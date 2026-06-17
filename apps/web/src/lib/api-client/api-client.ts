@@ -7,6 +7,7 @@ import {
 } from "@/config/api";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 import { authClient } from "@/lib/auth-client";
+import { applyDevPermissionOverrideHeader } from "@/lib/dev-permission-override";
 
 type ApiName = "default" | "battlelog" | "auth" | "activity";
 
@@ -289,6 +290,7 @@ const createApiClient = (api: ApiName): ApiClient => {
     const { params, headers: headerInit, credentials, ...requestInit } = config;
     const url = buildRequestUrl({ baseURL, path, params });
     const headers = new Headers(headerInit);
+    applyDevPermissionOverrideHeader(headers);
 
     let requestBody: BodyInit | undefined;
 

@@ -20,6 +20,7 @@ import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { canManageGuild } from "@/lib/guild-permissions";
 import { useListEvents } from "@/lib/api/generated/main/events/events";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { DevPermissionOverridePanel } from "@/components/dev/dev-permission-override-panel";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
@@ -151,6 +152,7 @@ export const GuildsSidebarNav: FC = () => {
           />
         ) : undefined
       }
+      footer={<DevPermissionOverridePanel guildId={guildId} />}
       onItemClick={handleItemClick}
     />
   );

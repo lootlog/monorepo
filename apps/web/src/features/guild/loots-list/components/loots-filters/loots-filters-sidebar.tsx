@@ -63,6 +63,7 @@ type SavedFilter = {
     players?: string[];
     npcs?: string[];
     rarities?: string[];
+    professions?: string[];
     npcTypes?: string[];
     npcLevelMin?: string;
     npcLevelMax?: string;
@@ -83,8 +84,12 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
-  const { defaultQuickFilters, npcTypeOptions, rarityOptions } =
-    useLootFilterOptions();
+  const {
+    defaultQuickFilters,
+    npcTypeOptions,
+    professionOptions,
+    rarityOptions,
+  } = useLootFilterOptions();
   const { world } = useGuildContext();
   const guildId = useGuildId();
   const { filters, setFilters, hasActiveFilters, clearFilters } =
@@ -219,6 +224,10 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
         npcLevelMax: mergedFilters.npcLevelMax || null,
         rarities:
           mergedFilters.rarities.length > 0 ? mergedFilters.rarities : null,
+        professions:
+          mergedFilters.professions.length > 0
+            ? mergedFilters.professions
+            : null,
         itemLevelMin: mergedFilters.itemLevelMin || null,
         itemLevelMax: mergedFilters.itemLevelMax || null,
         hid: mergedFilters.hid || null,
@@ -237,6 +246,8 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
       players: filters.players.length > 0 ? filters.players : undefined,
       npcs: filters.npcs.length > 0 ? filters.npcs : undefined,
       rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
+      professions:
+        filters.professions.length > 0 ? filters.professions : undefined,
       npcTypes: filters.npcTypes.length > 0 ? filters.npcTypes : undefined,
       npcLevelMin: filters.npcLevelMin || undefined,
       npcLevelMax: filters.npcLevelMax || undefined,
@@ -538,6 +549,45 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                                 className="text-sm cursor-pointer"
                               >
                                 {rarity.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">
+                          {t("loots.filtersPanel.itemSection.professionsLabel")}
+                        </Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {professionOptions.map((profession) => (
+                            <div
+                              key={profession.value}
+                              className="flex items-center gap-2"
+                            >
+                              <Checkbox
+                                id={`itemProfession-${profession.value}`}
+                                checked={filters.professions?.includes(
+                                  profession.value,
+                                )}
+                                onCheckedChange={(checked) => {
+                                  const currentProfessions =
+                                    filters.professions ?? [];
+                                  const newProfessions = checked
+                                    ? [...currentProfessions, profession.value]
+                                    : currentProfessions.filter(
+                                        (prof) => prof !== profession.value,
+                                      );
+                                  updateFilters({
+                                    professions: newProfessions,
+                                  });
+                                }}
+                              />
+                              <Label
+                                htmlFor={`itemProfession-${profession.value}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {profession.label}
                               </Label>
                             </div>
                           ))}

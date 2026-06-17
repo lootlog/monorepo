@@ -1,0 +1,31 @@
+import { Card } from "@lootlog/ui/components/card";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
+
+export const ReservationsSettingsSkeleton = () => {
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <Card className="mx-3 mt-3 shrink-0 gap-4 border-border bg-card/60 p-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-56" />
+          </div>
+        </div>
+      </Card>
+      <div className="flex-1 p-3">
+        <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+          <div className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="space-y-2">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};

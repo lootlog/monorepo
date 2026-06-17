@@ -8,6 +8,7 @@ export const useLootsFilters = createQueryFilters({
   npcLevelMin: parseAsString.withDefault(""),
   npcLevelMax: parseAsString.withDefault(""),
   rarities: parseAsArrayOf(parseAsString).withDefault([]),
+  professions: parseAsArrayOf(parseAsString).withDefault([]),
   itemLevelMin: parseAsString.withDefault(""),
   itemLevelMax: parseAsString.withDefault(""),
   hid: parseAsString.withDefault(""),

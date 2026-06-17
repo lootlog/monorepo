@@ -8,15 +8,15 @@ import {
 import { getKillsControllerGetMemberKillsQueryOptions } from "@/lib/api/generated/main/kills/kills";
 import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@/lib/api/generated/main/members/members";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute(
   "/_authenticated/$guildId/stats/members/$memberId",
 )({
-  loader: ({ context, params }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       const memberId = Number.parseInt(params.memberId, 10);
 
       if (Number.isNaN(memberId)) {
@@ -52,7 +52,7 @@ export const Route = createFileRoute(
 
         return null;
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
   component: MemberStatsPage,

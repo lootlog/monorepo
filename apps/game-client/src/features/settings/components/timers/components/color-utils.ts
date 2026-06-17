@@ -1,5 +1,3 @@
-export { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
-
 export const TAILWIND_TO_HEX: Record<
   string,
   { border: string; background: string }

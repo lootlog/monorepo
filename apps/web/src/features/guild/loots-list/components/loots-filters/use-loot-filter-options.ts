@@ -1,6 +1,18 @@
-import { NpcType } from "@/lib/api/generated/main/model";
+import {
+  LootItemResponseDtoProfItem,
+  NpcType,
+} from "@/lib/api/generated/main/model";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { useTranslation } from "react-i18next";
+
+const PROFESSION_TRANSLATION_KEYS = {
+  [LootItemResponseDtoProfItem.BLADE_DANCER]: "b",
+  [LootItemResponseDtoProfItem.HUNTER]: "h",
+  [LootItemResponseDtoProfItem.MAGE]: "m",
+  [LootItemResponseDtoProfItem.PALADIN]: "p",
+  [LootItemResponseDtoProfItem.TRACKER]: "t",
+  [LootItemResponseDtoProfItem.WARRIOR]: "w",
+};
 
 type LootQuickFilter = {
   id: string;
@@ -32,6 +44,18 @@ export function useLootFilterOptions() {
     { value: NpcType.ELITE2, label: t("npcType.ELITE2") },
     { value: NpcType.ELITE, label: t("npcType.ELITE") },
   ];
+
+  const professionOptions = [
+    LootItemResponseDtoProfItem.WARRIOR,
+    LootItemResponseDtoProfItem.PALADIN,
+    LootItemResponseDtoProfItem.HUNTER,
+    LootItemResponseDtoProfItem.MAGE,
+    LootItemResponseDtoProfItem.BLADE_DANCER,
+    LootItemResponseDtoProfItem.TRACKER,
+  ].map((profession) => ({
+    value: profession,
+    label: t(`professions.${PROFESSION_TRANSLATION_KEYS[profession]}`),
+  }));
 
   const defaultQuickFilters: LootQuickFilter[] = [
     {
@@ -81,6 +105,7 @@ export function useLootFilterOptions() {
       npcTypesPlaceholder: t("loots.filtersPanel.npcTypesPlaceholder"),
     },
     npcTypeOptions,
+    professionOptions,
     rarityOptions,
   };
 }

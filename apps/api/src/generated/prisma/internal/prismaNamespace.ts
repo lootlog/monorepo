@@ -431,7 +431,10 @@ export const ModelName = {
   MapTemplate: 'MapTemplate',
   NpcKillStats: 'NpcKillStats',
   UserKillStats: 'UserKillStats',
-  GuildKillSummary: 'GuildKillSummary'
+  GuildKillSummary: 'GuildKillSummary',
+  UserKillStatsBucket: 'UserKillStatsBucket',
+  NpcKillStatsBucket: 'NpcKillStatsBucket',
+  GuildKillSummaryBucket: 'GuildKillSummaryBucket'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -447,7 +450,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "timerHistoryEntry" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary"
+    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "timerHistoryEntry" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary" | "userKillStatsBucket" | "npcKillStatsBucket" | "guildKillSummaryBucket"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4003,6 +4006,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    UserKillStatsBucket: {
+      payload: Prisma.$UserKillStatsBucketPayload<ExtArgs>
+      fields: Prisma.UserKillStatsBucketFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserKillStatsBucketFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserKillStatsBucketFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload>
+        }
+        findFirst: {
+          args: Prisma.UserKillStatsBucketFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserKillStatsBucketFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload>
+        }
+        findMany: {
+          args: Prisma.UserKillStatsBucketFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload>[]
+        }
+        create: {
+          args: Prisma.UserKillStatsBucketCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload>
+        }
+        createMany: {
+          args: Prisma.UserKillStatsBucketCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserKillStatsBucketCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload>[]
+        }
+        delete: {
+          args: Prisma.UserKillStatsBucketDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload>
+        }
+        update: {
+          args: Prisma.UserKillStatsBucketUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserKillStatsBucketDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserKillStatsBucketUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserKillStatsBucketUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserKillStatsBucketUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserKillStatsBucketPayload>
+        }
+        aggregate: {
+          args: Prisma.UserKillStatsBucketAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserKillStatsBucket>
+        }
+        groupBy: {
+          args: Prisma.UserKillStatsBucketGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserKillStatsBucketGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserKillStatsBucketCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserKillStatsBucketCountAggregateOutputType> | number
+        }
+      }
+    }
+    NpcKillStatsBucket: {
+      payload: Prisma.$NpcKillStatsBucketPayload<ExtArgs>
+      fields: Prisma.NpcKillStatsBucketFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NpcKillStatsBucketFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NpcKillStatsBucketFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload>
+        }
+        findFirst: {
+          args: Prisma.NpcKillStatsBucketFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NpcKillStatsBucketFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload>
+        }
+        findMany: {
+          args: Prisma.NpcKillStatsBucketFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload>[]
+        }
+        create: {
+          args: Prisma.NpcKillStatsBucketCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload>
+        }
+        createMany: {
+          args: Prisma.NpcKillStatsBucketCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NpcKillStatsBucketCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload>[]
+        }
+        delete: {
+          args: Prisma.NpcKillStatsBucketDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload>
+        }
+        update: {
+          args: Prisma.NpcKillStatsBucketUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload>
+        }
+        deleteMany: {
+          args: Prisma.NpcKillStatsBucketDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NpcKillStatsBucketUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NpcKillStatsBucketUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload>[]
+        }
+        upsert: {
+          args: Prisma.NpcKillStatsBucketUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NpcKillStatsBucketPayload>
+        }
+        aggregate: {
+          args: Prisma.NpcKillStatsBucketAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNpcKillStatsBucket>
+        }
+        groupBy: {
+          args: Prisma.NpcKillStatsBucketGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NpcKillStatsBucketGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NpcKillStatsBucketCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NpcKillStatsBucketCountAggregateOutputType> | number
+        }
+      }
+    }
+    GuildKillSummaryBucket: {
+      payload: Prisma.$GuildKillSummaryBucketPayload<ExtArgs>
+      fields: Prisma.GuildKillSummaryBucketFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GuildKillSummaryBucketFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GuildKillSummaryBucketFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload>
+        }
+        findFirst: {
+          args: Prisma.GuildKillSummaryBucketFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GuildKillSummaryBucketFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload>
+        }
+        findMany: {
+          args: Prisma.GuildKillSummaryBucketFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload>[]
+        }
+        create: {
+          args: Prisma.GuildKillSummaryBucketCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload>
+        }
+        createMany: {
+          args: Prisma.GuildKillSummaryBucketCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GuildKillSummaryBucketCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload>[]
+        }
+        delete: {
+          args: Prisma.GuildKillSummaryBucketDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload>
+        }
+        update: {
+          args: Prisma.GuildKillSummaryBucketUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload>
+        }
+        deleteMany: {
+          args: Prisma.GuildKillSummaryBucketDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GuildKillSummaryBucketUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GuildKillSummaryBucketUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload>[]
+        }
+        upsert: {
+          args: Prisma.GuildKillSummaryBucketUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildKillSummaryBucketPayload>
+        }
+        aggregate: {
+          args: Prisma.GuildKillSummaryBucketAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGuildKillSummaryBucket>
+        }
+        groupBy: {
+          args: Prisma.GuildKillSummaryBucketGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GuildKillSummaryBucketGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GuildKillSummaryBucketCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GuildKillSummaryBucketCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -4050,6 +4275,11 @@ export const GuildScalarFieldEnum = {
   vanityUrl: 'vanityUrl',
   notificationRuleLimit: 'notificationRuleLimit',
   publicStatsCardEnabled: 'publicStatsCardEnabled',
+  reservationMaxDurationMinutes: 'reservationMaxDurationMinutes',
+  reservationMinDurationMinutes: 'reservationMinDurationMinutes',
+  reservationTimeGranularityMinutes: 'reservationTimeGranularityMinutes',
+  reservationMaxAdvanceDays: 'reservationMaxAdvanceDays',
+  reservationActiveLimitPerSpot: 'reservationActiveLimitPerSpot',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   active: 'active'
@@ -4812,6 +5042,65 @@ export const GuildKillSummaryScalarFieldEnum = {
 export type GuildKillSummaryScalarFieldEnum = (typeof GuildKillSummaryScalarFieldEnum)[keyof typeof GuildKillSummaryScalarFieldEnum]
 
 
+export const UserKillStatsBucketScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  world: 'world',
+  npcId: 'npcId',
+  npcName: 'npcName',
+  npcType: 'npcType',
+  npcLvl: 'npcLvl',
+  npcProf: 'npcProf',
+  npcIcon: 'npcIcon',
+  totalKills: 'totalKills',
+  periodStart: 'periodStart',
+  lastKilledAt: 'lastKilledAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserKillStatsBucketScalarFieldEnum = (typeof UserKillStatsBucketScalarFieldEnum)[keyof typeof UserKillStatsBucketScalarFieldEnum]
+
+
+export const NpcKillStatsBucketScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  memberId: 'memberId',
+  userId: 'userId',
+  world: 'world',
+  npcId: 'npcId',
+  npcName: 'npcName',
+  npcType: 'npcType',
+  npcLvl: 'npcLvl',
+  npcProf: 'npcProf',
+  npcIcon: 'npcIcon',
+  memberKills: 'memberKills',
+  periodStart: 'periodStart',
+  lastKilledAt: 'lastKilledAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NpcKillStatsBucketScalarFieldEnum = (typeof NpcKillStatsBucketScalarFieldEnum)[keyof typeof NpcKillStatsBucketScalarFieldEnum]
+
+
+export const GuildKillSummaryBucketScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  world: 'world',
+  npcId: 'npcId',
+  npcName: 'npcName',
+  npcType: 'npcType',
+  npcLvl: 'npcLvl',
+  npcProf: 'npcProf',
+  npcIcon: 'npcIcon',
+  uniqueKills: 'uniqueKills',
+  periodStart: 'periodStart',
+  lastKilledAt: 'lastKilledAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GuildKillSummaryBucketScalarFieldEnum = (typeof GuildKillSummaryBucketScalarFieldEnum)[keyof typeof GuildKillSummaryBucketScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -5394,6 +5683,9 @@ export type GlobalOmitConfig = {
   npcKillStats?: Prisma.NpcKillStatsOmit
   userKillStats?: Prisma.UserKillStatsOmit
   guildKillSummary?: Prisma.GuildKillSummaryOmit
+  userKillStatsBucket?: Prisma.UserKillStatsBucketOmit
+  npcKillStatsBucket?: Prisma.NpcKillStatsBucketOmit
+  guildKillSummaryBucket?: Prisma.GuildKillSummaryBucketOmit
 }
 
 /* Types for Logging */

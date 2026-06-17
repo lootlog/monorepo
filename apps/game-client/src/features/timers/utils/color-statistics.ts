@@ -1,5 +1,5 @@
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
-import { getDefaultColorName } from "@/features/timers/constants/color-names";
+import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
 import type { TimerWithTimeLeft } from "./timers-utils";
 
 type ColorStat = {

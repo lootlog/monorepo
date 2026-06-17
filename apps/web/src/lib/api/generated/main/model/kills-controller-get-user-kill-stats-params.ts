@@ -7,6 +7,7 @@
  */
 import type { KillsControllerGetUserKillStatsNpcType } from './kills-controller-get-user-kill-stats-npc-type';
 import type { KillsControllerGetUserKillStatsNpcTypesItem } from './kills-controller-get-user-kill-stats-npc-types-item';
+import type { KillStatsPeriod } from './kill-stats-period';
 
 export type KillsControllerGetUserKillStatsParams = {
 npcTypes?: KillsControllerGetUserKillStatsNpcTypesItem[];
@@ -17,4 +18,5 @@ world?: string;
  * @maximum 9007199254740991
  */
 topNpcsLimit?: number;
+period?: KillStatsPeriod;
 };

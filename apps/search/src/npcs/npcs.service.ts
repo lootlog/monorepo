@@ -2,9 +2,10 @@ import { NpcTypeEnum, getNpcTypeByWt } from "@lootlog/types";
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { Meilisearch, type SearchParams } from "meilisearch";
+import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
 import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
+import { buildMeilisearchStringInFilter } from "src/meilisearch/meilisearch.utils";
 import type { GetNpcsDto } from "./dto/get-npcs.dto";
 import { NPCS_INDEX } from "./constants/meilisearch";
 import type { IndexNpcsDto } from "./dto/index-npcs.dto";
@@ -27,9 +28,7 @@ export class NpcsService {
     const filters: string[] = [];
 
     if (hasMultipleSearchTerms) {
-      filters.push(
-        `name IN [${search.map((name) => JSON.stringify(name)).join(", ")}]`,
-      );
+      filters.push(buildMeilisearchStringInFilter("name", search));
     }
 
     if (ids && ids.length > 0) {
@@ -103,7 +102,6 @@ export class NpcsService {
       return await index.addDocuments(npcsWithUid, { primaryKey: "uid" });
     } catch (error) {
       this.logger.error("Error indexing npcs", { error });
-      return;
     }
   }
 }

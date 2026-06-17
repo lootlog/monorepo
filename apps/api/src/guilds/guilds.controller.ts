@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Patch,
   Post,
   Query,
@@ -20,6 +21,7 @@ import {
 import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
+import { UserGuildListResponseDto } from "src/guilds/dto/user-guild-list-response.dto";
 import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
 import { GuildsService } from "src/guilds/guilds.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
@@ -30,6 +32,10 @@ import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";
 import { GuildResponseDto } from "src/shared/dto/guild-response.dto";
+import {
+  DEV_PERMISSION_OVERRIDE_HEADER,
+  parseDevPermissionOverrideHeader,
+} from "src/shared/permissions/dev-permission-override";
 
 @ApiTags("guilds")
 @ApiBearerAuth()
@@ -49,7 +55,7 @@ export class GuildsController {
   @ZodResponse({
     status: 200,
     description: "List of user guilds",
-    type: [GuildResponseDto],
+    type: [UserGuildListResponseDto],
   })
   @ApiQuery({
     name: "source",
@@ -60,8 +66,19 @@ export class GuildsController {
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Query("source") source?: string,
+    @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ) {
-    return this.guildsService.getUserGuilds(discordId, userId, source);
+    const parsedDevPermissionOverride = parseDevPermissionOverrideHeader(
+      devPermissionOverride,
+    );
+
+    if (!parsedDevPermissionOverride) {
+      return this.guildsService.getUserGuilds(discordId, userId, source);
+    }
+
+    return this.guildsService.getUserGuilds(discordId, userId, source, {
+      devPermissionOverride: parsedDevPermissionOverride,
+    });
   }
 
   @Get("/@me/permissions")
@@ -79,8 +96,19 @@ export class GuildsController {
   getUserGuildsWithPermissions(
     @DiscordId() discordId: string,
     @UserId() userId: string,
+    @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ): Promise<UserGuildPermissionsDto[]> {
-    return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
+    const parsedDevPermissionOverride = parseDevPermissionOverrideHeader(
+      devPermissionOverride,
+    );
+
+    if (!parsedDevPermissionOverride) {
+      return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
+    }
+
+    return this.guildsService.getUserGuildsWithPermissions(discordId, userId, {
+      devPermissionOverride: parsedDevPermissionOverride,
+    });
   }
 
   @Get("/@me/manageable")

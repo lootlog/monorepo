@@ -142,6 +142,26 @@ describe("BattleAnalyticsService", () => {
       expect(drizzleService.db.query.battles.findMany).not.toHaveBeenCalled();
     });
 
+    it("should keep defined numeric filter values in cache keys", async () => {
+      const cachedData = JSON.stringify({
+        totalBattles: 0,
+        wins: 0,
+        losses: 0,
+        winRatio: 0,
+        totalPH: 0,
+      });
+      redisService.get.mockResolvedValue(cachedData);
+
+      await service.getBattleAnalytics(
+        { characterId: mockCharacterId, minLevel: 0, maxLevel: 0 },
+        mockUserId,
+      );
+
+      expect(redisService.get).toHaveBeenCalledWith(
+        `analytics:${mockUserId}:${mockCharacterId}:all:all:0-0:all:all`,
+      );
+    });
+
     it("should calculate analytics from database when no cache", async () => {
       redisService.get.mockResolvedValue(null);
       drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(
@@ -394,6 +414,28 @@ describe("BattleAnalyticsService", () => {
       );
 
       expect(result).toEqual(JSON.parse(cachedData));
+    });
+
+    it("should omit battle filters from rating cache keys", async () => {
+      const cachedData = JSON.stringify([]);
+      redisService.get.mockResolvedValue(cachedData);
+
+      await service.getRatingGrowthTimeSeries(
+        {
+          characterId: mockCharacterId,
+          world: mockWorld,
+          period: "all",
+          minLevel: 0,
+          maxLevel: 0,
+          ph: true,
+          matchmaking: true,
+        },
+        mockUserId,
+      );
+
+      expect(redisService.get).toHaveBeenCalledWith(
+        `statistics:rating-growth:${mockUserId}:${mockCharacterId}:${mockWorld}:all:0-0`,
+      );
     });
 
     it("should return empty array when no characters", async () => {

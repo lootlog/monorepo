@@ -7,8 +7,8 @@ import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 export const Route = createFileRoute("/_authenticated/$guildId/events")({
   component: Events,
   pendingComponent: EventsPageSkeleton,
-  loader: ({ context, params, preload }) =>
-    withRouteLoaderCancellation(async () => {
+  loader: ({ abortController, context, params, preload }) =>
+    withRouteLoaderCancellation(abortController, async () => {
       if (preload) {
         return null;
       }

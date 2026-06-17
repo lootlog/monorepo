@@ -13,13 +13,15 @@ export const Dashboard: React.FC = () => {
         <DashboardFiltersBar
           filters={filters}
           onWorldChange={(world) => updateFilters({ world })}
+          onPeriodChange={(period) => updateFilters({ period })}
         />
 
         <div className="grid gap-4 md:grid-cols-2">
-          <PlayerKillStatsCard world={filters.world} />
+          <PlayerKillStatsCard world={filters.world} period={filters.period} />
           <TopKilledNpcsCard
             world={filters.world}
             npcType={filters.npcType}
+            period={filters.period}
             onNpcTypeChange={(npcType) => updateFilters({ npcType })}
           />
         </div>

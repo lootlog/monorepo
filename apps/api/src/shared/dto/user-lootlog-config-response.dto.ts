@@ -8,8 +8,44 @@ const UserLootlogConfigResponseSchema = z.object({
   catchingGuildIds: z.array(z.string()),
 });
 
+const UserLootlogCatchingGuildSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+const UserLootlogPlayerCatchingGuildsResponseSchema = z.object({
+  accountId: z.string(),
+  characterId: z.string(),
+  guilds: z.array(UserLootlogCatchingGuildSchema),
+});
+
+const UserLootlogPlayerCatchingGuildsRequestPlayerSchema = z.object({
+  accountId: z.string(),
+  characterId: z.string(),
+});
+
+const UserLootlogPlayersCatchingGuildsRequestSchema = z.object({
+  players: z.array(UserLootlogPlayerCatchingGuildsRequestPlayerSchema).max(100),
+});
+
+const UserLootlogPlayersCatchingGuildsResponseSchema = z.object({
+  players: z.array(UserLootlogPlayerCatchingGuildsResponseSchema),
+});
+
 export type UserLootlogConfigResponse = z.infer<
   typeof UserLootlogConfigResponseSchema
+>;
+
+export type UserLootlogPlayerCatchingGuildsResponse = z.infer<
+  typeof UserLootlogPlayerCatchingGuildsResponseSchema
+>;
+
+export type UserLootlogPlayersCatchingGuildsRequest = z.infer<
+  typeof UserLootlogPlayersCatchingGuildsRequestSchema
+>;
+
+export type UserLootlogPlayersCatchingGuildsResponse = z.infer<
+  typeof UserLootlogPlayersCatchingGuildsResponseSchema
 >;
 
 type UserLootlogConfigSource = Pick<
@@ -29,4 +65,16 @@ export class UserLootlogConfigResponseDto extends createZodDto(
 
 export class UserLootlogConfigAccountResponseDto extends createZodDto(
   z.record(z.string(), UserLootlogConfigResponseSchema),
+) {}
+
+export class UserLootlogPlayerCatchingGuildsResponseDto extends createZodDto(
+  UserLootlogPlayerCatchingGuildsResponseSchema,
+) {}
+
+export class UserLootlogPlayersCatchingGuildsRequestDto extends createZodDto(
+  UserLootlogPlayersCatchingGuildsRequestSchema,
+) {}
+
+export class UserLootlogPlayersCatchingGuildsResponseDto extends createZodDto(
+  UserLootlogPlayersCatchingGuildsResponseSchema,
 ) {}

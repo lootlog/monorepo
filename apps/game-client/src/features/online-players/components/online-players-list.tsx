@@ -39,7 +39,10 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     useSettingsStore();
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
-  const [onlinePlayers] = usePlayersPresence(guildId, world || defaultWorld);
+  const [onlinePlayers, , , accessState] = usePlayersPresence(
+    guildId,
+    world ?? defaultWorld,
+  );
   const filtersByGuildId = useOnlinePlayersStore(
     (state) => state.filtersByGuildId,
   );
@@ -120,7 +123,13 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   let listContent: ReactNode;
 
-  if (viewMode === "members" && onlinePlayersList.length > 0) {
+  if (accessState === "forbidden") {
+    listContent = (
+      <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6 ll:text-center">
+        {t("emptyState.noAccess")}
+      </p>
+    );
+  } else if (viewMode === "members" && onlinePlayersList.length > 0) {
     listContent = onlinePlayersList.map(([discordId, presences]) => (
       <OnlinePlayersListEntry
         key={discordId}

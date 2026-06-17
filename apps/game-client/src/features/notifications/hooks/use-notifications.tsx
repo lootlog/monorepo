@@ -8,7 +8,7 @@ import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
-import type { GameNpc } from "@lootlog/margonem";
+import type { GameNpc } from "@lootlog/margonem/npcs";
 import { useRef } from "react";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/api/npcs.api";

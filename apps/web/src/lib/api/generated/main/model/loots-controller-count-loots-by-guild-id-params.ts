@@ -20,6 +20,7 @@ cursor?: number;
 npcs?: string[];
 players?: string[];
 rarities?: string[];
+professions?: string[];
 npcTypes?: string[];
 world?: string;
 /**

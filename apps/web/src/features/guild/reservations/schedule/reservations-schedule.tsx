@@ -9,6 +9,7 @@ import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { GatewayEvent } from "@/config/gateway";
+import { ROUTES } from "@/config/routes";
 import { toast } from "sonner";
 import { reservationSlug } from "../reservation-slug";
 import { Permission } from "@lootlog/types";
@@ -22,12 +23,15 @@ import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-
 import { normalizeReservation } from "./normalize-reservation";
 import {
   getReservationsControllerGetReservationsQueryKey,
+  invalidateReservationsControllerGetReservations,
   useReservationsControllerDeleteReservation,
   useReservationsControllerGetReservations,
 } from "@/lib/api/generated/main/reservations/reservations";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
+import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { getReservationSettings } from "./reservation-settings";
 
 export const ReservationsSchedule: React.FC = () => {
   const { reservationId } = useParams({
@@ -47,6 +51,10 @@ export const ReservationsSchedule: React.FC = () => {
   const { data: permissions } = useGuildPermissions();
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
+  const { data: guild } = useGuildsControllerGetGuildById({
+    guildId: guildId ?? "",
+  });
+  const reservationSettings = getReservationSettings(guild);
 
   const { data: reservations } = useReservationsControllerGetReservations(
     { guildId: guildId ?? "" },
@@ -56,8 +64,19 @@ export const ReservationsSchedule: React.FC = () => {
       },
     },
   );
-  const deleteReservationMutation =
-    useReservationsControllerDeleteReservation();
+  const deleteReservationMutation = useReservationsControllerDeleteReservation({
+    mutation: {
+      onSuccess: async () => {
+        if (!guildId) {
+          return;
+        }
+
+        await invalidateReservationsControllerGetReservations(queryClient, {
+          guildId,
+        });
+      },
+    },
+  });
   const deleteReservation = deleteReservationMutation.mutateAsync;
   const isDeleting = deleteReservationMutation.isPending;
 
@@ -87,6 +106,17 @@ export const ReservationsSchedule: React.FC = () => {
       permissions.includes(Permission.ADMIN)
     );
   }, [permissions, isOwner]);
+
+  const canManageReservationSettings =
+    isOwner ||
+    Boolean(
+      permissions?.includes(Permission.OWNER) ||
+      permissions?.includes(Permission.ADMIN),
+    );
+
+  const reservationSettingsHref = guildId
+    ? ROUTES.guild.settings.reservationsSettings(guildId)
+    : undefined;
 
   const normalizedReservationId = reservationId
     ? reservationSlug(reservationId)
@@ -182,7 +212,7 @@ export const ReservationsSchedule: React.FC = () => {
         });
       }
     },
-    [deleteReservation],
+    [deleteReservation, guildId],
   );
 
   const membersByUserId = useMemo(() => {
@@ -202,6 +232,9 @@ export const ReservationsSchedule: React.FC = () => {
           currentWeek={currentWeek}
           currentYear={currentYear}
           monthName={monthName}
+          settings={reservationSettings}
+          settingsHref={reservationSettingsHref}
+          canManageReservationSettings={canManageReservationSettings}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
           onAddReservation={() => setIsCreateDialogOpen(true)}
@@ -212,6 +245,7 @@ export const ReservationsSchedule: React.FC = () => {
           onOpenChange={setIsCreateDialogOpen}
           reservationKey={createReservationKey}
           currentUserId={currentUserId}
+          settings={reservationSettings}
         />
 
         <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden bg-transparent">
@@ -224,6 +258,7 @@ export const ReservationsSchedule: React.FC = () => {
             isDeleting={isDeleting}
             onDeleteReservation={handleDeleteReservation}
             reservationKey={createReservationKey}
+            settings={reservationSettings}
           />
         </div>
       </div>

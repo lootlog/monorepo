@@ -5,6 +5,7 @@ import type { KillsControllerGetNpcKillersParams } from "@/lib/api/generated/mai
 import type { LootsControllerGetLootStatsParams } from "@/lib/api/generated/main/model/loots-controller-get-loot-stats-params";
 import type { LootsControllerGetLootStatsPeriod } from "@/lib/api/generated/main/model/loots-controller-get-loot-stats-period";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
+import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 export const DEFAULT_MEMBER_KILLS_LIMIT = 40;
 const DEFAULT_NPC_KILLERS_LIMIT = 50;
@@ -26,12 +27,14 @@ export const buildGuildKillStatsParams = (filters: {
   minLvl?: number;
   maxLvl?: number;
   world?: string;
+  period?: KillStatsPeriod;
 }): KillsControllerGetGuildKillStatsParams | undefined =>
   withDefinedEntries({
     npcTypes: filters.npcTypes,
     minLvl: filters.minLvl,
     maxLvl: filters.maxLvl,
     world: filters.world,
+    period: filters.period === "all" ? undefined : filters.period,
   });
 
 export const buildGuildTopNpcsParams = (filters: {
@@ -41,6 +44,7 @@ export const buildGuildTopNpcsParams = (filters: {
   search?: string;
   minLvl?: number;
   maxLvl?: number;
+  period?: KillStatsPeriod;
 }): KillsControllerGetGuildTopNpcsParams => ({
   limit: filters.limit,
   npcType: filters.npcType,
@@ -48,6 +52,7 @@ export const buildGuildTopNpcsParams = (filters: {
   search: filters.search ?? "",
   minLvl: filters.minLvl === undefined ? "" : String(filters.minLvl),
   maxLvl: filters.maxLvl === undefined ? "" : String(filters.maxLvl),
+  period: filters.period ?? "all",
 });
 
 export const buildMemberKillsParams = (filters: {
@@ -58,6 +63,7 @@ export const buildMemberKillsParams = (filters: {
   cursor?: number;
   minLvl?: number;
   maxLvl?: number;
+  period?: KillStatsPeriod;
 }): KillsControllerGetMemberKillsParams => ({
   world: filters.world,
   npcTypes: filters.npcTypes,
@@ -66,17 +72,20 @@ export const buildMemberKillsParams = (filters: {
   cursor: filters.cursor ?? 0,
   minLvl: filters.minLvl ?? 0,
   maxLvl: filters.maxLvl ?? 0,
+  period: filters.period === "all" ? undefined : filters.period,
 });
 
 export const buildNpcKillersParams = (
   filters: {
     limit?: number;
     world?: string;
+    period?: KillStatsPeriod;
   } = {},
 ): KillsControllerGetNpcKillersParams =>
   withDefinedEntries({
     limit: filters.limit ?? DEFAULT_NPC_KILLERS_LIMIT,
     world: filters.world,
+    period: filters.period === "all" ? undefined : filters.period,
   }) ?? {};
 
 export const buildLootStatsParams = (filters: {

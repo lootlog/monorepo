@@ -13,6 +13,7 @@ const FetchLootsParamsSchema = z.object({
   npcs: commaSeparatedArray(z.string()).optional(),
   players: commaSeparatedArray(z.string()).optional(),
   rarities: commaSeparatedArray(z.string()).optional(),
+  professions: commaSeparatedArray(z.string()).optional(),
   npcTypes: commaSeparatedArray(z.string()).optional(),
   world: z.string().optional(),
   npcLevelMin: optionalFromQuery(intFromString({ min: 0, max: 500 })),

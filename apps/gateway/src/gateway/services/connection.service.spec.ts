@@ -1,11 +1,23 @@
 import { ConnectionService } from "./connection.service";
 import { Platform } from "../enums/platform.enum";
+import { env } from "src/config/env";
+import { RuntimeEnvironment } from "src/types/common.types";
 
 describe("ConnectionService", () => {
   let service: ConnectionService;
+  const originalEnv = env.ENV;
+  const originalDevPermissionOverrideEnabled =
+    env.DEV_PERMISSION_OVERRIDE_ENABLED;
 
   beforeEach(() => {
+    env.ENV = RuntimeEnvironment.LOCAL;
+    env.DEV_PERMISSION_OVERRIDE_ENABLED = false;
     service = new ConnectionService();
+  });
+
+  afterEach(() => {
+    env.ENV = originalEnv;
+    env.DEV_PERMISSION_OVERRIDE_ENABLED = originalDevPermissionOverrideEnabled;
   });
 
   it("extracts connection metadata and detects game platform", () => {
@@ -23,6 +35,72 @@ describe("ConnectionService", () => {
       platform: Platform.GAME,
     });
   });
+
+  it("normalizes repeated auth headers to the first value", () => {
+    const metadata = service.getConnectionMetadata({
+      headers: {
+        "x-auth-discord-id": ["discord-1", "discord-2"],
+        "x-auth-user-id": ["user-1", "user-2"],
+        origin: "https://alpha.margonem.pl",
+      },
+    } as never);
+
+    expect(metadata.discordId).toBe("discord-1");
+    expect(metadata.userId).toBe("user-1");
+  });
+
+  it("ignores dev permission override auth when the gateway flag is disabled", () => {
+    const metadata = service.getConnectionMetadata(
+      {
+        headers: {
+          "x-auth-discord-id": "discord-1",
+          "x-auth-user-id": "user-1",
+          origin: "https://alpha.margonem.pl",
+        },
+      } as never,
+      { devPermissionOverride: "encoded-override" },
+    );
+
+    expect(metadata.devPermissionOverride).toBeUndefined();
+  });
+
+  it("accepts dev permission override auth when the gateway flag is enabled", () => {
+    env.DEV_PERMISSION_OVERRIDE_ENABLED = true;
+
+    const metadata = service.getConnectionMetadata(
+      {
+        headers: {
+          "x-auth-discord-id": "discord-1",
+          "x-auth-user-id": "user-1",
+          origin: "https://alpha.margonem.pl",
+        },
+      } as never,
+      { devPermissionOverride: "encoded-override" },
+    );
+
+    expect(metadata.devPermissionOverride).toBe("encoded-override");
+  });
+
+  it.each([RuntimeEnvironment.STAGING, RuntimeEnvironment.PROD])(
+    "keeps dev permission override auth disabled in %s",
+    (runtimeEnvironment) => {
+      env.ENV = runtimeEnvironment;
+      env.DEV_PERMISSION_OVERRIDE_ENABLED = true;
+
+      const metadata = service.getConnectionMetadata(
+        {
+          headers: {
+            "x-auth-discord-id": "discord-1",
+            "x-auth-user-id": "user-1",
+            origin: "https://alpha.margonem.pl",
+          },
+        } as never,
+        { devPermissionOverride: "encoded-override" },
+      );
+
+      expect(metadata.devPermissionOverride).toBeUndefined();
+    },
+  );
 
   it("detects web app platform for non-game origins", () => {
     expect(service.determineUserPlatform("https://lootlog.com")).toBe(

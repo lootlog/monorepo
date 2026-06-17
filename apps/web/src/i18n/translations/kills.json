@@ -16,10 +16,19 @@
     "levelRange": "Zakres poziomów",
     "minLevel": "Min. poziom",
     "maxLevel": "Max. poziom",
+    "period": "Okres",
     "allTypes": "Wszystkie typy",
     "apply": "Zastosuj",
     "reset": "Resetuj",
     "close": "Zamknij"
+  },
+  "period": {
+    "all": "Wszystko",
+    "24h": "24h",
+    "3d": "3 dni",
+    "7d": "7 dni",
+    "14d": "14 dni",
+    "30d": "30 dni"
   },
   "memberRanking": {
     "title": "Ranking członków",
@@ -27,6 +36,7 @@
     "member": "Członek",
     "totalKills": "Łącznie",
     "noData": "Brak danych o biciach",
+    "filteredNoData": "Brak członków pasujących do wybranych filtrów",
     "viewAll": "Zobacz pełny ranking"
   },
   "recentKills": {
@@ -42,7 +52,8 @@
     "title": "Twoje statystyki bić",
     "killsByWorld": "Bicia według świata",
     "characters": "Postaci",
-    "noData": "Brak danych o biciach dla Twoich postaci"
+    "noData": "Brak danych o biciach dla Twoich postaci",
+    "filteredNoData": "Brak bić pasujących do wybranych filtrów"
   },
   "home": {
     "filters": {
@@ -54,6 +65,7 @@
     "topKilledNpcs": {
       "title": "Najczęściej bite potwory",
       "noData": "Brak danych o zabitych potworach",
+      "filteredNoData": "Brak potworów pasujących do wybranych filtrów",
       "killCount": "x{{count}}",
       "viewAll": "Zobacz pełny ranking"
     }
@@ -63,12 +75,14 @@
     "description": "Kompletna lista statystyk zabitych potworów",
     "search": "Szukaj potwora...",
     "noData": "Nie znaleziono potworów",
+    "filteredNoData": "Brak potworów pasujących do wybranych filtrów",
     "loading": "Ładowanie danych...",
     "total": "Łącznie: {{count}}"
   },
   "topNpcs": {
     "title": "Najczęściej bite potwory",
     "noData": "Brak danych o potworach",
+    "filteredNoData": "Brak potworów pasujących do wybranych filtrów",
     "viewAll": "Zobacz pełny ranking"
   },
   "npcsList": {
@@ -101,6 +115,7 @@
     "uniqueGuildKills": "Unikalnych bić: {{count}}",
     "notFound": "Nie znaleziono danych o tym potworze",
     "noKillers": "Brak graczy, którzy zabili tego potwora",
+    "filteredNoData": "Brak graczy pasujących do wybranych filtrów",
     "searchPlaceholder": "Szukaj gracza..."
   },
   "memberStats": {
@@ -112,6 +127,7 @@
     "killCount": "Bicia",
     "searchPlaceholder": "Szukaj potwora...",
     "noData": "Ten członek nie ma jeszcze żadnych bić",
+    "filteredNoData": "Brak bić tego członka pasujących do wybranych filtrów",
     "notFound": "Nie znaleziono członka w klanie"
   }
 }

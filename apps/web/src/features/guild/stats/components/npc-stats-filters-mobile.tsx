@@ -13,6 +13,10 @@ import {
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
+import {
+  KillStatsPeriodSelect,
+  type KillStatsPeriod,
+} from "@/features/kills/components/kill-stats-period-select";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 
 type NpcStatsFiltersMobileProps = {
@@ -20,10 +24,12 @@ type NpcStatsFiltersMobileProps = {
   npcType?: NpcType | "ALL";
   minLvl: string;
   maxLvl: string;
+  period: KillStatsPeriod;
   onWorldChange: (value: string | null) => void;
   onNpcTypeChange: (value: string) => void;
   onMinLvlChange: (value: string) => void;
   onMaxLvlChange: (value: string) => void;
+  onPeriodChange: (value: KillStatsPeriod) => void;
 };
 
 const createNumericLevelChangeHandler =
@@ -41,10 +47,12 @@ export const NpcStatsFiltersMobile = ({
   npcType,
   minLvl,
   maxLvl,
+  period,
   onWorldChange,
   onNpcTypeChange,
   onMinLvlChange,
   onMaxLvlChange,
+  onPeriodChange,
 }: NpcStatsFiltersMobileProps) => {
   const { t } = useTranslation();
 
@@ -60,6 +68,15 @@ export const NpcStatsFiltersMobile = ({
           onValueChange={onWorldChange}
           showAllOption
           width="w-full"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>{t("kills.filters.period")}</Label>
+        <KillStatsPeriodSelect
+          value={period}
+          onValueChange={onPeriodChange}
+          className="w-full"
         />
       </div>
 
