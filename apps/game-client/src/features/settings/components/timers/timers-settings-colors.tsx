@@ -56,17 +56,17 @@ export const TimersSettingsColors: FC = () => {
 
   const handleEditDefaultColor = (colorId: string) => {
     const overridden = overriddenDefaultColors[colorId];
-    const defaultColors = TAILWIND_TO_HEX[colorId] || {
+    const defaultColors = TAILWIND_TO_HEX[colorId] ?? {
       border: "#3b82f6",
       background: "#3b82f620",
     };
 
-    const bgColor = overridden?.backgroundColor || defaultColors.background;
+    const bgColor = overridden?.backgroundColor ?? defaultColors.background;
 
     setEditingDefaultColor(colorId);
     setEditingDefaultColorData({
-      name: defaultColorNames[colorId] || getDefaultColorName(colorId) || "",
-      borderColor: overridden?.borderColor || defaultColors.border,
+      name: defaultColorNames[colorId] ?? getDefaultColorName(colorId) ?? "",
+      borderColor: overridden?.borderColor ?? defaultColors.border,
       backgroundColor: stripAlphaChannel(bgColor),
       backgroundAlpha: hexToAlpha(bgColor),
     });
