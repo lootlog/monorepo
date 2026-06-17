@@ -21,15 +21,18 @@ import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserX } from "lucide-react";
+import { cn } from "@lootlog/ui/lib/utils";
 
 export type MemberDeactivationButtonProps = {
   member: GuildMember;
   onDeactivated: (member: GuildMember) => void;
+  className?: string;
 };
 
 export const MemberDeactivationButton = ({
   member,
   onDeactivated,
+  className,
 }: MemberDeactivationButtonProps) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
@@ -70,6 +73,7 @@ export const MemberDeactivationButton = ({
         <Button
           size="sm"
           variant="destructive"
+          className={cn(className)}
           disabled={!member.active || deactivateMemberMutation.isPending}
         >
           <UserX className="size-4" />
