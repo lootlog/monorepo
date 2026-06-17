@@ -115,7 +115,7 @@ export const RefreshMembersButton = () => {
   if (isRefreshing && displayJob) {
     return (
       <div className="flex flex-col gap-2 min-w-48">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <RefreshCw className="w-4 h-4 animate-spin" />
           <span>
             {t("settings.members.refreshingProgress", {
@@ -137,7 +137,7 @@ export const RefreshMembersButton = () => {
   if (!countdown.isExpired) {
     if (displayJob?.status === "COMPLETED") {
       return (
-        <div className="flex items-center gap-2 text-sm text-green-600">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-green-600">
           <RefreshCw className="w-4 h-4" />
           <span>
             {t("settings.members.refreshSuccessWithCooldown", {
@@ -151,7 +151,7 @@ export const RefreshMembersButton = () => {
 
     if (displayJob?.status === "FAILED") {
       return (
-        <div className="flex items-center gap-2 text-sm text-red-600">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-red-600">
           <Clock className="w-4 h-4" />
           <span>
             {t("settings.members.refreshErrorWithCooldown", {
@@ -164,7 +164,7 @@ export const RefreshMembersButton = () => {
     }
 
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <Clock className="w-4 h-4" />
         <span>
           {t("settings.members.nextRefreshIn", {
@@ -178,22 +178,21 @@ export const RefreshMembersButton = () => {
 
   if (displayJob?.status === "FAILED") {
     return (
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-red-600">
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={handleRefresh}
+        disabled={isPending || !countdown.isExpired}
+      >
+        <RefreshCw
+          className={cn("w-4 h-4 mr-2", isPending && "animate-spin")}
+        />
+        <span className="mr-1 font-medium">
           {t("settings.members.refreshError")}
         </span>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleRefresh}
-          disabled={isPending || !countdown.isExpired}
-        >
-          <RefreshCw
-            className={cn("w-4 h-4 mr-2", isPending && "animate-spin")}
-          />
-          {t("settings.members.retry")}
-        </Button>
-      </div>
+        <span className="opacity-70">·</span>
+        <span className="ml-1">{t("settings.members.retry")}</span>
+      </Button>
     );
   }
 

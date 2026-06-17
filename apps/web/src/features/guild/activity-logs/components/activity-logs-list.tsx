@@ -136,11 +136,11 @@ export const ActivityLogsList = () => {
   return (
     <ScrollArea
       id="activity-logs-list"
-      className="h-24 flex-1 relative"
+      className="h-24 flex-1 relative py-3"
       ref={scrollElementRef}
     >
       <div
-        className="p-3 pt-0"
+        className="px-3 pt-0"
         style={{
           height: `${virtualizer.getTotalSize()}px`,
           width: "100%",
@@ -156,7 +156,7 @@ export const ActivityLogsList = () => {
               key={virtualItem.key}
               data-index={virtualItem.index}
               ref={virtualizer.measureElement}
-              className="py-3"
+              className="pb-3"
               style={{
                 position: "absolute",
                 top: 0,
