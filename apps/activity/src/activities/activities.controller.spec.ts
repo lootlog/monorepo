@@ -33,6 +33,7 @@ describe("ActivitiesController", () => {
     findByGuild: vi.fn(),
     findByUser: vi.fn(),
     findOne: vi.fn(),
+    findMemberActivityStatsByGuild: vi.fn(),
   };
 
   const mockService = {
@@ -161,6 +162,43 @@ describe("ActivitiesController", () => {
       expect(result).toEqual(mockActivity);
       expect(queryService.findOne).toHaveBeenCalledWith(activityId, guildId);
       expect(queryService.findOne).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("getMemberActivityStats", () => {
+    it("should return member activity stats for all sources in a guild", async () => {
+      const guildId = "guild-1";
+      const stats = [
+        {
+          guildId,
+          discordId: "discord-1",
+          source: ActivitySource.WEB_APP,
+          lastSeenAt: new Date("2026-01-01T00:00:00.000Z"),
+          visitCount: 3,
+          activeSessionCount: 1,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+        {
+          guildId,
+          discordId: "discord-1",
+          source: ActivitySource.GAME,
+          lastSeenAt: new Date("2026-01-01T00:00:00.000Z"),
+          visitCount: 7,
+          activeSessionCount: 2,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      ];
+
+      mockQueryService.findMemberActivityStatsByGuild.mockResolvedValue(stats);
+
+      const result = await controller.getMemberActivityStats(guildId);
+
+      expect(result).toEqual(stats);
+      expect(queryService.findMemberActivityStatsByGuild).toHaveBeenCalledWith(
+        guildId,
+      );
     });
   });
 

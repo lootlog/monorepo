@@ -19,18 +19,24 @@ import {
 } from "@/lib/api/generated/main/members/members";
 import { useTranslation } from "react-i18next";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useSelectorPanel } from "@/components/selector-panel";
 
 export type MemberSyncButtonProps = {
   member: GuildMember;
+  className?: string;
+  variant?: "default" | "secondary" | "outline" | "ghost";
+  onMemberUpdated?: (member: GuildMember | null) => void;
 };
 
-export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
+export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
+  member,
+  className,
+  variant = "secondary",
+  onMemberUpdated,
+}) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const refreshStatusContext = useContext(RefreshStatusContext);
-  const { setSelectedItem } = useSelectorPanel<GuildMember>();
   const { mutate: refreshMember, isPending } =
     useMembersControllerRefreshMember({
       mutation: {
@@ -55,14 +61,14 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
                 );
               },
             );
-            setSelectedItem(data);
+            onMemberUpdated?.(data);
             if (data.active) {
               toast.success(t("settings.members.refreshSuccess"));
             } else {
               toast.warning(t("settings.members.refreshAccessDisabled"));
             }
           } else {
-            setSelectedItem(null);
+            onMemberUpdated?.(null);
             toast.warning(t("settings.members.refreshNotFound"));
           }
 
@@ -101,9 +107,15 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
   const canTriggerRefresh = refreshReferenceAt
     ? permissionRefreshInfo.canTriggerRefresh
     : true;
-  const canTriggerRefreshText = refreshReferenceAt
-    ? permissionRefreshInfo.canTriggerRefreshText
-    : t("settings.members.refreshNoDiscordSync");
+  let canTriggerRefreshText = t("settings.members.refreshNoDiscordSync");
+
+  if (refreshReferenceAt && canTriggerRefresh) {
+    canTriggerRefreshText = t(
+      "settings.members.refreshMemberPermissionsTooltip",
+    );
+  } else if (refreshReferenceAt) {
+    canTriggerRefreshText = permissionRefreshInfo.canTriggerRefreshText;
+  }
   let tooltipText = canTriggerRefreshText;
 
   if (!canRefresh) {
@@ -117,9 +129,9 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
       <TooltipTrigger asChild>
         <span>
           <Button
-            className="justify-center"
+            className={cn("justify-center", className)}
             size="sm"
-            variant="secondary"
+            variant={variant}
             disabled={
               isPending ||
               !canRefresh ||

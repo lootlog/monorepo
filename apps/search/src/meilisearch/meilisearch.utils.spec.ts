@@ -1,4 +1,5 @@
 import {
+  buildMeilisearchSearchTermFilter,
   buildMeilisearchStringInFilter,
   getMeilisearchErrorCode,
 } from "./meilisearch.utils";
@@ -32,5 +33,28 @@ describe("buildMeilisearchStringInFilter", () => {
     expect(buildMeilisearchStringInFilter("name", ['Hero "The One"'])).toBe(
       'name IN ["Hero \\"The One\\""]',
     );
+  });
+});
+
+describe("buildMeilisearchSearchTermFilter", () => {
+  it("uses the search string as the Meilisearch term", () => {
+    expect(buildMeilisearchSearchTermFilter("name", "Hero")).toEqual({
+      searchTerm: "Hero",
+    });
+  });
+
+  it("uses an IN filter for multiple exact search values", () => {
+    expect(
+      buildMeilisearchSearchTermFilter("name", ["Hero", "Villain"]),
+    ).toEqual({
+      searchTerm: "",
+      filter: 'name IN ["Hero", "Villain"]',
+    });
+  });
+
+  it("uses an empty search term when search is omitted", () => {
+    expect(buildMeilisearchSearchTermFilter("name", undefined)).toEqual({
+      searchTerm: "",
+    });
   });
 });

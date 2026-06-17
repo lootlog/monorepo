@@ -20,13 +20,13 @@ export class ActivityService {
     guilds: UserGuildData[],
   ): Promise<void> {
     const { discordId, userId, sessionId, platform, player } = client.data;
+    const source =
+      platform === Platform.GAME ? ActivitySource.GAME : ActivitySource.WEB_APP;
 
-    if (!player) {
+    if (source === ActivitySource.GAME && !player) {
       return;
     }
 
-    const source =
-      platform === Platform.GAME ? ActivitySource.GAME : ActivitySource.WEB_APP;
     const timestamp = Date.now();
 
     await Promise.all(
@@ -75,7 +75,7 @@ export class ActivityService {
     guildId: string;
     discordId: string;
     source: ActivitySource;
-    player: NonNullable<Socket["data"]["player"]>;
+    player: Socket["data"]["player"];
     sessionId: string;
     userAgent: string | undefined;
     timestamp: number;
@@ -86,13 +86,13 @@ export class ActivityService {
       discordId,
       type,
       source,
-      world: player.world,
+      world: source === ActivitySource.GAME ? player?.world : undefined,
       details: {
         sessionId,
         userAgent,
       },
       actorSnapshot:
-        source === ActivitySource.GAME
+        source === ActivitySource.GAME && player
           ? {
               accountId: Number(player.accountId),
               characterId: Number(player.characterId),

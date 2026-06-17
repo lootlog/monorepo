@@ -17,6 +17,7 @@ type NavigationParams = {
   heroId?: string;
   killId?: string;
   reservationId?: string;
+  roleId?: string;
   memberId?: string;
   npcId?: string;
 };
@@ -28,6 +29,9 @@ type GetNavigationInfoArgs = {
   eventName?: string;
   eventHeroNpcs?: Array<{ id: string; npcName: string }>;
   eventRankings: Array<{ memberId: number; member?: { name?: string } }>;
+  settingsRoleName?: string;
+  settingsMemberName?: string;
+  settingsNpcName?: string;
   npcKillersData?: { npc?: { npcName?: string } | null };
   memberKillsData?: { member?: { memberName?: string } | null };
   t: (key: string, options?: Record<string, unknown>) => string;
@@ -375,7 +379,8 @@ function resolveSettingsRoutes(
   guildBreadcrumb: Breadcrumb,
   args: GetNavigationInfoArgs,
 ): NavigationInfo | null {
-  const { t } = args;
+  const { params, settingsMemberName, settingsNpcName, settingsRoleName, t } =
+    args;
 
   if (!path.startsWith(routes.settings)) return null;
 
@@ -399,19 +404,42 @@ function resolveSettingsRoutes(
   if (path === routes.settingsRoles) {
     breadcrumbs.push({ label: t("common.breadcrumbs.roles"), path: null });
   } else if (path.startsWith(`${routes.settingsRoles}/`)) {
-    const roleId = path.split("/").pop();
     breadcrumbs.push({
       label: t("common.breadcrumbs.roles"),
       path: routes.settingsRoles,
     });
     breadcrumbs.push({
-      label: t("common.breadcrumbs.roleFallback", { id: roleId }),
+      label:
+        settingsRoleName ??
+        t("common.breadcrumbs.roleFallback", { id: params.roleId }),
       path: null,
     });
   } else if (path === routes.settingsMembers) {
     breadcrumbs.push({ label: t("common.breadcrumbs.members"), path: null });
+  } else if (path.startsWith(`${routes.settingsMembers}/`)) {
+    breadcrumbs.push({
+      label: t("common.breadcrumbs.members"),
+      path: routes.settingsMembers,
+    });
+    breadcrumbs.push({
+      label:
+        settingsMemberName ??
+        t("common.breadcrumbs.memberFallback", { id: params.memberId }),
+      path: null,
+    });
   } else if (path === routes.settingsNpcs) {
     breadcrumbs.push({ label: t("common.breadcrumbs.npcs"), path: null });
+  } else if (path.startsWith(`${routes.settingsNpcs}/`)) {
+    breadcrumbs.push({
+      label: t("common.breadcrumbs.npcs"),
+      path: routes.settingsNpcs,
+    });
+    breadcrumbs.push({
+      label:
+        settingsNpcName ??
+        t("common.breadcrumbs.npcFallback", { id: params.npcId }),
+      path: null,
+    });
   } else if (path === routes.settingsMapTemplates) {
     breadcrumbs.push({
       label: t("common.breadcrumbs.mapTemplates"),
@@ -465,6 +493,10 @@ function resolveSettingsRoutes(
     backPath = routes.notifications;
   } else if (path.startsWith(`${routes.settingsRoles}/`)) {
     backPath = routes.settingsRoles;
+  } else if (path.startsWith(`${routes.settingsMembers}/`)) {
+    backPath = routes.settingsMembers;
+  } else if (path.startsWith(`${routes.settingsNpcs}/`)) {
+    backPath = routes.settingsNpcs;
   } else if (path === routes.notifications) {
     backPath = routes.base;
   } else {
