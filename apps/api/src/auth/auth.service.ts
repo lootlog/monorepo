@@ -4,12 +4,10 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { firstValueFrom } from "rxjs";
 import type { GetIdpTokenResponse } from "src/auth/types/get-idp-token-response.type";
-import {
-  TokenExpiredError,
-  AuthServiceUnavailableError,
-  AccountNotFoundError,
-  AuthBadRequestError,
-} from "src/auth/errors";
+import { AccountNotFoundError } from "src/auth/errors/account-not-found.error";
+import { AuthBadRequestError } from "src/auth/errors/auth-bad-request.error";
+import { AuthServiceUnavailableError } from "src/auth/errors/auth-service-unavailable.error";
+import { TokenExpiredError } from "src/auth/errors/token-expired.error";
 import { authConfig } from "src/config/auth.config";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {

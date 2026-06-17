@@ -8,13 +8,11 @@ import {
 import { createHash } from "node:crypto";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 import { AuthService } from "src/auth/auth.service";
-import {
-  AccountNotFoundError,
-  AuthBadRequestError,
-  AuthServiceUnavailableError,
-  InvalidScopesError,
-  TokenExpiredError,
-} from "src/auth/errors";
+import { AccountNotFoundError } from "src/auth/errors/account-not-found.error";
+import { AuthBadRequestError } from "src/auth/errors/auth-bad-request.error";
+import { AuthServiceUnavailableError } from "src/auth/errors/auth-service-unavailable.error";
+import { InvalidScopesError } from "src/auth/errors/invalid-scopes.error";
+import { TokenExpiredError } from "src/auth/errors/token-expired.error";
 
 interface CachedDiscordRestClient {
   expiresAt: number;
