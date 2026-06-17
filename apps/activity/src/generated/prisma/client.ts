@@ -49,3 +49,8 @@ export type Activity = Prisma.ActivityModel
  * 
  */
 export type ActivityActorSnapshot = Prisma.ActivityActorSnapshotModel
+/**
+ * Model MemberActivityStats
+ * 
+ */
+export type MemberActivityStats = Prisma.MemberActivityStatsModel
