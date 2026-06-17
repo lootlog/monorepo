@@ -4,7 +4,7 @@ import type { Logger } from "winston";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
 import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
-import { buildMeilisearchStringInFilter } from "src/meilisearch/meilisearch.utils";
+import { buildMeilisearchSearchTermFilter } from "src/meilisearch/meilisearch.utils";
 import type { GetPlayersDto } from "./dto/get-players.dto";
 import { PLAYERS_INDEX } from "./constants/meilisearch";
 import type { IndexPlayersDto } from "./dto/index-players.dto";
@@ -21,13 +21,13 @@ export class PlayersService {
 
   async getPlayers({ limit, search, world }: GetPlayersDto) {
     const index = this.meilisearch.index<PlayerHit>(PLAYERS_INDEX);
-    const hasMultipleSearchTerms = Array.isArray(search);
-    const searchTerm = hasMultipleSearchTerms ? "" : (search ?? "");
+    const { filter: searchFilter, searchTerm } =
+      buildMeilisearchSearchTermFilter("name", search);
 
     const filters: string[] = [];
 
-    if (hasMultipleSearchTerms) {
-      filters.push(buildMeilisearchStringInFilter("name", search));
+    if (searchFilter) {
+      filters.push(searchFilter);
     }
 
     if (world) {
