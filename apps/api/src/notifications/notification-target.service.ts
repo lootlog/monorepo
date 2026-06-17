@@ -118,15 +118,11 @@ export class NotificationTargetService {
     data: UpdateNotificationTargetDto,
   ) {
     await this.ensureTarget(DbNotificationOwnerType.GUILD, guildId, targetId);
-    const hasDisplayName = Object.prototype.hasOwnProperty.call(
-      data,
-      "displayName",
-    );
 
     const updated = await this.prisma.notificationTarget.update({
       where: { id: targetId },
       data: {
-        ...(hasDisplayName ? { displayName: data.displayName ?? null } : {}),
+        ...this.getDisplayNameUpdate(data),
         active: data.active,
       },
     });
@@ -219,15 +215,10 @@ export class NotificationTargetService {
   ) {
     await this.ensureTarget(DbNotificationOwnerType.USER, discordId, targetId);
 
-    const hasDisplayName = Object.prototype.hasOwnProperty.call(
-      data,
-      "displayName",
-    );
-
     return this.prisma.notificationTarget.update({
       where: { id: targetId },
       data: {
-        ...(hasDisplayName ? { displayName: data.displayName ?? null } : {}),
+        ...this.getDisplayNameUpdate(data),
         active: data.active,
       },
     });
@@ -424,6 +415,16 @@ export class NotificationTargetService {
         where: { id: { in: singleTargetRuleIds } },
       });
     }
+  }
+
+  private getDisplayNameUpdate(
+    data: Pick<UpdateNotificationTargetDto, "displayName">,
+  ): Pick<Prisma.NotificationTargetUpdateInput, "displayName"> {
+    if (!Object.prototype.hasOwnProperty.call(data, "displayName")) {
+      return {};
+    }
+
+    return { displayName: data.displayName ?? null };
   }
 
   private async getOrCreateUserDmTestRule(discordId: string, targetId: number) {
