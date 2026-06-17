@@ -9,6 +9,7 @@ import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 
 const mocks = vi.hoisted(() => ({
   getPlayerCatchingGuilds: vi.fn(),
+  refreshActiveOtherCanvasTooltip: vi.fn(),
 }));
 
 vi.mock(
@@ -18,6 +19,10 @@ vi.mock(
       mocks.getPlayerCatchingGuilds,
   }),
 );
+
+vi.mock("@/lib/margonem-tooltips/patcher", () => ({
+  refreshActiveOtherCanvasTooltip: mocks.refreshActiveOtherCanvasTooltip,
+}));
 
 import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
 
@@ -81,6 +86,7 @@ describe("useCharacterTooltipCatchingGuilds", () => {
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOnlineCharacterOwnersStore.getState().clearOwners();
     mocks.getPlayerCatchingGuilds.mockReset();
+    mocks.refreshActiveOtherCanvasTooltip.mockReset();
   });
 
   it("fetches catching guilds on shift for the active other and caches the result", async () => {
@@ -248,6 +254,40 @@ describe("useCharacterTooltipCatchingGuilds", () => {
         characterId: "617",
       });
     });
+  });
+
+  it("refreshes the active tooltip when batch cache updates without single fetch", async () => {
+    const other = createOther();
+    renderHook(() => useCharacterTooltipCatchingGuilds(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      setOnlineOwner();
+      useCharacterTooltipCatchingGuildsStore.getState().setActiveOther(other);
+      useCharacterTooltipCatchingGuildsStore
+        .getState()
+        .setLoading("player-discord:9822301:617");
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));
+    });
+
+    await waitFor(() => {
+      expect(mocks.refreshActiveOtherCanvasTooltip).toHaveBeenCalled();
+    });
+    mocks.refreshActiveOtherCanvasTooltip.mockClear();
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore
+        .getState()
+        .setSuccess("player-discord:9822301:617", [
+          { id: "guild-1", name: "Alpha" },
+        ]);
+    });
+
+    await waitFor(() => {
+      expect(mocks.refreshActiveOtherCanvasTooltip).toHaveBeenCalledOnce();
+    });
+    expect(mocks.getPlayerCatchingGuilds).not.toHaveBeenCalled();
   });
 
   it("resets shift state on window blur", () => {

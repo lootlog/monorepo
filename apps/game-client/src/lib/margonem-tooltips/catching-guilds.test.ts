@@ -79,9 +79,25 @@ describe("appendCatchingGuildsTooltipSection", () => {
     ).toBe("<div>Other</div>");
   });
 
-  it("shows loading state before guilds are loaded", () => {
+  it("shows unavailable state before a cache entry exists", () => {
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     setOnlineOwner();
+
+    expect(
+      appendCatchingGuildsTooltipSection({
+        baseHtml: "<div>Other</div>",
+        character: createOther(),
+        currentHtml: "<div>Other</div>",
+        kind: "other",
+      }),
+    ).toContain("Brak informacji o graczu online");
+  });
+
+  it("shows loading state when the cache entry is loading", () => {
+    const store = useCharacterTooltipCatchingGuildsStore.getState();
+    store.setShiftPressed(true);
+    setOnlineOwner();
+    store.setLoading("player-discord:9822301:617");
 
     expect(
       appendCatchingGuildsTooltipSection({
