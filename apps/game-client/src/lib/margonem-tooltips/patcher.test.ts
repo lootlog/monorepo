@@ -8,6 +8,7 @@ import {
 } from "./patcher";
 import { characterTooltipTransforms } from "./registry";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import type { Other } from "@lootlog/margonem/others";
 
@@ -68,16 +69,38 @@ function asOtherRecord(
   return others as unknown as Record<string, Other>;
 }
 
+function setOnlineOwner(character: TestCharacter): void {
+  useOnlineCharacterOwnersStore.getState().setPresenceResponse({
+    "player-discord": [
+      {
+        discordId: "player-discord",
+        isAfk: false,
+        player: {
+          accountId: String(character.d.account),
+          characterId: String(character.d.id),
+          icon: "",
+          lvl: 300,
+          name: character.d.nick,
+          prof: "w",
+          world: "tempest",
+        },
+      },
+    ],
+  });
+}
+
 describe("installCharacterTooltipTransforms", () => {
   beforeEach(() => {
     characterTooltipTransforms.clear();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
+    useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
   });
 
   afterEach(() => {
     characterTooltipTransforms.clear();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
+    useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
 
     Object.defineProperty(window, "Engine", {
@@ -264,6 +287,7 @@ describe("installCharacterTooltipTransforms", () => {
     second.d = { account: 9822301, id: "30016", nick: "Second" };
     setRuntime(hero, { 1: first, 2: second }, canvasTip);
     useOthersStore.getState().setMany(asOtherRecord({ 1: first, 2: second }));
+    setOnlineOwner(first);
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
@@ -283,12 +307,12 @@ describe("installCharacterTooltipTransforms", () => {
     runtimeCanvasTip.show({}, first);
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
-    ).toBe("9822301:617");
+    ).toBe("player-discord:9822301:617");
 
     second.tipUpdate?.();
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
-    ).toBe("9822301:617");
+    ).toBe("player-discord:9822301:617");
 
     runtimeCanvasTip.hide({});
     expect(
@@ -309,6 +333,7 @@ describe("installCharacterTooltipTransforms", () => {
     other.d = { account: 9822301, id: "617", nick: "Other" };
     setRuntime(hero, { 1: other }, canvasTip);
     useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    setOnlineOwner(other);
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
@@ -322,7 +347,7 @@ describe("installCharacterTooltipTransforms", () => {
     runtimeCanvasTip.show({}, other);
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
-    ).toBe("9822301:617");
+    ).toBe("player-discord:9822301:617");
 
     cleanup();
 

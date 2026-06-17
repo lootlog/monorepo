@@ -16,6 +16,7 @@ export function getCharacterTooltipCatchingGuildsQueryKey(
 ) {
   return [
     "character-tooltip-catching-guilds",
+    target.userId,
     target.accountId,
     target.characterId,
   ] as const;
@@ -28,7 +29,10 @@ export function applyCatchingGuildsSuccess(
 ): void {
   useCharacterTooltipCatchingGuildsStore
     .getState()
-    .setSuccess(`${player.accountId}:${player.characterId}`, player.guilds);
+    .setSuccess(
+      `${player.userId}:${player.accountId}:${player.characterId}`,
+      player.guilds,
+    );
 }
 
 export function applyCatchingGuildsLoading(
@@ -74,6 +78,7 @@ export async function fetchSingleCatchingGuilds(
       gcTime: CATCHING_GUILDS_STALE_TIME,
       queryFn: () =>
         userLootlogConfigControllerGetPlayerCatchingGuilds({
+          userId: target.userId,
           accountId: target.accountId,
           characterId: target.characterId,
         }),

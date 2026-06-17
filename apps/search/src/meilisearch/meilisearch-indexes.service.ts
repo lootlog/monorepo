@@ -13,6 +13,7 @@ import { MEILISEARCH_CLIENT } from "./meilisearch.constants";
 import { getMeilisearchErrorCode } from "./meilisearch.utils";
 
 const itemFilterableAttributes = [
+  "world",
   "worlds",
   "type",
   "rarity",

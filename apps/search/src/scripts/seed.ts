@@ -154,6 +154,7 @@ async function setupIndexes() {
 
   const itemsIndex = meilisearch.index(ITEMS_INDEX);
   const itemsFilterTask = await itemsIndex.updateFilterableAttributes([
+    "world",
     "worlds",
     "type",
     "rarity",

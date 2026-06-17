@@ -12,7 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
+import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { Game } from "@/lib/game";
 import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";

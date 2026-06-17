@@ -8,7 +8,7 @@ import type { Timer } from "@/api/timers.api";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import { io, type Socket } from "socket.io-client";
 import { getSerializedDevPermissionOverride } from "@/lib/dev-permission-override";
-import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
+import type { PlayerPresence } from "@/lib/online-players-presence";
 import { msgpackParser } from "@lootlog/socket-parser";
 import type {
   PartyFinderVolunteer,
