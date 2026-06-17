@@ -63,6 +63,8 @@ const ROUTES = {
       reservationsSettings: (guildId: string) =>
         `/${guildId}/settings/reservations`,
       members: (guildId: string) => `/${guildId}/settings/members`,
+      member: (guildId: string, memberId: string) =>
+        `/${guildId}/settings/members/${memberId}`,
       info: (guildId: string) => `/${guildId}/settings/info`,
       appearance: (guildId: string) => `/${guildId}/settings/appearance`,
       servers: (guildId: string) => `/${guildId}/settings/servers`,
