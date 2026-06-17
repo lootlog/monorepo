@@ -209,11 +209,9 @@ describe("useWhoIsHereLootlogHighlight", () => {
     );
     const style = document.getElementById("ll-who-is-here-lootlog-style");
     expect(style?.textContent).toContain(
-      "0 0 0 1px var(--ll-who-is-here-lootlog-color) inset",
+      "color: var(--ll-who-is-here-lootlog-color) !important",
     );
-    expect(style?.textContent).toContain(
-      "0 0 0 1px var(--ll-who-is-here-lootlog-color)",
-    );
+    expect(style?.textContent).not.toContain("box-shadow");
     expect(style?.textContent).not.toContain("border:");
     expect(style?.textContent).not.toContain("border-left");
   });
