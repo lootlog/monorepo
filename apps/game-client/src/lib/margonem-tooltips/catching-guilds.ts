@@ -26,7 +26,11 @@ function buildCatchingGuildsBody(status: string, guildNames: string[]): string {
     return guildNames.map(escapeTooltipHtml).join(", ");
   }
 
-  return escapeTooltipHtml(t("characterTooltip.catchingGuilds.loading"));
+  if (status === "loading") {
+    return escapeTooltipHtml(t("characterTooltip.catchingGuilds.loading"));
+  }
+
+  return escapeTooltipHtml(t("characterTooltip.catchingGuilds.unavailable"));
 }
 
 function appendCatchingGuildsSection(
