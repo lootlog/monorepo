@@ -191,6 +191,17 @@ export class ActivitiesQueryService {
     return this.findMany({ ...query, userId, guildId });
   }
 
+  findMemberActivityStatsByGuild(guildId: string) {
+    return this.prisma.memberActivityStats.findMany({
+      where: { guildId },
+      orderBy: [
+        { activeSessionCount: "desc" },
+        { lastSeenAt: "desc" },
+        { source: "asc" },
+      ],
+    });
+  }
+
   private buildNonEmptyNullableFilter(
     search?: string,
   ): Prisma.StringNullableFilter {

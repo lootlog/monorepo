@@ -21,23 +21,29 @@ export class ActivitiesService {
     }
 
     try {
-      const activity = await this.prisma.activity.create({
-        data: {
-          userId: dto.userId,
-          guildId: dto.guildId,
-          discordId: dto.discordId,
-          type: dto.type,
-          source: dto.source,
-          idempotencyKey: dto.idempotencyKey,
-          world: dto.world,
-          details: dto.details
-            ? (dto.details as Prisma.InputJsonValue)
-            : undefined,
-          actorSnapshotId,
-        },
-        include: {
-          actorSnapshot: true,
-        },
+      const activity = await this.prisma.$transaction(async (tx) => {
+        const createdActivity = await tx.activity.create({
+          data: {
+            userId: dto.userId,
+            guildId: dto.guildId,
+            discordId: dto.discordId,
+            type: dto.type,
+            source: dto.source,
+            idempotencyKey: dto.idempotencyKey,
+            world: dto.world,
+            details: dto.details
+              ? (dto.details as Prisma.InputJsonValue)
+              : undefined,
+            actorSnapshotId,
+          },
+          include: {
+            actorSnapshot: true,
+          },
+        });
+
+        await this.updateMemberActivityStats(tx, dto);
+
+        return createdActivity;
       });
 
       return {
@@ -73,6 +79,53 @@ export class ActivitiesService {
       }
 
       throw error;
+    }
+  }
+
+  private async updateMemberActivityStats(
+    tx: Prisma.TransactionClient,
+    dto: CreateActivityDto,
+  ): Promise<void> {
+    if (dto.type === ActivityType.CONNECT_EVENT) {
+      const lastSeenAt = new Date();
+
+      await tx.memberActivityStats.upsert({
+        where: {
+          guildId_discordId_source: {
+            guildId: dto.guildId,
+            discordId: dto.discordId,
+            source: dto.source,
+          },
+        },
+        update: {
+          lastSeenAt,
+          visitCount: { increment: 1 },
+          activeSessionCount: { increment: 1 },
+        },
+        create: {
+          guildId: dto.guildId,
+          discordId: dto.discordId,
+          source: dto.source,
+          lastSeenAt,
+          visitCount: 1,
+          activeSessionCount: 1,
+        },
+      });
+      return;
+    }
+
+    if (dto.type === ActivityType.DISCONNECT_EVENT) {
+      await tx.memberActivityStats.updateMany({
+        where: {
+          guildId: dto.guildId,
+          discordId: dto.discordId,
+          source: dto.source,
+          activeSessionCount: { gt: 0 },
+        },
+        data: {
+          activeSessionCount: { decrement: 1 },
+        },
+      });
     }
   }
 

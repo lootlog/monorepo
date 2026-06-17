@@ -132,8 +132,8 @@
     "refreshedAt": "Odświeżono {{time}}",
     "discordSync": {
       "title": "Synchronizacja Discorda",
-      "notConfirmed": "Brak potwierdzonego dostępu z Discorda",
-      "lastConfirmedRelative": "Ostatnie potwierdzenie: {{time}}",
+      "notConfirmed": "Brak synchronizacji z Discordem",
+      "lastConfirmedRelative": "Ostatnia synchronizacja: {{time}}",
       "staleAccessHint": "Dostęp opiera się na ostatnich poprawnych danych z Discorda. Jeśli kolejne odświeżenie zwróci brak członkostwa, dostęp zostanie zablokowany.",
       "badges": {
         "confirmed": "Potwierdzony",
@@ -146,7 +146,7 @@
       "fields": {
         "technicalStatus": "Status techniczny",
         "lastAttemptAt": "Ostatnia próba",
-        "lastConfirmedAt": "Ostatnie potwierdzenie",
+        "lastConfirmedAt": "Ostatnia synchronizacja",
         "refreshQueue": "Kolejka",
         "nextRefreshAt": "Następna próba"
       },
@@ -219,6 +219,34 @@
           "title": "Nieznany status synchronizacji",
           "description": "System zapisał status, którego frontend jeszcze nie rozpoznaje. Surowa wartość jest widoczna poniżej."
         }
+      }
+    },
+    "webActivity": {
+      "title": "Aktywność",
+      "description": "Status online obejmuje aplikację webową i obecność w grze. Wejścia i sesje są rozdzielone według źródła.",
+      "online": "Online na stronie",
+      "offline": "Offline",
+      "onlineSources": {
+        "web": "Online na stronie",
+        "game": "Online w grze",
+        "webAndGame": "Online na stronie i w grze"
+      },
+      "noVisits": "Ostatnio online: brak danych",
+      "lastSeenRelative": "Ostatnio online: {{time}}",
+      "visitCount": "{{count}}",
+      "visitCountCompact": "Wejścia na stronę: {{count}}",
+      "webVisitCountCompact": "Strona: {{count}}",
+      "gameVisitCountCompact": "Gra: {{count}}",
+      "activeSessions": "{{count}}",
+      "fields": {
+        "lastSeenAt": "Ostatnio online",
+        "lastSeenInGameAt": "Ostatnio w grze",
+        "visitCount": "Wejścia na stronę",
+        "webVisitCount": "Wejścia na stronę",
+        "gameVisitCount": "Wejścia do gry",
+        "activeSessions": "Aktywne sesje strony",
+        "activeWebSessions": "Aktywne sesje strony",
+        "activeGameSessions": "Aktywne sesje w grze"
       }
     },
     "emptyTitle": "Nie znaleziono członków",
