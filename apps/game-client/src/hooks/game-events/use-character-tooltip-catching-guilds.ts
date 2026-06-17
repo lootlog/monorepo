@@ -29,6 +29,9 @@ export function useCharacterTooltipCatchingGuilds(): void {
   const activeTarget = useCharacterTooltipCatchingGuildsStore(
     (state) => state.activeTarget,
   );
+  const activeEntry = useCharacterTooltipCatchingGuildsStore((state) =>
+    activeTarget ? state.entriesByKey[activeTarget.key] : undefined,
+  );
   const ownersByCharacterKey = useOnlineCharacterOwnersStore(
     (state) => state.ownersByCharacterKey,
   );
@@ -98,4 +101,10 @@ export function useCharacterTooltipCatchingGuilds(): void {
       refreshActiveOtherTooltipIfCurrent(activeTarget.key);
     });
   }, [activeOther, activeTarget, isShiftPressed, queryClient]);
+
+  useEffect(() => {
+    if (!isShiftPressed || !activeTarget || !activeEntry) return;
+
+    refreshActiveOtherTooltipIfCurrent(activeTarget.key);
+  }, [activeEntry, activeTarget, isShiftPressed]);
 }

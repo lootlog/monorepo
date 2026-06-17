@@ -75,12 +75,6 @@ function installStyle(): () => void {
   const style = document.createElement("style");
   style.id = STYLE_ELEMENT_ID;
   style.textContent = `
-    .${HIGHLIGHT_CLASS} {
-      box-shadow:
-        0 0 0 1px var(${WHO_IS_HERE_COLOR_PROPERTY}) inset,
-        0 0 0 1px var(${WHO_IS_HERE_COLOR_PROPERTY});
-    }
-
     .${HIGHLIGHT_CLASS} .center,
     .${HIGHLIGHT_CLASS} .name .inner,
     .${HIGHLIGHT_CLASS} .lvl {
