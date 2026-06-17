@@ -34,7 +34,7 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
           >
             <div className="ll:flex-1 ll:flex ll:flex-col ll:justify-between ll:h-full">
               <span className="ll:text-xs ll:font-medium ll:truncate">
-                {colorNames[colorId] || getDefaultColorName(colorId)}
+                {colorNames[colorId] ?? getDefaultColorName(colorId)}
               </span>
               <Tile
                 color={colorId as keyof typeof TIMERS_COLORS}
