@@ -79,7 +79,7 @@ export class GuildGenerator {
     return {
       id,
       name,
-      color: color || 0,
+      color: color ?? 0,
       position,
       permissions,
       lvlRangeFrom,
