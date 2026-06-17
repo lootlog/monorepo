@@ -19,10 +19,6 @@
       "types": "./dist/decorators/index.d.ts",
       "default": "./dist/decorators/index.js"
     },
-    "./middleware": {
-      "types": "./dist/middleware/index.d.ts",
-      "default": "./dist/middleware/index.js"
-    },
     "./openapi": {
       "types": "./dist/openapi/index.d.ts",
       "default": "./dist/openapi/index.js"
