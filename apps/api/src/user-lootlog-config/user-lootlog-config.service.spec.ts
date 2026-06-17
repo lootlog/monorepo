@@ -90,6 +90,7 @@ describe("UserLootlogConfigService", () => {
       mockPrismaService.userCharactersLootlogSettings.findMany.mockResolvedValue(
         [
           {
+            userId: "player-discord",
             accountId: "account1",
             characterId: "character1",
             catchingGuildIds: ["guild1", "guild3", "guild2", "guild2"],
@@ -99,6 +100,7 @@ describe("UserLootlogConfigService", () => {
 
       const result = await service.getPlayerCatchingGuilds(
         "viewer-discord",
+        "player-discord",
         "account1",
         "character1",
       );
@@ -110,12 +112,19 @@ describe("UserLootlogConfigService", () => {
         mockPrismaService.userCharactersLootlogSettings.findMany,
       ).toHaveBeenCalledWith({
         where: {
-          OR: [{ accountId: "account1", characterId: "character1" }],
+          OR: [
+            {
+              userId: "player-discord",
+              accountId: "account1",
+              characterId: "character1",
+            },
+          ],
           catchingGuildIds: {
             hasSome: ["guild1", "guild2"],
           },
         },
         select: {
+          userId: true,
           accountId: true,
           characterId: true,
           catchingGuildIds: true,
@@ -125,6 +134,7 @@ describe("UserLootlogConfigService", () => {
         },
       });
       expect(result).toEqual({
+        userId: "player-discord",
         accountId: "account1",
         characterId: "character1",
         guilds: [
@@ -139,11 +149,13 @@ describe("UserLootlogConfigService", () => {
 
       const result = await service.getPlayerCatchingGuilds(
         "viewer-discord",
+        "player-discord",
         "account1",
         "character1",
       );
 
       expect(result).toEqual({
+        userId: "player-discord",
         accountId: "account1",
         characterId: "character1",
         guilds: [],
@@ -163,11 +175,13 @@ describe("UserLootlogConfigService", () => {
 
       const result = await service.getPlayerCatchingGuilds(
         "viewer-discord",
+        "unknown-discord",
         "unknown-account",
         "unknown-character",
       );
 
       expect(result).toEqual({
+        userId: "unknown-discord",
         accountId: "unknown-account",
         characterId: "unknown-character",
         guilds: [],
@@ -184,11 +198,13 @@ describe("UserLootlogConfigService", () => {
       mockPrismaService.userCharactersLootlogSettings.findMany.mockResolvedValue(
         [
           {
+            userId: "player-discord-1",
             accountId: "account1",
             characterId: "character1",
             catchingGuildIds: ["guild1", "guild3", "guild1"],
           },
           {
+            userId: "player-discord-2",
             accountId: "account2",
             characterId: "character2",
             catchingGuildIds: ["guild2"],
@@ -198,10 +214,26 @@ describe("UserLootlogConfigService", () => {
 
       const result = await service.getPlayersCatchingGuilds("viewer-discord", {
         players: [
-          { accountId: "account1", characterId: "character1" },
-          { accountId: "account1", characterId: "character1" },
-          { accountId: "account2", characterId: "character2" },
-          { accountId: "account3", characterId: "character3" },
+          {
+            userId: "player-discord-1",
+            accountId: "account1",
+            characterId: "character1",
+          },
+          {
+            userId: "player-discord-1",
+            accountId: "account1",
+            characterId: "character1",
+          },
+          {
+            userId: "player-discord-2",
+            accountId: "account2",
+            characterId: "character2",
+          },
+          {
+            userId: "player-discord-3",
+            accountId: "account3",
+            characterId: "character3",
+          },
         ],
       });
 
@@ -210,15 +242,28 @@ describe("UserLootlogConfigService", () => {
       ).toHaveBeenCalledWith({
         where: {
           OR: [
-            { accountId: "account1", characterId: "character1" },
-            { accountId: "account2", characterId: "character2" },
-            { accountId: "account3", characterId: "character3" },
+            {
+              userId: "player-discord-1",
+              accountId: "account1",
+              characterId: "character1",
+            },
+            {
+              userId: "player-discord-2",
+              accountId: "account2",
+              characterId: "character2",
+            },
+            {
+              userId: "player-discord-3",
+              accountId: "account3",
+              characterId: "character3",
+            },
           ],
           catchingGuildIds: {
             hasSome: ["guild1", "guild2"],
           },
         },
         select: {
+          userId: true,
           accountId: true,
           characterId: true,
           catchingGuildIds: true,
@@ -230,16 +275,19 @@ describe("UserLootlogConfigService", () => {
       expect(result).toEqual({
         players: [
           {
+            userId: "player-discord-1",
             accountId: "account1",
             characterId: "character1",
             guilds: [{ id: "guild1", name: "Alpha" }],
           },
           {
+            userId: "player-discord-2",
             accountId: "account2",
             characterId: "character2",
             guilds: [{ id: "guild2", name: "Beta" }],
           },
           {
+            userId: "player-discord-3",
             accountId: "account3",
             characterId: "character3",
             guilds: [],
@@ -253,20 +301,91 @@ describe("UserLootlogConfigService", () => {
 
       const result = await service.getPlayersCatchingGuilds("viewer-discord", {
         players: [
-          { accountId: "account1", characterId: "character1" },
-          { accountId: "account2", characterId: "character2" },
+          {
+            userId: "player-discord-1",
+            accountId: "account1",
+            characterId: "character1",
+          },
+          {
+            userId: "player-discord-2",
+            accountId: "account2",
+            characterId: "character2",
+          },
         ],
       });
 
       expect(result).toEqual({
         players: [
-          { accountId: "account1", characterId: "character1", guilds: [] },
-          { accountId: "account2", characterId: "character2", guilds: [] },
+          {
+            userId: "player-discord-1",
+            accountId: "account1",
+            characterId: "character1",
+            guilds: [],
+          },
+          {
+            userId: "player-discord-2",
+            accountId: "account2",
+            characterId: "character2",
+            guilds: [],
+          },
         ],
       });
       expect(
         mockPrismaService.userCharactersLootlogSettings.findMany,
       ).not.toHaveBeenCalled();
+    });
+
+    it("keeps same account and character separated by user ID", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild1", name: "Alpha" },
+        { id: "guild2", name: "Beta" },
+      ]);
+      mockPrismaService.userCharactersLootlogSettings.findMany.mockResolvedValue(
+        [
+          {
+            userId: "player-discord-1",
+            accountId: "account1",
+            characterId: "character1",
+            catchingGuildIds: ["guild1"],
+          },
+          {
+            userId: "player-discord-2",
+            accountId: "account1",
+            characterId: "character1",
+            catchingGuildIds: ["guild2"],
+          },
+        ],
+      );
+
+      const result = await service.getPlayersCatchingGuilds("viewer-discord", {
+        players: [
+          {
+            userId: "player-discord-1",
+            accountId: "account1",
+            characterId: "character1",
+          },
+          {
+            userId: "player-discord-2",
+            accountId: "account1",
+            characterId: "character1",
+          },
+        ],
+      });
+
+      expect(result.players).toEqual([
+        {
+          userId: "player-discord-1",
+          accountId: "account1",
+          characterId: "character1",
+          guilds: [{ id: "guild1", name: "Alpha" }],
+        },
+        {
+          userId: "player-discord-2",
+          accountId: "account1",
+          characterId: "character1",
+          guilds: [{ id: "guild2", name: "Beta" }],
+        },
+      ]);
     });
   });
 

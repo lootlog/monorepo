@@ -7,6 +7,7 @@
  */
 
 export type UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem = {
+  userId: string;
   accountId: string;
   characterId: string;
 };

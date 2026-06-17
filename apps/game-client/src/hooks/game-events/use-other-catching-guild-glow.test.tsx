@@ -7,6 +7,7 @@ import {
   lootlogOtherGlowManager,
 } from "@/lib/lootlog-other-glow-manager";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
 
@@ -45,6 +46,24 @@ function createOther(id: string): Other {
   } as unknown as Other;
 }
 
+function setOnlineOwners(others: Record<string, Other>): void {
+  useOnlineCharacterOwnersStore.getState().setPresenceResponse({
+    "player-discord": Object.values(others).map((other) => ({
+      discordId: "player-discord",
+      isAfk: false,
+      player: {
+        accountId: String(other.d.account),
+        characterId: String(other.d.id),
+        icon: other.d.icon,
+        lvl: other.d.lvl,
+        name: other.d.nick,
+        prof: other.d.prof,
+        world: "tempest",
+      },
+    })),
+  });
+}
+
 function setRuntime(): void {
   Object.defineProperty(window, "Engine", {
     configurable: true,
@@ -80,6 +99,7 @@ describe("useOtherCatchingGuildGlow", () => {
     mocks.getPlayersCatchingGuilds.mockReset();
     lootlogOtherGlowManager.cleanup();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
+    useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
     useSettingsStore.setState({
       guildIdByCharId: {},
@@ -103,6 +123,7 @@ describe("useOtherCatchingGuildGlow", () => {
       }),
     );
     useOthersStore.getState().setMany(others);
+    setOnlineOwners(others);
     useSettingsStore.setState({
       guildIdByCharId: {
         "hero-1": "guild-blue",
@@ -110,6 +131,7 @@ describe("useOtherCatchingGuildGlow", () => {
     });
     mocks.getPlayersCatchingGuilds.mockResolvedValue({
       players: Object.values(others).map((other, index) => ({
+        userId: "player-discord",
         accountId: String(other.d.account),
         characterId: String(other.d.id),
         guilds: index === 0 ? [{ id: "guild-blue", name: "Blue Guild" }] : [],
@@ -127,6 +149,7 @@ describe("useOtherCatchingGuildGlow", () => {
     });
     expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith({
       players: Object.values(others).map((other) => ({
+        userId: "player-discord",
         accountId: String(other.d.account),
         characterId: String(other.d.id),
       })),
@@ -151,6 +174,7 @@ describe("useOtherCatchingGuildGlow", () => {
       }),
     );
     useOthersStore.getState().setMany(others);
+    setOnlineOwners(others);
     useSettingsStore.setState({
       guildIdByCharId: {
         "hero-1": "guild-blue",
@@ -159,6 +183,7 @@ describe("useOtherCatchingGuildGlow", () => {
     mocks.getPlayersCatchingGuilds.mockImplementation(
       ({ players }: { players: Array<{ characterId: string }> }) => ({
         players: players.map((player) => ({
+          userId: "player-discord",
           accountId: "9822301",
           characterId: player.characterId,
           guilds: [],
@@ -191,6 +216,7 @@ describe("useOtherCatchingGuildGlow", () => {
       }),
     );
     useOthersStore.getState().setMany(others);
+    setOnlineOwners(others);
     useSettingsStore.setState({
       guildIdByCharId: {
         "hero-1": "guild-blue",
@@ -213,6 +239,7 @@ describe("useOtherCatchingGuildGlow", () => {
     useOthersStore.getState().setMany({
       "1": createOther("1"),
     });
+    setOnlineOwners({ "1": createOther("1") });
 
     renderHook(() => useOtherCatchingGuildGlow());
 
@@ -225,9 +252,31 @@ describe("useOtherCatchingGuildGlow", () => {
     expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
   });
 
-  it("clears glows when shift is released", async () => {
+  it("does not request when visible characters have no online owner", () => {
+    useOthersStore.getState().setMany({
+      "1": createOther("1"),
+    });
+    useSettingsStore.setState({
+      guildIdByCharId: {
+        "hero-1": "guild-blue",
+      },
+    });
+
+    renderHook(() => useOtherCatchingGuildGlow());
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
+    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
+  });
+
+  it("requests visible characters when online owners become known after shift", async () => {
     const other = createOther("1");
-    useOthersStore.getState().setMany({ "1": other });
+    useOthersStore.getState().setMany({
+      "1": other,
+    });
     useSettingsStore.setState({
       guildIdByCharId: {
         "hero-1": "guild-blue",
@@ -236,6 +285,52 @@ describe("useOtherCatchingGuildGlow", () => {
     mocks.getPlayersCatchingGuilds.mockResolvedValue({
       players: [
         {
+          userId: "player-discord",
+          accountId: String(other.d.account),
+          characterId: String(other.d.id),
+          guilds: [],
+        },
+      ],
+    });
+
+    renderHook(() => useOtherCatchingGuildGlow());
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
+
+    act(() => {
+      setOnlineOwners({ "1": other });
+    });
+
+    await waitFor(() => {
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith({
+        players: [
+          {
+            userId: "player-discord",
+            accountId: String(other.d.account),
+            characterId: String(other.d.id),
+          },
+        ],
+      });
+    });
+  });
+
+  it("clears glows when shift is released", async () => {
+    const other = createOther("1");
+    useOthersStore.getState().setMany({ "1": other });
+    setOnlineOwners({ "1": other });
+    useSettingsStore.setState({
+      guildIdByCharId: {
+        "hero-1": "guild-blue",
+      },
+    });
+    mocks.getPlayersCatchingGuilds.mockResolvedValue({
+      players: [
+        {
+          userId: "player-discord",
           accountId: String(other.d.account),
           characterId: String(other.d.id),
           guilds: [{ id: "guild-blue", name: "Blue Guild" }],

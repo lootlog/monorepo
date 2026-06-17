@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Other } from "@lootlog/margonem/others";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { appendCatchingGuildsTooltipSection } from "./catching-guilds";
 
 const createOther = (): Other =>
@@ -15,9 +16,43 @@ const createOther = (): Other =>
     },
   }) as Other;
 
+function setOnlineOwner(guildMemberName?: string): void {
+  useOnlineCharacterOwnersStore.getState().setPresenceResponse(
+    {
+      "player-discord": [
+        {
+          discordId: "player-discord",
+          isAfk: false,
+          player: {
+            accountId: "9822301",
+            characterId: "617",
+            icon: "other.gif",
+            lvl: 300,
+            name: "Other",
+            prof: "w",
+            world: "tempest",
+          },
+        },
+      ],
+    },
+    guildMemberName
+      ? {
+          "player-discord": {
+            avatar: null,
+            color: null,
+            id: 1,
+            name: guildMemberName,
+            userId: "player-discord",
+          },
+        }
+      : undefined,
+  );
+}
+
 describe("appendCatchingGuildsTooltipSection", () => {
   beforeEach(() => {
     useCharacterTooltipCatchingGuildsStore.getState().clear();
+    useOnlineCharacterOwnersStore.getState().clearOwners();
   });
 
   it("does not extend non-other tooltips", () => {
@@ -46,6 +81,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
 
   it("shows loading state before guilds are loaded", () => {
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    setOnlineOwner();
 
     expect(
       appendCatchingGuildsTooltipSection({
@@ -60,7 +96,8 @@ describe("appendCatchingGuildsTooltipSection", () => {
   it("shows escaped guild names for successful entries", () => {
     const store = useCharacterTooltipCatchingGuildsStore.getState();
     store.setShiftPressed(true);
-    store.setSuccess("9822301:617", [
+    setOnlineOwner("Member <One>");
+    store.setSuccess("player-discord:9822301:617", [
       { id: "guild-1", name: "Alpha <One>" },
       { id: "guild-2", name: "Beta & Co" },
     ]);
@@ -73,6 +110,8 @@ describe("appendCatchingGuildsTooltipSection", () => {
     });
 
     expect(result).toContain("Dodaje łupy i timery na:");
+    expect(result).toContain("Gra jako:");
+    expect(result).toContain("Member &lt;One&gt;");
     expect(result).toContain("Alpha &lt;One&gt;");
     expect(result).toContain("Beta &amp; Co");
   });
@@ -80,7 +119,8 @@ describe("appendCatchingGuildsTooltipSection", () => {
   it("shows an empty state for successful entries without guilds", () => {
     const store = useCharacterTooltipCatchingGuildsStore.getState();
     store.setShiftPressed(true);
-    store.setSuccess("9822301:617", []);
+    setOnlineOwner();
+    store.setSuccess("player-discord:9822301:617", []);
 
     expect(
       appendCatchingGuildsTooltipSection({
@@ -92,7 +132,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
     ).toContain("Brak wspólnych serwerów Lootloga");
   });
 
-  it("shows an empty state while shift is pressed even when the other target is missing", () => {
+  it("shows unavailable state while shift is pressed when the owner is missing", () => {
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
 
     expect(
@@ -102,13 +142,14 @@ describe("appendCatchingGuildsTooltipSection", () => {
         currentHtml: "<div>Other</div>",
         kind: "other",
       }),
-    ).toContain("Brak wspólnych serwerów Lootloga");
+    ).toContain("Brak informacji o graczu online");
   });
 
   it("shows an error state", () => {
     const store = useCharacterTooltipCatchingGuildsStore.getState();
     store.setShiftPressed(true);
-    store.setError("9822301:617");
+    setOnlineOwner();
+    store.setError("player-discord:9822301:617");
 
     expect(
       appendCatchingGuildsTooltipSection({

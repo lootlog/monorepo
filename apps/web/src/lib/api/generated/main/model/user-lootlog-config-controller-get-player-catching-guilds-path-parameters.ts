@@ -7,6 +7,7 @@
  */
 
 export type UserLootlogConfigControllerGetPlayerCatchingGuildsPathParameters = {
- accountId: string,
+ userId: string,
+    accountId: string,
     characterId: string,
  }

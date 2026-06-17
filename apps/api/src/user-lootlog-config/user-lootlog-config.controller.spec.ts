@@ -35,6 +35,7 @@ describe("UserLootlogConfigController", () => {
   describe("getPlayerCatchingGuilds", () => {
     it("delegates to service using authenticated user and hovered character refs", async () => {
       mockUserLootlogConfigService.getPlayerCatchingGuilds.mockResolvedValue({
+        userId: "player-discord",
         accountId: "9822301",
         characterId: "617",
         guilds: [{ id: "guild1", name: "Alpha" }],
@@ -42,14 +43,21 @@ describe("UserLootlogConfigController", () => {
 
       const result = await controller.getPlayerCatchingGuilds(
         "viewer-discord",
+        "player-discord",
         "9822301",
         "617",
       );
 
       expect(
         mockUserLootlogConfigService.getPlayerCatchingGuilds,
-      ).toHaveBeenCalledWith("viewer-discord", "9822301", "617");
+      ).toHaveBeenCalledWith(
+        "viewer-discord",
+        "player-discord",
+        "9822301",
+        "617",
+      );
       expect(result).toEqual({
+        userId: "player-discord",
         accountId: "9822301",
         characterId: "617",
         guilds: [{ id: "guild1", name: "Alpha" }],
@@ -70,18 +78,28 @@ describe("UserLootlogConfigController", () => {
     it("delegates batch request to service using authenticated user", async () => {
       const payload = {
         players: [
-          { accountId: "9822301", characterId: "617" },
-          { accountId: "9822301", characterId: "30016" },
+          {
+            userId: "player-discord",
+            accountId: "9822301",
+            characterId: "617",
+          },
+          {
+            userId: "other-discord",
+            accountId: "9822301",
+            characterId: "30016",
+          },
         ],
       };
       mockUserLootlogConfigService.getPlayersCatchingGuilds.mockResolvedValue({
         players: [
           {
+            userId: "player-discord",
             accountId: "9822301",
             characterId: "617",
             guilds: [{ id: "guild1", name: "Alpha" }],
           },
           {
+            userId: "other-discord",
             accountId: "9822301",
             characterId: "30016",
             guilds: [],
@@ -100,11 +118,13 @@ describe("UserLootlogConfigController", () => {
       expect(result).toEqual({
         players: [
           {
+            userId: "player-discord",
             accountId: "9822301",
             characterId: "617",
             guilds: [{ id: "guild1", name: "Alpha" }],
           },
           {
+            userId: "other-discord",
             accountId: "9822301",
             characterId: "30016",
             guilds: [],
