@@ -288,7 +288,7 @@ export class BattleAnalyticsService {
       return {
         records: [],
         pagination: {
-          size: query.size || 20,
+          size: this.getPageSize(query),
           hasNext: false,
           hasPrev: false,
         },
@@ -434,8 +434,8 @@ export class BattleAnalyticsService {
       );
     }
 
-    const sortBy = query.sortBy || "totalBattles";
-    const sortOrder = query.sortOrder || "desc";
+    const sortBy = query.sortBy ?? "totalBattles";
+    const sortOrder = query.sortOrder ?? "desc";
     filteredRecords.sort((a, b) => {
       let compareResult = 0;
 
@@ -485,7 +485,7 @@ export class BattleAnalyticsService {
       }
     }
 
-    const size = query.size || 20;
+    const size = this.getPageSize(query);
     const endIndex = startIndex + size;
     const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
 
@@ -1241,7 +1241,7 @@ export class BattleAnalyticsService {
       return {
         battles: [],
         pagination: {
-          size: query.size || 20,
+          size: this.getPageSize(query),
           hasNext: false,
           hasPrev: false,
         },
@@ -1306,7 +1306,7 @@ export class BattleAnalyticsService {
       }
     }
 
-    const size = query.size || 20;
+    const size = this.getPageSize(query);
     const endIndex = startIndex + size;
     const paginatedBattles = levelFilteredBattles.slice(startIndex, endIndex);
 
@@ -1395,5 +1395,9 @@ export class BattleAnalyticsService {
     }
 
     return maxLevel === undefined || opponentLevel <= maxLevel;
+  }
+
+  private getPageSize(query: QueryBattleStatisticsDto): number {
+    return query.size ?? 20;
   }
 }
