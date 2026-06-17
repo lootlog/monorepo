@@ -195,7 +195,7 @@ export const MembersTable = ({
   }
 
   return (
-    <Table className="min-w-[994px] table-fixed border-b border-border">
+    <Table className="min-w-[994px] table-fixed">
       <colgroup>
         <col className="w-[360px]" />
         <col className="w-[130px]" />
@@ -269,6 +269,7 @@ export const MembersTable = ({
             guildId,
             memberId: String(member.id),
           };
+          const isLastMember = virtualRow.index === members.length - 1;
           let activityLabel = t("settings.members.webActivity.noVisitsCompact");
 
           if (isOnlineOnWeb) {
@@ -286,6 +287,7 @@ export const MembersTable = ({
               tabIndex={0}
               className={cn(
                 "relative h-16 cursor-pointer border-b transition-colors",
+                isLastMember && "border-b-0",
                 isOnline
                   ? "border-emerald-500/20 bg-emerald-500/[0.045] hover:bg-emerald-500/[0.075]"
                   : "border-border/70 hover:bg-muted/35",
