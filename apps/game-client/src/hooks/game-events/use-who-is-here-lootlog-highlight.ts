@@ -76,8 +76,9 @@ function installStyle(): () => void {
   style.id = STYLE_ELEMENT_ID;
   style.textContent = `
     .${HIGHLIGHT_CLASS} {
-      border: 1px solid var(${WHO_IS_HERE_COLOR_PROPERTY});
-      box-sizing: border-box;
+      box-shadow:
+        0 0 0 1px var(${WHO_IS_HERE_COLOR_PROPERTY}) inset,
+        0 0 0 1px var(${WHO_IS_HERE_COLOR_PROPERTY});
     }
 
     .${HIGHLIGHT_CLASS} .center,
