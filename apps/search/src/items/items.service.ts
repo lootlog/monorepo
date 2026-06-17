@@ -33,8 +33,15 @@ const itemAttributesToRetrieve = [
   "lvl",
   "rarity",
   "type",
+  "world",
   "worlds",
 ];
+
+const buildItemWorldFilter = (world: string) => {
+  const formattedWorld = JSON.stringify(world);
+
+  return `(worlds = ${formattedWorld} OR world = ${formattedWorld})`;
+};
 
 @Injectable()
 export class ItemsService {
@@ -64,7 +71,7 @@ export class ItemsService {
 
     const filters = [
       ...incomingFilters,
-      ...(world ? [`worlds = ${JSON.stringify(world)}`] : []),
+      ...(world ? [buildItemWorldFilter(world)] : []),
     ];
 
     const query: SearchParams = {
@@ -72,7 +79,6 @@ export class ItemsService {
       offset,
       attributesToSearchOn: ["name", "stat"],
       attributesToRetrieve: itemAttributesToRetrieve,
-      distinct: "id",
       ...(facets && facets.length > 0 ? { facets } : {}),
       ...(filters.length > 0 ? { filter: filters.join(" AND ") } : {}),
       ...(sort && sort.length > 0 ? { sort } : {}),
