@@ -1,6 +1,6 @@
-import { readFile } from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,7 +9,7 @@ type BattlePayload = {
   accountId: string;
   characterId: string;
   world: string;
-  events: any[];
+  events: unknown[];
 };
 
 export class BattlesGenerator {
@@ -21,7 +21,7 @@ export class BattlesGenerator {
       "../../../../../../example-data/sample-battlelog-payload.json",
     );
     const sampleData = await readFile(samplePath, "utf-8");
-    this.samplePayload = JSON.parse(sampleData);
+    this.samplePayload = JSON.parse(sampleData) as BattlePayload;
   }
 
   generateSingle(characterId: string, accountId: string): BattlePayload {
@@ -35,7 +35,7 @@ export class BattlesGenerator {
     return {
       accountId,
       characterId,
-      world: randomWorld || "gordion",
+      world: randomWorld ?? "gordion",
       events: this.samplePayload.events,
     };
   }

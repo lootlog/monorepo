@@ -1,1 +1,0 @@
-export { isDiscordAdministrator } from "./discord";
