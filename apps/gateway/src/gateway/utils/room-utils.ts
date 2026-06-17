@@ -38,20 +38,12 @@ const FEATURE_ROOMS = {
   },
 } as const;
 
-const ALL_FEATURE_ROOMS: Array<{ feature: FeatureName; tier: TierName }> = [
-  { feature: "chat", tier: "base" },
-  { feature: "chat", tier: "titans" },
-  { feature: "chat", tier: "heroes" },
-  { feature: "timers", tier: "base" },
-  { feature: "timers", tier: "titans" },
-  { feature: "timers", tier: "heroes" },
-  { feature: "notifications", tier: "base" },
-  { feature: "notifications", tier: "titans" },
-  { feature: "notifications", tier: "heroes" },
-  { feature: "loots", tier: "base" },
-  { feature: "loots", tier: "titans" },
-  { feature: "loots", tier: "heroes" },
-];
+const FEATURE_NAMES = Object.keys(FEATURE_ROOMS) as FeatureName[];
+const TIER_NAMES = Object.keys(FEATURE_ROOMS.chat) as TierName[];
+
+const ALL_FEATURE_ROOMS = FEATURE_NAMES.flatMap((feature) =>
+  TIER_NAMES.map((tier) => ({ feature, tier })),
+);
 
 export function buildRoomName(
   guildId: string,
