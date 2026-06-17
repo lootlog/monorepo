@@ -50,11 +50,11 @@ export const getPresenceCharacter = (
     id: presence.player?.characterId
       ? Number.parseInt(presence.player.characterId, 10)
       : 0,
-    nick: presence.player?.name || t("states.unknownNeutral"),
-    icon: presence.player?.icon || "",
-    lvl: presence.player?.lvl || 0,
-    prof: presence.player?.prof || t("states.unknownNeutral"),
-    world: presence.player?.world || t("states.unknownNeutral"),
+    nick: presence.player?.name ?? t("states.unknownNeutral"),
+    icon: presence.player?.icon ?? "",
+    lvl: presence.player?.lvl ?? 0,
+    prof: presence.player?.prof ?? t("states.unknownNeutral"),
+    world: presence.player?.world ?? t("states.unknownNeutral"),
   };
 };
 

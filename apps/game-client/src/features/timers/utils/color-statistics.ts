@@ -44,7 +44,7 @@ export const calculateColorStatistics = (
     stats[color] = {
       total: 0,
       active: 0,
-      name: defaultColorNames[color] || getDefaultColorName(color) || color,
+      name: defaultColorNames[color] ?? getDefaultColorName(color),
       bgColor: overridden?.backgroundColor,
       borderColor: overridden?.borderColor,
     };

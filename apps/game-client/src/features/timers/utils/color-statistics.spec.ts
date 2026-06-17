@@ -94,6 +94,32 @@ describe("color-statistics", () => {
       expect(redStat?.name).toBe("My Red Name");
     });
 
+    it("should preserve empty default color names", () => {
+      const timersColors = {
+        Boss1: "red",
+      };
+
+      const sortedTimers: TimerWithTimeLeft[] = [
+        { npc: { id: 1, name: "Boss1" } } as unknown as TimerWithTimeLeft,
+      ];
+
+      const defaultColorNames = {
+        red: "",
+      };
+
+      const result = calculateColorStatistics(
+        timersColors,
+        sortedTimers,
+        {},
+        defaultColorNames,
+        {},
+      );
+
+      const redStat = result.find((s) => s.color === "red");
+
+      expect(redStat?.name).toBe("");
+    });
+
     it("should include overridden colors in statistics", () => {
       const timersColors = {
         Boss1: "red",
