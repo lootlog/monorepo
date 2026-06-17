@@ -134,6 +134,28 @@ describe("GatewayQueueHandler", () => {
     );
   });
 
+  it("logs DLQ messages without headers using an empty headers object", () => {
+    const payload = { guildId: "guild-1", lootId: 123 };
+    const messageWithoutHeaders = {
+      properties: {},
+    };
+    const loggerSpy = vi
+      .spyOn(handler["logger"], "error")
+      .mockImplementation(() => undefined);
+
+    handler.handleLootCreateDLQ(payload, messageWithoutHeaders as never);
+
+    expect(mockRetryService.getRetryCount).toHaveBeenCalledWith({});
+    expect(loggerSpy).toHaveBeenCalledWith(
+      "Message sent to DLQ - Loot Create:",
+      {
+        data: payload,
+        retryCount: 1,
+        headers: {},
+      },
+    );
+  });
+
   it("refreshes caches and rooms when member permissions are updated", async () => {
     await handler.handleUpdateMember(memberPayload as never, message as never);
 
