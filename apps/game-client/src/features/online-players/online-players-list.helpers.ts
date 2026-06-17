@@ -1,5 +1,5 @@
 import type { MargonemCharacter } from "@/api/characters.api";
-import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
+import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
 

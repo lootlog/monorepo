@@ -73,10 +73,10 @@ describe("ItemsService", () => {
           "lvl",
           "rarity",
           "type",
+          "world",
           "worlds",
         ],
-        distinct: "id",
-        filter: 'worlds = "Berufs"',
+        filter: '(worlds = "Berufs" OR world = "Berufs")',
       });
     });
 
@@ -135,11 +135,11 @@ describe("ItemsService", () => {
           "lvl",
           "rarity",
           "type",
+          "world",
           "worlds",
         ],
-        distinct: "id",
         filter:
-          'numericStats.dmg >= 40 AND requiredProfessions = "w" AND worlds = "Berufs"',
+          'numericStats.dmg >= 40 AND requiredProfessions = "w" AND (worlds = "Berufs" OR world = "Berufs")',
         facets: ["rarity", "requiredProfessions"],
         sort: ["lvl:desc"],
       });
@@ -214,9 +214,9 @@ describe("ItemsService", () => {
           "lvl",
           "rarity",
           "type",
+          "world",
           "worlds",
         ],
-        distinct: "id",
       });
       expect(indexMock.search).toHaveBeenNthCalledWith(2, "sword", {
         limit: 10,
@@ -230,9 +230,9 @@ describe("ItemsService", () => {
           "lvl",
           "rarity",
           "type",
+          "world",
           "worlds",
         ],
-        distinct: "id",
       });
       expect(loggerMock.warn).toHaveBeenCalledWith(
         "Items index settings are stale, retrying search without stat attribute",

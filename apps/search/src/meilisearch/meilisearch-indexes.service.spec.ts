@@ -136,6 +136,7 @@ describe("MeilisearchIndexesService", () => {
         "world",
       ]);
       expect(itemsIndexMock.updateFilterableAttributes).toHaveBeenCalledWith([
+        "world",
         "worlds",
         "type",
         "rarity",

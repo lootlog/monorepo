@@ -5,7 +5,7 @@ import {
   getFilteredMemberEntries,
   getPresenceCharacter,
 } from "@/features/online-players/online-players-list.helpers";
-import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
+import type { PlayerPresence } from "@/lib/online-players-presence";
 
 const createPresence = ({
   discordId,
