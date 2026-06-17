@@ -1,5 +1,6 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
 import { MemberData } from "@/features/guild/settings/members/components/member-data";
 import { ArrowLeft, Crown } from "lucide-react";
 import { useMemo, type FC } from "react";
@@ -21,12 +22,18 @@ export type MembersPanelContentProps = {
   selectedMemberColor: string | undefined;
   isOwner?: boolean;
   canManageMembers: boolean;
+  webActivityStats?: MemberActivityStats;
+  gameActivityStats?: MemberActivityStats;
+  isOnlineInGame?: boolean;
 };
 
 export const MembersPanelContent: FC<MembersPanelContentProps> = ({
   selectedMemberColor,
   isOwner = false,
   canManageMembers,
+  webActivityStats,
+  gameActivityStats,
+  isOnlineInGame = false,
 }) => {
   const { t } = useTranslation();
   const {
@@ -129,6 +136,9 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
         <MemberData
           member={selectedMember}
           canManageMembers={canManageMembers}
+          webActivityStats={webActivityStats}
+          gameActivityStats={gameActivityStats}
+          isOnlineInGame={isOnlineInGame}
         />
       </ScrollArea>
     </div>

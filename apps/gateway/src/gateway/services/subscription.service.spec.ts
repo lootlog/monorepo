@@ -3,6 +3,7 @@ import { SubscriptionService } from "./subscription.service";
 import { Platform } from "../enums/platform.enum";
 import { ResponseStatus } from "../enums/response-status.enum";
 import { ErrorMessages } from "../constants/error-messages.constant";
+import { ActivityType } from "../enums/activity-type.enum";
 import { buildRoomName } from "../utils/room-utils";
 import type { SocketUserPlayer } from "../types/socket-user.type";
 import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
@@ -70,6 +71,7 @@ describe("SubscriptionService", () => {
   let service: SubscriptionService;
 
   beforeEach(() => {
+    vi.clearAllMocks();
     service = new SubscriptionService(
       mockGuildsService as never,
       mockPresenceService as never,
@@ -94,7 +96,7 @@ describe("SubscriptionService", () => {
       client as never,
       "discord-1",
       "user-1",
-      createPlayer(),
+      undefined,
     );
 
     expect(result).toEqual({
@@ -290,6 +292,11 @@ describe("SubscriptionService", () => {
       buildRoomName("guild-1", "notifications", "base"),
     );
     expect(mockPresenceService.emitInitialPresence).not.toHaveBeenCalled();
+    expect(mockActivityService.publishActivityEvent).toHaveBeenCalledWith(
+      ActivityType.CONNECT_EVENT,
+      client,
+      guilds,
+    );
   });
 
   it("returns join failed when guild access cannot be resolved", async () => {
