@@ -5,6 +5,7 @@ import { refreshActiveOtherCanvasTooltip } from "@/lib/margonem-tooltips/patcher
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 import { fetchSingleCatchingGuilds } from "@/lib/character-tooltip-catching-guilds-cache";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 
 function refreshActiveOtherTooltip(): void {
   refreshActiveOtherCanvasTooltip();
@@ -27,6 +28,9 @@ export function useCharacterTooltipCatchingGuilds(): void {
   );
   const activeTarget = useCharacterTooltipCatchingGuildsStore(
     (state) => state.activeTarget,
+  );
+  const ownersByCharacterKey = useOnlineCharacterOwnersStore(
+    (state) => state.ownersByCharacterKey,
   );
   const queryClient = useQueryClient();
 
@@ -69,6 +73,14 @@ export function useCharacterTooltipCatchingGuilds(): void {
       window.removeEventListener("blur", handleWindowBlur);
     };
   }, []);
+
+  useEffect(() => {
+    if (!activeOther) return;
+
+    useCharacterTooltipCatchingGuildsStore
+      .getState()
+      .setActiveOther(activeOther);
+  }, [activeOther, ownersByCharacterKey]);
 
   useEffect(() => {
     if (!isShiftPressed || !activeOther || !activeTarget) return;

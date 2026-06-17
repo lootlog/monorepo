@@ -8,6 +8,7 @@
 import type { UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem } from './user-lootlog-player-catching-guilds-response-dto-output-guilds-item';
 
 export interface UserLootlogPlayerCatchingGuildsResponseDtoOutput {
+  userId: string;
   accountId: string;
   characterId: string;
   guilds: UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem[];

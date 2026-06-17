@@ -39,6 +39,14 @@ vi.mock("./use-other-catching-guild-glow", () => ({
   useOtherCatchingGuildGlow: vi.fn(),
 }));
 
+vi.mock("./use-online-character-owners", () => ({
+  useOnlineCharacterOwners: vi.fn(),
+}));
+
+vi.mock("./use-who-is-here-lootlog-highlight", () => ({
+  useWhoIsHereLootlogHighlight: vi.fn(),
+}));
+
 import { useGameEventHandlers } from "./use-game-event-handlers";
 
 describe("useGameEventHandlers", () => {

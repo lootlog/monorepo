@@ -63,11 +63,16 @@ export class UserLootlogConfigController {
     );
   }
 
-  @Get("players/:accountId/:characterId/catching-guilds")
+  @Get("players/:userId/:accountId/:characterId/catching-guilds")
   @ApiOperation({
     summary: "Get visible player catching guilds",
     description:
       "Retrieve shared accessible Lootlog guilds where a player has catching enabled",
+  })
+  @ApiParam({
+    name: "userId",
+    description: "Hovered player Discord ID",
+    example: "123456789012345678",
   })
   @ApiParam({
     name: "accountId",
@@ -86,11 +91,13 @@ export class UserLootlogConfigController {
   })
   getPlayerCatchingGuilds(
     @DiscordId() discordId: string,
+    @Param("userId") userId: string,
     @Param("accountId") accountId: string,
     @Param("characterId") characterId: string,
   ) {
     return this.userLootlogConfigService.getPlayerCatchingGuilds(
       discordId,
+      userId,
       accountId,
       characterId,
     );

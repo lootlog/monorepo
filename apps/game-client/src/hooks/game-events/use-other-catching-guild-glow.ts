@@ -17,6 +17,7 @@ import {
   type CharacterTooltipCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
+import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
 
@@ -53,6 +54,9 @@ export function useOtherCatchingGuildGlow(): void {
   );
   const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
   const othersById = useOthersStore((state) => state.othersById);
+  const ownersByCharacterKey = useOnlineCharacterOwnersStore(
+    (state) => state.ownersByCharacterKey,
+  );
   const currentCharacterId = getCurrentCharacterId();
   const selectedGuildId = currentCharacterId
     ? guildIdByCharId[currentCharacterId]
@@ -80,8 +84,8 @@ export function useOtherCatchingGuildGlow(): void {
       Object.values(othersById).map((other) => String(other.d.id)),
     );
 
-    for (const characterId of Object.keys(entriesByKey)) {
-      const [, entryCharacterId] = characterId.split(":");
+    for (const targetKey of Object.keys(entriesByKey)) {
+      const entryCharacterId = targetKey.split(":").at(-1);
       if (entryCharacterId && !currentCharacterIds.has(entryCharacterId)) {
         lootlogOtherGlowManager.removeGlow(entryCharacterId);
       }
@@ -108,7 +112,13 @@ export function useOtherCatchingGuildGlow(): void {
           : LOOTLOG_OTHER_GLOW_RED_ORANGE,
       );
     }
-  }, [entriesByKey, isShiftPressed, othersById, selectedGuildId]);
+  }, [
+    entriesByKey,
+    isShiftPressed,
+    othersById,
+    ownersByCharacterKey,
+    selectedGuildId,
+  ]);
 
   useEffect(() => {
     if (!isShiftPressed || !selectedGuildId) return;
@@ -136,6 +146,7 @@ export function useOtherCatchingGuildGlow(): void {
       void Promise.resolve(
         userLootlogConfigControllerGetPlayersCatchingGuilds({
           players: missingTargets.map((target) => ({
+            userId: target.userId,
             accountId: target.accountId,
             characterId: target.characterId,
           })),
@@ -162,5 +173,5 @@ export function useOtherCatchingGuildGlow(): void {
     return () => {
       cancelled = true;
     };
-  }, [isShiftPressed, othersById, selectedGuildId]);
+  }, [isShiftPressed, othersById, ownersByCharacterKey, selectedGuildId]);
 }

@@ -81,15 +81,17 @@ export class UserLootlogConfigService {
 
   async getPlayerCatchingGuilds(
     discordId: string,
+    userId: string,
     accountId: string,
     characterId: string,
   ): Promise<UserLootlogPlayerCatchingGuildsResponse> {
     const response = await this.getPlayersCatchingGuilds(discordId, {
-      players: [{ accountId, characterId }],
+      players: [{ userId, accountId, characterId }],
     });
 
     return (
       response.players[0] ?? {
+        userId,
         accountId,
         characterId,
         guilds: [],
@@ -103,11 +105,11 @@ export class UserLootlogConfigService {
   ): Promise<UserLootlogPlayersCatchingGuildsResponse> {
     const playersByKey = new Map<
       string,
-      { accountId: string; characterId: string }
+      { userId: string; accountId: string; characterId: string }
     >();
 
     for (const player of data.players) {
-      const key = `${player.accountId}:${player.characterId}`;
+      const key = `${player.userId}:${player.accountId}:${player.characterId}`;
       if (!playersByKey.has(key)) {
         playersByKey.set(key, player);
       }
@@ -132,6 +134,7 @@ export class UserLootlogConfigService {
     const configs = await this.prisma.userCharactersLootlogSettings.findMany({
       where: {
         OR: players.map((player) => ({
+          userId: player.userId,
           accountId: player.accountId,
           characterId: player.characterId,
         })),
@@ -140,6 +143,7 @@ export class UserLootlogConfigService {
         },
       },
       select: {
+        userId: true,
         accountId: true,
         characterId: true,
         catchingGuildIds: true,
@@ -151,7 +155,7 @@ export class UserLootlogConfigService {
 
     const visibleGuildIdsByPlayerKey = new Map<string, Set<string>>();
     for (const config of configs) {
-      const key = `${config.accountId}:${config.characterId}`;
+      const key = `${config.userId}:${config.accountId}:${config.characterId}`;
       const visibleGuildIds =
         visibleGuildIdsByPlayerKey.get(key) ?? new Set<string>();
 
@@ -166,7 +170,7 @@ export class UserLootlogConfigService {
 
     return {
       players: players.map((player) => {
-        const key = `${player.accountId}:${player.characterId}`;
+        const key = `${player.userId}:${player.accountId}:${player.characterId}`;
         const visibleGuildIds = visibleGuildIdsByPlayerKey.get(key) ?? [];
 
         return {
