@@ -31,10 +31,6 @@
       "types": "./dist/redis/index.d.ts",
       "default": "./dist/redis/index.js"
     },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "default": "./dist/utils/index.js"
-    },
     "./validators": {
       "types": "./dist/validators/index.d.ts",
       "default": "./dist/validators/index.js"
