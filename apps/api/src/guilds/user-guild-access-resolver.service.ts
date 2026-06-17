@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import type { APIGuild } from "discord-api-types/v10";
-import { isDiscordAdministrator } from "@lootlog/nest-shared/utils";
+import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DiscordService } from "src/discord/discord.service";
