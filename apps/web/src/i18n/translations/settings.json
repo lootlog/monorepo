@@ -50,14 +50,60 @@
     "description": "Zarządzaj uprawnieniami dla ról Discord",
     "searchPlaceholder": "Szukaj roli...",
     "emptyTitle": "Nie znaleziono ról",
-    "emptyDescription": "Spróbuj zmienić kryteria wyszukiwania"
+    "emptyDescription": "Brak ról do wyświetlenia.",
+    "emptyFilteredDescription": "Nie znaleziono ról pasujących do wyszukiwania.",
+    "emptyGuildTitle": "Brak ról w tej gildii",
+    "resetFilters": "Wyczyść filtry",
+    "details": "Szczegóły roli",
+    "backToRoles": "Wróć do ról",
+    "roleNotFound": "Nie znaleziono roli",
+    "roleNotFoundDescription": "Ta rola nie istnieje w tej gildii albo nie ma jej już w pobranej liście.",
+    "levelRange": "Poziom {{from}} - {{to}}",
+    "levelRangeTitle": "Przedział levelowy",
+    "levelRangeDescription": "Ogranicza widoczność danych do określonego zakresu poziomów.",
+    "noPermissions": "Brak uprawnień",
+    "permissionCountCompact": "{{count}} uprawnień",
+    "updateSuccess": "Zaktualizowano ustawienia roli",
+    "updateError": "Nie udało się zaktualizować ustawień roli",
+    "table": {
+      "role": "Rola",
+      "levelRange": "Zakres poziomów",
+      "permissions": "Uprawnienia",
+      "actions": "Akcje"
+    },
+    "actions": {
+      "more": "Więcej akcji",
+      "viewDetails": "Zobacz szczegóły"
+    }
   },
   "npcs": {
     "title": "Ustawienia potworów i NPC",
     "description": "Jakie przedmioty ma zbierać dla jakiego potwora",
     "searchPlaceholder": "Szukaj potwora...",
     "emptyTitle": "Nie znaleziono potworów",
-    "emptyDescription": "Spróbuj zmienić kryteria wyszukiwania"
+    "emptyDescription": "Brak potworów do wyświetlenia.",
+    "emptyFilteredDescription": "Nie znaleziono potworów pasujących do wyszukiwania.",
+    "emptyGuildTitle": "Brak konfiguracji potworów w tej gildii",
+    "resetFilters": "Wyczyść filtry",
+    "details": "Szczegóły konfiguracji",
+    "backToNpcs": "Wróć do potworów",
+    "npcNotFound": "Nie znaleziono potwora",
+    "npcNotFoundDescription": "Ten wpis konfiguracji nie istnieje w tej gildii albo nie ma go już w pobranej konfiguracji.",
+    "raritiesTitle": "Zbierane rzadkości",
+    "raritiesDescription": "Wybierz, które rzadkości mają być zbierane dla tego potwora.",
+    "rarityCountCompact": "{{count}}/{{total}} rzadkości",
+    "noRarities": "Brak rzadkości",
+    "updateSuccess": "Zaktualizowano ustawienia potwora",
+    "updateError": "Nie udało się zaktualizować ustawień potwora",
+    "table": {
+      "npc": "Potwór",
+      "rarities": "Rzadkości",
+      "actions": "Akcje"
+    },
+    "actions": {
+      "more": "Więcej akcji",
+      "viewDetails": "Zobacz szczegóły"
+    }
   },
   "reservations": {
     "title": "Ustawienia rezerwacji",
@@ -106,12 +152,41 @@
     }
   },
   "members": {
-    "title": "Ustawienia członków",
-    "description": "Zarządzaj członkami lootloga",
-    "searchPlaceholder": "Szukaj członka...",
+    "title": "Członkowie",
+    "description": "Zarządzaj dostępem członków lootloga",
+    "searchPlaceholder": "Szukaj członka, nick lub Discord ID...",
     "showInactive": "Nieaktywni",
     "details": "Szczegóły członka",
     "owner": "Właściciel serwera",
+    "summary": {
+      "total": "{{count}} członków",
+      "active": "{{count}} aktywnych",
+      "inactive": "{{count}} nieaktywnych",
+      "online": "{{count}} online",
+      "problems": "{{count}} problemów"
+    },
+    "filters": {
+      "all": "Wszyscy",
+      "active": "Aktywni",
+      "inactive": "Nieaktywni",
+      "online": "Online",
+      "problems": "Problemy"
+    },
+    "table": {
+      "member": "Członek",
+      "status": "Status",
+      "discord": "Sync",
+      "activity": "Aktywność",
+      "web": "Web",
+      "game": "Gra",
+      "visits": "Wejścia",
+      "roles": "Role",
+      "actions": "Akcje"
+    },
+    "actions": {
+      "more": "Więcej akcji",
+      "viewDetails": "Zobacz szczegóły"
+    },
     "refreshingProgress": "Odświeżanie {{processed}}/{{total}}",
     "nextRefreshIn": "Kolejne odświeżenie za {{minutes}}:{{seconds}}",
     "refreshSuccess": "Odświeżono pomyślnie",
@@ -124,6 +199,7 @@
     "refreshNoDiscordSync": "Brak potwierdzonej synchronizacji z Discordem",
     "refreshQueued": "Odświeżenie jest już w kolejce",
     "refreshPermissions": "Odśwież uprawnienia",
+    "refreshMemberPermissionsTooltip": "Odśwież uprawnienia członka",
     "refreshStarted": "Rozpoczęto odświeżanie wszystkich członków.",
     "refreshRateLimit": "Kolejne odświeżenie będzie dostępne po zakończeniu limitu.",
     "refreshStartError": "Nie udało się rozpocząć odświeżania.",
@@ -132,8 +208,10 @@
     "refreshedAt": "Odświeżono {{time}}",
     "discordSync": {
       "title": "Synchronizacja Discorda",
-      "notConfirmed": "Brak potwierdzonego dostępu z Discorda",
-      "lastConfirmedRelative": "Ostatnie potwierdzenie: {{time}}",
+      "notConfirmed": "Brak synchronizacji z Discordem",
+      "lastConfirmedRelative": "Ostatnia synchronizacja: {{time}}",
+      "lastConfirmedCompact": "{{time}}",
+      "neverSyncedCompact": "nigdy",
       "staleAccessHint": "Dostęp opiera się na ostatnich poprawnych danych z Discorda. Jeśli kolejne odświeżenie zwróci brak członkostwa, dostęp zostanie zablokowany.",
       "badges": {
         "confirmed": "Potwierdzony",
@@ -146,7 +224,7 @@
       "fields": {
         "technicalStatus": "Status techniczny",
         "lastAttemptAt": "Ostatnia próba",
-        "lastConfirmedAt": "Ostatnie potwierdzenie",
+        "lastConfirmedAt": "Ostatnia synchronizacja",
         "refreshQueue": "Kolejka",
         "nextRefreshAt": "Następna próba"
       },
@@ -221,15 +299,77 @@
         }
       }
     },
+    "webActivity": {
+      "title": "Aktywność",
+      "description": "Status online obejmuje aplikację webową i obecność w grze. Wejścia i sesje są rozdzielone według źródła.",
+      "online": "Online na stronie",
+      "offline": "Offline",
+      "onlineSources": {
+        "web": "Online na stronie",
+        "game": "Online w grze",
+        "webAndGame": "Online na stronie i w grze"
+      },
+      "noVisits": "Ostatnio online: brak danych",
+      "lastSeenRelative": "Ostatnio online: {{time}}",
+      "visitCount": "{{count}}",
+      "visitCountCompact": "Wejścia na stronę: {{count}}",
+      "webVisitCountCompact": "Strona: {{count}}",
+      "gameVisitCountCompact": "Gra: {{count}}",
+      "webVisitCountShort": "Web {{count}}",
+      "gameVisitCountShort": "Gra {{count}}",
+      "onlineNowCompact": "Online teraz",
+      "lastSeenCompact": "Online {{time}}",
+      "noVisitsCompact": "Online: brak danych",
+      "noData": "Brak danych",
+      "activeSessions": "{{count}}",
+      "fields": {
+        "lastSeenAt": "Ostatnio online",
+        "lastSeenInGameAt": "Ostatnio w grze",
+        "visitCount": "Wejścia na stronę",
+        "webVisitCount": "Wejścia na stronę",
+        "gameVisitCount": "Wejścia do gry",
+        "activeSessions": "Aktywne sesje strony",
+        "activeWebSessions": "Aktywne sesje strony",
+        "activeGameSessions": "Aktywne sesje w grze",
+        "webStatus": "Status strony",
+        "gameStatus": "Status gry"
+      }
+    },
     "emptyTitle": "Nie znaleziono członków",
-    "emptyDescription": "Spróbuj zmienić kryteria wyszukiwania",
+    "emptyDescription": "Brak członków do wyświetlenia.",
+    "emptyFilteredDescription": "Nie znaleziono członków pasujących do filtrów.",
+    "emptyGuildTitle": "Brak członków w tej gildii",
+    "resetFilters": "Wyczyść filtry",
+    "noSelectionTitle": "Wybierz członka",
+    "noSelectionDescription": "Wybierz członka z listy, aby zobaczyć szczegóły.",
+    "backToMembers": "Wróć do członków",
+    "memberNotFound": "Nie znaleziono członka",
+    "memberNotFoundDescription": "Ten członek nie istnieje w tej gildii albo nie ma go już w pobranej liście.",
     "statusActive": "Aktywny",
+    "statusAccessOk": "Dostęp OK",
     "statusInactive": "Nieaktywny",
+    "statusProblem": "Problem",
+    "statusNoRoles": "Brak ról",
+    "statusSyncStale": "Sync stale",
     "statusActiveDescription": "Członek jest aktywny i może korzystać z konfiguracji lootloga w tej gildii.",
     "statusInactiveDescription": "Członek został lokalnie dezaktywowany. Ponowna aktywacja nastąpi po odświeżeniu danych z Discorda.",
+    "access": {
+      "title": "Dostęp",
+      "status": "Status członka",
+      "discord": "Discord",
+      "lastActivity": "Ostatnia aktywność",
+      "ok": "Dostęp: OK",
+      "problem": "Dostęp: problem",
+      "inactive": "Dostęp: nieaktywny",
+      "okDescription": "Członek jest aktywny i ma potwierdzony dostęp do tej gildii.",
+      "onlineDescription": "Członek jest aktywny i aktualnie widoczny w Lootlogu lub grze.",
+      "problemDescription": "Dostęp wymaga sprawdzenia synchronizacji albo kolejki odświeżania.",
+      "inactiveDescription": "Członek nie ma aktywnego dostępu do tej gildii."
+    },
     "rolesTitle": "Role i uprawnienia",
     "noRoles": "Brak przypisanych ról. Może być potrzebna synchronizacja członka.",
     "permissionsCount": "{{count}} uprawnień",
+    "roleCountCompact": "{{count}} role",
     "actionsTitle": "Status i akcje",
     "deactivate": "Dezaktywuj",
     "deactivatePending": "Dezaktywowanie...",
@@ -238,6 +378,7 @@
     "deactivateConfirmTitle": "Dezaktywować członka?",
     "deactivateConfirmDescription": "Członek zostanie lokalnie oznaczony jako nieaktywny, a jego role zostaną wyczyszczone do czasu kolejnego odświeżenia z Discorda.",
     "reactivateHint": "Ponowna aktywacja nastąpi po odświeżeniu członka.",
+    "syncProblemHint": "Sprawdź synchronizację Discorda albo odśwież uprawnienia członka.",
     "lootlogTitle": "Konfiguracja lootloga",
     "lootlogLoading": "Ładowanie postaci...",
     "lootlogError": "Nie udało się pobrać konfiguracji postaci.",

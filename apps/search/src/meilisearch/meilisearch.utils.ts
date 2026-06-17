@@ -18,3 +18,19 @@ export function buildMeilisearchStringInFilter(
 
   return `${fieldName} IN [${formattedValues.join(", ")}]`;
 }
+
+export function buildMeilisearchSearchTermFilter(
+  fieldName: string,
+  search: string | string[] | undefined,
+): { searchTerm: string; filter?: string } {
+  if (Array.isArray(search)) {
+    return {
+      searchTerm: "",
+      filter: buildMeilisearchStringInFilter(fieldName, search),
+    };
+  }
+
+  return {
+    searchTerm: search ?? "",
+  };
+}

@@ -3,6 +3,7 @@ import {
   DEFAULT_ONLINE_PLAYERS_FILTERS,
   getFilteredAccountEntries,
   getFilteredMemberEntries,
+  getPresenceCharacter,
 } from "@/features/online-players/online-players-list.helpers";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
 
@@ -35,6 +36,26 @@ const createPresence = ({
 });
 
 describe("online players list helpers", () => {
+  it("preserves explicit empty presence fields when creating character data", () => {
+    const character = getPresenceCharacter(
+      createPresence({
+        discordId: "discord-1",
+        name: "",
+        lvl: 0,
+        characterId: "0",
+        prof: "",
+      }),
+    );
+
+    expect(character).toMatchObject({
+      icon: ".gif",
+      lvl: 0,
+      nick: "",
+      prof: "",
+      world: "pandora",
+    });
+  });
+
   it("sorts account entries by level descending after filtering", () => {
     const entries = getFilteredAccountEntries(
       {

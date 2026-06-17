@@ -77,6 +77,20 @@ export class GatewayQueueHandler {
     await handler();
   }
 
+  private logDeadLetterMessage<TPayload>(
+    label: string,
+    data: TPayload,
+    amqpMsg: AmqpMessage,
+  ) {
+    const headers = amqpMsg.properties.headers ?? {};
+
+    this.logger.error(`Message sent to DLQ - ${label}:`, {
+      data,
+      retryCount: this.retryService.getRetryCount(headers),
+      headers,
+    });
+  }
+
   @RabbitSubscribe({
     exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: RoutingKey.GUILDS_TIMERS_UPDATE,
@@ -423,13 +437,7 @@ export class GatewayQueueHandler {
     },
   })
   handleTimerUpdateDLQ(data: CreateTimerDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Timer Update:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Timer Update", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -441,13 +449,7 @@ export class GatewayQueueHandler {
     },
   })
   handleTimerDeleteDLQ(data: DeleteTimerDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Timer Delete:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Timer Delete", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -459,13 +461,7 @@ export class GatewayQueueHandler {
     },
   })
   handleLootCreateDLQ(data: LootCreateEventDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Loot Create:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Loot Create", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -480,13 +476,7 @@ export class GatewayQueueHandler {
     data: LootShareUpdateEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error("Message sent to DLQ - Loot Share Update:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Loot Share Update", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -501,13 +491,7 @@ export class GatewayQueueHandler {
     data: ReservationCreateEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error("Message sent to DLQ - Reservation Create:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Reservation Create", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -522,13 +506,7 @@ export class GatewayQueueHandler {
     data: ReservationDeleteEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error("Message sent to DLQ - Reservation Delete:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Reservation Delete", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -540,13 +518,7 @@ export class GatewayQueueHandler {
     },
   })
   handleSendMessageDLQ(data: SendMessageDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Send Message:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Send Message", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -558,13 +530,7 @@ export class GatewayQueueHandler {
     },
   })
   handleAddMemberDLQ(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Add Member Cache Invalidation:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Add Member Cache Invalidation", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -576,15 +542,10 @@ export class GatewayQueueHandler {
     },
   })
   handleUpdateMemberDLQ(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    this.logger.error(
-      "Message sent to DLQ - Update Member Cache Invalidation:",
-      {
-        data,
-        retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
-        ),
-        headers: amqpMsg.properties.headers,
-      },
+    this.logDeadLetterMessage(
+      "Update Member Cache Invalidation",
+      data,
+      amqpMsg,
     );
   }
 
@@ -597,15 +558,10 @@ export class GatewayQueueHandler {
     },
   })
   handleDeleteMemberDLQ(data: DeleteMemberDto, amqpMsg: AmqpMessage) {
-    this.logger.error(
-      "Message sent to DLQ - Delete Member Cache Invalidation:",
-      {
-        data,
-        retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
-        ),
-        headers: amqpMsg.properties.headers,
-      },
+    this.logDeadLetterMessage(
+      "Delete Member Cache Invalidation",
+      data,
+      amqpMsg,
     );
   }
 
@@ -618,15 +574,10 @@ export class GatewayQueueHandler {
     },
   })
   handleAddMemberRoleDLQ(data: AddMemberRoleDto, amqpMsg: AmqpMessage) {
-    this.logger.error(
-      "Message sent to DLQ - Add Member Role Cache Invalidation:",
-      {
-        data,
-        retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
-        ),
-        headers: amqpMsg.properties.headers,
-      },
+    this.logDeadLetterMessage(
+      "Add Member Role Cache Invalidation",
+      data,
+      amqpMsg,
     );
   }
 
@@ -639,15 +590,10 @@ export class GatewayQueueHandler {
     },
   })
   handleDeleteMemberRoleDLQ(data: DeleteMemberRoleDto, amqpMsg: AmqpMessage) {
-    this.logger.error(
-      "Message sent to DLQ - Delete Member Role Cache Invalidation:",
-      {
-        data,
-        retryCount: this.retryService.getRetryCount(
-          amqpMsg.properties.headers || {},
-        ),
-        headers: amqpMsg.properties.headers,
-      },
+    this.logDeadLetterMessage(
+      "Delete Member Role Cache Invalidation",
+      data,
+      amqpMsg,
     );
   }
 
@@ -660,13 +606,7 @@ export class GatewayQueueHandler {
     },
   })
   handleSendNotificationDLQ(data: SendNotificationDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Send Notification:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Send Notification", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -705,13 +645,7 @@ export class GatewayQueueHandler {
     data: VolunteerNotificationDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error("Message sent to DLQ - Volunteer Notification:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Volunteer Notification", data, amqpMsg);
   }
 
   @RabbitSubscribe({
@@ -747,13 +681,7 @@ export class GatewayQueueHandler {
     },
   })
   handlePartyGatheringDLQ(data: SendPartyGatheringDto, amqpMsg: AmqpMessage) {
-    this.logger.error("Message sent to DLQ - Party Gathering:", {
-      data,
-      retryCount: this.retryService.getRetryCount(
-        amqpMsg.properties.headers || {},
-      ),
-      headers: amqpMsg.properties.headers,
-    });
+    this.logDeadLetterMessage("Party Gathering", data, amqpMsg);
   }
 
   @RabbitSubscribe({

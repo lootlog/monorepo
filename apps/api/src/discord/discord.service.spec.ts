@@ -18,11 +18,9 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
 import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service";
 import { RedlockService } from "src/lib/redlock/redlock.service";
-import {
-  TokenExpiredError,
-  AuthServiceUnavailableError,
-  InvalidScopesError,
-} from "src/auth/errors";
+import { AuthServiceUnavailableError } from "src/auth/errors/auth-service-unavailable.error";
+import { InvalidScopesError } from "src/auth/errors/invalid-scopes.error";
+import { TokenExpiredError } from "src/auth/errors/token-expired.error";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 

@@ -5,7 +5,7 @@ import type { UserGuildData } from "src/guilds/types/guild.types";
 
 export function buildUser(
   client: Socket,
-  player: SocketUserPlayer,
+  player: SocketUserPlayer | undefined,
   guilds: UserGuildData[],
 ) {
   return {

@@ -224,7 +224,8 @@ export class BattlesService implements IBattlesService {
         await this.checkBattleAccess(battleId, requestingUserId);
       }
 
-      const rawData = await this.r2Service.getBattleData(battleId);
+      const rawData =
+        await this.r2Service.getBattleData<RawBattleData>(battleId);
       return rawData;
     } catch (error) {
       this.logger.error(

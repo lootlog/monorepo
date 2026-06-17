@@ -52,7 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Activity: 'Activity',
-  ActivityActorSnapshot: 'ActivityActorSnapshot'
+  ActivityActorSnapshot: 'ActivityActorSnapshot',
+  MemberActivityStats: 'MemberActivityStats'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -104,6 +105,20 @@ export const ActivityActorSnapshotScalarFieldEnum = {
 } as const
 
 export type ActivityActorSnapshotScalarFieldEnum = (typeof ActivityActorSnapshotScalarFieldEnum)[keyof typeof ActivityActorSnapshotScalarFieldEnum]
+
+
+export const MemberActivityStatsScalarFieldEnum = {
+  guildId: 'guildId',
+  discordId: 'discordId',
+  source: 'source',
+  lastSeenAt: 'lastSeenAt',
+  visitCount: 'visitCount',
+  activeSessionCount: 'activeSessionCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MemberActivityStatsScalarFieldEnum = (typeof MemberActivityStatsScalarFieldEnum)[keyof typeof MemberActivityStatsScalarFieldEnum]
 
 
 export const SortOrder = {

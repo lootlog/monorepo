@@ -69,10 +69,10 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
 
   mutateRef.current = updateLootlogCharacterConfig;
   onSelectionChangeRef.current = onSelectionChange;
-  const selectedGuildIds = watch("catchingGuildIds") || [];
+  const selectedGuildIds = watch("catchingGuildIds") ?? [];
 
   useEffect(() => {
-    const nextCatchingGuildIds = configByCharacterId?.catchingGuildIds || [];
+    const nextCatchingGuildIds = configByCharacterId?.catchingGuildIds ?? [];
 
     isResettingRef.current = true;
     reset({
@@ -100,7 +100,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
       }
 
       debounceTimerRef.current = setTimeout(() => {
-        const catchingGuildIds = (value.catchingGuildIds || []).filter(
+        const catchingGuildIds = (value.catchingGuildIds ?? []).filter(
           (id): id is string => typeof id === "string",
         );
 
