@@ -199,8 +199,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      lvlRangeFrom: role.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
-      lvlRangeTo: role.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
+      lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
+      lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
       ...PERMISSIONS.reduce(
         (acc, p) => ({
           ...acc,
@@ -213,8 +213,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
 
   useEffect(() => {
     form.reset({
-      lvlRangeFrom: role.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
-      lvlRangeTo: role.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
+      lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
+      lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
       ...PERMISSIONS.reduce(
         (acc, p) => ({
           ...acc,
@@ -248,11 +248,11 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
               guildId,
             });
           }
-          toast.success("Zaktualizowano ustawienia");
+          toast.success(t("settings.roles.updateSuccess"));
           form.reset({
             lvlRangeFrom:
-              response.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
-            lvlRangeTo: response.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
+              response.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
+            lvlRangeTo: response.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
             ...PERMISSIONS.reduce(
               (acc, p) => ({
                 ...acc,
@@ -263,7 +263,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
           });
         },
         onError: () => {
-          toast.error("Nie udało się zaktualizować ustawień");
+          toast.error(t("settings.roles.updateError"));
         },
       },
     );
@@ -275,69 +275,67 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
       >
-        <div className="p-3">
-          <Card className="bg-card/50 backdrop-blur-sm border-border p-0">
-            <div className="p-3">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Settings className="size-4 text-primary" />
-                </div>
-                <div>
-                  <Label className="text-sm font-semibold">
-                    Przedział levelowy
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Ogranicza widoczność danych do określonego zakresu poziomów
-                  </p>
-                </div>
+        <Card className="bg-card/50 backdrop-blur-sm border-border p-0">
+          <div className="p-3">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Settings className="size-4 text-primary" />
               </div>
-
-              <div className="flex gap-3 items-center ml-11">
-                <FormField
-                  control={form.control}
-                  name="lvlRangeFrom"
-                  render={({ field }) => (
-                    <FormItem className="flex-1 max-w-[100px]">
-                      <FormControl>
-                        <Input
-                          placeholder={DEFAULT_LVL_RANGE_FROM}
-                          type="number"
-                          max={500}
-                          min={0}
-                          className="h-9"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <span className="text-muted-foreground">—</span>
-                <FormField
-                  control={form.control}
-                  name="lvlRangeTo"
-                  render={({ field }) => (
-                    <FormItem className="flex-1 max-w-[100px]">
-                      <FormControl>
-                        <Input
-                          placeholder={DEFAULT_LVL_RANGE_TO}
-                          type="number"
-                          max={500}
-                          min={0}
-                          className="h-9"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div>
+                <Label className="text-sm font-semibold">
+                  {t("settings.roles.levelRangeTitle")}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.roles.levelRangeDescription")}
+                </p>
               </div>
             </div>
-          </Card>
-        </div>
 
-        <div className="px-3 space-y-3">
+            <div className="flex gap-3 items-center ml-11">
+              <FormField
+                control={form.control}
+                name="lvlRangeFrom"
+                render={({ field }) => (
+                  <FormItem className="flex-1 max-w-[100px]">
+                    <FormControl>
+                      <Input
+                        placeholder={DEFAULT_LVL_RANGE_FROM}
+                        type="number"
+                        max={500}
+                        min={0}
+                        className="h-9"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <span className="text-muted-foreground">-</span>
+              <FormField
+                control={form.control}
+                name="lvlRangeTo"
+                render={({ field }) => (
+                  <FormItem className="flex-1 max-w-[100px]">
+                    <FormControl>
+                      <Input
+                        placeholder={DEFAULT_LVL_RANGE_TO}
+                        type="number"
+                        max={500}
+                        min={0}
+                        className="h-9"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        </Card>
+
+        <div className="space-y-3 pt-3">
           <Accordion
             type="multiple"
             defaultValue={PERMISSION_GROUPS.map((g) => g.groupKey)}

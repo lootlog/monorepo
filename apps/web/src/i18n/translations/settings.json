@@ -50,14 +50,60 @@
     "description": "Zarządzaj uprawnieniami dla ról Discord",
     "searchPlaceholder": "Szukaj roli...",
     "emptyTitle": "Nie znaleziono ról",
-    "emptyDescription": "Spróbuj zmienić kryteria wyszukiwania"
+    "emptyDescription": "Brak ról do wyświetlenia.",
+    "emptyFilteredDescription": "Nie znaleziono ról pasujących do wyszukiwania.",
+    "emptyGuildTitle": "Brak ról w tej gildii",
+    "resetFilters": "Wyczyść filtry",
+    "details": "Szczegóły roli",
+    "backToRoles": "Wróć do ról",
+    "roleNotFound": "Nie znaleziono roli",
+    "roleNotFoundDescription": "Ta rola nie istnieje w tej gildii albo nie ma jej już w pobranej liście.",
+    "levelRange": "Poziom {{from}} - {{to}}",
+    "levelRangeTitle": "Przedział levelowy",
+    "levelRangeDescription": "Ogranicza widoczność danych do określonego zakresu poziomów.",
+    "noPermissions": "Brak uprawnień",
+    "permissionCountCompact": "{{count}} uprawnień",
+    "updateSuccess": "Zaktualizowano ustawienia roli",
+    "updateError": "Nie udało się zaktualizować ustawień roli",
+    "table": {
+      "role": "Rola",
+      "levelRange": "Zakres poziomów",
+      "permissions": "Uprawnienia",
+      "actions": "Akcje"
+    },
+    "actions": {
+      "more": "Więcej akcji",
+      "viewDetails": "Zobacz szczegóły"
+    }
   },
   "npcs": {
     "title": "Ustawienia potworów i NPC",
     "description": "Jakie przedmioty ma zbierać dla jakiego potwora",
     "searchPlaceholder": "Szukaj potwora...",
     "emptyTitle": "Nie znaleziono potworów",
-    "emptyDescription": "Spróbuj zmienić kryteria wyszukiwania"
+    "emptyDescription": "Brak potworów do wyświetlenia.",
+    "emptyFilteredDescription": "Nie znaleziono potworów pasujących do wyszukiwania.",
+    "emptyGuildTitle": "Brak konfiguracji potworów w tej gildii",
+    "resetFilters": "Wyczyść filtry",
+    "details": "Szczegóły konfiguracji",
+    "backToNpcs": "Wróć do potworów",
+    "npcNotFound": "Nie znaleziono potwora",
+    "npcNotFoundDescription": "Ten wpis konfiguracji nie istnieje w tej gildii albo nie ma go już w pobranej konfiguracji.",
+    "raritiesTitle": "Zbierane rzadkości",
+    "raritiesDescription": "Wybierz, które rzadkości mają być zbierane dla tego potwora.",
+    "rarityCountCompact": "{{count}}/{{total}} rzadkości",
+    "noRarities": "Brak rzadkości",
+    "updateSuccess": "Zaktualizowano ustawienia potwora",
+    "updateError": "Nie udało się zaktualizować ustawień potwora",
+    "table": {
+      "npc": "Potwór",
+      "rarities": "Rzadkości",
+      "actions": "Akcje"
+    },
+    "actions": {
+      "more": "Więcej akcji",
+      "viewDetails": "Zobacz szczegóły"
+    }
   },
   "reservations": {
     "title": "Ustawienia rezerwacji",
