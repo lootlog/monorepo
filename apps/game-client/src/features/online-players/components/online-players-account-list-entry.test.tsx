@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
+import type { PlayerPresence } from "@/lib/online-players-presence";
 import { OnlinePlayersAccountListEntry } from "./online-players-account-list-entry";
 
 const mockGame = vi.hoisted(() => ({

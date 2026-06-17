@@ -61,11 +61,16 @@
     "allServers": "Wszystkie serwery"
   },
   "characterTooltip": {
+    "owner": {
+      "title": "Gra jako:",
+      "unavailable": "Brak informacji o graczu online"
+    },
     "catchingGuilds": {
       "title": "Dodaje łupy i timery na:",
       "loading": "Ładowanie...",
       "empty": "Brak wspólnych serwerów Lootloga",
-      "error": "Nie udało się pobrać serwerów"
+      "error": "Nie udało się pobrać serwerów",
+      "unavailable": "Brak informacji o graczu online"
     }
   },
   "worldSelector": {
