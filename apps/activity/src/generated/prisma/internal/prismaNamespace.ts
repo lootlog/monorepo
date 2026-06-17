@@ -385,7 +385,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   Activity: 'Activity',
-  ActivityActorSnapshot: 'ActivityActorSnapshot'
+  ActivityActorSnapshot: 'ActivityActorSnapshot',
+  MemberActivityStats: 'MemberActivityStats'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -401,7 +402,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "activity" | "activityActorSnapshot"
+    modelProps: "activity" | "activityActorSnapshot" | "memberActivityStats"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -553,6 +554,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MemberActivityStats: {
+      payload: Prisma.$MemberActivityStatsPayload<ExtArgs>
+      fields: Prisma.MemberActivityStatsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MemberActivityStatsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MemberActivityStatsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload>
+        }
+        findFirst: {
+          args: Prisma.MemberActivityStatsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MemberActivityStatsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload>
+        }
+        findMany: {
+          args: Prisma.MemberActivityStatsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload>[]
+        }
+        create: {
+          args: Prisma.MemberActivityStatsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload>
+        }
+        createMany: {
+          args: Prisma.MemberActivityStatsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MemberActivityStatsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload>[]
+        }
+        delete: {
+          args: Prisma.MemberActivityStatsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload>
+        }
+        update: {
+          args: Prisma.MemberActivityStatsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload>
+        }
+        deleteMany: {
+          args: Prisma.MemberActivityStatsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MemberActivityStatsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MemberActivityStatsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload>[]
+        }
+        upsert: {
+          args: Prisma.MemberActivityStatsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivityStatsPayload>
+        }
+        aggregate: {
+          args: Prisma.MemberActivityStatsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMemberActivityStats>
+        }
+        groupBy: {
+          args: Prisma.MemberActivityStatsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemberActivityStatsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MemberActivityStatsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemberActivityStatsCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -625,6 +700,20 @@ export const ActivityActorSnapshotScalarFieldEnum = {
 } as const
 
 export type ActivityActorSnapshotScalarFieldEnum = (typeof ActivityActorSnapshotScalarFieldEnum)[keyof typeof ActivityActorSnapshotScalarFieldEnum]
+
+
+export const MemberActivityStatsScalarFieldEnum = {
+  guildId: 'guildId',
+  discordId: 'discordId',
+  source: 'source',
+  lastSeenAt: 'lastSeenAt',
+  visitCount: 'visitCount',
+  activeSessionCount: 'activeSessionCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MemberActivityStatsScalarFieldEnum = (typeof MemberActivityStatsScalarFieldEnum)[keyof typeof MemberActivityStatsScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -883,6 +972,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   activity?: Prisma.ActivityOmit
   activityActorSnapshot?: Prisma.ActivityActorSnapshotOmit
+  memberActivityStats?: Prisma.MemberActivityStatsOmit
 }
 
 /* Types for Logging */

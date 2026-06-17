@@ -26,7 +26,7 @@ const SocketUserPlayerSchema = z.object({
 });
 
 const JoinGatewaySchema = z.object({
-  data: SocketUserPlayerSchema,
+  data: SocketUserPlayerSchema.optional(),
 });
 
 export class JoinGatewayDto extends createZodDto(JoinGatewaySchema) {}

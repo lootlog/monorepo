@@ -1,5 +1,6 @@
 import { SearchInput } from "@/components/ui/search-input";
 import { useState, useMemo, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/utils/cn";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Label } from "@lootlog/ui/components/label";
@@ -29,12 +30,19 @@ import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
 import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
 import { useTranslation } from "react-i18next";
+import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
+import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
+import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
+import {
+  isMemberOnlineInGame,
+  resolveMemberPresenceGuildId,
+} from "@/features/guild/settings/members/member-game-presence.utils";
 
 const MembersSettingsHeader = () => {
   const { t } = useTranslation();
 
   return (
-    <Card className="mx-3 mt-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
+    <Card className="mx-3 gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner shadow-primary/10">
           <Users className="size-4 text-primary" />
@@ -57,18 +65,23 @@ const MembersSettingsContent = () => {
   const { t } = useTranslation();
   const [showInactive, setShowInactive] = useState(false);
   const showInactiveCheckboxId = "show-inactive-members";
-  const guildId = useGuildId();
+  const routeGuildId = useGuildId();
   const { data: members } = useMembersControllerGetGuildMembers(
-    { guildId: guildId ?? "" },
+    { guildId: routeGuildId ?? "" },
     {
       includeInactive: showInactive,
     },
   );
   const [searchValue, setSearchValue] = useState("");
   const { data: guild } = useGuildsControllerGetGuildById({
-    guildId: guildId ?? "",
+    guildId: routeGuildId ?? "",
   });
   const { data: permissions } = useGuildPermissions();
+  const resolvedGuildId = resolveMemberPresenceGuildId(guild);
+  const { data: memberActivityStats } = useQuery(
+    memberActivityStatsQueryOptions(resolvedGuildId),
+  );
+  const memberGamePresenceByDiscordId = useMemberGamePresence(resolvedGuildId);
   const {
     selectedItem: selectedMember,
     setSelectedItem: setSelectedMember,
@@ -115,6 +128,11 @@ const MembersSettingsContent = () => {
     return getColorFromRole(selectedMember.roles);
   }, [selectedMember]);
 
+  const memberActivityStatsByDiscordIdAndSource = useMemo(
+    () => mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats),
+    [memberActivityStats],
+  );
+
   const parentRef = useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
@@ -152,6 +170,20 @@ const MembersSettingsContent = () => {
                   selectedMemberColor={selectedMemberColor}
                   isOwner={selectedMember.userId === guild?.ownerId}
                   canManageMembers={canManageMembers}
+                  webActivityStats={
+                    memberActivityStatsByDiscordIdAndSource.get(
+                      selectedMember.userId,
+                    )?.WEB_APP
+                  }
+                  gameActivityStats={
+                    memberActivityStatsByDiscordIdAndSource.get(
+                      selectedMember.userId,
+                    )?.GAME
+                  }
+                  isOnlineInGame={isMemberOnlineInGame(
+                    memberGamePresenceByDiscordId,
+                    selectedMember.userId,
+                  )}
                 />
               )}
             </div>
@@ -219,6 +251,20 @@ const MembersSettingsContent = () => {
                         <MemberListItem
                           member={member}
                           isOwner={member.userId === guild?.ownerId}
+                          activityStats={
+                            memberActivityStatsByDiscordIdAndSource.get(
+                              member.userId,
+                            )?.WEB_APP
+                          }
+                          gameActivityStats={
+                            memberActivityStatsByDiscordIdAndSource.get(
+                              member.userId,
+                            )?.GAME
+                          }
+                          isOnlineInGame={isMemberOnlineInGame(
+                            memberGamePresenceByDiscordId,
+                            member.userId,
+                          )}
                         />
                       </div>
                     );
@@ -246,6 +292,20 @@ const MembersSettingsContent = () => {
                   selectedMemberColor={selectedMemberColor}
                   isOwner={selectedMember.userId === guild?.ownerId}
                   canManageMembers={canManageMembers}
+                  webActivityStats={
+                    memberActivityStatsByDiscordIdAndSource.get(
+                      selectedMember.userId,
+                    )?.WEB_APP
+                  }
+                  gameActivityStats={
+                    memberActivityStatsByDiscordIdAndSource.get(
+                      selectedMember.userId,
+                    )?.GAME
+                  }
+                  isOnlineInGame={isMemberOnlineInGame(
+                    memberGamePresenceByDiscordId,
+                    selectedMember.userId,
+                  )}
                 />
               </div>
             </div>

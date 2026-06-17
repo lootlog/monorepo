@@ -64,3 +64,17 @@ model ActivityActorSnapshot {
 
   activities Activity[] @relation("ActivityActorSnapshot_Activity")
 }
+
+model MemberActivityStats {
+  guildId            String
+  discordId          String
+  source             ActivitySource
+  lastSeenAt         DateTime?      @db.Timestamptz
+  visitCount         Int            @default(0)
+  activeSessionCount Int            @default(0)
+  createdAt          DateTime       @default(now()) @db.Timestamptz
+  updatedAt          DateTime       @updatedAt @db.Timestamptz
+
+  @@id([guildId, discordId, source])
+  @@index([guildId, source])
+}
