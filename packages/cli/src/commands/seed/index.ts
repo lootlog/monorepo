@@ -7,6 +7,14 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileExists } from "./utils/file-exists.js";
 
+const DEFAULT_ITEMS_OUTPUT = "./packages/cli/src/mocks/data/items.json";
+const DEFAULT_NPCS_OUTPUT = "./packages/cli/src/mocks/data/npcs.json";
+const DEFAULT_PLAYERS_OUTPUT = "./packages/cli/src/mocks/data/players.json";
+const DEFAULT_GUILDS_COUNT = 5;
+const DEFAULT_LOOTS_COUNT = 5000;
+const DEFAULT_BATTLES_COUNT = 1000;
+const DEFAULT_PLAYERS_COUNT = 1000;
+
 const displaySeedHelp = (): void => {
   console.log(`
 ${chalk.bold.blue("Seed Command")}
@@ -136,15 +144,13 @@ export const seedCommand = async (args: string[]): Promise<void> => {
   try {
     switch (subcommand) {
       case "scrape:items": {
-        const output =
-          options.output || "./packages/cli/src/mocks/data/items.json";
+        const output = options.output ?? DEFAULT_ITEMS_OUTPUT;
         await scrapeItems(output, options.force);
         break;
       }
 
       case "scrape:npcs": {
-        const output =
-          options.output || "./packages/cli/src/mocks/data/npcs.json";
+        const output = options.output ?? DEFAULT_NPCS_OUTPUT;
         await scrapeNpcs(output, options.force);
         break;
       }
@@ -152,10 +158,8 @@ export const seedCommand = async (args: string[]): Promise<void> => {
       case "scrape:all": {
         console.log(chalk.blue("🔄 Starting complete scraping process...\n"));
 
-        const itemsOutput =
-          options.itemsOutput || "./packages/cli/src/mocks/data/items.json";
-        const npcsOutput =
-          options.npcsOutput || "./packages/cli/src/mocks/data/npcs.json";
+        const itemsOutput = options.itemsOutput ?? DEFAULT_ITEMS_OUTPUT;
+        const npcsOutput = options.npcsOutput ?? DEFAULT_NPCS_OUTPUT;
 
         await scrapeItems(itemsOutput, options.force);
         console.log();
@@ -168,9 +172,8 @@ export const seedCommand = async (args: string[]): Promise<void> => {
       }
 
       case "generate:players": {
-        const count = options.count || options.players || 1000;
-        const output =
-          options.output || "./packages/cli/src/mocks/data/players.json";
+        const count = options.count ?? options.players ?? DEFAULT_PLAYERS_COUNT;
+        const output = options.output ?? DEFAULT_PLAYERS_OUTPUT;
         const outputPath = path.resolve(output);
 
         const outputExists = await fileExists(outputPath);
@@ -215,16 +218,10 @@ export const seedCommand = async (args: string[]): Promise<void> => {
           console.log(
             chalk.blue("📥 Step 1: Scraping data from margoworld.pl"),
           );
-          await scrapeItems(
-            "./packages/cli/src/mocks/data/items.json",
-            options.force,
-          );
+          await scrapeItems(DEFAULT_ITEMS_OUTPUT, options.force);
           console.log();
 
-          await scrapeNpcs(
-            "./packages/cli/src/mocks/data/npcs.json",
-            options.force,
-          );
+          await scrapeNpcs(DEFAULT_NPCS_OUTPUT, options.force);
           console.log();
         } else {
           console.log(
@@ -233,10 +230,8 @@ export const seedCommand = async (args: string[]): Promise<void> => {
         }
 
         console.log(chalk.blue("👥 Step 2: Generating players"));
-        const playerCount = options.players || 1000;
-        const playersPath = path.resolve(
-          "./packages/cli/src/mocks/data/players.json",
-        );
+        const playerCount = options.players ?? DEFAULT_PLAYERS_COUNT;
+        const playersPath = path.resolve(DEFAULT_PLAYERS_OUTPUT);
 
         const playersFileExists = await fileExists(playersPath);
 
@@ -254,9 +249,9 @@ export const seedCommand = async (args: string[]): Promise<void> => {
 
         console.log(chalk.blue("🌱 Step 3: Seeding database"));
         await seed({
-          guildsCount: options.guilds || 5,
-          lootsCount: options.loots || 5000,
-          battlesCount: options.battles || 1000,
+          guildsCount: options.guilds ?? DEFAULT_GUILDS_COUNT,
+          lootsCount: options.loots ?? DEFAULT_LOOTS_COUNT,
+          battlesCount: options.battles ?? DEFAULT_BATTLES_COUNT,
           playersCount: playerCount,
           clean: true,
         });
