@@ -2,7 +2,9 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Other } from "@lootlog/margonem/others";
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useGlobalStore } from "@/store/global.store";
+import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 
 const mocks = vi.hoisted(() => {
@@ -70,13 +72,53 @@ function setRuntimeOthers(others: Record<string, Other>, check = vi.fn()) {
   return check;
 }
 
+function setOnlineOwner(other: Other): void {
+  useOnlineCharacterOwnersStore.getState().setPresenceResponse({
+    "player-discord": [
+      {
+        discordId: "player-discord",
+        isAfk: false,
+        player: {
+          accountId: String(other.d.account),
+          characterId: String(other.d.id),
+          icon: other.d.icon,
+          lvl: other.d.lvl,
+          name: other.d.nick,
+          prof: other.d.prof,
+          world: "tempest",
+        },
+      },
+    ],
+  });
+}
+
+function createTownEvent(): GameEvent {
+  return {
+    town: {
+      bg: "dd3.jpg",
+      file: "it-eldrik-2.png",
+      id: 2659,
+      mainid: 1,
+      mode: 0,
+      name: "Dom Eldrika p.1",
+      pvp: 0,
+      visibility: 0,
+      water: "",
+      x: 16,
+      y: 16,
+    },
+  };
+}
+
 describe("useCharacterTooltipGameEvents", () => {
   beforeEach(() => {
     mocks.state.afterGameEventHandler = null;
     mocks.unsubscribe.mockReset();
     mocks.subscribeAfterGameEvent.mockClear();
     mocks.patchOtherCharacterTooltips.mockClear();
+    useCharacterTooltipCatchingGuildsStore.getState().clear();
     useGlobalStore.getState().setGameState({ gameInitialized: false });
+    useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
 
     Object.defineProperty(window, "Engine", {
@@ -193,6 +235,74 @@ describe("useCharacterTooltipGameEvents", () => {
     mocks.state.afterGameEventHandler?.({ e: "ok" });
 
     expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
+  });
+
+  it("clears stored others on town events without other payloads", () => {
+    const oldOther = createRuntimeOther("old");
+    useOthersStore.getState().setMany({ old: oldOther });
+
+    renderHook(() => useCharacterTooltipGameEvents());
+
+    mocks.state.afterGameEventHandler?.(createTownEvent());
+
+    expect(useOthersStore.getState().othersById).toEqual({});
+    expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
+  });
+
+  it("clears stored others before processing other payloads from town events", () => {
+    const oldOther = createRuntimeOther("old");
+    const newOther = createRuntimeOther("new");
+    useOthersStore.getState().setMany({ old: oldOther });
+    setRuntimeOthers({ new: newOther });
+
+    renderHook(() => useCharacterTooltipGameEvents());
+
+    mocks.state.afterGameEventHandler?.({
+      ...createTownEvent(),
+      other: {
+        new: {
+          action: "CREATE",
+          account: 1,
+          nick: "new",
+          icon: "new.gif",
+          x: 1,
+          y: 1,
+          dir: 0,
+          stasis: 0,
+          stasis_incoming_seconds: 0,
+          rights: 0,
+          lvl: 300,
+          oplvl: 0,
+          prof: "w",
+          attr: 0,
+          is_blessed: 0,
+          relation: 0,
+        },
+      },
+    });
+
+    expect(useOthersStore.getState().othersById).toEqual({ new: newOther });
+    expect(mocks.patchOtherCharacterTooltips).toHaveBeenCalledWith([newOther]);
+  });
+
+  it("clears the active tooltip target on town events", () => {
+    const other = createRuntimeOther("active");
+    setOnlineOwner(other);
+    useCharacterTooltipCatchingGuildsStore.getState().setActiveOther(other);
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
+    ).not.toBeNull();
+
+    renderHook(() => useCharacterTooltipGameEvents());
+
+    mocks.state.afterGameEventHandler?.(createTownEvent());
+
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeOther,
+    ).toBeNull();
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
+    ).toBeNull();
   });
 
   it("unsubscribes on unmount", () => {
