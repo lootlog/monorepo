@@ -452,9 +452,10 @@ describe("BattleAnalyticsService", () => {
     it("should return empty records when no characters found", async () => {
       drizzleService.db.query.userCharacters.findMany.mockResolvedValue([]);
 
-      const result = await service.getHeadToHead({}, mockUserId);
+      const result = await service.getHeadToHead({ size: 10 }, mockUserId);
 
       expect(result.records).toEqual([]);
+      expect(result.pagination.size).toBe(10);
       expect(result.pagination.hasNext).toBe(false);
     });
 
@@ -542,11 +543,12 @@ describe("BattleAnalyticsService", () => {
       drizzleService.db.query.userCharacters.findMany.mockResolvedValue([]);
 
       const result = await service.getPlayerVsPlayerBattles(
-        { opponentId: "opponent-1" },
+        { opponentId: "opponent-1", size: 10 },
         mockUserId,
       );
 
       expect(result.battles).toEqual([]);
+      expect(result.pagination.size).toBe(10);
       expect(result.pagination.hasNext).toBe(false);
     });
   });
