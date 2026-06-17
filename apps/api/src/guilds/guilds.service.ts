@@ -32,7 +32,7 @@ import { generateSlug } from "src/shared/utils/generate-slug";
 import { RESTRICTED_VANITY_URLS } from "src/guilds/constants/restricted-vanity-urls";
 import { DiscordService } from "src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { isDiscordAdministrator } from "@lootlog/nest-shared/utils";
+import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import {
   getPermissionsCachePattern,
   getGuildCacheKey,
