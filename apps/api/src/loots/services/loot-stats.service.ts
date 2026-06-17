@@ -130,10 +130,14 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
   ) {
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
+    let nextParamIndex = 2;
+
+    const dateCondition = dateFrom
+      ? `AND l."createdAt" >= $${nextParamIndex++}`
+      : "";
+    const worldCondition = world ? `AND l.world = $${nextParamIndex++}` : "";
     const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
+      ? `AND ns.type = ANY($${nextParamIndex}::text[])`
       : "";
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
