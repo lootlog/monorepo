@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { ChartArea, EyeOff, Eye } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { EyeOff, Eye } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Table,
   TableBody,
@@ -16,12 +17,30 @@ import type {
 } from "@/lib/api/battlelog-types";
 import { useStatsCustomization } from "@/hooks/use-stats-customization";
 import { StatsCustomizationModal } from "./stats-customization/stats-customization-modal";
+import { BattleStatsTableHeader } from "./battle-stats-table-header";
+import { useTranslation } from "react-i18next";
+import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
+import { cn } from "@lootlog/ui/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
+import { SearchInput } from "@/components/ui/search-input";
+
+const STAT_SEARCH_SCROLL_OFFSET_PX = 40;
 
 interface OneVsOneStatsTableProps {
   battle: Battle;
+  cardClassName?: string;
+  compact?: boolean;
+  scrollClassName?: string;
   showHeader?: boolean;
+  headerTitle?: string;
+  headerActions?: ReactNode;
   hideZeros?: boolean;
   onHideZerosChange?: (value: boolean) => void;
+  statsCustomizationConfig?: StatsCustomizationConfig;
 }
 
 interface StatDefinition {
@@ -35,6 +54,12 @@ interface StatCategory {
   name: string;
   stats: StatDefinition[];
 }
+
+type VisibleStatCategory = {
+  id: string;
+  name: string;
+  stats: StatDefinition[];
+};
 
 export const STAT_CATEGORIES: StatCategory[] = [
   {
@@ -351,18 +376,72 @@ const formatValue = (
   return String(value ?? 0);
 };
 
+const normalizeStatSearchText = (value: string) =>
+  value
+    .trim()
+    .toLocaleLowerCase("pl-PL")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const getMatchingStatSearchKey = (
+  query: string,
+  categories: VisibleStatCategory[],
+) => {
+  const normalizedQuery = normalizeStatSearchText(query);
+
+  if (!normalizedQuery) {
+    return null;
+  }
+
+  for (const category of categories) {
+    const categoryIndex = normalizeStatSearchText(
+      `${category.name} ${category.id}`,
+    );
+
+    if (categoryIndex.includes(normalizedQuery)) {
+      return `category:${category.id}`;
+    }
+
+    for (const stat of category.stats) {
+      const statIndex = normalizeStatSearchText(
+        `${stat.label} ${String(stat.key)}`,
+      );
+
+      if (statIndex.includes(normalizedQuery)) {
+        return `stat:${String(stat.key)}`;
+      }
+    }
+  }
+
+  return null;
+};
+
 export function OneVsOneStatsTable({
   battle,
+  cardClassName,
+  compact,
+  scrollClassName,
   showHeader = true,
+  headerTitle,
+  headerActions,
   hideZeros: controlledHideZeros,
   onHideZerosChange,
+  statsCustomizationConfig,
 }: OneVsOneStatsTableProps) {
+  const { t } = useTranslation();
   const [internalHideZeros, setInternalHideZeros] = useState(true);
+  const [statSearchQuery, setStatSearchQuery] = useState("");
+  const [activeStatSearchKey, setActiveStatSearchKey] = useState<string | null>(
+    null,
+  );
+  const statsScrollViewportRef = useRef<HTMLDivElement>(null);
+  const statSearchAnimationFrameRef = useRef<number | null>(null);
   const hideZeros = controlledHideZeros ?? internalHideZeros;
   const setHideZeros = onHideZerosChange ?? setInternalHideZeros;
 
+  const internalStatsCustomization = useStatsCustomization(STAT_CATEGORIES);
   const {
-    config,
+    config: internalConfig,
     updateCategoryOrder,
     toggleCategoryVisibility,
     updateCategoryName,
@@ -372,7 +451,8 @@ export function OneVsOneStatsTable({
     addCategory,
     removeCategory,
     resetToDefaults,
-  } = useStatsCustomization(STAT_CATEGORIES);
+  } = internalStatsCustomization;
+  const config = statsCustomizationConfig ?? internalConfig;
 
   const userWarrior = battle.warriors.find(
     (w) => w.originalId === battle.characterId,
@@ -431,6 +511,62 @@ export function OneVsOneStatsTable({
       (category): category is NonNullable<typeof category> => category !== null,
     );
 
+  const scrollToStatSearchKey = (searchKey: string) => {
+    if (statSearchAnimationFrameRef.current != null) {
+      cancelAnimationFrame(statSearchAnimationFrameRef.current);
+    }
+
+    statSearchAnimationFrameRef.current = requestAnimationFrame(() => {
+      statSearchAnimationFrameRef.current = null;
+
+      const matchingRow = Array.from(
+        statsScrollViewportRef.current?.querySelectorAll<HTMLElement>(
+          "[data-battle-stat-search-key]",
+        ) ?? [],
+      ).find((row) => row.dataset.battleStatSearchKey === searchKey);
+
+      if (!matchingRow || !statsScrollViewportRef.current) {
+        return;
+      }
+
+      const viewportRect =
+        statsScrollViewportRef.current.getBoundingClientRect();
+      const rowRect = matchingRow.getBoundingClientRect();
+      const scrollTop =
+        statsScrollViewportRef.current.scrollTop +
+        rowRect.top -
+        viewportRect.top -
+        STAT_SEARCH_SCROLL_OFFSET_PX;
+
+      statsScrollViewportRef.current.scrollTo({
+        top: Math.max(0, scrollTop),
+        behavior: "smooth",
+      });
+    });
+  };
+
+  useEffect(
+    () => () => {
+      if (statSearchAnimationFrameRef.current == null) {
+        return;
+      }
+
+      cancelAnimationFrame(statSearchAnimationFrameRef.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const matchingKey = getMatchingStatSearchKey(statSearchQuery, visibleStats);
+    setActiveStatSearchKey(matchingKey);
+
+    if (!matchingKey) {
+      return;
+    }
+
+    scrollToStatSearchKey(matchingKey);
+  }, [statSearchQuery, visibleStats]);
+
   if (!user || !opponent) {
     return (
       <Card className="border-border bg-card/40 backdrop-blur-sm p-8 w-full text-center text-muted-foreground">
@@ -440,18 +576,31 @@ export function OneVsOneStatsTable({
   }
 
   return (
-    <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full">
+    <Card
+      className={cn(
+        "border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full",
+        cardClassName,
+      )}
+    >
       {showHeader && (
-        <div className="sticky top-0 z-20 bg-background border-b w-full">
-          <div className="p-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-2 font-semibold">
-                <ChartArea className="h-5 w-5" />
-                Statystyki walki 1v1
-              </div>
-              <div className="flex items-center gap-2">
+        <BattleStatsTableHeader
+          title={headerTitle ?? t("battlePanel.single.statistics.title")}
+          compact={compact}
+          leading={
+            <SearchInput
+              aria-label={t("battleUi.customization.searchStat")}
+              className="h-9 text-sm"
+              placeholder={t("battleUi.customization.searchStat")}
+              value={statSearchQuery}
+              wrapperClassName="w-full"
+              onChange={(event) => setStatSearchQuery(event.target.value)}
+            />
+          }
+          actions={
+            headerActions ?? (
+              <>
                 <StatsCustomizationModal
-                  config={config}
+                  config={internalConfig}
                   defaultCategories={STAT_CATEGORIES}
                   onUpdateCategoryOrder={updateCategoryOrder}
                   onToggleCategoryVisibility={toggleCategoryVisibility}
@@ -462,73 +611,151 @@ export function OneVsOneStatsTable({
                   onAddCategory={addCategory}
                   onRemoveCategory={removeCategory}
                   onResetToDefaults={resetToDefaults}
+                  compactTrigger={compact}
                 />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setHideZeros(!hideZeros)}
-                  className="gap-2"
-                >
-                  {hideZeros ? (
-                    <>
-                      <Eye className="h-4 w-4" />
-                      Pokaż wszystkie
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="h-4 w-4" />
-                      Ukryj zerowe wartości
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+                {compact ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setHideZeros(!hideZeros)}
+                        aria-label={
+                          hideZeros
+                            ? t("battlePanel.single.statistics.showAll")
+                            : t("battlePanel.single.statistics.hideZeros")
+                        }
+                        className="size-8"
+                      >
+                        {hideZeros ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {hideZeros
+                        ? t("battlePanel.single.statistics.showAll")
+                        : t("battlePanel.single.statistics.hideZeros")}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setHideZeros(!hideZeros)}
+                    className="gap-2"
+                  >
+                    {hideZeros ? (
+                      <>
+                        <Eye className="h-4 w-4" />
+                        {t("battlePanel.single.statistics.showAll")}
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="h-4 w-4" />
+                        {t("battlePanel.single.statistics.hideZeros")}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </>
+            )
+          }
+        />
       )}
-      <div className="w-full overflow-x-auto max-w-screen">
+      <ScrollArea
+        ref={statsScrollViewportRef}
+        className={cn("min-h-0 w-full max-w-screen", scrollClassName)}
+      >
         <Table
+          className={cn(compact && "text-sm")}
           style={{
             tableLayout: "fixed",
             width: "100%",
-            minWidth: "420px",
+            minWidth: compact ? "360px" : "420px",
           }}
         >
           <colgroup>
-            <col style={{ width: "180px" }} />
-            <col style={{ width: "120px" }} />
-            <col style={{ width: "120px" }} />
+            <col style={{ width: compact ? "150px" : "180px" }} />
+            <col style={{ width: compact ? "105px" : "120px" }} />
+            <col style={{ width: compact ? "105px" : "120px" }} />
           </colgroup>
           <TableHeader>
             <TableRow>
-              <TableHead className="sticky left-0 z-10 bg-background border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+              <TableHead
+                className={cn(
+                  "sticky left-0 top-0 z-20 bg-background border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                  compact && "h-8 px-2 text-sm",
+                )}
+              >
                 Statystyka
               </TableHead>
-              <TableHead className="text-center whitespace-wrap px-2 bg-green-400/10">
+              <TableHead
+                className={cn(
+                  "sticky top-0 z-10 text-center whitespace-wrap px-2 bg-green-950 text-green-50",
+                  compact && "h-8 px-1.5 text-sm",
+                )}
+              >
                 {user.name}
               </TableHead>
-              <TableHead className="text-center whitespace-wrap px-2 bg-red-400/10">
+              <TableHead
+                className={cn(
+                  "sticky top-0 z-10 text-center whitespace-wrap px-2 bg-red-950 text-red-50",
+                  compact && "h-8 px-1.5 text-sm",
+                )}
+              >
                 {opponent.name}
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {visibleStats.map((category) => [
-              <TableRow key={`category-${category.id}`} className="bg-muted/50">
-                <TableCell className="sticky left-0 z-10 font-semibold bg-muted/50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] border-r">
+              <TableRow
+                key={`category-${category.id}`}
+                className={cn(
+                  "bg-muted/50",
+                  activeStatSearchKey === `category:${category.id}` &&
+                    "outline outline-1 -outline-offset-1 outline-primary/60",
+                )}
+                data-battle-stat-search-key={`category:${category.id}`}
+              >
+                <TableCell
+                  className={cn(
+                    "sticky left-0 z-10 font-semibold bg-muted/50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] border-r",
+                    compact ? "px-2 py-1" : "py-1",
+                  )}
+                >
                   {category.name}
                 </TableCell>
-                <TableCell className="bg-muted/50" />
-                <TableCell className="bg-muted/50" />
+                <TableCell
+                  className={cn("bg-muted/50", compact && "px-1.5 py-1")}
+                />
+                <TableCell
+                  className={cn("bg-muted/50", compact && "px-1.5 py-1")}
+                />
               </TableRow>,
               ...category.stats.map((stat) => {
                 const userValue = user[stat.key];
                 const opponentValue = opponent[stat.key];
+                const statSearchKey = `stat:${String(stat.key)}`;
 
                 return (
-                  <TableRow key={`${category.id}-${stat.key}`}>
+                  <TableRow
+                    key={`${category.id}-${stat.key}`}
+                    className={cn(
+                      activeStatSearchKey === statSearchKey &&
+                        "outline outline-1 -outline-offset-1 outline-primary/60",
+                    )}
+                    data-battle-stat-search-key={statSearchKey}
+                  >
                     <TableCell
-                      className={`sticky left-0 z-10 hover:bg-background/50 bg-background border-r font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-2 ${stat.color || ""}`}
+                      className={cn(
+                        "sticky left-0 z-10 hover:bg-background/50 bg-background border-r font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                        compact ? "px-2 py-1 leading-snug" : "py-2",
+                        stat.color,
+                      )}
                       style={{
                         wordWrap: "break-word",
                         overflowWrap: "break-word",
@@ -537,10 +764,20 @@ export function OneVsOneStatsTable({
                     >
                       {stat.label}
                     </TableCell>
-                    <TableCell className="text-center tabular-nums bg-green-400/10 whitespace-nowrap px-2 py-2">
+                    <TableCell
+                      className={cn(
+                        "text-center tabular-nums bg-green-400/10 whitespace-nowrap",
+                        compact ? "px-1.5 py-1" : "px-2 py-2",
+                      )}
+                    >
                       {formatValue(userValue, stat.format)}
                     </TableCell>
-                    <TableCell className="text-center tabular-nums bg-red-400/10 whitespace-nowrap px-2 py-2">
+                    <TableCell
+                      className={cn(
+                        "text-center tabular-nums bg-red-400/10 whitespace-nowrap",
+                        compact ? "px-1.5 py-1" : "px-2 py-2",
+                      )}
+                    >
                       {formatValue(opponentValue, stat.format)}
                     </TableCell>
                   </TableRow>
@@ -549,7 +786,7 @@ export function OneVsOneStatsTable({
             ])}
           </TableBody>
         </Table>
-      </div>
+      </ScrollArea>
     </Card>
   );
 }

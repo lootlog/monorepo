@@ -125,6 +125,148 @@ export type ParsedMove = {
   actions: { actionType: string; param: string }[];
 };
 
+export type ParsedBattlePayload = {
+  accountId: string;
+  characterId: string;
+  world: string;
+  events: ParsedMove[];
+  warriors: Record<string, BattleWarriorSnapshot>;
+  duration?: number;
+  matchmaking?: MatchmakingInfo;
+};
+
+export type BattleActionCategory =
+  | "damage"
+  | "healing"
+  | "mitigation"
+  | "counter"
+  | "absorb"
+  | "resource"
+  | "control"
+  | "buff"
+  | "debuff"
+  | "spell"
+  | "combo"
+  | "outcome"
+  | "movement"
+  | "legendary"
+  | "system"
+  | "unknown";
+
+export type BattleTimelineAction = {
+  actionType: string;
+  param: string;
+  category: BattleActionCategory;
+  actorId: string | null;
+  targetId: string | null;
+  value: number;
+  handled: boolean;
+};
+
+export type BattleTimelineWarriorDelta = {
+  damageDealt: number;
+  damageTaken: number;
+  healingDone: number;
+  healingReceived: number;
+  mitigation: number;
+  resourceDelta: number;
+  resourcePressure: number;
+  energyPressure: number;
+  manaPressure: number;
+  absorbGained: number;
+  absorbSpent: number;
+  magicAbsorbGained: number;
+  magicAbsorbSpent: number;
+  controlApplied: number;
+  controlTaken: number;
+};
+
+export type BattleTimelineWarriorCumulative = {
+  damageDealt: number;
+  damageTaken: number;
+  healingDone: number;
+  healingReceived: number;
+  mitigation: number;
+  resourceDelta: number;
+  resourcePressure: number;
+  energyPressure: number;
+  manaPressure: number;
+  absorbGained: number;
+  absorbSpent: number;
+  magicAbsorbGained: number;
+  magicAbsorbSpent: number;
+  controlApplied: number;
+  controlTaken: number;
+};
+
+export type BattleTimelineTurn = {
+  turn: number;
+  attackerId: string | null;
+  defenderId: string | null;
+  attackerHpPercentage: number | null;
+  defenderHpPercentage: number | null;
+  hpByWarrior: Record<string, number>;
+  teamHp: Record<string, number>;
+  teamHpDelta: Record<string, number>;
+  deltas: {
+    damage: number;
+    healing: number;
+    mitigation: number;
+    resourcePressure: number;
+    energyPressure: number;
+    manaPressure: number;
+    byWarrior: Record<string, BattleTimelineWarriorDelta>;
+  };
+  cumulative: Record<string, BattleTimelineWarriorCumulative>;
+  actions: BattleTimelineAction[];
+  flags: string[];
+  labels: string[];
+  significanceScore: number;
+  reason: string;
+};
+
+export type WarriorMechanicsAggregate = {
+  warriorId: string;
+  name: string;
+  team: number;
+  absorptionGained: number;
+  absorptionSpent: number;
+  magicAbsorptionGained: number;
+  magicAbsorptionSpent: number;
+  auxiliaryDamageTaken: number;
+  targetHealing: number;
+  spells: Array<{
+    key: string;
+    name: string;
+    skillId: number | null;
+    casts: number;
+  }>;
+  maxCombo: number;
+  controlApplied: number;
+  controlTaken: number;
+  mitigationEvents: number;
+  effectDamageTaken: number;
+  resourcePressure: number;
+  energyPressure: number;
+  manaPressure: number;
+};
+
+export type BattleActionCoverageEntry = {
+  actionType: string;
+  count: number;
+  handled: boolean;
+  category: BattleActionCategory;
+};
+
+export type BattleActionCoverage = {
+  totalActions: number;
+  handledActions: number;
+  unhandledActions: number;
+  handledPercentage: number;
+  actions: BattleActionCoverageEntry[];
+  unknown: BattleActionCoverageEntry[];
+};
+
 export type StatisticEntry = {
   warriorId: string;
   name: string;
@@ -169,12 +311,204 @@ export type BattleAnalysis = {
   };
   type: string;
   statistics: BattleStatistics;
+  battleTimeline: BattleTimelineTurn[];
+  warriorMechanics: WarriorMechanicsAggregate[];
+  actionCoverage: BattleActionCoverage;
   matchmaking?: MatchmakingInfo;
 };
+
+const DAMAGE_DEALT_ACTIONS: Record<string, keyof Warrior> = {
+  "+dmgd": "distanceDamage",
+  "+dmg": "meleeDamage",
+  "+dmgo": "auxiliaryDamage",
+  "+dmga": "auxiliaryDamage",
+  "+dmgf": "fireDamage",
+  "+dmgc": "frostDamage",
+  "+dmgl": "lightningDamage",
+  "+thirdatt": "thirdAttDamage",
+};
+
+const DAMAGE_TAKEN_ACTIONS: Record<string, keyof Warrior> = {
+  "-dmgd": "distanceDamageTaken",
+  "-dmg": "meleeDamageTaken",
+  "-dmgo": "auxiliaryDamageTaken",
+  "-dmga": "auxiliaryDamageTaken",
+  "-dmgf": "fireDamageTaken",
+  "-dmgc": "frostDamageTaken",
+  "-dmgl": "lightningDamageTaken",
+  "-thirdatt": "thirdAttDamageTaken",
+};
+
+const SPECIAL_DAMAGE_ACTIONS: Partial<
+  Record<string, { targetTakesDamage: boolean }>
+> = {
+  "+rage": { targetTakesDamage: true },
+  "+taken_dmg": { targetTakesDamage: true },
+};
+
+const PASSIVE_DAMAGE_ACTIONS = new Set([
+  "wound",
+  "critwound",
+  "anguish",
+  "poison",
+  "injure",
+  "fire",
+  "light",
+]);
+
+const MITIGATION_ACTIONS = new Set([
+  "-evade",
+  "-blok",
+  "-block",
+  "-parry",
+  "-arrowblock",
+  "-pierceb",
+  "active_decblock_per",
+  "active_decblock_per-enemies",
+  "alllowdmg",
+]);
+const COUNTER_ACTIONS = new Set(["-contra"]);
+
+const ABSORB_GAIN_ACTIONS = new Set([
+  "+absorb",
+  "+abdest",
+  "+abdest_per",
+  "active_absorbdest_per",
+]);
+
+const MAGIC_ABSORB_GAIN_ACTIONS = new Set(["+absorbm", "+abmdest_per"]);
+const ABSORB_SPEND_ACTIONS = new Set(["-absorb"]);
+const MAGIC_ABSORB_SPEND_ACTIONS = new Set(["-absorbm"]);
+
+const CONTROL_ACTIONS = new Set([
+  "+stun",
+  "stun",
+  "+freeze",
+  "freeze",
+  "+slow",
+  "+critslow_per",
+  "+distract",
+  "removestun-allies",
+  "removeslow-allies",
+]);
+
+const RESOURCE_ACTIONS = new Set([
+  "energy",
+  "en-regen",
+  "mana",
+  "-endest",
+  "-manadest",
+  "+engback",
+  "+energy",
+  "energyout",
+  "+endest",
+  "stealmana",
+]);
+
+const HEALING_ACTIONS = new Set([
+  "heal",
+  "bandage",
+  "heal_target",
+  "healall_per",
+  "lowheal_per-enemies",
+  "achpp_per",
+  "legbon_lastheal",
+  "legbon_holytouch_heal",
+]);
+
+const SPELL_ACTIONS = new Set(["tspell", "skillId", "+oth_dmg"]);
+const COMBO_ACTIONS = new Set(["combo", "combo-max"]);
+const OUTCOME_ACTIONS = new Set(["winner", "loser", "flee", "+ph"]);
+const MOVEMENT_ACTIONS = new Set(["step", "+swing"]);
+
+const LEGENDARY_ACTIONS = new Set([
+  "+legbon_curse",
+  "-legbon_cleanse",
+  "legbon_lastheal",
+  "-legbon_glare",
+  "+legbon_holytouch",
+  "legbon_holytouch_heal",
+  "-legbon_critred",
+  "-legbon_facade",
+  "+legbon_verycrit",
+  "+legbon_anguish",
+  "+legbon_puncture",
+]);
+
+const BUFF_ACTIONS = new Set([
+  "+pierce",
+  "+crit",
+  "+fastarrow",
+  "+injure",
+  "+wound",
+  "+woundpoison",
+  "+of_crit",
+  "+of_wound",
+  "+critsa_per",
+  "+critwound",
+  "+crush_physical",
+  "+crush_distance",
+  "+critpierce",
+  "+spell-taken_dmg-all",
+  "aura-sa_per",
+  "aura-adddmg2_per-meele",
+  "critval-allies",
+  "critmval-allies",
+  "absolute",
+  "+exp",
+]);
+
+const DEBUFF_ACTIONS = new Set([
+  "+acdmg",
+  "+actdmg",
+  "+resdmg",
+  "-redacdmg_per",
+  "-redabdest_per",
+  "-poison_lowdmg_per",
+  "critwound",
+]);
+
+const SYSTEM_ACTIONS = new Set(["txt", "shout"]);
+
+const createEmptyTimelineStats = (): BattleTimelineWarriorDelta => ({
+  damageDealt: 0,
+  damageTaken: 0,
+  healingDone: 0,
+  healingReceived: 0,
+  mitigation: 0,
+  resourceDelta: 0,
+  resourcePressure: 0,
+  energyPressure: 0,
+  manaPressure: 0,
+  absorbGained: 0,
+  absorbSpent: 0,
+  magicAbsorbGained: 0,
+  magicAbsorbSpent: 0,
+  controlApplied: 0,
+  controlTaken: 0,
+});
+
+const copyTimelineStats = (
+  stats: BattleTimelineWarriorCumulative,
+): BattleTimelineWarriorCumulative => ({ ...stats });
 
 export class BattleProcessor {
   private readonly warriors = new Map<string, Warrior>();
   private readonly lastHp = new Map<string, number>();
+  private readonly battleTimeline: BattleTimelineTurn[] = [];
+  private readonly timelineHp = new Map<string, number>();
+  private readonly timelineCumulative = new Map<
+    string,
+    BattleTimelineWarriorCumulative
+  >();
+  private readonly warriorMechanics = new Map<
+    string,
+    WarriorMechanicsAggregate
+  >();
+  private readonly actionCoverage = new Map<
+    string,
+    { count: number; handled: boolean; category: BattleActionCategory }
+  >();
   private readonly battleOutcome = {
     winner: "",
     loser: "",
@@ -189,6 +523,7 @@ export class BattleProcessor {
   processBattle(battleData: BattlePayload): BattleAnalysis {
     const duration = this.calculateBattleDuration(battleData.events);
     this.initializeBattleWarriors(battleData.events);
+    this.initializeTimelineState();
     this.determineBattleType();
     const matchmakingInfo = this.getMatchmakingInfo(battleData.events);
 
@@ -206,7 +541,37 @@ export class BattleProcessor {
       outcome: this.battleOutcome,
       type: this.battleType,
       statistics,
+      battleTimeline: this.battleTimeline,
+      warriorMechanics: this.getWarriorMechanics(),
+      actionCoverage: this.getActionCoverage(),
       matchmaking: matchmakingInfo,
+    };
+  }
+
+  processParsedBattle(battleData: ParsedBattlePayload): BattleAnalysis {
+    this.initializeWarriorsFromSnapshots(battleData.warriors);
+    this.initializeTimelineState();
+    this.determineBattleType();
+
+    this.calculateBattleStats(battleData.events, {
+      characterId: battleData.characterId,
+    });
+    this.determineOutcomeTeams();
+    this.calculateDerivedStats();
+
+    const statistics = this.calculateBattleStatistics();
+
+    return {
+      duration: battleData.duration ?? 0,
+      warriors: Array.from(this.warriors.values()),
+      parsedMoves: battleData.events,
+      outcome: this.battleOutcome,
+      type: this.battleType,
+      statistics,
+      battleTimeline: this.battleTimeline,
+      warriorMechanics: this.getWarriorMechanics(),
+      actionCoverage: this.getActionCoverage(),
+      matchmaking: battleData.matchmaking,
     };
   }
 
@@ -222,10 +587,10 @@ export class BattleProcessor {
         attackerId: attackerId !== "0" ? attackerId : null,
         defenderId: defenderId !== "0" ? defenderId : null,
         attackerHpPercentage: attackerHp
-          ? Number.parseInt(attackerHp, 10)
+          ? Number.parseFloat(attackerHp.replace(",", "."))
           : null,
         defenderHpPercentage: defenderHp
-          ? Number.parseInt(defenderHp, 10)
+          ? Number.parseFloat(defenderHp.replace(",", "."))
           : null,
         actions: actions.map((action) => {
           const [actionType = "", param = ""] = action.split("=");
@@ -239,15 +604,21 @@ export class BattleProcessor {
     moves: ParsedMove[],
     battleMeta: { characterId: string },
   ) {
-    for (const move of moves) {
+    for (const [moveIndex, move] of moves.entries()) {
+      const teamHpBefore = this.calculateTeamHp();
+
       this.processOutcome(move);
 
       if (!move.actions.length) {
         this.updateHpTracking(move);
+        this.recordTimelineTurn(moveIndex, move, teamHpBefore);
         continue;
       }
 
       const tspellAction = move.actions.find((a) => a.actionType === "tspell");
+      const skillIdAction = move.actions.find(
+        (a) => a.actionType === "skillId",
+      );
       const hasStepAction = move.actions.some((a) => a.actionType === "step");
 
       if (hasStepAction && move.attackerId) {
@@ -258,15 +629,17 @@ export class BattleProcessor {
         }
       }
 
-      this.processTurnTracking(move, tspellAction);
+      this.processTurnTracking(move, tspellAction, skillIdAction);
       this.processActions(move, !!tspellAction, battleMeta);
       this.updateHpTracking(move);
+      this.recordTimelineTurn(moveIndex, move, teamHpBefore);
     }
   }
 
   private processTurnTracking(
     move: ParsedMove,
     tspellAction?: { actionType: string; param: string },
+    skillIdAction?: { actionType: string; param: string },
   ) {
     if (tspellAction) {
       if (move.attackerId && move.defenderId) {
@@ -280,9 +653,9 @@ export class BattleProcessor {
         }
       }
 
-      const skillId = tspellAction.param
-        ? Number.parseInt(tspellAction.param, 10)
-        : 0;
+      const skillIdParam = skillIdAction?.param ?? tspellAction.param;
+      const skillId = skillIdParam ? Number.parseInt(skillIdParam, 10) : 0;
+      this.trackSpellMechanics(move, tspellAction.param, skillId);
       this.remainingFollowUpAttacks = skillId === 97 || skillId === 239 ? 2 : 1;
       this.lastAttackerId = move.attackerId;
     } else {
@@ -320,6 +693,514 @@ export class BattleProcessor {
       }
       this.lastHp.set(move.defenderId, move.defenderHpPercentage);
     }
+  }
+
+  private recordTimelineTurn(
+    moveIndex: number,
+    move: ParsedMove,
+    teamHpBefore: Record<string, number>,
+  ): void {
+    const analyzed = this.analyzeTimelineActions(move);
+    this.updateTimelineHp(move);
+
+    const hpByWarrior = this.getHpByWarrior();
+    const teamHp = this.calculateTeamHp();
+    const teamHpDelta = this.calculateTeamHpDelta(teamHpBefore, teamHp);
+    const flags = new Set(analyzed.flags);
+    const labels = new Set(analyzed.labels);
+
+    for (const [warriorId, hp] of Object.entries(hpByWarrior)) {
+      if (hp <= 0) {
+        flags.add("kill");
+        labels.add(`kill:${warriorId}`);
+      }
+    }
+
+    this.applyTimelineCumulative(analyzed.byWarrior);
+
+    const cumulative = Array.from(this.timelineCumulative.entries()).reduce<
+      Record<string, BattleTimelineWarriorCumulative>
+    >((acc, [warriorId, stats]) => {
+      acc[warriorId] = copyTimelineStats(stats);
+      return acc;
+    }, {});
+
+    const turn: BattleTimelineTurn = {
+      turn: moveIndex + 1,
+      attackerId: move.attackerId,
+      defenderId: move.defenderId,
+      attackerHpPercentage: move.attackerHpPercentage,
+      defenderHpPercentage: move.defenderHpPercentage,
+      hpByWarrior,
+      teamHp,
+      teamHpDelta,
+      deltas: {
+        damage: analyzed.damage,
+        healing: analyzed.healing,
+        mitigation: analyzed.mitigation,
+        resourcePressure: analyzed.resourcePressure,
+        energyPressure: analyzed.energyPressure,
+        manaPressure: analyzed.manaPressure,
+        byWarrior: analyzed.byWarrior,
+      },
+      cumulative,
+      actions: analyzed.actions,
+      flags: Array.from(flags),
+      labels: Array.from(labels),
+      significanceScore: this.calculateSignificanceScore({
+        damage: analyzed.damage,
+        healing: analyzed.healing,
+        mitigation: analyzed.mitigation,
+        resourcePressure: analyzed.resourcePressure,
+        flags,
+        teamHpDelta,
+      }),
+      reason: this.getTimelineReason({
+        damage: analyzed.damage,
+        healing: analyzed.healing,
+        mitigation: analyzed.mitigation,
+        resourcePressure: analyzed.resourcePressure,
+        flags,
+      }),
+    };
+
+    this.battleTimeline.push(turn);
+  }
+
+  private analyzeTimelineActions(move: ParsedMove): {
+    actions: BattleTimelineAction[];
+    byWarrior: Record<string, BattleTimelineWarriorDelta>;
+    damage: number;
+    healing: number;
+    mitigation: number;
+    resourcePressure: number;
+    energyPressure: number;
+    manaPressure: number;
+    flags: string[];
+    labels: string[];
+  } {
+    const byWarrior: Record<string, BattleTimelineWarriorDelta> = {};
+    const flags = new Set<string>();
+    const labels = new Set<string>();
+    const actions: BattleTimelineAction[] = [];
+    const hasActualDamage = move.actions.some(
+      (action) => DAMAGE_TAKEN_ACTIONS[action.actionType],
+    );
+
+    let damage = 0;
+    let healing = 0;
+    let mitigation = 0;
+    let resourcePressure = 0;
+    let energyPressure = 0;
+    let manaPressure = 0;
+
+    for (const { actionType, param } of move.actions) {
+      const category = this.getActionCategory(actionType);
+      const handled = category !== "unknown";
+      const value = this.parseActionValue(param);
+      const actorId = move.attackerId;
+      const targetId = move.defenderId;
+
+      this.recordActionCoverage(actionType, category, handled);
+
+      actions.push({
+        actionType,
+        param,
+        category,
+        actorId,
+        targetId,
+        value,
+        handled,
+      });
+
+      if (DAMAGE_DEALT_ACTIONS[actionType]) {
+        if (!hasActualDamage && actorId) {
+          this.addTimelineDelta(byWarrior, actorId, "damageDealt", value);
+          damage += value;
+        }
+        flags.add("damage");
+        continue;
+      }
+
+      if (DAMAGE_TAKEN_ACTIONS[actionType]) {
+        if (actorId) {
+          this.addTimelineDelta(byWarrior, actorId, "damageDealt", value);
+        }
+        if (targetId) {
+          this.addTimelineDelta(byWarrior, targetId, "damageTaken", value);
+          if (actionType === "-dmga" || actionType === "-dmgo") {
+            this.trackAuxiliaryDamageTaken(targetId, value);
+          }
+        }
+        damage += value;
+        flags.add("damage");
+        continue;
+      }
+
+      const specialDamageAction = SPECIAL_DAMAGE_ACTIONS[actionType];
+      if (specialDamageAction) {
+        if (actorId) {
+          this.addTimelineDelta(byWarrior, actorId, "damageDealt", value);
+        }
+        if (targetId && specialDamageAction.targetTakesDamage) {
+          this.addTimelineDelta(byWarrior, targetId, "damageTaken", value);
+        }
+        damage += value;
+        flags.add("damage");
+        continue;
+      }
+
+      if (PASSIVE_DAMAGE_ACTIONS.has(actionType)) {
+        if (actorId) {
+          this.addTimelineDelta(byWarrior, actorId, "damageTaken", value);
+          this.trackEffectDamage(actorId, value);
+        }
+        damage += value;
+        flags.add("effectDamage");
+        continue;
+      }
+
+      if (HEALING_ACTIONS.has(actionType)) {
+        const healedWarriorId =
+          actionType === "heal_target" || actionType === "legbon_lastheal"
+            ? (targetId ?? actorId)
+            : actorId;
+        if (actorId) {
+          this.addTimelineDelta(byWarrior, actorId, "healingDone", value);
+          if (actionType === "heal_target") {
+            this.trackTargetHealing(actorId, value);
+          }
+        }
+        if (healedWarriorId) {
+          this.addTimelineDelta(
+            byWarrior,
+            healedWarriorId,
+            "healingReceived",
+            value,
+          );
+        }
+        healing += value;
+        flags.add("healing");
+        continue;
+      }
+
+      if (MITIGATION_ACTIONS.has(actionType)) {
+        const defenderId = targetId ?? actorId;
+        if (defenderId) {
+          this.addTimelineDelta(byWarrior, defenderId, "mitigation", value);
+          this.trackMitigationEvent(defenderId);
+        }
+        mitigation += value;
+        flags.add(this.getMitigationFlag(actionType));
+        continue;
+      }
+
+      if (COUNTER_ACTIONS.has(actionType)) {
+        flags.add("counter");
+        continue;
+      }
+
+      if (ABSORB_GAIN_ACTIONS.has(actionType)) {
+        const warriorId = actorId ?? targetId;
+        if (warriorId) {
+          this.addTimelineDelta(byWarrior, warriorId, "absorbGained", value);
+          this.trackAbsorb(warriorId, "absorptionGained", value);
+        }
+        flags.add("absorb");
+        continue;
+      }
+
+      if (MAGIC_ABSORB_GAIN_ACTIONS.has(actionType)) {
+        const warriorId = actorId ?? targetId;
+        if (warriorId) {
+          this.addTimelineDelta(
+            byWarrior,
+            warriorId,
+            "magicAbsorbGained",
+            value,
+          );
+          this.trackAbsorb(warriorId, "magicAbsorptionGained", value);
+        }
+        flags.add("absorb");
+        continue;
+      }
+
+      if (ABSORB_SPEND_ACTIONS.has(actionType)) {
+        const warriorId = targetId ?? actorId;
+        if (warriorId) {
+          this.addTimelineDelta(byWarrior, warriorId, "absorbSpent", value);
+          this.trackAbsorb(warriorId, "absorptionSpent", value);
+        }
+        mitigation += value;
+        flags.add("absorb");
+        continue;
+      }
+
+      if (MAGIC_ABSORB_SPEND_ACTIONS.has(actionType)) {
+        const warriorId = targetId ?? actorId;
+        if (warriorId) {
+          this.addTimelineDelta(
+            byWarrior,
+            warriorId,
+            "magicAbsorbSpent",
+            value,
+          );
+          this.trackAbsorb(warriorId, "magicAbsorptionSpent", value);
+        }
+        mitigation += value;
+        flags.add("absorb");
+        continue;
+      }
+
+      if (CONTROL_ACTIONS.has(actionType)) {
+        if (actorId) {
+          this.addTimelineDelta(byWarrior, actorId, "controlApplied", 1);
+          this.trackControl(actorId, "controlApplied");
+        }
+        if (targetId) {
+          this.addTimelineDelta(byWarrior, targetId, "controlTaken", 1);
+          this.trackControl(targetId, "controlTaken");
+        }
+        flags.add(actionType.includes("freeze") ? "freeze" : "stun");
+        continue;
+      }
+
+      if (RESOURCE_ACTIONS.has(actionType)) {
+        const resourceTargetId =
+          actionType.startsWith("-") || actionType === "stealmana"
+            ? targetId
+            : actorId;
+        if (
+          actorId &&
+          (actionType.startsWith("-") || actionType === "stealmana")
+        ) {
+          this.addTimelineDelta(byWarrior, actorId, "resourcePressure", value);
+          const pressureField = this.getResourcePressureField(actionType);
+          if (pressureField) {
+            this.addTimelineDelta(byWarrior, actorId, pressureField, value);
+          }
+          this.trackResourcePressure(actorId, actionType, value);
+          resourcePressure += value;
+          if (pressureField === "energyPressure") {
+            energyPressure += value;
+          } else if (pressureField === "manaPressure") {
+            manaPressure += value;
+          }
+        }
+        if (resourceTargetId) {
+          const direction =
+            actionType === "en-regen" ||
+            actionType === "+energy" ||
+            actionType === "+engback"
+              ? value
+              : -value;
+          this.addTimelineDelta(
+            byWarrior,
+            resourceTargetId,
+            "resourceDelta",
+            direction,
+          );
+        }
+        flags.add("resource");
+        continue;
+      }
+
+      if (actionType === "+oth_dmg") {
+        const targetFromParam = this.getTargetIdFromActionParam(param);
+        const effectiveTargetId = targetFromParam ?? targetId;
+        if (actorId) {
+          this.addTimelineDelta(byWarrior, actorId, "damageDealt", value);
+        }
+        if (effectiveTargetId) {
+          this.addTimelineDelta(
+            byWarrior,
+            effectiveTargetId,
+            "damageTaken",
+            value,
+          );
+        }
+        damage += value;
+        flags.add("damage");
+        continue;
+      }
+
+      if (COMBO_ACTIONS.has(actionType)) {
+        if (actionType === "combo-max" && actorId) {
+          this.trackComboMax(actorId, value);
+        }
+        flags.add("combo");
+        continue;
+      }
+
+      if (actionType === "+ph") {
+        flags.add("ph");
+        continue;
+      }
+
+      if (actionType === "flee") {
+        flags.add("flee");
+        continue;
+      }
+
+      if (actionType === "txt" && param.includes("utrata tury")) {
+        flags.add("stun");
+      }
+
+      if (handled) {
+        labels.add(actionType);
+      }
+    }
+
+    return {
+      actions,
+      byWarrior,
+      damage,
+      healing,
+      mitigation,
+      resourcePressure,
+      energyPressure,
+      manaPressure,
+      flags: Array.from(flags),
+      labels: Array.from(labels),
+    };
+  }
+
+  private addTimelineDelta(
+    byWarrior: Record<string, BattleTimelineWarriorDelta>,
+    warriorId: string,
+    field: keyof BattleTimelineWarriorDelta,
+    value: number,
+  ): void {
+    if (!byWarrior[warriorId]) {
+      byWarrior[warriorId] = createEmptyTimelineStats();
+    }
+
+    byWarrior[warriorId][field] += value;
+  }
+
+  private applyTimelineCumulative(
+    byWarrior: Record<string, BattleTimelineWarriorDelta>,
+  ): void {
+    for (const [warriorId, delta] of Object.entries(byWarrior)) {
+      const cumulative =
+        this.timelineCumulative.get(warriorId) ?? createEmptyTimelineStats();
+
+      for (const [field, value] of Object.entries(delta) as Array<
+        [keyof BattleTimelineWarriorDelta, number]
+      >) {
+        cumulative[field] += value;
+      }
+
+      this.timelineCumulative.set(warriorId, cumulative);
+    }
+  }
+
+  private updateTimelineHp(move: ParsedMove): void {
+    if (move.attackerId && move.attackerHpPercentage !== null) {
+      this.timelineHp.set(move.attackerId, move.attackerHpPercentage);
+    }
+
+    if (move.defenderId && move.defenderHpPercentage !== null) {
+      this.timelineHp.set(move.defenderId, move.defenderHpPercentage);
+    }
+  }
+
+  private getHpByWarrior(): Record<string, number> {
+    return Array.from(this.warriors.keys()).reduce<Record<string, number>>(
+      (acc, warriorId) => {
+        acc[warriorId] = this.timelineHp.get(warriorId) ?? 100;
+        return acc;
+      },
+      {},
+    );
+  }
+
+  private calculateTeamHp(): Record<string, number> {
+    const teamHp = new Map<number, { total: number; count: number }>();
+
+    for (const [warriorId, warrior] of this.warriors.entries()) {
+      const hp = this.timelineHp.get(warriorId) ?? 100;
+      const entry = teamHp.get(warrior.team) ?? { total: 0, count: 0 };
+      entry.total += hp;
+      entry.count++;
+      teamHp.set(warrior.team, entry);
+    }
+
+    return Array.from(teamHp.entries()).reduce<Record<string, number>>(
+      (acc, [team, entry]) => {
+        acc[String(team)] =
+          entry.count > 0
+            ? Math.round((entry.total / entry.count) * 100) / 100
+            : 0;
+        return acc;
+      },
+      {},
+    );
+  }
+
+  private calculateTeamHpDelta(
+    previous: Record<string, number>,
+    current: Record<string, number>,
+  ): Record<string, number> {
+    return Object.entries(current).reduce<Record<string, number>>(
+      (acc, [team, hp]) => {
+        acc[team] = Math.round((hp - (previous[team] ?? hp)) * 100) / 100;
+        return acc;
+      },
+      {},
+    );
+  }
+
+  private calculateSignificanceScore(params: {
+    damage: number;
+    healing: number;
+    mitigation: number;
+    resourcePressure: number;
+    flags: Set<string>;
+    teamHpDelta: Record<string, number>;
+  }): number {
+    let score = 0;
+
+    score += Math.min(40, Math.round(params.damage / 100));
+    score += Math.min(20, Math.round(params.healing / 150));
+    score += Math.min(20, Math.round(params.mitigation / 150));
+    score += Math.min(10, Math.round(params.resourcePressure / 100));
+
+    if (params.flags.has("kill")) score += 50;
+    if (params.flags.has("flee")) score += 40;
+    if (params.flags.has("stun") || params.flags.has("freeze")) score += 20;
+    if (params.flags.has("absorb")) score += 12;
+    if (params.flags.has("ph")) score += 10;
+
+    const biggestTeamSwing = Math.max(
+      0,
+      ...Object.values(params.teamHpDelta).map((value) => Math.abs(value)),
+    );
+    score += Math.min(20, Math.round(biggestTeamSwing));
+
+    return Math.min(100, score);
+  }
+
+  private getTimelineReason(params: {
+    damage: number;
+    healing: number;
+    mitigation: number;
+    resourcePressure: number;
+    flags: Set<string>;
+  }): string {
+    if (params.flags.has("kill")) return "kill";
+    if (params.flags.has("flee")) return "flee";
+    if (params.flags.has("freeze")) return "freeze";
+    if (params.flags.has("stun")) return "control";
+    if (params.healing >= 500) return "bigHealing";
+    if (params.mitigation >= 500 || params.flags.has("absorb")) {
+      return "mitigation";
+    }
+    if (params.damage >= 1000) return "bigDamage";
+    if (params.resourcePressure > 0) return "resourcePressure";
+    if (params.flags.has("combo")) return "combo";
+    if (params.flags.has("ph")) return "ph";
+    return "tempo";
   }
 
   private processActions(
@@ -367,41 +1248,20 @@ export class BattleProcessor {
 
       if (!attacker) continue;
 
-      const value = Number.parseInt(param, 10);
-      const [firstParam] = param.split(",");
-      const firstValue = firstParam ? Number.parseInt(firstParam, 10) : 0;
+      const value = this.parseActionValue(param);
+      const firstValue = value;
 
-      const damageDealtMap: Record<string, keyof Warrior> = {
-        "+dmgd": "distanceDamage",
-        "+dmg": "meleeDamage",
-        "+dmgo": "auxiliaryDamage",
-        "+dmgf": "fireDamage",
-        "+dmgc": "frostDamage",
-        "+dmgl": "lightningDamage",
-        "+thirdatt": "thirdAttDamage",
-      };
-
-      if (damageDealtMap[actionType]) {
+      if (DAMAGE_DEALT_ACTIONS[actionType]) {
         attacker.damageDealt += value;
-        (attacker[damageDealtMap[actionType]] as number) += value;
+        (attacker[DAMAGE_DEALT_ACTIONS[actionType]] as number) += value;
         continue;
       }
 
-      const damageTakenMap: Record<string, keyof Warrior> = {
-        "-dmgd": "distanceDamageTaken",
-        "-dmg": "meleeDamageTaken",
-        "-dmgo": "auxiliaryDamageTaken",
-        "-dmgf": "fireDamageTaken",
-        "-dmgc": "frostDamageTaken",
-        "-dmgl": "lightningDamageTaken",
-        "-thirdatt": "thirdAttDamageTaken",
-      };
-
-      if (damageTakenMap[actionType]) {
+      if (DAMAGE_TAKEN_ACTIONS[actionType]) {
         attacker.damageDealtAfterDefensive += value;
         if (defender && move.defenderId) {
           defender.damageTaken += value;
-          (defender[damageTakenMap[actionType]] as number) += value;
+          (defender[DAMAGE_TAKEN_ACTIONS[actionType]] as number) += value;
           defender.flatDamageTaken += value;
           this.tryCalculateMaxHp(
             move.defenderId,
@@ -444,6 +1304,12 @@ export class BattleProcessor {
 
         case "bandage":
           attacker.activeHealing += value;
+          break;
+
+        case "heal_target":
+          if (defender) {
+            defender.activeHealing += value;
+          }
           break;
 
         case "+acdmg":
@@ -506,6 +1372,11 @@ export class BattleProcessor {
           attacker.regeneratedEnergy += value;
           break;
 
+        case "+energy":
+        case "+engback":
+          attacker.regeneratedEnergy += value;
+          break;
+
         case "+legbon_curse":
           attacker.legbonCurse++;
           break;
@@ -524,6 +1395,12 @@ export class BattleProcessor {
 
         case "+legbon_anguish":
           attacker.legbonAnguish++;
+          break;
+
+        case "combo-max":
+          if (move.attackerId) {
+            this.trackComboMax(move.attackerId, value);
+          }
           break;
 
         case "legbon_lastheal":
@@ -550,6 +1427,10 @@ export class BattleProcessor {
           break;
 
         case "-blok":
+        case "-block":
+        case "-parry":
+        case "-arrowblock":
+        case "-pierceb":
           defender.blocks++;
           defender.blockedDamage += value;
           if (attacker) attacker.attacksBlocked++;
@@ -569,6 +1450,11 @@ export class BattleProcessor {
 
         case "mana":
           attacker.regeneratedMana -= value;
+          break;
+
+        case "stealmana":
+          defender.destroyedMana += value;
+          attacker.regeneratedMana += value;
           break;
 
         case "-legbon_cleanse":
@@ -658,6 +1544,296 @@ export class BattleProcessor {
         }
       }
     }
+  }
+
+  private initializeWarriorsFromSnapshots(
+    warriors: Record<string, BattleWarriorSnapshot>,
+  ): void {
+    for (const [id, warriorData] of Object.entries(warriors)) {
+      if (!this.warriors.has(id)) {
+        this.warriors.set(id, this.createWarrior(warriorData));
+      }
+    }
+  }
+
+  private initializeTimelineState(): void {
+    for (const [id, warrior] of this.warriors.entries()) {
+      this.lastHp.set(id, 100);
+      this.timelineHp.set(id, 100);
+      this.timelineCumulative.set(id, createEmptyTimelineStats());
+      this.warriorMechanics.set(id, {
+        warriorId: warrior.originalId,
+        name: warrior.name,
+        team: warrior.team,
+        absorptionGained: 0,
+        absorptionSpent: 0,
+        magicAbsorptionGained: 0,
+        magicAbsorptionSpent: 0,
+        auxiliaryDamageTaken: 0,
+        targetHealing: 0,
+        spells: [],
+        maxCombo: 0,
+        controlApplied: 0,
+        controlTaken: 0,
+        mitigationEvents: 0,
+        effectDamageTaken: 0,
+        resourcePressure: 0,
+        energyPressure: 0,
+        manaPressure: 0,
+      });
+    }
+  }
+
+  private getActionCategory(actionType: string): BattleActionCategory {
+    if (
+      DAMAGE_DEALT_ACTIONS[actionType] ||
+      DAMAGE_TAKEN_ACTIONS[actionType] ||
+      SPECIAL_DAMAGE_ACTIONS[actionType]
+    ) {
+      return "damage";
+    }
+    if (PASSIVE_DAMAGE_ACTIONS.has(actionType)) return "damage";
+    if (HEALING_ACTIONS.has(actionType)) return "healing";
+    if (MITIGATION_ACTIONS.has(actionType)) return "mitigation";
+    if (COUNTER_ACTIONS.has(actionType)) return "counter";
+    if (
+      ABSORB_GAIN_ACTIONS.has(actionType) ||
+      MAGIC_ABSORB_GAIN_ACTIONS.has(actionType) ||
+      ABSORB_SPEND_ACTIONS.has(actionType) ||
+      MAGIC_ABSORB_SPEND_ACTIONS.has(actionType)
+    ) {
+      return "absorb";
+    }
+    if (RESOURCE_ACTIONS.has(actionType)) return "resource";
+    if (CONTROL_ACTIONS.has(actionType)) return "control";
+    if (SPELL_ACTIONS.has(actionType)) return "spell";
+    if (COMBO_ACTIONS.has(actionType)) return "combo";
+    if (OUTCOME_ACTIONS.has(actionType)) return "outcome";
+    if (MOVEMENT_ACTIONS.has(actionType)) return "movement";
+    if (LEGENDARY_ACTIONS.has(actionType)) return "legendary";
+    if (BUFF_ACTIONS.has(actionType)) return "buff";
+    if (DEBUFF_ACTIONS.has(actionType)) return "debuff";
+    if (SYSTEM_ACTIONS.has(actionType)) return "system";
+    return "unknown";
+  }
+
+  private recordActionCoverage(
+    actionType: string,
+    category: BattleActionCategory,
+    handled: boolean,
+  ): void {
+    const current = this.actionCoverage.get(actionType) ?? {
+      count: 0,
+      handled,
+      category,
+    };
+
+    current.count++;
+    current.handled = current.handled || handled;
+    current.category =
+      current.category === "unknown" ? category : current.category;
+    this.actionCoverage.set(actionType, current);
+  }
+
+  private parseActionValue(param: string): number {
+    const [firstParam = ""] = param.split(",");
+    const value = Number.parseInt(firstParam, 10);
+    return Number.isNaN(value) ? 0 : Math.abs(value);
+  }
+
+  private getMitigationFlag(actionType: string): string {
+    if (actionType === "-evade") return "evade";
+    if (actionType === "-parry") return "parry";
+    if (actionType === "-arrowblock") return "arrowBlock";
+    if (actionType === "-pierceb") return "pierceBlock";
+    return "block";
+  }
+
+  private getTargetIdFromActionParam(param: string): string | null {
+    const parts = param.split(",");
+    const targetNameWithHp = parts[2]?.trim();
+    if (!targetNameWithHp) {
+      return null;
+    }
+
+    const [targetNamePart = ""] = targetNameWithHp.split("(");
+    const targetName = targetNamePart.trim();
+    const found = targetName ? this.findWarrior(targetName, true) : null;
+    return found?.[0] ?? null;
+  }
+
+  private trackSpellMechanics(
+    move: ParsedMove,
+    spellName: string,
+    skillId: number,
+  ): void {
+    if (!move.attackerId) {
+      return;
+    }
+
+    const mechanics = this.warriorMechanics.get(move.attackerId);
+    if (!mechanics) {
+      return;
+    }
+
+    const normalizedSkillId = Number.isNaN(skillId) ? null : skillId;
+    const normalizedName = spellName || "unknown";
+    const key = `${normalizedSkillId ?? "unknown"}:${normalizedName}`;
+    const currentSpell = mechanics.spells.find((spell) => spell.key === key);
+
+    if (currentSpell) {
+      currentSpell.casts++;
+      return;
+    }
+
+    mechanics.spells.push({
+      key,
+      name: normalizedName,
+      skillId: normalizedSkillId,
+      casts: 1,
+    });
+  }
+
+  private trackComboMax(warriorId: string, value: number): void {
+    const mechanics = this.warriorMechanics.get(warriorId);
+    if (!mechanics) {
+      return;
+    }
+
+    mechanics.maxCombo = Math.max(mechanics.maxCombo, value);
+  }
+
+  private trackTargetHealing(warriorId: string, value: number): void {
+    const mechanics = this.warriorMechanics.get(warriorId);
+    if (!mechanics) {
+      return;
+    }
+
+    mechanics.targetHealing += value;
+  }
+
+  private trackAuxiliaryDamageTaken(warriorId: string, value: number): void {
+    const mechanics = this.warriorMechanics.get(warriorId);
+    if (!mechanics) {
+      return;
+    }
+
+    mechanics.auxiliaryDamageTaken += value;
+  }
+
+  private trackMitigationEvent(warriorId: string): void {
+    const mechanics = this.warriorMechanics.get(warriorId);
+    if (!mechanics) {
+      return;
+    }
+
+    mechanics.mitigationEvents++;
+  }
+
+  private trackAbsorb(
+    warriorId: string,
+    field:
+      | "absorptionGained"
+      | "absorptionSpent"
+      | "magicAbsorptionGained"
+      | "magicAbsorptionSpent",
+    value: number,
+  ): void {
+    const mechanics = this.warriorMechanics.get(warriorId);
+    if (!mechanics) {
+      return;
+    }
+
+    mechanics[field] += value;
+  }
+
+  private trackControl(
+    warriorId: string,
+    field: "controlApplied" | "controlTaken",
+  ): void {
+    const mechanics = this.warriorMechanics.get(warriorId);
+    if (!mechanics) {
+      return;
+    }
+
+    mechanics[field]++;
+  }
+
+  private trackEffectDamage(warriorId: string, value: number): void {
+    const mechanics = this.warriorMechanics.get(warriorId);
+    if (!mechanics) {
+      return;
+    }
+
+    mechanics.effectDamageTaken += value;
+  }
+
+  private getResourcePressureField(
+    actionType: string,
+  ): "energyPressure" | "manaPressure" | null {
+    if (actionType === "-endest") {
+      return "energyPressure";
+    }
+
+    if (actionType === "-manadest" || actionType === "stealmana") {
+      return "manaPressure";
+    }
+
+    return null;
+  }
+
+  private trackResourcePressure(
+    warriorId: string,
+    actionType: string,
+    value: number,
+  ): void {
+    const mechanics = this.warriorMechanics.get(warriorId);
+    if (!mechanics) {
+      return;
+    }
+
+    mechanics.resourcePressure += value;
+    const pressureField = this.getResourcePressureField(actionType);
+    if (pressureField) {
+      mechanics[pressureField] += value;
+    }
+  }
+
+  private getWarriorMechanics(): WarriorMechanicsAggregate[] {
+    return Array.from(this.warriorMechanics.values()).map((mechanics) => ({
+      ...mechanics,
+      spells: [...mechanics.spells].sort((a, b) => b.casts - a.casts),
+    }));
+  }
+
+  private getActionCoverage(): BattleActionCoverage {
+    const actions = Array.from(this.actionCoverage.entries())
+      .map<BattleActionCoverageEntry>(([actionType, entry]) => ({
+        actionType,
+        count: entry.count,
+        handled: entry.handled,
+        category: entry.category,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const totalActions = actions.reduce((sum, action) => sum + action.count, 0);
+    const handledActions = actions.reduce(
+      (sum, action) => sum + (action.handled ? action.count : 0),
+      0,
+    );
+    const unhandledActions = totalActions - handledActions;
+
+    return {
+      totalActions,
+      handledActions,
+      unhandledActions,
+      handledPercentage:
+        totalActions > 0
+          ? Math.round((handledActions / totalActions) * 10000) / 100
+          : 100,
+      actions,
+      unknown: actions.filter((action) => !action.handled),
+    };
   }
 
   private createWarrior(data: BattleWarriorSnapshot): Warrior {

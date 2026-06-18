@@ -8,25 +8,30 @@ import { BattleOwnerGuard } from "src/shared/guards/battle-owner.guard";
 
 describe("BattlesController", () => {
   let controller: BattlesController;
+  let mockBattlesService: Record<string, ReturnType<typeof vi.fn>>;
+  let mockBattleAnalyticsService: Record<string, ReturnType<typeof vi.fn>>;
 
   beforeEach(async () => {
-    const mockBattlesService = {
+    mockBattlesService = {
       createBattle: vi.fn(),
       getDashboardBattles: vi.fn(),
       getUserCharacters: vi.fn(),
       getUserWorlds: vi.fn(),
       getBattleFromDatabase: vi.fn(),
       getBattleRawData: vi.fn(),
+      getBattleTimeline: vi.fn(),
       updateBattle: vi.fn(),
       deleteBattle: vi.fn(),
       getPublicBattles: vi.fn(),
       getPublicBattle: vi.fn(),
       getPublicBattleRaw: vi.fn(),
+      getPublicBattleTimeline: vi.fn(),
       searchWarriors: vi.fn(),
     };
 
-    const mockBattleAnalyticsService = {
+    mockBattleAnalyticsService = {
       getBattleAnalytics: vi.fn(),
+      getCombatProfile: vi.fn(),
       calculateProfessionWinRate: vi.fn(),
       getHeadToHead: vi.fn(),
       getCurrentStreak: vi.fn(),
@@ -60,5 +65,57 @@ describe("BattlesController", () => {
 
   it("should be defined", () => {
     expect(controller).toBeDefined();
+  });
+
+  it("should return computed timeline for accessible battle", async () => {
+    const timeline = {
+      battleId: "battle-1",
+      generatedAt: new Date().toISOString(),
+      timeline: [],
+      warriors: [],
+    };
+    mockBattlesService.getBattleTimeline.mockResolvedValue(timeline);
+
+    await expect(
+      controller.getBattleTimeline("battle-1", "user-1"),
+    ).resolves.toBe(timeline);
+    expect(mockBattlesService.getBattleTimeline).toHaveBeenCalledWith(
+      "battle-1",
+      "user-1",
+    );
+  });
+
+  it("should return combat profile statistics", async () => {
+    const profile = {
+      summary: {
+        totalBattles: 0,
+        wins: 0,
+        losses: 0,
+        winRate: 0,
+        totalPH: 0,
+        totalRatingDelta: 0,
+        avgTurns: 0,
+        avgDuration: 0,
+        damagePerTurn: 0,
+        mitigationRate: 0,
+        controlRate: 0,
+      },
+      damageMix: [],
+      mitigationMix: [],
+      spellUsage: [],
+      matchupByProfession: [],
+      phTrend: [],
+      ratingTrend: [],
+      highlights: [],
+    };
+    mockBattleAnalyticsService.getCombatProfile.mockResolvedValue(profile);
+
+    await expect(
+      controller.getCombatProfile({ characterId: "char-1" } as any, "user-1"),
+    ).resolves.toBe(profile);
+    expect(mockBattleAnalyticsService.getCombatProfile).toHaveBeenCalledWith(
+      { characterId: "char-1" },
+      "user-1",
+    );
   });
 });

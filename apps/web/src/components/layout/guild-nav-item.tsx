@@ -1,4 +1,4 @@
-import type { GuildResponseDtoOutput as Guild } from "@/lib/api/generated/main/model";
+import type { UserCurrentGuildResponseDtoOutput as Guild } from "@/lib/api/generated/main/model";
 import { cn } from "@/utils/cn";
 import {
   Avatar,

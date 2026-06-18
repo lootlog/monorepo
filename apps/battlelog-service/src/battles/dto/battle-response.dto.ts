@@ -214,12 +214,74 @@ const BattleRawPayloadResponseSchema = z.object({
   characterId: z.string(),
   world: z.string(),
   events: z.array(ParsedBattleMoveResponseSchema),
+  sourceEvents: z.array(z.unknown()).optional(),
 });
 
 const BattleRawResponseSchema = z.object({
   battleId: z.string(),
   timestamp: z.string().datetime(),
   rawData: BattleRawPayloadResponseSchema,
+});
+
+const BattleTimelineActionResponseSchema = z.object({
+  actionType: z.string(),
+  param: z.string(),
+  category: z.string(),
+  actorId: z.string().nullable(),
+  targetId: z.string().nullable(),
+  value: z.number(),
+  handled: z.boolean(),
+});
+
+const BattleTimelineWarriorStatsResponseSchema = z.object({
+  damageDealt: z.number(),
+  damageTaken: z.number(),
+  healingDone: z.number(),
+  healingReceived: z.number(),
+  mitigation: z.number(),
+  resourceDelta: z.number(),
+  resourcePressure: z.number(),
+  energyPressure: z.number(),
+  manaPressure: z.number(),
+  absorbGained: z.number(),
+  absorbSpent: z.number(),
+  magicAbsorbGained: z.number(),
+  magicAbsorbSpent: z.number(),
+  controlApplied: z.number(),
+  controlTaken: z.number(),
+});
+
+const BattleTimelineTurnResponseSchema = z.object({
+  turn: z.number(),
+  attackerId: z.string().nullable(),
+  defenderId: z.string().nullable(),
+  attackerHpPercentage: z.number().nullable(),
+  defenderHpPercentage: z.number().nullable(),
+  hpByWarrior: z.record(z.string(), z.number()),
+  teamHp: z.record(z.string(), z.number()),
+  teamHpDelta: z.record(z.string(), z.number()),
+  deltas: z.object({
+    damage: z.number(),
+    healing: z.number(),
+    mitigation: z.number(),
+    resourcePressure: z.number(),
+    energyPressure: z.number(),
+    manaPressure: z.number(),
+    byWarrior: z.record(z.string(), BattleTimelineWarriorStatsResponseSchema),
+  }),
+  cumulative: z.record(z.string(), BattleTimelineWarriorStatsResponseSchema),
+  actions: z.array(BattleTimelineActionResponseSchema),
+  flags: z.array(z.string()),
+  labels: z.array(z.string()),
+  significanceScore: z.number(),
+  reason: z.string(),
+});
+
+const BattleTimelineResponseSchema = z.object({
+  battleId: z.string(),
+  generatedAt: z.string().datetime(),
+  timeline: z.array(BattleTimelineTurnResponseSchema),
+  warriors: z.array(BattleWarriorResponseSchema),
 });
 
 const BattleAcceptedResponseSchema = z.object({
@@ -229,6 +291,9 @@ const BattleAcceptedResponseSchema = z.object({
 export type BattleResponseInput = z.input<typeof BattleResponseSchema>;
 export type BattlesListResponseInput = z.input<
   typeof BattlesListResponseSchema
+>;
+export type BattleTimelineResponseInput = z.input<
+  typeof BattleTimelineResponseSchema
 >;
 
 const BattleWarriorResponseDtoBase: ZodDto<
@@ -289,6 +354,13 @@ const BattleRawResponseDtoBase: ZodDto<typeof BattleRawResponseSchema, false> =
   createZodDto(BattleRawResponseSchema);
 
 export class BattleRawResponseDto extends BattleRawResponseDtoBase {}
+
+const BattleTimelineResponseDtoBase: ZodDto<
+  typeof BattleTimelineResponseSchema,
+  false
+> = createZodDto(BattleTimelineResponseSchema);
+
+export class BattleTimelineResponseDto extends BattleTimelineResponseDtoBase {}
 
 const BattleAcceptedResponseDtoBase: ZodDto<
   typeof BattleAcceptedResponseSchema,
