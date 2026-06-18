@@ -33,10 +33,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
       };
     }
 
-    if (
-      path === ROUTES.user.battlePanel.base ||
-      path === ROUTES.user.battlePanel.stats
-    ) {
+    if (path === ROUTES.user.battlePanel.base) {
       return {
         breadcrumbs: [
           { label: t("layout.navigation.battlePanel"), path: null },
@@ -116,23 +113,9 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     }
 
     const normalizedPath = path.replace(/\/$/, "");
-    const battlesPath = ROUTES.user.battlePanel.battles;
+    const battlesDetailsPath = `${ROUTES.user.battlePanel.base}/battles`;
 
-    if (normalizedPath === battlesPath) {
-      return {
-        breadcrumbs: [
-          {
-            label: t("layout.navigation.battlePanel"),
-            path: ROUTES.user.battlePanel.base,
-          },
-          { label: t("layout.breadcrumbs.battles"), path: null },
-        ],
-        showBack: true,
-        backPath: ROUTES.user.battlePanel.base,
-      };
-    }
-
-    if (normalizedPath.startsWith(`${battlesPath}/`)) {
+    if (normalizedPath.startsWith(`${battlesDetailsPath}/`)) {
       const battleId = normalizedPath.split("/").pop();
       if (battleId && battleId.length > 0) {
         return {
@@ -143,7 +126,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
             },
             {
               label: t("layout.breadcrumbs.battles"),
-              path: ROUTES.user.battlePanel.battles,
+              path: ROUTES.user.battlePanel.base,
             },
             {
               label: t("battlePanel.navigation.battleFallback", {
@@ -153,7 +136,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
             },
           ],
           showBack: true,
-          backPath: ROUTES.user.battlePanel.battles,
+          backPath: ROUTES.user.battlePanel.base,
         };
       }
     }
