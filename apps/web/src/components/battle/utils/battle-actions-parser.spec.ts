@@ -39,4 +39,18 @@ describe("parseActions", () => {
       "combo-max",
     ]);
   });
+
+  it("keeps -dmga with post-defense attack damage actions", () => {
+    const parsedActions = parseActions([
+      { actionType: "+dmg", param: "20755" },
+      { actionType: "-dmg", param: "20754" },
+      { actionType: "-dmga", param: "2137" },
+    ]);
+
+    expect(parsedActions.attackActions.map((action) => action.type)).toEqual([
+      "+dmg",
+      "-dmg",
+      "-dmga",
+    ]);
+  });
 });

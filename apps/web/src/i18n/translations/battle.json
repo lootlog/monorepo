@@ -28,7 +28,7 @@
   "-absorbm": "-Absorpcja <value>{{value}}</value> obrażeń magicznych",
   "-arrowblock": "-Strzała zneutralizowana",
   "-blok": "-Zablokowanie <value>{{value}}</value> obrażeń",
-  "-combined_dmg": "<value>{{name}}({{hp}}%)</value> otrzymał <dmg>{{dmg}}</dmg><dmgo>{{dmgo}}</dmgo><dmgd>{{dmgd}}</dmgd><dmgf>{{dmgf}}</dmgf><dmgl>{{dmgl}}</dmgl><thirdatt>{{thirdatt}}</thirdatt><dmgc>{{dmgc}}</dmgc> obrażeń",
+  "-combined_dmg": "<value>{{name}}({{hp}}%)</value> otrzymał <dmg>{{dmg}}</dmg><dmga>{{dmga}}</dmga><dmgo>{{dmgo}}</dmgo><dmgd>{{dmgd}}</dmgd><dmgf>{{dmgf}}</dmgf><dmgl>{{dmgl}}</dmgl><thirdatt>{{thirdatt}}</thirdatt><dmgc>{{dmgc}}</dmgc> obrażeń",
   "-contra": "-Kontratak",
   "-endest": "<resourceDestroy>-Zniszczono <value>{{value}}</value> energii</resourceDestroy>",
   "-endest_reduced": "<resourceDestroy>-Zniszczono <value>{{value}}</value> (osłabione o <value>{{reducedValue}}</value> punktów) energii</resourceDestroy>",

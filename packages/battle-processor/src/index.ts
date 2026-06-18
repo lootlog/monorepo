@@ -1214,6 +1214,7 @@ export class BattleProcessor {
     const defender = move.defenderId
       ? (this.warriors.get(move.defenderId) ?? null)
       : null;
+    let defenderTakenDamage = 0;
 
     for (const { actionType, param } of move.actions) {
       if (actionType === "winner") {
@@ -1263,11 +1264,7 @@ export class BattleProcessor {
           defender.damageTaken += value;
           (defender[DAMAGE_TAKEN_ACTIONS[actionType]] as number) += value;
           defender.flatDamageTaken += value;
-          this.tryCalculateMaxHp(
-            move.defenderId,
-            value,
-            move.defenderHpPercentage,
-          );
+          defenderTakenDamage += value;
         }
         continue;
       }
@@ -1485,6 +1482,14 @@ export class BattleProcessor {
           attacker.reducedPoisonResistance += value;
           break;
       }
+    }
+
+    if (defender && move.defenderId && defenderTakenDamage > 0) {
+      this.tryCalculateMaxHp(
+        move.defenderId,
+        defenderTakenDamage,
+        move.defenderHpPercentage,
+      );
     }
   }
 
