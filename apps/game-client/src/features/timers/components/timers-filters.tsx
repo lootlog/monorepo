@@ -44,7 +44,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     colorFiltersEnabled,
   } = useTimersStore();
 
-  const filters = timersFilters[filtersKey] || DEFAULT_TIMERS_FILTERS;
+  const filters = timersFilters[filtersKey] ?? DEFAULT_TIMERS_FILTERS;
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTimerFiltersSearchText(e.target.value);
@@ -182,7 +182,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                     />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="ll:text-xs">
-                    {defaultColorNames[colorId] || getDefaultColorName(colorId)}
+                    {defaultColorNames[colorId] ?? getDefaultColorName(colorId)}
                   </TooltipContent>
                 </Tooltip>
               );
