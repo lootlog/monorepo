@@ -201,6 +201,7 @@ describe("GatewayService", () => {
       await service.handleGuildsTimerUpdate(timerDto);
 
       // Wait for async promise chain to complete
+      await flushPromises();
       // Feature room for titan timers
       expect(mockServer.in).toHaveBeenCalledWith("guild-123:timers:titans");
       expect(mockServer.fetchSockets).toHaveBeenCalled();
@@ -221,6 +222,18 @@ describe("GatewayService", () => {
       expect(mockServer.in).toHaveBeenCalledWith("guild-123:timers:titans");
       expect(mockServer.fetchSockets).toHaveBeenCalled();
       // No sockets to emit to since none are in the room
+    });
+
+    it("should ignore socket fetch failures for filtered timer updates", async () => {
+      mockServer.fetchSockets.mockRejectedValue(
+        new Error("timeout reached while waiting for fetchSockets response"),
+      );
+
+      await service.handleGuildsTimerUpdate(timerDto);
+      await flushPromises();
+
+      expect(mockServer.fetchSockets).toHaveBeenCalled();
+      expect(mockServer.emit).not.toHaveBeenCalled();
     });
 
     it("should emit to administrative users regardless of specific permissions", async () => {
@@ -249,6 +262,7 @@ describe("GatewayService", () => {
       await service.handleGuildsTimerUpdate(timerDto);
 
       // Wait for async promise chain to complete
+      await flushPromises();
       expect(mockAdminSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.TIMERS_CREATE,
         timerDto,
@@ -1507,6 +1521,20 @@ describe("GatewayService", () => {
       await service.rebalanceUserSocketRooms(discordId, userId);
 
       expect(mockGuildsService.getUserGuilds).toHaveBeenCalled();
+    });
+
+    it("should not throw when socket fetch fails", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+
+      mockGuildsService.getUserGuilds.mockResolvedValue([]);
+      mockServer.fetchSockets.mockRejectedValue(
+        new Error("timeout reached while waiting for fetchSockets response"),
+      );
+
+      await expect(
+        service.rebalanceUserSocketRooms(discordId, userId),
+      ).resolves.not.toThrow();
     });
 
     it("should handle errors gracefully", async () => {
