@@ -36,6 +36,8 @@ export type PresenceFetchResponse<TPlayers> =
       code: typeof ONLINE_PLAYERS_ACCESS_DENIED_CODE;
     };
 
+type FetchedSocket = Awaited<ReturnType<Server["fetchSockets"]>>[number];
+
 @Injectable()
 export class PresenceService {
   private readonly logger = new Logger(PresenceService.name);
@@ -254,7 +256,10 @@ export class PresenceService {
       return this.createOnlinePlayersForbiddenResponse();
     }
 
-    const socketsInRoom = await server.in(presenceRoom).fetchSockets();
+    const socketsInRoom = await this.fetchSocketsSafely(
+      () => server.in(presenceRoom).fetchSockets(),
+      `event presence room ${presenceRoom}`,
+    );
     const result: Record<string, PlayerPresence[]> = {};
 
     for (const socket of socketsInRoom) {
@@ -297,7 +302,10 @@ export class PresenceService {
       return this.createOnlinePlayersForbiddenResponse();
     }
 
-    const socketsInRoom = await server.in(presenceRoom).fetchSockets();
+    const socketsInRoom = await this.fetchSocketsSafely(
+      () => server.in(presenceRoom).fetchSockets(),
+      `online players presence room ${presenceRoom}`,
+    );
 
     let filteredSockets = socketsInRoom.filter(
       (s) => s.data.player?.world === world,
@@ -342,7 +350,10 @@ export class PresenceService {
     mapName: string,
   ): Promise<void> {
     const presenceRoom = buildRoomName(guildId, "presence");
-    const socketsInRoom = await server.in(presenceRoom).fetchSockets();
+    const socketsInRoom = await this.fetchSocketsSafely(
+      () => server.in(presenceRoom).fetchSockets(),
+      `presence check room ${presenceRoom}`,
+    );
 
     for (const socket of socketsInRoom) {
       const playerPresence = socket.data?.playerPresence;
@@ -445,9 +456,10 @@ export class PresenceService {
   }): void {
     const onlinePlayersRoom = buildRoomName(guildId, "online-players");
 
-    server
-      .in(onlinePlayersRoom)
-      .fetchSockets()
+    void this.fetchSocketsSafely(
+      () => server.in(onlinePlayersRoom).fetchSockets(),
+      `online players room ${onlinePlayersRoom}`,
+    )
       .then((sockets) => {
         for (const socket of sockets) {
           if (excludeSourceSocket && socket.id === sourceClient.id) {
@@ -468,6 +480,19 @@ export class PresenceService {
           error.stack,
         );
       });
+  }
+
+  private async fetchSocketsSafely(
+    fetchSockets: () => Promise<FetchedSocket[]>,
+    context: string,
+  ): Promise<FetchedSocket[]> {
+    try {
+      return await fetchSockets();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to fetch sockets for ${context}: ${message}`);
+      return [];
+    }
   }
 
   private buildPlayerPresence(
