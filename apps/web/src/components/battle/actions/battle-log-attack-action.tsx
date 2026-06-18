@@ -5,6 +5,7 @@ import type {
 import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
 import { Trans } from "react-i18next";
+import { getBattleActionPresentation } from "../utils/battle-action-presentation";
 import { generateDynamicValuesAndComponents } from "../utils/dynamic-values-helper";
 import { processDamageValue, roundHpPercentage } from "../utils/value-utils";
 
@@ -132,12 +133,19 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                   "v",
                   <span className="font-semibold" />,
                 );
+                const actionPresentation = getBattleActionPresentation(action);
                 return (
                   <span key={sIndex}>
                     <Trans
-                      i18nKey={`battle.${action.type}`}
+                      i18nKey={actionPresentation.i18nKey}
                       values={{
-                        value: action.value,
+                        name: attacker?.name,
+                        defenderName: defender?.name,
+                        hp: roundHpPercentage(event.attackerHpPercentage),
+                        defenderHp: roundHpPercentage(
+                          event.defenderHpPercentage,
+                        ),
+                        ...actionPresentation.values,
                         ...dynamicData.values,
                       }}
                       components={{
@@ -186,6 +194,9 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                         ),
                         puncture: (
                           <span className="font-semibold text-red-300" />
+                        ),
+                        crushDamage: (
+                          <span className="font-semibold text-rose-300" />
                         ),
                       }}
                     />

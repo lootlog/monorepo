@@ -20,9 +20,16 @@ import {
   type SQL,
 } from "drizzle-orm";
 import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
+import type { BattleTimelineResponseInput } from "src/battles/dto/battle-response.dto";
 import type { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
 import type { UpdateBattleDto } from "src/battles/dto/update-battle.dto";
 import type { PaginationOptions } from "src/battles/interfaces/pagination.interface";
+import { BATTLE_WARRIOR_STATS_VERSION } from "src/battles/battle-warrior-stats.types";
+import {
+  buildBattleWarriorStats,
+  inflateBattleWarriorsInBattle,
+  inflateBattleWarriorsInBattles,
+} from "src/battles/battle-warrior-stats";
 import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
 import { PaginationService } from "src/battles/services/pagination.service";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
@@ -37,6 +44,7 @@ import {
   type Warrior,
   type BattleAnalysis,
   type ParsedMove,
+  type BattleWarriorSnapshot,
 } from "@lootlog/battle-processor";
 import type {
   BattleWithRelations,
@@ -80,6 +88,7 @@ export class BattlesService implements IBattlesService {
 
       const rawBattleData = {
         events: analysis.parsedMoves,
+        sourceEvents: data.events,
         accountId: data.accountId,
         characterId: data.characterId,
         world: data.world,
@@ -111,7 +120,7 @@ export class BattlesService implements IBattlesService {
       );
 
       return {
-        battles: result.data,
+        battles: inflateBattleWarriorsInBattles(result.data),
         pagination: result.pagination,
         meta: {
           performance: result.performance,
@@ -144,7 +153,7 @@ export class BattlesService implements IBattlesService {
       );
 
       return {
-        battles: result.data,
+        battles: inflateBattleWarriorsInBattles(result.data),
         pagination: result.pagination,
         meta: {
           performance: result.performance,
@@ -226,7 +235,7 @@ export class BattlesService implements IBattlesService {
 
       const rawData =
         await this.r2Service.getBattleData<RawBattleData>(battleId);
-      return rawData;
+      return this.normalizeRawBattleData(rawData);
     } catch (error) {
       this.logger.error(
         `Failed to retrieve raw data for battle ${battleId}:`,
@@ -234,6 +243,21 @@ export class BattlesService implements IBattlesService {
       );
       throw error;
     }
+  }
+
+  async getBattleTimeline(
+    battleId: string,
+    requestingUserId?: string,
+  ): Promise<BattleTimelineResponseInput> {
+    const battle = await this.getBattleFromDatabase(battleId, requestingUserId);
+    return await this.buildTimelineResponse(battle);
+  }
+
+  async getPublicBattleTimeline(
+    battleId: string,
+  ): Promise<BattleTimelineResponseInput> {
+    const battle = await this.getPublicBattle(battleId);
+    return await this.buildTimelineResponse(battle);
   }
 
   async getBattleFromDatabase(
@@ -253,7 +277,92 @@ export class BattlesService implements IBattlesService {
       throw new NotFoundException(`Battle with ID ${battleId} not found`);
     }
 
-    return battle;
+    return inflateBattleWarriorsInBattle(battle);
+  }
+
+  private async buildTimelineResponse(
+    battle: BattleWithRelations,
+  ): Promise<BattleTimelineResponseInput> {
+    const rawBattleData = await this.r2Service.getBattleData<RawBattleData>(
+      battle.id,
+    );
+    const processor = new BattleProcessor();
+
+    let analysis: BattleAnalysis;
+    if (rawBattleData.rawData.sourceEvents?.length) {
+      analysis = processor.processBattle({
+        accountId: rawBattleData.rawData.accountId,
+        characterId: rawBattleData.rawData.characterId,
+        world: rawBattleData.rawData.world,
+        events: rawBattleData.rawData.sourceEvents,
+      });
+    } else {
+      analysis = processor.processParsedBattle({
+        accountId: rawBattleData.rawData.accountId,
+        characterId: rawBattleData.rawData.characterId,
+        world: rawBattleData.rawData.world,
+        events: rawBattleData.rawData.events,
+        warriors: this.createWarriorSnapshots(battle),
+        duration: battle.duration,
+        matchmaking: this.createTimelineMatchmakingSnapshot(battle),
+      });
+    }
+
+    return {
+      battleId: battle.id,
+      generatedAt: new Date().toISOString(),
+      timeline: analysis.battleTimeline,
+      warriors: this.normalizeTimelineWarriors(battle),
+    };
+  }
+
+  private createTimelineMatchmakingSnapshot(
+    battle: BattleWithRelations,
+  ): BattleAnalysis["matchmaking"] {
+    if (!battle.matchmaking) {
+      return undefined;
+    }
+
+    return {
+      difficultyRank: battle.difficultyRank ?? 0,
+      result: battle.result ?? 0,
+      ratingDelta: battle.ratingDelta ?? 0,
+      opponentLvl: battle.opponentLvl ?? 0,
+      opponentOplvl: battle.opponentOplvl ?? 0,
+      opponentRating: battle.opponentRating ?? 0,
+      rating: battle.rating ?? 0,
+      status: battle.status ?? 0,
+    };
+  }
+
+  private createWarriorSnapshots(
+    battle: BattleWithRelations,
+  ): Record<string, BattleWarriorSnapshot> {
+    return battle.warriors.reduce<Record<string, BattleWarriorSnapshot>>(
+      (acc, warrior) => {
+        const originalId = Number.parseInt(warrior.originalId, 10);
+        acc[warrior.originalId] = {
+          originalId: Number.isNaN(originalId) ? 0 : originalId,
+          name: warrior.name,
+          lvl: warrior.lvl,
+          prof: warrior.prof,
+          icon: warrior.icon,
+          team: warrior.team,
+        };
+
+        return acc;
+      },
+      {},
+    );
+  }
+
+  private normalizeTimelineWarriors(
+    battle: BattleWithRelations,
+  ): BattleTimelineResponseInput["warriors"] {
+    return battle.warriors.map((warrior) => ({
+      ...warrior,
+      spellsUsedMap: warrior.spellsUsedMap as Record<string, number>,
+    }));
   }
 
   async updateBattle(
@@ -282,7 +391,7 @@ export class BattlesService implements IBattlesService {
       throw new NotFoundException(`Battle with ID ${battleId} not found`);
     }
 
-    return battle;
+    return inflateBattleWarriorsInBattle(battle);
   }
 
   async deleteUserBattles(userId: string): Promise<{ deletedCount: number }> {
@@ -355,7 +464,7 @@ export class BattlesService implements IBattlesService {
       );
     }
 
-    return battle;
+    return inflateBattleWarriorsInBattle(battle);
   }
 
   async getPublicBattleRaw(battleId: string): Promise<RawBattleData> {
@@ -370,7 +479,29 @@ export class BattlesService implements IBattlesService {
       );
     }
 
-    return await this.r2Service.getBattleData(battle.id);
+    const rawData = await this.r2Service.getBattleData<RawBattleData>(
+      battle.id,
+    );
+
+    return this.normalizeRawBattleData(rawData);
+  }
+
+  private normalizeRawBattleData(rawBattleData: RawBattleData): RawBattleData {
+    if (!rawBattleData.rawData.sourceEvents?.length) {
+      return rawBattleData;
+    }
+
+    const processor = new BattleProcessor();
+
+    return {
+      ...rawBattleData,
+      rawData: {
+        ...rawBattleData.rawData,
+        events: processor.extractAndParseMoves(
+          rawBattleData.rawData.sourceEvents,
+        ),
+      },
+    };
   }
 
   analyzeBattle(dto: CreateBattleDto): BattleAnalysis {
@@ -649,6 +780,8 @@ export class BattlesService implements IBattlesService {
           normalAttacks: warrior.normalAttacks,
           spellsUsed: warrior.spellsUsed,
           spellsUsedMap: warrior.spellsUsedMap,
+          stats: buildBattleWarriorStats(warrior),
+          statsVersion: BATTLE_WARRIOR_STATS_VERSION,
           damageDealt: warrior.damageDealt,
           distanceDamage: warrior.distanceDamage,
           meleeDamage: warrior.meleeDamage,
@@ -726,7 +859,7 @@ export class BattlesService implements IBattlesService {
         return { ...insertedBattle, warriors: insertedWarriors };
       });
 
-      return battle;
+      return inflateBattleWarriorsInBattle(battle);
     } catch (error) {
       this.logger.error("Failed to store battle in database:", error);
       throw new Error(
@@ -739,6 +872,7 @@ export class BattlesService implements IBattlesService {
     battleId: string,
     data: Omit<CreateBattleDto, "events"> & {
       events: ParsedMove[];
+      sourceEvents?: CreateBattleDto["events"];
     },
   ): Promise<void> {
     try {

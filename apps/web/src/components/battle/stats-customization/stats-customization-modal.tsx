@@ -11,10 +11,16 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
 import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
 import { CategoryItem } from "./category-item";
 import { AddCategoryForm } from "./add-category-form";
+import { cn } from "@lootlog/ui/lib/utils";
 
 interface StatCategory {
   name: string;
@@ -33,6 +39,7 @@ interface StatsCustomizationModalProps {
   onAddCategory: (categoryName: string) => void;
   onRemoveCategory: (categoryId: string) => void;
   onResetToDefaults: () => void;
+  compactTrigger?: boolean;
 }
 
 export const StatsCustomizationModal = ({
@@ -47,6 +54,7 @@ export const StatsCustomizationModal = ({
   onAddCategory,
   onRemoveCategory,
   onResetToDefaults,
+  compactTrigger,
 }: StatsCustomizationModalProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -71,15 +79,35 @@ export const StatsCustomizationModal = ({
     isDragging || localOrderKey !== configOrderKey
       ? localCategoryOrder
       : config.categoryOrder;
+  const triggerLabel = t("battleUi.customization.open");
+  const triggerButton = (
+    <Button
+      variant="outline"
+      size={compactTrigger ? "icon" : "sm"}
+      aria-label={triggerLabel}
+      className={cn(compactTrigger ? "size-9" : "gap-2")}
+    >
+      <Settings2 className="h-4 w-4" />
+      {compactTrigger ? (
+        <span className="sr-only">{triggerLabel}</span>
+      ) : (
+        triggerLabel
+      )}
+    </Button>
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Settings2 className="h-4 w-4" />
-          {t("battleUi.customization.open")}
-        </Button>
-      </DialogTrigger>
+      {compactTrigger ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent>{triggerLabel}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+      )}
       <DialogContent className="max-sm:w-screen max-sm:h-dvh max-sm:max-w-none max-sm:rounded-none sm:max-w-2xl sm:h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0 py-4">
           <DialogTitle>{t("battleUi.customization.title")}</DialogTitle>

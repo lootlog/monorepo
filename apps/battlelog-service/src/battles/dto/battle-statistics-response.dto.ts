@@ -149,6 +149,68 @@ const PlayerVsPlayerPaginatedResponseSchema = z.object({
   }),
 });
 
+const CombatProfileSummaryResponseSchema = z.object({
+  totalBattles: z.number(),
+  wins: z.number(),
+  losses: z.number(),
+  winRate: z.number(),
+  totalPH: z.number(),
+  totalRatingDelta: z.number(),
+  avgTurns: z.number(),
+  avgDuration: z.number(),
+  damagePerTurn: z.number(),
+  mitigationRate: z.number(),
+  controlRate: z.number(),
+});
+
+const CombatProfileBreakdownResponseSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  value: z.number(),
+  share: z.number(),
+});
+
+const CombatProfileSpellUsageResponseSchema = z.object({
+  spell: z.string(),
+  skillId: z.number().nullable(),
+  casts: z.number(),
+  share: z.number(),
+});
+
+const CombatProfileMatchupResponseSchema = z.object({
+  prof: z.string(),
+  wins: z.number(),
+  losses: z.number(),
+  totalBattles: z.number(),
+  winRate: z.number(),
+});
+
+const CombatProfileTrendPointResponseSchema = z.object({
+  date: z.string().datetime(),
+  value: z.number(),
+  cumulativeValue: z.number(),
+  battleId: z.string(),
+});
+
+const CombatProfileHighlightResponseSchema = z.object({
+  battleId: z.string(),
+  createdAt: z.string().datetime(),
+  type: z.string(),
+  label: z.string(),
+  value: z.number(),
+});
+
+const CombatProfileResponseSchema = z.object({
+  summary: CombatProfileSummaryResponseSchema,
+  damageMix: z.array(CombatProfileBreakdownResponseSchema),
+  mitigationMix: z.array(CombatProfileBreakdownResponseSchema),
+  spellUsage: z.array(CombatProfileSpellUsageResponseSchema),
+  matchupByProfession: z.array(CombatProfileMatchupResponseSchema),
+  phTrend: z.array(CombatProfileTrendPointResponseSchema),
+  ratingTrend: z.array(CombatProfileTrendPointResponseSchema),
+  highlights: z.array(CombatProfileHighlightResponseSchema),
+});
+
 export type BattleAnalyticsDto = z.output<typeof BattleAnalyticsResponseSchema>;
 export type ProfessionWinRateDto = z.output<
   typeof ProfessionWinRateResponseSchema
@@ -178,6 +240,7 @@ export type PlayerVsPlayerBattleDto = z.output<
 export type PlayerVsPlayerPaginatedResponse = z.output<
   typeof PlayerVsPlayerPaginatedResponseSchema
 >;
+export type CombatProfileDto = z.output<typeof CombatProfileResponseSchema>;
 
 const BattleAnalyticsResponseDtoBase: ZodDto<
   typeof BattleAnalyticsResponseSchema,
@@ -239,3 +302,10 @@ const PlayerVsPlayerPaginatedResponseDtoBase: ZodDto<
 > = createZodDto(PlayerVsPlayerPaginatedResponseSchema);
 
 export class PlayerVsPlayerPaginatedResponseDto extends PlayerVsPlayerPaginatedResponseDtoBase {}
+
+const CombatProfileResponseDtoBase: ZodDto<
+  typeof CombatProfileResponseSchema,
+  false
+> = createZodDto(CombatProfileResponseSchema);
+
+export class CombatProfileResponseDto extends CombatProfileResponseDtoBase {}

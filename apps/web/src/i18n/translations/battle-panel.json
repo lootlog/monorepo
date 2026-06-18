@@ -91,8 +91,142 @@
       "winrate": "Winrate"
     }
   },
+  "single": {
+    "statistics": {
+      "title": "Statystyki walki",
+      "showAll": "Pokaż wszystkie",
+      "hideZeros": "Ukryj zerowe wartości"
+    },
+    "log": {
+      "title": "Przebieg walki",
+      "search": {
+        "label": "Szukaj w przebiegu walki",
+        "placeholder": "Szukaj...",
+        "counter": "{{current}} / {{total}}",
+        "previous": "Poprzednie wystąpienie",
+        "next": "Następne wystąpienie"
+      }
+    },
+    "chart": {
+      "title": "HP i momentum",
+      "description": "Kliknij punkt, żeby przejść do tej tury w logu",
+      "pin": "Przypnij",
+      "team": "Drużyna {{team}}",
+      "momentum": "Momentum",
+      "turnTooltip": "Tura {{turn}}",
+      "legendary": {
+        "title": "Bonusy legendarne",
+        "groupLabel": "Tura {{turn}}: {{bonuses}}",
+        "bonusRecipient": "{{bonus}}: {{recipient}}",
+        "anguish": "Krwawa udręka",
+        "cleanse": "Płomienne oczyszczenie",
+        "critShield": "Krytyczna osłona",
+        "curse": "Klątwa",
+        "facade": "Fasada opieki",
+        "glare": "Oślepienie",
+        "holyTouch": "Dotyk anioła",
+        "lastHeal": "Ostatni ratunek",
+        "legendary": "Bonus legendarny",
+        "puncture": "Przeszywająca skuteczność",
+        "unknown": "Bonus legendarny",
+        "veryCrit": "Cios bardzo krytyczny"
+      }
+    },
+    "recentOpponent": {
+      "title": "Ostatnie walki",
+      "subtitle": "Przeciwko {{opponent}}",
+      "unsupported": "Dostępne dla walk 1v1",
+      "unsupportedDescription": "Historia z tym przeciwnikiem pojawia się tylko dla jednoznacznych walk 1v1.",
+      "empty": "Brak wcześniejszych walk z tym przeciwnikiem.",
+      "error": "Nie udało się pobrać ostatnich walk.",
+      "openDialog": "Pokaż ostatnie walki",
+      "win": "W",
+      "loss": "L",
+      "durationSeconds": "{{seconds}}s"
+    },
+    "reasons": {
+      "kill": "Ta tura zakończyła wojownika",
+      "flee": "Ucieczka zmieniła wynik walki",
+      "freeze": "Kontrola zamroziła tempo",
+      "control": "Kontrola zabrała inicjatywę",
+      "bigHealing": "Duże leczenie odwróciło presję",
+      "mitigation": "Defensywa mocno ograniczyła obrażenia",
+      "bigDamage": "Duży burst przesunął walkę",
+      "resourcePressure": "Presja na zasoby ograniczyła opcje",
+      "combo": "Combo zbudowało przewagę",
+      "ph": "Tura rozstrzygnęła PH",
+      "tempo": "Tura przesunęła tempo walki"
+    },
+    "flags": {
+      "kill": "Zgon",
+      "flee": "Ucieczka",
+      "stun": "Ogłuszenie",
+      "freeze": "Zamrożenie",
+      "block": "Blok",
+      "evade": "Unik",
+      "counter": "Kontra",
+      "parry": "Parowanie",
+      "arrowBlock": "Blok strzały",
+      "pierceBlock": "Blok przebicia",
+      "absorb": "Absorpcja",
+      "ph": "PH",
+      "damage": "Obrażenia",
+      "healing": "Leczenie",
+      "resource": "Zasoby",
+      "combo": "Combo",
+      "effectDamage": "Efekt"
+    }
+  },
   "statistics": {
+    "title": "Statystyki walk",
+    "subtitle": "Szczegółowa analiza i statystyki z historii twoich walk",
     "loading": "Ładowanie...",
+    "combatProfile": {
+      "value": "Wartość",
+      "wins": "Wygrane",
+      "losses": "Porażki",
+      "ph": "PH",
+      "rating": "Rating",
+      "perTurn": "na turę",
+      "rate": "częstotliwość",
+      "damageMix": "Miks obrażeń",
+      "mitigationMix": "Miks defensywy",
+      "spellUsage": "Użycie umiejętności",
+      "matchups": "Matchupy po profesji",
+      "trends": "Trend PH i ratingu",
+      "highlights": "Największe zwroty",
+      "cards": {
+        "record": "Bilans",
+        "phRating": "PH / rating",
+        "turns": "Śr. tury / czas",
+        "damage": "Obrażenia na turę",
+        "mitigation": "Mitigacja",
+        "control": "Kontrola"
+      },
+      "damageTypes": {
+        "melee": "Fizyczne",
+        "distance": "Dystansowe",
+        "auxiliary": "Pomocnicze",
+        "fire": "Ogień",
+        "frost": "Zimno",
+        "lightning": "Błyskawice",
+        "third": "Trzeci cios",
+        "true": "Prawdziwe",
+        "rage": "Wściekłość",
+        "stigma": "Piętno"
+      },
+      "mitigationTypes": {
+        "blockedDamage": "Zablokowane obrażenia",
+        "blocks": "Bloki",
+        "evasions": "Uniki",
+        "counters": "Kontry"
+      },
+      "highlightTypes": {
+        "biggestDamage": "Największy burst",
+        "biggestMitigation": "Największa obrona",
+        "biggestComeback": "Największy comeback"
+      }
+    },
     "battleDuration": {
       "title": "Czas trwania walk",
       "description": "Porównanie średniego czasu walk i ekstrema",
