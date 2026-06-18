@@ -137,14 +137,14 @@ export const seedCommand = async (args: string[]): Promise<void> => {
     switch (subcommand) {
       case "scrape:items": {
         const output =
-          options.output || "./packages/cli/src/mocks/data/items.json";
+          options.output ?? "./packages/cli/src/mocks/data/items.json";
         await scrapeItems(output, options.force);
         break;
       }
 
       case "scrape:npcs": {
         const output =
-          options.output || "./packages/cli/src/mocks/data/npcs.json";
+          options.output ?? "./packages/cli/src/mocks/data/npcs.json";
         await scrapeNpcs(output, options.force);
         break;
       }
@@ -153,9 +153,9 @@ export const seedCommand = async (args: string[]): Promise<void> => {
         console.log(chalk.blue("🔄 Starting complete scraping process...\n"));
 
         const itemsOutput =
-          options.itemsOutput || "./packages/cli/src/mocks/data/items.json";
+          options.itemsOutput ?? "./packages/cli/src/mocks/data/items.json";
         const npcsOutput =
-          options.npcsOutput || "./packages/cli/src/mocks/data/npcs.json";
+          options.npcsOutput ?? "./packages/cli/src/mocks/data/npcs.json";
 
         await scrapeItems(itemsOutput, options.force);
         console.log();
@@ -168,9 +168,9 @@ export const seedCommand = async (args: string[]): Promise<void> => {
       }
 
       case "generate:players": {
-        const count = options.count || options.players || 1000;
+        const count = options.count ?? options.players ?? 1000;
         const output =
-          options.output || "./packages/cli/src/mocks/data/players.json";
+          options.output ?? "./packages/cli/src/mocks/data/players.json";
         const outputPath = path.resolve(output);
 
         const outputExists = await fileExists(outputPath);
@@ -233,7 +233,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
         }
 
         console.log(chalk.blue("👥 Step 2: Generating players"));
-        const playerCount = options.players || 1000;
+        const playerCount = options.players ?? 1000;
         const playersPath = path.resolve(
           "./packages/cli/src/mocks/data/players.json",
         );
@@ -254,9 +254,9 @@ export const seedCommand = async (args: string[]): Promise<void> => {
 
         console.log(chalk.blue("🌱 Step 3: Seeding database"));
         await seed({
-          guildsCount: options.guilds || 5,
-          lootsCount: options.loots || 5000,
-          battlesCount: options.battles || 1000,
+          guildsCount: options.guilds ?? 5,
+          lootsCount: options.loots ?? 5000,
+          battlesCount: options.battles ?? 1000,
           playersCount: playerCount,
           clean: true,
         });
