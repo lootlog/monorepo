@@ -10,6 +10,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import type { BattleWarriorStats } from "src/battles/battle-warrior-stats.types";
 
 export const battles = pgTable(
   "battles",
@@ -115,6 +116,11 @@ export const battleWarriors = pgTable(
     normalAttacks: integer("normalAttacks").default(0).notNull(),
     spellsUsed: integer("spellsUsed").default(0).notNull(),
     spellsUsedMap: jsonb("spellsUsedMap").default({}).notNull(),
+    stats: jsonb("stats")
+      .$type<Partial<BattleWarriorStats>>()
+      .default({})
+      .notNull(),
+    statsVersion: integer("statsVersion").default(1).notNull(),
 
     isDead: boolean("isDead").default(false).notNull(),
     surrendered: boolean("surrendered").default(false).notNull(),

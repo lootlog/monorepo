@@ -40,6 +40,7 @@ export class QueryBattleStatisticsDto extends createZodDto(
 
 const QueryPlayerVsPlayerSchema = QueryBattleStatisticsSchema.extend({
   opponentId: z.string(),
+  excludeBattleId: z.string().optional(),
 });
 
 export class QueryPlayerVsPlayerDto extends createZodDto(

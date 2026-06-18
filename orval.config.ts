@@ -4,9 +4,7 @@ const sharedQueryOverride = {
   shouldExportQueryKey: true,
   useGetQueryData: true,
   useInvalidate: true,
-  useMutation: true,
   usePrefetch: true,
-  useQuery: true,
   useSetQueryData: true,
 } as const;
 

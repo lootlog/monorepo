@@ -8,7 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import type { GuildResponseDtoOutput as Guild } from "@/lib/api/generated/main/model";
+import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 
 type SettingsGuildSelectionGridSharedProps = {
   className?: string;

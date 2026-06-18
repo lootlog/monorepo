@@ -19,13 +19,15 @@
     "test:cov": "vitest run --config ./vitest.config.ts --coverage",
     "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
-    "battlelog:push": "drizzle-kit push",
-    "battlelog:generate": "drizzle-kit generate",
-    "battlelog:migrate": "drizzle-kit migrate",
+    "battlelog:push": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs push",
+    "battlelog:generate": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs generate",
+    "battlelog:migrate": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs migrate",
     "battlelog:migrate:init": "tsx --env-file=.env scripts/migrate-init.ts",
-    "battlelog:migrate:dev": "drizzle-kit push --force",
-    "battlelog:pull": "drizzle-kit pull",
-    "battlelog:studio": "drizzle-kit studio"
+    "battlelog:audit-actions": "tsx --env-file=.env scripts/audit-r2-battle-actions.ts",
+    "battlelog:backfill-warrior-stats": "tsx --env-file=.env scripts/backfill-battle-warrior-stats.ts",
+    "battlelog:migrate:dev": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs push --force",
+    "battlelog:pull": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs pull",
+    "battlelog:studio": "node --preserve-symlinks-main ./node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",
