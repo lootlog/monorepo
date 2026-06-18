@@ -195,6 +195,56 @@ describe("BattleProcessor", () => {
       expect(warrior2?.isDead).toBe(true);
     });
 
+    it("should sum -dmga with post-defense damage taken by the defender", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 101,
+                  name: "Warrior1",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 102,
+                  name: "Warrior2",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: ["1=100;2=90;+dmg=20755;-dmg=20754;-dmga=2137"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const warrior1 = result.warriors.find((w) => w.name === "Warrior1");
+      const warrior2 = result.warriors.find((w) => w.name === "Warrior2");
+      const turn = result.battleTimeline[0];
+
+      expect(warrior1?.damageDealt).toBe(20755);
+      expect(warrior1?.damageDealtAfterDefensive).toBe(22891);
+      expect(warrior2?.damageTaken).toBe(22891);
+      expect(warrior2?.meleeDamageTaken).toBe(20754);
+      expect(warrior2?.auxiliaryDamageTaken).toBe(2137);
+      expect(warrior2?.flatDamageTaken).toBe(22891);
+      expect(warrior2?.maxHp).toBe(228910);
+      expect(turn?.deltas.damage).toBe(22891);
+      expect(turn?.deltas.byWarrior["1"]?.damageDealt).toBe(22891);
+      expect(turn?.deltas.byWarrior["2"]?.damageTaken).toBe(22891);
+    });
+
     it("should track critical hits and armor pierces", () => {
       const battleData: CreateBattleDto = {
         accountId: "test-account",
