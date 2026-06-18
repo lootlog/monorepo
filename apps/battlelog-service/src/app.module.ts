@@ -1,6 +1,6 @@
 import { Module, type MiddlewareConsumer } from "@nestjs/common";
 import { APP_PIPE } from "@nestjs/core";
-import { LoggerMiddleware } from "@lootlog/nest-shared/middleware";
+import { LoggerMiddleware } from "@lootlog/nest-shared";
 import { ZodValidationPipe } from "nestjs-zod";
 import { WinstonModule } from "nest-winston";
 import { BullModule } from "@nestjs/bullmq";
