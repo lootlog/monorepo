@@ -5,6 +5,7 @@ import {
   generateDynamicValuesAndComponents,
   type DynamicValuesConfig,
 } from "../utils/dynamic-values-helper";
+import { getBattleActionPresentation } from "../utils/battle-action-presentation";
 import { roundHpPercentage, roundValue } from "../utils/value-utils";
 import type {
   BattleWarrior as Warrior,
@@ -38,6 +39,7 @@ export const BattleActionItem: FC<BattleActionItemProps> = memo(
     const processedValue = transformValue
       ? transformValue(roundedValue, action.type)
       : roundedValue;
+    const actionPresentation = getBattleActionPresentation(action);
 
     const dynamicData = generateDynamicValuesAndComponents(
       action.value,
@@ -48,7 +50,7 @@ export const BattleActionItem: FC<BattleActionItemProps> = memo(
     return (
       <div className={cn("px-4 py-1 bg-gray-100/10", className)}>
         <Trans
-          i18nKey={`battle.${action.type}`}
+          i18nKey={actionPresentation.i18nKey}
           values={{
             name: attacker?.name,
             defenderName: defender?.name,
@@ -56,6 +58,7 @@ export const BattleActionItem: FC<BattleActionItemProps> = memo(
             hp: roundHpPercentage(event.attackerHpPercentage),
             defenderHp: roundHpPercentage(event.defenderHpPercentage),
             v1: 0,
+            ...actionPresentation.values,
             ...dynamicData.values,
           }}
           components={{

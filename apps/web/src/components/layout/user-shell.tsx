@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { ROUTES } from "@/config/routes";
+import { UserHeaderActionsContext } from "@/contexts/user-header-actions-context";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
@@ -19,6 +20,8 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [headerActionsElement, setHeaderActionsElement] =
+    useState<HTMLElement | null>(null);
 
   const getNavigationInfo = () => {
     const path = location.pathname;
@@ -30,10 +33,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
       };
     }
 
-    if (
-      path === ROUTES.user.battlePanel.base ||
-      path === ROUTES.user.battlePanel.stats
-    ) {
+    if (path === ROUTES.user.battlePanel.base) {
       return {
         breadcrumbs: [
           { label: t("layout.navigation.battlePanel"), path: null },
@@ -113,23 +113,9 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     }
 
     const normalizedPath = path.replace(/\/$/, "");
-    const battlesPath = ROUTES.user.battlePanel.battles;
+    const battlesDetailsPath = `${ROUTES.user.battlePanel.base}/battles`;
 
-    if (normalizedPath === battlesPath) {
-      return {
-        breadcrumbs: [
-          {
-            label: t("layout.navigation.battlePanel"),
-            path: ROUTES.user.battlePanel.base,
-          },
-          { label: t("layout.breadcrumbs.battles"), path: null },
-        ],
-        showBack: true,
-        backPath: ROUTES.user.battlePanel.base,
-      };
-    }
-
-    if (normalizedPath.startsWith(`${battlesPath}/`)) {
+    if (normalizedPath.startsWith(`${battlesDetailsPath}/`)) {
       const battleId = normalizedPath.split("/").pop();
       if (battleId && battleId.length > 0) {
         return {
@@ -140,7 +126,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
             },
             {
               label: t("layout.breadcrumbs.battles"),
-              path: ROUTES.user.battlePanel.battles,
+              path: ROUTES.user.battlePanel.base,
             },
             {
               label: t("battlePanel.navigation.battleFallback", {
@@ -150,7 +136,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
             },
           ],
           showBack: true,
-          backPath: ROUTES.user.battlePanel.battles,
+          backPath: ROUTES.user.battlePanel.base,
         };
       }
     }
@@ -201,101 +187,106 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
     location.pathname === "/@me/kills";
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-row bg-background/70">
-      <div className="flex h-full min-h-0 w-full flex-col">
-        <PageHeader>
-          <div className="flex w-full flex-row items-center justify-between gap-2">
-            <div className="flex flex-row items-center gap-2">
-              <SidebarTrigger />
-              {navigationInfo.showBack && (
-                <div
-                  onMouseEnter={() => setHoveredButton("back")}
-                  onMouseLeave={() => setHoveredButton(null)}
-                >
-                  <ThemeInteractiveFrame
-                    isHovered={hoveredButton === "back"}
-                    isActive={false}
+    <UserHeaderActionsContext.Provider value={headerActionsElement}>
+      <div className="flex h-full min-h-0 w-full flex-row bg-background/70">
+        <div className="flex h-full min-h-0 w-full flex-col">
+          <PageHeader>
+            <div className="flex w-full flex-row items-center justify-between gap-2">
+              <div className="flex flex-row items-center gap-2">
+                <SidebarTrigger />
+                {navigationInfo.showBack && (
+                  <div
+                    onMouseEnter={() => setHoveredButton("back")}
+                    onMouseLeave={() => setHoveredButton(null)}
                   >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        navigate({ to: navigationInfo.backPath as string })
-                      }
-                      className="h-8 w-8 p-1 rounded-full hover:bg-muted/50 transition-colors"
+                    <ThemeInteractiveFrame
+                      isHovered={hoveredButton === "back"}
+                      isActive={false}
                     >
-                      <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                  </ThemeInteractiveFrame>
-                </div>
-              )}
-            </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          navigate({ to: navigationInfo.backPath as string })
+                        }
+                        className="h-8 w-8 p-1 rounded-full hover:bg-muted/50 transition-colors"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                    </ThemeInteractiveFrame>
+                  </div>
+                )}
+              </div>
 
-            <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 overflow-hidden text-sm">
-              <AnimatePresence mode="popLayout">
-                {navigationInfo.breadcrumbs.map((crumb, index) => {
-                  const isLast =
-                    index === navigationInfo.breadcrumbs.length - 1;
-                  return (
-                    <motion.div
-                      key={`${crumb.label}-${crumb.path ?? "current"}`}
-                      className="flex min-w-0 shrink-0 items-center gap-1.5 last:shrink"
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 8 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      {crumb.path ? (
-                        <div
-                          onMouseEnter={() =>
-                            setHoveredButton(`crumb-${index}`)
-                          }
-                          onMouseLeave={() => setHoveredButton(null)}
-                        >
-                          <ThemeInteractiveFrame
-                            isHovered={hoveredButton === `crumb-${index}`}
-                            isActive={false}
+              <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 overflow-hidden text-sm">
+                <AnimatePresence mode="popLayout">
+                  {navigationInfo.breadcrumbs.map((crumb, index) => {
+                    const isLast =
+                      index === navigationInfo.breadcrumbs.length - 1;
+                    return (
+                      <motion.div
+                        key={`${crumb.label}-${crumb.path ?? "current"}`}
+                        className="flex min-w-0 shrink-0 items-center gap-1.5 last:shrink"
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 8 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        {crumb.path ? (
+                          <div
+                            onMouseEnter={() =>
+                              setHoveredButton(`crumb-${index}`)
+                            }
+                            onMouseLeave={() => setHoveredButton(null)}
                           >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                navigate({
-                                  to: crumb.path as string,
-                                })
-                              }
-                              className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
+                            <ThemeInteractiveFrame
+                              isHovered={hoveredButton === `crumb-${index}`}
+                              isActive={false}
                             >
-                              {crumb.label}
-                            </button>
-                          </ThemeInteractiveFrame>
-                        </div>
-                      ) : (
-                        <span className="truncate text-sm font-bold text-foreground">
-                          {crumb.label}
-                        </span>
-                      )}
-                      {!isLast && (
-                        <span className="text-xs text-muted-foreground/30 select-none">
-                          /
-                        </span>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  navigate({
+                                    to: crumb.path as string,
+                                  })
+                                }
+                                className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
+                              >
+                                {crumb.label}
+                              </button>
+                            </ThemeInteractiveFrame>
+                          </div>
+                        ) : (
+                          <span className="truncate text-sm font-bold text-foreground">
+                            {crumb.label}
+                          </span>
+                        )}
+                        {!isLast && (
+                          <span className="text-xs text-muted-foreground/30 select-none">
+                            /
+                          </span>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
 
-            <div className="w-8" />
-          </div>
-        </PageHeader>
-        {isFullHeightContent ? (
-          <div className="flex-1 min-h-0 overflow-auto">{children}</div>
-        ) : (
-          <ScrollArea className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col gap-4">
-            <div className="h-full">{children}</div>
-          </ScrollArea>
-        )}
+              <div
+                ref={setHeaderActionsElement}
+                className="flex min-w-8 shrink-0 items-center justify-end gap-1"
+              />
+            </div>
+          </PageHeader>
+          {isFullHeightContent ? (
+            <div className="flex-1 min-h-0 overflow-auto">{children}</div>
+          ) : (
+            <ScrollArea className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col gap-4">
+              <div className="h-full">{children}</div>
+            </ScrollArea>
+          )}
+        </div>
       </div>
-    </div>
+    </UserHeaderActionsContext.Provider>
   );
 };

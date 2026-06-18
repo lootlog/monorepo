@@ -1,13 +1,15 @@
-import type { Battle, BattleWarrior } from "src/shared/modules/drizzle/schema";
+import type { InflatedBattleWarrior } from "../battle-warrior-stats";
+import type { Battle } from "src/shared/modules/drizzle/schema";
 import type { QueryBattlesDto } from "../dto/query-battles.dto";
 import type { UpdateBattleDto } from "../dto/update-battle.dto";
 import type { CreateBattleDto } from "../dto/create-battle.dto";
+import type { BattleTimelineResponseInput } from "../dto/battle-response.dto";
 import type { PaginationResult } from "./pagination.interface";
 import type { BattleAnalysis, ParsedMove } from "@lootlog/battle-processor";
 
 // Complete battle with all relations
 export interface BattleWithRelations extends Battle {
-  warriors: BattleWarrior[];
+  warriors: InflatedBattleWarrior[];
 }
 
 // Service method parameters
@@ -39,6 +41,7 @@ export interface RawBattleData {
   timestamp: string;
   rawData: Omit<CreateBattleDto, "events"> & {
     events: ParsedMove[];
+    sourceEvents?: CreateBattleDto["events"];
   };
 }
 
@@ -77,6 +80,14 @@ export interface IBattlesService {
     battleId: string,
     requestingUserId?: string,
   ): Promise<RawBattleData>;
+
+  /**
+   * Retrieves computed battle timeline from R2 payload and DB warriors
+   */
+  getBattleTimeline(
+    battleId: string,
+    requestingUserId?: string,
+  ): Promise<BattleTimelineResponseInput>;
 
   /**
    * Updates a battle (only public field)

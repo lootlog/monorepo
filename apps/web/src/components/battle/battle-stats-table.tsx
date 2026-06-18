@@ -2,10 +2,12 @@ import { Card } from "@lootlog/ui/components/card";
 import { ExpandableDataTable } from "./expandable-data-table";
 import { getBattleStatsTableColumns } from "./battle-stats-table-columns-full";
 import { OneVsOneStatsTable } from "./one-vs-one-stats-table";
-import { ChartArea } from "lucide-react";
-import { useMemo, useState } from "react";
+import { BattleStatsTableHeader } from "./battle-stats-table-header";
+import { useMemo, useState, type ReactNode } from "react";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
+import { useTranslation } from "react-i18next";
+import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
 import type {
   Battle,
   BattleWarrior as Warrior,
@@ -14,18 +16,31 @@ import type {
 interface BattleStatsTableProps {
   battle: Battle;
   className?: string;
+  cardClassName?: string;
+  compact?: boolean;
+  scrollClassName?: string;
   showHeader?: boolean;
+  headerTitle?: string;
+  headerActions?: ReactNode;
   hideZeros?: boolean;
   onHideZerosChange?: (value: boolean) => void;
+  statsCustomizationConfig?: StatsCustomizationConfig;
 }
 
 export function BattleStatsTable({
   battle,
   className,
+  cardClassName,
+  compact,
+  scrollClassName,
   showHeader = true,
+  headerTitle,
+  headerActions,
   hideZeros,
   onHideZerosChange,
+  statsCustomizationConfig,
 }: BattleStatsTableProps) {
+  const { t } = useTranslation();
   const [expandedRows, setExpandedRows] = useState<
     Map<
       string,
@@ -135,31 +150,38 @@ export function BattleStatsTable({
     return (
       <OneVsOneStatsTable
         battle={battle}
+        cardClassName={cardClassName}
+        compact={compact}
+        scrollClassName={scrollClassName}
         showHeader={showHeader}
+        headerTitle={headerTitle}
+        headerActions={headerActions}
         hideZeros={hideZeros}
         onHideZerosChange={onHideZerosChange}
+        statsCustomizationConfig={statsCustomizationConfig}
       />
     );
   }
 
   return (
-    <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full">
+    <Card
+      className={cn(
+        "border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full",
+        cardClassName,
+      )}
+    >
       {showHeader && (
-        <div className="sticky top-0 z-9 bg-background border-b">
-          <div className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-semibold">
-                <ChartArea className="h-5 w-5" />
-                Statystyki walki
-              </div>
-            </div>
-          </div>
-        </div>
+        <BattleStatsTableHeader
+          title={headerTitle ?? t("battlePanel.single.statistics.title")}
+          actions={headerActions}
+          compact={compact}
+        />
       )}
       <ScrollArea
         className={cn(
-          "max-w-[100dvw] sm:max-w-[calc(100dvw-20rem)]",
+          "max-w-[100dvw] min-h-0 sm:max-w-[calc(100dvw-20rem)]",
           className,
+          scrollClassName,
         )}
       >
         <ExpandableDataTable

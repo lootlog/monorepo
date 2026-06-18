@@ -39,6 +39,7 @@ export const ATTACK_ACTIONS_SORT_ORDER = [
   "-parry",
   "-pierceb",
   "-arrowblock",
+  "-dmga",
   "-contra",
   "-legbon_glare",
   "-legbon_critred",
@@ -77,6 +78,22 @@ const SPELL_ACTION_TYPES = [
   "resfire_per",
   "reslight_per",
   "resfrost_per",
+  "aura-sa_per",
+  "aura-adddmg2_per-meele",
+  "active_decblock_per-enemies",
+  "alllowdmg",
+  "healall_per",
+  "critval-allies",
+  "critmval-allies",
+  "lowheal_per-enemies",
+  "removestun-allies",
+  "removeslow-allies",
+  "achpp_per",
+  "absolute",
+  "stealmana",
+  "+energy",
+  "energyout",
+  "+endest",
 ] as const;
 
 const BUFF_ACTION_TYPES = [
@@ -84,6 +101,10 @@ const BUFF_ACTION_TYPES = [
   "poison_lowdmg_per-enemies",
   "heal_per-enemies",
   "heal_per-allies",
+  "+abdest_per",
+  "+abmdest_per",
+  "+abdest",
+  "+spell-taken_dmg-all",
 ] as const;
 
 const PASSIVE_ACTION_TYPES = [
@@ -97,6 +118,7 @@ const PASSIVE_ACTION_TYPES = [
   "fire",
   "light",
   "anguish",
+  "critwound",
 ] as const;
 
 const ATTACK_ACTION_TYPES = [
@@ -104,10 +126,12 @@ const ATTACK_ACTION_TYPES = [
   "+dmgf",
   "+dmgl",
   "+dmgo",
+  "+dmga",
   "+dmg",
   "+dmgc",
   "-dmg",
   "-dmgo",
+  "-dmga",
   "-dmgd",
   "-dmgf",
   "-dmgl",
@@ -153,6 +177,7 @@ const ATTACK_ACTION_TYPES = [
   "+wound",
   "+acdmg_destroyed",
   "+stun",
+  "+freeze",
   "-poison_lowdmg_per",
   "+actdmg",
   "+critpoison_per",
@@ -160,12 +185,20 @@ const ATTACK_ACTION_TYPES = [
   "-immunity_to_dmg",
   "+of_woundpoison",
   "+of_crit",
+  "+critwound",
+  "+crush_physical",
+  "+crush_distance",
+  "+critpierce",
+  "+woundpoison",
+  "+distract",
+  "+swing",
+  "-redabdest_per",
   "vamp_time",
   "+oth_dmg",
   "+critsa_per",
 ] as const;
 
-const OUTCOME_ACTION_TYPES = ["winner", "loser"] as const;
+const OUTCOME_ACTION_TYPES = ["winner", "loser", "flee"] as const;
 
 const IGNORED_ACTION_TYPES = ["skillId", "+exp"] as const;
 

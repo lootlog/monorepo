@@ -35,6 +35,7 @@ import {
   BattleDeletedResponseDto,
   BattleRawResponseDto,
   BattleResponseDto,
+  BattleTimelineResponseDto,
   BattlesListResponseDto,
   BattleUserWorldsResponseDto,
   BattleWarriorsSearchResponseDto,
@@ -42,6 +43,7 @@ import {
 import {
   BattleAnalyticsResponseDto,
   BattleDurationStatsResponseDto,
+  CombatProfileResponseDto,
   HeadToHeadPaginatedResponseDto,
   PhGrowthDataPointResponseDto,
   PlayerVsPlayerPaginatedResponseDto,
@@ -140,6 +142,19 @@ export class BattlesController {
     @UserId() userId: string,
   ) {
     return this.battleAnalyticsService.getBattleAnalytics(query, userId);
+  }
+
+  @Get("/@me/statistics/combat-profile")
+  @ApiOperation({ summary: "Get combat profile statistics" })
+  @ZodResponse({
+    status: 200,
+    type: CombatProfileResponseDto,
+  })
+  getCombatProfile(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getCombatProfile(query, userId);
   }
 
   @Get("/@me/statistics/profession-win-rate")
@@ -270,6 +285,21 @@ export class BattlesController {
   }
 
   @UseGuards(BattleAccessGuard)
+  @Get("/:battleId/timeline")
+  @ApiOperation({ summary: "Get computed battle timeline" })
+  @ZodResponse({
+    status: 200,
+    type: BattleTimelineResponseDto,
+  })
+  @ApiResponse({ status: 404, description: "Battle not found" })
+  getBattleTimeline(
+    @Param("battleId") battleId: string,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.getBattleTimeline(battleId, userId);
+  }
+
+  @UseGuards(BattleAccessGuard)
   @Get("/:battleId")
   @ApiOperation({ summary: "Get a single battle" })
   @ZodResponse({
@@ -355,5 +385,16 @@ export class PublicBattlesController {
   @ApiResponse({ status: 404, description: "Public battle not found" })
   getPublicBattleRaw(@Param("battleId") battleId: string) {
     return this.battlesService.getPublicBattleRaw(battleId);
+  }
+
+  @Get("/:battleId/timeline")
+  @ApiOperation({ summary: "Get computed timeline for a public battle" })
+  @ZodResponse({
+    status: 200,
+    type: BattleTimelineResponseDto,
+  })
+  @ApiResponse({ status: 404, description: "Public battle not found" })
+  getPublicBattleTimeline(@Param("battleId") battleId: string) {
+    return this.battlesService.getPublicBattleTimeline(battleId);
   }
 }
