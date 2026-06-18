@@ -6,7 +6,7 @@ export const useCurrentGameAccountPreferences = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
-  const accountId = Game.hero?.account ? String(Game.hero.account) : null;
+  const accountId = Game.getAccountId();
   const query = useUserGameAccountPreferences(accountId, gameInitialized);
 
   return {
