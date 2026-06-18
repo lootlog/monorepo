@@ -1,4 +1,3 @@
-import { useMemo, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -38,146 +37,140 @@ export function RatingDeltaByOpponentCard({
 }: RatingDeltaByOpponentCardProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const topData = useMemo(() => data.slice(0, 5), [data]);
+  const topData = data.slice(0, 5);
 
-  const handleRowClick = useCallback(
-    (opponentId: string) => {
-      if (!search.characterId) return;
+  const handleRowClick = (opponentId: string) => {
+    if (!search.characterId) return;
 
-      void navigate({
-        to: "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId",
-        params: {
-          myId: search.characterId,
-          opponentId,
-        },
-        search,
-      });
+    void navigate({
+      to: "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId",
+      params: {
+        myId: search.characterId,
+        opponentId,
+      },
+      search,
+    });
+  };
+
+  const columns: ColumnDef<RatingDeltaByOpponentRecord>[] = [
+    {
+      id: "avatar",
+      header: "",
+      cell: ({ row }) => (
+        <PlayerTile
+          player={{
+            name: row.original.opponentName,
+            lvl: row.original.opponentLvl,
+            prof: row.original.opponentProf,
+            icon: row.original.opponentIcon,
+          }}
+          className="scale-75"
+        />
+      ),
     },
-    [navigate, search],
-  );
-
-  const columns: ColumnDef<RatingDeltaByOpponentRecord>[] = useMemo(
-    () => [
-      {
-        id: "avatar",
-        header: "",
-        cell: ({ row }) => (
-          <PlayerTile
-            player={{
-              name: row.original.opponentName,
-              lvl: row.original.opponentLvl,
-              prof: row.original.opponentProf,
-              icon: row.original.opponentIcon,
-            }}
-            className="scale-75"
-          />
-        ),
-      },
-      {
-        accessorKey: "opponentName",
-        header: t("battlePanel.statistics.columns.name"),
-        cell: ({ row }) => (
-          <span className="font-medium">{row.original.opponentName}</span>
-        ),
-      },
-      {
-        accessorKey: "opponentLvl",
-        header: () => (
+    {
+      accessorKey: "opponentName",
+      header: t("battlePanel.statistics.columns.name"),
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.opponentName}</span>
+      ),
+    },
+    {
+      accessorKey: "opponentLvl",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.level")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">{row.original.opponentLvl}</div>
+      ),
+    },
+    {
+      accessorKey: "opponentProf",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.profession")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">
+          {getProfessionName(row.original.opponentProf)}
+        </div>
+      ),
+    },
+    {
+      id: "record",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.winLoss")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">
+          <span className="text-green-600 font-medium">
+            {row.original.wins}
+          </span>
+          &nbsp;-&nbsp;
+          <span className="text-red-600 font-medium">
+            {row.original.losses}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "totalRatingDelta",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.totalRatingDelta")}
+        </div>
+      ),
+      cell: ({ row }) => {
+        const delta = row.original.totalRatingDelta;
+        const sign = delta >= 0 ? "+" : "";
+        return (
           <div className="text-center">
-            {t("battlePanel.statistics.columns.level")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">{row.original.opponentLvl}</div>
-        ),
-      },
-      {
-        accessorKey: "opponentProf",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.profession")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">
-            {getProfessionName(row.original.opponentProf)}
-          </div>
-        ),
-      },
-      {
-        id: "record",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.winLoss")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">
-            <span className="text-green-600 font-medium">
-              {row.original.wins}
+            <span
+              className={
+                delta >= 0
+                  ? "text-green-600 font-medium"
+                  : "text-red-600 font-medium"
+              }
+            >
+              {sign}
+              {delta}
             </span>
-            &nbsp;-&nbsp;
-            <span className="text-red-600 font-medium">
-              {row.original.losses}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "avgRatingDelta",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.avgRating")}
+        </div>
+      ),
+      cell: ({ row }) => {
+        const delta = row.original.avgRatingDelta;
+        const sign = delta >= 0 ? "+" : "";
+        return (
+          <div className="text-center">
+            <span
+              className={
+                delta >= 0
+                  ? "text-green-600 font-medium"
+                  : "text-red-600 font-medium"
+              }
+            >
+              {sign}
+              {delta.toFixed(2)}
             </span>
           </div>
-        ),
+        );
       },
-      {
-        accessorKey: "totalRatingDelta",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.totalRatingDelta")}
-          </div>
-        ),
-        cell: ({ row }) => {
-          const delta = row.original.totalRatingDelta;
-          const sign = delta >= 0 ? "+" : "";
-          return (
-            <div className="text-center">
-              <span
-                className={
-                  delta >= 0
-                    ? "text-green-600 font-medium"
-                    : "text-red-600 font-medium"
-                }
-              >
-                {sign}
-                {delta}
-              </span>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "avgRatingDelta",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.avgRating")}
-          </div>
-        ),
-        cell: ({ row }) => {
-          const delta = row.original.avgRatingDelta;
-          const sign = delta >= 0 ? "+" : "";
-          return (
-            <div className="text-center">
-              <span
-                className={
-                  delta >= 0
-                    ? "text-green-600 font-medium"
-                    : "text-red-600 font-medium"
-                }
-              >
-                {sign}
-                {delta.toFixed(2)}
-              </span>
-            </div>
-          );
-        },
-      },
-    ],
-    [t],
-  );
+    },
+  ];
 
   const table = useReactTable({
     data: topData,
