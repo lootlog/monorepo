@@ -873,29 +873,31 @@ export class BattleProcessor {
       const dealt2 = teams.dmgDealt[t2] ?? 0;
       const taken1 = teams.dmgTaken[t1] ?? 0;
       const taken2 = teams.dmgTaken[t2] ?? 0;
+      const getDefaultOpposingTeam = (team: number): number =>
+        team === t1 ? t2 : t1;
 
       if (winningTeam === null && losingTeam === null) {
         if (alive1 !== alive2) {
           winningTeam = alive1 > alive2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = getDefaultOpposingTeam(winningTeam);
         } else if (hp1 !== hp2) {
           winningTeam = hp1 > hp2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = getDefaultOpposingTeam(winningTeam);
         } else if (dealt1 !== dealt2) {
           winningTeam = dealt1 > dealt2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = getDefaultOpposingTeam(winningTeam);
         } else if (taken1 !== taken2) {
           winningTeam = taken1 < taken2 ? t1 : t2;
-          losingTeam = winningTeam === t1 ? t2 : t1;
+          losingTeam = getDefaultOpposingTeam(winningTeam);
         } else {
           // Deterministic default
           winningTeam = t1;
           losingTeam = t2;
         }
       } else if (winningTeam === null) {
-        winningTeam = losingTeam === t1 ? t2 : t1;
+        winningTeam = getDefaultOpposingTeam(losingTeam);
       } else if (losingTeam === null) {
-        losingTeam = winningTeam === t1 ? t2 : t1;
+        losingTeam = getDefaultOpposingTeam(winningTeam);
       }
     }
 
