@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { JSX } from "react";
-import { HomeContent } from "@/src/components/landing";
+import { HomeContent } from "@/src/components/landing/home-content";
 
 export const metadata: Metadata = {
   title: "Lootlog.pl - Dodatek do Margonem | Timery, Łupy, Analiza Walk",
