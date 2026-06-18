@@ -91,7 +91,7 @@ export const BattlePanelSingleBattleActions: FC<
           toast.success(t("battlePanel.toasts.battleDeleted"), {
             duration: 3000,
           });
-          navigate({ to: ROUTES.user.battlePanel.battles });
+          navigate({ to: ROUTES.user.battlePanel.base });
         },
         onError: () => {
           toast.error(t("battlePanel.toasts.battleDeleteError"), {

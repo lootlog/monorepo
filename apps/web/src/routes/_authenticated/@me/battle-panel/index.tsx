@@ -1,35 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BattlePanelDashboard } from "@/features/user/battle-panel/battle-panel-dashboard/battle-panel-dashboard";
-import { BattlePanelDashboardSkeleton } from "@/features/user/battle-panel/battle-panel-dashboard/battle-panel-dashboard-skeleton";
+import { BattlePanelBattlesList } from "@/features/user/battle-panel/battle-panel-battles-list/battle-panel-battles-list";
+import { BattlePanelBattlesSkeleton } from "@/features/user/battle-panel/battle-panel-battles-list/battle-panel-battles-skeleton";
 import {
-  battlePanelStatisticsSearchSchema,
-  loadBattlePanelStatisticsSearch,
-  normalizeBattlePanelCharacterId,
-} from "@/features/user/battle-panel/battle-panel-statistics-search";
-import { getBattlesControllerGetBattleAnalyticsQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
+  getBattlesControllerGetDashboardBattlesQueryOptions,
+  getBattlesControllerGetUserCharactersQueryOptions,
+} from "@/lib/api/generated/battlelog/battles/battles";
+import { loadBattlePanelBattlesSearch } from "@/features/user/battle-panel/battle-panel-battles-list/battle-query-parsers";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
-  validateSearch: battlePanelStatisticsSearchSchema,
-  loader: ({ abortController, context, location, preload }) =>
+  loader: ({ abortController, context, location }) =>
     withRouteLoaderCancellation(abortController, async () => {
-      if (preload) {
-        return null;
-      }
+      const search = loadBattlePanelBattlesSearch(location.searchStr);
 
-      const search = loadBattlePanelStatisticsSearch(location.searchStr);
-
-      await context.queryClient.ensureQueryData(
-        getBattlesControllerGetBattleAnalyticsQueryOptions({
-          characterId: normalizeBattlePanelCharacterId(search.characterId),
-          period: "180d",
-          minLevel: search.minLevel,
-          maxLevel: search.maxLevel,
-        }),
-      );
+      await Promise.all([
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetUserCharactersQueryOptions(),
+        ),
+        context.queryClient.ensureQueryData(
+          getBattlesControllerGetDashboardBattlesQueryOptions({
+            cursor: search.cursor ?? undefined,
+            size: 20,
+            includeTotal: true,
+            world: search.world ?? undefined,
+            type: search.type ?? undefined,
+            search: search.search ?? undefined,
+            result: search.result ?? undefined,
+            ph: search.ph ?? undefined,
+            matchmaking: search.matchmaking ?? undefined,
+            characterId: search.characterId ?? undefined,
+            minLevel: search.minLevel,
+            maxLevel: search.maxLevel,
+          }),
+        ),
+      ]);
 
       return null;
     }),
-  component: BattlePanelDashboard,
-  pendingComponent: BattlePanelDashboardSkeleton,
+  component: BattlePanelBattlesList,
+  pendingComponent: BattlePanelBattlesSkeleton,
 });
