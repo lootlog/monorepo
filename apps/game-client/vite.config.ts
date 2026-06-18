@@ -10,9 +10,9 @@ import { visualizer } from "rollup-plugin-visualizer";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "");
   const commitSha =
-    env.VITE_COMMIT_SHA ||
-    env.WORKERS_CI_COMMIT_SHA ||
-    process.env.WORKERS_CI_COMMIT_SHA ||
+    env.VITE_COMMIT_SHA ??
+    env.WORKERS_CI_COMMIT_SHA ??
+    process.env.WORKERS_CI_COMMIT_SHA ??
     "";
 
   return {

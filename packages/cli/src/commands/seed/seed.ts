@@ -20,7 +20,7 @@ const prisma = new PrismaClient();
 
 // Use separate connection string for battlelog if provided
 const battlelogConnectionUri =
-  process.env.BATTLELOG_DATABASE_URL || process.env.POSTGRESQL_CONNECTION_URI;
+  process.env.BATTLELOG_DATABASE_URL ?? process.env.POSTGRESQL_CONNECTION_URI;
 
 const battlelogPrisma = new BattlelogPrismaClient({
   datasources: {

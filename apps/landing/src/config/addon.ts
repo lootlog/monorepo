@@ -1,3 +1,3 @@
 export const ADDON_URL =
-  process.env.NEXT_PUBLIC_ADDON_URL ||
+  process.env.NEXT_PUBLIC_ADDON_URL ??
   "https://github.com/lootlog/monorepo/releases/latest";
