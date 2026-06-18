@@ -8,6 +8,7 @@ export const DEAD_LETTER_EXCHANGE_NAME = "dlx";
 export const RETRY_EXCHANGE_NAME = "retry";
 
 const DEFAULT_TTL = 30000; // 30 seconds
+const RABBITMQ_CONNECTION_INIT_TIMEOUT = 30000;
 
 export const rabbitmqConfig: RabbitMQConfig = {
   uri: env.RABBITMQ_URI,
@@ -176,5 +177,8 @@ export const rabbitmqConfig: RabbitMQConfig = {
       prefetchCount: 1,
       default: true,
     },
+  },
+  connectionInitOptions: {
+    timeout: RABBITMQ_CONNECTION_INIT_TIMEOUT,
   },
 };
