@@ -127,14 +127,6 @@ export class GuildsService {
     }
   }
 
-  private async refreshInBackground(
-    options: GetUserGuildsOptions,
-    cacheKey: string,
-  ): Promise<void> {
-    const guilds = await this.fetchFromHttpWithRetry(options);
-    await this.cacheGuilds(cacheKey, guilds);
-  }
-
   private async getCachedGuilds(
     cacheKey: string,
   ): Promise<CachedGuildData | null> {
