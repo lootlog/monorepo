@@ -39,6 +39,10 @@ import {
   type TierName,
 } from "src/gateway/utils/room-utils";
 
+type FetchedSocket = Awaited<
+  ReturnType<Gateway["server"]["fetchSockets"]>
+>[number];
+
 type FeatureRouting = {
   tier: TierName;
   npcLevel?: number;
@@ -74,10 +78,10 @@ export class GatewayService {
     const room = buildRoomName(guildId, feature, tier);
 
     if (npcLevel !== undefined) {
-      // Level filtering required - fetch sockets and filter
-      this.gateway.server
-        .in(room)
-        .fetchSockets()
+      void this.fetchSocketsSafely(
+        () => this.gateway.server.in(room).fetchSockets(),
+        `feature room ${room}`,
+      )
         .then((sockets) => {
           sockets.forEach((socket) => {
             const guildData = socket.data.guilds?.find(
@@ -98,9 +102,14 @@ export class GatewayService {
               socket.emit(event, data);
             }
           });
+        })
+        .catch((error) => {
+          this.logger.error(
+            `Failed to emit to feature room ${room}: ${error.message}`,
+            error.stack,
+          );
         });
     } else {
-      // No level filtering - direct room broadcast
       this.gateway.server.to(room).emit(event, data);
     }
   }
@@ -172,9 +181,10 @@ export class GatewayService {
     const routing = this.getChatMessageRouting(data);
     const room = buildRoomName(data.guildId, "chat", routing.tier);
 
-    this.gateway.server
-      .in(room)
-      .fetchSockets()
+    void this.fetchSocketsSafely(
+      () => this.gateway.server.in(room).fetchSockets(),
+      `chat room ${room}`,
+    )
       .then((sockets) => {
         sockets.forEach((socket) => {
           const guildData = socket.data.guilds?.find(
@@ -211,6 +221,12 @@ export class GatewayService {
             ),
           );
         });
+      })
+      .catch((error) => {
+        this.logger.error(
+          `Failed to send chat message for guild ${data.guildId}: ${error.message}`,
+          error.stack,
+        );
       });
   }
 
@@ -248,7 +264,10 @@ export class GatewayService {
         discordId,
         userId,
       });
-      const sockets = await this.gateway.server.fetchSockets();
+      const sockets = await this.fetchSocketsSafely(
+        () => this.gateway.server.fetchSockets(),
+        `socket rebalance for user ${discordId}`,
+      );
       const userSockets = sockets.filter(
         (socket) => socket.data.discordId === discordId,
       );
@@ -345,7 +364,10 @@ export class GatewayService {
   }
 
   async handleVolunteerNotification(data: VolunteerNotificationDto) {
-    const sockets = await this.gateway.server.fetchSockets();
+    const sockets = await this.fetchSocketsSafely(
+      () => this.gateway.server.fetchSockets(),
+      `volunteer notification ${data.notificationId}`,
+    );
     const targetSockets = sockets.filter(
       (socket) => socket.data.discordId === data.targetDiscordId,
     );
@@ -458,6 +480,19 @@ export class GatewayService {
     }
 
     return this.getNpcFeatureRouting(data.npc);
+  }
+
+  private async fetchSocketsSafely(
+    fetchSockets: () => Promise<FetchedSocket[]>,
+    context: string,
+  ): Promise<FetchedSocket[]> {
+    try {
+      return await fetchSockets();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to fetch sockets for ${context}: ${message}`);
+      return [];
+    }
   }
 
   private toChatMessageEnvelope(

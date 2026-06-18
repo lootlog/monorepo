@@ -95,6 +95,10 @@ describe("PresenceService", () => {
     } as never);
   });
 
+  async function flushPromises() {
+    return new Promise((resolve) => setImmediate(resolve));
+  }
+
   describe("fetchEventPresence", () => {
     it("returns all guild presence when world is not provided", async () => {
       const guildId = "guild-1";
@@ -168,6 +172,26 @@ describe("PresenceService", () => {
       if (result.status !== "success") return;
 
       expect(result.players["discord-1"][0].lvl).toBe("64");
+    });
+
+    it("returns empty presence when socket fetch fails", async () => {
+      const guildId = "guild-1";
+      const client = createViewerClient(guildId);
+
+      mockFetchSockets.mockRejectedValue(
+        new Error("timeout reached while waiting for fetchSockets response"),
+      );
+
+      const result = await service.fetchEventPresence(
+        mockServer as never,
+        client,
+        guildId,
+      );
+
+      expect(result).toEqual({
+        status: "success",
+        players: {},
+      });
     });
 
     it("returns forbidden when client is not in guild online players room", async () => {
@@ -417,6 +441,26 @@ describe("PresenceService", () => {
       expect(result.players["discord-high"][0].player.lvl).toBe("300");
       expect(result.players["discord-mid"][0].player.lvl).toBe("150");
     });
+
+    it("returns empty online players presence when socket fetch fails", async () => {
+      const guildId = "guild-1";
+
+      mockFetchSockets.mockRejectedValue(
+        new Error("timeout reached while waiting for fetchSockets response"),
+      );
+
+      const result = await service.fetchOnlinePlayersPresence(
+        mockServer as never,
+        createViewerClient(guildId),
+        guildId,
+        "alpha",
+      );
+
+      expect(result).toEqual({
+        status: "success",
+        players: {},
+      });
+    });
   });
 
   describe("live presence events", () => {
@@ -478,7 +522,7 @@ describe("PresenceService", () => {
         mockServer as never,
       );
 
-      await Promise.resolve();
+      await flushPromises();
 
       expect(viewerSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
@@ -542,7 +586,7 @@ describe("PresenceService", () => {
         "guild-1",
       ]);
 
-      await Promise.resolve();
+      await flushPromises();
 
       expect(viewerSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
@@ -603,7 +647,7 @@ describe("PresenceService", () => {
 
       service.emitDisconnectPresence(mockServer as never, client);
 
-      await Promise.resolve();
+      await flushPromises();
 
       expect(viewerSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
@@ -652,7 +696,7 @@ describe("PresenceService", () => {
         mockServer as never,
       );
 
-      await Promise.resolve();
+      await flushPromises();
 
       expect(viewerSocket.emit).not.toHaveBeenCalledWith(
         GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
