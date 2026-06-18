@@ -3,7 +3,7 @@ import { APP_PIPE } from "@nestjs/core";
 import { ZodValidationPipe } from "nestjs-zod";
 import { HealthzModule } from "./healthz/healthz.module";
 import { WinstonModule } from "nest-winston";
-import { LoggerMiddleware } from "@lootlog/nest-shared/middleware";
+import { LoggerMiddleware } from "@lootlog/nest-shared";
 import { GatewayModule } from "./gateway/gateway.module";
 import { winstonConfig } from "src/config/winston.config";
 
