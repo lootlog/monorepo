@@ -1,0 +1,80 @@
+---
+title: Mechanika walk i audyt battle panelu
+description: Zakres mechanik Margonem obsługiwanych przez battle panel, obecne wyliczenia oraz wynik audytu R2.
+---
+
+# Mechanika walk i audyt battle panelu
+
+Źródła: [Mechanika walk - Dokumentacja Margonem](https://pomoc.margonem.pl/index/view%2C372), obecne zachowanie `@lootlog/battle-processor` oraz próbka 1000 obiektów R2.
+
+## Zakres update'u
+
+Battle panel pozostaje narzędziem log analytics, nie symulatorem Margonem. Liczymy to, co jest widoczne w logach walki: przebieg tur, HP, obrażenia, leczenie, defensywę, zasoby, kontrolę, PH/rating i wzorce użycia umiejętności.
+
+W tej iteracji wspieramy PvP, Otchłań i grupowe PvP. Poza zakresem są PvE, loot, exp, ekonomia NPC oraz próba pełnego odtworzenia serwerowego silnika walki.
+
+## Mechaniki z dokumentacji
+
+Dokumentacja Margonem opisuje walkę jako sekwencję akcji wykonywanych w turach, z wpływem statystyk postaci, typów obrażeń, redukcji, zdarzeń losowych, bonusów legendarnych i wariantów trybu walki, w tym Otchłani. Dla panelu istotne są przede wszystkim zdarzenia widoczne w logu:
+
+- obrażenia fizyczne, dystansowe, pomocnicze, magiczne i dodatkowe,
+- redukcje, blok, unik, kontra, parowanie, przebicie bloku i absorpcje,
+- leczenie własne i leczenie celu,
+- kontrola tury, ogłuszenie, zamrożenie i usuwanie kontroli,
+- zasoby: energia, mana, niszczenie zasobów i odzysk,
+- combo, czary/umiejętności, `skillId` i nazwa akcji z `tspell`,
+- efekty okresowe: rana, trucizna, podpalenie, porażenie, udręka,
+- rozstrzygnięcie: zwycięzca, przegrany, ucieczka, PH i rating.
+
+## Co liczymy
+
+`packages/battle-processor` jest źródłem prawdy dla analizy walki. Zwraca teraz:
+
+- `battleTimeline`: snapshot po każdej turze z HP wojowników, HP drużyn, deltami obrażeń/leczenia/zasobów, cumulative totals, akcjami, flagami i krótkim powodem znaczenia tury.
+- `warriorMechanics`: agregaty mechanik widocznych w logu, m.in. absorpcje, `-dmga`, leczenie celu, użycie umiejętności przez `tspell + skillId`, combo max, kontrola, mitigacja, obrażenia efektów i presja zasobów.
+- `actionCoverage`: metadane pokrycia akcji, żeby nieobsługiwane typy były widoczne w audycie i dev output.
+
+Historyczne obiekty R2 mają kształt `{ battleId, timestamp, rawData }`, gdzie `rawData.events` to już sparsowane ruchy. Nowe zapisy mogą dodatkowo zawierać `rawData.sourceEvents`, ale release nie wymaga pełnego backfillu historii.
+
+## Wynik rozpoznania R2
+
+Eksploracja R2 znalazła 1000 parsowalnych gzip payloadów w kształcie `{ battleId, timestamp, rawData }`. Wszystkie użyte obiekty miały parsed moves, bez pierwotnych eventów źródłowych.
+
+Ważny caveat: bieżący `.env` Postgresa nie pokazywał tabeli `battles`, więc próba nie była pewnym “ostatnim 1000 walk”. Była pierwszą stroną listowania R2. Skrypt `pnpm --filter @lootlog/battlelog-service battlelog:audit-actions` raportuje to jawnie i używa DB po `createdAt` tylko wtedy, gdy tabela jest dostępna.
+
+Próbka pokazała 140 unikalnych typów akcji. Stary procesor pokrywał około 75% wystąpień i gubił ważne rodziny statystyk:
+
+- absorpcje: `+absorb`, `-absorb`, `+absorbm`, `-absorbm`,
+- obrażenia pomocnicze po defensywie: `-dmga`,
+- buffy/debuffy i aury, np. `+critslow_per`, `active_decblock_per`, `aura-sa_per`,
+- combo: `combo-max`,
+- kontrolę i defensywę: `+freeze`, parowanie, blok strzały, przebicie bloku,
+- leczenie celu: `heal_target`,
+- outcome/resource/system events: `flee`, `+ph`, `+engback`, `shout`.
+
+## Aktualna interpretacja
+
+Najważniejsza poprawka interpretacyjna: `tspell` często przechowuje nazwę czaru, a nie identyfikator. Do identyfikacji umiejętności i follow-up attacków używamy `skillId`, z fallbackiem do starego zachowania tylko wtedy, gdy `skillId` nie występuje.
+
+Timeline jest liczony z R2 na żądanie:
+
+- nowe walki: preferowane `sourceEvents`, jeżeli są zapisane,
+- stare walki: parsed moves plus wojownicy z DB,
+- brak obiektu R2: endpoint timeline raportuje błąd zamiast zwracać pustą analizę.
+
+## Endpointy i UI
+
+Nowe endpointy:
+
+- `GET /battles/:battleId/timeline`,
+- `GET /battles/public/:battleId/timeline`,
+- `GET /battles/@me/statistics/combat-profile`.
+
+UI pojedynczej walki powinien wykorzystywać timeline jako podstawę wykresu HP/momentum, wyboru tury, inspektora i logu. Historia statystyk korzysta z combat profile liczonego z agregatów DB, a nie z masowego pobierania R2.
+
+## Checklist kolejnych audytów
+
+- Uruchom `pnpm --filter @lootlog/battlelog-service battlelog:audit-actions`.
+- Sprawdź, czy `source.kind` to `db-latest`; jeśli jest `r2-first-list-page`, raport nie dowodzi najnowszych 1000 walk.
+- Porównaj `unknownProcessorActions`, `missingUiActions` i `missingTranslations`.
+- Po zmianach parsera lub tłumaczeń odśwież dokument przez `pnpm --filter @lootlog/battlelog-service battlelog:audit-actions -- --write-doc`.

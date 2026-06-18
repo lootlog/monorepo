@@ -120,6 +120,7 @@ describe("BattleAnalyticsService", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("getBattleAnalytics", () => {
@@ -507,6 +508,61 @@ describe("BattleAnalyticsService", () => {
     });
   });
 
+  describe("getCombatProfile", () => {
+    it("should not include counters in mitigation mix", async () => {
+      redisService.get.mockResolvedValue(null);
+      drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(
+        mockUserCharacter,
+      );
+      drizzleService.db.query.battles.findMany.mockResolvedValue([
+        {
+          ...mockBattle,
+          warriors: [
+            {
+              ...mockWarrior1,
+              damageDealtAfterDefensive: 300,
+              damageTaken: 200,
+              blockedDamage: 100,
+              blocks: 1,
+              evasions: 0,
+              counters: 3,
+              turns: 2,
+              turnsLost: 0,
+              meleeDamage: 300,
+              distanceDamage: 0,
+              auxiliaryDamage: 0,
+              fireDamage: 0,
+              frostDamage: 0,
+              lightningDamage: 0,
+              thirdAttDamage: 0,
+              trueDamageDealt: 0,
+              rageDamageDealt: 0,
+              stigmaDamageDealt: 0,
+              spellsUsedMap: {},
+            },
+            mockWarrior2,
+          ],
+        },
+      ]);
+
+      const result = await service.getCombatProfile(
+        { characterId: mockCharacterId },
+        mockUserId,
+      );
+
+      expect(result.summary.mitigationRate).toBe(33.33);
+      expect(result.mitigationMix).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ key: "blockedDamage", value: 100 }),
+          expect.objectContaining({ key: "blocks", value: 1 }),
+        ]),
+      );
+      expect(result.mitigationMix).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ key: "counters" })]),
+      );
+    });
+  });
+
   describe("getRatingDeltaByOpponent", () => {
     it("should return cached result if available", async () => {
       const cachedData = JSON.stringify([
@@ -550,6 +606,93 @@ describe("BattleAnalyticsService", () => {
       expect(result.battles).toEqual([]);
       expect(result.pagination.size).toBe(10);
       expect(result.pagination.hasNext).toBe(false);
+    });
+
+    it("should exclude the current battle and non-1v1 battles", async () => {
+      const buildWhereSpy = vi
+        .spyOn(service as any, "buildAnalyticsWhere")
+        .mockReturnValue(undefined);
+      drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(
+        mockUserCharacter,
+      );
+      drizzleService.db.query.battles.findMany.mockResolvedValue([
+        {
+          ...mockBattle,
+          id: "current-battle",
+          warriors: [
+            { ...mockWarrior1, battleId: "current-battle" },
+            { ...mockWarrior2, battleId: "current-battle" },
+          ],
+        },
+        {
+          ...mockBattle,
+          id: "group-battle",
+          type: "group",
+          warriors: [
+            { ...mockWarrior1, battleId: "group-battle" },
+            { ...mockWarrior2, battleId: "group-battle" },
+          ],
+        },
+        {
+          ...mockBattle,
+          id: "previous-battle",
+          warriors: [
+            { ...mockWarrior1, battleId: "previous-battle" },
+            { ...mockWarrior2, battleId: "previous-battle" },
+          ],
+        },
+      ]);
+
+      const result = await service.getPlayerVsPlayerBattles(
+        {
+          characterId: mockCharacterId,
+          world: mockWorld,
+          opponentId: "opponent-1",
+          excludeBattleId: "current-battle",
+          period: "all",
+          size: 10,
+        },
+        mockUserId,
+      );
+
+      expect(result.battles).toHaveLength(1);
+      expect(result.battles[0]?.battleId).toBe("previous-battle");
+      expect(result.pagination.size).toBe(10);
+      expect(result.pagination.hasNext).toBe(false);
+      drizzleService.db.query.battles.findMany.mock.calls[0][0].where.RAW({});
+      expect(buildWhereSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ matchmaking: undefined }),
+      );
+      buildWhereSpy.mockRestore();
+    });
+
+    it("should pass explicit matchmaking filter when requested", async () => {
+      const buildWhereSpy = vi
+        .spyOn(service as any, "buildAnalyticsWhere")
+        .mockReturnValue(undefined);
+      drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(
+        mockUserCharacter,
+      );
+      drizzleService.db.query.battles.findMany.mockResolvedValue([]);
+
+      await service.getPlayerVsPlayerBattles(
+        {
+          characterId: mockCharacterId,
+          opponentId: "opponent-1",
+          matchmaking: true,
+          period: "all",
+          size: 10,
+        },
+        mockUserId,
+      );
+
+      drizzleService.db.query.battles.findMany.mock.calls[0][0].where.RAW({});
+      expect(buildWhereSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ matchmaking: true }),
+      );
+      buildWhereSpy.mockRestore();
     });
   });
 

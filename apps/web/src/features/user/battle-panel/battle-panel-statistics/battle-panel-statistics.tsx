@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import {
+  battlesControllerGetCombatProfile,
   useBattlesControllerGetBattleDuration,
   useBattlesControllerGetCurrentStreak,
   useBattlesControllerGetHeadToHead,
@@ -26,7 +27,12 @@ import {
   battlePanelStatisticsSearchParsers,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
+import { CombatProfileOverview } from "./components/combat-profile-overview";
+import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+
 export function BattlePanelStatistics() {
+  const { t } = useTranslation();
   const { data: charactersResponse, isLoading: isLoadingCharacters } =
     useBattlesControllerGetUserCharacters();
   const characters = charactersResponse?.characters;
@@ -42,6 +48,7 @@ export function BattlePanelStatistics() {
   const maxLevel = queryState.maxLevel;
   const ph = queryState.ph ?? undefined;
   const matchmaking = queryState.matchmaking ?? undefined;
+  const selectedCharacterId = currentCharacterId ?? characters?.[0]?.id;
 
   useEffect(() => {
     if (!isLoadingCharacters && characters?.length && !currentCharacterId) {
@@ -56,7 +63,7 @@ export function BattlePanelStatistics() {
 
   const { data: professionData, isLoading: isProfessionLoading } =
     useBattlesControllerGetProfessionWinRate({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId: selectedCharacterId,
       period,
       minLevel,
       maxLevel,
@@ -66,7 +73,7 @@ export function BattlePanelStatistics() {
 
   const { data: headToHeadData, isLoading: isHeadToHeadLoading } =
     useBattlesControllerGetHeadToHead({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId: selectedCharacterId,
       period,
       minLevel,
       maxLevel,
@@ -77,7 +84,7 @@ export function BattlePanelStatistics() {
 
   const { data: streakData, isLoading: isStreakLoading } =
     useBattlesControllerGetCurrentStreak({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId: selectedCharacterId,
       period,
       minLevel,
       maxLevel,
@@ -87,7 +94,7 @@ export function BattlePanelStatistics() {
 
   const { data: durationData, isLoading: isDurationLoading } =
     useBattlesControllerGetBattleDuration({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId: selectedCharacterId,
       period,
       minLevel,
       maxLevel,
@@ -97,7 +104,7 @@ export function BattlePanelStatistics() {
 
   const { data: phGrowthData, isLoading: isPhGrowthLoading } =
     useBattlesControllerGetPhGrowth({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId: selectedCharacterId,
       period,
       minLevel,
       maxLevel,
@@ -107,7 +114,7 @@ export function BattlePanelStatistics() {
 
   const { data: ratingGrowthData, isLoading: isRatingGrowthLoading } =
     useBattlesControllerGetRatingGrowth({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId: selectedCharacterId,
       period,
       minLevel,
       maxLevel,
@@ -115,11 +122,32 @@ export function BattlePanelStatistics() {
 
   const { data: ratingDeltaData, isLoading: isRatingDeltaLoading } =
     useBattlesControllerGetRatingDeltaByOpponent({
-      characterId: currentCharacterId ?? characters?.[0]?.id,
+      characterId: selectedCharacterId,
       period,
       minLevel,
       maxLevel,
     });
+  const { data: combatProfile, isLoading: isCombatProfileLoading } = useQuery({
+    queryKey: [
+      "combat-profile",
+      selectedCharacterId,
+      period,
+      minLevel,
+      maxLevel,
+      ph,
+      matchmaking,
+    ],
+    queryFn: () =>
+      battlesControllerGetCombatProfile({
+        characterId: selectedCharacterId,
+        period,
+        minLevel,
+        maxLevel,
+        ph,
+        matchmaking,
+      }),
+    enabled: Boolean(selectedCharacterId),
+  });
 
   const statisticsSearch = {
     characterId: currentCharacterId,
@@ -139,8 +167,8 @@ export function BattlePanelStatistics() {
       <div className="px-3 py-3 flex flex-col gap-4">
         <SectionHeader
           icon={BarChart3}
-          title="Statystyki walk"
-          subtitle="Szczegółowa analiza i statystyki z historii twoich walk"
+          title={t("battlePanel.statistics.title")}
+          subtitle={t("battlePanel.statistics.subtitle")}
         />
         <Card className="gap-3 border-border bg-card/60 p-3 backdrop-blur-sm">
           <StatisticsFilters
@@ -182,6 +210,11 @@ export function BattlePanelStatistics() {
             }}
           />
         </Card>
+
+        <CombatProfileOverview
+          data={combatProfile}
+          isLoading={isCombatProfileLoading}
+        />
 
         {matchmaking ? (
           <>

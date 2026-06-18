@@ -13,6 +13,11 @@ import type { Npc } from "@/api/npcs.api";
 import type { GuildMember } from "@/types/guild-member";
 import type { NpcTypeSoundConfig, UserSoundSettings } from "@lootlog/types";
 
+export type GuildIdentity = Pick<
+  GuildResponseDtoOutput,
+  "id" | "name" | "icon" | "vanityUrl"
+>;
+
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 };
@@ -34,11 +39,11 @@ const getString = (value: unknown, fallback = "") => {
   return typeof value === "string" ? value : fallback;
 };
 
-export const getGuildIds = (guilds?: GuildResponseDtoOutput[]) => {
+export const getGuildIds = (guilds?: GuildIdentity[]) => {
   return guilds?.map((guild) => guild.id) ?? [];
 };
 
-export const normalizeGuild = (guild: GuildResponseDtoOutput): Guild => {
+export const normalizeGuild = (guild: GuildIdentity): Guild => {
   return {
     id: guild.id,
     name: guild.name,
@@ -47,11 +52,11 @@ export const normalizeGuild = (guild: GuildResponseDtoOutput): Guild => {
   };
 };
 
-export const normalizeGuilds = (guilds: GuildResponseDtoOutput[] = []) => {
+export const normalizeGuilds = (guilds: GuildIdentity[] = []) => {
   return guilds.map(normalizeGuild);
 };
 
-export const getGuildNamesById = (guilds?: GuildResponseDtoOutput[]) => {
+export const getGuildNamesById = (guilds?: GuildIdentity[]) => {
   return (
     guilds?.reduce<Record<string, string>>((result, guild) => {
       result[guild.id] = guild.name;

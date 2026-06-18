@@ -3,29 +3,10 @@ import type {
   BattleListParams as UseBattlesParams,
   BattleListResponse as GetBattlesResponse,
 } from "@/lib/api/battlelog-types";
-import { BattlesListEntry } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-entry";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@lootlog/ui/components/pagination";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-  EmptyDescription,
-} from "@lootlog/ui/components/empty";
+import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
 import { BattlesListFilters, type BattleFilters } from "./battles-list-filters";
-import { Swords } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import { Card } from "@lootlog/ui/components/card";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
+import { useEffect, useRef, type ReactNode } from "react";
 
 type BattlesListProps = {
   battlesResponse?: GetBattlesResponse;
@@ -37,6 +18,8 @@ type BattlesListProps = {
   showFilters?: boolean;
   isLoading?: boolean;
   enableScrollToTop?: boolean;
+  toolbar?: ReactNode;
+  toolbarEnd?: ReactNode;
 };
 
 export const BattlesList = ({
@@ -49,8 +32,9 @@ export const BattlesList = ({
   showFilters = false,
   isLoading = false,
   enableScrollToTop = false,
+  toolbar,
+  toolbarEnd,
 }: BattlesListProps) => {
-  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const currentFilters: BattleFilters = {
@@ -92,15 +76,6 @@ export const BattlesList = ({
     }
   };
 
-  const handleResultClick = (result: "won" | "lost" | "flee") => {
-    if (onFiltersChange) {
-      onFiltersChange({
-        ...currentFilters,
-        result: [result],
-      });
-    }
-  };
-
   const handleWorldClick = (world: string) => {
     if (onFiltersChange) {
       onFiltersChange({
@@ -131,7 +106,11 @@ export const BattlesList = ({
   return (
     <div
       ref={containerRef}
-      className="flex-1 min-h-0 flex flex-col overflow-hidden h-full"
+      className={cn(
+        "flex min-h-0 flex-col overflow-hidden",
+        showPagination ? "h-full flex-1" : "w-full",
+        showFilters && "gap-3",
+      )}
     >
       {showFilters && onFiltersChange && (
         <BattlesListFilters
@@ -141,88 +120,22 @@ export const BattlesList = ({
         />
       )}
 
-      <ScrollArea className="flex-1 min-h-0">
-        <div
-          className={cn("flex-1", {
-            "flex items-center justify-center min-h-[70vh]":
-              isLoading || battlesResponse?.battles.length === 0,
-          })}
-        >
-          {isLoading ? (
-            <div className="flex flex-col gap-2 p-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-xl" />
-              ))}
-            </div>
-          ) : battlesResponse?.battles.length === 0 ? (
-            <Empty className="border-0">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Swords />
-                </EmptyMedia>
-                <EmptyTitle>{t("battlePanel.list.empty")}</EmptyTitle>
-                <EmptyDescription>
-                  {t("battlePanel.list.emptyDescription")}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <div className="space-y-3 pb-3">
-              {battlesResponse?.battles.map((battle) => (
-                <BattlesListEntry
-                  key={battle.id}
-                  battle={battle}
-                  onResultClick={handleResultClick}
-                  onWorldClick={handleWorldClick}
-                  onPhClick={handlePhClick}
-                  onMatchmakingClick={handleMatchmakingClick}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-
-      {showPagination && (
-        <div className="sticky bottom-0">
-          <Card className="flex items-center justify-center px-4 py-3 bg-card/60 backdrop-blur-sm border-border relative">
-            <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
-              {battlesResponse?.pagination?.total && (
-                <span>
-                  {t("battlePanel.list.totalBattles", {
-                    count: battlesResponse.pagination.total,
-                  })}
-                </span>
-              )}
-            </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={handlePreviousPage}
-                    className={
-                      !battlesResponse?.pagination?.hasPrev
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={handleNextPage}
-                    className={
-                      !battlesResponse?.pagination?.hasNext
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </Card>
-        </div>
-      )}
+      <BattlesTable
+        battles={battlesResponse?.battles ?? []}
+        hasNext={Boolean(battlesResponse?.pagination?.hasNext)}
+        hasPrev={Boolean(battlesResponse?.pagination?.hasPrev)}
+        isLoading={isLoading}
+        onMatchmakingClick={handleMatchmakingClick}
+        onNextPage={handleNextPage}
+        onPhClick={handlePhClick}
+        onPreviousPage={handlePreviousPage}
+        onWorldClick={handleWorldClick}
+        showPagination={showPagination}
+        selectionLimit={params?.size}
+        totalCount={battlesResponse?.pagination?.total ?? 0}
+        toolbar={toolbar}
+        toolbarEnd={toolbarEnd}
+      />
     </div>
   );
 };

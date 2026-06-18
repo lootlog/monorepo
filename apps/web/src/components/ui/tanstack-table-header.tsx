@@ -1,11 +1,15 @@
-import { flexRender, type Table as TanStackTable } from "@tanstack/react-table";
+import {
+  flexRender,
+  type Header,
+  type Table as TanStackTable,
+} from "@tanstack/react-table";
 import { TableHead, TableHeader, TableRow } from "@lootlog/ui/components/table";
 
 type TanStackTableHeaderProps<TData> = {
   table: TanStackTable<TData>;
   className?: string;
   rowClassName?: string;
-  headClassName?: string;
+  headClassName?: string | ((header: Header<TData, unknown>) => string);
 };
 
 export const TanStackTableHeader = <TData,>({
@@ -18,16 +22,23 @@ export const TanStackTableHeader = <TData,>({
     <TableHeader className={className}>
       {table.getHeaderGroups().map((headerGroup) => (
         <TableRow key={headerGroup.id} className={rowClassName}>
-          {headerGroup.headers.map((header) => (
-            <TableHead key={header.id} className={headClassName}>
-              {header.isPlaceholder
-                ? null
-                : flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
-                  )}
-            </TableHead>
-          ))}
+          {headerGroup.headers.map((header) => {
+            const resolvedHeadClassName =
+              typeof headClassName === "function"
+                ? headClassName(header)
+                : headClassName;
+
+            return (
+              <TableHead key={header.id} className={resolvedHeadClassName}>
+                {header.isPlaceholder
+                  ? null
+                  : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
+              </TableHead>
+            );
+          })}
         </TableRow>
       ))}
     </TableHeader>

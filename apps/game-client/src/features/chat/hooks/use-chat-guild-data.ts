@@ -15,10 +15,10 @@ import {
 import {
   getGuildIds,
   mapGuildMembersByUserId,
+  type GuildIdentity,
 } from "@/lib/api/generated-helpers";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
-  GuildResponseDtoOutput,
   MemberSummaryResponseDtoOutput as GuildMember,
 } from "@/lib/api/generated/main/model";
 import {
@@ -29,7 +29,7 @@ import {
 
 type UseChatGuildDataOptions = {
   currentCharacterNick: string;
-  guilds?: GuildResponseDtoOutput[];
+  guilds?: GuildIdentity[];
   selectedGuildId?: string;
 };
 

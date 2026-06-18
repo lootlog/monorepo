@@ -71,7 +71,7 @@ describe("BattleProcessor", () => {
         {
           ev: 1000,
           f: {
-            m: ["1=100;2=90;+dmg=50", "2=80;1=100;-dmg=50"],
+            m: ["1=100.00;2=90.85;+dmg=50", "2=80.25;1=100.00;-dmg=50"],
           },
         },
       ];
@@ -83,13 +83,13 @@ describe("BattleProcessor", () => {
         attackerId: "1",
         defenderId: "2",
         attackerHpPercentage: 100,
-        defenderHpPercentage: 90,
+        defenderHpPercentage: 90.85,
         actions: [{ actionType: "+dmg", param: "50" }],
       });
       expect(moves[1]).toEqual({
         attackerId: "2",
         defenderId: "1",
-        attackerHpPercentage: 80,
+        attackerHpPercentage: 80.25,
         defenderHpPercentage: 100,
         actions: [{ actionType: "-dmg", param: "50" }],
       });
@@ -283,6 +283,49 @@ describe("BattleProcessor", () => {
       expect(defender?.blocks).toBe(1);
       expect(defender?.blockedDamage).toBe(50);
       expect(attacker?.attacksEvaded).toBe(2);
+      expect(attacker?.attacksBlocked).toBe(1);
+    });
+
+    it("should keep blocked damage finite when block action has no value", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 101,
+                  name: "Attacker",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 102,
+                  name: "Defender",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: ["1=100;2=100;-blok"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const defender = result.warriors.find((w) => w.name === "Defender");
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+
+      expect(defender?.blocks).toBe(1);
+      expect(defender?.blockedDamage).toBe(0);
+      expect(Number.isFinite(defender?.blockedDamage)).toBe(true);
       expect(attacker?.attacksBlocked).toBe(1);
     });
 
@@ -620,6 +663,60 @@ describe("BattleProcessor", () => {
       expect(fighter?.turns).toBe(3);
     });
 
+    it("should use skillId for follow-up attacks while keeping tspell as spell name", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Mage",
+                  lvl: 50,
+                  prof: "m",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Target",
+                  lvl: 45,
+                  prof: "w",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: [
+                "1=100;2=100;tspell=Podwojny strzal;skillId=97",
+                "1=100;2=90;+dmgd=100;-dmgd=100",
+                "1=100;2=80;+dmgd=100;-dmgd=100",
+              ],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const mage = result.warriors.find((w) => w.name === "Mage");
+      const mechanics = result.warriorMechanics.find(
+        (w) => w.warriorId === "1",
+      );
+
+      expect(mage?.spellsUsed).toBe(1);
+      expect(mage?.normalAttacks).toBe(0);
+      expect(mage?.turns).toBe(1);
+      expect(mage?.spellsUsedMap["Podwojny strzal"]).toBe(1);
+      expect(mechanics?.spells[0]).toMatchObject({
+        name: "Podwojny strzal",
+        skillId: 97,
+        casts: 1,
+      });
+    });
+
     it("should track steps", () => {
       const battleData: CreateBattleDto = {
         accountId: "test-account",
@@ -661,6 +758,532 @@ describe("BattleProcessor", () => {
       const runner = result.warriors.find((w) => w.name === "Runner");
 
       expect(runner?.steps).toBe(3);
+    });
+  });
+
+  describe("combat timeline analytics", () => {
+    it("should build HP timeline and team HP snapshots for group PvP", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Ally1",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Ally2",
+                  lvl: 50,
+                  prof: "m",
+                  icon: "icon2",
+                  team: 1,
+                },
+                "3": {
+                  originalId: 3,
+                  name: "Enemy1",
+                  lvl: 50,
+                  prof: "p",
+                  icon: "icon3",
+                  team: 2,
+                },
+                "4": {
+                  originalId: 4,
+                  name: "Enemy2",
+                  lvl: 50,
+                  prof: "h",
+                  icon: "icon4",
+                  team: 2,
+                },
+              },
+              m: ["1=100;3=80;+dmg=200;-dmg=200"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const firstTurn = result.battleTimeline[0];
+
+      expect(result.type).toBe("2v2");
+      expect(firstTurn?.hpByWarrior["3"]).toBe(80);
+      expect(firstTurn?.teamHp["1"]).toBe(100);
+      expect(firstTurn?.teamHp["2"]).toBe(90);
+      expect(firstTurn?.deltas.damage).toBe(200);
+    });
+
+    it("should track auxiliary taken damage, absorb, magic absorb and target healing", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Attacker",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Defender",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: [
+                "1=100;2=90;+dmga=40;-dmga=35;+absorb=20;-absorb=10;+absorbm=15;-absorbm=5;heal_target=30",
+              ],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const attacker = result.warriors.find((w) => w.name === "Attacker");
+      const defender = result.warriors.find((w) => w.name === "Defender");
+      const attackerMechanics = result.warriorMechanics.find(
+        (w) => w.warriorId === "1",
+      );
+      const defenderMechanics = result.warriorMechanics.find(
+        (w) => w.warriorId === "2",
+      );
+
+      expect(attacker?.auxiliaryDamage).toBe(40);
+      expect(attacker?.damageDealtAfterDefensive).toBe(35);
+      expect(defender?.auxiliaryDamageTaken).toBe(35);
+      expect(defender?.activeHealing).toBe(30);
+      expect(attackerMechanics?.absorptionGained).toBe(20);
+      expect(attackerMechanics?.magicAbsorptionGained).toBe(15);
+      expect(attackerMechanics?.targetHealing).toBe(30);
+      expect(defenderMechanics?.auxiliaryDamageTaken).toBe(35);
+      expect(defenderMechanics?.absorptionSpent).toBe(10);
+      expect(defenderMechanics?.magicAbsorptionSpent).toBe(5);
+      expect(result.battleTimeline[0]?.flags).toContain("absorb");
+    });
+
+    it("should expose control and defensive event flags", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Attacker",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Defender",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: [
+                "1=100;2=100;-evade;-parry=10;-arrowblock=12;-pierceb=14;+stun;+freeze",
+              ],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const defender = result.warriors.find((w) => w.name === "Defender");
+      const defenderMechanics = result.warriorMechanics.find(
+        (w) => w.warriorId === "2",
+      );
+      const flags = result.battleTimeline[0]?.flags ?? [];
+
+      expect(defender?.evasions).toBe(1);
+      expect(defender?.blocks).toBe(3);
+      expect(defender?.blockedDamage).toBe(36);
+      expect(defenderMechanics?.mitigationEvents).toBe(4);
+      expect(defenderMechanics?.controlTaken).toBe(2);
+      expect(flags).toEqual(
+        expect.arrayContaining([
+          "evade",
+          "parry",
+          "arrowBlock",
+          "pierceBlock",
+          "stun",
+          "freeze",
+        ]),
+      );
+    });
+
+    it("should expose counter without counting it as mitigation", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Attacker",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Defender",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: ["1=100;2=90;+dmg=100;-dmg=100;-contra=75"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const turn = result.battleTimeline[0];
+      const defender = result.warriors.find((w) => w.name === "Defender");
+      const defenderMechanics = result.warriorMechanics.find(
+        (w) => w.warriorId === "2",
+      );
+      const counterAction = turn?.actions.find(
+        (action) => action.actionType === "-contra",
+      );
+
+      expect(defender?.counters).toBe(1);
+      expect(defender?.blockedDamage).toBe(0);
+      expect(turn?.deltas.damage).toBe(100);
+      expect(turn?.deltas.mitigation).toBe(0);
+      expect(turn?.deltas.byWarrior["2"]?.mitigation).toBe(0);
+      expect(defenderMechanics?.mitigationEvents).toBe(0);
+      expect(turn?.flags).toContain("counter");
+      expect(counterAction?.category).toBe("counter");
+    });
+
+    it("should split resource pressure into energy and mana pressure", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Attacker",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Defender",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: ["1=100;2=100;-endest=12,3;-manadest=7;stealmana=5"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const turn = result.battleTimeline[0];
+      const attackerDelta = turn?.deltas.byWarrior["1"];
+      const defenderDelta = turn?.deltas.byWarrior["2"];
+      const attackerMechanics = result.warriorMechanics.find(
+        (warrior) => warrior.warriorId === "1",
+      );
+      const energyDestroyAction = turn?.actions.find(
+        (action) => action.actionType === "-endest",
+      );
+
+      expect(turn?.deltas.resourcePressure).toBe(24);
+      expect(turn?.deltas.energyPressure).toBe(12);
+      expect(turn?.deltas.manaPressure).toBe(12);
+      expect(attackerDelta?.resourcePressure).toBe(24);
+      expect(attackerDelta?.energyPressure).toBe(12);
+      expect(attackerDelta?.manaPressure).toBe(12);
+      expect(defenderDelta?.resourceDelta).toBe(-24);
+      expect(turn?.cumulative["1"]?.energyPressure).toBe(12);
+      expect(turn?.cumulative["1"]?.manaPressure).toBe(12);
+      expect(attackerMechanics?.resourcePressure).toBe(24);
+      expect(attackerMechanics?.energyPressure).toBe(12);
+      expect(attackerMechanics?.manaPressure).toBe(12);
+      expect(energyDestroyAction?.value).toBe(12);
+      expect(energyDestroyAction?.param).toBe("12,3");
+    });
+
+    it("should classify special damage effects in timeline and coverage", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Attacker",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Defender",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: ["1=100;2=92;+rage=80;+taken_dmg=45"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const turn = result.battleTimeline[0];
+      const rageAction = turn?.actions.find(
+        (action) => action.actionType === "+rage",
+      );
+      const stigmaAction = turn?.actions.find(
+        (action) => action.actionType === "+taken_dmg",
+      );
+
+      expect(turn?.deltas.damage).toBe(125);
+      expect(turn?.deltas.byWarrior["1"]?.damageDealt).toBe(125);
+      expect(turn?.deltas.byWarrior["2"]?.damageTaken).toBe(125);
+      expect(rageAction?.category).toBe("damage");
+      expect(rageAction?.handled).toBe(true);
+      expect(stigmaAction?.category).toBe("damage");
+      expect(stigmaAction?.handled).toBe(true);
+      expect(result.actionCoverage.unknown).toHaveLength(0);
+    });
+
+    it("should classify observed modifier metadata without timeline deltas", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Attacker",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Defender",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: ["1=100;2=100;-redacdmg_per=-30;+of_wound;+critsa_per=15"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const turn = result.battleTimeline[0];
+      const reductionAction = turn?.actions.find(
+        (action) => action.actionType === "-redacdmg_per",
+      );
+      const woundAction = turn?.actions.find(
+        (action) => action.actionType === "+of_wound",
+      );
+      const critSpeedAction = turn?.actions.find(
+        (action) => action.actionType === "+critsa_per",
+      );
+
+      expect(reductionAction?.category).toBe("debuff");
+      expect(woundAction?.category).toBe("buff");
+      expect(critSpeedAction?.category).toBe("buff");
+      expect(turn?.deltas.damage).toBe(0);
+      expect(turn?.deltas.resourcePressure).toBe(0);
+      expect(turn?.deltas.byWarrior).toEqual({});
+      expect(result.actionCoverage.unknown).toHaveLength(0);
+    });
+
+    it("should expose resource self-spend and regeneration in timeline", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Caster",
+                  lvl: 50,
+                  prof: "m",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Target",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: ["1=100;2=100;energyout=9;+endest=4;en-regen=3"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const turn = result.battleTimeline[0];
+
+      expect(turn?.deltas.byWarrior["1"]?.resourceDelta).toBe(-10);
+      expect(turn?.deltas.resourcePressure).toBe(0);
+      expect(turn?.flags).toContain("resource");
+      expect(result.actionCoverage.unknown).toHaveLength(0);
+    });
+
+    it("should expose flee and PH in timeline", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Runner",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Winner",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: ["1=50;2=100;+ph=12;flee;loser=Runner;winner=Winner"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+      const runner = result.warriors.find((w) => w.name === "Runner");
+      const flags = result.battleTimeline[0]?.flags ?? [];
+
+      expect(runner?.fled).toBe(true);
+      expect(runner?.ph).toBe(-12);
+      expect(result.outcome.hasFlee).toBe(true);
+      expect(flags).toEqual(expect.arrayContaining(["flee", "ph"]));
+    });
+
+    it("should process legacy parsed-only R2 payloads", () => {
+      const result = processor.processParsedBattle({
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        duration: 2500,
+        warriors: {
+          "1": {
+            originalId: 1,
+            name: "LegacyUser",
+            lvl: 50,
+            prof: "w",
+            icon: "icon1",
+            team: 1,
+          },
+          "2": {
+            originalId: 2,
+            name: "LegacyOpponent",
+            lvl: 45,
+            prof: "p",
+            icon: "icon2",
+            team: 2,
+          },
+        },
+        events: [
+          {
+            attackerId: "1",
+            defenderId: "2",
+            attackerHpPercentage: 100,
+            defenderHpPercentage: 70,
+            actions: [
+              { actionType: "+dmg", param: "300" },
+              { actionType: "-dmg", param: "300" },
+            ],
+          },
+        ],
+      });
+
+      expect(result.duration).toBe(2500);
+      expect(result.battleTimeline).toHaveLength(1);
+      expect(result.battleTimeline[0]?.hpByWarrior["2"]).toBe(70);
+      expect(result.actionCoverage.handledPercentage).toBe(100);
     });
   });
 });

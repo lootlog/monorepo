@@ -1,5 +1,6 @@
 import {
   flexRender,
+  type Cell,
   type Row,
   type Table as TanStackTable,
 } from "@tanstack/react-table";
@@ -12,7 +13,7 @@ type TableRowProps = ComponentProps<typeof TableRow>;
 type TanStackTableBodyProps<TData> = {
   table: TanStackTable<TData>;
   rowClassName?: string | ((row: Row<TData>) => string);
-  cellClassName?: string;
+  cellClassName?: string | ((cell: Cell<TData, unknown>) => string);
   getRowProps?: (row: Row<TData>) => TableRowProps;
 };
 
@@ -35,11 +36,18 @@ export const TanStackTableBody = <TData,>({
             {...rowProps}
             className={cn(resolvedRowClassName, rowProps?.className)}
           >
-            {row.getVisibleCells().map((cell) => (
-              <TableCell key={cell.id} className={cellClassName}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </TableCell>
-            ))}
+            {row.getVisibleCells().map((cell) => {
+              const resolvedCellClassName =
+                typeof cellClassName === "function"
+                  ? cellClassName(cell)
+                  : cellClassName;
+
+              return (
+                <TableCell key={cell.id} className={resolvedCellClassName}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              );
+            })}
           </TableRow>
         );
       })}
