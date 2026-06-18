@@ -1,17 +1,15 @@
 import { PlayerTile } from "@/components/battle";
 import type { Battle, PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
-import { battlesControllerGetPlayerVsPlayerBattles } from "@/lib/api/generated/battlelog/battles/battles";
 import { getProfessionName } from "@/lib/utils/professions";
 import { Badge } from "@lootlog/ui/components/badge";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Clock, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getRecentOpponentBattleContext } from "./recent-opponent-battle-context";
+import { useRecentOpponentBattles } from "../hooks/use-recent-opponent-battles";
 
 type RecentOpponentBattlesListProps = {
   battle: Battle | undefined;
@@ -26,32 +24,8 @@ export function RecentOpponentBattlesList({
   className,
 }: RecentOpponentBattlesListProps) {
   const { t } = useTranslation();
-  const context = getRecentOpponentBattleContext(battle);
-  const { data, isError, isLoading } = useQuery({
-    queryKey: [
-      "recent-opponent-battles",
-      context?.battleId,
-      context?.characterId,
-      context?.opponentId,
-      context?.world,
-    ],
-    queryFn: () => {
-      if (!context) {
-        throw new Error("Missing recent opponent context");
-      }
-
-      return battlesControllerGetPlayerVsPlayerBattles({
-        characterId: context.characterId,
-        excludeBattleId: context.battleId,
-        opponentId: context.opponentId,
-        period: "all",
-        size: 10,
-        world: context.world,
-      });
-    },
-    enabled: context !== null,
-  });
-  const battles = data?.battles ?? [];
+  const { battles, context, isError, isLoading } =
+    useRecentOpponentBattles(battle);
 
   return (
     <ScrollArea className={cn("min-h-0 flex-1", className)}>
