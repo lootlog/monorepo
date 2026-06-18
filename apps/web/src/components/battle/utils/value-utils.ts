@@ -22,7 +22,7 @@ export const roundHpPercentage = (
   const strValue = String(value);
   const hasPercent = strValue.includes("%");
   const numericValue = Number.parseFloat(
-    strValue.replace("%", "").replace(",", "."),
+    strValue.replace(/%/g, "").replace(",", "."),
   );
 
   if (Number.isNaN(numericValue)) {

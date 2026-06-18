@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { DetectorRoutingSettingsTabForm } from "./detector-routing-settings-tab-form";
-import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 const mockMutate = vi.fn();
@@ -35,48 +35,36 @@ vi.mock("@/hooks/use-debounced-callback", () => ({
   }),
 }));
 
-const guilds: GuildResponseDtoOutput[] = [
+const guilds: GuildIdentity[] = [
   {
     id: "guild-1",
     name: "Alpha",
     icon: null,
-    ownerId: "owner-1",
-    publicStatsCardEnabled: false,
   },
   {
     id: "guild-2",
     name: "Beta",
     icon: null,
-    ownerId: "owner-1",
-    publicStatsCardEnabled: false,
   },
   {
     id: "guild-3",
     name: "Gamma",
     icon: null,
-    ownerId: "owner-1",
-    publicStatsCardEnabled: false,
   },
   {
     id: "guild-4",
     name: "Delta",
     icon: null,
-    ownerId: "owner-1",
-    publicStatsCardEnabled: false,
   },
   {
     id: "guild-5",
     name: "Epsilon",
     icon: null,
-    ownerId: "owner-1",
-    publicStatsCardEnabled: false,
   },
   {
     id: "guild-6",
     name: "Zeta",
     icon: null,
-    ownerId: "owner-1",
-    publicStatsCardEnabled: false,
   },
 ];
 

@@ -8,7 +8,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { Game } from "@/lib/game";
 import { GuildButton } from "@/components/guild-button";
-import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
@@ -31,7 +31,7 @@ type GuildSwitcherProps = {
 };
 
 const orderGuilds = (
-  guilds: GuildResponseDtoOutput[] | undefined,
+  guilds: GuildIdentity[] | undefined,
   guildsOrder?: string[],
 ) => {
   if (!guilds?.length) {
@@ -45,7 +45,7 @@ const orderGuilds = (
   const guildsById = new Map(guilds.map((guild) => [guild.id, guild] as const));
   const orderedGuilds = guildsOrder
     .map((guildId) => guildsById.get(guildId))
-    .filter((guild): guild is GuildResponseDtoOutput => guild !== undefined);
+    .filter((guild): guild is GuildIdentity => guild !== undefined);
   const orderedGuildIds = new Set(orderedGuilds.map((guild) => guild.id));
   const remainingGuilds = guilds.filter(
     (guild) => !orderedGuildIds.has(guild.id),
