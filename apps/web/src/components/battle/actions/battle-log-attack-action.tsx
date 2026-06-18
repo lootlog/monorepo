@@ -39,6 +39,7 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
             dmgl: "",
             dmg: "",
             dmgo: "",
+            dmga: "",
             dmgc: "",
             thirdatt: "",
           };
@@ -48,6 +49,7 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
             dmgl: "",
             dmg: "",
             dmgo: "",
+            dmga: "",
             dmgc: "",
             thirdatt: "",
           };
@@ -72,6 +74,8 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
               positiveDamage.dmg = processDamageValue(action.value, "+");
             else if (action.type === "-dmgo")
               negativeDamage.dmgo = processDamageValue(action.value, "-");
+            else if (action.type === "-dmga")
+              negativeDamage.dmga = processDamageValue(action.value, "-");
             else if (action.type === "+dmgo")
               positiveDamage.dmgo = processDamageValue(action.value, "+");
             else if (action.type === "+dmgc")
@@ -100,6 +104,7 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
             negativeDamage.dmgl ||
             negativeDamage.dmg ||
             negativeDamage.dmgo ||
+            negativeDamage.dmga ||
             negativeDamage.thirdatt ||
             negativeDamage.dmgc;
 
@@ -219,6 +224,7 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                       dmgl: <span className="font-semibold text-yellow-300" />,
                       dmg: <span className="font-semibold" />,
                       dmgo: <span className="font-semibold text-orange-400" />,
+                      dmga: <span className="font-semibold" />,
                       thirdatt: <span className="font-semibold" />,
                       dmgc: <span className="font-semibold text-blue-400" />,
                     }}
