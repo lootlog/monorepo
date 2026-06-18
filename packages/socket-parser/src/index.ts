@@ -8,7 +8,9 @@ const PacketType = {
   CONNECT_ERROR: 4,
   BINARY_EVENT: 5,
   BINARY_ACK: 6,
-};
+} as const;
+
+const VALID_PACKET_TYPES = new Set<number>(Object.values(PacketType));
 
 // Custom extension codec to handle undefined properly
 const extensionCodec = new ExtensionCodec();
@@ -31,6 +33,15 @@ interface Packet {
   data?: unknown;
   id?: number;
 }
+
+const isPacketRecord = (decoded: unknown): decoded is Record<string, unknown> =>
+  typeof decoded === "object" && decoded !== null && !Array.isArray(decoded);
+
+const isValidPacketType = (type: unknown): type is number =>
+  typeof type === "number" && VALID_PACKET_TYPES.has(type);
+
+const isValidPacketId = (id: unknown): id is number | undefined =>
+  id === undefined || typeof id === "number";
 
 class MsgpackEncoder {
   encode(packet: unknown) {
@@ -80,24 +91,24 @@ class MsgpackDecoder {
 
   add(obj: Uint8Array | ArrayLike<number>) {
     const input = obj instanceof Uint8Array ? obj : new Uint8Array(obj);
-    const decoded = decode(input, { extensionCodec }) as Packet;
-
-    // Convert null data to undefined (msgpack encodes undefined as null by default)
-    if (decoded.data === null) {
-      decoded.data = undefined;
-    }
+    const decoded = decode(input, { extensionCodec });
 
     this.checkPacket(decoded);
-    this.emit("decoded", decoded);
+    const packet = decoded;
+
+    if (packet.data === null) {
+      packet.data = undefined;
+    }
+
+    this.emit("decoded", packet);
   }
 
-  private checkPacket(decoded: Packet) {
-    const isTypeValid =
-      typeof decoded.type === "number" &&
-      decoded.type >= PacketType.CONNECT &&
-      decoded.type <= PacketType.BINARY_ACK;
+  private checkPacket(decoded: unknown): asserts decoded is Packet {
+    if (!isPacketRecord(decoded)) {
+      throw new Error("invalid packet");
+    }
 
-    if (!isTypeValid) {
+    if (!isValidPacketType(decoded.type)) {
       throw new Error("invalid packet type");
     }
 
@@ -105,9 +116,7 @@ class MsgpackDecoder {
       throw new Error("invalid namespace");
     }
 
-    const isAckValid =
-      decoded.id === undefined || typeof decoded.id === "number";
-    if (!isAckValid) {
+    if (!isValidPacketId(decoded.id)) {
       throw new Error("invalid packet id");
     }
   }
