@@ -1,6 +1,5 @@
 import type { RawBattleParsedEvent } from "@/lib/api/battlelog-types";
 import {
-  ATTACK_ACTIONS_SORT_ORDER,
   isAttackActionInContext,
   isBuffAction,
   isOutcomeAction,
@@ -44,15 +43,6 @@ const createParsedAction = (
   value: param,
 });
 
-const sortAttackActions = (actions: ParsedAction[]): ParsedAction[] => {
-  return actions.sort((a, b) => {
-    const sortOrder = ATTACK_ACTIONS_SORT_ORDER as readonly string[];
-    const aIndex = sortOrder.indexOf(a.type);
-    const bIndex = sortOrder.indexOf(b.type);
-    return aIndex - bIndex;
-  });
-};
-
 const categorizeAction = (
   parsedActions: ParsedActions,
   actionType: string,
@@ -90,8 +80,5 @@ export const parseActions = (
       allActionTypes,
     );
   });
-
-  parsedActions.attackActions = sortAttackActions(parsedActions.attackActions);
-
   return parsedActions;
 };

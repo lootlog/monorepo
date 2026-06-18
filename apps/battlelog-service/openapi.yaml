@@ -227,6 +227,122 @@ paths:
       summary: Get authenticated user battle analytics
       tags:
         - battles
+  /battles/@me/statistics/combat-profile:
+    get:
+      operationId: BattlesController_getCombatProfile
+      parameters:
+        - name: characterId
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: world
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: period
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - 24h
+              - 3d
+              - 7d
+              - 14d
+              - 30d
+              - 90d
+              - 180d
+              - all
+        - name: minLevel
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 9007199254740991
+            type: integer
+        - name: maxLevel
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 9007199254740991
+            type: integer
+        - name: cursor
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: size
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 9007199254740991
+            type: integer
+        - name: sortBy
+          required: false
+          in: query
+          schema:
+            default: totalBattles
+            type: string
+            enum:
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+              - lastBattleDate
+              - totalRatingDelta
+              - avgRatingDelta
+        - name: sortOrder
+          required: false
+          in: query
+          schema:
+            default: desc
+            type: string
+            enum:
+              - asc
+              - desc
+        - name: includeTotal
+          required: false
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: minBattles
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 9007199254740991
+            type: integer
+        - name: ph
+          required: false
+          in: query
+          schema:
+            type: boolean
+        - name: matchmaking
+          required: false
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatProfileResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Get combat profile statistics
+      tags:
+        - battles
   /battles/@me/statistics/profession-win-rate:
     get:
       operationId: BattlesController_getProfessionWinRate
@@ -1156,6 +1272,11 @@ paths:
           in: query
           schema:
             type: string
+        - name: excludeBattleId
+          required: false
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -1203,6 +1324,29 @@ paths:
       security:
         - bearer: []
       summary: Get worlds used by authenticated user battles
+      tags:
+        - battles
+  /battles/{battleId}/timeline:
+    get:
+      operationId: BattlesController_getBattleTimeline
+      parameters:
+        - name: battleId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleTimelineResponseDto_Output"
+        "404":
+          description: Battle not found
+      security:
+        - bearer: []
+      summary: Get computed battle timeline
       tags:
         - battles
   /battles/{battleId}:
@@ -1341,6 +1485,27 @@ paths:
         "404":
           description: Public battle not found
       summary: Get raw payload for a public battle
+      tags:
+        - public-battles
+  /battles/public/{battleId}/timeline:
+    get:
+      operationId: PublicBattlesController_getPublicBattleTimeline
+      parameters:
+        - name: battleId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleTimelineResponseDto_Output"
+        "404":
+          description: Public battle not found
+      summary: Get computed timeline for a public battle
       tags:
         - public-battles
   /internal/delete-user-data:
@@ -2116,6 +2281,194 @@ components:
         - losses
         - winRatio
         - totalPH
+    CombatProfileResponseDto_Output:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            totalBattles:
+              type: number
+            wins:
+              type: number
+            losses:
+              type: number
+            winRate:
+              type: number
+            totalPH:
+              type: number
+            totalRatingDelta:
+              type: number
+            avgTurns:
+              type: number
+            avgDuration:
+              type: number
+            damagePerTurn:
+              type: number
+            mitigationRate:
+              type: number
+            controlRate:
+              type: number
+          required:
+            - totalBattles
+            - wins
+            - losses
+            - winRate
+            - totalPH
+            - totalRatingDelta
+            - avgTurns
+            - avgDuration
+            - damagePerTurn
+            - mitigationRate
+            - controlRate
+        damageMix:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              label:
+                type: string
+              value:
+                type: number
+              share:
+                type: number
+            required:
+              - key
+              - label
+              - value
+              - share
+        mitigationMix:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              label:
+                type: string
+              value:
+                type: number
+              share:
+                type: number
+            required:
+              - key
+              - label
+              - value
+              - share
+        spellUsage:
+          type: array
+          items:
+            type: object
+            properties:
+              spell:
+                type: string
+              skillId:
+                type: number
+                nullable: true
+              casts:
+                type: number
+              share:
+                type: number
+            required:
+              - spell
+              - skillId
+              - casts
+              - share
+        matchupByProfession:
+          type: array
+          items:
+            type: object
+            properties:
+              prof:
+                type: string
+              wins:
+                type: number
+              losses:
+                type: number
+              totalBattles:
+                type: number
+              winRate:
+                type: number
+            required:
+              - prof
+              - wins
+              - losses
+              - totalBattles
+              - winRate
+        phTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              value:
+                type: number
+              cumulativeValue:
+                type: number
+              battleId:
+                type: string
+            required:
+              - date
+              - value
+              - cumulativeValue
+              - battleId
+        ratingTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              value:
+                type: number
+              cumulativeValue:
+                type: number
+              battleId:
+                type: string
+            required:
+              - date
+              - value
+              - cumulativeValue
+              - battleId
+        highlights:
+          type: array
+          items:
+            type: object
+            properties:
+              battleId:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              type:
+                type: string
+              label:
+                type: string
+              value:
+                type: number
+            required:
+              - battleId
+              - createdAt
+              - type
+              - label
+              - value
+      required:
+        - summary
+        - damageMix
+        - mitigationMix
+        - spellUsage
+        - matchupByProfession
+        - phTrend
+        - ratingTrend
+        - highlights
     ProfessionWinRateResponseDto_Output:
       type: object
       properties:
@@ -2498,6 +2851,493 @@ components:
             type: string
       required:
         - worlds
+    BattleTimelineResponseDto_Output:
+      type: object
+      properties:
+        battleId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              turn:
+                type: number
+              attackerId:
+                type: string
+                nullable: true
+              defenderId:
+                type: string
+                nullable: true
+              attackerHpPercentage:
+                type: number
+                nullable: true
+              defenderHpPercentage:
+                type: number
+                nullable: true
+              hpByWarrior:
+                type: object
+                additionalProperties:
+                  type: number
+              teamHp:
+                type: object
+                additionalProperties:
+                  type: number
+              teamHpDelta:
+                type: object
+                additionalProperties:
+                  type: number
+              deltas:
+                type: object
+                properties:
+                  damage:
+                    type: number
+                  healing:
+                    type: number
+                  mitigation:
+                    type: number
+                  resourcePressure:
+                    type: number
+                  energyPressure:
+                    type: number
+                  manaPressure:
+                    type: number
+                  byWarrior:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        damageDealt:
+                          type: number
+                        damageTaken:
+                          type: number
+                        healingDone:
+                          type: number
+                        healingReceived:
+                          type: number
+                        mitigation:
+                          type: number
+                        resourceDelta:
+                          type: number
+                        resourcePressure:
+                          type: number
+                        energyPressure:
+                          type: number
+                        manaPressure:
+                          type: number
+                        absorbGained:
+                          type: number
+                        absorbSpent:
+                          type: number
+                        magicAbsorbGained:
+                          type: number
+                        magicAbsorbSpent:
+                          type: number
+                        controlApplied:
+                          type: number
+                        controlTaken:
+                          type: number
+                      required:
+                        - damageDealt
+                        - damageTaken
+                        - healingDone
+                        - healingReceived
+                        - mitigation
+                        - resourceDelta
+                        - resourcePressure
+                        - energyPressure
+                        - manaPressure
+                        - absorbGained
+                        - absorbSpent
+                        - magicAbsorbGained
+                        - magicAbsorbSpent
+                        - controlApplied
+                        - controlTaken
+                required:
+                  - damage
+                  - healing
+                  - mitigation
+                  - resourcePressure
+                  - energyPressure
+                  - manaPressure
+                  - byWarrior
+              cumulative:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    damageDealt:
+                      type: number
+                    damageTaken:
+                      type: number
+                    healingDone:
+                      type: number
+                    healingReceived:
+                      type: number
+                    mitigation:
+                      type: number
+                    resourceDelta:
+                      type: number
+                    resourcePressure:
+                      type: number
+                    energyPressure:
+                      type: number
+                    manaPressure:
+                      type: number
+                    absorbGained:
+                      type: number
+                    absorbSpent:
+                      type: number
+                    magicAbsorbGained:
+                      type: number
+                    magicAbsorbSpent:
+                      type: number
+                    controlApplied:
+                      type: number
+                    controlTaken:
+                      type: number
+                  required:
+                    - damageDealt
+                    - damageTaken
+                    - healingDone
+                    - healingReceived
+                    - mitigation
+                    - resourceDelta
+                    - resourcePressure
+                    - energyPressure
+                    - manaPressure
+                    - absorbGained
+                    - absorbSpent
+                    - magicAbsorbGained
+                    - magicAbsorbSpent
+                    - controlApplied
+                    - controlTaken
+              actions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    actionType:
+                      type: string
+                    param:
+                      type: string
+                    category:
+                      type: string
+                    actorId:
+                      type: string
+                      nullable: true
+                    targetId:
+                      type: string
+                      nullable: true
+                    value:
+                      type: number
+                    handled:
+                      type: boolean
+                  required:
+                    - actionType
+                    - param
+                    - category
+                    - actorId
+                    - targetId
+                    - value
+                    - handled
+              flags:
+                type: array
+                items:
+                  type: string
+              labels:
+                type: array
+                items:
+                  type: string
+              significanceScore:
+                type: number
+              reason:
+                type: string
+            required:
+              - turn
+              - attackerId
+              - defenderId
+              - attackerHpPercentage
+              - defenderHpPercentage
+              - hpByWarrior
+              - teamHp
+              - teamHpDelta
+              - deltas
+              - cumulative
+              - actions
+              - flags
+              - labels
+              - significanceScore
+              - reason
+        warriors:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              battleId:
+                type: string
+              originalId:
+                type: string
+              name:
+                type: string
+              lvl:
+                type: number
+              prof:
+                type: string
+              icon:
+                type: string
+              team:
+                type: number
+              turns:
+                type: number
+              turnsLost:
+                type: number
+              steps:
+                type: number
+              normalAttacks:
+                type: number
+              spellsUsed:
+                type: number
+              spellsUsedMap:
+                type: object
+                additionalProperties:
+                  type: number
+              isDead:
+                type: boolean
+              surrendered:
+                type: boolean
+              fled:
+                type: boolean
+              maxHp:
+                type: number
+              damageDealt:
+                type: number
+              distanceDamage:
+                type: number
+              meleeDamage:
+                type: number
+              auxiliaryDamage:
+                type: number
+              fireDamage:
+                type: number
+              frostDamage:
+                type: number
+              lightningDamage:
+                type: number
+              thirdAttDamage:
+                type: number
+              damageDealtAfterDefensive:
+                type: number
+              damageDealtAfterDefensivePercentage:
+                type: number
+              damageTaken:
+                type: number
+              distanceDamageTaken:
+                type: number
+              meleeDamageTaken:
+                type: number
+              auxiliaryDamageTaken:
+                type: number
+              fireDamageTaken:
+                type: number
+              frostDamageTaken:
+                type: number
+              lightningDamageTaken:
+                type: number
+              thirdAttDamageTaken:
+                type: number
+              flatDamageTaken:
+                type: number
+              rageDamageDealt:
+                type: number
+              trueDamageDealt:
+                type: number
+              trueDamageTaken:
+                type: number
+              stigmaDamageDealt:
+                type: number
+              stigmaDamageTaken:
+                type: number
+              passiveHealing:
+                type: number
+              activeHealing:
+                type: number
+              armorPierces:
+                type: number
+              criticalHits:
+                type: number
+              reducedArmor:
+                type: number
+              reducedPoisonResistance:
+                type: number
+              magicResistanceDestroyed:
+                type: number
+              evasions:
+                type: number
+              attacksEvaded:
+                type: number
+              counters:
+                type: number
+              fastArrows:
+                type: number
+              blocks:
+                type: number
+              attacksBlocked:
+                type: number
+              blockedDamage:
+                type: number
+              woundDamageTaken:
+                type: number
+              poisonDamageTaken:
+                type: number
+              injureDamageTaken:
+                type: number
+              injures:
+                type: number
+              critWoundDamageTaken:
+                type: number
+              firePassiveDamageTaken:
+                type: number
+              lightningPassiveDamageTaken:
+                type: number
+              destroyedEnergy:
+                type: number
+              destroyedMana:
+                type: number
+              regeneratedEnergy:
+                type: number
+              regeneratedMana:
+                type: number
+              reflectedDamage:
+                type: number
+              reflectedDamageTaken:
+                type: number
+              legbons:
+                type: number
+              legbonCurse:
+                type: number
+              legbonCleanse:
+                type: number
+              legbonLastheal:
+                type: number
+              legbonLasthealValue:
+                type: number
+              legbonGlare:
+                type: number
+              legbonHolytouch:
+                type: number
+              legbonHolytouchValue:
+                type: number
+              legbonCritredValue:
+                type: number
+              legbonFacadeValue:
+                type: number
+              legbonPunctureValue:
+                type: number
+              legbonVerycrit:
+                type: number
+              legbonAnguish:
+                type: number
+              legbonAnguishDamageTaken:
+                type: number
+              ph:
+                type: number
+            required:
+              - id
+              - battleId
+              - originalId
+              - name
+              - lvl
+              - prof
+              - icon
+              - team
+              - turns
+              - turnsLost
+              - steps
+              - normalAttacks
+              - spellsUsed
+              - spellsUsedMap
+              - isDead
+              - surrendered
+              - fled
+              - maxHp
+              - damageDealt
+              - distanceDamage
+              - meleeDamage
+              - auxiliaryDamage
+              - fireDamage
+              - frostDamage
+              - lightningDamage
+              - thirdAttDamage
+              - damageDealtAfterDefensive
+              - damageDealtAfterDefensivePercentage
+              - damageTaken
+              - distanceDamageTaken
+              - meleeDamageTaken
+              - auxiliaryDamageTaken
+              - fireDamageTaken
+              - frostDamageTaken
+              - lightningDamageTaken
+              - thirdAttDamageTaken
+              - flatDamageTaken
+              - rageDamageDealt
+              - trueDamageDealt
+              - trueDamageTaken
+              - stigmaDamageDealt
+              - stigmaDamageTaken
+              - passiveHealing
+              - activeHealing
+              - armorPierces
+              - criticalHits
+              - reducedArmor
+              - reducedPoisonResistance
+              - magicResistanceDestroyed
+              - evasions
+              - attacksEvaded
+              - counters
+              - fastArrows
+              - blocks
+              - attacksBlocked
+              - blockedDamage
+              - woundDamageTaken
+              - poisonDamageTaken
+              - injureDamageTaken
+              - injures
+              - critWoundDamageTaken
+              - firePassiveDamageTaken
+              - lightningPassiveDamageTaken
+              - destroyedEnergy
+              - destroyedMana
+              - regeneratedEnergy
+              - regeneratedMana
+              - reflectedDamage
+              - reflectedDamageTaken
+              - legbons
+              - legbonCurse
+              - legbonCleanse
+              - legbonLastheal
+              - legbonLasthealValue
+              - legbonGlare
+              - legbonHolytouch
+              - legbonHolytouchValue
+              - legbonCritredValue
+              - legbonFacadeValue
+              - legbonPunctureValue
+              - legbonVerycrit
+              - legbonAnguish
+              - legbonAnguishDamageTaken
+              - ph
+      required:
+        - battleId
+        - generatedAt
+        - timeline
+        - warriors
     BattleResponseDto_Output:
       type: object
       properties:
@@ -3078,6 +3918,9 @@ components:
                   - attackerHpPercentage
                   - defenderHpPercentage
                   - actions
+            sourceEvents:
+              type: array
+              items: {}
           required:
             - accountId
             - characterId
