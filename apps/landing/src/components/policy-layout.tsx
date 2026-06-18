@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { LandingHeader, LandingFooter } from "@/src/components/landing";
+import { LandingFooter } from "@/src/components/landing/footer";
+import { LandingHeader } from "@/src/components/landing/header";
 
 interface PolicyLayoutProps {
   children: ReactNode;
