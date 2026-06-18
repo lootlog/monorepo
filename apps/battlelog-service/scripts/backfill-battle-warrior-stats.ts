@@ -28,9 +28,28 @@ function quoteLiteral(value: string): string {
 }
 
 const requiredKeysSql = `ARRAY[${BATTLE_WARRIOR_STATS_KEYS.map(quoteLiteral).join(", ")}]`;
-const statsJsonSql = `jsonb_build_object(${BATTLE_WARRIOR_STATS_KEYS.map(
-  (key) => `${quoteLiteral(key)}, ${quoteIdentifier(key)}`,
-).join(", ")})`;
+const jsonbBuildObjectPairLimit = 40;
+const statsJsonSql = BATTLE_WARRIOR_STATS_KEYS.reduce<string[][]>(
+  (chunks, key) => {
+    const lastChunk = chunks.at(-1);
+
+    if (!lastChunk || lastChunk.length >= jsonbBuildObjectPairLimit) {
+      chunks.push([key]);
+      return chunks;
+    }
+
+    lastChunk.push(key);
+    return chunks;
+  },
+  [],
+)
+  .map(
+    (keys) =>
+      `jsonb_build_object(${keys
+        .map((key) => `${quoteLiteral(key)}, ${quoteIdentifier(key)}`)
+        .join(", ")})`,
+  )
+  .join(" || ");
 const sampleKeys = [
   "turns",
   "damageDealt",
