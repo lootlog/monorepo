@@ -2,6 +2,7 @@
   "navigation": {
     "title": "Panel walk",
     "battles": "Walki",
+    "analytics": "Analityka",
     "statistics": "Statystyki",
     "headToHead": "Bilans H2H",
     "matchmakingHeadToHead": "Matchmaking H2H",
@@ -57,17 +58,23 @@
     "hide": "Ukryj",
     "share": "Udostępnij",
     "delete": "Usuń",
+    "more": "Więcej akcji",
     "close": "Zamknij"
   },
   "toasts": {
     "battleDeleted": "Walka została usunięta.",
     "battleDeleteError": "Wystąpił błąd podczas usuwania walki.",
+    "bulkBattlesDeleted": "Usunięto zaznaczone walki: {{count}}.",
+    "bulkBattleDeleteError": "Nie udało się usunąć zaznaczonych walk.",
     "linkCopied": "Link do walki został skopiowany do schowka!",
     "linkCopyError": "Wystąpił błąd podczas kopiowania linku.",
     "battleShared": "Walka została udostępniona!",
     "battleShareError": "Wystąpił błąd podczas udostępniania walki.",
+    "bulkBattlesShared": "Udostępniono i skopiowano linki do walk: {{count}}.",
+    "bulkBattleShareError": "Nie udało się udostępnić zaznaczonych walk.",
     "battleHidden": "Walka została ukryta!",
-    "battleHideError": "Wystąpił błąd podczas ukrywania walki."
+    "battleHideError": "Wystąpił błąd podczas ukrywania walki.",
+    "selectionLimitReached": "Możesz zaznaczyć maksymalnie {{limit}} walk."
   },
   "dialogs": {
     "deleteBattle": {
@@ -80,12 +87,51 @@
     "empty": "Brak walk",
     "emptyDescription": "Nie znaleziono żadnych walk spełniających kryteria wyszukiwania",
     "savedEmpty": "Brak zapisanych walk",
-    "totalBattles": "Łącznie walk: {{count}}"
+    "totalBattles": "Łącznie walk: {{count}}",
+    "openBattle": "Otwórz walkę",
+    "columns": {
+      "result": "Wynik",
+      "yourTeam": "Twoja drużyna",
+      "opponents": "Przeciwnicy",
+      "world": "Świat",
+      "tags": "Tagi",
+      "time": "Czas",
+      "duration": "Długość",
+      "mode": "Tryb",
+      "actions": "Akcje"
+    },
+    "noTags": "-",
+    "damageTags": {
+      "fire": "Ogień",
+      "frost": "Zimno",
+      "lightning": "Błyskawice",
+      "poison": "Trucizna",
+      "wound": "Głęboka rana"
+    }
+  },
+  "bulk": {
+    "selected": "{{count}} zaznaczonych",
+    "share": "Udostępnij",
+    "delete": "Usuń",
+    "selectRows": "Zaznacz walki",
+    "selectRow": "Zaznacz walkę",
+    "honorPointsShort": "PH",
+    "matchmakingShort": "O",
+    "deleteDialog": {
+      "title": "Usunąć zaznaczone walki?",
+      "description": "Usuniesz zaznaczone walki: {{count}}. Tej operacji nie można cofnąć.",
+      "confirm": "Usuń zaznaczone"
+    }
   },
   "dashboard": {
     "chartTitle": "Walki",
     "chartDescription": "Pokazuje statystyki walk dla danej postaci z ostatnich 6 miesięcy",
     "emptyDescription": "Nie masz jeszcze żadnej zapisanej walki. Aby rozpocząć zbieranie danych o walkach, włącz panel walk w dodatku w grze w ustawieniach w zakładce „Panel walk”.",
+    "recentBattles": {
+      "title": "Ostatnie walki",
+      "subtitle": "Twoje ostatnie walki dla wszystkich postaci",
+      "viewAll": "Zobacz wszystkie"
+    },
     "chartLabels": {
       "battles": "Walki",
       "winrate": "Winrate"
@@ -140,8 +186,11 @@
       "empty": "Brak wcześniejszych walk z tym przeciwnikiem.",
       "error": "Nie udało się pobrać ostatnich walk.",
       "openDialog": "Pokaż ostatnie walki",
+      "viewAll": "Wszystkie",
+      "viewAllAria": "Zobacz wszystkie walki z {{opponent}}",
       "win": "W",
       "loss": "L",
+      "versus": "vs",
       "durationSeconds": "{{seconds}}s"
     },
     "reasons": {

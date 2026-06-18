@@ -99,6 +99,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
             key={item.id}
             to={url}
             preload="intent"
+            activeOptions={{ exact: true }}
             aria-current={active ? "page" : undefined}
             className="shrink-0"
             ref={active ? activeTabRef : undefined}

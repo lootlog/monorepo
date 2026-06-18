@@ -13,7 +13,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
 import { Filter } from "lucide-react";
 import {
   Drawer,
@@ -111,6 +110,25 @@ export const BattlePanelBattlesList = () => {
     setIsFiltersOpen((prev) => !prev);
   };
 
+  const tableToolbar = (
+    <WarriorSearchFilter
+      selectedWarriors={selectedWarriors}
+      onWarriorToggle={handleWarriorToggle}
+      className="min-w-0 flex-1 md:max-w-[360px]"
+    />
+  );
+
+  const tableToolbarEnd = !isMobile && (
+    <Button
+      onClick={handleToggleFilters}
+      variant={isFiltersOpen ? "default" : "outline"}
+      size="icon"
+      className="relative shrink-0"
+    >
+      <Filter className="h-4 w-4" />
+    </Button>
+  );
+
   return (
     <>
       {isMobile && (
@@ -136,28 +154,6 @@ export const BattlePanelBattlesList = () => {
       )}
 
       <div className="w-full flex flex-col h-full overflow-hidden bg-background/50">
-        <div className="px-3 pt-3 pb-0">
-          <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <WarriorSearchFilter
-                selectedWarriors={selectedWarriors}
-                onWarriorToggle={handleWarriorToggle}
-                className="flex-1"
-              />
-              {!isMobile && (
-                <Button
-                  onClick={handleToggleFilters}
-                  variant={isFiltersOpen ? "default" : "outline"}
-                  size="icon"
-                  className="relative shrink-0"
-                >
-                  <Filter className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </Card>
-        </div>
-
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden p-3">
             <BattlesList
@@ -181,6 +177,8 @@ export const BattlePanelBattlesList = () => {
               showPagination
               isLoading={isBattlesLoading}
               enableScrollToTop
+              toolbar={tableToolbar}
+              toolbarEnd={tableToolbarEnd}
             />
           </div>
 
