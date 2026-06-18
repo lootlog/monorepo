@@ -10,15 +10,26 @@ import type { Timer } from "@/api";
 
 const makeGuild = (
   overrides?: Partial<GuildResponseDtoOutput>,
-): GuildResponseDtoOutput => ({
-  id: "guild-1",
-  name: "Test Guild",
-  icon: "icon.png",
-  vanityUrl: "test-guild",
-  ownerId: "owner-1",
-  publicStatsCardEnabled: false,
-  ...overrides,
-});
+): GuildResponseDtoOutput => {
+  const guild: GuildResponseDtoOutput = {
+    id: "guild-1",
+    name: "Test Guild",
+    icon: "icon.png",
+    vanityUrl: "test-guild",
+    ownerId: "owner-1",
+    publicStatsCardEnabled: false,
+    reservationMaxDurationMinutes: 240,
+    reservationMinDurationMinutes: 15,
+    reservationTimeGranularityMinutes: 15,
+    reservationMaxAdvanceDays: 7,
+    reservationActiveLimitPerSpot: 1,
+  };
+
+  return {
+    ...guild,
+    ...overrides,
+  };
+};
 
 const makeMember = () => ({
   id: 1,

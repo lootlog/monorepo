@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 import { GuildSwitcher } from "./guild-switcher";
 
@@ -31,12 +31,10 @@ vi.mock("@/lib/game", () => ({
   },
 }));
 
-const createGuild = (id: string, name: string): GuildResponseDtoOutput => ({
+const createGuild = (id: string, name: string): GuildIdentity => ({
   id,
   name,
   icon: null,
-  ownerId: "owner-1",
-  publicStatsCardEnabled: false,
 });
 
 describe("GuildSwitcher", () => {
