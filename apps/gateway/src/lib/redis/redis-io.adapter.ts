@@ -6,6 +6,8 @@ import type { ServerOptions } from "socket.io";
 import { msgpackParser } from "@lootlog/socket-parser";
 import { redisConfig } from "src/config/redis.config";
 
+const SOCKET_IO_REDIS_REQUESTS_TIMEOUT = 30000;
+
 export class RedisIoAdapter extends IoAdapter {
   private adapterConstructor: ReturnType<typeof createAdapter>;
 
@@ -23,7 +25,10 @@ export class RedisIoAdapter extends IoAdapter {
 
     const subClient = pubClient.duplicate();
 
-    this.adapterConstructor = createAdapter(pubClient, subClient);
+    this.adapterConstructor = createAdapter(pubClient, subClient, {
+      requestsTimeout: SOCKET_IO_REDIS_REQUESTS_TIMEOUT,
+      publishOnSpecificResponseChannel: true,
+    });
   }
 
   createIOServer(port: number, options?: ServerOptions) {
