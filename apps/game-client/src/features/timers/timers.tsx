@@ -67,7 +67,9 @@ export const Timers = () => {
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
-  const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
+  const filters = timersFilters[settingsKey] ?? DEFAULT_TIMERS_FILTERS;
+  const hiddenTimersForSettings = hiddenTimers[settingsKey] ?? [];
+  const pinnedTimersForSettings = pinnedTimers[settingsKey] ?? [];
 
   const rawTimers = timers ? timers : EMPTY_TIMERS;
 
@@ -119,7 +121,7 @@ export const Timers = () => {
     calculatedTimers,
     isGrouping: generalConfig.timersGrouping,
     guildId: guildId ?? "",
-    hiddenTimers: hiddenTimers[settingsKey] || [],
+    hiddenTimers: hiddenTimersForSettings,
     showHiddenTimers,
     searchText: timerFiltersSearchText ?? "",
     selectedNpcTypes: filters.selectedNpcTypes,
@@ -128,7 +130,7 @@ export const Timers = () => {
     selectedColors: filters.selectedColors,
     colorFiltersEnabled: colorFiltersEnabled ?? false,
     timersColors: timersColors as Record<string, string>,
-    pinnedTimers: pinnedTimers[settingsKey] || [],
+    pinnedTimers: pinnedTimersForSettings,
     sortOrder: timersSortOrder ?? "asc",
     expiredTimersAtBottom: true,
     removeTimerAfterMs: generalConfig.removeTimerAfterMs,
@@ -167,7 +169,7 @@ export const Timers = () => {
         <TimersContent
           sortedTimers={sortedTimers}
           settingsKey={settingsKey}
-          hiddenTimers={hiddenTimers[settingsKey] || []}
+          hiddenTimers={hiddenTimersForSettings}
           areFiltersActive={areFiltersActive}
           colorStatistics={colorStatistics}
           guildId={guildId}
@@ -212,7 +214,7 @@ export const Timers = () => {
           <TimersContent
             sortedTimers={sortedTimers}
             settingsKey={settingsKey}
-            hiddenTimers={hiddenTimers[settingsKey] || []}
+            hiddenTimers={hiddenTimersForSettings}
             areFiltersActive={areFiltersActive}
             colorStatistics={colorStatistics}
             guildId={guildId}
