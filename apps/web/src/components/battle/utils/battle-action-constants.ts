@@ -39,6 +39,7 @@ export const ATTACK_ACTIONS_SORT_ORDER = [
   "-parry",
   "-pierceb",
   "-arrowblock",
+  "-dmg",
   "-dmga",
   "-contra",
   "-legbon_glare",

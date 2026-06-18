@@ -73,12 +73,13 @@ const renderAttackActions = (
 };
 
 describe("BattleLogAttackActions", () => {
-  it("renders crush damage with defender data instead of raw placeholders", () => {
+  it("renders -dmga with defender data instead of raw placeholders", () => {
     const html = renderAttackActions([{ type: "-dmga", value: "982" }]);
 
     expect(html).toContain("Demodras(82.33%)");
     expect(html).toContain("-982");
-    expect(html).toContain("obrażeń od zmiażdżenia");
+    expect(html).toContain("obrażeń");
+    expect(html).not.toContain("obrażeń od zmiażdżenia");
     expect(html).not.toContain("{{defenderName}}");
     expect(html).not.toContain("&lt;dmgo&gt;");
   });
@@ -88,5 +89,19 @@ describe("BattleLogAttackActions", () => {
 
     expect(html).toContain("-Oślepienie w następnej turze");
     expect(html).toContain("text-yellow-400");
+  });
+
+  it("renders -dmga in the defender damage line without crush copy", () => {
+    const html = renderAttackActions([
+      { type: "-dmg", value: "20754" },
+      { type: "-dmga", value: "2137" },
+    ]);
+
+    expect(html).toContain("Demodras(82.33%)");
+    expect(html).toContain("-20754");
+    expect(html).toContain("-2137");
+    expect(html).toContain("obrażeń");
+    expect(html).not.toContain("obrażeń od zmiażdżenia");
+    expect(html).not.toContain("text-rose-300");
   });
 });

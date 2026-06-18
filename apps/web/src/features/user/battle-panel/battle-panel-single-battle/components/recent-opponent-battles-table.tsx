@@ -37,14 +37,16 @@ const getRecentBattleRowClassName = (battle: PlayerVsPlayerBattle) => {
 };
 
 const renderWarrior = (warrior: RecentOpponentWarrior) => (
-  <div className="flex min-w-0 items-center gap-1">
+  <div className="flex min-w-0 items-center gap-1.5">
     <PlayerTile
       player={warrior}
-      className="h-9 w-6 origin-top-left scale-[0.72]"
+      className="h-10 w-7 origin-top-left scale-[0.78]"
     />
     <div className="min-w-0">
-      <div className="truncate text-xs font-medium">{warrior.name}</div>
-      <div className="text-[10px] text-muted-foreground">
+      <div className="truncate text-sm font-medium leading-tight">
+        {warrior.name}
+      </div>
+      <div className="text-xs leading-tight text-muted-foreground">
         {warrior.lvl}
         {warrior.prof}
       </div>
@@ -126,9 +128,9 @@ export function RecentOpponentBattlesTable({
         <Table className="table-fixed border-b">
           <colgroup>
             <col className="w-[34%]" />
-            <col className="w-5" />
+            <col className="w-6" />
             <col className="w-[34%]" />
-            <col className="w-[76px]" />
+            <col className="w-[88px]" />
           </colgroup>
           <TableBody>
             {battles.map((recentBattle) => {
@@ -144,7 +146,7 @@ export function RecentOpponentBattlesTable({
                   tabIndex={0}
                   aria-label={t("battlePanel.list.openBattle")}
                   className={cn(
-                    "h-12 cursor-pointer border-b border-border transition-colors [&_td:first-child]:!pl-2 [&_td:last-child]:!pr-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
+                    "h-14 cursor-pointer border-b border-border transition-colors [&_td:first-child]:!pl-2 [&_td:last-child]:!pr-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
                     getRecentBattleRowClassName(recentBattle),
                   )}
                   onClick={() => handleOpenBattle(recentBattle.battleId)}
@@ -155,7 +157,7 @@ export function RecentOpponentBattlesTable({
                   <TableCell className="min-w-0 py-1 pl-2 pr-1">
                     {renderWarrior(recentBattle.userWarrior)}
                   </TableCell>
-                  <TableCell className="px-0 py-1 text-center text-[9px] font-medium uppercase text-muted-foreground/80">
+                  <TableCell className="px-0 py-1 text-center text-[10px] font-medium uppercase text-muted-foreground/80">
                     {t("battlePanel.single.recentOpponent.versus")}
                   </TableCell>
                   <TableCell className="min-w-0 px-1 py-1">
@@ -164,7 +166,7 @@ export function RecentOpponentBattlesTable({
                   <TableCell className="py-1 pl-1 pr-2 text-right">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="inline-block max-w-full truncate text-xs font-medium text-muted-foreground">
+                        <span className="inline-block max-w-full truncate text-sm font-medium text-muted-foreground">
                           {getRelativeTime(recentBattle.createdAt)}
                         </span>
                       </TooltipTrigger>
