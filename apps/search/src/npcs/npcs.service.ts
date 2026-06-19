@@ -52,16 +52,7 @@ export class NpcsService {
         return data.hits;
       }
 
-      const uniqueHits = data.hits.filter((npc, index) => {
-        const npcKey = `${npc.name}_${npc.type}`;
-
-        return (
-          data.hits.findIndex(
-            (candidate) => `${candidate.name}_${candidate.type}` === npcKey,
-          ) === index
-        );
-      });
-      return uniqueHits;
+      return this.getUniqueNpcsByNameAndType(data.hits);
     } catch (error) {
       this.logger.error("NPC search error", { error });
       return [];
@@ -103,5 +94,20 @@ export class NpcsService {
     } catch (error) {
       this.logger.error("Error indexing npcs", { error });
     }
+  }
+
+  private getUniqueNpcsByNameAndType(npcs: NpcHit[]) {
+    const seenNpcKeys = new Set<string>();
+
+    return npcs.filter((npc) => {
+      const npcKey = `${npc.name}_${npc.type}`;
+
+      if (seenNpcKeys.has(npcKey)) {
+        return false;
+      }
+
+      seenNpcKeys.add(npcKey);
+      return true;
+    });
   }
 }
