@@ -4,7 +4,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
 import { WinstonModule } from "nest-winston";
 import { HealthzModule } from "src/healthz/healthz.module";
 import { ActivitiesModule } from "./activities/activities.module";
-import { LoggerMiddleware } from "@lootlog/nest-shared/middleware";
+import { LoggerMiddleware } from "@lootlog/nest-shared";
 import { winstonConfig } from "src/config/winston.config";
 
 @Module({
