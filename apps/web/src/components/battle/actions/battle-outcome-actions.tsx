@@ -2,7 +2,7 @@ import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,
 } from "@/lib/api/battlelog-types";
-import { memo, type FC } from "react";
+import type { FC } from "react";
 import { BattleActionItem } from "./battle-action-item";
 
 export type BattleOutcomeActionsProps = {
@@ -12,26 +12,27 @@ export type BattleOutcomeActionsProps = {
   eventIndex: number;
 };
 
-export const BattleOutcomeActions: FC<BattleOutcomeActionsProps> = memo(
-  ({ actions, attacker, event, eventIndex }) => {
-    if (actions.length === 0) return null;
+export const BattleOutcomeActions: FC<BattleOutcomeActionsProps> = ({
+  actions,
+  attacker,
+  event,
+  eventIndex,
+}) => {
+  if (actions.length === 0) return null;
 
-    return (
-      <>
-        {actions.map((action, sIndex) => (
-          <BattleActionItem
-            key={`outcomeActions-${eventIndex}-${sIndex}`}
-            action={action}
-            attacker={attacker}
-            event={event}
-            customComponents={{
-              value: <span className="font-semibold" />,
-            }}
-          />
-        ))}
-      </>
-    );
-  },
-);
-
-BattleOutcomeActions.displayName = "BattleOutcomeActions";
+  return (
+    <>
+      {actions.map((action, sIndex) => (
+        <BattleActionItem
+          key={`outcomeActions-${eventIndex}-${sIndex}`}
+          action={action}
+          attacker={attacker}
+          event={event}
+          customComponents={{
+            value: <span className="font-semibold" />,
+          }}
+        />
+      ))}
+    </>
+  );
+};
