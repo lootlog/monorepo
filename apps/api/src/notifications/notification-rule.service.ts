@@ -384,6 +384,11 @@ export class NotificationRuleService {
       existingRule.triggerType;
     const isScheduledMessage =
       nextTriggerType === DbNotificationTriggerType.SCHEDULED_MESSAGE;
+    const hasFilterSelectionUpdate =
+      data.npcId !== undefined ||
+      data.npcIds !== undefined ||
+      data.itemId !== undefined ||
+      data.itemIds !== undefined;
 
     if (!isScheduledMessage) {
       this.validateRuleNpcSelection(data);
@@ -397,28 +402,36 @@ export class NotificationRuleService {
         })
       : null;
 
+    let nextWorld = existingRule.world;
+
+    if (isScheduledMessage) {
+      nextWorld = null;
+    } else if (hasWorld) {
+      nextWorld = data.world ?? null;
+    }
+
+    let nextFilters:
+      | Prisma.InputJsonObject
+      | Prisma.JsonValue
+      | typeof Prisma.DbNull = existingRule.filters;
+
+    if (isScheduledMessage) {
+      nextFilters = Prisma.DbNull;
+    } else if (hasFilterSelectionUpdate) {
+      nextFilters = this.buildFilters(data);
+    }
+
     await this.prisma.$transaction(async (tx) => {
       await tx.notificationRule.update({
         where: { id: ruleId },
         data: {
           triggerType: nextTriggerType,
-          world: isScheduledMessage
-            ? null
-            : hasWorld
-              ? (data.world ?? null)
-              : existingRule.world,
+          world: nextWorld,
           name: hasName ? (data.name ?? null) : existingRule.name,
           contentTemplate: hasContentTemplate
             ? this.normalizeContentTemplate(data.contentTemplate)
             : existingRule.contentTemplate,
-          filters: isScheduledMessage
-            ? Prisma.DbNull
-            : data.npcId !== undefined ||
-                data.npcIds !== undefined ||
-                data.itemId !== undefined ||
-                data.itemIds !== undefined
-              ? this.buildFilters(data)
-              : existingRule.filters,
+          filters: nextFilters,
           ...this.resolveScheduleConfig({
             triggerType: nextTriggerType,
             data,
@@ -747,14 +760,18 @@ export class NotificationRuleService {
       data.scheduleWeekday ?? existingRule?.scheduleWeekday ?? null;
     const timeOfDay =
       data.scheduleTimeOfDay ?? existingRule?.scheduleTimeOfDay ?? null;
-    const scheduledUntil = Object.prototype.hasOwnProperty.call(
+    const hasScheduledUntil = Object.prototype.hasOwnProperty.call(
       data,
       "scheduledUntil",
-    )
-      ? data.scheduledUntil
+    );
+    let scheduledUntil = existingRule?.scheduledUntil ?? null;
+
+    if (hasScheduledUntil) {
+      scheduledUntil = data.scheduledUntil
         ? new Date(data.scheduledUntil)
-        : null
-      : (existingRule?.scheduledUntil ?? null);
+        : null;
+    }
+
     const scheduleTimezone = this.resolveNotificationScheduleTimeZone({
       ownerType,
       providedTimeZone: data.scheduleTimezone,
