@@ -32,12 +32,15 @@ import { BackendPreferencesWarning } from "@/features/backend-preferences-warnin
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- HMR teardown guard
-const win = window as any;
-if (win.__lootlogApiTeardown) {
-  win.__lootlogApiTeardown();
+type LootlogApiWindow = Window & {
+  __lootlogApiTeardown?: () => void;
+};
+
+const lootlogApiWindow = window as LootlogApiWindow;
+if (lootlogApiWindow.__lootlogApiTeardown) {
+  lootlogApiWindow.__lootlogApiTeardown();
 }
-win.__lootlogApiTeardown = bootstrapPublicApi(queryClient);
+lootlogApiWindow.__lootlogApiTeardown = bootstrapPublicApi(queryClient);
 
 function AppContent() {
   useGameEventHandlers();
