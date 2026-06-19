@@ -1,5 +1,5 @@
 import { Module, type MiddlewareConsumer } from "@nestjs/common";
-import { LoggerMiddleware } from "@lootlog/nest-shared/middleware";
+import { LoggerMiddleware } from "@lootlog/nest-shared";
 import { WinstonModule } from "nest-winston";
 import { winstonConfig } from "src/config/winston.config";
 import { AuthModule } from "src/auth/auth.module";
