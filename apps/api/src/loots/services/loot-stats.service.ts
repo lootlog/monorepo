@@ -130,10 +130,18 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
   ) {
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
+    const dateParamIndex = this.getDateFilterParamIndex();
+    const worldParamIndex = this.getWorldFilterParamIndex(dateFrom);
+    const npcTypesParamIndex = this.getNpcTypesFilterParamIndex(
+      dateFrom,
+      world,
+    );
+    const dateCondition = dateFrom
+      ? `AND l."createdAt" >= $${dateParamIndex}`
+      : "";
+    const worldCondition = world ? `AND l.world = $${worldParamIndex}` : "";
     const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
+      ? `AND ns.type = ANY($${npcTypesParamIndex}::text[])`
       : "";
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
@@ -147,6 +155,32 @@ export class LootStatsService {
       excludeColossusCondition,
       needsNpcFilter,
     };
+  }
+
+  private getDateFilterParamIndex() {
+    return 2;
+  }
+
+  private getWorldFilterParamIndex(dateFrom: Date | null) {
+    if (dateFrom) {
+      return 3;
+    }
+
+    return 2;
+  }
+
+  private getNpcTypesFilterParamIndex(dateFrom: Date | null, world?: string) {
+    let paramIndex = 2;
+
+    if (dateFrom) {
+      paramIndex += 1;
+    }
+
+    if (world) {
+      paramIndex += 1;
+    }
+
+    return paramIndex;
   }
 
   private buildFilterParams(
