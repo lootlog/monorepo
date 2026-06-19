@@ -98,6 +98,9 @@ describe("BattleAnalyticsService", () => {
       set: vi.fn(),
       getClient: vi.fn(),
       deleteByPattern: vi.fn(),
+      getOrSetJsonBestEffort: vi.fn(
+        ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+      ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -710,6 +713,12 @@ describe("BattleAnalyticsService", () => {
       expect(redisService.deleteByPattern).toHaveBeenCalledWith(
         `statistics:*:${mockUserId}:*`,
       );
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        `battle-characters:*:${mockUserId}*`,
+      );
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        `battle-worlds:${mockUserId}:*`,
+      );
     });
 
     it("should handle empty cache patterns gracefully", async () => {
@@ -717,7 +726,7 @@ describe("BattleAnalyticsService", () => {
 
       await service.invalidateAnalyticsCache(mockUserId);
 
-      expect(redisService.deleteByPattern).toHaveBeenCalledTimes(2);
+      expect(redisService.deleteByPattern).toHaveBeenCalledTimes(4);
     });
   });
 });

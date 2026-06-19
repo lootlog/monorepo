@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type {
   Guild,
   ItemRarity,
@@ -106,25 +106,42 @@ const countMapStats = (mapStats: unknown): number => {
 
 @Injectable()
 export class EventWrappedService {
+  private readonly logger = new Logger(EventWrappedService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly lootsService: LootsService,
   ) {}
 
-  async getWrapped(
+  getWrapped(
     guild: Guild,
     eventId: string,
     permissions: Permission[],
     roles: Role[],
   ): Promise<EventWrappedResponseDto> {
-    const cacheKey = getEventWrappedCacheKey(guild.id, eventId);
-    const cached = await this.redis.get(cacheKey);
+    const cacheKey = getEventWrappedCacheKey(
+      guild.id,
+      eventId,
+      this.buildVisibilityCacheScope(permissions, roles),
+    );
 
-    if (cached) {
-      return JSON.parse(cached) as EventWrappedResponseDto;
-    }
+    return this.redis.getOrSetJsonBestEffort({
+      key: cacheKey,
+      ttlSeconds: EVENT_WRAPPED_CACHE_TTL_SECONDS,
+      onError: (error) =>
+        this.logger.warn("Event wrapped cache unavailable", error),
+      factory: () =>
+        this.getWrappedUncached(guild, eventId, permissions, roles),
+    });
+  }
 
+  private async getWrappedUncached(
+    guild: Guild,
+    eventId: string,
+    permissions: Permission[],
+    roles: Role[],
+  ): Promise<EventWrappedResponseDto> {
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, guildId: guild.id },
       select: {
@@ -401,13 +418,46 @@ export class EventWrappedService {
       },
     };
 
-    await this.redis.set(
-      cacheKey,
-      JSON.stringify(response),
-      EVENT_WRAPPED_CACHE_TTL_SECONDS,
-    );
-
     return response;
+  }
+
+  private buildVisibilityCacheScope(permissions: Permission[], roles: Role[]) {
+    const visibilityScope = {
+      permissions: [...permissions].sort(),
+      roles: roles
+        .map((role) => ({
+          id: role.id,
+          lvlRangeFrom: role.lvlRangeFrom,
+          lvlRangeTo: role.lvlRangeTo,
+          permissions: [...role.permissions].sort(),
+        }))
+        .sort((leftRole, rightRole) => leftRole.id.localeCompare(rightRole.id)),
+    };
+
+    return Buffer.from(this.stableSerialize(visibilityScope)).toString(
+      "base64url",
+    );
+  }
+
+  private stableSerialize(value: unknown): string {
+    if (Array.isArray(value)) {
+      return `[${value.map((entry) => this.stableSerialize(entry)).join(",")}]`;
+    }
+
+    if (value && typeof value === "object") {
+      const entries = Object.entries(value)
+        .filter(([, entry]) => entry !== undefined)
+        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
+
+      return `{${entries
+        .map(
+          ([key, entry]) =>
+            `${JSON.stringify(key)}:${this.stableSerialize(entry)}`,
+        )
+        .join(",")}}`;
+    }
+
+    return JSON.stringify(value);
   }
 
   private getEventLoots(params: {

@@ -7,6 +7,7 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventsService } from "./events.service";
 import { EventAccessService } from "./services/event-access.service";
 import { EventCatalogService } from "./services/event-catalog.service";
+import { EventReadCacheService } from "./services/event-read-cache.service";
 import { EventPointsService } from "./services/event-points.service";
 import { EventTrackingService } from "./services/event-tracking.service";
 import { EventKillService } from "./services/event-kill.service";
@@ -121,6 +122,23 @@ describe("EventsService", () => {
 
   const mockRedisService = {
     del: mockFn(),
+    deleteByPattern: mockFn(),
+  };
+
+  const mockEventReadCache = {
+    getGuildKey: mockFn(
+      (guildId: string, scope: string) =>
+        `event-read:${guildId}:guild:${scope}`,
+    ),
+    getEventKey: mockFn(
+      (guildId: string, eventId: string, scope: string) =>
+        `event-read:${guildId}:${eventId}:${scope}`,
+    ),
+    getOrSet: mockFn((_key: string, factory: () => Promise<unknown>) =>
+      factory(),
+    ),
+    invalidateGuild: mockFn(),
+    invalidateEvent: mockFn(),
   };
 
   beforeEach(async () => {
@@ -133,6 +151,7 @@ describe("EventsService", () => {
         EventQueueDiagnosticsService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: EventPointsService, useValue: mockPointsService },
         { provide: EventTrackingService, useValue: mockTrackingService },
         { provide: EventKillService, useValue: mockKillService },
