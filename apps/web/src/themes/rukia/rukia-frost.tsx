@@ -350,6 +350,28 @@ const IceSparkles = () => {
   );
 };
 
+const getFrostPatchPlacement = (
+  isX: boolean,
+  isStart: boolean,
+  pos: number,
+) => {
+  if (isX) {
+    return {
+      x: `${pos}%`,
+      y: isStart ? "0px" : "auto",
+      anchorX: "50%",
+      anchorY: isStart ? "0%" : "100%",
+    };
+  }
+
+  return {
+    x: isStart ? "0px" : "auto",
+    y: `${pos}%`,
+    anchorX: isStart ? "0%" : "100%",
+    anchorY: "50%",
+  };
+};
+
 // Randomly generated frost patches along screen edges — irregular positions and sizes
 const generateFrostPatches = () => {
   const patches: {
@@ -381,14 +403,12 @@ const generateFrostPatches = () => {
 
       const isX = edge.axis === "x";
       const isStart = edge.side === "top" || edge.side === "left";
+      const placement = getFrostPatchPlacement(isX, isStart, pos);
 
       patches.push({
-        x: isX ? `${pos}%` : isStart ? "0px" : "auto",
-        y: isX ? (isStart ? "0px" : "auto") : `${pos}%`,
+        ...placement,
         w: isX ? size * stretch : size,
         h: isX ? size : size * stretch,
-        anchorX: isX ? "50%" : isStart ? "0%" : "100%",
-        anchorY: isX ? (isStart ? "0%" : "100%") : "50%",
         opacity,
         scaleX: isX ? stretch : 1,
         scaleY: isX ? 1 : stretch,
@@ -462,6 +482,8 @@ export const GlobalFrostOverlay = () => (
   </motion.div>
 );
 
+type FallingSnowflakeType = "simple" | "detailed" | "dot";
+
 // Single falling snowflake with dynamic behavior
 const FallingSnowflake = ({
   initialX,
@@ -482,7 +504,7 @@ const FallingSnowflake = ({
   rotationSpeed: number;
   rotateDirection: number;
   opacity: number;
-  type: "simple" | "detailed" | "dot";
+  type: FallingSnowflakeType;
 }) => {
   return (
     <motion.div
@@ -584,6 +606,30 @@ const FallingSnowflake = ({
   );
 };
 
+const getSnowflakeSize = (isTiny: boolean, isLarge: boolean) => {
+  if (isTiny) return 3 + Math.random() * 4;
+  if (isLarge) return 14 + Math.random() * 6;
+  return 8 + Math.random() * 6;
+};
+
+const getSnowflakeFallDuration = (isTiny: boolean, isLarge: boolean) => {
+  if (isTiny) return 25 + Math.random() * 15;
+  if (isLarge) return 35 + Math.random() * 15;
+  return 28 + Math.random() * 12;
+};
+
+const getSnowflakeOpacity = (isTiny: boolean, isLarge: boolean) => {
+  if (isTiny) return 0.1 + Math.random() * 0.1;
+  if (isLarge) return 0.15 + Math.random() * 0.1;
+  return 0.12 + Math.random() * 0.08;
+};
+
+const getSnowflakeType = (isTiny: boolean): FallingSnowflakeType => {
+  if (isTiny) return "dot";
+  if (Math.random() > 0.6) return "detailed";
+  return "simple";
+};
+
 // Generate snowflake configurations
 const generateSnowflakes = () => {
   const snowflakes = [];
@@ -596,29 +642,14 @@ const generateSnowflakes = () => {
     snowflakes.push({
       id: i,
       initialX: Math.random() * 100,
-      size: isTiny
-        ? 3 + Math.random() * 4
-        : isLarge
-          ? 14 + Math.random() * 6
-          : 8 + Math.random() * 6,
-      fallDuration: isTiny
-        ? 25 + Math.random() * 15
-        : isLarge
-          ? 35 + Math.random() * 15
-          : 28 + Math.random() * 12,
+      size: getSnowflakeSize(isTiny, isLarge),
+      fallDuration: getSnowflakeFallDuration(isTiny, isLarge),
       delay: Math.random() * 20,
       windStrength: 0.5 + Math.random() * 1.5,
       rotationSpeed: 15 + Math.random() * 25,
       rotateDirection: Math.random() > 0.5 ? 360 : -360,
-      opacity: isTiny
-        ? 0.1 + Math.random() * 0.1
-        : isLarge
-          ? 0.15 + Math.random() * 0.1
-          : 0.12 + Math.random() * 0.08,
-      type: (isTiny ? "dot" : Math.random() > 0.6 ? "detailed" : "simple") as
-        | "simple"
-        | "detailed"
-        | "dot",
+      opacity: getSnowflakeOpacity(isTiny, isLarge),
+      type: getSnowflakeType(isTiny),
     });
   }
 
