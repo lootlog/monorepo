@@ -11,9 +11,9 @@ export const parseDurationToSeconds = (input: string): number => {
   const match = normalizedInput.match(regex);
   if (!match) return 0;
 
-  const [, hours, minutes, seconds] = match.map(Number);
+  const [, hours = "0", minutes = "0", seconds = "0"] = match;
   const totalSeconds =
-    (hours || 0) * 3600 + (minutes || 0) * 60 + (seconds || 0);
+    Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
 
   return Math.min(totalSeconds, MAX_DURATION_SECONDS);
 };
