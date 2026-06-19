@@ -85,6 +85,8 @@ describe("LootsService", () => {
     get: Mock;
     del: Mock;
     set: Mock;
+    deleteByPattern: Mock;
+    getOrSetJsonBestEffort: Mock;
   };
   let amqpConnection: {
     publish: Mock;
@@ -1312,6 +1314,39 @@ describe("LootsService", () => {
         uniqueId: "unique1",
         submissions: mockSubmissions,
       });
+    });
+
+    it("should revive cached loot dates before returning first page results", async () => {
+      const cachedLoot = {
+        id: 1,
+        uniqueId: "unique1",
+        world: "testworld",
+        source: LootSource.FIGHT,
+        location: "Test Location",
+        lootShare: {},
+        createdAt: "2026-01-01T10:00:00.000Z",
+        updatedAt: "2026-01-01T10:05:00.000Z",
+        items: [],
+        players: [],
+        npcs: [],
+        submissions: [],
+        commentsCount: 0,
+      };
+
+      _redisService.getOrSetJsonBestEffort.mockResolvedValue([cachedLoot]);
+
+      const result = await service.fetchLootsByGuildId(
+        mockGuild,
+        [],
+        [],
+        params,
+      );
+
+      expect(result[0]?.createdAt).toBeInstanceOf(Date);
+      expect(result[0]?.createdAt.toISOString()).toBe(cachedLoot.createdAt);
+      expect(result[0]?.updatedAt).toBeInstanceOf(Date);
+      expect(result[0]?.updatedAt.toISOString()).toBe(cachedLoot.updatedAt);
+      expect(prismaService.loot.findMany).not.toHaveBeenCalled();
     });
 
     it("should return empty array when no loots found", async () => {
