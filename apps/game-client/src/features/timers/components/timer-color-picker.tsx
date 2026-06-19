@@ -68,7 +68,7 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
                 />
               </TooltipTrigger>
               <TooltipContent side="top" className="ll:text-xs">
-                {defaultColorNames[id] || getDefaultColorName(id)}
+                {defaultColorNames[id] ?? getDefaultColorName(id)}
               </TooltipContent>
             </Tooltip>
           );

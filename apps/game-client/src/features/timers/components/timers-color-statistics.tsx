@@ -48,7 +48,8 @@ export const TimersColorStatistics: FC<TimersColorStatisticsProps> = ({
             colorStatistics.map((stat) => {
               const defaultColor =
                 TIMERS_COLORS[stat.color as keyof typeof TIMERS_COLORS];
-              const hasCustomColors = stat.bgColor || stat.borderColor;
+              const hasCustomColors =
+                stat.bgColor !== undefined || stat.borderColor !== undefined;
 
               return (
                 <div
