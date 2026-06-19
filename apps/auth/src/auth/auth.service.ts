@@ -30,24 +30,11 @@ type IdpTokenResponse = {
 
 type AccessTokenPayload = Awaited<ReturnType<typeof auth.api.getAccessToken>>;
 
-type GetSessionOptions = {
-  disableCookieCache?: boolean;
-  disableRefresh?: boolean;
-};
-
 @Injectable()
 export class AuthService {
-  getSession(headers: IncomingHttpHeaders, options: GetSessionOptions = {}) {
+  getSession(headers: IncomingHttpHeaders) {
     return auth.api.getSession({
       headers: fromNodeHeaders(headers),
-      query: {
-        ...(options.disableCookieCache !== undefined && {
-          disableCookieCache: options.disableCookieCache,
-        }),
-        ...(options.disableRefresh !== undefined && {
-          disableRefresh: options.disableRefresh,
-        }),
-      },
     });
   }
 
@@ -121,13 +108,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    const session = await this.getSession(
-      this.getSessionVerificationHeaders(headers),
-      {
-        disableCookieCache: true,
-        disableRefresh: true,
-      },
-    );
+    const session = await this.getSession(headers);
     const verifiedIdentity = await this.buildVerifiedIdentityFromRequest(
       session,
       authorizationHeader,
@@ -279,44 +260,6 @@ export class AuthService {
 
   private getHttpStatus(status: string | number | undefined, fallback: number) {
     return typeof status === "number" ? status : fallback;
-  }
-
-  private getSessionVerificationHeaders(
-    headers: IncomingHttpHeaders,
-  ): IncomingHttpHeaders {
-    const sanitizedCookie = this.removeSessionDataCookies(headers.cookie);
-
-    if (sanitizedCookie === headers.cookie) {
-      return headers;
-    }
-
-    return {
-      ...headers,
-      cookie: sanitizedCookie || undefined,
-    };
-  }
-
-  private removeSessionDataCookies(cookieHeader: string | undefined) {
-    if (!cookieHeader) {
-      return cookieHeader;
-    }
-
-    const sessionDataCookieName = `${env.COOKIE_PREFIX}.session_data`;
-
-    return cookieHeader
-      .split(";")
-      .map((cookie) => cookie.trim())
-      .filter((cookie) => {
-        const separatorIndex = cookie.indexOf("=");
-        const cookieName =
-          separatorIndex === -1 ? cookie : cookie.slice(0, separatorIndex);
-
-        return (
-          cookieName !== sessionDataCookieName &&
-          !cookieName.startsWith(`${sessionDataCookieName}.`)
-        );
-      })
-      .join("; ");
   }
 
   private parseExpiresAt(accessTokenExpiresAt: unknown): Date | null {
