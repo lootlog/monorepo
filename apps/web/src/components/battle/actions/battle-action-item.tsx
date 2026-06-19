@@ -1,5 +1,5 @@
 import { cn } from "@lootlog/ui/lib/utils";
-import { memo, type FC, type ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import { Trans } from "react-i18next";
 import {
   generateDynamicValuesAndComponents,
@@ -23,54 +23,50 @@ export type BattleActionItemProps = {
   dynamicValuesConfig?: DynamicValuesConfig;
 };
 
-export const BattleActionItem: FC<BattleActionItemProps> = memo(
-  ({
-    action,
-    attacker,
-    defender,
-    event,
-    className,
-    customComponents = {},
-    transformValue,
-    dynamicValuesConfig,
-  }) => {
-    const roundedValue = roundValue(action.value);
+export const BattleActionItem: FC<BattleActionItemProps> = ({
+  action,
+  attacker,
+  defender,
+  event,
+  className,
+  customComponents = {},
+  transformValue,
+  dynamicValuesConfig,
+}) => {
+  const roundedValue = roundValue(action.value);
 
-    const processedValue = transformValue
-      ? transformValue(roundedValue, action.type)
-      : roundedValue;
-    const actionPresentation = getBattleActionPresentation(action);
+  const processedValue = transformValue
+    ? transformValue(roundedValue, action.type)
+    : roundedValue;
+  const actionPresentation = getBattleActionPresentation(action);
 
-    const dynamicData = generateDynamicValuesAndComponents(
-      action.value,
-      dynamicValuesConfig?.prefix || "v",
-      dynamicValuesConfig?.component || <span className="font-semibold" />,
-    );
+  const dynamicData = generateDynamicValuesAndComponents(
+    action.value,
+    dynamicValuesConfig?.prefix ?? "v",
+    dynamicValuesConfig?.component ?? <span className="font-semibold" />,
+  );
 
-    return (
-      <div className={cn("px-4 py-1 bg-gray-100/10", className)}>
-        <Trans
-          i18nKey={actionPresentation.i18nKey}
-          values={{
-            name: attacker?.name,
-            defenderName: defender?.name,
-            value: processedValue,
-            hp: roundHpPercentage(event.attackerHpPercentage),
-            defenderHp: roundHpPercentage(event.defenderHpPercentage),
-            v1: 0,
-            ...actionPresentation.values,
-            ...dynamicData.values,
-          }}
-          components={{
-            value: <span className="font-semibold" />,
-            ...dynamicData.components,
-            ...dynamicValuesConfig?.customComponents,
-            ...customComponents,
-          }}
-        />
-      </div>
-    );
-  },
-);
-
-BattleActionItem.displayName = "BattleActionItem";
+  return (
+    <div className={cn("px-4 py-1 bg-gray-100/10", className)}>
+      <Trans
+        i18nKey={actionPresentation.i18nKey}
+        values={{
+          name: attacker?.name,
+          defenderName: defender?.name,
+          value: processedValue,
+          hp: roundHpPercentage(event.attackerHpPercentage),
+          defenderHp: roundHpPercentage(event.defenderHpPercentage),
+          v1: 0,
+          ...actionPresentation.values,
+          ...dynamicData.values,
+        }}
+        components={{
+          value: <span className="font-semibold" />,
+          ...dynamicData.components,
+          ...dynamicValuesConfig?.customComponents,
+          ...customComponents,
+        }}
+      />
+    </div>
+  );
+};
