@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { startTransition, useEffect } from "react";
 import {
   battlesControllerGetCombatProfile,
   useBattlesControllerGetBattleDuration,
@@ -30,6 +30,7 @@ import {
 import { CombatProfileOverview } from "./components/combat-profile-overview";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { BattlePanelStatisticsSkeleton } from "./battle-panel-statistics-skeleton";
 
 export function BattlePanelStatistics() {
   const { t } = useTranslation();
@@ -159,7 +160,7 @@ export function BattlePanelStatistics() {
   };
 
   if (isLoadingCharacters) {
-    return null;
+    return <BattlePanelStatisticsSkeleton />;
   }
 
   return (
@@ -179,33 +180,45 @@ export function BattlePanelStatistics() {
             ph={ph}
             matchmaking={matchmaking}
             onCharacterChange={(characterId) => {
-              void setQueryState({
-                characterId: characterId ?? null,
+              startTransition(() => {
+                void setQueryState({
+                  characterId: characterId ?? null,
+                });
               });
             }}
             onPeriodChange={(newPeriod) => {
-              void setQueryState({
-                period: newPeriod,
+              startTransition(() => {
+                void setQueryState({
+                  period: newPeriod,
+                });
               });
             }}
             onMinLevelChange={(newMinLevel) => {
-              void setQueryState({
-                minLevel: newMinLevel ?? 1,
+              startTransition(() => {
+                void setQueryState({
+                  minLevel: newMinLevel ?? 1,
+                });
               });
             }}
             onMaxLevelChange={(newMaxLevel) => {
-              void setQueryState({
-                maxLevel: newMaxLevel ?? 500,
+              startTransition(() => {
+                void setQueryState({
+                  maxLevel: newMaxLevel ?? 500,
+                });
               });
             }}
             onPhChange={(newPh) => {
-              void setQueryState({
-                ph: newPh ? true : null,
+              startTransition(() => {
+                void setQueryState({
+                  ph: newPh ? true : null,
+                });
               });
             }}
             onMatchmakingChange={(newMatchmaking) => {
-              void setQueryState({
-                matchmaking: newMatchmaking ? true : null,
+              startTransition(() => {
+                void setQueryState({
+                  matchmaking: newMatchmaking ? true : null,
+                });
               });
             }}
           />

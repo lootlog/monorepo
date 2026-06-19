@@ -8,7 +8,6 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { AnimatePresence, motion } from "framer-motion";
 import { ThemeInteractiveFrame } from "@/themes";
 
 type UserShellProps = {
@@ -219,57 +218,51 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
               </div>
 
               <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 overflow-hidden text-sm">
-                <AnimatePresence mode="popLayout">
-                  {navigationInfo.breadcrumbs.map((crumb, index) => {
-                    const isLast =
-                      index === navigationInfo.breadcrumbs.length - 1;
-                    return (
-                      <motion.div
-                        key={`${crumb.label}-${crumb.path ?? "current"}`}
-                        className="flex min-w-0 shrink-0 items-center gap-1.5 last:shrink"
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 8 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        {crumb.path ? (
-                          <div
-                            onMouseEnter={() =>
-                              setHoveredButton(`crumb-${index}`)
-                            }
-                            onMouseLeave={() => setHoveredButton(null)}
+                {navigationInfo.breadcrumbs.map((crumb, index) => {
+                  const isLast =
+                    index === navigationInfo.breadcrumbs.length - 1;
+                  return (
+                    <div
+                      key={`${crumb.label}-${crumb.path ?? "current"}`}
+                      className="flex min-w-0 shrink-0 items-center gap-1.5 last:shrink"
+                    >
+                      {crumb.path ? (
+                        <div
+                          onMouseEnter={() =>
+                            setHoveredButton(`crumb-${index}`)
+                          }
+                          onMouseLeave={() => setHoveredButton(null)}
+                        >
+                          <ThemeInteractiveFrame
+                            isHovered={hoveredButton === `crumb-${index}`}
+                            isActive={false}
                           >
-                            <ThemeInteractiveFrame
-                              isHovered={hoveredButton === `crumb-${index}`}
-                              isActive={false}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate({
+                                  to: crumb.path as string,
+                                })
+                              }
+                              className="cursor-pointer whitespace-nowrap text-xs text-muted-foreground/70 transition-colors duration-200 hover:text-foreground"
                             >
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  navigate({
-                                    to: crumb.path as string,
-                                  })
-                                }
-                                className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
-                              >
-                                {crumb.label}
-                              </button>
-                            </ThemeInteractiveFrame>
-                          </div>
-                        ) : (
-                          <span className="truncate text-sm font-bold text-foreground">
-                            {crumb.label}
-                          </span>
-                        )}
-                        {!isLast && (
-                          <span className="text-xs text-muted-foreground/30 select-none">
-                            /
-                          </span>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                              {crumb.label}
+                            </button>
+                          </ThemeInteractiveFrame>
+                        </div>
+                      ) : (
+                        <span className="truncate text-sm font-bold text-foreground">
+                          {crumb.label}
+                        </span>
+                      )}
+                      {!isLast && (
+                        <span className="select-none text-xs text-muted-foreground/30">
+                          /
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <div

@@ -82,8 +82,9 @@ const router = createRouter({
   parseSearch,
   stringifySearch,
   defaultPendingComponent: RouteSectionLoading,
-  defaultPendingMs: 120,
-  defaultPendingMinMs: 250,
+  defaultPreload: "intent",
+  defaultPendingMs: 250,
+  defaultPendingMinMs: 150,
   scrollRestoration: true,
 });
 

@@ -11,7 +11,14 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { invalidateGuildNotificationQueries } from "../notifications-api";
+import {
+  cancelGuildNotificationQueries,
+  getGuildNotificationCacheSnapshot,
+  invalidateGuildNotificationQueries,
+  removeGuildNotificationTargetFromCache,
+  restoreGuildNotificationCacheSnapshot,
+  type GuildNotificationCacheSnapshot,
+} from "../notifications-api";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { getGuildNotificationTargetLabel } from "../utils/notification-settings.utils";
 import { useNotificationsGuildControllerDeleteGuildTarget } from "@/lib/api/generated/main/notifications/notifications";
@@ -35,14 +42,47 @@ export const NotificationTargetCard = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
-  const deleteTarget = useNotificationsGuildControllerDeleteGuildTarget({
+  const deleteTarget = useNotificationsGuildControllerDeleteGuildTarget<
+    unknown,
+    GuildNotificationCacheSnapshot | undefined
+  >({
     mutation: {
+      onMutate: async (variables) => {
+        if (!guildId) {
+          return undefined;
+        }
+
+        await cancelGuildNotificationQueries(queryClient, guildId);
+        const previousNotifications = getGuildNotificationCacheSnapshot(
+          queryClient,
+          guildId,
+        );
+
+        removeGuildNotificationTargetFromCache(
+          queryClient,
+          guildId,
+          variables.pathParams.targetId,
+        );
+
+        return previousNotifications;
+      },
       onSuccess: async () => {
         if (!guildId) {
           return;
         }
 
         await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+      onError: (_error, _variables, previousNotifications) => {
+        if (!guildId) {
+          return;
+        }
+
+        restoreGuildNotificationCacheSnapshot(
+          queryClient,
+          guildId,
+          previousNotifications,
+        );
       },
     },
   });
