@@ -10,9 +10,11 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import { useRef } from "react";
-import { getNpcTypeByWt } from "@lootlog/types";
-import { NpcType } from "@/api/npcs.api";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
+import {
+  getNotificationSettingsKey,
+  isNotificationSettingsKey,
+} from "@/features/notifications/utils/get-notification-settings-key";
 
 export type Notification = {
   npc?: GameNpc & { location: string; name: string };
@@ -23,11 +25,6 @@ export type Notification = {
   world: string;
   createdAt: string;
   isGatheringParty?: boolean;
-};
-
-const getNotificationType = (n: Notification) => {
-  if (!n.npc || !n.npc.wt) return "message" as const;
-  return getNpcTypeByWt(NpcType, n.npc.wt);
 };
 
 export const useNotifications = () => {
@@ -62,15 +59,15 @@ export const useNotifications = () => {
     }
 
     const currentSettings = settingsRef.current;
-    const notificationType = getNotificationType(data);
-    const typeSettings =
-      currentSettings[notificationType as keyof typeof currentSettings];
+    const notificationSettingsKey = getNotificationSettingsKey(data);
 
-    if (!typeSettings) {
+    if (!isNotificationSettingsKey(notificationSettingsKey)) {
       setOpen("notifications", true);
       pushNotification({ ...data, servers: [data.guildId] });
       return;
     }
+
+    const typeSettings = currentSettings[notificationSettingsKey];
 
     if (!typeSettings.show) return;
     if (typeSettings.ignoreOtherWorlds && data.world !== worldRef.current)
@@ -81,7 +78,7 @@ export const useNotifications = () => {
     pushNotification({ ...data, servers: [data.guildId] });
 
     if (typeSettings.sound) {
-      playSound("notifications", notificationType);
+      playSound("notifications", notificationSettingsKey);
     }
   };
 
