@@ -4,6 +4,10 @@ import { PrismaService } from "src/shared/db/prisma.service";
 import type { QueryActivitiesDto } from "../dto/query-activities.dto";
 import { mapActivityDetails } from "../utils/map-activity-details";
 
+const DEFAULT_SUGGESTION_LIMIT = 10;
+const MIN_SUGGESTION_LIMIT = 1;
+const MAX_SUGGESTION_LIMIT = 50;
+
 @Injectable()
 export class ActivitiesQueryService {
   constructor(private readonly prisma: PrismaService) {}
@@ -94,9 +98,9 @@ export class ActivitiesQueryService {
   async suggestActorNames(
     guildId: string,
     search?: string,
-    limit = 10,
+    limit = DEFAULT_SUGGESTION_LIMIT,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit, 1), 50);
+    const limitValue = this.normalizeSuggestionLimit(limit);
     const trimmedSearch = search?.trim();
 
     const where: Prisma.ActivityActorSnapshotWhereInput = {
@@ -130,7 +134,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 20,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit, 1), 50);
+    const limitValue = this.normalizeSuggestionLimit(limit);
     const trimmedSearch = search?.trim();
 
     const worldFilter = this.buildNonEmptyNullableFilter(trimmedSearch);
@@ -156,9 +160,9 @@ export class ActivitiesQueryService {
   async suggestClanNames(
     guildId: string,
     search?: string,
-    limit = 10,
+    limit = DEFAULT_SUGGESTION_LIMIT,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit, 1), 50);
+    const limitValue = this.normalizeSuggestionLimit(limit);
     const trimmedSearch = search?.trim();
 
     const clanNameFilter = this.buildNonEmptyNullableFilter(trimmedSearch);
@@ -216,6 +220,13 @@ export class ActivitiesQueryService {
     }
 
     return filter;
+  }
+
+  private normalizeSuggestionLimit(limit: number): number {
+    return Math.min(
+      Math.max(limit, MIN_SUGGESTION_LIMIT),
+      MAX_SUGGESTION_LIMIT,
+    );
   }
 
   private deduplicateNames(
