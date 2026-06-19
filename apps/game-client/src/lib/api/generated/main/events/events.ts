@@ -35,6 +35,7 @@ import type {
   CreateLocationDto,
   CreateMapDto,
   DeleteEventPathParameters,
+  EventCoordinationResponseDto,
   EventHeroStatsResponseDto,
   EventKillHistoryResponseDto,
   EventListItemResponseDto,
@@ -65,6 +66,7 @@ import type {
   EventsMonitoringControllerCloseRespawnWindowPathParameters,
   EventsMonitoringControllerGetActiveGapForMapPathParameters,
   EventsMonitoringControllerGetActiveGapsForHeroPathParameters,
+  EventsMonitoringControllerGetCoordinationPathParameters,
   EventsMonitoringControllerGetHeroCoverageGapsPathParameters,
   EventsMonitoringControllerGetHeroPresenceStatsPathParameters,
   EventsMonitoringControllerGetHeroRespawnConfigPathParameters,
@@ -3476,7 +3478,126 @@ export const useEventsRankingControllerUpdateKillPoint = <TError = ErrorType<voi
       > => {
       return useMutation(getEventsRankingControllerUpdateKillPointMutationOptions(options));
     }
-    export const getEventsMonitoringControllerGetKillTimelineDataUrl = ({ guildId, eventId, heroId, killId }: EventsMonitoringControllerGetKillTimelineDataPathParameters,) => {
+    export const getEventsMonitoringControllerGetCoordinationUrl = ({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/events/${eventId}/coordination`
+}
+
+/**
+ * Get respawn priorities, map coverage gaps, and recommended actions for an event
+ * @summary Get event coordination overview
+ */
+export const eventsMonitoringControllerGetCoordination = async ({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters, options?: RequestInit): Promise<EventCoordinationResponseDto> => {
+
+  return orvalFetch<EventCoordinationResponseDto>(getEventsMonitoringControllerGetCoordinationUrl({ guildId, eventId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsMonitoringControllerGetCoordinationQueryKey = ({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters,) => {
+    return [
+    `/guilds/${guildId}/events/${eventId}/coordination`
+    ] as const;
+    }
+
+
+export const getEventsMonitoringControllerGetCoordinationQueryOptions = <TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>, TError = ErrorType<unknown>>({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getEventsMonitoringControllerGetCoordinationQueryKey({ guildId, eventId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>> = ({ signal }) => eventsMonitoringControllerGetCoordination({ guildId, eventId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined && eventId !== null && eventId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type EventsMonitoringControllerGetCoordinationQueryResult = NonNullable<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>>
+export type EventsMonitoringControllerGetCoordinationQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get event coordination overview
+ */
+
+export function useEventsMonitoringControllerGetCoordination<TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>, TError = ErrorType<unknown>>(
+ { guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getEventsMonitoringControllerGetCoordinationQueryOptions({ guildId, eventId },options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get event coordination overview
+ */
+export const prefetchEventsMonitoringControllerGetCoordinationQuery = async <TData = Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, { guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getEventsMonitoringControllerGetCoordinationQueryOptions({ guildId, eventId },options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get event coordination overview
+ */
+export const invalidateEventsMonitoringControllerGetCoordination = async (
+ queryClient: QueryClient, { guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getEventsMonitoringControllerGetCoordinationQueryKey({ guildId, eventId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get event coordination overview
+ */
+export const useSetEventsMonitoringControllerGetCoordinationQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>>({ queryKey: getEventsMonitoringControllerGetCoordinationQueryKey({ guildId, eventId }) }, updater);
+  };
+}
+
+/**
+ * @summary Get event coordination overview
+ */
+export const useGetEventsMonitoringControllerGetCoordinationQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>>(getEventsMonitoringControllerGetCoordinationQueryKey({ guildId, eventId }));
+}
+
+
+export const getEventsMonitoringControllerGetKillTimelineDataUrl = ({ guildId, eventId, heroId, killId }: EventsMonitoringControllerGetKillTimelineDataPathParameters,) => {
 
 
 
