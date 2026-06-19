@@ -141,10 +141,8 @@ export function getNpcTier(npc?: NpcRoutingData): TierName {
   return getNpcRoutingTier(npc);
 }
 
-export function checkLevelRange(roles: GuildRole[], npcLevel: number): boolean {
-  return roles.some(
-    (role) => role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel,
-  );
+function isLevelWithinRoleRange(role: GuildRole, npcLevel: number): boolean {
+  return role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
 }
 
 export function hasFeatureRoomAccess(
@@ -164,7 +162,7 @@ export function hasFeatureRoomAccess(
       return true;
     }
 
-    return role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
+    return isLevelWithinRoleRange(role, npcLevel);
   });
 }
 
