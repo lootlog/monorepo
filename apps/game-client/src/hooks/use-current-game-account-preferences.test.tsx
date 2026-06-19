@@ -24,6 +24,7 @@ vi.mock("@/lib/game", () => ({
     hero: {
       account: 202,
     },
+    getAccountId: () => "202",
   },
 }));
 
