@@ -6,6 +6,8 @@ import {
   type ChartConfig,
 } from "@lootlog/ui/components/chart";
 import { StatCard } from "./stat-card";
+import { useTranslation } from "react-i18next";
+import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
 
 interface PhGrowthDataPoint {
   date: string;
@@ -19,14 +21,14 @@ interface PhGrowthChartProps {
   isLoading?: boolean;
 }
 
-const chartConfig = {
-  cumulativePh: {
-    label: "Skumulowany PH",
-    color: "var(--chart-1)",
-  },
-} satisfies ChartConfig;
-
 export function PhGrowthChart({ data, isLoading }: PhGrowthChartProps) {
+  const { t } = useTranslation();
+  const chartConfig = {
+    cumulativePh: {
+      label: t("battlePanel.statistics.phGrowth.chartLabel"),
+      color: "var(--chart-1)",
+    },
+  } satisfies ChartConfig;
   const chartData = data.map((point) => ({
     date: new Date(point.date).toLocaleDateString("pl-PL", {
       day: "2-digit",
@@ -38,54 +40,69 @@ export function PhGrowthChart({ data, isLoading }: PhGrowthChartProps) {
 
   return (
     <StatCard
-      title="Wzrost PH w czasie"
-      description="Historia zdobywania punktów honoru z walk"
+      title={t("battlePanel.statistics.phGrowth.title")}
+      description={t("battlePanel.statistics.phGrowth.description")}
       isLoading={isLoading}
       isEmpty={data.length === 0}
-      emptyMessage="Brak danych o walkach z PH"
+      emptyMessage={t("battlePanel.statistics.phGrowth.empty")}
     >
-      <div>
-        <div className="bg-muted/30 rounded-lg">
-          <div className="p-4">
-            <ChartContainer config={chartConfig} className="h-72 w-full">
-              <LineChart
-                accessibilityLayer
-                data={chartData}
-                margin={{
-                  left: -24,
-                  top: 20,
-                  right: 12,
-                  bottom: 20,
-                }}
+      <div className="min-w-0">
+        <div className="min-w-0 rounded-lg bg-muted/30">
+          <div className="min-w-0 p-4">
+            <BattlePanelChartFrame className="h-72 w-full">
+              <ChartContainer
+                config={chartConfig}
+                className="h-full min-w-0 w-full"
               >
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={24}
-                />
-                <YAxis tickLine={false} axisLine={false} tickMargin={4} />
-                <ChartTooltip
-                  cursor={false}
-                  content=<ChartTooltipContent
-                    indicator="line"
-                    labelFormatter={(value) => `Data: ${value}`}
-                    formatter={(value, _name, props) => {
-                      const ph = props.payload?.ph ?? 0;
-                      return [`Łącznie: ${value} PH (+${ph} PH)`, ""];
-                    }}
+                <LineChart
+                  accessibilityLayer
+                  data={chartData}
+                  margin={{
+                    left: -24,
+                    top: 20,
+                    right: 12,
+                    bottom: 20,
+                  }}
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={24}
                   />
-                />
-                <Line
-                  dataKey="cumulativePh"
-                  type="monotone"
-                  stroke="var(--color-cumulativePh)"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ChartContainer>
+                  <YAxis tickLine={false} axisLine={false} tickMargin={4} />
+                  <ChartTooltip
+                    cursor={false}
+                    content=<ChartTooltipContent
+                      indicator="line"
+                      labelFormatter={(value) =>
+                        t("battlePanel.statistics.phGrowth.tooltipDate", {
+                          date: value,
+                        })
+                      }
+                      formatter={(value, _name, props) => {
+                        const ph = props.payload?.ph ?? 0;
+                        return [
+                          t("battlePanel.statistics.phGrowth.tooltipValue", {
+                            value,
+                            ph,
+                          }),
+                          "",
+                        ];
+                      }}
+                    />
+                  />
+                  <Line
+                    dataKey="cumulativePh"
+                    type="monotone"
+                    stroke="var(--color-cumulativePh)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ChartContainer>
+            </BattlePanelChartFrame>
           </div>
         </div>
       </div>

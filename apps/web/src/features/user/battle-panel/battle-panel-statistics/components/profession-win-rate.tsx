@@ -7,6 +7,8 @@ import {
 } from "@lootlog/ui/components/chart";
 import { getProfessionName, getProfessionColor } from "@/lib/utils/professions";
 import { StatCard } from "./stat-card";
+import { useTranslation } from "react-i18next";
+import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
 
 interface ProfessionWinRate {
   prof: string;
@@ -21,17 +23,17 @@ interface ProfessionWinRateChartProps {
   isLoading?: boolean;
 }
 
-const chartConfig = {
-  winRate: {
-    label: "Współczynnik wygranych %",
-    color: "var(--chart-1)",
-  },
-} satisfies ChartConfig;
-
 export function ProfessionWinRateChart({
   data,
   isLoading,
 }: ProfessionWinRateChartProps) {
+  const { t } = useTranslation();
+  const chartConfig = {
+    winRate: {
+      label: t("battlePanel.statistics.professionWinRate.chartLabel"),
+      color: "var(--chart-1)",
+    },
+  } satisfies ChartConfig;
   const chartData = data.map((item) => ({
     ...item,
     professionName: getProfessionName(item.prof),
@@ -39,61 +41,72 @@ export function ProfessionWinRateChart({
 
   return (
     <StatCard
-      title="Współczynnik wygranych vs profesja"
-      description="Twój procent wygranych przeciwko każdej profesji w walkach 1v1"
+      title={t("battlePanel.statistics.professionWinRate.title")}
+      description={t("battlePanel.statistics.professionWinRate.description")}
       isLoading={isLoading}
       isEmpty={data.length === 0}
-      emptyMessage="Brak danych o walkach"
+      emptyMessage={t("battlePanel.statistics.professionWinRate.empty")}
     >
-      <div>
-        <div className="bg-muted/30 rounded-lg p-4">
-          <ChartContainer config={chartConfig} className="h-[300px] w-full">
-            <BarChart
-              accessibilityLayer
-              data={chartData}
-              margin={{
-                left: -24,
-                top: 20,
-                right: 12,
-                bottom: 20,
-              }}
-              barCategoryGap="40%"
+      <div className="min-w-0">
+        <div className="min-w-0 rounded-lg bg-muted/30 p-4">
+          <BattlePanelChartFrame className="h-[300px] w-full">
+            <ChartContainer
+              config={chartConfig}
+              className="h-full min-w-0 w-full"
             >
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="professionName"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                domain={[0, 100]}
-              />
-              <ChartTooltip
-                cursor={false}
-                content=<ChartTooltipContent
-                  indicator="line"
-                  labelFormatter={(value, payload) => {
-                    const item = payload[0]
-                      ?.payload as unknown as ProfessionWinRate;
-                    return `${value} (${item?.totalBattles || 0} walk)`;
-                  }}
-                  formatter={(value) => [`${value}%`]}
+              <BarChart
+                accessibilityLayer
+                data={chartData}
+                margin={{
+                  left: -24,
+                  top: 20,
+                  right: 12,
+                  bottom: 20,
+                }}
+                barCategoryGap="40%"
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="professionName"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
                 />
-              />
-              <Bar dataKey="winRate" radius={[4, 4, 0, 0]} maxBarSize={60}>
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={getProfessionColor(entry.prof)}
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  domain={[0, 100]}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content=<ChartTooltipContent
+                    indicator="line"
+                    labelFormatter={(value, payload) => {
+                      const item = payload[0]
+                        ?.payload as unknown as ProfessionWinRate;
+                      return t(
+                        "battlePanel.statistics.professionWinRate.tooltipBattles",
+                        {
+                          profession: value,
+                          count: item?.totalBattles ?? 0,
+                        },
+                      );
+                    }}
+                    formatter={(value) => [`${value}%`]}
                   />
-                ))}
-              </Bar>
-            </BarChart>
-          </ChartContainer>
+                />
+                <Bar dataKey="winRate" radius={[4, 4, 0, 0]} maxBarSize={60}>
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={getProfessionColor(entry.prof)}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          </BattlePanelChartFrame>
         </div>
       </div>
     </StatCard>

@@ -3,13 +3,6 @@ import type { Period } from "@/store/battle-filters.store";
 import { useBattlesControllerGetPlayerVsPlayerBattles } from "@/lib/api/generated/battlelog/battles/battles";
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@lootlog/ui/components/pagination";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
@@ -20,7 +13,7 @@ import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
 import { AnimatePresence, motion } from "framer-motion";
-import { Filter, ArrowRight } from "lucide-react";
+import { AlertCircle, ArrowRight, Filter, SearchX, Swords } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
 import { PeriodSelector, LevelRangeFilter } from "@/components/filters";
@@ -39,6 +32,10 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { useTranslation } from "react-i18next";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { getRouteErrorMessage } from "@/lib/router/route-errors";
+import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
+import type { KeyboardEvent } from "react";
 
 const PVP_FILTERS_OPEN_KEY = "pvp-filters-open";
 
@@ -89,16 +86,17 @@ export function PlayerVsPlayerFullPage() {
     });
   };
 
-  const { data, isLoading } = useBattlesControllerGetPlayerVsPlayerBattles({
-    cursor,
-    size: 20,
-    characterId: currentCharacterId ?? params.myId,
-    period,
-    opponentId: opponentId ?? "",
-    minLevel,
-    maxLevel,
-    includeTotal: true,
-  });
+  const { data, isLoading, isError, error } =
+    useBattlesControllerGetPlayerVsPlayerBattles({
+      cursor,
+      size: 20,
+      characterId: currentCharacterId ?? params.myId,
+      period,
+      opponentId: opponentId ?? "",
+      minLevel,
+      maxLevel,
+      includeTotal: true,
+    });
 
   const handleNextPage = () => {
     if (data?.pagination.nextCursor) {
@@ -113,10 +111,22 @@ export function PlayerVsPlayerFullPage() {
   };
 
   const handleBattleClick = (battleId: string) => {
-    navigate({
+    void navigate({
       to: "/@me/battle-panel/battles/$battleId",
       params: { battleId },
     });
+  };
+
+  const handleBattleRowKeyDown = (
+    event: KeyboardEvent<HTMLTableRowElement>,
+    battleId: string,
+  ) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    handleBattleClick(battleId);
   };
 
   const opponentName =
@@ -187,7 +197,7 @@ export function PlayerVsPlayerFullPage() {
         <div className="px-3 pt-3 pb-0">
           <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              {myCharacter && (
+              {myCharacter ? (
                 <PlayerTile
                   player={{
                     name: myCharacter.name,
@@ -196,6 +206,10 @@ export function PlayerVsPlayerFullPage() {
                     icon: myCharacter.icon,
                   }}
                 />
+              ) : (
+                <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                  <Swords className="size-4 text-primary" />
+                </div>
               )}
               <div className="min-w-0 flex-1">
                 <h2 className="text-base font-semibold leading-tight">
@@ -233,12 +247,25 @@ export function PlayerVsPlayerFullPage() {
               <ScrollArea className="flex-1 min-h-0">
                 {isLoading ? (
                   <TableRowsSkeleton />
+                ) : isError ? (
+                  <BattlePanelEmptyState
+                    icon={AlertCircle}
+                    title={t("battlePanel.statistics.empty.errorTitle")}
+                    description={
+                      getRouteErrorMessage(error) ??
+                      t("common.routeErrors.status.500.description")
+                    }
+                  />
                 ) : !data || data.battles.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-3 p-16">
-                    <p className="text-muted-foreground">
-                      Brak danych do wyświetlenia
-                    </p>
-                  </div>
+                  <BattlePanelEmptyState
+                    icon={SearchX}
+                    title={t(
+                      "battlePanel.statistics.playerVsPlayer.emptyTitle",
+                    )}
+                    description={t(
+                      "battlePanel.statistics.playerVsPlayer.emptyDescription",
+                    )}
+                  />
                 ) : (
                   <Table className="border-b">
                     <TanStackTableHeader
@@ -252,49 +279,28 @@ export function PlayerVsPlayerFullPage() {
                       cellClassName="whitespace-nowrap"
                       getRowProps={(row) => ({
                         className:
-                          "bg-background/30 cursor-pointer hover:bg-muted/50 border-b border-border",
+                          "bg-background/30 cursor-pointer hover:bg-muted/50 border-b border-border focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         onClick: () => handleBattleClick(row.original.battleId),
+                        onKeyDown: (event) =>
+                          handleBattleRowKeyDown(event, row.original.battleId),
+                        role: "link",
+                        tabIndex: 0,
                       })}
                     />
                   </Table>
                 )}
                 <ScrollBar orientation="horizontal" />
               </ScrollArea>
+              <TablePaginationFooter
+                totalLabel={t("battlePanel.statistics.total", {
+                  count: data?.pagination?.total ?? 0,
+                })}
+                hasPrev={Boolean(data?.pagination?.hasPrev)}
+                hasNext={Boolean(data?.pagination?.hasNext)}
+                onPreviousPage={handlePreviousPage}
+                onNextPage={handleNextPage}
+              />
             </Card>
-
-            <div className="sticky bottom-0 pt-3">
-              <Card className="flex items-center justify-center px-4 py-3 bg-card/60 backdrop-blur-sm border-border relative">
-                <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
-                  {data?.pagination?.total && (
-                    <span>Łącznie: {data.pagination.total}</span>
-                  )}
-                </div>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={handlePreviousPage}
-                        className={
-                          !data?.pagination?.hasPrev
-                            ? "pointer-events-none opacity-50"
-                            : "cursor-pointer"
-                        }
-                      />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={handleNextPage}
-                        className={
-                          !data?.pagination?.hasNext
-                            ? "pointer-events-none opacity-50"
-                            : "cursor-pointer"
-                        }
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </Card>
-            </div>
           </div>
 
           {!isMobile && (

@@ -1,6 +1,7 @@
 import { Flame, Snowflake, TrendingUp, TrendingDown } from "lucide-react";
 import type { Streak } from "@/lib/api/battlelog-types";
 import { StatCard } from "./stat-card";
+import { useTranslation } from "react-i18next";
 
 interface CurrentStreakCardProps {
   data: Streak;
@@ -8,13 +9,14 @@ interface CurrentStreakCardProps {
 }
 
 export function CurrentStreakCard({ data, isLoading }: CurrentStreakCardProps) {
+  const { t } = useTranslation();
   const isWinStreak = data.current.type === "wins";
   const hasStreak = data.current.type !== "none" && data.current.count > 0;
 
   return (
     <StatCard
-      title="Aktualna passa"
-      description="Twoja bieżąca seria wygranych lub przegranych"
+      title={t("battlePanel.statistics.currentStreak.title")}
+      description={t("battlePanel.statistics.currentStreak.description")}
       isLoading={isLoading}
       isEmpty={false}
     >
@@ -27,7 +29,7 @@ export function CurrentStreakCard({ data, isLoading }: CurrentStreakCardProps) {
                   <span className="text-4xl text-muted-foreground">-</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Brak aktywnej passy
+                  {t("battlePanel.statistics.currentStreak.empty")}
                 </p>
               </>
             ) : (
@@ -47,7 +49,9 @@ export function CurrentStreakCard({ data, isLoading }: CurrentStreakCardProps) {
                   </span>
                 </div>
                 <p className="text-lg font-medium">
-                  {isWinStreak ? "Passa wygranych" : "Passa przegranych"}
+                  {isWinStreak
+                    ? t("battlePanel.statistics.currentStreak.winStreak")
+                    : t("battlePanel.statistics.currentStreak.lossStreak")}
                 </p>
               </>
             )}
@@ -63,7 +67,7 @@ export function CurrentStreakCard({ data, isLoading }: CurrentStreakCardProps) {
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Najdłuższa passa wygranych
+              {t("battlePanel.statistics.currentStreak.longestWins")}
             </p>
           </div>
           <div className="text-center flex flex-col justify-center">
@@ -74,7 +78,7 @@ export function CurrentStreakCard({ data, isLoading }: CurrentStreakCardProps) {
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Najdłuższa passa przegranych
+              {t("battlePanel.statistics.currentStreak.longestLosses")}
             </p>
           </div>
         </div>

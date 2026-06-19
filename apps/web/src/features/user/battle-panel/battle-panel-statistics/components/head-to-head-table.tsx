@@ -1,10 +1,10 @@
-import { useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
   type ColumnDef,
 } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
+import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { formatDistanceToNow } from "date-fns";
@@ -16,8 +16,9 @@ import { Button } from "@lootlog/ui/components/button";
 import { ArrowRight } from "lucide-react";
 import { ROUTES } from "@/config/routes";
 import { useTranslation } from "react-i18next";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import type { Period } from "@/store/battle-filters.store";
+import type { KeyboardEvent } from "react";
 
 type HeadToHeadTableSearch = {
   characterId?: string;
@@ -53,113 +54,131 @@ export function HeadToHeadTable({
   isLoading,
 }: HeadToHeadTableProps) {
   const { t } = useTranslation();
-  const columns: ColumnDef<HeadToHeadRecord>[] = useMemo(
-    () => [
-      {
-        id: "avatar",
-        header: "",
-        cell: ({ row }) => (
-          <PlayerTile
-            player={{
-              name: row.original.opponentName,
-              lvl: row.original.opponentLvl,
-              prof: row.original.opponentProf,
-              icon: row.original.opponentIcon,
-            }}
-            className="scale-75"
-          />
-        ),
-      },
-      {
-        accessorKey: "opponentName",
-        header: t("battlePanel.statistics.columns.name"),
-        cell: ({ row }) => (
-          <span className="font-medium">{row.original.opponentName}</span>
-        ),
-      },
-      {
-        accessorKey: "opponentLvl",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.level")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">{row.original.opponentLvl}</div>
-        ),
-      },
-      {
-        accessorKey: "opponentProf",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.profession")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">
-            {getProfessionName(row.original.opponentProf)}
-          </div>
-        ),
-      },
-      {
-        id: "record",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.winLoss")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">
-            <span className="text-green-600 font-medium">
-              {row.original.wins}
-            </span>
-            &nbsp;-&nbsp;
-            <span className="text-red-600 font-medium">
-              {row.original.losses}
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "winRate",
-        header: () => (
-          <div className="text-center">
-            {t("battlePanel.statistics.columns.winRate")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center">
-            <span
-              className={
-                row.original.winRate >= 50
-                  ? "text-green-600 font-medium"
-                  : "text-red-600 font-medium"
-              }
-            >
-              {row.original.winRate.toFixed(1)}%
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "lastBattleDate",
-        header: () => (
-          <div className="text-right">
-            {t("battlePanel.statistics.columns.lastBattle")}
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="text-right text-sm text-muted-foreground">
-            {formatDistanceToNow(new Date(row.original.lastBattleDate), {
-              addSuffix: true,
-              locale: pl,
-            })}
-          </div>
-        ),
-      },
-    ],
-    [t],
-  );
+  const navigate = useNavigate();
+  const handleNavigateToHeadToHead = () => {
+    void navigate({
+      to: ROUTES.user.battlePanel.h2h,
+      search,
+    });
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    handleNavigateToHeadToHead();
+  };
+
+  const columns: ColumnDef<HeadToHeadRecord>[] = [
+    {
+      id: "avatar",
+      header: "",
+      cell: ({ row }) => (
+        <PlayerTile
+          player={{
+            name: row.original.opponentName,
+            lvl: row.original.opponentLvl,
+            prof: row.original.opponentProf,
+            icon: row.original.opponentIcon,
+          }}
+          className="scale-75"
+        />
+      ),
+    },
+    {
+      accessorKey: "opponentName",
+      header: t("battlePanel.statistics.columns.name"),
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.opponentName}</span>
+      ),
+    },
+    {
+      accessorKey: "opponentLvl",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.level")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">{row.original.opponentLvl}</div>
+      ),
+    },
+    {
+      accessorKey: "opponentProf",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.profession")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">
+          {getProfessionName(row.original.opponentProf)}
+        </div>
+      ),
+    },
+    {
+      id: "record",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.winLoss")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">
+          <span className="text-green-600 font-medium">
+            {row.original.wins}
+          </span>
+          &nbsp;-&nbsp;
+          <span className="text-red-600 font-medium">
+            {row.original.losses}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "winRate",
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.statistics.columns.winRate")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">
+          <span
+            className={
+              row.original.winRate >= 50
+                ? "text-green-600 font-medium"
+                : "text-red-600 font-medium"
+            }
+          >
+            {row.original.winRate.toFixed(1)}%
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "lastBattleDate",
+      header: () => (
+        <div className="text-right">
+          {t("battlePanel.statistics.columns.lastBattle")}
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-right text-sm text-muted-foreground">
+          {formatDistanceToNow(new Date(row.original.lastBattleDate), {
+            addSuffix: true,
+            locale: pl,
+          })}
+        </div>
+      ),
+    },
+  ];
 
   const table = useReactTable({
     data,
@@ -173,19 +192,29 @@ export function HeadToHeadTable({
       description={t("battlePanel.statistics.directMatchups.description")}
       isLoading={isLoading}
       isEmpty={data.length === 0}
-      emptyMessage={t("battlePanel.statistics.battleDuration.empty")}
-      className="flex flex-col"
+      emptyMessage={t("battlePanel.statistics.directMatchups.emptyTitle")}
+      className="flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={handleNavigateToHeadToHead}
+      onKeyDown={handleCardKeyDown}
+      role="link"
+      tabIndex={0}
+      ariaLabel={t("battlePanel.statistics.directMatchups.link")}
     >
-      <div className="min-h-72 flex flex-col flex-1">
-        <div className="overflow-auto bg-muted/30 rounded-lg">
+      <div className="flex min-h-72 min-w-0 flex-1 flex-col">
+        <ScrollArea className="min-w-0 rounded-lg bg-muted/30">
           <Table>
             <TanStackTableHeader table={table} />
             <TanStackTableBody table={table} />
           </Table>
-        </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
         <div className="flex justify-end pt-4 mt-auto">
           <Button asChild variant="outline" size="sm">
-            <Link to={ROUTES.user.battlePanel.h2h} search={search}>
+            <Link
+              to={ROUTES.user.battlePanel.h2h}
+              search={search}
+              onClick={(event) => event.stopPropagation()}
+            >
               {t("battlePanel.statistics.directMatchups.link")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
