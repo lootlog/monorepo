@@ -77,6 +77,7 @@ type GuildPermissionMember = {
 };
 
 const USER_GUILD_PERMISSIONS_CACHE_TTL_SECONDS = 60;
+const CURRENT_USER_ACCESSIBLE_GUILDS_CACHE_TTL_SECONDS = 30;
 const DEFAULT_RESERVATION_SETTINGS = {
   reservationMaxDurationMinutes: 180,
   reservationMinDurationMinutes: 30,
@@ -250,6 +251,40 @@ export class GuildsService {
     userId: string,
     options: GuildPermissionOptions = {},
   ): Promise<CurrentUserGuildAccessSummary[]> {
+    const cacheKey = this.getCurrentUserAccessibleGuildsCacheKey(
+      discordId,
+      userId,
+    );
+
+    if (!options.devPermissionOverride) {
+      const cached =
+        await this.redisService.getJson<CurrentUserGuildAccessSummary[]>(
+          cacheKey,
+        );
+
+      if (cached !== null) {
+        this.logger.debug({
+          message: "Cache hit for current user accessible guilds",
+          cacheKey,
+          discordId,
+          userId,
+        });
+        this.queueStaleAccessibleGuildSummaryRefreshes({
+          discordId,
+          userId,
+          guilds: cached,
+        });
+        return cached;
+      }
+
+      this.logger.debug({
+        message: "Cache miss for current user accessible guilds",
+        cacheKey,
+        discordId,
+        userId,
+      });
+    }
+
     const requiredPermissions = [Permission.LOOTLOG_ACCESS];
     const guilds = await this.getGuildsForRequiredPermissions(
       discordId,
@@ -272,7 +307,7 @@ export class GuildsService {
       members,
     });
 
-    return this.sortGuildEntriesByUserPreferences(
+    const result = await this.sortGuildEntriesByUserPreferences(
       userId,
       this.buildCurrentUserGuildAccessSummaries({
         discordId,
@@ -282,6 +317,16 @@ export class GuildsService {
         devPermissionOverride: options.devPermissionOverride,
       }).filter((guild) => guild.hasLootlogAccess),
     );
+
+    if (!options.devPermissionOverride) {
+      await this.redisService.setJson(
+        cacheKey,
+        result,
+        CURRENT_USER_ACCESSIBLE_GUILDS_CACHE_TTL_SECONDS,
+      );
+    }
+
+    return result;
   }
 
   async getManageableUserGuilds(discordId: string, userId: string) {
@@ -609,15 +654,25 @@ export class GuildsService {
       : null;
 
     if (cacheKey && !devPermissionOverride) {
-      const cached = await this.redisService.get(cacheKey);
+      const cached =
+        await this.redisService.getJson<UserGuildPermissionsDto[]>(cacheKey);
 
-      if (cached) {
-        try {
-          return JSON.parse(cached) as UserGuildPermissionsDto[];
-        } catch {
-          await this.redisService.del(cacheKey);
-        }
+      if (cached !== null) {
+        this.logger.debug({
+          message: "Cache hit for user guild permissions",
+          cacheKey,
+          discordId,
+          userId,
+        });
+        return cached;
       }
+
+      this.logger.debug({
+        message: "Cache miss for user guild permissions",
+        cacheKey,
+        discordId,
+        userId,
+      });
     }
 
     const guildCandidates = this.toGuildRefreshCandidates(
@@ -647,9 +702,9 @@ export class GuildsService {
     );
 
     if (cacheKey && !devPermissionOverride) {
-      await this.redisService.set(
+      await this.redisService.setJson(
         cacheKey,
-        JSON.stringify(result),
+        result,
         USER_GUILD_PERMISSIONS_CACHE_TTL_SECONDS,
       );
     }
@@ -1018,6 +1073,13 @@ export class GuildsService {
     );
   }
 
+  private getCurrentUserAccessibleGuildsCacheKey(
+    discordId: string,
+    userId: string,
+  ): string {
+    return `user:${userId}:discord:${discordId}:accessible-guilds`;
+  }
+
   private devOverrideHasRequiredPermissions(
     override: ApiDevPermissionOverride,
     guildId: string,
@@ -1031,6 +1093,41 @@ export class GuildsService {
     return requiredPermissions.some((permission) =>
       permissionSet.has(permission),
     );
+  }
+
+  private queueStaleAccessibleGuildSummaryRefreshes(options: {
+    discordId: string;
+    userId: string;
+    guilds: CurrentUserGuildAccessSummary[];
+  }): void {
+    const { discordId, userId, guilds } = options;
+    const staleGuildIds = guilds
+      .filter((guild) => guild.ownerId !== discordId)
+      .filter((guild) => guild.isAccessDataStale)
+      .map((guild) => guild.id);
+
+    if (staleGuildIds.length === 0) {
+      return;
+    }
+
+    void Promise.all(
+      staleGuildIds.map((guildId) =>
+        this.membersService.queueMemberRefresh({
+          discordId,
+          guildId,
+          userId,
+          priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+          reason: "guild-access-cache-background",
+        }),
+      ),
+    ).catch((error) => {
+      this.logger.warn({
+        message: "Failed to queue cached stale accessible guild refreshes",
+        discordId,
+        userId,
+        error,
+      });
+    });
   }
 
   private queueStaleAccessibleGuildRefreshes(options: {

@@ -97,7 +97,10 @@ describe("MembersService", () => {
   };
   let redisService: {
     get: Mock;
+    getJson: Mock;
+    getOrSetJson: Mock;
     set: Mock;
+    setJson: Mock;
     del: Mock;
     deleteByPattern: Mock;
   };
@@ -215,10 +218,17 @@ describe("MembersService", () => {
 
     const mockRedisService = {
       get: mockFn(),
+      getJson: mockFn(),
+      getOrSetJson: mockFn(),
       set: mockFn(),
+      setJson: mockFn(),
       del: mockFn(),
       deleteByPattern: mockFn(),
     };
+    mockRedisService.getJson.mockResolvedValue(null);
+    mockRedisService.getOrSetJson.mockImplementation(
+      ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+    );
 
     const mockDiagnostics = {
       recordInvalidDiscordRequest: mockFn().mockResolvedValue(undefined),
@@ -959,6 +969,26 @@ describe("MembersService", () => {
   });
 
   describe("getGuildMembersSummary", () => {
+    it("should return cached lightweight members without querying Prisma", async () => {
+      const cachedMembers = [
+        {
+          id: 123,
+          userId: "discord-123",
+          name: "Alpha",
+          avatar: "avatar.png",
+          color: 123456,
+        },
+      ];
+      redisService.getJson.mockResolvedValueOnce(cachedMembers);
+
+      const result = await service.getGuildMembersSummary("guild-123");
+
+      expect(result).toEqual(cachedMembers);
+      expect(prismaService.guild.findFirst).not.toHaveBeenCalled();
+      expect(prismaService.member.findMany).not.toHaveBeenCalled();
+      expect(redisService.getOrSetJson).not.toHaveBeenCalled();
+    });
+
     it("should return lightweight active members for a guild", async () => {
       prismaService.guild.findFirst.mockResolvedValue({
         ownerId: "owner-123",
@@ -1041,6 +1071,13 @@ describe("MembersService", () => {
           name: "asc",
         },
       });
+      expect(redisService.getOrSetJson).toHaveBeenCalledWith(
+        expect.objectContaining({
+          key: "member-read:guild-123:summary",
+          ttlSeconds: 30,
+          factory: expect.any(Function),
+        }),
+      );
     });
 
     it("should return empty array when guild does not exist", async () => {

@@ -925,13 +925,8 @@ export class BattleAnalyticsService {
         `statistics:*:${userId}:*`,
       ];
 
-      const redis = this.redisService.getClient();
-
       for (const pattern of patterns) {
-        const keys = await redis.keys(pattern);
-        if (keys.length > 0) {
-          await redis.del(...keys);
-        }
+        await this.redisService.deleteByPattern(pattern);
       }
     } catch (error) {
       this.logger.warn(

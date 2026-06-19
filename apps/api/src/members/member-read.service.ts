@@ -1,6 +1,12 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { PrismaService } from "src/db/prisma.service";
 import { Permission, type PlayerSnapshot } from "src/generated/prisma/client";
+import {
+  getGuildMemberReferencesCacheKey,
+  getGuildMembersSummaryCacheKey,
+  getMemberLootlogConfigSummaryCacheKey,
+} from "src/shared/constants/cache.constant";
 import type {
   MemberLootlogConfigCharacterSummary,
   MemberLootlogConfigSummary,
@@ -9,9 +15,17 @@ import type {
   MemberWithRoles,
 } from "./member.types";
 
+const MEMBER_READ_CACHE_TTL_SECONDS = 30;
+const MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS = 60;
+
 @Injectable()
 export class MemberReadService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(MemberReadService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   getGuildMembers(
     guildId: string,
@@ -32,197 +46,242 @@ export class MemberReadService {
     });
   }
 
-  async getGuildMemberReferences(
+  getGuildMemberReferences(
     guildId: string,
     includeInactive = false,
   ): Promise<MemberReference[]> {
-    const members = await this.prisma.member.findMany({
-      where: {
-        guildId,
-        ...(includeInactive ? {} : { active: true }),
-        globalUserId: { not: null },
-      },
-      select: {
-        id: true,
-        userId: true,
-        name: true,
-        avatar: true,
-        active: true,
-        roles: {
+    return this.getCachedMemberRead(
+      getGuildMemberReferencesCacheKey(guildId, includeInactive),
+      MEMBER_READ_CACHE_TTL_SECONDS,
+      "guild member references",
+      async () => {
+        const members = await this.prisma.member.findMany({
+          where: {
+            guildId,
+            ...(includeInactive ? {} : { active: true }),
+            globalUserId: { not: null },
+          },
           select: {
-            color: true,
-          },
-          orderBy: {
-            position: "desc",
-          },
-          take: 1,
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
-
-    return members.map(({ roles, ...member }) => ({
-      ...member,
-      color: roles[0]?.color ?? null,
-    }));
-  }
-
-  async getGuildMembersSummary(guildId: string): Promise<MemberSummary[]> {
-    const guild = await this.prisma.guild.findFirst({
-      where: {
-        id: guildId,
-        active: true,
-      },
-      select: {
-        ownerId: true,
-      },
-    });
-
-    if (!guild) {
-      return [];
-    }
-
-    const members = await this.prisma.member.findMany({
-      where: {
-        guildId,
-        active: true,
-        globalUserId: { not: null },
-        OR: [
-          {
-            userId: guild.ownerId,
-          },
-          {
+            id: true,
+            userId: true,
+            name: true,
+            avatar: true,
+            active: true,
             roles: {
-              some: {
-                permissions: {
-                  hasSome: [
-                    Permission.OWNER,
-                    Permission.ADMIN,
-                    Permission.LOOTLOG_ACCESS,
-                  ],
-                },
+              select: {
+                color: true,
               },
+              orderBy: {
+                position: "desc",
+              },
+              take: 1,
             },
           },
-        ],
-      },
-      select: {
-        id: true,
-        userId: true,
-        name: true,
-        avatar: true,
-        roles: {
-          select: {
-            color: true,
-          },
           orderBy: {
-            position: "desc",
+            name: "asc",
           },
-          take: 1,
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
+        });
 
-    return members.map(({ roles, ...member }) => ({
-      ...member,
-      color: roles[0]?.color ?? null,
-    }));
+        return members.map(({ roles, ...member }) => ({
+          ...member,
+          color: roles[0]?.color ?? null,
+        }));
+      },
+    );
   }
 
-  async getMemberLootlogConfigSummary(options: {
+  getGuildMembersSummary(guildId: string): Promise<MemberSummary[]> {
+    return this.getCachedMemberRead(
+      getGuildMembersSummaryCacheKey(guildId),
+      MEMBER_READ_CACHE_TTL_SECONDS,
+      "guild members summary",
+      async () => {
+        const guild = await this.prisma.guild.findFirst({
+          where: {
+            id: guildId,
+            active: true,
+          },
+          select: {
+            ownerId: true,
+          },
+        });
+
+        if (!guild) {
+          return [];
+        }
+
+        const members = await this.prisma.member.findMany({
+          where: {
+            guildId,
+            active: true,
+            globalUserId: { not: null },
+            OR: [
+              {
+                userId: guild.ownerId,
+              },
+              {
+                roles: {
+                  some: {
+                    permissions: {
+                      hasSome: [
+                        Permission.OWNER,
+                        Permission.ADMIN,
+                        Permission.LOOTLOG_ACCESS,
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+          select: {
+            id: true,
+            userId: true,
+            name: true,
+            avatar: true,
+            roles: {
+              select: {
+                color: true,
+              },
+              orderBy: {
+                position: "desc",
+              },
+              take: 1,
+            },
+          },
+          orderBy: {
+            name: "asc",
+          },
+        });
+
+        return members.map(({ roles, ...member }) => ({
+          ...member,
+          color: roles[0]?.color ?? null,
+        }));
+      },
+    );
+  }
+
+  private async getCachedMemberRead<T>(
+    cacheKey: string,
+    ttlSeconds: number,
+    cacheName: string,
+    factory: () => Promise<T>,
+  ): Promise<T> {
+    const cached = await this.redisService.getJson<T>(cacheKey);
+
+    if (cached !== null) {
+      this.logger.debug(`Cache hit for ${cacheName}: ${cacheKey}`);
+      return cached;
+    }
+
+    this.logger.debug(`Cache miss for ${cacheName}: ${cacheKey}`);
+
+    return this.redisService.getOrSetJson({
+      key: cacheKey,
+      ttlSeconds,
+      factory,
+    });
+  }
+
+  getMemberLootlogConfigSummary(options: {
     discordId: string;
     guildId: string;
   }): Promise<MemberLootlogConfigSummary> {
     const { discordId, guildId } = options;
-    const member = await this.prisma.member.findUnique({
-      where: {
-        memberId: { userId: discordId, guildId },
-      },
-      select: {
-        userId: true,
-        active: true,
-      },
-    });
 
-    if (!member) {
-      throw new NotFoundException("Member not found");
-    }
+    return this.getCachedMemberRead(
+      getMemberLootlogConfigSummaryCacheKey(guildId, discordId),
+      MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS,
+      "member lootlog config summary",
+      async () => {
+        const member = await this.prisma.member.findUnique({
+          where: {
+            memberId: { userId: discordId, guildId },
+          },
+          select: {
+            userId: true,
+            active: true,
+          },
+        });
 
-    const configs = await this.prisma.userCharactersLootlogSettings.findMany({
-      where: {
-        userId: discordId,
-      },
-      orderBy: [{ accountId: "asc" }, { characterId: "asc" }],
-    });
+        if (!member) {
+          throw new NotFoundException("Member not found");
+        }
 
-    const validCharacterRefs = this.getValidLootlogCharacterRefs(configs);
-    const latestSnapshotsByCharacterKey =
-      await this.getLatestPlayerSnapshots(validCharacterRefs);
+        const configs =
+          await this.prisma.userCharactersLootlogSettings.findMany({
+            where: {
+              userId: discordId,
+            },
+            orderBy: [{ accountId: "asc" }, { characterId: "asc" }],
+          });
 
-    const characters = configs.map((config) => {
-      const enabledForGuild = config.catchingGuildIds.includes(guildId);
-      const parsedRef = this.parseLootlogCharacterRef(
-        config.accountId,
-        config.characterId,
-      );
+        const validCharacterRefs = this.getValidLootlogCharacterRefs(configs);
+        const latestSnapshotsByCharacterKey =
+          await this.getLatestPlayerSnapshots(validCharacterRefs);
 
-      if (!parsedRef) {
+        const characters = configs.map((config) => {
+          const enabledForGuild = config.catchingGuildIds.includes(guildId);
+          const parsedRef = this.parseLootlogCharacterRef(
+            config.accountId,
+            config.characterId,
+          );
+
+          if (!parsedRef) {
+            return {
+              accountId: config.accountId,
+              characterId: config.characterId,
+              enabledForGuild,
+              characterName: null,
+              world: null,
+              icon: null,
+              metadataStatus: "invalid_character_ref",
+            } satisfies MemberLootlogConfigCharacterSummary;
+          }
+
+          const snapshot = latestSnapshotsByCharacterKey.get(
+            this.createPlayerSnapshotKey(
+              parsedRef.accountId,
+              parsedRef.characterId,
+            ),
+          );
+
+          if (!snapshot) {
+            return {
+              accountId: config.accountId,
+              characterId: config.characterId,
+              enabledForGuild,
+              characterName: null,
+              world: null,
+              icon: null,
+              metadataStatus: "missing_snapshot",
+            } satisfies MemberLootlogConfigCharacterSummary;
+          }
+
+          return {
+            accountId: config.accountId,
+            characterId: config.characterId,
+            enabledForGuild,
+            characterName: snapshot.name,
+            world: snapshot.world,
+            icon: snapshot.icon,
+            metadataStatus: "resolved",
+          } satisfies MemberLootlogConfigCharacterSummary;
+        });
+
         return {
-          accountId: config.accountId,
-          characterId: config.characterId,
-          enabledForGuild,
-          characterName: null,
-          world: null,
-          icon: null,
-          metadataStatus: "invalid_character_ref",
-        } satisfies MemberLootlogConfigCharacterSummary;
-      }
-
-      const snapshot = latestSnapshotsByCharacterKey.get(
-        this.createPlayerSnapshotKey(
-          parsedRef.accountId,
-          parsedRef.characterId,
-        ),
-      );
-
-      if (!snapshot) {
-        return {
-          accountId: config.accountId,
-          characterId: config.characterId,
-          enabledForGuild,
-          characterName: null,
-          world: null,
-          icon: null,
-          metadataStatus: "missing_snapshot",
-        } satisfies MemberLootlogConfigCharacterSummary;
-      }
-
-      return {
-        accountId: config.accountId,
-        characterId: config.characterId,
-        enabledForGuild,
-        characterName: snapshot.name,
-        world: snapshot.world,
-        icon: snapshot.icon,
-        metadataStatus: "resolved",
-      } satisfies MemberLootlogConfigCharacterSummary;
-    });
-
-    return {
-      memberUserId: member.userId,
-      guildId,
-      isActive: member.active,
-      configuredCharacterCount: characters.length,
-      enabledCharacterCount: characters.filter(
-        (character) => character.enabledForGuild,
-      ).length,
-      characters,
-    };
+          memberUserId: member.userId,
+          guildId,
+          isActive: member.active,
+          configuredCharacterCount: characters.length,
+          enabledCharacterCount: characters.filter(
+            (character) => character.enabledForGuild,
+          ).length,
+          characters,
+        };
+      },
+    );
   }
 
   private async getLatestPlayerSnapshots(
