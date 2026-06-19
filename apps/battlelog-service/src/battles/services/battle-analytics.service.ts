@@ -16,13 +16,23 @@ import type {
   PlayerVsPlayerPaginatedResponse,
   CombatProfileDto,
 } from "src/battles/dto/battle-statistics-response.dto";
-import { inflateBattleWarriorsInBattles } from "src/battles/battle-warrior-stats";
+import {
+  inflateBattleWarriorsInBattles,
+  type InflatedBattleWarrior,
+} from "src/battles/battle-warrior-stats";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import {
   battleWarriors,
+  type Battle,
+  type BattleWarrior,
   type battles,
 } from "src/shared/modules/drizzle/schema";
 import { RedisService } from "@lootlog/nest-shared/redis";
+
+type StoredBattleWithWarriors = Battle & { warriors: BattleWarrior[] };
+type InflatedBattleWithWarriors = Battle & {
+  warriors: InflatedBattleWarrior[];
+};
 
 @Injectable()
 export class BattleAnalyticsService {
@@ -47,7 +57,9 @@ export class BattleAnalyticsService {
     );
   }
 
-  private inflateBattleRows(fetchedBattles: any[]): any[] {
+  private inflateBattleRows(
+    fetchedBattles: StoredBattleWithWarriors[],
+  ): InflatedBattleWithWarriors[] {
     return inflateBattleWarriorsInBattles(fetchedBattles);
   }
 
@@ -1114,7 +1126,7 @@ export class BattleAnalyticsService {
   }
 
   private calculateCombatProfile(
-    fetchedBattles: any[],
+    fetchedBattles: InflatedBattleWithWarriors[],
     characterIds: string[],
   ): CombatProfileDto {
     const damageMix = new Map<string, number>();
@@ -1156,7 +1168,7 @@ export class BattleAnalyticsService {
     const ratingTrend: CombatProfileDto["ratingTrend"] = [];
 
     for (const battle of fetchedBattles) {
-      const userWarrior = battle.warriors.find((warrior: any) =>
+      const userWarrior = battle.warriors.find((warrior) =>
         characterIds.includes(warrior.originalId),
       );
       if (!userWarrior || battle.hasFlee) {
@@ -1230,7 +1242,7 @@ export class BattleAnalyticsService {
       }
 
       const opponents = battle.warriors.filter(
-        (warrior: any) => warrior.team !== userWarrior.team,
+        (warrior) => warrior.team !== userWarrior.team,
       );
       for (const opponent of opponents) {
         const stats = matchupByProfession.get(opponent.prof) ?? {
@@ -1808,7 +1820,7 @@ export class BattleAnalyticsService {
   }
 
   private isOpponentLevelInRange(
-    battle: any,
+    battle: InflatedBattleWithWarriors,
     characterIds: string[],
     minLevel?: number,
     maxLevel?: number,
@@ -1816,7 +1828,7 @@ export class BattleAnalyticsService {
     if (battle.type !== "1v1") return false;
 
     const opponentWarrior = battle.warriors.find(
-      (w: any) => !characterIds.includes(w.originalId),
+      (warrior) => !characterIds.includes(warrior.originalId),
     );
 
     if (!opponentWarrior) return false;
@@ -1831,16 +1843,16 @@ export class BattleAnalyticsService {
   }
 
   private isAnyOpponentLevelInRange(
-    battle: any,
+    battle: InflatedBattleWithWarriors,
     characterIds: string[],
     minLevel?: number,
     maxLevel?: number,
   ): boolean {
     const opponents = battle.warriors.filter(
-      (warrior: any) => !characterIds.includes(warrior.originalId),
+      (warrior) => !characterIds.includes(warrior.originalId),
     );
 
-    return opponents.some((opponent: any) => {
+    return opponents.some((opponent) => {
       if (minLevel !== undefined && opponent.lvl < minLevel) {
         return false;
       }
