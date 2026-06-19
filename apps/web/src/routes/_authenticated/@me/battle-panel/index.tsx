@@ -7,17 +7,20 @@ import {
 } from "@/lib/api/generated/battlelog/battles/battles";
 import { loadBattlePanelBattlesSearch } from "@/features/user/battle-panel/battle-panel-battles-list/battle-query-parsers";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
+import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
   loader: ({ abortController, context, location }) =>
     withRouteLoaderCancellation(abortController, async () => {
       const search = loadBattlePanelBattlesSearch(location.searchStr);
 
-      await Promise.all([
-        context.queryClient.ensureQueryData(
+      void Promise.all([
+        prefetchRouteQuery(
+          context.queryClient,
           getBattlesControllerGetUserCharactersQueryOptions(),
         ),
-        context.queryClient.ensureQueryData(
+        prefetchRouteQuery(
+          context.queryClient,
           getBattlesControllerGetDashboardBattlesQueryOptions({
             cursor: search.cursor ?? undefined,
             size: 20,
@@ -33,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
             maxLevel: search.maxLevel,
           }),
         ),
-      ]);
+      ]).catch(() => undefined);
 
       return null;
     }),

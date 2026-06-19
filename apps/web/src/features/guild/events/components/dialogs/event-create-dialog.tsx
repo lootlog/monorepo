@@ -23,6 +23,7 @@ import {
   getListEventsQueryKey,
   useCreateEvent,
 } from "@/lib/api/generated/main/events/events";
+import type { EventListItemResponseDto } from "@/lib/api/generated/main/model";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
@@ -152,6 +153,26 @@ export const EventCreateDialog = ({
       },
       {
         onSuccess: (eventData) => {
+          if (guildId) {
+            const listEventsQueryKey = getListEventsQueryKey(
+              { guildId },
+              { activeOnly: "false" },
+            );
+
+            queryClient.setQueryData<EventListItemResponseDto[]>(
+              listEventsQueryKey,
+              (currentEvents) =>
+                currentEvents
+                  ? [
+                      eventData,
+                      ...currentEvents.filter(
+                        (event) => event.id !== eventData.id,
+                      ),
+                    ]
+                  : [eventData],
+            );
+          }
+
           toast.success(t("events.createDialog.success"));
           handleClose(false);
           navigate({ to: `/${guildId}/events/${eventData.id}` });

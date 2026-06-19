@@ -6,22 +6,22 @@ import {
 } from "@/features/guild/reservations/reservations-api";
 import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@/lib/api/generated/main/members/members";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
+import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
-  loader: ({ abortController, context, params, preload }) =>
+  loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
-      if (preload) {
-        return null;
-      }
-
-      await Promise.all([
-        context.queryClient.ensureQueryData(
+      void Promise.all([
+        prefetchRouteQuery(
+          context.queryClient,
           reservationsQueryOptions(params.guildId),
         ),
-        context.queryClient.ensureQueryData(
+        prefetchRouteQuery(
+          context.queryClient,
           reservationsCardsQueryOptions(params.guildId),
         ),
-        context.queryClient.ensureQueryData(
+        prefetchRouteQuery(
+          context.queryClient,
           getMembersControllerGetGuildMemberReferencesQueryOptions(
             { guildId: params.guildId },
             {
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
             },
           ),
         ),
-      ]);
+      ]).catch(() => undefined);
 
       return null;
     }),

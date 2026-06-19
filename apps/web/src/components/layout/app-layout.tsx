@@ -1,7 +1,4 @@
-import { lazy, Suspense, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-
-let isFirstAppMount = true;
+import { lazy, Suspense, useRef } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { GuildShell } from "@/components/layout/guild-shell";
 import { GuildSidebarNavPlaceholder } from "@/components/layout/guild-sidebar-nav-placeholder";
@@ -33,12 +30,6 @@ const InstallAddonModal = lazy(() =>
 );
 
 export const AppLayout = () => {
-  const shouldAnimate = useRef(isFirstAppMount).current;
-
-  useEffect(() => {
-    isFirstAppMount = false;
-  }, []);
-
   const location = useLocation();
   const guildRouteMatch = useMatches({
     select: (matches) =>
@@ -69,12 +60,7 @@ export const AppLayout = () => {
   );
 
   return (
-    <motion.div
-      className="flex h-dvh w-full flex-col overflow-hidden"
-      initial={shouldAnimate ? { opacity: 0, scale: 0.96 } : false}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-    >
+    <div className="flex h-dvh w-full flex-col overflow-hidden">
       <Suspense fallback={null}>
         <ThemeAnnouncement />
       </Suspense>
@@ -101,6 +87,6 @@ export const AppLayout = () => {
         <CreateGuildModal />
         <InstallAddonModal />
       </Suspense>
-    </motion.div>
+    </div>
   );
 };
