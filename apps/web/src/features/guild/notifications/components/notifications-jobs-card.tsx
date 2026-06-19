@@ -17,7 +17,14 @@ import {
 } from "../utils/notification-settings.utils";
 import { NotificationJobCountdown } from "./notification-job-countdown";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { invalidateGuildNotificationQueries } from "../notifications-api";
+import {
+  cancelGuildNotificationQueries,
+  getGuildNotificationCacheSnapshot,
+  invalidateGuildNotificationQueries,
+  removeGuildNotificationJobFromCache,
+  restoreGuildNotificationCacheSnapshot,
+  type GuildNotificationCacheSnapshot,
+} from "../notifications-api";
 import { useNotificationsGuildControllerCancelGuildJob } from "@/lib/api/generated/main/notifications/notifications";
 import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model";
 
@@ -31,14 +38,47 @@ export const NotificationsPendingJobsCard = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
-  const cancelGuildJob = useNotificationsGuildControllerCancelGuildJob({
+  const cancelGuildJob = useNotificationsGuildControllerCancelGuildJob<
+    unknown,
+    GuildNotificationCacheSnapshot | undefined
+  >({
     mutation: {
+      onMutate: async (variables) => {
+        if (!guildId) {
+          return undefined;
+        }
+
+        await cancelGuildNotificationQueries(queryClient, guildId);
+        const previousNotifications = getGuildNotificationCacheSnapshot(
+          queryClient,
+          guildId,
+        );
+
+        removeGuildNotificationJobFromCache(
+          queryClient,
+          guildId,
+          variables.pathParams.jobId,
+        );
+
+        return previousNotifications;
+      },
       onSuccess: async () => {
         if (!guildId) {
           return;
         }
 
         await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+      onError: (_error, _variables, previousNotifications) => {
+        if (!guildId) {
+          return;
+        }
+
+        restoreGuildNotificationCacheSnapshot(
+          queryClient,
+          guildId,
+          previousNotifications,
+        );
       },
     },
   });

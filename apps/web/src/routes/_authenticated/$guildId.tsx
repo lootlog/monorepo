@@ -18,6 +18,7 @@ import {
   throwNotFoundIfResponseMatches,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
+import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$guildId")({
   component: GuildRouteProviders,
@@ -29,22 +30,23 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       try {
-        const guild = await context.queryClient.ensureQueryData(
-          getGuildsControllerGetGuildByIdQueryOptions(
-            { guildId: params.guildId },
-            {
-              query: {
-                queryKey: getGuildsControllerGetGuildByIdQueryKey({
-                  guildId: params.guildId,
-                }),
-                retry: true,
+        const [guild, guildMember, permissions] = await Promise.all([
+          ensureRouteQueryData(
+            context.queryClient,
+            getGuildsControllerGetGuildByIdQueryOptions(
+              { guildId: params.guildId },
+              {
+                query: {
+                  queryKey: getGuildsControllerGetGuildByIdQueryKey({
+                    guildId: params.guildId,
+                  }),
+                  retry: true,
+                },
               },
-            },
+            ),
           ),
-        );
-
-        const [guildMember, permissions] = await Promise.all([
-          context.queryClient.ensureQueryData(
+          ensureRouteQueryData(
+            context.queryClient,
             getMembersControllerGetMeQueryOptions(
               { guildId: params.guildId },
               {
@@ -57,7 +59,8 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
               },
             ),
           ),
-          context.queryClient.ensureQueryData(
+          ensureRouteQueryData(
+            context.queryClient,
             getGuildsControllerGetGuildPermissionsQueryOptions(
               { guildId: params.guildId },
               {

@@ -33,6 +33,7 @@ import {
   useDeleteEvent,
   useListEvents,
 } from "@/lib/api/generated/main/events/events";
+import type { EventListItemResponseDto } from "@/lib/api/generated/main/model";
 import type { Event } from "./types/api";
 
 export const Events = () => {
@@ -43,12 +44,45 @@ export const Events = () => {
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const queryClient = useQueryClient();
   const { data: permissions } = useGuildPermissions();
-  const deleteEvent = useDeleteEvent({
+  const listEventsParams = {
+    activeOnly: "false",
+  };
+  const listEventsQueryKey = getListEventsQueryKey(
+    { guildId: guildId ?? "" },
+    listEventsParams,
+  );
+  const deleteEvent = useDeleteEvent<
+    unknown,
+    EventListItemResponseDto[] | undefined
+  >({
     mutation: {
+      onMutate: async (variables) => {
+        await queryClient.cancelQueries({
+          queryKey: listEventsQueryKey,
+        });
+
+        const previousEvents =
+          queryClient.getQueryData<EventListItemResponseDto[]>(
+            listEventsQueryKey,
+          );
+
+        queryClient.setQueryData<EventListItemResponseDto[]>(
+          listEventsQueryKey,
+          (currentEvents) =>
+            currentEvents?.filter(
+              (event) => event.id !== variables.pathParams.eventId,
+            ) ?? currentEvents,
+        );
+
+        return previousEvents;
+      },
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: getListEventsQueryKey({ guildId: guildId ?? "" }),
         });
+      },
+      onError: (_error, _variables, previousEvents) => {
+        queryClient.setQueryData(listEventsQueryKey, previousEvents);
       },
     },
   });
@@ -70,9 +104,7 @@ export const Events = () => {
     {
       guildId: guildId ?? "",
     },
-    {
-      activeOnly: "false",
-    },
+    listEventsParams,
   );
 
   const canDeleteEvent =

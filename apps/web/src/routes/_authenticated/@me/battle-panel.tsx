@@ -2,15 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BattlePanelLayout } from "@/features/user/battle-panel/battle-panel-layout/battle-panel-layout";
 import { getBattlesControllerGetUserCharactersQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
+import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel")({
-  loader: ({ abortController, context, preload }) =>
+  loader: ({ abortController, context }) =>
     withRouteLoaderCancellation(abortController, async () => {
-      if (preload) {
-        return null;
-      }
-
-      await context.queryClient.ensureQueryData(
+      void prefetchRouteQuery(
+        context.queryClient,
         getBattlesControllerGetUserCharactersQueryOptions(),
       );
 

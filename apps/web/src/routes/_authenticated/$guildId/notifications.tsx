@@ -6,6 +6,7 @@ import {
 } from "@/lib/api/generated/main/notifications/notifications";
 import { getGuildsControllerGetGuildDiscordSyncStatusQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
+import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 function GuildNotificationsLayout() {
   return (
@@ -16,34 +17,34 @@ function GuildNotificationsLayout() {
 }
 
 export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
-  loader: ({ abortController, context, params, preload }) =>
+  loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
-      if (preload) {
-        return null;
-      }
-
-      await Promise.all([
-        context.queryClient.ensureQueryData(
+      void Promise.all([
+        prefetchRouteQuery(
+          context.queryClient,
           getNotificationsGuildControllerGetGuildTargetsQueryOptions({
             guildId: params.guildId,
           }),
         ),
-        context.queryClient.ensureQueryData(
+        prefetchRouteQuery(
+          context.queryClient,
           getNotificationsGuildControllerGetGuildRulesQueryOptions({
             guildId: params.guildId,
           }),
         ),
-        context.queryClient.ensureQueryData(
+        prefetchRouteQuery(
+          context.queryClient,
           getNotificationsGuildControllerGetGuildJobsQueryOptions({
             guildId: params.guildId,
           }),
         ),
-        context.queryClient.ensureQueryData(
+        prefetchRouteQuery(
+          context.queryClient,
           getGuildsControllerGetGuildDiscordSyncStatusQueryOptions({
             guildId: params.guildId,
           }),
         ),
-      ]);
+      ]).catch(() => undefined);
 
       return null;
     }),
