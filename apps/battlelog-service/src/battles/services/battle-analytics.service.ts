@@ -1069,7 +1069,7 @@ export class BattleAnalyticsService {
     prefix: string,
     metric: string,
     userId: string,
-    query: Record<string, unknown>,
+    query: object,
   ): string {
     return [
       prefix,
