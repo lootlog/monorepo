@@ -48,11 +48,11 @@ export const ItemImage: FC<ItemImageProps> = ({
           backgroundImage: `url(${MARGONEM_CDN_ITEMS_URL}/${icon})`,
         }}
       />
-      {(shareIndex || shareIndex === 0) && (
+      {shareIndex !== undefined && (
         <div
           className="absolute -right-1 top-7 flex size-4 items-center justify-center rounded-sm text-xs font-medium shadow-sm"
           style={{
-            backgroundColor: color ? `${color}` : "var(--background)",
+            backgroundColor: color ?? "var(--background)",
           }}
         >
           {shareIndex + 1}
