@@ -38,9 +38,9 @@ export const CatchingSettings = () => {
       {
         query: {
           queryKey,
-          refetchOnMount: true,
-          refetchOnWindowFocus: true,
-          staleTime: 0,
+          refetchOnMount: false,
+          refetchOnWindowFocus: false,
+          staleTime: 60_000,
         },
       },
     );

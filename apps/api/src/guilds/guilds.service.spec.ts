@@ -31,6 +31,7 @@ describe("GuildsService", () => {
     log: mockFn(),
     error: mockFn(),
     warn: mockFn(),
+    debug: mockFn(),
   };
 
   const mockPrismaService = {
@@ -103,7 +104,9 @@ describe("GuildsService", () => {
 
   const mockRedisService = {
     get: mockFn(),
+    getJson: mockFn(),
     set: mockFn(),
+    setJson: mockFn(),
     del: mockFn(),
     deleteByPattern: mockFn(),
   };
@@ -178,7 +181,9 @@ describe("GuildsService", () => {
     );
     mockPrismaService.member.findMany.mockResolvedValue([]);
     mockRedisService.get.mockResolvedValue(null);
+    mockRedisService.getJson.mockResolvedValue(null);
     mockRedisService.set.mockResolvedValue(undefined);
+    mockRedisService.setJson.mockResolvedValue(undefined);
     mockRedisService.del.mockResolvedValue(undefined);
   });
 
@@ -645,6 +650,11 @@ describe("GuildsService", () => {
           isAccessDataStale: false,
         },
       ]);
+      expect(mockRedisService.setJson).toHaveBeenCalledWith(
+        "user:user-123:discord:discord-123:accessible-guilds",
+        result,
+        30,
+      );
     });
 
     it("marks stale accessible guild data and queues a background refresh", async () => {
@@ -695,6 +705,39 @@ describe("GuildsService", () => {
         userId: "user-123",
         priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
         reason: "guild-access-background",
+      });
+    });
+
+    it("returns cached accessible guilds and refreshes stale entries in the background", async () => {
+      const cachedGuilds = [
+        {
+          id: "guild-stale",
+          name: "Stale",
+          icon: null,
+          vanityUrl: null,
+          ownerId: "owner-1",
+          publicStatsCardEnabled: false,
+          hasLootlogAccess: true,
+          isAccessDataStale: true,
+        },
+      ];
+      mockRedisService.getJson.mockResolvedValueOnce(cachedGuilds);
+
+      const result = await service.getCurrentUserAccessibleGuilds(
+        "discord-123",
+        "user-123",
+      );
+      await Promise.resolve();
+
+      expect(result).toEqual(cachedGuilds);
+      expect(mockPrismaService.guild.findMany).not.toHaveBeenCalled();
+      expect(mockPrismaService.member.findMany).not.toHaveBeenCalled();
+      expect(mockMembersService.queueMemberRefresh).toHaveBeenCalledWith({
+        discordId: "discord-123",
+        guildId: "guild-stale",
+        userId: "user-123",
+        priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+        reason: "guild-access-cache-background",
       });
     });
   });
@@ -861,10 +904,10 @@ describe("GuildsService", () => {
 
   describe("getUserGuildsWithPermissions", () => {
     it("uses cached database permissions without calling Discord", async () => {
-      mockRedisService.get.mockReset();
+      mockRedisService.getJson.mockReset();
       mockPrismaService.guild.findMany.mockReset();
       mockPrismaService.member.findMany.mockReset();
-      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.getJson.mockResolvedValue(null);
       mockPrismaService.guild.findMany.mockResolvedValue([
         createGuild({
           id: "guild-access",
@@ -915,9 +958,9 @@ describe("GuildsService", () => {
           ],
         },
       ]);
-      expect(mockRedisService.set).toHaveBeenCalledWith(
+      expect(mockRedisService.setJson).toHaveBeenCalledWith(
         "user:user-123:discord:discord-123:guild-permissions",
-        JSON.stringify(result),
+        result,
         60,
       );
     });
@@ -929,7 +972,7 @@ describe("GuildsService", () => {
           roles: [],
         },
       ];
-      mockRedisService.get.mockResolvedValue(JSON.stringify(cachedPermissions));
+      mockRedisService.getJson.mockResolvedValue(cachedPermissions);
 
       const result = await service.getUserGuildsWithPermissions(
         "discord-123",

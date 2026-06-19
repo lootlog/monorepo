@@ -64,6 +64,8 @@ describe("TimersService", () => {
 
   const mockRedisService = {
     get: mockFn(),
+    getJson: mockFn(),
+    getOrSetJson: mockFn(),
     set: mockFn(),
     setNX: mockFn(),
     eval: mockFn(),
@@ -148,6 +150,11 @@ describe("TimersService", () => {
 
     vi.clearAllMocks();
     mockRedisService.deleteByPattern.mockResolvedValue(0);
+    mockRedisService.get.mockResolvedValue(null);
+    mockRedisService.getJson.mockResolvedValue(null);
+    mockRedisService.getOrSetJson.mockImplementation(
+      ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+    );
     mockRedisService.setNX.mockResolvedValue(true);
     mockRedisService.eval.mockResolvedValue(1);
     mockPrismaService.timer.findUnique.mockResolvedValue(null);
@@ -207,7 +214,6 @@ describe("TimersService", () => {
     };
 
     it("should create timer with calculated spawn times", async () => {
-      mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
       mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
 
@@ -1573,7 +1579,7 @@ describe("TimersService", () => {
     });
 
     it("preserves actor character data when guild timers are read from cache", async () => {
-      mockRedisService.get.mockResolvedValue(JSON.stringify([timer]));
+      mockRedisService.getJson.mockResolvedValue([timer]);
 
       const result = await service.getTimers(
         "user123",
@@ -1595,6 +1601,7 @@ describe("TimersService", () => {
         },
       });
       expect(mockPrismaService.timer.findMany).not.toHaveBeenCalled();
+      expect(mockRedisService.getOrSetJson).not.toHaveBeenCalled();
     });
 
     it("returns guild name in timer history responses", async () => {
