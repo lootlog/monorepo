@@ -51,6 +51,8 @@ describe("KillsService", () => {
   };
   let redisService: {
     setNX: Mock;
+    getJson: Mock;
+    getOrSetJson: Mock;
   };
   let userLootlogConfigService: {
     getLootlogCharacterConfig: Mock;
@@ -127,6 +129,10 @@ describe("KillsService", () => {
 
     const mockRedisService = {
       setNX: mockFn().mockResolvedValue(true),
+      getJson: mockFn().mockResolvedValue(null),
+      getOrSetJson: mockFn().mockImplementation(
+        ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+      ),
     };
 
     const mockUserLootlogConfigService = {
@@ -566,6 +572,27 @@ describe("KillsService", () => {
       expect(result.memberRanking[0].totalParticipations).toBe(70);
     });
 
+    it("should return cached guild kill stats without querying stats tables", async () => {
+      const cachedStats = {
+        overview: {
+          guildUniqueKills: 1,
+          totalMemberParticipations: 2,
+          killsByType: { [NpcType.HERO]: 1 },
+          participationsByType: { [NpcType.HERO]: 2 },
+        },
+        memberRanking: [],
+      };
+      redisService.getJson.mockResolvedValueOnce(cachedStats);
+      const query = new GetGuildKillStatsDto();
+
+      const result = await service.getGuildKillStats(guildId, [], [], query);
+
+      expect(result).toEqual(cachedStats);
+      expect(redisService.getOrSetJson).not.toHaveBeenCalled();
+      expect(prismaService.npcKillStats.findMany).not.toHaveBeenCalled();
+      expect(prismaService.guildKillSummary.findMany).not.toHaveBeenCalled();
+    });
+
     it("should use bucket tables when period is provided", async () => {
       prismaService.npcKillStatsBucket.findMany.mockResolvedValue(
         mockMemberStats,
@@ -933,6 +960,26 @@ describe("KillsService", () => {
         pandora: 80,
         tempest: 20,
       });
+    });
+
+    it("should return cached user kill stats without querying stats tables", async () => {
+      const cachedStats = {
+        overview: {
+          totalKills: 7,
+          killsByType: { [NpcType.TITAN]: 7 },
+          killsByWorld: { pandora: 7 },
+        },
+        topNpcs: [],
+      };
+      redisService.getJson.mockResolvedValueOnce(cachedStats);
+      const query = new GetUserKillStatsDto();
+
+      const result = await service.getUserKillStats(discordId, query);
+
+      expect(result).toEqual(cachedStats);
+      expect(redisService.getOrSetJson).not.toHaveBeenCalled();
+      expect(prismaService.userKillStats.findMany).not.toHaveBeenCalled();
+      expect(prismaService.userKillStatsBucket.findMany).not.toHaveBeenCalled();
     });
 
     it("should use user bucket table when period is provided", async () => {

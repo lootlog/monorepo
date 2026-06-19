@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { useTimersCache } from "./use-timers-cache";
@@ -108,5 +108,25 @@ describe("useTimersCache", () => {
         (timer) => timer.timerKey,
       ),
     ).toEqual(["timer-1", "timer-3"]);
+  });
+
+  it("does not refetch the full timers query after an authoritative socket delete", () => {
+    queryClient.setQueryData(queryKeys.timers("pandora"), [
+      createTimer({
+        timerKey: "timer-1",
+      }),
+    ]);
+    const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useTimersCache(), { wrapper });
+
+    result.current.removeTimer({
+      world: "pandora",
+      guildId: "guild-1",
+      timerKey: "timer-1",
+    });
+
+    expect(queryClient.getQueryData(queryKeys.timers("pandora"))).toEqual([]);
+    expect(invalidateQueriesSpy).not.toHaveBeenCalled();
   });
 });

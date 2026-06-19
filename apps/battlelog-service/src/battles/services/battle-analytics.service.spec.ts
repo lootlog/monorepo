@@ -97,6 +97,7 @@ describe("BattleAnalyticsService", () => {
       get: vi.fn(),
       set: vi.fn(),
       getClient: vi.fn(),
+      deleteByPattern: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -697,29 +698,26 @@ describe("BattleAnalyticsService", () => {
   });
 
   describe("invalidateAnalyticsCache", () => {
-    it("should delete matching cache keys", async () => {
-      const mockRedisClient = {
-        keys: vi.fn().mockResolvedValue(["key1", "key2"]),
-        del: vi.fn().mockResolvedValue(2),
-      };
-      redisService.getClient.mockReturnValue(mockRedisClient as any);
+    it("should delete matching cache patterns through RedisService", async () => {
+      redisService.deleteByPattern.mockResolvedValue(2);
 
       await service.invalidateAnalyticsCache(mockUserId);
 
-      expect(mockRedisClient.keys).toHaveBeenCalled();
-      expect(mockRedisClient.del).toHaveBeenCalledWith("key1", "key2");
+      expect(redisService.getClient).not.toHaveBeenCalled();
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        `analytics:${mockUserId}:*`,
+      );
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        `statistics:*:${mockUserId}:*`,
+      );
     });
 
-    it("should handle empty keys gracefully", async () => {
-      const mockRedisClient = {
-        keys: vi.fn().mockResolvedValue([]),
-        del: vi.fn(),
-      };
-      redisService.getClient.mockReturnValue(mockRedisClient as any);
+    it("should handle empty cache patterns gracefully", async () => {
+      redisService.deleteByPattern.mockResolvedValue(0);
 
       await service.invalidateAnalyticsCache(mockUserId);
 
-      expect(mockRedisClient.del).not.toHaveBeenCalled();
+      expect(redisService.deleteByPattern).toHaveBeenCalledTimes(2);
     });
   });
 });
