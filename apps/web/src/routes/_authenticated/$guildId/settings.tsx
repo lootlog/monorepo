@@ -9,15 +9,15 @@ import {
   throwForbiddenRouteError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
+import {
+  ensureRouteQueryData,
+  prefetchRouteQuery,
+} from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$guildId/settings")({
   loader: ({ abortController, context, params, preload }) =>
     withRouteLoaderCancellation(abortController, async () => {
-      if (preload) {
-        return null;
-      }
-
-      const permissions = await context.queryClient.ensureQueryData(
+      const permissionsQueryOptions =
         getGuildsControllerGetGuildPermissionsQueryOptions(
           { guildId: params.guildId },
           {
@@ -28,7 +28,16 @@ export const Route = createFileRoute("/_authenticated/$guildId/settings")({
               staleTime: 30_000,
             },
           },
-        ),
+        );
+
+      if (preload) {
+        void prefetchRouteQuery(context.queryClient, permissionsQueryOptions);
+        return null;
+      }
+
+      const permissions = await ensureRouteQueryData(
+        context.queryClient,
+        permissionsQueryOptions,
       );
 
       if (!canManageGuild(permissions)) {

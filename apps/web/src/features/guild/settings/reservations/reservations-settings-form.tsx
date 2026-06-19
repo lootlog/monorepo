@@ -26,6 +26,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
+  getGuildsControllerGetGuildByIdQueryKey,
   invalidateGuildsControllerGetGuildById,
   useGuildsControllerUpdateGuildConfig,
 } from "@/lib/api/generated/main/guilds/guilds";
@@ -75,8 +76,12 @@ export const ReservationsSettingsForm = ({
         data: values,
       },
       {
-        onSuccess: async () => {
+        onSuccess: async (data) => {
           if (guildId) {
+            queryClient.setQueryData(
+              getGuildsControllerGetGuildByIdQueryKey({ guildId }),
+              data,
+            );
             await invalidateGuildsControllerGetGuildById(queryClient, {
               guildId,
             });

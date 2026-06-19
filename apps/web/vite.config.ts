@@ -55,6 +55,12 @@ const vendorChunkGroups = {
   "vendor-lottie": ["/node_modules/lottie-react/", "/node_modules/lottie-web/"],
 } as const;
 
+const deferredModulePreloadChunks = [
+  "vendor-forms",
+  "vendor-lottie",
+  "vendor-motion",
+] as const;
+
 function getChunkNameFromGroups(
   id: string,
   groups: Record<string, readonly string[]>,
@@ -68,6 +74,12 @@ function getChunkNameFromGroups(
 
 function getVendorChunkName(id: string) {
   return getChunkNameFromGroups(id, vendorChunkGroups);
+}
+
+function shouldDeferModulePreload(dep: string) {
+  return deferredModulePreloadChunks.some((chunkName) =>
+    dep.includes(chunkName),
+  );
 }
 
 // https://vitejs.dev/config/
@@ -151,6 +163,10 @@ export default defineConfig({
     include: ["react", "react-dom", "react-dom/client"],
   },
   build: {
+    modulePreload: {
+      resolveDependencies: (_filename, deps) =>
+        deps.filter((dep) => !shouldDeferModulePreload(dep)),
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {
