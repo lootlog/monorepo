@@ -105,8 +105,10 @@ const EXTERNAL_VALUE_KEYS = [
   "SEEDING_USER_ID",
 ] as const;
 
+const EXTERNAL_VALUE_KEY_SET = new Set<string>(EXTERNAL_VALUE_KEYS);
+
 const shouldGenerateValue = (key: string): boolean => {
-  return !EXTERNAL_VALUE_KEYS.some((externalKey) => key === externalKey);
+  return !EXTERNAL_VALUE_KEY_SET.has(key);
 };
 
 const generateSmartDefault = (
