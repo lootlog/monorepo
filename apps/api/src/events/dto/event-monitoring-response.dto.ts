@@ -2,8 +2,10 @@ import { createZodDto } from "nestjs-zod";
 import { CoverageGapType } from "src/generated/prisma/client";
 import { z } from "zod";
 import {
+  flexibleIsoDatetimeCodec,
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
+  nullableFlexibleIsoDatetimeCodec,
 } from "src/shared/dto/zod-response-codecs";
 
 const CoverageGapResponseSchema = z.object({
@@ -28,15 +30,15 @@ const KillTimelineAssignmentResponseSchema = z.object({
   memberName: z.string(),
   memberAvatar: z.string().nullable(),
   memberUserId: z.string(),
-  assignedAt: z.iso.datetime(),
-  unassignedAt: z.iso.datetime().nullable(),
+  assignedAt: flexibleIsoDatetimeCodec,
+  unassignedAt: nullableFlexibleIsoDatetimeCodec,
 });
 
 const KillTimelineGapResponseSchema = z.object({
   id: z.string(),
   gapType: z.nativeEnum(CoverageGapType),
-  startedAt: z.iso.datetime(),
-  endedAt: z.iso.datetime().nullable(),
+  startedAt: flexibleIsoDatetimeCodec,
+  endedAt: nullableFlexibleIsoDatetimeCodec,
   durationSeconds: z.number().nullable(),
 });
 

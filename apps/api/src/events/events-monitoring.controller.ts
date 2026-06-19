@@ -17,6 +17,7 @@ import {
 import { ZodResponse } from "nestjs-zod";
 import { Permission, type Role } from "src/generated/prisma/client";
 import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto";
+import { EventCoordinationResponseDto } from "./dto/event-coordination-response.dto";
 import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto";
 import {
   CoverageGapResponseDto,
@@ -40,6 +41,28 @@ import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 @Controller()
 export class EventsMonitoringController {
   constructor(private readonly eventsService: EventsService) {}
+
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get("/guilds/:guildId/events/:eventId/coordination")
+  @ApiOperation({
+    summary: "Get event coordination overview",
+    description:
+      "Get respawn priorities, map coverage gaps, and recommended actions for an event",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID" })
+  @ApiParam({ name: "eventId", description: "Event ID" })
+  @ZodResponse({
+    status: 200,
+    description: "Event coordination overview",
+    type: EventCoordinationResponseDto,
+  })
+  getCoordination(
+    @GuildData() guildData: { id: string },
+    @Param("eventId") eventId: string,
+  ) {
+    return this.eventsService.getCoordination(guildData.id, eventId);
+  }
 
   @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)

@@ -22,6 +22,7 @@ import {
   CalendarDays,
   BookText,
   Sparkles,
+  Crosshair,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -509,6 +510,20 @@ export const EventDetail = () => {
               </div>
 
               <div className="flex shrink-0 flex-wrap gap-2">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0"
+                >
+                  <Link
+                    to="/$guildId/events/$eventId/coordination"
+                    params={{ guildId: guildId ?? "", eventId: eventId ?? "" }}
+                  >
+                    <Crosshair className="size-3.5" />
+                    {t("events.coordination.trigger")}
+                  </Link>
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"

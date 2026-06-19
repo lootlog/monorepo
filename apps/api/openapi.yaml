@@ -4521,6 +4521,35 @@ paths:
       summary: Update kill point
       tags:
         - events
+  /guilds/{guildId}/events/{eventId}/coordination:
+    get:
+      description: Get respawn priorities, map coverage gaps, and recommended actions for an event
+      operationId: EventsMonitoringController_getCoordination
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          description: Event ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Event coordination overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventCoordinationResponseDto"
+      security:
+        - bearer: []
+      summary: Get event coordination overview
+      tags:
+        - events
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}/timeline:
     get:
       description: Get map timeline data with assignments and gaps for a specific kill
@@ -14713,6 +14742,176 @@ components:
           maxLength: 500
       required:
         - pointsDelta
+    EventCoordinationResponseDto:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        eventId:
+          type: string
+        world:
+          type: string
+        summary:
+          type: object
+          properties:
+            criticalCount:
+              type: number
+            warningCount:
+              type: number
+            coveredMaps:
+              type: number
+            totalMaps:
+              type: number
+            nextSpawnAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+          required:
+            - criticalCount
+            - warningCount
+            - coveredMaps
+            - totalMaps
+            - nextSpawnAt
+        heroes:
+          type: array
+          items:
+            type: object
+            properties:
+              heroId:
+                type: string
+              npcId:
+                type: number
+                nullable: true
+              npcName:
+                type: string
+              npcIcon:
+                type: string
+                nullable: true
+              npcLvl:
+                type: number
+                nullable: true
+              timer:
+                type: object
+                properties:
+                  npcId:
+                    type: number
+                  world:
+                    type: string
+                  minSpawnTime:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  maxSpawnTime:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  status:
+                    type: string
+                    enum:
+                      - OPEN
+                      - WAITING
+                      - OVERDUE
+                      - NONE
+                  overdueMs:
+                    type: number
+                    nullable: true
+                required:
+                  - npcId
+                  - world
+                  - minSpawnTime
+                  - maxSpawnTime
+                  - status
+                  - overdueMs
+                nullable: true
+              coverage:
+                type: object
+                properties:
+                  totalMaps:
+                    type: number
+                  assignedMaps:
+                    type: number
+                  coveredMaps:
+                    type: number
+                  unassignedMaps:
+                    type: number
+                  uncoveredMaps:
+                    type: number
+                  activeGapCount:
+                    type: number
+                required:
+                  - totalMaps
+                  - assignedMaps
+                  - coveredMaps
+                  - unassignedMaps
+                  - uncoveredMaps
+                  - activeGapCount
+              activeGaps:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    mapId:
+                      type: string
+                    numericMapId:
+                      type: number
+                    mapName:
+                      type: string
+                    gapType:
+                      type: string
+                      enum:
+                        - UNASSIGNED
+                        - UNCOVERED
+                    startedAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    durationSeconds:
+                      type: number
+                  required:
+                    - id
+                    - mapId
+                    - numericMapId
+                    - mapName
+                    - gapType
+                    - startedAt
+                    - durationSeconds
+              priority:
+                type: string
+                enum:
+                  - CRITICAL
+                  - WARNING
+                  - OK
+                  - IDLE
+              recommendedAction:
+                type: string
+                enum:
+                  - CLOSE_WINDOW
+                  - ASSIGN_MAPS
+                  - JOIN_MAP
+                  - WAIT
+                  - NONE
+            required:
+              - heroId
+              - npcId
+              - npcName
+              - npcIcon
+              - npcLvl
+              - timer
+              - coverage
+              - activeGaps
+              - priority
+              - recommendedAction
+      required:
+        - generatedAt
+        - eventId
+        - world
+        - summary
+        - heroes
     KillTimelineMapResponseDto:
       type: object
       properties:
