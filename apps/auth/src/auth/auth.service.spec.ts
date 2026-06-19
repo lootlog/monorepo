@@ -30,6 +30,7 @@ vi.mock("./better-auth", () => ({
 vi.mock("src/config/env", () => ({
   env: {
     APP_URL: "http://localhost:3000",
+    COOKIE_PREFIX: "local",
   },
 }));
 
@@ -160,6 +161,39 @@ describe("AuthService", () => {
         userId: "user-1",
         discordId: "discord-1",
       });
+      expect(auth.api.getSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: {
+            disableCookieCache: true,
+            disableRefresh: true,
+          },
+        }),
+      );
+    });
+
+    it("removes session data cache cookies before request verification", async () => {
+      vi.mocked(auth.api.getSession).mockResolvedValue({
+        session: {} as never,
+        user: {
+          id: "user-1",
+          discordId: "discord-1",
+        } as never,
+      });
+
+      await service.verifyRequestIdentity({
+        headers: {
+          cookie:
+            "local.session_data=cache; local.session_data.0=chunk; local.session_token=signed; argocd.token=ignored",
+        },
+      });
+
+      const [{ headers }] = vi.mocked(auth.api.getSession).mock.calls[0] as [
+        { headers: Headers },
+      ];
+
+      expect(headers.get("cookie")).toBe(
+        "local.session_token=signed; argocd.token=ignored",
+      );
     });
   });
 

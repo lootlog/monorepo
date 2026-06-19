@@ -14,6 +14,7 @@ import { EventKillService } from "./services/event-kill.service";
 import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service";
 import { EventRespawnService } from "./services/event-respawn.service";
 import { EventWrappedService } from "./services/event-wrapped.service";
+import { EventCoordinationService } from "./services/event-coordination.service";
 import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "./constants/scoring-rules.constant";
@@ -107,6 +108,10 @@ describe("EventsService", () => {
     getWrapped: mockFn(),
   };
 
+  const mockCoordinationService = {
+    getCoordination: mockFn(),
+  };
+
   const mockQueue = {
     getJobs: mockFn(),
     getJobCounts: mockFn(),
@@ -157,6 +162,10 @@ describe("EventsService", () => {
         { provide: EventKillService, useValue: mockKillService },
         { provide: EventRespawnService, useValue: mockRespawnService },
         { provide: EventWrappedService, useValue: mockWrappedService },
+        {
+          provide: EventCoordinationService,
+          useValue: mockCoordinationService,
+        },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
         {
           provide: getQueueToken(EVENT_HERO_KILL_QUEUE),
