@@ -38,20 +38,27 @@ const FEATURE_ROOMS = {
   },
 } as const;
 
-const ALL_FEATURE_ROOMS: Array<{ feature: FeatureName; tier: TierName }> = [
-  { feature: "chat", tier: "base" },
-  { feature: "chat", tier: "titans" },
-  { feature: "chat", tier: "heroes" },
-  { feature: "timers", tier: "base" },
-  { feature: "timers", tier: "titans" },
-  { feature: "timers", tier: "heroes" },
-  { feature: "notifications", tier: "base" },
-  { feature: "notifications", tier: "titans" },
-  { feature: "notifications", tier: "heroes" },
-  { feature: "loots", tier: "base" },
-  { feature: "loots", tier: "titans" },
-  { feature: "loots", tier: "heroes" },
-];
+function getFeatureRooms(): Array<{ feature: FeatureName; tier: TierName }> {
+  return (Object.keys(FEATURE_ROOMS) as FeatureName[]).flatMap((feature) =>
+    (Object.keys(FEATURE_ROOMS[feature]) as TierName[]).map((tier) => ({
+      feature,
+      tier,
+    })),
+  );
+}
+
+function getApplicableFeatureRooms(
+  platform: Platform,
+): Array<{ feature: FeatureName; tier: TierName }> {
+  const excludedFeatures =
+    platform === Platform.WEB_APP
+      ? WEB_EXCLUDED_FEATURES
+      : GAME_EXCLUDED_FEATURES;
+
+  return getFeatureRooms().filter(
+    ({ feature }) => !excludedFeatures.includes(feature),
+  );
+}
 
 export function buildRoomName(
   guildId: string,
@@ -88,15 +95,7 @@ export function calculateUserRooms(
     roomsByGuild: new Map(),
   };
 
-  // Filter features based on platform (web doesn't need chat/notifications)
-  const applicableFeatures =
-    platform === Platform.WEB_APP
-      ? ALL_FEATURE_ROOMS.filter(
-          ({ feature }) => !WEB_EXCLUDED_FEATURES.includes(feature),
-        )
-      : ALL_FEATURE_ROOMS.filter(
-          ({ feature }) => !GAME_EXCLUDED_FEATURES.includes(feature),
-        );
+  const applicableFeatures = getApplicableFeatureRooms(platform);
 
   for (const { guild, roles } of guilds) {
     const guildRooms: string[] = [];
