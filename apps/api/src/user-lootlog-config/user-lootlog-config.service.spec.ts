@@ -3,6 +3,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { Permission } from "src/generated/prisma/client";
 import { mockFn } from "src/test/mock-fn";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "./user-lootlog-config.service";
 
 describe("UserLootlogConfigService", () => {
@@ -19,6 +20,10 @@ describe("UserLootlogConfigService", () => {
   const mockGuildsService = {
     getGuildsForRequiredPermissions: mockFn(),
   };
+  const mockRedisService = {
+    getOrSetJsonBestEffort: mockFn(),
+    deleteByPattern: mockFn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -32,6 +37,10 @@ describe("UserLootlogConfigService", () => {
           provide: GuildsService,
           useValue: mockGuildsService,
         },
+        {
+          provide: RedisService,
+          useValue: mockRedisService,
+        },
       ],
     }).compile();
 
@@ -39,6 +48,10 @@ describe("UserLootlogConfigService", () => {
 
     vi.clearAllMocks();
     mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([]);
+    mockRedisService.getOrSetJsonBestEffort.mockImplementation(
+      ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+    );
+    mockRedisService.deleteByPattern.mockResolvedValue(0);
   });
 
   describe("getLootlogAccountConfig", () => {

@@ -877,6 +877,7 @@ model EventMap {
 
   @@unique([heroNpcId, mapId])
   @@index([mapId])
+  @@index([mapName])
   @@index([locationId])
 }
 
@@ -905,6 +906,8 @@ model EventMapCoverageGap {
 
   @@index([mapId, gapType, endedAt])
   @@index([heroNpcId, endedAt])
+  @@index([heroNpcId, startedAt])
+  @@index([mapId, startedAt])
 }
 
 model EventMapAssignmentHistory {
@@ -957,6 +960,7 @@ model EventPresenceLog {
   member Member   @relation(fields: [memberId], references: [id])
 
   @@index([mapId, memberId])
+  @@index([mapId, endedAt, isAfk, memberId])
   @@index([startedAt, endedAt])
 }
 
@@ -975,6 +979,7 @@ model EventHeroKill {
   windowSummary  EventRespawnWindowSummary?
 
   @@index([heroNpcId])
+  @@index([heroNpcId, killedAt])
   @@index([killedAt])
 }
 

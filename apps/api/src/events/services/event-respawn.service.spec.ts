@@ -7,6 +7,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { EventRespawnService } from "./event-respawn.service";
+import { EventReadCacheService } from "./event-read-cache.service";
 import { EventEmitterService } from "./event-emitter.service";
 import { EventKillService } from "./event-kill.service";
 import { EventTrackingService } from "./event-tracking.service";
@@ -73,6 +74,17 @@ describe("EventRespawnService", () => {
     closeEventRespawnTimer: mockFn(),
   };
 
+  const mockEventReadCache = {
+    getEventKey: mockFn(
+      (guildId: string, eventId: string, scope: string) =>
+        `event-read:${guildId}:${eventId}:${scope}`,
+    ),
+    getOrSet: mockFn((_key: string, factory: () => Promise<unknown>) =>
+      factory(),
+    ),
+    invalidateEvent: mockFn(),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -81,6 +93,7 @@ describe("EventRespawnService", () => {
         EventRespawnService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
+        { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: EventEmitterService, useValue: mockEventEmitter },
         { provide: EventKillService, useValue: mockKillService },
         { provide: EventTrackingService, useValue: mockTrackingService },

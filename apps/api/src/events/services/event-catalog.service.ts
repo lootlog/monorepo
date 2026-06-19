@@ -9,9 +9,10 @@ import type { Event } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventPointsService } from "src/events/services/event-points.service";
+import { EventReadCacheService } from "src/events/services/event-read-cache.service";
 import { EventTrackingService } from "src/events/services/event-tracking.service";
 import { TIMER_TYPES } from "src/timers/constants/timer-limits";
-import { getEventWrappedCacheKey } from "src/shared/constants/cache.constant";
+import { getEventWrappedCachePattern } from "src/shared/constants/cache.constant";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
@@ -64,6 +65,7 @@ export class EventCatalogService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly eventReadCache: EventReadCacheService,
     private readonly pointsService: EventPointsService,
     private readonly trackingService: EventTrackingService,
     @InjectQueue(RESPAWN_WINDOW_QUEUE)
@@ -151,113 +153,146 @@ export class EventCatalogService {
       },
     });
 
+    await this.eventReadCache.invalidateGuild(guildId);
+
     return attachComputedEventActive(createdEvent, now);
   }
 
-  async getEvents(guildId: string, world?: string, activeOnly = true) {
-    const normalizedWorld = world?.trim().toLowerCase();
-    const referenceTime = new Date();
+  getEvents(guildId: string, world?: string, activeOnly = true) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getGuildKey(guildId, "list", {
+        activeOnly,
+        world: world?.trim().toLowerCase(),
+      }),
+      async () => {
+        const normalizedWorld = world?.trim().toLowerCase();
+        const referenceTime = new Date();
 
-    const events = await this.prisma.event.findMany({
-      where: {
-        guildId,
-        ...(normalizedWorld && { world: normalizedWorld }),
-        ...(activeOnly ? buildActiveEventWhere(referenceTime) : {}),
-      },
-      select: {
-        id: true,
-        guildId: true,
-        name: true,
-        world: true,
-        startsAt: true,
-        endsAt: true,
-        createdAt: true,
-        updatedAt: true,
-        heroNpcs: {
+        const events = await this.prisma.event.findMany({
+          where: {
+            guildId,
+            ...(normalizedWorld && { world: normalizedWorld }),
+            ...(activeOnly ? buildActiveEventWhere(referenceTime) : {}),
+          },
           select: {
             id: true,
-            npcId: true,
-            npcName: true,
-            npcIcon: true,
-            npcLvl: true,
+            guildId: true,
+            name: true,
+            world: true,
+            startsAt: true,
+            endsAt: true,
+            createdAt: true,
+            updatedAt: true,
+            heroNpcs: {
+              select: {
+                id: true,
+                npcId: true,
+                npcName: true,
+                npcIcon: true,
+                npcLvl: true,
+              },
+            },
           },
-        },
-      },
-      orderBy: [{ createdAt: "desc" }],
-    });
+          orderBy: [{ createdAt: "desc" }],
+        });
 
-    return events
-      .map((event) => attachComputedEventActive(event, referenceTime))
-      .sort(compareEventsByActivityAndStart);
+        return events
+          .map((event) => attachComputedEventActive(event, referenceTime))
+          .sort(compareEventsByActivityAndStart);
+      },
+    );
   }
 
   getEvent(guildId: string, eventId: string) {
     return this.getEventOverview(guildId, eventId);
   }
 
-  async getEventOverview(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
-      where: {
-        id: eventId,
-        guildId,
-      },
-      select: {
-        id: true,
-        guildId: true,
-        name: true,
-        world: true,
-        startsAt: true,
-        endsAt: true,
-        createdAt: true,
-        updatedAt: true,
-        basePointsPerKill: true,
-        assignmentTimeoutMinutes: true,
-        participationConfirmationMinutes: true,
-        mapAssignmentCap: true,
-        scoringMode: true,
-        scoringRules: true,
-        rulebookMarkdown: true,
-        heroNpcs: {
-          select: {
-            id: true,
-            npcId: true,
-            npcName: true,
-            npcIcon: true,
-            npcLvl: true,
+  getEventOverview(guildId: string, eventId: string) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "overview"),
+      async () => {
+        const event = await this.prisma.event.findFirst({
+          where: {
+            id: eventId,
+            guildId,
           },
-        },
-      },
-    });
-
-    if (!event) {
-      throw new NotFoundException("Event not found");
-    }
-
-    return attachComputedEventActive(event, new Date());
-  }
-
-  async getEventMaps(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
-      where: {
-        id: eventId,
-        guildId,
-      },
-      select: {
-        id: true,
-        heroNpcs: {
           select: {
             id: true,
-            npcId: true,
-            npcName: true,
-            npcIcon: true,
-            npcLvl: true,
-            locations: {
-              orderBy: { order: "asc" },
+            guildId: true,
+            name: true,
+            world: true,
+            startsAt: true,
+            endsAt: true,
+            createdAt: true,
+            updatedAt: true,
+            basePointsPerKill: true,
+            assignmentTimeoutMinutes: true,
+            participationConfirmationMinutes: true,
+            mapAssignmentCap: true,
+            scoringMode: true,
+            scoringRules: true,
+            rulebookMarkdown: true,
+            heroNpcs: {
               select: {
                 id: true,
-                name: true,
-                order: true,
+                npcId: true,
+                npcName: true,
+                npcIcon: true,
+                npcLvl: true,
+              },
+            },
+          },
+        });
+
+        if (!event) {
+          throw new NotFoundException("Event not found");
+        }
+
+        return attachComputedEventActive(event, new Date());
+      },
+    );
+  }
+
+  getEventMaps(guildId: string, eventId: string) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "maps"),
+      async () => {
+        const event = await this.prisma.event.findFirst({
+          where: {
+            id: eventId,
+            guildId,
+          },
+          select: {
+            id: true,
+            heroNpcs: {
+              select: {
+                id: true,
+                npcId: true,
+                npcName: true,
+                npcIcon: true,
+                npcLvl: true,
+                locations: {
+                  orderBy: { order: "asc" },
+                  select: {
+                    id: true,
+                    name: true,
+                    order: true,
+                    maps: {
+                      orderBy: { mapId: "asc" },
+                      select: {
+                        id: true,
+                        mapId: true,
+                        mapName: true,
+                        locationId: true,
+                        assignedMembers: {
+                          select: memberSelectWithTopRole,
+                        },
+                      },
+                    },
+                  },
+                },
                 maps: {
+                  where: { locationId: null },
                   orderBy: { mapId: "asc" },
                   select: {
                     id: true,
@@ -271,29 +306,16 @@ export class EventCatalogService {
                 },
               },
             },
-            maps: {
-              where: { locationId: null },
-              orderBy: { mapId: "asc" },
-              select: {
-                id: true,
-                mapId: true,
-                mapName: true,
-                locationId: true,
-                assignedMembers: {
-                  select: memberSelectWithTopRole,
-                },
-              },
-            },
           },
-        },
+        });
+
+        if (!event) {
+          throw new NotFoundException("Event not found");
+        }
+
+        return event;
       },
-    });
-
-    if (!event) {
-      throw new NotFoundException("Event not found");
-    }
-
-    return event;
+    );
   }
 
   async updateEvent(guildId: string, eventId: string, data: UpdateEventDto) {
@@ -423,7 +445,10 @@ export class EventCatalogService {
       },
     );
 
-    await this.redis.del(getEventWrappedCacheKey(guildId, eventId));
+    await Promise.all([
+      this.redis.deleteByPattern(getEventWrappedCachePattern(guildId, eventId)),
+      this.eventReadCache.invalidateEvent(guildId, eventId),
+    ]);
 
     return attachComputedEventActive(updatedEvent, referenceTime);
   }
@@ -443,7 +468,10 @@ export class EventCatalogService {
       event.basePointsPerKill,
     );
 
-    await this.redis.del(getEventWrappedCacheKey(guildId, eventId));
+    await Promise.all([
+      this.redis.deleteByPattern(getEventWrappedCachePattern(guildId, eventId)),
+      this.eventReadCache.invalidateEvent(guildId, eventId),
+    ]);
 
     return { success: true };
   }
@@ -473,7 +501,10 @@ export class EventCatalogService {
       where: { id: eventId },
     });
 
-    await this.redis.del(getEventWrappedCacheKey(guildId, eventId));
+    await Promise.all([
+      this.redis.deleteByPattern(getEventWrappedCachePattern(guildId, eventId)),
+      this.eventReadCache.invalidateEvent(guildId, eventId),
+    ]);
 
     return { success: true };
   }
@@ -507,7 +538,7 @@ export class EventCatalogService {
       }
     }
 
-    return this.prisma.eventHeroNpc.create({
+    const createdHero = await this.prisma.eventHeroNpc.create({
       data: {
         eventId,
         npcId,
@@ -531,6 +562,10 @@ export class EventCatalogService {
         },
       },
     });
+
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
+
+    return createdHero;
   }
 
   async updateHero(
@@ -556,13 +591,17 @@ export class EventCatalogService {
     //   throw new BadRequestException("EVENT_HERO_NAME_LOCKED");
     // }
 
-    return this.prisma.eventHeroNpc.update({
+    const updatedHero = await this.prisma.eventHeroNpc.update({
       where: { id: heroId },
       data: {
         npcName: data.npcName,
         ...(data.npcId !== undefined && { npcId: data.npcId }),
       },
     });
+
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
+
+    return updatedHero;
   }
 
   async deleteHero(guildId: string, eventId: string, heroId: string) {
@@ -581,6 +620,8 @@ export class EventCatalogService {
     await this.prisma.eventHeroNpc.delete({
       where: { id: heroId },
     });
+
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
 
     return { success: true };
   }
@@ -628,6 +669,7 @@ export class EventCatalogService {
     });
 
     await this.trackingService.openUnassignedGap(map.id, heroId);
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
 
     return map;
   }
@@ -656,6 +698,8 @@ export class EventCatalogService {
     await this.prisma.eventMap.delete({
       where: { id: mapId },
     });
+
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
 
     return { success: true };
   }
@@ -695,7 +739,7 @@ export class EventCatalogService {
     });
     const newOrder = (maxOrderResult._max.order ?? -1) + 1;
 
-    return this.prisma.eventMapLocation.create({
+    const createdLocation = await this.prisma.eventMapLocation.create({
       data: {
         heroNpcId: heroId,
         name: data.name,
@@ -712,6 +756,10 @@ export class EventCatalogService {
         },
       },
     });
+
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
+
+    return createdLocation;
   }
 
   async updateLocation(
@@ -750,7 +798,7 @@ export class EventCatalogService {
       }
     }
 
-    return this.prisma.eventMapLocation.update({
+    const updatedLocation = await this.prisma.eventMapLocation.update({
       where: { id: locationId },
       data: {
         ...(data.name && { name: data.name }),
@@ -766,6 +814,10 @@ export class EventCatalogService {
         },
       },
     });
+
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
+
+    return updatedLocation;
   }
 
   async deleteLocation(
@@ -792,6 +844,8 @@ export class EventCatalogService {
     await this.prisma.eventMapLocation.delete({
       where: { id: locationId },
     });
+
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
 
     return { success: true };
   }
@@ -836,6 +890,8 @@ export class EventCatalogService {
       ),
     );
 
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
+
     return { success: true };
   }
 
@@ -874,7 +930,7 @@ export class EventCatalogService {
       }
     }
 
-    return this.prisma.eventMap.update({
+    const updatedMap = await this.prisma.eventMap.update({
       where: { id: mapId },
       data: { locationId },
       include: {
@@ -884,6 +940,10 @@ export class EventCatalogService {
         location: true,
       },
     });
+
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
+
+    return updatedMap;
   }
 
   async getLocations(guildId: string, eventId: string, heroId: string) {

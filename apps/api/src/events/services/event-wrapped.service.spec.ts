@@ -28,8 +28,7 @@ describe("EventWrappedService", () => {
   };
 
   const mockRedisService = {
-    get: mockFn(),
-    set: mockFn(),
+    getOrSetJsonBestEffort: mockFn(),
   };
 
   const mockLootsService = {
@@ -125,7 +124,7 @@ describe("EventWrappedService", () => {
         heroBreakdown: [],
       },
     };
-    mockRedisService.get.mockResolvedValue(JSON.stringify(cachedResponse));
+    mockRedisService.getOrSetJsonBestEffort.mockResolvedValue(cachedResponse);
 
     const result = await service.getWrapped(guild, "event-1", [], []);
 
@@ -134,7 +133,9 @@ describe("EventWrappedService", () => {
   });
 
   it("builds wrapped payload from rankings, coverage and loots", async () => {
-    mockRedisService.get.mockResolvedValue(null);
+    mockRedisService.getOrSetJsonBestEffort.mockImplementation(
+      ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+    );
     mockPrismaService.event.findFirst.mockResolvedValue({
       id: "event-1",
       name: "Gwiazda",
@@ -302,6 +303,12 @@ describe("EventWrappedService", () => {
     expect(result.coverage.coveragePercentage).toBe(75);
     expect(result.loot.heroBreakdown[0]?.rarityTotals.heroic).toBe(1);
     expect(result.heroes[0]?.coveragePercentage).toBe(75);
-    expect(mockRedisService.set).toHaveBeenCalled();
+    expect(mockRedisService.getOrSetJsonBestEffort).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: expect.stringContaining("event-wrapped:guild-1:event-1:"),
+        ttlSeconds: 3600,
+        factory: expect.any(Function),
+      }),
+    );
   });
 });
