@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Timer } from "@/api/timers.api";
 import { queryKeys } from "@/features/public-api/query-keys";
@@ -11,46 +10,37 @@ const isSameTimer = (a: TimerIdentity, b: TimerIdentity): boolean =>
 export const useTimersCache = () => {
   const queryClient = useQueryClient();
 
-  const upsertTimer = useCallback(
-    (timer: Timer) => {
-      if (!timer.world) return;
+  const upsertTimer = (timer: Timer) => {
+    if (!timer.world) return;
 
-      queryClient.setQueryData<Timer[]>(
-        queryKeys.timers(timer.world),
-        (old = []) => {
-          const updated = [...old];
+    queryClient.setQueryData<Timer[]>(
+      queryKeys.timers(timer.world),
+      (old = []) => {
+        const updated = [...old];
 
-          const index = updated.findIndex((t) => isSameTimer(t, timer));
+        const index = updated.findIndex((t) => isSameTimer(t, timer));
 
-          const next = { ...timer, isPending: false };
+        const next = { ...timer, isPending: false };
 
-          if (index !== -1) {
-            updated[index] = next;
-          } else {
-            updated.push(next);
-          }
+        if (index !== -1) {
+          updated[index] = next;
+        } else {
+          updated.push(next);
+        }
 
-          return updated;
-        },
-      );
-    },
-    [queryClient],
-  );
+        return updated;
+      },
+    );
+  };
 
-  const removeTimer = useCallback(
-    (timer: TimerIdentity) => {
-      if (!timer.world) return;
+  const removeTimer = (timer: TimerIdentity) => {
+    if (!timer.world) return;
 
-      queryClient.setQueryData<Timer[]>(
-        queryKeys.timers(timer.world),
-        (old = []) => old.filter((t) => !isSameTimer(t, timer)),
-      );
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.timers(timer.world),
-      });
-    },
-    [queryClient],
-  );
+    queryClient.setQueryData<Timer[]>(
+      queryKeys.timers(timer.world),
+      (old = []) => old.filter((t) => !isSameTimer(t, timer)),
+    );
+  };
 
   return { upsertTimer, removeTimer };
 };

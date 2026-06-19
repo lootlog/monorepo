@@ -6,6 +6,12 @@ const MARGONEM_CHARACTER_LIST_URL =
 const MARGONEM_CHARACTER_LIST_EN_URL =
   "https://public-api.margonem.com/account/charlist";
 
+export const CHARACTER_LIST_CACHE_FRESH_TTL_MS = 15 * 60 * 1000;
+export const CHARACTER_LIST_CACHE_STALE_TTL_MS = 24 * 60 * 60 * 1000;
+
+const CHARACTER_LIST_CACHE_KEY_PREFIX = "lootlog:margonem-character-list:v1";
+const MARGONEM_LOCAL_STORAGE_KEY = "Margonem";
+
 export type MargonemCharacter = {
   clan?: number;
   clan_rank?: number;
@@ -218,31 +224,151 @@ type FetchCharacterListOptions = {
   languageVersion: LanguageVersion;
 };
 
-export async function fetchCharacterList({
+type CharacterListCacheEntry = {
+  cachedAt: number;
+  characters: MargonemCharacter[];
+};
+
+const parseJsonOrNull = (value: string | null): unknown => {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+};
+
+const getLocalStorageItem = (key: string): string | null => {
+  try {
+    return window.localStorage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const setLocalStorageItem = (key: string, value: string): void => {
+  try {
+    window.localStorage?.setItem(key, value);
+  } catch {
+    // Ignore quota/privacy errors; the API response can still be returned.
+  }
+};
+
+const removeLocalStorageItem = (key: string): void => {
+  try {
+    window.localStorage?.removeItem(key);
+  } catch {
+    // Ignore storage errors.
+  }
+};
+
+const getPersistentCharacterListCacheKey = ({
   accountId,
   world,
   languageVersion,
-}: FetchCharacterListOptions): Promise<MargonemCharacter[]> {
-  const margonemEntry = window.localStorage?.getItem("Margonem");
-  const accountIdKey = String(accountId);
+}: FetchCharacterListOptions) => {
+  return [
+    CHARACTER_LIST_CACHE_KEY_PREFIX,
+    languageVersion,
+    String(accountId),
+    world ?? "unknown",
+  ].join(":");
+};
 
-  let parsed: unknown = null;
+const isCharacterListCacheEntry = (
+  value: unknown,
+): value is CharacterListCacheEntry => {
+  return (
+    isRecord(value) &&
+    typeof value.cachedAt === "number" &&
+    Number.isFinite(value.cachedAt) &&
+    Array.isArray(value.characters)
+  );
+};
 
-  if (margonemEntry) {
-    parsed = JSON.parse(margonemEntry);
+const readPersistentCharacterListCache = (
+  options: FetchCharacterListOptions,
+  maxAgeMs: number,
+) => {
+  const cacheKey = getPersistentCharacterListCacheKey(options);
+  const parsed = parseJsonOrNull(getLocalStorageItem(cacheKey));
+
+  if (!isCharacterListCacheEntry(parsed)) {
+    if (parsed !== null) {
+      removeLocalStorageItem(cacheKey);
+    }
+
+    return [];
   }
 
+  const ageMs = Date.now() - parsed.cachedAt;
+
+  if (ageMs < 0 || ageMs > maxAgeMs) {
+    return [];
+  }
+
+  return filterCharactersByWorld(
+    normalizeCharacterList(parsed.characters),
+    options.world,
+  );
+};
+
+const writePersistentCharacterListCache = (
+  options: FetchCharacterListOptions,
+  characters: MargonemCharacter[],
+) => {
+  const cacheEntry: CharacterListCacheEntry = {
+    cachedAt: Date.now(),
+    characters,
+  };
+
+  setLocalStorageItem(
+    getPersistentCharacterListCacheKey(options),
+    JSON.stringify(cacheEntry),
+  );
+};
+
+const readMargonemCharacterListCache = ({
+  accountId,
+  world,
+}: FetchCharacterListOptions) => {
+  const parsed = parseJsonOrNull(
+    getLocalStorageItem(MARGONEM_LOCAL_STORAGE_KEY),
+  );
+  const accountIdKey = String(accountId);
   const charlist =
     isRecord(parsed) && isRecord(parsed.charlist) ? parsed.charlist : null;
   const rawCachedCharacters = accountId
     ? (charlist?.[accountIdKey] ?? null)
     : null;
-
   const cached = accountId ? normalizeCharacterList(rawCachedCharacters) : [];
-  const filteredCached = filterCharactersByWorld(cached, world);
+
+  return filterCharactersByWorld(cached, world);
+};
+
+export async function fetchCharacterList({
+  accountId,
+  world,
+  languageVersion,
+}: FetchCharacterListOptions): Promise<MargonemCharacter[]> {
+  const options = { accountId, world, languageVersion };
+  const filteredCached = readMargonemCharacterListCache(options);
 
   if (filteredCached.length > 0) {
+    writePersistentCharacterListCache(options, filteredCached);
     return filteredCached;
+  }
+
+  const freshPersistentCache = readPersistentCharacterListCache(
+    options,
+    CHARACTER_LIST_CACHE_FRESH_TTL_MS,
+  );
+
+  if (freshPersistentCache.length > 0) {
+    return freshPersistentCache;
   }
 
   const hs3 = window.getCookie?.("hs3");
@@ -251,23 +377,41 @@ export async function fetchCharacterList({
       ? MARGONEM_CHARACTER_LIST_URL
       : MARGONEM_CHARACTER_LIST_EN_URL;
 
-  if (!hs3) {
-    throw new Error("Missing required authentication cookie");
+  try {
+    if (!hs3) {
+      throw new Error("Missing required authentication cookie");
+    }
+
+    const client = getApiClient("public");
+    const response = await client.get<MargonemCharacter[]>(
+      `${url}?hs3=${hs3}`,
+      {
+        withCredentials: true,
+      },
+    );
+    const normalizedCharacters = normalizeCharacterList(response.data);
+    const filteredCharacters = filterCharactersByWorld(
+      normalizedCharacters,
+      world,
+    );
+
+    if (!response.data || response.data.length === 0) {
+      throw new Error("Empty character list received from API");
+    }
+
+    writePersistentCharacterListCache(options, filteredCharacters);
+
+    return filteredCharacters;
+  } catch (error) {
+    const stalePersistentCache = readPersistentCharacterListCache(
+      options,
+      CHARACTER_LIST_CACHE_STALE_TTL_MS,
+    );
+
+    if (stalePersistentCache.length > 0) {
+      return stalePersistentCache;
+    }
+
+    throw error;
   }
-
-  const client = getApiClient("public");
-  const response = await client.get<MargonemCharacter[]>(`${url}?hs3=${hs3}`, {
-    withCredentials: true,
-  });
-  const normalizedCharacters = normalizeCharacterList(response.data);
-  const filteredCharacters = filterCharactersByWorld(
-    normalizedCharacters,
-    world,
-  );
-
-  if (!response.data || response.data.length === 0) {
-    throw new Error("Empty character list received from API");
-  }
-
-  return filteredCharacters;
 }
