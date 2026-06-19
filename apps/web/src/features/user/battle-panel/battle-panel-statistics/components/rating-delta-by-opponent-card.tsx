@@ -4,6 +4,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
+import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { PlayerTile } from "@/components/battle";
@@ -16,6 +17,7 @@ import type { RatingDeltaByOpponentRecord } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { Period } from "@/store/battle-filters.store";
+import type { KeyboardEvent } from "react";
 
 type RatingDeltaByOpponentCardSearch = {
   characterId?: string;
@@ -50,6 +52,18 @@ export function RatingDeltaByOpponentCard({
       },
       search,
     });
+  };
+
+  const handleRowKeyDown = (
+    event: KeyboardEvent<HTMLTableRowElement>,
+    opponentId: string,
+  ) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    handleRowClick(opponentId);
   };
 
   const columns: ColumnDef<RatingDeltaByOpponentRecord>[] = [
@@ -187,19 +201,25 @@ export function RatingDeltaByOpponentCard({
       emptyMessage={t("battlePanel.statistics.matchmaking.empty")}
       className="flex flex-col"
     >
-      <div className="min-h-72 flex flex-col flex-1">
-        <div className="overflow-auto bg-muted/30 rounded-lg">
+      <div className="flex min-h-72 min-w-0 flex-1 flex-col">
+        <ScrollArea className="min-w-0 rounded-lg bg-muted/30">
           <Table>
             <TanStackTableHeader table={table} />
             <TanStackTableBody
               table={table}
               getRowProps={(row) => ({
                 onClick: () => handleRowClick(row.original.opponentId),
-                className: "cursor-pointer hover:bg-muted/50",
+                onKeyDown: (event) =>
+                  handleRowKeyDown(event, row.original.opponentId),
+                role: "link",
+                tabIndex: 0,
+                className:
+                  "cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               })}
             />
           </Table>
-        </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
         <div className="flex justify-end pt-4 mt-auto">
           <Button asChild variant="outline" size="sm">
             <Link to={ROUTES.user.battlePanel.matchmakingH2h} search={search}>

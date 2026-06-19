@@ -5,7 +5,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@lootlog/ui/components/card";
-import type { ReactNode } from "react";
+import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
+import { cn } from "@lootlog/ui/lib/utils";
+import { Inbox } from "lucide-react";
+import type { KeyboardEventHandler, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 interface StatCardProps {
@@ -16,6 +19,11 @@ interface StatCardProps {
   emptyMessage?: string;
   children: ReactNode;
   className?: string;
+  onClick?: () => void;
+  onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
+  role?: string;
+  tabIndex?: number;
+  ariaLabel?: string;
 }
 
 export function StatCard({
@@ -23,26 +31,41 @@ export function StatCard({
   description,
   isLoading = false,
   isEmpty = false,
-  emptyMessage = "Brak danych",
+  emptyMessage,
   children,
   className,
+  onClick,
+  onKeyDown,
+  role,
+  tabIndex,
+  ariaLabel,
 }: StatCardProps) {
   const { t } = useTranslation();
+
   return (
-    <Card className={className}>
-      <CardHeader>
+    <Card
+      aria-label={ariaLabel}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+      role={role}
+      tabIndex={tabIndex}
+      variant={onClick ? "interactive" : "default"}
+      className={cn(
+        "flex min-w-0 flex-col border-border bg-card/40 p-0 backdrop-blur-sm",
+        className,
+      )}
+    >
+      <CardHeader className="p-4 pb-2">
         <div className="flex gap-2 flex-col">
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+          <CardTitle className="text-base font-semibold leading-tight">
+            {title}
+          </CardTitle>
+          <CardDescription className="text-xs leading-tight">
+            {description}
+          </CardDescription>
         </div>
       </CardHeader>
-      <CardContent
-        className={
-          className && !isLoading && !isEmpty
-            ? "flex-1 flex flex-col"
-            : undefined
-        }
-      >
+      <CardContent className="min-w-0 flex-1 p-4 pt-2">
         {isLoading ? (
           <div className="h-72 flex items-center justify-center">
             <p className="text-sm text-muted-foreground">
@@ -50,9 +73,10 @@ export function StatCard({
             </p>
           </div>
         ) : isEmpty ? (
-          <div className="h-72 flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">{emptyMessage}</p>
-          </div>
+          <BattlePanelEmptyState
+            icon={Inbox}
+            title={emptyMessage ?? t("battlePanel.statistics.empty.title")}
+          />
         ) : (
           children
         )}
