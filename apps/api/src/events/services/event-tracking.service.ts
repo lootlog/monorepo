@@ -11,6 +11,7 @@ import { CoverageGapType } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RedlockService } from "src/lib/redlock/redlock.service";
+import { EventReadCacheService } from "./event-read-cache.service";
 import { EventEmitterService } from "./event-emitter.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -28,6 +29,7 @@ export class EventTrackingService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitterService,
+    private readonly eventReadCache: EventReadCacheService,
     private readonly amqpConnection: AmqpConnection,
     private readonly redis: RedisService,
     private readonly redlockService: RedlockService,
@@ -177,7 +179,10 @@ export class EventTrackingService implements OnModuleInit {
       );
     }
 
-    await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, mapId);
+    await Promise.all([
+      this.eventReadCache.invalidateEvent(guildId, eventId),
+      this.eventEmitter.emitMapStatusUpdate(guildId, eventId, mapId),
+    ]);
 
     return updated;
   }
@@ -238,7 +243,10 @@ export class EventTrackingService implements OnModuleInit {
       await this.closeUncoveredGap(mapId);
     }
 
-    await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, mapId);
+    await Promise.all([
+      this.eventReadCache.invalidateEvent(guildId, eventId),
+      this.eventEmitter.emitMapStatusUpdate(guildId, eventId, mapId),
+    ]);
 
     return updated;
   }
@@ -423,104 +431,124 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  async getMapCoverageGaps(guildId: string, eventId: string, mapId: string) {
-    const map = await this.prisma.eventMap.findFirst({
-      where: {
-        id: mapId,
-        heroNpc: {
-          eventId,
-          event: { guildId },
-        },
-      },
-    });
-
-    if (!map) {
-      throw new NotFoundException("Map not found");
-    }
-
-    return this.prisma.eventMapCoverageGap.findMany({
-      where: { mapId },
-      orderBy: { startedAt: "desc" },
-    });
-  }
-
-  async getHeroCoverageGaps(
-    guildId: string,
-    eventId: string,
-    heroNpcId: string,
-  ) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
-      where: {
-        id: heroNpcId,
-        eventId,
-        event: { guildId },
-      },
-    });
-
-    if (!hero) {
-      throw new NotFoundException("Hero not found");
-    }
-
-    return this.prisma.eventMapCoverageGap.findMany({
-      where: { heroNpcId },
-      orderBy: { startedAt: "desc" },
-      include: {
-        map: {
-          select: {
-            mapName: true,
-            mapId: true,
-          },
-        },
-      },
-    });
-  }
-
-  async getActiveGapForMap(guildId: string, eventId: string, mapId: string) {
-    const map = await this.prisma.eventMap.findFirst({
-      where: {
-        id: mapId,
-        heroNpc: {
-          eventId,
-          event: { guildId },
-        },
-      },
-    });
-
-    if (!map) {
-      throw new NotFoundException("Map not found");
-    }
-
-    return this.prisma.eventMapCoverageGap.findFirst({
-      where: {
+  getMapCoverageGaps(guildId: string, eventId: string, mapId: string) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "map-gaps", {
         mapId,
-        endedAt: null,
+      }),
+      async () => {
+        const map = await this.prisma.eventMap.findFirst({
+          where: {
+            id: mapId,
+            heroNpc: {
+              eventId,
+              event: { guildId },
+            },
+          },
+        });
+
+        if (!map) {
+          throw new NotFoundException("Map not found");
+        }
+
+        return this.prisma.eventMapCoverageGap.findMany({
+          where: { mapId },
+          orderBy: { startedAt: "desc" },
+        });
       },
-    });
+    );
   }
 
-  async getActiveGapsForHero(
-    guildId: string,
-    eventId: string,
-    heroNpcId: string,
-  ) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
-      where: {
-        id: heroNpcId,
-        eventId,
-        event: { guildId },
-      },
-    });
-
-    if (!hero) {
-      throw new NotFoundException("Hero not found");
-    }
-
-    return this.prisma.eventMapCoverageGap.findMany({
-      where: {
+  getHeroCoverageGaps(guildId: string, eventId: string, heroNpcId: string) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "hero-gaps", {
         heroNpcId,
-        endedAt: null,
+      }),
+      async () => {
+        const hero = await this.prisma.eventHeroNpc.findFirst({
+          where: {
+            id: heroNpcId,
+            eventId,
+            event: { guildId },
+          },
+        });
+
+        if (!hero) {
+          throw new NotFoundException("Hero not found");
+        }
+
+        return this.prisma.eventMapCoverageGap.findMany({
+          where: { heroNpcId },
+          orderBy: { startedAt: "desc" },
+          include: {
+            map: {
+              select: {
+                mapName: true,
+                mapId: true,
+              },
+            },
+          },
+        });
       },
-    });
+    );
+  }
+
+  getActiveGapForMap(guildId: string, eventId: string, mapId: string) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "map-active-gap", {
+        mapId,
+      }),
+      async () => {
+        const map = await this.prisma.eventMap.findFirst({
+          where: {
+            id: mapId,
+            heroNpc: {
+              eventId,
+              event: { guildId },
+            },
+          },
+        });
+
+        if (!map) {
+          throw new NotFoundException("Map not found");
+        }
+
+        return this.prisma.eventMapCoverageGap.findFirst({
+          where: {
+            mapId,
+            endedAt: null,
+          },
+        });
+      },
+    );
+  }
+
+  getActiveGapsForHero(guildId: string, eventId: string, heroNpcId: string) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "hero-active-gaps", {
+        heroNpcId,
+      }),
+      async () => {
+        const hero = await this.prisma.eventHeroNpc.findFirst({
+          where: {
+            id: heroNpcId,
+            eventId,
+            event: { guildId },
+          },
+        });
+
+        if (!hero) {
+          throw new NotFoundException("Hero not found");
+        }
+
+        return this.prisma.eventMapCoverageGap.findMany({
+          where: {
+            heroNpcId,
+            endedAt: null,
+          },
+        });
+      },
+    );
   }
 
   async handlePlayerPresenceChange(
@@ -759,7 +787,32 @@ export class EventTrackingService implements OnModuleInit {
     return activeLogs.map((log) => log.memberId);
   }
 
-  async getHeroPresenceStats(
+  getHeroPresenceStats(
+    guildId: string,
+    eventId: string,
+    heroNpcId: string,
+  ): Promise<{
+    totalCoverageSeconds: number;
+    totalEventSeconds: number;
+    presencePercentage: number;
+    memberStats: Array<{
+      memberId: number;
+      memberName: string;
+      memberAvatar: string | null;
+      totalTimeSeconds: number;
+      afkTimeSeconds: number;
+      afkPercentage: number;
+    }>;
+  }> {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "hero-presence", {
+        heroNpcId,
+      }),
+      () => this.getHeroPresenceStatsUncached(guildId, eventId, heroNpcId),
+    );
+  }
+
+  private async getHeroPresenceStatsUncached(
     guildId: string,
     eventId: string,
     heroNpcId: string,

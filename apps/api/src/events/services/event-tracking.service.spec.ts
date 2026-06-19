@@ -3,6 +3,7 @@ import { mockFn } from "src/test/mock-fn";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { EventTrackingService } from "./event-tracking.service";
+import { EventReadCacheService } from "./event-read-cache.service";
 import { EventEmitterService } from "./event-emitter.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -69,6 +70,17 @@ describe("EventTrackingService", () => {
     set: mockFn(),
   };
 
+  const mockEventReadCache = {
+    getEventKey: mockFn(
+      (guildId: string, eventId: string, scope: string) =>
+        `event-read:${guildId}:${eventId}:${scope}`,
+    ),
+    getOrSet: mockFn((_key: string, factory: () => Promise<unknown>) =>
+      factory(),
+    ),
+    invalidateEvent: mockFn(),
+  };
+
   const mockRedlock = {
     using: mockFn(),
     acquire: mockFn(),
@@ -87,6 +99,7 @@ describe("EventTrackingService", () => {
         EventTrackingService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: EventEmitterService, useValue: mockEventEmitter },
+        { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: RedisService, useValue: mockRedisService },
         {

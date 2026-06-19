@@ -27,6 +27,12 @@ export interface RedisGetOrSetJsonOptions<T> {
   waitIntervalMs?: number;
 }
 
+export interface RedisGetOrSetJsonBestEffortOptions<
+  T,
+> extends RedisGetOrSetJsonOptions<T> {
+  onError?: (error: unknown) => void;
+}
+
 const DEFAULT_SCAN_COUNT = 500;
 const DEFAULT_DELETE_BATCH_SIZE = 500;
 const DEFAULT_SINGLE_FLIGHT_LOCK_TTL_SECONDS = 10;
@@ -174,6 +180,46 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       return value;
     } finally {
       await this.releaseSingleFlightLock(lockKey, lockToken);
+    }
+  }
+
+  async getOrSetJsonBestEffort<T>({
+    onError,
+    ...options
+  }: RedisGetOrSetJsonBestEffortOptions<T>): Promise<T> {
+    let factoryResult: { value: T } | null = null;
+    let factoryRejected = false;
+    let factoryError: unknown;
+
+    const guardedFactory = async () => {
+      try {
+        const value = await options.factory();
+        factoryResult = { value };
+        return value;
+      } catch (error) {
+        factoryRejected = true;
+        factoryError = error;
+        throw error;
+      }
+    };
+
+    try {
+      return await this.getOrSetJson({
+        ...options,
+        factory: guardedFactory,
+      });
+    } catch (error) {
+      if (factoryRejected) {
+        return Promise.reject(factoryError);
+      }
+
+      onError?.(error);
+
+      if (factoryResult) {
+        return factoryResult.value;
+      }
+
+      return options.factory();
     }
   }
 

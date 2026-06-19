@@ -1,7 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { Permission } from "src/generated/prisma/client";
+import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import {
   toUserLootlogConfigResponse,
@@ -10,12 +12,72 @@ import {
   type UserLootlogPlayerCatchingGuildsResponse,
 } from "src/shared/dto/user-lootlog-config-response.dto";
 
+const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 60;
+
 @Injectable()
 export class UserLootlogConfigService {
+  private readonly logger = new Logger(UserLootlogConfigService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly guildsService: GuildsService,
+    private readonly redis: RedisService,
   ) {}
+
+  private getAccountConfigCacheKey(discordId: string, accountId: string) {
+    return `user-lootlog-config:${discordId}:account:${accountId}`;
+  }
+
+  private getCharacterConfigCacheKey(
+    discordId: string,
+    accountId: string,
+    characterId: string,
+  ) {
+    return `user-lootlog-config:${discordId}:character:${accountId}:${characterId}`;
+  }
+
+  private getPlayersCatchingGuildsCacheKey(
+    discordId: string,
+    players: Array<{ userId: string; accountId: string; characterId: string }>,
+  ) {
+    return [
+      "user-lootlog-config",
+      discordId,
+      "players-catching",
+      Buffer.from(this.stableSerialize(players)).toString("base64url"),
+    ].join(":");
+  }
+
+  private async invalidateUserLootlogConfig(discordId: string) {
+    try {
+      await this.redis.deleteByPattern(
+        getUserLootlogConfigCachePattern(discordId),
+      );
+    } catch (error) {
+      this.logger.warn("Failed to invalidate user lootlog config cache", error);
+    }
+  }
+
+  private stableSerialize(value: unknown): string {
+    if (Array.isArray(value)) {
+      return `[${value.map((entry) => this.stableSerialize(entry)).join(",")}]`;
+    }
+
+    if (value && typeof value === "object") {
+      const entries = Object.entries(value)
+        .filter(([, entry]) => entry !== undefined)
+        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
+
+      return `{${entries
+        .map(
+          ([key, entry]) =>
+            `${JSON.stringify(key)}:${this.stableSerialize(entry)}`,
+        )
+        .join(",")}}`;
+    }
+
+    return JSON.stringify(value);
+  }
 
   private async getWritableLootlogGuildIds(discordId: string) {
     const guilds = await this.guildsService.getGuildsForRequiredPermissions(
@@ -26,13 +88,26 @@ export class UserLootlogConfigService {
     return new Set(guilds.map((guild) => guild.id));
   }
 
-  private async getAccessibleLootlogGuilds(discordId: string) {
+  private getAccessibleLootlogGuilds(discordId: string) {
     return this.guildsService.getGuildsForRequiredPermissions(discordId, [
       Permission.LOOTLOG_ACCESS,
     ]);
   }
 
-  async getLootlogAccountConfig(discordId: string, accountId: string) {
+  getLootlogAccountConfig(discordId: string, accountId: string) {
+    return this.redis.getOrSetJsonBestEffort({
+      key: this.getAccountConfigCacheKey(discordId, accountId),
+      ttlSeconds: USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS,
+      onError: (error) =>
+        this.logger.warn("User lootlog account cache unavailable", error),
+      factory: () => this.getLootlogAccountConfigUncached(discordId, accountId),
+    });
+  }
+
+  private async getLootlogAccountConfigUncached(
+    discordId: string,
+    accountId: string,
+  ) {
     const [accountConfig, writableGuildIds] = await Promise.all([
       this.prisma.userCharactersLootlogSettings.findMany({
         where: {
@@ -67,55 +142,29 @@ export class UserLootlogConfigService {
     accountId: string,
     characterId: string,
   ) {
-    return this.prisma.userCharactersLootlogSettings.findFirst({
-      where: {
-        userId: discordId,
-        accountId,
-        characterId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+    return this.redis.getOrSetJsonBestEffort({
+      key: this.getCharacterConfigCacheKey(discordId, accountId, characterId),
+      ttlSeconds: USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS,
+      onError: (error) =>
+        this.logger.warn("User lootlog character cache unavailable", error),
+      factory: () =>
+        this.prisma.userCharactersLootlogSettings.findFirst({
+          where: {
+            userId: discordId,
+            accountId,
+            characterId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        }),
     });
   }
 
-  async getPlayerCatchingGuilds(
+  private async getPlayersCatchingGuildsUncached(
     discordId: string,
-    userId: string,
-    accountId: string,
-    characterId: string,
-  ): Promise<UserLootlogPlayerCatchingGuildsResponse> {
-    const response = await this.getPlayersCatchingGuilds(discordId, {
-      players: [{ userId, accountId, characterId }],
-    });
-
-    return (
-      response.players[0] ?? {
-        userId,
-        accountId,
-        characterId,
-        guilds: [],
-      }
-    );
-  }
-
-  async getPlayersCatchingGuilds(
-    discordId: string,
-    data: UserLootlogPlayersCatchingGuildsRequest,
+    players: Array<{ userId: string; accountId: string; characterId: string }>,
   ): Promise<UserLootlogPlayersCatchingGuildsResponse> {
-    const playersByKey = new Map<
-      string,
-      { userId: string; accountId: string; characterId: string }
-    >();
-
-    for (const player of data.players) {
-      const key = `${player.userId}:${player.accountId}:${player.characterId}`;
-      if (!playersByKey.has(key)) {
-        playersByKey.set(key, player);
-      }
-    }
-
-    const players = [...playersByKey.values()];
     const accessibleGuilds = await this.getAccessibleLootlogGuilds(discordId);
     const accessibleGuildsById = new Map(
       accessibleGuilds.map((guild) => [guild.id, guild] as const),
@@ -188,6 +237,53 @@ export class UserLootlogConfigService {
     };
   }
 
+  async getPlayerCatchingGuilds(
+    discordId: string,
+    userId: string,
+    accountId: string,
+    characterId: string,
+  ): Promise<UserLootlogPlayerCatchingGuildsResponse> {
+    const response = await this.getPlayersCatchingGuilds(discordId, {
+      players: [{ userId, accountId, characterId }],
+    });
+
+    return (
+      response.players[0] ?? {
+        userId,
+        accountId,
+        characterId,
+        guilds: [],
+      }
+    );
+  }
+
+  getPlayersCatchingGuilds(
+    discordId: string,
+    data: UserLootlogPlayersCatchingGuildsRequest,
+  ): Promise<UserLootlogPlayersCatchingGuildsResponse> {
+    const playersByKey = new Map<
+      string,
+      { userId: string; accountId: string; characterId: string }
+    >();
+
+    for (const player of data.players) {
+      const key = `${player.userId}:${player.accountId}:${player.characterId}`;
+      if (!playersByKey.has(key)) {
+        playersByKey.set(key, player);
+      }
+    }
+
+    const players = [...playersByKey.values()];
+
+    return this.redis.getOrSetJsonBestEffort({
+      key: this.getPlayersCatchingGuildsCacheKey(discordId, players),
+      ttlSeconds: USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS,
+      onError: (error) =>
+        this.logger.warn("User lootlog players cache unavailable", error),
+      factory: () => this.getPlayersCatchingGuildsUncached(discordId, players),
+    });
+  }
+
   async createOrUpdateLootlogCharacterConfig(
     discordId: string,
     accountId: string,
@@ -216,6 +312,8 @@ export class UserLootlogConfigService {
         catchingGuildIds: normalizedCatchingGuildIds,
       },
     });
+
+    await this.invalidateUserLootlogConfig(discordId);
 
     return toUserLootlogConfigResponse(config);
   }
