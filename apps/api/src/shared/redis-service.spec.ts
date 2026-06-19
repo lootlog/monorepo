@@ -162,4 +162,51 @@ describe("RedisService", () => {
     expect(result).toEqual({ cached: true });
     expect(factory).not.toHaveBeenCalled();
   });
+
+  it("falls back to factory when Redis cache operations fail", async () => {
+    const client = createRedisClient();
+    const cacheError = new Error("Redis unavailable");
+    client.get.mockRejectedValueOnce(cacheError);
+    const service = createRedisService(client);
+    const factory = vi
+      .fn<() => Promise<{ fresh: boolean }>>()
+      .mockResolvedValue({ fresh: true });
+    const onError = vi.fn<(error: unknown) => void>();
+
+    const result = await service.getOrSetJsonBestEffort({
+      key: "cache:key",
+      ttlSeconds: 60,
+      factory,
+      onError,
+    });
+
+    expect(result).toEqual({ fresh: true });
+    expect(factory).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledWith(cacheError);
+  });
+
+  it("does not swallow factory errors in best-effort mode", async () => {
+    const client = createRedisClient();
+    client.get.mockResolvedValue(null);
+    client.set.mockResolvedValueOnce("OK");
+    client.eval.mockResolvedValueOnce(1);
+    const service = createRedisService(client);
+    const factoryError = new Error("Domain error");
+    const factory = vi
+      .fn<() => Promise<{ fresh: boolean }>>()
+      .mockRejectedValue(factoryError);
+    const onError = vi.fn<(error: unknown) => void>();
+
+    await expect(
+      service.getOrSetJsonBestEffort({
+        key: "cache:key",
+        ttlSeconds: 60,
+        factory,
+        onError,
+      }),
+    ).rejects.toThrow(factoryError);
+
+    expect(factory).toHaveBeenCalledTimes(1);
+    expect(onError).not.toHaveBeenCalled();
+  });
 });

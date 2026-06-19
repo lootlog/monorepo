@@ -208,6 +208,10 @@ describe("LootsService", () => {
       get: mockFn().mockResolvedValue(null),
       del: mockFn().mockResolvedValue(1),
       set: mockFn().mockResolvedValue("OK"),
+      deleteByPattern: mockFn().mockResolvedValue(0),
+      getOrSetJsonBestEffort: mockFn(
+        ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+      ),
     };
 
     const mockLogger = {

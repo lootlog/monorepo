@@ -78,6 +78,9 @@ describe("BattlesService", () => {
       set: vi.fn(),
       del: vi.fn(),
       deleteByPattern: vi.fn(),
+      getOrSetJsonBestEffort: vi.fn(
+        ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+      ),
     };
 
     const module: TestingModule = await Test.createTestingModule({

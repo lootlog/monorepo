@@ -1,6 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
 import { EventPointsService } from "./event-points.service";
+import { EventReadCacheService } from "./event-read-cache.service";
 import { PrismaService } from "src/db/prisma.service";
 import { EventEmitterService } from "./event-emitter.service";
 
@@ -53,6 +54,17 @@ describe("EventPointsService", () => {
     emitRankingUpdate: mockFn(),
   };
 
+  const mockEventReadCache = {
+    getEventKey: mockFn(
+      (guildId: string, eventId: string, scope: string) =>
+        `event-read:${guildId}:${eventId}:${scope}`,
+    ),
+    getOrSet: mockFn((_key: string, factory: () => Promise<unknown>) =>
+      factory(),
+    ),
+    invalidateEvent: mockFn(),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
     mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([]);
@@ -62,6 +74,7 @@ describe("EventPointsService", () => {
       providers: [
         EventPointsService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: EventEmitterService, useValue: mockEventEmitter },
       ],
     }).compile();

@@ -71,6 +71,14 @@ export function getMemberReadCachePattern(guildId: string): string {
 export function getEventWrappedCacheKey(
   guildId: string,
   eventId: string,
+  visibilityScope = "default",
 ): string {
-  return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:${eventId}`;
+  return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:${eventId}:${visibilityScope}`;
+}
+
+export function getEventWrappedCachePattern(
+  guildId: string,
+  eventId: string,
+): string {
+  return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:${eventId}:*`;
 }

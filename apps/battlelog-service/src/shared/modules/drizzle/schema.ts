@@ -221,6 +221,14 @@ export const battleWarriors = pgTable(
     index("battle_warriors_originalId_idx").on(table.originalId),
     index("battle_warriors_name_idx").on(table.name),
     index("battle_warriors_battleId_team_idx").on(table.battleId, table.team),
+    index("battle_warriors_battleId_originalId_idx").on(
+      table.battleId,
+      table.originalId,
+    ),
+    index("battle_warriors_originalId_battleId_idx").on(
+      table.originalId,
+      table.battleId,
+    ),
   ],
 );
 

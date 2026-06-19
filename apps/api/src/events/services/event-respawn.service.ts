@@ -16,6 +16,7 @@ import type {
 } from "../interfaces/respawn-window.interface";
 import { EventEmitterService } from "./event-emitter.service";
 import { EventKillService } from "./event-kill.service";
+import { EventReadCacheService } from "./event-read-cache.service";
 import { EventTrackingService } from "./event-tracking.service";
 import { EventSummaryService } from "./event-summary.service";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id";
@@ -31,6 +32,7 @@ export class EventRespawnService {
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
     private readonly eventEmitter: EventEmitterService,
     private readonly killService: EventKillService,
+    private readonly eventReadCache: EventReadCacheService,
     private readonly trackingService: EventTrackingService,
     private readonly summaryService: EventSummaryService,
     private readonly timersService: TimersService,
@@ -183,6 +185,7 @@ export class EventRespawnService {
 
     await this.cancelScheduledAutoClose(heroId);
 
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
     await this.eventEmitter.emitRespawnWindowClosed(guildId, eventId, heroId);
 
     if (createNewWindow) {
@@ -295,6 +298,7 @@ export class EventRespawnService {
       uncoveredCount,
     });
 
+    await this.eventReadCache.invalidateEvent(guildId, eventId);
     await this.eventEmitter.emitRespawnWindowOpened(guildId, eventId, heroId);
 
     await Promise.all(
@@ -306,7 +310,26 @@ export class EventRespawnService {
     return { minSpawnTime, maxSpawnTime };
   }
 
-  async getHeroRespawnConfig(
+  getHeroRespawnConfig(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+  ): Promise<{
+    hasTimer: boolean;
+    windowStatus: "OPEN" | "WAITING" | "OVERDUE" | "NONE";
+    minSpawnTime: Date | null;
+    maxSpawnTime: Date | null;
+    overdueMs: number | null;
+  }> {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "hero-respawn-config", {
+        heroId,
+      }),
+      () => this.getHeroRespawnConfigUncached(guildId, eventId, heroId),
+    );
+  }
+
+  private async getHeroRespawnConfigUncached(
     guildId: string,
     eventId: string,
     heroId: string,

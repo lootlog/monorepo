@@ -63,6 +63,19 @@ export class BattleAnalyticsService {
     return inflateBattleWarriorsInBattles(fetchedBattles);
   }
 
+  private getCachedAnalyticsResult<T>(
+    cacheKey: string,
+    factory: () => Promise<T>,
+  ): Promise<T> {
+    return this.redisService.getOrSetJsonBestEffort({
+      key: cacheKey,
+      ttlSeconds: this.ANALYTICS_CACHE_TTL,
+      factory,
+      onError: (error) =>
+        this.logger.warn("Battle analytics cache unavailable", error),
+    });
+  }
+
   async getBattleAnalytics(
     query: QueryBattleAnalyticsDto,
     userId: string,
@@ -356,6 +369,16 @@ export class BattleAnalyticsService {
   }
 
   async getHeadToHead(
+    query: QueryBattleStatisticsDto,
+    userId: string,
+  ): Promise<HeadToHeadPaginatedResponse> {
+    return this.getCachedAnalyticsResult(
+      this.buildQueryCacheKey("statistics", "head-to-head", userId, query),
+      () => this.getHeadToHeadUncached(query, userId),
+    );
+  }
+
+  private async getHeadToHeadUncached(
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<HeadToHeadPaginatedResponse> {
@@ -923,6 +946,8 @@ export class BattleAnalyticsService {
       const patterns = [
         `${this.ANALYTICS_CACHE_PREFIX}:${userId}:*`,
         `statistics:*:${userId}:*`,
+        `battle-characters:*:${userId}*`,
+        `battle-worlds:${userId}:*`,
       ];
 
       for (const pattern of patterns) {
@@ -937,6 +962,16 @@ export class BattleAnalyticsService {
   }
 
   private async getCharacterIds(
+    userId: string,
+    query: { characterId?: string; world?: string },
+  ): Promise<string[]> {
+    return this.getCachedAnalyticsResult(
+      this.buildQueryCacheKey("battle-characters", "ids", userId, query),
+      () => this.getCharacterIdsUncached(userId, query),
+    );
+  }
+
+  private async getCharacterIdsUncached(
     userId: string,
     query: { characterId?: string; world?: string },
   ): Promise<string[]> {
@@ -1028,6 +1063,41 @@ export class BattleAnalyticsService {
     }
 
     return cacheKeySegments.join(":");
+  }
+
+  private buildQueryCacheKey(
+    prefix: string,
+    metric: string,
+    userId: string,
+    query: Record<string, unknown>,
+  ): string {
+    return [
+      prefix,
+      metric,
+      userId,
+      Buffer.from(this.stableSerialize(query)).toString("base64url"),
+    ].join(":");
+  }
+
+  private stableSerialize(value: unknown): string {
+    if (Array.isArray(value)) {
+      return `[${value.map((entry) => this.stableSerialize(entry)).join(",")}]`;
+    }
+
+    if (value && typeof value === "object") {
+      const entries = Object.entries(value)
+        .filter(([, entry]) => entry !== undefined)
+        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
+
+      return `{${entries
+        .map(
+          ([key, entry]) =>
+            `${JSON.stringify(key)}:${this.stableSerialize(entry)}`,
+        )
+        .join(",")}}`;
+    }
+
+    return JSON.stringify(value);
   }
 
   private formatCacheSegment(
@@ -1657,6 +1727,16 @@ export class BattleAnalyticsService {
   }
 
   async getPlayerVsPlayerBattles(
+    query: QueryPlayerVsPlayerDto,
+    userId: string,
+  ): Promise<PlayerVsPlayerPaginatedResponse> {
+    return this.getCachedAnalyticsResult(
+      this.buildQueryCacheKey("statistics", "player-vs-player", userId, query),
+      () => this.getPlayerVsPlayerBattlesUncached(query, userId),
+    );
+  }
+
+  private async getPlayerVsPlayerBattlesUncached(
     query: QueryPlayerVsPlayerDto,
     userId: string,
   ): Promise<PlayerVsPlayerPaginatedResponse> {

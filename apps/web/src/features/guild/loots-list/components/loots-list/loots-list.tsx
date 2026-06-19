@@ -38,6 +38,7 @@ import { useTranslation } from "react-i18next";
 import { ThemeEmptyStateIcon, useThemedKey } from "@/themes";
 
 const LOOTS_PAGE_LIMIT = 20;
+const LOOTS_QUERY_STALE_TIME_MS = 30_000;
 const GRID_COLUMNS = 2;
 const EMPTY_LOOTS: Loot[] = [];
 const EMPTY_GRID_ROWS: Loot[][] = [];
@@ -367,8 +368,7 @@ export const LootsList: FC = () => {
         : undefined,
     initialPageParam: 0,
     enabled: !!guildId && !!world,
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: LOOTS_QUERY_STALE_TIME_MS,
   });
   const handleLootCreate = useEffectEvent(
     async (payload: LootCreateGatewayPayload) => {
