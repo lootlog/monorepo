@@ -1,6 +1,22 @@
-import type { BattleEventPayload } from "@/api";
+import type { BattleEventPayload, BattleEventWarriorPayload } from "@/api";
 import type { GameEvent, W } from "@lootlog/margonem/game-events";
-import { isEmpty, pick } from "@/utils/object-utils";
+import { isEmpty } from "@/utils/object-utils";
+
+const mapBattleWarriorToPayload = ({
+  icon,
+  lvl,
+  name,
+  originalId,
+  prof,
+  team,
+}: W[string]): BattleEventWarriorPayload => ({
+  icon,
+  lvl,
+  name,
+  originalId,
+  prof,
+  team,
+});
 
 export const mapBattleEventsToPayload = (
   events: GameEvent[],
@@ -8,20 +24,13 @@ export const mapBattleEventsToPayload = (
   if (!events || events.length === 0) return null;
 
   const result = events.map((event) => {
-    const fightWarriors: W = {} as W;
-    Object.entries(event.f?.w || {}).forEach(([key, warrior]) => {
-      const entry = pick(warrior, [
-        "originalId",
-        "name",
-        "lvl",
-        "prof",
-        "icon",
-        "team",
-      ]);
+    const fightWarriors: Record<string, BattleEventWarriorPayload> = {};
+    Object.entries(event.f?.w ?? {}).forEach(([key, warrior]) => {
+      const entry = mapBattleWarriorToPayload(warrior);
 
       if (isEmpty(entry)) return;
 
-      fightWarriors[key] = entry as W[string];
+      fightWarriors[key] = entry;
     });
 
     const f = event.f
@@ -55,6 +64,5 @@ export const mapBattleEventsToPayload = (
     };
   });
 
-  // @ts-expect-error - Type mismatch expected
   return result;
 };
