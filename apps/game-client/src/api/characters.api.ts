@@ -1,5 +1,4 @@
 import { LanguageVersion } from "@/store/global.store";
-import { get } from "@/utils/object-utils";
 import { getApiClient } from "@/lib/api-client";
 
 const MARGONEM_CHARACTER_LIST_URL =
@@ -48,6 +47,10 @@ const toStringOrNull = (value: unknown) => {
   return null;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
 const findValueByAliases = (
   characterData: Record<string, unknown>,
   aliases: string[],
@@ -82,12 +85,8 @@ const unwrapCharacterData = (characterData: Record<string, unknown>) => {
   ];
 
   for (const nestedCharacterCandidate of nestedCharacterCandidates) {
-    if (
-      typeof nestedCharacterCandidate === "object" &&
-      nestedCharacterCandidate !== null &&
-      !Array.isArray(nestedCharacterCandidate)
-    ) {
-      return nestedCharacterCandidate as Record<string, unknown>;
+    if (isRecord(nestedCharacterCandidate)) {
+      return nestedCharacterCandidate;
     }
   }
 
@@ -196,18 +195,9 @@ export const normalizeCharacterList = (
     return [];
   }
 
-  return characters.reduce<MargonemCharacter[]>(
-    (normalizedCharacters, character) => {
-      const normalizedCharacter = normalizeCharacter(character);
-
-      if (normalizedCharacter) {
-        normalizedCharacters.push(normalizedCharacter);
-      }
-
-      return normalizedCharacters;
-    },
-    [],
-  );
+  return characters
+    .map(normalizeCharacter)
+    .filter((character): character is MargonemCharacter => character !== null);
 };
 
 const filterCharactersByWorld = (
@@ -239,18 +229,11 @@ export async function fetchCharacterList({
   let parsed: unknown = null;
 
   if (margonemEntry) {
-    try {
-      parsed = JSON.parse(margonemEntry);
-    } catch (error) {
-      throw error;
-    }
+    parsed = JSON.parse(margonemEntry);
   }
 
-  // @ts-expect-error `get` accepts runtime data here; `parsed` intentionally stays `unknown`.
-  const charlist = get(parsed, "charlist", null) as Record<
-    string,
-    MargonemCharacter[]
-  > | null;
+  const charlist =
+    isRecord(parsed) && isRecord(parsed.charlist) ? parsed.charlist : null;
   const rawCachedCharacters = accountId
     ? (charlist?.[accountIdKey] ?? null)
     : null;
