@@ -13,24 +13,11 @@ const pendingGuildPayloads: Map<string, UpdateGuildTimerSettingsPayload> =
 const SYNC_DEBOUNCE_MS = 500;
 
 type MutateGlobalFn = (payload: UpdateTimerSettingsPayload) => void;
-type MutateGuildFn = (payload: UpdateGuildTimerSettingsPayload) => void;
 
 let globalMutateFn: MutateGlobalFn | null = null;
-const guildMutateFns: Map<string, MutateGuildFn> = new Map();
 
 export const registerGlobalSettingsMutation = (mutateFn: MutateGlobalFn) => {
   globalMutateFn = mutateFn;
-};
-
-const registerGuildSettingsMutation = (
-  guildId: string,
-  mutateFn: MutateGuildFn,
-) => {
-  guildMutateFns.set(guildId, mutateFn);
-};
-
-const unregisterGuildSettingsMutation = (guildId: string) => {
-  guildMutateFns.delete(guildId);
 };
 
 export const debouncedSyncGlobalSettings = (
@@ -69,7 +56,7 @@ export const debouncedSyncGuildSettings = (
   guildId: string,
   payload: UpdateGuildTimerSettingsPayload,
 ) => {
-  const existingPayload = pendingGuildPayloads.get(guildId) || {};
+  const existingPayload = pendingGuildPayloads.get(guildId) ?? {};
   pendingGuildPayloads.set(guildId, { ...existingPayload, ...payload });
 
   const existingTimeout = guildSyncTimeouts.get(guildId);
@@ -78,7 +65,6 @@ export const debouncedSyncGuildSettings = (
   }
 
   const timeoutId = setTimeout(() => {
-    const payloadToSend = { ...pendingGuildPayloads.get(guildId) };
     pendingGuildPayloads.delete(guildId);
 
     const { syncEnabled } = useTimersStore.getState();
@@ -88,32 +74,11 @@ export const debouncedSyncGuildSettings = (
       return;
     }
 
-    const mutateFn = guildMutateFns.get(guildId);
-    if (!mutateFn) {
-      console.warn(
-        `[TimerSync] Guild mutation not registered for ${guildId}, skipping sync`,
-      );
-      guildSyncTimeouts.delete(guildId);
-      return;
-    }
-
-    mutateFn(payloadToSend);
+    console.warn(
+      `[TimerSync] Guild mutation not registered for ${guildId}, skipping sync`,
+    );
     guildSyncTimeouts.delete(guildId);
   }, SYNC_DEBOUNCE_MS);
 
   guildSyncTimeouts.set(guildId, timeoutId);
-};
-
-const clearAllSyncTimeouts = () => {
-  if (syncTimeoutId) {
-    clearTimeout(syncTimeoutId);
-    syncTimeoutId = null;
-  }
-  pendingGlobalPayload = {};
-
-  for (const timeoutId of guildSyncTimeouts.values()) {
-    clearTimeout(timeoutId);
-  }
-  guildSyncTimeouts.clear();
-  pendingGuildPayloads.clear();
 };
