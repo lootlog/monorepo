@@ -135,6 +135,33 @@ describe("resolveDocumentTitle", () => {
     ).toBe("Ranking - Letni event | Lootlog.pl");
   });
 
+  it("uses the event name as context for the coordination route", () => {
+    expect(
+      resolveDocumentTitle([
+        createMatch({
+          loaderData: { guild: { name: "Nocna Straż" } },
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1",
+          routeId: "/_authenticated/$guildId",
+        }),
+        createMatch({
+          loaderData: {
+            event: { name: "Letni event", heroNpcs: [] },
+            rankings: [],
+          },
+          params: { eventId: "event-1", guildId: "guild-1" },
+          pathname: "/guild-1/events/event-1",
+          routeId: "/_authenticated/$guildId/events_/$eventId_",
+        }),
+        createMatch({
+          params: { eventId: "event-1", guildId: "guild-1" },
+          pathname: "/guild-1/events/event-1/coordination",
+          routeId: "/_authenticated/$guildId/events_/$eventId_/coordination",
+        }),
+      ]),
+    ).toBe("Koordynator - Letni event | Lootlog.pl");
+  });
+
   it("uses fallback detail labels when loader data does not include a name", () => {
     expect(
       resolveDocumentTitle([

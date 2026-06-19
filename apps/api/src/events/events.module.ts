@@ -30,6 +30,7 @@ import { EventRespawnService } from "./services/event-respawn.service";
 import { EventSummaryService } from "./services/event-summary.service";
 import { EventWrappedService } from "./services/event-wrapped.service";
 import { EventSettingsService } from "./services/event-settings.service";
+import { EventCoordinationService } from "./services/event-coordination.service";
 import { EventsSettingsController } from "./events-settings.controller";
 import { TimersModule } from "src/timers/timers.module";
 
@@ -63,6 +64,7 @@ import { TimersModule } from "src/timers/timers.module";
     EventSummaryService,
     EventWrappedService,
     EventSettingsService,
+    EventCoordinationService,
 
     EventsQueueHandler,
     EventHeroKillProcessor,

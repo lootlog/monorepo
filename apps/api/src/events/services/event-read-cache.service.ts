@@ -3,6 +3,28 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 
 const EVENT_READ_CACHE_PREFIX = "event-read";
 const EVENT_READ_CACHE_TTL_SECONDS = 10;
+const EVENT_READ_CACHE_DATE_FIELDS = new Set([
+  "assignedAt",
+  "confirmedAt",
+  "confirmationDeadlineAt",
+  "createdAt",
+  "editedAt",
+  "endedAt",
+  "endsAt",
+  "generatedAt",
+  "killedAt",
+  "lastKilledAt",
+  "maxSpawnTime",
+  "minSpawnTime",
+  "startedAt",
+  "startsAt",
+  "unassignedAt",
+  "updatedAt",
+  "windowClosedAt",
+  "windowOpenedAt",
+]);
+const ISO_DATETIME_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
 @Injectable()
 export class EventReadCacheService {
@@ -27,14 +49,16 @@ export class EventReadCacheService {
     return this.buildKey(guildId, eventId, scope, params);
   }
 
-  getOrSet<T>(key: string, factory: () => Promise<T>): Promise<T> {
-    return this.redis.getOrSetJsonBestEffort({
+  async getOrSet<T>(key: string, factory: () => Promise<T>): Promise<T> {
+    const value = await this.redis.getOrSetJsonBestEffort({
       key,
       ttlSeconds: EVENT_READ_CACHE_TTL_SECONDS,
       factory,
       onError: (error) =>
         this.logger.warn("Event read cache unavailable", error),
     });
+
+    return reviveEventReadCacheDates(value) as T;
   }
 
   async invalidateGuild(guildId: string) {
@@ -97,4 +121,42 @@ export class EventReadCacheService {
 
     return JSON.stringify(value);
   }
+}
+
+function reviveEventReadCacheDates(value: unknown, key?: string): unknown {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (
+    key &&
+    EVENT_READ_CACHE_DATE_FIELDS.has(key) &&
+    typeof value === "string" &&
+    isIsoDatetime(value)
+  ) {
+    return new Date(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => reviveEventReadCacheDates(entry));
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([entryKey, entryValue]) => [
+      entryKey,
+      reviveEventReadCacheDates(entryValue, entryKey),
+    ]),
+  );
+}
+
+function isIsoDatetime(value: string) {
+  if (!ISO_DATETIME_PATTERN.test(value)) {
+    return false;
+  }
+
+  return !Number.isNaN(new Date(value).getTime());
 }
