@@ -38,7 +38,8 @@ type GetNavigationInfoArgs = {
 };
 
 export function getNavigationInfo(args: GetNavigationInfoArgs): NavigationInfo {
-  const { path, params, guildName, t } = args;
+  const { params, guildName, t } = args;
+  const path = normalizePath(args.path);
   const { guildId } = params;
 
   if (!guildId) {
@@ -71,6 +72,8 @@ function buildRoutes(guildId: string) {
     timers: ROUTES.guild.timers(guildId),
     reservations: ROUTES.guild.reservations.base(guildId),
     stats: ROUTES.guild.stats(guildId),
+    statsKills: ROUTES.guild.statsKills(guildId),
+    statsLoots: ROUTES.guild.statsLoots(guildId),
     statsRanking: `${ROUTES.guild.stats(guildId)}/ranking`,
     statsNpcs: `${ROUTES.guild.stats(guildId)}/npcs`,
     notifications: ROUTES.guild.notifications.base(guildId),
@@ -86,6 +89,14 @@ function buildRoutes(guildId: string) {
 }
 
 type Routes = ReturnType<typeof buildRoutes>;
+
+function normalizePath(path: string) {
+  if (path.length <= 1) {
+    return path;
+  }
+
+  return path.replace(/\/$/, "");
+}
 
 function resolveSimpleRoute(
   path: string,
@@ -125,6 +136,16 @@ function resolveSimpleRoute(
       path: routes.stats,
       label: t("common.breadcrumbs.stats"),
       backPath: routes.base,
+    },
+    {
+      path: routes.statsKills,
+      label: t("common.stats.kills"),
+      backPath: routes.stats,
+    },
+    {
+      path: routes.statsLoots,
+      label: t("common.stats.loots"),
+      backPath: routes.stats,
     },
     {
       path: routes.events,
@@ -428,10 +449,13 @@ function resolveSettingsRoutes(
       path: null,
     });
   } else if (path === routes.settingsNpcs) {
-    breadcrumbs.push({ label: t("common.breadcrumbs.npcs"), path: null });
+    breadcrumbs.push({
+      label: t("common.breadcrumbs.settingsNpcs"),
+      path: null,
+    });
   } else if (path.startsWith(`${routes.settingsNpcs}/`)) {
     breadcrumbs.push({
-      label: t("common.breadcrumbs.npcs"),
+      label: t("common.breadcrumbs.settingsNpcs"),
       path: routes.settingsNpcs,
     });
     breadcrumbs.push({

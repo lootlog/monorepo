@@ -42,6 +42,7 @@ import type {
   CreateLootResponse,
   CreateLootSubmittedGuild,
 } from "src/loots/dto/loot-response.dto";
+import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 
 type LootSubmissionData = {
   guildId: string;
@@ -69,6 +70,14 @@ type CreateLootOutcome = {
   submissionData: LootSubmissionData[];
   submittedGuilds: CreateLootSubmittedGuild[];
   rejectedGuilds: CreateLootRejectedGuild[];
+};
+
+type CachedLootQueryResult = Omit<
+  LootQueryResult,
+  "createdAt" | "updatedAt"
+> & {
+  createdAt: Date | string;
+  updatedAt: Date | string;
 };
 
 const LOOTS_LIST_CACHE_TTL_SECONDS = 10;
@@ -281,6 +290,24 @@ export class LootsService implements OnModuleInit {
     }
 
     return JSON.stringify(value);
+  }
+
+  private normalizeCachedLootDate(value: Date | string): Date {
+    if (value instanceof Date) {
+      return value;
+    }
+
+    return new Date(value);
+  }
+
+  private normalizeCachedLoots(
+    loots: CachedLootQueryResult[],
+  ): LootQueryResult[] {
+    return loots.map((loot) => ({
+      ...loot,
+      createdAt: this.normalizeCachedLootDate(loot.createdAt),
+      updatedAt: this.normalizeCachedLootDate(loot.updatedAt),
+    }));
   }
 
   private getSocketNpcPayloadFromLootNpcs(
@@ -765,14 +792,16 @@ export class LootsService implements OnModuleInit {
     return mappedLootShare;
   }
 
-  fetchLootsByGuildId(
+  async fetchLootsByGuildId(
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
     params: FetchLootsParamsDto,
   ) {
     if (this.isFirstLootsPage(params)) {
-      return this.redisService.getOrSetJsonBestEffort({
+      const loots = await this.redisService.getOrSetJsonBestEffort<
+        CachedLootQueryResult[]
+      >({
         key: this.getLootsListCacheKey(guild, permissions, roles, params),
         ttlSeconds: LOOTS_LIST_CACHE_TTL_SECONDS,
         onError: (error) =>
@@ -785,6 +814,8 @@ export class LootsService implements OnModuleInit {
             params,
           ),
       });
+
+      return this.normalizeCachedLoots(loots);
     }
 
     return this.lootQueryService.fetchLootsByGuildId(
