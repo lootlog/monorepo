@@ -28,8 +28,7 @@ export const useGameAccountPreferencesSync = () => {
     isLoading: areGuildsLoading,
   } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const queryClient = useQueryClient();
-  const accountId = Game.hero?.account ? String(Game.hero.account) : null;
-  const guildIds = guilds?.map((guild) => guild.id) ?? [];
+  const accountId = Game.getAccountId();
   const seededAccountsRef = useRef<Set<string>>(new Set());
 
   const { data, isLoading, isFetching, isFetched } =
@@ -59,6 +58,7 @@ export const useGameAccountPreferencesSync = () => {
       const queryKey = getUsersControllerGetUserGameAccountPreferencesQueryKey({
         accountId,
       });
+      const guildIds = guilds?.map((guild) => guild.id) ?? [];
       const seededNotifications = data.hasStoredNotifications
         ? data.notifications
         : createNotificationsSettings(guildIds);
@@ -98,7 +98,7 @@ export const useGameAccountPreferencesSync = () => {
     accountId,
     data,
     gameInitialized,
-    guildIds,
+    guilds,
     areGuildsFetched,
     areGuildsFetching,
     areGuildsLoading,
