@@ -1,13 +1,11 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import {
-  LandingHeader,
-  LandingFooter,
-  HeroSection,
-  FaqPanel,
-  Testimonials,
-} from "@/src/components/landing";
+import { FaqPanel } from "@/src/components/landing/faq-panel";
+import { LandingFooter } from "@/src/components/landing/footer";
+import { LandingHeader } from "@/src/components/landing/header";
+import { HeroSection } from "@/src/components/landing/hero-section";
+import { Testimonials } from "@/src/components/landing/testimonials";
 
 export function HomeContent() {
   const { t } = useTranslation();
