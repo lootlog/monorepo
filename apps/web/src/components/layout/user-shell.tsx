@@ -9,6 +9,7 @@ import { ArrowLeft } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
+import { getUserNavigationInfo } from "./get-user-navigation-info";
 
 type UserShellProps = {
   children: ReactNode;
@@ -22,161 +23,10 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
   const [headerActionsElement, setHeaderActionsElement] =
     useState<HTMLElement | null>(null);
 
-  const getNavigationInfo = () => {
-    const path = location.pathname;
-
-    if (path === ROUTES.user.dashboard) {
-      return {
-        breadcrumbs: [{ label: t("layout.navigation.dashboard"), path: null }],
-        showBack: false,
-      };
-    }
-
-    if (path === ROUTES.user.battlePanel.base) {
-      return {
-        breadcrumbs: [
-          { label: t("layout.navigation.battlePanel"), path: null },
-        ],
-        showBack: false,
-      };
-    }
-
-    if (path === ROUTES.user.battlePanel.statistics) {
-      return {
-        breadcrumbs: [
-          {
-            label: t("layout.navigation.battlePanel"),
-            path: ROUTES.user.battlePanel.base,
-          },
-          { label: t("layout.breadcrumbs.statistics"), path: null },
-        ],
-        showBack: true,
-        backPath: ROUTES.user.battlePanel.base,
-      };
-    }
-
-    if (path === ROUTES.user.battlePanel.h2h) {
-      return {
-        breadcrumbs: [
-          {
-            label: t("layout.navigation.battlePanel"),
-            path: ROUTES.user.battlePanel.base,
-          },
-          {
-            label: t("layout.breadcrumbs.statistics"),
-            path: ROUTES.user.battlePanel.statistics,
-          },
-          { label: t("layout.breadcrumbs.headToHead"), path: null },
-        ],
-        showBack: true,
-        backPath: ROUTES.user.battlePanel.statistics,
-      };
-    }
-
-    if (path === ROUTES.user.battlePanel.matchmakingH2h) {
-      return {
-        breadcrumbs: [
-          {
-            label: t("layout.navigation.battlePanel"),
-            path: ROUTES.user.battlePanel.base,
-          },
-          {
-            label: t("layout.breadcrumbs.statistics"),
-            path: ROUTES.user.battlePanel.statistics,
-          },
-          { label: t("layout.breadcrumbs.matchmakingHeadToHead"), path: null },
-        ],
-        showBack: true,
-        backPath: ROUTES.user.battlePanel.statistics,
-      };
-    }
-
-    if (
-      path.startsWith(`${ROUTES.user.battlePanel.statistics}/player-vs-player/`)
-    ) {
-      return {
-        breadcrumbs: [
-          {
-            label: t("layout.navigation.battlePanel"),
-            path: ROUTES.user.battlePanel.base,
-          },
-          {
-            label: t("layout.breadcrumbs.statistics"),
-            path: ROUTES.user.battlePanel.statistics,
-          },
-          { label: t("layout.breadcrumbs.playerVsPlayer"), path: null },
-        ],
-        showBack: true,
-        backPath: ROUTES.user.battlePanel.statistics,
-      };
-    }
-
-    const normalizedPath = path.replace(/\/$/, "");
-    const battlesDetailsPath = `${ROUTES.user.battlePanel.base}/battles`;
-
-    if (normalizedPath.startsWith(`${battlesDetailsPath}/`)) {
-      const battleId = normalizedPath.split("/").pop();
-      if (battleId && battleId.length > 0) {
-        return {
-          breadcrumbs: [
-            {
-              label: t("layout.navigation.battlePanel"),
-              path: ROUTES.user.battlePanel.base,
-            },
-            {
-              label: t("layout.breadcrumbs.battles"),
-              path: ROUTES.user.battlePanel.base,
-            },
-            {
-              label: t("battlePanel.navigation.battleFallback", {
-                id: battleId,
-              }),
-              path: null,
-            },
-          ],
-          showBack: true,
-          backPath: ROUTES.user.battlePanel.base,
-        };
-      }
-    }
-
-    if (path.startsWith(ROUTES.user.settings.base)) {
-      return {
-        breadcrumbs: [{ label: t("layout.navigation.settings"), path: null }],
-        showBack: false,
-      };
-    }
-
-    if (path.startsWith(ROUTES.user.notifications.base)) {
-      return {
-        breadcrumbs: [
-          { label: t("layout.navigation.notifications"), path: null },
-        ],
-        showBack: false,
-      };
-    }
-
-    if (path === "/@me/kills") {
-      return {
-        breadcrumbs: [
-          {
-            label: t("layout.navigation.dashboard"),
-            path: ROUTES.user.dashboard,
-          },
-          { label: t("layout.breadcrumbs.npcRanking"), path: null },
-        ],
-        showBack: true,
-        backPath: ROUTES.user.dashboard,
-      };
-    }
-
-    return {
-      breadcrumbs: [{ label: t("layout.navigation.dashboard"), path: null }],
-      showBack: false,
-    };
-  };
-
-  const navigationInfo = getNavigationInfo();
+  const navigationInfo = getUserNavigationInfo({
+    path: location.pathname,
+    t,
+  });
   const isFullHeightContent =
     location.pathname === ROUTES.user.battlePanel.h2h ||
     location.pathname === ROUTES.user.battlePanel.matchmakingH2h ||
