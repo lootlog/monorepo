@@ -8,7 +8,7 @@ const PacketType = {
   CONNECT_ERROR: 4,
   BINARY_EVENT: 5,
   BINARY_ACK: 6,
-};
+} as const;
 
 // Custom extension codec to handle undefined properly
 const extensionCodec = new ExtensionCodec();
@@ -33,7 +33,7 @@ interface Packet {
 }
 
 class MsgpackEncoder {
-  encode(packet: unknown) {
+  encode(packet: unknown): Uint8Array[] {
     return [encode(packet, { extensionCodec })];
   }
 }
@@ -43,42 +43,55 @@ type EventCallback = (...args: unknown[]) => void;
 class MsgpackDecoder {
   private listeners: Map<string, EventCallback[]> = new Map();
 
-  on(event: string, callback: EventCallback) {
+  on(event: string, callback: EventCallback): void {
     const callbacks = this.listeners.get(event) ?? [];
     callbacks.push(callback);
     this.listeners.set(event, callbacks);
   }
 
-  off(event: string, callback: EventCallback) {
+  off(event: string, callback: EventCallback): void {
     const callbacks = this.listeners.get(event);
-    if (callbacks) {
-      const index = callbacks.indexOf(callback);
-      if (index !== -1) {
-        callbacks.splice(index, 1);
-      }
+
+    if (!callbacks) {
+      return;
+    }
+
+    const callbackIndex = callbacks.indexOf(callback);
+
+    if (callbackIndex === -1) {
+      return;
+    }
+
+    callbacks.splice(callbackIndex, 1);
+
+    if (callbacks.length === 0) {
+      this.listeners.delete(event);
     }
   }
 
   // Alias for off() - required by Socket.IO
-  removeListener(event: string, callback: EventCallback) {
+  removeListener(event: string, callback: EventCallback): void {
     this.off(event, callback);
   }
 
   // Alias for on() - for compatibility
-  addListener(event: string, callback: EventCallback) {
+  addListener(event: string, callback: EventCallback): void {
     this.on(event, callback);
   }
 
-  private emit(event: string, ...args: unknown[]) {
+  private emit(event: string, ...args: unknown[]): void {
     const callbacks = this.listeners.get(event);
-    if (callbacks) {
-      for (const callback of callbacks) {
-        callback(...args);
-      }
+
+    if (!callbacks) {
+      return;
+    }
+
+    for (const callback of callbacks) {
+      callback(...args);
     }
   }
 
-  add(obj: Uint8Array | ArrayLike<number>) {
+  add(obj: Uint8Array | ArrayLike<number>): void {
     const input = obj instanceof Uint8Array ? obj : new Uint8Array(obj);
     const decoded = decode(input, { extensionCodec }) as Packet;
 
@@ -91,7 +104,7 @@ class MsgpackDecoder {
     this.emit("decoded", decoded);
   }
 
-  private checkPacket(decoded: Packet) {
+  private checkPacket(decoded: Packet): void {
     const isTypeValid =
       typeof decoded.type === "number" &&
       decoded.type >= PacketType.CONNECT &&
@@ -112,7 +125,7 @@ class MsgpackDecoder {
     }
   }
 
-  destroy() {
+  destroy(): void {
     this.listeners.clear();
   }
 }
