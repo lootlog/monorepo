@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState } from "react";
 import {
   getISOWeek,
   getISOWeekYear,
@@ -15,7 +15,7 @@ export function useScheduleNavigation() {
   const [currentYear, setCurrentYear] = useState(initialYear);
   const [currentWeek, setCurrentWeek] = useState(initialWeek);
 
-  const handlePrevWeek = useCallback(() => {
+  const handlePrevWeek = () => {
     if (currentWeek > 1) {
       setCurrentWeek(currentWeek - 1);
     } else {
@@ -23,9 +23,9 @@ export function useScheduleNavigation() {
       setCurrentYear(prevYear);
       setCurrentWeek(getLastISOWeek(prevYear));
     }
-  }, [currentWeek, currentYear]);
+  };
 
-  const handleNextWeek = useCallback(() => {
+  const handleNextWeek = () => {
     const lastWeek = getLastISOWeek(currentYear);
     if (currentWeek < lastWeek) {
       setCurrentWeek(currentWeek + 1);
@@ -33,12 +33,9 @@ export function useScheduleNavigation() {
       setCurrentYear(currentYear + 1);
       setCurrentWeek(1);
     }
-  }, [currentWeek, currentYear]);
+  };
 
-  const weekStart = useMemo(
-    () => getDateOfISOWeek(currentWeek, currentYear),
-    [currentWeek, currentYear],
-  );
+  const weekStart = getDateOfISOWeek(currentWeek, currentYear);
 
   const monthName = MONTH_NAMES[weekStart.getMonth()] ?? "";
 
