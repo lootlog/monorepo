@@ -1,15 +1,13 @@
-import type {
-  Battle,
-  BattleWarrior as Warrior,
-} from "@/lib/api/battlelog-types";
+import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight, Flag, Skull } from "lucide-react";
 import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
+import type { TFunction } from "i18next";
 
 export const getBattleStatsTableColumns = (
-  _battle: Battle,
+  t: TFunction,
   expandedRows: Map<
     string,
     "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt"
@@ -23,7 +21,7 @@ export const getBattleStatsTableColumns = (
 ): ColumnDef<Warrior>[] => [
   {
     accessorKey: "name",
-    header: "Nick",
+    header: t("battleUi.statsTable.columns.nick"),
     cell: ({ row }) => {
       const warrior = row.original;
       const isExpanded = expandedRows.get(warrior.id) === "details";
@@ -56,7 +54,7 @@ export const getBattleStatsTableColumns = (
   },
   {
     accessorKey: "turns",
-    header: "Tury",
+    header: t("battleUi.statsTable.columns.turns"),
     enableSorting: true,
     cell: ({ row }) => {
       const warrior = row.original;
@@ -87,7 +85,7 @@ export const getBattleStatsTableColumns = (
   },
   {
     accessorKey: "damageDealt",
-    header: "Obrażenia",
+    header: t("battleUi.statsTable.columns.damage"),
     enableSorting: true,
     cell: ({ row }) => {
       const warrior = row.original;
@@ -118,7 +116,7 @@ export const getBattleStatsTableColumns = (
   },
   {
     accessorKey: "damageDealtAfterDefensive",
-    header: "Trafione obrażenia (ataki)",
+    header: t("battleUi.statsTable.columns.hitDamage"),
     enableSorting: true,
     cell: ({ row }) => {
       const value = row.original.damageDealtAfterDefensive;
@@ -128,7 +126,7 @@ export const getBattleStatsTableColumns = (
   },
   {
     accessorKey: "damageDealtAfterDefensivePercentage",
-    header: "Skuteczność",
+    header: t("battleUi.statsTable.columns.effectiveness"),
     enableSorting: true,
     cell: ({ row }) => {
       const value = row.original.damageDealtAfterDefensivePercentage;
@@ -138,7 +136,7 @@ export const getBattleStatsTableColumns = (
   },
   {
     accessorKey: "damageTaken",
-    header: "Otrzymane obrażenia",
+    header: t("battleUi.statsTable.columns.damageTaken"),
     enableSorting: true,
     cell: ({ row }) => {
       const warrior = row.original;
@@ -169,7 +167,7 @@ export const getBattleStatsTableColumns = (
   },
   {
     accessorKey: "evasions",
-    header: "Uniki",
+    header: t("battleUi.statsTable.columns.evasions"),
     enableSorting: true,
     cell: ({ row }) => (
       <div className="text-right tabular-nums">{row.original.evasions}</div>
@@ -177,7 +175,7 @@ export const getBattleStatsTableColumns = (
   },
   {
     accessorKey: "blocks",
-    header: "Bloki",
+    header: t("battleUi.statsTable.columns.blocks"),
     enableSorting: true,
     cell: ({ row }) => {
       const warrior = row.original;
@@ -208,7 +206,7 @@ export const getBattleStatsTableColumns = (
   },
   {
     accessorKey: "criticalHits",
-    header: "Krytyki",
+    header: t("battleUi.statsTable.columns.criticalHits"),
     enableSorting: true,
     cell: ({ row }) => (
       <div className="text-right tabular-nums">{row.original.criticalHits}</div>
@@ -216,7 +214,7 @@ export const getBattleStatsTableColumns = (
   },
   {
     accessorKey: "legbons",
-    header: "Bonusy",
+    header: t("battleUi.statsTable.columns.legendaryBonuses"),
     enableSorting: true,
     cell: ({ row }) => {
       const warrior = row.original;

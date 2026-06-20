@@ -2733,12 +2733,19 @@ components:
                 type: string
               loser:
                 type: string
+              hasFlee:
+                type: boolean
+              matchmaking:
+                type: boolean
               ratingDelta:
                 type: number
+                nullable: true
               userRating:
                 type: number
+                nullable: true
               opponentRating:
                 type: number
+                nullable: true
               userWarrior:
                 type: object
                 properties:
@@ -2750,11 +2757,29 @@ components:
                     type: string
                   icon:
                     type: string
+                  fireDamage:
+                    type: number
+                  frostDamage:
+                    type: number
+                  lightningDamage:
+                    type: number
+                  poisonDamageTaken:
+                    type: number
+                  woundDamageTaken:
+                    type: number
+                  critWoundDamageTaken:
+                    type: number
                 required:
                   - name
                   - lvl
                   - prof
                   - icon
+                  - fireDamage
+                  - frostDamage
+                  - lightningDamage
+                  - poisonDamageTaken
+                  - woundDamageTaken
+                  - critWoundDamageTaken
               opponentWarrior:
                 type: object
                 properties:
@@ -2766,17 +2791,37 @@ components:
                     type: string
                   icon:
                     type: string
+                  fireDamage:
+                    type: number
+                  frostDamage:
+                    type: number
+                  lightningDamage:
+                    type: number
+                  poisonDamageTaken:
+                    type: number
+                  woundDamageTaken:
+                    type: number
+                  critWoundDamageTaken:
+                    type: number
                 required:
                   - name
                   - lvl
                   - prof
                   - icon
+                  - fireDamage
+                  - frostDamage
+                  - lightningDamage
+                  - poisonDamageTaken
+                  - woundDamageTaken
+                  - critWoundDamageTaken
             required:
               - battleId
               - createdAt
               - duration
               - winner
               - loser
+              - hasFlee
+              - matchmaking
               - ratingDelta
               - userRating
               - opponentRating

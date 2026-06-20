@@ -60,7 +60,12 @@ export function RecentOpponentBattlesDialog({
           </DialogTitle>
           <p className="truncate text-sm text-muted-foreground">
             {t("battlePanel.single.recentOpponent.subtitle", {
-              opponent: context.opponentName,
+              opponentLevel: context.opponentLvl,
+              opponentName: context.opponentName,
+              opponentProf: context.opponentProf,
+              userLevel: context.userLvl,
+              userName: context.userName,
+              userProf: context.userProf,
             })}
           </p>
         </DialogHeader>

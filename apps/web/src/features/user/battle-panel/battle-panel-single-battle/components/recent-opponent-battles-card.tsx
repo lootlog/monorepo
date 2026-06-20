@@ -12,7 +12,7 @@ import { ArrowUpRight, History } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { getRecentOpponentBattleContext } from "./recent-opponent-battle-context";
-import { RecentOpponentBattlesTable } from "./recent-opponent-battles-table";
+import { RecentOpponentBattlesList } from "./recent-opponent-battles-list";
 
 type RecentOpponentBattlesCardProps = {
   battle: Battle | undefined;
@@ -26,6 +26,10 @@ export function RecentOpponentBattlesCard({
   const { t } = useTranslation();
   const context = getRecentOpponentBattleContext(battle);
 
+  if (!context) {
+    return null;
+  }
+
   return (
     <Card
       className={cn(
@@ -33,63 +37,58 @@ export function RecentOpponentBattlesCard({
         className,
       )}
     >
-      <div className="flex min-h-[61px] shrink-0 items-center justify-between gap-3 border-b bg-background px-3 py-3">
+      <div className="flex min-h-[49px] shrink-0 items-center justify-between gap-3 border-b bg-background px-3 py-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <History className="size-4 shrink-0 text-primary" />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1 leading-tight">
             <h3 className="truncate text-sm font-semibold">
               {t("battlePanel.single.recentOpponent.title")}
             </h3>
-            <p className="truncate text-xs text-muted-foreground">
-              {context
-                ? t("battlePanel.single.recentOpponent.subtitle", {
-                    opponent: context.opponentName,
-                  })
-                : t("battlePanel.single.recentOpponent.unsupported")}
+            <p className="truncate text-[11px] text-muted-foreground">
+              {t("battlePanel.single.recentOpponent.subtitle", {
+                opponentLevel: context.opponentLvl,
+                opponentName: context.opponentName,
+                opponentProf: context.opponentProf,
+                userLevel: context.userLvl,
+                userName: context.userName,
+                userProf: context.userProf,
+              })}
             </p>
           </div>
         </div>
-        {context && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="h-8 shrink-0 gap-1.5 px-2 text-xs"
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="size-8 shrink-0"
+            >
+              <Link
+                aria-label={t("battlePanel.single.recentOpponent.viewAllAria", {
+                  opponent: context.opponentName,
+                })}
+                to={
+                  ROUTES.user.battlePanel.playerVsPlayer(
+                    context.characterId,
+                    context.opponentId,
+                  ) as string
+                }
+                search={{ period: "all" }}
               >
-                <Link
-                  aria-label={t(
-                    "battlePanel.single.recentOpponent.viewAllAria",
-                    {
-                      opponent: context.opponentName,
-                    },
-                  )}
-                  to={
-                    ROUTES.user.battlePanel.playerVsPlayer(
-                      context.characterId,
-                      context.opponentId,
-                    ) as string
-                  }
-                  search={{ period: "all" }}
-                >
-                  <span className="hidden sm:inline">
-                    {t("battlePanel.single.recentOpponent.viewAll")}
-                  </span>
-                  <ArrowUpRight className="size-3.5" />
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {t("battlePanel.single.recentOpponent.viewAllAria", {
-                opponent: context.opponentName,
-              })}
-            </TooltipContent>
-          </Tooltip>
-        )}
+                <ArrowUpRight className="size-3.5" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {t("battlePanel.single.recentOpponent.viewAllAria", {
+              opponent: context.opponentName,
+            })}
+          </TooltipContent>
+        </Tooltip>
       </div>
 
-      <RecentOpponentBattlesTable battle={battle} />
+      <RecentOpponentBattlesList battle={battle} />
     </Card>
   );
 }

@@ -11,15 +11,16 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import type {
-  Battle,
-  BattleWarrior as Warrior,
-} from "@/lib/api/battlelog-types";
+import type { Battle } from "@/lib/api/battlelog-types";
 import { useStatsCustomization } from "@/hooks/use-stats-customization";
 import { StatsCustomizationModal } from "./stats-customization/stats-customization-modal";
 import { BattleStatsTableHeader } from "./battle-stats-table-header";
 import { useTranslation } from "react-i18next";
-import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
+import type {
+  BattleStatDefinition,
+  BattleStatCategoryDefinition,
+  StatsCustomizationConfig,
+} from "@/types/stats-customization.types";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
   Tooltip,
@@ -27,6 +28,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { SearchInput } from "@/components/ui/search-input";
+import { STAT_CATEGORIES } from "./one-vs-one-stats-definitions";
 
 const STAT_SEARCH_SCROLL_OFFSET_PX = 40;
 
@@ -43,326 +45,20 @@ interface OneVsOneStatsTableProps {
   statsCustomizationConfig?: StatsCustomizationConfig;
 }
 
-interface StatDefinition {
-  key: keyof Warrior;
+type VisibleStatDefinition = BattleStatDefinition & {
   label: string;
-  color?: string;
-  format?: (value: unknown) => string;
-}
-
-interface StatCategory {
-  name: string;
-  stats: StatDefinition[];
-}
+};
 
 type VisibleStatCategory = {
   id: string;
-  name: string;
-  stats: StatDefinition[];
+  label: string;
+  stats: VisibleStatDefinition[];
 };
-
-export const STAT_CATEGORIES: StatCategory[] = [
-  {
-    name: "Statystyki tur",
-    stats: [
-      { key: "turns", label: "Tury", color: "text-blue-400" },
-      { key: "steps", label: "Kroki", color: "text-green-400" },
-      { key: "turnsLost", label: "Utracone tury", color: "text-red-400" },
-      { key: "normalAttacks", label: "Zwykłe ataki", color: "text-orange-400" },
-      {
-        key: "spellsUsed",
-        label: "Użyte umiejętności",
-        color: "text-purple-400",
-      },
-    ],
-  },
-  {
-    name: "Zadane obrażenia",
-    stats: [
-      { key: "damageDealt", label: "Obrażenia", color: "text-white" },
-      {
-        key: "distanceDamage",
-        label: "Obrażenia dystansowe",
-        color: "text-green-400",
-      },
-      {
-        key: "meleeDamage",
-        label: "Obrażenia w zwarciu",
-        color: "text-blue-300",
-      },
-      {
-        key: "auxiliaryDamage",
-        label: "Obrażenia pomocnicze",
-        color: "text-orange-300",
-      },
-      { key: "fireDamage", label: "Obrażenia od ognia", color: "text-red-400" },
-      {
-        key: "frostDamage",
-        label: "Obrażenia od zimna",
-        color: "text-cyan-400",
-      },
-      {
-        key: "lightningDamage",
-        label: "Obrażenia od błyskawic",
-        color: "text-yellow-400",
-      },
-      {
-        key: "thirdAttDamage",
-        label: "Obrażenia trzeciego ciosu",
-        color: "text-orange-400",
-      },
-      {
-        key: "rageDamageDealt",
-        label: "Obrażenia od wściekłości",
-        color: "text-red-300",
-      },
-      { key: "trueDamageDealt", label: "True damage", color: "text-white" },
-      {
-        key: "stigmaDamageDealt",
-        label: "Obrażenia od piętna bestii",
-        color: "text-purple-400",
-      },
-      {
-        key: "reflectedDamage",
-        label: "Odbite obrażenia",
-        color: "text-purple-400",
-      },
-      {
-        key: "damageDealtAfterDefensive",
-        label: "Trafione obrażenia (ataki)",
-      },
-      {
-        key: "damageDealtAfterDefensivePercentage",
-        label: "Skuteczność",
-        format: (v) => `${v}%`,
-      },
-    ],
-  },
-  {
-    name: "Otrzymane obrażenia",
-    stats: [
-      { key: "damageTaken", label: "Otrzymane obrażenia", color: "text-white" },
-      {
-        key: "distanceDamageTaken",
-        label: "Obrażenia dystansowe",
-        color: "text-green-400",
-      },
-      {
-        key: "meleeDamageTaken",
-        label: "Obrażenia w zwarciu",
-        color: "text-blue-300",
-      },
-      {
-        key: "auxiliaryDamageTaken",
-        label: "Obrażenia pomocnicze",
-        color: "text-orange-300",
-      },
-      {
-        key: "fireDamageTaken",
-        label: "Obrażenia od ognia",
-        color: "text-red-400",
-      },
-      {
-        key: "frostDamageTaken",
-        label: "Obrażenia od zimna",
-        color: "text-cyan-400",
-      },
-      {
-        key: "lightningDamageTaken",
-        label: "Obrażenia od błyskawic",
-        color: "text-yellow-400",
-      },
-      {
-        key: "thirdAttDamageTaken",
-        label: "Obrażenia trzeciego ciosu",
-        color: "text-orange-400",
-      },
-      { key: "flatDamageTaken", label: "Obrażenia od ataków" },
-      { key: "trueDamageTaken", label: "True damage", color: "text-white" },
-      {
-        key: "stigmaDamageTaken",
-        label: "Obrażenia od piętna bestii",
-        color: "text-purple-400",
-      },
-      {
-        key: "woundDamageTaken",
-        label: "Obrażenia od głębokich ran",
-        color: "text-orange-600",
-      },
-      {
-        key: "poisonDamageTaken",
-        label: "Obrażenia od trucizny",
-        color: "text-green-600",
-      },
-      {
-        key: "injureDamageTaken",
-        label: "Obrażenia od zranienia",
-        color: "text-red-300",
-      },
-      {
-        key: "critWoundDamageTaken",
-        label: "Obrażenia od zranienia",
-        color: "text-orange-400",
-      },
-      {
-        key: "firePassiveDamageTaken",
-        label: "Pasywne obrażenia od ognia",
-        color: "text-red-500",
-      },
-      {
-        key: "lightningPassiveDamageTaken",
-        label: "Pasywne obrażenia od błyskawic",
-        color: "text-yellow-500",
-      },
-      {
-        key: "legbonAnguishDamageTaken",
-        label: "Udręka (otrzymane obrażenia)",
-        color: "text-red-600",
-      },
-      { key: "reflectedDamageTaken", label: "Otrzymane odbite obrażenia" },
-    ],
-  },
-  {
-    name: "Tury",
-    stats: [
-      { key: "criticalHits", label: "Krytyki" },
-      {
-        key: "armorPierces",
-        label: "Przebicia pancerza",
-        color: "text-yellow-400",
-      },
-      { key: "injures", label: "Zranienia" },
-
-      { key: "fastArrows", label: "Szybkie strzały", color: "text-yellow-400" },
-    ],
-  },
-  {
-    name: "Bonusy legendarne",
-    stats: [
-      { key: "legbons", label: "Bonusy" },
-      { key: "legbonCurse", label: "Klątwa", color: "text-yellow-400" },
-      { key: "legbonCleanse", label: "Oczyszczenie", color: "text-blue-400" },
-      {
-        key: "legbonLastheal",
-        label: "Ostatni ratunek",
-        color: "text-green-400",
-      },
-      {
-        key: "legbonLasthealValue",
-        label: "Ostatni ratunek (wartość leczenia)",
-        color: "text-gray-400",
-      },
-      { key: "legbonGlare", label: "Oślepienie", color: "text-yellow-400" },
-      {
-        key: "legbonHolytouch",
-        label: "Dotyk anioła (ilość)",
-        color: "text-blue-300",
-      },
-      {
-        key: "legbonHolytouchValue",
-        label: "Dotyk anioła (wartość leczenia)",
-        color: "text-blue-300",
-      },
-      {
-        key: "legbonCritredValue",
-        label: "Krytyczna osłona (wartość)",
-        color: "text-sky-400",
-      },
-      {
-        key: "legbonFacadeValue",
-        label: "Fasada opieki (wartość)",
-        color: "text-sky-400",
-      },
-      {
-        key: "legbonVerycrit",
-        label: "Cios bardzo krytyczny",
-        color: "text-red-600",
-      },
-      {
-        key: "legbonAnguish",
-        label: "Krwawa udręka (liczba)",
-        color: "text-red-600",
-      },
-      {
-        key: "legbonPunctureValue",
-        label: "Przeszywająca skuteczność (wartość)",
-        color: "text-red-300",
-      },
-    ],
-  },
-  {
-    name: "Niszczenie defensywy",
-    stats: [
-      {
-        key: "reducedArmor",
-        label: "Zniszczony pancerz",
-        color: "text-yellow-400",
-      },
-      {
-        key: "magicResistanceDestroyed",
-        label: "Zniszczona odporność magiczna",
-        color: "text-yellow-400",
-      },
-      {
-        key: "reducedPoisonResistance",
-        label: "Zniszczona odporność na truciznę",
-        color: "text-yellow-400",
-      },
-    ],
-  },
-  {
-    name: "Defensywa",
-    stats: [
-      { key: "evasions", label: "Uniki" },
-      { key: "counters", label: "Kontry", color: "text-blue-400" },
-      { key: "blocks", label: "Bloki", color: "text-blue-400" },
-      {
-        key: "blockedDamage",
-        label: "Zablokowane obrażenia",
-        color: "text-green-400",
-      },
-    ],
-  },
-  {
-    name: "Leczenie",
-    stats: [
-      {
-        key: "passiveHealing",
-        label: "Pasywne leczenie",
-        color: "text-green-400",
-      },
-      {
-        key: "activeHealing",
-        label: "Aktywne leczenie",
-        color: "text-green-400",
-      },
-    ],
-  },
-  {
-    name: "Zasoby",
-    stats: [
-      {
-        key: "destroyedEnergy",
-        label: "Zniszczona energia",
-        color: "text-cyan-400",
-      },
-      {
-        key: "destroyedMana",
-        label: "Zniszczona mana",
-        color: "text-blue-400",
-      },
-      {
-        key: "regeneratedEnergy",
-        label: "Zregenerowana energia",
-        color: "text-cyan-400",
-      },
-    ],
-  },
-];
 
 const formatValue = (
   value: unknown,
   formatter?: (value: unknown) => string,
+  booleanLabels?: { yes: string; no: string },
 ): string => {
   if (formatter) {
     return formatter(value);
@@ -371,7 +67,9 @@ const formatValue = (
     return value.toLocaleString("pl-PL");
   }
   if (typeof value === "boolean") {
-    return value ? "Tak" : "Nie";
+    return value
+      ? (booleanLabels?.yes ?? "true")
+      : (booleanLabels?.no ?? "false");
   }
   return String(value ?? 0);
 };
@@ -395,7 +93,7 @@ const getMatchingStatSearchKey = (
 
   for (const category of categories) {
     const categoryIndex = normalizeStatSearchText(
-      `${category.name} ${category.id}`,
+      `${category.label} ${category.id}`,
     );
 
     if (categoryIndex.includes(normalizedQuery)) {
@@ -438,6 +136,10 @@ export function OneVsOneStatsTable({
   const statSearchAnimationFrameRef = useRef<number | null>(null);
   const hideZeros = controlledHideZeros ?? internalHideZeros;
   const setHideZeros = onHideZerosChange ?? setInternalHideZeros;
+  const booleanLabels = {
+    yes: t("common.boolean.yes"),
+    no: t("common.boolean.no"),
+  };
 
   const internalStatsCustomization = useStatsCustomization(STAT_CATEGORIES);
   const {
@@ -464,16 +166,20 @@ export function OneVsOneStatsTable({
   const user = userWarrior;
   const opponent = opponentWarrior;
 
-  const allStatsMap = new Map<string, StatDefinition>();
+  const categoriesMap = new Map<string, BattleStatCategoryDefinition>(
+    STAT_CATEGORIES.map((category) => [category.id, category]),
+  );
+  const allStatsMap = new Map<string, BattleStatDefinition>();
   for (const category of STAT_CATEGORIES) {
     for (const stat of category.stats) {
-      allStatsMap.set(stat.key, stat);
+      allStatsMap.set(String(stat.key), stat);
     }
   }
 
   const visibleStats = config.categoryOrder
     .map((categoryId) => {
       const customization = config.categories[categoryId];
+      const categoryDefinition = categoriesMap.get(categoryId);
 
       if (!customization?.visible) {
         return null;
@@ -481,7 +187,7 @@ export function OneVsOneStatsTable({
 
       const orderedStats = customization.statOrder
         .map((statKey) => allStatsMap.get(statKey))
-        .filter((stat): stat is StatDefinition => stat !== undefined);
+        .filter((stat): stat is BattleStatDefinition => stat !== undefined);
 
       const filteredStats =
         hideZeros && user && opponent
@@ -503,8 +209,15 @@ export function OneVsOneStatsTable({
 
       return {
         id: categoryId,
-        name: customization.name,
-        stats: filteredStats,
+        label:
+          customization.name ??
+          (categoryDefinition
+            ? t(categoryDefinition.labelKey)
+            : customization.id),
+        stats: filteredStats.map((stat) => ({
+          ...stat,
+          label: t(stat.labelKey),
+        })),
       };
     })
     .filter(
@@ -570,7 +283,7 @@ export function OneVsOneStatsTable({
   if (!user || !opponent) {
     return (
       <Card className="border-border bg-card/40 backdrop-blur-sm p-8 w-full text-center text-muted-foreground">
-        Nie znaleziono danych walki 1v1
+        {t("battleUi.oneVsOne.empty")}
       </Card>
     );
   }
@@ -589,7 +302,7 @@ export function OneVsOneStatsTable({
           leading={
             <SearchInput
               aria-label={t("battleUi.customization.searchStat")}
-              className="h-9 text-sm"
+              className={cn(compact ? "h-8 text-sm" : "h-9 text-sm")}
               placeholder={t("battleUi.customization.searchStat")}
               value={statSearchQuery}
               wrapperClassName="w-full"
@@ -670,7 +383,7 @@ export function OneVsOneStatsTable({
         className={cn("min-h-0 w-full max-w-screen", scrollClassName)}
       >
         <Table
-          className={cn(compact && "text-sm")}
+          className={cn(compact && "text-[13px] leading-[1.35]")}
           style={{
             tableLayout: "fixed",
             width: "100%",
@@ -686,24 +399,24 @@ export function OneVsOneStatsTable({
             <TableRow>
               <TableHead
                 className={cn(
-                  "sticky left-0 top-0 z-20 bg-background border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
-                  compact && "h-8 px-2 text-sm",
+                  "sticky left-0 top-0 z-20 border-r border-b border-border/80 bg-muted/80 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                  compact && "h-7 px-2 text-[13px]",
                 )}
               >
-                Statystyka
+                {t("battleUi.oneVsOne.stat")}
               </TableHead>
               <TableHead
                 className={cn(
-                  "sticky top-0 z-10 text-center whitespace-wrap px-2 bg-green-950 text-green-50",
-                  compact && "h-8 px-1.5 text-sm",
+                  "sticky top-0 z-10 border-b border-border/80 bg-green-950 text-center whitespace-wrap px-2 text-green-50",
+                  compact && "h-7 px-1.5 text-[13px]",
                 )}
               >
                 {user.name}
               </TableHead>
               <TableHead
                 className={cn(
-                  "sticky top-0 z-10 text-center whitespace-wrap px-2 bg-red-950 text-red-50",
-                  compact && "h-8 px-1.5 text-sm",
+                  "sticky top-0 z-10 border-b border-border/80 bg-red-950 text-center whitespace-wrap px-2 text-red-50",
+                  compact && "h-7 px-1.5 text-[13px]",
                 )}
               >
                 {opponent.name}
@@ -727,7 +440,7 @@ export function OneVsOneStatsTable({
                     compact ? "px-2 py-1" : "py-1",
                   )}
                 >
-                  {category.name}
+                  {category.label}
                 </TableCell>
                 <TableCell
                   className={cn("bg-muted/50", compact && "px-1.5 py-1")}
@@ -753,7 +466,7 @@ export function OneVsOneStatsTable({
                     <TableCell
                       className={cn(
                         "sticky left-0 z-10 hover:bg-background/50 bg-background border-r font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
-                        compact ? "px-2 py-1 leading-snug" : "py-2",
+                        compact ? "px-2 py-1 leading-[1.35]" : "py-2",
                         stat.color,
                       )}
                       style={{
@@ -770,7 +483,7 @@ export function OneVsOneStatsTable({
                         compact ? "px-1.5 py-1" : "px-2 py-2",
                       )}
                     >
-                      {formatValue(userValue, stat.format)}
+                      {formatValue(userValue, stat.format, booleanLabels)}
                     </TableCell>
                     <TableCell
                       className={cn(
@@ -778,7 +491,7 @@ export function OneVsOneStatsTable({
                         compact ? "px-1.5 py-1" : "px-2 py-2",
                       )}
                     >
-                      {formatValue(opponentValue, stat.format)}
+                      {formatValue(opponentValue, stat.format, booleanLabels)}
                     </TableCell>
                   </TableRow>
                 );
