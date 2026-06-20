@@ -31,15 +31,17 @@ import {
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
-import { getNpcTypeByWt } from "@lootlog/types";
 import { format } from "date-fns";
 import { LoaderCircle, Swords, XIcon } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
-import { NpcType } from "@/api/npcs.api";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
 import { useTranslation } from "react-i18next";
+import {
+  getNotificationSettingsKey,
+  isNotificationSettingsKey,
+} from "@/features/notifications/utils/get-notification-settings-key";
 
 const AUTO_HIDE_RING_PATH =
   "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";
@@ -191,19 +193,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       ? notification
       : null;
 
-  const npcType = regularNotification?.npc
-    ? getNpcTypeByWt(NpcType, regularNotification.npc.wt)
+  const key = getNotificationSettingsKey(notification);
+  const categorySettings = isNotificationSettingsKey(key)
+    ? settings[key]
     : undefined;
-
-  let key: Extract<keyof typeof settings, string> = "message";
-
-  if (isPartyGathering) {
-    key = "party-gathering";
-  } else if (npcType) {
-    key = npcType as Extract<keyof typeof settings, string>;
-  }
-
-  const categorySettings = settings[key];
   const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
   const autoHideDurationMs = autoHideTimeout > 0 ? autoHideTimeout * 1000 : 0;
 
