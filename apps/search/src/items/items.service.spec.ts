@@ -8,18 +8,18 @@ describe("ItemsService", () => {
   let service: ItemsService;
 
   const loggerMock = {
-    error: vi.fn(),
-    warn: vi.fn(),
+    error: vi.fn<(message: string, context?: unknown) => void>(),
+    warn: vi.fn<(message: string, context?: unknown) => void>(),
   };
 
   const indexMock = {
-    search: vi.fn(),
-    addDocuments: vi.fn(),
-    getDocument: vi.fn(),
+    search: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
+    addDocuments: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
+    getDocument: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
   };
 
   const meilisearchMock = {
-    index: vi.fn(),
+    index: vi.fn<() => typeof indexMock>(),
   };
 
   beforeEach(async () => {
@@ -142,6 +142,26 @@ describe("ItemsService", () => {
           'numericStats.dmg >= 40 AND requiredProfessions = "w" AND (worlds = "Berufs" OR world = "Berufs")',
         facets: ["rarity", "requiredProfessions"],
         sort: ["lvl:desc"],
+      });
+    });
+
+    it("should use total hits when estimated total hits are missing", async () => {
+      indexMock.search.mockResolvedValue({
+        hits: [{ id: 1, name: "Sword", stat: "dmg=50" }],
+        totalHits: 42,
+      });
+
+      await expect(
+        service.searchItems({
+          limit: 10,
+          offset: 0,
+          search: "sword",
+        }),
+      ).resolves.toEqual({
+        hits: [{ id: 1, name: "Sword", stat: "dmg=50" }],
+        estimatedTotalHits: 42,
+        facetDistribution: {},
+        facetStats: {},
       });
     });
 
