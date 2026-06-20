@@ -53,7 +53,7 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
   return (
     <li
       className={cn(
-        "border-b-2 border-transparent outline-none transition-colors",
+        "border-b border-transparent outline-none transition-colors",
         onSelect && "cursor-pointer hover:bg-muted/40",
         searchMatched && "bg-amber-400/5",
         selected && "border-l-2 border-l-primary bg-primary/5",

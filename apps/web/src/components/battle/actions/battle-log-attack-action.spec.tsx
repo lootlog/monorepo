@@ -91,6 +91,25 @@ describe("BattleLogAttackActions", () => {
     expect(html).toContain("text-yellow-400");
   });
 
+  it("renders frenzy and retaliation legendary bonuses", () => {
+    const html = renderAttackActions([
+      { type: "+legbon_frenzy_main", value: "5" },
+      { type: "+legbon_frenzy_off", value: "5" },
+      { type: "-legbon_retaliation", value: "" },
+    ]);
+
+    expect(html).toContain("+Eskalacja szału");
+    expect(html).toContain("ataki ulegają wzmocnieniu");
+    expect(html).toContain("ataki pomocnicze ulegają wzmocnieniu");
+    expect(html).toContain("5/5");
+    expect(html).toContain("-Aura odwetu");
+    expect(html).toContain("text-orange-300");
+    expect(html).toContain("text-purple-300");
+    expect(html).not.toContain("{{value}}");
+    expect(html).not.toContain("battle.+legbon_frenzy");
+    expect(html).not.toContain("battle.-legbon_retaliation");
+  });
+
   it("renders -dmga in the defender damage line without crush copy", () => {
     const html = renderAttackActions([
       { type: "-dmg", value: "20754" },

@@ -3,7 +3,7 @@ import { ExpandableDataTable } from "./expandable-data-table";
 import { getBattleStatsTableColumns } from "./battle-stats-table-columns-full";
 import { OneVsOneStatsTable } from "./one-vs-one-stats-table";
 import { BattleStatsTableHeader } from "./battle-stats-table-header";
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -48,10 +48,9 @@ export function BattleStatsTable({
     >
   >(new Map());
 
-  const userTeam = useMemo(() => {
-    return battle.warriors.find((w) => w.originalId === battle.characterId)
-      ?.team;
-  }, [battle.warriors, battle.characterId]);
+  const userTeam = battle.warriors.find(
+    (w) => w.originalId === battle.characterId,
+  )?.team;
 
   const toggleDamageExpansion = (warriorId: string) => {
     setExpandedRows((prev) => {
@@ -125,26 +124,22 @@ export function BattleStatsTable({
     });
   };
 
-  const sortedWarriors = useMemo(() => {
-    return [...battle.warriors].sort((a, b) => {
-      if (a.team === userTeam && b.team !== userTeam) return -1;
-      if (a.team !== userTeam && b.team === userTeam) return 1;
-      return a.team - b.team;
-    });
-  }, [battle.warriors, userTeam]);
+  const sortedWarriors = [...battle.warriors].sort((a, b) => {
+    if (a.team === userTeam && b.team !== userTeam) return -1;
+    if (a.team !== userTeam && b.team === userTeam) return 1;
+    return a.team - b.team;
+  });
 
-  const currentColumns = useMemo(() => {
-    return getBattleStatsTableColumns(
-      battle,
-      expandedRows,
-      toggleDamageExpansion,
-      toggleLegendaryExpansion,
-      toggleTurnsExpansion,
-      toggleBlocksExpansion,
-      toggleDetailsExpansion,
-      toggleDamageDealtExpansion,
-    );
-  }, [battle, expandedRows]);
+  const currentColumns = getBattleStatsTableColumns(
+    t,
+    expandedRows,
+    toggleDamageExpansion,
+    toggleLegendaryExpansion,
+    toggleTurnsExpansion,
+    toggleBlocksExpansion,
+    toggleDetailsExpansion,
+    toggleDamageDealtExpansion,
+  );
 
   if (battle.type === "1v1") {
     return (

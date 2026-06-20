@@ -27,36 +27,17 @@ export type BattleMetadataProps = {
   battle: Battle;
   align?: "left" | "center";
   className?: string;
-  labels?: {
-    startTime: string;
-    duration: string;
-    battleType: string;
-    public: string;
-    private: string;
-    publicTooltip: string;
-    privateTooltip: string;
-  };
 };
 
 export const BattleMetadata: FC<BattleMetadataProps> = ({
   battle,
   align = "center",
   className,
-  labels,
 }) => {
   const { t } = useTranslation();
   const warrior = battle.warriors.find(
     (w) => w.originalId === battle.characterId,
   );
-  const resolvedLabels = labels ?? {
-    startTime: t("battleUi.metadata.startTime"),
-    duration: t("battleUi.metadata.duration"),
-    battleType: t("battleUi.metadata.battleType"),
-    public: t("battleUi.metadata.public"),
-    private: t("battleUi.metadata.private"),
-    publicTooltip: t("battleUi.metadata.publicTooltip"),
-    privateTooltip: t("battleUi.metadata.privateTooltip"),
-  };
 
   return (
     <TooltipProvider>
@@ -75,7 +56,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8}>
-            <p>{resolvedLabels.startTime}</p>
+            <p>{t("battleUi.metadata.startTime")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -87,7 +68,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8}>
-            <p>{resolvedLabels.duration}</p>
+            <p>{t("battleUi.metadata.duration")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -99,7 +80,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8}>
-            <p>{resolvedLabels.battleType}</p>
+            <p>{t("battleUi.metadata.battleType")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -107,14 +88,16 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
           <TooltipTrigger asChild>
             <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
               {battle.public ? <Unlock size="14" /> : <Lock size="14" />}
-              {battle.public ? resolvedLabels.public : resolvedLabels.private}
+              {battle.public
+                ? t("battleUi.metadata.public")
+                : t("battleUi.metadata.private")}
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8}>
             <p>
               {battle.public
-                ? resolvedLabels.publicTooltip
-                : resolvedLabels.privateTooltip}
+                ? t("battleUi.metadata.publicTooltip")
+                : t("battleUi.metadata.privateTooltip")}
             </p>
           </TooltipContent>
         </Tooltip>

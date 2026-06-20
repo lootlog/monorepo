@@ -15,9 +15,14 @@ export type PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem = {
   duration: number;
   winner: string;
   loser: string;
-  ratingDelta: number;
-  userRating: number;
-  opponentRating: number;
+  hasFlee: boolean;
+  matchmaking: boolean;
+  /** @nullable */
+  ratingDelta: number | null;
+  /** @nullable */
+  userRating: number | null;
+  /** @nullable */
+  opponentRating: number | null;
   userWarrior: PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemUserWarrior;
   opponentWarrior: PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemOpponentWarrior;
 };

@@ -16,7 +16,7 @@ export const BattleHeader: FC<BattleHeaderProps> = ({
 
   return (
     <>
-      <li className="bg-gray-500/10 px-4 py-1 border-b-2 border-background border-solid">
+      <li className="border-b-2 border-solid border-background bg-gray-500/10 px-3 py-0.5">
         Rozpoczęła się walka pomiędzy{" "}
         {attackingTeam.map((w) => {
           const isLast = w === attackingTeam[attackingTeam.length - 1];

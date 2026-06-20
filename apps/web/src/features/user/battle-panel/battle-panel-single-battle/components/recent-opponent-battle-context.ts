@@ -4,7 +4,12 @@ export type RecentOpponentBattleContext = {
   battleId: string;
   characterId: string;
   opponentId: string;
+  opponentLvl: number;
   opponentName: string;
+  opponentProf: string;
+  userLvl: number;
+  userName: string;
+  userProf: string;
   world: string;
 };
 
@@ -35,7 +40,12 @@ export const getRecentOpponentBattleContext = (
     battleId: battle.id,
     characterId: battle.characterId,
     opponentId: opponentWarrior.originalId,
+    opponentLvl: opponentWarrior.lvl,
     opponentName: opponentWarrior.name,
+    opponentProf: opponentWarrior.prof,
+    userLvl: userWarrior.lvl,
+    userName: userWarrior.name,
+    userProf: userWarrior.prof,
     world: battle.world,
   };
 };
