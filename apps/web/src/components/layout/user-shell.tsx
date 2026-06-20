@@ -1,10 +1,14 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { ROUTES } from "@/config/routes";
 import { UserHeaderActionsContext } from "@/contexts/user-header-actions-context";
+import {
+  getBattleRouteLabel,
+  type BattleRouteLabelMatch,
+} from "@/lib/battle/battle-route-label";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation, useMatches, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,13 +21,18 @@ type UserShellProps = {
 
 export const UserShell: FC<UserShellProps> = ({ children }) => {
   const location = useLocation();
+  const matches = useMatches();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const [headerActionsElement, setHeaderActionsElement] =
     useState<HTMLElement | null>(null);
+  const currentMatch = matches[matches.length - 1] as
+    | BattleRouteLabelMatch
+    | undefined;
 
   const navigationInfo = getUserNavigationInfo({
+    battleLabel: getBattleRouteLabel(currentMatch, t),
     path: location.pathname,
     t,
   });
@@ -37,8 +46,8 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
 
   return (
     <UserHeaderActionsContext.Provider value={headerActionsElement}>
-      <div className="flex h-full min-h-0 w-full flex-row bg-background/70">
-        <div className="flex h-full min-h-0 w-full flex-col">
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-row bg-background/70">
+        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
           <PageHeader>
             <div className="flex w-full flex-row items-center justify-between gap-2">
               <div className="flex flex-row items-center gap-2">
@@ -124,8 +133,10 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
           {isFullHeightContent ? (
             <div className="flex-1 min-h-0 overflow-auto">{children}</div>
           ) : (
-            <ScrollArea className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col gap-4">
-              <div className="h-full">{children}</div>
+            <ScrollArea className="flex h-full min-h-0 min-w-0 w-full max-w-full flex-1 flex-col gap-4 [&>[data-radix-scroll-area-viewport]>div]:!block [&>[data-radix-scroll-area-viewport]>div]:!w-full">
+              <div className="h-full min-w-0 w-full max-w-full overflow-x-hidden">
+                {children}
+              </div>
             </ScrollArea>
           )}
         </div>
