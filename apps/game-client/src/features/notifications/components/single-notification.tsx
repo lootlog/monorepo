@@ -33,7 +33,7 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { format } from "date-fns";
-import { LoaderCircle, Swords, User, XIcon } from "lucide-react";
+import { LoaderCircle, Swords, XIcon } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { NpcType } from "@/api/npcs.api";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
@@ -195,9 +195,14 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     ? getNpcTypeByWt(NpcType, regularNotification.npc.wt)
     : undefined;
 
-  const key = (
-    isPartyGathering ? "party-gathering" : (npcType ?? "message")
-  ) as keyof typeof settings;
+  let key: Extract<keyof typeof settings, string> = "message";
+
+  if (isPartyGathering) {
+    key = "party-gathering";
+  } else if (npcType) {
+    key = npcType as Extract<keyof typeof settings, string>;
+  }
+
   const categorySettings = settings[key];
   const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
   const autoHideDurationMs = autoHideTimeout > 0 ? autoHideTimeout * 1000 : 0;
@@ -238,6 +243,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const showPartyGatheringAction = isPartyGathering;
   const showJoinAction = Boolean(regularNotification?.isGatheringParty);
   let actionLabel: string | null = null;
+  const hasAutoHideState = Boolean(autoHideState);
+  const autoHideDeadlineMs = autoHideState?.deadlineMs;
+  const autoHidePausedRemainingMs = autoHideState?.pausedRemainingMs;
 
   if (showPartyGatheringAction) {
     actionLabel = t("actions.join");
@@ -265,10 +273,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
     const { width, height } = svg.getBoundingClientRect();
     const totalLength = 2 * (width + height);
-    const deadlineMs =
-      autoHideState?.deadlineMs ?? Date.now() + autoHideDurationMs;
+    const deadlineMs = autoHideDeadlineMs ?? Date.now() + autoHideDurationMs;
     const remainingMs =
-      autoHideState?.pausedRemainingMs ?? Math.max(0, deadlineMs - Date.now());
+      autoHidePausedRemainingMs ?? Math.max(0, deadlineMs - Date.now());
     const clampedRemainingMs = Math.min(autoHideDurationMs, remainingMs);
     const elapsedMs = Math.max(0, autoHideDurationMs - clampedRemainingMs);
     const initialOffset = (elapsedMs / autoHideDurationMs) * totalLength;
@@ -286,7 +293,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       };
     }
 
-    if (autoHideState && autoHideState.pausedRemainingMs !== null) {
+    if (hasAutoHideState && autoHidePausedRemainingMs !== null) {
       return () => {
         path.style.strokeDasharray = "";
         path.style.strokeDashoffset = "";
@@ -317,8 +324,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     };
   }, [
     autoHideDurationMs,
-    autoHideState?.deadlineMs,
-    autoHideState?.pausedRemainingMs,
+    autoHideDeadlineMs,
+    autoHidePausedRemainingMs,
+    hasAutoHideState,
   ]);
 
   const handleMuteMenuOpenChange = (open: boolean) => {
