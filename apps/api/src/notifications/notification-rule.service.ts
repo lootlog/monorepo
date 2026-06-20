@@ -41,6 +41,13 @@ const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
 const GUILD_NOTIFICATION_MAX_NPCS_PER_RULE = 5;
 const USER_NOTIFICATION_RULE_LIMIT = 50;
 
+function hasUpdateRuleField(
+  data: UpdateNotificationRuleDto,
+  field: keyof UpdateNotificationRuleDto,
+) {
+  return Object.prototype.hasOwnProperty.call(data, field);
+}
+
 @Injectable()
 export class NotificationRuleService {
   constructor(
@@ -372,12 +379,9 @@ export class NotificationRuleService {
     ruleId: number,
     data: UpdateNotificationRuleDto,
   ) {
-    const hasName = Object.prototype.hasOwnProperty.call(data, "name");
-    const hasWorld = Object.prototype.hasOwnProperty.call(data, "world");
-    const hasContentTemplate = Object.prototype.hasOwnProperty.call(
-      data,
-      "contentTemplate",
-    );
+    const hasName = hasUpdateRuleField(data, "name");
+    const hasWorld = hasUpdateRuleField(data, "world");
+    const hasContentTemplate = hasUpdateRuleField(data, "contentTemplate");
     const existingRule = await this.ensureRule({ ownerType, ownerId, ruleId });
     const nextTriggerType =
       (data.triggerType as DbNotificationTriggerType | undefined) ??
@@ -760,10 +764,7 @@ export class NotificationRuleService {
       data.scheduleWeekday ?? existingRule?.scheduleWeekday ?? null;
     const timeOfDay =
       data.scheduleTimeOfDay ?? existingRule?.scheduleTimeOfDay ?? null;
-    const hasScheduledUntil = Object.prototype.hasOwnProperty.call(
-      data,
-      "scheduledUntil",
-    );
+    const hasScheduledUntil = hasUpdateRuleField(data, "scheduledUntil");
     let scheduledUntil = existingRule?.scheduledUntil ?? null;
 
     if (hasScheduledUntil) {
