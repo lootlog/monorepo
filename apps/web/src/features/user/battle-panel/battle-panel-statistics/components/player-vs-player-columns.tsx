@@ -2,10 +2,28 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { PlayerTile } from "@/components/battle";
+import {
+  BattleResultStatus,
+  type BattleResultStatusValue,
+} from "@/features/user/battle-panel/components/battle-result-status";
 import { getProfessionName } from "@/lib/utils/professions";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
 import i18n from "@/i18n/config";
+
+const getPlayerVsPlayerBattleResult = (
+  battle: PlayerVsPlayerBattle,
+): BattleResultStatusValue => {
+  if (battle.hasFlee) {
+    return "flee";
+  }
+
+  if (battle.userWarrior.name === battle.winner) {
+    return "won";
+  }
+
+  return "lost";
+};
 
 export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
   {
@@ -66,19 +84,11 @@ export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
       </div>
     ),
     cell: ({ row }) => {
-      const isWin = row.original.userWarrior.name === row.original.winner;
       return (
-        <div className="text-center">
-          <span
-            className={cn(
-              "font-bold",
-              isWin ? "text-green-600" : "text-red-600",
-            )}
-          >
-            {isWin
-              ? i18n.t("battlePanel.statistics.columns.w")
-              : i18n.t("battlePanel.statistics.columns.l")}
-          </span>
+        <div className="flex justify-center">
+          <BattleResultStatus
+            result={getPlayerVsPlayerBattleResult(row.original)}
+          />
         </div>
       );
     },
@@ -93,7 +103,17 @@ export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
     ),
     cell: ({ row }) => {
       const delta = row.original.ratingDelta;
+
+      if (delta === null) {
+        return (
+          <div className="text-center text-muted-foreground">
+            {i18n.t("battlePanel.single.recentOpponent.noRating")}
+          </div>
+        );
+      }
+
       const sign = delta >= 0 ? "+" : "";
+
       return (
         <div className="text-center">
           <span
@@ -118,7 +138,10 @@ export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="text-center font-medium">{row.original.userRating}</div>
+      <div className="text-center font-medium">
+        {row.original.userRating ??
+          i18n.t("battlePanel.single.recentOpponent.noRating")}
+      </div>
     ),
     enableSorting: false,
   },
@@ -131,7 +154,8 @@ export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
     ),
     cell: ({ row }) => (
       <div className="text-center font-medium">
-        {row.original.opponentRating}
+        {row.original.opponentRating ??
+          i18n.t("battlePanel.single.recentOpponent.noRating")}
       </div>
     ),
     enableSorting: false,

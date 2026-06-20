@@ -63,6 +63,21 @@ export class BattleAnalyticsService {
     return inflateBattleWarriorsInBattles(fetchedBattles);
   }
 
+  private mapPlayerVsPlayerWarrior(warrior: InflatedBattleWarrior | undefined) {
+    return {
+      name: warrior?.name ?? "",
+      lvl: warrior?.lvl ?? 0,
+      prof: warrior?.prof ?? "",
+      icon: warrior?.icon ?? "",
+      fireDamage: warrior?.fireDamage ?? 0,
+      frostDamage: warrior?.frostDamage ?? 0,
+      lightningDamage: warrior?.lightningDamage ?? 0,
+      poisonDamageTaken: warrior?.poisonDamageTaken ?? 0,
+      woundDamageTaken: warrior?.woundDamageTaken ?? 0,
+      critWoundDamageTaken: warrior?.critWoundDamageTaken ?? 0,
+    };
+  }
+
   private getCachedAnalyticsResult<T>(
     cacheKey: string,
     factory: () => Promise<T>,
@@ -1731,7 +1746,12 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<PlayerVsPlayerPaginatedResponse> {
     return this.getCachedAnalyticsResult(
-      this.buildQueryCacheKey("statistics", "player-vs-player", userId, query),
+      this.buildQueryCacheKey(
+        "statistics",
+        "player-vs-player:v2",
+        userId,
+        query,
+      ),
       () => this.getPlayerVsPlayerBattlesUncached(query, userId),
     );
   }
@@ -1844,21 +1864,13 @@ export class BattleAnalyticsService {
         duration: battle.duration,
         winner: battle.winner,
         loser: battle.loser,
-        ratingDelta: battle.ratingDelta ?? 0,
-        userRating: battle.rating ?? 0,
-        opponentRating: battle.opponentRating ?? 0,
-        userWarrior: {
-          name: userWarrior?.name ?? "",
-          lvl: userWarrior?.lvl ?? 0,
-          prof: userWarrior?.prof ?? "",
-          icon: userWarrior?.icon ?? "",
-        },
-        opponentWarrior: {
-          name: opponentWarrior?.name ?? "",
-          lvl: opponentWarrior?.lvl ?? 0,
-          prof: opponentWarrior?.prof ?? "",
-          icon: opponentWarrior?.icon ?? "",
-        },
+        hasFlee: battle.hasFlee,
+        matchmaking: battle.matchmaking,
+        ratingDelta: battle.ratingDelta,
+        userRating: battle.rating,
+        opponentRating: battle.opponentRating,
+        userWarrior: this.mapPlayerVsPlayerWarrior(userWarrior),
+        opponentWarrior: this.mapPlayerVsPlayerWarrior(opponentWarrior),
       };
     });
 

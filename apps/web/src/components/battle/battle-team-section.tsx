@@ -11,10 +11,6 @@ export type BattleTeamSectionProps = {
   userTeam: number | undefined;
   characterId: string;
   cdnBaseUrl: string;
-  teamLabels?: {
-    userTeam: string;
-    enemyTeam: string;
-  };
 };
 
 export const BattleTeamSection: FC<BattleTeamSectionProps> = ({
@@ -23,14 +19,9 @@ export const BattleTeamSection: FC<BattleTeamSectionProps> = ({
   userTeam,
   characterId,
   cdnBaseUrl,
-  teamLabels,
 }) => {
   const { t } = useTranslation();
   const isUserTeam = userTeam === teamNumber;
-  const resolvedTeamLabels = teamLabels ?? {
-    userTeam: t("battleUi.team.userTeam"),
-    enemyTeam: t("battleUi.team.enemyTeam"),
-  };
 
   return (
     <div className="space-y-3">
@@ -42,8 +33,8 @@ export const BattleTeamSection: FC<BattleTeamSectionProps> = ({
       >
         <Sword className="h-5 w-5" />
         {isUserTeam
-          ? resolvedTeamLabels.userTeam
-          : resolvedTeamLabels.enemyTeam}
+          ? t("battleUi.team.userTeam")
+          : t("battleUi.team.enemyTeam")}
       </h3>
       <div className="space-y-2">
         <TeamDisplay

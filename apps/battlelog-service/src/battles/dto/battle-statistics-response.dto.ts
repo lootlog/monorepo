@@ -108,27 +108,32 @@ const RatingDeltaByOpponentResponseSchema = z.object({
   lastBattleDate: z.string().datetime(),
 });
 
+const PlayerVsPlayerWarriorResponseSchema = z.object({
+  name: z.string(),
+  lvl: z.number(),
+  prof: z.string(),
+  icon: z.string(),
+  fireDamage: z.number(),
+  frostDamage: z.number(),
+  lightningDamage: z.number(),
+  poisonDamageTaken: z.number(),
+  woundDamageTaken: z.number(),
+  critWoundDamageTaken: z.number(),
+});
+
 const PlayerVsPlayerBattleResponseSchema = z.object({
   battleId: z.string(),
   createdAt: z.string().datetime(),
   duration: z.number(),
   winner: z.string(),
   loser: z.string(),
-  ratingDelta: z.number(),
-  userRating: z.number(),
-  opponentRating: z.number(),
-  userWarrior: z.object({
-    name: z.string(),
-    lvl: z.number(),
-    prof: z.string(),
-    icon: z.string(),
-  }),
-  opponentWarrior: z.object({
-    name: z.string(),
-    lvl: z.number(),
-    prof: z.string(),
-    icon: z.string(),
-  }),
+  hasFlee: z.boolean(),
+  matchmaking: z.boolean(),
+  ratingDelta: z.number().nullable(),
+  userRating: z.number().nullable(),
+  opponentRating: z.number().nullable(),
+  userWarrior: PlayerVsPlayerWarriorResponseSchema,
+  opponentWarrior: PlayerVsPlayerWarriorResponseSchema,
 });
 
 const PlayerVsPlayerPaginatedResponseSchema = z.object({

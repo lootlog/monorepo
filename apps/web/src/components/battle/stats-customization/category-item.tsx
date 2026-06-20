@@ -1,17 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { GripVertical, ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { useTranslation } from "react-i18next";
-import type { CategoryCustomization } from "@/types/stats-customization.types";
+import type {
+  BattleStatDefinition,
+  CategoryCustomization,
+} from "@/types/stats-customization.types";
 import { CategoryStatsSection } from "./category-stats-section";
 import { AvailableStatsSection } from "./available-stats-section";
 
 interface CategoryItemProps {
   category: CategoryCustomization;
-  allAvailableStats: Array<{ key: string; label: string }>;
+  defaultCategoryLabel?: string;
+  allAvailableStats: BattleStatDefinition[];
   onToggleVisibility: () => void;
   onUpdateName: (newName: string) => void;
   onUpdateStatOrder: (newOrder: string[]) => void;
@@ -22,31 +26,7 @@ interface CategoryItemProps {
 
 export const CategoryItem = ({
   category,
-  allAvailableStats,
-  onToggleVisibility,
-  onUpdateName,
-  onUpdateStatOrder,
-  onAddStat,
-  onRemoveStat,
-  onRemoveCategory,
-}: CategoryItemProps) => {
-  return (
-    <CategoryItemContent
-      key={`${category.id}:${category.name}`}
-      category={category}
-      allAvailableStats={allAvailableStats}
-      onToggleVisibility={onToggleVisibility}
-      onUpdateName={onUpdateName}
-      onUpdateStatOrder={onUpdateStatOrder}
-      onAddStat={onAddStat}
-      onRemoveStat={onRemoveStat}
-      onRemoveCategory={onRemoveCategory}
-    />
-  );
-};
-
-const CategoryItemContent = ({
-  category,
+  defaultCategoryLabel,
   allAvailableStats,
   onToggleVisibility,
   onUpdateName,
@@ -57,16 +37,28 @@ const CategoryItemContent = ({
 }: CategoryItemProps) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [localName, setLocalName] = useState(category.name);
+  const categoryLabel = category.name ?? defaultCategoryLabel ?? category.id;
+  const [localName, setLocalName] = useState(categoryLabel);
+
+  useEffect(() => {
+    setLocalName(categoryLabel);
+  }, [categoryLabel]);
 
   const handleNameBlur = () => {
-    if (localName.trim() !== category.name) {
-      onUpdateName(localName.trim() || category.id);
+    const nextName = localName.trim();
+
+    if (!nextName) {
+      setLocalName(categoryLabel);
+      return;
+    }
+
+    if (nextName !== categoryLabel) {
+      onUpdateName(nextName);
     }
   };
 
   const availableStats = allAvailableStats.filter(
-    (stat) => !category.statOrder.includes(stat.key),
+    (stat) => !category.statOrder.includes(String(stat.key)),
   );
 
   return (

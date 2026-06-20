@@ -4,9 +4,10 @@ import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
+import type { BattleStatDefinition } from "@/types/stats-customization.types";
 
 interface AvailableStatsSectionProps {
-  availableStats: Array<{ key: string; label: string }>;
+  availableStats: BattleStatDefinition[];
   onAddStat: (statKey: string) => void;
 }
 
@@ -16,9 +17,10 @@ export const AvailableStatsSection = ({
 }: AvailableStatsSectionProps) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
+  const normalizedSearchQuery = searchQuery.toLocaleLowerCase("pl-PL");
 
   const filteredAvailableStats = availableStats.filter((stat) =>
-    stat.label.toLowerCase().includes(searchQuery.toLowerCase()),
+    t(stat.labelKey).toLocaleLowerCase("pl-PL").includes(normalizedSearchQuery),
   );
 
   if (availableStats.length === 0) {
@@ -54,14 +56,14 @@ export const AvailableStatsSection = ({
           {filteredAvailableStats.length > 0 ? (
             filteredAvailableStats.map((stat) => (
               <div
-                key={stat.key}
+                key={String(stat.key)}
                 className="flex items-center gap-2 bg-background border rounded px-2 py-1.5 text-sm"
               >
-                <span className="flex-1">{stat.label}</span>
+                <span className="flex-1">{t(stat.labelKey)}</span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onAddStat(stat.key)}
+                  onClick={() => onAddStat(String(stat.key))}
                   className="h-6 w-6 p-0 hover:bg-primary/10 hover:text-primary"
                 >
                   <Plus className="h-3 w-3" />

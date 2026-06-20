@@ -3,10 +3,11 @@ import { Reorder } from "framer-motion";
 import { GripVertical, X } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { useTranslation } from "react-i18next";
+import type { BattleStatDefinition } from "@/types/stats-customization.types";
 
 interface CategoryStatsSectionProps {
   statOrder: string[];
-  allAvailableStats: Array<{ key: string; label: string }>;
+  allAvailableStats: BattleStatDefinition[];
   onUpdateStatOrder: (newOrder: string[]) => void;
   onRemoveStat: (statKey: string) => void;
 }
@@ -23,7 +24,7 @@ export const CategoryStatsSection = ({
 
   const getStatLabel = (statKey: string) => {
     const stat = allAvailableStats.find((s) => s.key === statKey);
-    return stat?.label || statKey;
+    return stat ? t(stat.labelKey) : statKey;
   };
 
   const handleReorder = (newOrder: string[]) => {

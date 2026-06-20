@@ -34,13 +34,29 @@ describe("legendary bonus timeline markers", () => {
     expect(getLegendaryBonusMarkerDefinition("+legbon_curse").type).toBe(
       "curse",
     );
+    expect(getLegendaryBonusMarkerDefinition("+legbon_frenzy_main").type).toBe(
+      "frenzy",
+    );
+    expect(getLegendaryBonusMarkerDefinition("+legbon_frenzy_off").type).toBe(
+      "frenzy",
+    );
+    expect(getLegendaryBonusMarkerDefinition("-legbon_retaliation").type).toBe(
+      "retaliation",
+    );
     expect(getLegendaryBonusMarkerDefinition("+not_mapped").type).toBe(
       "legendary",
     );
   });
 
-  it("detects noisy follow-up bonuses as legendary but hides them from chart markers", () => {
+  it("detects hidden legendary bonuses but hides them from chart markers", () => {
     const actions = [
+      {
+        actionType: "+legbon_puncture",
+        category: "legendary",
+        actorId: "1",
+        targetId: "2",
+        param: "",
+      },
       {
         actionType: "-legbon_critred",
         category: "legendary",
@@ -107,6 +123,44 @@ describe("legendary bonus timeline markers", () => {
       "Attacker",
       "Attacker",
     ]);
+  });
+
+  it("groups frenzy activations under a shared legend item", () => {
+    const groups = buildLegendaryBonusMarkerGroups(
+      [
+        {
+          turn: 6,
+          teamHp: { "1": 69, "2": 31 },
+          actions: [
+            {
+              actionType: "+legbon_frenzy_main",
+              category: "legendary",
+              actorId: "1",
+              targetId: "2",
+              param: "5",
+            },
+            {
+              actionType: "+legbon_frenzy_off",
+              category: "legendary",
+              actorId: "1",
+              targetId: "2",
+              param: "5",
+            },
+          ],
+        },
+      ],
+      [{ originalId: "1", name: "Attacker", team: 1 }],
+    );
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toMatchObject({ turn: 6, team: 1, y: 69 });
+    expect(groups[0]?.bonuses.map((bonus) => bonus.type)).toEqual([
+      "frenzy",
+      "frenzy",
+    ]);
+    expect(
+      getLegendaryBonusLegendItems(groups).map((item) => item.type),
+    ).toEqual(["frenzy"]);
   });
 
   it("uses target team when actor team is unavailable", () => {
@@ -188,6 +242,35 @@ describe("legendary bonus timeline markers", () => {
     expect(groups).toHaveLength(1);
     expect(groups[0]).toMatchObject({ turn: 34, team: 1, y: 60.64 });
     expect(groups[0]?.bonuses[0]?.type).toBe("glare");
+    expect(groups[0]?.bonuses[0]?.recipientName).toBe("zpwrama");
+  });
+
+  it("places retaliation on defender team", () => {
+    const groups = buildLegendaryBonusMarkerGroups(
+      [
+        {
+          turn: 35,
+          teamHp: { "1": 54.2, "2": 88.4 },
+          actions: [
+            {
+              actionType: "-legbon_retaliation",
+              category: "legendary",
+              actorId: "attacker",
+              targetId: "defender",
+              param: "",
+            },
+          ],
+        },
+      ],
+      [
+        { originalId: "attacker", name: "Demodras", team: 2 },
+        { originalId: "defender", name: "zpwrama", team: 1 },
+      ],
+    );
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toMatchObject({ turn: 35, team: 1, y: 54.2 });
+    expect(groups[0]?.bonuses[0]?.type).toBe("retaliation");
     expect(groups[0]?.bonuses[0]?.recipientName).toBe("zpwrama");
   });
 
@@ -313,6 +396,30 @@ describe("legendary bonus timeline markers", () => {
               actorId: "1",
               targetId: "2",
               param: "5359",
+            },
+          ],
+        },
+      ],
+      [{ originalId: "1", team: 1 }],
+    );
+
+    expect(groups).toHaveLength(0);
+    expect(getLegendaryBonusLegendItems(groups)).toHaveLength(0);
+  });
+
+  it("does not create markers or legend items for puncture only fights", () => {
+    const groups = buildLegendaryBonusMarkerGroups(
+      [
+        {
+          turn: 4,
+          teamHp: { "1": 63, "2": 37 },
+          actions: [
+            {
+              actionType: "+legbon_puncture",
+              category: "legendary",
+              actorId: "1",
+              targetId: "2",
+              param: "",
             },
           ],
         },

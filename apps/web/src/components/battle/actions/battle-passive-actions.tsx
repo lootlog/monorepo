@@ -25,7 +25,7 @@ export const BattlePassiveActions: FC<BattlePassiveActionsProps> = ({
 
   return (
     <div
-      className={cn("py-1 bg-gray-100/10", {
+      className={cn("bg-gray-100/10 py-0.5", {
         "bg-red-400/[15%]": attacker?.team !== userTeam,
         "bg-green-400/[15%]": attacker?.team === userTeam,
       })}
@@ -40,7 +40,7 @@ export const BattlePassiveActions: FC<BattlePassiveActionsProps> = ({
             prefix: "v",
             component: <span className="font-semibold" />,
           }}
-          className={cn("p-0 px-4 bg-transparent")}
+          className={cn("bg-transparent p-0 px-3")}
           customComponents={{
             value: <span className="font-semibold" />,
             heal: <span className="font-semibold text-blue-300" />,

@@ -22,17 +22,6 @@ export type BattleOverviewHeaderProps = {
   onUnshareClick: () => void;
   onDeleteClick: () => void;
   showActions?: boolean;
-  labels?: {
-    title: string;
-    copyLink: string;
-    hide: string;
-    share: string;
-    delete: string;
-    deleteConfirmTitle: string;
-    deleteConfirmDescription: string;
-    cancel: string;
-    deleteBattle: string;
-  };
 };
 
 export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
@@ -43,29 +32,15 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
   onUnshareClick,
   onDeleteClick,
   showActions = true,
-  labels,
 }) => {
   const { t } = useTranslation();
-  const resolvedLabels = labels ?? {
-    title: t("battleUi.overviewHeader.title"),
-    copyLink: t("battleUi.overviewHeader.copyLink"),
-    hide: t("battleUi.overviewHeader.hide"),
-    share: t("battleUi.overviewHeader.share"),
-    delete: t("battleUi.overviewHeader.delete"),
-    deleteConfirmTitle: t("battleUi.overviewHeader.deleteConfirmTitle"),
-    deleteConfirmDescription: t(
-      "battleUi.overviewHeader.deleteConfirmDescription",
-    ),
-    cancel: t("battleUi.overviewHeader.cancel"),
-    deleteBattle: t("battleUi.overviewHeader.deleteBattle"),
-  };
   return (
     <>
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between p-4 py-2 h-14 min-h-14">
           <div className="flex items-center gap-2 font-semibold">
             <Users className="h-5 w-5" />
-            {resolvedLabels.title}
+            {t("battleUi.overviewHeader.title")}
           </div>
           {showActions && (
             <div className="flex flex-row gap-2">
@@ -76,14 +51,14 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
                     onClick={onCopyClick}
                     disabled={isPending}
                   >
-                    {resolvedLabels.copyLink} <Copy />
+                    {t("battleUi.overviewHeader.copyLink")} <Copy />
                   </Button>
                   <Button
                     variant="outline"
                     onClick={onUnshareClick}
                     disabled={isPending}
                   >
-                    {resolvedLabels.hide} <Lock />
+                    {t("battleUi.overviewHeader.hide")} <Lock />
                   </Button>
                 </>
               ) : (
@@ -92,31 +67,31 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
                   onClick={onShareClick}
                   disabled={isPending}
                 >
-                  {resolvedLabels.share} <Share2 />
+                  {t("battleUi.overviewHeader.share")} <Share2 />
                 </Button>
               )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" disabled={isPending}>
-                    {resolvedLabels.delete}
+                    {t("battleUi.overviewHeader.delete")}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      {resolvedLabels.deleteConfirmTitle}
+                      {t("battleUi.overviewHeader.deleteConfirmTitle")}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      {resolvedLabels.deleteConfirmDescription}
+                      {t("battleUi.overviewHeader.deleteConfirmDescription")}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>
-                      {resolvedLabels.cancel}
+                      {t("battleUi.overviewHeader.cancel")}
                     </AlertDialogCancel>
                     <AlertDialogAction asChild>
                       <Button variant="destructive" onClick={onDeleteClick}>
-                        {resolvedLabels.deleteBattle}
+                        {t("battleUi.overviewHeader.deleteBattle")}
                       </Button>
                     </AlertDialogAction>
                   </AlertDialogFooter>

@@ -21,10 +21,12 @@ export const legendaryBonusIconByType: Record<
   critShield: Shield,
   curse: Ban,
   facade: Shield,
+  frenzy: Flame,
   glare: EyeOff,
   holyTouch: HeartPulse,
   lastHeal: ShieldCheck,
   legendary: Sparkles,
   puncture: Crosshair,
+  retaliation: Shield,
   veryCrit: Zap,
 };

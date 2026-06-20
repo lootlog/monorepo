@@ -11,4 +11,10 @@ export type PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemUserWarrior = {
   lvl: number;
   prof: string;
   icon: string;
+  fireDamage: number;
+  frostDamage: number;
+  lightningDamage: number;
+  poisonDamageTaken: number;
+  woundDamageTaken: number;
+  critWoundDamageTaken: number;
 };
