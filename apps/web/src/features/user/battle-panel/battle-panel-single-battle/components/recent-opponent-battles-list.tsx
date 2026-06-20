@@ -1,9 +1,10 @@
 import {
   BattleResultStatus,
   getBattleResultRowClassName,
-  type BattleResultStatusValue,
 } from "@/features/user/battle-panel/components/battle-result-status";
-import type { Battle, PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
+import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
+import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
+import type { Battle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
@@ -16,26 +17,11 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { RecentOpponentBattleWarrior } from "./recent-opponent-battle-warrior";
 import { useRecentOpponentBattles } from "../hooks/use-recent-opponent-battles";
 
 type RecentOpponentBattlesListProps = {
   battle: Battle | undefined;
   className?: string;
-};
-
-const getRecentBattleResult = (
-  battle: PlayerVsPlayerBattle,
-): BattleResultStatusValue => {
-  if (battle.hasFlee) {
-    return "flee";
-  }
-
-  if (battle.userWarrior.name === battle.winner) {
-    return "won";
-  }
-
-  return "lost";
 };
 
 export function RecentOpponentBattlesList({
@@ -57,7 +43,7 @@ export function RecentOpponentBattlesList({
           Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
-              className="grid min-h-10 grid-cols-[32px_minmax(0,1fr)_68px] items-center gap-2 px-2.5 py-1"
+              className="grid h-14 grid-cols-[32px_minmax(0,1fr)_76px] items-center gap-2 px-2.5"
             >
               <Skeleton className="size-6 rounded-md" />
               <div className="flex min-w-0 items-center gap-3.5">
@@ -77,7 +63,7 @@ export function RecentOpponentBattlesList({
           </div>
         ) : (
           battles.map((recentBattle) => {
-            const result = getRecentBattleResult(recentBattle);
+            const result = getPlayerVsPlayerBattleResult(recentBattle);
             const exactTime = format(
               new Date(recentBattle.createdAt),
               "dd.MM.yyyy HH:mm",
@@ -102,24 +88,24 @@ export function RecentOpponentBattlesList({
                 params={{ battleId: recentBattle.battleId }}
                 preload={false}
                 className={cn(
-                  "grid min-h-10 grid-cols-[32px_minmax(0,1fr)_68px] items-center gap-1 px-2.5 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
+                  "grid h-14 grid-cols-[32px_minmax(0,1fr)_76px] items-center gap-1 px-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
                   getBattleResultRowClassName(result),
                 )}
               >
                 <BattleResultStatus result={result} />
-                <div className="flex min-w-0 items-center gap-3.5">
-                  <RecentOpponentBattleWarrior
+                <div className="flex min-w-0 items-center gap-3.5 overflow-hidden">
+                  <BattlePanelPvpWarriorSummary
                     warrior={userWarriorForTags}
                     opposingWarrior={opponentWarriorForTags}
                     className="max-w-[calc(50%-0.4375rem)]"
                   />
-                  <RecentOpponentBattleWarrior
+                  <BattlePanelPvpWarriorSummary
                     warrior={opponentWarriorForTags}
                     opposingWarrior={userWarriorForTags}
                     className="max-w-[calc(50%-0.4375rem)]"
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="block whitespace-normal break-words text-right text-[11px] leading-snug text-muted-foreground">

@@ -11,7 +11,7 @@ export type BattleResultStatusValue = "flee" | "lost" | "won";
 
 type BattleResultStatusProps = {
   className?: string;
-  result: BattleResultStatusValue;
+  result?: BattleResultStatusValue | null;
   showLabel?: boolean;
 };
 
@@ -41,7 +41,7 @@ const BATTLE_RESULT_STATUS_CONFIG: Record<
 };
 
 export const getBattleResultRowClassName = (
-  result: BattleResultStatusValue,
+  result?: BattleResultStatusValue | null,
 ) => {
   if (result === "won") {
     return "bg-green-500/5 hover:bg-green-500/10";
@@ -51,8 +51,19 @@ export const getBattleResultRowClassName = (
     return "bg-red-500/5 hover:bg-red-500/10";
   }
 
+  if (result !== "flee") {
+    return "bg-background/30 hover:bg-muted/50";
+  }
+
   return "bg-yellow-500/5 hover:bg-yellow-500/10";
 };
+
+const isBattleResultStatusValue = (
+  result: BattleResultStatusProps["result"],
+): result is BattleResultStatusValue =>
+  result !== null &&
+  result !== undefined &&
+  Object.prototype.hasOwnProperty.call(BATTLE_RESULT_STATUS_CONFIG, result);
 
 export function BattleResultStatus({
   className,
@@ -60,6 +71,11 @@ export function BattleResultStatus({
   showLabel = false,
 }: BattleResultStatusProps) {
   const { t } = useTranslation();
+
+  if (!isBattleResultStatusValue(result)) {
+    return null;
+  }
+
   const resultConfig = BATTLE_RESULT_STATUS_CONFIG[result];
   const ResultIcon = resultConfig.icon;
   const resultLabel = t(resultConfig.labelKey);

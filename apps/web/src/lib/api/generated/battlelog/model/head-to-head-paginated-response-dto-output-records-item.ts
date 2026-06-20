@@ -5,6 +5,9 @@
  * The Battle Log API documentation
  * OpenAPI spec version: 1.0
  */
+import type { HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleOpponentWarrior } from './head-to-head-paginated-response-dto-output-records-item-last-battle-opponent-warrior.js';
+import type { HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult } from './head-to-head-paginated-response-dto-output-records-item-last-battle-result.js';
+import type { HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleUserWarrior } from './head-to-head-paginated-response-dto-output-records-item-last-battle-user-warrior.js';
 
 export type HeadToHeadPaginatedResponseDtoOutputRecordsItem = {
   opponentId: string;
@@ -12,6 +15,9 @@ export type HeadToHeadPaginatedResponseDtoOutputRecordsItem = {
   opponentIcon: string;
   opponentProf: string;
   opponentLvl: number;
+  lastBattleResult: HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult;
+  lastBattleUserWarrior: HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleUserWarrior;
+  lastBattleOpponentWarrior: HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleOpponentWarrior;
   wins: number;
   losses: number;
   totalBattles: number;
