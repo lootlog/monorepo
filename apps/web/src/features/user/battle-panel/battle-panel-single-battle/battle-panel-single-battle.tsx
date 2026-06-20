@@ -63,7 +63,6 @@ export const BattlePanelSingleBattle = () => {
   const [selectedTurn, setSelectedTurn] = useState<number | null>(null);
   const [scrollTargetTurn, setScrollTargetTurn] = useState<number | null>(null);
   const [scrollTargetRequestId, setScrollTargetRequestId] = useState(0);
-  const [isChartPinned, setIsChartPinned] = useState(true);
   const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT_PX);
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
@@ -252,9 +251,7 @@ export const BattlePanelSingleBattle = () => {
     const viewportElement = logViewport ?? scrollViewportRef.current;
     const viewportRect = viewportElement.getBoundingClientRect();
     const pageViewportRect = scrollViewportRef.current.getBoundingClientRect();
-    const chartRect = isChartPinned
-      ? chartWrapperRef.current?.getBoundingClientRect()
-      : null;
+    const chartRect = chartWrapperRef.current?.getBoundingClientRect();
     const occlusionBottom =
       chartRect &&
       chartRect.bottom > viewportRect.top &&
@@ -378,9 +375,7 @@ export const BattlePanelSingleBattle = () => {
           <div
             className={cn(
               "flex flex-col gap-3",
-              shouldRenderTimelineSlot &&
-                isChartPinned &&
-                "lg:sticky lg:top-3 lg:z-20",
+              shouldRenderTimelineSlot && "lg:sticky lg:top-3 lg:z-20",
             )}
           >
             {shouldRenderTimelineSlot ? (
@@ -390,9 +385,7 @@ export const BattlePanelSingleBattle = () => {
                     timeline={timeline.timeline}
                     warriors={timeline.warriors}
                     characterId={battle?.characterId ?? null}
-                    isPinned={isChartPinned}
                     selectedTurn={selectedTurnNumber}
-                    onPinnedChange={setIsChartPinned}
                     onTurnSelect={handleTurnSelect}
                   />
                 ) : (
