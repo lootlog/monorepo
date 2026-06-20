@@ -13,8 +13,6 @@ import {
   getBattlesControllerGetHeadToHeadQueryOptions,
   getBattlesControllerGetPhGrowthQueryOptions,
   getBattlesControllerGetProfessionWinRateQueryOptions,
-  getBattlesControllerGetRatingDeltaByOpponentQueryOptions,
-  getBattlesControllerGetRatingGrowthQueryOptions,
 } from "@/lib/api/generated/battlelog/battles/battles";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
@@ -40,8 +38,10 @@ export const Route = createFileRoute(
           period: search.period,
           minLevel: search.minLevel,
           maxLevel: search.maxLevel,
+          startDate: search.startDate ?? undefined,
+          endDate: search.endDate ?? undefined,
           ph: search.ph ?? undefined,
-          matchmaking: search.matchmaking ?? undefined,
+          matchmaking: false,
         };
 
         await Promise.all([
@@ -67,24 +67,6 @@ export const Route = createFileRoute(
           prefetchRouteQuery(
             context.queryClient,
             getBattlesControllerGetPhGrowthQueryOptions(baseParams),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetRatingGrowthQueryOptions({
-              characterId,
-              period: baseParams.period,
-              minLevel: baseParams.minLevel,
-              maxLevel: baseParams.maxLevel,
-            }),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetRatingDeltaByOpponentQueryOptions({
-              characterId,
-              period: baseParams.period,
-              minLevel: baseParams.minLevel,
-              maxLevel: baseParams.maxLevel,
-            }),
           ),
         ]);
       })().catch(() => undefined);

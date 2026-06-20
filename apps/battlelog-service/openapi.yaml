@@ -122,6 +122,20 @@ paths:
           in: query
           schema:
             type: boolean
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: minLevel
           required: false
           in: query
@@ -205,6 +219,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: ph
           required: false
           in: query
@@ -225,6 +253,34 @@ paths:
       security:
         - bearer: []
       summary: Get authenticated user battle analytics
+      tags:
+        - battles
+  /battles/@me/abyss/seasons:
+    get:
+      operationId: BattlesController_getAbyssSeasons
+      parameters:
+        - name: characterId
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: world
+          required: false
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AbyssSeasonResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Get authenticated user Abyss seasons
       tags:
         - battles
   /battles/@me/statistics/combat-profile:
@@ -269,6 +325,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: cursor
           required: false
           in: query
@@ -385,6 +455,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: cursor
           required: false
           in: query
@@ -503,6 +587,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: cursor
           required: false
           in: query
@@ -619,6 +717,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: cursor
           required: false
           in: query
@@ -735,6 +847,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: cursor
           required: false
           in: query
@@ -851,6 +977,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: cursor
           required: false
           in: query
@@ -969,6 +1109,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: cursor
           required: false
           in: query
@@ -1087,6 +1241,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: cursor
           required: false
           in: query
@@ -1205,6 +1373,20 @@ paths:
             minimum: 1
             maximum: 9007199254740991
             type: integer
+        - name: startDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
+        - name: endDate
+          required: false
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            type: string
         - name: cursor
           required: false
           in: query
@@ -1642,6 +1824,37 @@ components:
                     type: number
                   status:
                     type: number
+                  placement_cur:
+                    type: number
+                  placement_max:
+                    type: number
+                  points_gained:
+                    type: number
+                  daily_stage:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      points_cur:
+                        type: number
+                      points_max:
+                        type: number
+                      points_step:
+                        type: number
+                      rewards_last:
+                        type: number
+                      rewards_cur:
+                        type: number
+                      rewards_max:
+                        type: number
+                    required:
+                      - id
+                      - points_cur
+                      - points_max
+                      - points_step
+                      - rewards_last
+                      - rewards_cur
+                      - rewards_max
                 required:
                   - difficulty_rank
                   - result
@@ -1908,6 +2121,36 @@ components:
                 type: number
                 nullable: true
               status:
+                type: number
+                nullable: true
+              pointsGained:
+                type: number
+                nullable: true
+              placementCur:
+                type: number
+                nullable: true
+              placementMax:
+                type: number
+                nullable: true
+              dailyStageId:
+                type: number
+                nullable: true
+              dailyPointsCur:
+                type: number
+                nullable: true
+              dailyPointsMax:
+                type: number
+                nullable: true
+              dailyPointsStep:
+                type: number
+                nullable: true
+              dailyRewardsLast:
+                type: number
+                nullable: true
+              dailyRewardsCur:
+                type: number
+                nullable: true
+              dailyRewardsMax:
                 type: number
                 nullable: true
               warriors:
@@ -2197,6 +2440,16 @@ components:
               - opponentRating
               - rating
               - status
+              - pointsGained
+              - placementCur
+              - placementMax
+              - dailyStageId
+              - dailyPointsCur
+              - dailyPointsMax
+              - dailyPointsStep
+              - dailyRewardsLast
+              - dailyRewardsCur
+              - dailyRewardsMax
               - warriors
         pagination:
           type: object
@@ -2281,6 +2534,46 @@ components:
         - losses
         - winRatio
         - totalPH
+    AbyssSeasonResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        totalBattles:
+          type: number
+        wins:
+          type: number
+        losses:
+          type: number
+        winRate:
+          type: number
+        totalRatingDelta:
+          type: number
+        peakRating:
+          type: number
+          nullable: true
+        totalPointsGained:
+          type: number
+          nullable: true
+      required:
+        - id
+        - startedAt
+        - endedAt
+        - totalBattles
+        - wins
+        - losses
+        - winRate
+        - totalRatingDelta
+        - peakRating
+        - totalPointsGained
     CombatProfileResponseDto_Output:
       type: object
       properties:
@@ -3699,6 +3992,36 @@ components:
         status:
           type: number
           nullable: true
+        pointsGained:
+          type: number
+          nullable: true
+        placementCur:
+          type: number
+          nullable: true
+        placementMax:
+          type: number
+          nullable: true
+        dailyStageId:
+          type: number
+          nullable: true
+        dailyPointsCur:
+          type: number
+          nullable: true
+        dailyPointsMax:
+          type: number
+          nullable: true
+        dailyPointsStep:
+          type: number
+          nullable: true
+        dailyRewardsLast:
+          type: number
+          nullable: true
+        dailyRewardsCur:
+          type: number
+          nullable: true
+        dailyRewardsMax:
+          type: number
+          nullable: true
         warriors:
           type: array
           items:
@@ -3986,6 +4309,16 @@ components:
         - opponentRating
         - rating
         - status
+        - pointsGained
+        - placementCur
+        - placementMax
+        - dailyStageId
+        - dailyPointsCur
+        - dailyPointsMax
+        - dailyPointsStep
+        - dailyRewardsLast
+        - dailyRewardsCur
+        - dailyRewardsMax
         - warriors
     BattleRawResponseDto_Output:
       type: object

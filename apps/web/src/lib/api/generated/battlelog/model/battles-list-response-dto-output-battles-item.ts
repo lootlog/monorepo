@@ -45,5 +45,25 @@ export type BattlesListResponseDtoOutputBattlesItem = {
   rating: number | null;
   /** @nullable */
   status: number | null;
+  /** @nullable */
+  pointsGained: number | null;
+  /** @nullable */
+  placementCur: number | null;
+  /** @nullable */
+  placementMax: number | null;
+  /** @nullable */
+  dailyStageId: number | null;
+  /** @nullable */
+  dailyPointsCur: number | null;
+  /** @nullable */
+  dailyPointsMax: number | null;
+  /** @nullable */
+  dailyPointsStep: number | null;
+  /** @nullable */
+  dailyRewardsLast: number | null;
+  /** @nullable */
+  dailyRewardsCur: number | null;
+  /** @nullable */
+  dailyRewardsMax: number | null;
   warriors: BattlesListResponseDtoOutputBattlesItemWarriorsItem[];
 };

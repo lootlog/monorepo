@@ -374,6 +374,16 @@ export class BattlesService implements IBattlesService {
       opponentRating: battle.opponentRating ?? 0,
       rating: battle.rating ?? 0,
       status: battle.status ?? 0,
+      pointsGained: battle.pointsGained ?? undefined,
+      placementCur: battle.placementCur ?? undefined,
+      placementMax: battle.placementMax ?? undefined,
+      dailyStageId: battle.dailyStageId ?? undefined,
+      dailyPointsCur: battle.dailyPointsCur ?? undefined,
+      dailyPointsMax: battle.dailyPointsMax ?? undefined,
+      dailyPointsStep: battle.dailyPointsStep ?? undefined,
+      dailyRewardsLast: battle.dailyRewardsLast ?? undefined,
+      dailyRewardsCur: battle.dailyRewardsCur ?? undefined,
+      dailyRewardsMax: battle.dailyRewardsMax ?? undefined,
     };
   }
 
@@ -665,8 +675,16 @@ export class BattlesService implements IBattlesService {
         conditions.push(this.warriorExists(battlesRef, ...phConditions));
       }
 
-      if (query.matchmaking === true) {
-        conditions.push(eq(battlesRef.matchmaking, true));
+      if (query.matchmaking !== undefined) {
+        conditions.push(eq(battlesRef.matchmaking, query.matchmaking));
+      }
+
+      if (query.startDate) {
+        conditions.push(gte(battlesRef.createdAt, new Date(query.startDate)));
+      }
+
+      if (query.endDate) {
+        conditions.push(lte(battlesRef.createdAt, new Date(query.endDate)));
       }
 
       if (query.search) {
@@ -810,6 +828,16 @@ export class BattlesService implements IBattlesService {
               opponentRating: analysis.matchmaking.opponentRating,
               rating: analysis.matchmaking.rating,
               status: analysis.matchmaking.status,
+              pointsGained: analysis.matchmaking.pointsGained,
+              placementCur: analysis.matchmaking.placementCur,
+              placementMax: analysis.matchmaking.placementMax,
+              dailyStageId: analysis.matchmaking.dailyStageId,
+              dailyPointsCur: analysis.matchmaking.dailyPointsCur,
+              dailyPointsMax: analysis.matchmaking.dailyPointsMax,
+              dailyPointsStep: analysis.matchmaking.dailyPointsStep,
+              dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
+              dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
+              dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
             }),
           })
           .returning();

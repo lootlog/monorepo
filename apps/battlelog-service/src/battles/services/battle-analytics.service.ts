@@ -1,12 +1,24 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { and, eq, exists, gt, inArray, isNotNull, type SQL } from "drizzle-orm";
+import {
+  and,
+  eq,
+  exists,
+  gt,
+  gte,
+  inArray,
+  isNotNull,
+  lte,
+  type SQL,
+} from "drizzle-orm";
 import type { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
 import type {
+  QueryAbyssSeasonsDto,
   QueryBattleStatisticsDto,
   QueryPlayerVsPlayerDto,
 } from "src/battles/dto/query-battle-statistics.dto";
 import type {
   ProfessionWinRateDto,
+  AbyssSeasonDto,
   HeadToHeadPaginatedResponse,
   StreakDto,
   BattleDurationStatsDto,
@@ -34,12 +46,18 @@ type InflatedBattleWithWarriors = Battle & {
   warriors: InflatedBattleWarrior[];
 };
 type BattleResult = "flee" | "lost" | "won";
+type DateRangeQuery = {
+  period?: string;
+  startDate?: string;
+  endDate?: string;
+};
 
 @Injectable()
 export class BattleAnalyticsService {
   private readonly logger = new Logger(BattleAnalyticsService.name);
   private readonly ANALYTICS_CACHE_PREFIX = "analytics";
   private readonly ANALYTICS_CACHE_TTL = 5 * 60;
+  private readonly ABYSS_SEASON_GAP_MS = 14 * 24 * 60 * 60 * 1000;
 
   constructor(
     private readonly drizzle: DrizzleService,
@@ -165,12 +183,12 @@ export class BattleAnalyticsService {
       };
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const analyticsParams = {
       userId,
       world: query.world,
-      startDate,
+      ...dateRange,
       matchmaking: query.matchmaking,
       characterIds,
       phFilter: query.ph,
@@ -238,6 +256,68 @@ export class BattleAnalyticsService {
     return result;
   }
 
+  async getAbyssSeasons(
+    query: QueryAbyssSeasonsDto,
+    userId: string,
+  ): Promise<AbyssSeasonDto[]> {
+    return this.getCachedAnalyticsResult(
+      this.buildQueryCacheKey("statistics", "abyss-seasons:v1", userId, query),
+      () => this.getAbyssSeasonsUncached(query, userId),
+    );
+  }
+
+  private async getAbyssSeasonsUncached(
+    query: QueryAbyssSeasonsDto,
+    userId: string,
+  ): Promise<AbyssSeasonDto[]> {
+    const characterIds = await this.getCharacterIds(userId, query);
+
+    if (characterIds.length === 0) {
+      return [];
+    }
+
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: {
+        RAW: (table: typeof battles) =>
+          and(
+            eq(table.userId, userId),
+            eq(table.matchmaking, true),
+            this.warriorExists(
+              table,
+              inArray(battleWarriors.originalId, characterIds),
+            ),
+          ),
+      },
+      with: { warriors: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const sortedBattles = this.inflateBattleRows(fetchedBattles);
+    const seasons: AbyssSeasonDto[] = [];
+    let seasonBattles: InflatedBattleWithWarriors[] = [];
+
+    for (const battle of sortedBattles) {
+      const previousBattle = seasonBattles.at(-1);
+      const startsNewSeason =
+        previousBattle &&
+        battle.createdAt.getTime() - previousBattle.createdAt.getTime() >
+          this.ABYSS_SEASON_GAP_MS;
+
+      if (startsNewSeason) {
+        seasons.push(this.buildAbyssSeasonSummary(seasonBattles, characterIds));
+        seasonBattles = [];
+      }
+
+      seasonBattles.push(battle);
+    }
+
+    if (seasonBattles.length > 0) {
+      seasons.push(this.buildAbyssSeasonSummary(seasonBattles, characterIds));
+    }
+
+    return seasons.reverse();
+  }
+
   async calculateProfessionWinRate(
     query: QueryBattleStatisticsDto,
     userId: string,
@@ -259,7 +339,7 @@ export class BattleAnalyticsService {
       return [];
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -267,7 +347,7 @@ export class BattleAnalyticsService {
           this.buildAnalyticsWhere(table, {
             userId,
             world: query.world,
-            startDate,
+            ...dateRange,
             matchmaking: query.matchmaking,
             characterIds,
             phFilter: query.ph,
@@ -358,7 +438,7 @@ export class BattleAnalyticsService {
       return this.getEmptyCombatProfile();
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -366,7 +446,7 @@ export class BattleAnalyticsService {
           this.buildCombatProfileWhere(table, {
             userId,
             world: query.world,
-            startDate,
+            ...dateRange,
             matchmaking: query.matchmaking,
             characterIds,
             phFilter: query.ph,
@@ -436,7 +516,7 @@ export class BattleAnalyticsService {
       };
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -444,7 +524,7 @@ export class BattleAnalyticsService {
           this.buildAnalyticsWhere(table, {
             userId,
             world: query.world,
-            startDate,
+            ...dateRange,
             matchmaking: query.matchmaking,
             characterIds,
             phFilter: query.ph,
@@ -702,7 +782,7 @@ export class BattleAnalyticsService {
       };
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -710,7 +790,7 @@ export class BattleAnalyticsService {
           this.buildAnalyticsWhere(table, {
             userId,
             world: query.world,
-            startDate,
+            ...dateRange,
             matchmaking: query.matchmaking,
             characterIds,
             phFilter: query.ph,
@@ -821,7 +901,7 @@ export class BattleAnalyticsService {
       };
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -829,7 +909,7 @@ export class BattleAnalyticsService {
           this.buildAnalyticsWhere(table, {
             userId,
             world: query.world,
-            startDate,
+            ...dateRange,
             matchmaking: query.matchmaking,
             characterIds,
             phFilter: query.ph,
@@ -934,7 +1014,7 @@ export class BattleAnalyticsService {
       return [];
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -943,7 +1023,12 @@ export class BattleAnalyticsService {
             eq(table.userId, userId),
             eq(table.type, "1v1"),
             ...(query.world ? [eq(table.world, query.world)] : []),
-            ...(startDate ? [gt(table.createdAt, startDate)] : []),
+            ...(dateRange.startDate
+              ? [gte(table.createdAt, dateRange.startDate)]
+              : []),
+            ...(dateRange.endDate
+              ? [lte(table.createdAt, dateRange.endDate)]
+              : []),
             ...(query.matchmaking !== undefined
               ? [eq(table.matchmaking, query.matchmaking)]
               : []),
@@ -1079,6 +1164,82 @@ export class BattleAnalyticsService {
     return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   }
 
+  private buildAbyssSeasonSummary(
+    seasonBattles: InflatedBattleWithWarriors[],
+    characterIds: string[],
+  ): AbyssSeasonDto {
+    const firstBattle = seasonBattles[0]!;
+    const lastBattle = seasonBattles[seasonBattles.length - 1]!;
+    let wins = 0;
+    let losses = 0;
+    let totalRatingDelta = 0;
+    let peakRating: number | null = null;
+    let totalPointsGained = 0;
+    let hasPoints = false;
+
+    for (const battle of seasonBattles) {
+      const userWarrior = battle.warriors.find((warrior) =>
+        characterIds.includes(warrior.originalId),
+      );
+
+      if (userWarrior && !battle.hasFlee) {
+        if (userWarrior.team === battle.winningTeam) {
+          wins++;
+        } else if (userWarrior.team === battle.losingTeam) {
+          losses++;
+        }
+      }
+
+      totalRatingDelta += battle.ratingDelta ?? 0;
+
+      if (battle.rating !== null && battle.rating !== undefined) {
+        peakRating =
+          peakRating === null
+            ? battle.rating
+            : Math.max(peakRating, battle.rating);
+      }
+
+      if (battle.pointsGained !== null && battle.pointsGained !== undefined) {
+        totalPointsGained += battle.pointsGained;
+        hasPoints = true;
+      }
+    }
+
+    const resolvedBattles = wins + losses;
+
+    return {
+      id: `abyss-${firstBattle.createdAt.getTime()}-${lastBattle.createdAt.getTime()}`,
+      startedAt: firstBattle.createdAt.toISOString(),
+      endedAt: lastBattle.createdAt.toISOString(),
+      totalBattles: seasonBattles.length,
+      wins,
+      losses,
+      winRate:
+        resolvedBattles > 0
+          ? Math.round((wins / resolvedBattles) * 10000) / 100
+          : 0,
+      totalRatingDelta,
+      peakRating,
+      totalPointsGained: hasPoints ? totalPointsGained : null,
+    };
+  }
+
+  private getDateRangeFilter(query: DateRangeQuery): {
+    startDate?: Date;
+    endDate?: Date;
+  } {
+    if (query.startDate || query.endDate) {
+      return {
+        ...(query.startDate ? { startDate: new Date(query.startDate) } : {}),
+        ...(query.endDate ? { endDate: new Date(query.endDate) } : {}),
+      };
+    }
+
+    return {
+      startDate: this.getDateFilter(query.period),
+    };
+  }
+
   private buildAnalyticsCacheKey(
     userId: string,
     query: QueryBattleAnalyticsDto,
@@ -1089,6 +1250,8 @@ export class BattleAnalyticsService {
       this.formatCacheSegment(query.characterId),
       this.formatCacheSegment(query.world),
       this.formatCacheSegment(query.period),
+      this.formatCacheSegment(query.startDate),
+      this.formatCacheSegment(query.endDate),
       this.formatLevelCacheSegment(query),
       this.formatBooleanCacheSegment(query.ph, "ph"),
       this.formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
@@ -1108,6 +1271,8 @@ export class BattleAnalyticsService {
       this.formatCacheSegment(query.characterId),
       this.formatCacheSegment(query.world),
       this.formatCacheSegment(query.period),
+      this.formatCacheSegment(query.startDate),
+      this.formatCacheSegment(query.endDate),
       this.formatLevelCacheSegment(query),
     ];
 
@@ -1174,7 +1339,11 @@ export class BattleAnalyticsService {
     enabled: boolean | undefined,
     enabledSegment: string,
   ): string {
-    return enabled ? enabledSegment : "all";
+    if (enabled === undefined) {
+      return "all";
+    }
+
+    return enabled ? enabledSegment : `not-${enabledSegment}`;
   }
 
   private buildAnalyticsWhere(
@@ -1183,6 +1352,7 @@ export class BattleAnalyticsService {
       userId: string;
       world?: string;
       startDate?: Date;
+      endDate?: Date;
       matchmaking?: boolean;
       characterIds: string[];
       phFilter?: boolean;
@@ -1195,7 +1365,10 @@ export class BattleAnalyticsService {
       eq(battlesRef.userId, params.userId),
       eq(battlesRef.type, "1v1"),
       ...(params.world ? [eq(battlesRef.world, params.world)] : []),
-      ...(params.startDate ? [gt(battlesRef.createdAt, params.startDate)] : []),
+      ...(params.startDate
+        ? [gte(battlesRef.createdAt, params.startDate)]
+        : []),
+      ...(params.endDate ? [lte(battlesRef.createdAt, params.endDate)] : []),
       ...(params.matchmaking !== undefined
         ? [eq(battlesRef.matchmaking, params.matchmaking)]
         : []),
@@ -1222,6 +1395,7 @@ export class BattleAnalyticsService {
       userId: string;
       world?: string;
       startDate?: Date;
+      endDate?: Date;
       matchmaking?: boolean;
       characterIds: string[];
       phFilter?: boolean;
@@ -1230,7 +1404,10 @@ export class BattleAnalyticsService {
     const conditions: (SQL | undefined)[] = [
       eq(battlesRef.userId, params.userId),
       ...(params.world ? [eq(battlesRef.world, params.world)] : []),
-      ...(params.startDate ? [gt(battlesRef.createdAt, params.startDate)] : []),
+      ...(params.startDate
+        ? [gte(battlesRef.createdAt, params.startDate)]
+        : []),
+      ...(params.endDate ? [lte(battlesRef.createdAt, params.endDate)] : []),
       ...(params.matchmaking !== undefined
         ? [eq(battlesRef.matchmaking, params.matchmaking)]
         : []),
@@ -1591,7 +1768,7 @@ export class BattleAnalyticsService {
       return [];
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -1599,7 +1776,7 @@ export class BattleAnalyticsService {
           this.buildAnalyticsWhere(table, {
             userId,
             world: query.world,
-            startDate,
+            ...dateRange,
             matchmaking: true,
             characterIds,
             ratingNotNull: true,
@@ -1662,7 +1839,7 @@ export class BattleAnalyticsService {
       return [];
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -1670,7 +1847,7 @@ export class BattleAnalyticsService {
           this.buildAnalyticsWhere(table, {
             userId,
             world: query.world,
-            startDate,
+            ...dateRange,
             matchmaking: true,
             characterIds,
             hasFlee: false,
@@ -1824,7 +2001,7 @@ export class BattleAnalyticsService {
       };
     }
 
-    const startDate = this.getDateFilter(query.period);
+    const dateRange = this.getDateRangeFilter(query);
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
       where: {
@@ -1832,7 +2009,7 @@ export class BattleAnalyticsService {
           this.buildAnalyticsWhere(table, {
             userId,
             world: query.world,
-            startDate,
+            ...dateRange,
             matchmaking: query.matchmaking,
             characterIds,
             phFilter: query.ph,

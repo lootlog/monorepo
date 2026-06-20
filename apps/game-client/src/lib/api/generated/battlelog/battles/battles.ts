@@ -23,6 +23,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AbyssSeasonResponseDtoOutput,
   BattleAnalyticsResponseDtoOutput,
   BattleCharactersResponseDtoOutput,
   BattleCreatedResponseDtoOutput,
@@ -34,6 +35,7 @@ import type {
   BattleUserWorldsResponseDtoOutput,
   BattleWarriorsSearchResponseDtoOutput,
   BattlesControllerDeleteBattlePathParameters,
+  BattlesControllerGetAbyssSeasonsParams,
   BattlesControllerGetBattleAnalyticsParams,
   BattlesControllerGetBattleDurationParams,
   BattlesControllerGetBattlePathParameters,
@@ -505,6 +507,131 @@ export const useGetBattlesControllerGetBattleAnalyticsQueryData = () => {
   const queryClient = useQueryClient();
   return (params?: BattlesControllerGetBattleAnalyticsParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>>>(getBattlesControllerGetBattleAnalyticsQueryKey(params));
+}
+
+
+export const getBattlesControllerGetAbyssSeasonsUrl = (params: BattlesControllerGetAbyssSeasonsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/battles/@me/abyss/seasons?${stringifiedParams}` : `/battles/@me/abyss/seasons`
+}
+
+/**
+ * @summary Get authenticated user Abyss seasons
+ */
+export const battlesControllerGetAbyssSeasons = async (params: BattlesControllerGetAbyssSeasonsParams, options?: RequestInit): Promise<AbyssSeasonResponseDtoOutput[]> => {
+
+  return orvalFetchBattlelog<AbyssSeasonResponseDtoOutput[]>(getBattlesControllerGetAbyssSeasonsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getBattlesControllerGetAbyssSeasonsQueryKey = (params?: BattlesControllerGetAbyssSeasonsParams,) => {
+    return [
+    `/battles/@me/abyss/seasons`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getBattlesControllerGetAbyssSeasonsQueryOptions = <TData = Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>, TError = ErrorType<unknown>>(params: BattlesControllerGetAbyssSeasonsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getBattlesControllerGetAbyssSeasonsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>> = ({ signal }) => battlesControllerGetAbyssSeasons(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type BattlesControllerGetAbyssSeasonsQueryResult = NonNullable<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>>
+export type BattlesControllerGetAbyssSeasonsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get authenticated user Abyss seasons
+ */
+
+export function useBattlesControllerGetAbyssSeasons<TData = Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>, TError = ErrorType<unknown>>(
+ params: BattlesControllerGetAbyssSeasonsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getBattlesControllerGetAbyssSeasonsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get authenticated user Abyss seasons
+ */
+export const prefetchBattlesControllerGetAbyssSeasonsQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, params: BattlesControllerGetAbyssSeasonsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>, TError, TData>, request?: SecondParameter<typeof orvalFetchBattlelog>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getBattlesControllerGetAbyssSeasonsQueryOptions(params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get authenticated user Abyss seasons
+ */
+export const invalidateBattlesControllerGetAbyssSeasons = async (
+ queryClient: QueryClient, params: BattlesControllerGetAbyssSeasonsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getBattlesControllerGetAbyssSeasonsQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get authenticated user Abyss seasons
+ */
+export const useSetBattlesControllerGetAbyssSeasonsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: BattlesControllerGetAbyssSeasonsParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>>({ queryKey: getBattlesControllerGetAbyssSeasonsQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get authenticated user Abyss seasons
+ */
+export const useGetBattlesControllerGetAbyssSeasonsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: BattlesControllerGetAbyssSeasonsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>>(getBattlesControllerGetAbyssSeasonsQueryKey(params));
 }
 
 

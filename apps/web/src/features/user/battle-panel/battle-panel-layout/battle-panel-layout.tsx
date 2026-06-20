@@ -9,7 +9,8 @@ export const BattlePanelLayout = () => {
   const normalizedPathname = pathname.replace(/\/$/, "");
   const showTopLevelNavigation =
     normalizedPathname === ROUTES.user.battlePanel.base ||
-    normalizedPathname === ROUTES.user.battlePanel.statistics;
+    normalizedPathname === ROUTES.user.battlePanel.statistics ||
+    normalizedPathname === ROUTES.user.battlePanel.abyss;
 
   const navigationItems = [
     {
@@ -21,6 +22,11 @@ export const BattlePanelLayout = () => {
       id: "analytics",
       label: t("battlePanel.navigation.analytics"),
       href: ROUTES.user.battlePanel.statistics,
+    },
+    {
+      id: "abyss",
+      label: t("battlePanel.navigation.abyss"),
+      href: ROUTES.user.battlePanel.abyss,
     },
   ];
 
