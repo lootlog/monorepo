@@ -163,7 +163,27 @@ describe("BattleAnalyticsService", () => {
       );
 
       expect(redisService.get).toHaveBeenCalledWith(
-        `analytics:${mockUserId}:${mockCharacterId}:all:all:0-0:all:all`,
+        `analytics:${mockUserId}:${mockCharacterId}:all:all:all:all:0-0:all:all`,
+      );
+    });
+
+    it("should keep matchmaking false distinct in cache keys", async () => {
+      const cachedData = JSON.stringify({
+        totalBattles: 0,
+        wins: 0,
+        losses: 0,
+        winRatio: 0,
+        totalPH: 0,
+      });
+      redisService.get.mockResolvedValue(cachedData);
+
+      await service.getBattleAnalytics(
+        { characterId: mockCharacterId, matchmaking: false },
+        mockUserId,
+      );
+
+      expect(redisService.get).toHaveBeenCalledWith(
+        `analytics:${mockUserId}:${mockCharacterId}:all:all:all:all:any-any:all:not-matchmaking`,
       );
     });
 
@@ -439,7 +459,7 @@ describe("BattleAnalyticsService", () => {
       );
 
       expect(redisService.get).toHaveBeenCalledWith(
-        `statistics:rating-growth:${mockUserId}:${mockCharacterId}:${mockWorld}:all:0-0`,
+        `statistics:rating-growth:${mockUserId}:${mockCharacterId}:${mockWorld}:all:all:all:0-0`,
       );
     });
 
@@ -604,6 +624,87 @@ describe("BattleAnalyticsService", () => {
       const result = await service.getRatingGrowthTimeSeries({}, mockUserId);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("getAbyssSeasons", () => {
+    it("should group matchmaking battles into seasons after a 14 day gap", async () => {
+      drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(
+        mockUserCharacter,
+      );
+      drizzleService.db.query.battles.findMany.mockResolvedValue([
+        {
+          ...mockBattle,
+          id: "season-one-win",
+          createdAt: new Date("2024-01-01T19:00:00.000Z"),
+          rating: 1000,
+          ratingDelta: 10,
+          pointsGained: 5,
+          warriors: [
+            { ...mockWarrior1, battleId: "season-one-win", team: 1 },
+            { ...mockWarrior2, battleId: "season-one-win", team: 2 },
+          ],
+        },
+        {
+          ...mockBattle,
+          id: "season-one-loss",
+          winningTeam: 2,
+          losingTeam: 1,
+          createdAt: new Date("2024-01-02T19:00:00.000Z"),
+          rating: 992,
+          ratingDelta: -8,
+          pointsGained: null,
+          warriors: [
+            { ...mockWarrior1, battleId: "season-one-loss", team: 1 },
+            { ...mockWarrior2, battleId: "season-one-loss", team: 2 },
+          ],
+        },
+        {
+          ...mockBattle,
+          id: "season-two-win",
+          createdAt: new Date("2024-01-25T19:00:00.000Z"),
+          rating: 1010,
+          ratingDelta: 12,
+          pointsGained: 7,
+          warriors: [
+            { ...mockWarrior1, battleId: "season-two-win", team: 1 },
+            { ...mockWarrior2, battleId: "season-two-win", team: 2 },
+          ],
+        },
+      ]);
+
+      const result = await service.getAbyssSeasons(
+        { characterId: mockCharacterId },
+        mockUserId,
+      );
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual(
+        expect.objectContaining({
+          startedAt: "2024-01-25T19:00:00.000Z",
+          endedAt: "2024-01-25T19:00:00.000Z",
+          totalBattles: 1,
+          wins: 1,
+          losses: 0,
+          winRate: 100,
+          totalRatingDelta: 12,
+          peakRating: 1010,
+          totalPointsGained: 7,
+        }),
+      );
+      expect(result[1]).toEqual(
+        expect.objectContaining({
+          startedAt: "2024-01-01T19:00:00.000Z",
+          endedAt: "2024-01-02T19:00:00.000Z",
+          totalBattles: 2,
+          wins: 1,
+          losses: 1,
+          winRate: 50,
+          totalRatingDelta: 2,
+          peakRating: 1000,
+          totalPointsGained: 5,
+        }),
+      );
     });
   });
 

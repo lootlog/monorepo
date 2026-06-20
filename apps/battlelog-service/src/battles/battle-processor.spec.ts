@@ -195,6 +195,79 @@ describe("BattleProcessor", () => {
       expect(warrior2?.isDead).toBe(true);
     });
 
+    it("should preserve abyss points from match summary", () => {
+      const battleData: CreateBattleDto = {
+        accountId: "test-account",
+        characterId: "1",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            match_summary: {
+              difficulty_rank: 1,
+              result: 1,
+              rating_delta: 12,
+              opponent_lvl: 55,
+              opponent_oplvl: 55,
+              opponent_rating: 1400,
+              rating: 1412,
+              status: 1,
+              points_gained: 18,
+              placement_cur: 24,
+              placement_max: 100,
+              daily_stage: {
+                id: 3,
+                points_cur: 40,
+                points_max: 100,
+                points_step: 20,
+                rewards_last: 1,
+                rewards_cur: 2,
+                rewards_max: 5,
+              },
+            },
+            f: {
+              w: {
+                "1": {
+                  originalId: 1,
+                  name: "Warrior1",
+                  lvl: 50,
+                  prof: "w",
+                  icon: "icon1",
+                  team: 1,
+                },
+                "2": {
+                  originalId: 2,
+                  name: "Warrior2",
+                  lvl: 45,
+                  prof: "p",
+                  icon: "icon2",
+                  team: 2,
+                },
+              },
+              m: ["1=100;2=0;winner=Warrior1;loser=Warrior2"],
+            },
+          },
+        ],
+      };
+
+      const result = processor.processBattle(battleData);
+
+      expect(result.matchmaking).toEqual(
+        expect.objectContaining({
+          pointsGained: 18,
+          placementCur: 24,
+          placementMax: 100,
+          dailyStageId: 3,
+          dailyPointsCur: 40,
+          dailyPointsMax: 100,
+          dailyPointsStep: 20,
+          dailyRewardsLast: 1,
+          dailyRewardsCur: 2,
+          dailyRewardsMax: 5,
+        }),
+      );
+    });
+
     it("should sum -dmga with post-defense damage taken by the defender", () => {
       const battleData: CreateBattleDto = {
         accountId: "test-account",

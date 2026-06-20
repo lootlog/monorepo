@@ -37,6 +37,7 @@ type StatisticsFiltersMobileProps = {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
+  showMatchmakingFilter?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
@@ -52,6 +53,7 @@ export const StatisticsFiltersMobile = ({
   maxLevel,
   ph,
   matchmaking,
+  showMatchmakingFilter = true,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
@@ -188,24 +190,26 @@ export const StatisticsFiltersMobile = ({
               />
             </div>
 
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <div className="flex items-center gap-2">
-                <Swords className="h-4 w-4" />
-                <Label
-                  htmlFor="matchmaking-filter-mobile"
-                  className="cursor-pointer"
-                >
-                  {t("battlePanel.filters.matchmaking")}
-                </Label>
+            {showMatchmakingFilter && (
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <div className="flex items-center gap-2">
+                  <Swords className="h-4 w-4" />
+                  <Label
+                    htmlFor="matchmaking-filter-mobile"
+                    className="cursor-pointer"
+                  >
+                    {t("battlePanel.filters.matchmaking")}
+                  </Label>
+                </div>
+                <Checkbox
+                  id="matchmaking-filter-mobile"
+                  checked={matchmaking === true}
+                  onCheckedChange={(checked) =>
+                    onMatchmakingChange(checked === true)
+                  }
+                />
               </div>
-              <Checkbox
-                id="matchmaking-filter-mobile"
-                checked={matchmaking === true}
-                onCheckedChange={(checked) =>
-                  onMatchmakingChange(checked === true)
-                }
-              />
-            </div>
+            )}
           </div>
         </ScrollArea>
         <div className="mt-6 shrink-0">

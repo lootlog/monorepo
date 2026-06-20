@@ -23,6 +23,7 @@ import { CreateBattleDto } from "src/battles/dto/create-battle.dto";
 import { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
 import { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
 import {
+  QueryAbyssSeasonsDto,
   QueryBattleStatisticsDto,
   QueryPlayerVsPlayerDto,
 } from "src/battles/dto/query-battle-statistics.dto";
@@ -41,6 +42,7 @@ import {
   BattleWarriorsSearchResponseDto,
 } from "src/battles/dto/battle-response.dto";
 import {
+  AbyssSeasonResponseDto,
   BattleAnalyticsResponseDto,
   BattleDurationStatsResponseDto,
   CombatProfileResponseDto,
@@ -142,6 +144,19 @@ export class BattlesController {
     @UserId() userId: string,
   ) {
     return this.battleAnalyticsService.getBattleAnalytics(query, userId);
+  }
+
+  @Get("/@me/abyss/seasons")
+  @ApiOperation({ summary: "Get authenticated user Abyss seasons" })
+  @ZodResponse({
+    status: 200,
+    type: [AbyssSeasonResponseDto],
+  })
+  getAbyssSeasons(
+    @Query() query: QueryAbyssSeasonsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getAbyssSeasons(query, userId);
   }
 
   @Get("/@me/statistics/combat-profile")

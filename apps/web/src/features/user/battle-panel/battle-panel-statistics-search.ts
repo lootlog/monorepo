@@ -31,14 +31,30 @@ const HEAD_TO_HEAD_SORT_BY_VALUES = [
 ] as const;
 
 const SORT_ORDER_VALUES = ["asc", "desc"] as const;
+const ABYSS_TAB_VALUES = ["battles", "analytics", "seasons"] as const;
+
+export type AbyssTab = (typeof ABYSS_TAB_VALUES)[number];
 
 export const battlePanelStatisticsSearchParsers = {
   characterId: parseAsString,
   period: parseAsStringLiteral(PERIOD_VALUES).withDefault("30d"),
   minLevel: parseAsInteger.withDefault(1),
   maxLevel: parseAsInteger.withDefault(500),
+  startDate: parseAsString,
+  endDate: parseAsString,
   ph: parseAsBoolean,
   matchmaking: parseAsBoolean,
+};
+
+export const battlePanelAbyssSearchParsers = {
+  characterId: parseAsString,
+  tab: parseAsStringLiteral(ABYSS_TAB_VALUES).withDefault("battles"),
+  seasonId: parseAsString,
+  startDate: parseAsString,
+  endDate: parseAsString,
+  minLevel: parseAsInteger.withDefault(1),
+  maxLevel: parseAsInteger.withDefault(500),
+  cursor: parseAsString,
 };
 
 export const battlePanelHeadToHeadSearchParsers = {
@@ -77,6 +93,13 @@ export const battlePanelPlayerVsPlayerSearchSchema = createStandardSchemaV1(
   },
 );
 
+export const battlePanelAbyssSearchSchema = createStandardSchemaV1(
+  battlePanelAbyssSearchParsers,
+  {
+    partialOutput: true,
+  },
+);
+
 export const loadBattlePanelStatisticsSearch = createLoader(
   battlePanelStatisticsSearchParsers,
 );
@@ -87,6 +110,10 @@ export const loadBattlePanelHeadToHeadSearch = createLoader(
 
 export const loadBattlePanelPlayerVsPlayerSearch = createLoader(
   battlePanelPlayerVsPlayerSearchParsers,
+);
+
+export const loadBattlePanelAbyssSearch = createLoader(
+  battlePanelAbyssSearchParsers,
 );
 
 export const normalizeBattlePanelCharacterId = (

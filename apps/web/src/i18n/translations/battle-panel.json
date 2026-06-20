@@ -3,6 +3,7 @@
     "title": "Panel walk",
     "battles": "Walki",
     "analytics": "Analityka",
+    "abyss": "Otchłań",
     "statistics": "Statystyki",
     "headToHead": "Bilans H2H",
     "matchmakingHeadToHead": "Matchmaking H2H",
@@ -156,6 +157,51 @@
     "chartLabels": {
       "battles": "Walki",
       "winrate": "Winrate"
+    }
+  },
+  "abyss": {
+    "title": "Otchłań",
+    "subtitle": "Walki rankingowe, sezony i analityka Otchłani dla wybranej postaci",
+    "season": "Sezon",
+    "latestSeason": "Najnowsza Otchłań",
+    "noSeason": "Brak sezonów",
+    "selectSeason": "Wybierz Otchłań",
+    "seasonRange": "{{from}} - {{to}}",
+    "seasonsTitle": "Lista Otchłani",
+    "seasonsSubtitle": "Automatycznie wykryte edycje na podstawie przerw między walkami",
+    "currentSeason": "Wybrana",
+    "openH2h": "Pełny bilans H2H",
+    "battlesTitle": "Walki Otchłani",
+    "battlesSubtitle": "Pojedynki matchmakingowe z wybranej edycji",
+    "emptyTitle": "Brak walk Otchłani",
+    "emptyDescription": "Nie znaleziono walk matchmakingowych dla wybranej postaci i zakresu.",
+    "pointsUnavailable": "Brak danych punktów",
+    "cards": {
+      "record": "Bilans",
+      "winRate": "Winrate",
+      "rating": "Rating",
+      "points": "Punkty",
+      "peakRating": "Peak rating"
+    },
+    "tabs": {
+      "battles": "Walki",
+      "analytics": "Analityka",
+      "seasons": "Sezony"
+    },
+    "seasonsTable": {
+      "range": "Zakres",
+      "totalBattles": "Walki",
+      "record": "Bilans",
+      "winRate": "Winrate",
+      "ratingDelta": "Rating",
+      "peakRating": "Peak",
+      "points": "Punkty",
+      "action": "Akcja"
+    },
+    "stats": {
+      "totalBattles": "{{count}} walk",
+      "ratingDelta": "{{value}} rating",
+      "points": "{{value}} pkt"
     }
   },
   "single": {

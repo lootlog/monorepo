@@ -10,6 +10,7 @@ import type {
   BattlesListResponseDtoOutput,
   BattlesListResponseDtoOutputBattlesItem,
   BattlesListResponseDtoOutputBattlesItemWarriorsItem,
+  AbyssSeasonResponseDtoOutput,
   HeadToHeadPaginatedResponseDtoOutputRecordsItem,
   PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem,
   RatingDeltaByOpponentResponseDtoOutput,
@@ -25,6 +26,7 @@ export type BattleWarrior =
 export type BattleListResponse = BattlesListResponseDtoOutput;
 export type BattleListParams = BattlesControllerGetDashboardBattlesParams;
 export type BattleCharacter = BattleCharactersResponseDtoOutputCharactersItem;
+export type AbyssSeason = AbyssSeasonResponseDtoOutput;
 export type BattleDurationStats = BattleDurationStatsResponseDtoOutput;
 export type HeadToHeadRecord = HeadToHeadPaginatedResponseDtoOutputRecordsItem;
 export type PlayerVsPlayerBattle =
