@@ -395,11 +395,11 @@ export function OneVsOneStatsTable({
             <col style={{ width: compact ? "105px" : "120px" }} />
             <col style={{ width: compact ? "105px" : "120px" }} />
           </colgroup>
-          <TableHeader>
-            <TableRow>
+          <TableHeader className="[&_tr]:border-b [&_tr]:border-border/70">
+            <TableRow className="border-b border-border/70">
               <TableHead
                 className={cn(
-                  "sticky left-0 top-0 z-20 border-r border-b border-border/80 bg-muted/80 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                  "sticky left-0 top-0 z-20 border-r border-b border-border/70 bg-muted/80 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
                   compact && "h-7 px-2 text-[13px]",
                 )}
               >
@@ -407,7 +407,7 @@ export function OneVsOneStatsTable({
               </TableHead>
               <TableHead
                 className={cn(
-                  "sticky top-0 z-10 border-b border-border/80 bg-green-950 text-center whitespace-wrap px-2 text-green-50",
+                  "sticky top-0 z-10 border-b border-border/70 bg-green-950 text-center whitespace-wrap px-2 text-green-50",
                   compact && "h-7 px-1.5 text-[13px]",
                 )}
               >
@@ -415,7 +415,7 @@ export function OneVsOneStatsTable({
               </TableHead>
               <TableHead
                 className={cn(
-                  "sticky top-0 z-10 border-b border-border/80 bg-red-950 text-center whitespace-wrap px-2 text-red-50",
+                  "sticky top-0 z-10 border-b border-border/70 bg-red-950 text-center whitespace-wrap px-2 text-red-50",
                   compact && "h-7 px-1.5 text-[13px]",
                 )}
               >
@@ -428,7 +428,7 @@ export function OneVsOneStatsTable({
               <TableRow
                 key={`category-${category.id}`}
                 className={cn(
-                  "bg-muted/50",
+                  "border-b border-border/70 bg-muted/50",
                   activeStatSearchKey === `category:${category.id}` &&
                     "outline outline-1 -outline-offset-1 outline-primary/60",
                 )}
@@ -436,7 +436,7 @@ export function OneVsOneStatsTable({
               >
                 <TableCell
                   className={cn(
-                    "sticky left-0 z-10 font-semibold bg-muted/50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] border-r",
+                    "sticky left-0 z-10 border-r border-border/70 bg-muted/50 font-semibold shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
                     compact ? "px-2 py-1" : "py-1",
                   )}
                 >
@@ -458,6 +458,7 @@ export function OneVsOneStatsTable({
                   <TableRow
                     key={`${category.id}-${stat.key}`}
                     className={cn(
+                      "border-b border-border/70",
                       activeStatSearchKey === statSearchKey &&
                         "outline outline-1 -outline-offset-1 outline-primary/60",
                     )}
@@ -465,7 +466,7 @@ export function OneVsOneStatsTable({
                   >
                     <TableCell
                       className={cn(
-                        "sticky left-0 z-10 hover:bg-background/50 bg-background border-r font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                        "sticky left-0 z-10 border-r border-border/70 bg-background font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] hover:bg-background/50",
                         compact ? "px-2 py-1 leading-[1.35]" : "py-2",
                         stat.color,
                       )}

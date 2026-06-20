@@ -202,11 +202,17 @@ export function RatingDeltaByOpponentCard({
       className="flex flex-col"
     >
       <div className="flex min-h-72 min-w-0 flex-1 flex-col">
-        <ScrollArea className="min-w-0 rounded-lg bg-muted/30">
-          <Table>
-            <TanStackTableHeader table={table} />
+        <ScrollArea className="min-w-0 rounded-lg border border-border bg-card/40">
+          <Table className="border-b">
+            <TanStackTableHeader
+              table={table}
+              className="bg-background/80"
+              rowClassName="border-b-1! border-border"
+              headClassName="whitespace-nowrap"
+            />
             <TanStackTableBody
               table={table}
+              cellClassName="whitespace-nowrap"
               getRowProps={(row) => ({
                 onClick: () => handleRowClick(row.original.opponentId),
                 onKeyDown: (event) =>
@@ -214,13 +220,13 @@ export function RatingDeltaByOpponentCard({
                 role: "link",
                 tabIndex: 0,
                 className:
-                  "cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "cursor-pointer border-b border-border bg-background/30 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               })}
             />
           </Table>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
-        <div className="flex justify-end pt-4 mt-auto">
+        <div className="mt-auto flex justify-end pt-4">
           <Button asChild variant="outline" size="sm">
             <Link to={ROUTES.user.battlePanel.matchmakingH2h} search={search}>
               {t("battlePanel.statistics.matchmaking.link")}
