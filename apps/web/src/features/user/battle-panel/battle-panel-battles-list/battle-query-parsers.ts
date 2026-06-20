@@ -18,6 +18,8 @@ export const battleQueryParsers = {
   ),
   ph: parseAsBoolean,
   matchmaking: parseAsBoolean,
+  startDate: parseAsString,
+  endDate: parseAsString,
   characterId: parseAsArrayOf(parseAsString),
   minLevel: parseAsInteger.withDefault(1),
   maxLevel: parseAsInteger.withDefault(500),

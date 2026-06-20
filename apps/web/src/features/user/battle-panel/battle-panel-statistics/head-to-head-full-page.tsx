@@ -56,8 +56,10 @@ export function HeadToHeadFullPage() {
   const period = queryState.period ?? "30d";
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;
+  const startDate = queryState.startDate ?? undefined;
+  const endDate = queryState.endDate ?? undefined;
   const ph = queryState.ph ?? undefined;
-  const matchmaking = queryState.matchmaking ?? undefined;
+  const matchmaking = false;
   const cursor = queryState.cursor ?? undefined;
   const search = queryState.search ?? undefined;
   const sortBy = queryState.sortBy ?? "totalBattles";
@@ -80,6 +82,8 @@ export function HeadToHeadFullPage() {
         period,
         minLevel,
         maxLevel,
+        startDate,
+        endDate,
         ph,
         matchmaking,
       },
@@ -106,6 +110,8 @@ export function HeadToHeadFullPage() {
       sortOrder,
       characterId: currentCharacterId,
       period,
+      startDate,
+      endDate,
       search,
       minLevel,
       maxLevel,
@@ -117,7 +123,6 @@ export function HeadToHeadFullPage() {
 
   const applyFilterState = ({
     characterId,
-    matchmaking: nextMatchmaking,
     maxLevel: nextMaxLevel,
     minLevel: nextMinLevel,
     period: nextPeriod,
@@ -125,7 +130,6 @@ export function HeadToHeadFullPage() {
     search: nextSearch,
   }: {
     characterId?: string;
-    matchmaking?: boolean;
     maxLevel?: number;
     minLevel?: number;
     period: Period;
@@ -138,8 +142,10 @@ export function HeadToHeadFullPage() {
       period: nextPeriod,
       minLevel: nextMinLevel ?? 1,
       maxLevel: nextMaxLevel ?? 500,
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
       ph: nextPh ?? null,
-      matchmaking: nextMatchmaking ?? null,
+      matchmaking: null,
       search: nextSearch ?? null,
       cursor: null,
     });
@@ -159,7 +165,6 @@ export function HeadToHeadFullPage() {
       minLevel,
       maxLevel,
       ph,
-      matchmaking,
       search:
         nextSelectedWarriors.length > 0
           ? nextSelectedWarriors.map((item) => item.name).join(",")
@@ -188,7 +193,6 @@ export function HeadToHeadFullPage() {
       minLevel,
       maxLevel,
       ph,
-      matchmaking,
       search,
     });
   };
@@ -200,7 +204,6 @@ export function HeadToHeadFullPage() {
       minLevel,
       maxLevel,
       ph,
-      matchmaking,
       search,
     });
   };
@@ -212,7 +215,6 @@ export function HeadToHeadFullPage() {
       minLevel: value,
       maxLevel,
       ph,
-      matchmaking,
       search,
     });
   };
@@ -224,7 +226,6 @@ export function HeadToHeadFullPage() {
       minLevel,
       maxLevel: value,
       ph,
-      matchmaking,
       search,
     });
   };
@@ -236,22 +237,11 @@ export function HeadToHeadFullPage() {
       minLevel,
       maxLevel,
       ph: value ? true : undefined,
-      matchmaking,
       search,
     });
   };
 
-  const handleMatchmakingChange = (value: boolean) => {
-    applyFilterState({
-      characterId: currentCharacterId,
-      period,
-      minLevel,
-      maxLevel,
-      ph,
-      matchmaking: value ? true : undefined,
-      search,
-    });
-  };
+  const handleMatchmakingChange = () => {};
 
   const handleClearFilters = () => {
     applyFilterState(getResetHeadToHeadFilters());
@@ -284,6 +274,8 @@ export function HeadToHeadFullPage() {
     period,
     minLevel,
     maxLevel,
+    startDate,
+    endDate,
     ph,
     matchmaking,
     search,
@@ -307,6 +299,7 @@ export function HeadToHeadFullPage() {
       ph={ph}
       matchmaking={matchmaking}
       selectedWarriors={selectedWarriors}
+      showMatchmakingFilter={false}
       onCharacterChange={handleCharacterChange}
       onPeriodChange={handlePeriodChange}
       onMinLevelChange={handleMinLevelChange}
@@ -333,6 +326,7 @@ export function HeadToHeadFullPage() {
       onWarriorToggle={handleWarriorToggle}
       period={period}
       ph={ph}
+      showMatchmakingFilter={false}
       selectedWarriors={selectedWarriors}
     />
   );

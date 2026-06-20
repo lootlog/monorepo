@@ -52,6 +52,20 @@ const CreateBattleMatchSummarySchema = z.object({
   opponent_rating: z.number(),
   rating: z.number(),
   status: z.number(),
+  placement_cur: z.number().optional(),
+  placement_max: z.number().optional(),
+  points_gained: z.number().optional(),
+  daily_stage: z
+    .object({
+      id: z.number(),
+      points_cur: z.number(),
+      points_max: z.number(),
+      points_step: z.number(),
+      rewards_last: z.number(),
+      rewards_cur: z.number(),
+      rewards_max: z.number(),
+    })
+    .optional(),
 });
 
 const CreateBattleEventsSchema = z.object({

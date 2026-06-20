@@ -21,6 +21,8 @@ const QueryBattlesSchema = z.object({
   result: commaSeparatedArray(z.enum(["won", "lost", "flee"])).optional(),
   ph: booleanFromString.optional(),
   matchmaking: booleanFromString.optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
   minLevel: z.coerce.number().min(1).max(1000).optional(),
   maxLevel: z.coerce.number().min(1).max(1000).optional(),
 });
