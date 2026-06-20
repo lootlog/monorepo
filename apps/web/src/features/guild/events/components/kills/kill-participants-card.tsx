@@ -23,6 +23,7 @@ import { Users, ChevronDown, Frown, MapPin, Pencil, Info } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import { useEventsRankingControllerUpdateKillPoint } from "@/lib/api/generated/main/events/events";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
@@ -86,10 +87,10 @@ const ParticipantRow = ({
     participant.member.avatar,
     32,
   );
-  const roleColor = participant.member.roles?.[0]?.color;
-  const nameStyle = roleColor
-    ? { color: `#${roleColor.toString(16).padStart(6, "0")}` }
-    : undefined;
+  const roleCssColor = getCustomRoleCssColor(
+    participant.member.roles?.[0]?.color,
+  );
+  const nameStyle = roleCssColor ? { color: roleCssColor } : undefined;
 
   const aggregatedMaps = participant.mapData
     ? aggregateMapData(participant.mapData)
