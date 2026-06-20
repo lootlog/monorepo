@@ -2,6 +2,7 @@ import i18n from "@/i18n/config";
 import { getNavigationInfo } from "@/components/layout/get-navigation-info";
 import { getUserNavigationInfo } from "@/components/layout/get-user-navigation-info";
 import type { Breadcrumb } from "@/components/layout/get-navigation-info";
+import { getBattleRouteLabel } from "@/lib/battle/battle-route-label";
 
 export type DocumentTitleMatch = {
   routeId: string;
@@ -150,6 +151,7 @@ function getCurrentBreadcrumb(breadcrumbs: Breadcrumb[]) {
 
 function getUserRouteTitle(lastMatch: DocumentTitleMatch) {
   const navigationInfo = getUserNavigationInfo({
+    battleLabel: getBattleRouteLabel(lastMatch, t),
     path: getPathname(lastMatch),
     t,
   });

@@ -27,6 +27,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -41,7 +42,8 @@ import {
 } from "@lootlog/ui/components/tooltip";
 
 const STICKY_TOP_OFFSET_PX = 12;
-const STICKY_CONTENT_GAP_PX = 16;
+const STICKY_CONTENT_GAP_PX = 12;
+const SIDE_CARD_BOTTOM_OFFSET_PX = 8;
 const SCROLL_AREA_VIEWPORT_SELECTOR = '[data-slot="scroll-area-viewport"]';
 
 export const BattlePanelSingleBattle = () => {
@@ -64,13 +66,13 @@ export const BattlePanelSingleBattle = () => {
   const [scrollTargetRequestId, setScrollTargetRequestId] = useState(0);
   const [isChartPinned, setIsChartPinned] = useState(true);
   const [chartHeight, setChartHeight] = useState(0);
-  const [scrollViewportTop, setScrollViewportTop] = useState(0);
+  const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
   const battleLogWrapperRef = useRef<HTMLDivElement>(null);
   const selectedTurnRef = useRef<number | null>(null);
   const chartHeightRef = useRef(0);
-  const scrollViewportTopRef = useRef(0);
+  const scrollViewportHeightRef = useRef(0);
   const scrollAnimationFrameRef = useRef<number | null>(null);
 
   const {
@@ -93,17 +95,15 @@ export const BattlePanelSingleBattle = () => {
   const selectedTurnNumber = selectedTurnExists
     ? selectedTurn
     : (timeline?.timeline[0]?.turn ?? null);
-  const sideStickyTop =
-    isChartPinned && chartHeight > 0
-      ? scrollViewportTop +
-        STICKY_TOP_OFFSET_PX +
-        chartHeight +
-        STICKY_CONTENT_GAP_PX
-      : STICKY_TOP_OFFSET_PX;
+  const hasTimeline = Boolean(timeline?.timeline.length);
   const layoutStyle = {
-    "--battle-side-sticky-top": `${sideStickyTop}px`,
-    "--battle-side-card-height":
-      "max(560px, calc(100dvh - var(--battle-side-sticky-top) - 8px))",
+    "--battle-chart-height": `${chartHeight}px`,
+    "--battle-scroll-viewport-height": scrollViewportHeight
+      ? `${scrollViewportHeight}px`
+      : "100dvh",
+    "--battle-side-card-height": `max(0px, calc(var(--battle-scroll-viewport-height) - var(--battle-chart-height) - ${
+      STICKY_TOP_OFFSET_PX + STICKY_CONTENT_GAP_PX + SIDE_CARD_BOTTOM_OFFSET_PX
+    }px))`,
   } as CSSProperties;
 
   const setMeasuredChartHeight = (value: number) => {
@@ -115,42 +115,62 @@ export const BattlePanelSingleBattle = () => {
     setChartHeight(value);
   };
 
-  const setMeasuredScrollViewportTop = (value: number) => {
-    if (scrollViewportTopRef.current === value) {
+  const setMeasuredScrollViewportHeight = (value: number) => {
+    if (scrollViewportHeightRef.current === value) {
       return;
     }
 
-    scrollViewportTopRef.current = value;
-    setScrollViewportTop(value);
+    scrollViewportHeightRef.current = value;
+    setScrollViewportHeight(value);
   };
 
   const updateStickyMeasurements = () => {
     const chartElement = chartWrapperRef.current;
     const scrollElement = scrollViewportRef.current;
 
-    setMeasuredScrollViewportTop(
-      scrollElement ? Math.ceil(scrollElement.getBoundingClientRect().top) : 0,
-    );
-
-    if (!chartElement) {
-      setMeasuredChartHeight(0);
-      return;
-    }
-
     setMeasuredChartHeight(
-      Math.ceil(chartElement.getBoundingClientRect().height),
+      chartElement ? Math.ceil(chartElement.getBoundingClientRect().height) : 0,
     );
+    setMeasuredScrollViewportHeight(scrollElement?.clientHeight ?? 0);
   };
 
   useEffect(() => {
     selectedTurnRef.current = selectedTurn;
   }, [selectedTurn]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (scrollAnimationFrameRef.current != null) {
+      cancelAnimationFrame(scrollAnimationFrameRef.current);
+      scrollAnimationFrameRef.current = null;
+    }
+
+    selectedTurnRef.current = null;
+    setSelectedTurn(null);
+    setScrollTargetTurn(null);
+    setScrollTargetRequestId(0);
+
+    scrollViewportRef.current?.scrollTo({
+      top: 0,
+      left: 0,
+    });
+    scrollViewportRef.current
+      ?.querySelectorAll<HTMLElement>(SCROLL_AREA_VIEWPORT_SELECTOR)
+      .forEach((scrollViewport) => {
+        scrollViewport.scrollTo({
+          top: 0,
+          left: 0,
+        });
+      });
+  }, [battleId]);
+
+  useLayoutEffect(() => {
     const chartElement = chartWrapperRef.current;
 
     if (!chartElement) {
       setMeasuredChartHeight(0);
+      setMeasuredScrollViewportHeight(
+        scrollViewportRef.current?.clientHeight ?? 0,
+      );
       return;
     }
 
@@ -174,7 +194,7 @@ export const BattlePanelSingleBattle = () => {
       resizeObserver.disconnect();
       window.removeEventListener("resize", handleWindowResize);
     };
-  }, [isChartPinned, timeline?.timeline.length]);
+  }, [timeline?.timeline.length]);
 
   useEffect(
     () => () => {
@@ -352,119 +372,127 @@ export const BattlePanelSingleBattle = () => {
         <div className="px-3 py-3 flex flex-col gap-4" style={layoutStyle}>
           {battle && <BattleOverview battle={battle} showHeader={false} />}
 
-          {timeline?.timeline.length ? (
-            <div
-              ref={chartWrapperRef}
-              className={cn(isChartPinned && "sticky top-3 z-30 bg-background")}
-            >
-              <BattleHpTimelineChart
-                timeline={timeline.timeline}
-                warriors={timeline.warriors}
-                characterId={battle?.characterId ?? null}
-                isPinned={isChartPinned}
-                selectedTurn={selectedTurnNumber}
-                onPinnedChange={setIsChartPinned}
-                onTurnSelect={handleTurnSelect}
-              />
-            </div>
-          ) : null}
-
           <div
-            className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.3fr)] xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)_minmax(300px,0.9fr)]"
-            onWheelCapture={handleSideCardsWheelCapture}
+            className={cn(
+              "flex flex-col gap-3",
+              hasTimeline && isChartPinned && "lg:sticky lg:top-3 lg:z-20",
+            )}
           >
-            <div className="min-w-0 lg:sticky lg:[top:var(--battle-side-sticky-top)] lg:self-start">
-              {battle && (
-                <BattleStatsTable
-                  battle={battle}
-                  cardClassName="lg:h-[var(--battle-side-card-height)] lg:min-h-0"
-                  compact
-                  scrollClassName="lg:min-h-0 lg:flex-1 lg:pr-2"
-                  headerTitle={t("battlePanel.single.statistics.title")}
-                  headerActions={
-                    is1v1 ? (
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        <StatsCustomizationModal
-                          config={config}
-                          defaultCategories={STAT_CATEGORIES}
-                          onUpdateCategoryOrder={updateCategoryOrder}
-                          onToggleCategoryVisibility={toggleCategoryVisibility}
-                          onUpdateCategoryName={updateCategoryName}
-                          onUpdateStatOrder={updateStatOrder}
-                          onAddStatToCategory={addStatToCategory}
-                          onRemoveStatFromCategory={removeStatFromCategory}
-                          onAddCategory={addCategory}
-                          onRemoveCategory={removeCategory}
-                          onResetToDefaults={resetToDefaults}
-                          compactTrigger
-                        />
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => setHideZeros(!hideZeros)}
-                              aria-label={
-                                hideZeros
-                                  ? t("battlePanel.single.statistics.showAll")
-                                  : t("battlePanel.single.statistics.hideZeros")
-                              }
-                              className="size-9"
-                            >
-                              {hideZeros ? (
-                                <Eye className="h-4 w-4" />
-                              ) : (
-                                <EyeOff className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {hideZeros
-                              ? t("battlePanel.single.statistics.showAll")
-                              : t("battlePanel.single.statistics.hideZeros")}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    ) : undefined
-                  }
-                  hideZeros={is1v1 ? hideZeros : undefined}
-                  onHideZerosChange={is1v1 ? setHideZeros : undefined}
-                  statsCustomizationConfig={is1v1 ? config : undefined}
+            {timeline?.timeline.length ? (
+              <div ref={chartWrapperRef} className="bg-background">
+                <BattleHpTimelineChart
+                  timeline={timeline.timeline}
+                  warriors={timeline.warriors}
+                  characterId={battle?.characterId ?? null}
+                  isPinned={isChartPinned}
+                  selectedTurn={selectedTurnNumber}
+                  onPinnedChange={setIsChartPinned}
+                  onTurnSelect={handleTurnSelect}
                 />
-              )}
-            </div>
+              </div>
+            ) : null}
 
             <div
-              ref={battleLogWrapperRef}
-              className="flex min-w-0 flex-col gap-3 lg:sticky lg:[top:var(--battle-side-sticky-top)] lg:self-start"
+              className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.3fr)] xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)_minmax(300px,0.9fr)]"
+              onWheelCapture={handleSideCardsWheelCapture}
             >
-              {rawBattle && battle && (
-                <BattleLog
-                  rawBattle={rawBattle.rawData}
-                  warriors={battle.warriors}
-                  showHeader={false}
-                  className="lg:flex lg:h-[var(--battle-side-card-height)] lg:min-h-0 lg:w-full lg:flex-col"
-                  listScrollClassName="lg:min-h-0 lg:flex-1 lg:pr-2"
-                  selectedTurn={selectedTurnNumber}
-                  scrollToSelectedTurnRequestId={
-                    scrollTargetTurn !== null &&
-                    scrollTargetTurn === selectedTurnNumber
-                      ? scrollTargetRequestId
-                      : 0
-                  }
-                  onListScroll={handleBattleScroll}
-                  onSelectedTurnScrollComplete={
-                    handleSelectedTurnScrollComplete
-                  }
-                  onTurnSelect={handleTurnSelect}
-                  onTurnFocus={handleTurnFocus}
-                />
-              )}
-            </div>
+              <div className="min-w-0">
+                {battle && (
+                  <BattleStatsTable
+                    battle={battle}
+                    cardClassName="lg:h-[var(--battle-side-card-height)] lg:min-h-0"
+                    compact
+                    scrollClassName="lg:min-h-0 lg:flex-1 lg:pr-2"
+                    headerTitle={t("battlePanel.single.statistics.title")}
+                    headerActions={
+                      is1v1 ? (
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <StatsCustomizationModal
+                            config={config}
+                            defaultCategories={STAT_CATEGORIES}
+                            onUpdateCategoryOrder={updateCategoryOrder}
+                            onToggleCategoryVisibility={
+                              toggleCategoryVisibility
+                            }
+                            onUpdateCategoryName={updateCategoryName}
+                            onUpdateStatOrder={updateStatOrder}
+                            onAddStatToCategory={addStatToCategory}
+                            onRemoveStatFromCategory={removeStatFromCategory}
+                            onAddCategory={addCategory}
+                            onRemoveCategory={removeCategory}
+                            onResetToDefaults={resetToDefaults}
+                            compactTrigger
+                          />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setHideZeros(!hideZeros)}
+                                aria-label={
+                                  hideZeros
+                                    ? t("battlePanel.single.statistics.showAll")
+                                    : t(
+                                        "battlePanel.single.statistics.hideZeros",
+                                      )
+                                }
+                                className="size-9"
+                              >
+                                {hideZeros ? (
+                                  <Eye className="h-4 w-4" />
+                                ) : (
+                                  <EyeOff className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {hideZeros
+                                ? t("battlePanel.single.statistics.showAll")
+                                : t("battlePanel.single.statistics.hideZeros")}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      ) : undefined
+                    }
+                    hideZeros={is1v1 ? hideZeros : undefined}
+                    onHideZerosChange={is1v1 ? setHideZeros : undefined}
+                    statsCustomizationConfig={is1v1 ? config : undefined}
+                  />
+                )}
+              </div>
 
-            <div className="hidden min-w-0 xl:block xl:self-start">
-              <div className="sticky lg:[top:var(--battle-side-sticky-top)]">
-                <RecentOpponentBattlesCard battle={battle} />
+              <div
+                ref={battleLogWrapperRef}
+                className="flex min-w-0 flex-col gap-3"
+              >
+                {rawBattle && battle && (
+                  <BattleLog
+                    rawBattle={rawBattle.rawData}
+                    warriors={battle.warriors}
+                    showHeader={false}
+                    className="lg:flex lg:h-[var(--battle-side-card-height)] lg:min-h-0 lg:w-full lg:flex-col"
+                    listScrollClassName="lg:min-h-0 lg:flex-1 lg:pr-2"
+                    selectedTurn={selectedTurnNumber}
+                    scrollToSelectedTurnRequestId={
+                      scrollTargetTurn !== null &&
+                      scrollTargetTurn === selectedTurnNumber
+                        ? scrollTargetRequestId
+                        : 0
+                    }
+                    onListScroll={handleBattleScroll}
+                    onSelectedTurnScrollComplete={
+                      handleSelectedTurnScrollComplete
+                    }
+                    onTurnSelect={handleTurnSelect}
+                    onTurnFocus={handleTurnFocus}
+                  />
+                )}
+              </div>
+
+              <div className="hidden min-w-0 xl:block xl:self-start">
+                <div>
+                  <RecentOpponentBattlesCard battle={battle} />
+                </div>
               </div>
             </div>
           </div>

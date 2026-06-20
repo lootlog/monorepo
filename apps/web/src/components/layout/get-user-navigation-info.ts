@@ -2,6 +2,7 @@ import { ROUTES } from "@/config/routes";
 import type { NavigationInfo } from "./get-navigation-info";
 
 type GetUserNavigationInfoArgs = {
+  battleLabel?: string;
   path: string;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
@@ -15,6 +16,7 @@ function normalizePath(path: string) {
 }
 
 export function getUserNavigationInfo({
+  battleLabel,
   path,
   t,
 }: GetUserNavigationInfoArgs): NavigationInfo {
@@ -122,9 +124,11 @@ export function getUserNavigationInfo({
             path: ROUTES.user.battlePanel.base,
           },
           {
-            label: t("battlePanel.navigation.battleFallback", {
-              id: battleId,
-            }),
+            label:
+              battleLabel ??
+              t("battlePanel.navigation.battleFallback", {
+                id: battleId,
+              }),
             path: null,
           },
         ],
