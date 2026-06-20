@@ -38,6 +38,52 @@ describe("resolveDocumentTitle", () => {
     ).toBe("Bilans H2H - Panel walk | Lootlog.pl");
   });
 
+  it("uses 1v1 battle participants for user battle detail titles", () => {
+    expect(
+      resolveDocumentTitle([
+        createMatch({ routeId: "__root__" }),
+        createMatch({
+          loaderData: {
+            battle: {
+              id: "battle-1",
+              type: "1v1",
+              warriors: [
+                { name: "gorilla banana", team: 1 },
+                { name: "imbi woj", team: 2 },
+              ],
+            },
+          },
+          params: { battleId: "battle-1" },
+          pathname: "/@me/battle-panel/battles/battle-1",
+          routeId: "/_authenticated/@me/battle-panel/battles_/$battleId",
+        }),
+      ]),
+    ).toBe("gorilla banana vs imbi woj - Panel walk | Lootlog.pl");
+  });
+
+  it("uses the battle id fallback for non-1v1 user battle detail titles", () => {
+    expect(
+      resolveDocumentTitle([
+        createMatch({ routeId: "__root__" }),
+        createMatch({
+          loaderData: {
+            battle: {
+              id: "battle-1",
+              type: "group",
+              warriors: [
+                { name: "gorilla banana", team: 1 },
+                { name: "imbi woj", team: 2 },
+              ],
+            },
+          },
+          params: { battleId: "battle-1" },
+          pathname: "/@me/battle-panel/battles/battle-1",
+          routeId: "/_authenticated/@me/battle-panel/battles_/$battleId",
+        }),
+      ]),
+    ).toBe("Walka #battle-1 - Panel walk | Lootlog.pl");
+  });
+
   it("uses the guild name as context for regular guild pages", () => {
     expect(
       resolveDocumentTitle([

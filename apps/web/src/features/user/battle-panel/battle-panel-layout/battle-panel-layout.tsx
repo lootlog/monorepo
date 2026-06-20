@@ -25,7 +25,7 @@ export const BattlePanelLayout = () => {
   ];
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] min-h-0 w-full flex-col bg-background/50">
+    <div className="flex h-[calc(100vh-3.5rem)] min-h-0 min-w-0 w-full flex-col bg-background/50">
       {showTopLevelNavigation && (
         <HorizontalMenu
           items={navigationItems}
@@ -33,7 +33,7 @@ export const BattlePanelLayout = () => {
           className="shrink-0 pb-0"
         />
       )}
-      <div className="min-h-0 flex-1 overflow-hidden">
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
         <Outlet />
       </div>
     </div>

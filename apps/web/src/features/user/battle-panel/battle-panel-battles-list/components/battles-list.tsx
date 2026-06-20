@@ -72,7 +72,7 @@ export const BattlesList = ({
 
   const handlePreviousPage = () => {
     if (onCursorChange) {
-      onCursorChange(undefined);
+      onCursorChange(battlesResponse?.pagination.previousCursor);
     }
   };
 
@@ -107,7 +107,7 @@ export const BattlesList = ({
     <div
       ref={containerRef}
       className={cn(
-        "flex min-h-0 flex-col overflow-hidden",
+        "flex min-h-0 min-w-0 flex-col overflow-hidden",
         showPagination ? "h-full flex-1" : "w-full",
         showFilters && "gap-3",
       )}

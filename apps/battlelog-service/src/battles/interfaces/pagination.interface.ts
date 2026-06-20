@@ -5,6 +5,7 @@ export interface CursorPagination {
   hasNext: boolean;
   hasPrev: boolean;
   nextCursor?: string;
+  previousCursor?: string;
   total?: number;
 }
 
