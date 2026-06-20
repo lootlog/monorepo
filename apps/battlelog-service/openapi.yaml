@@ -2506,6 +2506,80 @@ components:
                 type: string
               opponentLvl:
                 type: number
+              lastBattleResult:
+                type: string
+                enum:
+                  - won
+                  - lost
+                  - flee
+              lastBattleUserWarrior:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  lvl:
+                    type: number
+                  prof:
+                    type: string
+                  icon:
+                    type: string
+                  fireDamage:
+                    type: number
+                  frostDamage:
+                    type: number
+                  lightningDamage:
+                    type: number
+                  poisonDamageTaken:
+                    type: number
+                  woundDamageTaken:
+                    type: number
+                  critWoundDamageTaken:
+                    type: number
+                required:
+                  - name
+                  - lvl
+                  - prof
+                  - icon
+                  - fireDamage
+                  - frostDamage
+                  - lightningDamage
+                  - poisonDamageTaken
+                  - woundDamageTaken
+                  - critWoundDamageTaken
+              lastBattleOpponentWarrior:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  lvl:
+                    type: number
+                  prof:
+                    type: string
+                  icon:
+                    type: string
+                  fireDamage:
+                    type: number
+                  frostDamage:
+                    type: number
+                  lightningDamage:
+                    type: number
+                  poisonDamageTaken:
+                    type: number
+                  woundDamageTaken:
+                    type: number
+                  critWoundDamageTaken:
+                    type: number
+                required:
+                  - name
+                  - lvl
+                  - prof
+                  - icon
+                  - fireDamage
+                  - frostDamage
+                  - lightningDamage
+                  - poisonDamageTaken
+                  - woundDamageTaken
+                  - critWoundDamageTaken
               wins:
                 type: number
               losses:
@@ -2528,6 +2602,9 @@ components:
               - opponentIcon
               - opponentProf
               - opponentLvl
+              - lastBattleResult
+              - lastBattleUserWarrior
+              - lastBattleOpponentWarrior
               - wins
               - losses
               - totalBattles

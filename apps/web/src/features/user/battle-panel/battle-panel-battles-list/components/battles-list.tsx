@@ -7,13 +7,19 @@ import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-
 import { BattlesListFilters, type BattleFilters } from "./battles-list-filters";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useEffect, useRef, type ReactNode } from "react";
+import type { BattlePanelFilterChip } from "@/features/user/battle-panel/components/battle-panel-filter-chip-list";
 
 type BattlesListProps = {
+  activeFilterChips?: BattlePanelFilterChip[];
   battlesResponse?: GetBattlesResponse;
+  clearFiltersLabel?: string;
   characters?: BattleCharacter[];
   params?: UseBattlesParams;
   onCursorChange?: (cursor: string | undefined) => void;
+  onClearFilters?: () => void;
   onFiltersChange?: (filters: BattleFilters) => void;
+  pageIndex?: number;
+  pageSize?: number;
   showPagination?: boolean;
   showFilters?: boolean;
   isLoading?: boolean;
@@ -23,11 +29,16 @@ type BattlesListProps = {
 };
 
 export const BattlesList = ({
+  activeFilterChips = [],
   battlesResponse,
+  clearFiltersLabel,
   characters,
   params,
   onCursorChange,
+  onClearFilters,
   onFiltersChange,
+  pageIndex = 0,
+  pageSize,
   showPagination = false,
   showFilters = false,
   isLoading = false,
@@ -121,15 +132,20 @@ export const BattlesList = ({
       )}
 
       <BattlesTable
+        activeFilterChips={activeFilterChips}
         battles={battlesResponse?.battles ?? []}
+        clearFiltersLabel={clearFiltersLabel}
         hasNext={Boolean(battlesResponse?.pagination?.hasNext)}
         hasPrev={Boolean(battlesResponse?.pagination?.hasPrev)}
         isLoading={isLoading}
+        onClearFilters={onClearFilters}
         onMatchmakingClick={handleMatchmakingClick}
         onNextPage={handleNextPage}
         onPhClick={handlePhClick}
         onPreviousPage={handlePreviousPage}
         onWorldClick={handleWorldClick}
+        pageIndex={pageIndex}
+        pageSize={pageSize ?? params?.size}
         showPagination={showPagination}
         selectionLimit={params?.size}
         totalCount={battlesResponse?.pagination?.total ?? 0}

@@ -1,56 +1,52 @@
-import { useState, type KeyboardEvent } from "react";
-import type { Period } from "@/store/battle-filters.store";
-import {
-  useReactTable,
-  getCoreRowModel,
-  type SortingState,
-} from "@tanstack/react-table";
-import { Table } from "@lootlog/ui/components/table";
-import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
-import { Card } from "@lootlog/ui/components/card";
-import { Button } from "@lootlog/ui/components/button";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@lootlog/ui/components/drawer";
 import { SectionHeader } from "@/components/layout/section-header";
-import { useBattlesControllerGetHeadToHead } from "@/lib/api/generated/battlelog/battles/battles";
-import { AlertCircle, Filter, SearchX, Swords } from "lucide-react";
-import type { SearchWarrior } from "@/lib/api/battlelog-types";
-import { HeadToHeadFiltersPanel } from "./components/head-to-head-filters-panel";
-import { headToHeadColumns } from "./components/head-to-head-columns";
-import { useQueryStates } from "nuqs";
+import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
+import {
+  buildHeadToHeadFilterLabels,
+  getResetHeadToHeadFilters,
+  removeHeadToHeadFilter,
+} from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
+import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
+import { BattlePanelH2hCard } from "@/features/user/battle-panel/components/battle-panel-h2h-card";
+import { BattlePanelMobileFiltersDrawer } from "@/features/user/battle-panel/components/battle-panel-mobile-filters-drawer";
+import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
+import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
+import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-status";
 import {
   battlePanelHeadToHeadSearchParsers,
   getSelectedWarriorsFromSearch,
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-statistics-search";
-import { useTranslation } from "react-i18next";
+import { useBattlesControllerGetHeadToHead } from "@/lib/api/generated/battlelog/battles/battles";
+import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
-import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
-import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
-import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
-import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
-import { useNavigate } from "@tanstack/react-router";
+import type { Period } from "@/store/battle-filters.store";
+import { Table } from "@lootlog/ui/components/table";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { useLocalStorage } from "usehooks-ts";
+import { cn } from "@lootlog/ui/lib/utils";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  getCoreRowModel,
+  type SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
+import { AlertCircle, SearchX, Swords } from "lucide-react";
+import { useQueryStates } from "nuqs";
+import { useState, type KeyboardEvent } from "react";
+import { useTranslation } from "react-i18next";
+import { headToHeadColumns } from "./components/head-to-head-columns";
+import { HeadToHeadFilterToolbar } from "./components/head-to-head-filter-toolbar";
+import { HeadToHeadFiltersPanel } from "./components/head-to-head-filters-panel";
 
 type SortBy = "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
-
-const H2H_FILTERS_OPEN_KEY = "h2h-filters-open";
 
 export function HeadToHeadFullPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
-    H2H_FILTERS_OPEN_KEY,
-    true,
-  );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
   const [queryState, setQueryState] = useQueryStates(
     battlePanelHeadToHeadSearchParsers,
   );
@@ -68,6 +64,7 @@ export function HeadToHeadFullPage() {
   const sortOrder = queryState.sortOrder ?? "desc";
   const selectedWarriors = getSelectedWarriorsFromSearch(search);
   const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
+  const pageSize = 20;
 
   const handleRowClick = (opponentId: string) => {
     if (!currentCharacterId) return;
@@ -104,7 +101,7 @@ export function HeadToHeadFullPage() {
   const { data, isLoading, isError, error } = useBattlesControllerGetHeadToHead(
     {
       cursor,
-      size: 20,
+      size: pageSize,
       sortBy,
       sortOrder,
       characterId: currentCharacterId,
@@ -118,6 +115,36 @@ export function HeadToHeadFullPage() {
     },
   );
 
+  const applyFilterState = ({
+    characterId,
+    matchmaking: nextMatchmaking,
+    maxLevel: nextMaxLevel,
+    minLevel: nextMinLevel,
+    period: nextPeriod,
+    ph: nextPh,
+    search: nextSearch,
+  }: {
+    characterId?: string;
+    matchmaking?: boolean;
+    maxLevel?: number;
+    minLevel?: number;
+    period: Period;
+    ph?: boolean;
+    search?: string;
+  }) => {
+    setPageIndex(0);
+    void setQueryState({
+      characterId: characterId ?? null,
+      period: nextPeriod,
+      minLevel: nextMinLevel ?? 1,
+      maxLevel: nextMaxLevel ?? 500,
+      ph: nextPh ?? null,
+      matchmaking: nextMatchmaking ?? null,
+      search: nextSearch ?? null,
+      cursor: null,
+    });
+  };
+
   const handleWarriorToggle = (warrior: SearchWarrior) => {
     const isSelected = selectedWarriors.some(
       (item) => item.name === warrior.name,
@@ -126,71 +153,112 @@ export function HeadToHeadFullPage() {
       ? selectedWarriors.filter((item) => item.name !== warrior.name)
       : [warrior];
 
-    void setQueryState({
+    applyFilterState({
+      characterId: currentCharacterId,
+      period,
+      minLevel,
+      maxLevel,
+      ph,
+      matchmaking,
       search:
         nextSelectedWarriors.length > 0
           ? nextSelectedWarriors.map((item) => item.name).join(",")
-          : null,
-      cursor: null,
+          : undefined,
     });
   };
 
   const handleNextPage = () => {
     if (data?.pagination.nextCursor) {
+      setPageIndex((currentPageIndex) => currentPageIndex + 1);
       void setQueryState({ cursor: data.pagination.nextCursor });
     }
   };
 
   const handlePreviousPage = () => {
     if (data?.pagination.previousCursor) {
+      setPageIndex((currentPageIndex) => Math.max(currentPageIndex - 1, 0));
       void setQueryState({ cursor: data.pagination.previousCursor });
     }
   };
 
   const handlePeriodChange = (value: Period) => {
-    void setQueryState({
+    applyFilterState({
+      characterId: currentCharacterId,
       period: value,
-      cursor: null,
+      minLevel,
+      maxLevel,
+      ph,
+      matchmaking,
+      search,
     });
   };
 
   const handleCharacterChange = (id: string | undefined) => {
-    void setQueryState({
-      characterId: id ?? null,
-      cursor: null,
+    applyFilterState({
+      characterId: id,
+      period,
+      minLevel,
+      maxLevel,
+      ph,
+      matchmaking,
+      search,
     });
   };
 
   const handleMinLevelChange = (value: number | undefined) => {
-    void setQueryState({
-      minLevel: value ?? 1,
-      cursor: null,
+    applyFilterState({
+      characterId: currentCharacterId,
+      period,
+      minLevel: value,
+      maxLevel,
+      ph,
+      matchmaking,
+      search,
     });
   };
 
   const handleMaxLevelChange = (value: number | undefined) => {
-    void setQueryState({
-      maxLevel: value ?? 500,
-      cursor: null,
+    applyFilterState({
+      characterId: currentCharacterId,
+      period,
+      minLevel,
+      maxLevel: value,
+      ph,
+      matchmaking,
+      search,
     });
   };
 
   const handlePhChange = (value: boolean) => {
-    void setQueryState({
-      ph: value ? true : null,
-      cursor: null,
+    applyFilterState({
+      characterId: currentCharacterId,
+      period,
+      minLevel,
+      maxLevel,
+      ph: value ? true : undefined,
+      matchmaking,
+      search,
     });
   };
 
   const handleMatchmakingChange = (value: boolean) => {
-    void setQueryState({
-      matchmaking: value ? true : null,
-      cursor: null,
+    applyFilterState({
+      characterId: currentCharacterId,
+      period,
+      minLevel,
+      maxLevel,
+      ph,
+      matchmaking: value ? true : undefined,
+      search,
     });
   };
 
+  const handleClearFilters = () => {
+    applyFilterState(getResetHeadToHeadFilters());
+  };
+
   const table = useReactTable({
-    data: data?.records || [],
+    data: data?.records ?? [],
     columns: headToHeadColumns,
     state: {
       sorting,
@@ -200,6 +268,7 @@ export function HeadToHeadFullPage() {
         typeof updater === "function" ? updater(sorting) : updater;
       const nextSort = nextSorting[0];
 
+      setPageIndex(0);
       void setQueryState({
         sortBy: (nextSort?.id as SortBy | undefined) ?? "totalBattles",
         sortOrder: nextSort?.desc ? "desc" : "asc",
@@ -209,6 +278,25 @@ export function HeadToHeadFullPage() {
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
   });
+
+  const filterState = {
+    characterId: currentCharacterId,
+    period,
+    minLevel,
+    maxLevel,
+    ph,
+    matchmaking,
+    search,
+  };
+  const activeFilterChips = buildHeadToHeadFilterLabels({
+    ...filterState,
+    selectedWarriorsCount: selectedWarriors.length,
+    translate: t,
+  }).map((chip) => ({
+    ...chip,
+    onRemove: () =>
+      applyFilterState(removeHeadToHeadFilter(filterState, chip.id)),
+  }));
 
   const filtersContent = (
     <HeadToHeadFiltersPanel
@@ -228,137 +316,132 @@ export function HeadToHeadFullPage() {
       onWarriorToggle={handleWarriorToggle}
     />
   );
+  const toolbar = (
+    <HeadToHeadFilterToolbar
+      characterId={currentCharacterId}
+      isMobile={isMobile}
+      matchmaking={matchmaking}
+      maxLevel={maxLevel}
+      minLevel={minLevel}
+      onCharacterChange={handleCharacterChange}
+      onMatchmakingChange={handleMatchmakingChange}
+      onMaxLevelChange={handleMaxLevelChange}
+      onMinLevelChange={handleMinLevelChange}
+      onMobileFiltersOpen={() => setIsMobileFiltersOpen(true)}
+      onPeriodChange={handlePeriodChange}
+      onPhChange={handlePhChange}
+      onWarriorToggle={handleWarriorToggle}
+      period={period}
+      ph={ph}
+      selectedWarriors={selectedWarriors}
+    />
+  );
+  const paginationFooter = (
+    <BattlePanelPaginationFooter
+      hasPrev={Boolean(data?.pagination?.hasPrev)}
+      hasNext={Boolean(data?.pagination?.hasNext)}
+      label={(range) => t("battlePanel.statistics.showingRecords", range)}
+      onPreviousPage={handlePreviousPage}
+      onNextPage={handleNextPage}
+      pageIndex={pageIndex}
+      pageSize={pageSize}
+      totalCount={data?.pagination?.total ?? 0}
+      visibleCount={data?.records.length ?? 0}
+    />
+  );
 
   return (
     <>
       {isMobile && (
-        <Drawer
+        <BattlePanelMobileFiltersDrawer
           open={isMobileFiltersOpen}
           onOpenChange={setIsMobileFiltersOpen}
-          shouldScaleBackground={false}
+          contentClassName="p-0"
+          title={t("battlePanel.filters.headToHeadTitle")}
         >
-          <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
-            <DrawerHeader className="border-b px-4 py-3 shrink-0">
-              <DrawerTitle>
-                {t("battlePanel.filters.headToHeadTitle")}
-              </DrawerTitle>
-            </DrawerHeader>
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full">{filtersContent}</ScrollArea>
-            </div>
-          </DrawerContent>
-        </Drawer>
+          {filtersContent}
+        </BattlePanelMobileFiltersDrawer>
       )}
 
-      <div className="w-full flex flex-col h-full overflow-hidden bg-background/50">
-        <div className="px-3 pt-3 pb-0">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-background/50">
+        <div className="px-3 pb-0 pt-3">
           <SectionHeader
             icon={Swords}
             title={t("battlePanel.statistics.directMatchups.title")}
             subtitle={t(
               "battlePanel.statistics.directMatchups.fullDescription",
             )}
-            actions={
-              !isMobile && (
-                <Button
-                  aria-label={t("battlePanel.filters.title")}
-                  onClick={() => setIsFiltersOpen((prev) => !prev)}
-                  variant={isFiltersOpen ? "default" : "outline"}
-                  size="icon"
-                  className="relative shrink-0"
-                >
-                  <Filter className="h-4 w-4" />
-                </Button>
-              )
-            }
           />
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden p-3">
-            <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm gap-0">
-              <ScrollArea className="relative flex-1 min-h-0 w-full">
-                {isLoading ? (
-                  <TableRowsSkeleton />
-                ) : isError ? (
-                  <BattlePanelEmptyState
-                    icon={AlertCircle}
-                    title={t("battlePanel.statistics.empty.errorTitle")}
-                    description={
-                      getRouteErrorMessage(error) ??
-                      t("common.routeErrors.status.500.description")
-                    }
-                  />
-                ) : !data || data.records.length === 0 ? (
-                  <BattlePanelEmptyState
-                    icon={SearchX}
-                    title={t(
-                      "battlePanel.statistics.directMatchups.emptyTitle",
-                    )}
-                    description={t(
-                      "battlePanel.statistics.directMatchups.emptyDescription",
-                    )}
-                  />
-                ) : (
-                  <Table className="border-b">
-                    <TanStackTableHeader
-                      table={table}
-                      className="bg-background sticky top-0 z-10"
-                      rowClassName="border-b-1! border-border"
-                      headClassName="whitespace-nowrap"
-                    />
-                    <TanStackTableBody
-                      table={table}
-                      cellClassName="whitespace-nowrap"
-                      getRowProps={(row) => ({
-                        className:
-                          "bg-background/30 cursor-pointer hover:bg-muted/50 border-b border-border focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        onClick: () => handleRowClick(row.original.opponentId),
-                        onKeyDown: (event) =>
-                          handleRowKeyDown(event, row.original.opponentId),
-                        role: "link",
-                        tabIndex: 0,
-                      })}
-                    />
-                  </Table>
-                )}
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-
-              <TablePaginationFooter
-                totalLabel={t("battlePanel.statistics.total", {
-                  count: data?.pagination?.total ?? 0,
-                })}
-                hasPrev={Boolean(data?.pagination?.hasPrev)}
-                hasNext={Boolean(data?.pagination?.hasNext)}
-                onPreviousPage={handlePreviousPage}
-                onNextPage={handleNextPage}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3">
+          <BattlePanelResultsSurface
+            chips={activeFilterChips}
+            clearFiltersLabel={t("battlePanel.filters.clear")}
+            footer={paginationFooter}
+            onClearFilters={handleClearFilters}
+            toolbar={toolbar}
+            withHorizontalScroll={!isMobile}
+          >
+            {isLoading ? (
+              <TableRowsSkeleton />
+            ) : isError ? (
+              <BattlePanelEmptyState
+                icon={AlertCircle}
+                title={t("battlePanel.statistics.empty.errorTitle")}
+                description={
+                  getRouteErrorMessage(error) ??
+                  t("common.routeErrors.status.500.description")
+                }
               />
-            </Card>
-          </div>
-
-          {!isMobile && isFiltersOpen && (
-            <div className="overflow-hidden h-full shrink-0 w-[320px]">
-              <div className="w-[320px] h-full flex flex-col shrink-0 bg-background/50 py-3 pr-3">
-                <Card className="flex-1 flex flex-col min-h-0 bg-filters-sidebar border-border backdrop-blur-sm p-0">
-                  <ScrollArea className="h-full">{filtersContent}</ScrollArea>
-                </Card>
+            ) : !data || data.records.length === 0 ? (
+              <BattlePanelEmptyState
+                icon={SearchX}
+                title={t("battlePanel.statistics.directMatchups.emptyTitle")}
+                description={t(
+                  "battlePanel.statistics.directMatchups.emptyDescription",
+                )}
+              />
+            ) : isMobile ? (
+              <div className="grid gap-2 p-3">
+                {data.records.map((record) => (
+                  <BattlePanelH2hCard
+                    key={record.opponentId}
+                    record={record}
+                    onOpen={handleRowClick}
+                  />
+                ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <Table className="border-b">
+                <TanStackTableHeader
+                  table={table}
+                  className="sticky top-0 z-10 bg-background"
+                  rowClassName="border-b-1! border-border"
+                  headClassName="whitespace-nowrap"
+                />
+                <TanStackTableBody
+                  table={table}
+                  cellClassName="whitespace-nowrap"
+                  getRowProps={(row) => ({
+                    className: cn(
+                      "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      getBattleResultRowClassName(
+                        row.original.lastBattleResult,
+                      ),
+                    ),
+                    onClick: () => handleRowClick(row.original.opponentId),
+                    onKeyDown: (event) =>
+                      handleRowKeyDown(event, row.original.opponentId),
+                    role: "link",
+                    tabIndex: 0,
+                  })}
+                />
+              </Table>
+            )}
+          </BattlePanelResultsSurface>
         </div>
       </div>
-
-      {isMobile && (
-        <Button
-          aria-label={t("battlePanel.filters.title")}
-          onClick={() => setIsMobileFiltersOpen(true)}
-          size="icon"
-          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-20"
-        >
-          <Filter className="h-5 w-5" />
-        </Button>
-      )}
     </>
   );
 }

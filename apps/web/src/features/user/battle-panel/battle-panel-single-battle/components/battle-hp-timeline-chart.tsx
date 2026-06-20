@@ -8,7 +8,6 @@ import {
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-legendary-markers";
 import { BattleHpTimelinePlot } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-plot";
 import { useBattleHpTimelineLayers } from "@/features/user/battle-panel/battle-panel-single-battle/components/use-battle-hp-timeline-layers";
-import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Card } from "@lootlog/ui/components/card";
 import { Activity } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -17,9 +16,7 @@ type BattleHpTimelineChartProps = {
   timeline: BattleTimelineResponseDtoOutput["timeline"];
   warriors: BattleTimelineResponseDtoOutput["warriors"];
   characterId: string | null;
-  isPinned: boolean;
   selectedTurn: number | null;
-  onPinnedChange: (isPinned: boolean) => void;
   onTurnSelect: (turn: number) => void;
 };
 
@@ -27,9 +24,7 @@ export function BattleHpTimelineChart({
   timeline,
   warriors,
   characterId,
-  isPinned,
   selectedTurn,
-  onPinnedChange,
   onTurnSelect,
 }: BattleHpTimelineChartProps) {
   const { t } = useTranslation();
@@ -70,17 +65,6 @@ export function BattleHpTimelineChart({
             onResetLayers={resetLayers}
             onTurnSelect={onTurnSelect}
           />
-          <label
-            className="inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-sm border border-border bg-background px-2.5 text-sm text-foreground"
-            htmlFor="battle-hp-timeline-pin"
-          >
-            <Checkbox
-              id="battle-hp-timeline-pin"
-              checked={isPinned}
-              onCheckedChange={(checked) => onPinnedChange(checked === true)}
-            />
-            {t("battlePanel.single.chart.pin")}
-          </label>
         </div>
       </div>
       <BattleHpTimelinePlot

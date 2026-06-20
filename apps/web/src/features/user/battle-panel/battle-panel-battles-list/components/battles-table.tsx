@@ -1,10 +1,17 @@
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
-import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
 import { ROUTES } from "@/config/routes";
 import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
+import {
+  getBattleResult,
+  getBattleTeams,
+} from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
+import { BattlePanelBattleCard } from "@/features/user/battle-panel/components/battle-panel-battle-card";
+import type { BattlePanelFilterChip } from "@/features/user/battle-panel/components/battle-panel-filter-chip-list";
+import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
+import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
 import {
   BattleDamageTags,
   getBattleDamageTags,
@@ -12,7 +19,6 @@ import {
 import {
   BattleResultStatus,
   getBattleResultRowClassName,
-  type BattleResultStatusValue,
 } from "@/features/user/battle-panel/components/battle-result-status";
 import { useBattleSharing } from "@/features/user/battle-panel/battle-panel-single-battle/hooks/use-battle-sharing";
 import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
@@ -40,7 +46,6 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import {
   DropdownMenu,
@@ -56,13 +61,13 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Table } from "@lootlog/ui/components/table";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -90,17 +95,23 @@ import {
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
+import { BattlesBulkActionsBar } from "./battles-bulk-actions-bar";
 
 type BattlesTableProps = {
+  activeFilterChips?: BattlePanelFilterChip[];
   battles: Battle[];
+  clearFiltersLabel?: string;
   hasNext?: boolean;
   hasPrev?: boolean;
   isLoading?: boolean;
+  onClearFilters?: () => void;
   onMatchmakingClick?: () => void;
   onNextPage?: () => void;
   onPhClick?: () => void;
   onPreviousPage?: () => void;
   onWorldClick?: (world: string) => void;
+  pageIndex?: number;
+  pageSize?: number;
   selectionLimit?: number;
   showPagination?: boolean;
   totalCount?: number;
@@ -110,44 +121,6 @@ type BattlesTableProps = {
 
 const composeBattleUrl = (battleId: string) =>
   `${BATTLELOG_PUBLIC_URL}/battles/${battleId}`;
-
-const getBattleTeams = (battle: Battle) => {
-  const attackingTeam = battle.warriors.filter((warrior) => warrior.team === 1);
-  const defendingTeam = battle.warriors.filter((warrior) => warrior.team === 2);
-  const userWarrior = battle.warriors.find(
-    (warrior) => warrior.originalId === battle.characterId,
-  );
-
-  if (userWarrior?.team === 1) {
-    return {
-      leftTeam: attackingTeam,
-      rightTeam: defendingTeam,
-      userWarrior,
-    };
-  }
-
-  return {
-    leftTeam: defendingTeam,
-    rightTeam: attackingTeam,
-    userWarrior,
-  };
-};
-
-const getBattleResult = (battle: Battle): BattleResultStatusValue => {
-  if (battle.hasFlee) {
-    return "flee";
-  }
-
-  const userWarrior = battle.warriors.find(
-    (warrior) => warrior.originalId === battle.characterId,
-  );
-
-  if (battle.winningTeam === userWarrior?.team) {
-    return "won";
-  }
-
-  return "lost";
-};
 
 const getRowClassName = (battle: Battle) => {
   return getBattleResultRowClassName(getBattleResult(battle));
@@ -206,16 +179,27 @@ const isTableActionEvent = (event: MouseEvent<HTMLElement>) =>
     getEventTargetElement(event.target)?.closest("[data-battle-table-action]"),
   );
 
+const BATTLE_INFO_TAG_CLASS_NAME =
+  "inline-flex h-[17px] max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-foreground/30 bg-background/40 px-2 py-0 text-[10px] font-semibold leading-none text-muted-foreground";
+
+const BATTLE_INFO_TAG_ACTION_CLASS_NAME =
+  "cursor-pointer transition-colors hover:bg-background/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+
 export const BattlesTable = ({
+  activeFilterChips = [],
   battles,
+  clearFiltersLabel,
   hasNext = false,
   hasPrev = false,
   isLoading = false,
+  onClearFilters,
   onMatchmakingClick,
   onNextPage,
   onPhClick,
   onPreviousPage,
   onWorldClick,
+  pageIndex = 0,
+  pageSize = 20,
   selectionLimit,
   showPagination = false,
   totalCount = 0,
@@ -223,6 +207,7 @@ export const BattlesTable = ({
   toolbarEnd,
 }: BattlesTableProps) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [, copy] = useCopyToClipboard();
@@ -394,6 +379,10 @@ export const BattlesTable = ({
   ) => {
     event.stopPropagation();
     handleSelectionChange(battleId, !selectedBattleIds.has(battleId));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedBattleIds(new Set());
   };
 
   const handleBulkShare = async () => {
@@ -603,13 +592,14 @@ export const BattlesTable = ({
           data-battle-table-action
           onClick={(event) => handleWorldBadgeClick(event, battle.world)}
           onKeyDown={stopTableKeyboardAction}
-          className="inline-flex max-w-[92px] items-center truncate rounded-md border border-foreground/30 bg-background/40 px-2 py-0 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-background/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className={cn(
+            BATTLE_INFO_TAG_CLASS_NAME,
+            BATTLE_INFO_TAG_ACTION_CLASS_NAME,
+          )}
         >
           {capitalizeFirstLetter(battle.world)}
         </button>
-        <span className="inline-flex max-w-[92px] items-center truncate rounded-md border border-foreground/30 bg-background/40 px-2 py-0 text-[10px] font-semibold text-muted-foreground">
-          {visibilityLabel}
-        </span>
+        <span className={BATTLE_INFO_TAG_CLASS_NAME}>{visibilityLabel}</span>
         {userWarrior?.ph !== 0 && userWarrior?.ph !== undefined && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -621,7 +611,10 @@ export const BattlesTable = ({
                 role="button"
                 tabIndex={0}
                 variant="outline"
-                className="inline-flex size-6 min-w-6 cursor-pointer items-center justify-center rounded-md border-foreground/40 p-0 text-[9px]"
+                className={cn(
+                  BATTLE_INFO_TAG_CLASS_NAME,
+                  BATTLE_INFO_TAG_ACTION_CLASS_NAME,
+                )}
               >
                 {t("battlePanel.bulk.honorPointsShort")}
               </Badge>
@@ -642,7 +635,11 @@ export const BattlesTable = ({
                 role="button"
                 tabIndex={0}
                 variant="outline"
-                className="inline-flex h-[18px] max-w-[92px] cursor-pointer items-center justify-center truncate rounded-md border-purple-500/50 bg-purple-500/10 px-1 py-0 text-[9px] font-semibold leading-none text-purple-400 hover:bg-purple-500/20"
+                className={cn(
+                  BATTLE_INFO_TAG_CLASS_NAME,
+                  BATTLE_INFO_TAG_ACTION_CLASS_NAME,
+                  "border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20",
+                )}
               >
                 {t("battlePanel.filters.matchmaking")}
               </Badge>
@@ -652,6 +649,58 @@ export const BattlesTable = ({
             </TooltipContent>
           </Tooltip>
         )}
+      </div>
+    );
+  };
+
+  const renderBattleActions = (battle: Battle) => {
+    return (
+      <div
+        data-battle-table-action
+        className="flex justify-end"
+        onClick={stopTableAction}
+        onKeyDown={stopTableKeyboardAction}
+      >
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              aria-label={t("battlePanel.actions.more")}
+              variant="ghost"
+              size="icon"
+              className="size-7 md:size-8"
+              disabled={isRowActionBusy}
+            >
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {battle.public ? (
+              <>
+                <DropdownMenuItem onSelect={() => handleCopyLink(battle.id)}>
+                  <Copy className="size-4" />
+                  {t("battlePanel.actions.copyLink")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleUnshare(battle.id)}>
+                  <Lock className="size-4" />
+                  {t("battlePanel.actions.hide")}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <DropdownMenuItem onSelect={() => handleShare(battle.id)}>
+                <Share2 className="size-4" />
+                {t("battlePanel.actions.share")}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onSelect={() => setSingleDeleteBattle(battle)}
+            >
+              <Trash2 className="size-4" />
+              {t("battlePanel.actions.delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     );
   };
@@ -703,7 +752,11 @@ export const BattlesTable = ({
     },
     {
       id: "status",
-      header: () => null,
+      header: () => (
+        <div className="text-center">
+          {t("battlePanel.list.columns.result")}
+        </div>
+      ),
       cell: ({ row }) => renderBattleStatus(row.original),
       enableSorting: false,
     },
@@ -769,61 +822,7 @@ export const BattlesTable = ({
           {t("battlePanel.list.columns.actions")}
         </div>
       ),
-      cell: ({ row }) => {
-        const battle = row.original;
-
-        return (
-          <div
-            data-battle-table-action
-            className="flex justify-end"
-            onClick={stopTableAction}
-            onKeyDown={stopTableKeyboardAction}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  aria-label={t("battlePanel.actions.more")}
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 md:size-8"
-                  disabled={isRowActionBusy}
-                >
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {battle.public ? (
-                  <>
-                    <DropdownMenuItem
-                      onSelect={() => handleCopyLink(battle.id)}
-                    >
-                      <Copy className="size-4" />
-                      {t("battlePanel.actions.copyLink")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => handleUnshare(battle.id)}>
-                      <Lock className="size-4" />
-                      {t("battlePanel.actions.hide")}
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <DropdownMenuItem onSelect={() => handleShare(battle.id)}>
-                    <Share2 className="size-4" />
-                    {t("battlePanel.actions.share")}
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onSelect={() => setSingleDeleteBattle(battle)}
-                >
-                  <Trash2 className="size-4" />
-                  {t("battlePanel.actions.delete")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
-      },
+      cell: ({ row }) => renderBattleActions(row.original),
       enableSorting: false,
     },
   ];
@@ -834,155 +833,137 @@ export const BattlesTable = ({
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const selectionBar = hasSelectedBattles ? (
+    <BattlesBulkActionsBar
+      disabled={isBulkBusy}
+      onClearSelection={handleClearSelection}
+      onDelete={() => setIsBulkDeleteDialogOpen(true)}
+      onShare={handleBulkShare}
+      selectedCount={selectedBattles.length}
+    />
+  ) : undefined;
+  const paginationFooter = showPagination ? (
+    <BattlePanelPaginationFooter
+      label={({ from, to, total }) =>
+        t("battlePanel.list.showingBattles", {
+          from,
+          to,
+          total,
+        })
+      }
+      hasPrev={hasPrev}
+      hasNext={hasNext}
+      pageIndex={pageIndex}
+      pageSize={pageSize}
+      totalCount={totalCount}
+      visibleCount={battles.length}
+      onPreviousPage={onPreviousPage ?? (() => undefined)}
+      onNextPage={onNextPage ?? (() => undefined)}
+    />
+  ) : undefined;
+
   return (
     <>
-      <Card
-        className={cn(
-          "min-h-0 min-w-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm gap-0",
-          showPagination ? "flex h-full flex-1 flex-col" : "flex flex-col",
-        )}
+      <BattlePanelResultsSurface
+        chips={activeFilterChips}
+        clearFiltersLabel={clearFiltersLabel}
+        footer={paginationFooter}
+        onClearFilters={onClearFilters}
+        selectionBar={selectionBar}
+        toolbar={toolbar}
+        toolbarEnd={toolbarEnd}
+        withHorizontalScroll={!isMobile}
       >
-        <div className="grid shrink-0 gap-2 border-b border-border bg-background/80 px-3 py-3 md:min-h-[64px] md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-          <div className="flex min-w-0 items-center gap-2">{toolbar}</div>
+        {isLoading ? (
+          <TableRowsSkeleton rows={showPagination ? 10 : 4} />
+        ) : battles.length === 0 ? (
           <div
             className={cn(
-              "flex min-h-8 flex-wrap items-center justify-end gap-2",
-              !toolbarEnd && "hidden md:flex",
+              "flex items-center justify-center",
+              showPagination ? "min-h-[360px]" : "min-h-48",
             )}
           >
-            <div
-              aria-hidden={!hasSelectedBattles}
-              className={cn(
-                "flex flex-wrap items-center justify-end gap-2",
-                !hasSelectedBattles && "invisible pointer-events-none",
-              )}
-            >
-              <span className="text-xs font-medium text-muted-foreground">
-                {t("battlePanel.bulk.selected", {
-                  count: selectedBattles.length,
-                })}
-              </span>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleBulkShare}
-                disabled={!hasSelectedBattles || isBulkBusy}
-              >
-                <Share2 className="size-3.5" />
-                {t("battlePanel.bulk.share")}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="destructive"
-                onClick={() => setIsBulkDeleteDialogOpen(true)}
-                disabled={!hasSelectedBattles || isBulkBusy}
-              >
-                <Trash2 className="size-3.5" />
-                {t("battlePanel.bulk.delete")}
-              </Button>
-            </div>
-            {toolbarEnd}
+            <Empty className="border-0">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Shield />
+                </EmptyMedia>
+                <EmptyTitle>{t("battlePanel.list.empty")}</EmptyTitle>
+                <EmptyDescription>
+                  {t("battlePanel.list.emptyDescription")}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </div>
-        </div>
-
-        <ScrollArea
-          className={cn(
-            "relative min-w-0 w-full",
-            showPagination && "flex-1 min-h-0",
-          )}
-        >
-          {isLoading ? (
-            <TableRowsSkeleton rows={showPagination ? 10 : 4} />
-          ) : battles.length === 0 ? (
-            <div
-              className={cn(
-                "flex items-center justify-center",
-                showPagination ? "min-h-[360px]" : "min-h-48",
-              )}
-            >
-              <Empty className="border-0">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <Shield />
-                  </EmptyMedia>
-                  <EmptyTitle>{t("battlePanel.list.empty")}</EmptyTitle>
-                  <EmptyDescription>
-                    {t("battlePanel.list.emptyDescription")}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            </div>
-          ) : (
-            <Table className="min-w-full table-fixed border-b md:min-w-[960px] md:table-auto">
-              <TanStackTableHeader
-                table={table}
-                className="sticky top-0 z-10 bg-background"
-                rowClassName="border-b-1! border-border"
-                headClassName={(header) =>
-                  cn(
-                    "whitespace-nowrap align-middle",
-                    getColumnResponsiveClassName(header.column.id),
-                  )
-                }
+        ) : isMobile ? (
+          <div className="flex flex-col gap-2 p-3">
+            {battles.map((battle) => (
+              <BattlePanelBattleCard
+                key={battle.id}
+                actions={renderBattleActions(battle)}
+                battle={battle}
+                isChecked={selectedBattleIds.has(battle.id)}
+                onBattleClick={handleOpenBattle}
+                onSelectionChange={handleSelectionChange}
               />
-              <TanStackTableBody
-                table={table}
-                rowClassName={(row) =>
-                  cn(
-                    "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
-                    getRowClassName(row.original),
-                    selectedBattleIds.has(row.original.id) &&
-                      "ring-2 ring-inset ring-primary/45",
-                  )
-                }
-                cellClassName={(cell) =>
-                  cn(
-                    "whitespace-nowrap align-middle",
-                    getColumnResponsiveClassName(cell.column.id),
-                  )
-                }
-                getRowProps={(row) => ({
-                  role: "link",
-                  tabIndex: 0,
-                  "aria-label": t("battlePanel.list.openBattle"),
-                  onClick: (event) => {
-                    if (isTableActionEvent(event)) {
-                      return;
-                    }
+            ))}
+          </div>
+        ) : (
+          <Table className="min-w-full table-fixed border-b md:min-w-[960px] md:table-auto">
+            <TanStackTableHeader
+              table={table}
+              className="sticky top-0 z-10 bg-background"
+              rowClassName="border-b-1! border-border"
+              headClassName={(header) =>
+                cn(
+                  "whitespace-nowrap align-middle",
+                  getColumnResponsiveClassName(header.column.id),
+                )
+              }
+            />
+            <TanStackTableBody
+              table={table}
+              rowClassName={(row) =>
+                cn(
+                  "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
+                  getRowClassName(row.original),
+                  selectedBattleIds.has(row.original.id) &&
+                    "ring-2 ring-inset ring-primary/45",
+                )
+              }
+              cellClassName={(cell) =>
+                cn(
+                  "whitespace-nowrap align-middle",
+                  getColumnResponsiveClassName(cell.column.id),
+                )
+              }
+              getRowProps={(row) => ({
+                role: "link",
+                tabIndex: 0,
+                "aria-label": t("battlePanel.list.openBattle"),
+                onClick: (event) => {
+                  if (isTableActionEvent(event)) {
+                    return;
+                  }
 
-                    handleOpenBattle(row.original.id);
-                  },
-                  onKeyDown: (event) => {
-                    if (
-                      getEventTargetElement(event.target)?.closest(
-                        "[data-battle-table-action]",
-                      )
-                    ) {
-                      return;
-                    }
+                  handleOpenBattle(row.original.id);
+                },
+                onKeyDown: (event) => {
+                  if (
+                    getEventTargetElement(event.target)?.closest(
+                      "[data-battle-table-action]",
+                    )
+                  ) {
+                    return;
+                  }
 
-                    handleRowKeyDown(event, row.original.id);
-                  },
-                })}
-              />
-            </Table>
-          )}
-        </ScrollArea>
-
-        {showPagination && (
-          <TablePaginationFooter
-            totalLabel={t("battlePanel.list.totalBattles", {
-              count: totalCount,
-            })}
-            hasPrev={hasPrev}
-            hasNext={hasNext}
-            onPreviousPage={onPreviousPage ?? (() => undefined)}
-            onNextPage={onNextPage ?? (() => undefined)}
-          />
+                  handleRowKeyDown(event, row.original.id);
+                },
+              })}
+            />
+          </Table>
         )}
-      </Card>
+      </BattlePanelResultsSurface>
 
       <AlertDialog
         open={isBulkDeleteDialogOpen}
