@@ -22,7 +22,10 @@ const hasNpcPermission = (npc: NpcData, roles: Role[]) => {
   );
 };
 
-export const canViewChatMessage = (data: ChatStoredMessage, roles: Role[]) => {
+export const canViewChatMessage = (
+  data: ChatStoredMessage | null | undefined,
+  roles: Role[],
+) => {
   if (!data) return false;
   const canReadChatMessages = roles.some((role) =>
     role.permissions.includes(Permission.LOOTLOG_CHAT_READ),
