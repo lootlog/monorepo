@@ -63,6 +63,9 @@ export function MatchmakingH2HFullPage() {
   const period = queryState.period ?? "30d";
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;
+  const matchmaking = true;
+  const startDate = queryState.startDate ?? undefined;
+  const endDate = queryState.endDate ?? undefined;
   const cursor = queryState.cursor ?? undefined;
   const search = queryState.search ?? undefined;
   const sortBy = queryState.sortBy ?? "totalBattles";
@@ -85,6 +88,8 @@ export function MatchmakingH2HFullPage() {
         period,
         minLevel,
         maxLevel,
+        startDate,
+        endDate,
         matchmaking: true,
       },
     });
@@ -110,6 +115,8 @@ export function MatchmakingH2HFullPage() {
       sortOrder,
       characterId: currentCharacterId,
       period,
+      startDate,
+      endDate,
       search,
       minLevel,
       maxLevel,
@@ -137,6 +144,8 @@ export function MatchmakingH2HFullPage() {
       period: nextPeriod,
       minLevel: nextMinLevel ?? 1,
       maxLevel: nextMaxLevel ?? 500,
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
       ph: null,
       matchmaking: null,
       search: nextSearch ?? null,
@@ -249,6 +258,8 @@ export function MatchmakingH2HFullPage() {
     period,
     minLevel,
     maxLevel,
+    startDate,
+    endDate,
     search,
   };
   const activeFilterChips = buildHeadToHeadFilterLabels({
@@ -268,7 +279,7 @@ export function MatchmakingH2HFullPage() {
       minLevel={minLevel}
       maxLevel={maxLevel}
       ph={false}
-      matchmaking
+      matchmaking={matchmaking}
       selectedWarriors={selectedWarriors}
       showPhFilter={false}
       showMatchmakingFilter={false}
@@ -295,6 +306,7 @@ export function MatchmakingH2HFullPage() {
       onPeriodChange={handlePeriodChange}
       onPhChange={() => {}}
       onWarriorToggle={handleWarriorToggle}
+      matchmaking={matchmaking}
       period={period}
       selectedWarriors={selectedWarriors}
       showMatchmakingFilter={false}

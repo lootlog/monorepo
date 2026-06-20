@@ -57,6 +57,8 @@ export function PlayerVsPlayerFullPage() {
   const period = queryState.period ?? "30d";
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;
+  const startDate = queryState.startDate ?? undefined;
+  const endDate = queryState.endDate ?? undefined;
   const ph = queryState.ph ?? undefined;
   const matchmaking = queryState.matchmaking ?? undefined;
   const cursor = queryState.cursor ?? undefined;
@@ -80,6 +82,8 @@ export function PlayerVsPlayerFullPage() {
       period: nextPeriod,
       minLevel: nextMinLevel ?? 1,
       maxLevel: nextMaxLevel ?? 500,
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
       ph: nextPh ?? null,
       matchmaking: nextMatchmaking ?? null,
       cursor: null,
@@ -122,6 +126,8 @@ export function PlayerVsPlayerFullPage() {
       size: pageSize,
       characterId: currentCharacterId ?? params.myId,
       period,
+      startDate,
+      endDate,
       opponentId: opponentId ?? "",
       minLevel,
       maxLevel,

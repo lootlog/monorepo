@@ -52,6 +52,7 @@ type BattlesListFilterToolbarProps = {
   onWarriorToggle: (warrior: Warrior) => void;
   onWorldChange: (value: string) => void;
   selectedWarriors: Warrior[];
+  showMatchmakingFilter?: boolean;
   worlds: string[];
 };
 
@@ -70,6 +71,7 @@ export const BattlesListFilterToolbar = ({
   onWarriorToggle,
   onWorldChange,
   selectedWarriors,
+  showMatchmakingFilter = true,
   worlds,
 }: BattlesListFilterToolbarProps) => {
   const { t } = useTranslation();
@@ -86,7 +88,7 @@ export const BattlesListFilterToolbar = ({
   ];
   const extraFiltersCount =
     (filters.ph ? 1 : 0) +
-    (filters.matchmaking ? 1 : 0) +
+    (showMatchmakingFilter && filters.matchmaking ? 1 : 0) +
     ((filters.minLevel ?? 1) !== 1 || (filters.maxLevel ?? 500) !== 500
       ? 1
       : 0);
@@ -286,24 +288,26 @@ export const BattlesListFilterToolbar = ({
                 onCheckedChange={(checked) => onPhToggle(checked === true)}
               />
             </div>
-            <div className="flex items-center justify-between rounded-md border border-border/70 bg-background/40 p-3">
-              <div className="flex items-center gap-2">
-                <Swords className="size-4" aria-hidden="true" />
-                <Label
-                  htmlFor="battles-toolbar-matchmaking"
-                  className="cursor-pointer"
-                >
-                  {t("battlePanel.filters.matchmaking")}
-                </Label>
+            {showMatchmakingFilter && (
+              <div className="flex items-center justify-between rounded-md border border-border/70 bg-background/40 p-3">
+                <div className="flex items-center gap-2">
+                  <Swords className="size-4" aria-hidden="true" />
+                  <Label
+                    htmlFor="battles-toolbar-matchmaking"
+                    className="cursor-pointer"
+                  >
+                    {t("battlePanel.filters.matchmaking")}
+                  </Label>
+                </div>
+                <Checkbox
+                  id="battles-toolbar-matchmaking"
+                  checked={filters.matchmaking === true}
+                  onCheckedChange={(checked) =>
+                    onMatchmakingToggle(checked === true)
+                  }
+                />
               </div>
-              <Checkbox
-                id="battles-toolbar-matchmaking"
-                checked={filters.matchmaking === true}
-                onCheckedChange={(checked) =>
-                  onMatchmakingToggle(checked === true)
-                }
-              />
-            </div>
+            )}
           </div>
         </PopoverContent>
       </Popover>

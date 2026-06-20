@@ -9,6 +9,7 @@ interface StatisticsFiltersProps {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
+  showMatchmakingFilter?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
@@ -24,6 +25,7 @@ export function StatisticsFilters({
   maxLevel,
   ph,
   matchmaking,
+  showMatchmakingFilter = true,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
@@ -41,6 +43,7 @@ export function StatisticsFilters({
           maxLevel={maxLevel}
           ph={ph}
           matchmaking={matchmaking}
+          showMatchmakingFilter={showMatchmakingFilter}
           onCharacterChange={onCharacterChange}
           onPeriodChange={onPeriodChange}
           onMinLevelChange={onMinLevelChange}
@@ -58,6 +61,7 @@ export function StatisticsFilters({
           maxLevel={maxLevel}
           ph={ph}
           matchmaking={matchmaking}
+          showMatchmakingFilter={showMatchmakingFilter}
           onCharacterChange={onCharacterChange}
           onPeriodChange={onPeriodChange}
           onMinLevelChange={onMinLevelChange}

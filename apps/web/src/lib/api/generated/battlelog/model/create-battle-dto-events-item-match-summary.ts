@@ -5,6 +5,7 @@
  * The Battle Log API documentation
  * OpenAPI spec version: 1.0
  */
+import type { CreateBattleDtoEventsItemMatchSummaryDailyStage } from './create-battle-dto-events-item-match-summary-daily-stage.js';
 
 export type CreateBattleDtoEventsItemMatchSummary = {
   difficulty_rank: number;
@@ -15,4 +16,8 @@ export type CreateBattleDtoEventsItemMatchSummary = {
   opponent_rating: number;
   rating: number;
   status: number;
+  placement_cur?: number;
+  placement_max?: number;
+  points_gained?: number;
+  daily_stage?: CreateBattleDtoEventsItemMatchSummaryDailyStage;
 };

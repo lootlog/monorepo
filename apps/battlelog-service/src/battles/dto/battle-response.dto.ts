@@ -135,6 +135,16 @@ const BattleResponseSchema = z.object({
   opponentRating: z.number().nullable(),
   rating: z.number().nullable(),
   status: z.number().nullable(),
+  pointsGained: z.number().nullable(),
+  placementCur: z.number().nullable(),
+  placementMax: z.number().nullable(),
+  dailyStageId: z.number().nullable(),
+  dailyPointsCur: z.number().nullable(),
+  dailyPointsMax: z.number().nullable(),
+  dailyPointsStep: z.number().nullable(),
+  dailyRewardsLast: z.number().nullable(),
+  dailyRewardsCur: z.number().nullable(),
+  dailyRewardsMax: z.number().nullable(),
   warriors: z.array(BattleWarriorResponseSchema),
 });
 

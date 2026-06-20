@@ -13,6 +13,8 @@ const QueryBattleStatisticsSchema = z.object({
     .optional(),
   minLevel: intFromString({ min: 1 }).optional(),
   maxLevel: intFromString({ min: 1 }).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
   cursor: z.string().optional(),
   size: intFromString({ min: 1 }).default(20),
   sortBy: z
@@ -45,4 +47,13 @@ const QueryPlayerVsPlayerSchema = QueryBattleStatisticsSchema.extend({
 
 export class QueryPlayerVsPlayerDto extends createZodDto(
   QueryPlayerVsPlayerSchema,
+) {}
+
+const QueryAbyssSeasonsSchema = z.object({
+  characterId: z.string(),
+  world: z.string().optional(),
+});
+
+export class QueryAbyssSeasonsDto extends createZodDto(
+  QueryAbyssSeasonsSchema,
 ) {}
