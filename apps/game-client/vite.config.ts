@@ -38,10 +38,7 @@ export default defineConfig(({ mode }) => {
         },
         {
           find: /^use-sync-external-store\/shim(\/index)?(\.js)?$/,
-          replacement: path.resolve(
-            __dirname,
-            "./src/shims/use-sync-external-store-shim.ts",
-          ),
+          replacement: "react",
         },
       ],
     },
