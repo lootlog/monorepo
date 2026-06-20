@@ -1,6 +1,9 @@
 import type { Battle } from "@/lib/api/battlelog-types";
-import { battlesControllerGetPlayerVsPlayerBattles } from "@/lib/api/generated/battlelog/battles/battles";
-import { useQuery } from "@tanstack/react-query";
+import {
+  battlesControllerGetPlayerVsPlayerBattles,
+  getBattlesControllerGetBattleQueryOptions,
+} from "@/lib/api/generated/battlelog/battles/battles";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { getRecentOpponentBattleContext } from "../components/recent-opponent-battle-context";
 
 export const useRecentOpponentBattles = (battle: Battle | undefined) => {
@@ -8,6 +11,7 @@ export const useRecentOpponentBattles = (battle: Battle | undefined) => {
   const query = useQuery({
     queryKey: [
       "recent-opponent-battles",
+      "v2",
       context?.battleId,
       context?.characterId,
       context?.opponentId,
@@ -29,10 +33,33 @@ export const useRecentOpponentBattles = (battle: Battle | undefined) => {
     },
     enabled: context !== null,
   });
+  const battles = query.data?.battles ?? [];
+  const battleDetailsQueries = useQueries({
+    queries: battles.map((recentBattle) =>
+      getBattlesControllerGetBattleQueryOptions({
+        battleId: recentBattle.battleId,
+      }),
+    ),
+  });
+  const battleDetailsById = battleDetailsQueries.reduce<
+    Record<string, Battle | undefined>
+  >((detailsById, detailQuery, index) => {
+    const recentBattle = battles[index];
+
+    if (!recentBattle) {
+      return detailsById;
+    }
+
+    return {
+      ...detailsById,
+      [recentBattle.battleId]: detailQuery.data,
+    };
+  }, {});
 
   return {
     ...query,
-    battles: query.data?.battles ?? [],
+    battleDetailsById,
+    battles,
     context,
   };
 };

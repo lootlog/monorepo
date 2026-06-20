@@ -17,19 +17,18 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
-import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
+import type {
+  BattleStatCategoryDefinition,
+  BattleStatDefinition,
+  StatsCustomizationConfig,
+} from "@/types/stats-customization.types";
 import { CategoryItem } from "./category-item";
 import { AddCategoryForm } from "./add-category-form";
 import { cn } from "@lootlog/ui/lib/utils";
 
-interface StatCategory {
-  name: string;
-  stats: Array<{ key: string; label: string }>;
-}
-
 interface StatsCustomizationModalProps {
   config: StatsCustomizationConfig;
-  defaultCategories: StatCategory[];
+  defaultCategories: BattleStatCategoryDefinition[];
   onUpdateCategoryOrder: (newOrder: string[]) => void;
   onToggleCategoryVisibility: (categoryId: string) => void;
   onUpdateCategoryName: (categoryId: string, newName: string) => void;
@@ -62,8 +61,11 @@ export const StatsCustomizationModal = ({
     config.categoryOrder,
   );
   const [isDragging, setIsDragging] = useState(false);
+  const defaultCategoriesById = new Map<string, BattleStatCategoryDefinition>(
+    defaultCategories.map((category) => [category.id, category]),
+  );
 
-  const allAvailableStats = Array.from(
+  const allAvailableStats: BattleStatDefinition[] = Array.from(
     new Map(
       defaultCategories.flatMap((cat) => cat.stats).map((s) => [s.key, s]),
     ).values(),
@@ -85,7 +87,7 @@ export const StatsCustomizationModal = ({
       variant="outline"
       size={compactTrigger ? "icon" : "sm"}
       aria-label={triggerLabel}
-      className={cn(compactTrigger ? "size-9" : "gap-2")}
+      className={cn(compactTrigger ? "size-8" : "gap-2")}
     >
       <Settings2 className="h-4 w-4" />
       {compactTrigger ? (
@@ -127,6 +129,7 @@ export const StatsCustomizationModal = ({
             >
               {displayedCategoryOrder.map((categoryId) => {
                 const customization = config.categories[categoryId];
+                const defaultCategory = defaultCategoriesById.get(categoryId);
 
                 if (!customization) {
                   return null;
@@ -146,6 +149,11 @@ export const StatsCustomizationModal = ({
                   >
                     <CategoryItem
                       category={customization}
+                      defaultCategoryLabel={
+                        defaultCategory
+                          ? t(defaultCategory.labelKey)
+                          : customization.name
+                      }
                       allAvailableStats={allAvailableStats}
                       onToggleVisibility={() =>
                         onToggleCategoryVisibility(categoryId)

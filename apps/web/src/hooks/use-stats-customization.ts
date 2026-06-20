@@ -1,28 +1,23 @@
 import { useLocalStorage } from "usehooks-ts";
 import type {
   CategoryCustomization,
+  BattleStatCategoryDefinition,
   StatsCustomizationConfig,
 } from "@/types/stats-customization.types";
 
-const STORAGE_KEY = "lootlog-battle-stats-customization";
-
-interface StatCategory {
-  name: string;
-  stats: Array<{ key: string; label: string }>;
-}
+const STORAGE_KEY = "lootlog-battle-stats-customization-v2";
 
 const createDefaultConfig = (
-  categories: StatCategory[],
+  categories: BattleStatCategoryDefinition[],
 ): StatsCustomizationConfig => {
-  const categoryOrder = categories.map((cat) => cat.name);
+  const categoryOrder = categories.map((category) => category.id);
   const categoriesMap: Record<string, CategoryCustomization> = {};
 
   for (const category of categories) {
-    categoriesMap[category.name] = {
-      id: category.name,
-      name: category.name,
+    categoriesMap[category.id] = {
+      id: category.id,
       visible: true,
-      statOrder: category.stats.map((stat) => stat.key),
+      statOrder: category.stats.map((stat) => String(stat.key)),
     };
   }
 
@@ -32,7 +27,9 @@ const createDefaultConfig = (
   };
 };
 
-export const useStatsCustomization = (defaultCategories: StatCategory[]) => {
+export const useStatsCustomization = (
+  defaultCategories: BattleStatCategoryDefinition[],
+) => {
   const [config, setConfig] = useLocalStorage<StatsCustomizationConfig>(
     STORAGE_KEY,
     createDefaultConfig(defaultCategories),

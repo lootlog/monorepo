@@ -43,7 +43,7 @@ export const BattleSpellActions: FC<BattleSpellActionsProps> = ({
   };
 
   return (
-    <div className={cn("px-4 py-1 bg-gray-100/10", teamColors)}>
+    <div className={cn("bg-gray-100/10 px-3 py-0.5", teamColors)}>
       {actions.map((action, sIndex) => {
         const processedValue = transformValue(action.value, action.type);
         const dynamicData = generateDynamicValuesAndComponents(action.value);

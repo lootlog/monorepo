@@ -47,7 +47,7 @@ export const BattleActionItem: FC<BattleActionItemProps> = ({
   );
 
   return (
-    <div className={cn("px-4 py-1 bg-gray-100/10", className)}>
+    <div className={cn("bg-gray-100/10 px-3 py-0.5", className)}>
       <Trans
         i18nKey={actionPresentation.i18nKey}
         values={{

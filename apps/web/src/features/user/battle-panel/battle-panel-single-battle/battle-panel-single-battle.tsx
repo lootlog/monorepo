@@ -3,7 +3,7 @@ import {
   BattleStatsTable,
   StatsCustomizationModal,
 } from "@/components/battle";
-import { STAT_CATEGORIES } from "@/components/battle/one-vs-one-stats-table";
+import { STAT_CATEGORIES } from "@/components/battle/one-vs-one-stats-definitions";
 import { UserHeaderActionsPortal } from "@/components/layout/user-header-actions-portal";
 import { BattleOverview } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-overview";
 import { BattleHpTimelineChart } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-chart";
@@ -13,6 +13,7 @@ import {
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-log-scroll-active-turn";
 import { BattlePanelSingleBattleActions } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-panel-single-battle-actions";
 import { getBattleSideCardScrollHandoff } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-side-card-scroll-handoff";
+import { getRecentOpponentBattleContext } from "@/features/user/battle-panel/battle-panel-single-battle/components/recent-opponent-battle-context";
 import { RecentOpponentBattlesCard } from "@/features/user/battle-panel/battle-panel-single-battle/components/recent-opponent-battles-card";
 import {
   battlesControllerGetBattleTimeline,
@@ -89,6 +90,8 @@ export const BattlePanelSingleBattle = () => {
   } = useStatsCustomization(STAT_CATEGORIES);
 
   const is1v1 = battle?.type === "1v1";
+  const shouldShowRecentOpponentBattles =
+    getRecentOpponentBattleContext(battle) !== null;
   const selectedTurnExists = timeline?.timeline.some(
     (turn) => turn.turn === selectedTurn,
   );
@@ -370,7 +373,7 @@ export const BattlePanelSingleBattle = () => {
         onScroll={handleBattleScroll}
       >
         <div className="px-3 py-3 flex flex-col gap-4" style={layoutStyle}>
-          {battle && <BattleOverview battle={battle} showHeader={false} />}
+          {battle && <BattleOverview battle={battle} />}
 
           <div
             className={cn(
@@ -393,7 +396,11 @@ export const BattlePanelSingleBattle = () => {
             ) : null}
 
             <div
-              className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.3fr)] xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)_minmax(300px,0.9fr)]"
+              className={cn(
+                "grid grid-cols-1 gap-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.3fr)]",
+                shouldShowRecentOpponentBattles &&
+                  "xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)_minmax(300px,0.9fr)]",
+              )}
               onWheelCapture={handleSideCardsWheelCapture}
             >
               <div className="min-w-0">
@@ -436,7 +443,7 @@ export const BattlePanelSingleBattle = () => {
                                         "battlePanel.single.statistics.hideZeros",
                                       )
                                 }
-                                className="size-9"
+                                className="size-8"
                               >
                                 {hideZeros ? (
                                   <Eye className="h-4 w-4" />
@@ -489,11 +496,13 @@ export const BattlePanelSingleBattle = () => {
                 )}
               </div>
 
-              <div className="hidden min-w-0 xl:block xl:self-start">
-                <div>
-                  <RecentOpponentBattlesCard battle={battle} />
+              {shouldShowRecentOpponentBattles && (
+                <div className="hidden min-w-0 xl:block xl:self-start">
+                  <div>
+                    <RecentOpponentBattlesCard battle={battle} />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

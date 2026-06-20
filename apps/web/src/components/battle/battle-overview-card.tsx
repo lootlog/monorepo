@@ -4,7 +4,6 @@ import { BattleOverviewHeader } from "./battle-overview-header";
 import { BattleTeamSection } from "./battle-team-section";
 import { AnimatedTrophy } from "./animated-trophy";
 import { BattleMetadata } from "./battle-metadata";
-import type { BattleLabels } from "./battle-labels";
 import type {
   Battle,
   BattleWarrior as Warrior,
@@ -21,7 +20,6 @@ export type BattleOverviewCardProps = {
   isSharePending?: boolean;
   showActions?: boolean;
   cdnBaseUrl: string;
-  labels?: Partial<BattleLabels>;
   showHeader?: boolean;
 };
 
@@ -35,44 +33,9 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
   isSharePending = false,
   showActions = true,
   cdnBaseUrl,
-  labels = {},
   showHeader = true,
 }) => {
   const { t } = useTranslation();
-  const defaultLabels: BattleLabels = {
-    header: {
-      title: t("battleUi.overviewHeader.title"),
-      copyLink: t("battleUi.overviewHeader.copyLink"),
-      hide: t("battleUi.overviewHeader.hide"),
-      share: t("battleUi.overviewHeader.share"),
-      delete: t("battleUi.overviewHeader.delete"),
-      deleteConfirmTitle: t("battleUi.overviewHeader.deleteConfirmTitle"),
-      deleteConfirmDescription: t(
-        "battleUi.overviewHeader.deleteConfirmDescription",
-      ),
-      cancel: t("battleUi.overviewHeader.cancel"),
-      deleteBattle: t("battleUi.overviewHeader.deleteBattle"),
-    },
-    teams: {
-      userTeam: t("battleUi.team.userTeam"),
-      enemyTeam: t("battleUi.team.enemyTeam"),
-    },
-    metadata: {
-      startTime: t("battleUi.metadata.startTime"),
-      duration: t("battleUi.metadata.duration"),
-      battleType: t("battleUi.metadata.battleType"),
-      public: t("battleUi.metadata.public"),
-      private: t("battleUi.metadata.private"),
-      publicTooltip: t("battleUi.metadata.publicTooltip"),
-      privateTooltip: t("battleUi.metadata.privateTooltip"),
-    },
-  };
-  const mergedLabels = {
-    header: { ...defaultLabels.header, ...labels.header },
-    teams: { ...defaultLabels.teams, ...labels.teams },
-    metadata: { ...defaultLabels.metadata, ...labels.metadata },
-  };
-
   const attackingTeam = battle.warriors.filter((w: Warrior) => w.team === 1);
   const defendingTeam = battle.warriors.filter((w: Warrior) => w.team === 2);
 
@@ -113,7 +76,6 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
           onUnshareClick={handleUnshareClick}
           onDeleteClick={handleDeleteClick}
           showActions={showActions}
-          labels={mergedLabels.header}
         />
       )}
       <div className="bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 text-white relative">
@@ -125,7 +87,6 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
               userTeam={userTeam?.team}
               characterId={currentUserCharacterId || battle.characterId}
               cdnBaseUrl={cdnBaseUrl}
-              teamLabels={mergedLabels.teams}
             />
             <div className="grid grid-cols-3 items-center justify-items-center">
               <div>
@@ -157,11 +118,10 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
               userTeam={userTeam?.team}
               characterId={currentUserCharacterId || battle.characterId}
               cdnBaseUrl={cdnBaseUrl}
-              teamLabels={mergedLabels.teams}
             />
           </div>
         </div>
-        <BattleMetadata battle={battle} labels={mergedLabels.metadata} />
+        <BattleMetadata battle={battle} />
       </div>
     </Card>
   );

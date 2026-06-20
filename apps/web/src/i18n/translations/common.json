@@ -22,6 +22,10 @@
   },
   "search": "Szukaj...",
   "noResults": "Brak wyników",
+  "boolean": {
+    "yes": "Tak",
+    "no": "Nie"
+  },
   "cancel": "Anuluj",
   "reset": "Resetuj",
   "delete": "Usuń",

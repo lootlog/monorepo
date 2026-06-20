@@ -120,6 +120,45 @@ describe("battle log search", () => {
     },
   );
 
+  it.each([
+    "Eskalacja szału",
+    "szal",
+    "+legbon_frenzy_main",
+    "Aura odwetu",
+    "odwet",
+    "-legbon_retaliation",
+  ])("matches new legendary bonus labels for query %s", (query) => {
+    const event: RawBattleParsedEvent = {
+      attackerId: "617",
+      defenderId: "38798",
+      attackerHpPercentage: 90.76,
+      defenderHpPercentage: 60.64,
+      actions: [
+        {
+          actionType: "+legbon_frenzy_main",
+          param: "5",
+        },
+        {
+          actionType: "-legbon_retaliation",
+          param: "",
+        },
+      ],
+    };
+    const rawText = buildBattleLogRawSearchText({
+      event,
+      attacker,
+      defender,
+      turn: 22,
+    });
+
+    expect(
+      findBattleLogSearchMatches({
+        query,
+        entries: [{ turn: 22, rawText }],
+      }),
+    ).toEqual([{ turn: 22 }]);
+  });
+
   it.each(["Głę", "Głęboka", "Gleboka rana"])(
     "matches deep wound action labels for query %s",
     (query) => {

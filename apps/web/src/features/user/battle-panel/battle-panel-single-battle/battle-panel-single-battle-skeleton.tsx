@@ -189,28 +189,24 @@ export const BattlePanelSingleBattleSkeleton = () => {
             <div className="hidden min-w-0 xl:block xl:self-start">
               <div>
                 <Card className="flex max-h-[420px] min-h-0 w-full flex-col gap-0 overflow-hidden border-border bg-card p-0 xl:h-[var(--battle-side-card-height)] xl:max-h-none">
-                  <div className="flex min-h-[61px] shrink-0 items-center justify-between gap-3 border-b bg-background px-3 py-3">
+                  <div className="flex min-h-[49px] shrink-0 items-center justify-between gap-3 border-b bg-background px-3 py-2">
                     <div className="flex min-w-0 flex-1 items-center gap-2">
                       <Skeleton className="size-4 rounded-sm" />
-                      <div className="min-w-0 flex-1 space-y-1.5">
-                        <Skeleton className="h-4 w-36" />
-                        <Skeleton className="h-3 w-44" />
-                      </div>
+                      <Skeleton className="h-4 min-w-0 flex-1" />
                     </div>
-                    <Skeleton className="h-8 w-20 rounded-sm" />
+                    <Skeleton className="size-8 shrink-0 rounded-sm" />
                   </div>
                   <div className="min-h-0 flex-1 overflow-hidden">
                     {recentRows.map((_, index) => (
                       <div
                         key={index}
-                        className="grid grid-cols-[40px_minmax(0,1fr)_56px] items-center gap-3 border-b border-border/70 px-3 py-3"
+                        className="grid h-10 grid-cols-[24px_54px_78px_44px_minmax(0,1fr)] items-center gap-2 border-b border-border/70 px-2"
                       >
-                        <Skeleton className="size-8 rounded-sm" />
-                        <div className="min-w-0 space-y-1.5">
-                          <Skeleton className="h-3.5 w-full" />
-                          <Skeleton className="h-3 w-2/3" />
-                        </div>
-                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="size-5 rounded-sm" />
+                        <Skeleton className="h-3.5 w-full" />
+                        <Skeleton className="h-3.5 w-full" />
+                        <Skeleton className="h-3.5 w-full" />
+                        <Skeleton className="h-3.5 w-full" />
                       </div>
                     ))}
                   </div>

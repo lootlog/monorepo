@@ -26,6 +26,7 @@ import { BlocksBreakdown } from "./blocks-breakdown";
 import { WarriorDetailsBreakdown } from "./warrior-details-breakdown";
 import { DamageDealtBreakdown } from "./damage-dealt-breakdown";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
+import { useTranslation } from "react-i18next";
 
 interface ExpandableDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -45,6 +46,7 @@ export function ExpandableDataTable<TData, TValue>({
   forceHorizontalScroll = false,
   expandedRows,
 }: ExpandableDataTableProps<TData, TValue>) {
+  const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
@@ -206,7 +208,7 @@ export function ExpandableDataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {t("battleUi.statsTable.empty")}
                 </TableCell>
               </TableRow>
             )}
