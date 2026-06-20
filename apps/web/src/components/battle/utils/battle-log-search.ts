@@ -58,7 +58,7 @@ const ACTION_SEARCH_LABELS: Record<string, readonly string[]> = {
 };
 
 const appendSearchPart = (parts: string[], value: unknown): void => {
-  if (value == null) {
+  if (value === null || value === undefined) {
     return;
   }
 
