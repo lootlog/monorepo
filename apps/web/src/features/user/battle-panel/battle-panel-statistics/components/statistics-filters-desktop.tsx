@@ -16,6 +16,7 @@ type StatisticsFiltersDesktopProps = {
   maxLevel?: number;
   ph?: boolean;
   matchmaking?: boolean;
+  showMatchmakingFilter?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
@@ -31,6 +32,7 @@ export const StatisticsFiltersDesktop = ({
   maxLevel,
   ph,
   matchmaking,
+  showMatchmakingFilter = true,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
@@ -79,17 +81,22 @@ export const StatisticsFiltersDesktop = ({
         />
       </div>
 
-      <div className="flex items-center gap-2 border rounded-md px-3 h-10">
-        <Swords className="h-4 w-4" />
-        <Label htmlFor="matchmaking-filter" className="cursor-pointer text-sm">
-          {t("battlePanel.filters.matchmaking")}
-        </Label>
-        <Checkbox
-          id="matchmaking-filter"
-          checked={matchmaking === true}
-          onCheckedChange={(checked) => onMatchmakingChange(checked === true)}
-        />
-      </div>
+      {showMatchmakingFilter && (
+        <div className="flex items-center gap-2 border rounded-md px-3 h-10">
+          <Swords className="h-4 w-4" />
+          <Label
+            htmlFor="matchmaking-filter"
+            className="cursor-pointer text-sm"
+          >
+            {t("battlePanel.filters.matchmaking")}
+          </Label>
+          <Checkbox
+            id="matchmaking-filter"
+            checked={matchmaking === true}
+            onCheckedChange={(checked) => onMatchmakingChange(checked === true)}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -6,8 +6,6 @@ import {
   useBattlesControllerGetHeadToHead,
   useBattlesControllerGetPhGrowth,
   useBattlesControllerGetProfessionWinRate,
-  useBattlesControllerGetRatingDeltaByOpponent,
-  useBattlesControllerGetRatingGrowth,
   useBattlesControllerGetUserCharacters,
 } from "@/lib/api/generated/battlelog/battles/battles";
 import { StatisticsFilters } from "./components/statistics-filters";
@@ -16,8 +14,6 @@ import { HeadToHeadTable } from "./components/head-to-head-table";
 import { CurrentStreakCard } from "./components/current-streak-card";
 import { BattleDurationStatsCard } from "./components/battle-duration-stats";
 import { PhGrowthChart } from "./components/ph-growth-chart";
-import { RatingGrowthChart } from "./components/rating-growth-chart";
-import { RatingDeltaByOpponentCard } from "./components/rating-delta-by-opponent-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SectionHeader } from "@/components/layout/section-header";
 import { BarChart3 } from "lucide-react";
@@ -46,8 +42,10 @@ export function BattlePanelStatistics() {
   const period = queryState.period ?? "30d";
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;
+  const startDate = queryState.startDate ?? undefined;
+  const endDate = queryState.endDate ?? undefined;
   const ph = queryState.ph ?? undefined;
-  const matchmaking = queryState.matchmaking ?? undefined;
+  const matchmaking = false;
   const selectedCharacterId = currentCharacterId ?? characters?.[0]?.id;
 
   useEffect(() => {
@@ -67,6 +65,8 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      startDate,
+      endDate,
       ph,
       matchmaking,
     });
@@ -77,6 +77,8 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      startDate,
+      endDate,
       ph,
       matchmaking,
       size: 5,
@@ -88,6 +90,8 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      startDate,
+      endDate,
       ph,
       matchmaking,
     });
@@ -98,6 +102,8 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      startDate,
+      endDate,
       ph,
       matchmaking,
     });
@@ -108,25 +114,12 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      startDate,
+      endDate,
       ph,
       matchmaking,
     });
 
-  const { data: ratingGrowthData, isLoading: isRatingGrowthLoading } =
-    useBattlesControllerGetRatingGrowth({
-      characterId: selectedCharacterId,
-      period,
-      minLevel,
-      maxLevel,
-    });
-
-  const { data: ratingDeltaData, isLoading: isRatingDeltaLoading } =
-    useBattlesControllerGetRatingDeltaByOpponent({
-      characterId: selectedCharacterId,
-      period,
-      minLevel,
-      maxLevel,
-    });
   const { data: combatProfile, isLoading: isCombatProfileLoading } = useQuery({
     queryKey: [
       "combat-profile",
@@ -134,6 +127,8 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      startDate,
+      endDate,
       ph,
       matchmaking,
     ],
@@ -143,6 +138,8 @@ export function BattlePanelStatistics() {
         period,
         minLevel,
         maxLevel,
+        startDate,
+        endDate,
         ph,
         matchmaking,
       }),
@@ -154,6 +151,8 @@ export function BattlePanelStatistics() {
     period,
     minLevel,
     maxLevel,
+    startDate,
+    endDate,
     ph,
     matchmaking,
   };
@@ -178,6 +177,7 @@ export function BattlePanelStatistics() {
               maxLevel={maxLevel}
               ph={ph}
               matchmaking={matchmaking}
+              showMatchmakingFilter={false}
               onCharacterChange={(characterId) => {
                 startTransition(() => {
                   void setQueryState({
@@ -228,94 +228,44 @@ export function BattlePanelStatistics() {
             isLoading={isCombatProfileLoading}
           />
 
-          {matchmaking ? (
-            <>
-              <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-                <CurrentStreakCard
-                  data={
-                    streakData ?? {
-                      current: { type: "none", count: 0 },
-                      longest: { wins: 0, losses: 0 },
-                    }
-                  }
-                  isLoading={isStreakLoading}
-                />
-                <BattleDurationStatsCard
-                  data={
-                    durationData ?? {
-                      avgWinDuration: 0,
-                      avgLossDuration: 0,
-                      fastest: null,
-                      longest: null,
-                    }
-                  }
-                  isLoading={isDurationLoading}
-                />
-                <RatingGrowthChart
-                  data={ratingGrowthData ?? []}
-                  isLoading={isRatingGrowthLoading}
-                />
-              </div>
+          <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+            <CurrentStreakCard
+              data={
+                streakData ?? {
+                  current: { type: "none", count: 0 },
+                  longest: { wins: 0, losses: 0 },
+                }
+              }
+              isLoading={isStreakLoading}
+            />
+            <BattleDurationStatsCard
+              data={
+                durationData ?? {
+                  avgWinDuration: 0,
+                  avgLossDuration: 0,
+                  fastest: null,
+                  longest: null,
+                }
+              }
+              isLoading={isDurationLoading}
+            />
+            <PhGrowthChart
+              data={phGrowthData ?? []}
+              isLoading={isPhGrowthLoading}
+            />
+          </div>
 
-              <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-2">
-                <ProfessionWinRateChart
-                  data={professionData ?? []}
-                  isLoading={isProfessionLoading}
-                />
-                <RatingDeltaByOpponentCard
-                  data={ratingDeltaData ?? []}
-                  search={{
-                    characterId: statisticsSearch.characterId,
-                    period: statisticsSearch.period,
-                    minLevel: statisticsSearch.minLevel,
-                    maxLevel: statisticsSearch.maxLevel,
-                  }}
-                  isLoading={isRatingDeltaLoading}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-                <CurrentStreakCard
-                  data={
-                    streakData ?? {
-                      current: { type: "none", count: 0 },
-                      longest: { wins: 0, losses: 0 },
-                    }
-                  }
-                  isLoading={isStreakLoading}
-                />
-                <BattleDurationStatsCard
-                  data={
-                    durationData ?? {
-                      avgWinDuration: 0,
-                      avgLossDuration: 0,
-                      fastest: null,
-                      longest: null,
-                    }
-                  }
-                  isLoading={isDurationLoading}
-                />
-                <PhGrowthChart
-                  data={phGrowthData ?? []}
-                  isLoading={isPhGrowthLoading}
-                />
-              </div>
-
-              <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-2">
-                <ProfessionWinRateChart
-                  data={professionData ?? []}
-                  isLoading={isProfessionLoading}
-                />
-                <HeadToHeadTable
-                  data={headToHeadData?.records ?? []}
-                  search={statisticsSearch}
-                  isLoading={isHeadToHeadLoading}
-                />
-              </div>
-            </>
-          )}
+          <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-2">
+            <ProfessionWinRateChart
+              data={professionData ?? []}
+              isLoading={isProfessionLoading}
+            />
+            <HeadToHeadTable
+              data={headToHeadData?.records ?? []}
+              search={statisticsSearch}
+              isLoading={isHeadToHeadLoading}
+            />
+          </div>
         </div>
       </ScrollArea>
     </div>

@@ -53,6 +53,20 @@ export const mapBattleEventsToPayload = (
           opponent_rating: event.match_summary.opponent_rating,
           rating: event.match_summary.rating,
           status: event.match_summary.status,
+          placement_cur: event.match_summary.placement_cur,
+          placement_max: event.match_summary.placement_max,
+          points_gained: event.match_summary.points_gained,
+          daily_stage: event.match_summary.daily_stage
+            ? {
+                id: event.match_summary.daily_stage.id,
+                points_cur: event.match_summary.daily_stage.points_cur,
+                points_max: event.match_summary.daily_stage.points_max,
+                points_step: event.match_summary.daily_stage.points_step,
+                rewards_last: event.match_summary.daily_stage.rewards_last,
+                rewards_cur: event.match_summary.daily_stage.rewards_cur,
+                rewards_max: event.match_summary.daily_stage.rewards_max,
+              }
+            : undefined,
         }
       : undefined;
 

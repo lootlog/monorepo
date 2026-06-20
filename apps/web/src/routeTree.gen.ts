@@ -37,6 +37,7 @@ import { Route as AuthenticatedGuildIdNotificationsIndexRouteImport } from './ro
 import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
 import { Route as AuthenticatedAtmeSettingsAccountRouteImport } from './routes/_authenticated/@me/settings/account'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsRouteImport } from './routes/_authenticated/@me/battle-panel/statistics'
+import { Route as AuthenticatedAtmeBattlePanelAbyssRouteImport } from './routes/_authenticated/@me/battle-panel/abyss'
 import { Route as AuthenticatedGuildIdStatsRankingRouteImport } from './routes/_authenticated/$guildId/stats/ranking'
 import { Route as AuthenticatedGuildIdStatsLootsRouteImport } from './routes/_authenticated/$guildId/stats/loots'
 import { Route as AuthenticatedGuildIdStatsKillsRouteImport } from './routes/_authenticated/$guildId/stats/kills'
@@ -56,6 +57,7 @@ import { Route as AuthenticatedGuildIdEventsEventIdIndexRouteImport } from './ro
 import { Route as AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.matchmaking-h2h'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.h2h'
 import { Route as AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport } from './routes/_authenticated/@me/battle-panel/battles_.$battleId'
+import { Route as AuthenticatedAtmeBattlePanelAbyssH2hRouteImport } from './routes/_authenticated/@me/battle-panel/abyss_.h2h'
 import { Route as AuthenticatedGuildIdStatsNpcsNpcIdRouteImport } from './routes/_authenticated/$guildId/stats/npcs.$npcId'
 import { Route as AuthenticatedGuildIdStatsMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/stats/members.$memberId'
 import { Route as AuthenticatedGuildIdSettingsRolesRoleIdRouteImport } from './routes/_authenticated/$guildId/settings/roles_.$roleId'
@@ -234,6 +236,12 @@ const AuthenticatedAtmeBattlePanelStatisticsRoute =
     path: '/statistics',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
   } as any)
+const AuthenticatedAtmeBattlePanelAbyssRoute =
+  AuthenticatedAtmeBattlePanelAbyssRouteImport.update({
+    id: '/abyss',
+    path: '/abyss',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
 const AuthenticatedGuildIdStatsRankingRoute =
   AuthenticatedGuildIdStatsRankingRouteImport.update({
     id: '/ranking',
@@ -346,6 +354,12 @@ const AuthenticatedAtmeBattlePanelBattlesBattleIdRoute =
   AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport.update({
     id: '/battles_/$battleId',
     path: '/battles/$battleId',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
+const AuthenticatedAtmeBattlePanelAbyssH2hRoute =
+  AuthenticatedAtmeBattlePanelAbyssH2hRouteImport.update({
+    id: '/abyss_/h2h',
+    path: '/abyss/h2h',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
   } as any)
 const AuthenticatedGuildIdStatsNpcsNpcIdRoute =
@@ -493,6 +507,7 @@ export interface FileRoutesByFullPath {
   '/$guildId/stats/kills': typeof AuthenticatedGuildIdStatsKillsRoute
   '/$guildId/stats/loots': typeof AuthenticatedGuildIdStatsLootsRoute
   '/$guildId/stats/ranking': typeof AuthenticatedGuildIdStatsRankingRoute
+  '/@me/battle-panel/abyss': typeof AuthenticatedAtmeBattlePanelAbyssRoute
   '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
@@ -511,6 +526,7 @@ export interface FileRoutesByFullPath {
   '/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
   '/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
   '/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
+  '/@me/battle-panel/abyss/h2h': typeof AuthenticatedAtmeBattlePanelAbyssH2hRoute
   '/@me/battle-panel/battles/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
   '/@me/battle-panel/statistics/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/@me/battle-panel/statistics/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
@@ -551,6 +567,7 @@ export interface FileRoutesByTo {
   '/$guildId/stats/kills': typeof AuthenticatedGuildIdStatsKillsRoute
   '/$guildId/stats/loots': typeof AuthenticatedGuildIdStatsLootsRoute
   '/$guildId/stats/ranking': typeof AuthenticatedGuildIdStatsRankingRoute
+  '/@me/battle-panel/abyss': typeof AuthenticatedAtmeBattlePanelAbyssRoute
   '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
@@ -568,6 +585,7 @@ export interface FileRoutesByTo {
   '/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
   '/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
   '/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
+  '/@me/battle-panel/abyss/h2h': typeof AuthenticatedAtmeBattlePanelAbyssH2hRoute
   '/@me/battle-panel/battles/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
   '/@me/battle-panel/statistics/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/@me/battle-panel/statistics/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
@@ -618,6 +636,7 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/stats/kills': typeof AuthenticatedGuildIdStatsKillsRoute
   '/_authenticated/$guildId/stats/loots': typeof AuthenticatedGuildIdStatsLootsRoute
   '/_authenticated/$guildId/stats/ranking': typeof AuthenticatedGuildIdStatsRankingRoute
+  '/_authenticated/@me/battle-panel/abyss': typeof AuthenticatedAtmeBattlePanelAbyssRoute
   '/_authenticated/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/_authenticated/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/_authenticated/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
@@ -636,6 +655,7 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/settings/roles_/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
   '/_authenticated/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
   '/_authenticated/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
+  '/_authenticated/@me/battle-panel/abyss_/h2h': typeof AuthenticatedAtmeBattlePanelAbyssH2hRoute
   '/_authenticated/@me/battle-panel/battles_/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
   '/_authenticated/@me/battle-panel/statistics_/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
@@ -687,6 +707,7 @@ export interface FileRouteTypes {
     | '/$guildId/stats/kills'
     | '/$guildId/stats/loots'
     | '/$guildId/stats/ranking'
+    | '/@me/battle-panel/abyss'
     | '/@me/battle-panel/statistics'
     | '/@me/settings/account'
     | '/@me/settings/appearance'
@@ -705,6 +726,7 @@ export interface FileRouteTypes {
     | '/$guildId/settings/roles/$roleId'
     | '/$guildId/stats/members/$memberId'
     | '/$guildId/stats/npcs/$npcId'
+    | '/@me/battle-panel/abyss/h2h'
     | '/@me/battle-panel/battles/$battleId'
     | '/@me/battle-panel/statistics/h2h'
     | '/@me/battle-panel/statistics/matchmaking-h2h'
@@ -745,6 +767,7 @@ export interface FileRouteTypes {
     | '/$guildId/stats/kills'
     | '/$guildId/stats/loots'
     | '/$guildId/stats/ranking'
+    | '/@me/battle-panel/abyss'
     | '/@me/battle-panel/statistics'
     | '/@me/settings/account'
     | '/@me/settings/appearance'
@@ -762,6 +785,7 @@ export interface FileRouteTypes {
     | '/$guildId/settings/roles/$roleId'
     | '/$guildId/stats/members/$memberId'
     | '/$guildId/stats/npcs/$npcId'
+    | '/@me/battle-panel/abyss/h2h'
     | '/@me/battle-panel/battles/$battleId'
     | '/@me/battle-panel/statistics/h2h'
     | '/@me/battle-panel/statistics/matchmaking-h2h'
@@ -811,6 +835,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/stats/kills'
     | '/_authenticated/$guildId/stats/loots'
     | '/_authenticated/$guildId/stats/ranking'
+    | '/_authenticated/@me/battle-panel/abyss'
     | '/_authenticated/@me/battle-panel/statistics'
     | '/_authenticated/@me/settings/account'
     | '/_authenticated/@me/settings/appearance'
@@ -829,6 +854,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/settings/roles_/$roleId'
     | '/_authenticated/$guildId/stats/members/$memberId'
     | '/_authenticated/$guildId/stats/npcs/$npcId'
+    | '/_authenticated/@me/battle-panel/abyss_/h2h'
     | '/_authenticated/@me/battle-panel/battles_/$battleId'
     | '/_authenticated/@me/battle-panel/statistics_/h2h'
     | '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h'
@@ -1050,6 +1076,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRouteImport
       parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
     }
+    '/_authenticated/@me/battle-panel/abyss': {
+      id: '/_authenticated/@me/battle-panel/abyss'
+      path: '/abyss'
+      fullPath: '/@me/battle-panel/abyss'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelAbyssRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
     '/_authenticated/$guildId/stats/ranking': {
       id: '/_authenticated/$guildId/stats/ranking'
       path: '/ranking'
@@ -1181,6 +1214,13 @@ declare module '@tanstack/react-router' {
       path: '/battles/$battleId'
       fullPath: '/@me/battle-panel/battles/$battleId'
       preLoaderRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/abyss_/h2h': {
+      id: '/_authenticated/@me/battle-panel/abyss_/h2h'
+      path: '/abyss/h2h'
+      fullPath: '/@me/battle-panel/abyss/h2h'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelAbyssH2hRouteImport
       parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
     }
     '/_authenticated/$guildId/stats/npcs/$npcId': {
@@ -1521,8 +1561,10 @@ const AuthenticatedGuildIdRouteWithChildren =
   AuthenticatedGuildIdRoute._addFileChildren(AuthenticatedGuildIdRouteChildren)
 
 interface AuthenticatedAtmeBattlePanelRouteChildren {
+  AuthenticatedAtmeBattlePanelAbyssRoute: typeof AuthenticatedAtmeBattlePanelAbyssRoute
   AuthenticatedAtmeBattlePanelStatisticsRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   AuthenticatedAtmeBattlePanelIndexRoute: typeof AuthenticatedAtmeBattlePanelIndexRoute
+  AuthenticatedAtmeBattlePanelAbyssH2hRoute: typeof AuthenticatedAtmeBattlePanelAbyssH2hRoute
   AuthenticatedAtmeBattlePanelBattlesBattleIdRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
   AuthenticatedAtmeBattlePanelStatisticsH2hRoute: typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute: typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
@@ -1531,10 +1573,14 @@ interface AuthenticatedAtmeBattlePanelRouteChildren {
 
 const AuthenticatedAtmeBattlePanelRouteChildren: AuthenticatedAtmeBattlePanelRouteChildren =
   {
+    AuthenticatedAtmeBattlePanelAbyssRoute:
+      AuthenticatedAtmeBattlePanelAbyssRoute,
     AuthenticatedAtmeBattlePanelStatisticsRoute:
       AuthenticatedAtmeBattlePanelStatisticsRoute,
     AuthenticatedAtmeBattlePanelIndexRoute:
       AuthenticatedAtmeBattlePanelIndexRoute,
+    AuthenticatedAtmeBattlePanelAbyssH2hRoute:
+      AuthenticatedAtmeBattlePanelAbyssH2hRoute,
     AuthenticatedAtmeBattlePanelBattlesBattleIdRoute:
       AuthenticatedAtmeBattlePanelBattlesBattleIdRoute,
     AuthenticatedAtmeBattlePanelStatisticsH2hRoute:

@@ -21,9 +21,12 @@ import type { KeyboardEvent } from "react";
 
 type RatingDeltaByOpponentCardSearch = {
   characterId?: string;
-  period: Period;
+  period?: Period;
   minLevel: number;
   maxLevel: number;
+  startDate?: string;
+  endDate?: string;
+  matchmaking?: boolean;
 };
 
 interface RatingDeltaByOpponentCardProps {

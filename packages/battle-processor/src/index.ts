@@ -22,6 +22,18 @@ export type BattleEvent = {
     opponent_rating: number;
     rating: number;
     status: number;
+    placement_cur?: number;
+    placement_max?: number;
+    points_gained?: number;
+    daily_stage?: {
+      id: number;
+      points_cur: number;
+      points_max: number;
+      points_step: number;
+      rewards_last: number;
+      rewards_cur: number;
+      rewards_max: number;
+    };
   };
 };
 
@@ -296,6 +308,16 @@ export type MatchmakingInfo = {
   opponentRating: number;
   rating: number;
   status: number;
+  pointsGained?: number;
+  placementCur?: number;
+  placementMax?: number;
+  dailyStageId?: number;
+  dailyPointsCur?: number;
+  dailyPointsMax?: number;
+  dailyPointsStep?: number;
+  dailyRewardsLast?: number;
+  dailyRewardsCur?: number;
+  dailyRewardsMax?: number;
 };
 
 export type BattleAnalysis = {
@@ -1972,6 +1994,16 @@ export class BattleProcessor {
           opponentRating: summary.opponent_rating,
           rating: summary.rating,
           status: summary.status,
+          pointsGained: summary.points_gained,
+          placementCur: summary.placement_cur,
+          placementMax: summary.placement_max,
+          dailyStageId: summary.daily_stage?.id,
+          dailyPointsCur: summary.daily_stage?.points_cur,
+          dailyPointsMax: summary.daily_stage?.points_max,
+          dailyPointsStep: summary.daily_stage?.points_step,
+          dailyRewardsLast: summary.daily_stage?.rewards_last,
+          dailyRewardsCur: summary.daily_stage?.rewards_cur,
+          dailyRewardsMax: summary.daily_stage?.rewards_max,
         };
       }
     }

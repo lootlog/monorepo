@@ -124,6 +124,19 @@ const RatingDeltaByOpponentResponseSchema = z.object({
   lastBattleDate: z.string().datetime(),
 });
 
+const AbyssSeasonResponseSchema = z.object({
+  id: z.string(),
+  startedAt: z.string().datetime(),
+  endedAt: z.string().datetime(),
+  totalBattles: z.number(),
+  wins: z.number(),
+  losses: z.number(),
+  winRate: z.number(),
+  totalRatingDelta: z.number(),
+  peakRating: z.number().nullable(),
+  totalPointsGained: z.number().nullable(),
+});
+
 const PlayerVsPlayerBattleResponseSchema = z.object({
   battleId: z.string(),
   createdAt: z.string().datetime(),
@@ -242,6 +255,7 @@ export type RatingGrowthDataPointDto = z.output<
 export type RatingDeltaByOpponentDto = z.output<
   typeof RatingDeltaByOpponentResponseSchema
 >;
+export type AbyssSeasonDto = z.output<typeof AbyssSeasonResponseSchema>;
 export type PlayerVsPlayerBattleDto = z.output<
   typeof PlayerVsPlayerBattleResponseSchema
 >;
@@ -303,6 +317,13 @@ const RatingDeltaByOpponentResponseDtoBase: ZodDto<
 > = createZodDto(RatingDeltaByOpponentResponseSchema);
 
 export class RatingDeltaByOpponentResponseDto extends RatingDeltaByOpponentResponseDtoBase {}
+
+const AbyssSeasonResponseDtoBase: ZodDto<
+  typeof AbyssSeasonResponseSchema,
+  false
+> = createZodDto(AbyssSeasonResponseSchema);
+
+export class AbyssSeasonResponseDto extends AbyssSeasonResponseDtoBase {}
 
 const PlayerVsPlayerPaginatedResponseDtoBase: ZodDto<
   typeof PlayerVsPlayerPaginatedResponseSchema,
