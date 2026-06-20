@@ -21,6 +21,7 @@ import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  getGuildsControllerGetGuildByIdQueryKey,
   invalidateGuildsControllerGetGuildById,
   useGuildsControllerGetGuildById,
   useGuildsControllerUpdateGuildConfig,
@@ -82,6 +83,10 @@ export const GeneralForm = () => {
       {
         onSuccess: async (data) => {
           if (guildId) {
+            queryClient.setQueryData(
+              getGuildsControllerGetGuildByIdQueryKey({ guildId }),
+              data,
+            );
             await Promise.all([
               invalidateGuildsControllerGetGuildById(queryClient, { guildId }),
               invalidateUsersControllerGetCurrentUserAccessibleGuilds(

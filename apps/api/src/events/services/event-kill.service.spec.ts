@@ -3,6 +3,7 @@ import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { NotFoundException } from "@nestjs/common";
 import { EventKillService } from "./event-kill.service";
+import { EventReadCacheService } from "./event-read-cache.service";
 import { EventEmitterService } from "./event-emitter.service";
 import { EventPointsService } from "./event-points.service";
 import { EventTrackingService } from "./event-tracking.service";
@@ -155,6 +156,17 @@ describe("EventKillService", () => {
     setNX: mockFn().mockResolvedValue(true),
   };
 
+  const mockEventReadCache = {
+    getEventKey: mockFn(
+      (guildId: string, eventId: string, scope: string) =>
+        `event-read:${guildId}:${eventId}:${scope}`,
+    ),
+    getOrSet: mockFn((_key: string, factory: () => Promise<unknown>) =>
+      factory(),
+    ),
+    invalidateEvent: mockFn(),
+  };
+
   const mockTimersService = {
     getTimersForEventHeroFilters: mockFn(),
   };
@@ -175,6 +187,7 @@ describe("EventKillService", () => {
         EventKillService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
         { provide: EventEmitterService, useValue: mockEventEmitter },
         { provide: EventPointsService, useValue: mockPointsService },

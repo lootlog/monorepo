@@ -32,7 +32,14 @@ import {
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
 import { formatNotificationDateInTimeZone } from "../utils/notification-schedule-time.utils";
-import { invalidateGuildNotificationQueries } from "../notifications-api";
+import {
+  cancelGuildNotificationQueries,
+  getGuildNotificationCacheSnapshot,
+  invalidateGuildNotificationQueries,
+  removeGuildNotificationRuleFromCache,
+  restoreGuildNotificationCacheSnapshot,
+  type GuildNotificationCacheSnapshot,
+} from "../notifications-api";
 import {
   useNotificationsGuildControllerDeleteGuildRule,
   useNotificationsGuildControllerRebuildGuildRuleJobs,
@@ -52,14 +59,47 @@ export const NotificationRuleCard = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
-  const deleteRule = useNotificationsGuildControllerDeleteGuildRule({
+  const deleteRule = useNotificationsGuildControllerDeleteGuildRule<
+    unknown,
+    GuildNotificationCacheSnapshot | undefined
+  >({
     mutation: {
+      onMutate: async (variables) => {
+        if (!guildId) {
+          return undefined;
+        }
+
+        await cancelGuildNotificationQueries(queryClient, guildId);
+        const previousNotifications = getGuildNotificationCacheSnapshot(
+          queryClient,
+          guildId,
+        );
+
+        removeGuildNotificationRuleFromCache(
+          queryClient,
+          guildId,
+          variables.pathParams.ruleId,
+        );
+
+        return previousNotifications;
+      },
       onSuccess: async () => {
         if (!guildId) {
           return;
         }
 
         await invalidateGuildNotificationQueries(queryClient, guildId);
+      },
+      onError: (_error, _variables, previousNotifications) => {
+        if (!guildId) {
+          return;
+        }
+
+        restoreGuildNotificationCacheSnapshot(
+          queryClient,
+          guildId,
+          previousNotifications,
+        );
       },
     },
   });

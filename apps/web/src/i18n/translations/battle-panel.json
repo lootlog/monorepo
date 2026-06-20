@@ -7,6 +7,7 @@
     "headToHead": "Bilans H2H",
     "matchmakingHeadToHead": "Matchmaking H2H",
     "playerVsPlayer": "Gracz vs Gracz",
+    "battleDuel": "{{first}} vs {{second}}",
     "battleFallback": "Walka #{{id}}"
   },
   "filters": {
@@ -90,14 +91,11 @@
     "totalBattles": "Łącznie walk: {{count}}",
     "openBattle": "Otwórz walkę",
     "columns": {
-      "result": "Wynik",
+      "info": "Tagi",
       "yourTeam": "Twoja drużyna",
       "opponents": "Przeciwnicy",
-      "world": "Świat",
-      "tags": "Tagi",
       "time": "Czas",
       "duration": "Długość",
-      "mode": "Tryb",
       "actions": "Akcje"
     },
     "noTags": "-",
@@ -107,6 +105,11 @@
       "lightning": "Błyskawice",
       "poison": "Trucizna",
       "wound": "Głęboka rana"
+    },
+    "results": {
+      "won": "Wygrana",
+      "lost": "Przegrana",
+      "flee": "Ucieczka"
     }
   },
   "bulk": {
@@ -116,7 +119,6 @@
     "selectRows": "Zaznacz walki",
     "selectRow": "Zaznacz walkę",
     "honorPointsShort": "PH",
-    "matchmakingShort": "O",
     "deleteDialog": {
       "title": "Usunąć zaznaczone walki?",
       "description": "Usuniesz zaznaczone walki: {{count}}. Tej operacji nie można cofnąć.",
@@ -230,6 +232,12 @@
     "title": "Statystyki walk",
     "subtitle": "Szczegółowa analiza i statystyki z historii twoich walk",
     "loading": "Ładowanie...",
+    "empty": {
+      "title": "Brak danych",
+      "description": "Nie znaleziono danych dla wybranych filtrów.",
+      "errorTitle": "Nie udało się pobrać danych"
+    },
+    "total": "Łącznie: {{count}}",
     "combatProfile": {
       "value": "Wartość",
       "wins": "Wygrane",
@@ -276,26 +284,67 @@
         "biggestComeback": "Największy comeback"
       }
     },
+    "currentStreak": {
+      "title": "Aktualna passa",
+      "description": "Twoja bieżąca seria wygranych lub przegranych",
+      "empty": "Brak aktywnej passy",
+      "winStreak": "Passa wygranych",
+      "lossStreak": "Passa przegranych",
+      "longestWins": "Najdłuższa passa wygranych",
+      "longestLosses": "Najdłuższa passa przegranych"
+    },
     "battleDuration": {
       "title": "Czas trwania walk",
       "description": "Porównanie średniego czasu walk i ekstrema",
       "empty": "Brak danych o walkach"
     },
+    "phGrowth": {
+      "title": "Wzrost PH w czasie",
+      "description": "Historia zdobywania punktów honoru z walk",
+      "empty": "Brak danych o walkach z PH",
+      "chartLabel": "Skumulowany PH",
+      "tooltipDate": "Data: {{date}}",
+      "tooltipValue": "Łącznie: {{value}} PH (+{{ph}} PH)"
+    },
+    "ratingGrowth": {
+      "title": "Wzrost ratingu w czasie",
+      "description": "Historia zmian ratingu w Otchłani",
+      "empty": "Brak danych o walkach w Otchłani",
+      "chartLabel": "Rating",
+      "tooltipDate": "Data: {{date}}",
+      "tooltipValue": "Rating: {{value}} ({{delta}})"
+    },
+    "professionWinRate": {
+      "title": "Współczynnik wygranych vs profesja",
+      "description": "Twój procent wygranych przeciwko każdej profesji w walkach 1v1",
+      "empty": "Brak danych o walkach",
+      "chartLabel": "Współczynnik wygranych %",
+      "tooltipBattles": "{{profession}} ({{count}} walk)"
+    },
     "directMatchups": {
       "title": "Bilans bezpośrednich starć",
       "description": "Historia walk z konkretnymi przeciwnikami (top 5)",
-      "link": "Zobacz cały bilans"
+      "fullDescription": "Kompletna historia walk z konkretnymi przeciwnikami",
+      "link": "Zobacz cały bilans",
+      "emptyTitle": "Brak bilansów",
+      "emptyDescription": "Nie znaleziono przeciwników dla wybranych filtrów."
     },
     "matchmaking": {
       "title": "Bilans walk w Otchłani",
       "description": "Największe zmiany ratingu według przeciwników (top 5)",
+      "fullTitle": "Pełny bilans starć w Otchłani",
+      "fullDescription": "Kompletna historia walk rankingowych z konkretnymi przeciwnikami",
       "empty": "Brak danych o walkach w Otchłani",
+      "emptyTitle": "Brak bilansów Otchłani",
+      "emptyDescription": "Nie znaleziono rankingowych starć dla wybranych filtrów.",
       "link": "Zobacz pełny bilans Otchłani"
     },
     "playerVsPlayer": {
       "characterFallback": "Twoja postać",
       "opponentFallback": "Przeciwnik",
-      "subtitle": "Poziom {{level}} • Historia walk rankingowych"
+      "subtitle": "Poziom {{level}} • Historia walk rankingowych",
+      "emptyTitle": "Brak walk z tym przeciwnikiem",
+      "emptyDescription": "Nie znaleziono walk dla wybranego pojedynku i filtrów."
     },
     "cards": {
       "averageTime": "Średni czas",

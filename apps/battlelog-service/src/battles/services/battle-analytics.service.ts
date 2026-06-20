@@ -16,13 +16,23 @@ import type {
   PlayerVsPlayerPaginatedResponse,
   CombatProfileDto,
 } from "src/battles/dto/battle-statistics-response.dto";
-import { inflateBattleWarriorsInBattles } from "src/battles/battle-warrior-stats";
+import {
+  inflateBattleWarriorsInBattles,
+  type InflatedBattleWarrior,
+} from "src/battles/battle-warrior-stats";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import {
   battleWarriors,
+  type Battle,
+  type BattleWarrior,
   type battles,
 } from "src/shared/modules/drizzle/schema";
 import { RedisService } from "@lootlog/nest-shared/redis";
+
+type StoredBattleWithWarriors = Battle & { warriors: BattleWarrior[] };
+type InflatedBattleWithWarriors = Battle & {
+  warriors: InflatedBattleWarrior[];
+};
 
 @Injectable()
 export class BattleAnalyticsService {
@@ -47,8 +57,23 @@ export class BattleAnalyticsService {
     );
   }
 
-  private inflateBattleRows(fetchedBattles: any[]): any[] {
+  private inflateBattleRows(
+    fetchedBattles: StoredBattleWithWarriors[],
+  ): InflatedBattleWithWarriors[] {
     return inflateBattleWarriorsInBattles(fetchedBattles);
+  }
+
+  private getCachedAnalyticsResult<T>(
+    cacheKey: string,
+    factory: () => Promise<T>,
+  ): Promise<T> {
+    return this.redisService.getOrSetJsonBestEffort({
+      key: cacheKey,
+      ttlSeconds: this.ANALYTICS_CACHE_TTL,
+      factory,
+      onError: (error) =>
+        this.logger.warn("Battle analytics cache unavailable", error),
+    });
   }
 
   async getBattleAnalytics(
@@ -344,6 +369,16 @@ export class BattleAnalyticsService {
   }
 
   async getHeadToHead(
+    query: QueryBattleStatisticsDto,
+    userId: string,
+  ): Promise<HeadToHeadPaginatedResponse> {
+    return this.getCachedAnalyticsResult(
+      this.buildQueryCacheKey("statistics", "head-to-head", userId, query),
+      () => this.getHeadToHeadUncached(query, userId),
+    );
+  }
+
+  private async getHeadToHeadUncached(
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<HeadToHeadPaginatedResponse> {
@@ -911,15 +946,12 @@ export class BattleAnalyticsService {
       const patterns = [
         `${this.ANALYTICS_CACHE_PREFIX}:${userId}:*`,
         `statistics:*:${userId}:*`,
+        `battle-characters:*:${userId}*`,
+        `battle-worlds:${userId}:*`,
       ];
 
-      const redis = this.redisService.getClient();
-
       for (const pattern of patterns) {
-        const keys = await redis.keys(pattern);
-        if (keys.length > 0) {
-          await redis.del(...keys);
-        }
+        await this.redisService.deleteByPattern(pattern);
       }
     } catch (error) {
       this.logger.warn(
@@ -930,6 +962,16 @@ export class BattleAnalyticsService {
   }
 
   private async getCharacterIds(
+    userId: string,
+    query: { characterId?: string; world?: string },
+  ): Promise<string[]> {
+    return this.getCachedAnalyticsResult(
+      this.buildQueryCacheKey("battle-characters", "ids", userId, query),
+      () => this.getCharacterIdsUncached(userId, query),
+    );
+  }
+
+  private async getCharacterIdsUncached(
     userId: string,
     query: { characterId?: string; world?: string },
   ): Promise<string[]> {
@@ -1023,6 +1065,41 @@ export class BattleAnalyticsService {
     return cacheKeySegments.join(":");
   }
 
+  private buildQueryCacheKey(
+    prefix: string,
+    metric: string,
+    userId: string,
+    query: object,
+  ): string {
+    return [
+      prefix,
+      metric,
+      userId,
+      Buffer.from(this.stableSerialize(query)).toString("base64url"),
+    ].join(":");
+  }
+
+  private stableSerialize(value: unknown): string {
+    if (Array.isArray(value)) {
+      return `[${value.map((entry) => this.stableSerialize(entry)).join(",")}]`;
+    }
+
+    if (value && typeof value === "object") {
+      const entries = Object.entries(value)
+        .filter(([, entry]) => entry !== undefined)
+        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
+
+      return `{${entries
+        .map(
+          ([key, entry]) =>
+            `${JSON.stringify(key)}:${this.stableSerialize(entry)}`,
+        )
+        .join(",")}}`;
+    }
+
+    return JSON.stringify(value);
+  }
+
   private formatCacheSegment(
     value: string | number | undefined,
     fallback = "all",
@@ -1114,7 +1191,7 @@ export class BattleAnalyticsService {
   }
 
   private calculateCombatProfile(
-    fetchedBattles: any[],
+    fetchedBattles: InflatedBattleWithWarriors[],
     characterIds: string[],
   ): CombatProfileDto {
     const damageMix = new Map<string, number>();
@@ -1156,7 +1233,7 @@ export class BattleAnalyticsService {
     const ratingTrend: CombatProfileDto["ratingTrend"] = [];
 
     for (const battle of fetchedBattles) {
-      const userWarrior = battle.warriors.find((warrior: any) =>
+      const userWarrior = battle.warriors.find((warrior) =>
         characterIds.includes(warrior.originalId),
       );
       if (!userWarrior || battle.hasFlee) {
@@ -1230,7 +1307,7 @@ export class BattleAnalyticsService {
       }
 
       const opponents = battle.warriors.filter(
-        (warrior: any) => warrior.team !== userWarrior.team,
+        (warrior) => warrior.team !== userWarrior.team,
       );
       for (const opponent of opponents) {
         const stats = matchupByProfession.get(opponent.prof) ?? {
@@ -1653,6 +1730,16 @@ export class BattleAnalyticsService {
     query: QueryPlayerVsPlayerDto,
     userId: string,
   ): Promise<PlayerVsPlayerPaginatedResponse> {
+    return this.getCachedAnalyticsResult(
+      this.buildQueryCacheKey("statistics", "player-vs-player", userId, query),
+      () => this.getPlayerVsPlayerBattlesUncached(query, userId),
+    );
+  }
+
+  private async getPlayerVsPlayerBattlesUncached(
+    query: QueryPlayerVsPlayerDto,
+    userId: string,
+  ): Promise<PlayerVsPlayerPaginatedResponse> {
     const startTime = Date.now();
 
     const characterIds = await this.getCharacterIds(userId, {
@@ -1808,7 +1895,7 @@ export class BattleAnalyticsService {
   }
 
   private isOpponentLevelInRange(
-    battle: any,
+    battle: InflatedBattleWithWarriors,
     characterIds: string[],
     minLevel?: number,
     maxLevel?: number,
@@ -1816,7 +1903,7 @@ export class BattleAnalyticsService {
     if (battle.type !== "1v1") return false;
 
     const opponentWarrior = battle.warriors.find(
-      (w: any) => !characterIds.includes(w.originalId),
+      (warrior) => !characterIds.includes(warrior.originalId),
     );
 
     if (!opponentWarrior) return false;
@@ -1831,16 +1918,16 @@ export class BattleAnalyticsService {
   }
 
   private isAnyOpponentLevelInRange(
-    battle: any,
+    battle: InflatedBattleWithWarriors,
     characterIds: string[],
     minLevel?: number,
     maxLevel?: number,
   ): boolean {
     const opponents = battle.warriors.filter(
-      (warrior: any) => !characterIds.includes(warrior.originalId),
+      (warrior) => !characterIds.includes(warrior.originalId),
     );
 
-    return opponents.some((opponent: any) => {
+    return opponents.some((opponent) => {
       if (minLevel !== undefined && opponent.lvl < minLevel) {
         return false;
       }

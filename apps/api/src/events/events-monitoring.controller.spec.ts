@@ -1,19 +1,21 @@
 import { Permission } from "src/generated/prisma/client";
 import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
+import { mockFn } from "src/test/mock-fn";
 import { EventsMonitoringController } from "./events-monitoring.controller";
 
 describe("EventsMonitoringController", () => {
   const mockEventsService = {
-    getHeroWithAccessCheck: vi.fn(),
-    getKillTimelineData: vi.fn(),
-    getHeroCoverageGaps: vi.fn(),
-    getMapCoverageGaps: vi.fn(),
-    getActiveGapForMap: vi.fn(),
-    getActiveGapsForHero: vi.fn(),
-    getHeroPresenceStats: vi.fn(),
-    getHeroRespawnConfig: vi.fn(),
-    closeRespawnWindow: vi.fn(),
-    openRespawnWindow: vi.fn(),
+    getCoordination: mockFn(),
+    getHeroWithAccessCheck: mockFn(),
+    getKillTimelineData: mockFn(),
+    getHeroCoverageGaps: mockFn(),
+    getMapCoverageGaps: mockFn(),
+    getActiveGapForMap: mockFn(),
+    getActiveGapsForHero: mockFn(),
+    getHeroPresenceStats: mockFn(),
+    getHeroRespawnConfig: mockFn(),
+    closeRespawnWindow: mockFn(),
+    openRespawnWindow: mockFn(),
   };
 
   let controller: EventsMonitoringController;
@@ -27,6 +29,12 @@ describe("EventsMonitoringController", () => {
     expect(
       Reflect.getMetadata(
         PERMISSIONS_KEY,
+        EventsMonitoringController.prototype.getCoordination,
+      ),
+    ).toEqual([Permission.LOOTLOG_EVENTS_READ]);
+    expect(
+      Reflect.getMetadata(
+        PERMISSIONS_KEY,
         EventsMonitoringController.prototype.getKillTimelineData,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_READ]);
@@ -36,6 +44,20 @@ describe("EventsMonitoringController", () => {
         EventsMonitoringController.prototype.closeRespawnWindow,
       ),
     ).toEqual([Permission.LOOTLOG_EVENTS_MANAGE]);
+  });
+
+  it("returns event coordination data", async () => {
+    mockEventsService.getCoordination.mockResolvedValue({
+      eventId: "event-1",
+      heroes: [],
+    });
+
+    await controller.getCoordination({ id: "guild-1" }, "event-1");
+
+    expect(mockEventsService.getCoordination).toHaveBeenCalledWith(
+      "guild-1",
+      "event-1",
+    );
   });
 
   it("checks hero visibility before returning timeline data", async () => {

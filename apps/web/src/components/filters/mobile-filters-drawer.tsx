@@ -7,6 +7,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@lootlog/ui/components/drawer";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Filter } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -40,12 +41,14 @@ export const MobileFiltersDrawer = ({
           <Filter className={iconClassName} />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="p-4">
-        <DrawerHeader className="mb-4">
+      <DrawerContent className="flex max-h-[85vh] flex-col p-4">
+        <DrawerHeader className="mb-4 shrink-0">
           <DrawerTitle>{title}</DrawerTitle>
         </DrawerHeader>
-        <div className="space-y-4 overflow-y-auto">{children}</div>
-        <div className="mt-6">
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="space-y-4 pr-2">{children}</div>
+        </ScrollArea>
+        <div className="mt-6 shrink-0">
           <DrawerClose asChild>
             <Button variant="outline" className="w-full">
               {closeLabel}

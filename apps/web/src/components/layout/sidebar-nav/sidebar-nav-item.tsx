@@ -3,7 +3,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "framer-motion";
 import type { MenuItem } from "./types";
 import { ThemeInteractiveFrame } from "@/themes";
 
@@ -67,25 +66,20 @@ export const SidebarNavItem = ({
           {badge.content}
         </Badge>
       )}
-      <AnimatePresence>
-        {isCatTheme && isHovered && !badge && (
-          <motion.span
-            className="absolute right-2 top-1/2 pointer-events-none"
-            initial={{ opacity: 0, scale: 0.8, y: "-50%" }}
-            animate={{ opacity: 0.5, scale: 1, y: "-50%" }}
-            exit={{ opacity: 0, scale: 0.8, y: "-50%" }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <svg className="!size-6" viewBox="0 0 32 32">
-              <ellipse cx="16" cy="22" rx="7" ry="5.5" fill="currentColor" />
-              <circle cx="9" cy="12" r="3.2" fill="currentColor" />
-              <circle cx="15" cy="8" r="2.8" fill="currentColor" />
-              <circle cx="21" cy="8" r="2.8" fill="currentColor" />
-              <circle cx="27" cy="12" r="3.2" fill="currentColor" />
-            </svg>
-          </motion.span>
-        )}
-      </AnimatePresence>
+      {isCatTheme && isHovered && !badge ? (
+        <span
+          className="absolute right-2 top-1/2 pointer-events-none"
+          style={{ opacity: 0.5, transform: "translateY(-50%)" }}
+        >
+          <svg className="!size-6" viewBox="0 0 32 32">
+            <ellipse cx="16" cy="22" rx="7" ry="5.5" fill="currentColor" />
+            <circle cx="9" cy="12" r="3.2" fill="currentColor" />
+            <circle cx="15" cy="8" r="2.8" fill="currentColor" />
+            <circle cx="21" cy="8" r="2.8" fill="currentColor" />
+            <circle cx="27" cy="12" r="3.2" fill="currentColor" />
+          </svg>
+        </span>
+      ) : null}
     </Button>
   );
 
@@ -95,18 +89,9 @@ export const SidebarNavItem = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <AnimatePresence>
-        {isActive && !isRukiaTheme && (
-          <motion.div
-            layoutId="sidebar-active-glow"
-            className="absolute inset-x-2 inset-y-0 rounded-md bg-primary/5"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-          />
-        )}
-      </AnimatePresence>
+      {isActive && !isRukiaTheme ? (
+        <div className="absolute inset-x-2 inset-y-0 rounded-md bg-primary/5" />
+      ) : null}
       <Link
         to={url}
         key={path}

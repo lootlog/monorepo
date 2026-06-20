@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { formatDurationPadded } from "../../utils/format-duration";
 
 export type CoverageGapType = "UNASSIGNED" | "UNCOVERED";
@@ -27,7 +27,7 @@ export const useLocalCoverageTimer = (
   const initializedRef = useRef(false);
   const usedBackendValueRef = useRef(false);
 
-  const gapType = useMemo(() => getGapTypeFromStatus(status), [status]);
+  const gapType = getGapTypeFromStatus(status);
 
   useEffect(() => {
     const prevGapType = prevGapTypeRef.current;

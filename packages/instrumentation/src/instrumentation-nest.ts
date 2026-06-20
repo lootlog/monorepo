@@ -1,7 +1,7 @@
 // CRITICAL: This file MUST be imported/required BEFORE any other imports in your app!
 // Use: node --import ./instrumentation.js ./dist/main.js
 
-import { type Context } from "@opentelemetry/api";
+import type { Context } from "@opentelemetry/api";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { NestInstrumentation } from "@opentelemetry/instrumentation-nestjs-core";
@@ -12,10 +12,10 @@ import {
   createAllowListAttributesProcessor,
   type ViewOptions,
 } from "@opentelemetry/sdk-metrics";
-import {
-  type ReadableSpan,
-  type Span,
-  type SpanProcessor,
+import type {
+  ReadableSpan,
+  Span,
+  SpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
 import {
   type BaseObservabilityConfig,
@@ -32,6 +32,26 @@ export interface ObservabilityConfig extends BaseObservabilityConfig {
 
 let sdkInstance: NodeSDK | null = null;
 let currentServiceName = "";
+
+const DYNAMIC_CHANNEL_PATTERN = /[a-zA-Z]+:\d+/;
+const SOCKET_ROOM_PATTERN = /room:[a-zA-Z]+-?\d+/;
+const SOCKET_NAMESPACE_PATTERN = /namespace:[a-zA-Z]+-?\d+/;
+
+type HttpServerSpan = {
+  updateName: (name: string) => void;
+  setAttribute: (key: string, value: string) => void;
+};
+
+type InstrumentedRequest = {
+  method?: string;
+  originalUrl?: string;
+  path?: string;
+  raw?: {
+    method?: string;
+    url?: string;
+  };
+  url?: string;
+};
 
 class FilteringSpanProcessor implements SpanProcessor {
   constructor(private readonly wrappedProcessor: SpanProcessor) {}
@@ -50,32 +70,21 @@ class FilteringSpanProcessor implements SpanProcessor {
   private shouldDropSpan(span: ReadableSpan): boolean {
     const spanName = span.name;
     const attributes = span.attributes;
+    const messagingDestination =
+      attributes["messaging.destination"]?.toString();
 
-    if (
+    return (
       spanName.includes("socket.io") ||
-      spanName.match(/room:[a-zA-Z]+-?\d+/) ||
-      spanName.match(/namespace:[a-zA-Z]+-?\d+/) ||
+      SOCKET_ROOM_PATTERN.test(spanName) ||
+      SOCKET_NAMESPACE_PATTERN.test(spanName) ||
       spanName.includes("emit to") ||
-      spanName.includes("send to")
-    ) {
-      return true;
-    }
-
-    const messagingDest = attributes["messaging.destination"]?.toString();
-    if (
-      messagingDest &&
-      (messagingDest.match(/[a-zA-Z]+:\d+/) ||
-        messagingDest.includes("guild:") ||
-        messagingDest.includes("battle:"))
-    ) {
-      return true;
-    }
-
-    if (spanName.match(/[a-zA-Z]+:\d+/)) {
-      return true;
-    }
-
-    return false;
+      spanName.includes("send to") ||
+      DYNAMIC_CHANNEL_PATTERN.test(spanName) ||
+      (messagingDestination !== undefined &&
+        (DYNAMIC_CHANNEL_PATTERN.test(messagingDestination) ||
+          messagingDestination.includes("guild:") ||
+          messagingDestination.includes("battle:")))
+    );
   }
 
   shutdown(): Promise<void> {
@@ -216,7 +225,7 @@ export function initObservability(config: ObservabilityConfig): void {
     "@opentelemetry/instrumentation-http": {
       enabled: true,
       ignoreOutgoingRequestHook: () => true,
-      requestHook: (span: any, req: any) => {
+      requestHook: (span: HttpServerSpan, req: InstrumentedRequest) => {
         try {
           const url: string =
             req?.url ?? req?.path ?? req?.raw?.url ?? req?.originalUrl ?? "/";
@@ -231,7 +240,6 @@ export function initObservability(config: ObservabilityConfig): void {
       },
     },
     "@opentelemetry/instrumentation-express": { enabled: true },
-    "@opentelemetry/instrumentation-fastify": { enabled: true },
     "@opentelemetry/instrumentation-dns": { enabled: false },
     "@opentelemetry/instrumentation-net": { enabled: false },
     "@opentelemetry/instrumentation-fs": { enabled: false },

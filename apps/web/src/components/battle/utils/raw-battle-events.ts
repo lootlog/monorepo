@@ -15,7 +15,7 @@ type BattleMoveSide = {
 };
 
 const parseHpPercentage = (value: string | undefined): number | null => {
-  if (value == null || value === "") {
+  if (value === undefined || value === "") {
     return null;
   }
 

@@ -10,8 +10,8 @@ export const useTimers = ({ world }: UseTimersOptions) => {
   const query = useQuery({
     queryKey: queryKeys.timers(world),
     enabled: !!world,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
     queryFn: () => fetchTimers(world as string),
   });
 

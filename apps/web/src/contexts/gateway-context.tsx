@@ -9,12 +9,23 @@ import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  getUsersControllerGetCurrentUserGuildsQueryKey,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@/lib/api/generated/main/users/users";
 import { queryClient } from "@/lib/query-client";
 import {
   DEV_PERMISSION_OVERRIDE_EVENT,
   getSerializedDevPermissionOverride,
 } from "@/lib/dev-permission-override";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  getGuildsControllerGetUserGuildsWithPermissionsQueryKey,
+} from "@/lib/api/generated/main/guilds/guilds";
+import { getMembersControllerGetMeQueryKey } from "@/lib/api/generated/main/members/members";
+import { getAuthControllerGetScopesQueryKey } from "@/lib/api/generated/auth/auth/auth";
+import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 
 export type GatewayProviderValue = {
   connected: boolean;
@@ -81,7 +92,36 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
       devPermissionOverride: getSerializedDevPermissionOverride(),
     };
     setJoined(false);
-    queryClient.invalidateQueries();
+    void queryClient.invalidateQueries({
+      queryKey: sessionQueryOptions.queryKey,
+    });
+    void queryClient.invalidateQueries({
+      queryKey: getAuthControllerGetScopesQueryKey(),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: getUsersControllerGetCurrentUserGuildsQueryKey(),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: getGuildsControllerGetUserGuildsWithPermissionsQueryKey(),
+    });
+
+    const scopedGuildIds = new Set(
+      [routeGuildId, currentGuildId].filter(
+        (guildId): guildId is string => typeof guildId === "string",
+      ),
+    );
+
+    for (const guildId of scopedGuildIds) {
+      void queryClient.invalidateQueries({
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: getMembersControllerGetMeQueryKey({ guildId }),
+      });
+    }
 
     if (socket.connected) {
       socket.disconnect();

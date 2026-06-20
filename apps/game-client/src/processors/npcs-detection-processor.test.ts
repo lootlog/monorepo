@@ -10,6 +10,8 @@ import { NpcsDetectionProcessor } from "./npcs-detection-processor";
 import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import type * as Api from "@/api";
+import type * as LootlogTypes from "@lootlog/types";
 
 const {
   mockCreateNotification,
@@ -35,6 +37,7 @@ const {
       name: "Ithan",
     },
     npcs: [] as GameNpc[],
+    getAccountId: vi.fn(() => "202"),
     getNpcTpl: vi.fn(),
     getNpcIcon: vi.fn(),
     getWorldName: vi.fn(() => "pandora"),
@@ -42,7 +45,7 @@ const {
 }));
 
 vi.mock("@/api", async (importOriginal) => {
-  const originalModule = await importOriginal<typeof import("@/api")>();
+  const originalModule = await importOriginal<typeof Api>();
 
   return {
     ...originalModule,
@@ -60,8 +63,7 @@ vi.mock("@/lib/sound-playback", () => ({
 }));
 
 vi.mock("@lootlog/types", async (importOriginal) => {
-  const originalModule =
-    await importOriginal<typeof import("@lootlog/types")>();
+  const originalModule = await importOriginal<typeof LootlogTypes>();
   return {
     ...originalModule,
     getNpcTypeByWt: (...args: unknown[]) => mockGetNpcTypeByWt(...args),

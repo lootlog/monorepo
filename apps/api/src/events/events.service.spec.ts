@@ -7,12 +7,14 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventsService } from "./events.service";
 import { EventAccessService } from "./services/event-access.service";
 import { EventCatalogService } from "./services/event-catalog.service";
+import { EventReadCacheService } from "./services/event-read-cache.service";
 import { EventPointsService } from "./services/event-points.service";
 import { EventTrackingService } from "./services/event-tracking.service";
 import { EventKillService } from "./services/event-kill.service";
 import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service";
 import { EventRespawnService } from "./services/event-respawn.service";
 import { EventWrappedService } from "./services/event-wrapped.service";
+import { EventCoordinationService } from "./services/event-coordination.service";
 import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "./constants/scoring-rules.constant";
@@ -106,6 +108,10 @@ describe("EventsService", () => {
     getWrapped: mockFn(),
   };
 
+  const mockCoordinationService = {
+    getCoordination: mockFn(),
+  };
+
   const mockQueue = {
     getJobs: mockFn(),
     getJobCounts: mockFn(),
@@ -121,6 +127,23 @@ describe("EventsService", () => {
 
   const mockRedisService = {
     del: mockFn(),
+    deleteByPattern: mockFn(),
+  };
+
+  const mockEventReadCache = {
+    getGuildKey: mockFn(
+      (guildId: string, scope: string) =>
+        `event-read:${guildId}:guild:${scope}`,
+    ),
+    getEventKey: mockFn(
+      (guildId: string, eventId: string, scope: string) =>
+        `event-read:${guildId}:${eventId}:${scope}`,
+    ),
+    getOrSet: mockFn((_key: string, factory: () => Promise<unknown>) =>
+      factory(),
+    ),
+    invalidateGuild: mockFn(),
+    invalidateEvent: mockFn(),
   };
 
   beforeEach(async () => {
@@ -133,11 +156,16 @@ describe("EventsService", () => {
         EventQueueDiagnosticsService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: EventReadCacheService, useValue: mockEventReadCache },
         { provide: EventPointsService, useValue: mockPointsService },
         { provide: EventTrackingService, useValue: mockTrackingService },
         { provide: EventKillService, useValue: mockKillService },
         { provide: EventRespawnService, useValue: mockRespawnService },
         { provide: EventWrappedService, useValue: mockWrappedService },
+        {
+          provide: EventCoordinationService,
+          useValue: mockCoordinationService,
+        },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
         {
           provide: getQueueToken(EVENT_HERO_KILL_QUEUE),

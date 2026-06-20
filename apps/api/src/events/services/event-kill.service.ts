@@ -11,6 +11,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventEmitterService } from "./event-emitter.service";
 import { EventPointsService } from "./event-points.service";
+import { EventReadCacheService } from "./event-read-cache.service";
 import { EventTrackingService } from "./event-tracking.service";
 import { EventSummaryService } from "./event-summary.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
@@ -104,6 +105,7 @@ export class EventKillService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly eventEmitter: EventEmitterService,
+    private readonly eventReadCache: EventReadCacheService,
     private readonly pointsService: EventPointsService,
     private readonly trackingService: EventTrackingService,
     private readonly summaryService: EventSummaryService,
@@ -333,7 +335,14 @@ export class EventKillService {
     });
   }
 
-  async getEventHeroStats(guildId: string, eventId: string) {
+  getEventHeroStats(guildId: string, eventId: string) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "hero-stats"),
+      () => this.getEventHeroStatsUncached(guildId, eventId),
+    );
+  }
+
+  private async getEventHeroStatsUncached(guildId: string, eventId: string) {
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, guildId },
       include: {
@@ -923,6 +932,7 @@ export class EventKillService {
 
     await this.cancelScheduledAutoClose(eventHero.id);
 
+    await this.eventReadCache.invalidateEvent(guildId, event.id);
     await this.eventEmitter.emitHeroKilled(guildId, event.id, kill.kill.id);
 
     if (!isManualClose) {
@@ -950,7 +960,31 @@ export class EventKillService {
     return kill.kill;
   }
 
-  async getHeroKillHistory(
+  getHeroKillHistory(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    limit = 20,
+    cursor?: string,
+  ) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "hero-kill-history", {
+        cursor,
+        heroId,
+        limit,
+      }),
+      () =>
+        this.getHeroKillHistoryUncached(
+          guildId,
+          eventId,
+          heroId,
+          limit,
+          cursor,
+        ),
+    );
+  }
+
+  private async getHeroKillHistoryUncached(
     guildId: string,
     eventId: string,
     heroId: string,
@@ -1025,7 +1059,31 @@ export class EventKillService {
     };
   }
 
-  async getEventKillHistory(
+  getEventKillHistory(
+    guildId: string,
+    eventId: string,
+    limit = 20,
+    cursor?: string,
+    heroId?: string,
+  ) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "event-kill-history", {
+        cursor,
+        heroId,
+        limit,
+      }),
+      () =>
+        this.getEventKillHistoryUncached(
+          guildId,
+          eventId,
+          limit,
+          cursor,
+          heroId,
+        ),
+    );
+  }
+
+  private async getEventKillHistoryUncached(
     guildId: string,
     eventId: string,
     limit = 20,
@@ -1099,7 +1157,34 @@ export class EventKillService {
     };
   }
 
-  async getMemberKillHistory(
+  getMemberKillHistory(
+    guildId: string,
+    eventId: string,
+    memberId: number,
+    limit = 20,
+    cursor?: string,
+    heroId?: string,
+  ) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "member-kill-history", {
+        cursor,
+        heroId,
+        limit,
+        memberId,
+      }),
+      () =>
+        this.getMemberKillHistoryUncached(
+          guildId,
+          eventId,
+          memberId,
+          limit,
+          cursor,
+          heroId,
+        ),
+    );
+  }
+
+  private async getMemberKillHistoryUncached(
     guildId: string,
     eventId: string,
     memberId: number,

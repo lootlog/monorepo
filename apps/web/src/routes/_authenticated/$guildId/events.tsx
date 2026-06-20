@@ -3,17 +3,15 @@ import { Events } from "@/features/guild/events/events";
 import { EventsPageSkeleton } from "@/features/guild/events/events-page-skeleton";
 import { getListEventsQueryOptions } from "@/lib/api/generated/main/events/events";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
+import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/$guildId/events")({
   component: Events,
   pendingComponent: EventsPageSkeleton,
-  loader: ({ abortController, context, params, preload }) =>
+  loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
-      if (preload) {
-        return null;
-      }
-
-      await context.queryClient.ensureQueryData(
+      void prefetchRouteQuery(
+        context.queryClient,
         getListEventsQueryOptions(
           {
             guildId: params.guildId,

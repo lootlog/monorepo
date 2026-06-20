@@ -38,20 +38,11 @@ const FEATURE_ROOMS = {
   },
 } as const;
 
-const ALL_FEATURE_ROOMS: Array<{ feature: FeatureName; tier: TierName }> = [
-  { feature: "chat", tier: "base" },
-  { feature: "chat", tier: "titans" },
-  { feature: "chat", tier: "heroes" },
-  { feature: "timers", tier: "base" },
-  { feature: "timers", tier: "titans" },
-  { feature: "timers", tier: "heroes" },
-  { feature: "notifications", tier: "base" },
-  { feature: "notifications", tier: "titans" },
-  { feature: "notifications", tier: "heroes" },
-  { feature: "loots", tier: "base" },
-  { feature: "loots", tier: "titans" },
-  { feature: "loots", tier: "heroes" },
-];
+const FEATURE_NAMES = Object.keys(FEATURE_ROOMS) as FeatureName[];
+const TIER_NAMES = Object.keys(FEATURE_ROOMS.chat) as TierName[];
+const ALL_FEATURE_ROOMS = FEATURE_NAMES.flatMap((feature) =>
+  TIER_NAMES.map((tier) => ({ feature, tier })),
+);
 
 export function buildRoomName(
   guildId: string,
@@ -150,10 +141,8 @@ export function getNpcTier(npc?: NpcRoutingData): TierName {
   return getNpcRoutingTier(npc);
 }
 
-export function checkLevelRange(roles: GuildRole[], npcLevel: number): boolean {
-  return roles.some(
-    (role) => role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel,
-  );
+function isLevelWithinRoleRange(role: GuildRole, npcLevel: number): boolean {
+  return role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
 }
 
 export function hasFeatureRoomAccess(
@@ -173,7 +162,7 @@ export function hasFeatureRoomAccess(
       return true;
     }
 
-    return role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
+    return isLevelWithinRoleRange(role, npcLevel);
   });
 }
 

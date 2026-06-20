@@ -6,6 +6,7 @@ import {
 import type { EventKillPoint, Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { EventEmitterService } from "./event-emitter.service";
+import { EventReadCacheService } from "./event-read-cache.service";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
@@ -77,41 +78,47 @@ export class EventPointsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitterService,
+    private readonly eventReadCache: EventReadCacheService,
   ) {}
 
-  async getRanking(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
-    });
+  getRanking(guildId: string, eventId: string) {
+    return this.eventReadCache.getOrSet(
+      this.eventReadCache.getEventKey(guildId, eventId, "ranking"),
+      async () => {
+        const event = await this.prisma.event.findFirst({
+          where: { id: eventId, guildId },
+        });
 
-    if (!event) {
-      throw new NotFoundException("Event not found");
-    }
+        if (!event) {
+          throw new NotFoundException("Event not found");
+        }
 
-    return this.prisma.eventRanking.findMany({
-      where: { eventId },
-      select: {
-        id: true,
-        eventId: true,
-        memberId: true,
-        heroNpcName: true,
-        totalPoints: true,
-        totalKills: true,
-        totalTimeSeconds: true,
-        avgAfkPercentage: true,
-        pointsModified: true,
-        updatedAt: true,
-        member: {
+        return this.prisma.eventRanking.findMany({
+          where: { eventId },
           select: {
             id: true,
-            name: true,
+            eventId: true,
+            memberId: true,
+            heroNpcName: true,
+            totalPoints: true,
+            totalKills: true,
+            totalTimeSeconds: true,
+            avgAfkPercentage: true,
+            pointsModified: true,
+            updatedAt: true,
+            member: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
-        },
+          orderBy: {
+            totalPoints: "desc",
+          },
+        });
       },
-      orderBy: {
-        totalPoints: "desc",
-      },
-    });
+    );
   }
 
   calculateMemberPoints(
@@ -1539,7 +1546,10 @@ export class EventPointsService {
         });
       }
 
-      await this.eventEmitter.emitRankingUpdate(guildId, eventId);
+      await Promise.all([
+        this.eventReadCache.invalidateEvent(guildId, eventId),
+        this.eventEmitter.emitRankingUpdate(guildId, eventId),
+      ]);
     }
 
     return updated;
@@ -1605,7 +1615,10 @@ export class EventPointsService {
       },
     });
 
-    await this.eventEmitter.emitRankingUpdate(guildId, eventId);
+    await Promise.all([
+      this.eventReadCache.invalidateEvent(guildId, eventId),
+      this.eventEmitter.emitRankingUpdate(guildId, eventId),
+    ]);
 
     return updated;
   }
@@ -1677,6 +1690,9 @@ export class EventPointsService {
       return;
     }
 
-    await this.eventEmitter.emitRankingUpdate(event.guildId, event.id);
+    await Promise.all([
+      this.eventReadCache.invalidateEvent(event.guildId, event.id),
+      this.eventEmitter.emitRankingUpdate(event.guildId, event.id),
+    ]);
   }
 }

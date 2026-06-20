@@ -26,6 +26,9 @@ describe("ReservationsService", () => {
     get: mockFn(),
     set: mockFn(),
     del: mockFn(),
+    setNX: mockFn(),
+    deleteByPattern: mockFn(),
+    getOrSetJsonBestEffort: mockFn(),
   };
 
   const mockHttpService = {
@@ -73,6 +76,11 @@ describe("ReservationsService", () => {
     mockPrismaService.reservation.create.mockResolvedValue(
       createReservationRecord(),
     );
+    mockRedisService.setNX.mockResolvedValue(true);
+    mockRedisService.getOrSetJsonBestEffort.mockImplementation(
+      ({ factory }: { factory: () => Promise<unknown> }) => factory(),
+    );
+    mockRedisService.deleteByPattern.mockResolvedValue(0);
 
     service = new ReservationsService(
       mockPrismaService as unknown as PrismaService,

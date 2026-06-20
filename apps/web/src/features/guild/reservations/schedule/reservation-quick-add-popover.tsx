@@ -16,6 +16,15 @@ import {
   useReservationsControllerCreateReservation,
 } from "@/lib/api/generated/main/reservations/reservations";
 import {
+  getOptimisticReservationId,
+  getReservationsCacheSnapshot,
+  replaceReservationInReservationsCache,
+  reservationsCacheQueryKey,
+  restoreReservationsCacheSnapshot,
+  upsertReservationInReservationsCache,
+  type ReservationsCacheMutationContext,
+} from "../reservations-api";
+import {
   type ReservationSettings,
   validateReservationDateRange,
 } from "./reservation-settings";
@@ -46,16 +55,77 @@ export const ReservationQuickAddPopover: React.FC<
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
-  const createReservationMutation = useReservationsControllerCreateReservation({
+  const createReservationMutation = useReservationsControllerCreateReservation<
+    unknown,
+    ReservationsCacheMutationContext
+  >({
     mutation: {
-      onSuccess: async () => {
+      onMutate: async (variables) => {
+        if (!guildId) {
+          return {
+            previousReservations: undefined,
+          };
+        }
+
+        await queryClient.cancelQueries({
+          queryKey: reservationsCacheQueryKey(guildId),
+        });
+
+        const previousReservations = getReservationsCacheSnapshot(
+          queryClient,
+          guildId,
+        );
+        const optimisticReservationId = getOptimisticReservationId();
+
+        upsertReservationInReservationsCache(queryClient, guildId, {
+          id: optimisticReservationId,
+          reservationId: variables.data.reservationId,
+          createdDate: variables.data.createdDate,
+          fromDate: variables.data.fromDate,
+          toDate: variables.data.toDate,
+          createdBy: variables.data.createdBy,
+          comment: variables.data.comment ?? null,
+        });
+
+        return {
+          previousReservations,
+          optimisticReservationId,
+        };
+      },
+      onSuccess: async (reservation, _variables, mutationContext) => {
         if (!guildId) {
           return;
+        }
+
+        if (mutationContext?.optimisticReservationId) {
+          replaceReservationInReservationsCache(
+            queryClient,
+            guildId,
+            mutationContext.optimisticReservationId,
+            reservation,
+          );
+        } else {
+          upsertReservationInReservationsCache(
+            queryClient,
+            guildId,
+            reservation,
+          );
         }
 
         await invalidateReservationsControllerGetReservations(queryClient, {
           guildId,
         });
+      },
+      onError: (_error, _variables, mutationContext) => {
+        if (!guildId) {
+          return;
+        }
+
+        restoreReservationsCacheSnapshot(
+          queryClient,
+          guildId,
+          mutationContext?.previousReservations,
+        );
       },
     },
   });
@@ -80,6 +150,7 @@ export const ReservationQuickAddPopover: React.FC<
 
     try {
       const normalizedComment = comment.trim();
+      const createdDate = new Date().toISOString();
       if (!guildId) {
         throw new Error("Missing guild id when creating reservation.");
       }
@@ -88,7 +159,7 @@ export const ReservationQuickAddPopover: React.FC<
         pathParams: { guildId },
         data: {
           reservationId: reservationKey,
-          createdDate: new Date().toISOString(),
+          createdDate,
           fromDate: start.toISOString(),
           toDate: end.toISOString(),
           createdBy: currentUserId,

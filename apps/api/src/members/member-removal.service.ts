@@ -13,6 +13,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { DiscordService } from "src/discord/discord.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import {
+  getMemberReadCachePattern,
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
 } from "src/shared/constants/cache.constant";
@@ -199,6 +200,9 @@ export class MemberRemovalService {
     const operations: Promise<unknown>[] = [
       this.redisService.deleteByPattern(
         getUserLootlogConfigCachePattern(member.discordId),
+      ),
+      this.redisService.deleteByPattern(
+        getMemberReadCachePattern(member.guildId),
       ),
     ];
 

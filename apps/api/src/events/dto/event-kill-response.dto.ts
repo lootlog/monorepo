@@ -2,8 +2,10 @@ import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 import { EVENT_SCORING_MODES } from "../constants/scoring-rules.constant";
 import {
+  flexibleIsoDatetimeCodec,
   isoDatetimeCodec,
   jsonValueSchema,
+  nullableFlexibleIsoDatetimeCodec,
 } from "src/shared/dto/zod-response-codecs";
 
 const EventKillHeroNpcResponseSchema = z.object({
@@ -29,8 +31,8 @@ const EventKillParticipantRoleResponseSchema = z.object({
 const EventKillParticipantMapDataResponseSchema = z.object({
   mapId: z.string(),
   mapName: z.string(),
-  assignedAt: z.iso.datetime(),
-  unassignedAt: z.iso.datetime().nullable(),
+  assignedAt: flexibleIsoDatetimeCodec,
+  unassignedAt: nullableFlexibleIsoDatetimeCodec,
   assignmentDurationSeconds: z.number(),
   presenceTimeSeconds: z.number(),
   afkTimeSeconds: z.number(),

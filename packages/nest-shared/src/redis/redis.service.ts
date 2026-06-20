@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { setTimeout as sleep } from "node:timers/promises";
 import {
   Inject,
   Injectable,
@@ -15,6 +17,34 @@ export interface RedisModuleOptions {
   username?: string;
   prefix?: string;
 }
+
+export interface RedisGetOrSetJsonOptions<T> {
+  key: string;
+  ttlSeconds: number;
+  factory: () => Promise<T>;
+  lockTtlSeconds?: number;
+  waitTimeoutMs?: number;
+  waitIntervalMs?: number;
+}
+
+export interface RedisGetOrSetJsonBestEffortOptions<
+  T,
+> extends RedisGetOrSetJsonOptions<T> {
+  onError?: (error: unknown) => void;
+}
+
+const DEFAULT_SCAN_COUNT = 500;
+const DEFAULT_DELETE_BATCH_SIZE = 500;
+const DEFAULT_SINGLE_FLIGHT_LOCK_TTL_SECONDS = 10;
+const DEFAULT_SINGLE_FLIGHT_WAIT_TIMEOUT_MS = 2_000;
+const DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS = 50;
+
+const RELEASE_LOCK_SCRIPT = `
+if redis.call("get", KEYS[1]) == ARGV[1] then
+  return redis.call("del", KEYS[1])
+end
+return 0
+`;
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
@@ -65,7 +95,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   private unprefixKey(key: string): string {
-    return this.prefix ? key.replace(`${this.prefix}:`, "") : key;
+    const prefix = `${this.prefix}:`;
+
+    return this.prefix && key.startsWith(prefix)
+      ? key.slice(prefix.length)
+      : key;
   }
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
@@ -81,17 +115,178 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.client.get(this.prefixKey(key));
   }
 
+  async getJson<T>(key: string): Promise<T | null> {
+    const cached = await this.get(key);
+
+    if (cached === null) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(cached) as T;
+    } catch {
+      await this.del(key);
+      return null;
+    }
+  }
+
+  async setJson<T>(key: string, value: T, ttlSeconds?: number): Promise<void> {
+    await this.set(key, JSON.stringify(value), ttlSeconds);
+  }
+
+  async getOrSetJson<T>({
+    key,
+    ttlSeconds,
+    factory,
+    lockTtlSeconds = DEFAULT_SINGLE_FLIGHT_LOCK_TTL_SECONDS,
+    waitTimeoutMs = DEFAULT_SINGLE_FLIGHT_WAIT_TIMEOUT_MS,
+    waitIntervalMs = DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS,
+  }: RedisGetOrSetJsonOptions<T>): Promise<T> {
+    const cached = await this.getJson<T>(key);
+
+    if (cached !== null) {
+      return cached;
+    }
+
+    const lockKey = `${key}:single-flight`;
+    const lockToken = randomUUID();
+    const lockAcquired = await this.setNX(lockKey, lockToken, lockTtlSeconds);
+
+    if (!lockAcquired) {
+      const cachedAfterWait = await this.waitForJsonCache<T>(
+        key,
+        waitTimeoutMs,
+        waitIntervalMs,
+      );
+
+      if (cachedAfterWait !== null) {
+        return cachedAfterWait;
+      }
+
+      const value = await factory();
+      await this.setJson(key, value, ttlSeconds);
+      return value;
+    }
+
+    try {
+      const cachedAfterLock = await this.getJson<T>(key);
+
+      if (cachedAfterLock !== null) {
+        return cachedAfterLock;
+      }
+
+      const value = await factory();
+      await this.setJson(key, value, ttlSeconds);
+      return value;
+    } finally {
+      await this.releaseSingleFlightLock(lockKey, lockToken);
+    }
+  }
+
+  async getOrSetJsonBestEffort<T>({
+    onError,
+    ...options
+  }: RedisGetOrSetJsonBestEffortOptions<T>): Promise<T> {
+    let factoryResult: { value: T } | null = null;
+    let factoryRejected = false;
+    let factoryError: unknown;
+
+    const guardedFactory = async () => {
+      try {
+        const value = await options.factory();
+        factoryResult = { value };
+        return value;
+      } catch (error) {
+        factoryRejected = true;
+        factoryError = error;
+        throw error;
+      }
+    };
+
+    try {
+      return await this.getOrSetJson({
+        ...options,
+        factory: guardedFactory,
+      });
+    } catch (error) {
+      if (factoryRejected) {
+        return Promise.reject(factoryError);
+      }
+
+      onError?.(error);
+
+      if (factoryResult) {
+        return factoryResult.value;
+      }
+
+      return options.factory();
+    }
+  }
+
+  private async waitForJsonCache<T>(
+    key: string,
+    waitTimeoutMs: number,
+    waitIntervalMs: number,
+  ): Promise<T | null> {
+    const deadline = Date.now() + waitTimeoutMs;
+
+    while (Date.now() < deadline) {
+      await sleep(waitIntervalMs);
+
+      const cached = await this.getJson<T>(key);
+
+      if (cached !== null) {
+        return cached;
+      }
+    }
+
+    return null;
+  }
+
+  private async releaseSingleFlightLock(
+    lockKey: string,
+    lockToken: string,
+  ): Promise<void> {
+    try {
+      await this.eval<number>(RELEASE_LOCK_SCRIPT, [lockKey], [lockToken]);
+    } catch {
+      // The lock has a short TTL; a release failure should not fail the read.
+    }
+  }
+
   async del(key: string): Promise<number> {
     return this.client.del(this.prefixKey(key));
   }
 
-  async deleteByPattern(pattern: string): Promise<number> {
+  async deleteByPattern(
+    pattern: string,
+    batchSize = DEFAULT_DELETE_BATCH_SIZE,
+  ): Promise<number> {
+    const client = this.getClient();
     const prefixedPattern = this.prefixKey(pattern);
-    const keys = await this.client.keys(prefixedPattern);
-    if (keys.length === 0) {
-      return 0;
-    }
-    return this.client.del(...keys);
+    let cursor = "0";
+    let deletedCount = 0;
+
+    do {
+      const [nextCursor, matchedKeys] = await client.scan(
+        cursor,
+        "MATCH",
+        prefixedPattern,
+        "COUNT",
+        DEFAULT_SCAN_COUNT,
+      );
+      cursor = nextCursor;
+
+      for (let index = 0; index < matchedKeys.length; index += batchSize) {
+        const batch = matchedKeys.slice(index, index + batchSize);
+
+        if (batch.length > 0) {
+          deletedCount += await client.del(...batch);
+        }
+      }
+    } while (cursor !== "0");
+
+    return deletedCount;
   }
 
   async setNX(
@@ -191,7 +386,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         "MATCH",
         prefixedPattern,
         "COUNT",
-        100,
+        DEFAULT_SCAN_COUNT,
       );
       cursor = nextCursor;
       keys.push(...matchedKeys);

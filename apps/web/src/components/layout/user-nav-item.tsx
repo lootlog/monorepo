@@ -11,7 +11,6 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { motion } from "framer-motion";
 import { Link, useLocation } from "@tanstack/react-router";
 import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 
@@ -40,11 +39,7 @@ export const UserNavItem = () => {
       <TooltipTrigger asChild>
         <div className="relative h-10 flex items-center justify-center">
           {isActive && !isRukiaTheme && (
-            <motion.div
-              layoutId="guild-active-pill"
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]"
-              transition={{ type: "spring", stiffness: 350, damping: 30 }}
-            />
+            <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]" />
           )}
           <Link to={ROUTES.user.dashboard} className="block">
             <ThemeCircularFrame isActive={isActive}>

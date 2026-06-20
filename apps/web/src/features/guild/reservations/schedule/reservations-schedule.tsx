@@ -3,7 +3,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
-import { reservationsQueryOptions } from "../reservations-api";
+import {
+  getReservationsCacheSnapshot,
+  removeReservationFromReservationsCache,
+  reservationsCacheQueryKey,
+  reservationsQueryOptions,
+  restoreReservationsCacheSnapshot,
+  type ReservationsCacheMutationContext,
+} from "../reservations-api";
 import { useSession } from "@/hooks/auth/use-session";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -22,7 +29,6 @@ import { useReservationSegments } from "./use-reservation-segments";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { normalizeReservation } from "./normalize-reservation";
 import {
-  getReservationsControllerGetReservationsQueryKey,
   invalidateReservationsControllerGetReservations,
   useReservationsControllerDeleteReservation,
   useReservationsControllerGetReservations,
@@ -64,16 +70,62 @@ export const ReservationsSchedule: React.FC = () => {
       },
     },
   );
-  const deleteReservationMutation = useReservationsControllerDeleteReservation({
+  const deleteReservationMutation = useReservationsControllerDeleteReservation<
+    unknown,
+    ReservationsCacheMutationContext
+  >({
     mutation: {
-      onSuccess: async () => {
+      onMutate: async (variables) => {
+        if (!guildId) {
+          return {
+            previousReservations: undefined,
+          };
+        }
+
+        await queryClient.cancelQueries({
+          queryKey: reservationsCacheQueryKey(guildId),
+        });
+
+        const previousReservations = getReservationsCacheSnapshot(
+          queryClient,
+          guildId,
+        );
+
+        removeReservationFromReservationsCache(
+          queryClient,
+          guildId,
+          variables.pathParams.reservationRecordId,
+        );
+
+        return {
+          previousReservations,
+        };
+      },
+      onSuccess: async (reservation) => {
         if (!guildId) {
           return;
         }
 
+        removeReservationFromReservationsCache(
+          queryClient,
+          guildId,
+          reservation.id,
+        );
+
         await invalidateReservationsControllerGetReservations(queryClient, {
           guildId,
         });
+      },
+      onError: (_error, _variables, mutationContext) => {
+        if (!guildId) {
+          return;
+        }
+
+        restoreReservationsCacheSnapshot(
+          queryClient,
+          guildId,
+          mutationContext?.previousReservations,
+        );
       },
     },
   });
@@ -171,9 +223,7 @@ export const ReservationsSchedule: React.FC = () => {
       }
 
       void queryClient.invalidateQueries({
-        queryKey: getReservationsControllerGetReservationsQueryKey({
-          guildId,
-        }),
+        queryKey: reservationsCacheQueryKey(guildId),
       });
     };
 

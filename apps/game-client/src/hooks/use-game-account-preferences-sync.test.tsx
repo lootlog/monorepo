@@ -8,6 +8,7 @@ import {
 } from "@/lib/game-account-preferences";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
 import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
+import type * as UsersApi from "@/lib/api/generated/main/users/users";
 
 const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserGameAccountPreferences = vi.fn();
@@ -16,9 +17,9 @@ const mockFlushPending = vi.fn();
 const mockMutate = vi.fn();
 
 vi.mock("@/lib/api/generated/main/users/users", async () => {
-  const actual = await vi.importActual<
-    typeof import("@/lib/api/generated/main/users/users")
-  >("@/lib/api/generated/main/users/users");
+  const actual = await vi.importActual<typeof UsersApi>(
+    "@/lib/api/generated/main/users/users",
+  );
 
   return {
     ...actual,
@@ -39,6 +40,7 @@ vi.mock("@/lib/game", () => ({
     hero: {
       account: 202,
     },
+    getAccountId: () => "202",
   },
 }));
 

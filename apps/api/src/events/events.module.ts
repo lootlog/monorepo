@@ -25,10 +25,12 @@ import { EventPointsService } from "./services/event-points.service";
 import { EventTrackingService } from "./services/event-tracking.service";
 import { EventKillService } from "./services/event-kill.service";
 import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service";
+import { EventReadCacheService } from "./services/event-read-cache.service";
 import { EventRespawnService } from "./services/event-respawn.service";
 import { EventSummaryService } from "./services/event-summary.service";
 import { EventWrappedService } from "./services/event-wrapped.service";
 import { EventSettingsService } from "./services/event-settings.service";
+import { EventCoordinationService } from "./services/event-coordination.service";
 import { EventsSettingsController } from "./events-settings.controller";
 import { TimersModule } from "src/timers/timers.module";
 
@@ -55,12 +57,14 @@ import { TimersModule } from "src/timers/timers.module";
     EventEmitterService,
     EventPointsService,
     EventQueueDiagnosticsService,
+    EventReadCacheService,
     EventTrackingService,
     EventKillService,
     EventRespawnService,
     EventSummaryService,
     EventWrappedService,
     EventSettingsService,
+    EventCoordinationService,
 
     EventsQueueHandler,
     EventHeroKillProcessor,

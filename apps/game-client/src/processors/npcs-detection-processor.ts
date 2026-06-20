@@ -329,7 +329,7 @@ export class NpcsDetectionProcessor {
   }
 
   private getCurrentAccountId() {
-    return Game.hero?.account ? String(Game.hero.account) : null;
+    return Game.getAccountId();
   }
 
   private isDetectorReady(accountId: string) {
