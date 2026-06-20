@@ -323,9 +323,9 @@ export class NotificationRuleService {
     data: CreateNotificationRuleDto,
     options?: { guildId?: string },
   ) {
-    const isScheduledMessage =
-      (data.triggerType as string) ===
-      DbNotificationTriggerType.SCHEDULED_MESSAGE;
+    const triggerType = data.triggerType as DbNotificationTriggerType;
+    const isScheduledMessage = this.isScheduledMessageTrigger(triggerType);
+    const ruleWorld = isScheduledMessage ? null : (data.world ?? null);
 
     if (!isScheduledMessage) {
       this.validateRuleNpcSelection(data);
@@ -341,14 +341,14 @@ export class NotificationRuleService {
       data: {
         ownerType,
         ownerId,
-        triggerType: data.triggerType as DbNotificationTriggerType,
+        triggerType,
         guildId: options?.guildId ?? null,
-        world: isScheduledMessage ? null : (data.world ?? null),
+        world: ruleWorld,
         name: data.name ?? null,
         filters: isScheduledMessage ? Prisma.DbNull : this.buildFilters(data),
         contentTemplate: this.normalizeContentTemplate(data.contentTemplate),
         ...this.resolveScheduleConfig({
-          triggerType: data.triggerType as DbNotificationTriggerType,
+          triggerType,
           data,
         }),
         ...this.resolveScheduledMessageFields({
@@ -382,13 +382,8 @@ export class NotificationRuleService {
     const nextTriggerType =
       (data.triggerType as DbNotificationTriggerType | undefined) ??
       existingRule.triggerType;
-    const isScheduledMessage =
-      nextTriggerType === DbNotificationTriggerType.SCHEDULED_MESSAGE;
-    const hasFilterSelectionUpdate =
-      data.npcId !== undefined ||
-      data.npcIds !== undefined ||
-      data.itemId !== undefined ||
-      data.itemIds !== undefined;
+    const isScheduledMessage = this.isScheduledMessageTrigger(nextTriggerType);
+    const hasFilterSelectionUpdate = this.hasFilterSelectionUpdate(data);
 
     if (!isScheduledMessage) {
       this.validateRuleNpcSelection(data);
@@ -637,6 +632,19 @@ export class NotificationRuleService {
     return trimmedContentTemplate.length > 0 ? trimmedContentTemplate : null;
   }
 
+  private isScheduledMessageTrigger(triggerType: DbNotificationTriggerType) {
+    return triggerType === DbNotificationTriggerType.SCHEDULED_MESSAGE;
+  }
+
+  private hasFilterSelectionUpdate(data: UpdateNotificationRuleDto) {
+    return (
+      data.npcId !== undefined ||
+      data.npcIds !== undefined ||
+      data.itemId !== undefined ||
+      data.itemIds !== undefined
+    );
+  }
+
   private resolveScheduleConfig(params: {
     triggerType: DbNotificationTriggerType;
     data: Pick<
@@ -649,7 +657,7 @@ export class NotificationRuleService {
       scheduleOffsetMinutes: number | null;
     };
   }) {
-    if (params.triggerType === DbNotificationTriggerType.SCHEDULED_MESSAGE) {
+    if (this.isScheduledMessageTrigger(params.triggerType)) {
       return {
         scheduleStrategy: DbNotificationScheduleStrategy.FIXED_DATETIME,
         scheduleAnchor: null,
