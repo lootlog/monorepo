@@ -100,6 +100,7 @@ export function RecentOpponentBattlesList({
                 key={recentBattle.battleId}
                 to="/@me/battle-panel/battles/$battleId"
                 params={{ battleId: recentBattle.battleId }}
+                preload={false}
                 className={cn(
                   "grid min-h-10 grid-cols-[32px_minmax(0,1fr)_68px] items-center gap-1 px-2.5 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
                   getBattleResultRowClassName(result),
