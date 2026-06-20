@@ -9,6 +9,7 @@ import {
   type LexicalNode,
 } from "lexical";
 import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
+import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import {
   $createNotificationTemplateRoleNode,
   $isNotificationTemplateRoleNode,
@@ -49,11 +50,6 @@ export const renderTemplatePreview = (
     ) => values[placeholder] ?? "",
   );
 
-export const getGuildRoleHexColor = (role: GuildRole) =>
-  role.color == null || role.color === 0
-    ? null
-    : `#${role.color.toString(16).padStart(6, "0").toUpperCase()}`;
-
 export const createTemplateEditorNodes = (
   value: string,
   roles: GuildRole[],
@@ -80,7 +76,7 @@ export const createTemplateEditorNodes = (
         const role = roleById.get(match[2]);
         paragraphNode.append(
           $createNotificationTemplateRoleNode({
-            roleColor: role ? getGuildRoleHexColor(role) : null,
+            roleColor: role ? getCustomRoleCssColor(role.color) : null,
             roleId: match[2],
             roleName: role?.name ?? match[2],
           }),
