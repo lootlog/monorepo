@@ -1,5 +1,16 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { and, count, gt, lt, or, eq, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  count,
+  gt,
+  gte,
+  lt,
+  lte,
+  or,
+  eq,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import { battles } from "src/shared/modules/drizzle/schema";
 import type {
@@ -68,6 +79,7 @@ export class PaginationService {
       const lastItem = items[items.length - 1];
       nextCursor = this.encodeCursor(lastItem.createdAt, lastItem.id);
     }
+    const previousCursor = await this.getPreviousCursor(whereBuilder, options);
 
     let total: number | undefined;
     const countStartTime = Date.now();
@@ -81,6 +93,7 @@ export class PaginationService {
       hasNext,
       hasPrev: !!cursor,
       nextCursor,
+      previousCursor,
       total,
     };
 
@@ -122,6 +135,63 @@ export class PaginationService {
     )!;
 
     return where ? and(where, cursorCondition) : cursorCondition;
+  }
+
+  private async getPreviousCursor(
+    whereBuilder: WhereBuilder,
+    options: PaginationOptions,
+  ): Promise<string | undefined> {
+    if (!options.cursor) {
+      return undefined;
+    }
+
+    const decoded = this.decodeCursor(options.cursor);
+    if (!decoded) {
+      return undefined;
+    }
+
+    const size = options.size ?? 20;
+    const reverseOrder = options.sortOrder === "asc" ? "desc" : "asc";
+    const previousWindow = await this.drizzle.db.query.battles.findMany({
+      where: {
+        RAW: (table: typeof battles) => {
+          const base = whereBuilder(table);
+          return this.buildPreviousCursorWhere(table, base, decoded, options);
+        },
+      },
+      limit: size + 1,
+      orderBy: { createdAt: reverseOrder, id: reverseOrder },
+    });
+
+    if (previousWindow.length <= size) {
+      return undefined;
+    }
+
+    const previousBoundary = previousWindow[size];
+    if (!previousBoundary) {
+      return undefined;
+    }
+
+    return this.encodeCursor(previousBoundary.createdAt, previousBoundary.id);
+  }
+
+  private buildPreviousCursorWhere(
+    table: typeof battles,
+    where: SQL | undefined,
+    decoded: DecodedCursor,
+    options: PaginationOptions,
+  ): SQL | undefined {
+    const { createdAt, id } = decoded;
+    const createdAtComparator = options.sortOrder === "desc" ? gt : lt;
+    const idComparator = options.sortOrder === "desc" ? gte : lte;
+    const previousCursorCondition = or(
+      createdAtComparator(table.createdAt, createdAt),
+      and(eq(table.createdAt, createdAt), idComparator(table.id, id)),
+    )!;
+
+    return where
+      ? and(where, previousCursorCondition)
+      : previousCursorCondition;
   }
 
   private async getEstimatedCount(where: SQL | undefined): Promise<number> {

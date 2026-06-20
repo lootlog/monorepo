@@ -7,6 +7,7 @@
     "headToHead": "Bilans H2H",
     "matchmakingHeadToHead": "Matchmaking H2H",
     "playerVsPlayer": "Gracz vs Gracz",
+    "battleDuel": "{{first}} vs {{second}}",
     "battleFallback": "Walka #{{id}}"
   },
   "filters": {
@@ -90,14 +91,11 @@
     "totalBattles": "Łącznie walk: {{count}}",
     "openBattle": "Otwórz walkę",
     "columns": {
-      "result": "Wynik",
+      "info": "Tagi",
       "yourTeam": "Twoja drużyna",
       "opponents": "Przeciwnicy",
-      "world": "Świat",
-      "tags": "Tagi",
       "time": "Czas",
       "duration": "Długość",
-      "mode": "Tryb",
       "actions": "Akcje"
     },
     "noTags": "-",
@@ -107,6 +105,11 @@
       "lightning": "Błyskawice",
       "poison": "Trucizna",
       "wound": "Głęboka rana"
+    },
+    "results": {
+      "won": "Wygrana",
+      "lost": "Przegrana",
+      "flee": "Ucieczka"
     }
   },
   "bulk": {
@@ -116,7 +119,6 @@
     "selectRows": "Zaznacz walki",
     "selectRow": "Zaznacz walkę",
     "honorPointsShort": "PH",
-    "matchmakingShort": "O",
     "deleteDialog": {
       "title": "Usunąć zaznaczone walki?",
       "description": "Usuniesz zaznaczone walki: {{count}}. Tej operacji nie można cofnąć.",
