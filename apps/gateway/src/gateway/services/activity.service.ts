@@ -8,6 +8,61 @@ import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import type { Socket } from "src/gateway/types/socket-user.type";
 import type { UserGuildData } from "src/guilds/types/guild.types";
 
+type ActivityPlayer = NonNullable<Socket["data"]["player"]>;
+
+interface ActivityActorSnapshot {
+  accountId: number;
+  characterId: number;
+  clanName: string;
+  name: string;
+  clanId: number;
+  icon: string;
+  lvl: number;
+  prof: string;
+}
+
+interface GameActivityData {
+  world: string;
+  actorSnapshot: ActivityActorSnapshot;
+}
+
+function getActivitySource(platform: Platform): ActivitySource {
+  if (platform === Platform.GAME) {
+    return ActivitySource.GAME;
+  }
+
+  return ActivitySource.WEB_APP;
+}
+
+function getGameActivityData(
+  source: ActivitySource,
+  player: Socket["data"]["player"],
+): GameActivityData | undefined {
+  if (source !== ActivitySource.GAME || player === undefined) {
+    return undefined;
+  }
+
+  return {
+    world: player.world,
+    actorSnapshot: createActivityActorSnapshot(player),
+  };
+}
+
+function createActivityActorSnapshot(
+  player: ActivityPlayer,
+): ActivityActorSnapshot {
+  return {
+    accountId: Number(player.accountId),
+    characterId: Number(player.characterId),
+    clanName: player.clan?.name ?? "",
+    name: player.name,
+    clanId: player.clan?.id ?? 0,
+    icon: player.icon,
+    lvl: Number(player.lvl),
+    prof: player.prof,
+  };
+}
+
 @Injectable()
 export class ActivityService {
   private readonly logger = new Logger(ActivityService.name);
@@ -20,8 +75,7 @@ export class ActivityService {
     guilds: UserGuildData[],
   ): Promise<void> {
     const { discordId, userId, sessionId, platform, player } = client.data;
-    const source =
-      platform === Platform.GAME ? ActivitySource.GAME : ActivitySource.WEB_APP;
+    const source = getActivitySource(platform);
 
     if (source === ActivitySource.GAME && !player) {
       return;
@@ -80,30 +134,20 @@ export class ActivityService {
     userAgent: string | undefined;
     timestamp: number;
   }) {
+    const gameActivityData = getGameActivityData(source, player);
+
     return {
       userId,
       guildId,
       discordId,
       type,
       source,
-      world: source === ActivitySource.GAME ? player?.world : undefined,
+      world: gameActivityData?.world,
       details: {
         sessionId,
         userAgent,
       },
-      actorSnapshot:
-        source === ActivitySource.GAME && player
-          ? {
-              accountId: Number(player.accountId),
-              characterId: Number(player.characterId),
-              clanName: player.clan?.name ?? "",
-              name: player.name,
-              clanId: player.clan?.id ?? 0,
-              icon: player.icon,
-              lvl: Number(player.lvl),
-              prof: player.prof,
-            }
-          : undefined,
+      actorSnapshot: gameActivityData?.actorSnapshot,
       idempotencyKey: `${type.toLowerCase()}_${sessionId}_${guildId}_${timestamp}`,
     };
   }
