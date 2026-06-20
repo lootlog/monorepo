@@ -1374,9 +1374,6 @@ importers:
 
   packages/api-helpers:
     dependencies:
-      hono:
-        specifier: ^4.12.25
-        version: 4.12.25
       jose:
         specifier: ^6.2.2
         version: 6.2.2
@@ -1861,16 +1858,8 @@ packages:
     resolution: {integrity: sha512-iY8yvjE0y651BixKNPgmv1WrQc+GZ142sb0z4gYnChDDY2YqI4P/jsSopBWrKfAt7LOJAkOXt7rC/hms+WclQQ==}
     engines: {node: '>=18.0.0'}
 
-  '@axiomhq/js@1.6.0':
-    resolution: {integrity: sha512-qm0ObduIpI6PJUOYwakH5WV3E7IF0qXE/wh5N1JWGAzxKtCZryk+YwA0aW3lPZSGPQeLHyEzN+9pXsOIjoPiRg==}
-    engines: {node: '>=20'}
-
   '@axiomhq/js@1.6.1':
     resolution: {integrity: sha512-iNWOnGvP+R2lIWYk9jkfvRI/rfhOR9hlWJOBJhMKwZ9mfpE0KdnFnG2XPLoMcrbyrOBKj6Jw0hpIH5GhPucLog==}
-    engines: {node: '>=20'}
-
-  '@axiomhq/winston@1.6.0':
-    resolution: {integrity: sha512-7f35MXE7yHP9np47bLvVJ2w/qkW6/o/Zu3+QNDzy5MMa+OLawtZ2l353wpAtxWYbxA/5laJDzP81Iq1yhYNZIQ==}
     engines: {node: '>=20'}
 
   '@axiomhq/winston@1.6.1':
@@ -13567,18 +13556,9 @@ snapshots:
 
   '@aws/lambda-invoke-store@0.2.4': {}
 
-  '@axiomhq/js@1.6.0':
-    dependencies:
-      fetch-retry: 6.0.0
-
   '@axiomhq/js@1.6.1':
     dependencies:
       fetch-retry: 6.0.0
-
-  '@axiomhq/winston@1.6.0':
-    dependencies:
-      '@axiomhq/js': 1.6.0
-      winston-transport: 4.9.0
 
   '@axiomhq/winston@1.6.1':
     dependencies:
@@ -15307,7 +15287,6 @@ snapshots:
 
   '@lootlog/api-helpers@file:packages/api-helpers':
     dependencies:
-      hono: 4.12.25
       jose: 6.2.3
 
   '@lootlog/nest-shared@file:packages/nest-shared(@nestjs/common@11.1.26(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.26)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':

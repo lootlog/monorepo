@@ -3,21 +3,21 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
+      "auth": [
+        "./dist/auth.d.ts"
+      ],
       "permissions": [
         "./dist/permissions.d.ts"
       ]
     }
   },
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "import": "./dist/auth.mjs",
+      "require": "./dist/auth.js"
     },
     "./permissions": {
       "types": "./dist/permissions.d.ts",
@@ -29,7 +29,6 @@
     "build": "tsdown"
   },
   "dependencies": {
-    "hono": "^4.12.25",
     "jose": "^6.2.2"
   },
   "devDependencies": {

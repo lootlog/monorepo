@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { APIError } from "better-auth/api";
-import { type JwksKeys, validateToken } from "@lootlog/api-helpers";
+import { type JwksKeys, validateToken } from "@lootlog/api-helpers/auth";
 import { fromNodeHeaders } from "better-auth/node";
 import type { IncomingHttpHeaders } from "node:http";
 import { env } from "src/config/env";

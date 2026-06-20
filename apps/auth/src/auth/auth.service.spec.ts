@@ -4,13 +4,13 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from "@nestjs/common";
-import { validateToken } from "@lootlog/api-helpers";
+import { validateToken } from "@lootlog/api-helpers/auth";
 import { APIError } from "better-auth/api";
 import { AuthService } from "./auth.service";
 import { idpTokenRequestSchema } from "./dto/idp-token-request.dto";
 import { auth } from "./better-auth";
 
-vi.mock("@lootlog/api-helpers", () => ({
+vi.mock("@lootlog/api-helpers/auth", () => ({
   validateToken:
     vi.fn<(input: unknown) => Promise<{ userId: string; discordId: string }>>(),
 }));
