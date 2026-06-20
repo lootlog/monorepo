@@ -1,81 +1,19 @@
+import i18n from "@/i18n/config";
+import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
+import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
+import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
+import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
+import { getRelativeTime } from "@/utils/date/get-relative-time";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
+import { cn } from "@lootlog/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { pl } from "date-fns/locale";
-import { PlayerTile } from "@/components/battle";
-import {
-  BattleResultStatus,
-  type BattleResultStatusValue,
-} from "@/features/user/battle-panel/components/battle-result-status";
-import { getProfessionName } from "@/lib/utils/professions";
-import { cn } from "@lootlog/ui/lib/utils";
-import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
-import i18n from "@/i18n/config";
-
-const getPlayerVsPlayerBattleResult = (
-  battle: PlayerVsPlayerBattle,
-): BattleResultStatusValue => {
-  if (battle.hasFlee) {
-    return "flee";
-  }
-
-  if (battle.userWarrior.name === battle.winner) {
-    return "won";
-  }
-
-  return "lost";
-};
 
 export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
-  {
-    id: "avatar",
-    header: "",
-    cell: ({ row }) => (
-      <PlayerTile
-        player={{
-          name: row.original.opponentWarrior.name,
-          lvl: row.original.opponentWarrior.lvl,
-          prof: row.original.opponentWarrior.prof,
-          icon: row.original.opponentWarrior.icon,
-        }}
-        className="scale-75"
-      />
-    ),
-    enableSorting: false,
-  },
-  {
-    accessorKey: "opponentWarrior.name",
-    header: i18n.t("battlePanel.statistics.columns.nick"),
-    cell: ({ row }) => (
-      <span className="font-medium">{row.original.opponentWarrior.name}</span>
-    ),
-    enableSorting: false,
-  },
-  {
-    accessorKey: "opponentWarrior.lvl",
-    header: () => (
-      <div className="text-center">
-        {i18n.t("battlePanel.statistics.columns.level")}
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="text-center">{row.original.opponentWarrior.lvl}</div>
-    ),
-    enableSorting: false,
-  },
-  {
-    accessorKey: "opponentWarrior.prof",
-    header: () => (
-      <div className="text-center">
-        {i18n.t("battlePanel.statistics.columns.profession")}
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="text-center">
-        {getProfessionName(row.original.opponentWarrior.prof)}
-      </div>
-    ),
-    enableSorting: false,
-  },
   {
     id: "result",
     header: () => (
@@ -92,6 +30,30 @@ export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
         </div>
       );
     },
+    enableSorting: false,
+  },
+  {
+    id: "userWarrior",
+    header: i18n.t("battlePanel.list.columns.yourTeam"),
+    cell: ({ row }) => (
+      <BattlePanelPvpWarriorSummary
+        warrior={row.original.userWarrior}
+        opposingWarrior={row.original.opponentWarrior}
+        className="max-w-[280px]"
+      />
+    ),
+    enableSorting: false,
+  },
+  {
+    id: "opponentWarrior",
+    header: i18n.t("battlePanel.list.columns.opponents"),
+    cell: ({ row }) => (
+      <BattlePanelPvpWarriorSummary
+        warrior={row.original.opponentWarrior}
+        opposingWarrior={row.original.userWarrior}
+        className="max-w-[280px]"
+      />
+    ),
     enableSorting: false,
   },
   {
@@ -179,13 +141,25 @@ export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
         {i18n.t("battlePanel.statistics.columns.date")}
       </div>
     ),
-    cell: ({ row }) => (
-      <div className="text-right text-sm">
-        {format(new Date(row.original.createdAt), "HH:mm - dd.MM.yyyy", {
-          locale: pl,
-        })}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const exactTime = format(
+        new Date(row.original.createdAt),
+        "dd.MM.yyyy HH:mm",
+      );
+
+      return (
+        <div className="flex min-w-0 justify-end">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
+                {getRelativeTime(row.original.createdAt)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{exactTime}</TooltipContent>
+          </Tooltip>
+        </div>
+      );
+    },
     enableSorting: false,
   },
 ];

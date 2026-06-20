@@ -479,6 +479,101 @@ describe("BattleAnalyticsService", () => {
       expect(result.records[0].opponentName).toBe("Opponent1");
       expect(result.records[0].wins).toBe(1);
       expect(result.records[0].losses).toBe(0);
+      expect(result.records[0].lastBattleResult).toBe("won");
+      expect(result.records[0].lastBattleUserWarrior.name).toBe("TestPlayer");
+      expect(result.records[0].lastBattleOpponentWarrior.name).toBe(
+        "Opponent1",
+      );
+    });
+
+    it("should keep aggregate stats and use the latest battle snapshot for presentation fields", async () => {
+      drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(
+        mockUserCharacter,
+      );
+
+      const olderWinBattle = {
+        ...mockBattle,
+        id: "b-1",
+        createdAt: new Date("2024-01-01"),
+        warriors: [
+          {
+            ...mockWarrior1,
+            battleId: "b-1",
+            fireDamage: 10,
+            woundDamageTaken: 1,
+          },
+          {
+            ...mockWarrior2,
+            battleId: "b-1",
+            name: "OpponentOld",
+            lvl: 95,
+            frostDamage: 20,
+          },
+        ],
+      };
+      const newerLossBattle = {
+        ...mockBattle,
+        id: "b-2",
+        winner: "OpponentPrime",
+        loser: "TestPlayer",
+        winningTeam: 2,
+        losingTeam: 1,
+        createdAt: new Date("2024-01-03"),
+        warriors: [
+          {
+            ...mockWarrior1,
+            battleId: "b-2",
+            poisonDamageTaken: 6,
+            woundDamageTaken: 9,
+          },
+          {
+            ...mockWarrior2,
+            battleId: "b-2",
+            name: "OpponentPrime",
+            lvl: 97,
+            frostDamage: 77,
+            lightningDamage: 12,
+          },
+        ],
+      };
+
+      drizzleService.db.query.battles.findMany.mockResolvedValue([
+        olderWinBattle,
+        newerLossBattle,
+      ]);
+
+      const result = await service.getHeadToHead(
+        { characterId: mockCharacterId },
+        mockUserId,
+      );
+
+      expect(result.records).toHaveLength(1);
+      expect(result.records[0]).toEqual(
+        expect.objectContaining({
+          opponentName: "OpponentPrime",
+          opponentLvl: 97,
+          wins: 1,
+          losses: 1,
+          totalBattles: 2,
+          lastBattleDate: "2024-01-03T00:00:00.000Z",
+          lastBattleResult: "lost",
+        }),
+      );
+      expect(result.records[0].lastBattleUserWarrior).toEqual(
+        expect.objectContaining({
+          name: "TestPlayer",
+          poisonDamageTaken: 6,
+          woundDamageTaken: 9,
+        }),
+      );
+      expect(result.records[0].lastBattleOpponentWarrior).toEqual(
+        expect.objectContaining({
+          name: "OpponentPrime",
+          lvl: 97,
+          frostDamage: 77,
+          lightningDamage: 12,
+        }),
+      );
     });
   });
 

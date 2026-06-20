@@ -201,14 +201,23 @@ export function HeadToHeadTable({
       ariaLabel={t("battlePanel.statistics.directMatchups.link")}
     >
       <div className="flex min-h-72 min-w-0 flex-1 flex-col">
-        <ScrollArea className="min-w-0 rounded-lg bg-muted/30">
-          <Table>
-            <TanStackTableHeader table={table} />
-            <TanStackTableBody table={table} />
+        <ScrollArea className="min-w-0 rounded-lg border border-border bg-card/40">
+          <Table className="border-b">
+            <TanStackTableHeader
+              table={table}
+              className="bg-background/80"
+              rowClassName="border-b-1! border-border"
+              headClassName="whitespace-nowrap"
+            />
+            <TanStackTableBody
+              table={table}
+              rowClassName="border-b border-border bg-background/30 transition-colors hover:bg-muted/50"
+              cellClassName="whitespace-nowrap"
+            />
           </Table>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
-        <div className="flex justify-end pt-4 mt-auto">
+        <div className="mt-auto flex justify-end pt-4">
           <Button asChild variant="outline" size="sm">
             <Link
               to={ROUTES.user.battlePanel.h2h}

@@ -1,27 +1,30 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowUpDown } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { pl } from "date-fns/locale";
-import { PlayerTile } from "@/components/battle";
-import { getProfessionName } from "@/lib/utils/professions";
+import { format } from "date-fns";
+import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
+import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
 import type { HeadToHeadRecord } from "@/lib/api/battlelog-types";
+import { getRelativeTime } from "@/utils/date/get-relative-time";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import i18n from "@/i18n/config";
 
 export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
   {
-    id: "avatar",
-    header: "",
+    id: "lastBattleResult",
+    header: () => (
+      <div className="text-center">
+        {i18n.t("battlePanel.statistics.columns.result")}
+      </div>
+    ),
     cell: ({ row }) => (
-      <PlayerTile
-        player={{
-          name: row.original.opponentName,
-          lvl: row.original.opponentLvl,
-          prof: row.original.opponentProf,
-          icon: row.original.opponentIcon,
-        }}
-        className="scale-75"
-      />
+      <div className="flex justify-center">
+        <BattleResultStatus result={row.original.lastBattleResult} />
+      </div>
     ),
     enableSorting: false,
   },
@@ -29,33 +32,10 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
     accessorKey: "opponentName",
     header: i18n.t("battlePanel.statistics.columns.name"),
     cell: ({ row }) => (
-      <span className="font-medium">{row.original.opponentName}</span>
-    ),
-    enableSorting: false,
-  },
-  {
-    accessorKey: "opponentLvl",
-    header: () => (
-      <div className="text-center">
-        {i18n.t("battlePanel.statistics.columns.level")}
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="text-center">{row.original.opponentLvl}</div>
-    ),
-    enableSorting: false,
-  },
-  {
-    accessorKey: "opponentProf",
-    header: () => (
-      <div className="text-center">
-        {i18n.t("battlePanel.statistics.columns.profession")}
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="text-center">
-        {getProfessionName(row.original.opponentProf)}
-      </div>
+      <BattlePanelH2hOpponentSummary
+        record={row.original}
+        className="max-w-[280px]"
+      />
     ),
     enableSorting: false,
   },
@@ -232,13 +212,24 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
         </Button>
       </div>
     ),
-    cell: ({ row }) => (
-      <div className="text-right text-sm text-muted-foreground">
-        {formatDistanceToNow(new Date(row.original.lastBattleDate), {
-          addSuffix: true,
-          locale: pl,
-        })}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const exactTime = format(
+        new Date(row.original.lastBattleDate),
+        "dd.MM.yyyy HH:mm",
+      );
+
+      return (
+        <div className="flex min-w-0 justify-end">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
+                {getRelativeTime(row.original.lastBattleDate)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{exactTime}</TooltipContent>
+          </Tooltip>
+        </div>
+      );
+    },
   },
 ];
