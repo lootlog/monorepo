@@ -46,7 +46,7 @@ function createMessage(
 
 describe("canViewChatMessage", () => {
   it("returns false when data is missing", () => {
-    expect(canViewChatMessage(undefined as never, [])).toBe(false);
+    expect(canViewChatMessage(undefined, [])).toBe(false);
   });
 
   it("returns false without base chat permission", () => {
