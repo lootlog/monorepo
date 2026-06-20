@@ -20,7 +20,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
-import { WarriorSearchFilter } from "@/components/filters";
+import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 

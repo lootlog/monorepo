@@ -16,7 +16,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, ArrowRight, Filter, SearchX, Swords } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
-import { PeriodSelector, LevelRangeFilter } from "@/components/filters";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
+import { PeriodSelector } from "@/components/filters/period-selector";
 import {
   Drawer,
   DrawerContent,

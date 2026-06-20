@@ -1,9 +1,7 @@
 import { Label } from "@lootlog/ui/components/label";
-import {
-  CharacterSelector,
-  PeriodSelector,
-  LevelRangeFilter,
-} from "@/components/filters";
+import { CharacterSelector } from "@/components/filters/character-selector";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
+import { PeriodSelector } from "@/components/filters/period-selector";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Swords, Award } from "lucide-react";
 import type { Period } from "@/store/battle-filters.store";
