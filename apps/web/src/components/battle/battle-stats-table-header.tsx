@@ -19,7 +19,7 @@ export const BattleStatsTableHeader = ({
     <div className="w-full shrink-0 border-b bg-background">
       <div
         className={cn(
-          compact ? "flex min-h-[61px] items-center px-3 py-3" : "p-4",
+          compact ? "flex min-h-[49px] items-center px-3 py-2" : "p-4",
         )}
       >
         <div
@@ -53,7 +53,7 @@ export const BattleStatsTableHeader = ({
               className={cn(
                 "ml-auto flex shrink-0 items-center",
                 compact
-                  ? "gap-1.5 [&_button]:size-9 [&_button]:min-w-9 [&_button]:px-0 [&_svg]:h-4 [&_svg]:w-4"
+                  ? "gap-1.5 [&_button]:size-8 [&_button]:min-w-8 [&_button]:px-0 [&_svg]:h-4 [&_svg]:w-4"
                   : "flex-wrap gap-2",
               )}
             >

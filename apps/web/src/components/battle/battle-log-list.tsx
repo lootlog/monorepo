@@ -288,7 +288,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   const searchMatchedTurnsSet = new Set(searchMatchedTurns);
 
   return (
-    <ul ref={listRef} className="text-sm">
+    <ul ref={listRef} className="text-[13px] leading-[1.35]">
       <BattleHeader warriors={warriors} characterId={characterId} />
       {visibleEvents?.map((event, eventIndex) => {
         const turn = eventIndex + 1;

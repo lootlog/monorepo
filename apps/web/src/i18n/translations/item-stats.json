@@ -66,6 +66,7 @@
     "curse": "<legbon>Klątwa: podczas udanego ataku 9% szans na aktywację klątwy, która zablokuje najbliższą wykonywaną przez przeciwnika akcję.</legbon>",
     "lastheal": "<legbon>Ostatni ratunek: kiedy po otrzymanym ataku zostanie graczowi mniej niż 18% życia, zostaje jednorazowo znacznie uleczony.</legbon>",
     "facade": "Fasada opieki: przyjmowane ciosy są o 13% słabsze.",
+    "frenzy": "<legbon>Eskalacja szału: trafienia krytyczne powodują trwałe zwiększenie obrażeń ataków o {{value}}%.</legbon>",
     "verycrit": "<legbon>Cios bardzo krytyczny: 17% szansy na zwiększenie mocy ciosu krytycznego o 75%.</legbon>",
     "holytouch": "<legbon>Dotyk anioła: podczas ataku 7% szansy na regenerację po 6% życia przez trzy najbliższe tury.</legbon>",
     "glare": "<legbon>Oślepienie: podczas przyjmowania ataku 9% szansy na oślepienie przeciwnika i zablokowanie jego najbliższej akcji.</legbon>",
@@ -73,6 +74,7 @@
     "cleanse": "<legbon>Płomienne oczyszczenie: podczas otrzymywania celnego ataku 12% szans na usunięcie z postaci efektów obezwładnienia, spowolnienia i obrażeń warunkowych.</legbon>",
     "anguish": "<legbon>Krwawa udręka: trafiony atak ma 8% szansy na wywołanie u przeciwnika krwawienia na pięć tur.</legbon>",
     "puncture": "<legbon>Przeszywająca skuteczność: cel ataku ma obniżone o 12% zdolności defensywne.</legbon>",
+    "retaliation": "<legbon>Aura odwetu: przyjęcie ataku ma {{value}}% szansy na odbicie w przeciwnika otrzymanych obrażeń.</legbon>",
     "not-supported": "Nieznany bonus legendarny"
   },
   "rarity": {

@@ -1,6 +1,21 @@
+import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
+
+export interface BattleStatDefinition {
+  key: keyof Warrior;
+  labelKey: string;
+  color?: string;
+  format?: (value: unknown) => string;
+}
+
+export interface BattleStatCategoryDefinition {
+  id: CategoryId;
+  labelKey: string;
+  stats: BattleStatDefinition[];
+}
+
 export interface CategoryCustomization {
   id: string;
-  name: string;
+  name?: string;
   visible: boolean;
   statOrder: string[];
 }
@@ -11,12 +26,12 @@ export interface StatsCustomizationConfig {
 }
 
 const DEFAULT_CATEGORY_IDS = [
-  "turns",
+  "turnStats",
   "damageDealt",
   "damageTaken",
-  "turnsStats",
+  "turns",
   "legendaryBonuses",
-  "defenseDestruction",
+  "defenseDestroy",
   "defense",
   "healing",
   "resources",

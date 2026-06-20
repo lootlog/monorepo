@@ -30,7 +30,7 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
   };
 
   return (
-    <div className="min-h-[61px] border-b bg-background px-3 py-3">
+    <div className="min-h-[49px] border-b bg-background px-3 py-2">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -39,12 +39,12 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
             onChange={handleQueryChange}
             aria-label={t("battlePanel.single.log.search.label")}
             placeholder={t("battlePanel.single.log.search.placeholder")}
-            className="h-9 pl-9"
+            className="h-8 pl-9"
           />
         </div>
         <div className="flex items-center justify-between gap-2 sm:justify-end">
           <span
-            className="min-w-14 text-center text-sm font-medium tabular-nums text-muted-foreground"
+            className="min-w-14 text-center text-xs font-medium tabular-nums text-muted-foreground"
             aria-live="polite"
           >
             {t("battlePanel.single.log.search.counter", {
@@ -57,7 +57,7 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
               type="button"
               variant="outline"
               size="icon"
-              className="h-9 w-9"
+              className="h-8 w-8"
               aria-label={t("battlePanel.single.log.search.previous")}
               disabled={!hasResults}
               onClick={onPrevious}
@@ -68,7 +68,7 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
               type="button"
               variant="outline"
               size="icon"
-              className="h-9 w-9"
+              className="h-8 w-8"
               aria-label={t("battlePanel.single.log.search.next")}
               disabled={!hasResults}
               onClick={onNext}
