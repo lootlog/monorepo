@@ -186,6 +186,24 @@ const sanitizeMaxContentHeight = (height: number | undefined) => {
   return Math.max(1, Math.round(height as number));
 };
 
+const getWindowCursor = ({
+  isLocked,
+  isDragging,
+}: {
+  isLocked: boolean;
+  isDragging: boolean;
+}) => {
+  if (isLocked) {
+    return "default";
+  }
+
+  if (isDragging) {
+    return "grabbing";
+  }
+
+  return "grab";
+};
+
 const measureWindowContent = ({
   windowBody,
   contentElement,
@@ -699,7 +717,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         top: position.y,
         left: position.x,
         zIndex,
-        cursor: isLocked ? "default" : isDragging ? "grabbing" : "grab",
+        cursor: getWindowCursor({ isLocked, isDragging }),
       }}
       onMouseDownCapture={onMouseDownCapture}
       onTouchStartCapture={onTouchStartCapture}
