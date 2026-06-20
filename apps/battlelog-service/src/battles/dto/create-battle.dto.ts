@@ -22,6 +22,32 @@ const CreateBattleFightEventWarriorSchema = z.object({
   team: z.number(),
 });
 
+const requiredWarriorSnapshotFields = [
+  "originalId",
+  "name",
+  "lvl",
+  "prof",
+  "icon",
+  "team",
+] as const;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const hasCompleteWarriorSnapshotShape = (value: unknown): boolean =>
+  isRecord(value) &&
+  requiredWarriorSnapshotFields.every((field) => field in value);
+
+const removeIncompleteWarriorSnapshots = (value: unknown): unknown => {
+  if (!isRecord(value)) return value;
+
+  return Object.fromEntries(
+    Object.entries(value).filter(([, warrior]) =>
+      hasCompleteWarriorSnapshotShape(warrior),
+    ),
+  );
+};
+
 export const WarriorsRecordSchema = z
   .record(z.string(), CreateBattleFightEventWarriorSchema)
   .refine(
@@ -35,12 +61,19 @@ export const WarriorsRecordSchema = z
     { message: "w must be a valid Record of warriors" },
   );
 
+const OptionalWarriorsRecordSchema = z.preprocess((value) => {
+  const warriors = removeIncompleteWarriorSnapshots(value);
+  if (!isRecord(warriors)) return warriors;
+
+  return Object.keys(warriors).length > 0 ? warriors : undefined;
+}, WarriorsRecordSchema.optional());
+
 const CreateBattleFightEventSchema = z.object({
   m: z.array(z.string()).optional(),
   endBattle: z.number().optional(),
   init: z.string().optional(),
   auto: z.string().optional(),
-  w: WarriorsRecordSchema.optional(),
+  w: OptionalWarriorsRecordSchema,
 });
 
 const CreateBattleMatchSummarySchema = z.object({
@@ -75,7 +108,7 @@ const CreateBattleEventsSchema = z.object({
   match_summary: CreateBattleMatchSummarySchema.optional(),
 });
 
-const CreateBattleSchema = z.object({
+export const CreateBattleSchema = z.object({
   accountId: z.string(),
   characterId: z.string(),
   world: z.string(),
