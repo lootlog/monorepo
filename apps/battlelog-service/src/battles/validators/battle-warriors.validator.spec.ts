@@ -1,4 +1,7 @@
-import { WarriorsRecordSchema } from "../dto/create-battle.dto";
+import {
+  CreateBattleSchema,
+  WarriorsRecordSchema,
+} from "../dto/create-battle.dto";
 
 describe("WarriorsRecordSchema", () => {
   it("should accept valid warriors record with two teams", () => {
@@ -134,5 +137,53 @@ describe("WarriorsRecordSchema", () => {
     const result = WarriorsRecordSchema.safeParse({});
 
     expect(result.success).toBe(false);
+  });
+
+  it("should drop incomplete warrior snapshots from battle events", () => {
+    const result = CreateBattleSchema.safeParse({
+      accountId: "9822301",
+      characterId: "617",
+      world: "gordion",
+      events: [
+        {
+          ev: 1,
+          f: {
+            w: {
+              "52785": {
+                originalId: 52785,
+                name: "Warrior1",
+                lvl: 85,
+                prof: "w",
+                icon: "icon1",
+                team: 1,
+              },
+              "161562": {
+                originalId: 161562,
+                name: "Warrior2",
+                lvl: 83,
+                prof: "p",
+                icon: "icon2",
+                team: 2,
+              },
+            },
+          },
+        },
+        {
+          ev: 2,
+          f: {
+            m: ["52785=100;161562=90;+dmg=10"],
+            w: {
+              "52785": {},
+              "161562": { hpp: 90 },
+            },
+          },
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(result.data.events[1]?.f.w).toBeUndefined();
   });
 });
