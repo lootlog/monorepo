@@ -5,7 +5,7 @@ import {
 } from "@/features/user/battle-panel/components/battle-damage-tags";
 import { cn } from "@lootlog/ui/lib/utils";
 
-type RecentOpponentBattleWarriorData = BattleDamageTagWarrior & {
+type BattlePanelPvpWarriorSummaryData = BattleDamageTagWarrior & {
   icon: string;
   id?: string;
   lvl: number;
@@ -13,19 +13,19 @@ type RecentOpponentBattleWarriorData = BattleDamageTagWarrior & {
   prof: string;
 };
 
-type RecentOpponentBattleWarriorProps = {
+type BattlePanelPvpWarriorSummaryProps = {
   className?: string;
-  opposingWarrior: RecentOpponentBattleWarriorData;
-  warrior: RecentOpponentBattleWarriorData;
+  opposingWarrior: BattlePanelPvpWarriorSummaryData;
+  warrior: BattlePanelPvpWarriorSummaryData;
 };
 
-export function RecentOpponentBattleWarrior({
+export function BattlePanelPvpWarriorSummary({
   className,
   opposingWarrior,
   warrior,
-}: RecentOpponentBattleWarriorProps) {
+}: BattlePanelPvpWarriorSummaryProps) {
   return (
-    <div className={cn("flex min-w-0 items-center gap-1", className)}>
+    <div className={cn("flex min-w-0 items-center gap-1.5", className)}>
       <div className="relative h-9 w-6 shrink-0 overflow-visible">
         <PlayerTile
           player={warrior}
@@ -36,8 +36,8 @@ export function RecentOpponentBattleWarrior({
         <div className="truncate text-xs font-semibold">{warrior.name}</div>
         <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
           <span className="shrink-0">
-            {warrior.lvl}
-            {warrior.prof}
+            ({warrior.lvl}
+            {warrior.prof})
           </span>
           <BattleDamageTags
             team={[warrior]}

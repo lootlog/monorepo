@@ -15,12 +15,17 @@
     "battlesTitle": "Filtry walk",
     "statisticsTitle": "Filtry statystyk",
     "headToHeadTitle": "Filtry bilansów",
+    "clear": "Wyczyść filtry",
+    "more": "Więcej",
+    "moreWithCount": "Więcej ({{count}})",
     "searchWarriors": "Szukaj wojowników",
     "searchOpponent": "Szukaj przeciwnika",
     "world": "Świat",
     "battleResult": "Wynik walki",
+    "battleResultShort": "Wynik",
     "character": "Postać",
     "battleType": "Typ walki",
+    "battleTypeShort": "Typ",
     "period": "Okres",
     "levelRange": "Zakres poziomów",
     "honorPoints": "Punkty Honoru",
@@ -38,6 +43,17 @@
     "noOptions": "Brak opcji",
     "minPlaceholder": "Min",
     "maxPlaceholder": "Max",
+    "chips": {
+      "search": "Wojownicy: {{count}}",
+      "world": "Świat: {{value}}",
+      "result": "Wynik: {{count}}",
+      "character": "Postać: {{count}}",
+      "type": "Typ: {{count}}",
+      "honorPoints": "Punkty Honoru",
+      "matchmaking": "Otchłań",
+      "levelRange": "Poziom: {{min}}-{{max}}",
+      "period": "Okres: {{value}}"
+    },
     "types": {
       "solo": "Solo",
       "group": "Grupowe"
@@ -89,11 +105,13 @@
     "emptyDescription": "Nie znaleziono żadnych walk spełniających kryteria wyszukiwania",
     "savedEmpty": "Brak zapisanych walk",
     "totalBattles": "Łącznie walk: {{count}}",
+    "showingBattles": "Pokazano {{from}}-{{to}} z {{total}}",
     "openBattle": "Otwórz walkę",
     "columns": {
       "info": "Tagi",
       "yourTeam": "Twoja drużyna",
       "opponents": "Przeciwnicy",
+      "result": "Wynik",
       "time": "Czas",
       "duration": "Długość",
       "actions": "Akcje"
@@ -116,6 +134,7 @@
     "selected": "{{count}} zaznaczonych",
     "share": "Udostępnij",
     "delete": "Usuń",
+    "clearSelection": "Wyczyść zaznaczenie",
     "selectRows": "Zaznacz walki",
     "selectRow": "Zaznacz walkę",
     "honorPointsShort": "PH",
@@ -158,7 +177,6 @@
     "chart": {
       "title": "HP i momentum",
       "description": "Kliknij punkt, żeby przejść do tej tury w logu",
-      "pin": "Przypnij",
       "openDialog": "Otwórz duży wykres",
       "dialogTitle": "HP i momentum",
       "team": "Drużyna {{team}}",
@@ -249,6 +267,7 @@
     "title": "Statystyki walk",
     "subtitle": "Szczegółowa analiza i statystyki z historii twoich walk",
     "loading": "Ładowanie...",
+    "showingRecords": "Pokazano {{from}}-{{to}} z {{total}}",
     "empty": {
       "title": "Brak danych",
       "description": "Nie znaleziono danych dla wybranych filtrów.",
@@ -360,6 +379,7 @@
       "characterFallback": "Twoja postać",
       "opponentFallback": "Przeciwnik",
       "subtitle": "Poziom {{level}} • Historia walk rankingowych",
+      "open": "Przejdź do PvP",
       "emptyTitle": "Brak walk z tym przeciwnikiem",
       "emptyDescription": "Nie znaleziono walk dla wybranego pojedynku i filtrów."
     },

@@ -17,12 +17,28 @@ const ProfessionWinRateResponseSchema = z.object({
   winRate: z.number(),
 });
 
+const PlayerVsPlayerWarriorResponseSchema = z.object({
+  name: z.string(),
+  lvl: z.number(),
+  prof: z.string(),
+  icon: z.string(),
+  fireDamage: z.number(),
+  frostDamage: z.number(),
+  lightningDamage: z.number(),
+  poisonDamageTaken: z.number(),
+  woundDamageTaken: z.number(),
+  critWoundDamageTaken: z.number(),
+});
+
 const HeadToHeadRecordResponseSchema = z.object({
   opponentId: z.string(),
   opponentName: z.string(),
   opponentIcon: z.string(),
   opponentProf: z.string(),
   opponentLvl: z.number(),
+  lastBattleResult: z.enum(["won", "lost", "flee"]),
+  lastBattleUserWarrior: PlayerVsPlayerWarriorResponseSchema,
+  lastBattleOpponentWarrior: PlayerVsPlayerWarriorResponseSchema,
   wins: z.number(),
   losses: z.number(),
   totalBattles: z.number(),
@@ -106,19 +122,6 @@ const RatingDeltaByOpponentResponseSchema = z.object({
   totalBattles: z.number(),
   avgRatingDelta: z.number(),
   lastBattleDate: z.string().datetime(),
-});
-
-const PlayerVsPlayerWarriorResponseSchema = z.object({
-  name: z.string(),
-  lvl: z.number(),
-  prof: z.string(),
-  icon: z.string(),
-  fireDamage: z.number(),
-  frostDamage: z.number(),
-  lightningDamage: z.number(),
-  poisonDamageTaken: z.number(),
-  woundDamageTaken: z.number(),
-  critWoundDamageTaken: z.number(),
 });
 
 const PlayerVsPlayerBattleResponseSchema = z.object({

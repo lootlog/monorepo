@@ -33,6 +33,7 @@ type StoredBattleWithWarriors = Battle & { warriors: BattleWarrior[] };
 type InflatedBattleWithWarriors = Battle & {
   warriors: InflatedBattleWarrior[];
 };
+type BattleResult = "flee" | "lost" | "won";
 
 @Injectable()
 export class BattleAnalyticsService {
@@ -76,6 +77,21 @@ export class BattleAnalyticsService {
       woundDamageTaken: warrior?.woundDamageTaken ?? 0,
       critWoundDamageTaken: warrior?.critWoundDamageTaken ?? 0,
     };
+  }
+
+  private getBattleResultForUserWarrior(
+    battle: InflatedBattleWithWarriors,
+    userWarrior: InflatedBattleWarrior,
+  ): BattleResult {
+    if (battle.hasFlee) {
+      return "flee";
+    }
+
+    if (userWarrior.team === battle.winningTeam) {
+      return "won";
+    }
+
+    return "lost";
   }
 
   private getCachedAnalyticsResult<T>(
@@ -388,7 +404,7 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<HeadToHeadPaginatedResponse> {
     return this.getCachedAnalyticsResult(
-      this.buildQueryCacheKey("statistics", "head-to-head", userId, query),
+      this.buildQueryCacheKey("statistics", "head-to-head:v2", userId, query),
       () => this.getHeadToHeadUncached(query, userId),
     );
   }
@@ -461,6 +477,9 @@ export class BattleAnalyticsService {
         wins: number;
         losses: number;
         lastBattleDate: Date;
+        lastBattleResult: BattleResult;
+        lastBattleUserWarrior: InflatedBattleWarrior;
+        lastBattleOpponentWarrior: InflatedBattleWarrior;
         totalRatingDelta: number;
         battlesWithRating: number;
       }
@@ -476,7 +495,12 @@ export class BattleAnalyticsService {
 
       if (userWarrior && opponentWarrior) {
         const opponentId = opponentWarrior.originalId;
-        const stats = opponentStats.get(opponentId) ?? {
+        const battleResult = this.getBattleResultForUserWarrior(
+          battle,
+          userWarrior,
+        );
+        const existingStats = opponentStats.get(opponentId);
+        const stats = existingStats ?? {
           name: opponentWarrior.name,
           icon: opponentWarrior.icon,
           prof: opponentWarrior.prof,
@@ -484,6 +508,9 @@ export class BattleAnalyticsService {
           wins: 0,
           losses: 0,
           lastBattleDate: battle.createdAt,
+          lastBattleResult: battleResult,
+          lastBattleUserWarrior: userWarrior,
+          lastBattleOpponentWarrior: opponentWarrior,
           totalRatingDelta: 0,
           battlesWithRating: 0,
         };
@@ -501,8 +528,15 @@ export class BattleAnalyticsService {
           }
         }
 
-        if (battle.createdAt > stats.lastBattleDate) {
+        if (!existingStats || battle.createdAt > stats.lastBattleDate) {
+          stats.name = opponentWarrior.name;
+          stats.icon = opponentWarrior.icon;
+          stats.prof = opponentWarrior.prof;
+          stats.lvl = opponentWarrior.lvl;
           stats.lastBattleDate = battle.createdAt;
+          stats.lastBattleResult = battleResult;
+          stats.lastBattleUserWarrior = userWarrior;
+          stats.lastBattleOpponentWarrior = opponentWarrior;
         }
 
         opponentStats.set(opponentId, stats);
@@ -518,6 +552,13 @@ export class BattleAnalyticsService {
           opponentIcon: stats.icon,
           opponentProf: stats.prof,
           opponentLvl: stats.lvl,
+          lastBattleResult: stats.lastBattleResult,
+          lastBattleUserWarrior: this.mapPlayerVsPlayerWarrior(
+            stats.lastBattleUserWarrior,
+          ),
+          lastBattleOpponentWarrior: this.mapPlayerVsPlayerWarrior(
+            stats.lastBattleOpponentWarrior,
+          ),
           wins: stats.wins,
           losses: stats.losses,
           totalBattles,
@@ -1794,6 +1835,7 @@ export class BattleAnalyticsService {
             startDate,
             matchmaking: query.matchmaking,
             characterIds,
+            phFilter: query.ph,
           }),
       },
       with: { warriors: true },
