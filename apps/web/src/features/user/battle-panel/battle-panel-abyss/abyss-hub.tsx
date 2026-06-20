@@ -308,7 +308,7 @@ export function AbyssHub() {
                 onValueChange={handleSeasonChange}
                 disabled={isLoadingSeasons || seasons.length === 0}
               >
-                <SelectTrigger className="h-10 w-full lg:w-[260px]">
+                <SelectTrigger size="lg" className="w-full lg:w-[260px]">
                   <SelectValue
                     placeholder={t("battlePanel.abyss.selectSeason")}
                   />
