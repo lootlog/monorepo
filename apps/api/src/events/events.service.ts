@@ -22,8 +22,8 @@ import type { UpdateLocationDto } from "./dto/update-location.dto";
 import type {
   CheckEventHeroKillParams,
   EventHeroKillJobData,
-  KillTimerData,
-} from "./interfaces";
+} from "./interfaces/check-event-hero-kill-params.interface";
+import type { KillTimerData } from "./interfaces/kill-timer-data.interface";
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,
