@@ -73,7 +73,7 @@ const CreateBattleFightEventSchema = z.object({
   endBattle: z.number().optional(),
   init: z.string().optional(),
   auto: z.string().optional(),
-  w: OptionalWarriorsRecordSchema,
+  w: OptionalWarriorsRecordSchema.optional(),
 });
 
 const CreateBattleMatchSummarySchema = z.object({
@@ -111,6 +111,7 @@ const CreateBattleEventsSchema = z.object({
 export const CreateBattleSchema = z.object({
   accountId: z.string(),
   characterId: z.string(),
+  submissionId: z.string().min(1).max(128).optional(),
   world: z.string(),
   matchmaking: z.boolean().optional(),
   events: z.array(CreateBattleEventsSchema).min(1),

@@ -3,12 +3,13 @@ import { BattleEventProcessor } from "./battle-event-processor";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { NpcType } from "@/api/npcs.api";
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import type * as ApiModule from "@/api";
 
 const mockCreateKill = vi.fn().mockResolvedValue({ updated: 1 });
 const mockCreateBattle = vi.fn().mockResolvedValue({ battleId: 1 });
 
 vi.mock("@/api", async (importOriginal) => {
-  const originalModule = await importOriginal<typeof import("@/api")>();
+  const originalModule = await importOriginal<typeof ApiModule>();
 
   return {
     ...originalModule,
@@ -230,6 +231,7 @@ describe("BattleEventProcessor", () => {
       expect(mockCreateBattle).toHaveBeenCalledWith({
         accountId: "67890",
         characterId: "12345",
+        submissionId: "mock-hash-123",
         world: "pandora",
         events: { mapped: true },
       });
@@ -497,7 +499,7 @@ describe("BattleEventProcessor", () => {
             prof: "w",
             wt: 85,
             type: 2,
-          } as any,
+          } as never,
         },
       });
 

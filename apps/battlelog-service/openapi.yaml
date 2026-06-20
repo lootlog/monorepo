@@ -1731,6 +1731,10 @@ components:
           type: string
         characterId:
           type: string
+        submissionId:
+          type: string
+          minLength: 1
+          maxLength: 128
         world:
           type: string
         matchmaking:

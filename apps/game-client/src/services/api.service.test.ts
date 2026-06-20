@@ -121,7 +121,7 @@ describe("api.service logging", () => {
   it("logs createLoot error responses and marks the action as failed", async () => {
     const apiError = {
       message: "Request failed",
-      status: 500,
+      status: 400,
       data: { message: "boom" },
     };
 
@@ -150,7 +150,7 @@ describe("api.service logging", () => {
       expect.objectContaining({
         endpoint: "/loots",
         status: "error",
-        statusCode: 500,
+        statusCode: 400,
         response: {
           message: "Request failed",
           data: { message: "boom" },
