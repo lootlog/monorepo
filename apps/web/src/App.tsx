@@ -16,6 +16,14 @@ export interface RouterContext {
   session?: SessionData | null;
 }
 
+const parseSearchValue = (values: string[]) => {
+  if (values.length > 1) {
+    return values;
+  }
+
+  return values[0] ?? "";
+};
+
 const parseSearch = (searchString: string) => {
   const normalizedSearch = searchString.startsWith("?")
     ? searchString.slice(1)
@@ -32,7 +40,7 @@ const parseSearch = (searchString: string) => {
     seenKeys.add(key);
 
     const values = searchParams.getAll(key);
-    parsedSearch[key] = values.length > 1 ? values : (values[0] ?? "");
+    parsedSearch[key] = parseSearchValue(values);
   }
 
   return parsedSearch;
@@ -74,8 +82,9 @@ const router = createRouter({
   parseSearch,
   stringifySearch,
   defaultPendingComponent: RouteSectionLoading,
-  defaultPendingMs: 120,
-  defaultPendingMinMs: 250,
+  defaultPreload: "intent",
+  defaultPendingMs: 250,
+  defaultPendingMinMs: 150,
   scrollRestoration: true,
 });
 

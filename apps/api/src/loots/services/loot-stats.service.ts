@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { NpcType, type ItemRarity } from "src/generated/prisma/client";
@@ -13,10 +13,12 @@ import type {
   TopItem,
 } from "../dto/loot-stats.dto";
 
-const CACHE_TTL_SECONDS = 3600; // 60 minutes
+const CACHE_TTL_SECONDS = 60;
 
 @Injectable()
 export class LootStatsService {
+  private readonly logger = new Logger(LootStatsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
@@ -37,77 +39,88 @@ export class LootStatsService {
       excludeColossus,
     );
 
-    const cached = await this.redis.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached) as LootStatsResponse;
+    const cached = await this.redis.getJson<LootStatsResponse>(cacheKey);
+    if (cached !== null) {
+      this.logger.debug(`Cache hit for ${cacheKey}`);
+      return cached;
     }
 
-    const dateFrom = this.getDateFromPeriod(period);
-    const npcTypeFilter = npcTypes?.length
-      ? npcTypes.filter((t): t is NpcType =>
-          Object.values(NpcType).includes(t as NpcType),
-        )
-      : undefined;
+    this.logger.debug(`Cache miss for ${cacheKey}`);
 
-    const [overview, byRarity, timeline, topNpcs, topContributors, topItems] =
-      await Promise.all([
-        this.getOverview(
-          guildId,
-          dateFrom,
-          world,
-          npcTypeFilter,
-          excludeColossus,
-        ),
-        this.getByRarity(
-          guildId,
-          dateFrom,
-          world,
-          npcTypeFilter,
-          excludeColossus,
-        ),
-        this.getTimeline(
-          guildId,
-          dateFrom,
-          period,
-          world,
-          npcTypeFilter,
-          excludeColossus,
-        ),
-        this.getTopNpcs(
-          guildId,
-          dateFrom,
-          world,
-          npcTypeFilter,
-          excludeColossus,
-        ),
-        this.getTopContributors(
-          guildId,
-          dateFrom,
-          world,
-          npcTypeFilter,
-          excludeColossus,
-        ),
-        this.getTopLegendaryItems(
-          guildId,
-          dateFrom,
-          world,
-          npcTypeFilter,
-          excludeColossus,
-        ),
-      ]);
+    return this.redis.getOrSetJson({
+      key: cacheKey,
+      ttlSeconds: CACHE_TTL_SECONDS,
+      factory: async () => {
+        const dateFrom = this.getDateFromPeriod(period);
+        const npcTypeFilter = npcTypes?.length
+          ? npcTypes.filter((t): t is NpcType =>
+              Object.values(NpcType).includes(t as NpcType),
+            )
+          : undefined;
 
-    const response: LootStatsResponse = {
-      overview,
-      byRarity,
-      timeline,
-      topNpcs,
-      topContributors,
-      topItems,
-    };
+        const [
+          overview,
+          byRarity,
+          timeline,
+          topNpcs,
+          topContributors,
+          topItems,
+        ] = await Promise.all([
+          this.getOverview(
+            guildId,
+            dateFrom,
+            world,
+            npcTypeFilter,
+            excludeColossus,
+          ),
+          this.getByRarity(
+            guildId,
+            dateFrom,
+            world,
+            npcTypeFilter,
+            excludeColossus,
+          ),
+          this.getTimeline(
+            guildId,
+            dateFrom,
+            period,
+            world,
+            npcTypeFilter,
+            excludeColossus,
+          ),
+          this.getTopNpcs(
+            guildId,
+            dateFrom,
+            world,
+            npcTypeFilter,
+            excludeColossus,
+          ),
+          this.getTopContributors(
+            guildId,
+            dateFrom,
+            world,
+            npcTypeFilter,
+            excludeColossus,
+          ),
+          this.getTopLegendaryItems(
+            guildId,
+            dateFrom,
+            world,
+            npcTypeFilter,
+            excludeColossus,
+          ),
+        ]);
 
-    await this.redis.set(cacheKey, JSON.stringify(response), CACHE_TTL_SECONDS);
-
-    return response;
+        return {
+          overview,
+          byRarity,
+          timeline,
+          topNpcs,
+          topContributors,
+          topItems,
+        };
+      },
+    });
   }
 
   private buildCacheKey(
@@ -130,10 +143,18 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
   ) {
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
+    const dateParamIndex = this.getDateFilterParamIndex();
+    const worldParamIndex = this.getWorldFilterParamIndex(dateFrom);
+    const npcTypesParamIndex = this.getNpcTypesFilterParamIndex(
+      dateFrom,
+      world,
+    );
+    const dateCondition = dateFrom
+      ? `AND l."createdAt" >= $${dateParamIndex}`
+      : "";
+    const worldCondition = world ? `AND l.world = $${worldParamIndex}` : "";
     const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
+      ? `AND ns.type = ANY($${npcTypesParamIndex}::text[])`
       : "";
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
@@ -147,6 +168,32 @@ export class LootStatsService {
       excludeColossusCondition,
       needsNpcFilter,
     };
+  }
+
+  private getDateFilterParamIndex() {
+    return 2;
+  }
+
+  private getWorldFilterParamIndex(dateFrom: Date | null) {
+    if (dateFrom) {
+      return 3;
+    }
+
+    return 2;
+  }
+
+  private getNpcTypesFilterParamIndex(dateFrom: Date | null, world?: string) {
+    let paramIndex = 2;
+
+    if (dateFrom) {
+      paramIndex += 1;
+    }
+
+    if (world) {
+      paramIndex += 1;
+    }
+
+    return paramIndex;
   }
 
   private buildFilterParams(

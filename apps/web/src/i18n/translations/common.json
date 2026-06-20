@@ -1,4 +1,14 @@
 {
+  "documentTitle": {
+    "appName": "Lootlog.pl",
+    "template": "{{title}} | {{appName}}",
+    "contextTemplate": "{{title}} - {{context}} | {{appName}}",
+    "signin": "Logowanie",
+    "init": "Start",
+    "publicBattle": "Walka #{{id}}",
+    "battle": "Walka #{{id}}",
+    "fallback": "Lootlog"
+  },
   "devPermissionOverride": {
     "trigger": "Dev permisje",
     "title": "Dev permisje",
@@ -39,6 +49,7 @@
     "all": "Wszystko"
   },
   "breadcrumbs": {
+    "guild": "Lootlog",
     "lootsList": "Lista łupów",
     "timers": "Timery",
     "reservations": "Rezerwacje",
@@ -51,6 +62,7 @@
     "events": "Eventy",
     "newEvent": "Nowy event",
     "event": "Event",
+    "coordination": "Koordynator",
     "killHistory": "Historia bić",
     "hero": "Heros",
     "ranking": "Ranking",
@@ -64,7 +76,7 @@
     "notificationEdit": "Edycja reguły",
     "notificationHistory": "Historia",
     "info": "Informacje",
-    "npcs": "Ustawienia potworów i NPC"
+    "settingsNpcs": "Ustawienia potworów i NPC"
   },
   "greeting": "Cześć, {{name}}!",
   "routeErrors": {

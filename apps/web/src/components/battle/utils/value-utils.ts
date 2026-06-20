@@ -15,7 +15,7 @@ export const roundValue = (value: string | number): string => {
 export const roundHpPercentage = (
   value: string | number | null | undefined,
 ): string => {
-  if (value == null) {
+  if (value === null || value === undefined) {
     return "-";
   }
 

@@ -1,0 +1,2 @@
+CREATE INDEX "battle_warriors_battleId_originalId_idx" ON "battle_warriors" ("battleId","originalId");--> statement-breakpoint
+CREATE INDEX "battle_warriors_originalId_battleId_idx" ON "battle_warriors" ("originalId","battleId");

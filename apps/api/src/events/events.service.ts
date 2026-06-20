@@ -22,12 +22,11 @@ import type { UpdateLocationDto } from "./dto/update-location.dto";
 import type {
   CheckEventHeroKillParams,
   EventHeroKillJobData,
-  KillTimerData,
-} from "./interfaces";
+} from "./interfaces/check-event-hero-kill-params.interface";
+import type { KillTimerData } from "./interfaces/kill-timer-data.interface";
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,
-  MapStatus,
 } from "./interfaces/respawn-window.interface";
 import {
   EVENT_HERO_KILL_JOB_NAME,
@@ -43,6 +42,7 @@ import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics
 import { EventRespawnService } from "./services/event-respawn.service";
 import { EventTrackingService } from "./services/event-tracking.service";
 import { EventWrappedService } from "./services/event-wrapped.service";
+import { EventCoordinationService } from "./services/event-coordination.service";
 
 @Injectable()
 export class EventsService {
@@ -55,6 +55,7 @@ export class EventsService {
     private readonly killService: EventKillService,
     private readonly respawnService: EventRespawnService,
     private readonly wrappedService: EventWrappedService,
+    private readonly coordinationService: EventCoordinationService,
     @InjectQueue(EVENT_HERO_KILL_QUEUE)
     private readonly eventHeroKillQueue: Queue<EventHeroKillJobData>,
   ) {}
@@ -77,6 +78,10 @@ export class EventsService {
 
   getEventMaps(guildId: string, eventId: string) {
     return this.catalogService.getEventMaps(guildId, eventId);
+  }
+
+  getCoordination(guildId: string, eventId: string) {
+    return this.coordinationService.getCoordination(guildId, eventId);
   }
 
   getWrapped(

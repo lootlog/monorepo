@@ -8,6 +8,7 @@ const AUTH_TOKEN_CACHE_KEY_PREFIX = "auth:idp-token";
 const GUILD_CACHE_KEY_PREFIX = "guild";
 const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = "user-lootlog-config";
 const EVENT_WRAPPED_CACHE_KEY_PREFIX = "event-wrapped";
+const MEMBER_READ_CACHE_KEY_PREFIX = "member-read";
 
 export function getPermissionsCacheKey(
   userId: string,
@@ -43,9 +44,41 @@ export function getUserLootlogConfigCachePattern(discordId: string): string {
   return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:*`;
 }
 
+export function getGuildMemberReferencesCacheKey(
+  guildId: string,
+  includeInactive: boolean,
+): string {
+  return `${MEMBER_READ_CACHE_KEY_PREFIX}:${guildId}:references:${
+    includeInactive ? "all" : "active"
+  }`;
+}
+
+export function getGuildMembersSummaryCacheKey(guildId: string): string {
+  return `${MEMBER_READ_CACHE_KEY_PREFIX}:${guildId}:summary`;
+}
+
+export function getMemberLootlogConfigSummaryCacheKey(
+  guildId: string,
+  discordId: string,
+): string {
+  return `${MEMBER_READ_CACHE_KEY_PREFIX}:${guildId}:lootlog-config:${discordId}`;
+}
+
+export function getMemberReadCachePattern(guildId: string): string {
+  return `${MEMBER_READ_CACHE_KEY_PREFIX}:${guildId}:*`;
+}
+
 export function getEventWrappedCacheKey(
   guildId: string,
   eventId: string,
+  visibilityScope = "default",
 ): string {
-  return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:${eventId}`;
+  return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:${eventId}:${visibilityScope}`;
+}
+
+export function getEventWrappedCachePattern(
+  guildId: string,
+  eventId: string,
+): string {
+  return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:${eventId}:*`;
 }

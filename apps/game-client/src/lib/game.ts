@@ -21,6 +21,10 @@ export class Game {
     return this.interface === "ni" ? window.Engine.hero.d : window.hero;
   }
 
+  static getAccountId(): string | null {
+    return this.hero?.account ? String(this.hero.account) : null;
+  }
+
   static get map(): GameMap {
     return this.interface === "ni" ? window.Engine.map.d : window.map;
   }

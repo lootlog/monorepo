@@ -64,13 +64,21 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
+  Biohazard,
   Copy,
+  Flag,
+  Flame,
+  HeartCrack,
   Lock,
-  LockOpen,
   MoreHorizontal,
   Share2,
   Shield,
+  Snowflake,
   Trash2,
+  Trophy,
+  XCircle,
+  Zap,
+  type LucideIcon,
 } from "lucide-react";
 import {
   useEffect,
@@ -105,29 +113,58 @@ type BattlesTableProps = {
 
 type BattleTeamDamageTag = {
   badgeClassName: string;
+  icon: LucideIcon;
   key: BattleDamageTag;
 };
 
-const MOBILE_HIDDEN_COLUMN_IDS = new Set(["world", "tags", "mode"]);
-
-const DAMAGE_TAG_CLASS_NAMES: Record<
+const DAMAGE_TAG_CONFIG: Record<
   BattleDamageTag,
-  Pick<BattleTeamDamageTag, "badgeClassName">
+  Pick<BattleTeamDamageTag, "badgeClassName" | "icon">
 > = {
   fire: {
     badgeClassName: "border-red-500/20 bg-red-500/5 text-red-300",
+    icon: Flame,
   },
   frost: {
     badgeClassName: "border-cyan-500/20 bg-cyan-500/5 text-cyan-300",
+    icon: Snowflake,
   },
   lightning: {
     badgeClassName: "border-yellow-500/20 bg-yellow-500/5 text-yellow-300",
+    icon: Zap,
   },
   poison: {
     badgeClassName: "border-green-500/20 bg-green-500/5 text-green-300",
+    icon: Biohazard,
   },
   wound: {
     badgeClassName: "border-orange-500/20 bg-orange-500/5 text-orange-300",
+    icon: HeartCrack,
+  },
+};
+
+const BATTLE_RESULT_STATUS_CONFIG: Record<
+  BattleResult,
+  {
+    className: string;
+    icon: LucideIcon;
+    labelKey: string;
+  }
+> = {
+  won: {
+    className: "border-green-500/25 bg-green-500/10 text-green-400",
+    icon: Trophy,
+    labelKey: "battlePanel.list.results.won",
+  },
+  lost: {
+    className: "border-red-500/25 bg-red-500/10 text-red-400",
+    icon: XCircle,
+    labelKey: "battlePanel.list.results.lost",
+  },
+  flee: {
+    className: "border-yellow-500/25 bg-yellow-500/10 text-yellow-400",
+    icon: Flag,
+    labelKey: "battlePanel.list.results.flee",
   },
 };
 
@@ -184,24 +221,24 @@ const getTeamDamageTags = (
   const tags: BattleTeamDamageTag[] = [];
 
   if (sumWarriorValues(team, (warrior) => warrior.fireDamage) > 0) {
-    tags.push({ key: "fire", ...DAMAGE_TAG_CLASS_NAMES.fire });
+    tags.push({ key: "fire", ...DAMAGE_TAG_CONFIG.fire });
   }
 
   if (sumWarriorValues(team, (warrior) => warrior.frostDamage) > 0) {
-    tags.push({ key: "frost", ...DAMAGE_TAG_CLASS_NAMES.frost });
+    tags.push({ key: "frost", ...DAMAGE_TAG_CONFIG.frost });
   }
 
   if (sumWarriorValues(team, (warrior) => warrior.lightningDamage) > 0) {
     tags.push({
       key: "lightning",
-      ...DAMAGE_TAG_CLASS_NAMES.lightning,
+      ...DAMAGE_TAG_CONFIG.lightning,
     });
   }
 
   if (
     sumWarriorValues(opposingTeam, (warrior) => warrior.poisonDamageTaken) > 0
   ) {
-    tags.push({ key: "poison", ...DAMAGE_TAG_CLASS_NAMES.poison });
+    tags.push({ key: "poison", ...DAMAGE_TAG_CONFIG.poison });
   }
 
   if (
@@ -210,26 +247,10 @@ const getTeamDamageTags = (
       (warrior) => warrior.woundDamageTaken + warrior.critWoundDamageTaken,
     ) > 0
   ) {
-    tags.push({ key: "wound", ...DAMAGE_TAG_CLASS_NAMES.wound });
+    tags.push({ key: "wound", ...DAMAGE_TAG_CONFIG.wound });
   }
 
   return tags;
-};
-
-const mergeDamageTags = (
-  tagGroups: BattleTeamDamageTag[][],
-): BattleTeamDamageTag[] => {
-  const tagsByKey = new Map<BattleDamageTag, BattleTeamDamageTag>();
-
-  for (const tagGroup of tagGroups) {
-    for (const tag of tagGroup) {
-      if (!tagsByKey.has(tag.key)) {
-        tagsByKey.set(tag.key, tag);
-      }
-    }
-  }
-
-  return Array.from(tagsByKey.values());
 };
 
 const getRowClassName = (battle: Battle) => {
@@ -247,36 +268,28 @@ const getRowClassName = (battle: Battle) => {
 };
 
 const getColumnResponsiveClassName = (columnId: string) => {
-  if (MOBILE_HIDDEN_COLUMN_IDS.has(columnId)) {
-    return "hidden md:table-cell";
+  if (columnId === "select") {
+    return "relative w-[9%] px-0! md:w-12";
   }
 
-  if (columnId === "select") {
-    return "w-[9%] px-2 md:w-10";
+  if (columnId === "status") {
+    return "w-[10%] px-1 md:w-[64px]";
+  }
+
+  if (columnId === "battleInfo") {
+    return "w-[20%] px-1 md:w-[176px]";
   }
 
   if (columnId === "leftTeam" || columnId === "rightTeam") {
-    return "w-[27%] md:w-auto";
+    return "w-[24%] md:w-[240px]";
   }
 
   if (columnId === "createdAt") {
-    return "w-[22%] md:w-[112px]";
-  }
-
-  if (columnId === "world") {
-    return "md:w-[116px]";
-  }
-
-  if (columnId === "tags") {
-    return "md:w-[176px]";
-  }
-
-  if (columnId === "mode") {
-    return "md:w-[76px]";
+    return "w-[20%] md:w-[112px]";
   }
 
   if (columnId === "actions") {
-    return "w-[15%] md:w-[64px]";
+    return "w-[14%] md:w-[64px]";
   }
 
   return "";
@@ -290,9 +303,22 @@ const stopTableKeyboardAction = (event: KeyboardEvent<HTMLElement>) => {
   event.stopPropagation();
 };
 
+const getEventTargetElement = (target: EventTarget | null) => {
+  if (target instanceof Element) {
+    return target;
+  }
+
+  if (target instanceof Node) {
+    return target.parentElement;
+  }
+
+  return null;
+};
+
 const isTableActionEvent = (event: MouseEvent<HTMLElement>) =>
-  event.target instanceof Element &&
-  Boolean(event.target.closest("[data-battle-table-action]"));
+  Boolean(
+    getEventTargetElement(event.target)?.closest("[data-battle-table-action]"),
+  );
 
 export const BattlesTable = ({
   battles,
@@ -471,6 +497,19 @@ export const BattlesTable = ({
     setSelectedBattleIds(new Set(selectableVisibleBattleIds));
   };
 
+  const handleHeaderSelectionCellClick = (event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    handleHeaderSelectionChange(!areAllSelectableRowsSelected);
+  };
+
+  const handleSelectionCellClick = (
+    event: MouseEvent<HTMLElement>,
+    battleId: string,
+  ) => {
+    event.stopPropagation();
+    handleSelectionChange(battleId, !selectedBattleIds.has(battleId));
+  };
+
   const handleBulkShare = async () => {
     if (selectedBattles.length === 0) {
       return;
@@ -589,58 +628,189 @@ export const BattlesTable = ({
     );
   };
 
-  const renderTeam = (team: BattleWarrior[], userWarrior?: BattleWarrior) => (
-    <div className="flex min-w-0 max-w-[112px] flex-col gap-1 md:min-w-[200px] md:max-w-[300px]">
-      {team.map((warrior) => (
-        <div key={warrior.id} className="flex min-w-0 items-center gap-1.5">
-          <PlayerTile player={warrior} className="scale-75" />
-          <span
-            className={cn("min-w-0 truncate text-xs font-medium", {
-              "text-green-500": warrior.originalId === userWarrior?.originalId,
-            })}
-          >
-            {warrior.name}{" "}
-            <span className="text-muted-foreground font-normal">
-              ({warrior.lvl}
-              {warrior.prof})
-            </span>
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderDamageTags = (
-    team: BattleWarrior[],
-    opposingTeam: BattleWarrior[],
-  ) => {
-    const tags = mergeDamageTags([
-      getTeamDamageTags(team, opposingTeam),
-      getTeamDamageTags(opposingTeam, team),
-    ]);
-
+  const renderDamageTagIcons = (tags: BattleTeamDamageTag[]) => {
     if (tags.length === 0) {
-      return (
-        <span className="text-xs text-muted-foreground/70">
-          {t("battlePanel.list.noTags")}
-        </span>
-      );
+      return null;
     }
 
     return (
-      <div className="flex max-w-[176px] flex-wrap gap-1">
-        {tags.map((tag) => (
-          <Badge
-            key={tag.key}
-            variant="outline"
-            className={cn(
-              "inline-flex h-5 items-center rounded-full px-2 py-0 text-[10px] font-medium shadow-none",
-              tag.badgeClassName,
-            )}
-          >
-            {t(`battlePanel.list.damageTags.${tag.key}`)}
-          </Badge>
+      <div
+        data-battle-table-action
+        onClick={stopTableAction}
+        onClickCapture={stopTableAction}
+        onKeyDown={stopTableKeyboardAction}
+        className="ml-1 flex shrink-0 items-center gap-0.5"
+      >
+        {tags.map((tag) => {
+          const Icon = tag.icon;
+          const tagLabel = t(`battlePanel.list.damageTags.${tag.key}`);
+
+          return (
+            <Tooltip key={tag.key}>
+              <TooltipTrigger asChild>
+                <Badge
+                  data-battle-table-action
+                  onClick={stopTableAction}
+                  onKeyDown={stopTableKeyboardAction}
+                  tabIndex={0}
+                  role="img"
+                  aria-label={tagLabel}
+                  variant="outline"
+                  className={cn(
+                    "inline-flex size-5 min-w-5 items-center justify-center rounded-full p-0 shadow-none",
+                    tag.badgeClassName,
+                  )}
+                >
+                  <Icon className="size-3" aria-hidden="true" />
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>{tagLabel}</TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderTeam = (
+    team: BattleWarrior[],
+    opposingTeam: BattleWarrior[],
+    userWarrior?: BattleWarrior,
+  ) => {
+    const tags = getTeamDamageTags(team, opposingTeam);
+    const tagIcons = renderDamageTagIcons(tags);
+    const shouldRenderInlineTags = team.length === 1;
+
+    return (
+      <div className="flex min-w-0 max-w-[120px] flex-col gap-1 md:min-w-[220px] md:max-w-[280px]">
+        {team.map((warrior) => (
+          <div key={warrior.id} className="flex min-w-0 items-center gap-1.5">
+            <PlayerTile player={warrior} className="origin-center scale-75" />
+            <div className="flex min-w-0 flex-col gap-0.5 leading-tight">
+              <span
+                className={cn("min-w-0 truncate text-xs font-medium", {
+                  "text-green-500":
+                    warrior.originalId === userWarrior?.originalId,
+                })}
+              >
+                {warrior.name}
+              </span>
+              <span className="truncate text-[11px] font-normal text-muted-foreground">
+                ({warrior.lvl}
+                {warrior.prof})
+              </span>
+            </div>
+            {shouldRenderInlineTags && tagIcons}
+          </div>
         ))}
+        {!shouldRenderInlineTags && tagIcons && (
+          <div className="ml-7 flex min-w-0">{tagIcons}</div>
+        )}
+      </div>
+    );
+  };
+
+  const renderBattleStatus = (battle: Battle) => {
+    const result = getBattleResult(battle);
+    const resultConfig = BATTLE_RESULT_STATUS_CONFIG[result];
+    const ResultIcon = resultConfig.icon;
+    const resultLabel = t(resultConfig.labelKey);
+
+    return (
+      <div
+        data-battle-table-action
+        onClick={stopTableAction}
+        onKeyDown={stopTableKeyboardAction}
+        className="mx-auto flex w-6 items-center justify-center"
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              role="img"
+              aria-label={resultLabel}
+              className={cn(
+                "inline-flex size-6 items-center justify-center rounded-md border",
+                resultConfig.className,
+              )}
+            >
+              <ResultIcon className="size-3.5" aria-hidden="true" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{resultLabel}</TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  };
+
+  const renderBattleInfo = (battle: Battle) => {
+    const visibilityLabel = battle.public
+      ? t("battleUi.metadata.public")
+      : t("battleUi.metadata.private");
+    const userWarrior = battle.warriors.find(
+      (warrior) => warrior.originalId === battle.characterId,
+    );
+
+    return (
+      <div
+        data-battle-table-action
+        onClick={stopTableAction}
+        onKeyDown={stopTableKeyboardAction}
+        className="flex max-w-[168px] flex-wrap items-center gap-1"
+      >
+        <button
+          type="button"
+          data-battle-table-action
+          onClick={(event) => handleWorldBadgeClick(event, battle.world)}
+          onKeyDown={stopTableKeyboardAction}
+          className="inline-flex max-w-[92px] items-center truncate rounded-md border border-foreground/30 bg-background/40 px-2 py-0 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-background/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          {capitalizeFirstLetter(battle.world)}
+        </button>
+        <span className="inline-flex max-w-[92px] items-center truncate rounded-md border border-foreground/30 bg-background/40 px-2 py-0 text-[10px] font-semibold text-muted-foreground">
+          {visibilityLabel}
+        </span>
+        {userWarrior?.ph !== 0 && userWarrior?.ph !== undefined && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                onClick={handlePhBadgeClick}
+                onKeyDown={(event) =>
+                  handleFilterBadgeKeyDown(event, () => onPhClick?.())
+                }
+                role="button"
+                tabIndex={0}
+                variant="outline"
+                className="inline-flex size-6 min-w-6 cursor-pointer items-center justify-center rounded-md border-foreground/40 p-0 text-[9px]"
+              >
+                {t("battlePanel.bulk.honorPointsShort")}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t("battlePanel.filters.honorPoints")}
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {battle.matchmaking && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                onClick={handleMatchmakingBadgeClick}
+                onKeyDown={(event) =>
+                  handleFilterBadgeKeyDown(event, () => onMatchmakingClick?.())
+                }
+                role="button"
+                tabIndex={0}
+                variant="outline"
+                className="inline-flex h-6 cursor-pointer items-center justify-center rounded-md border-purple-500/50 bg-purple-500/10 px-1.5 py-0 text-[10px] font-semibold text-purple-400 hover:bg-purple-500/20"
+              >
+                {t("battlePanel.filters.matchmaking")}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t("battlePanel.filters.matchmaking")}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
     );
   };
@@ -649,10 +819,17 @@ export const BattlesTable = ({
     {
       id: "select",
       header: () => (
-        <div className="flex items-center justify-center">
+        <div
+          data-battle-table-action
+          className="absolute inset-0 flex cursor-pointer items-center justify-center transition-colors hover:bg-primary/10"
+          onClick={handleHeaderSelectionCellClick}
+          onKeyDown={stopTableKeyboardAction}
+        >
           <Checkbox
             checked={headerCheckboxState}
             aria-label={t("battlePanel.bulk.selectRows")}
+            className="size-5"
+            onClick={stopTableAction}
             onCheckedChange={(checked) =>
               handleHeaderSelectionChange(checked === true)
             }
@@ -662,13 +839,19 @@ export const BattlesTable = ({
       cell: ({ row }) => (
         <div
           data-battle-table-action
-          className="flex items-center justify-center"
-          onClick={stopTableAction}
+          className={cn(
+            "absolute inset-0 flex cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-primary/10",
+            selectedBattleIds.has(row.original.id) &&
+              "bg-primary/10 text-primary ring-1 ring-inset ring-primary/40",
+          )}
+          onClick={(event) => handleSelectionCellClick(event, row.original.id)}
           onKeyDown={stopTableKeyboardAction}
         >
           <Checkbox
             checked={selectedBattleIds.has(row.original.id)}
             aria-label={t("battlePanel.bulk.selectRow")}
+            className="size-5"
+            onClick={stopTableAction}
             onCheckedChange={(checked) =>
               handleSelectionChange(row.original.id, checked === true)
             }
@@ -678,12 +861,20 @@ export const BattlesTable = ({
       enableSorting: false,
     },
     {
+      id: "status",
+      header: () => null,
+      cell: ({ row }) => renderBattleStatus(row.original),
+      enableSorting: false,
+    },
+    {
       id: "leftTeam",
       header: t("battlePanel.list.columns.yourTeam"),
       cell: ({ row }) => {
-        const { leftTeam, userWarrior } = getBattleTeams(row.original);
+        const { leftTeam, rightTeam, userWarrior } = getBattleTeams(
+          row.original,
+        );
 
-        return renderTeam(leftTeam, userWarrior);
+        return renderTeam(leftTeam, rightTeam, userWarrior);
       },
       enableSorting: false,
     },
@@ -691,40 +882,18 @@ export const BattlesTable = ({
       id: "rightTeam",
       header: t("battlePanel.list.columns.opponents"),
       cell: ({ row }) => {
-        const { rightTeam } = getBattleTeams(row.original);
-
-        return renderTeam(rightTeam);
-      },
-      enableSorting: false,
-    },
-    {
-      id: "world",
-      header: t("battlePanel.list.columns.world"),
-      cell: ({ row }) => {
-        const battle = row.original;
-
-        return (
-          <button
-            type="button"
-            data-battle-table-action
-            onClick={(event) => handleWorldBadgeClick(event, battle.world)}
-            onKeyDown={stopTableKeyboardAction}
-            className="inline-flex max-w-[108px] items-center truncate rounded-md border border-foreground/30 bg-background/40 px-2 py-0 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-background/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
-            {capitalizeFirstLetter(battle.world)}
-          </button>
-        );
-      },
-      enableSorting: false,
-    },
-    {
-      id: "tags",
-      header: t("battlePanel.list.columns.tags"),
-      cell: ({ row }) => {
         const { leftTeam, rightTeam } = getBattleTeams(row.original);
 
-        return renderDamageTags(leftTeam, rightTeam);
+        return renderTeam(rightTeam, leftTeam);
       },
+      enableSorting: false,
+    },
+    {
+      id: "battleInfo",
+      header: () => (
+        <div className="text-left">{t("battlePanel.list.columns.info")}</div>
+      ),
+      cell: ({ row }) => renderBattleInfo(row.original),
       enableSorting: false,
     },
     {
@@ -747,87 +916,6 @@ export const BattlesTable = ({
               </TooltipTrigger>
               <TooltipContent>{exactTime}</TooltipContent>
             </Tooltip>
-          </div>
-        );
-      },
-      enableSorting: false,
-    },
-    {
-      id: "mode",
-      header: () => (
-        <div className="text-center">{t("battlePanel.list.columns.mode")}</div>
-      ),
-      cell: ({ row }) => {
-        const battle = row.original;
-        const userWarrior = battle.warriors.find(
-          (warrior) => warrior.originalId === battle.characterId,
-        );
-        const visibilityLabel = battle.public
-          ? t("battleUi.metadata.public")
-          : t("battleUi.metadata.private");
-
-        return (
-          <div className="flex min-w-[72px] flex-wrap items-center justify-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span
-                  role="img"
-                  aria-label={visibilityLabel}
-                  className="inline-flex size-6 items-center justify-center rounded-md text-muted-foreground"
-                >
-                  {battle.public ? (
-                    <LockOpen className="size-3.5" />
-                  ) : (
-                    <Lock className="size-3.5" />
-                  )}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>{visibilityLabel}</TooltipContent>
-            </Tooltip>
-            {userWarrior?.ph !== 0 && userWarrior?.ph !== undefined && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    onClick={handlePhBadgeClick}
-                    onKeyDown={(event) =>
-                      handleFilterBadgeKeyDown(event, () => onPhClick?.())
-                    }
-                    role="button"
-                    tabIndex={0}
-                    variant="outline"
-                    className="cursor-pointer rounded-md border-foreground/40 px-1.5 py-0 text-[10px]"
-                  >
-                    {t("battlePanel.bulk.honorPointsShort")}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t("battlePanel.filters.honorPoints")}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {battle.matchmaking && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    onClick={handleMatchmakingBadgeClick}
-                    onKeyDown={(event) =>
-                      handleFilterBadgeKeyDown(event, () =>
-                        onMatchmakingClick?.(),
-                      )
-                    }
-                    role="button"
-                    tabIndex={0}
-                    variant="outline"
-                    className="cursor-pointer rounded-md border-purple-500/50 bg-purple-500/10 px-1.5 py-0 text-[10px] text-purple-500 hover:bg-purple-500/20"
-                  >
-                    {t("battlePanel.bulk.matchmakingShort")}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t("battlePanel.filters.matchmaking")}
-                </TooltipContent>
-              </Tooltip>
-            )}
           </div>
         );
       },
@@ -909,7 +997,7 @@ export const BattlesTable = ({
     <>
       <Card
         className={cn(
-          "min-h-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm gap-0",
+          "min-h-0 min-w-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm gap-0",
           showPagination ? "flex h-full flex-1 flex-col" : "flex flex-col",
         )}
       >
@@ -959,7 +1047,10 @@ export const BattlesTable = ({
         </div>
 
         <ScrollArea
-          className={cn("relative w-full", showPagination && "flex-1 min-h-0")}
+          className={cn(
+            "relative min-w-0 w-full",
+            showPagination && "flex-1 min-h-0",
+          )}
         >
           {isLoading ? (
             <TableRowsSkeleton rows={showPagination ? 10 : 4} />
@@ -983,7 +1074,7 @@ export const BattlesTable = ({
               </Empty>
             </div>
           ) : (
-            <Table className="min-w-full table-fixed border-b md:min-w-[840px] md:table-auto">
+            <Table className="min-w-full table-fixed border-b md:min-w-[960px] md:table-auto">
               <TanStackTableHeader
                 table={table}
                 className="sticky top-0 z-10 bg-background"
@@ -1002,7 +1093,7 @@ export const BattlesTable = ({
                     "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
                     getRowClassName(row.original),
                     selectedBattleIds.has(row.original.id) &&
-                      "ring-1 ring-inset ring-primary/30",
+                      "ring-2 ring-inset ring-primary/45",
                   )
                 }
                 cellClassName={(cell) =>
@@ -1024,8 +1115,9 @@ export const BattlesTable = ({
                   },
                   onKeyDown: (event) => {
                     if (
-                      event.target instanceof Element &&
-                      event.target.closest("[data-battle-table-action]")
+                      getEventTargetElement(event.target)?.closest(
+                        "[data-battle-table-action]",
+                      )
                     ) {
                       return;
                     }

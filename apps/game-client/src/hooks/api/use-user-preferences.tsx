@@ -15,8 +15,8 @@ export const useUserPreferences = (enabled = true) => {
     query: {
       queryKey: getUsersControllerGetUserPreferencesQueryKey(),
       enabled,
-      staleTime: 0,
-      refetchOnMount: true,
+      staleTime: 60_000,
+      refetchOnMount: false,
       refetchOnWindowFocus: false,
       retry: false,
     },

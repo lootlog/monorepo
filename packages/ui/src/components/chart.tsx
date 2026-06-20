@@ -7,6 +7,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
+const RESPONSIVE_CONTAINER_INITIAL_DIMENSION = { width: 1, height: 1 };
 
 export type ChartConfig = {
   [k in string]: {
@@ -61,7 +62,10 @@ function ChartContainer({
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
+        <RechartsPrimitive.ResponsiveContainer
+          initialDimension={RESPONSIVE_CONTAINER_INITIAL_DIMENSION}
+          minWidth={0}
+        >
           {children}
         </RechartsPrimitive.ResponsiveContainer>
       </div>
@@ -153,7 +157,7 @@ function ChartTooltipContent({
 }) {
   const { config } = useChart();
 
-  const tooltipLabel = React.useMemo(() => {
+  const tooltipLabel = (() => {
     if (hideLabel || !payload?.length) {
       return null;
     }
@@ -179,15 +183,7 @@ function ChartTooltipContent({
     }
 
     return <div className={cn("font-medium", labelClassName)}>{value}</div>;
-  }, [
-    label,
-    labelFormatter,
-    payload,
-    hideLabel,
-    labelClassName,
-    config,
-    labelKey,
-  ]);
+  })();
 
   if (!active || !payload?.length) {
     return null;

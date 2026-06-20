@@ -16,6 +16,7 @@ import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.serv
 import { DiscordService } from "src/discord/discord.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import {
+  getMemberReadCachePattern,
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
 } from "src/shared/constants/cache.constant";
@@ -277,6 +278,7 @@ export class MemberDiscordSyncService {
         ),
         this.redisService.del(getPermissionsCacheKey(globalUserId, guildId)),
         this.redisService.deleteByPattern(getUserLootlogConfigCachePattern(id)),
+        this.redisService.deleteByPattern(getMemberReadCachePattern(guildId)),
       ]);
 
       return member;

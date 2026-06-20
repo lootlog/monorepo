@@ -7,6 +7,7 @@ import {
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Swords, Award } from "lucide-react";
 import type { Period } from "@/store/battle-filters.store";
+import { useTranslation } from "react-i18next";
 
 type StatisticsFiltersDesktopProps = {
   characterId?: string;
@@ -37,8 +38,10 @@ export const StatisticsFiltersDesktop = ({
   onPhChange,
   onMatchmakingChange,
 }: StatisticsFiltersDesktopProps) => {
+  const { t } = useTranslation();
+
   return (
-    <div className="flex flex-col sm:flex-row gap-2 flex-wrap items-end">
+    <div className="flex flex-col flex-wrap gap-2 sm:flex-row sm:items-end">
       <div>
         <CharacterSelector
           characterId={characterId}
@@ -67,7 +70,7 @@ export const StatisticsFiltersDesktop = ({
       <div className="flex items-center gap-2 border rounded-md px-3 h-10">
         <Award className="h-4 w-4" />
         <Label htmlFor="ph-filter" className="cursor-pointer text-sm">
-          Punkty Honoru
+          {t("battlePanel.filters.honorPoints")}
         </Label>
         <Checkbox
           id="ph-filter"
@@ -79,7 +82,7 @@ export const StatisticsFiltersDesktop = ({
       <div className="flex items-center gap-2 border rounded-md px-3 h-10">
         <Swords className="h-4 w-4" />
         <Label htmlFor="matchmaking-filter" className="cursor-pointer text-sm">
-          Otchłań
+          {t("battlePanel.filters.matchmaking")}
         </Label>
         <Checkbox
           id="matchmaking-filter"

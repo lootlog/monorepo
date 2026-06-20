@@ -9,6 +9,8 @@ describe("add-timer-form-helpers", () => {
       expect(parseDurationToSeconds("1h2m3s")).toBe(3723);
       expect(parseDurationToSeconds("15m")).toBe(900);
       expect(parseDurationToSeconds("45s")).toBe(45);
+      expect(parseDurationToSeconds("2H 5S")).toBe(7205);
+      expect(parseDurationToSeconds("1h 30s")).toBe(3630);
     });
 
     it("returns zero for empty or malformed values", () => {

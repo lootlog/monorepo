@@ -33,6 +33,7 @@ import {
 import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
 import { PaginationService } from "src/battles/services/pagination.service";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   battles,
   battleWarriors,
@@ -59,13 +60,23 @@ import type {
 @Injectable()
 export class BattlesService implements IBattlesService {
   private readonly logger = new Logger(BattlesService.name);
+  private readonly USER_METADATA_CACHE_TTL_SECONDS = 5 * 60;
 
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly r2Service: R2Service,
     private readonly paginationService: PaginationService,
     private readonly battleAnalyticsService: BattleAnalyticsService,
+    private readonly redisService: RedisService,
   ) {}
+
+  private getUserCharactersCacheKey(userId: string) {
+    return `battle-characters:list:${userId}`;
+  }
+
+  private getUserWorldsCacheKey(userId: string) {
+    return `battle-worlds:${userId}:list`;
+  }
 
   private warriorExists(
     battlesRef: typeof battles,
@@ -175,6 +186,23 @@ export class BattlesService implements IBattlesService {
       icon: string;
     }>;
   }> {
+    return this.redisService.getOrSetJsonBestEffort({
+      key: this.getUserCharactersCacheKey(userId),
+      ttlSeconds: this.USER_METADATA_CACHE_TTL_SECONDS,
+      onError: (error) =>
+        this.logger.warn("User characters cache unavailable", error),
+      factory: () => this.getUserCharactersUncached(userId),
+    });
+  }
+
+  private async getUserCharactersUncached(userId: string): Promise<{
+    characters: Array<{
+      id: string;
+      name: string;
+      world: string;
+      icon: string;
+    }>;
+  }> {
     try {
       const results = await this.drizzle.db.query.userCharacters.findMany({
         where: { userId },
@@ -204,6 +232,18 @@ export class BattlesService implements IBattlesService {
   }
 
   async getUserWorlds(userId: string): Promise<{ worlds: string[] }> {
+    return this.redisService.getOrSetJsonBestEffort({
+      key: this.getUserWorldsCacheKey(userId),
+      ttlSeconds: this.USER_METADATA_CACHE_TTL_SECONDS,
+      onError: (error) =>
+        this.logger.warn("User worlds cache unavailable", error),
+      factory: () => this.getUserWorldsUncached(userId),
+    });
+  }
+
+  private async getUserWorldsUncached(
+    userId: string,
+  ): Promise<{ worlds: string[] }> {
     try {
       const results = await this.drizzle.db
         .selectDistinctOn([userCharacters.world], {
@@ -276,6 +316,8 @@ export class BattlesService implements IBattlesService {
     if (!battle) {
       throw new NotFoundException(`Battle with ID ${battleId} not found`);
     }
+
+    await this.battleAnalyticsService.invalidateAnalyticsCache(battle.userId);
 
     return inflateBattleWarriorsInBattle(battle);
   }
@@ -426,11 +468,17 @@ export class BattlesService implements IBattlesService {
     }
 
     this.logger.log(`Deleted ${battleIds.length} battles for user ${userId}`);
+    await this.battleAnalyticsService.invalidateAnalyticsCache(userId);
 
     return { deletedCount: battleIds.length };
   }
 
   async deleteBattle(battleId: string): Promise<DeleteBattleResult> {
+    const battle = await this.drizzle.db.query.battles.findFirst({
+      where: { id: battleId },
+      columns: { userId: true },
+    });
+
     const deleted = await this.drizzle.db
       .delete(battles)
       .where(eq(battles.id, battleId))
@@ -438,6 +486,10 @@ export class BattlesService implements IBattlesService {
 
     if (deleted.length === 0) {
       throw new NotFoundException(`Battle with ID ${battleId} not found`);
+    }
+
+    if (battle) {
+      await this.battleAnalyticsService.invalidateAnalyticsCache(battle.userId);
     }
 
     try {

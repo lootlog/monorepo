@@ -46,7 +46,7 @@ export const useTimerSettings = (enabled = true) => {
     query: {
       queryKey: TIMER_SETTINGS_QUERY_KEY,
       staleTime: 5 * 60 * 1000,
-      refetchOnMount: "always",
+      refetchOnMount: false,
       enabled,
     },
   });

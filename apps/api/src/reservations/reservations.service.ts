@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
@@ -23,6 +24,10 @@ const DEFAULT_RESERVATION_SETTINGS = {
   reservationActiveLimitPerSpot: 3,
 } as const;
 
+const RESERVATIONS_CACHE_TTL_SECONDS = 15;
+const RESERVATIONS_CLEANUP_GATE_TTL_SECONDS = 15 * 60;
+const RESERVATIONS_CARDS_CACHE_TTL_SECONDS = 60 * 60;
+
 type ReservationRecord = {
   id: number;
   reservationId: string;
@@ -31,6 +36,15 @@ type ReservationRecord = {
   toDate: Date;
   createdBy: string;
   comment?: string | null;
+};
+
+type SerializedReservationRecord = Omit<
+  ReservationRecord,
+  "createdDate" | "fromDate" | "toDate"
+> & {
+  createdDate: string;
+  fromDate: string;
+  toDate: string;
 };
 
 type ReservationCard = {
@@ -46,6 +60,8 @@ type ReservationsCardsPayload = Record<
 
 @Injectable()
 export class ReservationsService {
+  private readonly logger = new Logger(ReservationsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
@@ -53,8 +69,20 @@ export class ReservationsService {
     private readonly httpService: HttpService,
   ) {}
 
+  private getReservationsCacheKey(guildId: string) {
+    return `reservations:list:${guildId}`;
+  }
+
+  private getReservationsCleanupGateKey(guildId: string) {
+    return `reservations:cleanup:${guildId}`;
+  }
+
+  private getReservationRetentionDate() {
+    return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  }
+
   private async deleteExpiredReservations(guildId: string) {
-    const monthAgoDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const monthAgoDate = this.getReservationRetentionDate();
     await this.prisma.reservation.deleteMany({
       where: {
         guildId,
@@ -62,6 +90,35 @@ export class ReservationsService {
       },
     });
     return monthAgoDate;
+  }
+
+  private async deleteExpiredReservationsWithGate(guildId: string) {
+    const monthAgoDate = this.getReservationRetentionDate();
+    let cleanupScheduled = false;
+
+    try {
+      cleanupScheduled = await this.redis.setNX(
+        this.getReservationsCleanupGateKey(guildId),
+        "1",
+        RESERVATIONS_CLEANUP_GATE_TTL_SECONDS,
+      );
+    } catch (error) {
+      this.logger.warn("Reservations cleanup gate unavailable", error);
+    }
+
+    if (cleanupScheduled) {
+      await this.deleteExpiredReservations(guildId);
+    }
+
+    return monthAgoDate;
+  }
+
+  private async invalidateReservationsCache(guildId: string) {
+    try {
+      await this.redis.del(this.getReservationsCacheKey(guildId));
+    } catch (error) {
+      this.logger.warn("Failed to invalidate reservations cache", error);
+    }
   }
 
   private normalizeReservationsCards(input: ReservationsCardsPayload) {
@@ -117,6 +174,61 @@ export class ReservationsService {
       createdBy: reservation.createdBy,
       comment: reservation.comment ?? null,
     };
+  }
+
+  private deserializeReservationRecord(
+    reservation: SerializedReservationRecord,
+  ): ReservationRecord {
+    return {
+      id: reservation.id,
+      reservationId: reservation.reservationId,
+      createdDate: new Date(reservation.createdDate),
+      fromDate: new Date(reservation.fromDate),
+      toDate: new Date(reservation.toDate),
+      createdBy: reservation.createdBy,
+      comment: reservation.comment,
+    };
+  }
+
+  private groupReservationRecords(reservations: ReservationRecord[]) {
+    return reservations.reduce<Record<string, ReservationRecord[]>>(
+      (accumulator, reservation) => {
+        const list =
+          accumulator[reservation.reservationId] ??
+          (accumulator[reservation.reservationId] = []);
+
+        list.push(this.mapReservationRecord(reservation));
+
+        return accumulator;
+      },
+      {},
+    );
+  }
+
+  private serializeReservationGroups(
+    groups: Record<string, ReservationRecord[]>,
+  ) {
+    return Object.fromEntries(
+      Object.entries(groups).map(([reservationId, reservations]) => [
+        reservationId,
+        reservations.map((reservation) =>
+          this.serializeReservationRecord(reservation),
+        ),
+      ]),
+    ) satisfies Record<string, SerializedReservationRecord[]>;
+  }
+
+  private deserializeReservationGroups(
+    groups: Record<string, SerializedReservationRecord[]>,
+  ) {
+    return Object.fromEntries(
+      Object.entries(groups).map(([reservationId, reservations]) => [
+        reservationId,
+        reservations.map((reservation) =>
+          this.deserializeReservationRecord(reservation),
+        ),
+      ]),
+    ) satisfies Record<string, ReservationRecord[]>;
   }
 
   private async getReservationSettings(guildId: string) {
@@ -279,100 +391,97 @@ export class ReservationsService {
     });
 
     const record = this.mapReservationRecord(created);
+    await this.invalidateReservationsCache(guildId);
     this.emitReservationCreated(guildId, record);
 
     return record;
   }
 
-  async getReservationsCards() {
+  getReservationsCards() {
     const cacheKey = `reservations:cards`;
 
-    const cached = await this.redis.get(cacheKey);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached) as ReservationsCardsPayload;
-        const normalized = this.normalizeReservationsCards(parsed);
-        if (Object.keys(normalized).length > 0) {
-          return normalized;
+    return this.redis.getOrSetJsonBestEffort({
+      key: cacheKey,
+      ttlSeconds: RESERVATIONS_CARDS_CACHE_TTL_SECONDS,
+      onError: (error) =>
+        this.logger.warn("Reservations cards cache unavailable", error),
+      factory: async () => {
+        const externalUrl = env.RESERVATIONS_CARDS_URL;
+
+        const response = await lastValueFrom(
+          this.httpService.get<unknown>(externalUrl),
+        );
+
+        const rawPayload = response.data;
+
+        let decodedPayload: unknown;
+        if (typeof rawPayload === "string") {
+          try {
+            decodedPayload = JSON.parse(rawPayload);
+          } catch {
+            throw new Error("Nie udało się zdekodować danych kart rezerwacji.");
+          }
+        } else {
+          decodedPayload = rawPayload;
         }
-        await this.redis.del(cacheKey);
-      } catch {
-        await this.redis.del(cacheKey);
-      }
-    }
 
-    const externalUrl = env.RESERVATIONS_CARDS_URL;
+        const payload = decodedPayload as
+          | { data?: ReservationsCardsPayload }
+          | ReservationsCardsPayload
+          | undefined;
 
-    const response = await lastValueFrom(
-      this.httpService.get<unknown>(externalUrl),
-    );
+        const data =
+          (payload as { data?: ReservationsCardsPayload })?.data ??
+          (payload as ReservationsCardsPayload) ??
+          undefined;
 
-    const rawPayload = response.data;
+        if (!data) {
+          throw new Error(
+            "Brak danych kart rezerwacji z zewnętrznego serwisu.",
+          );
+        }
 
-    let decodedPayload: unknown;
-    if (typeof rawPayload === "string") {
-      try {
-        decodedPayload = JSON.parse(rawPayload);
-      } catch {
-        throw new Error("Nie udało się zdekodować danych kart rezerwacji.");
-      }
-    } else {
-      decodedPayload = rawPayload;
-    }
+        const normalized = this.normalizeReservationsCards(data);
 
-    const payload = decodedPayload as
-      | { data?: ReservationsCardsPayload }
-      | ReservationsCardsPayload
-      | undefined;
+        if (Object.keys(normalized).length === 0) {
+          throw new Error("Brak kart rezerwacji po przetworzeniu odpowiedzi.");
+        }
 
-    const data =
-      (payload as { data?: ReservationsCardsPayload })?.data ??
-      (payload as ReservationsCardsPayload) ??
-      undefined;
-
-    if (!data) {
-      throw new Error("Brak danych kart rezerwacji z zewnętrznego serwisu.");
-    }
-
-    const normalized = this.normalizeReservationsCards(data);
-
-    if (Object.keys(normalized).length === 0) {
-      throw new Error("Brak kart rezerwacji po przetworzeniu odpowiedzi.");
-    }
-
-    await this.redis.set(cacheKey, JSON.stringify(normalized), 60 * 60);
-
-    return normalized;
+        return normalized;
+      },
+    });
   }
+
   async getReservations(guildId: string) {
-    const monthAgoDate = await this.deleteExpiredReservations(guildId);
+    const monthAgoDate = await this.deleteExpiredReservationsWithGate(guildId);
+    const serializedReservations = await this.redis.getOrSetJsonBestEffort({
+      key: this.getReservationsCacheKey(guildId),
+      ttlSeconds: RESERVATIONS_CACHE_TTL_SECONDS,
+      onError: (error) =>
+        this.logger.warn("Reservations cache unavailable", error),
+      factory: async () => {
+        const reservations = (await this.prisma.reservation.findMany({
+          where: {
+            guildId,
+            toDate: { gte: monthAgoDate },
+          },
+          orderBy: [{ reservationId: "asc" }, { fromDate: "asc" }],
+        })) as ReservationRecord[];
 
-    const reservations = (await this.prisma.reservation.findMany({
-      where: {
-        guildId,
-        toDate: { gte: monthAgoDate },
+        return this.serializeReservationGroups(
+          this.groupReservationRecords(reservations),
+        );
       },
-      orderBy: [{ reservationId: "asc" }, { fromDate: "asc" }],
-    })) as ReservationRecord[];
+    });
 
-    return reservations.reduce<Record<string, ReservationRecord[]>>(
-      (accumulator, reservation) => {
-        const list =
-          accumulator[reservation.reservationId] ??
-          (accumulator[reservation.reservationId] = []);
-
-        list.push(this.mapReservationRecord(reservation));
-
-        return accumulator;
-      },
-      {},
-    );
+    return this.deserializeReservationGroups(serializedReservations);
   }
 
   async clearReservations(guildId: string) {
     await this.prisma.reservation.deleteMany({
       where: { guildId },
     });
+    await this.invalidateReservationsCache(guildId);
   }
 
   async deleteReservation(options: {
@@ -416,6 +525,7 @@ export class ReservationsService {
     });
 
     const record = this.mapReservationRecord(reservation);
+    await this.invalidateReservationsCache(guildId);
     this.emitReservationDeleted(guildId, record);
 
     return record;

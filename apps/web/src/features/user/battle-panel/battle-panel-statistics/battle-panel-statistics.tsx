@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { startTransition, useEffect } from "react";
 import {
   battlesControllerGetCombatProfile,
   useBattlesControllerGetBattleDuration,
@@ -19,7 +19,6 @@ import { PhGrowthChart } from "./components/ph-growth-chart";
 import { RatingGrowthChart } from "./components/rating-growth-chart";
 import { RatingDeltaByOpponentCard } from "./components/rating-delta-by-opponent-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Card } from "@lootlog/ui/components/card";
 import { SectionHeader } from "@/components/layout/section-header";
 import { BarChart3 } from "lucide-react";
 import { useQueryStates } from "nuqs";
@@ -30,6 +29,7 @@ import {
 import { CombatProfileOverview } from "./components/combat-profile-overview";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { BattlePanelStatisticsSkeleton } from "./battle-panel-statistics-skeleton";
 
 export function BattlePanelStatistics() {
   const { t } = useTranslation();
@@ -159,152 +159,165 @@ export function BattlePanelStatistics() {
   };
 
   if (isLoadingCharacters) {
-    return null;
+    return <BattlePanelStatisticsSkeleton />;
   }
 
   return (
-    <ScrollArea className="h-full bg-background/50">
-      <div className="px-3 py-3 flex flex-col gap-4">
-        <SectionHeader
-          icon={BarChart3}
-          title={t("battlePanel.statistics.title")}
-          subtitle={t("battlePanel.statistics.subtitle")}
-        />
-        <Card className="gap-3 border-border bg-card/60 p-3 backdrop-blur-sm">
-          <StatisticsFilters
-            characterId={currentCharacterId}
-            period={period}
-            minLevel={minLevel}
-            maxLevel={maxLevel}
-            ph={ph}
-            matchmaking={matchmaking}
-            onCharacterChange={(characterId) => {
-              void setQueryState({
-                characterId: characterId ?? null,
-              });
-            }}
-            onPeriodChange={(newPeriod) => {
-              void setQueryState({
-                period: newPeriod,
-              });
-            }}
-            onMinLevelChange={(newMinLevel) => {
-              void setQueryState({
-                minLevel: newMinLevel ?? 1,
-              });
-            }}
-            onMaxLevelChange={(newMaxLevel) => {
-              void setQueryState({
-                maxLevel: newMaxLevel ?? 500,
-              });
-            }}
-            onPhChange={(newPh) => {
-              void setQueryState({
-                ph: newPh ? true : null,
-              });
-            }}
-            onMatchmakingChange={(newMatchmaking) => {
-              void setQueryState({
-                matchmaking: newMatchmaking ? true : null,
-              });
-            }}
+    <div className="flex h-full min-h-0 flex-col bg-background/50">
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="flex min-h-full flex-col gap-4 px-3 py-3">
+          <SectionHeader
+            icon={BarChart3}
+            title={t("battlePanel.statistics.title")}
+            subtitle={t("battlePanel.statistics.subtitle")}
+          >
+            <StatisticsFilters
+              characterId={currentCharacterId}
+              period={period}
+              minLevel={minLevel}
+              maxLevel={maxLevel}
+              ph={ph}
+              matchmaking={matchmaking}
+              onCharacterChange={(characterId) => {
+                startTransition(() => {
+                  void setQueryState({
+                    characterId: characterId ?? null,
+                  });
+                });
+              }}
+              onPeriodChange={(newPeriod) => {
+                startTransition(() => {
+                  void setQueryState({
+                    period: newPeriod,
+                  });
+                });
+              }}
+              onMinLevelChange={(newMinLevel) => {
+                startTransition(() => {
+                  void setQueryState({
+                    minLevel: newMinLevel ?? 1,
+                  });
+                });
+              }}
+              onMaxLevelChange={(newMaxLevel) => {
+                startTransition(() => {
+                  void setQueryState({
+                    maxLevel: newMaxLevel ?? 500,
+                  });
+                });
+              }}
+              onPhChange={(newPh) => {
+                startTransition(() => {
+                  void setQueryState({
+                    ph: newPh ? true : null,
+                  });
+                });
+              }}
+              onMatchmakingChange={(newMatchmaking) => {
+                startTransition(() => {
+                  void setQueryState({
+                    matchmaking: newMatchmaking ? true : null,
+                  });
+                });
+              }}
+            />
+          </SectionHeader>
+
+          <CombatProfileOverview
+            data={combatProfile}
+            isLoading={isCombatProfileLoading}
           />
-        </Card>
 
-        <CombatProfileOverview
-          data={combatProfile}
-          isLoading={isCombatProfileLoading}
-        />
+          {matchmaking ? (
+            <>
+              <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                <CurrentStreakCard
+                  data={
+                    streakData ?? {
+                      current: { type: "none", count: 0 },
+                      longest: { wins: 0, losses: 0 },
+                    }
+                  }
+                  isLoading={isStreakLoading}
+                />
+                <BattleDurationStatsCard
+                  data={
+                    durationData ?? {
+                      avgWinDuration: 0,
+                      avgLossDuration: 0,
+                      fastest: null,
+                      longest: null,
+                    }
+                  }
+                  isLoading={isDurationLoading}
+                />
+                <RatingGrowthChart
+                  data={ratingGrowthData ?? []}
+                  isLoading={isRatingGrowthLoading}
+                />
+              </div>
 
-        {matchmaking ? (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
-              <CurrentStreakCard
-                data={
-                  streakData ?? {
-                    current: { type: "none", count: 0 },
-                    longest: { wins: 0, losses: 0 },
+              <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-2">
+                <ProfessionWinRateChart
+                  data={professionData ?? []}
+                  isLoading={isProfessionLoading}
+                />
+                <RatingDeltaByOpponentCard
+                  data={ratingDeltaData ?? []}
+                  search={{
+                    characterId: statisticsSearch.characterId,
+                    period: statisticsSearch.period,
+                    minLevel: statisticsSearch.minLevel,
+                    maxLevel: statisticsSearch.maxLevel,
+                  }}
+                  isLoading={isRatingDeltaLoading}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                <CurrentStreakCard
+                  data={
+                    streakData ?? {
+                      current: { type: "none", count: 0 },
+                      longest: { wins: 0, losses: 0 },
+                    }
                   }
-                }
-                isLoading={isStreakLoading}
-              />
-              <BattleDurationStatsCard
-                data={
-                  durationData ?? {
-                    avgWinDuration: 0,
-                    avgLossDuration: 0,
-                    fastest: null,
-                    longest: null,
+                  isLoading={isStreakLoading}
+                />
+                <BattleDurationStatsCard
+                  data={
+                    durationData ?? {
+                      avgWinDuration: 0,
+                      avgLossDuration: 0,
+                      fastest: null,
+                      longest: null,
+                    }
                   }
-                }
-                isLoading={isDurationLoading}
-              />
-              <RatingGrowthChart
-                data={ratingGrowthData ?? []}
-                isLoading={isRatingGrowthLoading}
-              />
-            </div>
+                  isLoading={isDurationLoading}
+                />
+                <PhGrowthChart
+                  data={phGrowthData ?? []}
+                  isLoading={isPhGrowthLoading}
+                />
+              </div>
 
-            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
-              <ProfessionWinRateChart
-                data={professionData ?? []}
-                isLoading={isProfessionLoading}
-              />
-              <RatingDeltaByOpponentCard
-                data={ratingDeltaData ?? []}
-                search={{
-                  characterId: statisticsSearch.characterId,
-                  period: statisticsSearch.period,
-                  minLevel: statisticsSearch.minLevel,
-                  maxLevel: statisticsSearch.maxLevel,
-                }}
-                isLoading={isRatingDeltaLoading}
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
-              <CurrentStreakCard
-                data={
-                  streakData ?? {
-                    current: { type: "none", count: 0 },
-                    longest: { wins: 0, losses: 0 },
-                  }
-                }
-                isLoading={isStreakLoading}
-              />
-              <BattleDurationStatsCard
-                data={
-                  durationData ?? {
-                    avgWinDuration: 0,
-                    avgLossDuration: 0,
-                    fastest: null,
-                    longest: null,
-                  }
-                }
-                isLoading={isDurationLoading}
-              />
-              <PhGrowthChart
-                data={phGrowthData ?? []}
-                isLoading={isPhGrowthLoading}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
-              <ProfessionWinRateChart
-                data={professionData ?? []}
-                isLoading={isProfessionLoading}
-              />
-              <HeadToHeadTable
-                data={headToHeadData?.records ?? []}
-                search={statisticsSearch}
-                isLoading={isHeadToHeadLoading}
-              />
-            </div>
-          </>
-        )}
-      </div>
-    </ScrollArea>
+              <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-2">
+                <ProfessionWinRateChart
+                  data={professionData ?? []}
+                  isLoading={isProfessionLoading}
+                />
+                <HeadToHeadTable
+                  data={headToHeadData?.records ?? []}
+                  search={statisticsSearch}
+                  isLoading={isHeadToHeadLoading}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
   );
 }

@@ -16,6 +16,12 @@ export default defineConfig({
     alias: {
       "@lootlog/battle-processor":
         "../../packages/battle-processor/src/index.ts",
+      "@lootlog/nest-shared/decorators":
+        "../../packages/nest-shared/src/decorators/index.ts",
+      "@lootlog/nest-shared/redis":
+        "../../packages/nest-shared/src/redis/index.ts",
+      "@lootlog/nest-shared/validators":
+        "../../packages/nest-shared/src/validators/index.ts",
     },
     setupFiles: ["./vitest.setup.ts"],
   }),

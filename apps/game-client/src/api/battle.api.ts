@@ -1,6 +1,11 @@
 import { getApiClient } from "@/lib/api-client";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
-import type { F, GameEvent, MatchSummary } from "@lootlog/margonem/game-events";
+import type {
+  F,
+  GameEvent,
+  MatchSummary,
+  W,
+} from "@lootlog/margonem/game-events";
 
 type KillNpcData = {
   id: number;
@@ -40,9 +45,18 @@ export async function createKill(
   return response.data;
 }
 
+export type BattleEventWarriorPayload = Pick<
+  W[string],
+  "originalId" | "name" | "lvl" | "prof" | "icon" | "team"
+>;
+
+type BattleEventFightPayload = Pick<F, "m" | "endBattle" | "init" | "auto"> & {
+  w?: Record<string, BattleEventWarriorPayload>;
+};
+
 export type BattleEventPayload = {
-  f?: Pick<F, "m" | "endBattle" | "init" | "auto" | "w">;
-  ev: number;
+  f?: BattleEventFightPayload;
+  ev?: number;
   party?: GameEvent["party"];
   match_summary?: Partial<MatchSummary>;
   matchmaking_state?: number;

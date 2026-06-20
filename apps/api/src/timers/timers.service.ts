@@ -1693,30 +1693,36 @@ export class TimersService implements OnModuleInit {
     const alwaysVisibleExpiredTimerKeys =
       await this.getAlwaysVisibleExpiredTimerKeys(userId, world);
     const cacheKey = this.getTimersCacheKey(guild.id, userId, world);
-    const cached = await this.redis.get(cacheKey);
+    const cached =
+      await this.redis.getJson<TimerWithOptionalMember[]>(cacheKey);
 
-    if (cached) {
+    if (cached !== null) {
       this.logger.log({ level: "debug", message: `Cache hit for ${cacheKey}` });
-      const cachedTimers = JSON.parse(cached) as TimerWithOptionalMember[];
       return this.filterTimersByPermissions(
-        cachedTimers,
+        cached,
         administrativeUser,
         roles,
       ).map((timer) => this.mapTimerResponse(timer));
     }
 
-    const timers = await this.prisma.timer.findMany({
-      where: this.getTimersWhere(
-        guild.id,
-        world,
-        alwaysVisibleExpiredTimerKeys,
-        now,
-      ),
-      orderBy: { maxSpawnTime: "desc" },
-      include: { member: true, actorCharacter: true },
+    this.logger.log({ level: "debug", message: `Cache miss for ${cacheKey}` });
+
+    const timers = await this.redis.getOrSetJson({
+      key: cacheKey,
+      ttlSeconds: CACHE_TTL_SECONDS,
+      factory: () =>
+        this.prisma.timer.findMany({
+          where: this.getTimersWhere(
+            guild.id,
+            world,
+            alwaysVisibleExpiredTimerKeys,
+            now,
+          ),
+          orderBy: { maxSpawnTime: "desc" },
+          include: { member: true, actorCharacter: true },
+        }),
     });
 
-    await this.redis.set(cacheKey, JSON.stringify(timers), CACHE_TTL_SECONDS);
     return this.filterTimersByPermissions(
       timers,
       administrativeUser,

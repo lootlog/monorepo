@@ -1,13 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ActivityLogs } from "@/features/guild/activity-logs/activity-logs";
 import { ActivityLogsPageSkeleton } from "@/features/guild/activity-logs/activity-logs-page-skeleton";
-import { prefetchActivitiesControllerSuggestWorldsQuery } from "@/lib/api/generated/activity/guilds/guilds";
+import { getActivitiesControllerSuggestWorldsQueryOptions } from "@/lib/api/generated/activity/guilds/guilds";
 import {
   activityLogsInfiniteQueryOptions,
   getActivityLogSources,
   getActivityLogTypes,
 } from "@/features/guild/activity-logs/activity-logs.queries";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
+import {
+  prefetchRouteInfiniteQuery,
+  prefetchRouteQuery,
+} from "@/lib/router/route-prefetch";
 
 const getSearchParamValues = (searchParams: URLSearchParams, key: string) => {
   const values = searchParams.getAll(key).filter(Boolean);
@@ -15,12 +19,8 @@ const getSearchParamValues = (searchParams: URLSearchParams, key: string) => {
 };
 
 export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
-  loader: ({ abortController, context, location, params, preload }) =>
+  loader: ({ abortController, context, location, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
-      if (preload) {
-        return null;
-      }
-
       const searchParams = new URLSearchParams(location.searchStr);
       const startDate = searchParams.get("startDate") || undefined;
       const endDate = searchParams.get("endDate") || undefined;
@@ -28,8 +28,9 @@ export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
       const clanName = searchParams.get("clanName") || undefined;
       const world = searchParams.get("world") || undefined;
 
-      await Promise.all([
-        context.queryClient.fetchInfiniteQuery(
+      void Promise.all([
+        prefetchRouteInfiniteQuery(
+          context.queryClient,
           activityLogsInfiniteQueryOptions({
             guildId: params.guildId,
             types: getActivityLogTypes(
@@ -46,12 +47,14 @@ export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
             limit: 20,
           }),
         ),
-        prefetchActivitiesControllerSuggestWorldsQuery(
+        prefetchRouteQuery(
           context.queryClient,
-          { guildId: params.guildId },
-          { limit: 20 },
+          getActivitiesControllerSuggestWorldsQueryOptions(
+            { guildId: params.guildId },
+            { limit: 20 },
+          ),
         ),
-      ]);
+      ]).catch(() => undefined);
 
       return null;
     }),

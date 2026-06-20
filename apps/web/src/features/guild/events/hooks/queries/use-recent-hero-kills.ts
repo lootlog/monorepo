@@ -14,6 +14,8 @@ interface UseRecentHeroKillsOptions {
   limit?: number;
 }
 
+const EVENT_LIVE_QUERY_STALE_TIME_MS = 10_000;
+
 export const useRecentHeroKills = ({
   guildId,
   eventId,
@@ -48,8 +50,7 @@ export const useRecentHeroKills = ({
       return response.data;
     },
     enabled: !!guildId && !!eventId,
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: EVENT_LIVE_QUERY_STALE_TIME_MS,
   });
 };
 

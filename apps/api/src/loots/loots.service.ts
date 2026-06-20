@@ -42,6 +42,7 @@ import type {
   CreateLootResponse,
   CreateLootSubmittedGuild,
 } from "src/loots/dto/loot-response.dto";
+import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 
 type LootSubmissionData = {
   guildId: string;
@@ -70,6 +71,16 @@ type CreateLootOutcome = {
   submittedGuilds: CreateLootSubmittedGuild[];
   rejectedGuilds: CreateLootRejectedGuild[];
 };
+
+type CachedLootQueryResult = Omit<
+  LootQueryResult,
+  "createdAt" | "updatedAt"
+> & {
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
+
+const LOOTS_LIST_CACHE_TTL_SECONDS = 10;
 
 @Injectable()
 export class LootsService implements OnModuleInit {
@@ -199,6 +210,104 @@ export class LootsService implements OnModuleInit {
     }
 
     return uniqueSubmissions;
+  }
+
+  private isFirstLootsPage(params: FetchLootsParamsDto) {
+    return (
+      params.cursor === undefined ||
+      params.cursor === null ||
+      params.cursor <= 0
+    );
+  }
+
+  private getLootsListCacheKey(
+    guild: Guild,
+    permissions: Permission[],
+    roles: Role[],
+    params: FetchLootsParamsDto,
+  ) {
+    const visibilityScope = {
+      permissions: [...permissions].sort(),
+      roles: roles
+        .map((role) => ({
+          id: role.id,
+          lvlRangeFrom: role.lvlRangeFrom,
+          lvlRangeTo: role.lvlRangeTo,
+          permissions: [...role.permissions].sort(),
+        }))
+        .sort((leftRole, rightRole) => leftRole.id.localeCompare(rightRole.id)),
+    };
+
+    return [
+      "loots",
+      "list",
+      guild.id,
+      Buffer.from(
+        this.stableSerialize({
+          params: {
+            ...params,
+            cursor: 0,
+          },
+          visibilityScope,
+        }),
+      ).toString("base64url"),
+    ].join(":");
+  }
+
+  private async invalidateLootsListCache(guildIds: string[]) {
+    const uniqueGuildIds = [...new Set(guildIds)];
+
+    await Promise.all(
+      uniqueGuildIds.map(async (guildId) => {
+        try {
+          await this.redisService.deleteByPattern(`loots:list:${guildId}:*`);
+        } catch (error) {
+          this.logger.warn("Failed to invalidate loots list cache", {
+            error,
+            guildId,
+          });
+        }
+      }),
+    );
+  }
+
+  private stableSerialize(value: unknown): string {
+    if (Array.isArray(value)) {
+      return `[${value.map((entry) => this.stableSerialize(entry)).join(",")}]`;
+    }
+
+    if (value && typeof value === "object") {
+      const entries = Object.entries(value)
+        .filter(([, entry]) => entry !== undefined)
+        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
+
+      return `{${entries
+        .map(
+          ([key, entry]) =>
+            `${JSON.stringify(key)}:${this.stableSerialize(entry)}`,
+        )
+        .join(",")}}`;
+    }
+
+    return JSON.stringify(value);
+  }
+
+  private normalizeCachedLootDate(value: Date | string): Date {
+    if (value instanceof Date) {
+      return value;
+    }
+
+    return new Date(value);
+  }
+
+  private normalizeCachedLoots(
+    loots: CachedLootQueryResult[],
+  ): LootQueryResult[] {
+    return loots.map((loot) => ({
+      ...loot,
+      createdAt: this.normalizeCachedLootDate(loot.createdAt),
+      updatedAt: this.normalizeCachedLootDate(loot.updatedAt),
+    }));
   }
 
   private getSocketNpcPayloadFromLootNpcs(
@@ -403,6 +512,9 @@ export class LootsService implements OnModuleInit {
           });
         }
 
+        await this.invalidateLootsListCache(
+          newSubmissions.map((submission) => submission.guildId),
+        );
         await this.publishLootCreateEvents(
           existingLoot.id,
           newSubmissions,
@@ -455,6 +567,9 @@ export class LootsService implements OnModuleInit {
         })),
         skipDuplicates: true,
       });
+      await this.invalidateLootsListCache(
+        outcome.submissionData.map((submission) => submission.guildId),
+      );
       await this.publishLootCreateEvents(
         loot.id,
         outcome.submissionData,
@@ -542,15 +657,18 @@ export class LootsService implements OnModuleInit {
         guildId,
       },
     });
+    await this.invalidateLootsListCache([guildId]);
   }
 
-  createComment(options: {
+  async createComment(options: {
     discordId: string;
     guildId: string;
     lootId: number;
     body: CreateCommentDto;
   }) {
-    return this.lootCommentService.createComment(options);
+    const comment = await this.lootCommentService.createComment(options);
+    await this.invalidateLootsListCache([options.guildId]);
+    return comment;
   }
 
   async updateLoot(discordId: string, lootId: number, data: UpdateLootDto) {
@@ -652,6 +770,9 @@ export class LootsService implements OnModuleInit {
     const uniqueGuildSubmissions = this.getUniqueGuildSubmissions(
       loot.lootSubmissions,
     );
+    await this.invalidateLootsListCache(
+      uniqueGuildSubmissions.map((submission) => submission.guildId),
+    );
 
     await Promise.all(
       uniqueGuildSubmissions.map((submission) =>
@@ -671,12 +792,32 @@ export class LootsService implements OnModuleInit {
     return mappedLootShare;
   }
 
-  fetchLootsByGuildId(
+  async fetchLootsByGuildId(
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
     params: FetchLootsParamsDto,
   ) {
+    if (this.isFirstLootsPage(params)) {
+      const loots = await this.redisService.getOrSetJsonBestEffort<
+        CachedLootQueryResult[]
+      >({
+        key: this.getLootsListCacheKey(guild, permissions, roles, params),
+        ttlSeconds: LOOTS_LIST_CACHE_TTL_SECONDS,
+        onError: (error) =>
+          this.logger.warn("Loots list cache unavailable", { error }),
+        factory: () =>
+          this.lootQueryService.fetchLootsByGuildId(
+            guild,
+            permissions,
+            roles,
+            params,
+          ),
+      });
+
+      return this.normalizeCachedLoots(loots);
+    }
+
     return this.lootQueryService.fetchLootsByGuildId(
       guild,
       permissions,

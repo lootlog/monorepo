@@ -21,6 +21,9 @@ interface RetryConfig {
   dlqExchange?: string;
 }
 
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_RETRY_DELAY_MS = 30000;
+
 @Injectable()
 export class RetryService {
   constructor(
@@ -30,18 +33,16 @@ export class RetryService {
 
   shouldRetry(
     headers: Record<string, unknown>,
-    maxRetries: number = 3,
+    maxRetries: number = DEFAULT_MAX_RETRIES,
   ): boolean {
     const retryCount = this.getRetryCount(headers);
     return retryCount < maxRetries;
   }
 
   getRetryCount(headers: Record<string, unknown>): number {
-    if (
-      headers["x-retry-count"] &&
-      typeof headers["x-retry-count"] === "number"
-    ) {
-      return headers["x-retry-count"];
+    const retryCount = headers["x-retry-count"];
+    if (typeof retryCount === "number") {
+      return retryCount;
     }
 
     const xDeath = headers["x-death"];
@@ -59,7 +60,7 @@ export class RetryService {
     headers: Record<string, unknown> = {},
     config: RetryConfig = {},
   ): Promise<void> {
-    const dlqExchange = config.dlqExchange || DEAD_LETTER_EXCHANGE_NAME;
+    const dlqExchange = config.dlqExchange ?? DEAD_LETTER_EXCHANGE_NAME;
 
     this.logger.log({
       level: "warn",
@@ -75,7 +76,10 @@ export class RetryService {
     });
   }
 
-  getRetryQueueOptions(mainRoutingKey: string, retryDelayMs: number = 30000) {
+  getRetryQueueOptions(
+    mainRoutingKey: string,
+    retryDelayMs: number = DEFAULT_RETRY_DELAY_MS,
+  ) {
     const mainExchange = DEFAULT_EXCHANGE_NAME;
 
     return {
@@ -89,7 +93,7 @@ export class RetryService {
   getMainQueueOptions(retryRoutingKey: string, config: RetryConfig = {}) {
     return {
       durable: true,
-      deadLetterExchange: config.retryExchange || RETRY_EXCHANGE_NAME,
+      deadLetterExchange: config.retryExchange ?? RETRY_EXCHANGE_NAME,
       deadLetterRoutingKey: retryRoutingKey,
     };
   }
@@ -102,7 +106,7 @@ export class RetryService {
     config: RetryConfig = {},
   ): Promise<boolean> {
     const retryCount = this.getRetryCount(headers);
-    const maxRetries = config.maxRetries || 3;
+    const maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
 
     if (!this.shouldRetry(headers, maxRetries)) {
       this.logger.log({
@@ -126,9 +130,9 @@ export class RetryService {
     identifier: string,
     config: RetryConfig = {},
   ): void {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
     const currentRetryCount = this.getRetryCount(headers);
-    const retryDelayMs = config.retryDelayMs || 30000;
+    const retryDelayMs = config.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
 
     this.logger.log({
       level: "info",

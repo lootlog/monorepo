@@ -16,7 +16,7 @@ export const Route = createFileRoute(
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       try {
-        await Promise.all([
+        const [battle] = await Promise.all([
           context.queryClient.ensureQueryData(
             getBattlesControllerGetBattleQueryOptions({
               battleId: params.battleId,
@@ -29,7 +29,7 @@ export const Route = createFileRoute(
           ),
         ]);
 
-        return null;
+        return { battle };
       } catch (error) {
         throwNotFoundIfResponseMatches(error);
       }

@@ -31,15 +31,17 @@ import {
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
-import { getNpcTypeByWt } from "@lootlog/types";
 import { format } from "date-fns";
-import { LoaderCircle, Swords, User, XIcon } from "lucide-react";
+import { LoaderCircle, Swords, XIcon } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
-import { NpcType } from "@/api/npcs.api";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
 import { useTranslation } from "react-i18next";
+import {
+  getNotificationSettingsKey,
+  isNotificationSettingsKey,
+} from "@/features/notifications/utils/get-notification-settings-key";
 
 const AUTO_HIDE_RING_PATH =
   "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";
@@ -191,14 +193,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       ? notification
       : null;
 
-  const npcType = regularNotification?.npc
-    ? getNpcTypeByWt(NpcType, regularNotification.npc.wt)
+  const key = getNotificationSettingsKey(notification);
+  const categorySettings = isNotificationSettingsKey(key)
+    ? settings[key]
     : undefined;
-
-  const key = (
-    isPartyGathering ? "party-gathering" : (npcType ?? "message")
-  ) as keyof typeof settings;
-  const categorySettings = settings[key];
   const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
   const autoHideDurationMs = autoHideTimeout > 0 ? autoHideTimeout * 1000 : 0;
 
@@ -238,6 +236,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const showPartyGatheringAction = isPartyGathering;
   const showJoinAction = Boolean(regularNotification?.isGatheringParty);
   let actionLabel: string | null = null;
+  const hasAutoHideState = Boolean(autoHideState);
+  const autoHideDeadlineMs = autoHideState?.deadlineMs;
+  const autoHidePausedRemainingMs = autoHideState?.pausedRemainingMs;
 
   if (showPartyGatheringAction) {
     actionLabel = t("actions.join");
@@ -265,10 +266,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
     const { width, height } = svg.getBoundingClientRect();
     const totalLength = 2 * (width + height);
-    const deadlineMs =
-      autoHideState?.deadlineMs ?? Date.now() + autoHideDurationMs;
+    const deadlineMs = autoHideDeadlineMs ?? Date.now() + autoHideDurationMs;
     const remainingMs =
-      autoHideState?.pausedRemainingMs ?? Math.max(0, deadlineMs - Date.now());
+      autoHidePausedRemainingMs ?? Math.max(0, deadlineMs - Date.now());
     const clampedRemainingMs = Math.min(autoHideDurationMs, remainingMs);
     const elapsedMs = Math.max(0, autoHideDurationMs - clampedRemainingMs);
     const initialOffset = (elapsedMs / autoHideDurationMs) * totalLength;
@@ -286,7 +286,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       };
     }
 
-    if (autoHideState && autoHideState.pausedRemainingMs !== null) {
+    if (hasAutoHideState && autoHidePausedRemainingMs !== null) {
       return () => {
         path.style.strokeDasharray = "";
         path.style.strokeDashoffset = "";
@@ -317,8 +317,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     };
   }, [
     autoHideDurationMs,
-    autoHideState?.deadlineMs,
-    autoHideState?.pausedRemainingMs,
+    autoHideDeadlineMs,
+    autoHidePausedRemainingMs,
+    hasAutoHideState,
   ]);
 
   const handleMuteMenuOpenChange = (open: boolean) => {
