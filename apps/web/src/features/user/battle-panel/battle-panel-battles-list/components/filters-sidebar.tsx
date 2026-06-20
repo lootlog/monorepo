@@ -46,6 +46,7 @@ type FiltersSidebarProps = {
   onFiltersChange: (filters: BattleFilters) => void;
   characters?: Array<{ id: string; name: string; world: string }>;
   className?: string;
+  showMatchmakingFilter?: boolean;
 };
 
 export const FiltersSidebar = ({
@@ -53,6 +54,7 @@ export const FiltersSidebar = ({
   onFiltersChange,
   characters = [],
   className,
+  showMatchmakingFilter = true,
 }: FiltersSidebarProps) => {
   const { t } = useTranslation();
   const characterListId = useId();
@@ -150,7 +152,7 @@ export const FiltersSidebar = ({
     (filters.type?.length ?? 0) > 0 ||
     (filters.result?.length ?? 0) > 0 ||
     !!filters.ph ||
-    !!filters.matchmaking ||
+    (showMatchmakingFilter && !!filters.matchmaking) ||
     (filters.characterId?.length ?? 0) > 0 ||
     !!filters.search ||
     (filters.minLevel !== undefined && filters.minLevel !== 1) ||
@@ -321,20 +323,22 @@ export const FiltersSidebar = ({
                 </Label>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Swords className="h-4 w-4" />
-                <Checkbox
-                  id="sidebar-matchmaking-checkbox"
-                  checked={filters.matchmaking === true}
-                  onCheckedChange={handleMatchmakingToggle}
-                />
-                <Label
-                  htmlFor="sidebar-matchmaking-checkbox"
-                  className="cursor-pointer text-sm"
-                >
-                  {t("battlePanel.filters.matchmaking")}
-                </Label>
-              </div>
+              {showMatchmakingFilter && (
+                <div className="flex items-center gap-2">
+                  <Swords className="h-4 w-4" />
+                  <Checkbox
+                    id="sidebar-matchmaking-checkbox"
+                    checked={filters.matchmaking === true}
+                    onCheckedChange={handleMatchmakingToggle}
+                  />
+                  <Label
+                    htmlFor="sidebar-matchmaking-checkbox"
+                    className="cursor-pointer text-sm"
+                  >
+                    {t("battlePanel.filters.matchmaking")}
+                  </Label>
+                </div>
+              )}
 
               <Separator />
 

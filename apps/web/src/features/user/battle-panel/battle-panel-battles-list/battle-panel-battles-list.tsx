@@ -43,8 +43,9 @@ export const BattlePanelBattlesList = () => {
       search: queryState.search ?? undefined,
       result: queryState.result ?? undefined,
       ph: queryState.ph ?? undefined,
-      matchmaking: queryState.matchmaking ?? undefined,
       characterId: queryState.characterId ?? undefined,
+      startDate: queryState.startDate ?? undefined,
+      endDate: queryState.endDate ?? undefined,
       minLevel: queryState.minLevel,
       maxLevel: queryState.maxLevel,
     });
@@ -59,7 +60,6 @@ export const BattlePanelBattlesList = () => {
     search: queryState.search ?? undefined,
     result: queryState.result ?? undefined,
     ph: queryState.ph ?? undefined,
-    matchmaking: queryState.matchmaking ?? undefined,
     characterId: queryState.characterId ?? undefined,
     minLevel: queryState.minLevel,
     maxLevel: queryState.maxLevel,
@@ -86,7 +86,7 @@ export const BattlePanelBattlesList = () => {
       search: newFilters.search ?? null,
       result: newFilters.result ?? null,
       ph: newFilters.ph ?? null,
-      matchmaking: newFilters.matchmaking ?? null,
+      matchmaking: null,
       characterId: newFilters.characterId ?? null,
       minLevel: newFilters.minLevel ?? 1,
       maxLevel: newFilters.maxLevel ?? 500,
@@ -174,12 +174,7 @@ export const BattlePanelBattlesList = () => {
     });
   };
 
-  const handleMatchmakingToggle = (checked: boolean) => {
-    handleFiltersChange({
-      ...filters,
-      matchmaking: checked ? true : undefined,
-    });
-  };
+  const handleMatchmakingToggle = () => {};
 
   const activeFilterChips = buildBattleListFilterLabels({
     filters,
@@ -208,6 +203,7 @@ export const BattlePanelBattlesList = () => {
       onWarriorToggle={handleWarriorToggle}
       onWorldChange={handleWorldChange}
       selectedWarriors={selectedWarriors}
+      showMatchmakingFilter={false}
       worlds={worlds}
     />
   );
@@ -226,6 +222,7 @@ export const BattlePanelBattlesList = () => {
             onFiltersChange={handleFiltersChange}
             characters={characters}
             className="h-auto w-full border-l-0 p-0"
+            showMatchmakingFilter={false}
           />
         </BattlePanelMobileFiltersDrawer>
       )}
@@ -246,8 +243,9 @@ export const BattlePanelBattlesList = () => {
                 search: filters.search,
                 result: filters.result,
                 ph: filters.ph,
-                matchmaking: filters.matchmaking,
                 characterId: filters.characterId,
+                startDate: queryState.startDate ?? undefined,
+                endDate: queryState.endDate ?? undefined,
                 minLevel: filters.minLevel,
                 maxLevel: filters.maxLevel,
               }}

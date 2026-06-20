@@ -11,6 +11,8 @@ const QueryBattleAnalyticsSchema = z.object({
   period: z.enum(["24h", "3d", "7d", "14d", "30d", "90d", "180d"]).optional(),
   minLevel: intFromString({ min: 1 }).optional(),
   maxLevel: intFromString({ min: 1 }).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
   ph: booleanFromString.optional(),
   matchmaking: booleanFromString.optional(),
 });

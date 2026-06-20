@@ -50,6 +50,20 @@ export function getUserNavigationInfo({
     };
   }
 
+  if (normalizedPath === ROUTES.user.battlePanel.abyss) {
+    return {
+      breadcrumbs: [
+        {
+          label: t("layout.navigation.battlePanel"),
+          path: ROUTES.user.battlePanel.base,
+        },
+        { label: t("layout.breadcrumbs.abyss"), path: null },
+      ],
+      showBack: true,
+      backPath: ROUTES.user.battlePanel.base,
+    };
+  }
+
   if (normalizedPath === ROUTES.user.battlePanel.h2h) {
     return {
       breadcrumbs: [
@@ -76,13 +90,13 @@ export function getUserNavigationInfo({
           path: ROUTES.user.battlePanel.base,
         },
         {
-          label: t("layout.breadcrumbs.statistics"),
-          path: ROUTES.user.battlePanel.statistics,
+          label: t("layout.breadcrumbs.abyss"),
+          path: ROUTES.user.battlePanel.abyss,
         },
-        { label: t("layout.breadcrumbs.matchmakingHeadToHead"), path: null },
+        { label: t("layout.breadcrumbs.abyssHeadToHead"), path: null },
       ],
       showBack: true,
-      backPath: ROUTES.user.battlePanel.statistics,
+      backPath: ROUTES.user.battlePanel.abyss,
     };
   }
 
