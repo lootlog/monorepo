@@ -141,7 +141,7 @@ export const BattlePanelSingleBattle = () => {
   }, [selectedTurn]);
 
   useLayoutEffect(() => {
-    if (scrollAnimationFrameRef.current != null) {
+    if (scrollAnimationFrameRef.current !== null) {
       cancelAnimationFrame(scrollAnimationFrameRef.current);
       scrollAnimationFrameRef.current = null;
     }
@@ -200,7 +200,7 @@ export const BattlePanelSingleBattle = () => {
 
   useEffect(
     () => () => {
-      if (scrollAnimationFrameRef.current == null) {
+      if (scrollAnimationFrameRef.current === null) {
         return;
       }
 
@@ -210,7 +210,7 @@ export const BattlePanelSingleBattle = () => {
   );
 
   const handleTurnSelect = (turn: number) => {
-    if (scrollAnimationFrameRef.current != null) {
+    if (scrollAnimationFrameRef.current !== null) {
       cancelAnimationFrame(scrollAnimationFrameRef.current);
       scrollAnimationFrameRef.current = null;
     }
@@ -291,7 +291,7 @@ export const BattlePanelSingleBattle = () => {
       occlusionBottom,
     });
 
-    if (activeTurn == null || activeTurn === selectedTurnRef.current) {
+    if (activeTurn === null || activeTurn === selectedTurnRef.current) {
       return;
     }
 
@@ -301,7 +301,7 @@ export const BattlePanelSingleBattle = () => {
   };
 
   const handleBattleScroll = () => {
-    if (scrollAnimationFrameRef.current != null) {
+    if (scrollAnimationFrameRef.current !== null) {
       return;
     }
 
