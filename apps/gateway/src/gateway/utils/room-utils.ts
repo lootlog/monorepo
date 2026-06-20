@@ -1,9 +1,4 @@
-import {
-  getNpcRoutingTier,
-  Permission,
-  type NpcRoutingData,
-  type NpcRoutingTier,
-} from "@lootlog/types";
+import { Permission, type NpcRoutingTier } from "@lootlog/types";
 import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
 import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
 import { Platform } from "src/gateway/enums/platform.enum";
@@ -112,8 +107,7 @@ export function calculateUserRooms(
 
       // Calculate based on specific permissions
       for (const { feature, tier } of applicableFeatures) {
-        const requiredPermission = FEATURE_ROOMS[feature][tier];
-        if (hasPermission(roles, requiredPermission)) {
+        if (hasFeatureRoomAccess(roles, feature, tier)) {
           guildRooms.push(buildRoomName(guild.id, feature, tier));
         }
       }
@@ -135,10 +129,6 @@ export function getFeaturePermission(
   tier: TierName,
 ): Permission {
   return FEATURE_ROOMS[feature][tier];
-}
-
-export function getNpcTier(npc?: NpcRoutingData): TierName {
-  return getNpcRoutingTier(npc);
 }
 
 function isLevelWithinRoleRange(role: GuildRole, npcLevel: number): boolean {

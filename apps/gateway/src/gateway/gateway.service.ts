@@ -22,6 +22,7 @@ import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { Gateway } from "src/gateway/gateway";
 import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
 import { RedisService } from "@lootlog/nest-shared/redis";
+import { getNpcRoutingTier, type NpcRoutingData } from "@lootlog/types";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { UserGuildData } from "src/guilds/types/guild.types";
 import type {
@@ -33,7 +34,6 @@ import type {
 import {
   buildRoomName,
   calculateUserRooms,
-  getNpcTier,
   hasFeatureRoomAccess,
   type FeatureName,
   type TierName,
@@ -46,6 +46,10 @@ type FetchedSocket = Awaited<
 type FeatureRouting = {
   tier: TierName;
   npcLevel?: number;
+};
+
+type RoutedNpcData = NpcRoutingData & {
+  lvl?: number;
 };
 
 type RoutedDeleteTimerDto = DeleteTimerDto;
@@ -452,18 +456,13 @@ export class GatewayService {
     });
   }
 
-  private getNpcFeatureRouting(npc?: {
-    lvl?: number;
-    prof?: string;
-    type?: number | string;
-    wt?: number | string;
-  }): FeatureRouting {
+  private getNpcFeatureRouting(npc?: RoutedNpcData): FeatureRouting {
     if (!npc) {
       return { tier: "base" };
     }
 
     return {
-      tier: getNpcTier(npc),
+      tier: getNpcRoutingTier(npc),
       npcLevel: npc.lvl,
     };
   }

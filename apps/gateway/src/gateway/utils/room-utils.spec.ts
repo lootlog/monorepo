@@ -4,7 +4,6 @@ import type { GuildRole, UserGuildData } from "src/guilds/types/guild.types";
 import {
   buildRoomName,
   calculateUserRooms,
-  getNpcTier,
   hasFeatureRoomAccess,
 } from "./room-utils";
 
@@ -37,38 +36,6 @@ function createGuildData(
 }
 
 describe("room-utils", () => {
-  describe("getNpcTier", () => {
-    it("returns titans for numeric NPC payloads resolved from weight", () => {
-      expect(
-        getNpcTier({
-          type: 2,
-          wt: "120",
-          prof: "w",
-        }),
-      ).toBe("titans");
-    });
-
-    it("returns heroes for explicit event hero type", () => {
-      expect(
-        getNpcTier({
-          type: "EVENT_HERO",
-          wt: "85",
-          prof: "m",
-        }),
-      ).toBe("heroes");
-    });
-
-    it("falls back to base when type cannot be resolved", () => {
-      expect(
-        getNpcTier({
-          type: "unknown",
-          wt: "invalid",
-          prof: "m",
-        }),
-      ).toBe("base");
-    });
-  });
-
   describe("hasFeatureRoomAccess", () => {
     it("allows base feature access without npc level when permission matches", () => {
       expect(
