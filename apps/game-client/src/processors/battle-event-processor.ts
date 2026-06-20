@@ -23,7 +23,7 @@ const TRACKABLE_NPC_TYPES = new Set([
   NpcType.TITAN,
 ]);
 
-const showBattleCreatedToast = (battleId: number) => {
+const showBattleCreatedToast = (battleId: string) => {
   const t = getFixedT("timers");
   const battleUrl = `${LOOTLOG_APP_URL}/@me/battle-panel/battles/${battleId}`;
 
@@ -214,9 +214,19 @@ export class BattleEventProcessor {
 
           // Use incremental hasMultipleTeams flag instead of O(N*M) loop
           if (events && !hasNpcInBattle && this.hasMultipleTeams) {
+            const submissionId = await createSHA256Hash(
+              JSON.stringify({
+                accountId: String(accountId),
+                characterId: String(characterId),
+                events,
+                world,
+              }),
+            );
+
             createBattle({
               accountId: String(accountId),
               characterId: String(characterId),
+              submissionId,
               world,
               events,
             })

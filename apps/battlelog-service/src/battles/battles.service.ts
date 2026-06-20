@@ -120,6 +120,21 @@ export class BattlesService implements IBattlesService {
     }
   }
 
+  private async getExistingBattleBySubmissionId(
+    submissionId: string | undefined,
+  ): Promise<BattleWithRelations | null> {
+    if (!submissionId) {
+      return null;
+    }
+
+    const battle = await this.drizzle.db.query.battles.findFirst({
+      where: { submissionId },
+      with: { warriors: true },
+    });
+
+    return battle ? inflateBattleWarriorsInBattle(battle) : null;
+  }
+
   async getPublicBattles(query: QueryBattlesDto): Promise<GetAllBattlesResult> {
     try {
       const filterBuilder = await this.buildFilterConditions(query);
@@ -809,6 +824,9 @@ export class BattlesService implements IBattlesService {
             updatedAt: new Date(),
             accountId: data.accountId,
             characterId: data.characterId,
+            ...(data.submissionId && {
+              submissionId: data.submissionId,
+            }),
             world: data.world,
             duration: analysis.duration,
             type: analysis.type,
@@ -941,6 +959,14 @@ export class BattlesService implements IBattlesService {
 
       return inflateBattleWarriorsInBattle(battle);
     } catch (error) {
+      const existingBattle = await this.getExistingBattleBySubmissionId(
+        data.submissionId,
+      );
+
+      if (existingBattle) {
+        return existingBattle;
+      }
+
       this.logger.error("Failed to store battle in database:", error);
       throw new Error(
         `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,

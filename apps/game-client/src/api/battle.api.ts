@@ -1,5 +1,6 @@
 import { getApiClient } from "@/lib/api-client";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
+import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 import type {
   F,
   GameEvent,
@@ -40,6 +41,7 @@ export async function createKill(
       payload: params,
     },
     execute: () => client.post<CreateKillResponse>("/kills", params),
+    retry: GAME_EVENT_RETRY_OPTIONS,
   });
 
   return response.data;
@@ -65,12 +67,13 @@ export type BattleEventPayload = {
 export type CreateBattleOptions = {
   accountId: string;
   characterId: string;
+  submissionId: string;
   world: string;
   events: BattleEventPayload[];
 };
 
 type CreateBattleResponse = {
-  battleId: number;
+  battleId: string;
 };
 
 export async function createBattle(
@@ -86,6 +89,7 @@ export async function createBattle(
       payload: options,
     },
     execute: () => client.post<CreateBattleResponse>("/battles", options),
+    retry: GAME_EVENT_RETRY_OPTIONS,
   });
 
   return response.data;

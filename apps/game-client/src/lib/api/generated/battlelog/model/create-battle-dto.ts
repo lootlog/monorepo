@@ -10,6 +10,11 @@ import type { CreateBattleDtoEventsItem } from './create-battle-dto-events-item.
 export interface CreateBattleDto {
   accountId: string;
   characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  submissionId?: string;
   world: string;
   matchmaking?: boolean;
   /** @minItems 1 */
