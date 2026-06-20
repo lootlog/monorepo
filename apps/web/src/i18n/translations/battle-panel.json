@@ -159,9 +159,26 @@
       "title": "HP i momentum",
       "description": "Kliknij punkt, żeby przejść do tej tury w logu",
       "pin": "Przypnij",
+      "openDialog": "Otwórz duży wykres",
+      "dialogTitle": "HP i momentum",
       "team": "Drużyna {{team}}",
       "momentum": "Momentum",
       "turnTooltip": "Tura {{turn}}",
+      "layers": {
+        "title": "Warstwy",
+        "reset": "Przywróć domyślne warstwy"
+      },
+      "legend": {
+        "title": "Legenda wykresu",
+        "open": "Pokaż legendę wykresu",
+        "layers": "Warstwy",
+        "legendary": "Bonusy legendarne",
+        "empty": "Brak aktywnych markerów"
+      },
+      "events": {
+        "groupLabel": "Tura {{turn}}: {{events}}",
+        "eventCount": "{{event}} x{{count}}"
+      },
       "legendary": {
         "title": "Bonusy legendarne",
         "groupLabel": "Tura {{turn}}: {{bonuses}}",
@@ -171,18 +188,20 @@
         "critShield": "Krytyczna osłona",
         "curse": "Klątwa",
         "facade": "Fasada opieki",
+        "frenzy": "Eskalacja szału",
         "glare": "Oślepienie",
         "holyTouch": "Dotyk anioła",
         "lastHeal": "Ostatni ratunek",
         "legendary": "Bonus legendarny",
         "puncture": "Przeszywająca skuteczność",
+        "retaliation": "Aura odwetu",
         "unknown": "Bonus legendarny",
         "veryCrit": "Cios bardzo krytyczny"
       }
     },
     "recentOpponent": {
       "title": "Ostatnie walki",
-      "subtitle": "Przeciwko {{opponent}}",
+      "subtitle": "{{userName}} ({{userLevel}}{{userProf}}) vs. {{opponentName}} ({{opponentLevel}}{{opponentProf}})",
       "unsupported": "Dostępne dla walk 1v1",
       "unsupportedDescription": "Historia z tym przeciwnikiem pojawia się tylko dla jednoznacznych walk 1v1.",
       "empty": "Brak wcześniejszych walk z tym przeciwnikiem.",
@@ -190,10 +209,7 @@
       "openDialog": "Pokaż ostatnie walki",
       "viewAll": "Wszystkie",
       "viewAllAria": "Zobacz wszystkie walki z {{opponent}}",
-      "win": "W",
-      "loss": "L",
-      "versus": "vs",
-      "durationSeconds": "{{seconds}}s"
+      "noRating": "Brak ratingu"
     },
     "reasons": {
       "kill": "Ta tura zakończyła wojownika",
@@ -223,6 +239,7 @@
       "ph": "PH",
       "damage": "Obrażenia",
       "healing": "Leczenie",
+      "activeHealing": "Aktywne leczenie",
       "resource": "Zasoby",
       "combo": "Combo",
       "effectDamage": "Efekt"

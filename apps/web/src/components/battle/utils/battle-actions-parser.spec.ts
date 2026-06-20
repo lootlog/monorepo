@@ -53,4 +53,18 @@ describe("parseActions", () => {
       "-dmga",
     ]);
   });
+
+  it("keeps new legendary bonus actions with attack actions", () => {
+    const parsedActions = parseActions([
+      { actionType: "+legbon_frenzy_main", param: "5" },
+      { actionType: "+legbon_frenzy_off", param: "5" },
+      { actionType: "-legbon_retaliation", param: "" },
+    ]);
+
+    expect(parsedActions.attackActions.map((action) => action.type)).toEqual([
+      "+legbon_frenzy_main",
+      "+legbon_frenzy_off",
+      "-legbon_retaliation",
+    ]);
+  });
 });

@@ -5,6 +5,15 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
 import { ROUTES } from "@/config/routes";
 import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
+import {
+  BattleDamageTags,
+  getBattleDamageTags,
+} from "@/features/user/battle-panel/components/battle-damage-tags";
+import {
+  BattleResultStatus,
+  getBattleResultRowClassName,
+  type BattleResultStatusValue,
+} from "@/features/user/battle-panel/components/battle-result-status";
 import { useBattleSharing } from "@/features/user/battle-panel/battle-panel-single-battle/hooks/use-battle-sharing";
 import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
 import {
@@ -64,21 +73,12 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
-  Biohazard,
   Copy,
-  Flag,
-  Flame,
-  HeartCrack,
   Lock,
   MoreHorizontal,
   Share2,
   Shield,
-  Snowflake,
   Trash2,
-  Trophy,
-  XCircle,
-  Zap,
-  type LucideIcon,
 } from "lucide-react";
 import {
   useEffect,
@@ -90,9 +90,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
-
-type BattleResult = "won" | "lost" | "flee";
-type BattleDamageTag = "fire" | "frost" | "lightning" | "poison" | "wound";
 
 type BattlesTableProps = {
   battles: Battle[];
@@ -109,63 +106,6 @@ type BattlesTableProps = {
   totalCount?: number;
   toolbar?: ReactNode;
   toolbarEnd?: ReactNode;
-};
-
-type BattleTeamDamageTag = {
-  badgeClassName: string;
-  icon: LucideIcon;
-  key: BattleDamageTag;
-};
-
-const DAMAGE_TAG_CONFIG: Record<
-  BattleDamageTag,
-  Pick<BattleTeamDamageTag, "badgeClassName" | "icon">
-> = {
-  fire: {
-    badgeClassName: "border-red-500/20 bg-red-500/5 text-red-300",
-    icon: Flame,
-  },
-  frost: {
-    badgeClassName: "border-cyan-500/20 bg-cyan-500/5 text-cyan-300",
-    icon: Snowflake,
-  },
-  lightning: {
-    badgeClassName: "border-yellow-500/20 bg-yellow-500/5 text-yellow-300",
-    icon: Zap,
-  },
-  poison: {
-    badgeClassName: "border-green-500/20 bg-green-500/5 text-green-300",
-    icon: Biohazard,
-  },
-  wound: {
-    badgeClassName: "border-orange-500/20 bg-orange-500/5 text-orange-300",
-    icon: HeartCrack,
-  },
-};
-
-const BATTLE_RESULT_STATUS_CONFIG: Record<
-  BattleResult,
-  {
-    className: string;
-    icon: LucideIcon;
-    labelKey: string;
-  }
-> = {
-  won: {
-    className: "border-green-500/25 bg-green-500/10 text-green-400",
-    icon: Trophy,
-    labelKey: "battlePanel.list.results.won",
-  },
-  lost: {
-    className: "border-red-500/25 bg-red-500/10 text-red-400",
-    icon: XCircle,
-    labelKey: "battlePanel.list.results.lost",
-  },
-  flee: {
-    className: "border-yellow-500/25 bg-yellow-500/10 text-yellow-400",
-    icon: Flag,
-    labelKey: "battlePanel.list.results.flee",
-  },
 };
 
 const composeBattleUrl = (battleId: string) =>
@@ -193,7 +133,7 @@ const getBattleTeams = (battle: Battle) => {
   };
 };
 
-const getBattleResult = (battle: Battle): BattleResult => {
+const getBattleResult = (battle: Battle): BattleResultStatusValue => {
   if (battle.hasFlee) {
     return "flee";
   }
@@ -209,62 +149,8 @@ const getBattleResult = (battle: Battle): BattleResult => {
   return "lost";
 };
 
-const sumWarriorValues = (
-  warriors: BattleWarrior[],
-  getValue: (warrior: BattleWarrior) => number,
-) => warriors.reduce((total, warrior) => total + getValue(warrior), 0);
-
-const getTeamDamageTags = (
-  team: BattleWarrior[],
-  opposingTeam: BattleWarrior[],
-): BattleTeamDamageTag[] => {
-  const tags: BattleTeamDamageTag[] = [];
-
-  if (sumWarriorValues(team, (warrior) => warrior.fireDamage) > 0) {
-    tags.push({ key: "fire", ...DAMAGE_TAG_CONFIG.fire });
-  }
-
-  if (sumWarriorValues(team, (warrior) => warrior.frostDamage) > 0) {
-    tags.push({ key: "frost", ...DAMAGE_TAG_CONFIG.frost });
-  }
-
-  if (sumWarriorValues(team, (warrior) => warrior.lightningDamage) > 0) {
-    tags.push({
-      key: "lightning",
-      ...DAMAGE_TAG_CONFIG.lightning,
-    });
-  }
-
-  if (
-    sumWarriorValues(opposingTeam, (warrior) => warrior.poisonDamageTaken) > 0
-  ) {
-    tags.push({ key: "poison", ...DAMAGE_TAG_CONFIG.poison });
-  }
-
-  if (
-    sumWarriorValues(
-      opposingTeam,
-      (warrior) => warrior.woundDamageTaken + warrior.critWoundDamageTaken,
-    ) > 0
-  ) {
-    tags.push({ key: "wound", ...DAMAGE_TAG_CONFIG.wound });
-  }
-
-  return tags;
-};
-
 const getRowClassName = (battle: Battle) => {
-  const result = getBattleResult(battle);
-
-  if (result === "won") {
-    return "bg-green-500/5 hover:bg-green-500/10";
-  }
-
-  if (result === "lost") {
-    return "bg-red-500/5 hover:bg-red-500/10";
-  }
-
-  return "bg-yellow-500/5 hover:bg-yellow-500/10";
+  return getBattleResultRowClassName(getBattleResult(battle));
 };
 
 const getColumnResponsiveClassName = (columnId: string) => {
@@ -628,57 +514,29 @@ export const BattlesTable = ({
     );
   };
 
-  const renderDamageTagIcons = (tags: BattleTeamDamageTag[]) => {
-    if (tags.length === 0) {
-      return null;
-    }
-
-    return (
-      <div
-        data-battle-table-action
-        onClick={stopTableAction}
-        onClickCapture={stopTableAction}
-        onKeyDown={stopTableKeyboardAction}
-        className="ml-1 flex shrink-0 items-center gap-0.5"
-      >
-        {tags.map((tag) => {
-          const Icon = tag.icon;
-          const tagLabel = t(`battlePanel.list.damageTags.${tag.key}`);
-
-          return (
-            <Tooltip key={tag.key}>
-              <TooltipTrigger asChild>
-                <Badge
-                  data-battle-table-action
-                  onClick={stopTableAction}
-                  onKeyDown={stopTableKeyboardAction}
-                  tabIndex={0}
-                  role="img"
-                  aria-label={tagLabel}
-                  variant="outline"
-                  className={cn(
-                    "inline-flex size-5 min-w-5 items-center justify-center rounded-full p-0 shadow-none",
-                    tag.badgeClassName,
-                  )}
-                >
-                  <Icon className="size-3" aria-hidden="true" />
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>{tagLabel}</TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </div>
-    );
-  };
-
   const renderTeam = (
     team: BattleWarrior[],
     opposingTeam: BattleWarrior[],
     userWarrior?: BattleWarrior,
   ) => {
-    const tags = getTeamDamageTags(team, opposingTeam);
-    const tagIcons = renderDamageTagIcons(tags);
+    const hasTags = getBattleDamageTags(team, opposingTeam).length > 0;
+    const tagIcons = hasTags ? (
+      <BattleDamageTags
+        team={team}
+        opposingTeam={opposingTeam}
+        className="ml-1"
+        battleTableAction
+        containerProps={{
+          onClick: stopTableAction,
+          onClickCapture: stopTableAction,
+          onKeyDown: stopTableKeyboardAction,
+        }}
+        badgeProps={{
+          onClick: stopTableAction,
+          onKeyDown: stopTableKeyboardAction,
+        }}
+      />
+    ) : null;
     const shouldRenderInlineTags = team.length === 1;
 
     return (
@@ -712,9 +570,6 @@ export const BattlesTable = ({
 
   const renderBattleStatus = (battle: Battle) => {
     const result = getBattleResult(battle);
-    const resultConfig = BATTLE_RESULT_STATUS_CONFIG[result];
-    const ResultIcon = resultConfig.icon;
-    const resultLabel = t(resultConfig.labelKey);
 
     return (
       <div
@@ -723,21 +578,7 @@ export const BattlesTable = ({
         onKeyDown={stopTableKeyboardAction}
         className="mx-auto flex w-6 items-center justify-center"
       >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span
-              role="img"
-              aria-label={resultLabel}
-              className={cn(
-                "inline-flex size-6 items-center justify-center rounded-md border",
-                resultConfig.className,
-              )}
-            >
-              <ResultIcon className="size-3.5" aria-hidden="true" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{resultLabel}</TooltipContent>
-        </Tooltip>
+        <BattleResultStatus result={result} />
       </div>
     );
   };
@@ -801,7 +642,7 @@ export const BattlesTable = ({
                 role="button"
                 tabIndex={0}
                 variant="outline"
-                className="inline-flex h-6 cursor-pointer items-center justify-center rounded-md border-purple-500/50 bg-purple-500/10 px-1.5 py-0 text-[10px] font-semibold text-purple-400 hover:bg-purple-500/20"
+                className="inline-flex h-[18px] max-w-[92px] cursor-pointer items-center justify-center truncate rounded-md border-purple-500/50 bg-purple-500/10 px-1 py-0 text-[9px] font-semibold leading-none text-purple-400 hover:bg-purple-500/20"
               >
                 {t("battlePanel.filters.matchmaking")}
               </Badge>
@@ -840,7 +681,7 @@ export const BattlesTable = ({
         <div
           data-battle-table-action
           className={cn(
-            "absolute inset-0 flex cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-primary/10",
+            "absolute inset-0 flex cursor-pointer items-center justify-center transition-colors hover:bg-primary/10",
             selectedBattleIds.has(row.original.id) &&
               "bg-primary/10 text-primary ring-1 ring-inset ring-primary/40",
           )}

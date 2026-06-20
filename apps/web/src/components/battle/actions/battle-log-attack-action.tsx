@@ -27,7 +27,7 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
   return (
     actions.length > 0 && (
       <div
-        className={cn("px-4 py-1 bg-gray-100/10 flex flex-col", {
+        className={cn("flex flex-col bg-gray-100/10 px-3 py-0.5", {
           "bg-red-400/10": attacker?.team !== userTeam,
           "bg-green-400/10": attacker?.team === userTeam,
         })}
@@ -166,6 +166,9 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                         fastArrow: (
                           <span className="font-semibold text-yellow-400" />
                         ),
+                        frenzy: (
+                          <span className="font-semibold text-orange-300" />
+                        ),
                         crit: <span className="font-semibold text-red-400" />,
                         verycrit: (
                           <span className="font-semibold text-red-600" />
@@ -187,6 +190,9 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                         ),
                         legbonCritred: (
                           <span className="font-semibold text-sky-400" />
+                        ),
+                        retaliation: (
+                          <span className="font-semibold text-purple-300" />
                         ),
                         pierce: (
                           <span className="font-semibold text-green-500" />

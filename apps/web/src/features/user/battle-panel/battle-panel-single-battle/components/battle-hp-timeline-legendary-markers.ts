@@ -4,11 +4,13 @@ export type LegendaryBonusIconKey =
   | "critShield"
   | "curse"
   | "facade"
+  | "frenzy"
   | "glare"
   | "holyTouch"
   | "lastHeal"
   | "legendary"
   | "puncture"
+  | "retaliation"
   | "veryCrit";
 
 export type LegendaryBonusMarkerDefinition = {
@@ -67,6 +69,16 @@ export const LEGENDARY_BONUS_MARKER_DEFINITIONS: Record<
     labelKey: "battlePanel.single.chart.legendary.curse",
     color: "#facc15",
   },
+  "+legbon_frenzy_main": {
+    type: "frenzy",
+    labelKey: "battlePanel.single.chart.legendary.frenzy",
+    color: "#fb923c",
+  },
+  "+legbon_frenzy_off": {
+    type: "frenzy",
+    labelKey: "battlePanel.single.chart.legendary.frenzy",
+    color: "#fb923c",
+  },
   "+legbon_holytouch": {
     type: "holyTouch",
     labelKey: "battlePanel.single.chart.legendary.holyTouch",
@@ -102,6 +114,11 @@ export const LEGENDARY_BONUS_MARKER_DEFINITIONS: Record<
     labelKey: "battlePanel.single.chart.legendary.glare",
     color: "#fde047",
   },
+  "-legbon_retaliation": {
+    type: "retaliation",
+    labelKey: "battlePanel.single.chart.legendary.retaliation",
+    color: "#c084fc",
+  },
   legbon_holytouch_heal: {
     type: "holyTouch",
     labelKey: "battlePanel.single.chart.legendary.holyTouch",
@@ -121,6 +138,7 @@ const FALLBACK_LEGENDARY_BONUS_MARKER: LegendaryBonusMarkerDefinition = {
 };
 
 const CHART_HIDDEN_LEGENDARY_BONUS_ACTIONS = new Set([
+  "+legbon_puncture",
   "-legbon_critred",
   "-legbon_facade",
   "legbon_holytouch_heal",
@@ -128,6 +146,7 @@ const CHART_HIDDEN_LEGENDARY_BONUS_ACTIONS = new Set([
 const DEFENDER_TEAM_LEGENDARY_BONUS_ACTIONS = new Set([
   "-legbon_cleanse",
   "-legbon_glare",
+  "-legbon_retaliation",
 ]);
 
 export const getLegendaryBonusMarkerDefinition = (actionType: string) =>

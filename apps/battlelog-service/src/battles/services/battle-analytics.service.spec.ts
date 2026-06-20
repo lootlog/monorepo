@@ -640,9 +640,32 @@ describe("BattleAnalyticsService", () => {
         {
           ...mockBattle,
           id: "previous-battle",
+          hasFlee: true,
+          matchmaking: false,
+          opponentRating: null,
+          rating: null,
+          ratingDelta: null,
           warriors: [
-            { ...mockWarrior1, battleId: "previous-battle" },
-            { ...mockWarrior2, battleId: "previous-battle" },
+            {
+              ...mockWarrior1,
+              battleId: "previous-battle",
+              fireDamage: 11,
+              frostDamage: 12,
+              lightningDamage: 13,
+              poisonDamageTaken: 14,
+              woundDamageTaken: 15,
+              critWoundDamageTaken: 16,
+            },
+            {
+              ...mockWarrior2,
+              battleId: "previous-battle",
+              fireDamage: 21,
+              frostDamage: 22,
+              lightningDamage: 23,
+              poisonDamageTaken: 24,
+              woundDamageTaken: 25,
+              critWoundDamageTaken: 26,
+            },
           ],
         },
       ]);
@@ -660,7 +683,32 @@ describe("BattleAnalyticsService", () => {
       );
 
       expect(result.battles).toHaveLength(1);
-      expect(result.battles[0]?.battleId).toBe("previous-battle");
+      expect(result.battles[0]).toEqual(
+        expect.objectContaining({
+          battleId: "previous-battle",
+          hasFlee: true,
+          matchmaking: false,
+          opponentRating: null,
+          ratingDelta: null,
+          userRating: null,
+          userWarrior: expect.objectContaining({
+            fireDamage: 11,
+            frostDamage: 12,
+            lightningDamage: 13,
+            poisonDamageTaken: 14,
+            woundDamageTaken: 15,
+            critWoundDamageTaken: 16,
+          }),
+          opponentWarrior: expect.objectContaining({
+            fireDamage: 21,
+            frostDamage: 22,
+            lightningDamage: 23,
+            poisonDamageTaken: 24,
+            woundDamageTaken: 25,
+            critWoundDamageTaken: 26,
+          }),
+        }),
+      );
       expect(result.pagination.size).toBe(10);
       expect(result.pagination.hasNext).toBe(false);
       drizzleService.db.query.battles.findMany.mock.calls[0][0].where.RAW({});
