@@ -5,6 +5,10 @@ import type {
 import type { FC } from "react";
 import { BattleActionItem } from "./battle-action-item";
 import { cn } from "@lootlog/ui/lib/utils";
+import {
+  BATTLE_SURFACE_COLORS,
+  BATTLE_TEXT_COLORS,
+} from "../utils/battle-color-palette";
 
 export type BattlePassiveActionsProps = {
   actions: { type: string; value: string }[];
@@ -25,9 +29,9 @@ export const BattlePassiveActions: FC<BattlePassiveActionsProps> = ({
 
   return (
     <div
-      className={cn("bg-gray-100/10 py-0.5", {
-        "bg-red-400/[15%]": attacker?.team !== userTeam,
-        "bg-green-400/[15%]": attacker?.team === userTeam,
+      className={cn(BATTLE_SURFACE_COLORS.log.neutral, "py-0.5", {
+        [BATTLE_SURFACE_COLORS.log.enemyStrong]: attacker?.team !== userTeam,
+        [BATTLE_SURFACE_COLORS.log.friendlyStrong]: attacker?.team === userTeam,
       })}
     >
       {actions.map((action, sIndex) => (
@@ -43,11 +47,40 @@ export const BattlePassiveActions: FC<BattlePassiveActionsProps> = ({
           className={cn("bg-transparent p-0 px-3")}
           customComponents={{
             value: <span className="font-semibold" />,
-            heal: <span className="font-semibold text-blue-300" />,
-            poison: <span className="font-semibold text-green-400" />,
-            fire: <span className="font-semibold text-red-400" />,
-            light: <span className="font-semibold text-yellow-400" />,
-            anguish: <span className="font-semibold text-red-600" />,
+            heal: (
+              <span
+                className={cn("font-semibold", BATTLE_TEXT_COLORS.healing.log)}
+              />
+            ),
+            poison: (
+              <span
+                className={cn(
+                  "font-semibold",
+                  BATTLE_TEXT_COLORS.damage.poison,
+                )}
+              />
+            ),
+            fire: (
+              <span
+                className={cn("font-semibold", BATTLE_TEXT_COLORS.damage.fire)}
+              />
+            ),
+            light: (
+              <span
+                className={cn(
+                  "font-semibold",
+                  BATTLE_TEXT_COLORS.damage.lightning,
+                )}
+              />
+            ),
+            anguish: (
+              <span
+                className={cn(
+                  "font-semibold",
+                  BATTLE_TEXT_COLORS.legendary.anguish,
+                )}
+              />
+            ),
           }}
         />
       ))}

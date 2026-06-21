@@ -1,6 +1,10 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
 import { PlayerTile } from "./player-tile";
+import {
+  BATTLE_SURFACE_COLORS,
+  BATTLE_TEXT_COLORS,
+} from "./utils/battle-color-palette";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 
 export type TeamDisplayProps = {
@@ -23,9 +27,9 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
           key={member.id}
           className={cn(
             "flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1 box-border pr-4",
-            {
-              "border border-green-500": member.originalId === characterId,
-            },
+            member.originalId === characterId && "border",
+            member.originalId === characterId &&
+              BATTLE_SURFACE_COLORS.team.currentCharacterBorder,
           )}
         >
           <PlayerTile
@@ -36,7 +40,8 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
           <div className="text-xs">
             <div
               className={cn("font-semibold", {
-                "text-green-500": member.originalId === characterId,
+                [BATTLE_TEXT_COLORS.team.friendly]:
+                  member.originalId === characterId,
               })}
             >
               {member.name}

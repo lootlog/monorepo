@@ -2,6 +2,7 @@ import i18n from "@/i18n/config";
 import { getNavigationInfo } from "@/components/layout/get-navigation-info";
 import { getUserNavigationInfo } from "@/components/layout/get-user-navigation-info";
 import type { Breadcrumb } from "@/components/layout/get-navigation-info";
+import type { Battle } from "@/lib/api/battlelog-types";
 import { getBattleRouteLabel } from "@/lib/battle/battle-route-label";
 
 export type DocumentTitleMatch = {
@@ -13,7 +14,8 @@ export type DocumentTitleMatch = {
   loaderData?: unknown;
 };
 
-type ResolveDocumentTitleOptions = {
+export type ResolveDocumentTitleOptions = {
+  currentBattle?: Battle;
   guildName?: string;
 };
 
@@ -149,9 +151,14 @@ function getCurrentBreadcrumb(breadcrumbs: Breadcrumb[]) {
   return breadcrumbs[breadcrumbs.length - 1];
 }
 
-function getUserRouteTitle(lastMatch: DocumentTitleMatch) {
+function getUserRouteTitle(
+  lastMatch: DocumentTitleMatch,
+  options: ResolveDocumentTitleOptions,
+) {
   const navigationInfo = getUserNavigationInfo({
-    battleLabel: getBattleRouteLabel(lastMatch, t),
+    battleLabel: getBattleRouteLabel(lastMatch, t, {
+      currentBattle: options.currentBattle,
+    }),
     path: getPathname(lastMatch),
     t,
   });
@@ -280,7 +287,7 @@ export function resolveDocumentTitle(
   }
 
   if (lastMatch.routeId.startsWith(USER_ROUTE_PREFIX)) {
-    return getUserRouteTitle(lastMatch);
+    return getUserRouteTitle(lastMatch, options);
   }
 
   if (lastMatch.routeId.startsWith(GUILD_ROUTE_PREFIX)) {

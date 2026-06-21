@@ -1,3 +1,5 @@
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
+
 export type BattleHpTimelineLayerKey =
   | "legendary"
   | "stun"
@@ -25,52 +27,52 @@ export const BATTLE_HP_TIMELINE_LAYER_DEFINITIONS = [
   {
     key: "legendary",
     labelKey: "battlePanel.single.chart.legendary.title",
-    color: "#f59e0b",
+    color: BATTLE_HEX_COLORS.legendary.unknown,
   },
   {
     key: "stun",
     labelKey: "battlePanel.single.flags.stun",
-    color: "#a78bfa",
+    color: BATTLE_HEX_COLORS.timeline.stun,
   },
   {
     key: "freeze",
     labelKey: "battlePanel.single.flags.freeze",
-    color: "#38bdf8",
+    color: BATTLE_HEX_COLORS.timeline.freeze,
   },
   {
     key: "counter",
     labelKey: "battlePanel.single.flags.counter",
-    color: "#60a5fa",
+    color: BATTLE_HEX_COLORS.timeline.counter,
   },
   {
     key: "evade",
     labelKey: "battlePanel.single.flags.evade",
-    color: "#cbd5e1",
+    color: BATTLE_HEX_COLORS.timeline.evade,
   },
   {
     key: "parry",
     labelKey: "battlePanel.single.flags.parry",
-    color: "#818cf8",
+    color: BATTLE_HEX_COLORS.timeline.parry,
   },
   {
     key: "arrowBlock",
     labelKey: "battlePanel.single.flags.arrowBlock",
-    color: "#22c55e",
+    color: BATTLE_HEX_COLORS.timeline.arrowBlock,
   },
   {
     key: "pierceBlock",
     labelKey: "battlePanel.single.flags.pierceBlock",
-    color: "#fb7185",
+    color: BATTLE_HEX_COLORS.timeline.pierceBlock,
   },
   {
     key: "activeHealing",
     labelKey: "battlePanel.single.flags.activeHealing",
-    color: "#4ade80",
+    color: BATTLE_HEX_COLORS.timeline.activeHealing,
   },
   {
     key: "combo",
     labelKey: "battlePanel.single.flags.combo",
-    color: "#fbbf24",
+    color: BATTLE_HEX_COLORS.timeline.combo,
   },
 ] satisfies BattleHpTimelineLayerDefinition[];
 

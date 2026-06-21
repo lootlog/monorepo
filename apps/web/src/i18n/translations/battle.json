@@ -35,7 +35,7 @@
   "-endest": "<resourceDestroy>-Zniszczono <value>{{value}}</value> energii</resourceDestroy>",
   "-endest_reduced": "<resourceDestroy>-Zniszczono <value>{{value}}</value> (osłabione o <value>{{reducedValue}}</value> punktów) energii</resourceDestroy>",
   "-evade": "-Unik",
-  "-legbon_cleanse": "-Płomienne oczyszczenie",
+  "-legbon_cleanse": "<cleanse>-Płomienne oczyszczenie</cleanse>",
   "-legbon_critred": "<legbonCritred>-Krytyczna osłona, osłabienie obrażeń o <value>{{value}}%</value></legbonCritred>",
   "-legbon_facade": "<legbonFacade>-Fasada opieki, <value>{{value}}%</value> redukcji ciosów do końca walki</legbonFacade>",
   "-legbon_glare": "<curse>-Oślepienie w następnej turze</curse>",

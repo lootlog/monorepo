@@ -1,4 +1,5 @@
 import i18n from "@/i18n/config";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
 import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
@@ -81,7 +82,9 @@ export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
           <span
             className={cn(
               "font-medium",
-              delta >= 0 ? "text-green-600" : "text-red-600",
+              delta >= 0
+                ? BATTLE_TEXT_COLORS.result.won
+                : BATTLE_TEXT_COLORS.result.lost,
             )}
           >
             {sign}

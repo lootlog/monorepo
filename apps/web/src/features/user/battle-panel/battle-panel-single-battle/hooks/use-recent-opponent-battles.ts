@@ -11,27 +11,29 @@ export const useRecentOpponentBattles = (battle: Battle | undefined) => {
   const query = useQuery({
     queryKey: [
       "recent-opponent-battles",
-      "v2",
-      context?.battleId,
+      "v4",
       context?.characterId,
       context?.opponentId,
       context?.world,
     ],
-    queryFn: () => {
+    queryFn: ({ signal }) => {
       if (!context) {
         throw new Error("Missing recent opponent context");
       }
 
-      return battlesControllerGetPlayerVsPlayerBattles({
-        characterId: context.characterId,
-        excludeBattleId: context.battleId,
-        opponentId: context.opponentId,
-        period: "all",
-        size: 10,
-        world: context.world,
-      });
+      return battlesControllerGetPlayerVsPlayerBattles(
+        {
+          characterId: context.characterId,
+          opponentId: context.opponentId,
+          period: "all",
+          size: 10,
+          world: context.world,
+        },
+        { signal },
+      );
     },
     enabled: context !== null,
+    placeholderData: undefined,
   });
   const battles = query.data?.battles ?? [];
   const battleDetailsQueries = useQueries({

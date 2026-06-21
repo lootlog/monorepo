@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { PlayerTile } from "@/components/battle";
@@ -18,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { Period } from "@/store/battle-filters.store";
 import type { KeyboardEvent } from "react";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type RatingDeltaByOpponentCardSearch = {
   characterId?: string;
@@ -125,11 +127,11 @@ export function RatingDeltaByOpponentCard({
       ),
       cell: ({ row }) => (
         <div className="text-center">
-          <span className="text-green-600 font-medium">
+          <span className={cn("font-medium", BATTLE_TEXT_COLORS.result.won)}>
             {row.original.wins}
           </span>
           &nbsp;-&nbsp;
-          <span className="text-red-600 font-medium">
+          <span className={cn("font-medium", BATTLE_TEXT_COLORS.result.lost)}>
             {row.original.losses}
           </span>
         </div>
@@ -148,11 +150,12 @@ export function RatingDeltaByOpponentCard({
         return (
           <div className="text-center">
             <span
-              className={
+              className={cn(
+                "font-medium",
                 delta >= 0
-                  ? "text-green-600 font-medium"
-                  : "text-red-600 font-medium"
-              }
+                  ? BATTLE_TEXT_COLORS.result.won
+                  : BATTLE_TEXT_COLORS.result.lost,
+              )}
             >
               {sign}
               {delta}
@@ -174,11 +177,12 @@ export function RatingDeltaByOpponentCard({
         return (
           <div className="text-center">
             <span
-              className={
+              className={cn(
+                "font-medium",
                 delta >= 0
-                  ? "text-green-600 font-medium"
-                  : "text-red-600 font-medium"
-              }
+                  ? BATTLE_TEXT_COLORS.result.won
+                  : BATTLE_TEXT_COLORS.result.lost,
+              )}
             >
               {sign}
               {delta.toFixed(2)}

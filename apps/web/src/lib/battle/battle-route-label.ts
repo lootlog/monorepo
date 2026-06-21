@@ -11,6 +11,10 @@ type BattleRouteLoaderData = {
   battle?: Battle;
 };
 
+type BattleRouteLabelOptions = {
+  currentBattle?: Battle;
+};
+
 function getBattleFromLoaderData(loaderData: unknown) {
   if (!loaderData || typeof loaderData !== "object") {
     return;
@@ -48,9 +52,31 @@ function getOneVsOneBattleLabel(battle: Battle | undefined, t: Translate) {
   });
 }
 
+function getRouteBattle(
+  match: BattleRouteLabelMatch | undefined,
+  options: BattleRouteLabelOptions,
+) {
+  const battleId = match?.params?.battleId;
+
+  if (!battleId) {
+    return;
+  }
+
+  const loaderBattle = getBattleFromLoaderData(match?.loaderData);
+
+  if (loaderBattle?.id === battleId) {
+    return loaderBattle;
+  }
+
+  if (options.currentBattle?.id === battleId) {
+    return options.currentBattle;
+  }
+}
+
 export function getBattleRouteLabel(
   match: BattleRouteLabelMatch | undefined,
   t: Translate,
+  options: BattleRouteLabelOptions = {},
 ) {
   const battleId = match?.params?.battleId;
 
@@ -59,7 +85,7 @@ export function getBattleRouteLabel(
   }
 
   return (
-    getOneVsOneBattleLabel(getBattleFromLoaderData(match?.loaderData), t) ??
+    getOneVsOneBattleLabel(getRouteBattle(match, options), t) ??
     t("battlePanel.navigation.battleFallback", { id: battleId })
   );
 }

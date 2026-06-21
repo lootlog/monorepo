@@ -1,9 +1,11 @@
 import { PlayerTile } from "@/components/battle";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { cn } from "@lootlog/ui/lib/utils";
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,7 +19,6 @@ type BattlePanelBattleCardProps = {
   actions?: ReactNode;
   battle: Battle;
   isChecked: boolean;
-  onBattleClick: (battleId: string) => void;
   onSelectionChange: (battleId: string, selected: boolean) => void;
 };
 
@@ -32,7 +33,7 @@ const renderTeam = (team: BattleWarrior[], userWarrior?: BattleWarrior) => {
               className={cn(
                 "truncate text-xs font-medium",
                 warrior.originalId === userWarrior?.originalId &&
-                  "text-green-500",
+                  BATTLE_TEXT_COLORS.team.friendly,
               )}
             >
               {warrior.name}
@@ -52,7 +53,6 @@ export const BattlePanelBattleCard = ({
   actions,
   battle,
   isChecked,
-  onBattleClick,
   onSelectionChange,
 }: BattlePanelBattleCardProps) => {
   const { t } = useTranslation();
@@ -76,10 +76,11 @@ export const BattlePanelBattleCard = ({
             onSelectionChange(battle.id, checked === true)
           }
         />
-        <button
-          type="button"
-          className="min-w-0 flex-1 text-left"
-          onClick={() => onBattleClick(battle.id)}
+        <Link
+          to="/@me/battle-panel/battles/$battleId"
+          params={{ battleId: battle.id }}
+          preload={false}
+          className="min-w-0 flex-1 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <div className="flex min-w-0 items-start justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
@@ -107,7 +108,7 @@ export const BattlePanelBattleCard = ({
             </div>
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">{exactTime}</p>
-        </button>
+        </Link>
         {actions}
       </div>
     </article>
