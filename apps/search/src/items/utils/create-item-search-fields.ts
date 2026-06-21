@@ -27,10 +27,14 @@ const normalizeStatValue = (value: string): string | number | boolean => {
   return value;
 };
 
+const parseRequiredProfessions = (value: string): string[] =>
+  value.split("").filter(Boolean);
+
 export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
   const stats: Record<string, ItemStatValue> = {};
   const numericStats: Record<string, number> = {};
   const statsKeys: string[] = [];
+  let requiredProfessions: string[] = [...DEFAULT_REQUIRED_PROFESSIONS];
 
   for (const statEntry of statRaw.split(";")) {
     const [key, value] = statEntry.split("=");
@@ -42,8 +46,9 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
     statsKeys.push(key);
 
     if (key === "reqp") {
-      const requiredProfessions = value.split("").filter(Boolean);
-      stats[key] = requiredProfessions;
+      const parsedRequiredProfessions = parseRequiredProfessions(value);
+      stats[key] = parsedRequiredProfessions;
+      requiredProfessions = [...parsedRequiredProfessions];
       continue;
     }
 
@@ -54,10 +59,6 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
       numericStats[key] = normalizedValue;
     }
   }
-
-  const requiredProfessions = Array.isArray(stats["reqp"])
-    ? [...stats["reqp"]]
-    : [...DEFAULT_REQUIRED_PROFESSIONS];
 
   return {
     stats,
