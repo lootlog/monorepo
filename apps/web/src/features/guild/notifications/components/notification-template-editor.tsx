@@ -30,6 +30,7 @@ import {
   SCHEDULED_PRESET_SIMPLE,
   SCHEDULED_PRESET_MINIMAL,
 } from "../utils/notification-settings.utils";
+import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Command,
@@ -57,7 +58,6 @@ import {
 import {
   createPreviewTemplateValues,
   renderTemplatePreview,
-  getGuildRoleHexColor,
   createTemplateEditorNodes,
   serializeTemplateEditorValue,
   getBackspaceTemplateTokenNode,
@@ -346,7 +346,7 @@ export const NotificationTemplateEditor = ({
         nextSelection.insertNodes([
           $createNotificationTemplateRoleNode({
             roleColor: suggestion.role
-              ? getGuildRoleHexColor(suggestion.role)
+              ? getCustomRoleCssColor(suggestion.role.color)
               : null,
             roleId: suggestion.role?.id ?? suggestion.key,
             roleName: suggestion.role?.name ?? suggestion.label.slice(1),

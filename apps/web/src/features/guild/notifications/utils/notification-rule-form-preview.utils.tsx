@@ -1,6 +1,6 @@
 import { defaultUrlTransform, type Components } from "react-markdown";
-import { getGuildRoleHexColor } from "../components/notification-template-editor.utils";
 import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
+import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 
 const ROLE_LINK_PREFIX = "role:";
 
@@ -11,7 +11,7 @@ export const replaceRoleMentions = (text: string, roles: GuildRole[]) => {
     .replace(/<@&(\d+)>/g, (_match, roleId: string) => {
       const role = roleById.get(roleId);
       const name = role ? `@${role.name}` : `@${roleId}`;
-      const color = role ? (getGuildRoleHexColor(role) ?? "") : "";
+      const color = role ? (getCustomRoleCssColor(role.color) ?? "") : "";
       return `[${name}](${ROLE_LINK_PREFIX}${color})`;
     })
     .replace(/@(everyone|here)/g, (_match, keyword: string) => {
