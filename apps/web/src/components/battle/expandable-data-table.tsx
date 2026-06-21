@@ -70,39 +70,45 @@ export function ExpandableDataTable<TData, TValue>({
                 {headerGroup.headers.map((header) => {
                   const canSort = header.column.getCanSort();
                   const sortDirection = header.column.getIsSorted();
+                  let headerContent: React.ReactNode = null;
 
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : canSort ? (
+                  if (!header.isPlaceholder) {
+                    const renderedHeader = flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    );
+
+                    if (canSort) {
+                      let sortIcon = (
+                        <ArrowUpDown className="h-4 w-4 opacity-50" />
+                      );
+
+                      if (sortDirection === "asc") {
+                        sortIcon = <ArrowUp className="h-4 w-4" />;
+                      } else if (sortDirection === "desc") {
+                        sortIcon = <ArrowDown className="h-4 w-4" />;
+                      }
+
+                      headerContent = (
                         <button
                           type="button"
                           className="flex w-full items-center gap-2 cursor-pointer select-none hover:bg-gray-400/10 p-2 -m-2 rounded text-left"
                           onClick={header.column.getToggleSortingHandler()}
                         >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          <span className="ml-auto">
-                            {sortDirection === "asc" ? (
-                              <ArrowUp className="h-4 w-4" />
-                            ) : sortDirection === "desc" ? (
-                              <ArrowDown className="h-4 w-4" />
-                            ) : (
-                              <ArrowUpDown className="h-4 w-4 opacity-50" />
-                            )}
-                          </span>
+                          {renderedHeader}
+                          <span className="ml-auto">{sortIcon}</span>
                         </button>
-                      ) : (
-                        <div className={cn("flex items-center gap-2")}>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                      );
+                    } else {
+                      headerContent = (
+                        <div className="flex items-center gap-2">
+                          {renderedHeader}
                         </div>
-                      )}
-                    </TableHead>
-                  );
+                      );
+                    }
+                  }
+
+                  return <TableHead key={header.id}>{headerContent}</TableHead>;
                 })}
               </TableRow>
             ))}
