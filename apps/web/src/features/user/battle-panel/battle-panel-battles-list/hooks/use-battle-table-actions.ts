@@ -10,6 +10,7 @@ import {
 import {
   invalidatePublicBattlesControllerGetPublicBattle,
   invalidatePublicBattlesControllerGetPublicBattleRaw,
+  invalidatePublicBattlesControllerGetPublicBattleTimeline,
 } from "@/lib/api/generated/battlelog/public-battles/public-battles";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -63,6 +64,9 @@ export const useBattleTableActions = ({
           battleId,
         }),
         invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
+          battleId,
+        }),
+        invalidatePublicBattlesControllerGetPublicBattleTimeline(queryClient, {
           battleId,
         }),
       );
@@ -138,7 +142,9 @@ export const useBattleTableActions = ({
           }),
         ),
       );
-      await invalidateBattlesControllerGetDashboardBattles(queryClient);
+      await invalidateBattleVisibilityQueries(
+        selectedBattles.map((battle) => battle.id),
+      );
       toast.success(
         t("battlePanel.toasts.bulkBattlesDeleted", {
           count: selectedBattles.length,
@@ -169,7 +175,7 @@ export const useBattleTableActions = ({
       },
       {
         onSuccess: async () => {
-          await invalidateBattlesControllerGetDashboardBattles(queryClient);
+          await invalidateBattleVisibilityQueries([singleDeleteBattle.id]);
           toast.success(t("battlePanel.toasts.battleDeleted"), {
             duration: 3000,
           });

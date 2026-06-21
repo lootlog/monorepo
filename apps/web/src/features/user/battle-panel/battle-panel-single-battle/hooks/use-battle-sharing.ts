@@ -6,6 +6,7 @@ import {
 import {
   invalidatePublicBattlesControllerGetPublicBattle,
   invalidatePublicBattlesControllerGetPublicBattleRaw,
+  invalidatePublicBattlesControllerGetPublicBattleTimeline,
 } from "@/lib/api/generated/battlelog/public-battles/public-battles";
 import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
 import { useQueryClient } from "@tanstack/react-query";
@@ -53,6 +54,12 @@ export const useBattleSharing = () => {
             invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
               battleId,
             }),
+            invalidatePublicBattlesControllerGetPublicBattleTimeline(
+              queryClient,
+              {
+                battleId,
+              },
+            ),
           ]);
           const battleUrl = composeBattleUrl(response.id);
           toast.success(t("battlePanel.toasts.battleShared"), {
@@ -91,6 +98,12 @@ export const useBattleSharing = () => {
             invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
               battleId,
             }),
+            invalidatePublicBattlesControllerGetPublicBattleTimeline(
+              queryClient,
+              {
+                battleId,
+              },
+            ),
           ]);
           toast.success(t("battlePanel.toasts.battleHidden"), {
             duration: 3000,
