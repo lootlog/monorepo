@@ -21,7 +21,7 @@ import { useQueryStates } from "nuqs";
 import {
   battlePanelStatisticsSearchParsers,
   normalizeBattlePanelCharacterId,
-} from "@/features/user/battle-panel/battle-panel-statistics-search";
+} from "@/features/user/battle-panel/battle-panel-search";
 import { CombatProfileOverview } from "./components/combat-profile-overview";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";

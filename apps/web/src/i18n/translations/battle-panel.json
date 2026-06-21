@@ -232,6 +232,14 @@
       "team": "Drużyna {{team}}",
       "momentum": "Momentum",
       "turnTooltip": "Tura {{turn}}",
+      "tooltip": {
+        "momentum": "Momentum",
+        "deltas": "Zmiany tury",
+        "damage": "Obrażenia",
+        "healing": "Leczenie",
+        "mitigation": "Mitigacja",
+        "resourcePressure": "Presja zasobów"
+      },
       "layers": {
         "title": "Warstwy",
         "reset": "Przywróć domyślne warstwy"

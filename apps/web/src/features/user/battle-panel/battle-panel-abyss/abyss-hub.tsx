@@ -3,9 +3,13 @@ import { SectionHeader } from "@/components/layout/section-header";
 import { ROUTES } from "@/config/routes";
 import {
   battlePanelAbyssSearchParsers,
+  getBattlePanelCursorPaginationForCursor,
+  getBattlePanelPageIndex,
   normalizeBattlePanelCharacterId,
+  resetBattlePanelCursorPagination,
+  type Period,
   type AbyssTab,
-} from "@/features/user/battle-panel/battle-panel-statistics-search";
+} from "@/features/user/battle-panel/battle-panel-search";
 import {
   getBattlesControllerGetAbyssSeasonsQueryKey,
   getBattlesControllerGetBattleDurationQueryKey,
@@ -26,7 +30,6 @@ import {
   useBattlesControllerGetUserCharacters,
 } from "@/lib/api/generated/battlelog/battles/battles";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
-import type { Period } from "@/store/battle-filters.store";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -45,7 +48,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { BarChart3, List, Swords, Trophy } from "lucide-react";
 import { useQueryStates } from "nuqs";
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { AbyssAnalyticsTab } from "./abyss-analytics-tab";
 import { AbyssBattlesTab } from "./abyss-battles-tab";
@@ -66,10 +69,10 @@ export function AbyssHub() {
   const { data: charactersResponse, isLoading: isLoadingCharacters } =
     useBattlesControllerGetUserCharacters();
   const characters = charactersResponse?.characters;
-  const [pageIndex, setPageIndex] = useState(0);
   const [queryState, setQueryState] = useQueryStates(
     battlePanelAbyssSearchParsers,
   );
+  const pageIndex = getBattlePanelPageIndex(queryState.page);
 
   const activeTab = queryState.tab;
   const currentCharacterId = normalizeBattlePanelCharacterId(
@@ -193,14 +196,13 @@ export function AbyssHub() {
     });
 
   const handleCharacterChange = (characterId: string | undefined) => {
-    setPageIndex(0);
     startTransition(() => {
       void setQueryState({
+        ...resetBattlePanelCursorPagination(),
         characterId: characterId ?? null,
         seasonId: null,
         startDate: null,
         endDate: null,
-        cursor: null,
       });
     });
   };
@@ -211,13 +213,12 @@ export function AbyssHub() {
       return;
     }
 
-    setPageIndex(0);
     startTransition(() => {
       void setQueryState({
+        ...resetBattlePanelCursorPagination(),
         seasonId: nextSeason.id,
         startDate: nextSeason.startedAt,
         endDate: nextSeason.endedAt,
-        cursor: null,
       });
     });
   };
@@ -231,45 +232,41 @@ export function AbyssHub() {
       return;
     }
 
-    setPageIndex(0);
     startTransition(() => {
       void setQueryState({
+        ...resetBattlePanelCursorPagination(),
         tab: value,
-        cursor: null,
       });
     });
   };
 
   const handleMinLevelChange = (value: number | undefined) => {
-    setPageIndex(0);
     startTransition(() => {
       void setQueryState({
+        ...resetBattlePanelCursorPagination(),
         minLevel: value ?? 1,
-        cursor: null,
       });
     });
   };
 
   const handleMaxLevelChange = (value: number | undefined) => {
-    setPageIndex(0);
     startTransition(() => {
       void setQueryState({
+        ...resetBattlePanelCursorPagination(),
         maxLevel: value ?? 500,
-        cursor: null,
       });
     });
   };
 
   const handleCursorChange = (nextCursor: string | undefined) => {
-    if (!nextCursor) {
-      setPageIndex(0);
-    } else if (nextCursor === battlesResponse?.pagination.nextCursor) {
-      setPageIndex((currentPageIndex) => currentPageIndex + 1);
-    } else if (nextCursor === battlesResponse?.pagination.previousCursor) {
-      setPageIndex((currentPageIndex) => Math.max(currentPageIndex - 1, 0));
-    }
-
-    void setQueryState({ cursor: nextCursor ?? null });
+    void setQueryState(
+      getBattlePanelCursorPaginationForCursor({
+        currentPage: queryState.page,
+        nextCursor: battlesResponse?.pagination.nextCursor,
+        previousCursor: battlesResponse?.pagination.previousCursor,
+        targetCursor: nextCursor,
+      }),
+    );
   };
 
   const h2hSearch = {

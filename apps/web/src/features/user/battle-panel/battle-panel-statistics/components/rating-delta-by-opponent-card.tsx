@@ -17,7 +17,7 @@ import { ROUTES } from "@/config/routes";
 import type { RatingDeltaByOpponentRecord } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "@tanstack/react-router";
-import type { Period } from "@/store/battle-filters.store";
+import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import type { KeyboardEvent } from "react";
 import { cn } from "@lootlog/ui/lib/utils";
 

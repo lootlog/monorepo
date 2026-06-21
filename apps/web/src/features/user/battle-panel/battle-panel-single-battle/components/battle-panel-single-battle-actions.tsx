@@ -10,6 +10,7 @@ import {
 import {
   invalidatePublicBattlesControllerGetPublicBattle,
   invalidatePublicBattlesControllerGetPublicBattleRaw,
+  invalidatePublicBattlesControllerGetPublicBattleTimeline,
 } from "@/lib/api/generated/battlelog/public-battles/public-battles";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -87,6 +88,12 @@ export const BattlePanelSingleBattleActions: FC<
             invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
               battleId: battle.id,
             }),
+            invalidatePublicBattlesControllerGetPublicBattleTimeline(
+              queryClient,
+              {
+                battleId: battle.id,
+              },
+            ),
           ]);
           toast.success(t("battlePanel.toasts.battleDeleted"), {
             duration: 3000,

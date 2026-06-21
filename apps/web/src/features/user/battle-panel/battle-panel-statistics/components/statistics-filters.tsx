@@ -1,4 +1,4 @@
-import type { Period } from "@/store/battle-filters.store";
+import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { StatisticsFiltersMobile } from "./statistics-filters-mobile";
 import { StatisticsFiltersDesktop } from "./statistics-filters-desktop";
 

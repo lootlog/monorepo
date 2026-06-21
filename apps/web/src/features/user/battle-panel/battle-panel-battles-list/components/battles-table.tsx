@@ -1,8 +1,6 @@
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
-import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
-import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
 import {
   getBattleResult,
   getBattleTeams,
@@ -12,47 +10,14 @@ import type { BattlePanelFilterChip } from "@/features/user/battle-panel/compone
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
 import {
-  BattleDamageTags,
-  getBattleDamageTags,
-} from "@/features/user/battle-panel/components/battle-damage-tags";
-import {
   BattleResultStatus,
   getBattleResultRowClassName,
 } from "@/features/user/battle-panel/components/battle-result-status";
-import { useBattleSharing } from "@/features/user/battle-panel/battle-panel-single-battle/hooks/use-battle-sharing";
-import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
-import {
-  invalidateBattlesControllerGetBattle,
-  invalidateBattlesControllerGetDashboardBattles,
-  useBattlesControllerDeleteBattle,
-  useBattlesControllerUpdateBattle,
-} from "@/lib/api/generated/battlelog/battles/battles";
-import {
-  invalidatePublicBattlesControllerGetPublicBattle,
-  invalidatePublicBattlesControllerGetPublicBattleRaw,
-} from "@/lib/api/generated/battlelog/public-battles/public-battles";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { useBattleTableActions } from "@/features/user/battle-panel/battle-panel-battles-list/hooks/use-battle-table-actions";
+import { useBattleTableSelection } from "@/features/user/battle-panel/battle-panel-battles-list/hooks/use-battle-table-selection";
+import type { Battle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@lootlog/ui/components/alert-dialog";
-import { Badge } from "@lootlog/ui/components/badge";
-import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@lootlog/ui/components/dropdown-menu";
 import {
   Empty,
   EmptyDescription,
@@ -68,7 +33,6 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   getCoreRowModel,
   useReactTable,
@@ -77,24 +41,18 @@ import {
 } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
-import {
-  Copy,
-  Lock,
-  MoreHorizontal,
-  Share2,
-  Shield,
-  Trash2,
-} from "lucide-react";
-import {
-  useEffect,
-  useState,
-  type KeyboardEvent,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
+import { Shield } from "lucide-react";
+import type { MouseEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { useCopyToClipboard } from "usehooks-ts";
+import { BattleTableActionsMenu } from "./battle-table-actions-menu";
+import { BattleTableDeleteDialogs } from "./battle-table-delete-dialogs";
+import {
+  stopBattleTableAction,
+  stopBattleTableKeyboardAction,
+} from "./battle-table-events";
+import { BattleTableInfoBadges } from "./battle-table-info-badges";
+import { BattleTableTeamCell } from "./battle-table-team-cell";
 import { BattlesBulkActionsBar } from "./battles-bulk-actions-bar";
 
 type BattlesTableProps = {
@@ -118,9 +76,6 @@ type BattlesTableProps = {
   toolbar?: ReactNode;
   toolbarEnd?: ReactNode;
 };
-
-const composeBattleUrl = (battleId: string) =>
-  `${BATTLELOG_PUBLIC_URL}/battles/${battleId}`;
 
 const getRowClassName = (battle: Battle) => {
   return getBattleResultRowClassName(getBattleResult(battle));
@@ -154,20 +109,6 @@ const getColumnResponsiveClassName = (columnId: string) => {
   return "";
 };
 
-const stopTableAction = (event: MouseEvent<HTMLElement>) => {
-  event.stopPropagation();
-};
-
-const stopTableKeyboardAction = (event: KeyboardEvent<HTMLElement>) => {
-  event.stopPropagation();
-};
-
-const BATTLE_INFO_TAG_CLASS_NAME =
-  "inline-flex h-[17px] max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-foreground/30 bg-background/40 px-2 py-0 text-[10px] font-semibold leading-none text-muted-foreground";
-
-const BATTLE_INFO_TAG_ACTION_CLASS_NAME =
-  "cursor-pointer transition-colors hover:bg-background/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
-
 const BATTLE_TABLE_LINK_COLUMN_IDS = new Set([
   "status",
   "leftTeam",
@@ -200,146 +141,46 @@ export const BattlesTable = ({
 }: BattlesTableProps) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
-  const [, copy] = useCopyToClipboard();
-  const { handleShare, handleCopyLink, handleUnshare, isPending } =
-    useBattleSharing();
-  const { mutateAsync: updateBattle, isPending: isBulkSharePending } =
-    useBattlesControllerUpdateBattle();
   const {
-    mutate: deleteBattle,
-    mutateAsync: deleteBattleAsync,
-    isPending: isDeletePending,
-  } = useBattlesControllerDeleteBattle();
-  const [selectedBattleIds, setSelectedBattleIds] = useState<Set<string>>(
-    () => new Set(),
-  );
-  const [singleDeleteBattle, setSingleDeleteBattle] = useState<Battle | null>(
-    null,
-  );
-  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
-
-  const battleIdsFingerprint = battles.map((battle) => battle.id).join(",");
-  const effectiveSelectionLimit = selectionLimit ?? battles.length;
-  const selectedBattles = battles.filter((battle) =>
-    selectedBattleIds.has(battle.id),
-  );
-  const visibleBattleIds = battles.map((battle) => battle.id);
-  const selectableVisibleBattleIds = visibleBattleIds.slice(
-    0,
-    effectiveSelectionLimit,
-  );
-  const selectedVisibleCount = visibleBattleIds.filter((battleId) =>
-    selectedBattleIds.has(battleId),
-  ).length;
-  const selectedSelectableVisibleCount = selectableVisibleBattleIds.filter(
-    (battleId) => selectedBattleIds.has(battleId),
-  ).length;
-  const areAllSelectableRowsSelected =
-    selectableVisibleBattleIds.length > 0 &&
-    selectedSelectableVisibleCount === selectableVisibleBattleIds.length;
-  let headerCheckboxState: boolean | "indeterminate" = false;
-
-  if (areAllSelectableRowsSelected) {
-    headerCheckboxState = true;
-  } else if (selectedVisibleCount > 0) {
-    headerCheckboxState = "indeterminate";
-  }
-
-  const isBulkBusy = isBulkSharePending || isDeletePending;
-  const hasSelectedBattles = selectedBattles.length > 0;
-  const isRowActionBusy = isPending || isBulkBusy;
-
-  useEffect(() => {
-    setSelectedBattleIds(new Set());
-  }, [battleIdsFingerprint]);
-
-  const invalidateBattleVisibilityQueries = async (battleIds: string[]) => {
-    const invalidationPromises: Promise<unknown>[] = [
-      invalidateBattlesControllerGetDashboardBattles(queryClient),
-    ];
-
-    for (const battleId of battleIds) {
-      invalidationPromises.push(
-        invalidateBattlesControllerGetBattle(queryClient, { battleId }),
-        invalidatePublicBattlesControllerGetPublicBattle(queryClient, {
-          battleId,
-        }),
-        invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
-          battleId,
-        }),
-      );
-    }
-
-    await Promise.all(invalidationPromises);
-  };
-
-  const handleWorldBadgeClick = (
-    event: MouseEvent<HTMLElement>,
-    world: string,
-  ) => {
-    event.stopPropagation();
-    onWorldClick?.(world);
-  };
-
-  const handlePhBadgeClick = (event: MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    onPhClick?.();
-  };
-
-  const handleMatchmakingBadgeClick = (event: MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    onMatchmakingClick?.();
-  };
-
-  const handleFilterBadgeKeyDown = (
-    event: KeyboardEvent<HTMLElement>,
-    action: () => void,
-  ) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    action();
-  };
-
-  const handleSelectionChange = (battleId: string, checked: boolean) => {
-    if (
-      checked &&
-      !selectedBattleIds.has(battleId) &&
-      selectedBattleIds.size >= effectiveSelectionLimit
-    ) {
+    areAllSelectableRowsSelected,
+    clearSelection,
+    handleHeaderSelectionChange,
+    handleSelectionChange,
+    hasSelectedBattles,
+    headerCheckboxState,
+    removeBattleFromSelection,
+    selectedBattleIds,
+    selectedBattles,
+  } = useBattleTableSelection({
+    battles,
+    selectionLimit,
+    onSelectionLimitReached: (limit) => {
       toast.error(
         t("battlePanel.toasts.selectionLimitReached", {
-          limit: effectiveSelectionLimit,
+          limit,
         }),
       );
-      return;
-    }
-
-    setSelectedBattleIds((currentSelection) => {
-      const nextSelection = new Set(currentSelection);
-
-      if (checked) {
-        nextSelection.add(battleId);
-        return nextSelection;
-      }
-
-      nextSelection.delete(battleId);
-      return nextSelection;
-    });
-  };
-
-  const handleHeaderSelectionChange = (checked: boolean) => {
-    if (!checked || areAllSelectableRowsSelected) {
-      setSelectedBattleIds(new Set());
-      return;
-    }
-
-    setSelectedBattleIds(new Set(selectableVisibleBattleIds));
-  };
+    },
+  });
+  const {
+    handleBulkDelete,
+    handleBulkShare,
+    handleCopyLink,
+    handleShare,
+    handleSingleDelete,
+    handleUnshare,
+    isBulkBusy,
+    isBulkDeleteDialogOpen,
+    isDeletePending,
+    isRowActionBusy,
+    setIsBulkDeleteDialogOpen,
+    setSingleDeleteBattle,
+    singleDeleteBattle,
+  } = useBattleTableActions({
+    clearSelection,
+    removeBattleFromSelection,
+    selectedBattles,
+  });
 
   const handleHeaderSelectionCellClick = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
@@ -352,182 +193,6 @@ export const BattlesTable = ({
   ) => {
     event.stopPropagation();
     handleSelectionChange(battleId, !selectedBattleIds.has(battleId));
-  };
-
-  const handleClearSelection = () => {
-    setSelectedBattleIds(new Set());
-  };
-
-  const handleBulkShare = async () => {
-    if (selectedBattles.length === 0) {
-      return;
-    }
-
-    const privateBattles = selectedBattles.filter((battle) => !battle.public);
-
-    try {
-      await Promise.all(
-        privateBattles.map((battle) =>
-          updateBattle({
-            pathParams: { battleId: battle.id },
-            data: { public: true },
-          }),
-        ),
-      );
-
-      if (privateBattles.length > 0) {
-        await invalidateBattleVisibilityQueries(
-          privateBattles.map((battle) => battle.id),
-        );
-      }
-    } catch {
-      toast.error(t("battlePanel.toasts.bulkBattleShareError"), {
-        duration: 3000,
-      });
-      return;
-    }
-
-    try {
-      const links = selectedBattles
-        .map((battle) => composeBattleUrl(battle.id))
-        .join(", ");
-      const copied = await copy(links);
-
-      if (!copied) {
-        throw new Error("Bulk links were not copied");
-      }
-
-      toast.success(
-        t("battlePanel.toasts.bulkBattlesShared", {
-          count: selectedBattles.length,
-        }),
-        {
-          duration: 3000,
-        },
-      );
-    } catch {
-      toast.error(t("battlePanel.toasts.linkCopyError"), {
-        duration: 3000,
-      });
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedBattles.length === 0) {
-      return;
-    }
-
-    try {
-      await Promise.all(
-        selectedBattles.map((battle) =>
-          deleteBattleAsync({
-            pathParams: { battleId: battle.id },
-          }),
-        ),
-      );
-      await invalidateBattlesControllerGetDashboardBattles(queryClient);
-      toast.success(
-        t("battlePanel.toasts.bulkBattlesDeleted", {
-          count: selectedBattles.length,
-        }),
-        {
-          duration: 3000,
-        },
-      );
-      setSelectedBattleIds(new Set());
-      setIsBulkDeleteDialogOpen(false);
-    } catch {
-      toast.error(t("battlePanel.toasts.bulkBattleDeleteError"), {
-        duration: 3000,
-      });
-    }
-  };
-
-  const handleSingleDelete = () => {
-    if (!singleDeleteBattle) {
-      return;
-    }
-
-    deleteBattle(
-      {
-        pathParams: {
-          battleId: singleDeleteBattle.id,
-        },
-      },
-      {
-        onSuccess: async () => {
-          await invalidateBattlesControllerGetDashboardBattles(queryClient);
-          toast.success(t("battlePanel.toasts.battleDeleted"), {
-            duration: 3000,
-          });
-          setSelectedBattleIds((currentSelection) => {
-            const nextSelection = new Set(currentSelection);
-            nextSelection.delete(singleDeleteBattle.id);
-            return nextSelection;
-          });
-          setSingleDeleteBattle(null);
-        },
-        onError: () => {
-          toast.error(t("battlePanel.toasts.battleDeleteError"), {
-            duration: 3000,
-          });
-        },
-      },
-    );
-  };
-
-  const renderTeam = (
-    team: BattleWarrior[],
-    opposingTeam: BattleWarrior[],
-    userWarrior?: BattleWarrior,
-  ) => {
-    const hasTags = getBattleDamageTags(team, opposingTeam).length > 0;
-    const tagIcons = hasTags ? (
-      <BattleDamageTags
-        team={team}
-        opposingTeam={opposingTeam}
-        className="ml-1"
-        battleTableAction
-        containerProps={{
-          onClick: stopTableAction,
-          onClickCapture: stopTableAction,
-          onKeyDown: stopTableKeyboardAction,
-        }}
-        badgeProps={{
-          onClick: stopTableAction,
-          onKeyDown: stopTableKeyboardAction,
-        }}
-      />
-    ) : null;
-    const shouldRenderInlineTags = team.length === 1;
-
-    return (
-      <div className="flex min-w-0 max-w-[120px] flex-col gap-1 md:min-w-[220px] md:max-w-[280px]">
-        {team.map((warrior) => (
-          <div key={warrior.id} className="flex min-w-0 items-center gap-1.5">
-            <PlayerTile player={warrior} className="origin-center scale-75" />
-            <div className="flex min-w-0 flex-col gap-0.5 leading-tight">
-              <span
-                className={cn("min-w-0 truncate text-xs font-medium", {
-                  "text-green-500":
-                    warrior.originalId === userWarrior?.originalId,
-                })}
-              >
-                {warrior.name}
-              </span>
-              <span className="truncate text-[11px] font-normal text-muted-foreground">
-                ({warrior.lvl}
-                {warrior.prof})
-              </span>
-            </div>
-            {shouldRenderInlineTags && tagIcons}
-          </div>
-        ))}
-        {!shouldRenderInlineTags && tagIcons && (
-          <div className="ml-7 flex min-w-0">{tagIcons}</div>
-        )}
-      </div>
-    );
   };
 
   const renderBattleStatus = (battle: Battle) => {
@@ -568,136 +233,16 @@ export const BattlesTable = ({
     );
   };
 
-  const renderBattleInfo = (battle: Battle) => {
-    const visibilityLabel = battle.public
-      ? t("battleUi.metadata.public")
-      : t("battleUi.metadata.private");
-    const userWarrior = battle.warriors.find(
-      (warrior) => warrior.originalId === battle.characterId,
-    );
-
-    return (
-      <div
-        data-battle-table-action
-        onClick={stopTableAction}
-        onKeyDown={stopTableKeyboardAction}
-        className="flex max-w-[168px] flex-wrap items-center gap-1"
-      >
-        <button
-          type="button"
-          data-battle-table-action
-          onClick={(event) => handleWorldBadgeClick(event, battle.world)}
-          onKeyDown={stopTableKeyboardAction}
-          className={cn(
-            BATTLE_INFO_TAG_CLASS_NAME,
-            BATTLE_INFO_TAG_ACTION_CLASS_NAME,
-          )}
-        >
-          {capitalizeFirstLetter(battle.world)}
-        </button>
-        <span className={BATTLE_INFO_TAG_CLASS_NAME}>{visibilityLabel}</span>
-        {userWarrior?.ph !== 0 && userWarrior?.ph !== undefined && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                onClick={handlePhBadgeClick}
-                onKeyDown={(event) =>
-                  handleFilterBadgeKeyDown(event, () => onPhClick?.())
-                }
-                role="button"
-                tabIndex={0}
-                variant="outline"
-                className={cn(
-                  BATTLE_INFO_TAG_CLASS_NAME,
-                  BATTLE_INFO_TAG_ACTION_CLASS_NAME,
-                )}
-              >
-                {t("battlePanel.bulk.honorPointsShort")}
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              {t("battlePanel.filters.honorPoints")}
-            </TooltipContent>
-          </Tooltip>
-        )}
-        {battle.matchmaking && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                onClick={handleMatchmakingBadgeClick}
-                onKeyDown={(event) =>
-                  handleFilterBadgeKeyDown(event, () => onMatchmakingClick?.())
-                }
-                role="button"
-                tabIndex={0}
-                variant="outline"
-                className={cn(
-                  BATTLE_INFO_TAG_CLASS_NAME,
-                  BATTLE_INFO_TAG_ACTION_CLASS_NAME,
-                  "border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20",
-                )}
-              >
-                {t("battlePanel.filters.matchmaking")}
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              {t("battlePanel.filters.matchmaking")}
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-    );
-  };
-
   const renderBattleActions = (battle: Battle) => {
     return (
-      <div
-        data-battle-table-action
-        className="flex justify-end"
-        onClick={stopTableAction}
-        onKeyDown={stopTableKeyboardAction}
-      >
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label={t("battlePanel.actions.more")}
-              variant="ghost"
-              size="icon"
-              className="size-7 md:size-8"
-              disabled={isRowActionBusy}
-            >
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {battle.public ? (
-              <>
-                <DropdownMenuItem onSelect={() => handleCopyLink(battle.id)}>
-                  <Copy className="size-4" />
-                  {t("battlePanel.actions.copyLink")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => handleUnshare(battle.id)}>
-                  <Lock className="size-4" />
-                  {t("battlePanel.actions.hide")}
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <DropdownMenuItem onSelect={() => handleShare(battle.id)}>
-                <Share2 className="size-4" />
-                {t("battlePanel.actions.share")}
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onSelect={() => setSingleDeleteBattle(battle)}
-            >
-              <Trash2 className="size-4" />
-              {t("battlePanel.actions.delete")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      <BattleTableActionsMenu
+        battle={battle}
+        disabled={isRowActionBusy}
+        onCopyLink={handleCopyLink}
+        onDelete={setSingleDeleteBattle}
+        onShare={handleShare}
+        onUnshare={handleUnshare}
+      />
     );
   };
 
@@ -709,13 +254,13 @@ export const BattlesTable = ({
           data-battle-table-action
           className="absolute inset-0 flex cursor-pointer items-center justify-center transition-colors hover:bg-primary/10"
           onClick={handleHeaderSelectionCellClick}
-          onKeyDown={stopTableKeyboardAction}
+          onKeyDown={stopBattleTableKeyboardAction}
         >
           <Checkbox
             checked={headerCheckboxState}
             aria-label={t("battlePanel.bulk.selectRows")}
             className="size-5"
-            onClick={stopTableAction}
+            onClick={stopBattleTableAction}
             onCheckedChange={(checked) =>
               handleHeaderSelectionChange(checked === true)
             }
@@ -731,13 +276,13 @@ export const BattlesTable = ({
               "bg-primary/10 text-primary ring-1 ring-inset ring-primary/40",
           )}
           onClick={(event) => handleSelectionCellClick(event, row.original.id)}
-          onKeyDown={stopTableKeyboardAction}
+          onKeyDown={stopBattleTableKeyboardAction}
         >
           <Checkbox
             checked={selectedBattleIds.has(row.original.id)}
             aria-label={t("battlePanel.bulk.selectRow")}
             className="size-5"
-            onClick={stopTableAction}
+            onClick={stopBattleTableAction}
             onCheckedChange={(checked) =>
               handleSelectionChange(row.original.id, checked === true)
             }
@@ -764,7 +309,13 @@ export const BattlesTable = ({
           row.original,
         );
 
-        return renderTeam(leftTeam, rightTeam, userWarrior);
+        return (
+          <BattleTableTeamCell
+            team={leftTeam}
+            opposingTeam={rightTeam}
+            userWarrior={userWarrior}
+          />
+        );
       },
       enableSorting: false,
     },
@@ -774,7 +325,7 @@ export const BattlesTable = ({
       cell: ({ row }) => {
         const { leftTeam, rightTeam } = getBattleTeams(row.original);
 
-        return renderTeam(rightTeam, leftTeam);
+        return <BattleTableTeamCell team={rightTeam} opposingTeam={leftTeam} />;
       },
       enableSorting: false,
     },
@@ -783,7 +334,14 @@ export const BattlesTable = ({
       header: () => (
         <div className="text-left">{t("battlePanel.list.columns.info")}</div>
       ),
-      cell: ({ row }) => renderBattleInfo(row.original),
+      cell: ({ row }) => (
+        <BattleTableInfoBadges
+          battle={row.original}
+          onMatchmakingClick={onMatchmakingClick}
+          onPhClick={onPhClick}
+          onWorldClick={onWorldClick}
+        />
+      ),
       enableSorting: false,
     },
     {
@@ -832,7 +390,7 @@ export const BattlesTable = ({
   const selectionBar = hasSelectedBattles ? (
     <BattlesBulkActionsBar
       disabled={isBulkBusy}
-      onClearSelection={handleClearSelection}
+      onClearSelection={clearSelection}
       onDelete={() => setIsBulkDeleteDialogOpen(true)}
       onShare={handleBulkShare}
       selectedCount={selectedBattles.length}
@@ -938,67 +496,20 @@ export const BattlesTable = ({
         )}
       </BattlePanelResultsSurface>
 
-      <AlertDialog
-        open={isBulkDeleteDialogOpen}
-        onOpenChange={setIsBulkDeleteDialogOpen}
-      >
-        <AlertDialogContent onClick={stopTableAction}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("battlePanel.bulk.deleteDialog.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("battlePanel.bulk.deleteDialog.description", {
-                count: selectedBattles.length,
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                variant="destructive"
-                onClick={handleBulkDelete}
-                disabled={isDeletePending}
-              >
-                {t("battlePanel.bulk.deleteDialog.confirm")}
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={Boolean(singleDeleteBattle)}
-        onOpenChange={(open) => {
+      <BattleTableDeleteDialogs
+        isBulkDeleteDialogOpen={isBulkDeleteDialogOpen}
+        isDeletePending={isDeletePending}
+        onBulkDelete={handleBulkDelete}
+        onBulkDeleteOpenChange={setIsBulkDeleteDialogOpen}
+        onSingleDelete={handleSingleDelete}
+        onSingleDeleteOpenChange={(open) => {
           if (!open) {
             setSingleDeleteBattle(null);
           }
         }}
-      >
-        <AlertDialogContent onClick={stopTableAction}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("battlePanel.dialogs.deleteBattle.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("battlePanel.dialogs.deleteBattle.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                variant="destructive"
-                onClick={handleSingleDelete}
-                disabled={isDeletePending}
-              >
-                {t("battlePanel.dialogs.deleteBattle.confirm")}
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        selectedCount={selectedBattles.length}
+        singleDeleteBattle={singleDeleteBattle}
+      />
     </>
   );
 };
