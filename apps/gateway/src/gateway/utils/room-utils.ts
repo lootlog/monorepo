@@ -94,31 +94,25 @@ export function calculateUserRooms(
 
   for (const { guild, roles } of guilds) {
     const guildRooms: string[] = [];
-    const isOwner = guild.ownerId === discordId;
+    const hasFullGuildAccess =
+      guild.ownerId === discordId || isOwnerOrAdminFromRoles(roles);
 
     // Everyone gets presence and events rooms
     guildRooms.push(buildRoomName(guild.id, "presence"));
     guildRooms.push(buildRoomName(guild.id, "events"));
 
-    // Owner/Admin get all feature rooms + admin room
-    if (isOwner || isOwnerOrAdminFromRoles(roles)) {
+    if (hasFullGuildAccess) {
       guildRooms.push(buildRoomName(guild.id, "admin"));
+    }
+
+    if (hasFullGuildAccess || hasOnlinePlayersAccess(roles)) {
       guildRooms.push(buildRoomName(guild.id, "online-players"));
+    }
 
-      for (const { feature, tier } of applicableFeatures) {
+    for (const { feature, tier } of applicableFeatures) {
+      const requiredPermission = FEATURE_ROOMS[feature][tier];
+      if (hasFullGuildAccess || hasPermission(roles, requiredPermission)) {
         guildRooms.push(buildRoomName(guild.id, feature, tier));
-      }
-    } else {
-      if (hasPermission(roles, Permission.LOOTLOG_ONLINE_PLAYERS_READ)) {
-        guildRooms.push(buildRoomName(guild.id, "online-players"));
-      }
-
-      // Calculate based on specific permissions
-      for (const { feature, tier } of applicableFeatures) {
-        const requiredPermission = FEATURE_ROOMS[feature][tier];
-        if (hasPermission(roles, requiredPermission)) {
-          guildRooms.push(buildRoomName(guild.id, feature, tier));
-        }
       }
     }
 
