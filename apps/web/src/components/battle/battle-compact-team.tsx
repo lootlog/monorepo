@@ -1,4 +1,8 @@
 import { PlayerTile } from "@/components/battle/player-tile";
+import {
+  BATTLE_SURFACE_COLORS,
+  BATTLE_TEXT_COLORS,
+} from "@/components/battle/utils/battle-color-palette";
 import { BattleDamageTags } from "@/features/user/battle-panel/components/battle-damage-tags";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -29,8 +33,8 @@ export const BattleCompactTeam: FC<BattleCompactTeamProps> = ({
       className={cn(
         "min-w-0 rounded-sm bg-background/35 px-2.5 py-2",
         isUserTeam
-          ? "shadow-inner shadow-green-500/5"
-          : "shadow-inner shadow-destructive/5",
+          ? BATTLE_SURFACE_COLORS.team.friendlyShadow
+          : BATTLE_SURFACE_COLORS.team.enemyShadow,
       )}
     >
       <div
@@ -42,7 +46,9 @@ export const BattleCompactTeam: FC<BattleCompactTeamProps> = ({
         <div
           className={cn(
             "flex min-w-0 items-center gap-1.5 text-[11px] font-semibold leading-none",
-            isUserTeam ? "text-green-500" : "text-destructive",
+            isUserTeam
+              ? BATTLE_TEXT_COLORS.team.friendly
+              : BATTLE_TEXT_COLORS.team.enemy,
           )}
         >
           <Sword className="size-3.5 shrink-0" />
@@ -67,7 +73,7 @@ export const BattleCompactTeam: FC<BattleCompactTeamProps> = ({
               className={cn(
                 "flex min-w-0 max-w-full items-center gap-1.5 rounded-sm border bg-muted/35 py-1 pl-1 pr-2",
                 isCurrentCharacter
-                  ? "border-green-500/70 bg-green-500/10"
+                  ? BATTLE_SURFACE_COLORS.team.currentCharacterStrongBorder
                   : "border-border/70",
               )}
             >
@@ -82,7 +88,7 @@ export const BattleCompactTeam: FC<BattleCompactTeamProps> = ({
                 <div
                   className={cn(
                     "truncate font-semibold",
-                    isCurrentCharacter && "text-green-500",
+                    isCurrentCharacter && BATTLE_TEXT_COLORS.team.friendly,
                   )}
                 >
                   {member.name}

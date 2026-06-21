@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { buildBattleHpTimelineLegendItems } from "./battle-hp-timeline-legend-items";
 import {
   DEFAULT_BATTLE_HP_TIMELINE_LAYER_CONFIG,
@@ -26,7 +27,7 @@ const legendaryItems: LegendaryBonusMarkerDefinition[] = [
   {
     type: "curse",
     labelKey: "battlePanel.single.chart.legendary.curse",
-    color: "#facc15",
+    color: BATTLE_HEX_COLORS.legendary.curse,
   },
 ];
 

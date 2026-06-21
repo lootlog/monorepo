@@ -3,6 +3,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import {
+  BATTLE_BADGE_COLORS,
+  BATTLE_SURFACE_COLORS,
+} from "@/components/battle/utils/battle-color-palette";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Flag, Trophy, XCircle, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -24,17 +28,17 @@ const BATTLE_RESULT_STATUS_CONFIG: Record<
   }
 > = {
   won: {
-    className: "border-green-500/25 bg-green-500/10 text-green-400",
+    className: BATTLE_BADGE_COLORS.result.won,
     icon: Trophy,
     labelKey: "battlePanel.list.results.won",
   },
   lost: {
-    className: "border-red-500/25 bg-red-500/10 text-red-400",
+    className: BATTLE_BADGE_COLORS.result.lost,
     icon: XCircle,
     labelKey: "battlePanel.list.results.lost",
   },
   flee: {
-    className: "border-yellow-500/25 bg-yellow-500/10 text-yellow-400",
+    className: BATTLE_BADGE_COLORS.result.flee,
     icon: Flag,
     labelKey: "battlePanel.list.results.flee",
   },
@@ -44,18 +48,18 @@ export const getBattleResultRowClassName = (
   result?: BattleResultStatusValue | null,
 ) => {
   if (result === "won") {
-    return "bg-green-500/5 hover:bg-green-500/10";
+    return BATTLE_SURFACE_COLORS.resultRow.won;
   }
 
   if (result === "lost") {
-    return "bg-red-500/5 hover:bg-red-500/10";
+    return BATTLE_SURFACE_COLORS.resultRow.lost;
   }
 
   if (result !== "flee") {
-    return "bg-background/30 hover:bg-muted/50";
+    return BATTLE_SURFACE_COLORS.resultRow.unknown;
   }
 
-  return "bg-yellow-500/5 hover:bg-yellow-500/10";
+  return BATTLE_SURFACE_COLORS.resultRow.flee;
 };
 
 const isBattleResultStatusValue = (

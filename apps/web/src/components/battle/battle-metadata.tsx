@@ -22,6 +22,7 @@ import { formatSeconds } from "@/utils/date/format-seconds";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import { cn } from "@lootlog/ui/lib/utils";
+import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 
 export type BattleMetadataProps = {
   battle: Battle;
@@ -145,7 +146,12 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
         {battle.matchmaking && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 cursor-help whitespace-nowrap text-purple-500">
+              <div
+                className={cn(
+                  "flex items-center gap-1 cursor-help whitespace-nowrap",
+                  BATTLE_TEXT_COLORS.metric.secondary,
+                )}
+              >
                 <Swords size={14} /> {t("battleUi.metadata.matchmaking")}
               </div>
             </TooltipTrigger>

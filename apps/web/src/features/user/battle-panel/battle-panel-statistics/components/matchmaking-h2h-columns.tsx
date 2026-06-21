@@ -1,5 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@lootlog/ui/components/button";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
@@ -11,6 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { cn } from "@lootlog/ui/lib/utils";
 import i18n from "@/i18n/config";
 
 export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
@@ -56,7 +58,9 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
     ),
     cell: ({ row }) => (
       <div className="text-center">
-        <span className="text-green-600 font-medium">{row.original.wins}</span>
+        <span className={cn("font-medium", BATTLE_TEXT_COLORS.result.won)}>
+          {row.original.wins}
+        </span>
       </div>
     ),
   },
@@ -77,7 +81,9 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
     ),
     cell: ({ row }) => (
       <div className="text-center">
-        <span className="text-red-600 font-medium">{row.original.losses}</span>
+        <span className={cn("font-medium", BATTLE_TEXT_COLORS.result.lost)}>
+          {row.original.losses}
+        </span>
       </div>
     ),
   },
@@ -118,11 +124,12 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
     cell: ({ row }) => (
       <div className="text-center">
         <span
-          className={
+          className={cn(
+            "font-medium",
             row.original.winRate >= 50
-              ? "text-green-600 font-medium"
-              : "text-red-600 font-medium"
-          }
+              ? BATTLE_TEXT_COLORS.result.won
+              : BATTLE_TEXT_COLORS.result.lost,
+          )}
         >
           {row.original.winRate.toFixed(1)}%
         </span>
@@ -150,11 +157,12 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
       return (
         <div className="text-center">
           <span
-            className={
+            className={cn(
+              "font-medium",
               delta >= 0
-                ? "text-green-600 font-medium"
-                : "text-red-600 font-medium"
-            }
+                ? BATTLE_TEXT_COLORS.result.won
+                : BATTLE_TEXT_COLORS.result.lost,
+            )}
           >
             {sign}
             {delta}
@@ -184,11 +192,12 @@ export const matchmakingH2HColumns: ColumnDef<HeadToHeadRecord>[] = [
       return (
         <div className="text-center">
           <span
-            className={
+            className={cn(
+              "font-medium",
               delta >= 0
-                ? "text-green-600 font-medium"
-                : "text-red-600 font-medium"
-            }
+                ? BATTLE_TEXT_COLORS.result.won
+                : BATTLE_TEXT_COLORS.result.lost,
+            )}
           >
             {sign}
             {delta.toFixed(2)}
