@@ -1,18 +1,17 @@
 # @lootlog/api-helpers
 
-Shared auth and request-context helpers for backend services.
+Shared auth and permission helpers for backend services.
 
 ## Overview
 
-- Provides reusable helpers for validating Auth-issued JWTs and extracting user metadata from trusted headers.
-- Supports the Hono services used in this monorepo and keeps auth-adjacent logic out of individual apps.
+- Provides reusable helpers for validating Auth-issued JWTs.
+- Keeps auth-adjacent logic out of individual apps.
 - Ships an additional `permissions` subpath export for permission-related helpers.
 
 ## Exports
 
-- `userMetadataFromHeaders`
-- `validateToken`
-- JWT verification types from `verify-jwt.types`
+- `validateToken` from `@lootlog/api-helpers/auth/verify-jwt`
+- JWT verification types from `@lootlog/api-helpers/auth/verify-jwt`
 - `@lootlog/api-helpers/permissions`
 
 ## Development
@@ -25,5 +24,4 @@ pnpm --filter @lootlog/api-helpers build
 
 ## Notes
 
-- Main exports are defined in `src/index.ts`.
 - Token verification is implemented with `jose` and expects either a JWKS object or a remote JWKS URL.

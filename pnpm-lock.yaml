@@ -1374,9 +1374,6 @@ importers:
 
   packages/api-helpers:
     dependencies:
-      hono:
-        specifier: ^4.12.25
-        version: 4.12.25
       jose:
         specifier: ^6.2.2
         version: 6.2.2
@@ -15307,7 +15304,6 @@ snapshots:
 
   '@lootlog/api-helpers@file:packages/api-helpers':
     dependencies:
-      hono: 4.12.25
       jose: 6.2.3
 
   '@lootlog/nest-shared@file:packages/nest-shared(@nestjs/common@11.1.26(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.26)(ioredis@5.10.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
