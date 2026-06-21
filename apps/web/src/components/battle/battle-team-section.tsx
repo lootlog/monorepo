@@ -3,6 +3,7 @@ import { Sword } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { TeamDisplay } from "./team-display";
+import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 
 export type BattleTeamSectionProps = {
@@ -27,8 +28,8 @@ export const BattleTeamSection: FC<BattleTeamSectionProps> = ({
     <div className="space-y-3">
       <h3
         className={cn("font-semibold flex items-center justify-center gap-2", {
-          "text-destructive": !isUserTeam,
-          "text-green-500": isUserTeam,
+          [BATTLE_TEXT_COLORS.team.enemy]: !isUserTeam,
+          [BATTLE_TEXT_COLORS.team.friendly]: isUserTeam,
         })}
       >
         <Sword className="h-5 w-5" />

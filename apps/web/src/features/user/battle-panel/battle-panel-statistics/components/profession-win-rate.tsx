@@ -9,6 +9,7 @@ import { getProfessionName, getProfessionColor } from "@/lib/utils/professions";
 import { StatCard } from "./stat-card";
 import { useTranslation } from "react-i18next";
 import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 
 interface ProfessionWinRate {
   prof: string;
@@ -31,7 +32,7 @@ export function ProfessionWinRateChart({
   const chartConfig = {
     winRate: {
       label: t("battlePanel.statistics.professionWinRate.chartLabel"),
-      color: "var(--chart-1)",
+      color: BATTLE_HEX_COLORS.chart.winRate,
     },
   } satisfies ChartConfig;
   const chartData = data.map((item) => ({

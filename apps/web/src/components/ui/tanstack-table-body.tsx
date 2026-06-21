@@ -4,7 +4,7 @@ import {
   type Row,
   type Table as TanStackTable,
 } from "@tanstack/react-table";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { TableBody, TableCell, TableRow } from "@lootlog/ui/components/table";
 import { cn } from "@lootlog/ui/lib/utils";
 
@@ -15,6 +15,10 @@ type TanStackTableBodyProps<TData> = {
   rowClassName?: string | ((row: Row<TData>) => string);
   cellClassName?: string | ((cell: Cell<TData, unknown>) => string);
   getRowProps?: (row: Row<TData>) => TableRowProps;
+  renderCellContent?: (
+    cell: Cell<TData, unknown>,
+    content: ReactNode,
+  ) => ReactNode;
 };
 
 export const TanStackTableBody = <TData,>({
@@ -22,6 +26,7 @@ export const TanStackTableBody = <TData,>({
   rowClassName,
   cellClassName,
   getRowProps,
+  renderCellContent,
 }: TanStackTableBodyProps<TData>) => {
   return (
     <TableBody>
@@ -41,10 +46,16 @@ export const TanStackTableBody = <TData,>({
                 typeof cellClassName === "function"
                   ? cellClassName(cell)
                   : cellClassName;
+              const content = flexRender(
+                cell.column.columnDef.cell,
+                cell.getContext(),
+              );
 
               return (
                 <TableCell key={cell.id} className={resolvedCellClassName}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  {renderCellContent
+                    ? renderCellContent(cell, content)
+                    : content}
                 </TableCell>
               );
             })}

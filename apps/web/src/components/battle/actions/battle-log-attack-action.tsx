@@ -6,6 +6,10 @@ import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
 import { Trans } from "react-i18next";
 import { getBattleActionPresentation } from "../utils/battle-action-presentation";
+import {
+  BATTLE_SURFACE_COLORS,
+  BATTLE_TEXT_COLORS,
+} from "../utils/battle-color-palette";
 import { generateDynamicValuesAndComponents } from "../utils/dynamic-values-helper";
 import { processDamageValue, roundHpPercentage } from "../utils/value-utils";
 
@@ -17,6 +21,10 @@ export type BattleLogAttackActionsProps = {
   userTeam?: number;
 };
 
+const createStrongText = (className?: string) => (
+  <span className={cn("font-semibold", className)} />
+);
+
 export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
   attacker,
   defender,
@@ -27,10 +35,14 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
   return (
     actions.length > 0 && (
       <div
-        className={cn("flex flex-col bg-gray-100/10 px-3 py-0.5", {
-          "bg-red-400/10": attacker?.team !== userTeam,
-          "bg-green-400/10": attacker?.team === userTeam,
-        })}
+        className={cn(
+          "flex flex-col px-3 py-0.5",
+          BATTLE_SURFACE_COLORS.log.neutral,
+          {
+            [BATTLE_SURFACE_COLORS.log.enemy]: attacker?.team !== userTeam,
+            [BATTLE_SURFACE_COLORS.log.friendly]: attacker?.team === userTeam,
+          },
+        )}
       >
         {(() => {
           const positiveDamage = {
@@ -120,14 +132,20 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                       ...positiveDamage,
                     }}
                     components={{
-                      value: <span className="font-semibold" />,
-                      dmgd: <span className="font-semibold text-green-500" />,
-                      dmgf: <span className="font-semibold text-red-500" />,
-                      dmgl: <span className="font-semibold text-yellow-300" />,
-                      dmg: <span className="font-semibold" />,
-                      dmgo: <span className="font-semibold text-orange-400" />,
-                      thirdatt: <span className="font-semibold" />,
-                      dmgc: <span className="font-semibold text-blue-400" />,
+                      value: createStrongText(),
+                      dmgd: createStrongText(
+                        BATTLE_TEXT_COLORS.damage.distance,
+                      ),
+                      dmgf: createStrongText(BATTLE_TEXT_COLORS.damage.fire),
+                      dmgl: createStrongText(
+                        BATTLE_TEXT_COLORS.damage.lightning,
+                      ),
+                      dmg: createStrongText(),
+                      dmgo: createStrongText(
+                        BATTLE_TEXT_COLORS.damage.auxiliary,
+                      ),
+                      thirdatt: createStrongText(),
+                      dmgc: createStrongText(BATTLE_TEXT_COLORS.damage.frost),
                     }}
                   />
                 </span>
@@ -154,60 +172,65 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                         ...dynamicData.values,
                       }}
                       components={{
-                        value: <span className="font-semibold" />,
+                        value: createStrongText(),
                         ...dynamicData.components,
-                        ofwound: (
-                          <span className="font-semibold text-orange-400" />
+                        ofwound: createStrongText(
+                          BATTLE_TEXT_COLORS.damage.wound,
                         ),
-                        thirdatt: (
-                          <span className="font-semibold text-yellow-400" />
+                        thirdatt: createStrongText(
+                          BATTLE_TEXT_COLORS.damage.thirdAttack,
                         ),
-                        heal: <span className="font-semibold text-blue-300" />,
-                        fastArrow: (
-                          <span className="font-semibold text-yellow-400" />
+                        heal: createStrongText(BATTLE_TEXT_COLORS.healing.log),
+                        fastArrow: createStrongText(
+                          BATTLE_TEXT_COLORS.defense.destroy,
                         ),
-                        frenzy: (
-                          <span className="font-semibold text-orange-300" />
+                        frenzy: createStrongText(
+                          BATTLE_TEXT_COLORS.legendary.frenzy,
                         ),
-                        crit: <span className="font-semibold text-red-400" />,
-                        verycrit: (
-                          <span className="font-semibold text-red-600" />
+                        crit: createStrongText(
+                          BATTLE_TEXT_COLORS.damage.critical,
                         ),
-                        bonusDamage: (
-                          <span className="font-semibold text-purple-400" />
+                        verycrit: createStrongText(
+                          BATTLE_TEXT_COLORS.legendary.veryCrit,
                         ),
-                        resourceDestroy: (
-                          <span className="font-semibold text-yellow-100" />
+                        bonusDamage: createStrongText(
+                          BATTLE_TEXT_COLORS.damage.bonus,
                         ),
-                        curse: (
-                          <span className="font-semibold text-yellow-400" />
+                        resourceDestroy: createStrongText(
+                          BATTLE_TEXT_COLORS.defense.resourceDestroy,
                         ),
-                        ofcrit: (
-                          <span className="font-semibold text-orange-400" />
+                        curse: createStrongText(
+                          BATTLE_TEXT_COLORS.legendary.curse,
                         ),
-                        legbonFacade: (
-                          <span className="font-semibold text-sky-400" />
+                        ofcrit: createStrongText(
+                          BATTLE_TEXT_COLORS.damage.criticalWound,
                         ),
-                        legbonCritred: (
-                          <span className="font-semibold text-sky-400" />
+                        cleanse: createStrongText(
+                          BATTLE_TEXT_COLORS.legendary.cleanse,
                         ),
-                        retaliation: (
-                          <span className="font-semibold text-purple-300" />
+                        legbonFacade: createStrongText(
+                          BATTLE_TEXT_COLORS.legendary.facade,
                         ),
-                        pierce: (
-                          <span className="font-semibold text-green-500" />
+                        legbonCritred: createStrongText(
+                          BATTLE_TEXT_COLORS.legendary.critShield,
                         ),
-                        injure: (
-                          <span className="font-semibold text-pink-400" />
+                        retaliation: createStrongText(
+                          BATTLE_TEXT_COLORS.legendary.retaliation,
                         ),
-                        anguish: (
-                          <span className="font-semibold text-red-600" />
+                        pierce: createStrongText(
+                          BATTLE_TEXT_COLORS.defense.pierce,
                         ),
-                        puncture: (
-                          <span className="font-semibold text-red-300" />
+                        injure: createStrongText(
+                          BATTLE_TEXT_COLORS.damage.injure,
                         ),
-                        crushDamage: (
-                          <span className="font-semibold text-rose-300" />
+                        anguish: createStrongText(
+                          BATTLE_TEXT_COLORS.legendary.anguish,
+                        ),
+                        puncture: createStrongText(
+                          BATTLE_TEXT_COLORS.legendary.puncture,
+                        ),
+                        crushDamage: createStrongText(
+                          BATTLE_TEXT_COLORS.damage.crush,
                         ),
                       }}
                     />
@@ -224,15 +247,21 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                       ...negativeDamage,
                     }}
                     components={{
-                      value: <span className="font-semibold" />,
-                      dmgd: <span className="font-semibold text-green-500" />,
-                      dmgf: <span className="font-semibold text-red-500" />,
-                      dmgl: <span className="font-semibold text-yellow-300" />,
-                      dmg: <span className="font-semibold" />,
-                      dmgo: <span className="font-semibold text-orange-400" />,
-                      dmga: <span className="font-semibold" />,
-                      thirdatt: <span className="font-semibold" />,
-                      dmgc: <span className="font-semibold text-blue-400" />,
+                      value: createStrongText(),
+                      dmgd: createStrongText(
+                        BATTLE_TEXT_COLORS.damage.distance,
+                      ),
+                      dmgf: createStrongText(BATTLE_TEXT_COLORS.damage.fire),
+                      dmgl: createStrongText(
+                        BATTLE_TEXT_COLORS.damage.lightning,
+                      ),
+                      dmg: createStrongText(),
+                      dmgo: createStrongText(
+                        BATTLE_TEXT_COLORS.damage.auxiliary,
+                      ),
+                      dmga: createStrongText(),
+                      thirdatt: createStrongText(),
+                      dmgc: createStrongText(BATTLE_TEXT_COLORS.damage.frost),
                     }}
                   />
                 </span>

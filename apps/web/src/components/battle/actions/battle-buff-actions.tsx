@@ -4,6 +4,8 @@ import type {
 } from "@/lib/api/battlelog-types";
 import type { FC } from "react";
 import { BattleActionItem } from "./battle-action-item";
+import { cn } from "@lootlog/ui/lib/utils";
+import { BATTLE_TEXT_COLORS } from "../utils/battle-color-palette";
 
 export type BattleBuffActionsProps = {
   actions: { type: string; value: string }[];
@@ -29,7 +31,11 @@ export const BattleBuffActions: FC<BattleBuffActionsProps> = ({
           attacker={attacker}
           event={event}
           customComponents={{
-            value: <span className="font-bold text-orange-500" />,
+            value: (
+              <span
+                className={cn("font-bold", BATTLE_TEXT_COLORS.damage.auxiliary)}
+              />
+            ),
           }}
         />
       ))}

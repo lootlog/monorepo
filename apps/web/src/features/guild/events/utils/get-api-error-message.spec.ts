@@ -1,16 +1,21 @@
 import { describe, expect, it } from "vitest";
+import { ApiError } from "@/lib/api-client/api-client";
 import { getApiErrorMessage } from "./get-api-error-message";
 
 describe("getApiErrorMessage", () => {
   it("returns the first API validation message", () => {
     expect(
-      getApiErrorMessage({
-        response: {
+      getApiErrorMessage(
+        new ApiError({
           data: {
             message: ["First validation error", "Second validation error"],
           },
-        },
-      }),
+          message: "Request failed",
+          method: "POST",
+          status: 400,
+          url: "http://localhost/api/test",
+        }),
+      ),
     ).toBe("First validation error");
   });
 

@@ -8,6 +8,7 @@ import {
 import { StatCard } from "./stat-card";
 import { useTranslation } from "react-i18next";
 import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 
 interface PhGrowthDataPoint {
   date: string;
@@ -26,7 +27,7 @@ export function PhGrowthChart({ data, isLoading }: PhGrowthChartProps) {
   const chartConfig = {
     cumulativePh: {
       label: t("battlePanel.statistics.phGrowth.chartLabel"),
-      color: "var(--chart-1)",
+      color: BATTLE_HEX_COLORS.chart.honorPoints,
     },
   } satisfies ChartConfig;
   const chartData = data.map((point) => ({

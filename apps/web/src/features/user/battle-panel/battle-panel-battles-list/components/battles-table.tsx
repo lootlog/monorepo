@@ -2,7 +2,6 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
-import { ROUTES } from "@/config/routes";
 import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
 import {
   getBattleResult,
@@ -73,9 +72,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   getCoreRowModel,
   useReactTable,
+  type Cell,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
   Copy,
@@ -162,28 +162,20 @@ const stopTableKeyboardAction = (event: KeyboardEvent<HTMLElement>) => {
   event.stopPropagation();
 };
 
-const getEventTargetElement = (target: EventTarget | null) => {
-  if (target instanceof Element) {
-    return target;
-  }
-
-  if (target instanceof Node) {
-    return target.parentElement;
-  }
-
-  return null;
-};
-
-const isTableActionEvent = (event: MouseEvent<HTMLElement>) =>
-  Boolean(
-    getEventTargetElement(event.target)?.closest("[data-battle-table-action]"),
-  );
-
 const BATTLE_INFO_TAG_CLASS_NAME =
   "inline-flex h-[17px] max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-foreground/30 bg-background/40 px-2 py-0 text-[10px] font-semibold leading-none text-muted-foreground";
 
 const BATTLE_INFO_TAG_ACTION_CLASS_NAME =
   "cursor-pointer transition-colors hover:bg-background/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+
+const BATTLE_TABLE_LINK_COLUMN_IDS = new Set([
+  "status",
+  "leftTeam",
+  "rightTeam",
+  "createdAt",
+]);
+
+const BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID = "leftTeam";
 
 export const BattlesTable = ({
   activeFilterChips = [],
@@ -208,7 +200,6 @@ export const BattlesTable = ({
 }: BattlesTableProps) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [, copy] = useCopyToClipboard();
   const { handleShare, handleCopyLink, handleUnshare, isPending } =
@@ -281,24 +272,6 @@ export const BattlesTable = ({
     }
 
     await Promise.all(invalidationPromises);
-  };
-
-  const handleOpenBattle = (battleId: string) => {
-    navigate({
-      to: ROUTES.user.battlePanel.battle(battleId) as string,
-    });
-  };
-
-  const handleRowKeyDown = (
-    event: KeyboardEvent<HTMLTableRowElement>,
-    battleId: string,
-  ) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-    handleOpenBattle(battleId);
   };
 
   const handleWorldBadgeClick = (
@@ -561,14 +534,37 @@ export const BattlesTable = ({
     const result = getBattleResult(battle);
 
     return (
-      <div
-        data-battle-table-action
-        onClick={stopTableAction}
-        onKeyDown={stopTableKeyboardAction}
-        className="mx-auto flex w-6 items-center justify-center"
-      >
+      <div className="mx-auto flex w-6 items-center justify-center">
         <BattleResultStatus result={result} />
       </div>
+    );
+  };
+
+  const renderBattleLinkCellContent = (
+    cell: Cell<Battle, unknown>,
+    content: ReactNode,
+  ) => {
+    if (!BATTLE_TABLE_LINK_COLUMN_IDS.has(cell.column.id)) {
+      return content;
+    }
+
+    return (
+      <Link
+        aria-label={
+          cell.column.id === BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID
+            ? t("battlePanel.list.openBattle")
+            : undefined
+        }
+        tabIndex={
+          cell.column.id === BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID ? 0 : -1
+        }
+        to="/@me/battle-panel/battles/$battleId"
+        params={{ battleId: cell.row.original.id }}
+        preload={false}
+        className="flex min-h-12 w-full items-center rounded-sm text-inherit outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
+      >
+        {content}
+      </Link>
     );
   };
 
@@ -903,7 +899,6 @@ export const BattlesTable = ({
                 actions={renderBattleActions(battle)}
                 battle={battle}
                 isChecked={selectedBattleIds.has(battle.id)}
-                onBattleClick={handleOpenBattle}
                 onSelectionChange={handleSelectionChange}
               />
             ))}
@@ -925,7 +920,7 @@ export const BattlesTable = ({
               table={table}
               rowClassName={(row) =>
                 cn(
-                  "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
+                  "h-14 border-b border-border",
                   getRowClassName(row.original),
                   selectedBattleIds.has(row.original.id) &&
                     "ring-2 ring-inset ring-primary/45",
@@ -937,29 +932,7 @@ export const BattlesTable = ({
                   getColumnResponsiveClassName(cell.column.id),
                 )
               }
-              getRowProps={(row) => ({
-                role: "link",
-                tabIndex: 0,
-                "aria-label": t("battlePanel.list.openBattle"),
-                onClick: (event) => {
-                  if (isTableActionEvent(event)) {
-                    return;
-                  }
-
-                  handleOpenBattle(row.original.id);
-                },
-                onKeyDown: (event) => {
-                  if (
-                    getEventTargetElement(event.target)?.closest(
-                      "[data-battle-table-action]",
-                    )
-                  ) {
-                    return;
-                  }
-
-                  handleRowKeyDown(event, row.original.id);
-                },
-              })}
+              renderCellContent={renderBattleLinkCellContent}
             />
           </Table>
         )}

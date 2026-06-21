@@ -9,16 +9,20 @@ import {
   EVENT_SCORING_NUMERIC_OPERATORS,
   EVENT_SCORING_TIMEZONE,
   type EventScoringAction,
-  type EventScoringBooleanFactor,
   type EventScoringCondition,
   type EventScoringMode,
-  type EventScoringNumericFactor,
-  type EventScoringNumericOperator,
   type EventScoringRules,
 } from "../constants/scoring-rules.constant";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isOneOf<const TValues extends readonly string[]>(
+  values: TValues,
+  value: unknown,
+): value is TValues[number] {
+  return typeof value === "string" && values.includes(value as TValues[number]);
 }
 
 function toNumber(value: unknown, fallback: number, min = 0, max?: number) {
@@ -38,21 +42,15 @@ function toClock(value: unknown, fallback: string): string {
 }
 
 function toMode(value: unknown, fallback: EventScoringMode): EventScoringMode {
-  if (typeof value !== "string") {
-    return fallback;
+  if (isOneOf(EVENT_SCORING_MODES, value)) {
+    return value;
   }
-  if ((EVENT_SCORING_MODES as readonly string[]).includes(value)) {
-    return value as EventScoringMode;
-  }
+
   return fallback;
 }
 
 function parseAction(value: unknown): EventScoringAction | null {
-  if (!isRecord(value) || typeof value.type !== "string") {
-    return null;
-  }
-
-  if (!(EVENT_SCORING_ACTION_TYPES as readonly string[]).includes(value.type)) {
+  if (!isRecord(value) || !isOneOf(EVENT_SCORING_ACTION_TYPES, value.type)) {
     return null;
   }
 
@@ -79,26 +77,14 @@ function parseAction(value: unknown): EventScoringAction | null {
 }
 
 function parseCondition(value: unknown): EventScoringCondition | null {
-  if (!isRecord(value) || typeof value.type !== "string") {
-    return null;
-  }
-
-  if (
-    !(EVENT_SCORING_CONDITION_TYPES as readonly string[]).includes(value.type)
-  ) {
+  if (!isRecord(value) || !isOneOf(EVENT_SCORING_CONDITION_TYPES, value.type)) {
     return null;
   }
 
   if (value.type === "NUMERIC") {
     if (
-      typeof value.factor !== "string" ||
-      !(EVENT_SCORING_NUMERIC_FACTORS as readonly string[]).includes(
-        value.factor,
-      ) ||
-      typeof value.operator !== "string" ||
-      !(EVENT_SCORING_NUMERIC_OPERATORS as readonly string[]).includes(
-        value.operator,
-      )
+      !isOneOf(EVENT_SCORING_NUMERIC_FACTORS, value.factor) ||
+      !isOneOf(EVENT_SCORING_NUMERIC_OPERATORS, value.operator)
     ) {
       return null;
     }
@@ -110,26 +96,24 @@ function parseCondition(value: unknown): EventScoringCondition | null {
 
     return {
       type: "NUMERIC",
-      factor: value.factor as EventScoringNumericFactor,
-      operator: value.operator as EventScoringNumericOperator,
+      factor: value.factor,
+      operator: value.operator,
       value: Math.round(parsedValue * 100) / 100,
     };
   }
 
   if (value.type === "BOOLEAN") {
-    if (
-      typeof value.factor !== "string" ||
-      !(EVENT_SCORING_BOOLEAN_FACTORS as readonly string[]).includes(
-        value.factor,
-      ) ||
-      typeof value.value !== "boolean"
-    ) {
+    if (!isOneOf(EVENT_SCORING_BOOLEAN_FACTORS, value.factor)) {
+      return null;
+    }
+
+    if (typeof value.value !== "boolean") {
       return null;
     }
 
     return {
       type: "BOOLEAN",
-      factor: value.factor as EventScoringBooleanFactor,
+      factor: value.factor,
       value: value.value,
     };
   }
@@ -142,12 +126,7 @@ function parseCondition(value: unknown): EventScoringCondition | null {
     };
   }
 
-  if (
-    typeof value.operator !== "string" ||
-    !(EVENT_SCORING_NUMERIC_OPERATORS as readonly string[]).includes(
-      value.operator,
-    )
-  ) {
+  if (!isOneOf(EVENT_SCORING_NUMERIC_OPERATORS, value.operator)) {
     return null;
   }
 
@@ -160,7 +139,7 @@ function parseCondition(value: unknown): EventScoringCondition | null {
     type: "RESPAWN_WINDOW_COVERAGE",
     from: toClock(value.from, "00:00"),
     to: toClock(value.to, "23:59"),
-    operator: value.operator as EventScoringNumericOperator,
+    operator: value.operator,
     value: Math.round(parsedValue * 100) / 100,
   };
 }

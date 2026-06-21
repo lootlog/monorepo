@@ -2,6 +2,7 @@ import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { BattleBreakdownTable } from "./battle-breakdown-table";
+import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 
 interface LegendaryBonusesBreakdownProps {
   warrior: Warrior;
@@ -15,22 +16,22 @@ export const LegendaryBonusesBreakdown: FC<LegendaryBonusesBreakdownProps> = ({
     {
       type: t("battleUi.breakdowns.legendary.curse"),
       value: warrior.legbonCurse,
-      color: "text-yellow-400",
+      color: BATTLE_TEXT_COLORS.legendary.curse,
     },
     {
       type: t("battleUi.breakdowns.legendary.veryCrit"),
       value: warrior.legbonVerycrit,
-      color: "text-red-600",
+      color: BATTLE_TEXT_COLORS.legendary.veryCrit,
     },
     {
       type: t("battleUi.breakdowns.legendary.holyTouch"),
       value: warrior.legbonHolytouch,
-      color: "text-blue-300",
+      color: BATTLE_TEXT_COLORS.legendary.holyTouch,
     },
     {
       type: t("battleUi.breakdowns.legendary.anguish"),
       value: warrior.legbonAnguish,
-      color: "text-red-600",
+      color: BATTLE_TEXT_COLORS.legendary.anguish,
     },
   ].filter((item) => item.value > 0);
 
@@ -38,17 +39,17 @@ export const LegendaryBonusesBreakdown: FC<LegendaryBonusesBreakdownProps> = ({
     {
       type: t("battleUi.breakdowns.legendary.glare"),
       value: warrior.legbonGlare,
-      color: "text-yellow-400",
+      color: BATTLE_TEXT_COLORS.legendary.glare,
     },
     {
       type: t("battleUi.breakdowns.legendary.cleanse"),
       value: warrior.legbonCleanse,
-      color: "text-blue-400",
+      color: BATTLE_TEXT_COLORS.legendary.cleanse,
     },
     {
       type: t("battleUi.breakdowns.legendary.lastHeal"),
       value: warrior.legbonLastheal,
-      color: "text-green-400",
+      color: BATTLE_TEXT_COLORS.legendary.lastHeal,
     },
   ].filter((item) => item.value > 0);
 
@@ -56,32 +57,32 @@ export const LegendaryBonusesBreakdown: FC<LegendaryBonusesBreakdownProps> = ({
     {
       type: t("battleUi.breakdowns.legendary.lastHealValue"),
       value: warrior.legbonLasthealValue,
-      color: "text-gray-400",
+      color: BATTLE_TEXT_COLORS.muted,
     },
     {
       type: t("battleUi.breakdowns.legendary.facadeValue"),
       value: warrior.legbonFacadeValue,
-      color: "text-sky-400",
+      color: BATTLE_TEXT_COLORS.legendary.facade,
     },
     {
       type: t("battleUi.breakdowns.legendary.critShieldValue"),
       value: warrior.legbonCritredValue,
-      color: "text-sky-400",
+      color: BATTLE_TEXT_COLORS.legendary.critShield,
     },
     {
       type: t("battleUi.breakdowns.legendary.punctureValue"),
       value: warrior.legbonPunctureValue,
-      color: "text-red-300",
+      color: BATTLE_TEXT_COLORS.legendary.puncture,
     },
     {
       type: t("battleUi.breakdowns.legendary.holyTouchHealing"),
       value: warrior.legbonHolytouchValue,
-      color: "text-blue-300",
+      color: BATTLE_TEXT_COLORS.legendary.holyTouch,
     },
     {
       type: t("battleUi.breakdowns.legendary.anguishDamage"),
       value: warrior.legbonAnguishDamageTaken,
-      color: "text-red-600",
+      color: BATTLE_TEXT_COLORS.legendary.anguish,
     },
   ].filter((item) => item.value > 0);
 
