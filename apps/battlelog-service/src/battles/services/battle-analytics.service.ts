@@ -51,6 +51,10 @@ type DateRangeQuery = {
   startDate?: string;
   endDate?: string;
 };
+type OpponentLevelRangeQuery =
+  | QueryBattleAnalyticsDto
+  | QueryBattleStatisticsDto
+  | QueryPlayerVsPlayerDto;
 
 @Injectable()
 export class BattleAnalyticsService {
@@ -202,17 +206,11 @@ export class BattleAnalyticsService {
       with: { warriors: true },
     });
 
-    let filteredBattles = this.inflateBattleRows(fetchedBattles);
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = filteredBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterBattlesByOpponentLevel(
+      this.inflateBattleRows(fetchedBattles),
+      characterIds,
+      query,
+    );
 
     let wins = 0;
     let losses = 0;
@@ -357,17 +355,11 @@ export class BattleAnalyticsService {
       with: { warriors: true },
     });
 
-    let filteredBattles = this.inflateBattleRows(fetchedBattles);
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = filteredBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterBattlesByOpponentLevel(
+      this.inflateBattleRows(fetchedBattles),
+      characterIds,
+      query,
+    );
 
     const professionStats = new Map<string, { wins: number; losses: number }>();
 
@@ -456,17 +448,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "asc" },
     });
 
-    let filteredBattles = this.inflateBattleRows(fetchedBattles);
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = filteredBattles.filter((battle) =>
-        this.isAnyOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterBattlesByAnyOpponentLevel(
+      this.inflateBattleRows(fetchedBattles),
+      characterIds,
+      query,
+    );
 
     const profile = this.calculateCombatProfile(filteredBattles, characterIds);
 
@@ -535,17 +521,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "desc" },
     });
 
-    let filteredBattles = this.inflateBattleRows(fetchedBattles);
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = filteredBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterBattlesByOpponentLevel(
+      this.inflateBattleRows(fetchedBattles),
+      characterIds,
+      query,
+    );
 
     const opponentStats = new Map<
       string,
@@ -801,17 +781,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "desc" },
     });
 
-    let filteredBattles = this.inflateBattleRows(fetchedBattles);
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = filteredBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterBattlesByOpponentLevel(
+      this.inflateBattleRows(fetchedBattles),
+      characterIds,
+      query,
+    );
 
     if (filteredBattles.length === 0) {
       return {
@@ -920,17 +894,11 @@ export class BattleAnalyticsService {
       orderBy: { duration: "asc" },
     });
 
-    let filteredBattles = this.inflateBattleRows(fetchedBattles);
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = filteredBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterBattlesByOpponentLevel(
+      this.inflateBattleRows(fetchedBattles),
+      characterIds,
+      query,
+    );
 
     if (filteredBattles.length === 0) {
       return {
@@ -1045,17 +1013,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "asc" },
     });
 
-    let filteredBattles = this.inflateBattleRows(fetchedBattles);
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = filteredBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterBattlesByOpponentLevel(
+      this.inflateBattleRows(fetchedBattles),
+      characterIds,
+      query,
+    );
 
     let cumulativePh = 0;
     const result: PhGrowthDataPointDto[] = filteredBattles.map((battle) => {
@@ -1328,10 +1290,7 @@ export class BattleAnalyticsService {
     return String(value ?? fallback);
   }
 
-  private formatLevelCacheSegment(query: {
-    minLevel?: number;
-    maxLevel?: number;
-  }): string {
+  private formatLevelCacheSegment(query: OpponentLevelRangeQuery): string {
     return `${this.formatCacheSegment(query.minLevel, "any")}-${this.formatCacheSegment(query.maxLevel, "any")}`;
   }
 
@@ -1787,17 +1746,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "asc" },
     });
 
-    let filteredBattles = this.inflateBattleRows(fetchedBattles);
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = filteredBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterBattlesByOpponentLevel(
+      this.inflateBattleRows(fetchedBattles),
+      characterIds,
+      query,
+    );
 
     const result: RatingGrowthDataPointDto[] = filteredBattles.map((battle) => {
       return {
@@ -1858,17 +1811,11 @@ export class BattleAnalyticsService {
       orderBy: { createdAt: "desc" },
     });
 
-    let filteredBattles = this.inflateBattleRows(fetchedBattles);
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = filteredBattles.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const filteredBattles = this.filterBattlesByOpponentLevel(
+      this.inflateBattleRows(fetchedBattles),
+      characterIds,
+      query,
+    );
 
     const opponentStats = new Map<
       string,
@@ -2036,17 +1983,11 @@ export class BattleAnalyticsService {
       },
     );
 
-    let levelFilteredBattles = filteredByOpponent;
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      levelFilteredBattles = filteredByOpponent.filter((battle) =>
-        this.isOpponentLevelInRange(
-          battle,
-          characterIds,
-          query.minLevel,
-          query.maxLevel,
-        ),
-      );
-    }
+    const levelFilteredBattles = this.filterBattlesByOpponentLevel(
+      filteredByOpponent,
+      characterIds,
+      query,
+    );
 
     const totalRecords = levelFilteredBattles.length;
 
@@ -2146,6 +2087,48 @@ export class BattleAnalyticsService {
     }
 
     return maxLevel === undefined || opponentLevel <= maxLevel;
+  }
+
+  private filterBattlesByOpponentLevel(
+    battleRows: InflatedBattleWithWarriors[],
+    characterIds: string[],
+    query: OpponentLevelRangeQuery,
+  ): InflatedBattleWithWarriors[] {
+    if (!this.hasOpponentLevelFilter(query)) {
+      return battleRows;
+    }
+
+    return battleRows.filter((battle) =>
+      this.isOpponentLevelInRange(
+        battle,
+        characterIds,
+        query.minLevel,
+        query.maxLevel,
+      ),
+    );
+  }
+
+  private filterBattlesByAnyOpponentLevel(
+    battleRows: InflatedBattleWithWarriors[],
+    characterIds: string[],
+    query: OpponentLevelRangeQuery,
+  ): InflatedBattleWithWarriors[] {
+    if (!this.hasOpponentLevelFilter(query)) {
+      return battleRows;
+    }
+
+    return battleRows.filter((battle) =>
+      this.isAnyOpponentLevelInRange(
+        battle,
+        characterIds,
+        query.minLevel,
+        query.maxLevel,
+      ),
+    );
+  }
+
+  private hasOpponentLevelFilter(query: OpponentLevelRangeQuery): boolean {
+    return query.minLevel !== undefined || query.maxLevel !== undefined;
   }
 
   private isAnyOpponentLevelInRange(
