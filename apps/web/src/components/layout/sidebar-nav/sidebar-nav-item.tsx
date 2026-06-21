@@ -1,7 +1,7 @@
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useState } from "react";
+import { type MouseEvent, type ReactNode, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { MenuItem } from "./types";
 import { ThemeInteractiveFrame } from "@/themes";
@@ -23,15 +23,16 @@ export const SidebarNavItem = ({
   path: string;
   available: boolean;
   isActive: boolean;
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   badge?: MenuItem["badge"];
   highlight?: boolean;
   isRukiaTheme: boolean;
   isCatTheme: boolean;
-  onItemClick: (e: React.MouseEvent) => void;
+  onItemClick: (e: MouseEvent) => void;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const badgeVariant = isActive ? "white" : (badge?.variant ?? "default");
 
   const buttonContent = (
     <Button
@@ -59,10 +60,7 @@ export const SidebarNavItem = ({
         {label}
       </div>
       {badge && (
-        <Badge
-          variant={isActive ? "white" : (badge.variant ?? "default")}
-          className="ml-auto"
-        >
+        <Badge variant={badgeVariant} className="ml-auto">
           {badge.content}
         </Badge>
       )}
