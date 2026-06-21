@@ -60,6 +60,21 @@ const memberSelectWithTopRole = {
   },
 };
 
+function resolveUpdatedEventDate(
+  value: string | null | undefined,
+  currentDate: Date | null,
+): Date | null {
+  if (value === undefined) {
+    return currentDate;
+  }
+
+  if (!value) {
+    return null;
+  }
+
+  return new Date(value);
+}
+
 @Injectable()
 export class EventCatalogService {
   constructor(
@@ -357,14 +372,8 @@ export class EventCatalogService {
           : null;
     }
 
-    const newStartDate =
-      startsAt !== undefined
-        ? startsAt
-          ? new Date(startsAt)
-          : null
-        : event.startsAt;
-    const newEndDate =
-      endsAt !== undefined ? (endsAt ? new Date(endsAt) : null) : event.endsAt;
+    const newStartDate = resolveUpdatedEventDate(startsAt, event.startsAt);
+    const newEndDate = resolveUpdatedEventDate(endsAt, event.endsAt);
 
     if (newEndDate && newStartDate && newEndDate <= newStartDate) {
       throw new BadRequestException("End date must be after start date");
