@@ -1,5 +1,6 @@
 import { getApiClient } from "@/lib/api-client";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
+import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 import type { Item } from "@lootlog/margonem/game-events";
 import type { Npc, PartyMember } from "@/utils/game/get-battle-participants";
 
@@ -58,6 +59,7 @@ export async function createLoot(
       payload: options,
     },
     execute: () => client.post<CreateLootResponse>("/loots", options),
+    retry: GAME_EVENT_RETRY_OPTIONS,
   });
 
   return response.data;

@@ -28,6 +28,7 @@ export const battles = pgTable(
 
     accountId: text("accountId").notNull(),
     characterId: text("characterId").notNull(),
+    submissionId: text("submissionId"),
     world: text("world").notNull(),
     duration: doublePrecision("duration").notNull(),
     type: text("type").notNull(),
@@ -71,6 +72,7 @@ export const battles = pgTable(
       table.characterId,
       table.createdAt,
     ),
+    uniqueIndex("battles_submissionId_key").on(table.submissionId),
     index("battles_public_createdAt_idx").on(table.public, table.createdAt),
     index("battles_id_idx").on(table.id),
   ],
