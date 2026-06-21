@@ -57,6 +57,10 @@ export type LegendaryBonusMarkerGroup = {
   bonuses: LegendaryBonusMarker[];
 };
 
+type BuildLegendaryBonusMarkerGroupsOptions = {
+  includeChartHidden?: boolean;
+};
+
 export const LEGENDARY_BONUS_MARKER_DEFINITIONS: Record<
   string,
   LegendaryBonusMarkerDefinition
@@ -307,6 +311,7 @@ const getLastHealWarriorName = (action: LegendaryBonusTimelineAction) => {
 export const buildLegendaryBonusMarkerGroups = (
   timeline: LegendaryBonusTimelineTurn[],
   warriors: LegendaryBonusTimelineWarrior[],
+  options: BuildLegendaryBonusMarkerGroupsOptions = {},
 ) => {
   const warriorById = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior]),
@@ -323,7 +328,11 @@ export const buildLegendaryBonusMarkerGroups = (
 
   for (const turn of timeline) {
     for (const action of turn.actions) {
-      if (!isChartVisibleLegendaryBonusTimelineAction(action)) {
+      const isLegendaryAction = options.includeChartHidden
+        ? isLegendaryBonusTimelineAction(action)
+        : isChartVisibleLegendaryBonusTimelineAction(action);
+
+      if (!isLegendaryAction) {
         continue;
       }
 

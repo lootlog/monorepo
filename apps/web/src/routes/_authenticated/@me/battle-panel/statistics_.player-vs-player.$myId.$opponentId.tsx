@@ -6,7 +6,7 @@ import {
   battlePanelPlayerVsPlayerSearchSchema,
   loadBattlePanelPlayerVsPlayerSearch,
   normalizeBattlePanelCharacterId,
-} from "@/features/user/battle-panel/battle-panel-statistics-search";
+} from "@/features/user/battle-panel/battle-panel-search";
 import { getBattlesControllerGetPlayerVsPlayerBattlesQueryOptions } from "@/lib/api/generated/battlelog/battles/battles";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 

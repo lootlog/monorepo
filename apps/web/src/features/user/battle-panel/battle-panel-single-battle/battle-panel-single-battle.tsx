@@ -12,10 +12,12 @@ import {
   getBattleLogScrollActiveTurn,
   type BattleLogTurnPosition,
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-log-scroll-active-turn";
+import { getBattlePanelSelectedTurn } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-panel-single-battle-state";
 import { BattlePanelSingleBattleActions } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-panel-single-battle-actions";
 import { getBattleSideCardScrollHandoff } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-side-card-scroll-handoff";
 import { getRecentOpponentBattleContext } from "@/features/user/battle-panel/battle-panel-single-battle/components/recent-opponent-battle-context";
 import { RecentOpponentBattlesCard } from "@/features/user/battle-panel/battle-panel-single-battle/components/recent-opponent-battles-card";
+import { battlePanelSingleBattleSearchParsers } from "@/features/user/battle-panel/battle-panel-search";
 import {
   useBattlesControllerGetBattle,
   useBattlesControllerGetBattleRawData,
@@ -26,6 +28,7 @@ import { useParams } from "@tanstack/react-router";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
 import { Eye, EyeOff } from "lucide-react";
+import { useQueryStates } from "nuqs";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
   useEffect,
@@ -33,9 +36,9 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type WheelEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocalStorage } from "usehooks-ts";
 import {
   Tooltip,
   TooltipContent,
@@ -46,6 +49,7 @@ const STICKY_TOP_OFFSET_PX = 12;
 const STICKY_CONTENT_GAP_PX = 12;
 const SIDE_CARD_BOTTOM_OFFSET_PX = 8;
 const DEFAULT_CHART_HEIGHT_PX = 216;
+const HIDE_ZERO_STATS_STORAGE_KEY = "lootlog-battle-hide-zero-stats-v1";
 const SCROLL_AREA_VIEWPORT_SELECTOR = '[data-slot="scroll-area-viewport"]';
 
 export const BattlePanelSingleBattle = () => {
@@ -59,16 +63,26 @@ export const BattlePanelSingleBattle = () => {
   });
   const { data: timeline, isPending: isTimelinePending } =
     useBattlesControllerGetBattleTimeline({ battleId });
-  const [hideZeros, setHideZeros] = useState(true);
+  const [queryState, setQueryState] = useQueryStates(
+    battlePanelSingleBattleSearchParsers,
+  );
+  const [hideZeros, setHideZeros] = useLocalStorage(
+    HIDE_ZERO_STATS_STORAGE_KEY,
+    true,
+  );
   const [selectedTurn, setSelectedTurn] = useState<number | null>(null);
   const [scrollTargetTurn, setScrollTargetTurn] = useState<number | null>(null);
   const [scrollTargetRequestId, setScrollTargetRequestId] = useState(0);
   const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT_PX);
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const sideCardsGridRef = useRef<HTMLDivElement>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
   const battleLogWrapperRef = useRef<HTMLDivElement>(null);
   const selectedTurnRef = useRef<number | null>(null);
+  const sideCardsWheelHandlerRef = useRef<(event: WheelEvent) => void>(
+    () => undefined,
+  );
   const chartHeightRef = useRef(DEFAULT_CHART_HEIGHT_PX);
   const scrollViewportHeightRef = useRef(0);
   const scrollAnimationFrameRef = useRef<number | null>(null);
@@ -90,12 +104,11 @@ export const BattlePanelSingleBattle = () => {
   const shouldShowRecentOpponentBattles =
     getRecentOpponentBattleContext(battle) !== null;
   const timelineTurns = timeline?.timeline ?? [];
-  const selectedTurnExists = timelineTurns.some(
-    (turn) => turn.turn === selectedTurn,
-  );
-  const selectedTurnNumber = selectedTurnExists
-    ? selectedTurn
-    : (timelineTurns[0]?.turn ?? null);
+  const selectedTurnNumber = getBattlePanelSelectedTurn({
+    availableTurns: timelineTurns.map((turn) => turn.turn),
+    requestedTurn: queryState.turn,
+    selectedTurn,
+  });
   const hasTimeline = timelineTurns.length > 0;
   const shouldRenderTimelineSlot = isTimelinePending || hasTimeline;
   const layoutStyle = {
@@ -139,6 +152,18 @@ export const BattlePanelSingleBattle = () => {
   useEffect(() => {
     selectedTurnRef.current = selectedTurn;
   }, [selectedTurn]);
+
+  useEffect(() => {
+    const requestedTurn = queryState.turn;
+    if (requestedTurn === null) {
+      return;
+    }
+
+    selectedTurnRef.current = requestedTurn;
+    setSelectedTurn(requestedTurn);
+    setScrollTargetTurn(requestedTurn);
+    setScrollTargetRequestId((requestId) => requestId + 1);
+  }, [battleId, queryState.turn]);
 
   useLayoutEffect(() => {
     if (scrollAnimationFrameRef.current != null) {
@@ -219,6 +244,7 @@ export const BattlePanelSingleBattle = () => {
     setSelectedTurn(turn);
     setScrollTargetTurn(turn);
     setScrollTargetRequestId((requestId) => requestId + 1);
+    void setQueryState({ turn });
   };
 
   const handleTurnFocus = (turn: number) => {
@@ -310,7 +336,7 @@ export const BattlePanelSingleBattle = () => {
     );
   };
 
-  const handleSideCardsWheelCapture = (event: WheelEvent<HTMLDivElement>) => {
+  const handleSideCardsWheelCapture = (event: WheelEvent) => {
     const outerViewport = scrollViewportRef.current;
 
     if (!outerViewport) {
@@ -357,6 +383,31 @@ export const BattlePanelSingleBattle = () => {
     innerViewport.scrollTop += handoff.innerScrollDelta;
   };
 
+  sideCardsWheelHandlerRef.current = handleSideCardsWheelCapture;
+
+  useEffect(() => {
+    const sideCardsGrid = sideCardsGridRef.current;
+
+    if (!sideCardsGrid) {
+      return;
+    }
+
+    const handleWheelCapture = (event: WheelEvent) => {
+      sideCardsWheelHandlerRef.current(event);
+    };
+
+    sideCardsGrid.addEventListener("wheel", handleWheelCapture, {
+      capture: true,
+      passive: false,
+    });
+
+    return () => {
+      sideCardsGrid.removeEventListener("wheel", handleWheelCapture, {
+        capture: true,
+      });
+    };
+  }, []);
+
   return (
     <>
       {battle ? (
@@ -395,12 +446,12 @@ export const BattlePanelSingleBattle = () => {
             ) : null}
 
             <div
+              ref={sideCardsGridRef}
               className={cn(
                 "grid grid-cols-1 gap-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.3fr)]",
                 shouldShowRecentOpponentBattles &&
                   "xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)_minmax(300px,0.9fr)]",
               )}
-              onWheelCapture={handleSideCardsWheelCapture}
             >
               <div className="min-w-0">
                 {battle && (

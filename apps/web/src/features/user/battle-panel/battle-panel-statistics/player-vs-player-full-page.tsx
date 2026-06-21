@@ -17,11 +17,15 @@ import { BattlePanelResultsSurface } from "@/features/user/battle-panel/componen
 import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-status";
 import {
   battlePanelPlayerVsPlayerSearchParsers,
+  getBattlePanelPageIndex,
+  getNextBattlePanelPage,
+  getPreviousBattlePanelPage,
   normalizeBattlePanelCharacterId,
-} from "@/features/user/battle-panel/battle-panel-statistics-search";
+  resetBattlePanelCursorPagination,
+  type Period,
+} from "@/features/user/battle-panel/battle-panel-search";
 import { useBattlesControllerGetPlayerVsPlayerBattles } from "@/lib/api/generated/battlelog/battles/battles";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
-import type { Period } from "@/store/battle-filters.store";
 import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
@@ -42,7 +46,6 @@ export function PlayerVsPlayerFullPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [pageIndex, setPageIndex] = useState(0);
   const params = useParams({ strict: false }) as {
     myId?: string;
     opponentId?: string;
@@ -52,6 +55,7 @@ export function PlayerVsPlayerFullPage() {
   const [queryState, setQueryState] = useQueryStates(
     battlePanelPlayerVsPlayerSearchParsers,
   );
+  const pageIndex = getBattlePanelPageIndex(queryState.page);
   const currentCharacterId =
     normalizeBattlePanelCharacterId(queryState.characterId) ?? params.myId;
   const period = queryState.period ?? "30d";
@@ -77,8 +81,8 @@ export function PlayerVsPlayerFullPage() {
     period: Period;
     ph?: boolean;
   }) => {
-    setPageIndex(0);
     void setQueryState({
+      ...resetBattlePanelCursorPagination(),
       period: nextPeriod,
       minLevel: nextMinLevel ?? 1,
       maxLevel: nextMaxLevel ?? 500,
@@ -86,7 +90,6 @@ export function PlayerVsPlayerFullPage() {
       endDate: endDate ?? null,
       ph: nextPh ?? null,
       matchmaking: nextMatchmaking ?? null,
-      cursor: null,
     });
   };
 
@@ -138,15 +141,19 @@ export function PlayerVsPlayerFullPage() {
 
   const handleNextPage = () => {
     if (data?.pagination.nextCursor) {
-      setPageIndex((currentPageIndex) => currentPageIndex + 1);
-      void setQueryState({ cursor: data.pagination.nextCursor });
+      void setQueryState({
+        cursor: data.pagination.nextCursor,
+        page: getNextBattlePanelPage(queryState.page),
+      });
     }
   };
 
   const handlePreviousPage = () => {
     if (data?.pagination.previousCursor) {
-      setPageIndex((currentPageIndex) => Math.max(currentPageIndex - 1, 0));
-      void setQueryState({ cursor: data.pagination.previousCursor });
+      void setQueryState({
+        cursor: data.pagination.previousCursor,
+        page: getPreviousBattlePanelPage(queryState.page),
+      });
     }
   };
 
