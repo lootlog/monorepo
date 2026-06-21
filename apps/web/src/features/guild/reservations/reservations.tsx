@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Grid2X2, List, Search } from "lucide-react";
 import { ReservationCard } from "./reservation-card";
@@ -27,6 +27,26 @@ import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
 import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
+
+type ReservationCardEntries = Array<
+  [string, ReservationsCardsResponseDtoOutputItem[]]
+>;
+
+const getReservationLookupKey = (
+  name: string,
+  slug: string,
+  reservations: Record<string, unknown>,
+) => {
+  if (slug in reservations) {
+    return slug;
+  }
+
+  if (name in reservations) {
+    return name;
+  }
+
+  return name.toLowerCase();
+};
 
 export const Reservations: React.FC = () => {
   const navigate = useNavigate();
@@ -64,23 +84,14 @@ export const Reservations: React.FC = () => {
   );
 
   const normalizedSearch = searchValue.trim().toLowerCase();
-  const filteredCards = useMemo(() => {
-    if (!reservationsCards) {
-      return [] as Array<[string, ReservationsCardsResponseDtoOutputItem[]]>;
-    }
-
-    const entries = Object.entries(reservationsCards) as Array<
-      [string, ReservationsCardsResponseDtoOutputItem[]]
-    >;
-
-    if (!normalizedSearch) {
-      return entries;
-    }
-
-    return entries.filter(([name]) =>
-      name.toLowerCase().includes(normalizedSearch),
-    );
-  }, [reservationsCards, normalizedSearch]);
+  const reservationCardEntries = Object.entries(
+    reservationsCards ?? {},
+  ) as ReservationCardEntries;
+  const filteredCards = normalizedSearch
+    ? reservationCardEntries.filter(([name]) =>
+        name.toLowerCase().includes(normalizedSearch),
+      )
+    : reservationCardEntries;
 
   const isLoading = !guild || !reservations || !reservationsCards;
   const guildPath = guild?.vanityUrl ?? guild?.id;
@@ -101,12 +112,11 @@ export const Reservations: React.FC = () => {
         .flatMap(([name, items]) =>
           items.map((item, idx) => {
             const slug = reservationSlug(name);
-            const normalizedKey =
-              slug in reservations
-                ? slug
-                : name in reservations
-                  ? name
-                  : name.toLowerCase();
+            const normalizedKey = getReservationLookupKey(
+              name,
+              slug,
+              reservations,
+            );
             const reservationsForCard =
               reservations[normalizedKey] ?? reservations[slug] ?? [];
 
@@ -116,7 +126,7 @@ export const Reservations: React.FC = () => {
               slug,
               item,
               reservationsForCard,
-              lvl: item.lvl || 0,
+              lvl: item.lvl ?? 0,
             };
           }),
         )
