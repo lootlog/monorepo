@@ -1,8 +1,8 @@
 import {
   useLogsStore,
-  LogActionType,
-  LogEntryStatus,
-  SerializableValue,
+  type LogActionType,
+  type LogEntryStatus,
+  type SerializableValue,
 } from "@/store/logs.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
 
@@ -47,6 +47,12 @@ type RunLoggedRequestInput<TResponse> = LoggedRequestInput & {
   request: () => Promise<TResponse>;
 };
 
+export type LoggedActionRetryOptions = {
+  maxAttempts: number;
+  retryableStatuses: readonly number[];
+  getDelayMs: (attempt: number, error: unknown) => number;
+};
+
 type RunSingleLoggedActionInput<TResponse> = {
   actionType: LogActionType;
   actionPayload: unknown;
@@ -54,6 +60,7 @@ type RunSingleLoggedActionInput<TResponse> = {
   execute: () => Promise<TResponse>;
   getSuccessDetails?: (response: TResponse) => unknown;
   getErrorDetails?: (error: unknown) => unknown;
+  retry?: LoggedActionRetryOptions;
 };
 
 const isRecord = (value: unknown): value is RecordValue => {
@@ -280,6 +287,68 @@ export const runLoggedRequest = async <TResponse>({
   }
 };
 
+const delayRetry = (delayMs: number): Promise<void> => {
+  if (delayMs <= 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, delayMs);
+  });
+};
+
+const shouldRetryLoggedActionError = (
+  error: unknown,
+  retry: LoggedActionRetryOptions,
+): boolean => {
+  const statusCode = getErrorStatusCode(error);
+
+  if (statusCode === null) {
+    return true;
+  }
+
+  return retry.retryableStatuses.includes(statusCode);
+};
+
+const runLoggedRequestWithRetry = <TResponse>({
+  action,
+  method,
+  endpoint,
+  payload,
+  request,
+  retry,
+}: RunLoggedRequestInput<TResponse> & {
+  retry?: LoggedActionRetryOptions;
+}): Promise<TResponse> => {
+  const maxAttempts = Math.max(1, retry?.maxAttempts ?? 1);
+
+  const runAttempt = async (attempt: number): Promise<TResponse> => {
+    try {
+      return await runLoggedRequest({
+        action,
+        method,
+        endpoint,
+        payload,
+        request,
+      });
+    } catch (error) {
+      const canRetry =
+        retry &&
+        attempt < maxAttempts &&
+        shouldRetryLoggedActionError(error, retry);
+
+      if (!canRetry) {
+        throw error;
+      }
+
+      await delayRetry(retry.getDelayMs(attempt, error));
+      return runAttempt(attempt + 1);
+    }
+  };
+
+  return runAttempt(1);
+};
+
 export const runSingleLoggedAction = async <TResponse>({
   actionType,
   actionPayload,
@@ -287,6 +356,7 @@ export const runSingleLoggedAction = async <TResponse>({
   execute,
   getSuccessDetails,
   getErrorDetails,
+  retry,
 }: RunSingleLoggedActionInput<TResponse>): Promise<TResponse> => {
   const action = startLoggedAction({
     actionType,
@@ -294,12 +364,13 @@ export const runSingleLoggedAction = async <TResponse>({
   });
 
   try {
-    const response = await runLoggedRequest({
+    const response = await runLoggedRequestWithRetry({
       action,
       method: request.method,
       endpoint: request.endpoint,
       payload: request.payload,
       request: execute,
+      retry,
     });
 
     action.complete({

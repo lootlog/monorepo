@@ -8,9 +8,45 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("BattlesService", () => {
   let service: BattlesService;
+  let mockDrizzleService: {
+    db: {
+      query: {
+        battles: {
+          findMany: ReturnType<typeof vi.fn>;
+          findFirst: ReturnType<typeof vi.fn>;
+        };
+        battleWarriors: { findMany: ReturnType<typeof vi.fn> };
+        userCharacters: {
+          findMany: ReturnType<typeof vi.fn>;
+          findFirst: ReturnType<typeof vi.fn>;
+        };
+      };
+      insert: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+      select: ReturnType<typeof vi.fn>;
+      selectDistinctOn: ReturnType<typeof vi.fn>;
+      execute: ReturnType<typeof vi.fn>;
+      transaction: ReturnType<typeof vi.fn>;
+    };
+  };
+  let mockR2Service: {
+    uploadBattleData: ReturnType<typeof vi.fn>;
+    getBattleData: ReturnType<typeof vi.fn>;
+    deleteBattleData: ReturnType<typeof vi.fn>;
+  };
+  let mockBattleAnalyticsService: {
+    getBattleAnalytics: ReturnType<typeof vi.fn>;
+    calculateProfessionWinRate: ReturnType<typeof vi.fn>;
+    getHeadToHead: ReturnType<typeof vi.fn>;
+    getCurrentStreak: ReturnType<typeof vi.fn>;
+    getBattleDurationStats: ReturnType<typeof vi.fn>;
+    getPhGrowthTimeSeries: ReturnType<typeof vi.fn>;
+    invalidateAnalyticsCache: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
-    const mockDrizzleService = {
+    mockDrizzleService = {
       db: {
         query: {
           battles: { findMany: vi.fn(), findFirst: vi.fn() },
@@ -54,7 +90,7 @@ describe("BattlesService", () => {
       },
     };
 
-    const mockR2Service = {
+    mockR2Service = {
       uploadBattleData: vi.fn(),
       getBattleData: vi.fn(),
       deleteBattleData: vi.fn(),
@@ -64,13 +100,14 @@ describe("BattlesService", () => {
       paginateBattles: vi.fn(),
     };
 
-    const mockBattleAnalyticsService = {
+    mockBattleAnalyticsService = {
       getBattleAnalytics: vi.fn(),
       calculateProfessionWinRate: vi.fn(),
       getHeadToHead: vi.fn(),
       getCurrentStreak: vi.fn(),
       getBattleDurationStats: vi.fn(),
       getPhGrowthTimeSeries: vi.fn(),
+      invalidateAnalyticsCache: vi.fn(),
     };
 
     const mockRedisService = {
@@ -114,5 +151,93 @@ describe("BattlesService", () => {
 
   it("should be defined", () => {
     expect(service).toBeDefined();
+  });
+
+  it("returns an existing battle when a repeated submission hits the unique constraint", async () => {
+    const analysis = {
+      duration: 12,
+      outcome: {
+        hasFlee: false,
+        loser: "Team 2",
+        losingTeam: 2,
+        winner: "Team 1",
+        winningTeam: 1,
+      },
+      parsedMoves: [],
+      statistics: {},
+      type: "pvp",
+      warriors: [],
+    };
+    const existingBattle = {
+      id: "battle-existing",
+      warriors: [],
+    };
+
+    vi.spyOn(service as never, "analyzeBattle").mockReturnValue(
+      analysis as never,
+    );
+    mockDrizzleService.db.transaction.mockRejectedValueOnce(
+      Object.assign(
+        new Error("duplicate key value violates unique constraint"),
+        {
+          code: "23505",
+        },
+      ),
+    );
+    mockDrizzleService.db.query.battles.findFirst.mockResolvedValueOnce(
+      existingBattle,
+    );
+
+    await expect(
+      service.createBattle({
+        userId: "user-1",
+        data: {
+          accountId: "account-1",
+          characterId: "character-1",
+          submissionId: "submission-1",
+          world: "pandora",
+          events: [
+            {
+              ev: 1,
+              f: {
+                m: ["move"],
+                w: {
+                  "1": {
+                    icon: "a.gif",
+                    lvl: 100,
+                    name: "A",
+                    originalId: 1,
+                    prof: "w",
+                    team: 1,
+                  },
+                  "2": {
+                    icon: "b.gif",
+                    lvl: 100,
+                    name: "B",
+                    originalId: 2,
+                    prof: "m",
+                    team: 2,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      }),
+    ).resolves.toEqual({ battleId: "battle-existing" });
+
+    expect(mockDrizzleService.db.query.battles.findFirst).toHaveBeenCalledWith({
+      where: { submissionId: "submission-1" },
+      with: { warriors: true },
+    });
+    expect(mockR2Service.uploadBattleData).toHaveBeenCalledWith(
+      "battle-existing",
+      expect.objectContaining({
+        battleId: "battle-existing",
+      }),
+    );
+    expect(
+      mockBattleAnalyticsService.invalidateAnalyticsCache,
+    ).toHaveBeenCalledWith("user-1");
   });
 });
