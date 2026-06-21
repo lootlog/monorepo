@@ -192,6 +192,24 @@ describe("PaginationService", () => {
       expect(result.performance.countTime).toBeDefined();
       expect(typeof result.performance.countTime).toBe("number");
       expect(result.pagination.total).toBe(100);
+      expect(result.performance.estimatedTotal).toBe(true);
+    });
+
+    it("should mark zero totals as estimated when includeTotal is true", async () => {
+      drizzleService.db.query.battles.findMany.mockResolvedValue([]);
+      drizzleService.db.execute.mockResolvedValue({
+        rows: [{ estimated_count: "0" }],
+      });
+
+      const result = await service.paginateBattles(() => undefined, {
+        size: 10,
+        sortOrder: "desc",
+        includeTotal: true,
+      });
+
+      expect(result.pagination.total).toBe(0);
+      expect(result.performance.totalItems).toBe(0);
+      expect(result.performance.estimatedTotal).toBe(true);
     });
   });
 });

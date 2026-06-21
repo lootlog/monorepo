@@ -106,7 +106,7 @@ export class PaginationService {
         queryTime,
         countTime: includeTotal ? countTime : undefined,
         totalItems: total,
-        estimatedTotal: !!total,
+        estimatedTotal: total !== undefined,
       },
     };
   }
@@ -203,7 +203,7 @@ export class PaginationService {
           WHERE relname = 'battles'
         `);
         const row = result.rows[0] as { estimated_count: string } | undefined;
-        return Number(row?.estimated_count || 0);
+        return Number(row?.estimated_count ?? 0);
       }
 
       const result = await this.drizzle.db
