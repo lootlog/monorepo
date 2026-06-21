@@ -53,7 +53,7 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
   return (
     <li
       className={cn(
-        "border-b border-transparent outline-none transition-colors",
+        "relative border-b border-transparent pr-11 outline-none transition-colors",
         onSelect && "cursor-pointer hover:bg-muted/40",
         searchMatched && "bg-amber-400/5",
         selected && "border-l-2 border-l-primary bg-primary/5",
@@ -67,6 +67,13 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
       onClick={onSelect}
       onKeyDown={handleKeyDown}
     >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-2 top-1.5 rounded-sm border border-border/40 bg-background/45 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground/60 tabular-nums"
+      >
+        #{turn}
+      </span>
+
       <BattleBuffActions
         actions={parsedActions.buffActions}
         attacker={attacker}

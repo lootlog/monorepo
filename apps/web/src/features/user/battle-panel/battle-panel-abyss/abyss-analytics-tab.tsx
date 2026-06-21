@@ -4,7 +4,7 @@ import { CurrentStreakCard } from "@/features/user/battle-panel/battle-panel-sta
 import { ProfessionWinRateChart } from "@/features/user/battle-panel/battle-panel-statistics/components/profession-win-rate";
 import { RatingDeltaByOpponentCard } from "@/features/user/battle-panel/battle-panel-statistics/components/rating-delta-by-opponent-card";
 import { RatingGrowthChart } from "@/features/user/battle-panel/battle-panel-statistics/components/rating-growth-chart";
-import type { Period } from "@/store/battle-filters.store";
+import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import type { ComponentProps } from "react";
 
 type AbyssAnalyticsSearch = {

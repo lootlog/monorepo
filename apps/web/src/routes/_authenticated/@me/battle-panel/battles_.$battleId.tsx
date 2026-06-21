@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BattlePanelSingleBattle } from "@/features/user/battle-panel/battle-panel-single-battle/battle-panel-single-battle";
 import { BattlePanelSingleBattleSkeleton } from "@/features/user/battle-panel/battle-panel-single-battle/battle-panel-single-battle-skeleton";
+import { battlePanelSingleBattleSearchSchema } from "@/features/user/battle-panel/battle-panel-search";
 import {
   getBattlesControllerGetBattleQueryOptions,
   getBattlesControllerGetBattleRawDataQueryOptions,
@@ -13,6 +14,7 @@ import {
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/battles_/$battleId",
 )({
+  validateSearch: battlePanelSingleBattleSearchSchema,
   loader: ({ abortController, context, params, preload }) =>
     withRouteLoaderCancellation(abortController, async () => {
       if (preload) {
