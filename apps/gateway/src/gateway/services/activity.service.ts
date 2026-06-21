@@ -8,6 +8,8 @@ import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import type { Socket } from "src/gateway/types/socket-user.type";
 import type { UserGuildData } from "src/guilds/types/guild.types";
 
+type ActivityPlayer = NonNullable<Socket["data"]["player"]>;
+
 @Injectable()
 export class ActivityService {
   private readonly logger = new Logger(ActivityService.name);
@@ -80,31 +82,47 @@ export class ActivityService {
     userAgent: string | undefined;
     timestamp: number;
   }) {
+    const gamePlayer = this.getGamePlayer(source, player);
+
     return {
       userId,
       guildId,
       discordId,
       type,
       source,
-      world: source === ActivitySource.GAME ? player?.world : undefined,
+      world: gamePlayer?.world,
       details: {
         sessionId,
         userAgent,
       },
-      actorSnapshot:
-        source === ActivitySource.GAME && player
-          ? {
-              accountId: Number(player.accountId),
-              characterId: Number(player.characterId),
-              clanName: player.clan?.name ?? "",
-              name: player.name,
-              clanId: player.clan?.id ?? 0,
-              icon: player.icon,
-              lvl: Number(player.lvl),
-              prof: player.prof,
-            }
-          : undefined,
+      actorSnapshot: gamePlayer
+        ? this.buildActorSnapshot(gamePlayer)
+        : undefined,
       idempotencyKey: `${type.toLowerCase()}_${sessionId}_${guildId}_${timestamp}`,
+    };
+  }
+
+  private getGamePlayer(
+    source: ActivitySource,
+    player: Socket["data"]["player"],
+  ): ActivityPlayer | undefined {
+    if (source !== ActivitySource.GAME || !player) {
+      return undefined;
+    }
+
+    return player;
+  }
+
+  private buildActorSnapshot(player: ActivityPlayer) {
+    return {
+      accountId: Number(player.accountId),
+      characterId: Number(player.characterId),
+      clanName: player.clan?.name ?? "",
+      name: player.name,
+      clanId: player.clan?.id ?? 0,
+      icon: player.icon,
+      lvl: Number(player.lvl),
+      prof: player.prof,
     };
   }
 }
