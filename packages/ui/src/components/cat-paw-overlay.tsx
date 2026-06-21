@@ -41,71 +41,81 @@ export function useCatTheme() {
   return isCat;
 }
 
+type CatPaw = {
+  id: string;
+  left: string;
+  top: string;
+  size: number;
+  rotation: number;
+  opacity: number;
+};
+
+function createCatPaws(id: string): CatPaw[] {
+  const rand = seededRandom(hashString(id));
+
+  for (let i = 0; i < 20; i++) rand();
+
+  const result: CatPaw[] = [];
+
+  const startX = rand() * 100;
+  const startY = rand() * 100;
+
+  let walkAngle = rand() * Math.PI * 2;
+
+  const curveBias = (rand() - 0.5) * 0.6;
+
+  const baseSize = 35 + rand() * 15;
+  const baseOpacity = 0.03 + rand() * 0.03;
+  const steps = 12 + Math.floor(rand() * 8);
+
+  const strideForwardPx = baseSize * 0.75;
+  const strideLateralPx = baseSize * 0.6;
+  const pawRotationOutward = 12;
+
+  let bodyAccumulatedX = 0;
+  let bodyAccumulatedY = 0;
+
+  for (let i = 0; i < steps; i++) {
+    const isRightPaw = i % 2 === 0;
+
+    walkAngle += curveBias + (rand() - 0.5) * 0.15;
+
+    bodyAccumulatedX += Math.cos(walkAngle) * strideForwardPx;
+    bodyAccumulatedY += Math.sin(walkAngle) * strideForwardPx;
+
+    const perpendicularAngle = walkAngle + Math.PI / 2;
+    const sideOffset = isRightPaw ? strideLateralPx : -strideLateralPx;
+
+    const pawX = bodyAccumulatedX + Math.cos(perpendicularAngle) * sideOffset;
+    const pawY = bodyAccumulatedY + Math.sin(perpendicularAngle) * sideOffset;
+
+    const angleInDegrees = walkAngle * (180 / Math.PI) + 90;
+    const pawRotation =
+      angleInDegrees + (isRightPaw ? pawRotationOutward : -pawRotationOutward);
+
+    const signX = pawX >= 0 ? "+" : "-";
+    const signY = pawY >= 0 ? "+" : "-";
+
+    result.push({
+      id: `paw-${i}`,
+      left: `calc(${startX}% ${signX} ${Math.abs(pawX)}px)`,
+      top: `calc(${startY}% ${signY} ${Math.abs(pawY)}px)`,
+      size: baseSize + (rand() * 4 - 2),
+      rotation: pawRotation,
+      opacity: baseOpacity,
+    });
+  }
+
+  return result;
+}
+
 export function CatPawOverlay() {
   const isCatTheme = useCatTheme();
   const id = React.useId();
 
-  const paws = React.useMemo(() => {
-    const rand = seededRandom(hashString(id));
-
-    for (let i = 0; i < 20; i++) rand();
-
-    const result = [];
-
-    const startX = rand() * 100;
-    const startY = rand() * 100;
-
-    let walkAngle = rand() * Math.PI * 2;
-
-    const curveBias = (rand() - 0.5) * 0.6;
-
-    const baseSize = 35 + rand() * 15;
-    const baseOpacity = 0.03 + rand() * 0.03;
-    const steps = 12 + Math.floor(rand() * 8);
-
-    const strideForwardPx = baseSize * 0.75;
-    const strideLateralPx = baseSize * 0.6;
-    const pawRotationOutward = 12;
-
-    let bodyAccumulatedX = 0;
-    let bodyAccumulatedY = 0;
-
-    for (let i = 0; i < steps; i++) {
-      const isRightPaw = i % 2 === 0;
-
-      walkAngle += curveBias + (rand() - 0.5) * 0.15;
-
-      bodyAccumulatedX += Math.cos(walkAngle) * strideForwardPx;
-      bodyAccumulatedY += Math.sin(walkAngle) * strideForwardPx;
-
-      const perpendicularAngle = walkAngle + Math.PI / 2;
-      const sideOffset = isRightPaw ? strideLateralPx : -strideLateralPx;
-
-      const pawX = bodyAccumulatedX + Math.cos(perpendicularAngle) * sideOffset;
-      const pawY = bodyAccumulatedY + Math.sin(perpendicularAngle) * sideOffset;
-
-      const angleInDegrees = walkAngle * (180 / Math.PI) + 90;
-      const pawRotation =
-        angleInDegrees +
-        (isRightPaw ? pawRotationOutward : -pawRotationOutward);
-
-      const signX = pawX >= 0 ? "+" : "-";
-      const signY = pawY >= 0 ? "+" : "-";
-
-      result.push({
-        id: `paw-${i}`,
-        left: `calc(${startX}% ${signX} ${Math.abs(pawX)}px)`,
-        top: `calc(${startY}% ${signY} ${Math.abs(pawY)}px)`,
-        size: baseSize + (rand() * 4 - 2),
-        rotation: pawRotation,
-        opacity: baseOpacity,
-      });
-    }
-
-    return result;
-  }, [id]);
-
   if (!isCatTheme) return null;
+
+  const paws = createCatPaws(id);
 
   return (
     <div

@@ -43,45 +43,48 @@ const MAGIC_CIRCLE_SVG =
 const ENERGY_PARTICLE_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Ccircle cx='4' cy='4' r='3' fill='white' opacity='0.6'/%3E%3Ccircle cx='4' cy='4' r='1.5' fill='white' opacity='0.9'/%3E%3C/svg%3E";
 
+type RiasMagicElement = {
+  id: string;
+  left: string;
+  top: string;
+  size: number;
+  rotation: number;
+  opacity: number;
+  type: "circle" | "particle";
+};
+
+function createRiasMagicElements(id: string): RiasMagicElement[] {
+  const rand = seededRandom(hashString(id));
+
+  for (let i = 0; i < 20; i++) rand();
+
+  const result: RiasMagicElement[] = [];
+  const count = 5 + Math.floor(rand() * 4);
+
+  for (let i = 0; i < count; i++) {
+    const type = rand() > 0.5 ? "circle" : "particle";
+
+    result.push({
+      id: `rias-${i}`,
+      left: `${rand() * 100}%`,
+      top: `${rand() * 100}%`,
+      size: type === "circle" ? 20 + rand() * 16 : 8 + rand() * 6,
+      rotation: rand() * 360,
+      opacity: 0.02 + rand() * 0.02,
+      type,
+    });
+  }
+
+  return result;
+}
+
 export function RiasMagicCardOverlay() {
   const isRiasTheme = useRiasTheme();
   const id = React.useId();
 
-  const elements = React.useMemo(() => {
-    const rand = seededRandom(hashString(id));
-
-    for (let i = 0; i < 20; i++) rand();
-
-    const result: Array<{
-      id: string;
-      left: string;
-      top: string;
-      size: number;
-      rotation: number;
-      opacity: number;
-      type: "circle" | "particle";
-    }> = [];
-
-    const count = 5 + Math.floor(rand() * 4);
-
-    for (let i = 0; i < count; i++) {
-      const type = rand() > 0.5 ? "circle" : "particle";
-
-      result.push({
-        id: `rias-${i}`,
-        left: `${rand() * 100}%`,
-        top: `${rand() * 100}%`,
-        size: type === "circle" ? 20 + rand() * 16 : 8 + rand() * 6,
-        rotation: rand() * 360,
-        opacity: 0.02 + rand() * 0.02,
-        type,
-      });
-    }
-
-    return result;
-  }, [id]);
-
   if (!isRiasTheme) return null;
+
+  const elements = createRiasMagicElements(id);
 
   return (
     <div

@@ -41,45 +41,48 @@ const SNOWFLAKE_SVG =
 const CRYSTAL_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 0 L9 6 L15 6 L10 9 L12 16 L8 11 L4 16 L6 9 L1 6 L7 6 Z' fill='white'/%3E%3C/svg%3E";
 
+type RukiaFrostElement = {
+  id: string;
+  left: string;
+  top: string;
+  size: number;
+  rotation: number;
+  opacity: number;
+  type: "snowflake" | "crystal";
+};
+
+function createRukiaFrostElements(id: string): RukiaFrostElement[] {
+  const rand = seededRandom(hashString(id));
+
+  for (let i = 0; i < 20; i++) rand();
+
+  const result: RukiaFrostElement[] = [];
+  const count = 6 + Math.floor(rand() * 4);
+
+  for (let i = 0; i < count; i++) {
+    const type = rand() > 0.4 ? "snowflake" : "crystal";
+
+    result.push({
+      id: `frost-${i}`,
+      left: `${rand() * 100}%`,
+      top: `${rand() * 100}%`,
+      size: type === "snowflake" ? 18 + rand() * 14 : 10 + rand() * 8,
+      rotation: rand() * 360,
+      opacity: 0.025 + rand() * 0.025,
+      type,
+    });
+  }
+
+  return result;
+}
+
 export function RukiaFrostCardOverlay() {
   const isRukiaTheme = useRukiaTheme();
   const id = React.useId();
 
-  const elements = React.useMemo(() => {
-    const rand = seededRandom(hashString(id));
-
-    for (let i = 0; i < 20; i++) rand();
-
-    const result: Array<{
-      id: string;
-      left: string;
-      top: string;
-      size: number;
-      rotation: number;
-      opacity: number;
-      type: "snowflake" | "crystal";
-    }> = [];
-
-    const count = 6 + Math.floor(rand() * 4);
-
-    for (let i = 0; i < count; i++) {
-      const type = rand() > 0.4 ? "snowflake" : "crystal";
-
-      result.push({
-        id: `frost-${i}`,
-        left: `${rand() * 100}%`,
-        top: `${rand() * 100}%`,
-        size: type === "snowflake" ? 18 + rand() * 14 : 10 + rand() * 8,
-        rotation: rand() * 360,
-        opacity: 0.025 + rand() * 0.025,
-        type,
-      });
-    }
-
-    return result;
-  }, [id]);
-
   if (!isRukiaTheme) return null;
+
+  const elements = createRukiaFrostElements(id);
 
   return (
     <div
