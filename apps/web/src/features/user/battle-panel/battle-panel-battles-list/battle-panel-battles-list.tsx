@@ -9,13 +9,18 @@ import {
 import { BattlePanelMobileFiltersDrawer } from "@/features/user/battle-panel/components/battle-panel-mobile-filters-drawer";
 import { useQueryStates } from "nuqs";
 import type { BattleFilters } from "./components/battles-list-filters";
-import { getSelectedWarriorsFromSearch } from "@/features/user/battle-panel/battle-panel-statistics-search";
+import {
+  battlePanelBattlesSearchParsers,
+  getBattlePanelCursorPaginationForCursor,
+  getBattlePanelPageIndex,
+  getSelectedWarriorsFromSearch,
+  resetBattlePanelCursorPagination,
+} from "@/features/user/battle-panel/battle-panel-search";
 import {
   useBattlesControllerGetDashboardBattles,
   useBattlesControllerGetUserCharacters,
   useBattlesControllerGetUserWorlds,
 } from "@/lib/api/generated/battlelog/battles/battles";
-import { battleQueryParsers } from "./battle-query-parsers";
 import { useState } from "react";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
@@ -24,11 +29,13 @@ import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 export const BattlePanelBattlesList = () => {
   const { t } = useTranslation();
-  const [queryState, setQueryState] = useQueryStates(battleQueryParsers);
+  const [queryState, setQueryState] = useQueryStates(
+    battlePanelBattlesSearchParsers,
+  );
   const pageSize = 20;
   const isMobile = useIsMobile();
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [pageIndex, setPageIndex] = useState(0);
+  const pageIndex = getBattlePanelPageIndex(queryState.page);
   const selectedWarriors = getSelectedWarriorsFromSearch(
     queryState.search ?? undefined,
   );
@@ -66,27 +73,24 @@ export const BattlePanelBattlesList = () => {
   };
 
   const handleCursorChange = (cursor: string | undefined) => {
-    if (!cursor) {
-      setPageIndex(0);
-    } else if (cursor === battlesResponse?.pagination.nextCursor) {
-      setPageIndex((currentPageIndex) => currentPageIndex + 1);
-    } else if (cursor === battlesResponse?.pagination.previousCursor) {
-      setPageIndex((currentPageIndex) => Math.max(currentPageIndex - 1, 0));
-    }
-
-    setQueryState({ cursor: cursor ?? null });
+    setQueryState(
+      getBattlePanelCursorPaginationForCursor({
+        currentPage: queryState.page,
+        nextCursor: battlesResponse?.pagination.nextCursor,
+        previousCursor: battlesResponse?.pagination.previousCursor,
+        targetCursor: cursor,
+      }),
+    );
   };
 
   const handleFiltersChange = (newFilters: BattleFilters) => {
-    setPageIndex(0);
     setQueryState({
-      cursor: null,
+      ...resetBattlePanelCursorPagination(),
       world: newFilters.world ?? null,
       type: newFilters.type ?? null,
       search: newFilters.search ?? null,
       result: newFilters.result ?? null,
       ph: newFilters.ph ?? null,
-      matchmaking: null,
       characterId: newFilters.characterId ?? null,
       minLevel: newFilters.minLevel ?? 1,
       maxLevel: newFilters.maxLevel ?? 500,

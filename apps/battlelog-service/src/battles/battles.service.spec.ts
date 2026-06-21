@@ -4,6 +4,8 @@ import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import { R2Service } from "src/shared/modules/r2/r2.service";
 import { PaginationService } from "./services/pagination.service";
 import { BattleAnalyticsService } from "./services/battle-analytics.service";
+import { BattleListFilterService } from "./services/battle-list-filter.service";
+import { BattleMetadataService } from "./services/battle-metadata.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("BattlesService", () => {
@@ -123,6 +125,8 @@ describe("BattlesService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BattlesService,
+        BattleListFilterService,
+        BattleMetadataService,
         {
           provide: DrizzleService,
           useValue: mockDrizzleService,

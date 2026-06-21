@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { QueryCacheNotifyEvent, QueryClient } from "@tanstack/react-query";
 import { useMatches } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { Battle } from "@/lib/api/battlelog-types";
@@ -13,6 +13,17 @@ type DocumentTitleUpdaterProps = {
 type CachedGuild = {
   name?: string;
 };
+
+export function shouldRefreshDocumentTitleFromQueryCacheEvent(
+  event: QueryCacheNotifyEvent,
+  queryKeyHash: string,
+) {
+  if (!queryKeyHash || event.type !== "updated") {
+    return false;
+  }
+
+  return JSON.stringify(event.query.queryKey) === queryKeyHash;
+}
 
 function getGuildIdFromMatches(
   matches: ReturnType<typeof useMatches>,
@@ -74,7 +85,9 @@ export function DocumentTitleUpdater({
     }
 
     return queryClient.getQueryCache().subscribe((event) => {
-      if (JSON.stringify(event.query.queryKey) !== guildQueryKeyHash) {
+      if (
+        !shouldRefreshDocumentTitleFromQueryCacheEvent(event, guildQueryKeyHash)
+      ) {
         return;
       }
 
@@ -88,7 +101,12 @@ export function DocumentTitleUpdater({
     }
 
     return queryClient.getQueryCache().subscribe((event) => {
-      if (JSON.stringify(event.query.queryKey) !== battleQueryKeyHash) {
+      if (
+        !shouldRefreshDocumentTitleFromQueryCacheEvent(
+          event,
+          battleQueryKeyHash,
+        )
+      ) {
         return;
       }
 

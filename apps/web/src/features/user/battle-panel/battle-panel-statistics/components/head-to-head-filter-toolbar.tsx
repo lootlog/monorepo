@@ -5,7 +5,7 @@ import {
   WarriorSearchFilter,
 } from "@/components/filters";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
-import type { Period } from "@/store/battle-filters.store";
+import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Label } from "@lootlog/ui/components/label";

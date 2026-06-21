@@ -27,7 +27,7 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useBattlesControllerGetUserCharacters } from "@/lib/api/generated/battlelog/battles/battles";
-import type { Period } from "@/store/battle-filters.store";
+import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { useTranslation } from "react-i18next";
 
 type StatisticsFiltersMobileProps = {
