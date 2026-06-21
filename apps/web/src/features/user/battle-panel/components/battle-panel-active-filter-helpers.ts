@@ -1,4 +1,4 @@
-import type { Period } from "@/store/battle-filters.store";
+import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import type { BattleFilters } from "../battle-panel-battles-list/components/battles-list-filters";
 import {
   BATTLE_PANEL_DEFAULT_MAX_LEVEL,

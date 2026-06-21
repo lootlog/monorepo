@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PublicBattle } from "@/features/public-battle/public-battle";
 import { PublicBattleSkeleton } from "@/features/public-battle/public-battle-skeleton";
+import { battlePanelSingleBattleSearchSchema } from "@/features/user/battle-panel/battle-panel-search";
 import {
   getPublicBattlesControllerGetPublicBattleQueryOptions,
   getPublicBattlesControllerGetPublicBattleRawQueryOptions,
+  getPublicBattlesControllerGetPublicBattleTimelineQueryOptions,
 } from "@/lib/api/generated/battlelog/public-battles/public-battles";
 import {
   throwNotFoundIfResponseMatches,
@@ -11,6 +13,7 @@ import {
 } from "@/lib/router/route-errors";
 
 export const Route = createFileRoute("/battles/$id")({
+  validateSearch: battlePanelSingleBattleSearchSchema,
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       try {
@@ -26,6 +29,11 @@ export const Route = createFileRoute("/battles/$id")({
             }),
           ),
         ]);
+        void context.queryClient.prefetchQuery(
+          getPublicBattlesControllerGetPublicBattleTimelineQueryOptions({
+            battleId: params.id,
+          }),
+        );
 
         return null;
       } catch (error) {
