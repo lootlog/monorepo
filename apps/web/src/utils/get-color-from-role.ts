@@ -1,11 +1,33 @@
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+const DEFAULT_ROLE_COLOR_HEX = "FFF";
 
-export const getColorFromRoleColor = (color: number | null | undefined) => {
-  return color === 0 || color == null
-    ? "FFF"
-    : color.toString(16).padStart(6, "0");
+type RoleColorSource = {
+  color?: number | null;
 };
 
-export const getColorFromRole = (roles: GuildMember["roles"]) => {
+const hasCustomRoleColor = (
+  color: number | null | undefined,
+): color is number => color !== null && color !== undefined && color !== 0;
+
+export const getColorFromRoleColor = (color: number | null | undefined) => {
+  if (!hasCustomRoleColor(color)) {
+    return DEFAULT_ROLE_COLOR_HEX;
+  }
+
+  return color.toString(16).padStart(6, "0");
+};
+
+export const getCustomRoleCssColor = (
+  color: number | null | undefined,
+): string | null => {
+  if (!hasCustomRoleColor(color)) {
+    return null;
+  }
+
+  return `#${getColorFromRoleColor(color).toUpperCase()}`;
+};
+
+export const getColorFromRole = (
+  roles: readonly RoleColorSource[] | null | undefined,
+) => {
   return getColorFromRoleColor(roles?.[0]?.color);
 };

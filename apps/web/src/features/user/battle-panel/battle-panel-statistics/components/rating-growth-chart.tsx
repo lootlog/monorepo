@@ -8,6 +8,7 @@ import {
 import { StatCard } from "./stat-card";
 import { useTranslation } from "react-i18next";
 import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 
 interface RatingGrowthDataPoint {
   date: string;
@@ -26,7 +27,7 @@ export function RatingGrowthChart({ data, isLoading }: RatingGrowthChartProps) {
   const chartConfig = {
     rating: {
       label: t("battlePanel.statistics.ratingGrowth.chartLabel"),
-      color: "var(--chart-2)",
+      color: BATTLE_HEX_COLORS.chart.rating,
     },
   } satisfies ChartConfig;
   const chartData = data.map((point) => ({

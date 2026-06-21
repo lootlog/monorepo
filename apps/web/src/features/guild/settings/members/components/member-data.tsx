@@ -25,6 +25,7 @@ import {
   isMemberProblematic,
 } from "@/features/guild/settings/members/member-list-item.utils";
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";
+import { getColorFromRoleColor } from "@/utils/get-color-from-role";
 
 export type MemberDataProps = {
   member: GuildMember;
@@ -308,11 +309,7 @@ export const MemberData = ({
         ) : (
           <div className="divide-y divide-border/60">
             {member.roles.map((role) => {
-              const roleColor = role.color ?? 0;
-              const color =
-                roleColor === 0
-                  ? "FFF"
-                  : roleColor.toString(16).padStart(6, "0");
+              const color = getColorFromRoleColor(role.color);
               const filteredPermissions = role.permissions.filter(
                 (permission) => permission !== "OWNER",
               ) as Permission[];

@@ -2,6 +2,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
 import type { FC } from "react";
+import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 
 export type AnimatedTrophyProps = {
   show: boolean;
@@ -39,8 +40,8 @@ export const AnimatedTrophy: FC<AnimatedTrophyProps> = ({
         <Trophy
           size={40}
           className={cn("", {
-            "text-destructive": !isUserTeamWinner,
-            "text-green-500": isUserTeamWinner,
+            [BATTLE_TEXT_COLORS.team.enemy]: !isUserTeamWinner,
+            [BATTLE_TEXT_COLORS.team.friendly]: isUserTeamWinner,
           })}
         />
       </motion.div>

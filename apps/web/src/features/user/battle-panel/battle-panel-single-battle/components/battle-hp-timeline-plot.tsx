@@ -1,4 +1,5 @@
 import type { BattleTimelineResponseDtoOutput } from "@/lib/api/generated/battlelog/model";
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { BattleHpTimelineEventMarker } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-marker";
 import {
   buildBattleHpTimelineEventMarkerGroups,
@@ -83,7 +84,7 @@ export function BattleHpTimelinePlot({
     },
     momentum: {
       label: t("battlePanel.single.chart.momentum"),
-      color: "var(--chart-5)",
+      color: BATTLE_HEX_COLORS.chart.momentum,
     },
   } satisfies ChartConfig;
   const chartData = timeline.map((turn) => {

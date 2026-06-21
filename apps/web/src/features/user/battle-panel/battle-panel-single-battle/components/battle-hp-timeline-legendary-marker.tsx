@@ -1,4 +1,5 @@
 import type { KeyboardEvent, MouseEvent } from "react";
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { legendaryBonusIconByType } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-legendary-icons";
 import type { LegendaryBonusMarkerGroup } from "./battle-hp-timeline-legendary-markers";
 
@@ -98,11 +99,11 @@ export function BattleHpTimelineLegendaryMarker({
             cy={cy - 18}
             r={8}
             fill="var(--background)"
-            stroke="#f59e0b"
+            stroke={BATTLE_HEX_COLORS.legendary.unknown}
             strokeWidth={1.5}
           />
           <text
-            fill="#f59e0b"
+            fill={BATTLE_HEX_COLORS.legendary.unknown}
             fontSize={8}
             fontWeight={700}
             pointerEvents="none"

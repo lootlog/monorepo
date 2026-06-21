@@ -9,6 +9,8 @@ import type {
   BattleWarrior as Warrior,
 } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
+import { cn } from "@lootlog/ui/lib/utils";
+import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
 
 export type BattleOverviewCardProps = {
   battle: Battle;
@@ -78,7 +80,12 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
           showActions={showActions}
         />
       )}
-      <div className="bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 text-white relative">
+      <div
+        className={cn(
+          BATTLE_SURFACE_COLORS.overview.teamGradient,
+          "text-white relative",
+        )}
+      >
         <div className="p-4 pt-12 pb-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <BattleTeamSection

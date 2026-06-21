@@ -80,6 +80,7 @@ export function RecentOpponentBattlesList({
               detailedOpponentWarrior ?? recentBattle.opponentWarrior;
             const userWarriorForTags =
               detailedUserWarrior ?? recentBattle.userWarrior;
+            const isCurrentBattle = recentBattle.battleId === battle?.id;
 
             return (
               <Link
@@ -87,9 +88,12 @@ export function RecentOpponentBattlesList({
                 to="/@me/battle-panel/battles/$battleId"
                 params={{ battleId: recentBattle.battleId }}
                 preload={false}
+                aria-current={isCurrentBattle ? "page" : undefined}
                 className={cn(
                   "grid h-14 grid-cols-[32px_minmax(0,1fr)_76px] items-center gap-1 px-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
                   getBattleResultRowClassName(result),
+                  isCurrentBattle &&
+                    "relative z-10 bg-primary/10 ring-1 ring-inset ring-primary/45",
                 )}
               >
                 <BattleResultStatus result={result} />
@@ -105,7 +109,12 @@ export function RecentOpponentBattlesList({
                     className="max-w-[calc(50%-0.4375rem)]"
                   />
                 </div>
-                <div className="min-w-0">
+                <div className="flex min-w-0 flex-col items-end gap-0.5">
+                  {isCurrentBattle ? (
+                    <span className="max-w-full truncate rounded-sm border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium leading-none text-primary">
+                      {t("battlePanel.single.recentOpponent.current")}
+                    </span>
+                  ) : null}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="block whitespace-normal break-words text-right text-[11px] leading-snug text-muted-foreground">

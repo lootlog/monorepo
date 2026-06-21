@@ -11,22 +11,18 @@ import {
   getPlayersControllerGetPlayersQueryKey,
   usePlayersControllerGetPlayers,
 } from "@/lib/api/generated/search/players/players";
+import {
+  areBasicRouteSearchStatesEqual,
+  emptyBasicRouteSearch,
+  getBasicRouteSearchQueryParams,
+  getBasicRouteSearchState,
+  isBasicRouteSearchActive,
+  type SearchStatus,
+  validateBasicRouteSearch,
+} from "./-search-route.utils";
 
 const SEARCH_DEBOUNCE_MS = 300;
 const SEARCH_LIMIT = 72;
-type SearchStatus = "error" | "idle" | "loading" | "ready";
-
-type PlayersRouteSearch = {
-  query: string;
-  world: string;
-};
-
-function validateSearch(search: Record<string, unknown>): PlayersRouteSearch {
-  return {
-    query: typeof search.query === "string" ? search.query : "",
-    world: typeof search.world === "string" ? search.world : "",
-  };
-}
 
 export const Route = createFileRoute("/players")({
   component: PlayersRoute,
@@ -38,7 +34,7 @@ export const Route = createFileRoute("/players")({
     ],
   }),
   loader: () => getRuntimeConfig(),
-  validateSearch,
+  validateSearch: validateBasicRouteSearch,
 });
 
 function PlayersRoute() {
@@ -47,13 +43,8 @@ function PlayersRoute() {
   const search = Route.useSearch();
   const [queryValue, setQueryValue] = useState(search.query);
   const [worldValue, setWorldValue] = useState(search.world);
-  const hasActiveSearch =
-    search.query.trim() !== "" || search.world.trim() !== "";
-  const queryParams = {
-    limit: SEARCH_LIMIT,
-    search: search.query.trim() || undefined,
-    world: search.world.trim() || undefined,
-  };
+  const hasActiveSearch = isBasicRouteSearchActive(search);
+  const queryParams = getBasicRouteSearchQueryParams(search, SEARCH_LIMIT);
   const playersQuery = usePlayersControllerGetPlayers(queryParams, {
     query: {
       enabled: hasActiveSearch,
@@ -81,14 +72,13 @@ function PlayersRoute() {
   }, [search.query, search.world]);
 
   useEffect(() => {
-    const nextSearch = {
-      query: queryValue.trim(),
-      world: worldValue.trim(),
-    };
+    const nextSearch = getBasicRouteSearchState({ queryValue, worldValue });
 
     if (
-      nextSearch.query === search.query &&
-      nextSearch.world === search.world
+      areBasicRouteSearchStatesEqual(nextSearch, {
+        query: search.query,
+        world: search.world,
+      })
     ) {
       return;
     }
@@ -112,10 +102,7 @@ function PlayersRoute() {
 
     startTransition(() => {
       void navigate({
-        search: {
-          query: queryValue.trim(),
-          world: worldValue.trim(),
-        },
+        search: getBasicRouteSearchState({ queryValue, worldValue }),
       });
     });
   }
@@ -126,10 +113,7 @@ function PlayersRoute() {
 
     startTransition(() => {
       void navigate({
-        search: {
-          query: "",
-          world: "",
-        },
+        search: emptyBasicRouteSearch,
       });
     });
   }

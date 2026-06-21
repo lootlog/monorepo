@@ -1,8 +1,13 @@
+import {
+  BATTLE_SURFACE_COLORS,
+  BATTLE_TEXT_COLORS,
+} from "@/components/battle/utils/battle-color-palette";
 import type { BattleDurationStats } from "@/lib/api/battlelog-types";
 import { intervalToDuration } from "date-fns";
 import { Clock, Zap, Hourglass } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { StatCard } from "./stat-card";
+import { cn } from "@lootlog/ui/lib/utils";
 
 interface BattleDurationStatsCardProps {
   data: BattleDurationStats;
@@ -37,10 +42,25 @@ export function BattleDurationStatsCard({
     >
       <div className="flex flex-col h-full">
         <div className="grid grid-cols-2 gap-4 min-h-[160px] items-center">
-          <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+          <div
+            className={cn(
+              "text-center p-4 rounded-lg border",
+              BATTLE_SURFACE_COLORS.metric.positiveBox,
+            )}
+          >
             <div className="flex items-center justify-center mb-2">
-              <Clock className="w-5 h-5 text-green-600 mr-2" />
-              <span className="text-sm font-medium text-green-600">
+              <Clock
+                className={cn(
+                  "w-5 h-5 mr-2",
+                  BATTLE_TEXT_COLORS.metric.positive,
+                )}
+              />
+              <span
+                className={cn(
+                  "text-sm font-medium",
+                  BATTLE_TEXT_COLORS.metric.positive,
+                )}
+              >
                 {t("battlePanel.filters.results.won")}
               </span>
             </div>
@@ -54,10 +74,25 @@ export function BattleDurationStatsCard({
             </p>
           </div>
 
-          <div className="text-center p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+          <div
+            className={cn(
+              "text-center p-4 rounded-lg border",
+              BATTLE_SURFACE_COLORS.metric.negativeBox,
+            )}
+          >
             <div className="flex items-center justify-center mb-2">
-              <Clock className="w-5 h-5 text-red-600 mr-2" />
-              <span className="text-sm font-medium text-red-600">
+              <Clock
+                className={cn(
+                  "w-5 h-5 mr-2",
+                  BATTLE_TEXT_COLORS.metric.negative,
+                )}
+              />
+              <span
+                className={cn(
+                  "text-sm font-medium",
+                  BATTLE_TEXT_COLORS.metric.negative,
+                )}
+              >
                 {t("battlePanel.filters.results.lost")}
               </span>
             </div>
@@ -75,23 +110,43 @@ export function BattleDurationStatsCard({
         <div className="grid grid-cols-2 gap-4 pt-6 mt-6 border-t">
           <div className="text-center flex flex-col justify-center">
             <div className="flex items-center justify-center mb-2">
-              <Zap className="w-4 h-4 text-yellow-600 mr-1" />
+              <Zap
+                className={cn(
+                  "w-4 h-4 mr-1",
+                  BATTLE_TEXT_COLORS.metric.average,
+                )}
+              />
               <span className="text-sm font-medium">
                 {t("battlePanel.statistics.cards.fastest")}
               </span>
             </div>
-            <p className="text-2xl font-bold text-yellow-600">
+            <p
+              className={cn(
+                "text-2xl font-bold",
+                BATTLE_TEXT_COLORS.metric.average,
+              )}
+            >
               {data.fastest ? formatDuration(data.fastest.duration) : "-"}
             </p>
           </div>
           <div className="text-center flex flex-col justify-center">
             <div className="flex items-center justify-center mb-2">
-              <Hourglass className="w-4 h-4 text-purple-600 mr-1" />
+              <Hourglass
+                className={cn(
+                  "w-4 h-4 mr-1",
+                  BATTLE_TEXT_COLORS.metric.secondary,
+                )}
+              />
               <span className="text-sm font-medium">
                 {t("battlePanel.statistics.cards.longest")}
               </span>
             </div>
-            <p className="text-2xl font-bold text-purple-600">
+            <p
+              className={cn(
+                "text-2xl font-bold",
+                BATTLE_TEXT_COLORS.metric.secondary,
+              )}
+            >
               {data.longest ? formatDuration(data.longest.duration) : "-"}
             </p>
           </div>

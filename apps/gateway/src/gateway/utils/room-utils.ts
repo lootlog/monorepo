@@ -11,10 +11,6 @@ import { Platform } from "src/gateway/enums/platform.enum";
 export type FeatureName = "chat" | "timers" | "notifications" | "loots";
 export type TierName = NpcRoutingTier;
 
-// Features excluded for web app (they don't need chat/notifications)
-const WEB_EXCLUDED_FEATURES: FeatureName[] = ["chat", "notifications"];
-const GAME_EXCLUDED_FEATURES: FeatureName[] = ["loots"];
-
 const FEATURE_ROOMS = {
   chat: {
     base: Permission.LOOTLOG_CHAT_READ,
@@ -38,11 +34,26 @@ const FEATURE_ROOMS = {
   },
 } as const;
 
+type FeatureRoom = { feature: FeatureName; tier: TierName };
+
 const FEATURE_NAMES = Object.keys(FEATURE_ROOMS) as FeatureName[];
 const TIER_NAMES = Object.keys(FEATURE_ROOMS.chat) as TierName[];
-const ALL_FEATURE_ROOMS = FEATURE_NAMES.flatMap((feature) =>
+const ALL_FEATURE_ROOMS: FeatureRoom[] = FEATURE_NAMES.flatMap((feature) =>
   TIER_NAMES.map((tier) => ({ feature, tier })),
 );
+const PLATFORM_EXCLUDED_FEATURES: Record<Platform, readonly FeatureName[]> = {
+  [Platform.GAME]: ["loots"],
+  [Platform.WEB_APP]: ["chat", "notifications"],
+  [Platform.UNKNOWN]: ["loots"],
+};
+
+function getApplicableFeatureRooms(platform: Platform): FeatureRoom[] {
+  const excludedFeatures = PLATFORM_EXCLUDED_FEATURES[platform];
+
+  return ALL_FEATURE_ROOMS.filter(
+    ({ feature }) => !excludedFeatures.includes(feature),
+  );
+}
 
 export function buildRoomName(
   guildId: string,
@@ -79,43 +90,29 @@ export function calculateUserRooms(
     roomsByGuild: new Map(),
   };
 
-  // Filter features based on platform (web doesn't need chat/notifications)
-  const applicableFeatures =
-    platform === Platform.WEB_APP
-      ? ALL_FEATURE_ROOMS.filter(
-          ({ feature }) => !WEB_EXCLUDED_FEATURES.includes(feature),
-        )
-      : ALL_FEATURE_ROOMS.filter(
-          ({ feature }) => !GAME_EXCLUDED_FEATURES.includes(feature),
-        );
+  const applicableFeatures = getApplicableFeatureRooms(platform);
 
   for (const { guild, roles } of guilds) {
     const guildRooms: string[] = [];
-    const isOwner = guild.ownerId === discordId;
+    const hasFullGuildAccess =
+      guild.ownerId === discordId || isOwnerOrAdminFromRoles(roles);
 
     // Everyone gets presence and events rooms
     guildRooms.push(buildRoomName(guild.id, "presence"));
     guildRooms.push(buildRoomName(guild.id, "events"));
 
-    // Owner/Admin get all feature rooms + admin room
-    if (isOwner || isOwnerOrAdminFromRoles(roles)) {
+    if (hasFullGuildAccess) {
       guildRooms.push(buildRoomName(guild.id, "admin"));
+    }
+
+    if (hasFullGuildAccess || hasOnlinePlayersAccess(roles)) {
       guildRooms.push(buildRoomName(guild.id, "online-players"));
+    }
 
-      for (const { feature, tier } of applicableFeatures) {
+    for (const { feature, tier } of applicableFeatures) {
+      const requiredPermission = FEATURE_ROOMS[feature][tier];
+      if (hasFullGuildAccess || hasPermission(roles, requiredPermission)) {
         guildRooms.push(buildRoomName(guild.id, feature, tier));
-      }
-    } else {
-      if (hasPermission(roles, Permission.LOOTLOG_ONLINE_PLAYERS_READ)) {
-        guildRooms.push(buildRoomName(guild.id, "online-players"));
-      }
-
-      // Calculate based on specific permissions
-      for (const { feature, tier } of applicableFeatures) {
-        const requiredPermission = FEATURE_ROOMS[feature][tier];
-        if (hasPermission(roles, requiredPermission)) {
-          guildRooms.push(buildRoomName(guild.id, feature, tier));
-        }
       }
     }
 

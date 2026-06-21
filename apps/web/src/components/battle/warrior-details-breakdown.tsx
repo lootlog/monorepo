@@ -2,6 +2,7 @@ import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { BattleBreakdownTable } from "./battle-breakdown-table";
+import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 
 interface WarriorDetailsBreakdownProps {
   warrior: Warrior;
@@ -15,12 +16,12 @@ export const WarriorDetailsBreakdown: FC<WarriorDetailsBreakdownProps> = ({
     {
       type: t("battleUi.breakdowns.details.passiveHealing"),
       value: warrior.passiveHealing,
-      color: "text-green-400",
+      color: BATTLE_TEXT_COLORS.healing.passive,
     },
     {
       type: t("battleUi.breakdowns.details.activeHealing"),
       value: warrior.activeHealing,
-      color: "text-green-400",
+      color: BATTLE_TEXT_COLORS.healing.active,
     },
   ].filter((item) => item.value > 0);
 
@@ -28,27 +29,27 @@ export const WarriorDetailsBreakdown: FC<WarriorDetailsBreakdownProps> = ({
     {
       type: t("battleUi.breakdowns.details.armorPierces"),
       value: warrior.armorPierces,
-      color: "text-yellow-400",
+      color: BATTLE_TEXT_COLORS.defense.destroy,
     },
     {
       type: t("battleUi.breakdowns.details.fastArrows"),
       value: warrior.fastArrows,
-      color: "text-yellow-400",
+      color: BATTLE_TEXT_COLORS.defense.destroy,
     },
     {
       type: t("battleUi.breakdowns.details.reducedArmor"),
       value: warrior.reducedArmor,
-      color: "text-yellow-400",
+      color: BATTLE_TEXT_COLORS.defense.destroy,
     },
     {
       type: t("battleUi.breakdowns.details.destroyedResistances"),
       value: warrior.magicResistanceDestroyed,
-      color: "text-yellow-400",
+      color: BATTLE_TEXT_COLORS.defense.destroy,
     },
     {
       type: t("battleUi.breakdowns.details.reducedPoisonResistance"),
       value: warrior.reducedPoisonResistance,
-      color: "text-yellow-400",
+      color: BATTLE_TEXT_COLORS.defense.destroy,
     },
   ].filter((item) => item.value > 0);
 
@@ -56,7 +57,7 @@ export const WarriorDetailsBreakdown: FC<WarriorDetailsBreakdownProps> = ({
     {
       type: t("battleUi.breakdowns.details.counters"),
       value: warrior.counters,
-      color: "text-blue-400",
+      color: BATTLE_TEXT_COLORS.defense.counter,
     },
   ].filter((item) => item.value > 0);
 
@@ -64,17 +65,17 @@ export const WarriorDetailsBreakdown: FC<WarriorDetailsBreakdownProps> = ({
     {
       type: t("battleUi.breakdowns.details.destroyedEnergy"),
       value: warrior.destroyedEnergy,
-      color: "text-cyan-400",
+      color: BATTLE_TEXT_COLORS.resources.energy,
     },
     {
       type: t("battleUi.breakdowns.details.destroyedMana"),
       value: warrior.destroyedMana,
-      color: "text-blue-400",
+      color: BATTLE_TEXT_COLORS.resources.mana,
     },
     {
       type: t("battleUi.breakdowns.details.regeneratedEnergy"),
       value: warrior.regeneratedEnergy,
-      color: "text-cyan-400",
+      color: BATTLE_TEXT_COLORS.resources.energy,
     },
   ].filter((item) => item.value > 0);
 

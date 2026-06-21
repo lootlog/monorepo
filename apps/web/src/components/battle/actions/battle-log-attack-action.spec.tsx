@@ -91,6 +91,13 @@ describe("BattleLogAttackActions", () => {
     expect(html).toContain("text-yellow-400");
   });
 
+  it("highlights fiery cleanse with the battle cleanse color", () => {
+    const html = renderAttackActions([{ type: "-legbon_cleanse", value: "" }]);
+
+    expect(html).toContain("-Płomienne oczyszczenie");
+    expect(html).toContain("text-[#ff999a]");
+  });
+
   it("renders frenzy and retaliation legendary bonuses", () => {
     const html = renderAttackActions([
       { type: "+legbon_frenzy_main", value: "5" },

@@ -6,6 +6,7 @@ import {
   type DynamicValuesConfig,
 } from "../utils/dynamic-values-helper";
 import { getBattleActionPresentation } from "../utils/battle-action-presentation";
+import { BATTLE_SURFACE_COLORS } from "../utils/battle-color-palette";
 import { roundHpPercentage, roundValue } from "../utils/value-utils";
 import type {
   BattleWarrior as Warrior,
@@ -47,7 +48,13 @@ export const BattleActionItem: FC<BattleActionItemProps> = ({
   );
 
   return (
-    <div className={cn("bg-gray-100/10 px-3 py-0.5", className)}>
+    <div
+      className={cn(
+        BATTLE_SURFACE_COLORS.log.neutral,
+        "px-3 py-0.5",
+        className,
+      )}
+    >
       <Trans
         i18nKey={actionPresentation.i18nKey}
         values={{

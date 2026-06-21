@@ -6,6 +6,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import type { FC } from "react";
 import { Trans } from "react-i18next";
 import { generateDynamicValuesAndComponents } from "../utils/dynamic-values-helper";
+import { BATTLE_SURFACE_COLORS } from "../utils/battle-color-palette";
 import {
   roundHpPercentage,
   transformAndRoundEnergyMana,
@@ -38,12 +39,18 @@ export const BattleSpellActions: FC<BattleSpellActionsProps> = ({
   };
 
   const teamColors = {
-    "bg-red-400/10": attacker?.team !== userTeam,
-    "bg-green-400/10": attacker?.team === userTeam,
+    [BATTLE_SURFACE_COLORS.log.enemy]: attacker?.team !== userTeam,
+    [BATTLE_SURFACE_COLORS.log.friendly]: attacker?.team === userTeam,
   };
 
   return (
-    <div className={cn("bg-gray-100/10 px-3 py-0.5", teamColors)}>
+    <div
+      className={cn(
+        BATTLE_SURFACE_COLORS.log.neutral,
+        "px-3 py-0.5",
+        teamColors,
+      )}
+    >
       {actions.map((action, sIndex) => {
         const processedValue = transformValue(action.value, action.type);
         const dynamicData = generateDynamicValuesAndComponents(action.value);

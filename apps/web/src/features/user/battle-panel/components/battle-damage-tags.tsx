@@ -1,4 +1,5 @@
 import { Badge } from "@lootlog/ui/components/badge";
+import { BATTLE_BADGE_COLORS } from "@/components/battle/utils/battle-color-palette";
 import {
   Tooltip,
   TooltipContent,
@@ -47,23 +48,23 @@ const DAMAGE_TAG_CONFIG: Record<
   Pick<BattleDamageTag, "badgeClassName" | "icon">
 > = {
   fire: {
-    badgeClassName: "border-red-500/20 bg-red-500/5 text-red-300",
+    badgeClassName: BATTLE_BADGE_COLORS.damage.fire,
     icon: Flame,
   },
   frost: {
-    badgeClassName: "border-cyan-500/20 bg-cyan-500/5 text-cyan-300",
+    badgeClassName: BATTLE_BADGE_COLORS.damage.frost,
     icon: Snowflake,
   },
   lightning: {
-    badgeClassName: "border-yellow-500/20 bg-yellow-500/5 text-yellow-300",
+    badgeClassName: BATTLE_BADGE_COLORS.damage.lightning,
     icon: Zap,
   },
   poison: {
-    badgeClassName: "border-green-500/20 bg-green-500/5 text-green-300",
+    badgeClassName: BATTLE_BADGE_COLORS.damage.poison,
     icon: Biohazard,
   },
   wound: {
-    badgeClassName: "border-orange-500/20 bg-orange-500/5 text-orange-300",
+    badgeClassName: BATTLE_BADGE_COLORS.damage.wound,
     icon: HeartCrack,
   },
 };

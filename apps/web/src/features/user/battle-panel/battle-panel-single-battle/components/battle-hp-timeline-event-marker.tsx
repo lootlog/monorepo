@@ -1,4 +1,5 @@
 import type { KeyboardEvent, MouseEvent } from "react";
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { battleHpTimelineEventIconByKey } from "./battle-hp-timeline-event-icons";
 import type { BattleHpTimelineEventMarkerGroup } from "./battle-hp-timeline-event-markers";
 
@@ -111,11 +112,11 @@ export function BattleHpTimelineEventMarker({
             cy={cy + 18}
             r={8}
             fill="var(--background)"
-            stroke="#f59e0b"
+            stroke={BATTLE_HEX_COLORS.legendary.unknown}
             strokeWidth={1.5}
           />
           <text
-            fill="#f59e0b"
+            fill={BATTLE_HEX_COLORS.legendary.unknown}
             fontSize={8}
             fontWeight={700}
             pointerEvents="none"

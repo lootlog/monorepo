@@ -12,22 +12,18 @@ import {
   getNpcsControllerGetNpcsQueryKey,
   useNpcsControllerGetNpcs,
 } from "@/lib/api/generated/search/npcs/npcs";
+import {
+  areBasicRouteSearchStatesEqual,
+  emptyBasicRouteSearch,
+  getBasicRouteSearchQueryParams,
+  getBasicRouteSearchState,
+  isBasicRouteSearchActive,
+  type SearchStatus,
+  validateBasicRouteSearch,
+} from "./-search-route.utils";
 
 const SEARCH_DEBOUNCE_MS = 300;
 const SEARCH_LIMIT = 72;
-type SearchStatus = "error" | "idle" | "loading" | "ready";
-
-type NpcsRouteSearch = {
-  query: string;
-  world: string;
-};
-
-function validateSearch(search: Record<string, unknown>): NpcsRouteSearch {
-  return {
-    query: typeof search.query === "string" ? search.query : "",
-    world: typeof search.world === "string" ? search.world : "",
-  };
-}
 
 export const Route = createFileRoute("/npcs")({
   component: NpcsRoute,
@@ -39,7 +35,7 @@ export const Route = createFileRoute("/npcs")({
     ],
   }),
   loader: () => getRuntimeConfig(),
-  validateSearch,
+  validateSearch: validateBasicRouteSearch,
 });
 
 function NpcsRoute() {
@@ -48,13 +44,8 @@ function NpcsRoute() {
   const search = Route.useSearch();
   const [queryValue, setQueryValue] = useState(search.query);
   const [worldValue, setWorldValue] = useState(search.world);
-  const hasActiveSearch =
-    search.query.trim() !== "" || search.world.trim() !== "";
-  const queryParams = {
-    limit: SEARCH_LIMIT,
-    search: search.query.trim() || undefined,
-    world: search.world.trim() || undefined,
-  };
+  const hasActiveSearch = isBasicRouteSearchActive(search);
+  const queryParams = getBasicRouteSearchQueryParams(search, SEARCH_LIMIT);
   const npcsQuery = useNpcsControllerGetNpcs(queryParams, {
     query: {
       enabled: hasActiveSearch,
@@ -82,14 +73,13 @@ function NpcsRoute() {
   }, [search.query, search.world]);
 
   useEffect(() => {
-    const nextSearch = {
-      query: queryValue.trim(),
-      world: worldValue.trim(),
-    };
+    const nextSearch = getBasicRouteSearchState({ queryValue, worldValue });
 
     if (
-      nextSearch.query === search.query &&
-      nextSearch.world === search.world
+      areBasicRouteSearchStatesEqual(nextSearch, {
+        query: search.query,
+        world: search.world,
+      })
     ) {
       return;
     }
@@ -113,10 +103,7 @@ function NpcsRoute() {
 
     startTransition(() => {
       void navigate({
-        search: {
-          query: queryValue.trim(),
-          world: worldValue.trim(),
-        },
+        search: getBasicRouteSearchState({ queryValue, worldValue }),
       });
     });
   }
@@ -127,10 +114,7 @@ function NpcsRoute() {
 
     startTransition(() => {
       void navigate({
-        search: {
-          query: "",
-          world: "",
-        },
+        search: emptyBasicRouteSearch,
       });
     });
   }
