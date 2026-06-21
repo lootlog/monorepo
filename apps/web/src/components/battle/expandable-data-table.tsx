@@ -28,15 +28,59 @@ import { DamageDealtBreakdown } from "./damage-dealt-breakdown";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 
+type ExpansionType =
+  | "damage"
+  | "legendary"
+  | "turns"
+  | "blocks"
+  | "details"
+  | "damageDealt";
+
 interface ExpandableDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   getRowClassName?: (row: Row<TData>) => string;
   forceHorizontalScroll?: boolean;
-  expandedRows: Map<
-    string,
-    "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt"
-  >;
+  expandedRows: Map<string, ExpansionType>;
+}
+
+function renderSortIcon(sortDirection: false | "asc" | "desc") {
+  if (sortDirection === "asc") {
+    return <ArrowUp className="h-4 w-4" />;
+  }
+
+  if (sortDirection === "desc") {
+    return <ArrowDown className="h-4 w-4" />;
+  }
+
+  return <ArrowUpDown className="h-4 w-4 opacity-50" />;
+}
+
+function renderExpansionContent(
+  expansionType: ExpansionType,
+  warrior: Warrior,
+) {
+  if (expansionType === "damage") {
+    return <DamageBreakdown warrior={warrior} />;
+  }
+
+  if (expansionType === "legendary") {
+    return <LegendaryBonusesBreakdown warrior={warrior} />;
+  }
+
+  if (expansionType === "turns") {
+    return <TurnsBreakdown warrior={warrior} />;
+  }
+
+  if (expansionType === "blocks") {
+    return <BlocksBreakdown warrior={warrior} />;
+  }
+
+  if (expansionType === "details") {
+    return <WarriorDetailsBreakdown warrior={warrior} />;
+  }
+
+  return <DamageDealtBreakdown warrior={warrior} />;
 }
 
 export function ExpandableDataTable<TData, TValue>({
@@ -70,39 +114,36 @@ export function ExpandableDataTable<TData, TValue>({
                 {headerGroup.headers.map((header) => {
                   const canSort = header.column.getCanSort();
                   const sortDirection = header.column.getIsSorted();
+                  let headerContent: React.ReactNode = null;
 
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : canSort ? (
-                        <button
-                          type="button"
-                          className="flex w-full items-center gap-2 cursor-pointer select-none hover:bg-gray-400/10 p-2 -m-2 rounded text-left"
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          <span className="ml-auto">
-                            {sortDirection === "asc" ? (
-                              <ArrowUp className="h-4 w-4" />
-                            ) : sortDirection === "desc" ? (
-                              <ArrowDown className="h-4 w-4" />
-                            ) : (
-                              <ArrowUpDown className="h-4 w-4 opacity-50" />
-                            )}
-                          </span>
-                        </button>
-                      ) : (
-                        <div className={cn("flex items-center gap-2")}>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                        </div>
-                      )}
-                    </TableHead>
-                  );
+                  if (!header.isPlaceholder && canSort) {
+                    headerContent = (
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 cursor-pointer select-none hover:bg-gray-400/10 p-2 -m-2 rounded text-left"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        <span className="ml-auto">
+                          {renderSortIcon(sortDirection)}
+                        </span>
+                      </button>
+                    );
+                  } else if (!header.isPlaceholder) {
+                    headerContent = (
+                      <div className={cn("flex items-center gap-2")}>
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return <TableHead key={header.id}>{headerContent}</TableHead>;
                 })}
               </TableRow>
             ))}
@@ -170,27 +211,9 @@ export function ExpandableDataTable<TData, TValue>({
                                     ease: "easeInOut",
                                   }}
                                 >
-                                  {expansionType === "damage" && (
-                                    <DamageBreakdown warrior={warrior} />
-                                  )}
-                                  {expansionType === "legendary" && (
-                                    <LegendaryBonusesBreakdown
-                                      warrior={warrior}
-                                    />
-                                  )}
-                                  {expansionType === "turns" && (
-                                    <TurnsBreakdown warrior={warrior} />
-                                  )}
-                                  {expansionType === "blocks" && (
-                                    <BlocksBreakdown warrior={warrior} />
-                                  )}
-                                  {expansionType === "details" && (
-                                    <WarriorDetailsBreakdown
-                                      warrior={warrior}
-                                    />
-                                  )}
-                                  {expansionType === "damageDealt" && (
-                                    <DamageDealtBreakdown warrior={warrior} />
+                                  {renderExpansionContent(
+                                    expansionType,
+                                    warrior,
                                   )}
                                 </motion.div>
                               </AnimatePresence>
