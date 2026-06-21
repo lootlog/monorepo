@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 import {
   buildLegendaryBonusMarkerGroups,
   getLegendaryBonusLegendItems,
@@ -43,6 +44,11 @@ describe("legendary bonus timeline markers", () => {
     expect(getLegendaryBonusMarkerDefinition("-legbon_retaliation").type).toBe(
       "retaliation",
     );
+    expect(getLegendaryBonusMarkerDefinition("-legbon_cleanse")).toMatchObject({
+      color: BATTLE_HEX_COLORS.legendary.cleanse,
+      type: "cleanse",
+    });
+    expect(BATTLE_HEX_COLORS.legendary.cleanse).toBe("#ff999a");
     expect(getLegendaryBonusMarkerDefinition("+not_mapped").type).toBe(
       "legendary",
     );
@@ -213,6 +219,9 @@ describe("legendary bonus timeline markers", () => {
     expect(groups).toHaveLength(1);
     expect(groups[0]).toMatchObject({ turn: 24, team: 2, y: 57.62 });
     expect(groups[0]?.bonuses[0]?.type).toBe("cleanse");
+    expect(groups[0]?.bonuses[0]?.color).toBe(
+      BATTLE_HEX_COLORS.legendary.cleanse,
+    );
     expect(groups[0]?.bonuses[0]?.recipientName).toBe("Demodras");
   });
 

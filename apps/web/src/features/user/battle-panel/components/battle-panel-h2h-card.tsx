@@ -1,4 +1,5 @@
 import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import {
   BattleResultStatus,
   getBattleResultRowClassName,
@@ -60,7 +61,9 @@ export const BattlePanelH2hCard = ({
           <p
             className={cn(
               "text-sm font-semibold tabular-nums",
-              record.winRate >= 50 ? "text-green-500" : "text-red-500",
+              record.winRate >= 50
+                ? BATTLE_TEXT_COLORS.result.won
+                : BATTLE_TEXT_COLORS.result.lost,
             )}
           >
             {record.winRate.toFixed(1)}%
@@ -73,13 +76,17 @@ export const BattlePanelH2hCard = ({
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
         <div className="rounded-md border border-border/70 bg-background/40 p-2">
-          <p className="font-semibold text-green-500">{record.wins}</p>
+          <p className={cn("font-semibold", BATTLE_TEXT_COLORS.result.won)}>
+            {record.wins}
+          </p>
           <p className="text-muted-foreground">
             {t("battlePanel.filters.results.won")}
           </p>
         </div>
         <div className="rounded-md border border-border/70 bg-background/40 p-2">
-          <p className="font-semibold text-red-500">{record.losses}</p>
+          <p className={cn("font-semibold", BATTLE_TEXT_COLORS.result.lost)}>
+            {record.losses}
+          </p>
           <p className="text-muted-foreground">
             {t("battlePanel.filters.results.lost")}
           </p>
@@ -100,7 +107,9 @@ export const BattlePanelH2hCard = ({
           <span
             className={cn(
               "font-semibold tabular-nums",
-              totalRatingDelta >= 0 ? "text-green-500" : "text-red-500",
+              totalRatingDelta >= 0
+                ? BATTLE_TEXT_COLORS.result.won
+                : BATTLE_TEXT_COLORS.result.lost,
             )}
           >
             {ratingDeltaSign}

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Battle } from "@/lib/api/battlelog-types";
 import {
   resolveDocumentTitle,
   type DocumentTitleMatch,
@@ -14,6 +15,17 @@ function createMatch(
     status: "success",
     ...overrides,
   };
+}
+
+function createDuelBattle(id: string): Battle {
+  return {
+    id,
+    type: "1v1",
+    warriors: [
+      { name: "gorilla banana", team: 1 },
+      { name: "imbi woj", team: 2 },
+    ],
+  } as Battle;
 }
 
 describe("resolveDocumentTitle", () => {
@@ -43,22 +55,59 @@ describe("resolveDocumentTitle", () => {
       resolveDocumentTitle([
         createMatch({ routeId: "__root__" }),
         createMatch({
-          loaderData: {
-            battle: {
-              id: "battle-1",
-              type: "1v1",
-              warriors: [
-                { name: "gorilla banana", team: 1 },
-                { name: "imbi woj", team: 2 },
-              ],
-            },
-          },
+          loaderData: { battle: createDuelBattle("battle-1") },
           params: { battleId: "battle-1" },
           pathname: "/@me/battle-panel/battles/battle-1",
           routeId: "/_authenticated/@me/battle-panel/battles_/$battleId",
         }),
       ]),
     ).toBe("gorilla banana vs imbi woj - Panel walk | Lootlog.pl");
+  });
+
+  it("uses the cached battle for user battle detail titles when loader data is empty", () => {
+    expect(
+      resolveDocumentTitle(
+        [
+          createMatch({ routeId: "__root__" }),
+          createMatch({
+            params: { battleId: "battle-1" },
+            pathname: "/@me/battle-panel/battles/battle-1",
+            routeId: "/_authenticated/@me/battle-panel/battles_/$battleId",
+          }),
+        ],
+        { currentBattle: createDuelBattle("battle-1") },
+      ),
+    ).toBe("gorilla banana vs imbi woj - Panel walk | Lootlog.pl");
+  });
+
+  it("ignores stale battle loader data for user battle detail titles", () => {
+    expect(
+      resolveDocumentTitle([
+        createMatch({ routeId: "__root__" }),
+        createMatch({
+          loaderData: { battle: createDuelBattle("battle-1") },
+          params: { battleId: "battle-2" },
+          pathname: "/@me/battle-panel/battles/battle-2",
+          routeId: "/_authenticated/@me/battle-panel/battles_/$battleId",
+        }),
+      ]),
+    ).toBe("Walka #battle-2 - Panel walk | Lootlog.pl");
+  });
+
+  it("ignores stale cached battle data for user battle detail titles", () => {
+    expect(
+      resolveDocumentTitle(
+        [
+          createMatch({ routeId: "__root__" }),
+          createMatch({
+            params: { battleId: "battle-2" },
+            pathname: "/@me/battle-panel/battles/battle-2",
+            routeId: "/_authenticated/@me/battle-panel/battles_/$battleId",
+          }),
+        ],
+        { currentBattle: createDuelBattle("battle-1") },
+      ),
+    ).toBe("Walka #battle-2 - Panel walk | Lootlog.pl");
   });
 
   it("uses the battle id fallback for non-1v1 user battle detail titles", () => {

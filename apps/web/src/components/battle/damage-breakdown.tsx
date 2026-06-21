@@ -2,6 +2,7 @@ import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { BattleBreakdownTable } from "./battle-breakdown-table";
+import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 
 interface DamageBreakdownProps {
   warrior: Warrior;
@@ -13,82 +14,82 @@ export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
     {
       type: t("battleUi.breakdowns.damageTaken.all"),
       value: warrior.damageTaken,
-      color: "text-white",
+      color: BATTLE_TEXT_COLORS.neutral,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.ranged"),
       value: warrior.distanceDamageTaken,
-      color: "text-green-400",
+      color: BATTLE_TEXT_COLORS.damage.distance,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.physical"),
       value: warrior.meleeDamageTaken,
-      color: "text-blue-300",
+      color: BATTLE_TEXT_COLORS.damage.melee,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.auxiliary"),
       value: warrior.auxiliaryDamageTaken,
-      color: "text-orange-300",
+      color: BATTLE_TEXT_COLORS.damage.auxiliary,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.fire"),
       value: warrior.fireDamageTaken,
-      color: "text-red-400",
+      color: BATTLE_TEXT_COLORS.damage.fire,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.ice"),
       value: warrior.frostDamageTaken,
-      color: "text-cyan-400",
+      color: BATTLE_TEXT_COLORS.damage.frost,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.lightning"),
       value: warrior.lightningDamageTaken,
-      color: "text-yellow-400",
+      color: BATTLE_TEXT_COLORS.damage.lightning,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.thirdAttack"),
       value: warrior.thirdAttDamageTaken,
-      color: "text-orange-400",
+      color: BATTLE_TEXT_COLORS.damage.thirdAttack,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.percent"),
       value: warrior.trueDamageTaken,
-      color: "text-white",
+      color: BATTLE_TEXT_COLORS.damage.trueDamage,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.stigma"),
       value: warrior.stigmaDamageTaken,
-      color: "text-purple-400",
+      color: BATTLE_TEXT_COLORS.damage.stigma,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.wound"),
       value: warrior.woundDamageTaken,
-      color: "text-orange-600",
+      color: BATTLE_TEXT_COLORS.damage.wound,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.poison"),
       value: warrior.poisonDamageTaken,
-      color: "text-green-600",
+      color: BATTLE_TEXT_COLORS.damage.poison,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.injure"),
       value: warrior.injureDamageTaken,
-      color: "text-red-300",
+      color: BATTLE_TEXT_COLORS.damage.injure,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.criticalWound"),
       value: warrior.critWoundDamageTaken,
-      color: "text-orange-400",
+      color: BATTLE_TEXT_COLORS.damage.criticalWound,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.firePassive"),
       value: warrior.firePassiveDamageTaken,
-      color: "text-red-500",
+      color: BATTLE_TEXT_COLORS.damage.firePassive,
     },
     {
       type: t("battleUi.breakdowns.damageTaken.lightningPassive"),
       value: warrior.lightningPassiveDamageTaken,
-      color: "text-yellow-500",
+      color: BATTLE_TEXT_COLORS.damage.lightningPassive,
     },
   ].filter((item) => item.value > 0);
 

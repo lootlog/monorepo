@@ -12,6 +12,7 @@ import type {
   Battle,
   BattleWarrior as Warrior,
 } from "@/lib/api/battlelog-types";
+import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
 
 interface BattleStatsTableProps {
   battle: Battle;
@@ -187,10 +188,10 @@ export function BattleStatsTable({
             const warrior = row.original as Warrior;
 
             return cn({
-              "bg-green-400/10 hover:bg-green-400/20":
+              [BATTLE_SURFACE_COLORS.team.friendlyRow]:
                 warrior.team === userTeam,
-              "bg-red-400/10 hover:bg-red-400/20": warrior.team !== userTeam,
-              "bg-green-400/20 hover:bg-green-400/30":
+              [BATTLE_SURFACE_COLORS.team.enemyRow]: warrior.team !== userTeam,
+              [BATTLE_SURFACE_COLORS.team.currentCharacterRow]:
                 warrior.originalId === battle.characterId,
             });
           }}
