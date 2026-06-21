@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
@@ -34,7 +34,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   const { data: fetchedWorlds } = useGuildsControllerGetWorldsByGuildId({
     guildId: guildId ?? "",
   });
-  const worlds = externalWorlds ?? fetchedWorlds;
+  const worlds = externalWorlds ?? fetchedWorlds ?? [];
   const guildContext = useContext(GuildContext);
   const contextWorld = guildContext?.world ?? "";
   const setContextWorld = guildContext?.setWorld;
@@ -44,32 +44,28 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   const isControlled = value !== undefined;
   const currentWorld = isControlled ? value : contextWorld;
 
-  const orderedWorlds = useMemo(() => {
-    if (!worlds) return [];
-    const sanitizedOrder = worldOrder.filter((w) => worlds.includes(w));
-    const remaining = worlds.filter((w) => !sanitizedOrder.includes(w));
-    return [...sanitizedOrder, ...remaining];
-  }, [worldOrder, worlds]);
+  const sanitizedWorldOrder = worldOrder.filter((world) =>
+    worlds.includes(world),
+  );
+  const orderedWorlds = [
+    ...sanitizedWorldOrder,
+    ...worlds.filter((world) => !sanitizedWorldOrder.includes(world)),
+  ];
 
-  const options = useMemo(() => {
-    const worldOptions =
-      orderedWorlds?.map((w) => ({
-        value: w,
-        label: w.charAt(0).toUpperCase() + w.slice(1),
-      })) ?? [];
+  const worldOptions = orderedWorlds.map((world) => ({
+    value: world,
+    label: world.charAt(0).toUpperCase() + world.slice(1),
+  }));
 
-    if (showAllOption) {
-      return [
+  const options = showAllOption
+    ? [
         {
           value: ALL_WORLDS_SENTINEL,
           label: t("kills.home.filters.allWorlds"),
         },
         ...worldOptions,
-      ];
-    }
-
-    return worldOptions;
-  }, [orderedWorlds, showAllOption, t]);
+      ]
+    : worldOptions;
 
   const handleSelect = (selectedValue: string) => {
     const actualWorld =
@@ -84,7 +80,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
     if (actualWorld) {
       setWorldOrder((prev) => [
         actualWorld,
-        ...prev.filter((w) => w !== actualWorld),
+        ...prev.filter((world) => world !== actualWorld),
       ]);
     }
   };
