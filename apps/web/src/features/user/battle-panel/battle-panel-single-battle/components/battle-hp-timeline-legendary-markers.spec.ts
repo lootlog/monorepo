@@ -92,6 +92,39 @@ describe("legendary bonus timeline markers", () => {
     }
   });
 
+  it("can include chart-hidden legendary bonuses for tooltip payloads", () => {
+    const timeline = [
+      {
+        turn: 5,
+        teamHp: { "1": 72, "2": 48 },
+        actions: [
+          {
+            actionType: "+legbon_puncture",
+            category: "legendary",
+            actorId: "1",
+            targetId: "2",
+            param: "",
+          },
+        ],
+      },
+    ];
+    const warriors = [
+      { originalId: "1", name: "Kamik", team: 1 },
+      { originalId: "2", name: "Rival", team: 2 },
+    ];
+
+    expect(buildLegendaryBonusMarkerGroups(timeline, warriors)).toEqual([]);
+    expect(
+      buildLegendaryBonusMarkerGroups(timeline, warriors, {
+        includeChartHidden: true,
+      })[0]?.bonuses[0],
+    ).toMatchObject({
+      actionType: "+legbon_puncture",
+      labelKey: "battlePanel.single.chart.legendary.puncture",
+      recipientName: "Kamik",
+    });
+  });
+
   it("groups multiple legendary bonuses from the same turn and team", () => {
     const groups = buildLegendaryBonusMarkerGroups(
       [

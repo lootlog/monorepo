@@ -8,7 +8,7 @@ import { Separator } from "@lootlog/ui/components/separator";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Award, ArrowRight, Swords } from "lucide-react";
-import type { Period } from "@/store/battle-filters.store";
+import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 

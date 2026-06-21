@@ -6,7 +6,7 @@ import {
 } from "@/components/filters";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Swords, Award } from "lucide-react";
-import type { Period } from "@/store/battle-filters.store";
+import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { useTranslation } from "react-i18next";
 
 type StatisticsFiltersDesktopProps = {

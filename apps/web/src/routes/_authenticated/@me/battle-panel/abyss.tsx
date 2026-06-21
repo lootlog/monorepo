@@ -6,7 +6,7 @@ import {
   battlePanelAbyssSearchSchema,
   loadBattlePanelAbyssSearch,
   normalizeBattlePanelCharacterId,
-} from "@/features/user/battle-panel/battle-panel-statistics-search";
+} from "@/features/user/battle-panel/battle-panel-search";
 import {
   getBattlesControllerGetAbyssSeasonsQueryOptions,
   getBattlesControllerGetBattleDurationQueryOptions,

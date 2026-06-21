@@ -5,11 +5,15 @@ import {
   getBattlesControllerGetDashboardBattlesQueryOptions,
   getBattlesControllerGetUserCharactersQueryOptions,
 } from "@/lib/api/generated/battlelog/battles/battles";
-import { loadBattlePanelBattlesSearch } from "@/features/user/battle-panel/battle-panel-battles-list/battle-query-parsers";
+import {
+  battlePanelBattlesSearchSchema,
+  loadBattlePanelBattlesSearch,
+} from "@/features/user/battle-panel/battle-panel-search";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
+  validateSearch: battlePanelBattlesSearchSchema,
   loader: ({ abortController, context, location }) =>
     withRouteLoaderCancellation(abortController, async () => {
       const search = loadBattlePanelBattlesSearch(location.searchStr);

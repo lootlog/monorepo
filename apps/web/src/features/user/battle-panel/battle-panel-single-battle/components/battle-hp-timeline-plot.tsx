@@ -11,6 +11,11 @@ import {
   type LegendaryBonusMarkerGroup,
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-legendary-markers";
 import { BattleHpTimelinePoint } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-point";
+import { BattleHpTimelineTooltipContent } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-tooltip-content";
+import {
+  buildBattleHpTimelineTooltipData,
+  buildBattleHpTimelineTooltipLegendaryBonusesByTurn,
+} from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-tooltip";
 import {
   getBattleHpTimelinePlayerTeam,
   getBattleHpTimelineTeamColor,
@@ -23,10 +28,10 @@ import {
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from "@lootlog/ui/components/chart";
 import { cn } from "@lootlog/ui/lib/utils";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   CartesianGrid,
@@ -60,6 +65,7 @@ export function BattleHpTimelinePlot({
   onTurnSelect,
 }: BattleHpTimelinePlotProps) {
   const { t } = useTranslation();
+  const chartRootRef = useRef<HTMLDivElement | null>(null);
   const playerTeam = getBattleHpTimelinePlayerTeam(warriors, characterId);
   const team1Color = getBattleHpTimelineTeamColor(1, playerTeam);
   const team2Color = getBattleHpTimelineTeamColor(2, playerTeam);
@@ -87,20 +93,27 @@ export function BattleHpTimelinePlot({
       color: BATTLE_HEX_COLORS.chart.momentum,
     },
   } satisfies ChartConfig;
-  const chartData = timeline.map((turn) => {
-    const team1 = turn.teamHp["1"] ?? 0;
-    const team2 = turn.teamHp["2"] ?? 0;
-
-    return {
-      turn: turn.turn,
-      team1,
-      team2,
-      momentum: Math.round((team1 - team2) * 100) / 100,
-      reason: turn.reason,
-    };
-  });
+  const tooltipLegendaryMarkerGroups = buildLegendaryBonusMarkerGroups(
+    timeline,
+    warriors,
+    { includeChartHidden: true },
+  );
+  const allLegendaryMarkerGroups = buildLegendaryBonusMarkerGroups(
+    timeline,
+    warriors,
+  );
+  const legendaryBonusesByTurn =
+    buildBattleHpTimelineTooltipLegendaryBonusesByTurn(
+      tooltipLegendaryMarkerGroups,
+    );
+  const chartData = timeline.map((turn) =>
+    buildBattleHpTimelineTooltipData(
+      turn,
+      legendaryBonusesByTurn.get(turn.turn) ?? [],
+    ),
+  );
   const legendaryMarkerGroups = layers.legendary
-    ? buildLegendaryBonusMarkerGroups(timeline, warriors)
+    ? allLegendaryMarkerGroups
     : [];
   const eventMarkerGroups = buildBattleHpTimelineEventMarkerGroups(
     timeline,
@@ -148,7 +161,14 @@ export function BattleHpTimelinePlot({
     });
 
   return (
-    <ChartContainer config={chartConfig} className={cn("w-full", className)}>
+    <ChartContainer
+      ref={chartRootRef}
+      config={chartConfig}
+      className={cn(
+        "w-full overflow-visible [&_.recharts-wrapper]:overflow-visible",
+        className,
+      )}
+    >
       <LineChart accessibilityLayer data={chartData} margin={chartMargin}>
         <CartesianGrid vertical={false} />
         <XAxis
@@ -164,13 +184,16 @@ export function BattleHpTimelinePlot({
           tickMargin={4}
         />
         <ChartTooltip
+          allowEscapeViewBox={{ x: true, y: true }}
           cursor={false}
+          wrapperStyle={{ zIndex: 30 }}
           content={
-            <ChartTooltipContent
-              indicator="line"
-              labelFormatter={(value) =>
-                t("battlePanel.single.chart.turnTooltip", { turn: value })
-              }
+            <BattleHpTimelineTooltipContent
+              chartRootRef={chartRootRef}
+              team1Color={team1Color}
+              team1Label={team1Label}
+              team2Color={team2Color}
+              team2Label={team2Label}
             />
           }
         />

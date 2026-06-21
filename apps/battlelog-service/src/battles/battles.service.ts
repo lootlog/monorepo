@@ -4,21 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from "@nestjs/common";
-import {
-  and,
-  desc,
-  eq,
-  exists,
-  gt,
-  gte,
-  ilike,
-  inArray,
-  lte,
-  not,
-  notInArray,
-  or,
-  type SQL,
-} from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
 import type { BattleTimelineResponseInput } from "src/battles/dto/battle-response.dto";
 import type { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
@@ -31,9 +17,10 @@ import {
   inflateBattleWarriorsInBattles,
 } from "src/battles/battle-warrior-stats";
 import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
+import { BattleListFilterService } from "src/battles/services/battle-list-filter.service";
+import { BattleMetadataService } from "src/battles/services/battle-metadata.service";
 import { PaginationService } from "src/battles/services/pagination.service";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
-import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   battles,
   battleWarriors,
@@ -60,35 +47,15 @@ import type {
 @Injectable()
 export class BattlesService implements IBattlesService {
   private readonly logger = new Logger(BattlesService.name);
-  private readonly USER_METADATA_CACHE_TTL_SECONDS = 5 * 60;
 
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly r2Service: R2Service,
     private readonly paginationService: PaginationService,
     private readonly battleAnalyticsService: BattleAnalyticsService,
-    private readonly redisService: RedisService,
+    private readonly battleListFilterService: BattleListFilterService,
+    private readonly battleMetadataService: BattleMetadataService,
   ) {}
-
-  private getUserCharactersCacheKey(userId: string) {
-    return `battle-characters:list:${userId}`;
-  }
-
-  private getUserWorldsCacheKey(userId: string) {
-    return `battle-worlds:${userId}:list`;
-  }
-
-  private warriorExists(
-    battlesRef: typeof battles,
-    ...conditions: (SQL | undefined)[]
-  ) {
-    return exists(
-      this.drizzle.db
-        .select({ one: eq(battleWarriors.id, battleWarriors.id) })
-        .from(battleWarriors)
-        .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
-    );
-  }
 
   async createBattle(params: CreateBattleParams): Promise<CreateBattleResult> {
     const { data, userId } = params;
@@ -137,7 +104,8 @@ export class BattlesService implements IBattlesService {
 
   async getPublicBattles(query: QueryBattlesDto): Promise<GetAllBattlesResult> {
     try {
-      const filterBuilder = await this.buildFilterConditions(query);
+      const filterBuilder =
+        await this.battleListFilterService.buildFilterConditions(query);
 
       const paginationOptions = this.buildPaginationOptions(query);
       const result = await this.paginationService.paginateBattles(
@@ -166,10 +134,11 @@ export class BattlesService implements IBattlesService {
   ): Promise<GetAllBattlesResult> {
     try {
       const { userId: _userId, ...filteredQuery } = query;
-      const filterBuilder = await this.buildFilterConditions(
-        filteredQuery,
-        requestingUserId,
-      );
+      const filterBuilder =
+        await this.battleListFilterService.buildFilterConditions(
+          filteredQuery,
+          requestingUserId,
+        );
 
       const paginationOptions = this.buildPaginationOptions(query);
       const result = await this.paginationService.paginateBattles(
@@ -201,82 +170,11 @@ export class BattlesService implements IBattlesService {
       icon: string;
     }>;
   }> {
-    return this.redisService.getOrSetJsonBestEffort({
-      key: this.getUserCharactersCacheKey(userId),
-      ttlSeconds: this.USER_METADATA_CACHE_TTL_SECONDS,
-      onError: (error) =>
-        this.logger.warn("User characters cache unavailable", error),
-      factory: () => this.getUserCharactersUncached(userId),
-    });
-  }
-
-  private async getUserCharactersUncached(userId: string): Promise<{
-    characters: Array<{
-      id: string;
-      name: string;
-      world: string;
-      icon: string;
-    }>;
-  }> {
-    try {
-      const results = await this.drizzle.db.query.userCharacters.findMany({
-        where: { userId },
-        orderBy: { lastSeenAt: "desc" },
-        columns: {
-          characterId: true,
-          name: true,
-          world: true,
-          icon: true,
-        },
-      });
-
-      const characters = results.map((char) => ({
-        id: char.characterId,
-        name: char.name,
-        world: char.world,
-        icon: char.icon,
-      }));
-
-      return { characters };
-    } catch (error) {
-      this.logger.error("Failed to retrieve user characters:", error);
-      throw new Error(
-        `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
+    return this.battleMetadataService.getUserCharacters(userId);
   }
 
   async getUserWorlds(userId: string): Promise<{ worlds: string[] }> {
-    return this.redisService.getOrSetJsonBestEffort({
-      key: this.getUserWorldsCacheKey(userId),
-      ttlSeconds: this.USER_METADATA_CACHE_TTL_SECONDS,
-      onError: (error) =>
-        this.logger.warn("User worlds cache unavailable", error),
-      factory: () => this.getUserWorldsUncached(userId),
-    });
-  }
-
-  private async getUserWorldsUncached(
-    userId: string,
-  ): Promise<{ worlds: string[] }> {
-    try {
-      const results = await this.drizzle.db
-        .selectDistinctOn([userCharacters.world], {
-          world: userCharacters.world,
-        })
-        .from(userCharacters)
-        .where(eq(userCharacters.userId, userId))
-        .orderBy(userCharacters.world);
-
-      const worlds = results.map((char) => char.world);
-
-      return { worlds };
-    } catch (error) {
-      this.logger.error("Failed to retrieve user worlds:", error);
-      throw new Error(
-        `Failed to retrieve user worlds: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
+    return this.battleMetadataService.getUserWorlds(userId);
   }
 
   async getBattleRawData(
@@ -595,147 +493,6 @@ export class BattlesService implements IBattlesService {
     }
   }
 
-  private async buildFilterConditions(
-    query: QueryBattlesDto,
-    userId?: string,
-  ): Promise<(battlesRef: typeof battles) => SQL | undefined> {
-    let characterIds = query.characterId || [];
-    if (query.result?.length && !characterIds.length && userId) {
-      const userChars = await this.drizzle.db.query.userCharacters.findMany({
-        where: { userId },
-        columns: { characterId: true },
-      });
-      characterIds = userChars.map((c) => c.characterId);
-    }
-
-    return (battlesRef: typeof battles) => {
-      const conditions: (SQL | undefined)[] = [];
-
-      if (query.world) conditions.push(eq(battlesRef.world, query.world));
-      if (query.userId) conditions.push(eq(battlesRef.userId, query.userId));
-      if (typeof query.public === "boolean")
-        conditions.push(eq(battlesRef.public, query.public));
-
-      if (characterIds.length) {
-        conditions.push(
-          characterIds.length === 1
-            ? eq(battlesRef.characterId, characterIds[0])
-            : inArray(battlesRef.characterId, characterIds),
-        );
-      }
-
-      if (query.type?.length) {
-        const hasSolo = query.type.includes("solo");
-        const hasGroup = query.type.includes("group");
-        if (hasSolo && !hasGroup) {
-          conditions.push(eq(battlesRef.type, "1v1"));
-        } else if (hasGroup && !hasSolo) {
-          conditions.push(not(eq(battlesRef.type, "1v1")));
-        }
-      }
-
-      if (query.result?.length && characterIds.length) {
-        const resultConditions: (SQL | undefined)[] = [];
-
-        if (query.result.includes("won")) {
-          for (const charId of characterIds) {
-            for (const team of [1, 2]) {
-              resultConditions.push(
-                and(
-                  this.warriorExists(
-                    battlesRef,
-                    eq(battleWarriors.originalId, charId),
-                    eq(battleWarriors.team, team),
-                  ),
-                  eq(battlesRef.winningTeam, team),
-                  eq(battlesRef.hasFlee, false),
-                ),
-              );
-            }
-          }
-        }
-
-        if (query.result.includes("lost")) {
-          for (const charId of characterIds) {
-            for (const team of [1, 2]) {
-              resultConditions.push(
-                and(
-                  this.warriorExists(
-                    battlesRef,
-                    eq(battleWarriors.originalId, charId),
-                    eq(battleWarriors.team, team),
-                  ),
-                  eq(battlesRef.losingTeam, team),
-                  eq(battlesRef.hasFlee, false),
-                ),
-              );
-            }
-          }
-        }
-
-        if (query.result.includes("flee")) {
-          resultConditions.push(eq(battlesRef.hasFlee, true));
-        }
-
-        if (resultConditions.length) {
-          conditions.push(or(...resultConditions));
-        }
-      }
-
-      if (query.ph === true) {
-        const phConditions: (SQL | undefined)[] = [gt(battleWarriors.ph, 0)];
-        if (characterIds.length) {
-          phConditions.push(inArray(battleWarriors.originalId, characterIds));
-        }
-        conditions.push(this.warriorExists(battlesRef, ...phConditions));
-      }
-
-      if (query.matchmaking !== undefined) {
-        conditions.push(eq(battlesRef.matchmaking, query.matchmaking));
-      }
-
-      if (query.startDate) {
-        conditions.push(gte(battlesRef.createdAt, new Date(query.startDate)));
-      }
-
-      if (query.endDate) {
-        conditions.push(lte(battlesRef.createdAt, new Date(query.endDate)));
-      }
-
-      if (query.search) {
-        conditions.push(
-          this.warriorExists(
-            battlesRef,
-            ilike(battleWarriors.name, `%${query.search}%`),
-          ),
-        );
-      }
-
-      if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-        const levelConditions: (SQL | undefined)[] = [];
-
-        if (query.minLevel !== undefined && query.maxLevel !== undefined) {
-          levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
-          levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
-        } else if (query.minLevel !== undefined) {
-          levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
-        } else if (query.maxLevel !== undefined) {
-          levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
-        }
-
-        if (characterIds.length) {
-          levelConditions.push(
-            notInArray(battleWarriors.originalId, characterIds),
-          );
-        }
-
-        conditions.push(this.warriorExists(battlesRef, ...levelConditions));
-      }
-
-      return conditions.length ? and(...conditions) : undefined;
-    };
-  }
-
   private buildPaginationOptions(query: QueryBattlesDto): PaginationOptions {
     return {
       sortOrder: query.sortOrder ?? "desc",
@@ -763,40 +520,6 @@ export class BattlesService implements IBattlesService {
     }
   }
 
-  private async upsertUserCharacter(
-    userId: string,
-    characterId: string,
-    name: string,
-    world: string,
-    icon: string,
-  ): Promise<void> {
-    try {
-      await this.drizzle.db
-        .insert(userCharacters)
-        .values({
-          userId,
-          characterId,
-          name,
-          world,
-          icon,
-          updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: [
-            userCharacters.userId,
-            userCharacters.characterId,
-            userCharacters.world,
-          ],
-          set: { name, icon, lastSeenAt: new Date(), updatedAt: new Date() },
-        });
-    } catch (error) {
-      this.logger.warn(
-        `Failed to upsert character ${characterId} for user ${userId}`,
-        error,
-      );
-    }
-  }
-
   private async storeBattleInDatabase(
     data: CreateBattleDto,
     userId: string,
@@ -807,13 +530,13 @@ export class BattlesService implements IBattlesService {
         (w) => w.originalId === data.characterId,
       );
       if (userWarrior) {
-        await this.upsertUserCharacter(
+        await this.battleMetadataService.upsertUserCharacter({
           userId,
-          data.characterId,
-          userWarrior.name,
-          data.world,
-          userWarrior.icon,
-        );
+          characterId: data.characterId,
+          name: userWarrior.name,
+          world: data.world,
+          icon: userWarrior.icon,
+        });
       }
 
       const battle = await this.drizzle.db.transaction(async (tx) => {
@@ -1006,33 +729,6 @@ export class BattlesService implements IBattlesService {
   ): Promise<{
     warriors: Array<{ name: string; icon: string; prof: string; lvl: number }>;
   }> {
-    try {
-      if (!query || query.trim().length < 2) {
-        return { warriors: [] };
-      }
-
-      const results = await this.drizzle.db
-        .selectDistinctOn([battleWarriors.name], {
-          name: battleWarriors.name,
-          icon: battleWarriors.icon,
-          prof: battleWarriors.prof,
-          lvl: battleWarriors.lvl,
-        })
-        .from(battleWarriors)
-        .innerJoin(battles, eq(battleWarriors.battleId, battles.id))
-        .where(
-          and(
-            eq(battles.userId, userId),
-            ilike(battleWarriors.name, `%${query.trim()}%`),
-          ),
-        )
-        .orderBy(battleWarriors.name, desc(battleWarriors.id))
-        .limit(10);
-
-      return { warriors: results };
-    } catch (error) {
-      this.logger.error("Failed to search warriors:", error);
-      throw error;
-    }
+    return this.battleMetadataService.searchWarriors(query, userId);
   }
 }

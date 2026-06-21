@@ -2,11 +2,21 @@ import type { Mocked } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotFoundException } from "@nestjs/common";
 import { BattleAnalyticsService } from "./battle-analytics.service";
+import { BattleAnalyticsCacheService } from "./battle-analytics-cache.service";
+import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service";
+import { BattleAnalyticsPagingService } from "./battle-analytics-paging.service";
+import { BattleAnalyticsQueryService } from "./battle-analytics-query.service";
+import { AbyssSeasonCalculatorService } from "./abyss-season-calculator.service";
+import { BattleSummaryCalculatorService } from "./battle-summary-calculator.service";
+import { CombatProfileCalculatorService } from "./combat-profile-calculator.service";
+import { HeadToHeadCalculatorService } from "./head-to-head-calculator.service";
+import { PlayerVsPlayerCalculatorService } from "./player-vs-player-calculator.service";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("BattleAnalyticsService", () => {
   let service: BattleAnalyticsService;
+  let queryService: BattleAnalyticsQueryService;
   let drizzleService: { db: any };
   let redisService: Mocked<RedisService>;
 
@@ -106,6 +116,15 @@ describe("BattleAnalyticsService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BattleAnalyticsService,
+        BattleAnalyticsCacheService,
+        BattleAnalyticsDomainService,
+        BattleAnalyticsPagingService,
+        BattleAnalyticsQueryService,
+        AbyssSeasonCalculatorService,
+        BattleSummaryCalculatorService,
+        CombatProfileCalculatorService,
+        HeadToHeadCalculatorService,
+        PlayerVsPlayerCalculatorService,
         {
           provide: DrizzleService,
           useValue: mockDrizzleService,
@@ -118,6 +137,9 @@ describe("BattleAnalyticsService", () => {
     }).compile();
 
     service = module.get<BattleAnalyticsService>(BattleAnalyticsService);
+    queryService = module.get<BattleAnalyticsQueryService>(
+      BattleAnalyticsQueryService,
+    );
     drizzleService = module.get(DrizzleService);
     redisService = module.get(RedisService) as Mocked<RedisService>;
   });
@@ -810,7 +832,7 @@ describe("BattleAnalyticsService", () => {
 
     it("should exclude the current battle and non-1v1 battles", async () => {
       const buildWhereSpy = vi
-        .spyOn(service as any, "buildAnalyticsWhere")
+        .spyOn(queryService, "buildAnalyticsWhere")
         .mockReturnValue(undefined);
       drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(
         mockUserCharacter,
@@ -917,7 +939,7 @@ describe("BattleAnalyticsService", () => {
 
     it("should pass explicit matchmaking filter when requested", async () => {
       const buildWhereSpy = vi
-        .spyOn(service as any, "buildAnalyticsWhere")
+        .spyOn(queryService, "buildAnalyticsWhere")
         .mockReturnValue(undefined);
       drizzleService.db.query.userCharacters.findFirst.mockResolvedValue(
         mockUserCharacter,
