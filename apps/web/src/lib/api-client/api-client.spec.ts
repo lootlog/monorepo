@@ -1,7 +1,22 @@
-import { describe, expect, it } from "vitest";
-import { buildRequestUrl } from "./api-client";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { buildRequestUrl, executeApiRequest } from "./api-client";
+
+vi.mock("@/lib/auth-client", () => ({
+  authClient: {
+    signIn: {
+      social: vi.fn(),
+    },
+  },
+}));
+
+const mockFetch = vi.fn<typeof fetch>();
 
 describe("buildRequestUrl", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+    vi.stubGlobal("fetch", mockFetch);
+  });
+
   it("keeps the API base path for paths starting with a slash", () => {
     const url = buildRequestUrl({
       baseURL: "http://localhost/api/lootlog",
@@ -47,5 +62,23 @@ describe("buildRequestUrl", () => {
     expect(url.toString()).toBe(
       "http://localhost/api/lootlog/users/@me/preferences?include=theme&include=colorMode&page=2",
     );
+  });
+
+  it("parses JSON response subtypes", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ detail: "Reauthentication required" }), {
+        status: 200,
+        headers: {
+          "content-type": "application/problem+json",
+        },
+      }),
+    );
+
+    await expect(
+      executeApiRequest<{ detail: string }>({
+        url: new URL("https://api.example.com/session"),
+        method: "GET",
+      }),
+    ).resolves.toEqual({ detail: "Reauthentication required" });
   });
 });
