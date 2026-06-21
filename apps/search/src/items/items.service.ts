@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { Meilisearch, type SearchParams } from "meilisearch";
+import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
 import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
 import { getMeilisearchErrorCode } from "src/meilisearch/meilisearch.utils";
@@ -172,7 +172,6 @@ export class ItemsService {
       });
     } catch (error) {
       this.logger.error("Error indexing items", { error });
-      return;
     }
   }
 
@@ -195,9 +194,7 @@ export class ItemsService {
     return {
       hits: data.hits,
       estimatedTotalHits:
-        "estimatedTotalHits" in data
-          ? (data.estimatedTotalHits ?? data.totalHits ?? data.hits.length)
-          : (data.totalHits ?? data.hits.length),
+        data.estimatedTotalHits ?? data.totalHits ?? data.hits.length,
       facetDistribution: data.facetDistribution ?? {},
       facetStats: data.facetStats ?? {},
     };
