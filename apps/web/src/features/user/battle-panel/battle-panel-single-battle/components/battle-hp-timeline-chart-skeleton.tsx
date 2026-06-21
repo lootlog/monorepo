@@ -15,7 +15,8 @@ export function BattleHpTimelineChartSkeleton() {
         <div className="flex items-center gap-2">
           <Skeleton className="h-8 w-8 rounded-sm" />
           <Skeleton className="h-8 w-8 rounded-sm" />
-          <Skeleton className="h-8 w-24 rounded-sm" />
+          <Skeleton className="h-8 w-8 rounded-sm" />
+          <Skeleton className="h-8 w-8 rounded-sm" />
         </div>
       </div>
 

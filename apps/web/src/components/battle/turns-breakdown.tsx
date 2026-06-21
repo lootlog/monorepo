@@ -2,6 +2,7 @@ import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { BattleBreakdownTable } from "./battle-breakdown-table";
+import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 
 interface TurnsBreakdownProps {
   warrior: Warrior;
@@ -13,27 +14,27 @@ export const TurnsBreakdown: FC<TurnsBreakdownProps> = ({ warrior }) => {
     {
       type: t("battleUi.breakdowns.turns.totalTurns"),
       value: warrior.turns,
-      color: "text-blue-400",
+      color: BATTLE_TEXT_COLORS.turn.total,
     },
     {
       type: t("battleUi.breakdowns.turns.normalAttacks"),
       value: warrior.normalAttacks,
-      color: "text-orange-400",
+      color: BATTLE_TEXT_COLORS.turn.normalAttack,
     },
     {
       type: t("battleUi.breakdowns.turns.spellsUsed"),
       value: warrior.spellsUsed,
-      color: "text-purple-400",
+      color: BATTLE_TEXT_COLORS.turn.spell,
     },
     {
       type: t("battleUi.breakdowns.turns.steps"),
       value: warrior.steps,
-      color: "text-green-400",
+      color: BATTLE_TEXT_COLORS.turn.steps,
     },
     {
       type: t("battleUi.breakdowns.turns.turnsLost"),
       value: warrior.turnsLost,
-      color: "text-red-400",
+      color: BATTLE_TEXT_COLORS.turn.lost,
     },
   ].filter((item) => item.value > 0);
 
@@ -73,7 +74,7 @@ export const TurnsBreakdown: FC<TurnsBreakdownProps> = ({ warrior }) => {
               rows={spellBreakdown.map((item) => ({
                 type: item.spell,
                 value: item.count,
-                color: "text-purple-300",
+                color: BATTLE_TEXT_COLORS.turn.spell,
               }))}
               typeLabel={t("battleUi.breakdowns.headers.skill")}
               valueLabel={t("battleUi.breakdowns.headers.uses")}

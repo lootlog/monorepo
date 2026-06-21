@@ -10,12 +10,16 @@ const createBattle = (overrides: Partial<Battle> = {}): Battle =>
     world: "gordion",
     warriors: [
       {
+        lvl: 300,
         originalId: "617",
         name: "Demodras",
+        prof: "b",
       },
       {
+        lvl: 300,
         originalId: "38798",
         name: "zpwrama",
+        prof: "p",
       },
     ],
     ...overrides,
@@ -27,7 +31,12 @@ describe("getRecentOpponentBattleContext", () => {
       battleId: "battle-1",
       characterId: "617",
       opponentId: "38798",
+      opponentLvl: 300,
       opponentName: "zpwrama",
+      opponentProf: "p",
+      userLvl: 300,
+      userName: "Demodras",
+      userProf: "b",
       world: "gordion",
     });
   });

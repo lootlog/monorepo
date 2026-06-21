@@ -2,6 +2,7 @@ import type {
   BattleStatCategoryDefinition,
   BattleStatDefinition,
 } from "@/types/stats-customization.types";
+import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 
 const createStatDefinition = (
   key: BattleStatDefinition["key"],
@@ -17,29 +18,59 @@ export const STAT_CATEGORIES: BattleStatCategoryDefinition[] = [
     id: "turnStats",
     labelKey: "battleUi.oneVsOne.categories.turnStats",
     stats: [
-      createStatDefinition("turns", { color: "text-blue-400" }),
-      createStatDefinition("steps", { color: "text-green-400" }),
-      createStatDefinition("turnsLost", { color: "text-red-400" }),
-      createStatDefinition("normalAttacks", { color: "text-orange-400" }),
-      createStatDefinition("spellsUsed", { color: "text-purple-400" }),
+      createStatDefinition("turns", { color: BATTLE_TEXT_COLORS.turn.total }),
+      createStatDefinition("steps", { color: BATTLE_TEXT_COLORS.turn.steps }),
+      createStatDefinition("turnsLost", {
+        color: BATTLE_TEXT_COLORS.turn.lost,
+      }),
+      createStatDefinition("normalAttacks", {
+        color: BATTLE_TEXT_COLORS.turn.normalAttack,
+      }),
+      createStatDefinition("spellsUsed", {
+        color: BATTLE_TEXT_COLORS.turn.spell,
+      }),
     ],
   },
   {
     id: "damageDealt",
     labelKey: "battleUi.oneVsOne.categories.damageDealt",
     stats: [
-      createStatDefinition("damageDealt", { color: "text-white" }),
-      createStatDefinition("distanceDamage", { color: "text-green-400" }),
-      createStatDefinition("meleeDamage", { color: "text-blue-300" }),
-      createStatDefinition("auxiliaryDamage", { color: "text-orange-300" }),
-      createStatDefinition("fireDamage", { color: "text-red-400" }),
-      createStatDefinition("frostDamage", { color: "text-cyan-400" }),
-      createStatDefinition("lightningDamage", { color: "text-yellow-400" }),
-      createStatDefinition("thirdAttDamage", { color: "text-orange-400" }),
-      createStatDefinition("rageDamageDealt", { color: "text-red-300" }),
-      createStatDefinition("trueDamageDealt", { color: "text-white" }),
-      createStatDefinition("stigmaDamageDealt", { color: "text-purple-400" }),
-      createStatDefinition("reflectedDamage", { color: "text-purple-400" }),
+      createStatDefinition("damageDealt", {
+        color: BATTLE_TEXT_COLORS.neutral,
+      }),
+      createStatDefinition("distanceDamage", {
+        color: BATTLE_TEXT_COLORS.damage.distance,
+      }),
+      createStatDefinition("meleeDamage", {
+        color: BATTLE_TEXT_COLORS.damage.melee,
+      }),
+      createStatDefinition("auxiliaryDamage", {
+        color: BATTLE_TEXT_COLORS.damage.auxiliary,
+      }),
+      createStatDefinition("fireDamage", {
+        color: BATTLE_TEXT_COLORS.damage.fire,
+      }),
+      createStatDefinition("frostDamage", {
+        color: BATTLE_TEXT_COLORS.damage.frost,
+      }),
+      createStatDefinition("lightningDamage", {
+        color: BATTLE_TEXT_COLORS.damage.lightning,
+      }),
+      createStatDefinition("thirdAttDamage", {
+        color: BATTLE_TEXT_COLORS.damage.thirdAttack,
+      }),
+      createStatDefinition("rageDamageDealt", {
+        color: BATTLE_TEXT_COLORS.damage.rage,
+      }),
+      createStatDefinition("trueDamageDealt", {
+        color: BATTLE_TEXT_COLORS.damage.trueDamage,
+      }),
+      createStatDefinition("stigmaDamageDealt", {
+        color: BATTLE_TEXT_COLORS.damage.stigma,
+      }),
+      createStatDefinition("reflectedDamage", {
+        color: BATTLE_TEXT_COLORS.damage.reflected,
+      }),
       createStatDefinition("damageDealtAfterDefensive"),
       createStatDefinition("damageDealtAfterDefensivePercentage", {
         format: (value) => `${value}%`,
@@ -50,37 +81,57 @@ export const STAT_CATEGORIES: BattleStatCategoryDefinition[] = [
     id: "damageTaken",
     labelKey: "battleUi.oneVsOne.categories.damageTaken",
     stats: [
-      createStatDefinition("damageTaken", { color: "text-white" }),
-      createStatDefinition("distanceDamageTaken", { color: "text-green-400" }),
-      createStatDefinition("meleeDamageTaken", { color: "text-blue-300" }),
-      createStatDefinition("auxiliaryDamageTaken", {
-        color: "text-orange-300",
+      createStatDefinition("damageTaken", {
+        color: BATTLE_TEXT_COLORS.neutral,
       }),
-      createStatDefinition("fireDamageTaken", { color: "text-red-400" }),
-      createStatDefinition("frostDamageTaken", { color: "text-cyan-400" }),
+      createStatDefinition("distanceDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.distance,
+      }),
+      createStatDefinition("meleeDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.melee,
+      }),
+      createStatDefinition("auxiliaryDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.auxiliary,
+      }),
+      createStatDefinition("fireDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.fire,
+      }),
+      createStatDefinition("frostDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.frost,
+      }),
       createStatDefinition("lightningDamageTaken", {
-        color: "text-yellow-400",
+        color: BATTLE_TEXT_COLORS.damage.lightning,
       }),
       createStatDefinition("thirdAttDamageTaken", {
-        color: "text-orange-400",
+        color: BATTLE_TEXT_COLORS.damage.thirdAttack,
       }),
       createStatDefinition("flatDamageTaken"),
-      createStatDefinition("trueDamageTaken", { color: "text-white" }),
-      createStatDefinition("stigmaDamageTaken", { color: "text-purple-400" }),
-      createStatDefinition("woundDamageTaken", { color: "text-orange-600" }),
-      createStatDefinition("poisonDamageTaken", { color: "text-green-600" }),
-      createStatDefinition("injureDamageTaken", { color: "text-red-300" }),
+      createStatDefinition("trueDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.trueDamage,
+      }),
+      createStatDefinition("stigmaDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.stigma,
+      }),
+      createStatDefinition("woundDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.wound,
+      }),
+      createStatDefinition("poisonDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.poison,
+      }),
+      createStatDefinition("injureDamageTaken", {
+        color: BATTLE_TEXT_COLORS.damage.injure,
+      }),
       createStatDefinition("critWoundDamageTaken", {
-        color: "text-orange-400",
+        color: BATTLE_TEXT_COLORS.damage.criticalWound,
       }),
       createStatDefinition("firePassiveDamageTaken", {
-        color: "text-red-500",
+        color: BATTLE_TEXT_COLORS.damage.firePassive,
       }),
       createStatDefinition("lightningPassiveDamageTaken", {
-        color: "text-yellow-500",
+        color: BATTLE_TEXT_COLORS.damage.lightningPassive,
       }),
       createStatDefinition("legbonAnguishDamageTaken", {
-        color: "text-red-600",
+        color: BATTLE_TEXT_COLORS.legendary.anguish,
       }),
       createStatDefinition("reflectedDamageTaken"),
     ],
@@ -90,9 +141,13 @@ export const STAT_CATEGORIES: BattleStatCategoryDefinition[] = [
     labelKey: "battleUi.oneVsOne.categories.turns",
     stats: [
       createStatDefinition("criticalHits"),
-      createStatDefinition("armorPierces", { color: "text-yellow-400" }),
+      createStatDefinition("armorPierces", {
+        color: BATTLE_TEXT_COLORS.defense.destroy,
+      }),
       createStatDefinition("injures"),
-      createStatDefinition("fastArrows", { color: "text-yellow-400" }),
+      createStatDefinition("fastArrows", {
+        color: BATTLE_TEXT_COLORS.defense.destroy,
+      }),
     ],
   },
   {
@@ -100,32 +155,56 @@ export const STAT_CATEGORIES: BattleStatCategoryDefinition[] = [
     labelKey: "battleUi.oneVsOne.categories.legendaryBonuses",
     stats: [
       createStatDefinition("legbons"),
-      createStatDefinition("legbonCurse", { color: "text-yellow-400" }),
-      createStatDefinition("legbonCleanse", { color: "text-blue-400" }),
-      createStatDefinition("legbonLastheal", { color: "text-green-400" }),
-      createStatDefinition("legbonLasthealValue", { color: "text-gray-400" }),
-      createStatDefinition("legbonGlare", { color: "text-yellow-400" }),
-      createStatDefinition("legbonHolytouch", { color: "text-blue-300" }),
-      createStatDefinition("legbonHolytouchValue", {
-        color: "text-blue-300",
+      createStatDefinition("legbonCurse", {
+        color: BATTLE_TEXT_COLORS.legendary.curse,
       }),
-      createStatDefinition("legbonCritredValue", { color: "text-sky-400" }),
-      createStatDefinition("legbonFacadeValue", { color: "text-sky-400" }),
-      createStatDefinition("legbonVerycrit", { color: "text-red-600" }),
-      createStatDefinition("legbonAnguish", { color: "text-red-600" }),
-      createStatDefinition("legbonPunctureValue", { color: "text-red-300" }),
+      createStatDefinition("legbonCleanse", {
+        color: BATTLE_TEXT_COLORS.legendary.cleanse,
+      }),
+      createStatDefinition("legbonLastheal", {
+        color: BATTLE_TEXT_COLORS.legendary.lastHeal,
+      }),
+      createStatDefinition("legbonLasthealValue", {
+        color: BATTLE_TEXT_COLORS.muted,
+      }),
+      createStatDefinition("legbonGlare", {
+        color: BATTLE_TEXT_COLORS.legendary.glare,
+      }),
+      createStatDefinition("legbonHolytouch", {
+        color: BATTLE_TEXT_COLORS.legendary.holyTouch,
+      }),
+      createStatDefinition("legbonHolytouchValue", {
+        color: BATTLE_TEXT_COLORS.legendary.holyTouch,
+      }),
+      createStatDefinition("legbonCritredValue", {
+        color: BATTLE_TEXT_COLORS.legendary.critShield,
+      }),
+      createStatDefinition("legbonFacadeValue", {
+        color: BATTLE_TEXT_COLORS.legendary.facade,
+      }),
+      createStatDefinition("legbonVerycrit", {
+        color: BATTLE_TEXT_COLORS.legendary.veryCrit,
+      }),
+      createStatDefinition("legbonAnguish", {
+        color: BATTLE_TEXT_COLORS.legendary.anguish,
+      }),
+      createStatDefinition("legbonPunctureValue", {
+        color: BATTLE_TEXT_COLORS.legendary.puncture,
+      }),
     ],
   },
   {
     id: "defenseDestroy",
     labelKey: "battleUi.oneVsOne.categories.defenseDestroy",
     stats: [
-      createStatDefinition("reducedArmor", { color: "text-yellow-400" }),
+      createStatDefinition("reducedArmor", {
+        color: BATTLE_TEXT_COLORS.defense.destroy,
+      }),
       createStatDefinition("magicResistanceDestroyed", {
-        color: "text-yellow-400",
+        color: BATTLE_TEXT_COLORS.defense.destroy,
       }),
       createStatDefinition("reducedPoisonResistance", {
-        color: "text-yellow-400",
+        color: BATTLE_TEXT_COLORS.defense.destroy,
       }),
     ],
   },
@@ -134,26 +213,42 @@ export const STAT_CATEGORIES: BattleStatCategoryDefinition[] = [
     labelKey: "battleUi.oneVsOne.categories.defense",
     stats: [
       createStatDefinition("evasions"),
-      createStatDefinition("counters", { color: "text-blue-400" }),
-      createStatDefinition("blocks", { color: "text-blue-400" }),
-      createStatDefinition("blockedDamage", { color: "text-green-400" }),
+      createStatDefinition("counters", {
+        color: BATTLE_TEXT_COLORS.defense.counter,
+      }),
+      createStatDefinition("blocks", {
+        color: BATTLE_TEXT_COLORS.defense.block,
+      }),
+      createStatDefinition("blockedDamage", {
+        color: BATTLE_TEXT_COLORS.defense.blockedDamage,
+      }),
     ],
   },
   {
     id: "healing",
     labelKey: "battleUi.oneVsOne.categories.healing",
     stats: [
-      createStatDefinition("passiveHealing", { color: "text-green-400" }),
-      createStatDefinition("activeHealing", { color: "text-green-400" }),
+      createStatDefinition("passiveHealing", {
+        color: BATTLE_TEXT_COLORS.healing.passive,
+      }),
+      createStatDefinition("activeHealing", {
+        color: BATTLE_TEXT_COLORS.healing.active,
+      }),
     ],
   },
   {
     id: "resources",
     labelKey: "battleUi.oneVsOne.categories.resources",
     stats: [
-      createStatDefinition("destroyedEnergy", { color: "text-cyan-400" }),
-      createStatDefinition("destroyedMana", { color: "text-blue-400" }),
-      createStatDefinition("regeneratedEnergy", { color: "text-cyan-400" }),
+      createStatDefinition("destroyedEnergy", {
+        color: BATTLE_TEXT_COLORS.resources.energy,
+      }),
+      createStatDefinition("destroyedMana", {
+        color: BATTLE_TEXT_COLORS.resources.mana,
+      }),
+      createStatDefinition("regeneratedEnergy", {
+        color: BATTLE_TEXT_COLORS.resources.energy,
+      }),
     ],
   },
 ];

@@ -1,6 +1,8 @@
+import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
+
 export const BATTLE_HP_TIMELINE_COLORS = {
-  friendly: "#4ade80",
-  enemy: "#f87171",
+  friendly: BATTLE_HEX_COLORS.team.friendly,
+  enemy: BATTLE_HEX_COLORS.team.enemy,
 } as const;
 
 type BattleHpTimelineColorWarrior = {

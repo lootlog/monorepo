@@ -7,6 +7,10 @@ import type {
   Battle,
   BattleWarrior as Warrior,
 } from "@/lib/api/battlelog-types";
+import {
+  BATTLE_BADGE_COLORS,
+  BATTLE_SURFACE_COLORS,
+} from "./utils/battle-color-palette";
 import { BattleCompactTeam } from "./battle-compact-team";
 import { BattleMetadata } from "./battle-metadata";
 
@@ -24,8 +28,8 @@ const RESULT_ICON_BY_TYPE: Record<BattleWinnerResult, LucideIcon> = {
 };
 
 const RESULT_CLASS_NAME_BY_TYPE: Record<BattleWinnerResult, string> = {
-  flee: "border-yellow-500/25 bg-yellow-500/10 text-yellow-400",
-  won: "border-green-500/25 bg-green-500/10 text-green-400",
+  flee: BATTLE_BADGE_COLORS.result.flee,
+  won: BATTLE_BADGE_COLORS.result.won,
 };
 
 const getWinnerResult = (battle: Battle): BattleWinnerResult =>
@@ -63,7 +67,9 @@ export const BattleCompactOverviewCard: FC<BattleCompactOverviewCardProps> = ({
 
   return (
     <Card className="w-full gap-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm">
-      <div className="bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 px-3 py-3">
+      <div
+        className={cn(BATTLE_SURFACE_COLORS.overview.teamGradient, "px-3 py-3")}
+      >
         <div className="grid grid-cols-1 items-stretch gap-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
           <BattleCompactTeam
             cdnBaseUrl={cdnBaseUrl}

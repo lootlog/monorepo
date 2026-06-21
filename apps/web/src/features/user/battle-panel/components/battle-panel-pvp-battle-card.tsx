@@ -1,3 +1,4 @@
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -74,7 +75,9 @@ export const BattlePanelPvpBattleCard = ({
             className={cn(
               "text-sm font-semibold tabular-nums",
               ratingDelta !== null &&
-                (ratingDelta >= 0 ? "text-green-500" : "text-red-500"),
+                (ratingDelta >= 0
+                  ? BATTLE_TEXT_COLORS.result.won
+                  : BATTLE_TEXT_COLORS.result.lost),
             )}
           >
             {ratingDeltaLabel}

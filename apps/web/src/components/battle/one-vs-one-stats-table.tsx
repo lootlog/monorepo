@@ -29,6 +29,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { SearchInput } from "@/components/ui/search-input";
 import { STAT_CATEGORIES } from "./one-vs-one-stats-definitions";
+import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
 
 const STAT_SEARCH_SCROLL_OFFSET_PX = 40;
 
@@ -407,7 +408,8 @@ export function OneVsOneStatsTable({
               </TableHead>
               <TableHead
                 className={cn(
-                  "sticky top-0 z-10 border-b border-border/70 bg-green-950 text-center whitespace-wrap px-2 text-green-50",
+                  "sticky top-0 z-10 border-b border-border/70 text-center whitespace-wrap px-2",
+                  BATTLE_SURFACE_COLORS.team.friendlyHeader,
                   compact && "h-7 px-1.5 text-[13px]",
                 )}
               >
@@ -415,7 +417,8 @@ export function OneVsOneStatsTable({
               </TableHead>
               <TableHead
                 className={cn(
-                  "sticky top-0 z-10 border-b border-border/70 bg-red-950 text-center whitespace-wrap px-2 text-red-50",
+                  "sticky top-0 z-10 border-b border-border/70 text-center whitespace-wrap px-2",
+                  BATTLE_SURFACE_COLORS.team.enemyHeader,
                   compact && "h-7 px-1.5 text-[13px]",
                 )}
               >
@@ -480,7 +483,8 @@ export function OneVsOneStatsTable({
                     </TableCell>
                     <TableCell
                       className={cn(
-                        "text-center tabular-nums bg-green-400/10 whitespace-nowrap",
+                        "text-center tabular-nums whitespace-nowrap",
+                        BATTLE_SURFACE_COLORS.team.friendlyCell,
                         compact ? "px-1.5 py-1" : "px-2 py-2",
                       )}
                     >
@@ -488,7 +492,8 @@ export function OneVsOneStatsTable({
                     </TableCell>
                     <TableCell
                       className={cn(
-                        "text-center tabular-nums bg-red-400/10 whitespace-nowrap",
+                        "text-center tabular-nums whitespace-nowrap",
+                        BATTLE_SURFACE_COLORS.team.enemyCell,
                         compact ? "px-1.5 py-1" : "px-2 py-2",
                       )}
                     >
