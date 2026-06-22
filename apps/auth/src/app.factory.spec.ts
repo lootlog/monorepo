@@ -13,19 +13,21 @@ const createRequest = ({
   headers,
   method,
   rawBody,
+  socketEncrypted = false,
   url,
 }: {
   body?: unknown;
   headers: Record<string, string>;
   method: string;
   rawBody?: string;
+  socketEncrypted?: boolean;
   url: string;
 }) => {
   const rawRequest = Readable.from(rawBody ? [rawBody] : []) as MockRawRequest;
   rawRequest.headers = headers;
   rawRequest.method = method;
   rawRequest.url = url;
-  rawRequest.socket = { encrypted: false };
+  rawRequest.socket = { encrypted: socketEncrypted };
 
   return {
     body,
@@ -96,5 +98,35 @@ describe("buildBetterAuthRequest", () => {
       "http://localhost/idp/callback/discord?code=test-code&state=test-state",
     );
     expect(authRequest.method).toBe("GET");
+  });
+
+  it("uses the first forwarded protocol when building the request origin", async () => {
+    const request = createRequest({
+      headers: {
+        host: "lootlog.pl",
+        "x-forwarded-proto": "https, http",
+      },
+      method: "GET",
+      url: "/idp/callback/discord",
+    });
+
+    const authRequest = await buildBetterAuthRequest(request);
+
+    expect(authRequest.url).toBe("https://lootlog.pl/idp/callback/discord");
+  });
+
+  it("uses the socket protocol when forwarded protocol is absent", async () => {
+    const request = createRequest({
+      headers: {
+        host: "lootlog.pl",
+      },
+      method: "GET",
+      socketEncrypted: true,
+      url: "/idp/callback/discord",
+    });
+
+    const authRequest = await buildBetterAuthRequest(request);
+
+    expect(authRequest.url).toBe("https://lootlog.pl/idp/callback/discord");
   });
 });
