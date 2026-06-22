@@ -1,4 +1,4 @@
-import { initObservability } from "@lootlog/instrumentation";
+import { initObservability } from "@lootlog/instrumentation/instrumentation-nest";
 import "dotenv/config";
 
 initObservability({
