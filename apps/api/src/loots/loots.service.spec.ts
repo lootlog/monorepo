@@ -16,6 +16,7 @@ import { LootMappingService } from "./services/loot-mapping.service";
 import { LootValidationService } from "./services/loot-validation.service";
 import { LootQueryService } from "./services/loot-query.service";
 import { LootCommentService } from "./services/loot-comment.service";
+import { LootStatsService } from "./services/loot-stats.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RedlockService } from "src/lib/redlock/redlock.service";
 import type { CreateLootDto } from "./dto/create-loot.dto";
@@ -87,6 +88,9 @@ describe("LootsService", () => {
     set: Mock;
     deleteByPattern: Mock;
     getOrSetJsonBestEffort: Mock;
+  };
+  let lootStatsService: {
+    invalidateCache: Mock;
   };
   let amqpConnection: {
     publish: Mock;
@@ -215,6 +219,9 @@ describe("LootsService", () => {
         ({ factory }: { factory: () => Promise<unknown> }) => factory(),
       ),
     };
+    const mockLootStatsService = {
+      invalidateCache: mockFn().mockResolvedValue(undefined),
+    };
 
     const mockLogger = {
       log: mockFn(),
@@ -233,6 +240,7 @@ describe("LootsService", () => {
         LootValidationService,
         LootQueryService,
         LootCommentService,
+        { provide: LootStatsService, useValue: mockLootStatsService },
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: PlayersService, useValue: mockPlayersService },
         { provide: NpcsService, useValue: mockNpcsService },
@@ -275,6 +283,7 @@ describe("LootsService", () => {
     lootlogConfigService = module.get(LootlogConfigService);
     userLootlogConfigService = module.get(UserLootlogConfigService);
     _redisService = module.get(RedisService);
+    lootStatsService = module.get(LootStatsService);
   });
 
   afterEach(() => {
@@ -356,6 +365,7 @@ describe("LootsService", () => {
 
       expect(prismaService.loot.create).toHaveBeenCalled();
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalled();
+      expect(lootStatsService.invalidateCache).toHaveBeenCalledWith(["guild1"]);
       expect(playersService.bulkIndexPlayers).toHaveBeenCalled();
       expect(npcsService.bulkIndexNpcs).toHaveBeenCalled();
       expect(_itemsService.bulkIndexItems).toHaveBeenCalledWith([
@@ -385,6 +395,7 @@ describe("LootsService", () => {
 
       expect(prismaService.loot.findUnique).toHaveBeenCalled();
       expect(prismaService.loot.create).not.toHaveBeenCalled();
+      expect(lootStatsService.invalidateCache).toHaveBeenCalledWith(["guild1"]);
       expect(playersService.bulkIndexPlayers).not.toHaveBeenCalled();
       expect(npcsService.bulkIndexNpcs).not.toHaveBeenCalled();
       expect(result).toEqual(expectedSuccessResponse);
@@ -408,6 +419,7 @@ describe("LootsService", () => {
         RoutingKey.GUILDS_LOOTS_CREATE,
         expect.any(Object),
       );
+      expect(lootStatsService.invalidateCache).not.toHaveBeenCalled();
     });
 
     it("should publish create event only for newly persisted existing loot submissions", async () => {
@@ -948,6 +960,9 @@ describe("LootsService", () => {
       expect(prismaService.lootSubmission.deleteMany).toHaveBeenCalledWith({
         where: { lootId: options.lootId, guildId: options.guildId },
       });
+      expect(lootStatsService.invalidateCache).toHaveBeenCalledWith([
+        options.guildId,
+      ]);
     });
 
     it("should throw ForbiddenException when loot does not exist", async () => {
@@ -1541,6 +1556,122 @@ describe("LootsService", () => {
           }),
         }),
       );
+    });
+  });
+
+  describe("resolveLootItemByHid", () => {
+    const role: Role = {
+      id: "role1",
+      name: "Loot Reader",
+      color: 0,
+      position: 1,
+      permissions: [Permission.LOOTLOG_LOOTS_READ],
+      lvlRangeFrom: 10,
+      lvlRangeTo: 60,
+      guildId: mockGuild.id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it("should resolve a visible item by HID without loading full loot payloads", async () => {
+      prismaService.loot.findFirst.mockResolvedValue({
+        lootItems: [
+          {
+            hid: "abc123",
+            itemSnapshot: {
+              itemId: 100,
+              name: "Test Item",
+              icon: "item.png",
+              lvl: null,
+              rarity: ItemRarity.LEGENDARY,
+              itemType: "weapon",
+              statRaw: "lvl=50;reqp=w",
+            },
+          },
+        ],
+      });
+
+      const result = await service.resolveLootItemByHid(
+        mockGuild,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [role],
+        { hid: "abc123", world: "testworld" },
+      );
+
+      expect(prismaService.loot.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            world: "testworld",
+            lootSubmissions: {
+              some: {
+                guildId: mockGuild.id,
+              },
+            },
+            AND: expect.arrayContaining([
+              {
+                lootItems: {
+                  some: {
+                    hid: "abc123",
+                  },
+                },
+              },
+              {
+                lootNpcs: {
+                  some: {
+                    npcSnapshot: {
+                      OR: expect.arrayContaining([
+                        expect.objectContaining({
+                          AND: expect.arrayContaining([
+                            {
+                              OR: expect.arrayContaining([
+                                { lvl: { gte: 10 } },
+                              ]),
+                            },
+                            {
+                              OR: expect.arrayContaining([
+                                { lvl: { lte: 60 } },
+                              ]),
+                            },
+                          ]),
+                        }),
+                      ]),
+                    },
+                  },
+                },
+              },
+            ]),
+          }),
+          select: {
+            lootItems: expect.objectContaining({
+              where: { hid: "abc123" },
+              take: 1,
+            }),
+          },
+        }),
+      );
+      expect(result).toEqual({
+        id: 100,
+        hid: "abc123",
+        name: "Test Item",
+        icon: "item.png",
+        stat: "lvl=50;reqp=w",
+        type: "weapon",
+        rarity: ItemRarity.LEGENDARY,
+        lvl: 50,
+        prof: [Profession.WARRIOR],
+      });
+    });
+
+    it("should return null when HID is blank", async () => {
+      const result = await service.resolveLootItemByHid(
+        mockGuild,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [role],
+        { hid: "   ", world: "testworld" },
+      );
+
+      expect(result).toBeNull();
+      expect(prismaService.loot.findFirst).not.toHaveBeenCalled();
     });
   });
 
