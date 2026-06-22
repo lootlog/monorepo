@@ -29,19 +29,23 @@ describe("KillsService", () => {
     npcKillStats: {
       upsert: Mock;
       findMany: Mock;
+      groupBy: Mock;
     };
     npcKillStatsBucket: {
       upsert: Mock;
       findMany: Mock;
+      groupBy: Mock;
     };
     guildKillSummary: {
       upsert: Mock;
       findMany: Mock;
       findFirst: Mock;
+      groupBy: Mock;
     };
     guildKillSummaryBucket: {
       upsert: Mock;
       findMany: Mock;
+      groupBy: Mock;
     };
     member: {
       findUnique: Mock;
@@ -53,6 +57,7 @@ describe("KillsService", () => {
     setNX: Mock;
     getJson: Mock;
     getOrSetJson: Mock;
+    deleteByPattern: Mock;
   };
   let userLootlogConfigService: {
     getLootlogCharacterConfig: Mock;
@@ -63,6 +68,7 @@ describe("KillsService", () => {
   let logger: {
     log: Mock;
     error: Mock;
+    warn: Mock;
   };
 
   const mockCreateKillDto: CreateKillDto = {
@@ -106,19 +112,23 @@ describe("KillsService", () => {
       npcKillStats: {
         upsert: mockFn(),
         findMany: mockFn(),
+        groupBy: mockFn(),
       },
       npcKillStatsBucket: {
         upsert: mockFn(),
         findMany: mockFn(),
+        groupBy: mockFn(),
       },
       guildKillSummary: {
         upsert: mockFn(),
         findMany: mockFn(),
         findFirst: mockFn(),
+        groupBy: mockFn(),
       },
       guildKillSummaryBucket: {
         upsert: mockFn(),
         findMany: mockFn(),
+        groupBy: mockFn(),
       },
       member: {
         findUnique: mockFn(),
@@ -133,6 +143,7 @@ describe("KillsService", () => {
       getOrSetJson: mockFn().mockImplementation(
         ({ factory }: { factory: () => Promise<unknown> }) => factory(),
       ),
+      deleteByPattern: mockFn().mockResolvedValue(0),
     };
 
     const mockUserLootlogConfigService = {
@@ -149,6 +160,7 @@ describe("KillsService", () => {
     const mockLogger = {
       log: mockFn(),
       error: mockFn(),
+      warn: mockFn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -238,6 +250,9 @@ describe("KillsService", () => {
           totalKills: { increment: 1 },
         }),
       });
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        `kill-stats:user-*:${discordId}:*`,
+      );
     });
 
     it("should return deduplicated: true when user already reported this kill", async () => {
@@ -250,6 +265,7 @@ describe("KillsService", () => {
 
       expect(result).toEqual({ deduplicated: true, updated: 0 });
       expect(prismaService.userKillStats.upsert).not.toHaveBeenCalled();
+      expect(redisService.deleteByPattern).not.toHaveBeenCalled();
     });
 
     it("should return updated: 0 when no guilds are configured", async () => {
@@ -286,6 +302,21 @@ describe("KillsService", () => {
       expect(prismaService.guildKillSummaryBucket.upsert).toHaveBeenCalledTimes(
         2,
       );
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        `kill-stats:user-*:${discordId}:*`,
+      );
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        "kill-stats:guild-*:guild1:*",
+      );
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        "kill-stats:member-kills:guild1:*",
+      );
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        "kill-stats:guild-*:guild2:*",
+      );
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        "kill-stats:member-kills:guild2:*",
+      );
       expect(result).toEqual({ updated: 2 });
     });
 
@@ -302,6 +333,12 @@ describe("KillsService", () => {
       const result = await service.createKill(discordId, mockCreateKillDto);
 
       expect(prismaService.npcKillStats.upsert).toHaveBeenCalledTimes(1);
+      expect(redisService.deleteByPattern).toHaveBeenCalledWith(
+        "kill-stats:guild-*:guild1:*",
+      );
+      expect(redisService.deleteByPattern).not.toHaveBeenCalledWith(
+        "kill-stats:guild-*:guild2:*",
+      );
       expect(result).toEqual({ updated: 1 });
     });
 
@@ -523,36 +560,36 @@ describe("KillsService", () => {
       {
         memberId: 1,
         npcType: NpcType.HERO,
-        npcLvl: 300,
-        memberKills: 50,
-        member: { id: 1, name: "Player1", avatar: null, userId: "user1" },
+        _sum: { memberKills: 50 },
       },
       {
         memberId: 1,
         npcType: NpcType.TITAN,
-        npcLvl: 400,
-        memberKills: 20,
-        member: { id: 1, name: "Player1", avatar: null, userId: "user1" },
+        _sum: { memberKills: 20 },
       },
       {
         memberId: 2,
         npcType: NpcType.HERO,
-        npcLvl: 250,
-        memberKills: 30,
-        member: { id: 2, name: "Player2", avatar: null, userId: "user2" },
+        _sum: { memberKills: 30 },
       },
     ];
 
     const mockGuildSummary = [
-      { npcType: NpcType.HERO, uniqueKills: 40 },
-      { npcType: NpcType.TITAN, uniqueKills: 15 },
+      { npcType: NpcType.HERO, _sum: { uniqueKills: 40 } },
+      { npcType: NpcType.TITAN, _sum: { uniqueKills: 15 } },
+    ];
+
+    const mockMembers = [
+      { id: 1, name: "Player1", avatar: null, userId: "user1" },
+      { id: 2, name: "Player2", avatar: null, userId: "user2" },
     ];
 
     it("should return aggregated kill stats", async () => {
-      prismaService.npcKillStats.findMany.mockResolvedValue(mockMemberStats);
-      prismaService.guildKillSummary.findMany.mockResolvedValue(
+      prismaService.npcKillStats.groupBy.mockResolvedValue(mockMemberStats);
+      prismaService.guildKillSummary.groupBy.mockResolvedValue(
         mockGuildSummary,
       );
+      prismaService.member.findMany.mockResolvedValue(mockMembers);
       const query = new GetGuildKillStatsDto();
 
       const result = await service.getGuildKillStats(guildId, [], [], query);
@@ -590,16 +627,19 @@ describe("KillsService", () => {
       expect(result).toEqual(cachedStats);
       expect(redisService.getOrSetJson).not.toHaveBeenCalled();
       expect(prismaService.npcKillStats.findMany).not.toHaveBeenCalled();
+      expect(prismaService.npcKillStats.groupBy).not.toHaveBeenCalled();
       expect(prismaService.guildKillSummary.findMany).not.toHaveBeenCalled();
+      expect(prismaService.guildKillSummary.groupBy).not.toHaveBeenCalled();
     });
 
     it("should use bucket tables when period is provided", async () => {
-      prismaService.npcKillStatsBucket.findMany.mockResolvedValue(
+      prismaService.npcKillStatsBucket.groupBy.mockResolvedValue(
         mockMemberStats,
       );
-      prismaService.guildKillSummaryBucket.findMany.mockResolvedValue(
+      prismaService.guildKillSummaryBucket.groupBy.mockResolvedValue(
         mockGuildSummary,
       );
+      prismaService.member.findMany.mockResolvedValue(mockMembers);
       const query = new GetGuildKillStatsDto();
       query.period = "24h";
 
@@ -607,7 +647,7 @@ describe("KillsService", () => {
 
       expect(prismaService.npcKillStats.findMany).not.toHaveBeenCalled();
       expect(prismaService.guildKillSummary.findMany).not.toHaveBeenCalled();
-      expect(prismaService.npcKillStatsBucket.findMany).toHaveBeenCalledWith(
+      expect(prismaService.npcKillStatsBucket.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             periodStart: { gte: expect.any(Date) },
@@ -618,14 +658,14 @@ describe("KillsService", () => {
     });
 
     it("should filter by NPC type when provided", async () => {
-      prismaService.npcKillStats.findMany.mockResolvedValue([]);
-      prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+      prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+      prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
       const query = new GetGuildKillStatsDto();
       query.npcTypes = [NpcType.TITAN];
 
       await service.getGuildKillStats(guildId, [], [], query);
 
-      expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+      expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             npcType: { in: [NpcType.TITAN] },
@@ -635,15 +675,15 @@ describe("KillsService", () => {
     });
 
     it("should filter by level range when provided", async () => {
-      prismaService.npcKillStats.findMany.mockResolvedValue([]);
-      prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+      prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+      prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
       const query = new GetGuildKillStatsDto();
       query.minLvl = 100;
       query.maxLvl = 300;
 
       await service.getGuildKillStats(guildId, [], [], query);
 
-      expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+      expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             npcLvl: { gte: 100, lte: 300 },
@@ -653,15 +693,15 @@ describe("KillsService", () => {
     });
 
     it("should ignore zero level range values from unselected filters", async () => {
-      prismaService.npcKillStats.findMany.mockResolvedValue([]);
-      prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+      prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+      prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
       const query = new GetGuildKillStatsDto();
       query.minLvl = 0;
       query.maxLvl = 0;
 
       await service.getGuildKillStats(guildId, [], [], query);
 
-      expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+      expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.not.objectContaining({
             npcLvl: expect.anything(),
@@ -708,14 +748,14 @@ describe("KillsService", () => {
 
     describe("permission filtering", () => {
       it("should not apply visibility filter for administrative users", async () => {
-        prismaService.npcKillStats.findMany.mockResolvedValue([]);
-        prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+        prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+        prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const permissions = [Permission.OWNER];
 
         await service.getGuildKillStats(guildId, permissions, [], query);
 
-        expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+        expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.not.objectContaining({
               OR: expect.anything(),
@@ -725,13 +765,13 @@ describe("KillsService", () => {
       });
 
       it("should not apply visibility filter when no roles provided", async () => {
-        prismaService.npcKillStats.findMany.mockResolvedValue([]);
-        prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+        prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+        prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
 
         await service.getGuildKillStats(guildId, [], [], query);
 
-        expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+        expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.not.objectContaining({
               OR: expect.anything(),
@@ -741,8 +781,8 @@ describe("KillsService", () => {
       });
 
       it("should filter out TITANs when role lacks TITANS_READ permission", async () => {
-        prismaService.npcKillStats.findMany.mockResolvedValue([]);
-        prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+        prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+        prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const role = createMockRole({
           permissions: [Permission.LOOTLOG_LOOTS_READ],
@@ -750,7 +790,7 @@ describe("KillsService", () => {
 
         await service.getGuildKillStats(guildId, [], [role], query);
 
-        expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+        expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.objectContaining({
               OR: [
@@ -766,8 +806,8 @@ describe("KillsService", () => {
       });
 
       it("should allow TITANs when role has TITANS_READ permission", async () => {
-        prismaService.npcKillStats.findMany.mockResolvedValue([]);
-        prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+        prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+        prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const role = createMockRole({
           permissions: [
@@ -778,7 +818,7 @@ describe("KillsService", () => {
 
         await service.getGuildKillStats(guildId, [], [role], query);
 
-        const call = prismaService.npcKillStats.findMany.mock.calls[0][0];
+        const call = prismaService.npcKillStats.groupBy.mock.calls[0][0];
         const andConditions = call.where.OR?.[0]?.AND || [];
         const hasTitanFilter = andConditions.some(
           (c: { npcType?: { not?: NpcType } }) =>
@@ -788,8 +828,8 @@ describe("KillsService", () => {
       });
 
       it("should filter out HEROes when role lacks HEROES_READ permission", async () => {
-        prismaService.npcKillStats.findMany.mockResolvedValue([]);
-        prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+        prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+        prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const role = createMockRole({
           permissions: [Permission.LOOTLOG_LOOTS_READ],
@@ -797,7 +837,7 @@ describe("KillsService", () => {
 
         await service.getGuildKillStats(guildId, [], [role], query);
 
-        expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+        expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.objectContaining({
               OR: [
@@ -813,8 +853,8 @@ describe("KillsService", () => {
       });
 
       it("should allow HEROes when role has HEROES_READ permission", async () => {
-        prismaService.npcKillStats.findMany.mockResolvedValue([]);
-        prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+        prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+        prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const role = createMockRole({
           permissions: [
@@ -825,7 +865,7 @@ describe("KillsService", () => {
 
         await service.getGuildKillStats(guildId, [], [role], query);
 
-        const call = prismaService.npcKillStats.findMany.mock.calls[0][0];
+        const call = prismaService.npcKillStats.groupBy.mock.calls[0][0];
         const andConditions = call.where.OR?.[0]?.AND || [];
         const hasHeroFilter = andConditions.some(
           (c: { npcType?: { notIn?: NpcType[] } }) =>
@@ -836,8 +876,8 @@ describe("KillsService", () => {
       });
 
       it("should apply level range filter from role", async () => {
-        prismaService.npcKillStats.findMany.mockResolvedValue([]);
-        prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+        prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+        prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const role = createMockRole({
           lvlRangeFrom: 100,
@@ -846,7 +886,7 @@ describe("KillsService", () => {
 
         await service.getGuildKillStats(guildId, [], [role], query);
 
-        expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
+        expect(prismaService.npcKillStats.groupBy).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.objectContaining({
               OR: [
@@ -863,8 +903,8 @@ describe("KillsService", () => {
       });
 
       it("should combine visibility from multiple roles with OR", async () => {
-        prismaService.npcKillStats.findMany.mockResolvedValue([]);
-        prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+        prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+        prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const role1 = createMockRole({
           id: "role1",
@@ -884,13 +924,13 @@ describe("KillsService", () => {
 
         await service.getGuildKillStats(guildId, [], [role1, role2], query);
 
-        const call = prismaService.npcKillStats.findMany.mock.calls[0][0];
+        const call = prismaService.npcKillStats.groupBy.mock.calls[0][0];
         expect(call.where.OR).toHaveLength(2);
       });
 
       it("should skip roles without LOOTLOG_LOOTS_READ permission", async () => {
-        prismaService.npcKillStats.findMany.mockResolvedValue([]);
-        prismaService.guildKillSummary.findMany.mockResolvedValue([]);
+        prismaService.npcKillStats.groupBy.mockResolvedValue([]);
+        prismaService.guildKillSummary.groupBy.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const role1 = createMockRole({
           id: "role1",
@@ -903,7 +943,7 @@ describe("KillsService", () => {
 
         await service.getGuildKillStats(guildId, [], [role1, role2], query);
 
-        const call = prismaService.npcKillStats.findMany.mock.calls[0][0];
+        const call = prismaService.npcKillStats.groupBy.mock.calls[0][0];
         expect(call.where.OR).toHaveLength(1);
       });
     });

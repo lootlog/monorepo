@@ -21,8 +21,23 @@ import {
   getShortnameByProf,
 } from "src/shared/utils/get-prof-by-shortname";
 
+const lootItemSelect = {
+  hid: true,
+  itemSnapshot: {
+    select: {
+      itemId: true,
+      name: true,
+      icon: true,
+      lvl: true,
+      rarity: true,
+      itemType: true,
+      statRaw: true,
+    },
+  },
+} satisfies Prisma.LootItemSelect;
+
 type LootItemWithSnapshot = Prisma.LootItemGetPayload<{
-  include: { itemSnapshot: true };
+  select: typeof lootItemSelect;
 }>;
 
 type LootPlayerWithSnapshot = Prisma.LootPlayerGetPayload<{
@@ -63,6 +78,12 @@ export class LootQueryService {
       createdAtMax,
     }: FetchLootsParamsDto,
   ) {
+    const itemSnapshotIds = await this.resolveItemSnapshotIds(itemNames);
+
+    if (itemSnapshotIds?.length === 0) {
+      return [];
+    }
+
     const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
       npcTypes,
       npcs,
@@ -78,7 +99,7 @@ export class LootQueryService {
       search,
       world,
       hid,
-      itemNames,
+      itemSnapshotIds,
       cursor,
       createdAtMin,
       createdAtMax,
@@ -110,7 +131,7 @@ export class LootQueryService {
           },
         },
         lootItems: {
-          include: { itemSnapshot: true },
+          select: lootItemSelect,
           orderBy: { id: "asc" },
         },
         lootPlayers: {
@@ -150,7 +171,7 @@ export class LootQueryService {
     return results;
   }
 
-  countLootsByGuildId(
+  async countLootsByGuildId(
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
@@ -174,6 +195,12 @@ export class LootQueryService {
       createdAtMax,
     }: FetchLootsParamsDto,
   ) {
+    const itemSnapshotIds = await this.resolveItemSnapshotIds(itemNames);
+
+    if (itemSnapshotIds?.length === 0) {
+      return 0;
+    }
+
     const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
       npcTypes,
       npcs,
@@ -189,7 +216,7 @@ export class LootQueryService {
       search,
       world,
       hid,
-      itemNames,
+      itemSnapshotIds,
       cursor: null,
       createdAtMin,
       createdAtMax,
@@ -237,7 +264,7 @@ export class LootQueryService {
           },
         },
         lootItems: {
-          include: { itemSnapshot: true },
+          select: lootItemSelect,
           orderBy: { id: "asc" },
         },
         lootPlayers: {
@@ -279,6 +306,67 @@ export class LootQueryService {
     };
   }
 
+  async resolveLootItemByHid(
+    guild: Guild,
+    permissions: Permission[],
+    roles: Role[],
+    options: { hid: string; world?: string },
+  ): Promise<LootItemDto | null> {
+    const hid = options.hid.trim();
+
+    if (!hid) {
+      return null;
+    }
+
+    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
+      cursor: null,
+      hid,
+      world: options.world,
+    });
+
+    const loot = await this.prisma.loot.findFirst({
+      where: baseWhere,
+      orderBy: { id: "desc" },
+      select: {
+        lootItems: {
+          where: { hid },
+          select: lootItemSelect,
+          orderBy: { id: "asc" },
+          take: 1,
+        },
+      },
+    });
+
+    const item = loot?.lootItems[0];
+
+    return item ? this.mapItemFromSnapshot(item) : null;
+  }
+
+  private async resolveItemSnapshotIds(
+    itemNames?: string[],
+  ): Promise<number[] | undefined> {
+    const names = Array.from(
+      new Set((itemNames ?? []).map((name) => name.trim()).filter(Boolean)),
+    );
+
+    if (names.length === 0) {
+      return undefined;
+    }
+
+    const snapshots = await this.prisma.itemSnapshot.findMany({
+      where: {
+        name: {
+          in: names,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return snapshots.map((snapshot) => snapshot.id);
+  }
+
   private buildBaseWhereCondition(
     guild: Guild,
     permissions: Permission[],
@@ -298,7 +386,7 @@ export class LootQueryService {
       search,
       world,
       hid,
-      itemNames,
+      itemSnapshotIds,
       cursor,
       createdAtMin,
       createdAtMax,
@@ -317,7 +405,7 @@ export class LootQueryService {
       search?: string;
       world?: string;
       hid?: string;
-      itemNames?: string[];
+      itemSnapshotIds?: number[];
       cursor?: number | null;
       createdAtMin?: string;
       createdAtMax?: string;
@@ -353,7 +441,8 @@ export class LootQueryService {
     const searchCondition = this.buildSearchCondition(search);
     const cursorCondition = this.buildCursorCondition(cursor ?? null);
     const hidCondition = this.buildHidCondition(hid);
-    const itemNamesCondition = this.buildItemNamesCondition(itemNames);
+    const itemSnapshotIdsCondition =
+      this.buildItemSnapshotIdsCondition(itemSnapshotIds);
     const createdAtCondition = this.buildCreatedAtCondition(
       createdAtMin,
       createdAtMax,
@@ -384,7 +473,7 @@ export class LootQueryService {
       levelRangesCondition,
       searchCondition,
       hidCondition,
-      itemNamesCondition,
+      itemSnapshotIdsCondition,
       createdAtCondition,
     ].filter(Boolean) as Prisma.LootWhereInput[];
 
@@ -531,20 +620,18 @@ export class LootQueryService {
     };
   }
 
-  private buildItemNamesCondition(
-    itemNames?: string[],
+  private buildItemSnapshotIdsCondition(
+    itemSnapshotIds?: number[],
   ): Prisma.LootWhereInput | null {
-    if (!itemNames || itemNames.length === 0) {
+    if (!itemSnapshotIds) {
       return null;
     }
 
     return {
       lootItems: {
         some: {
-          itemSnapshot: {
-            name: {
-              in: itemNames,
-            },
+          itemSnapshotId: {
+            in: itemSnapshotIds,
           },
         },
       },
@@ -846,19 +933,22 @@ export class LootQueryService {
   }
 
   private mapItemFromSnapshot(lootItem: LootItemWithSnapshot): LootItemDto {
-    const stats = this.parseStatsSnapshot(lootItem.itemSnapshot.statsSnapshot);
-    const lvl = lootItem.itemSnapshot.lvl ?? this.parseNumber(stats?.lvl) ?? 0;
+    const statRaw = lootItem.itemSnapshot.statRaw;
+    const lvl =
+      lootItem.itemSnapshot.lvl ??
+      this.parseNumber(this.parseStatValue(statRaw, "lvl")) ??
+      0;
 
     return {
       id: lootItem.itemSnapshot.itemId,
       hid: lootItem.hid,
       name: lootItem.itemSnapshot.name,
       icon: lootItem.itemSnapshot.icon,
-      stat: lootItem.itemSnapshot.statRaw,
+      stat: statRaw,
       type: lootItem.itemSnapshot.itemType,
       rarity: lootItem.itemSnapshot.rarity,
       lvl,
-      prof: this.parseRequiredProf(stats?.reqp),
+      prof: this.parseRequiredProf(this.parseStatValue(statRaw, "reqp")),
     };
   }
 
@@ -898,19 +988,19 @@ export class LootQueryService {
     return entries.map((entry) => this.mapNpcFromSnapshot(entry));
   }
 
-  private parseStatsSnapshot(
-    statsSnapshot: Prisma.JsonValue | null,
-  ): Record<string, string> {
-    if (!statsSnapshot || typeof statsSnapshot !== "object") {
-      return {};
-    }
-    return statsSnapshot as Record<string, string>;
-  }
-
   private parseNumber(value: unknown): number | null {
     if (value === null || value === undefined) return null;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private parseStatValue(statRaw: string, key: string): string | null {
+    const prefix = `${key}=`;
+    const segment = statRaw
+      .split(";")
+      .find((entry) => entry.startsWith(prefix));
+
+    return segment?.slice(prefix.length) ?? null;
   }
 
   private parseRequiredProf(reqp?: string | null): Profession[] {
