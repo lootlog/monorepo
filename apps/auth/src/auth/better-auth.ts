@@ -4,6 +4,7 @@ import { admin, bearer, jwt } from "better-auth/plugins";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 import { env } from "src/config/env";
 import { betterAuthSchema, db } from "src/database/drizzle";
+import { authRedisSecondaryStorage } from "./auth-redis-storage";
 
 export const auth = betterAuth({
   appName: "@lootlog/auth",
@@ -13,6 +14,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema: betterAuthSchema,
   }),
+  secondaryStorage: authRedisSecondaryStorage,
   account: {
     encryptOAuthTokens: true,
   },
@@ -30,6 +32,7 @@ export const auth = betterAuth({
   },
   secret: env.AUTH_SECRET,
   session: {
+    storeSessionInDatabase: true,
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60,

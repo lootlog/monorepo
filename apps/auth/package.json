@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.18",
+    "@better-auth/redis-storage": "1.6.18",
     "@lootlog/api-helpers": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
@@ -32,6 +33,7 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "fastify": "^5.8.5",
+    "ioredis": "5.10.1",
     "nest-winston": "^1.10.2",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",

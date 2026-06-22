@@ -37,6 +37,11 @@ export const env = createEnv(
     DISCORD_CLIENT_SECRET: z.string(),
     DISCORD_CLIENT_ID: z.string(),
 
+    REDIS_HOST: z.string(),
+    REDIS_PORT: z.coerce.number(),
+    REDIS_USERNAME: z.string(),
+    REDIS_PASSWORD: z.string(),
+
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
     OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
     OTEL_NODE_RESOURCE_DETECTORS: z.string().default("env,host,os,process"),
