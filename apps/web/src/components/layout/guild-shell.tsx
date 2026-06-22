@@ -20,7 +20,7 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
         ) : (
           <PageHeader>
             <div className="flex items-center gap-2">
-              <SidebarTrigger />
+              <SidebarTrigger className="size-8!" />
               <span className="text-sm font-bold text-primary">
                 {t("common.routeErrors.guildShellTitle")}
               </span>

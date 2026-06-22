@@ -46,7 +46,12 @@ import {
 import { getEventStatusAtTimestamp } from "./utils/event-activity";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
+  getEventsRankingControllerGetEventHeroStatsQueryKey,
+  getListEventHeroTimersQueryKey,
+  getListEventMapsQueryKey,
+  getListEventRankingQueryKey,
   getListEventsQueryKey,
+  getShowEventOverviewQueryKey,
   useDeleteEvent,
   useEventsAssignmentControllerDeleteHero,
   useEventsRankingControllerGetEventHeroStats,
@@ -70,23 +75,46 @@ export const EventDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
+  const hasEventRouteParams = Boolean(guildId && eventId);
 
   const {
     data: event,
     isLoading,
     error,
-  } = useShowEventOverview({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  } = useShowEventOverview(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getShowEventOverviewQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
   const {
     data: eventMaps,
     isLoading: isMapsLoading,
     error: mapsError,
-  } = useListEventMaps({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  } = useListEventMaps(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getListEventMapsQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
 
   const { data: permissions } = useGuildPermissions();
 
@@ -98,16 +126,52 @@ export const EventDetail = () => {
     {
       world: event?.world ?? "",
     },
+    {
+      query: {
+        enabled: hasEventRouteParams && Boolean(event?.world),
+        queryKey: getListEventHeroTimersQueryKey(
+          {
+            guildId: guildId ?? "",
+            eventId: eventId ?? "",
+          },
+          {
+            world: event?.world ?? "",
+          },
+        ),
+      },
+    },
   );
 
-  const { data: heroStats } = useEventsRankingControllerGetEventHeroStats({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
-  const { data: rankings = [], error: rankingError } = useListEventRanking({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  const { data: heroStats } = useEventsRankingControllerGetEventHeroStats(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
+  const { data: rankings = [], error: rankingError } = useListEventRanking(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getListEventRankingQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
   const updateEvent = useUpdateEvent({
     mutation: {
       onSuccess: () => {

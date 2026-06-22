@@ -201,7 +201,7 @@ export const GuildBreadcrumbs: FC = () => {
     <PageHeader>
       <div className="flex flex-row gap-2 items-center justify-between w-full">
         <div className="flex flex-row gap-2 items-center">
-          <SidebarTrigger />
+          <SidebarTrigger className="size-8!" />
           {navInfo.showBack && navInfo.backPath && (
             <Button
               variant="ghost"
@@ -236,7 +236,7 @@ export const GuildBreadcrumbs: FC = () => {
                         <button
                           type="button"
                           onClick={() => navigate({ to: crumb.path as string })}
-                          className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
+                          className="min-h-8 rounded px-1 text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
                         >
                           {crumb.label}
                         </button>

@@ -5,7 +5,10 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
-import { useKillsControllerGetGuildKillStats } from "@/lib/api/generated/main/kills/kills";
+import {
+  getKillsControllerGetGuildKillStatsQueryKey,
+  useKillsControllerGetGuildKillStats,
+} from "@/lib/api/generated/main/kills/kills";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { NpcTypeStatsCards } from "./components/kill-stats-overview";
 import { MemberRankingPodiumCard } from "./components/member-ranking-podium-card";
@@ -27,14 +30,24 @@ export const KillStats: React.FC = () => {
     setMaxLvl,
     setPeriod,
   } = useStatsSettings("overview");
+  const killStatsParams = buildGuildKillStatsParams({
+    world: settings.world ?? undefined,
+    minLvl: debouncedMinLvl,
+    maxLvl: debouncedMaxLvl,
+    period: settings.period,
+  });
   const { data, isLoading } = useKillsControllerGetGuildKillStats(
     { guildId },
-    buildGuildKillStatsParams({
-      world: settings.world ?? undefined,
-      minLvl: debouncedMinLvl,
-      maxLvl: debouncedMaxLvl,
-      period: settings.period,
-    }),
+    killStatsParams,
+    {
+      query: {
+        enabled: Boolean(guildId),
+        queryKey: getKillsControllerGetGuildKillStatsQueryKey(
+          { guildId },
+          killStatsParams,
+        ),
+      },
+    },
   );
   const isMobile = useIsMobile();
   const hasActiveFilters =

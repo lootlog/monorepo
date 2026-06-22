@@ -40,14 +40,21 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getGuildsControllerGetGuildByIdQueryKey,
+  useGuildsControllerGetGuildById,
+} from "@/lib/api/generated/main/guilds/guilds";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
 } from "@/lib/api/generated/main/members/members";
 import {
+  getEventsMonitoringControllerGetActiveGapsForHeroQueryKey,
   getListEventHeroTimersQueryKey,
+  getListEventMapsQueryKey,
+  getListEventRankingQueryKey,
+  getShowEventOverviewQueryKey,
   useEventsAssignmentControllerAssignMember,
   useEventsAssignmentControllerSelfAssignMember,
   useEventsAssignmentControllerSelfUnassignMember,
@@ -97,9 +104,22 @@ export const HeroDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId } = useParams({ strict: false });
   const queryClient = useQueryClient();
-  const { data: guild } = useGuildsControllerGetGuildById({
-    guildId: guildId ?? "",
-  });
+  const hasGuildId = Boolean(guildId);
+  const hasEventRouteParams = Boolean(guildId && eventId);
+  const hasHeroRouteParams = Boolean(guildId && eventId && heroId);
+  const { data: guild } = useGuildsControllerGetGuildById(
+    {
+      guildId: guildId ?? "",
+    },
+    {
+      query: {
+        enabled: hasGuildId,
+        queryKey: getGuildsControllerGetGuildByIdQueryKey({
+          guildId: guildId ?? "",
+        }),
+      },
+    },
+  );
   const [mapManageOpen, setMapManageOpen] = useState(false);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
@@ -111,6 +131,7 @@ export const HeroDetail = () => {
     { guildId: guildId ?? "" },
     {
       query: {
+        enabled: hasGuildId,
         queryKey: getMembersControllerGetMeQueryKey({
           guildId: guildId ?? "",
         }),
@@ -207,10 +228,21 @@ export const HeroDetail = () => {
     data: event,
     isLoading,
     error,
-  } = useShowEventOverview({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  } = useShowEventOverview(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getShowEventOverviewQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
 
   const { presenceData } = useEventPresence({
     guildId: guild?.id,
@@ -218,19 +250,53 @@ export const HeroDetail = () => {
   });
 
   const { data: activeGaps = [] } =
-    useEventsMonitoringControllerGetActiveGapsForHero({
+    useEventsMonitoringControllerGetActiveGapsForHero(
+      {
+        guildId: guildId ?? "",
+        eventId: eventId ?? "",
+        heroId: heroId ?? "",
+      },
+      {
+        query: {
+          enabled: hasHeroRouteParams,
+          queryKey: getEventsMonitoringControllerGetActiveGapsForHeroQueryKey({
+            guildId: guildId ?? "",
+            eventId: eventId ?? "",
+            heroId: heroId ?? "",
+          }),
+        },
+      },
+    );
+  const { data: rankings = [] } = useListEventRanking(
+    {
       guildId: guildId ?? "",
       eventId: eventId ?? "",
-      heroId: heroId ?? "",
-    });
-  const { data: rankings = [] } = useListEventRanking({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
-  const { data: eventMaps, isLoading: isMapsLoading } = useListEventMaps({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getListEventRankingQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
+  const { data: eventMaps, isLoading: isMapsLoading } = useListEventMaps(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getListEventMapsQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
 
   const { data: timers } = useListEventHeroTimers(
     {
@@ -242,7 +308,7 @@ export const HeroDetail = () => {
     },
     {
       query: {
-        enabled: Boolean(event?.world),
+        enabled: hasEventRouteParams && Boolean(event?.world),
         queryKey: getListEventHeroTimersQueryKey(
           {
             guildId: guildId ?? "",

@@ -19,7 +19,10 @@ import { useTranslation } from "react-i18next";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { canManageGuild } from "@/lib/guild-permissions";
-import { useListEvents } from "@/lib/api/generated/main/events/events";
+import {
+  getListEventsQueryKey,
+  useListEvents,
+} from "@/lib/api/generated/main/events/events";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { DevPermissionOverridePanel } from "@/components/dev/dev-permission-override-panel";
 import { canReadGuildDocs } from "@/features/guild/docs/docs-permissions";
@@ -44,6 +47,20 @@ export const GuildsSidebarNav: FC = () => {
     },
     {
       activeOnly: "true",
+    },
+    {
+      query: {
+        enabled: Boolean(activeEventsGuildId),
+        queryKey: getListEventsQueryKey(
+          {
+            guildId: activeEventsGuildId,
+          },
+          {
+            activeOnly: "true",
+          },
+        ),
+        refetchInterval: 60_000,
+      },
     },
   );
   const hasActiveEvents = (activeEvents?.length ?? 0) > 0;
@@ -157,6 +174,7 @@ export const GuildsSidebarNav: FC = () => {
       beforeItems={
         canViewEvents ? (
           <GuildPinnedEventsSection
+            activeEvents={activeEvents ?? []}
             guildId={guildId ?? ""}
             onNavigate={handleItemClick}
           />

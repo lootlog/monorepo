@@ -2,42 +2,33 @@ import { startTransition, useEffect, useState } from "react";
 import { isEventActiveAtTimestamp } from "@/features/guild/events/utils/event-activity";
 import { PinnedEventsBanner } from "./pinned-events-banner";
 import {
-  getListEventsQueryKey,
-  useListEvents,
-} from "@/lib/api/generated/main/events/events";
-import { useEventsSettingsControllerGetSettings } from "@/lib/api/generated/main/event-settings/event-settings";
+  getEventsSettingsControllerGetSettingsQueryKey,
+  useEventsSettingsControllerGetSettings,
+} from "@/lib/api/generated/main/event-settings/event-settings";
 import { AnimatePresence, motion } from "framer-motion";
+import type { ListEventsQueryResult } from "@/lib/api/generated/main/events/events";
 
 export const GuildPinnedEventsSection = ({
+  activeEvents,
   guildId,
   onNavigate,
 }: {
+  activeEvents: ListEventsQueryResult;
   guildId: string;
   onNavigate?: () => void;
 }) => {
-  const { data: activeEvents, isPending: isEventsPending } = useListEvents(
-    {
-      guildId,
-    },
-    {
-      activeOnly: "true",
-    },
-    {
-      query: {
-        queryKey: getListEventsQueryKey(
-          {
-            guildId,
-          },
-          {
-            activeOnly: "true",
-          },
-        ),
-        refetchInterval: 60_000,
-      },
-    },
-  );
   const { data: eventSettings, isPending: isSettingsPending } =
-    useEventsSettingsControllerGetSettings({ guildId });
+    useEventsSettingsControllerGetSettings(
+      { guildId },
+      {
+        query: {
+          enabled: Boolean(guildId),
+          queryKey: getEventsSettingsControllerGetSettingsQueryKey({
+            guildId,
+          }),
+        },
+      },
+    );
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   useEffect(() => {
@@ -50,7 +41,7 @@ export const GuildPinnedEventsSection = ({
     return () => window.clearInterval(intervalId);
   }, []);
 
-  const filteredActiveEvents = (activeEvents ?? []).filter((event) =>
+  const filteredActiveEvents = activeEvents.filter((event) =>
     isEventActiveAtTimestamp(event, currentTimestamp),
   );
   const pinnedActiveEvents = (eventSettings?.pinnedEvents ?? [])
@@ -59,7 +50,7 @@ export const GuildPinnedEventsSection = ({
     )
     .filter((event) => event !== undefined);
 
-  const isLoading = isEventsPending || isSettingsPending;
+  const isLoading = isSettingsPending;
   const hasPinnedEvents = pinnedActiveEvents.length > 0;
 
   return (
