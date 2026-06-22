@@ -363,6 +363,7 @@ model ItemSnapshot {
   lootItems LootItem[]
 
   @@unique([itemId, statsHash])
+  @@index([name])
   @@index([rarity, lvl])
 }
 
@@ -375,8 +376,9 @@ model LootItem {
   loot         Loot         @relation(fields: [lootId], references: [id])
   itemSnapshot ItemSnapshot @relation(fields: [itemSnapshotId], references: [id])
 
-  @@index([lootId])
-  @@index([itemSnapshotId])
+  @@index([lootId, itemSnapshotId])
+  @@index([hid, lootId])
+  @@index([itemSnapshotId, lootId])
 }
 
 model PlayerSnapshot {
@@ -1166,6 +1168,7 @@ model NpcKillStats {
   @@unique([guildId, memberId, world, npcId])
   @@index([guildId])
   @@index([guildId, npcType])
+  @@index([guildId, world, npcType])
   @@index([memberId])
 }
 
@@ -1187,6 +1190,7 @@ model UserKillStats {
   @@unique([userId, world, npcId])
   @@index([userId])
   @@index([userId, npcType])
+  @@index([userId, world, npcType])
 }
 
 // Kill tracking - aggregated unique kills per NPC per guild (deduplicated)
@@ -1209,6 +1213,7 @@ model GuildKillSummary {
   @@unique([guildId, world, npcId])
   @@index([guildId])
   @@index([guildId, npcType])
+  @@index([guildId, world, npcType])
 }
 
 // Kill tracking - hourly personal stats per NPC per user
@@ -1230,6 +1235,7 @@ model UserKillStatsBucket {
   @@unique([userId, world, npcId, periodStart])
   @@index([userId, periodStart])
   @@index([userId, npcType, periodStart])
+  @@index([userId, world, npcType, periodStart])
 }
 
 // Kill tracking - hourly aggregated stats per NPC per member
@@ -1256,6 +1262,7 @@ model NpcKillStatsBucket {
   @@unique([guildId, memberId, world, npcId, periodStart])
   @@index([guildId, periodStart])
   @@index([guildId, npcType, periodStart])
+  @@index([guildId, world, npcType, periodStart])
   @@index([memberId, periodStart])
 }
 
@@ -1280,4 +1287,5 @@ model GuildKillSummaryBucket {
   @@unique([guildId, world, npcId, periodStart])
   @@index([guildId, periodStart])
   @@index([guildId, npcType, periodStart])
+  @@index([guildId, world, npcType, periodStart])
 }

@@ -78,6 +78,12 @@ export class LootQueryService {
       createdAtMax,
     }: FetchLootsParamsDto,
   ) {
+    const itemSnapshotIds = await this.resolveItemSnapshotIds(itemNames);
+
+    if (itemSnapshotIds?.length === 0) {
+      return [];
+    }
+
     const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
       npcTypes,
       npcs,
@@ -93,7 +99,7 @@ export class LootQueryService {
       search,
       world,
       hid,
-      itemNames,
+      itemSnapshotIds,
       cursor,
       createdAtMin,
       createdAtMax,
@@ -165,7 +171,7 @@ export class LootQueryService {
     return results;
   }
 
-  countLootsByGuildId(
+  async countLootsByGuildId(
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
@@ -189,6 +195,12 @@ export class LootQueryService {
       createdAtMax,
     }: FetchLootsParamsDto,
   ) {
+    const itemSnapshotIds = await this.resolveItemSnapshotIds(itemNames);
+
+    if (itemSnapshotIds?.length === 0) {
+      return 0;
+    }
+
     const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
       npcTypes,
       npcs,
@@ -204,7 +216,7 @@ export class LootQueryService {
       search,
       world,
       hid,
-      itemNames,
+      itemSnapshotIds,
       cursor: null,
       createdAtMin,
       createdAtMax,
@@ -330,6 +342,31 @@ export class LootQueryService {
     return item ? this.mapItemFromSnapshot(item) : null;
   }
 
+  private async resolveItemSnapshotIds(
+    itemNames?: string[],
+  ): Promise<number[] | undefined> {
+    const names = Array.from(
+      new Set((itemNames ?? []).map((name) => name.trim()).filter(Boolean)),
+    );
+
+    if (names.length === 0) {
+      return undefined;
+    }
+
+    const snapshots = await this.prisma.itemSnapshot.findMany({
+      where: {
+        name: {
+          in: names,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return snapshots.map((snapshot) => snapshot.id);
+  }
+
   private buildBaseWhereCondition(
     guild: Guild,
     permissions: Permission[],
@@ -349,7 +386,7 @@ export class LootQueryService {
       search,
       world,
       hid,
-      itemNames,
+      itemSnapshotIds,
       cursor,
       createdAtMin,
       createdAtMax,
@@ -368,7 +405,7 @@ export class LootQueryService {
       search?: string;
       world?: string;
       hid?: string;
-      itemNames?: string[];
+      itemSnapshotIds?: number[];
       cursor?: number | null;
       createdAtMin?: string;
       createdAtMax?: string;
@@ -404,7 +441,8 @@ export class LootQueryService {
     const searchCondition = this.buildSearchCondition(search);
     const cursorCondition = this.buildCursorCondition(cursor ?? null);
     const hidCondition = this.buildHidCondition(hid);
-    const itemNamesCondition = this.buildItemNamesCondition(itemNames);
+    const itemSnapshotIdsCondition =
+      this.buildItemSnapshotIdsCondition(itemSnapshotIds);
     const createdAtCondition = this.buildCreatedAtCondition(
       createdAtMin,
       createdAtMax,
@@ -435,7 +473,7 @@ export class LootQueryService {
       levelRangesCondition,
       searchCondition,
       hidCondition,
-      itemNamesCondition,
+      itemSnapshotIdsCondition,
       createdAtCondition,
     ].filter(Boolean) as Prisma.LootWhereInput[];
 
@@ -582,20 +620,18 @@ export class LootQueryService {
     };
   }
 
-  private buildItemNamesCondition(
-    itemNames?: string[],
+  private buildItemSnapshotIdsCondition(
+    itemSnapshotIds?: number[],
   ): Prisma.LootWhereInput | null {
-    if (!itemNames || itemNames.length === 0) {
+    if (!itemSnapshotIds) {
       return null;
     }
 
     return {
       lootItems: {
         some: {
-          itemSnapshot: {
-            name: {
-              in: itemNames,
-            },
+          itemSnapshotId: {
+            in: itemSnapshotIds,
           },
         },
       },
