@@ -8,8 +8,23 @@ interface SliderProps extends React.ComponentPropsWithoutRef<
 > {
   showValue?: boolean;
   formatValue?: (value: number) => React.ReactNode;
-  showEndpoints?: boolean; // show min & max labels
+  showEndpoints?: boolean;
   formatEndpoint?: (value: number, type: "min" | "max") => React.ReactNode;
+}
+
+function getInitialSliderValue(
+  value: SliderProps["value"],
+  defaultValue: SliderProps["defaultValue"],
+) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (Array.isArray(defaultValue)) {
+    return defaultValue;
+  }
+
+  return [0];
 }
 
 const Slider = React.forwardRef<
@@ -30,17 +45,17 @@ const Slider = React.forwardRef<
     },
     ref,
   ) => {
-    const [internalValue, setInternalValue] = React.useState<number[]>(
-      (value as number[]) || (defaultValue as number[]) || [0],
+    const [internalValue, setInternalValue] = React.useState<number[]>(() =>
+      getInitialSliderValue(value, defaultValue),
     );
 
     React.useEffect(() => {
       if (Array.isArray(value)) setInternalValue(value);
     }, [value]);
 
-    const handleValueChange = (vals: number[]) => {
-      if (value === undefined) setInternalValue(vals); // uncontrolled
-      onValueChange?.(vals);
+    const handleValueChange = (nextValue: number[]) => {
+      if (value === undefined) setInternalValue(nextValue);
+      onValueChange?.(nextValue);
     };
 
     const currentVal = (Array.isArray(value) ? value : internalValue)[0];
