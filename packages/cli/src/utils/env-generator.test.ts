@@ -161,7 +161,6 @@ const assertGeneratedRootValuesCanBeReused = (): void => {
       envVariable("REDIS_PASSWORD", "redis_password"),
     ],
     new Map(),
-    true,
   );
 
   const extractedSharedValues = extractSharedValues(generatedRootVariables);

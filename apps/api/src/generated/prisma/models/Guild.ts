@@ -33,6 +33,7 @@ export type GuildAvgAggregateOutputType = {
   reservationTimeGranularityMinutes: number | null
   reservationMaxAdvanceDays: number | null
   reservationActiveLimitPerSpot: number | null
+  documentLimit: number | null
 }
 
 export type GuildSumAggregateOutputType = {
@@ -42,6 +43,7 @@ export type GuildSumAggregateOutputType = {
   reservationTimeGranularityMinutes: number | null
   reservationMaxAdvanceDays: number | null
   reservationActiveLimitPerSpot: number | null
+  documentLimit: number | null
 }
 
 export type GuildMinAggregateOutputType = {
@@ -57,6 +59,7 @@ export type GuildMinAggregateOutputType = {
   reservationTimeGranularityMinutes: number | null
   reservationMaxAdvanceDays: number | null
   reservationActiveLimitPerSpot: number | null
+  documentLimit: number | null
   createdAt: Date | null
   updatedAt: Date | null
   active: boolean | null
@@ -75,6 +78,7 @@ export type GuildMaxAggregateOutputType = {
   reservationTimeGranularityMinutes: number | null
   reservationMaxAdvanceDays: number | null
   reservationActiveLimitPerSpot: number | null
+  documentLimit: number | null
   createdAt: Date | null
   updatedAt: Date | null
   active: boolean | null
@@ -93,6 +97,7 @@ export type GuildCountAggregateOutputType = {
   reservationTimeGranularityMinutes: number
   reservationMaxAdvanceDays: number
   reservationActiveLimitPerSpot: number
+  documentLimit: number
   createdAt: number
   updatedAt: number
   active: number
@@ -107,6 +112,7 @@ export type GuildAvgAggregateInputType = {
   reservationTimeGranularityMinutes?: true
   reservationMaxAdvanceDays?: true
   reservationActiveLimitPerSpot?: true
+  documentLimit?: true
 }
 
 export type GuildSumAggregateInputType = {
@@ -116,6 +122,7 @@ export type GuildSumAggregateInputType = {
   reservationTimeGranularityMinutes?: true
   reservationMaxAdvanceDays?: true
   reservationActiveLimitPerSpot?: true
+  documentLimit?: true
 }
 
 export type GuildMinAggregateInputType = {
@@ -131,6 +138,7 @@ export type GuildMinAggregateInputType = {
   reservationTimeGranularityMinutes?: true
   reservationMaxAdvanceDays?: true
   reservationActiveLimitPerSpot?: true
+  documentLimit?: true
   createdAt?: true
   updatedAt?: true
   active?: true
@@ -149,6 +157,7 @@ export type GuildMaxAggregateInputType = {
   reservationTimeGranularityMinutes?: true
   reservationMaxAdvanceDays?: true
   reservationActiveLimitPerSpot?: true
+  documentLimit?: true
   createdAt?: true
   updatedAt?: true
   active?: true
@@ -167,6 +176,7 @@ export type GuildCountAggregateInputType = {
   reservationTimeGranularityMinutes?: true
   reservationMaxAdvanceDays?: true
   reservationActiveLimitPerSpot?: true
+  documentLimit?: true
   createdAt?: true
   updatedAt?: true
   active?: true
@@ -272,6 +282,7 @@ export type GuildGroupByOutputType = {
   reservationTimeGranularityMinutes: number
   reservationMaxAdvanceDays: number
   reservationActiveLimitPerSpot: number
+  documentLimit: number
   createdAt: Date
   updatedAt: Date
   active: boolean
@@ -313,6 +324,7 @@ export type GuildWhereInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFilter<"Guild"> | number
   reservationMaxAdvanceDays?: Prisma.IntFilter<"Guild"> | number
   reservationActiveLimitPerSpot?: Prisma.IntFilter<"Guild"> | number
+  documentLimit?: Prisma.IntFilter<"Guild"> | number
   createdAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   active?: Prisma.BoolFilter<"Guild"> | boolean
@@ -331,6 +343,8 @@ export type GuildWhereInput = {
   notificationRules?: Prisma.NotificationRuleListRelationFilter
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotListRelationFilter
   discordSyncState?: Prisma.XOR<Prisma.DiscordGuildSyncStateNullableScalarRelationFilter, Prisma.DiscordGuildSyncStateWhereInput> | null
+  documents?: Prisma.GuildDocumentListRelationFilter
+  documentHistory?: Prisma.GuildDocumentHistoryListRelationFilter
 }
 
 export type GuildOrderByWithRelationInput = {
@@ -346,6 +360,7 @@ export type GuildOrderByWithRelationInput = {
   reservationTimeGranularityMinutes?: Prisma.SortOrder
   reservationMaxAdvanceDays?: Prisma.SortOrder
   reservationActiveLimitPerSpot?: Prisma.SortOrder
+  documentLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -364,6 +379,8 @@ export type GuildOrderByWithRelationInput = {
   notificationRules?: Prisma.NotificationRuleOrderByRelationAggregateInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotOrderByRelationAggregateInput
   discordSyncState?: Prisma.DiscordGuildSyncStateOrderByWithRelationInput
+  documents?: Prisma.GuildDocumentOrderByRelationAggregateInput
+  documentHistory?: Prisma.GuildDocumentHistoryOrderByRelationAggregateInput
 }
 
 export type GuildWhereUniqueInput = Prisma.AtLeast<{
@@ -382,6 +399,7 @@ export type GuildWhereUniqueInput = Prisma.AtLeast<{
   reservationTimeGranularityMinutes?: Prisma.IntFilter<"Guild"> | number
   reservationMaxAdvanceDays?: Prisma.IntFilter<"Guild"> | number
   reservationActiveLimitPerSpot?: Prisma.IntFilter<"Guild"> | number
+  documentLimit?: Prisma.IntFilter<"Guild"> | number
   createdAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
   active?: Prisma.BoolFilter<"Guild"> | boolean
@@ -400,6 +418,8 @@ export type GuildWhereUniqueInput = Prisma.AtLeast<{
   notificationRules?: Prisma.NotificationRuleListRelationFilter
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotListRelationFilter
   discordSyncState?: Prisma.XOR<Prisma.DiscordGuildSyncStateNullableScalarRelationFilter, Prisma.DiscordGuildSyncStateWhereInput> | null
+  documents?: Prisma.GuildDocumentListRelationFilter
+  documentHistory?: Prisma.GuildDocumentHistoryListRelationFilter
 }, "id" | "vanityUrl">
 
 export type GuildOrderByWithAggregationInput = {
@@ -415,6 +435,7 @@ export type GuildOrderByWithAggregationInput = {
   reservationTimeGranularityMinutes?: Prisma.SortOrder
   reservationMaxAdvanceDays?: Prisma.SortOrder
   reservationActiveLimitPerSpot?: Prisma.SortOrder
+  documentLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -441,6 +462,7 @@ export type GuildScalarWhereWithAggregatesInput = {
   reservationTimeGranularityMinutes?: Prisma.IntWithAggregatesFilter<"Guild"> | number
   reservationMaxAdvanceDays?: Prisma.IntWithAggregatesFilter<"Guild"> | number
   reservationActiveLimitPerSpot?: Prisma.IntWithAggregatesFilter<"Guild"> | number
+  documentLimit?: Prisma.IntWithAggregatesFilter<"Guild"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Guild"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Guild"> | Date | string
   active?: Prisma.BoolWithAggregatesFilter<"Guild"> | boolean
@@ -459,6 +481,7 @@ export type GuildCreateInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -477,6 +500,8 @@ export type GuildCreateInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateInput = {
@@ -492,6 +517,7 @@ export type GuildUncheckedCreateInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -510,6 +536,8 @@ export type GuildUncheckedCreateInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUpdateInput = {
@@ -525,6 +553,7 @@ export type GuildUpdateInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -543,6 +572,8 @@ export type GuildUpdateInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateInput = {
@@ -558,6 +589,7 @@ export type GuildUncheckedUpdateInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -576,6 +608,8 @@ export type GuildUncheckedUpdateInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateManyInput = {
@@ -591,6 +625,7 @@ export type GuildCreateManyInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -609,6 +644,7 @@ export type GuildUpdateManyMutationInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -627,6 +663,7 @@ export type GuildUncheckedUpdateManyInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -645,6 +682,7 @@ export type GuildCountOrderByAggregateInput = {
   reservationTimeGranularityMinutes?: Prisma.SortOrder
   reservationMaxAdvanceDays?: Prisma.SortOrder
   reservationActiveLimitPerSpot?: Prisma.SortOrder
+  documentLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -657,6 +695,7 @@ export type GuildAvgOrderByAggregateInput = {
   reservationTimeGranularityMinutes?: Prisma.SortOrder
   reservationMaxAdvanceDays?: Prisma.SortOrder
   reservationActiveLimitPerSpot?: Prisma.SortOrder
+  documentLimit?: Prisma.SortOrder
 }
 
 export type GuildMaxOrderByAggregateInput = {
@@ -672,6 +711,7 @@ export type GuildMaxOrderByAggregateInput = {
   reservationTimeGranularityMinutes?: Prisma.SortOrder
   reservationMaxAdvanceDays?: Prisma.SortOrder
   reservationActiveLimitPerSpot?: Prisma.SortOrder
+  documentLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -690,6 +730,7 @@ export type GuildMinOrderByAggregateInput = {
   reservationTimeGranularityMinutes?: Prisma.SortOrder
   reservationMaxAdvanceDays?: Prisma.SortOrder
   reservationActiveLimitPerSpot?: Prisma.SortOrder
+  documentLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -702,6 +743,7 @@ export type GuildSumOrderByAggregateInput = {
   reservationTimeGranularityMinutes?: Prisma.SortOrder
   reservationMaxAdvanceDays?: Prisma.SortOrder
   reservationActiveLimitPerSpot?: Prisma.SortOrder
+  documentLimit?: Prisma.SortOrder
 }
 
 export type GuildScalarRelationFilter = {
@@ -894,6 +936,34 @@ export type GuildUpdateOneRequiredWithoutMapTemplatesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.GuildUpdateToOneWithWhereWithoutMapTemplatesInput, Prisma.GuildUpdateWithoutMapTemplatesInput>, Prisma.GuildUncheckedUpdateWithoutMapTemplatesInput>
 }
 
+export type GuildCreateNestedOneWithoutDocumentsInput = {
+  create?: Prisma.XOR<Prisma.GuildCreateWithoutDocumentsInput, Prisma.GuildUncheckedCreateWithoutDocumentsInput>
+  connectOrCreate?: Prisma.GuildCreateOrConnectWithoutDocumentsInput
+  connect?: Prisma.GuildWhereUniqueInput
+}
+
+export type GuildUpdateOneRequiredWithoutDocumentsNestedInput = {
+  create?: Prisma.XOR<Prisma.GuildCreateWithoutDocumentsInput, Prisma.GuildUncheckedCreateWithoutDocumentsInput>
+  connectOrCreate?: Prisma.GuildCreateOrConnectWithoutDocumentsInput
+  upsert?: Prisma.GuildUpsertWithoutDocumentsInput
+  connect?: Prisma.GuildWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.GuildUpdateToOneWithWhereWithoutDocumentsInput, Prisma.GuildUpdateWithoutDocumentsInput>, Prisma.GuildUncheckedUpdateWithoutDocumentsInput>
+}
+
+export type GuildCreateNestedOneWithoutDocumentHistoryInput = {
+  create?: Prisma.XOR<Prisma.GuildCreateWithoutDocumentHistoryInput, Prisma.GuildUncheckedCreateWithoutDocumentHistoryInput>
+  connectOrCreate?: Prisma.GuildCreateOrConnectWithoutDocumentHistoryInput
+  connect?: Prisma.GuildWhereUniqueInput
+}
+
+export type GuildUpdateOneRequiredWithoutDocumentHistoryNestedInput = {
+  create?: Prisma.XOR<Prisma.GuildCreateWithoutDocumentHistoryInput, Prisma.GuildUncheckedCreateWithoutDocumentHistoryInput>
+  connectOrCreate?: Prisma.GuildCreateOrConnectWithoutDocumentHistoryInput
+  upsert?: Prisma.GuildUpsertWithoutDocumentHistoryInput
+  connect?: Prisma.GuildWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.GuildUpdateToOneWithWhereWithoutDocumentHistoryInput, Prisma.GuildUpdateWithoutDocumentHistoryInput>, Prisma.GuildUncheckedUpdateWithoutDocumentHistoryInput>
+}
+
 export type GuildCreateNestedOneWithoutNpcKillStatsInput = {
   create?: Prisma.XOR<Prisma.GuildCreateWithoutNpcKillStatsInput, Prisma.GuildUncheckedCreateWithoutNpcKillStatsInput>
   connectOrCreate?: Prisma.GuildCreateOrConnectWithoutNpcKillStatsInput
@@ -963,6 +1033,7 @@ export type GuildCreateWithoutRolesInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -980,6 +1051,8 @@ export type GuildCreateWithoutRolesInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutRolesInput = {
@@ -995,6 +1068,7 @@ export type GuildUncheckedCreateWithoutRolesInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1012,6 +1086,8 @@ export type GuildUncheckedCreateWithoutRolesInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutRolesInput = {
@@ -1043,6 +1119,7 @@ export type GuildUpdateWithoutRolesInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1060,6 +1137,8 @@ export type GuildUpdateWithoutRolesInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutRolesInput = {
@@ -1075,6 +1154,7 @@ export type GuildUncheckedUpdateWithoutRolesInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1092,6 +1172,8 @@ export type GuildUncheckedUpdateWithoutRolesInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutMembersInput = {
@@ -1107,6 +1189,7 @@ export type GuildCreateWithoutMembersInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1124,6 +1207,8 @@ export type GuildCreateWithoutMembersInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutMembersInput = {
@@ -1139,6 +1224,7 @@ export type GuildUncheckedCreateWithoutMembersInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1156,6 +1242,8 @@ export type GuildUncheckedCreateWithoutMembersInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutMembersInput = {
@@ -1187,6 +1275,7 @@ export type GuildUpdateWithoutMembersInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1204,6 +1293,8 @@ export type GuildUpdateWithoutMembersInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutMembersInput = {
@@ -1219,6 +1310,7 @@ export type GuildUncheckedUpdateWithoutMembersInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1236,6 +1328,8 @@ export type GuildUncheckedUpdateWithoutMembersInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutTimersInput = {
@@ -1251,6 +1345,7 @@ export type GuildCreateWithoutTimersInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1268,6 +1363,8 @@ export type GuildCreateWithoutTimersInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutTimersInput = {
@@ -1283,6 +1380,7 @@ export type GuildUncheckedCreateWithoutTimersInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1300,6 +1398,8 @@ export type GuildUncheckedCreateWithoutTimersInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutTimersInput = {
@@ -1331,6 +1431,7 @@ export type GuildUpdateWithoutTimersInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1348,6 +1449,8 @@ export type GuildUpdateWithoutTimersInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutTimersInput = {
@@ -1363,6 +1466,7 @@ export type GuildUncheckedUpdateWithoutTimersInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1380,6 +1484,8 @@ export type GuildUncheckedUpdateWithoutTimersInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutTimerHistoryEntriesInput = {
@@ -1395,6 +1501,7 @@ export type GuildCreateWithoutTimerHistoryEntriesInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1412,6 +1519,8 @@ export type GuildCreateWithoutTimerHistoryEntriesInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutTimerHistoryEntriesInput = {
@@ -1427,6 +1536,7 @@ export type GuildUncheckedCreateWithoutTimerHistoryEntriesInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1444,6 +1554,8 @@ export type GuildUncheckedCreateWithoutTimerHistoryEntriesInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutTimerHistoryEntriesInput = {
@@ -1475,6 +1587,7 @@ export type GuildUpdateWithoutTimerHistoryEntriesInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1492,6 +1605,8 @@ export type GuildUpdateWithoutTimerHistoryEntriesInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutTimerHistoryEntriesInput = {
@@ -1507,6 +1622,7 @@ export type GuildUncheckedUpdateWithoutTimerHistoryEntriesInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1524,6 +1640,8 @@ export type GuildUncheckedUpdateWithoutTimerHistoryEntriesInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutLootSubmissionsInput = {
@@ -1539,6 +1657,7 @@ export type GuildCreateWithoutLootSubmissionsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1556,6 +1675,8 @@ export type GuildCreateWithoutLootSubmissionsInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutLootSubmissionsInput = {
@@ -1571,6 +1692,7 @@ export type GuildUncheckedCreateWithoutLootSubmissionsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1588,6 +1710,8 @@ export type GuildUncheckedCreateWithoutLootSubmissionsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutLootSubmissionsInput = {
@@ -1619,6 +1743,7 @@ export type GuildUpdateWithoutLootSubmissionsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1636,6 +1761,8 @@ export type GuildUpdateWithoutLootSubmissionsInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutLootSubmissionsInput = {
@@ -1651,6 +1778,7 @@ export type GuildUncheckedUpdateWithoutLootSubmissionsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1668,6 +1796,8 @@ export type GuildUncheckedUpdateWithoutLootSubmissionsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutReservationsInput = {
@@ -1683,6 +1813,7 @@ export type GuildCreateWithoutReservationsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1700,6 +1831,8 @@ export type GuildCreateWithoutReservationsInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutReservationsInput = {
@@ -1715,6 +1848,7 @@ export type GuildUncheckedCreateWithoutReservationsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1732,6 +1866,8 @@ export type GuildUncheckedCreateWithoutReservationsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutReservationsInput = {
@@ -1763,6 +1899,7 @@ export type GuildUpdateWithoutReservationsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1780,6 +1917,8 @@ export type GuildUpdateWithoutReservationsInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutReservationsInput = {
@@ -1795,6 +1934,7 @@ export type GuildUncheckedUpdateWithoutReservationsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1812,6 +1952,8 @@ export type GuildUncheckedUpdateWithoutReservationsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutNotificationRulesInput = {
@@ -1827,6 +1969,7 @@ export type GuildCreateWithoutNotificationRulesInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1844,6 +1987,8 @@ export type GuildCreateWithoutNotificationRulesInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutNotificationRulesInput = {
@@ -1859,6 +2004,7 @@ export type GuildUncheckedCreateWithoutNotificationRulesInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1876,6 +2022,8 @@ export type GuildUncheckedCreateWithoutNotificationRulesInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutNotificationRulesInput = {
@@ -1907,6 +2055,7 @@ export type GuildUpdateWithoutNotificationRulesInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1924,6 +2073,8 @@ export type GuildUpdateWithoutNotificationRulesInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutNotificationRulesInput = {
@@ -1939,6 +2090,7 @@ export type GuildUncheckedUpdateWithoutNotificationRulesInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1956,6 +2108,8 @@ export type GuildUncheckedUpdateWithoutNotificationRulesInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutDiscordChannelSnapshotsInput = {
@@ -1971,6 +2125,7 @@ export type GuildCreateWithoutDiscordChannelSnapshotsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -1988,6 +2143,8 @@ export type GuildCreateWithoutDiscordChannelSnapshotsInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketCreateNestedManyWithoutGuildInput
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutDiscordChannelSnapshotsInput = {
@@ -2003,6 +2160,7 @@ export type GuildUncheckedCreateWithoutDiscordChannelSnapshotsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2020,6 +2178,8 @@ export type GuildUncheckedCreateWithoutDiscordChannelSnapshotsInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedCreateNestedManyWithoutGuildInput
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutDiscordChannelSnapshotsInput = {
@@ -2051,6 +2211,7 @@ export type GuildUpdateWithoutDiscordChannelSnapshotsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2068,6 +2229,8 @@ export type GuildUpdateWithoutDiscordChannelSnapshotsInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUpdateManyWithoutGuildNestedInput
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutDiscordChannelSnapshotsInput = {
@@ -2083,6 +2246,7 @@ export type GuildUncheckedUpdateWithoutDiscordChannelSnapshotsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2100,6 +2264,8 @@ export type GuildUncheckedUpdateWithoutDiscordChannelSnapshotsInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedUpdateManyWithoutGuildNestedInput
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutDiscordSyncStateInput = {
@@ -2115,6 +2281,7 @@ export type GuildCreateWithoutDiscordSyncStateInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2132,6 +2299,8 @@ export type GuildCreateWithoutDiscordSyncStateInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketCreateNestedManyWithoutGuildInput
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutDiscordSyncStateInput = {
@@ -2147,6 +2316,7 @@ export type GuildUncheckedCreateWithoutDiscordSyncStateInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2164,6 +2334,8 @@ export type GuildUncheckedCreateWithoutDiscordSyncStateInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedCreateNestedManyWithoutGuildInput
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutDiscordSyncStateInput = {
@@ -2195,6 +2367,7 @@ export type GuildUpdateWithoutDiscordSyncStateInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2212,6 +2385,8 @@ export type GuildUpdateWithoutDiscordSyncStateInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUpdateManyWithoutGuildNestedInput
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutDiscordSyncStateInput = {
@@ -2227,6 +2402,7 @@ export type GuildUncheckedUpdateWithoutDiscordSyncStateInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2244,6 +2420,8 @@ export type GuildUncheckedUpdateWithoutDiscordSyncStateInput = {
   guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedUpdateManyWithoutGuildNestedInput
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutEventsInput = {
@@ -2259,6 +2437,7 @@ export type GuildCreateWithoutEventsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2276,6 +2455,8 @@ export type GuildCreateWithoutEventsInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutEventsInput = {
@@ -2291,6 +2472,7 @@ export type GuildUncheckedCreateWithoutEventsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2308,6 +2490,8 @@ export type GuildUncheckedCreateWithoutEventsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutEventsInput = {
@@ -2339,6 +2523,7 @@ export type GuildUpdateWithoutEventsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2356,6 +2541,8 @@ export type GuildUpdateWithoutEventsInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutEventsInput = {
@@ -2371,6 +2558,7 @@ export type GuildUncheckedUpdateWithoutEventsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2388,6 +2576,8 @@ export type GuildUncheckedUpdateWithoutEventsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutMapTemplatesInput = {
@@ -2403,6 +2593,7 @@ export type GuildCreateWithoutMapTemplatesInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2420,6 +2611,8 @@ export type GuildCreateWithoutMapTemplatesInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutMapTemplatesInput = {
@@ -2435,6 +2628,7 @@ export type GuildUncheckedCreateWithoutMapTemplatesInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2452,6 +2646,8 @@ export type GuildUncheckedCreateWithoutMapTemplatesInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutMapTemplatesInput = {
@@ -2483,6 +2679,7 @@ export type GuildUpdateWithoutMapTemplatesInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2500,6 +2697,8 @@ export type GuildUpdateWithoutMapTemplatesInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutMapTemplatesInput = {
@@ -2515,6 +2714,7 @@ export type GuildUncheckedUpdateWithoutMapTemplatesInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2532,6 +2732,320 @@ export type GuildUncheckedUpdateWithoutMapTemplatesInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
+}
+
+export type GuildCreateWithoutDocumentsInput = {
+  id: string
+  name: string
+  icon?: string | null
+  ownerId: string
+  vanityUrl?: string | null
+  notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
+  documentLimit?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  active?: boolean
+  roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
+  members?: Prisma.MemberCreateNestedManyWithoutGuildInput
+  timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
+  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
+  reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
+  events?: Prisma.EventCreateNestedManyWithoutGuildInput
+  mapTemplates?: Prisma.MapTemplateCreateNestedManyWithoutGuildInput
+  npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutGuildInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutGuildInput
+  guildKillSummary?: Prisma.GuildKillSummaryCreateNestedManyWithoutGuildInput
+  guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketCreateNestedManyWithoutGuildInput
+  notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
+}
+
+export type GuildUncheckedCreateWithoutDocumentsInput = {
+  id: string
+  name: string
+  icon?: string | null
+  ownerId: string
+  vanityUrl?: string | null
+  notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
+  documentLimit?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  active?: boolean
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
+  timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
+  reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
+  events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
+  mapTemplates?: Prisma.MapTemplateUncheckedCreateNestedManyWithoutGuildInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutGuildInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutGuildInput
+  guildKillSummary?: Prisma.GuildKillSummaryUncheckedCreateNestedManyWithoutGuildInput
+  guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedCreateNestedManyWithoutGuildInput
+  notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
+}
+
+export type GuildCreateOrConnectWithoutDocumentsInput = {
+  where: Prisma.GuildWhereUniqueInput
+  create: Prisma.XOR<Prisma.GuildCreateWithoutDocumentsInput, Prisma.GuildUncheckedCreateWithoutDocumentsInput>
+}
+
+export type GuildUpsertWithoutDocumentsInput = {
+  update: Prisma.XOR<Prisma.GuildUpdateWithoutDocumentsInput, Prisma.GuildUncheckedUpdateWithoutDocumentsInput>
+  create: Prisma.XOR<Prisma.GuildCreateWithoutDocumentsInput, Prisma.GuildUncheckedCreateWithoutDocumentsInput>
+  where?: Prisma.GuildWhereInput
+}
+
+export type GuildUpdateToOneWithWhereWithoutDocumentsInput = {
+  where?: Prisma.GuildWhereInput
+  data: Prisma.XOR<Prisma.GuildUpdateWithoutDocumentsInput, Prisma.GuildUncheckedUpdateWithoutDocumentsInput>
+}
+
+export type GuildUpdateWithoutDocumentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
+  members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
+  timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
+  reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
+  events?: Prisma.EventUpdateManyWithoutGuildNestedInput
+  mapTemplates?: Prisma.MapTemplateUpdateManyWithoutGuildNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutGuildNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutGuildNestedInput
+  guildKillSummary?: Prisma.GuildKillSummaryUpdateManyWithoutGuildNestedInput
+  guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUpdateManyWithoutGuildNestedInput
+  notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
+}
+
+export type GuildUncheckedUpdateWithoutDocumentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
+  members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
+  timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
+  reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
+  events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
+  mapTemplates?: Prisma.MapTemplateUncheckedUpdateManyWithoutGuildNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutGuildNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutGuildNestedInput
+  guildKillSummary?: Prisma.GuildKillSummaryUncheckedUpdateManyWithoutGuildNestedInput
+  guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedUpdateManyWithoutGuildNestedInput
+  notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
+}
+
+export type GuildCreateWithoutDocumentHistoryInput = {
+  id: string
+  name: string
+  icon?: string | null
+  ownerId: string
+  vanityUrl?: string | null
+  notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
+  documentLimit?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  active?: boolean
+  roles?: Prisma.RoleCreateNestedManyWithoutGuildInput
+  members?: Prisma.MemberCreateNestedManyWithoutGuildInput
+  timers?: Prisma.TimerCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryCreateNestedManyWithoutGuildInput
+  lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutGuildInput
+  reservations?: Prisma.ReservationCreateNestedManyWithoutGuildInput
+  events?: Prisma.EventCreateNestedManyWithoutGuildInput
+  mapTemplates?: Prisma.MapTemplateCreateNestedManyWithoutGuildInput
+  npcKillStats?: Prisma.NpcKillStatsCreateNestedManyWithoutGuildInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketCreateNestedManyWithoutGuildInput
+  guildKillSummary?: Prisma.GuildKillSummaryCreateNestedManyWithoutGuildInput
+  guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketCreateNestedManyWithoutGuildInput
+  notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+}
+
+export type GuildUncheckedCreateWithoutDocumentHistoryInput = {
+  id: string
+  name: string
+  icon?: string | null
+  ownerId: string
+  vanityUrl?: string | null
+  notificationRuleLimit?: number
+  publicStatsCardEnabled?: boolean
+  reservationMaxDurationMinutes?: number
+  reservationMinDurationMinutes?: number
+  reservationTimeGranularityMinutes?: number
+  reservationMaxAdvanceDays?: number
+  reservationActiveLimitPerSpot?: number
+  documentLimit?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  active?: boolean
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutGuildInput
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutGuildInput
+  timers?: Prisma.TimerUncheckedCreateNestedManyWithoutGuildInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedCreateNestedManyWithoutGuildInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutGuildInput
+  reservations?: Prisma.ReservationUncheckedCreateNestedManyWithoutGuildInput
+  events?: Prisma.EventUncheckedCreateNestedManyWithoutGuildInput
+  mapTemplates?: Prisma.MapTemplateUncheckedCreateNestedManyWithoutGuildInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedCreateNestedManyWithoutGuildInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedCreateNestedManyWithoutGuildInput
+  guildKillSummary?: Prisma.GuildKillSummaryUncheckedCreateNestedManyWithoutGuildInput
+  guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedCreateNestedManyWithoutGuildInput
+  notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+}
+
+export type GuildCreateOrConnectWithoutDocumentHistoryInput = {
+  where: Prisma.GuildWhereUniqueInput
+  create: Prisma.XOR<Prisma.GuildCreateWithoutDocumentHistoryInput, Prisma.GuildUncheckedCreateWithoutDocumentHistoryInput>
+}
+
+export type GuildUpsertWithoutDocumentHistoryInput = {
+  update: Prisma.XOR<Prisma.GuildUpdateWithoutDocumentHistoryInput, Prisma.GuildUncheckedUpdateWithoutDocumentHistoryInput>
+  create: Prisma.XOR<Prisma.GuildCreateWithoutDocumentHistoryInput, Prisma.GuildUncheckedCreateWithoutDocumentHistoryInput>
+  where?: Prisma.GuildWhereInput
+}
+
+export type GuildUpdateToOneWithWhereWithoutDocumentHistoryInput = {
+  where?: Prisma.GuildWhereInput
+  data: Prisma.XOR<Prisma.GuildUpdateWithoutDocumentHistoryInput, Prisma.GuildUncheckedUpdateWithoutDocumentHistoryInput>
+}
+
+export type GuildUpdateWithoutDocumentHistoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  roles?: Prisma.RoleUpdateManyWithoutGuildNestedInput
+  members?: Prisma.MemberUpdateManyWithoutGuildNestedInput
+  timers?: Prisma.TimerUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUpdateManyWithoutGuildNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutGuildNestedInput
+  reservations?: Prisma.ReservationUpdateManyWithoutGuildNestedInput
+  events?: Prisma.EventUpdateManyWithoutGuildNestedInput
+  mapTemplates?: Prisma.MapTemplateUpdateManyWithoutGuildNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUpdateManyWithoutGuildNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUpdateManyWithoutGuildNestedInput
+  guildKillSummary?: Prisma.GuildKillSummaryUpdateManyWithoutGuildNestedInput
+  guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUpdateManyWithoutGuildNestedInput
+  notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+}
+
+export type GuildUncheckedUpdateWithoutDocumentHistoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  vanityUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notificationRuleLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  publicStatsCardEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reservationMaxDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMinDurationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
+  reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutGuildNestedInput
+  members?: Prisma.MemberUncheckedUpdateManyWithoutGuildNestedInput
+  timers?: Prisma.TimerUncheckedUpdateManyWithoutGuildNestedInput
+  timerHistoryEntries?: Prisma.TimerHistoryEntryUncheckedUpdateManyWithoutGuildNestedInput
+  lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput
+  reservations?: Prisma.ReservationUncheckedUpdateManyWithoutGuildNestedInput
+  events?: Prisma.EventUncheckedUpdateManyWithoutGuildNestedInput
+  mapTemplates?: Prisma.MapTemplateUncheckedUpdateManyWithoutGuildNestedInput
+  npcKillStats?: Prisma.NpcKillStatsUncheckedUpdateManyWithoutGuildNestedInput
+  npcKillStatsBuckets?: Prisma.NpcKillStatsBucketUncheckedUpdateManyWithoutGuildNestedInput
+  guildKillSummary?: Prisma.GuildKillSummaryUncheckedUpdateManyWithoutGuildNestedInput
+  guildKillSummaryBuckets?: Prisma.GuildKillSummaryBucketUncheckedUpdateManyWithoutGuildNestedInput
+  notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
+  discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
+  discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutNpcKillStatsInput = {
@@ -2547,6 +3061,7 @@ export type GuildCreateWithoutNpcKillStatsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2564,6 +3079,8 @@ export type GuildCreateWithoutNpcKillStatsInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutNpcKillStatsInput = {
@@ -2579,6 +3096,7 @@ export type GuildUncheckedCreateWithoutNpcKillStatsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2596,6 +3114,8 @@ export type GuildUncheckedCreateWithoutNpcKillStatsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutNpcKillStatsInput = {
@@ -2627,6 +3147,7 @@ export type GuildUpdateWithoutNpcKillStatsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2644,6 +3165,8 @@ export type GuildUpdateWithoutNpcKillStatsInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutNpcKillStatsInput = {
@@ -2659,6 +3182,7 @@ export type GuildUncheckedUpdateWithoutNpcKillStatsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2676,6 +3200,8 @@ export type GuildUncheckedUpdateWithoutNpcKillStatsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutGuildKillSummaryInput = {
@@ -2691,6 +3217,7 @@ export type GuildCreateWithoutGuildKillSummaryInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2708,6 +3235,8 @@ export type GuildCreateWithoutGuildKillSummaryInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutGuildKillSummaryInput = {
@@ -2723,6 +3252,7 @@ export type GuildUncheckedCreateWithoutGuildKillSummaryInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2740,6 +3270,8 @@ export type GuildUncheckedCreateWithoutGuildKillSummaryInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutGuildKillSummaryInput = {
@@ -2771,6 +3303,7 @@ export type GuildUpdateWithoutGuildKillSummaryInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2788,6 +3321,8 @@ export type GuildUpdateWithoutGuildKillSummaryInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutGuildKillSummaryInput = {
@@ -2803,6 +3338,7 @@ export type GuildUncheckedUpdateWithoutGuildKillSummaryInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2820,6 +3356,8 @@ export type GuildUncheckedUpdateWithoutGuildKillSummaryInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutNpcKillStatsBucketsInput = {
@@ -2835,6 +3373,7 @@ export type GuildCreateWithoutNpcKillStatsBucketsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2852,6 +3391,8 @@ export type GuildCreateWithoutNpcKillStatsBucketsInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutNpcKillStatsBucketsInput = {
@@ -2867,6 +3408,7 @@ export type GuildUncheckedCreateWithoutNpcKillStatsBucketsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2884,6 +3426,8 @@ export type GuildUncheckedCreateWithoutNpcKillStatsBucketsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutNpcKillStatsBucketsInput = {
@@ -2915,6 +3459,7 @@ export type GuildUpdateWithoutNpcKillStatsBucketsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2932,6 +3477,8 @@ export type GuildUpdateWithoutNpcKillStatsBucketsInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutNpcKillStatsBucketsInput = {
@@ -2947,6 +3494,7 @@ export type GuildUncheckedUpdateWithoutNpcKillStatsBucketsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2964,6 +3512,8 @@ export type GuildUncheckedUpdateWithoutNpcKillStatsBucketsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutGuildKillSummaryBucketsInput = {
@@ -2979,6 +3529,7 @@ export type GuildCreateWithoutGuildKillSummaryBucketsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -2996,6 +3547,8 @@ export type GuildCreateWithoutGuildKillSummaryBucketsInput = {
   notificationRules?: Prisma.NotificationRuleCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutGuildKillSummaryBucketsInput = {
@@ -3011,6 +3564,7 @@ export type GuildUncheckedCreateWithoutGuildKillSummaryBucketsInput = {
   reservationTimeGranularityMinutes?: number
   reservationMaxAdvanceDays?: number
   reservationActiveLimitPerSpot?: number
+  documentLimit?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   active?: boolean
@@ -3028,6 +3582,8 @@ export type GuildUncheckedCreateWithoutGuildKillSummaryBucketsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedCreateNestedManyWithoutGuildInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedCreateNestedManyWithoutGuildInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedCreateNestedOneWithoutGuildInput
+  documents?: Prisma.GuildDocumentUncheckedCreateNestedManyWithoutGuildInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutGuildKillSummaryBucketsInput = {
@@ -3059,6 +3615,7 @@ export type GuildUpdateWithoutGuildKillSummaryBucketsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3076,6 +3633,8 @@ export type GuildUpdateWithoutGuildKillSummaryBucketsInput = {
   notificationRules?: Prisma.NotificationRuleUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutGuildKillSummaryBucketsInput = {
@@ -3091,6 +3650,7 @@ export type GuildUncheckedUpdateWithoutGuildKillSummaryBucketsInput = {
   reservationTimeGranularityMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   reservationMaxAdvanceDays?: Prisma.IntFieldUpdateOperationsInput | number
   reservationActiveLimitPerSpot?: Prisma.IntFieldUpdateOperationsInput | number
+  documentLimit?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3108,6 +3668,8 @@ export type GuildUncheckedUpdateWithoutGuildKillSummaryBucketsInput = {
   notificationRules?: Prisma.NotificationRuleUncheckedUpdateManyWithoutGuildNestedInput
   discordChannelSnapshots?: Prisma.DiscordGuildChannelSnapshotUncheckedUpdateManyWithoutGuildNestedInput
   discordSyncState?: Prisma.DiscordGuildSyncStateUncheckedUpdateOneWithoutGuildNestedInput
+  documents?: Prisma.GuildDocumentUncheckedUpdateManyWithoutGuildNestedInput
+  documentHistory?: Prisma.GuildDocumentHistoryUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 
@@ -3130,6 +3692,8 @@ export type GuildCountOutputType = {
   guildKillSummaryBuckets: number
   notificationRules: number
   discordChannelSnapshots: number
+  documents: number
+  documentHistory: number
 }
 
 export type GuildCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3147,6 +3711,8 @@ export type GuildCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   guildKillSummaryBuckets?: boolean | GuildCountOutputTypeCountGuildKillSummaryBucketsArgs
   notificationRules?: boolean | GuildCountOutputTypeCountNotificationRulesArgs
   discordChannelSnapshots?: boolean | GuildCountOutputTypeCountDiscordChannelSnapshotsArgs
+  documents?: boolean | GuildCountOutputTypeCountDocumentsArgs
+  documentHistory?: boolean | GuildCountOutputTypeCountDocumentHistoryArgs
 }
 
 /**
@@ -3257,6 +3823,20 @@ export type GuildCountOutputTypeCountDiscordChannelSnapshotsArgs<ExtArgs extends
   where?: Prisma.DiscordGuildChannelSnapshotWhereInput
 }
 
+/**
+ * GuildCountOutputType without action
+ */
+export type GuildCountOutputTypeCountDocumentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.GuildDocumentWhereInput
+}
+
+/**
+ * GuildCountOutputType without action
+ */
+export type GuildCountOutputTypeCountDocumentHistoryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.GuildDocumentHistoryWhereInput
+}
+
 
 export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -3271,6 +3851,7 @@ export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   reservationTimeGranularityMinutes?: boolean
   reservationMaxAdvanceDays?: boolean
   reservationActiveLimitPerSpot?: boolean
+  documentLimit?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
@@ -3289,6 +3870,8 @@ export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   notificationRules?: boolean | Prisma.Guild$notificationRulesArgs<ExtArgs>
   discordChannelSnapshots?: boolean | Prisma.Guild$discordChannelSnapshotsArgs<ExtArgs>
   discordSyncState?: boolean | Prisma.Guild$discordSyncStateArgs<ExtArgs>
+  documents?: boolean | Prisma.Guild$documentsArgs<ExtArgs>
+  documentHistory?: boolean | Prisma.Guild$documentHistoryArgs<ExtArgs>
   _count?: boolean | Prisma.GuildCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["guild"]>
 
@@ -3305,6 +3888,7 @@ export type GuildSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   reservationTimeGranularityMinutes?: boolean
   reservationMaxAdvanceDays?: boolean
   reservationActiveLimitPerSpot?: boolean
+  documentLimit?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
@@ -3323,6 +3907,7 @@ export type GuildSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   reservationTimeGranularityMinutes?: boolean
   reservationMaxAdvanceDays?: boolean
   reservationActiveLimitPerSpot?: boolean
+  documentLimit?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
@@ -3341,12 +3926,13 @@ export type GuildSelectScalar = {
   reservationTimeGranularityMinutes?: boolean
   reservationMaxAdvanceDays?: boolean
   reservationActiveLimitPerSpot?: boolean
+  documentLimit?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   active?: boolean
 }
 
-export type GuildOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "ownerId" | "vanityUrl" | "notificationRuleLimit" | "publicStatsCardEnabled" | "reservationMaxDurationMinutes" | "reservationMinDurationMinutes" | "reservationTimeGranularityMinutes" | "reservationMaxAdvanceDays" | "reservationActiveLimitPerSpot" | "createdAt" | "updatedAt" | "active", ExtArgs["result"]["guild"]>
+export type GuildOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "ownerId" | "vanityUrl" | "notificationRuleLimit" | "publicStatsCardEnabled" | "reservationMaxDurationMinutes" | "reservationMinDurationMinutes" | "reservationTimeGranularityMinutes" | "reservationMaxAdvanceDays" | "reservationActiveLimitPerSpot" | "documentLimit" | "createdAt" | "updatedAt" | "active", ExtArgs["result"]["guild"]>
 export type GuildInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   roles?: boolean | Prisma.Guild$rolesArgs<ExtArgs>
   members?: boolean | Prisma.Guild$membersArgs<ExtArgs>
@@ -3363,6 +3949,8 @@ export type GuildInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   notificationRules?: boolean | Prisma.Guild$notificationRulesArgs<ExtArgs>
   discordChannelSnapshots?: boolean | Prisma.Guild$discordChannelSnapshotsArgs<ExtArgs>
   discordSyncState?: boolean | Prisma.Guild$discordSyncStateArgs<ExtArgs>
+  documents?: boolean | Prisma.Guild$documentsArgs<ExtArgs>
+  documentHistory?: boolean | Prisma.Guild$documentHistoryArgs<ExtArgs>
   _count?: boolean | Prisma.GuildCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type GuildIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -3386,6 +3974,8 @@ export type $GuildPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     notificationRules: Prisma.$NotificationRulePayload<ExtArgs>[]
     discordChannelSnapshots: Prisma.$DiscordGuildChannelSnapshotPayload<ExtArgs>[]
     discordSyncState: Prisma.$DiscordGuildSyncStatePayload<ExtArgs> | null
+    documents: Prisma.$GuildDocumentPayload<ExtArgs>[]
+    documentHistory: Prisma.$GuildDocumentHistoryPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3400,6 +3990,7 @@ export type $GuildPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     reservationTimeGranularityMinutes: number
     reservationMaxAdvanceDays: number
     reservationActiveLimitPerSpot: number
+    documentLimit: number
     createdAt: Date
     updatedAt: Date
     active: boolean
@@ -3812,6 +4403,8 @@ export interface Prisma__GuildClient<T, Null = never, ExtArgs extends runtime.Ty
   notificationRules<T extends Prisma.Guild$notificationRulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$notificationRulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   discordChannelSnapshots<T extends Prisma.Guild$discordChannelSnapshotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$discordChannelSnapshotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DiscordGuildChannelSnapshotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   discordSyncState<T extends Prisma.Guild$discordSyncStateArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$discordSyncStateArgs<ExtArgs>>): Prisma.Prisma__DiscordGuildSyncStateClient<runtime.Types.Result.GetResult<Prisma.$DiscordGuildSyncStatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  documents<T extends Prisma.Guild$documentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$documentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GuildDocumentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  documentHistory<T extends Prisma.Guild$documentHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$documentHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GuildDocumentHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3853,6 +4446,7 @@ export interface GuildFieldRefs {
   readonly reservationTimeGranularityMinutes: Prisma.FieldRef<"Guild", 'Int'>
   readonly reservationMaxAdvanceDays: Prisma.FieldRef<"Guild", 'Int'>
   readonly reservationActiveLimitPerSpot: Prisma.FieldRef<"Guild", 'Int'>
+  readonly documentLimit: Prisma.FieldRef<"Guild", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Guild", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Guild", 'DateTime'>
   readonly active: Prisma.FieldRef<"Guild", 'Boolean'>
@@ -4601,6 +5195,54 @@ export type Guild$discordSyncStateArgs<ExtArgs extends runtime.Types.Extensions.
    */
   include?: Prisma.DiscordGuildSyncStateInclude<ExtArgs> | null
   where?: Prisma.DiscordGuildSyncStateWhereInput
+}
+
+/**
+ * Guild.documents
+ */
+export type Guild$documentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the GuildDocument
+   */
+  select?: Prisma.GuildDocumentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the GuildDocument
+   */
+  omit?: Prisma.GuildDocumentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GuildDocumentInclude<ExtArgs> | null
+  where?: Prisma.GuildDocumentWhereInput
+  orderBy?: Prisma.GuildDocumentOrderByWithRelationInput | Prisma.GuildDocumentOrderByWithRelationInput[]
+  cursor?: Prisma.GuildDocumentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.GuildDocumentScalarFieldEnum | Prisma.GuildDocumentScalarFieldEnum[]
+}
+
+/**
+ * Guild.documentHistory
+ */
+export type Guild$documentHistoryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the GuildDocumentHistory
+   */
+  select?: Prisma.GuildDocumentHistorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the GuildDocumentHistory
+   */
+  omit?: Prisma.GuildDocumentHistoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GuildDocumentHistoryInclude<ExtArgs> | null
+  where?: Prisma.GuildDocumentHistoryWhereInput
+  orderBy?: Prisma.GuildDocumentHistoryOrderByWithRelationInput | Prisma.GuildDocumentHistoryOrderByWithRelationInput[]
+  cursor?: Prisma.GuildDocumentHistoryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.GuildDocumentHistoryScalarFieldEnum | Prisma.GuildDocumentHistoryScalarFieldEnum[]
 }
 
 /**

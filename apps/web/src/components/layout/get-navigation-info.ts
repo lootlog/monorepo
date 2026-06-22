@@ -17,6 +17,7 @@ type NavigationParams = {
   heroId?: string;
   killId?: string;
   reservationId?: string;
+  docId?: string;
   roleId?: string;
   memberId?: string;
   npcId?: string;
@@ -30,6 +31,7 @@ type GetNavigationInfoArgs = {
   eventHeroNpcs?: Array<{ id: string; npcName: string }>;
   eventRankings: Array<{ memberId: number; member?: { name?: string } }>;
   settingsRoleName?: string;
+  docTitle?: string;
   settingsMemberName?: string;
   settingsNpcName?: string;
   npcKillersData?: { npc?: { npcName?: string } | null };
@@ -71,6 +73,7 @@ function buildRoutes(guildId: string) {
     base: ROUTES.guild.base(guildId),
     timers: ROUTES.guild.timers(guildId),
     reservations: ROUTES.guild.reservations.base(guildId),
+    docs: ROUTES.guild.docs.base(guildId),
     stats: ROUTES.guild.stats(guildId),
     statsKills: ROUTES.guild.statsKills(guildId),
     statsLoots: ROUTES.guild.statsLoots(guildId),
@@ -125,6 +128,11 @@ function resolveSimpleRoute(
     {
       path: routes.reservations,
       label: t("common.breadcrumbs.reservations"),
+      backPath: routes.base,
+    },
+    {
+      path: routes.docs,
+      label: t("common.breadcrumbs.docs"),
       backPath: routes.base,
     },
     {
@@ -211,6 +219,27 @@ function resolveSimpleRoute(
       ],
       showBack: true,
       backPath: routes.reservations,
+    };
+  }
+
+  if (path.startsWith(routes.docs) && path !== routes.docs) {
+    const { docId } = args.params;
+
+    return {
+      breadcrumbs: [
+        guildBreadcrumb,
+        {
+          label: t("common.breadcrumbs.docs"),
+          path: routes.docs,
+        },
+        {
+          label:
+            args.docTitle ?? t("common.breadcrumbs.docFallback", { id: docId }),
+          path: null,
+        },
+      ],
+      showBack: true,
+      backPath: routes.docs,
     };
   }
 

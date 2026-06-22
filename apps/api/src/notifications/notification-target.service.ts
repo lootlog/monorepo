@@ -31,6 +31,7 @@ import {
   computeTestTriggerUsage,
   getDefaultTestTriggerUsage,
 } from "src/notifications/utils/test-trigger-usage.util";
+import { hasOwnUpdateField } from "src/notifications/utils/has-own-update-field.util";
 
 const USER_DM_TEST_TRIGGER_LIMIT = 5;
 const USER_DM_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
@@ -420,7 +421,7 @@ export class NotificationTargetService {
   private getDisplayNameUpdate(
     data: Pick<UpdateNotificationTargetDto, "displayName">,
   ): Pick<Prisma.NotificationTargetUpdateInput, "displayName"> {
-    if (!Object.prototype.hasOwnProperty.call(data, "displayName")) {
+    if (!hasOwnUpdateField(data, "displayName")) {
       return {};
     }
 

@@ -24,6 +24,7 @@ import {
   getDevPermissionOverrideForGuild,
   type ApiDevPermissionOverride,
 } from "./dev-permission-override";
+import { PermissionResolver } from "./permission-resolver";
 
 type GuildLookupResult = {
   guild: Guild;
@@ -207,7 +208,7 @@ export class MemberContextService {
         }, []) || [];
     }
 
-    const uniquePermissions = Array.from(new Set(permissions));
+    const uniquePermissions = PermissionResolver.resolve(permissions);
 
     const context = {
       permissions: uniquePermissions,

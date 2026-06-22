@@ -11,14 +11,27 @@ const NPC_TIER_PERMISSIONS: Record<NpcRoutingTier, Permission> = {
   heroes: Permission.LOOTLOG_CHAT_HEROES_READ,
 };
 
-const hasNpcPermission = (npc: NpcData, roles: Role[]) => {
+const hasPermission = (roles: Role[], permission: Permission) => {
+  return roles.some((role) => role.permissions.includes(permission));
+};
+
+const isNpcScopedMessage = (data: ChatStoredMessage) => {
+  return (
+    data.type === MessageType.NPC ||
+    (data.type === MessageType.PARTY_GATHERING && data.npc !== undefined)
+  );
+};
+
+const isNpcLevelInRoleRange = (npc: NpcData, role: Role) => {
+  return role.lvlRangeFrom <= npc.lvl && role.lvlRangeTo >= npc.lvl;
+};
+
+const hasNpcTierPermission = (npc: NpcData, roles: Role[]) => {
   const permission = NPC_TIER_PERMISSIONS[getNpcRoutingTier(npc)];
 
   return roles.some(
     (role) =>
-      role.permissions.includes(permission) &&
-      role.lvlRangeFrom <= npc.lvl &&
-      role.lvlRangeTo >= npc.lvl,
+      role.permissions.includes(permission) && isNpcLevelInRoleRange(npc, role),
   );
 };
 
@@ -27,19 +40,14 @@ export const canViewChatMessage = (
   roles: Role[],
 ) => {
   if (!data) return false;
-  const canReadChatMessages = roles.some((role) =>
-    role.permissions.includes(Permission.LOOTLOG_CHAT_READ),
-  );
-  if (!canReadChatMessages) return false;
 
-  if (
-    data.type === MessageType.NPC ||
-    (data.type === MessageType.PARTY_GATHERING && data.npc)
-  ) {
+  if (!hasPermission(roles, Permission.LOOTLOG_CHAT_READ)) return false;
+
+  if (isNpcScopedMessage(data)) {
     const npc = data.npc;
     if (!npc) return false;
 
-    return hasNpcPermission(npc, roles);
+    return hasNpcTierPermission(npc, roles);
   }
 
   return true;

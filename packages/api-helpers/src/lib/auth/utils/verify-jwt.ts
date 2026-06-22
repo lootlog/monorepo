@@ -38,3 +38,10 @@ export async function validateToken({
     discordId: payload.discordId as string,
   };
 }
+
+export type {
+  Jwks,
+  JwksKeys,
+  VerifyTokenOptions,
+  VerifyTokenResponse,
+} from "./verify-jwt.types.js";

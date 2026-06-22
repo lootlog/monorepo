@@ -9,12 +9,22 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@lootlog/ui/components/alert-dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { Trash2 } from "lucide-react";
-import { cloneElement, isValidElement, useState, type ReactNode } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 
 interface ConfirmDeleteDialogProps {
   onConfirm: () => void | Promise<void>;
@@ -26,6 +36,8 @@ interface ConfirmDeleteDialogProps {
   confirmLabel?: string;
   confirmButtonLabel?: string;
   cancelButtonLabel?: string;
+  triggerTooltip?: ReactNode;
+  triggerTooltipSide?: "top" | "right" | "bottom" | "left";
 }
 
 export function ConfirmDeleteDialog({
@@ -38,6 +50,8 @@ export function ConfirmDeleteDialog({
   confirmLabel,
   confirmButtonLabel = "Usuń",
   cancelButtonLabel = "Anuluj",
+  triggerTooltip,
+  triggerTooltipSide = "top",
 }: ConfirmDeleteDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,10 +60,27 @@ export function ConfirmDeleteDialog({
   const isConfirmDisabled =
     Boolean(disabled || isSubmitting) ||
     (requiresConfirmation && inputValue !== confirmText);
-  const resolvedTrigger =
-    trigger && isValidElement<{ disabled?: boolean }>(trigger)
-      ? cloneElement(trigger, { disabled })
-      : trigger;
+  const baseTrigger = trigger || (
+    <Button variant="ghost" size="icon" disabled={disabled}>
+      <Trash2 className="h-4 w-4 text-destructive" />
+    </Button>
+  );
+
+  const triggerElement = isValidElement<{
+    disabled?: boolean;
+    onClick?: (event: MouseEvent<HTMLElement>) => void;
+  }>(baseTrigger)
+    ? cloneElement(baseTrigger, {
+        disabled,
+        onClick: (event: MouseEvent<HTMLElement>) => {
+          baseTrigger.props.onClick?.(event);
+
+          if (!event.defaultPrevented && !disabled) {
+            setIsOpen(true);
+          }
+        },
+      })
+    : baseTrigger;
 
   const handleOpenChange = (nextOpen: boolean) => {
     setIsOpen(nextOpen);
@@ -77,13 +108,18 @@ export function ConfirmDeleteDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger asChild>
-        {resolvedTrigger || (
-          <Button variant="ghost" size="icon" disabled={disabled}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        )}
-      </AlertDialogTrigger>
+      {triggerTooltip ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">{triggerElement}</span>
+          </TooltipTrigger>
+          <TooltipContent side={triggerTooltipSide}>
+            {triggerTooltip}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        triggerElement
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

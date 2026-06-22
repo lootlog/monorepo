@@ -98,7 +98,13 @@ const getRequestProtocol = (request: BetterAuthFastifyRequest) => {
   );
 
   if (typeof forwardedProtocol === "string" && forwardedProtocol.length > 0) {
-    return forwardedProtocol.split(",")[0]?.trim() || "http";
+    const firstForwardedProtocol = forwardedProtocol.split(",")[0]?.trim();
+
+    if (firstForwardedProtocol) {
+      return firstForwardedProtocol;
+    }
+
+    return "http";
   }
 
   return (request.raw.socket as { encrypted?: boolean }).encrypted
@@ -109,7 +115,9 @@ const getRequestProtocol = (request: BetterAuthFastifyRequest) => {
 export const buildBetterAuthRequest = async (
   request: BetterAuthFastifyRequest,
 ) => {
-  const origin = `${getRequestProtocol(request)}://${getHeaderValue(request.headers.host) ?? "localhost"}`;
+  const requestProtocol = getRequestProtocol(request);
+  const requestHost = getHeaderValue(request.headers.host) ?? "localhost";
+  const origin = `${requestProtocol}://${requestHost}`;
   const parsedBody = serializeParsedBody(request.body, request.headers);
   const body =
     parsedBody ??

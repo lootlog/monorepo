@@ -3,21 +3,29 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
+      "auth/user-metadata": [
+        "./dist/auth/user-metadata.d.ts"
+      ],
+      "auth/verify-jwt": [
+        "./dist/auth/verify-jwt.d.ts"
+      ],
       "permissions": [
         "./dist/permissions.d.ts"
       ]
     }
   },
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+    "./auth/user-metadata": {
+      "types": "./dist/auth/user-metadata.d.ts",
+      "import": "./dist/auth/user-metadata.mjs",
+      "require": "./dist/auth/user-metadata.js"
+    },
+    "./auth/verify-jwt": {
+      "types": "./dist/auth/verify-jwt.d.ts",
+      "import": "./dist/auth/verify-jwt.mjs",
+      "require": "./dist/auth/verify-jwt.js"
     },
     "./permissions": {
       "types": "./dist/permissions.d.ts",
