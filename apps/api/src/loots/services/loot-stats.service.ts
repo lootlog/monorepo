@@ -24,6 +24,23 @@ export class LootStatsService {
     private readonly redis: RedisService,
   ) {}
 
+  async invalidateCache(guildIds: string[]) {
+    const uniqueGuildIds = [...new Set(guildIds)];
+
+    await Promise.all(
+      uniqueGuildIds.map(async (guildId) => {
+        try {
+          await this.redis.deleteByPattern(`loot-stats:${guildId}:*`);
+        } catch (error) {
+          this.logger.warn("Failed to invalidate loot stats cache", {
+            error,
+            guildId,
+          });
+        }
+      }),
+    );
+  }
+
   async getLootStats(
     guildId: string,
     period: Period = "7d",

@@ -1824,6 +1824,42 @@ paths:
       summary: Get guild loots count
       tags:
         - loots
+  /guilds/{guildId}/loots/items/resolve:
+    get:
+      description: Resolve a single visible loot item by HID without loading full loot payloads
+      operationId: LootsController_resolveLootItemByHid
+      parameters:
+        - name: hid
+          required: true
+          in: query
+          schema:
+            minLength: 1
+            type: string
+        - name: world
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+      responses:
+        "200":
+          description: Resolved loot item or null when not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NullableLootItemResponseDto_Output"
+        "403":
+          description: Forbidden - insufficient permissions
+      security:
+        - bearer: []
+      summary: Resolve loot item by HID
+      tags:
+        - loots
   /guilds/{guildId}/loots/{lootId}:
     get:
       description: Retrieve a single loot by ID
@@ -9046,6 +9082,57 @@ components:
           type: number
       required:
         - count
+    LootItemResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: number
+        hid:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        stat:
+          type: string
+        type:
+          type: string
+          nullable: true
+        rarity:
+          type: string
+          enum:
+            - UNIQUE
+            - HEROIC
+            - LEGENDARY
+            - UPGRADED
+          nullable: true
+        lvl:
+          type: number
+        prof:
+          type: array
+          items:
+            type: string
+            enum:
+              - WARRIOR
+              - PALADIN
+              - HUNTER
+              - MAGE
+              - BLADE_DANCER
+              - TRACKER
+      required:
+        - id
+        - hid
+        - name
+        - icon
+        - stat
+        - type
+        - rarity
+        - lvl
+        - prof
+    NullableLootItemResponseDto_Output:
+      allOf:
+        - $ref: "#/components/schemas/LootItemResponseDto_Output"
+      nullable: true
     NullableLootResponseDto:
       type: object
       properties:
