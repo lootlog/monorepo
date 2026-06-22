@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import type pg from "pg";
-import { db, drizzlePool } from "./drizzle";
+import type { db, drizzlePool } from "./drizzle";
 
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
@@ -21,6 +21,15 @@ type LocalMigration = {
   createdAt: number;
   hash: string;
 };
+
+type AuthDatabaseConnection = {
+  db: typeof db;
+  drizzlePool: typeof drizzlePool;
+};
+
+function getAuthDatabaseConnection(): Promise<AuthDatabaseConnection> {
+  return import("./drizzle.js");
+}
 
 function getMigrationJournalPath() {
   return path.join(migrationsFolder, "meta", "_journal.json");
@@ -115,28 +124,32 @@ async function markBaselineMigrationsAsApplied(pool: pg.Pool) {
   );
 }
 
-export async function initializeAuthMigrations(pool: pg.Pool = drizzlePool) {
-  await ensureMigrationTracking(pool);
+export async function initializeAuthMigrations(pool?: pg.Pool) {
+  const migrationPool = pool ?? (await getAuthDatabaseConnection()).drizzlePool;
 
-  const trackedMigrationCount = await getTrackedMigrationCount(pool);
+  await ensureMigrationTracking(migrationPool);
+
+  const trackedMigrationCount = await getTrackedMigrationCount(migrationPool);
 
   if (trackedMigrationCount > 0) {
     return;
   }
 
-  const existingAuthTableCount = await getExistingAuthTableCount(pool);
+  const existingAuthTableCount = await getExistingAuthTableCount(migrationPool);
 
   if (existingAuthTableCount === 0) {
     return;
   }
 
-  await repairLegacyJwtSchema(pool);
-  await markBaselineMigrationsAsApplied(pool);
+  await repairLegacyJwtSchema(migrationPool);
+  await markBaselineMigrationsAsApplied(migrationPool);
 }
 
-export async function runAuthMigrations(pool: pg.Pool = drizzlePool) {
-  await initializeAuthMigrations(pool);
-  await migrate(db, {
+export async function runAuthMigrations(pool?: pg.Pool) {
+  const authDatabaseConnection = await getAuthDatabaseConnection();
+
+  await initializeAuthMigrations(pool ?? authDatabaseConnection.drizzlePool);
+  await migrate(authDatabaseConnection.db, {
     migrationsFolder,
     migrationsSchema,
     migrationsTable,
