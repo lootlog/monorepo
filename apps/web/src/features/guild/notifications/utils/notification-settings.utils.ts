@@ -1,14 +1,12 @@
 import type { BadgeProps } from "@lootlog/ui/components/badge";
-import type {
-  CreateNotificationRuleDtoScheduleAnchor,
-  CreateNotificationRuleDtoTriggerType,
-  GuildNotificationRulesResponseDto,
-  NotificationJobsResponseDto,
-  NotificationTargetResponseDto,
-} from "@/lib/api/generated/main/model";
 import {
   CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  type CreateNotificationRuleDtoScheduleAnchor,
   CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+  type CreateNotificationRuleDtoTriggerType,
+  type GuildNotificationRulesResponseDto,
+  type NotificationJobsResponseDto,
+  type NotificationTargetResponseDto,
 } from "@/lib/api/generated/main/model";
 
 type GuildNotificationTarget = NotificationTargetResponseDto;
