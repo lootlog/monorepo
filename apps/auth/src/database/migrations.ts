@@ -20,7 +20,6 @@ type MigrationJournal = {
 type LocalMigration = {
   createdAt: number;
   hash: string;
-  name: string;
 };
 
 function getMigrationJournalPath() {
@@ -45,7 +44,6 @@ function readLocalMigrations(): LocalMigration[] {
     return {
       createdAt: when,
       hash: crypto.createHash("sha256").update(sqlContent).digest("hex"),
-      name: tag,
     };
   });
 }
@@ -56,9 +54,7 @@ async function ensureMigrationTracking(pool: pg.Pool) {
     CREATE TABLE IF NOT EXISTS ${migrationsSchema}.${migrationsTable} (
       id SERIAL PRIMARY KEY,
       hash text NOT NULL,
-      created_at bigint,
-      name text,
-      applied_at timestamp with time zone DEFAULT now()
+      created_at bigint
     )
   `);
 }
@@ -109,11 +105,11 @@ async function markBaselineMigrationsAsApplied(pool: pg.Pool) {
     localMigrations.map((migration) =>
       pool.query(
         `
-          INSERT INTO ${migrationsSchema}.${migrationsTable} (hash, created_at, name)
-          VALUES ($1, $2, $3)
+          INSERT INTO ${migrationsSchema}.${migrationsTable} (hash, created_at)
+          VALUES ($1, $2)
           ON CONFLICT DO NOTHING
         `,
-        [migration.hash, migration.createdAt, migration.name],
+        [migration.hash, migration.createdAt],
       ),
     ),
   );

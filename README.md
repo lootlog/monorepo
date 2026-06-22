@@ -280,7 +280,7 @@ pnpm battlelog:generate     # Regenerate Prisma client
 pnpm battlelog:studio       # Open Prisma Studio
 
 # Auth service (Users DB)
-pnpm auth:migrate:dev       # Push auth schema changes in development
+pnpm auth:migrate:dev       # Apply auth migrations in development
 pnpm auth:migrate:prod      # Apply auth migrations in production
 ```
 
