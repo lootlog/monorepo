@@ -20,6 +20,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import type { KeyboardEvent } from "react";
 import { cn } from "@lootlog/ui/lib/utils";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 
 type RatingDeltaByOpponentCardSearch = {
   characterId?: string;
@@ -37,6 +38,17 @@ interface RatingDeltaByOpponentCardProps {
   isLoading?: boolean;
 }
 
+const getRatingDeltaClassName = (delta: number) =>
+  cn(
+    "font-medium",
+    delta >= 0 ? BATTLE_TEXT_COLORS.result.won : BATTLE_TEXT_COLORS.result.lost,
+  );
+
+const formatSignedRating = (delta: number, fractionDigits = 0) => {
+  const sign = delta >= 0 ? "+" : "";
+  return `${sign}${delta.toFixed(fractionDigits)}`;
+};
+
 export function RatingDeltaByOpponentCard({
   data,
   search,
@@ -44,6 +56,7 @@ export function RatingDeltaByOpponentCard({
 }: RatingDeltaByOpponentCardProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const topData = data.slice(0, 5);
 
   const handleRowClick = (opponentId: string) => {
@@ -146,19 +159,10 @@ export function RatingDeltaByOpponentCard({
       ),
       cell: ({ row }) => {
         const delta = row.original.totalRatingDelta;
-        const sign = delta >= 0 ? "+" : "";
         return (
           <div className="text-center">
-            <span
-              className={cn(
-                "font-medium",
-                delta >= 0
-                  ? BATTLE_TEXT_COLORS.result.won
-                  : BATTLE_TEXT_COLORS.result.lost,
-              )}
-            >
-              {sign}
-              {delta}
+            <span className={getRatingDeltaClassName(delta)}>
+              {formatSignedRating(delta)}
             </span>
           </div>
         );
@@ -173,19 +177,10 @@ export function RatingDeltaByOpponentCard({
       ),
       cell: ({ row }) => {
         const delta = row.original.avgRatingDelta;
-        const sign = delta >= 0 ? "+" : "";
         return (
           <div className="text-center">
-            <span
-              className={cn(
-                "font-medium",
-                delta >= 0
-                  ? BATTLE_TEXT_COLORS.result.won
-                  : BATTLE_TEXT_COLORS.result.lost,
-              )}
-            >
-              {sign}
-              {delta.toFixed(2)}
+            <span className={getRatingDeltaClassName(delta)}>
+              {formatSignedRating(delta, 2)}
             </span>
           </div>
         );
@@ -209,30 +204,122 @@ export function RatingDeltaByOpponentCard({
       className="flex flex-col"
     >
       <div className="flex min-h-72 min-w-0 flex-1 flex-col">
-        <ScrollArea className="min-w-0 rounded-lg border border-border bg-card/40">
-          <Table className="border-b">
-            <TanStackTableHeader
-              table={table}
-              className="bg-background/80"
-              rowClassName="border-b-1! border-border"
-              headClassName="whitespace-nowrap"
-            />
-            <TanStackTableBody
-              table={table}
-              cellClassName="whitespace-nowrap"
-              getRowProps={(row) => ({
-                onClick: () => handleRowClick(row.original.opponentId),
-                onKeyDown: (event) =>
-                  handleRowKeyDown(event, row.original.opponentId),
-                role: "link",
-                tabIndex: 0,
-                className:
-                  "cursor-pointer border-b border-border bg-background/30 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              })}
-            />
-          </Table>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        {isMobile ? (
+          <div className="grid min-w-0 gap-2">
+            {topData.map((opponent) => (
+              <button
+                key={opponent.opponentId}
+                type="button"
+                onClick={() => handleRowClick(opponent.opponentId)}
+                className="min-w-0 rounded-lg border border-border bg-card/40 p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <PlayerTile
+                    player={{
+                      name: opponent.opponentName,
+                      lvl: opponent.opponentLvl,
+                      prof: opponent.opponentProf,
+                      icon: opponent.opponentIcon,
+                    }}
+                    className="shrink-0 scale-75"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold">
+                      {opponent.opponentName}
+                    </div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {t("battlePanel.statistics.columns.level")}:{" "}
+                      {opponent.opponentLvl} /{" "}
+                      {t("battlePanel.statistics.columns.profession")}:{" "}
+                      {getProfessionName(opponent.opponentProf)}
+                    </div>
+                  </div>
+                  <ArrowRight
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                  <div className="min-w-0 rounded-md bg-background/60 p-2">
+                    <div className="truncate text-muted-foreground">
+                      {t("battlePanel.statistics.columns.winLoss")}
+                    </div>
+                    <div className="mt-1 whitespace-nowrap">
+                      <span
+                        className={cn(
+                          "font-medium",
+                          BATTLE_TEXT_COLORS.result.won,
+                        )}
+                      >
+                        {opponent.wins}
+                      </span>
+                      &nbsp;-&nbsp;
+                      <span
+                        className={cn(
+                          "font-medium",
+                          BATTLE_TEXT_COLORS.result.lost,
+                        )}
+                      >
+                        {opponent.losses}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="min-w-0 rounded-md bg-background/60 p-2">
+                    <div className="truncate text-muted-foreground">
+                      {t("battlePanel.statistics.columns.totalRatingDelta")}
+                    </div>
+                    <div
+                      className={cn(
+                        "mt-1 truncate",
+                        getRatingDeltaClassName(opponent.totalRatingDelta),
+                      )}
+                    >
+                      {formatSignedRating(opponent.totalRatingDelta)}
+                    </div>
+                  </div>
+                  <div className="min-w-0 rounded-md bg-background/60 p-2">
+                    <div className="truncate text-muted-foreground">
+                      {t("battlePanel.statistics.columns.avgRating")}
+                    </div>
+                    <div
+                      className={cn(
+                        "mt-1 truncate",
+                        getRatingDeltaClassName(opponent.avgRatingDelta),
+                      )}
+                    >
+                      {formatSignedRating(opponent.avgRatingDelta, 2)}
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <ScrollArea className="min-w-0 rounded-lg border border-border bg-card/40">
+            <Table className="border-b">
+              <TanStackTableHeader
+                table={table}
+                className="bg-background/80"
+                rowClassName="border-b-1! border-border"
+                headClassName="whitespace-nowrap"
+              />
+              <TanStackTableBody
+                table={table}
+                cellClassName="whitespace-nowrap"
+                getRowProps={(row) => ({
+                  onClick: () => handleRowClick(row.original.opponentId),
+                  onKeyDown: (event) =>
+                    handleRowKeyDown(event, row.original.opponentId),
+                  role: "link",
+                  tabIndex: 0,
+                  className:
+                    "cursor-pointer border-b border-border bg-background/30 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                })}
+              />
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        )}
         <div className="mt-auto flex justify-end pt-4">
           <Button asChild variant="outline" size="sm">
             <Link to={ROUTES.user.battlePanel.matchmakingH2h} search={search}>

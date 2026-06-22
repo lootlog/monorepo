@@ -15,7 +15,10 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useKillsControllerGetGuildTopNpcs } from "@/lib/api/generated/main/kills/kills";
+import {
+  getKillsControllerGetGuildTopNpcsQueryKey,
+  useKillsControllerGetGuildTopNpcs,
+} from "@/lib/api/generated/main/kills/kills";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { TRACKABLE_NPC_TYPES } from "../constants";
@@ -55,17 +58,27 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
     STORAGE_KEY,
     "ELITE2",
   );
+  const topNpcsParams = buildGuildTopNpcsParams({
+    limit: 5,
+    npcType: selectedNpcType,
+    world,
+    minLvl,
+    maxLvl,
+    period,
+  });
 
   const { data, isLoading } = useKillsControllerGetGuildTopNpcs(
     { guildId: guildId ?? "" },
-    buildGuildTopNpcsParams({
-      limit: 5,
-      npcType: selectedNpcType,
-      world,
-      minLvl,
-      maxLvl,
-      period,
-    }),
+    topNpcsParams,
+    {
+      query: {
+        enabled: Boolean(guildId),
+        queryKey: getKillsControllerGetGuildTopNpcsQueryKey(
+          { guildId: guildId ?? "" },
+          topNpcsParams,
+        ),
+      },
+    },
   );
 
   if (isLoading) {

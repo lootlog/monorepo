@@ -25,7 +25,10 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useKillsControllerGetGuildTopNpcs } from "@/lib/api/generated/main/kills/kills";
+import {
+  getKillsControllerGetGuildTopNpcsQueryKey,
+  useKillsControllerGetGuildTopNpcs,
+} from "@/lib/api/generated/main/kills/kills";
 import type { GuildTopNpcsResponseDtoOutputTopNpcsItem } from "@/lib/api/generated/main/model/guild-top-npcs-response-dto-output-top-npcs-item";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
@@ -59,18 +62,28 @@ export const StatsNpcsList: React.FC = () => {
   } = useStatsSettings("npcs-list");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
+  const topNpcsParams = buildGuildTopNpcsParams({
+    limit: 100,
+    npcType: settings.npcType === "ALL" ? undefined : settings.npcType,
+    world: settings.world ?? undefined,
+    search: debouncedSearch || undefined,
+    minLvl: debouncedMinLvl,
+    maxLvl: debouncedMaxLvl,
+    period: settings.period,
+  });
 
   const { data, isLoading } = useKillsControllerGetGuildTopNpcs(
     { guildId },
-    buildGuildTopNpcsParams({
-      limit: 100,
-      npcType: settings.npcType === "ALL" ? undefined : settings.npcType,
-      world: settings.world ?? undefined,
-      search: debouncedSearch || undefined,
-      minLvl: debouncedMinLvl,
-      maxLvl: debouncedMaxLvl,
-      period: settings.period,
-    }),
+    topNpcsParams,
+    {
+      query: {
+        enabled: Boolean(guildId),
+        queryKey: getKillsControllerGetGuildTopNpcsQueryKey(
+          { guildId },
+          topNpcsParams,
+        ),
+      },
+    },
   );
 
   const topNpcs = data?.topNpcs ?? [];
@@ -258,66 +271,40 @@ export const StatsNpcsList: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <Table className="border-b">
-                  <TableHeader className="bg-background sticky top-0 z-10">
-                    <TableRow className="border-b-1! border-border">
-                      <TableHead className="whitespace-nowrap w-12">
-                        #
-                      </TableHead>
-                      <TableHead className="whitespace-nowrap">
-                        {t("kills.recentKills.npc")}
-                      </TableHead>
-                      <TableHead className="whitespace-nowrap">
-                        {t("kills.recentKills.type")}
-                      </TableHead>
-                      <TableHead className="whitespace-nowrap">
-                        {t("kills.npcKillers.killCount")}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  <div className="grid gap-2 p-3 md:hidden">
                     {paginatedData.map((npc, index) => (
-                      <TableRow
+                      <button
                         key={npc.npcId}
-                        className="bg-background/30 border-b border-border h-14 hover:bg-muted/30 transition-colors cursor-pointer"
+                        type="button"
+                        className="min-w-0 rounded-lg border border-border bg-background/60 p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         onClick={() => handleRowClick(npc)}
                       >
-                        <TableCell className="whitespace-nowrap">
-                          <span className="text-muted-foreground font-medium">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-medium text-muted-foreground">
                             {cursor + index + 1}
-                          </span>
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            {npc.npcIcon && (
-                              <div className="w-8 flex-shrink-0">
-                                <NpcTile
-                                  npc={{
-                                    id: npc.npcId,
-                                    name: npc.npcName,
-                                    lvl: npc.npcLvl,
-                                    icon: npc.npcIcon,
-                                  }}
-                                />
-                              </div>
-                            )}
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium leading-tight">
-                                {npc.npcName}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {npc.npcLvl}
-                              </span>
+                          </div>
+                          {npc.npcIcon && (
+                            <div className="w-8 shrink-0">
+                              <NpcTile
+                                npc={{
+                                  id: npc.npcId,
+                                  name: npc.npcName,
+                                  lvl: npc.npcLvl,
+                                  icon: npc.npcIcon,
+                                }}
+                              />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-semibold">
+                              {npc.npcName}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {t(`npcType.${npc.npcType}`)} - {npc.npcLvl}
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          <span className="text-sm text-muted-foreground">
-                            {t(`npcType.${npc.npcType}`)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 w-fit">
+                          <div className="flex shrink-0 items-center gap-1 rounded-md bg-muted/50 px-2 py-1">
                             <span className="text-xs text-muted-foreground">
                               x
                             </span>
@@ -325,11 +312,83 @@ export const StatsNpcsList: React.FC = () => {
                               {npc.uniqueKills.toLocaleString()}
                             </span>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </div>
+                      </button>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                  <Table className="hidden border-b md:table">
+                    <TableHeader className="bg-background sticky top-0 z-10">
+                      <TableRow className="border-b-1! border-border">
+                        <TableHead className="whitespace-nowrap w-12">
+                          #
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          {t("kills.recentKills.npc")}
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          {t("kills.recentKills.type")}
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          {t("kills.npcKillers.killCount")}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedData.map((npc, index) => (
+                        <TableRow
+                          key={npc.npcId}
+                          className="bg-background/30 border-b border-border h-14 hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => handleRowClick(npc)}
+                        >
+                          <TableCell className="whitespace-nowrap">
+                            <span className="text-muted-foreground font-medium">
+                              {cursor + index + 1}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              {npc.npcIcon && (
+                                <div className="w-8 flex-shrink-0">
+                                  <NpcTile
+                                    npc={{
+                                      id: npc.npcId,
+                                      name: npc.npcName,
+                                      lvl: npc.npcLvl,
+                                      icon: npc.npcIcon,
+                                    }}
+                                  />
+                                </div>
+                              )}
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium leading-tight">
+                                  {npc.npcName}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {npc.npcLvl}
+                                </span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <span className="text-sm text-muted-foreground">
+                              {t(`npcType.${npc.npcType}`)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 w-fit">
+                              <span className="text-xs text-muted-foreground">
+                                x
+                              </span>
+                              <span className="text-sm font-semibold tabular-nums">
+                                {npc.uniqueKills.toLocaleString()}
+                              </span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
               )}
             </ScrollArea>
 

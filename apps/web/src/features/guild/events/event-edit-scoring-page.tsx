@@ -25,6 +25,7 @@ import { ScoringRulesEditor } from "./components/scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "./components/scoring/scoring-mode-selector";
 import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";
 import {
+  getShowEventOverviewQueryKey,
   useRecalculateEventPoints,
   useShowEventOverview,
   useUpdateEvent,
@@ -58,8 +59,18 @@ export const EventEditScoringPage = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   };
+  const hasEventRouteParams = Boolean(guildId && eventId);
 
-  const { data: event, isLoading, error } = useShowEventOverview(routeParams);
+  const {
+    data: event,
+    isLoading,
+    error,
+  } = useShowEventOverview(routeParams, {
+    query: {
+      enabled: hasEventRouteParams,
+      queryKey: getShowEventOverviewQueryKey(routeParams),
+    },
+  });
   if (isLoading) {
     return (
       <div className="flex flex-col gap-3 px-3 py-3">

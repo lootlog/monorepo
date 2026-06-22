@@ -44,16 +44,19 @@ export const PlayerVsPlayerFilterToolbar = ({
 
   if (isMobile) {
     return (
-      <div className="flex min-w-0 items-center justify-between gap-2">
-        <PeriodSelector
-          value={period}
-          onValueChange={onPeriodChange}
-          width="w-full"
-        />
+      <div className="flex w-full min-w-0 items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <PeriodSelector
+            value={period}
+            onValueChange={onPeriodChange}
+            width="w-full"
+            className="min-w-0"
+          />
+        </div>
         <Button
           type="button"
           variant="outline"
-          className="shrink-0 gap-2"
+          className="shrink-0 gap-2 px-3"
           onClick={onMobileFiltersOpen}
         >
           <Filter className="size-4" aria-hidden="true" />

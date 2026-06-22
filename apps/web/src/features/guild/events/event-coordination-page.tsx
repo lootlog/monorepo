@@ -11,6 +11,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
+  getEventsMonitoringControllerGetCoordinationQueryKey,
   invalidateEventsMonitoringControllerGetCoordination,
   useEventsAssignmentControllerSelfAssignMember,
   useEventsMonitoringControllerCloseRespawnWindow,
@@ -31,6 +32,7 @@ export const EventCoordinationPage = () => {
   const [assigningMapId, setAssigningMapId] = useState<string | null>(null);
   const [closingHero, setClosingHero] =
     useState<EventCoordinationResponseDtoHeroesItem | null>(null);
+  const hasEventRouteParams = Boolean(guildId && eventId);
 
   const { data: permissions } = useGuildPermissions();
   const {
@@ -38,10 +40,21 @@ export const EventCoordinationPage = () => {
     isPending,
     error,
     refetch,
-  } = useEventsMonitoringControllerGetCoordination({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  } = useEventsMonitoringControllerGetCoordination(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getEventsMonitoringControllerGetCoordinationQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
 
   const selfAssign = useEventsAssignmentControllerSelfAssignMember({
     mutation: {
