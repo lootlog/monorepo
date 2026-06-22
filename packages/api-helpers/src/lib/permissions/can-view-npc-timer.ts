@@ -4,7 +4,7 @@ export type NpcPermissionData = {
 };
 
 export type RolePermissionData = {
-  permissions: string[];
+  permissions: readonly string[];
   lvlRangeFrom: number;
   lvlRangeTo: number;
 };
@@ -44,7 +44,7 @@ const getRequiredTimerPermission = (npcType: string): TimerPermission =>
 
 export const canViewNpcTimer = (
   npc: NpcPermissionData | null,
-  roles: RolePermissionData[],
+  roles: readonly RolePermissionData[],
 ): boolean => {
   if (!npc) return false;
 
