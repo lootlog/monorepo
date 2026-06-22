@@ -1374,6 +1374,9 @@ importers:
 
   packages/api-helpers:
     dependencies:
+      '@lootlog/types':
+        specifier: workspace:*
+        version: link:../types
       hono:
         specifier: ^4.12.25
         version: 4.12.25
@@ -15307,6 +15310,7 @@ snapshots:
 
   '@lootlog/api-helpers@file:packages/api-helpers':
     dependencies:
+      '@lootlog/types': file:packages/types
       hono: 4.12.25
       jose: 6.2.3
 
