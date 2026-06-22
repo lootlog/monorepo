@@ -15,6 +15,11 @@ import type {
   PartyGatheringSession,
 } from "@/store/party-finder.store";
 
+export type PermissionsUpdatedPayload = {
+  guilds?: { guild: { id: string } }[];
+  featureRooms?: string[];
+};
+
 type ServerToClientEvents = {
   [GatewayEvent.DISCONNECT]: () => void;
   [GatewayEvent.DISCONNECTING]: () => void;
@@ -26,9 +31,7 @@ type ServerToClientEvents = {
     guildIds: string[];
   }) => void;
 
-  [GatewayEvent.PERMISSIONS_UPDATED]: (data: {
-    guilds: { guild: { id: string } }[];
-  }) => void;
+  [GatewayEvent.PERMISSIONS_UPDATED]: (data: PermissionsUpdatedPayload) => void;
 
   [GatewayEvent.TIMERS_CREATE]: (data: Timer) => void;
   [GatewayEvent.TIMERS_DELETE]: (data: Timer) => void;

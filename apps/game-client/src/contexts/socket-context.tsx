@@ -4,7 +4,11 @@ import {
   DEV_PERMISSION_OVERRIDE_EVENT,
   getSerializedDevPermissionOverride,
 } from "@/lib/dev-permission-override";
-import { type AppSocket, getSocket } from "@/lib/socket";
+import {
+  type AppSocket,
+  getSocket,
+  type PermissionsUpdatedPayload,
+} from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import {
   createContext,
@@ -104,9 +108,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         isAfk: false,
       });
     };
-    const handlePermissionsUpdated = (data: {
-      guilds: { guild: { id: string } }[];
-    }) => {
+    const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
       if (import.meta.env.DEV) {
         console.log("[Gateway] Rooms rebalanced:", data);
       }
@@ -120,7 +122,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      setJoinedGuilds(data.guilds.map((g) => g.guild.id) || []);
+      setJoinedGuilds(data.guilds.map((g) => g.guild.id));
     };
 
     socket.on(GatewayEvent.CONNECT, handleConnect);
