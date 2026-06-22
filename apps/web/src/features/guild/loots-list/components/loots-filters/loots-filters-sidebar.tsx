@@ -24,7 +24,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Bookmark } from "lucide-react";
 import { useState, type FC } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { FilterCombobox } from "./filter-combobox";
 import { useLootFilterOptions } from "./use-loot-filter-options";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
@@ -32,8 +31,8 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
-  getLootsControllerFetchLootsByGuildIdQueryKey,
-  lootsControllerFetchLootsByGuildId,
+  getLootsControllerResolveLootItemByHidQueryKey,
+  useLootsControllerResolveLootItemByHid,
 } from "@/lib/api/generated/main/loots/loots";
 import {
   getItemsControllerGetItemsQueryKey,
@@ -48,7 +47,7 @@ import {
   usePlayersControllerGetPlayers,
 } from "@/lib/api/generated/search/players/players";
 import { ItemRarity } from "@/lib/loots/loot-types";
-import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
+import type { LootsControllerResolveLootItemByHidParams } from "@/lib/api/generated/main/model";
 import { formatItemHid, parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useTranslation } from "react-i18next";
@@ -154,41 +153,28 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   const parsedHid = parseItemHid(
     filters.hid && world ? formatItemHid(filters.hid, world) : "",
   );
-  const hidLootQueryParams:
-    | LootsControllerFetchLootsByGuildIdParams
+  const hidItemQueryParams:
+    | LootsControllerResolveLootItemByHidParams
     | undefined = parsedHid
     ? {
         hid: parsedHid.hid,
         world: parsedHid.world,
-        limit: 1,
       }
     : undefined;
-  const { data: hidItem } = useQuery({
-    queryKey: hidLootQueryParams
-      ? getLootsControllerFetchLootsByGuildIdQueryKey(
+  const hidItemFallbackQueryParams = hidItemQueryParams ?? { hid: "" };
+  const { data: hidItem } = useLootsControllerResolveLootItemByHid(
+    { guildId: guildId ?? "" },
+    hidItemFallbackQueryParams,
+    {
+      query: {
+        queryKey: getLootsControllerResolveLootItemByHidQueryKey(
           { guildId: guildId ?? "" },
-          hidLootQueryParams,
-        )
-      : ["loots-filters", "hid-item"],
-    queryFn: async () => {
-      if (!guildId || !hidLootQueryParams) {
-        return null;
-      }
-
-      const response = await lootsControllerFetchLootsByGuildId(
-        { guildId },
-        hidLootQueryParams,
-      );
-      const firstLoot = response[0];
-
-      return (
-        firstLoot?.items.find((item) => item.hid === hidLootQueryParams.hid) ??
-        null
-      );
+          hidItemFallbackQueryParams,
+        ),
+        enabled: !!guildId && !!hidItemQueryParams,
+      },
     },
-    enabled: !!guildId && !!hidLootQueryParams,
-    staleTime: 5 * 60 * 1000,
-  });
+  );
 
   const playersOptions =
     playersQuery.data?.map((player) => ({

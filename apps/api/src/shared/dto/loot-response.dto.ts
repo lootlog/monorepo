@@ -77,6 +77,10 @@ export class LootShareResponseDto extends createZodDto(
   LootShareResponseSchema,
 ) {}
 
+export class NullableLootItemResponseDto extends createZodDto(
+  LootItemResponseSchema.nullable(),
+) {}
+
 const LootResponseSchema = z.object({
   id: z.number(),
   uniqueId: z.string(),
