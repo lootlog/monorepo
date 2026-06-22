@@ -1,4 +1,4 @@
-import { BattleProcessor } from "@lootlog/battle-processor";
+import { BattleProcessor, type BattlePayload } from "@lootlog/battle-processor";
 import type { CreateBattleDto } from "./dto/create-battle.dto";
 
 describe("BattleProcessor", () => {
@@ -67,7 +67,7 @@ describe("BattleProcessor", () => {
 
   describe("extractAndParseMoves", () => {
     it("should parse moves correctly", () => {
-      const events = [
+      const events: BattlePayload["events"] = [
         {
           ev: 1000,
           f: {
@@ -76,7 +76,7 @@ describe("BattleProcessor", () => {
         },
       ];
 
-      const moves = processor.extractAndParseMoves(events as any);
+      const moves = processor.extractAndParseMoves(events);
 
       expect(moves).toHaveLength(2);
       expect(moves[0]).toEqual({
@@ -96,7 +96,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should handle moves with zero IDs as null", () => {
-      const events = [
+      const events: BattlePayload["events"] = [
         {
           ev: 1000,
           f: {
@@ -105,7 +105,7 @@ describe("BattleProcessor", () => {
         },
       ];
 
-      const moves = processor.extractAndParseMoves(events as any);
+      const moves = processor.extractAndParseMoves(events);
 
       expect(moves[0]).toEqual({
         attackerId: null,
@@ -117,7 +117,7 @@ describe("BattleProcessor", () => {
     });
 
     it("should handle moves without params", () => {
-      const events = [
+      const events: BattlePayload["events"] = [
         {
           ev: 1000,
           f: {
@@ -126,7 +126,7 @@ describe("BattleProcessor", () => {
         },
       ];
 
-      const moves = processor.extractAndParseMoves(events as any);
+      const moves = processor.extractAndParseMoves(events);
 
       expect(moves[0].actions).toEqual([
         { actionType: "step", param: "" },
