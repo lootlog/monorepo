@@ -1,20 +1,6 @@
 import * as React from "react";
 
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 11) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
-
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash);
-}
+import { createSeededRandom, hashString } from "@lootlog/ui/lib/seeded-random";
 
 const RIAS_CLASS = "rias";
 
@@ -43,43 +29,44 @@ const MAGIC_CIRCLE_SVG =
 const ENERGY_PARTICLE_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Ccircle cx='4' cy='4' r='3' fill='white' opacity='0.6'/%3E%3Ccircle cx='4' cy='4' r='1.5' fill='white' opacity='0.9'/%3E%3C/svg%3E";
 
+function createRiasOverlayElements(id: string) {
+  const random = createSeededRandom(hashString(id));
+
+  for (let i = 0; i < 20; i++) random();
+
+  const result: Array<{
+    id: string;
+    left: string;
+    top: string;
+    size: number;
+    rotation: number;
+    opacity: number;
+    type: "circle" | "particle";
+  }> = [];
+
+  const count = 5 + Math.floor(random() * 4);
+
+  for (let i = 0; i < count; i++) {
+    const type = random() > 0.5 ? "circle" : "particle";
+
+    result.push({
+      id: `rias-${i}`,
+      left: `${random() * 100}%`,
+      top: `${random() * 100}%`,
+      size: type === "circle" ? 20 + random() * 16 : 8 + random() * 6,
+      rotation: random() * 360,
+      opacity: 0.02 + random() * 0.02,
+      type,
+    });
+  }
+
+  return result;
+}
+
 export function RiasMagicCardOverlay() {
   const isRiasTheme = useRiasTheme();
   const id = React.useId();
-
-  const elements = React.useMemo(() => {
-    const rand = seededRandom(hashString(id));
-
-    for (let i = 0; i < 20; i++) rand();
-
-    const result: Array<{
-      id: string;
-      left: string;
-      top: string;
-      size: number;
-      rotation: number;
-      opacity: number;
-      type: "circle" | "particle";
-    }> = [];
-
-    const count = 5 + Math.floor(rand() * 4);
-
-    for (let i = 0; i < count; i++) {
-      const type = rand() > 0.5 ? "circle" : "particle";
-
-      result.push({
-        id: `rias-${i}`,
-        left: `${rand() * 100}%`,
-        top: `${rand() * 100}%`,
-        size: type === "circle" ? 20 + rand() * 16 : 8 + rand() * 6,
-        rotation: rand() * 360,
-        opacity: 0.02 + rand() * 0.02,
-        type,
-      });
-    }
-
-    return result;
-  }, [id]);
+  const elements = createRiasOverlayElements(id);
 
   if (!isRiasTheme) return null;
 
