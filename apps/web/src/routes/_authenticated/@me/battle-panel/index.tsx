@@ -4,13 +4,14 @@ import { BattlePanelBattlesSkeleton } from "@/features/user/battle-panel/battle-
 import {
   getBattlesControllerGetDashboardBattlesQueryOptions,
   getBattlesControllerGetUserCharactersQueryOptions,
+  getBattlesControllerGetUserWorldsQueryOptions,
 } from "@/lib/api/generated/battlelog/battles/battles";
 import {
   battlePanelBattlesSearchSchema,
   loadBattlePanelBattlesSearch,
 } from "@/features/user/battle-panel/battle-panel-search";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
-import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
+import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
   validateSearch: battlePanelBattlesSearchSchema,
@@ -18,12 +19,16 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/")({
     withRouteLoaderCancellation(abortController, async () => {
       const search = loadBattlePanelBattlesSearch(location.searchStr);
 
-      void Promise.all([
-        prefetchRouteQuery(
+      await Promise.all([
+        ensureRouteQueryData(
           context.queryClient,
           getBattlesControllerGetUserCharactersQueryOptions(),
         ),
-        prefetchRouteQuery(
+        ensureRouteQueryData(
+          context.queryClient,
+          getBattlesControllerGetUserWorldsQueryOptions(),
+        ),
+        ensureRouteQueryData(
           context.queryClient,
           getBattlesControllerGetDashboardBattlesQueryOptions({
             cursor: search.cursor ?? undefined,

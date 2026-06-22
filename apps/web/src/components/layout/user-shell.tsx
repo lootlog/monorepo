@@ -51,7 +51,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
           <PageHeader>
             <div className="flex w-full flex-row items-center justify-between gap-2">
               <div className="flex flex-row items-center gap-2">
-                <SidebarTrigger />
+                <SidebarTrigger className="size-8!" />
                 {navigationInfo.showBack && (
                   <div
                     onMouseEnter={() => setHoveredButton("back")}
@@ -103,7 +103,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                                   to: crumb.path as string,
                                 })
                               }
-                              className="cursor-pointer whitespace-nowrap text-xs text-muted-foreground/70 transition-colors duration-200 hover:text-foreground"
+                              className="min-h-8 cursor-pointer whitespace-nowrap rounded px-1 text-xs text-muted-foreground/70 transition-colors duration-200 hover:text-foreground"
                             >
                               {crumb.label}
                             </button>

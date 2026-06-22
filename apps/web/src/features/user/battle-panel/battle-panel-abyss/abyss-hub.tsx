@@ -291,13 +291,13 @@ export function AbyssHub() {
             title={t("battlePanel.abyss.title")}
             subtitle={t("battlePanel.abyss.subtitle")}
           >
-            <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-end">
+            <div className="flex min-w-0 max-w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-end">
               <CharacterSelector
                 characterId={currentCharacterId}
                 onCharacterChange={handleCharacterChange}
                 allowAllCharacters={false}
                 size="default"
-                className="h-10"
+                className="h-10 w-full min-w-0 lg:w-auto"
               />
 
               <Select
@@ -305,7 +305,10 @@ export function AbyssHub() {
                 onValueChange={handleSeasonChange}
                 disabled={isLoadingSeasons || seasons.length === 0}
               >
-                <SelectTrigger size="lg" className="w-full lg:w-[260px]">
+                <SelectTrigger
+                  size="lg"
+                  className="w-full min-w-0 lg:w-[260px]"
+                >
                   <SelectValue
                     placeholder={t("battlePanel.abyss.selectSeason")}
                   />
@@ -327,7 +330,7 @@ export function AbyssHub() {
                 </SelectContent>
               </Select>
 
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <LevelRangeFilter
                   minLevel={minLevel}
                   maxLevel={maxLevel}
@@ -338,7 +341,11 @@ export function AbyssHub() {
                 />
               </div>
 
-              <Button asChild variant="outline" className="h-10">
+              <Button
+                asChild
+                variant="outline"
+                className="h-10 w-full min-w-0 lg:w-auto"
+              >
                 <Link
                   to={ROUTES.user.battlePanel.matchmakingH2h}
                   search={h2hSearch}
@@ -355,21 +362,27 @@ export function AbyssHub() {
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}
-            className="gap-4"
+            className="min-w-0 gap-4"
           >
-            <TabsList className="grid h-auto w-full grid-cols-3 bg-muted/50 p-1 sm:w-fit">
-              <TabsTrigger value="battles" className="gap-2 text-xs sm:text-sm">
+            <TabsList className="grid h-auto w-full min-w-0 grid-cols-3 bg-muted/50 p-1 sm:w-fit">
+              <TabsTrigger
+                value="battles"
+                className="min-h-9 gap-2 text-xs sm:text-sm"
+              >
                 <Swords className="size-3.5" />
                 {t("battlePanel.abyss.tabs.battles")}
               </TabsTrigger>
               <TabsTrigger
                 value="analytics"
-                className="gap-2 text-xs sm:text-sm"
+                className="min-h-9 gap-2 text-xs sm:text-sm"
               >
                 <BarChart3 className="size-3.5" />
                 {t("battlePanel.abyss.tabs.analytics")}
               </TabsTrigger>
-              <TabsTrigger value="seasons" className="gap-2 text-xs sm:text-sm">
+              <TabsTrigger
+                value="seasons"
+                className="min-h-9 gap-2 text-xs sm:text-sm"
+              >
                 <Trophy className="size-3.5" />
                 {t("battlePanel.abyss.tabs.seasons")}
               </TabsTrigger>
