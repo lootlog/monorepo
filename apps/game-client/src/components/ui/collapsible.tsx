@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { useSettingsStore } from "@/store/settings.store";
 
 const CONTENT_ANIMATION: Variants = {
   initial: {
@@ -34,6 +35,22 @@ const CollapsibleContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof CollapsiblePrimitive.CollapsibleContent>
 >(({ className, children, ...props }, ref) => {
   const context = React.useContext(CollapsibleContext);
+  const animationEffectsEnabled = useSettingsStore(
+    (state) => state.animationEffectsEnabled,
+  );
+
+  if (!animationEffectsEnabled) {
+    return context?.isOpen ? (
+      <CollapsiblePrimitive.CollapsibleContent
+        ref={ref}
+        forceMount
+        className={cn("ll:overflow-hidden", className)}
+        {...props}
+      >
+        <div className="ll:pt-2 ll:pb-4 ll:px-3">{children}</div>
+      </CollapsiblePrimitive.CollapsibleContent>
+    ) : null;
+  }
 
   return (
     <AnimatePresence initial={false}>

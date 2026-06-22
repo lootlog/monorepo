@@ -22,8 +22,35 @@ import { calculateColorStatistics } from "@/features/timers/utils/color-statisti
 import { Game } from "@/lib/game";
 import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
 import { useTranslation } from "react-i18next";
+import { useShallow } from "zustand/react/shallow";
 
 const EMPTY_TIMERS: Timer[] = [];
+
+const getDeduplicatedTimers = (timers: Timer[], timersGrouping: boolean) => {
+  if (timersGrouping) return timers;
+
+  const timersByCompositeKey = new Map<string, Timer>();
+
+  for (const timer of timers) {
+    const compositeKey = `${timer.guildId}_${timer.world}_${timer.timerKey}`;
+    timersByCompositeKey.set(compositeKey, timer);
+  }
+
+  return Array.from(timersByCompositeKey.values());
+};
+
+const normalizeUngroupedTimers = (timers: Timer[]) => {
+  return timers.map((timer) => ({
+    ...timer,
+    members: timer.member ? [timer.member] : [],
+    actorCharactersByMemberId:
+      timer.member && timer.actorCharacter
+        ? { [String(timer.member.id)]: timer.actorCharacter }
+        : timer.actorCharactersByMemberId,
+    minTimeLeft: 0,
+    maxTimeLeft: 0,
+  }));
+};
 
 export const Timers = () => {
   const { t } = useTranslation("timers");
@@ -31,7 +58,13 @@ export const Timers = () => {
   const gameInterface = Game.interface;
   const defaultWorld = Game.getWorldName();
   const { worldByGuildId, allowWorldSelection, guildIdByCharId } =
-    useSettingsStore();
+    useSettingsStore(
+      useShallow((state) => ({
+        worldByGuildId: state.worldByGuildId,
+        allowWorldSelection: state.allowWorldSelection,
+        guildIdByCharId: state.guildIdByCharId,
+      })),
+    );
 
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
@@ -60,7 +93,27 @@ export const Timers = () => {
     defaultColorNames,
     overriddenDefaultColors,
     alwaysVisibleExpiredTimers,
-  } = useTimersStore();
+  } = useTimersStore(
+    useShallow((state) => ({
+      hiddenTimers: state.hiddenTimers,
+      pinnedTimers: state.pinnedTimers,
+      generalConfig: state.generalConfig,
+      timerFiltersEnabled: state.timerFiltersEnabled,
+      toggleTimerFiltersEnabled: state.toggleTimerFiltersEnabled,
+      colorFiltersEnabled: state.colorFiltersEnabled,
+      toggleColorFiltersEnabled: state.toggleColorFiltersEnabled,
+      timerFiltersSearchText: state.timerFiltersSearchText,
+      timersSortOrder: state.timersSortOrder,
+      setTimersSortOrder: state.setTimersSortOrder,
+      timersFilters: state.timersFilters,
+      displayConfig: state.displayConfig,
+      timersColors: state.timersColors,
+      customColors: state.customColors,
+      defaultColorNames: state.defaultColorNames,
+      overriddenDefaultColors: state.overriddenDefaultColors,
+      alwaysVisibleExpiredTimers: state.alwaysVisibleExpiredTimers,
+    })),
+  );
 
   const { data: timers } = useTimers({ world: desiredWorld });
 
@@ -73,29 +126,14 @@ export const Timers = () => {
 
   const rawTimers = timers ? timers : EMPTY_TIMERS;
 
-  const deduplicatedTimers = generalConfig.timersGrouping
-    ? rawTimers
-    : Array.from(
-        new Map(
-          rawTimers.map((timer) => {
-            const compositeKey = `${timer.guildId}_${timer.world}_${timer.timerKey}`;
-            return [compositeKey, timer];
-          }),
-        ).values(),
-      );
+  const deduplicatedTimers = getDeduplicatedTimers(
+    rawTimers,
+    generalConfig.timersGrouping,
+  );
 
   const merged = generalConfig.timersGrouping
     ? mergeTimers(deduplicatedTimers)
-    : deduplicatedTimers.map((timer) => ({
-        ...timer,
-        members: timer.member ? [timer.member] : [],
-        actorCharactersByMemberId:
-          timer.member && timer.actorCharacter
-            ? { [String(timer.member.id)]: timer.actorCharacter }
-            : timer.actorCharactersByMemberId,
-        minTimeLeft: 0,
-        maxTimeLeft: 0,
-      }));
+    : normalizeUngroupedTimers(deduplicatedTimers);
 
   const withTimeLeft = calculateTimeLeft(merged);
 

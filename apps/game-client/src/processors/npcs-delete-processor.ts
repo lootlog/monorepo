@@ -15,15 +15,50 @@ export class NpcsDeleteProcessor {
   handle(event: GameEvent): void {
     if (!event.npcs_del?.length) return;
 
-    event.npcs_del.forEach((npc) => {
-      const world = Game.getWorldName();
+    const world = Game.getWorldName();
+    const npcDetectorStore = useNpcDetectorStore.getState();
+    const notificationsStore = useNotificationsStore.getState();
+    let timerContext: {
+      accountId: string;
+      characterId: string;
+      catchingGuildIds: string[];
+      mapId: number | string;
+      mapName: string;
+    } | null = null;
 
-      useNpcDetectorStore.getState().removeNpc(npc.id);
-      useNotificationsStore.getState().removeNotificationByNpcId(npc.id, world);
+    const getTimerContext = () => {
+      if (timerContext) return timerContext;
+
+      const hero = Game.hero;
+      const accountId = String(hero.account);
+      const characterId = String(hero.id);
+      const map = Game.map;
+      const lootlogCharacterConfigQueryKey =
+        getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+          accountId,
+        });
+      const charactersConfig =
+        queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
+          lootlogCharacterConfigQueryKey,
+        );
+      const characterConfig = charactersConfig?.[characterId];
+
+      timerContext = {
+        accountId,
+        characterId,
+        catchingGuildIds: characterConfig?.catchingGuildIds ?? [],
+        mapId: map.id,
+        mapName: map.name,
+      };
+
+      return timerContext;
+    };
+
+    event.npcs_del.forEach((npc) => {
+      npcDetectorStore.removeNpc(npc.id);
+      notificationsStore.removeNotificationByNpcId(npc.id, world);
 
       const data = Game.getNpc(npc.id);
-      const characterId = Game.hero.id;
-      const accountId = Game.hero.account;
 
       if (!data || !npc.respBaseSeconds || data.wt < MIN_NPC_WT) {
         return;
@@ -33,31 +68,21 @@ export class NpcsDeleteProcessor {
         return;
       }
 
-      const map = Game.map.id;
-      const elite2Name = SpecialE2[map as keyof typeof SpecialE2] || data.nick;
+      const context = getTimerContext();
+      const elite2Name =
+        SpecialE2[context.mapId as keyof typeof SpecialE2] || data.nick;
       const npcType = getNpcTypeByWt(NpcType, data.wt, data.prof, data.type);
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
-      const lootlogCharacterConfigQueryKey =
-        getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-          accountId: String(accountId),
-        });
 
-      const charactersConfig =
-        queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
-          lootlogCharacterConfigQueryKey,
-        );
-      const characterConfig = charactersConfig?.[String(characterId)];
-      const catchingGuildIds = characterConfig?.catchingGuildIds ?? [];
-
-      if (catchingGuildIds.length === 0) {
+      if (context.catchingGuildIds.length === 0) {
         return;
       }
 
       createAutoTimer({
         respawnRandomness: data.resp_rand,
         respBaseSeconds: npc.respBaseSeconds,
-        characterId: String(characterId),
-        accountId: String(accountId),
+        characterId: context.characterId,
+        accountId: context.accountId,
         world,
         npc: {
           icon: data.icon,
@@ -68,7 +93,7 @@ export class NpcsDeleteProcessor {
           type: data.type,
           lvl: data.lvl,
           name: npcName,
-          location: Game.map.name,
+          location: context.mapName,
         },
       }).catch((error) => {
         console.warn("[NpcsDeleteProcessor] Failed to create timer:", error);
