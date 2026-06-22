@@ -11,7 +11,6 @@ import {
   executeApiRequest,
 } from "@/lib/api-client/api-client";
 import { applyDevPermissionOverrideHeader } from "@/lib/dev-permission-override";
-import { recordApiRequest } from "@/lib/performance/app-performance-metrics";
 
 export type ErrorType<TError> = ApiError<TError>;
 export type BodyType<TBody> = TBody;
@@ -67,21 +66,14 @@ const executeOrvalFetch = <TData>({
 
   const method = requestInit.method ?? "GET";
 
-  return recordApiRequest(
-    {
-      method,
-      url: requestUrl.toString(),
+  return executeApiRequest<TData>({
+    url: requestUrl,
+    method,
+    requestInit: {
+      ...requestInit,
+      headers,
     },
-    () =>
-      executeApiRequest<TData>({
-        url: requestUrl,
-        method,
-        requestInit: {
-          ...requestInit,
-          headers,
-        },
-      }),
-  );
+  });
 };
 
 export function orvalFetch<TData>(
