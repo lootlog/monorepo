@@ -706,6 +706,8 @@ paths:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_DOCS_READ
+                    - LOOTLOG_DOCS_WRITE
       security:
         - bearer: []
       summary: Get guild permissions
@@ -5651,6 +5653,297 @@ paths:
       summary: Get public guild loot stats card
       tags:
         - public-guild-stats-card
+  /guilds/{guildId}/docs:
+    get:
+      description: Retrieve document summaries for a guild
+      operationId: DocsController_getDocuments
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of guild documents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildDocumentListResponseDto"
+        "403":
+          description: Forbidden - insufficient permissions
+      security:
+        - bearer: []
+      summary: Get guild documents
+      tags:
+        - docs
+    post:
+      description: Create a new empty guild document
+      operationId: DocsController_createDocument
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGuildDocumentDto"
+      responses:
+        "201":
+          description: Document created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildDocumentResponseDto"
+        "409":
+          description: Guild document limit reached
+      security:
+        - bearer: []
+      summary: Create guild document
+      tags:
+        - docs
+  /guilds/{guildId}/docs/trash:
+    get:
+      description: Retrieve guild documents currently in trash
+      operationId: DocsController_getTrash
+      parameters:
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted guild documents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildDocumentTrashResponseDto"
+      security:
+        - bearer: []
+      summary: Get deleted guild documents
+      tags:
+        - docs
+  /guilds/{guildId}/docs/{docId}/history:
+    get:
+      description: Retrieve version metadata for a guild document
+      operationId: DocsController_getHistory
+      parameters:
+        - name: docId
+          required: true
+          in: path
+          description: Document ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Document history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildDocumentHistoryResponseDto"
+      security:
+        - bearer: []
+      summary: Get guild document history
+      tags:
+        - docs
+  /guilds/{guildId}/docs/{docId}/history/{historyId}:
+    get:
+      description: Retrieve a read-only snapshot for a document history entry
+      operationId: DocsController_getHistorySnapshot
+      parameters:
+        - name: docId
+          required: true
+          in: path
+          description: Document ID
+          schema:
+            type: string
+        - name: historyId
+          required: true
+          in: path
+          description: History entry ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Document history snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildDocumentHistorySnapshotResponseDto"
+      security:
+        - bearer: []
+      summary: Get guild document history snapshot
+      tags:
+        - docs
+  /guilds/{guildId}/docs/{docId}:
+    get:
+      description: Retrieve a guild document with its current Lexical state
+      operationId: DocsController_getDocument
+      parameters:
+        - name: docId
+          required: true
+          in: path
+          description: Document ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guild document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildDocumentResponseDto"
+      security:
+        - bearer: []
+      summary: Get guild document
+      tags:
+        - docs
+    put:
+      description: Save document title and Lexical state
+      operationId: DocsController_updateDocument
+      parameters:
+        - name: docId
+          required: true
+          in: path
+          description: Document ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGuildDocumentDto"
+      responses:
+        "200":
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildDocumentResponseDto"
+      security:
+        - bearer: []
+      summary: Update guild document
+      tags:
+        - docs
+    delete:
+      description: Soft-delete a guild document
+      operationId: DocsController_deleteDocument
+      parameters:
+        - name: docId
+          required: true
+          in: path
+          description: Document ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Document moved to trash
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocsMutationResponseDto"
+      security:
+        - bearer: []
+      summary: Move guild document to trash
+      tags:
+        - docs
+  /guilds/{guildId}/docs/{docId}/restore:
+    post:
+      description: Restore a guild document from trash
+      operationId: DocsController_restoreDocument
+      parameters:
+        - name: docId
+          required: true
+          in: path
+          description: Document ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Document restored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocsMutationResponseDto"
+      security:
+        - bearer: []
+      summary: Restore guild document
+      tags:
+        - docs
+  /guilds/{guildId}/docs/{docId}/purge:
+    delete:
+      description: Permanently delete a guild document from trash
+      operationId: DocsController_purgeDocument
+      parameters:
+        - name: docId
+          required: true
+          in: path
+          description: Document ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Document permanently deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocsMutationResponseDto"
+      security:
+        - bearer: []
+      summary: Permanently delete guild document
+      tags:
+        - docs
 info:
   title: Lootlog API
   description: The Lootlog API documentation
@@ -6433,6 +6726,8 @@ components:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_DOCS_READ
+                    - LOOTLOG_DOCS_WRITE
               lvlRangeFrom:
                 type: number
                 nullable: true
@@ -6563,6 +6858,8 @@ components:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_DOCS_READ
+                    - LOOTLOG_DOCS_WRITE
               lvlRangeFrom:
                 type: number
                 nullable: true
@@ -6886,6 +7183,8 @@ components:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_DOCS_READ
+                    - LOOTLOG_DOCS_WRITE
             required:
               - id
               - lvlRangeFrom
@@ -7125,6 +7424,8 @@ components:
                     - LOOTLOG_EVENTS_MANAGE
                     - LOOTLOG_EVENTS_READ
                     - LOOTLOG_EVENTS_WRITE
+                    - LOOTLOG_DOCS_READ
+                    - LOOTLOG_DOCS_WRITE
             required:
               - id
               - lvlRangeFrom
@@ -7182,6 +7483,8 @@ components:
               - LOOTLOG_EVENTS_MANAGE
               - LOOTLOG_EVENTS_READ
               - LOOTLOG_EVENTS_WRITE
+              - LOOTLOG_DOCS_READ
+              - LOOTLOG_DOCS_WRITE
         lvlRangeFrom:
           type: number
           nullable: true
@@ -7231,6 +7534,8 @@ components:
               - LOOTLOG_EVENTS_MANAGE
               - LOOTLOG_EVENTS_READ
               - LOOTLOG_EVENTS_WRITE
+              - LOOTLOG_DOCS_READ
+              - LOOTLOG_DOCS_WRITE
         lvlRangeFrom:
           type: number
         lvlRangeTo:
@@ -7415,6 +7720,8 @@ components:
                         - LOOTLOG_EVENTS_MANAGE
                         - LOOTLOG_EVENTS_READ
                         - LOOTLOG_EVENTS_WRITE
+                        - LOOTLOG_DOCS_READ
+                        - LOOTLOG_DOCS_WRITE
                   lvlRangeFrom:
                     type: number
                     nullable: true
@@ -7623,6 +7930,8 @@ components:
                         - LOOTLOG_EVENTS_MANAGE
                         - LOOTLOG_EVENTS_READ
                         - LOOTLOG_EVENTS_WRITE
+                        - LOOTLOG_DOCS_READ
+                        - LOOTLOG_DOCS_WRITE
                   lvlRangeFrom:
                     type: number
                     nullable: true
@@ -15830,6 +16139,394 @@ components:
           type: string
       required:
         - nextRefreshAt
+    GuildDocumentListResponseDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              guildId:
+                type: string
+              title:
+                type: string
+              version:
+                type: number
+              createdByMemberId:
+                type: string
+              createdBy:
+                type: object
+                properties:
+                  memberId:
+                    type: string
+                  name:
+                    type: string
+                    nullable: true
+                required:
+                  - memberId
+                  - name
+              updatedByMemberId:
+                type: string
+              updatedBy:
+                type: object
+                properties:
+                  memberId:
+                    type: string
+                  name:
+                    type: string
+                    nullable: true
+                required:
+                  - memberId
+                  - name
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - id
+              - guildId
+              - title
+              - version
+              - createdByMemberId
+              - createdBy
+              - updatedByMemberId
+              - updatedBy
+              - createdAt
+              - updatedAt
+        limit:
+          type: object
+          properties:
+            canCreate:
+              type: boolean
+            max:
+              type: number
+            trashed:
+              type: number
+            used:
+              type: number
+          required:
+            - canCreate
+            - max
+            - trashed
+            - used
+      required:
+        - items
+        - limit
+    CreateGuildDocumentDto:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+        - title
+    GuildDocumentResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/GuildDocumentResponseDto__schema0"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/GuildDocumentResponseDto__schema0"
+      nullable: true
+    GuildDocumentResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        guildId:
+          type: string
+        title:
+          type: string
+        version:
+          type: number
+        createdByMemberId:
+          type: string
+        createdBy:
+          type: object
+          properties:
+            memberId:
+              type: string
+            name:
+              type: string
+              nullable: true
+          required:
+            - memberId
+            - name
+        updatedByMemberId:
+          type: string
+        updatedBy:
+          type: object
+          properties:
+            memberId:
+              type: string
+            name:
+              type: string
+              nullable: true
+          required:
+            - memberId
+            - name
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        content:
+          $ref: "#/components/schemas/GuildDocumentResponseDto__schema0"
+      required:
+        - id
+        - guildId
+        - title
+        - version
+        - createdByMemberId
+        - createdBy
+        - updatedByMemberId
+        - updatedBy
+        - createdAt
+        - updatedAt
+        - content
+    GuildDocumentTrashResponseDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              guildId:
+                type: string
+              title:
+                type: string
+              version:
+                type: number
+              createdByMemberId:
+                type: string
+              createdBy:
+                type: object
+                properties:
+                  memberId:
+                    type: string
+                  name:
+                    type: string
+                    nullable: true
+                required:
+                  - memberId
+                  - name
+              updatedByMemberId:
+                type: string
+              updatedBy:
+                type: object
+                properties:
+                  memberId:
+                    type: string
+                  name:
+                    type: string
+                    nullable: true
+                required:
+                  - memberId
+                  - name
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              deletedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              deletedByMemberId:
+                type: string
+              deletedBy:
+                type: object
+                properties:
+                  memberId:
+                    type: string
+                  name:
+                    type: string
+                    nullable: true
+                required:
+                  - memberId
+                  - name
+            required:
+              - id
+              - guildId
+              - title
+              - version
+              - createdByMemberId
+              - createdBy
+              - updatedByMemberId
+              - updatedBy
+              - createdAt
+              - updatedAt
+              - deletedAt
+              - deletedByMemberId
+              - deletedBy
+      required:
+        - items
+    GuildDocumentHistoryResponseDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              documentId:
+                type: string
+              guildId:
+                type: string
+              version:
+                type: number
+              title:
+                type: string
+              action:
+                type: string
+                enum:
+                  - SAVE
+                  - DELETE
+                  - RESTORE
+              actorMemberId:
+                type: string
+              actor:
+                type: object
+                properties:
+                  memberId:
+                    type: string
+                  name:
+                    type: string
+                    nullable: true
+                required:
+                  - memberId
+                  - name
+              editedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - id
+              - documentId
+              - guildId
+              - version
+              - title
+              - action
+              - actorMemberId
+              - actor
+              - editedAt
+      required:
+        - items
+    GuildDocumentHistorySnapshotResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/GuildDocumentHistorySnapshotResponseDto__schema0"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/GuildDocumentHistorySnapshotResponseDto__schema0"
+      nullable: true
+    GuildDocumentHistorySnapshotResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        documentId:
+          type: string
+        guildId:
+          type: string
+        version:
+          type: number
+        title:
+          type: string
+        action:
+          type: string
+          enum:
+            - SAVE
+            - DELETE
+            - RESTORE
+        actorMemberId:
+          type: string
+        actor:
+          type: object
+          properties:
+            memberId:
+              type: string
+            name:
+              type: string
+              nullable: true
+          required:
+            - memberId
+            - name
+        editedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        content:
+          $ref: "#/components/schemas/GuildDocumentHistorySnapshotResponseDto__schema0"
+      required:
+        - id
+        - documentId
+        - guildId
+        - version
+        - title
+        - action
+        - actorMemberId
+        - actor
+        - editedAt
+        - content
+    UpdateGuildDocumentDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/UpdateGuildDocumentDto__schema0"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/UpdateGuildDocumentDto__schema0"
+      nullable: true
+    UpdateGuildDocumentDto:
+      type: object
+      properties:
+        content:
+          $ref: "#/components/schemas/UpdateGuildDocumentDto__schema0"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+        - content
+        - title
+    DocsMutationResponseDto:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
     JsonValue:
       anyOf:
         - type: string

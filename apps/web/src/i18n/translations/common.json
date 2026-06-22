@@ -57,6 +57,8 @@
     "lootsList": "Lista łupów",
     "timers": "Timery",
     "reservations": "Rezerwacje",
+    "docs": "Dokumenty",
+    "docFallback": "Dokument #{{id}}",
     "activityLogs": "Logi aktywności",
     "stats": "Statystyki",
     "memberRanking": "Ranking członków",

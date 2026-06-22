@@ -96,6 +96,8 @@ export const ModelName = {
   EventPointsEditHistory: 'EventPointsEditHistory',
   EventRespawnWindowSummary: 'EventRespawnWindowSummary',
   MapTemplate: 'MapTemplate',
+  GuildDocument: 'GuildDocument',
+  GuildDocumentHistory: 'GuildDocumentHistory',
   NpcKillStats: 'NpcKillStats',
   UserKillStats: 'UserKillStats',
   GuildKillSummary: 'GuildKillSummary',
@@ -133,6 +135,7 @@ export const GuildScalarFieldEnum = {
   reservationTimeGranularityMinutes: 'reservationTimeGranularityMinutes',
   reservationMaxAdvanceDays: 'reservationMaxAdvanceDays',
   reservationActiveLimitPerSpot: 'reservationActiveLimitPerSpot',
+  documentLimit: 'documentLimit',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   active: 'active'
@@ -837,6 +840,38 @@ export const MapTemplateScalarFieldEnum = {
 } as const
 
 export type MapTemplateScalarFieldEnum = (typeof MapTemplateScalarFieldEnum)[keyof typeof MapTemplateScalarFieldEnum]
+
+
+export const GuildDocumentScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  title: 'title',
+  content: 'content',
+  version: 'version',
+  createdByMemberId: 'createdByMemberId',
+  updatedByMemberId: 'updatedByMemberId',
+  deletedAt: 'deletedAt',
+  deletedByMemberId: 'deletedByMemberId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GuildDocumentScalarFieldEnum = (typeof GuildDocumentScalarFieldEnum)[keyof typeof GuildDocumentScalarFieldEnum]
+
+
+export const GuildDocumentHistoryScalarFieldEnum = {
+  id: 'id',
+  documentId: 'documentId',
+  guildId: 'guildId',
+  version: 'version',
+  title: 'title',
+  content: 'content',
+  action: 'action',
+  actorMemberId: 'actorMemberId',
+  editedAt: 'editedAt'
+} as const
+
+export type GuildDocumentHistoryScalarFieldEnum = (typeof GuildDocumentHistoryScalarFieldEnum)[keyof typeof GuildDocumentHistoryScalarFieldEnum]
 
 
 export const NpcKillStatsScalarFieldEnum = {

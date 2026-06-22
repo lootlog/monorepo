@@ -14,6 +14,7 @@ import {
   DEV_PERMISSION_OVERRIDE_HEADER,
   parseDevPermissionOverrideHeader,
 } from "./dev-permission-override";
+import { PermissionResolver } from "./permission-resolver";
 
 interface RequestWithPermissions {
   userId?: string;
@@ -134,8 +135,9 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const { guild, member, roles, permissions } = context;
+    const resolvedPermissions = PermissionResolver.resolve(permissions);
 
-    const permissionsSet = new Set(permissions);
+    const permissionsSet = new Set(resolvedPermissions);
     const hasPermission = requiredPermissions.some((permission) =>
       permissionsSet.has(permission),
     );
@@ -144,7 +146,7 @@ export class PermissionsGuard implements CanActivate {
       return false;
     }
 
-    request.permissions = permissions;
+    request.permissions = resolvedPermissions;
     request.guild = guild;
     request.roles = roles;
     request.member = member;

@@ -25,6 +25,10 @@ import {
   getLootlogConfigControllerGetLootlogConfigQueryKey,
   useLootlogConfigControllerGetLootlogConfig,
 } from "@/lib/api/generated/main/lootlog-config/lootlog-config";
+import {
+  getDocsControllerGetDocumentQueryKey,
+  useDocsControllerGetDocument,
+} from "@/lib/api/generated/main/docs/docs";
 
 const guildRouteApi = getRouteApi("/_authenticated/$guildId");
 
@@ -61,6 +65,7 @@ export const GuildBreadcrumbs: FC = () => {
     npcId,
     reservationId,
     roleId,
+    docId,
   } = params;
   const path = location.pathname;
 
@@ -73,6 +78,9 @@ export const GuildBreadcrumbs: FC = () => {
   );
   const isSettingsNpcRoute = Boolean(
     guildId && npcId && path.startsWith(`/${guildId}/settings/npcs/`),
+  );
+  const isDocsDetailRoute = Boolean(
+    guildId && docId && path.startsWith(`/${guildId}/docs/`),
   );
   const isEventMemberRoute = Boolean(
     params.memberId && path.includes("/members/") && isEventRoute,
@@ -113,6 +121,18 @@ export const GuildBreadcrumbs: FC = () => {
         },
       },
     );
+  const { data: currentDocument } = useDocsControllerGetDocument(
+    { guildId: guildId ?? "", docId: docId ?? "" },
+    {
+      query: {
+        enabled: isDocsDetailRoute,
+        queryKey: getDocsControllerGetDocumentQueryKey({
+          guildId: guildId ?? "",
+          docId: docId ?? "",
+        }),
+      },
+    },
+  );
   const event = isEventRoute ? eventRouteData?.event : undefined;
   const eventRankings = isEventMemberRoute
     ? (eventRouteData?.rankings ?? [])
@@ -141,7 +161,9 @@ export const GuildBreadcrumbs: FC = () => {
       npcId,
       reservationId,
       roleId,
+      docId,
     },
+    docTitle: isDocsDetailRoute ? currentDocument?.title : undefined,
     guildName: guild?.name,
     eventName: event?.name,
     eventHeroNpcs: event?.heroNpcs,
