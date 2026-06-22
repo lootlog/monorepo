@@ -29,7 +29,7 @@ export class BattleListFilterService {
     query: QueryBattlesDto,
     userId?: string,
   ): Promise<BattleListWhereBuilder> {
-    let characterIds = query.characterId || [];
+    let characterIds = query.characterId ?? [];
     if (query.result?.length && !characterIds.length && userId) {
       const userChars = await this.drizzle.db.query.userCharacters.findMany({
         where: { userId },

@@ -5,6 +5,7 @@ import { BattleAnalyticsService } from "./services/battle-analytics.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { BattleAccessGuard } from "src/shared/guards/battle-access.guard";
 import { BattleOwnerGuard } from "src/shared/guards/battle-owner.guard";
+import type { QueryBattleStatisticsDto } from "./dto/query-battle-statistics.dto";
 
 describe("BattlesController", () => {
   let controller: BattlesController;
@@ -109,12 +110,13 @@ describe("BattlesController", () => {
       highlights: [],
     };
     mockBattleAnalyticsService.getCombatProfile.mockResolvedValue(profile);
+    const query: QueryBattleStatisticsDto = { characterId: "char-1" };
 
-    await expect(
-      controller.getCombatProfile({ characterId: "char-1" } as any, "user-1"),
-    ).resolves.toBe(profile);
+    await expect(controller.getCombatProfile(query, "user-1")).resolves.toBe(
+      profile,
+    );
     expect(mockBattleAnalyticsService.getCombatProfile).toHaveBeenCalledWith(
-      { characterId: "char-1" },
+      query,
       "user-1",
     );
   });

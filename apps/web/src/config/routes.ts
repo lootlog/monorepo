@@ -43,6 +43,10 @@ const ROUTES = {
       reservationId: (guildId: string, reservationId: string) =>
         `/${guildId}/reservations/${reservationId}`,
     },
+    docs: {
+      base: (guildId: string) => `/${guildId}/docs`,
+      document: (guildId: string, docId: string) => `/${guildId}/docs/${docId}`,
+    },
     activityLogs: (guildId: string) => `/${guildId}/activity-logs`,
     events: (guildId: string) => `/${guildId}/events`,
     notifications: {
@@ -89,6 +93,7 @@ const ROUTE_SEGMENTS = {
   guild: {
     timers: "/timers",
     reservations: "/reservations",
+    docs: "/docs",
     stats: "/stats",
     statsKills: "/stats/kills",
     statsLoots: "/stats/loots",

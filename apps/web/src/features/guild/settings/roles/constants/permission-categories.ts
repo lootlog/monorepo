@@ -5,6 +5,7 @@ import {
   Package,
   Clock,
   CalendarCheck,
+  FileText,
   MessageCircle,
   Bell,
   Users,
@@ -70,6 +71,13 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       Permission.LOOTLOG_RESERVATIONS_READ,
       Permission.LOOTLOG_RESERVATIONS_WRITE,
     ],
+  },
+  {
+    name: "Dokumenty",
+    icon: FileText,
+    color: "text-indigo-500",
+    bgColor: "bg-indigo-500/20",
+    permissions: [Permission.LOOTLOG_DOCS_READ, Permission.LOOTLOG_DOCS_WRITE],
   },
   {
     name: "Członkowie",

@@ -80,7 +80,7 @@ const processEnvFile = async (
   let variables = parseEnvFile(sampleContent);
 
   if (options.auto) {
-    variables = generateEnvValues(variables, sharedValues, true);
+    variables = generateEnvValues(variables, sharedValues);
     let derivedSharedValues = sharedValues;
     if (processOptions.useGeneratedSharedValues) {
       derivedSharedValues = extractSharedValues(variables);
