@@ -220,7 +220,7 @@ describe("ActivitiesController", () => {
 
   describe("endpoint restrictions", () => {
     it("should not have a findAll method that allows fetching all activities", () => {
-      expect((controller as any).findAll).toBeUndefined();
+      expect("findAll" in controller).toBe(false);
     });
   });
 });
