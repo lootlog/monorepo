@@ -20,6 +20,7 @@ model Guild {
   reservationTimeGranularityMinutes Int @default(15)
   reservationMaxAdvanceDays Int         @default(7)
   reservationActiveLimitPerSpot Int     @default(3)
+  documentLimit     Int                @default(50)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   roles             Role[]
@@ -38,6 +39,8 @@ model Guild {
   notificationRules NotificationRule[]
   discordChannelSnapshots DiscordGuildChannelSnapshot[]
   discordSyncState  DiscordGuildSyncState?
+  documents         GuildDocument[]
+  documentHistory   GuildDocumentHistory[]
 
   @@index([vanityUrl])
 }
@@ -72,6 +75,8 @@ enum Permission {
   LOOTLOG_EVENTS_MANAGE
   LOOTLOG_EVENTS_READ
   LOOTLOG_EVENTS_WRITE
+  LOOTLOG_DOCS_READ
+  LOOTLOG_DOCS_WRITE
 }
 
 enum MemberType {
@@ -153,6 +158,12 @@ enum LootSource {
 enum TimerHistoryAction {
   CREATE
   RESET
+  DELETE
+  RESTORE
+}
+
+enum GuildDocumentHistoryAction {
+  SAVE
   DELETE
   RESTORE
 }
@@ -1091,6 +1102,45 @@ model MapTemplate {
 
   @@unique([guildId, name])
   @@index([guildId])
+}
+
+model GuildDocument {
+  id                String    @id @default(cuid())
+  guildId           String
+  title             String
+  content           Json
+  version           Int       @default(1)
+  createdByMemberId String
+  updatedByMemberId String
+  deletedAt         DateTime?
+  deletedByMemberId String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  guild   Guild                  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  history GuildDocumentHistory[]
+
+  @@index([guildId, deletedAt, updatedAt(sort: Desc)])
+  @@index([guildId, deletedAt(sort: Desc)])
+}
+
+model GuildDocumentHistory {
+  id            String                     @id @default(cuid())
+  documentId    String
+  guildId       String
+  version       Int
+  title         String
+  content       Json
+  action        GuildDocumentHistoryAction @default(SAVE)
+  actorMemberId String
+  editedAt      DateTime                   @default(now())
+
+  document GuildDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  guild    Guild         @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, version])
+  @@index([documentId, editedAt(sort: Desc)])
+  @@index([guildId, editedAt(sort: Desc)])
 }
 
 // Kill tracking - aggregated stats per NPC per member (guild-specific)

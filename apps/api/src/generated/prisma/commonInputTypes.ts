@@ -728,6 +728,23 @@ export type EnumPointsEditTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumPointsEditTypeFilter<$PrismaModel>
 }
 
+export type EnumGuildDocumentHistoryActionFilter<$PrismaModel = never> = {
+  equals?: $Enums.GuildDocumentHistoryAction | Prisma.EnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  in?: $Enums.GuildDocumentHistoryAction[] | Prisma.ListEnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GuildDocumentHistoryAction[] | Prisma.ListEnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGuildDocumentHistoryActionFilter<$PrismaModel> | $Enums.GuildDocumentHistoryAction
+}
+
+export type EnumGuildDocumentHistoryActionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.GuildDocumentHistoryAction | Prisma.EnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  in?: $Enums.GuildDocumentHistoryAction[] | Prisma.ListEnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GuildDocumentHistoryAction[] | Prisma.ListEnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGuildDocumentHistoryActionWithAggregatesFilter<$PrismaModel> | $Enums.GuildDocumentHistoryAction
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumGuildDocumentHistoryActionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumGuildDocumentHistoryActionFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -1377,6 +1394,23 @@ export type NestedEnumPointsEditTypeWithAggregatesFilter<$PrismaModel = never> =
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumPointsEditTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumPointsEditTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumGuildDocumentHistoryActionFilter<$PrismaModel = never> = {
+  equals?: $Enums.GuildDocumentHistoryAction | Prisma.EnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  in?: $Enums.GuildDocumentHistoryAction[] | Prisma.ListEnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GuildDocumentHistoryAction[] | Prisma.ListEnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGuildDocumentHistoryActionFilter<$PrismaModel> | $Enums.GuildDocumentHistoryAction
+}
+
+export type NestedEnumGuildDocumentHistoryActionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.GuildDocumentHistoryAction | Prisma.EnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  in?: $Enums.GuildDocumentHistoryAction[] | Prisma.ListEnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.GuildDocumentHistoryAction[] | Prisma.ListEnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumGuildDocumentHistoryActionWithAggregatesFilter<$PrismaModel> | $Enums.GuildDocumentHistoryAction
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumGuildDocumentHistoryActionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumGuildDocumentHistoryActionFilter<$PrismaModel>
 }
 
 
