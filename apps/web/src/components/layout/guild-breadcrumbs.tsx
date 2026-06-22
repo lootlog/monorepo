@@ -1,4 +1,4 @@
-import { type FC, useEffect, useRef } from "react";
+import type { FC } from "react";
 import {
   getRouteApi,
   useLocation,
@@ -37,7 +37,6 @@ export const GuildBreadcrumbs: FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
-  const mobileBreadcrumbsRef = useRef<HTMLDivElement>(null);
   const guildRouteData = guildRouteApi.useLoaderData();
   const eventRouteData = useMatches({
     select: (matches) =>
@@ -174,33 +173,10 @@ export const GuildBreadcrumbs: FC = () => {
     t,
   });
 
-  const breadcrumbScrollKey = navInfo.breadcrumbs
-    .map((crumb) => `${crumb.label}:${crumb.path ?? ""}`)
-    .join("|");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.matchMedia("(min-width: 768px)").matches) return;
-
-    const animationFrameId = window.requestAnimationFrame(() => {
-      const scrollContainer = mobileBreadcrumbsRef.current;
-      if (!scrollContainer) return;
-
-      scrollContainer.scrollTo({
-        left: scrollContainer.scrollWidth,
-        behavior: "auto",
-      });
-    });
-
-    return () => {
-      window.cancelAnimationFrame(animationFrameId);
-    };
-  }, [breadcrumbScrollKey, location.pathname]);
-
   return (
     <PageHeader>
-      <div className="flex flex-row gap-2 items-center justify-between w-full">
-        <div className="flex flex-row gap-2 items-center">
+      <div className="flex min-w-0 flex-row gap-2 items-center justify-between w-full overflow-hidden">
+        <div className="flex min-w-0 shrink-0 flex-row gap-2 items-center">
           <SidebarTrigger className="size-8!" />
           {navInfo.showBack && navInfo.backPath && (
             <Button
@@ -214,19 +190,16 @@ export const GuildBreadcrumbs: FC = () => {
           )}
         </div>
 
-        <div className="flex flex-1 min-w-0 items-center text-sm justify-center">
-          <div
-            ref={mobileBreadcrumbsRef}
-            className="flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:overflow-hidden"
-          >
-            <div className="inline-flex min-w-max items-center justify-center gap-1.5 pr-1 md:flex md:min-w-0 md:w-full md:pr-0">
+        <div className="flex flex-1 min-w-0 items-center overflow-hidden text-sm justify-center">
+          <div className="min-w-0 max-w-full flex-1 overflow-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex w-full min-w-0 items-center justify-center gap-1.5 pr-1 md:pr-0">
               <AnimatePresence mode="popLayout">
                 {navInfo.breadcrumbs.map((crumb, index) => {
                   const isLast = index === navInfo.breadcrumbs.length - 1;
                   return (
                     <motion.div
                       key={`${crumb.label}-${crumb.path ?? "current"}`}
-                      className="flex shrink-0 items-center gap-1.5 md:min-w-0 md:last:shrink"
+                      className="flex min-w-0 items-center gap-1.5"
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 8 }}
@@ -236,12 +209,12 @@ export const GuildBreadcrumbs: FC = () => {
                         <button
                           type="button"
                           onClick={() => navigate({ to: crumb.path as string })}
-                          className="min-h-8 rounded px-1 text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer"
+                          className="min-h-8 max-w-[6.5rem] truncate rounded px-1 text-xs text-muted-foreground/70 hover:text-foreground transition-colors duration-200 whitespace-nowrap cursor-pointer sm:max-w-40"
                         >
                           {crumb.label}
                         </button>
                       ) : (
-                        <span className="text-sm font-bold text-foreground whitespace-nowrap md:max-w-full md:truncate">
+                        <span className="block max-w-40 truncate text-sm font-bold text-foreground whitespace-nowrap sm:max-w-64">
                           {crumb.label}
                         </span>
                       )}

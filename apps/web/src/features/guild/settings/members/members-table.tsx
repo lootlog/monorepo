@@ -81,10 +81,11 @@ export const MembersTable = ({
       params: { guildId, memberId: String(member.id) },
     });
   };
+  const rowEstimateSize = isMobile ? 88 : 64;
   const rowVirtualizer = useVirtualizer({
     count: members.length,
     getScrollElement: () => scrollElementRef.current,
-    estimateSize: () => 64,
+    estimateSize: () => rowEstimateSize,
     overscan: 8,
   });
   const virtualRows = rowVirtualizer.getVirtualItems();
@@ -98,7 +99,13 @@ export const MembersTable = ({
   if (isMobile) {
     return (
       <div className="divide-y divide-border">
-        {members.map((member) => {
+        {topPadding > 0 && (
+          <div aria-hidden="true" style={{ height: topPadding }} />
+        )}
+        {virtualRows.map((virtualRow) => {
+          const member = members[virtualRow.index];
+          if (!member) return null;
+
           const webActivityStats = activityStatsByDiscordIdAndSource.get(
             member.userId,
           )?.WEB_APP;
@@ -118,7 +125,7 @@ export const MembersTable = ({
 
           return (
             <button
-              key={member.id}
+              key={virtualRow.key}
               type="button"
               className="relative grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
               onClick={() => openMemberDetails(member)}
@@ -190,6 +197,9 @@ export const MembersTable = ({
             </button>
           );
         })}
+        {bottomPadding > 0 && (
+          <div aria-hidden="true" style={{ height: bottomPadding }} />
+        )}
       </div>
     );
   }
