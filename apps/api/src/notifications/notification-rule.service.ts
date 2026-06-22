@@ -26,6 +26,7 @@ import type { CreateNotificationRuleDto } from "src/notifications/dto/create-not
 import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
 import {
   calculateFirstOccurrenceInTimeZone,
+  isRecurringScheduleInterval,
   isValidTimeZone,
 } from "src/notifications/utils/notification-schedule-time.util";
 import { ensureLimitNotExceeded } from "src/notifications/utils/ensure-limit-not-exceeded.util";
@@ -783,8 +784,7 @@ export class NotificationRuleService {
 
     if (
       ownerType === DbNotificationOwnerType.USER &&
-      (intervalType === DbNotificationScheduleIntervalType.DAILY ||
-        intervalType === DbNotificationScheduleIntervalType.WEEKLY) &&
+      isRecurringScheduleInterval(intervalType) &&
       !scheduleTimezone
     ) {
       throw new BadRequestException(
@@ -802,8 +802,7 @@ export class NotificationRuleService {
 
     if (
       !scheduledAt &&
-      (intervalType === DbNotificationScheduleIntervalType.DAILY ||
-        intervalType === DbNotificationScheduleIntervalType.WEEKLY) &&
+      isRecurringScheduleInterval(intervalType) &&
       timeOfDay &&
       scheduleTimezone
     ) {
