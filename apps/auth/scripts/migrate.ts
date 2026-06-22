@@ -4,7 +4,7 @@ import { drizzlePool } from "../src/database/drizzle";
 async function main() {
   try {
     await runAuthMigrations(drizzlePool);
-    console.log("Auth local migrations applied.");
+    console.log("Auth migrations applied.");
   } finally {
     await drizzlePool.end();
   }
