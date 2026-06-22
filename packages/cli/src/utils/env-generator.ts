@@ -189,14 +189,9 @@ const generateSmartDefault = (
 export const generateEnvValues = (
   variables: EnvVariable[],
   sharedValues: Map<string, string> = new Map(),
-  autoMode: boolean = true,
 ): EnvVariable[] => {
   return variables.map((variable) => {
     if (variable.isEmpty || variable.isComment || !variable.key) {
-      return variable;
-    }
-
-    if (!autoMode) {
       return variable;
     }
 
