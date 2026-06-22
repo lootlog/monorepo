@@ -6,6 +6,11 @@ import { useCancelPartyGathering } from "./use-cancel-party-gathering";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 
 const mockCancelPartyGathering = vi.fn();
+const mockSetOpen = vi.fn();
+
+type MockWindowsStoreState = {
+  setOpen: typeof mockSetOpen;
+};
 
 vi.mock("@/api", () => ({
   cancelPartyGathering: (...args: unknown[]) =>
@@ -13,7 +18,8 @@ vi.mock("@/api", () => ({
 }));
 
 vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (selector: any) => selector({ setOpen: vi.fn() }),
+  useWindowsStore: (selector: (state: MockWindowsStoreState) => unknown) =>
+    selector({ setOpen: mockSetOpen }),
 }));
 
 vi.stubGlobal("message", vi.fn());
@@ -77,6 +83,7 @@ describe("useCancelPartyGathering", () => {
         }),
       }),
     );
+    expect(mockSetOpen).toHaveBeenCalledWith("party-finder", false);
   });
 
   it("should handle 204 response with no body", async () => {
@@ -99,5 +106,6 @@ describe("useCancelPartyGathering", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(usePartyFinderStore.getState().partyGathering).toBeNull();
+    expect(mockSetOpen).toHaveBeenCalledWith("party-finder", false);
   });
 });
