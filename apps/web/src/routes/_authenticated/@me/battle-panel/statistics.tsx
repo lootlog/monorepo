@@ -8,8 +8,8 @@ import {
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-search";
 import {
-  battlesControllerGetCombatProfile,
   getBattlesControllerGetBattleDurationQueryOptions,
+  getBattlesControllerGetCombatProfileQueryOptions,
   getBattlesControllerGetCurrentStreakQueryOptions,
   getBattlesControllerGetHeadToHeadQueryOptions,
   getBattlesControllerGetPhGrowthQueryOptions,
@@ -83,20 +83,10 @@ export const Route = createFileRoute(
           context.queryClient,
           getBattlesControllerGetPhGrowthQueryOptions(baseParams),
         ),
-        ensureRouteQueryData(context.queryClient, {
-          queryKey: [
-            "combat-profile",
-            characterId,
-            search.period,
-            search.minLevel,
-            search.maxLevel,
-            search.startDate ?? undefined,
-            search.endDate ?? undefined,
-            search.ph ?? undefined,
-            false,
-          ],
-          queryFn: () => battlesControllerGetCombatProfile(baseParams),
-        }),
+        ensureRouteQueryData(
+          context.queryClient,
+          getBattlesControllerGetCombatProfileQueryOptions(baseParams),
+        ),
       ]);
 
       return null;
