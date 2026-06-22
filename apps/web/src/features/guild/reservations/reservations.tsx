@@ -25,8 +25,14 @@ import { useViewMode } from "@/hooks/use-view-mode";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
-import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
+import {
+  getGuildsControllerGetGuildByIdQueryKey,
+  useGuildsControllerGetGuildById,
+} from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getMembersControllerGetGuildMemberReferencesQueryKey,
+  useMembersControllerGetGuildMemberReferences,
+} from "@/lib/api/generated/main/members/members";
 
 type ReservationCardEntries = Array<
   [string, ReservationsCardsResponseDtoOutputItem[]]
@@ -52,9 +58,20 @@ export const Reservations: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const guildId = useGuildId();
-  const { data: guild } = useGuildsControllerGetGuildById({
-    guildId: guildId ?? "",
-  });
+  const hasGuildId = Boolean(guildId);
+  const { data: guild } = useGuildsControllerGetGuildById(
+    {
+      guildId: guildId ?? "",
+    },
+    {
+      query: {
+        enabled: hasGuildId,
+        queryKey: getGuildsControllerGetGuildByIdQueryKey({
+          guildId: guildId ?? "",
+        }),
+      },
+    },
+  );
 
   const [searchValue, setSearchValue] = useState("");
   const { viewMode, setViewMode } = useViewMode("reservations-view-mode");
@@ -80,6 +97,15 @@ export const Reservations: React.FC = () => {
     { guildId: guildId ?? "" },
     {
       includeInactive: true,
+    },
+    {
+      query: {
+        enabled: hasGuildId,
+        queryKey: getMembersControllerGetGuildMemberReferencesQueryKey(
+          { guildId: guildId ?? "" },
+          { includeInactive: true },
+        ),
+      },
     },
   );
 

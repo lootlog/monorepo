@@ -23,7 +23,10 @@ import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { GuildKillStatsResponseDtoOutputMemberRankingItem } from "@/lib/api/generated/main/model/guild-kill-stats-response-dto-output-member-ranking-item";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { TRACKABLE_NPC_TYPES } from "../constants";
-import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
+import {
+  getMembersControllerGetGuildMemberReferencesQueryKey,
+  useMembersControllerGetGuildMemberReferences,
+} from "@/lib/api/generated/main/members/members";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
 
 const STORAGE_KEY = "stats-podium-npc-type";
@@ -164,6 +167,15 @@ export const MemberRankingPodiumCard: React.FC<
     { guildId: guildId ?? "" },
     {
       includeInactive: true,
+    },
+    {
+      query: {
+        enabled: Boolean(guildId),
+        queryKey: getMembersControllerGetGuildMemberReferencesQueryKey(
+          { guildId: guildId ?? "" },
+          { includeInactive: true },
+        ),
+      },
     },
   );
 

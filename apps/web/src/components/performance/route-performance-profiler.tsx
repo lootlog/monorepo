@@ -2,8 +2,9 @@ import { recordRouteRender } from "@/lib/performance/app-performance-metrics";
 import { Profiler, type ProfilerOnRenderCallback, type ReactNode } from "react";
 import { useLocation } from "@tanstack/react-router";
 
-type UserRoutePerformanceProfilerProps = {
+type RoutePerformanceProfilerProps = {
   children: ReactNode;
+  scope: "guild-route" | "user-route";
 };
 
 const handleProfilerRender: ProfilerOnRenderCallback = (
@@ -14,7 +15,7 @@ const handleProfilerRender: ProfilerOnRenderCallback = (
   startTime,
   commitTime,
 ) => {
-  const route = id.replace("user-route:", "");
+  const route = id.replace(/^(guild-route|user-route):/, "");
   recordRouteRender({
     actualDuration,
     baseDuration,
@@ -26,14 +27,15 @@ const handleProfilerRender: ProfilerOnRenderCallback = (
   });
 };
 
-export const UserRoutePerformanceProfiler = ({
+export const RoutePerformanceProfiler = ({
   children,
-}: UserRoutePerformanceProfilerProps) => {
+  scope,
+}: RoutePerformanceProfilerProps) => {
   const location = useLocation();
 
   return (
     <Profiler
-      id={`user-route:${location.pathname}`}
+      id={`${scope}:${location.pathname}`}
       onRender={handleProfilerRender}
     >
       {children}

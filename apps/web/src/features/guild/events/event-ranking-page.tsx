@@ -13,6 +13,8 @@ import { EventParticipationConfirmationDialog } from "./components/dialogs/event
 import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
+  getListEventRankingQueryKey,
+  getShowEventOverviewQueryKey,
   useListEventRanking,
   useShowEventOverview,
 } from "@/lib/api/generated/main/events/events";
@@ -21,6 +23,7 @@ export const EventRankingPage = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
+  const hasEventRouteParams = Boolean(guildId && eventId);
 
   const { data: permissions } = useGuildPermissions();
   const canEditPoints =
@@ -31,18 +34,40 @@ export const EventRankingPage = () => {
     data: event,
     isLoading: isEventLoading,
     error: eventError,
-  } = useShowEventOverview({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  } = useShowEventOverview(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getShowEventOverviewQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
   const {
     data: rankings = [],
     isLoading: isRankingLoading,
     error: rankingError,
-  } = useListEventRanking({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  } = useListEventRanking(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getListEventRankingQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
 
   if (isEventLoading || isRankingLoading) {
     return (
