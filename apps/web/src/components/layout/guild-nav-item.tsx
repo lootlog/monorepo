@@ -11,8 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import type { FC } from "react";
-import type React from "react";
+import type { FC, MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 import { useTranslation } from "react-i18next";
@@ -24,7 +23,7 @@ export type GuildNavItemProps = {
   unreadLootsCount?: number;
 };
 
-const GuildNavItemComponent: FC<GuildNavItemProps> = ({
+export const GuildNavItem: FC<GuildNavItemProps> = ({
   guild,
   isDragging = false,
   currentGuildId,
@@ -35,7 +34,7 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   const isActive =
     currentGuildId === guild.id || currentGuildId === guild.vanityUrl;
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: MouseEvent) => {
     if (isDragging) {
       e.preventDefault();
       e.stopPropagation();
@@ -93,5 +92,3 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
     </Tooltip>
   );
 };
-
-export const GuildNavItem = GuildNavItemComponent;
