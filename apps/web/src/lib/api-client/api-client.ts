@@ -121,6 +121,16 @@ const getApiMessageFromData = (data: unknown): string | undefined => {
   return normalizedMessage.trim().length > 0 ? normalizedMessage : undefined;
 };
 
+const isJsonContentType = (contentType: string | null) => {
+  if (!contentType) {
+    return false;
+  }
+
+  return (
+    contentType.includes("application/json") || contentType.includes("+json")
+  );
+};
+
 const parseResponseBody = (
   responseText: string,
   contentType: string | null,
@@ -129,11 +139,7 @@ const parseResponseBody = (
     return undefined;
   }
 
-  const isJsonResponse =
-    contentType?.includes("application/json") === true ||
-    contentType?.includes("+json") === true;
-
-  if (!isJsonResponse) {
+  if (!isJsonContentType(contentType)) {
     return responseText;
   }
 
