@@ -1,4 +1,0 @@
-{
-  "!apps/{web,game-client}/src/lib/api/generated/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": "oxlint --no-error-on-unmatched-pattern",
-  "!apps/{web,game-client}/src/lib/api/generated/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,md,css,html,yml,yaml}": "oxfmt"
-}
