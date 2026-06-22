@@ -29,6 +29,7 @@ import { bootstrapPublicApi } from "@/features/public-api";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
 import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-boundary-fallback";
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
+import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
@@ -57,6 +58,7 @@ function AppContent() {
   return (
     gameInitialized && (
       <>
+        <AnimationEffectsRootClass />
         <Timers />
         <AddTimer />
         <Settings />

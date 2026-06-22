@@ -1,4 +1,5 @@
 import { useWindowsStore, type WindowId } from "@/store/windows.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { AnimatePresence, motion } from "framer-motion";
 import type { ReactNode } from "react";
 
@@ -25,12 +26,21 @@ export const AnimatedWindow = ({
   windowKey,
   children,
 }: AnimatedWindowProps) => {
+  const animationEffectsEnabled = useSettingsStore(
+    (state) => state.animationEffectsEnabled,
+  );
   const windowFocusHistory = useWindowsStore(
     (state) => state.windowFocusHistory,
   );
   const windowZIndex = windowFocusHistory.indexOf(windowKey);
   const zIndex =
     windowZIndex === -1 ? 0 : windowFocusHistory.length - windowZIndex;
+
+  if (!animationEffectsEnabled) {
+    return isOpen ? (
+      <div style={{ zIndex, position: "relative" }}>{children}</div>
+    ) : null;
+  }
 
   return (
     <AnimatePresence>

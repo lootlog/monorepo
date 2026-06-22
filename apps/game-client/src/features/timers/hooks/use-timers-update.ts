@@ -5,27 +5,33 @@ import {
   type TimerWithTimeLeft,
 } from "../utils/timers-utils";
 
-const getTimersSignature = (timers: TimerWithTimeLeft[]) =>
-  timers
-    .map((timer) =>
-      [
-        timer.guildId,
-        timer.world,
-        timer.timerKey,
-        timer.npcId,
-        timer.minSpawnTime,
-        timer.maxSpawnTime,
-        timer.wasReset,
-        timer.updatedAt,
-        timer.member?.id,
-        timer.actorCharacter?.accountId,
-        timer.actorCharacter?.characterId,
-        timer.actorCharacter?.name,
-        timer.actorCharacter?.lvl,
-        timer.actorCharacter?.prof,
-      ].join(":"),
-    )
-    .join("|");
+const getTimersSignature = (timers: TimerWithTimeLeft[]) => {
+  let signature = "";
+
+  for (const timer of timers) {
+    if (signature) {
+      signature += "|";
+    }
+
+    signature +=
+      `${timer.guildId}:` +
+      `${timer.world}:` +
+      `${timer.timerKey}:` +
+      `${timer.npcId}:` +
+      `${timer.minSpawnTime}:` +
+      `${timer.maxSpawnTime}:` +
+      `${timer.wasReset}:` +
+      `${timer.updatedAt}:` +
+      `${timer.member?.id}:` +
+      `${timer.actorCharacter?.accountId}:` +
+      `${timer.actorCharacter?.characterId}:` +
+      `${timer.actorCharacter?.name}:` +
+      `${timer.actorCharacter?.lvl}:` +
+      `${timer.actorCharacter?.prof}`;
+  }
+
+  return signature;
+};
 
 export const useTimersUpdate = (
   activeTimers: TimerWithTimeLeft[],

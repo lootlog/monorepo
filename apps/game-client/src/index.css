@@ -196,6 +196,22 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   font-family: Arimo, Calibri, Segoe;
 }
 
+#lootlog-root.ll-reduced-motion *,
+#lootlog-root.ll-reduced-motion *::before,
+#lootlog-root.ll-reduced-motion *::after {
+  scroll-behavior: auto !important;
+  transition-delay: 0ms !important;
+  transition-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  animation-duration: 0ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+#lootlog-root.ll-reduced-motion .ll\:animate-spin {
+  animation-duration: 1s !important;
+  animation-iteration-count: infinite !important;
+}
+
 .ll-custom-cursor-pointer {
   cursor:
     url(../img/gui/cursor/5n.png?v=1747722915506) 4 0,
