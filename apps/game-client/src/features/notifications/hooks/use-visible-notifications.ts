@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import type { NotificationsSettings } from "@lootlog/types";
 import {
   type MentionNotification,
   type StoredNotification,
@@ -20,6 +21,15 @@ interface UseVisibleNotificationsResult {
   all: StoredNotification[];
 }
 
+type NotificationAutoHideStates = Record<
+  string,
+  {
+    deadlineMs: number | null;
+    pausedRemainingMs: number | null;
+    durationMs: number;
+  }
+>;
+
 const isMentionNotification = (
   notification: StoredNotification,
 ): notification is StoredNotification & MentionNotification => {
@@ -40,15 +50,8 @@ const getScheduledExpirationTimeMs = ({
   settings,
 }: {
   notification: StoredNotification;
-  notificationAutoHideByListKey: Record<
-    string,
-    {
-      deadlineMs: number | null;
-      pausedRemainingMs: number | null;
-      durationMs: number;
-    }
-  >;
-  settings: Record<string, { autoHideTimeout?: number }>;
+  notificationAutoHideByListKey: NotificationAutoHideStates;
+  settings: Partial<NotificationsSettings>;
 }) => {
   const key = getNotificationSettingsKey(notification);
 
@@ -76,6 +79,49 @@ const getScheduledExpirationTimeMs = ({
     autoHideState?.deadlineMs ??
     getExpirationTimeMs(notification, notificationSettings.autoHideTimeout)
   );
+};
+
+const isNotificationVisible = ({
+  notification,
+  settings,
+  world,
+}: {
+  notification: StoredNotification;
+  settings: Partial<NotificationsSettings>;
+  world: string;
+}) => {
+  if (isMentionNotification(notification)) {
+    return true;
+  }
+
+  const key = getNotificationSettingsKey(notification);
+
+  if (!isNotificationSettingsKey(key)) {
+    return false;
+  }
+
+  const notificationSettings = settings[key];
+
+  if (!notificationSettings) {
+    return false;
+  }
+
+  if (!notificationSettings.show) {
+    return false;
+  }
+
+  if (notificationSettings.ignoreOtherWorlds && notification.world !== world) {
+    return false;
+  }
+
+  if (
+    Array.isArray(notificationSettings.guildIds) &&
+    !notificationSettings.guildIds.includes(notification.guildId)
+  ) {
+    return false;
+  }
+
+  return true;
 };
 
 export const useVisibleNotifications = ({
@@ -136,25 +182,9 @@ export const useVisibleNotifications = ({
     };
   }, [autoCleanup, notificationAutoHideByListKey, notifications, settings]);
 
-  const visible = notifications.filter((n) => {
-    if (isMentionNotification(n)) {
-      return true;
-    }
-
-    const key = getNotificationSettingsKey(n);
-
-    if (!isNotificationSettingsKey(key)) {
-      return false;
-    }
-
-    const s = settings[key];
-    if (!s) return false;
-    if (!s.show) return false;
-    if (s.ignoreOtherWorlds && n.world !== world) return false;
-    if (Array.isArray(s.guildIds) && !s.guildIds.includes(n.guildId))
-      return false;
-    return true;
-  });
+  const visible = notifications.filter((notification) =>
+    isNotificationVisible({ notification, settings, world }),
+  );
 
   return { notifications: visible, all: notifications };
 };
