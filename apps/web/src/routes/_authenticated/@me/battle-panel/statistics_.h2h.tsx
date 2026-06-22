@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { HeadToHeadFullPage } from "@/features/user/battle-panel/battle-panel-statistics/head-to-head-full-page";
 import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
@@ -21,6 +21,16 @@ export const Route = createFileRoute(
         queryClient: context.queryClient,
         characterId: normalizeBattlePanelCharacterId(search.characterId),
       });
+
+      if (characterId && !search.characterId) {
+        throw redirect({
+          to: "/@me/battle-panel/statistics/h2h",
+          search: {
+            ...search,
+            characterId,
+          },
+        });
+      }
 
       await context.queryClient.prefetchQuery(
         getBattlesControllerGetHeadToHeadQueryOptions({

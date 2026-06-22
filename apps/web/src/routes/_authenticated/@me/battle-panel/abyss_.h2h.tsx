@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { MatchmakingH2HFullPage } from "@/features/user/battle-panel/battle-panel-statistics/matchmaking-h2h-full-page";
 import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
@@ -24,6 +24,16 @@ export const Route = createFileRoute(
 
       if (!characterId) {
         return null;
+      }
+
+      if (!search.characterId) {
+        throw redirect({
+          to: "/@me/battle-panel/abyss/h2h",
+          search: {
+            ...search,
+            characterId,
+          },
+        });
       }
 
       await context.queryClient.ensureQueryData(

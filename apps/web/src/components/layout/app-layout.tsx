@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { GuildShell } from "@/components/layout/guild-shell";
 import { GuildSidebarNavPlaceholder } from "@/components/layout/guild-sidebar-nav-placeholder";
 import { GuildsSidebarNav } from "@/components/layout/guilds-sidebar-nav";
+import { UserRoutePerformanceProfiler } from "@/components/performance/user-route-performance-profiler";
 import { UserShell } from "@/components/layout/user-shell";
 import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 import { Toaster } from "@lootlog/ui/components/sonner";
@@ -69,9 +70,11 @@ export const AppLayout = () => {
           <SidebarProvider>
             <AppSidebar navigation={sidebarNavigation} />
             {isUserRoute ? (
-              <UserShell>
-                <Outlet />
-              </UserShell>
+              <UserRoutePerformanceProfiler>
+                <UserShell>
+                  <Outlet />
+                </UserShell>
+              </UserRoutePerformanceProfiler>
             ) : (
               <GuildShell
                 variant={hasResolvedGuildRoute ? "ready" : "fallback"}

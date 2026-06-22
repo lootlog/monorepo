@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import {
@@ -21,6 +21,7 @@ import {
   type KillsFiltersState,
 } from "./components/kills-filters";
 import { createKillsColumns } from "./components/kills-columns";
+import { KillsMobileList } from "./components/kills-mobile-list";
 import type { NpcType } from "@/features/user/kills/npc-types";
 import type { KillsControllerGetUserNpcKillsParams } from "@/lib/api/generated/main/model";
 import {
@@ -28,6 +29,7 @@ import {
   useKillsControllerGetUserNpcKills,
 } from "@/lib/api/generated/main/kills/kills";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 
 type KillsSearchParams = {
   world?: string;
@@ -42,10 +44,24 @@ type KillsSearchParams = {
 
 const ITEMS_PER_PAGE = 20;
 
+const getNextSearchParams = (
+  searchParams: KillsSearchParams,
+  updates: Partial<KillsSearchParams>,
+) => {
+  const newParams = { ...searchParams, ...updates };
+
+  return Object.fromEntries(
+    Object.entries(newParams).filter(
+      ([, value]) => value !== undefined && value !== "",
+    ),
+  );
+};
+
 export const KillsPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as KillsSearchParams;
+  const isMobile = useIsMobile();
 
   const [searchInput, setSearchInput] = useState(searchParams.search ?? "");
   const debouncedSearch = useDebounce(searchInput, 500);
@@ -97,54 +113,55 @@ export const KillsPage: React.FC = () => {
     },
   );
 
-  const updateSearchParams = useCallback(
-    (updates: Partial<KillsSearchParams>) => {
-      const newParams = { ...searchParams, ...updates };
-
-      const cleanParams = Object.fromEntries(
-        Object.entries(newParams).filter(
-          ([, value]) => value !== undefined && value !== "",
-        ),
-      );
-
-      navigate({
-        to: ".",
-        search: cleanParams,
-        replace: true,
-      });
-    },
-    [navigate, searchParams],
-  );
+  const updateSearchParams = (updates: Partial<KillsSearchParams>) => {
+    navigate({
+      to: ".",
+      search: getNextSearchParams(searchParams, updates),
+      replace: true,
+    });
+  };
 
   useEffect(() => {
     if (debouncedSearch !== prevDebouncedSearch.current) {
       prevDebouncedSearch.current = debouncedSearch;
-      updateSearchParams({
-        search: debouncedSearch || undefined,
-        cursor: undefined,
+      navigate({
+        to: ".",
+        search: getNextSearchParams(searchParams, {
+          search: debouncedSearch || undefined,
+          cursor: undefined,
+        }),
+        replace: true,
       });
     }
-  }, [debouncedSearch, updateSearchParams]);
+  }, [debouncedSearch, navigate, searchParams]);
 
   useEffect(() => {
     if (debouncedMinLvl !== prevDebouncedMinLvl.current) {
       prevDebouncedMinLvl.current = debouncedMinLvl;
-      updateSearchParams({
-        minLvl: debouncedMinLvl || undefined,
-        cursor: undefined,
+      navigate({
+        to: ".",
+        search: getNextSearchParams(searchParams, {
+          minLvl: debouncedMinLvl || undefined,
+          cursor: undefined,
+        }),
+        replace: true,
       });
     }
-  }, [debouncedMinLvl, updateSearchParams]);
+  }, [debouncedMinLvl, navigate, searchParams]);
 
   useEffect(() => {
     if (debouncedMaxLvl !== prevDebouncedMaxLvl.current) {
       prevDebouncedMaxLvl.current = debouncedMaxLvl;
-      updateSearchParams({
-        maxLvl: debouncedMaxLvl || undefined,
-        cursor: undefined,
+      navigate({
+        to: ".",
+        search: getNextSearchParams(searchParams, {
+          maxLvl: debouncedMaxLvl || undefined,
+          cursor: undefined,
+        }),
+        replace: true,
       });
     }
-  }, [debouncedMaxLvl, updateSearchParams]);
+  }, [debouncedMaxLvl, navigate, searchParams]);
 
   const handleWorldChange = (world: string | undefined) => {
     updateSearchParams({ world, cursor: undefined });
@@ -267,19 +284,25 @@ export const KillsPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <Table className="border-b">
-                  <TanStackTableHeader
-                    table={table}
-                    className="bg-background sticky top-0 z-10"
-                    rowClassName="border-b-1! border-border"
-                    headClassName="whitespace-nowrap"
-                  />
-                  <TanStackTableBody
-                    table={table}
-                    rowClassName="bg-background/30 border-b border-border h-14"
-                    cellClassName="whitespace-nowrap"
-                  />
-                </Table>
+                <>
+                  {isMobile ? (
+                    <KillsMobileList npcs={data.npcs} startRank={cursor} />
+                  ) : (
+                    <Table className="border-b">
+                      <TanStackTableHeader
+                        table={table}
+                        className="bg-background sticky top-0 z-10"
+                        rowClassName="border-b-1! border-border"
+                        headClassName="whitespace-nowrap"
+                      />
+                      <TanStackTableBody
+                        table={table}
+                        rowClassName="bg-background/30 border-b border-border h-14"
+                        cellClassName="whitespace-nowrap"
+                      />
+                    </Table>
+                  )}
+                </>
               )}
             </ScrollArea>
             <TablePaginationFooter

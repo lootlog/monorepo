@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { BattlePanelStatistics } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-statistics";
 import { BattlePanelStatisticsSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-statistics-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
@@ -8,6 +8,7 @@ import {
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-search";
 import {
+  battlesControllerGetCombatProfile,
   getBattlesControllerGetBattleDurationQueryOptions,
   getBattlesControllerGetCurrentStreakQueryOptions,
   getBattlesControllerGetHeadToHeadQueryOptions,
@@ -15,7 +16,7 @@ import {
   getBattlesControllerGetProfessionWinRateQueryOptions,
 } from "@/lib/api/generated/battlelog/battles/battles";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
-import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
+import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics",
@@ -28,48 +29,75 @@ export const Route = createFileRoute(
         search.characterId,
       );
 
-      void (async () => {
-        const characterId = await ensureBattlePanelCharacterId({
-          queryClient: context.queryClient,
-          characterId: normalizedCharacterId,
-        });
-        const baseParams = {
-          characterId,
-          period: search.period,
-          minLevel: search.minLevel,
-          maxLevel: search.maxLevel,
-          startDate: search.startDate ?? undefined,
-          endDate: search.endDate ?? undefined,
-          ph: search.ph ?? undefined,
-          matchmaking: false,
-        };
+      const characterId = await ensureBattlePanelCharacterId({
+        queryClient: context.queryClient,
+        characterId: normalizedCharacterId,
+      });
 
-        await Promise.all([
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetProfessionWinRateQueryOptions(baseParams),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetHeadToHeadQueryOptions({
-              ...baseParams,
-              size: 5,
-            }),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetCurrentStreakQueryOptions(baseParams),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetBattleDurationQueryOptions(baseParams),
-          ),
-          prefetchRouteQuery(
-            context.queryClient,
-            getBattlesControllerGetPhGrowthQueryOptions(baseParams),
-          ),
-        ]);
-      })().catch(() => undefined);
+      if (!characterId) {
+        return null;
+      }
+
+      if (!search.characterId) {
+        throw redirect({
+          to: "/@me/battle-panel/statistics",
+          search: {
+            ...search,
+            characterId,
+          },
+        });
+      }
+
+      const baseParams = {
+        characterId,
+        period: search.period,
+        minLevel: search.minLevel,
+        maxLevel: search.maxLevel,
+        startDate: search.startDate ?? undefined,
+        endDate: search.endDate ?? undefined,
+        ph: search.ph ?? undefined,
+        matchmaking: false,
+      };
+
+      await Promise.all([
+        ensureRouteQueryData(
+          context.queryClient,
+          getBattlesControllerGetProfessionWinRateQueryOptions(baseParams),
+        ),
+        ensureRouteQueryData(
+          context.queryClient,
+          getBattlesControllerGetHeadToHeadQueryOptions({
+            ...baseParams,
+            size: 5,
+          }),
+        ),
+        ensureRouteQueryData(
+          context.queryClient,
+          getBattlesControllerGetCurrentStreakQueryOptions(baseParams),
+        ),
+        ensureRouteQueryData(
+          context.queryClient,
+          getBattlesControllerGetBattleDurationQueryOptions(baseParams),
+        ),
+        ensureRouteQueryData(
+          context.queryClient,
+          getBattlesControllerGetPhGrowthQueryOptions(baseParams),
+        ),
+        ensureRouteQueryData(context.queryClient, {
+          queryKey: [
+            "combat-profile",
+            characterId,
+            search.period,
+            search.minLevel,
+            search.maxLevel,
+            search.startDate ?? undefined,
+            search.endDate ?? undefined,
+            search.ph ?? undefined,
+            false,
+          ],
+          queryFn: () => battlesControllerGetCombatProfile(baseParams),
+        }),
+      ]);
 
       return null;
     }),
