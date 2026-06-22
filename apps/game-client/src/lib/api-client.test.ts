@@ -64,6 +64,24 @@ describe("api-client", () => {
     ).resolves.toEqual({ ok: true });
   });
 
+  it("parses JSON response subtypes", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ detail: "Validation failed" }), {
+        status: 200,
+        headers: {
+          "content-type": "application/problem+json",
+        },
+      }),
+    );
+
+    await expect(
+      executeApiRequest<{ detail: string }>({
+        url: new URL("https://api.example.com/fail"),
+        method: "GET",
+      }),
+    ).resolves.toEqual({ detail: "Validation failed" });
+  });
+
   it("returns raw text for non-json responses", async () => {
     mockFetch.mockResolvedValue(
       new Response("plain-text-response", {
