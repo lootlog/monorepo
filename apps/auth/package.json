@@ -15,8 +15,8 @@
     "test:cov": "vitest run --config ./vitest.config.ts --coverage",
     "auth:generate": "drizzle-kit generate",
     "auth:migrate:init": "node --import tsx scripts/migrate-init.ts",
-    "auth:migrate:dev": "node --import tsx scripts/migrate-dev.ts",
-    "auth:migrate:prod": "drizzle-kit migrate"
+    "auth:migrate:dev": "node --import tsx scripts/migrate.ts",
+    "auth:migrate:prod": "node --import tsx scripts/migrate.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.18",

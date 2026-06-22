@@ -1,9 +1,10 @@
 import { initializeAuthMigrations } from "../src/database/migrations";
-import { drizzlePool } from "../src/database/drizzle";
 
 async function main() {
+  const { drizzlePool } = await import("../src/database/drizzle");
+
   try {
-    await initializeAuthMigrations(drizzlePool);
+    await initializeAuthMigrations();
     console.log("Auth migrations initialized.");
   } finally {
     await drizzlePool.end();

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import type pg from "pg";
-import { db, drizzlePool } from "./drizzle";
+import type { db, drizzlePool } from "./drizzle";
 
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
@@ -20,8 +20,16 @@ type MigrationJournal = {
 type LocalMigration = {
   createdAt: number;
   hash: string;
-  name: string;
 };
+
+type AuthDatabaseConnection = {
+  db: typeof db;
+  drizzlePool: typeof drizzlePool;
+};
+
+function getAuthDatabaseConnection(): Promise<AuthDatabaseConnection> {
+  return import("./drizzle.js");
+}
 
 function getMigrationJournalPath() {
   return path.join(migrationsFolder, "meta", "_journal.json");
@@ -45,7 +53,6 @@ function readLocalMigrations(): LocalMigration[] {
     return {
       createdAt: when,
       hash: crypto.createHash("sha256").update(sqlContent).digest("hex"),
-      name: tag,
     };
   });
 }
@@ -56,9 +63,7 @@ async function ensureMigrationTracking(pool: pg.Pool) {
     CREATE TABLE IF NOT EXISTS ${migrationsSchema}.${migrationsTable} (
       id SERIAL PRIMARY KEY,
       hash text NOT NULL,
-      created_at bigint,
-      name text,
-      applied_at timestamp with time zone DEFAULT now()
+      created_at bigint
     )
   `);
 }
@@ -109,38 +114,42 @@ async function markBaselineMigrationsAsApplied(pool: pg.Pool) {
     localMigrations.map((migration) =>
       pool.query(
         `
-          INSERT INTO ${migrationsSchema}.${migrationsTable} (hash, created_at, name)
-          VALUES ($1, $2, $3)
+          INSERT INTO ${migrationsSchema}.${migrationsTable} (hash, created_at)
+          VALUES ($1, $2)
           ON CONFLICT DO NOTHING
         `,
-        [migration.hash, migration.createdAt, migration.name],
+        [migration.hash, migration.createdAt],
       ),
     ),
   );
 }
 
-export async function initializeAuthMigrations(pool: pg.Pool = drizzlePool) {
-  await ensureMigrationTracking(pool);
+export async function initializeAuthMigrations(pool?: pg.Pool) {
+  const migrationPool = pool ?? (await getAuthDatabaseConnection()).drizzlePool;
 
-  const trackedMigrationCount = await getTrackedMigrationCount(pool);
+  await ensureMigrationTracking(migrationPool);
+
+  const trackedMigrationCount = await getTrackedMigrationCount(migrationPool);
 
   if (trackedMigrationCount > 0) {
     return;
   }
 
-  const existingAuthTableCount = await getExistingAuthTableCount(pool);
+  const existingAuthTableCount = await getExistingAuthTableCount(migrationPool);
 
   if (existingAuthTableCount === 0) {
     return;
   }
 
-  await repairLegacyJwtSchema(pool);
-  await markBaselineMigrationsAsApplied(pool);
+  await repairLegacyJwtSchema(migrationPool);
+  await markBaselineMigrationsAsApplied(migrationPool);
 }
 
-export async function runAuthMigrations(pool: pg.Pool = drizzlePool) {
-  await initializeAuthMigrations(pool);
-  await migrate(db, {
+export async function runAuthMigrations(pool?: pg.Pool) {
+  const authDatabaseConnection = await getAuthDatabaseConnection();
+
+  await initializeAuthMigrations(pool ?? authDatabaseConnection.drizzlePool);
+  await migrate(authDatabaseConnection.db, {
     migrationsFolder,
     migrationsSchema,
     migrationsTable,

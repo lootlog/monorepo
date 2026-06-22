@@ -1,10 +1,11 @@
 import { runAuthMigrations } from "../src/database/migrations";
-import { drizzlePool } from "../src/database/drizzle";
 
 async function main() {
+  const { drizzlePool } = await import("../src/database/drizzle");
+
   try {
-    await runAuthMigrations(drizzlePool);
-    console.log("Auth local migrations applied.");
+    await runAuthMigrations();
+    console.log("Auth migrations applied.");
   } finally {
     await drizzlePool.end();
   }
