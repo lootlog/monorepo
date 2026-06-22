@@ -10,9 +10,8 @@ Shared auth and request-context helpers for backend services.
 
 ## Exports
 
-- `userMetadataFromHeaders`
-- `validateToken`
-- JWT verification types from `verify-jwt.types`
+- `@lootlog/api-helpers/auth/user-metadata`
+- `@lootlog/api-helpers/auth/verify-jwt`
 - `@lootlog/api-helpers/permissions`
 
 ## Development
@@ -25,5 +24,5 @@ pnpm --filter @lootlog/api-helpers build
 
 ## Notes
 
-- Main exports are defined in `src/index.ts`.
+- Public exports are built directly from their implementation files.
 - Token verification is implemented with `jose` and expects either a JWKS object or a remote JWKS URL.
