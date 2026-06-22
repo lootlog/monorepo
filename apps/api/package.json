@@ -21,7 +21,8 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "api:migrate:dev": "prisma migrate dev",
     "api:generate": "prisma generate",
-    "api:studio": "prisma studio"
+    "api:studio": "prisma studio",
+    "bench:hot-paths": "node ./benchmarks/hot-paths.mjs"
   },
   "dependencies": {
     "@discordjs/rest": "^2.6.1",
