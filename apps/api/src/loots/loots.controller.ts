@@ -28,6 +28,7 @@ import {
   LootStatsResponseDto,
 } from "src/loots/dto/loot-response.dto";
 import { LootStatsQueryDto } from "src/loots/dto/loot-stats.dto";
+import { ResolveLootItemParamsDto } from "src/loots/dto/resolve-loot-item-params.dto";
 import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
 import { LootsService } from "src/loots/loots.service";
 import { LootStatsService } from "src/loots/services/loot-stats.service";
@@ -38,6 +39,7 @@ import { CountResponseDto } from "src/shared/dto/common-response.dto";
 import { LootCommentResponseDto } from "src/shared/dto/loot-comment-response.dto";
 import {
   LootShareResponseDto,
+  NullableLootItemResponseDto,
   LootResponseDto,
   NullableLootResponseDto,
 } from "src/shared/dto/loot-response.dto";
@@ -151,6 +153,36 @@ export class LootsController {
     );
 
     return { count };
+  }
+
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get("/guilds/:guildId/loots/items/resolve")
+  @ApiOperation({
+    summary: "Resolve loot item by HID",
+    description:
+      "Resolve a single visible loot item by HID without loading full loot payloads",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ZodResponse({
+    status: 200,
+    description: "Resolved loot item or null when not found",
+    type: NullableLootItemResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - insufficient permissions",
+  })
+  resolveLootItemByHid(
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
+    @GuildData() guild: Guild,
+    @Query() query: ResolveLootItemParamsDto,
+  ) {
+    return this.lootsService.resolveLootItemByHid(guild, permissions, roles, {
+      hid: query.hid,
+      world: query.world,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_LOOTS_READ)

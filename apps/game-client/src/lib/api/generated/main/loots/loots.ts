@@ -41,7 +41,10 @@ import type {
   LootsControllerGetCommentsPathParameters,
   LootsControllerGetLootStatsParams,
   LootsControllerGetLootStatsPathParameters,
+  LootsControllerResolveLootItemByHidParams,
+  LootsControllerResolveLootItemByHidPathParameters,
   LootsControllerUpdateLootPathParameters,
+  NullableLootItemResponseDtoOutput,
   NullableLootResponseDto,
   UpdateLootDto
 } from '../model';
@@ -456,6 +459,141 @@ export const useGetLootsControllerCountLootsByGuildIdQueryData = () => {
   return ({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
     params: LootsControllerCountLootsByGuildIdParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>>(getLootsControllerCountLootsByGuildIdQueryKey({ guildId },params));
+}
+
+
+export const getLootsControllerResolveLootItemByHidUrl = ({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
+    params: LootsControllerResolveLootItemByHidParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/loots/items/resolve?${stringifiedParams}` : `/guilds/${guildId}/loots/items/resolve`
+}
+
+/**
+ * Resolve a single visible loot item by HID without loading full loot payloads
+ * @summary Resolve loot item by HID
+ */
+export const lootsControllerResolveLootItemByHid = async ({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
+    params: LootsControllerResolveLootItemByHidParams, options?: RequestInit): Promise<NullableLootItemResponseDtoOutput | null> => {
+
+  return orvalFetch<NullableLootItemResponseDtoOutput | null>(getLootsControllerResolveLootItemByHidUrl({ guildId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getLootsControllerResolveLootItemByHidQueryKey = ({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
+    params?: LootsControllerResolveLootItemByHidParams,) => {
+    return [
+    `/guilds/${guildId}/loots/items/resolve`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getLootsControllerResolveLootItemByHidQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<void>>({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
+    params: LootsControllerResolveLootItemByHidParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getLootsControllerResolveLootItemByHidQueryKey({ guildId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>> = ({ signal }) => lootsControllerResolveLootItemByHid({ guildId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type LootsControllerResolveLootItemByHidQueryResult = NonNullable<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>>
+export type LootsControllerResolveLootItemByHidQueryError = ErrorType<void>
+
+
+/**
+ * @summary Resolve loot item by HID
+ */
+
+export function useLootsControllerResolveLootItemByHid<TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<void>>(
+ { guildId }: LootsControllerResolveLootItemByHidPathParameters,
+    params: LootsControllerResolveLootItemByHidParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getLootsControllerResolveLootItemByHidQueryOptions({ guildId },params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Resolve loot item by HID
+ */
+export const prefetchLootsControllerResolveLootItemByHidQuery = async <TData = Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError = ErrorType<void>>(
+ queryClient: QueryClient, { guildId }: LootsControllerResolveLootItemByHidPathParameters,
+    params: LootsControllerResolveLootItemByHidParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>, TError, TData>, request?: SecondParameter<typeof orvalFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getLootsControllerResolveLootItemByHidQueryOptions({ guildId },params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Resolve loot item by HID
+ */
+export const invalidateLootsControllerResolveLootItemByHid = async (
+ queryClient: QueryClient, { guildId }: LootsControllerResolveLootItemByHidPathParameters,
+    params: LootsControllerResolveLootItemByHidParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getLootsControllerResolveLootItemByHidQueryKey({ guildId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Resolve loot item by HID
+ */
+export const useSetLootsControllerResolveLootItemByHidQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
+    params: LootsControllerResolveLootItemByHidParams | undefined,updater: Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>> | undefined) => Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>>({ queryKey: getLootsControllerResolveLootItemByHidQueryKey({ guildId },params) }, updater);
+  };
+}
+
+/**
+ * @summary Resolve loot item by HID
+ */
+export const useGetLootsControllerResolveLootItemByHidQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
+    params: LootsControllerResolveLootItemByHidParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>>(getLootsControllerResolveLootItemByHidQueryKey({ guildId },params));
 }
 
 
