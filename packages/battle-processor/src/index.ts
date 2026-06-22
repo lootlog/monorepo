@@ -2012,42 +2012,47 @@ export class BattleProcessor {
   }
 
   private determineOutcomeTeams() {
-    const splitNames = (s: string): string[] =>
-      s
+    const splitOutcomeNames = (value: string): string[] =>
+      value
         .split(",")
-        .map((n) => n.trim())
-        .filter(Boolean);
+        .map((name) => name.trim())
+        .filter((name) => name.length > 0);
 
     const getTeamFromNames = (names: string[]): number | null => {
       if (names.length === 0) return null;
-      const tokens = names.map((n) => n.trim());
-      const lowerSet = new Set(tokens.map((n) => this.normalize(n)));
-      const idSet = new Set(tokens.filter((t) => /^\d+$/.test(t)));
-      const teams: number[] = [];
+      const tokens = names.map((name) => name.trim());
+      const normalizedNames = new Set(
+        tokens.map((name) => this.normalize(name)),
+      );
+      const numericIds = new Set(tokens.filter((token) => /^\d+$/.test(token)));
+      const matchedTeams: number[] = [];
 
-      for (const [id, w] of this.warriors.entries()) {
-        if (idSet.has(id) || idSet.has(String(w.originalId))) {
-          teams.push(w.team);
+      for (const [id, warrior] of this.warriors.entries()) {
+        if (numericIds.has(id) || numericIds.has(String(warrior.originalId))) {
+          matchedTeams.push(warrior.team);
           continue;
         }
-        if (lowerSet.has(this.normalize(w.name))) {
-          teams.push(w.team);
+        if (normalizedNames.has(this.normalize(warrior.name))) {
+          matchedTeams.push(warrior.team);
         }
       }
 
-      if (teams.length === 0) return null;
+      if (matchedTeams.length === 0) return null;
 
-      const counts = teams.reduce<Record<number, number>>((acc, t) => {
-        acc[t] = (acc[t] ?? 0) + 1;
-        return acc;
-      }, {});
+      const counts = matchedTeams.reduce<Record<number, number>>(
+        (acc, team) => {
+          acc[team] = (acc[team] ?? 0) + 1;
+          return acc;
+        },
+        {},
+      );
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
       const [topTeam] = sorted[0] ?? [];
       return topTeam === undefined ? null : Number(topTeam);
     };
 
-    const winnerNames = splitNames(this.battleOutcome.winner);
-    const loserNames = splitNames(this.battleOutcome.loser);
+    const winnerNames = splitOutcomeNames(this.battleOutcome.winner);
+    const loserNames = splitOutcomeNames(this.battleOutcome.loser);
 
     let winningTeam = getTeamFromNames(winnerNames);
     let losingTeam = getTeamFromNames(loserNames);
