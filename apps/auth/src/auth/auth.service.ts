@@ -5,8 +5,11 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from "@nestjs/common";
+import {
+  type JwksKeys,
+  validateToken,
+} from "@lootlog/api-helpers/auth/verify-jwt";
 import { APIError } from "better-auth/api";
-import { type JwksKeys, validateToken } from "@lootlog/api-helpers";
 import { fromNodeHeaders } from "better-auth/node";
 import type { IncomingHttpHeaders } from "node:http";
 import { env } from "src/config/env";
