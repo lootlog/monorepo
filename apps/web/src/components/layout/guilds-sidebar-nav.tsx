@@ -6,6 +6,7 @@ import {
   CalendarClock,
   ClipboardList,
   Clock,
+  FileText,
   Logs,
   Settings,
   Trophy,
@@ -21,6 +22,7 @@ import { canManageGuild } from "@/lib/guild-permissions";
 import { useListEvents } from "@/lib/api/generated/main/events/events";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { DevPermissionOverridePanel } from "@/components/dev/dev-permission-override-panel";
+import { canReadGuildDocs } from "@/features/guild/docs/docs-permissions";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
@@ -33,6 +35,7 @@ export const GuildsSidebarNav: FC = () => {
     permissions?.includes("LOOTLOG_EVENTS_READ") ||
     permissions?.includes("LOOTLOG_EVENTS_MANAGE") ||
     permissions?.includes("OWNER");
+  const canViewDocs = canReadGuildDocs(permissions);
   const activeEventsGuildId = canViewEvents ? (guildId ?? "") : "";
 
   const { data: activeEvents } = useListEvents(
@@ -76,6 +79,13 @@ export const GuildsSidebarNav: FC = () => {
         permissions?.includes("LOOTLOG_RESERVATIONS_READ") ||
         permissions?.includes("OWNER"),
       ),
+    },
+    {
+      label: t("layout.navigation.docs"),
+      icon: <FileText className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.docs,
+      available: true,
+      enabled: Boolean(canViewDocs),
     },
     {
       label: t("layout.navigation.events"),

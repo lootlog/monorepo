@@ -203,6 +203,43 @@ describe("resolveDocumentTitle", () => {
     ).toBe("Rezerwacje - Nocna Straż | Lootlog.pl");
   });
 
+  it("uses the guild docs list title", () => {
+    expect(
+      resolveDocumentTitle([
+        createMatch({
+          loaderData: { guild: { name: "Nocna Straż" } },
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1",
+          routeId: "/_authenticated/$guildId",
+        }),
+        createMatch({
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1/docs",
+          routeId: "/_authenticated/$guildId/docs",
+        }),
+      ]),
+    ).toBe("Dokumenty - Nocna Straż | Lootlog.pl");
+  });
+
+  it("uses the guild doc detail title from loader data", () => {
+    expect(
+      resolveDocumentTitle([
+        createMatch({
+          loaderData: { guild: { name: "Nocna Straż" } },
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1",
+          routeId: "/_authenticated/$guildId",
+        }),
+        createMatch({
+          loaderData: { document: { title: "Zasady tytanów" } },
+          params: { docId: "doc-1", guildId: "guild-1" },
+          pathname: "/guild-1/docs/doc-1",
+          routeId: "/_authenticated/$guildId/docs/$docId",
+        }),
+      ]),
+    ).toBe("Zasady tytanów - Nocna Straż | Lootlog.pl");
+  });
+
   it("uses the event name as context for event child pages", () => {
     expect(
       resolveDocumentTitle([

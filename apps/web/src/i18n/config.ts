@@ -21,6 +21,7 @@ import activityLogs from "./translations/activity-logs.json";
 import auth from "./translations/auth.json";
 import layout from "./translations/layout.json";
 import ui from "./translations/ui.json";
+import docs from "./translations/docs.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -46,6 +47,7 @@ i18n.use(initReactI18next).init({
         auth,
         layout,
         ui,
+        docs,
       },
     },
   },

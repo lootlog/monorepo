@@ -41,9 +41,16 @@ type EventRouteLoaderData = {
   }>;
 };
 
+type DocsRouteLoaderData = {
+  document?: {
+    title?: string;
+  };
+};
+
 const ROOT_ROUTE_ID = "__root__";
 const GUILD_ROUTE_ID = "/_authenticated/$guildId";
 const EVENT_ROUTE_ID = "/_authenticated/$guildId/events_/$eventId_";
+const DOCS_DETAIL_ROUTE_ID = "/_authenticated/$guildId/docs/$docId";
 const USER_ROUTE_PREFIX = "/_authenticated/@me";
 const GUILD_ROUTE_PREFIX = "/_authenticated/$guildId";
 const FALLBACK_ID_PATTERN = /#\S+/;
@@ -211,6 +218,15 @@ function getEventRouteData(matches: readonly DocumentTitleMatch[]) {
   };
 }
 
+function getDocsRouteData(matches: readonly DocumentTitleMatch[]) {
+  const docsLoaderData = getMatchByRouteId(matches, DOCS_DETAIL_ROUTE_ID)
+    ?.loaderData as DocsRouteLoaderData | undefined;
+
+  return {
+    docTitle: docsLoaderData?.document?.title,
+  };
+}
+
 function shouldUseGuildContext(title: string, guildName?: string) {
   if (!guildName || title === guildName) {
     return false;
@@ -227,9 +243,11 @@ function getGuildRouteTitle(
   const params = getRouteParams(lastMatch);
   const guildName = getGuildName(matches, options);
   const eventData = getEventRouteData(matches);
+  const docsData = getDocsRouteData(matches);
   const navigationInfo = getNavigationInfo({
     path: getPathname(lastMatch),
     params: {
+      docId: params.docId,
       eventId: params.eventId,
       guildId: params.guildId,
       heroId: params.heroId,
@@ -242,6 +260,7 @@ function getGuildRouteTitle(
     eventHeroNpcs: eventData.eventHeroNpcs,
     eventName: eventData.eventName,
     eventRankings: eventData.eventRankings,
+    docTitle: docsData.docTitle,
     guildName,
     t,
   });
