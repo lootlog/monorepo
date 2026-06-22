@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { initObservability } from "@lootlog/instrumentation";
+import { initObservability } from "@lootlog/instrumentation/instrumentation-nest";
 
 initObservability({
   serviceName: process.env.SERVICE_NAME ?? "auth",
