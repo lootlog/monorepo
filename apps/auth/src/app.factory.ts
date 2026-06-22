@@ -21,6 +21,8 @@ export async function createApp(): Promise<NestFastifyApplication> {
     },
   );
 
+  app.enableShutdownHooks();
+
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   const fastify = app.getHttpAdapter().getInstance();
