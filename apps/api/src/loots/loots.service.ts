@@ -31,6 +31,7 @@ import { LootMappingService } from "./services/loot-mapping.service";
 import { LootValidationService } from "./services/loot-validation.service";
 import { LootQueryService } from "./services/loot-query.service";
 import { LootCommentService } from "./services/loot-comment.service";
+import { LootStatsService } from "./services/loot-stats.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { ExecutionError } from "redlock";
 import { RedlockService } from "src/lib/redlock/redlock.service";
@@ -100,6 +101,7 @@ export class LootsService implements OnModuleInit {
     private readonly lootValidationService: LootValidationService,
     private readonly lootQueryService: LootQueryService,
     private readonly lootCommentService: LootCommentService,
+    private readonly lootStatsService: LootStatsService,
     private readonly redisService: RedisService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly redlockService: RedlockService,
@@ -269,6 +271,14 @@ export class LootsService implements OnModuleInit {
         }
       }),
     );
+  }
+
+  private async invalidateLootStatsCaches(guildIds: string[]) {
+    if (guildIds.length === 0) {
+      return;
+    }
+
+    await this.lootStatsService.invalidateCache(guildIds);
   }
 
   private stableSerialize(value: unknown): string {
@@ -512,9 +522,13 @@ export class LootsService implements OnModuleInit {
           });
         }
 
-        await this.invalidateLootsListCache(
-          newSubmissions.map((submission) => submission.guildId),
+        const newSubmissionGuildIds = newSubmissions.map(
+          (submission) => submission.guildId,
         );
+        await Promise.all([
+          this.invalidateLootsListCache(newSubmissionGuildIds),
+          this.invalidateLootStatsCaches(newSubmissionGuildIds),
+        ]);
         await this.publishLootCreateEvents(
           existingLoot.id,
           newSubmissions,
@@ -567,9 +581,13 @@ export class LootsService implements OnModuleInit {
         })),
         skipDuplicates: true,
       });
-      await this.invalidateLootsListCache(
-        outcome.submissionData.map((submission) => submission.guildId),
+      const submittedGuildIds = outcome.submissionData.map(
+        (submission) => submission.guildId,
       );
+      await Promise.all([
+        this.invalidateLootsListCache(submittedGuildIds),
+        this.invalidateLootStatsCaches(submittedGuildIds),
+      ]);
       await this.publishLootCreateEvents(
         loot.id,
         outcome.submissionData,
@@ -657,7 +675,10 @@ export class LootsService implements OnModuleInit {
         guildId,
       },
     });
-    await this.invalidateLootsListCache([guildId]);
+    await Promise.all([
+      this.invalidateLootsListCache([guildId]),
+      this.invalidateLootStatsCaches([guildId]),
+    ]);
   }
 
   async createComment(options: {
@@ -851,6 +872,20 @@ export class LootsService implements OnModuleInit {
       permissions,
       roles,
       lootId,
+    );
+  }
+
+  resolveLootItemByHid(
+    guild: Guild,
+    permissions: Permission[],
+    roles: Role[],
+    options: { hid: string; world?: string },
+  ) {
+    return this.lootQueryService.resolveLootItemByHid(
+      guild,
+      permissions,
+      roles,
+      options,
     );
   }
 }

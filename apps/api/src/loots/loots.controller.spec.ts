@@ -4,6 +4,7 @@ import type { Mock } from "vitest";
 import {
   LootSource,
   Permission,
+  Profession,
   type Guild,
   type Role,
 } from "src/generated/prisma/client";
@@ -14,6 +15,7 @@ import { CreateCommentDto } from "./dto/create-comment-dto";
 import { CreateLootDto } from "./dto/create-loot.dto";
 import { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto";
 import { LootStatsQueryDto } from "./dto/loot-stats.dto";
+import { ResolveLootItemParamsDto } from "./dto/resolve-loot-item-params.dto";
 import { UpdateLootDto } from "./dto/update-loot.dto";
 import { ErrorKey } from "./enum/error-key.enum";
 import { LootsController } from "./loots.controller";
@@ -25,6 +27,7 @@ describe("LootsController", () => {
   let service: {
     createLoot: Mock;
     fetchLootsByGuildId: Mock;
+    resolveLootItemByHid: Mock;
     fetchLootById: Mock;
     getComments: Mock;
     createComment: Mock;
@@ -108,6 +111,7 @@ describe("LootsController", () => {
     const mockLootsService = {
       createLoot: mockFn(),
       fetchLootsByGuildId: mockFn(),
+      resolveLootItemByHid: mockFn(),
       fetchLootById: mockFn(),
       getComments: mockFn(),
       createComment: mockFn(),
@@ -168,6 +172,11 @@ describe("LootsController", () => {
         LootsController.prototype,
         "createComment",
       );
+      const resolveLootItemParamTypes = Reflect.getMetadata(
+        "design:paramtypes",
+        LootsController.prototype,
+        "resolveLootItemByHid",
+      );
       const updateLootParamTypes = Reflect.getMetadata(
         "design:paramtypes",
         LootsController.prototype,
@@ -178,6 +187,7 @@ describe("LootsController", () => {
       expect(getLootStatsParamTypes[1]).toBe(LootStatsQueryDto);
       expect(createLootParamTypes[2]).toBe(CreateLootDto);
       expect(createCommentParamTypes[2]).toBe(CreateCommentDto);
+      expect(resolveLootItemParamTypes[3]).toBe(ResolveLootItemParamsDto);
       expect(updateLootParamTypes[1]).toBe(UpdateLootDto);
     });
   });
@@ -294,6 +304,40 @@ describe("LootsController", () => {
       );
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("resolveLootItemByHid", () => {
+    it("should resolve a visible loot item by HID", async () => {
+      const query = { hid: "item1", world: "testworld" };
+      const mockItem = {
+        id: 1,
+        hid: "item1",
+        name: "Test Item",
+        icon: "item.png",
+        stat: "lvl=50",
+        type: null,
+        rarity: null,
+        lvl: 50,
+        prof: [Profession.WARRIOR],
+      };
+
+      service.resolveLootItemByHid.mockResolvedValue(mockItem);
+
+      const result = await controller.resolveLootItemByHid(
+        [Permission.LOOTLOG_LOOTS_READ],
+        [mockRole],
+        mockGuild,
+        query,
+      );
+
+      expect(service.resolveLootItemByHid).toHaveBeenCalledWith(
+        mockGuild,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [mockRole],
+        query,
+      );
+      expect(result).toEqual(mockItem);
     });
   });
 
