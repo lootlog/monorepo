@@ -45,4 +45,15 @@ describe("parseItemStats", () => {
       { key: "ttl", value: "180" },
     ]);
   });
+
+  it("should preserve equals signs inside stat values", () => {
+    const stats = "custom=a=b=c;flag;empty=";
+    const result = parseItemStats(stats);
+
+    expect(result).toEqual([
+      { key: "custom", value: "a=b=c" },
+      { key: "flag", value: true },
+      { key: "empty", value: "" },
+    ]);
+  });
 });
