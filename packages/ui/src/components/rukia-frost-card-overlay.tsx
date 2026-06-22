@@ -1,20 +1,6 @@
 import * as React from "react";
 
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 11) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
-
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash);
-}
+import { createSeededRandom, hashString } from "@lootlog/ui/lib/seeded-random";
 
 const RUKIA_CLASS = "rukia";
 
@@ -41,43 +27,44 @@ const SNOWFLAKE_SVG =
 const CRYSTAL_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 0 L9 6 L15 6 L10 9 L12 16 L8 11 L4 16 L6 9 L1 6 L7 6 Z' fill='white'/%3E%3C/svg%3E";
 
+function createRukiaOverlayElements(id: string) {
+  const random = createSeededRandom(hashString(id));
+
+  for (let i = 0; i < 20; i++) random();
+
+  const result: Array<{
+    id: string;
+    left: string;
+    top: string;
+    size: number;
+    rotation: number;
+    opacity: number;
+    type: "snowflake" | "crystal";
+  }> = [];
+
+  const count = 6 + Math.floor(random() * 4);
+
+  for (let i = 0; i < count; i++) {
+    const type = random() > 0.4 ? "snowflake" : "crystal";
+
+    result.push({
+      id: `frost-${i}`,
+      left: `${random() * 100}%`,
+      top: `${random() * 100}%`,
+      size: type === "snowflake" ? 18 + random() * 14 : 10 + random() * 8,
+      rotation: random() * 360,
+      opacity: 0.025 + random() * 0.025,
+      type,
+    });
+  }
+
+  return result;
+}
+
 export function RukiaFrostCardOverlay() {
   const isRukiaTheme = useRukiaTheme();
   const id = React.useId();
-
-  const elements = React.useMemo(() => {
-    const rand = seededRandom(hashString(id));
-
-    for (let i = 0; i < 20; i++) rand();
-
-    const result: Array<{
-      id: string;
-      left: string;
-      top: string;
-      size: number;
-      rotation: number;
-      opacity: number;
-      type: "snowflake" | "crystal";
-    }> = [];
-
-    const count = 6 + Math.floor(rand() * 4);
-
-    for (let i = 0; i < count; i++) {
-      const type = rand() > 0.4 ? "snowflake" : "crystal";
-
-      result.push({
-        id: `frost-${i}`,
-        left: `${rand() * 100}%`,
-        top: `${rand() * 100}%`,
-        size: type === "snowflake" ? 18 + rand() * 14 : 10 + rand() * 8,
-        rotation: rand() * 360,
-        opacity: 0.025 + rand() * 0.025,
-        type,
-      });
-    }
-
-    return result;
-  }, [id]);
+  const elements = createRukiaOverlayElements(id);
 
   if (!isRukiaTheme) return null;
 
