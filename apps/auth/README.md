@@ -35,7 +35,7 @@ pnpm --filter @lootlog/auth dev
 ## Notes
 
 - Database access is configured with Drizzle and PostgreSQL in `src/database/drizzle.ts`.
-- `auth:migrate:dev` applies local Drizzle migrations through the app migrator instead of `drizzle-kit push`.
+- `auth:migrate:dev` and `auth:migrate:prod` apply Drizzle migrations through the app migrator.
 - The local migration runner preserves existing auth tables by initializing Drizzle migration tracking before applying pending migrations.
 - Use `auth:migrate:init` only when you need to explicitly initialize Drizzle migration tracking for an existing database that predates Drizzle migration tracking.
 - Observability is initialized at process startup in `src/instrumentation.ts`.
