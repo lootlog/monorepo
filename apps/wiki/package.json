@@ -29,7 +29,7 @@
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.40.2",
+    "@cloudflare/vite-plugin": "^1.42.1",
     "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
@@ -38,7 +38,7 @@
     "tailwindcss": "^4.3.1",
     "typescript": "~6.0.3",
     "vite": "^8.0.16",
-    "vitest": "^4.1.8",
-    "wrangler": "^4.100.0"
+    "vitest": "^4.1.9",
+    "wrangler": "^4.103.0"
   }
 }
