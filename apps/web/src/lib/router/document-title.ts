@@ -1,7 +1,9 @@
 import i18n from "@/i18n/config";
-import { getNavigationInfo } from "@/components/layout/get-navigation-info";
+import {
+  getNavigationInfo,
+  type Breadcrumb,
+} from "@/components/layout/get-navigation-info";
 import { getUserNavigationInfo } from "@/components/layout/get-user-navigation-info";
-import type { Breadcrumb } from "@/components/layout/get-navigation-info";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { getBattleRouteLabel } from "@/lib/battle/battle-route-label";
 

@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import {
   CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
   type CreateNotificationRuleDtoTriggerType,
+  type RoleResponseDtoOutput as GuildRole,
 } from "@/lib/api/generated/main/model";
 import {
   TIMER_PRESET_SIMPLE,
@@ -64,7 +65,6 @@ import {
   removeTemplateTokenNode,
   SCHEDULED_MESSAGE_VARIABLE_KEYS,
 } from "./notification-template-editor.utils";
-import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
 
 type NotificationTemplateEditorProps = {
   value: string;
