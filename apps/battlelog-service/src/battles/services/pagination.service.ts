@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import { battles } from "src/shared/modules/drizzle/schema";
+import type { StoredBattleWithWarriors } from "./battle-analytics.types";
 import type {
   CursorPagination,
   PaginationOptions,
@@ -44,7 +45,7 @@ export class PaginationService {
     const timestamp = cursor.substring(0, separatorIndex);
     const id = cursor.substring(separatorIndex + 1);
     const createdAt = new Date(timestamp);
-    if (isNaN(createdAt.getTime())) {
+    if (Number.isNaN(createdAt.getTime())) {
       return null;
     }
     return { createdAt, id };
@@ -53,7 +54,7 @@ export class PaginationService {
   async paginateBattles(
     whereBuilder: WhereBuilder,
     options: PaginationOptions,
-  ): Promise<PaginationResult<any>> {
+  ): Promise<PaginationResult<StoredBattleWithWarriors>> {
     const startTime = Date.now();
     const { size = 20, cursor, includeTotal } = options;
 
@@ -203,7 +204,7 @@ export class PaginationService {
           WHERE relname = 'battles'
         `);
         const row = result.rows[0] as { estimated_count: string } | undefined;
-        return Number(row?.estimated_count || 0);
+        return Number(row?.estimated_count ?? 0);
       }
 
       const result = await this.drizzle.db
