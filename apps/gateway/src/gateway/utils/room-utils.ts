@@ -11,6 +11,22 @@ import { Platform } from "src/gateway/enums/platform.enum";
 export type FeatureName = "chat" | "timers" | "notifications" | "loots";
 export type TierName = NpcRoutingTier;
 
+type FeaturePermissions = Record<TierName, Permission>;
+type FeaturePermissionMap = Record<FeatureName, FeaturePermissions>;
+type FeatureRoom = { feature: FeatureName; tier: TierName };
+
+const FEATURE_NAMES = [
+  "chat",
+  "timers",
+  "notifications",
+  "loots",
+] as const satisfies readonly FeatureName[];
+const TIER_NAMES = [
+  "base",
+  "titans",
+  "heroes",
+] as const satisfies readonly TierName[];
+
 const FEATURE_ROOMS = {
   chat: {
     base: Permission.LOOTLOG_CHAT_READ,
@@ -32,23 +48,20 @@ const FEATURE_ROOMS = {
     titans: Permission.LOOTLOG_LOOTS_TITANS_READ,
     heroes: Permission.LOOTLOG_LOOTS_HEROES_READ,
   },
-} as const;
+} as const satisfies FeaturePermissionMap;
 
-type FeatureRoom = { feature: FeatureName; tier: TierName };
-
-const FEATURE_NAMES = Object.keys(FEATURE_ROOMS) as FeatureName[];
-const TIER_NAMES = Object.keys(FEATURE_ROOMS.chat) as TierName[];
 const ALL_FEATURE_ROOMS: FeatureRoom[] = FEATURE_NAMES.flatMap((feature) =>
   TIER_NAMES.map((tier) => ({ feature, tier })),
 );
-const PLATFORM_EXCLUDED_FEATURES: Record<Platform, readonly FeatureName[]> = {
+const PLATFORM_EXCLUDED_FEATURES = {
   [Platform.GAME]: ["loots"],
   [Platform.WEB_APP]: ["chat", "notifications"],
   [Platform.UNKNOWN]: ["loots"],
-};
+} as const satisfies Record<Platform, readonly FeatureName[]>;
 
 function getApplicableFeatureRooms(platform: Platform): FeatureRoom[] {
-  const excludedFeatures = PLATFORM_EXCLUDED_FEATURES[platform];
+  const excludedFeatures: readonly FeatureName[] =
+    PLATFORM_EXCLUDED_FEATURES[platform];
 
   return ALL_FEATURE_ROOMS.filter(
     ({ feature }) => !excludedFeatures.includes(feature),
