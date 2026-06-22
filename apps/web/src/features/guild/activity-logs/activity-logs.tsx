@@ -36,6 +36,7 @@ export const ActivityLogs: FC = () => {
   );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const isMobile = useIsMobile();
+  const hasGuildId = Boolean(guildId);
 
   const { data: worldSuggestionsResponse } = useQuery(
     getActivitiesControllerSuggestWorldsQueryOptions(
@@ -43,6 +44,7 @@ export const ActivityLogs: FC = () => {
       { limit: 20 },
       {
         query: {
+          enabled: hasGuildId,
           queryKey: getActivitiesControllerSuggestWorldsQueryKey(
             { guildId: guildId ?? "" },
             { limit: 20 },

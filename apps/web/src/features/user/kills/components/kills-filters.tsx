@@ -78,9 +78,9 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-10 bg-background border-b px-4 py-3">
-      <div className="flex flex-col md:flex-row gap-2 flex-wrap items-center">
-        <div className="relative w-full md:w-[200px]">
+    <div className="sticky top-0 z-10 w-full max-w-full overflow-hidden border-b bg-background px-3 py-3 md:px-4">
+      <div className="flex min-w-0 flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center">
+        <div className="relative min-w-0 md:w-[200px]">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t("kills.ranking.search")}
@@ -94,7 +94,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
           value={filters.world ?? "all"}
           onValueChange={handleWorldChange}
         >
-          <SelectTrigger className="w-full md:w-[170px] h-9">
+          <SelectTrigger className="h-9 w-full min-w-0 md:w-[170px]">
             <div className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
               <SelectValue placeholder={t("kills.home.filters.allWorlds")} />
@@ -116,7 +116,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
           value={filters.npcTypes?.[0] ?? "all"}
           onValueChange={handleNpcTypeChange}
         >
-          <SelectTrigger className="w-full md:w-[140px] h-9">
+          <SelectTrigger className="h-9 w-full min-w-0 md:w-[140px]">
             <SelectValue placeholder={t("kills.filters.allTypes")} />
           </SelectTrigger>
           <SelectContent>
@@ -132,16 +132,16 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
         <KillStatsPeriodSelect
           value={filters.period}
           onValueChange={onPeriodChange}
-          className="w-full md:w-[140px] h-9"
+          className="h-9 w-full min-w-0 md:w-[140px]"
         />
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 items-center gap-1.5 md:w-auto">
           <Input
             type="number"
             placeholder={t("kills.filters.minLevel")}
             value={filters.minLvl ?? ""}
             onChange={handleMinLvlChange}
-            className="w-full md:w-[70px] h-9"
+            className="h-9 min-w-0 flex-1 md:w-[70px]"
             min={0}
           />
           <span className="text-muted-foreground text-sm">-</span>
@@ -150,7 +150,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
             placeholder={t("kills.filters.maxLevel")}
             value={filters.maxLvl ?? ""}
             onChange={handleMaxLvlChange}
-            className="w-full md:w-[70px] h-9"
+            className="h-9 min-w-0 flex-1 md:w-[70px]"
             min={0}
           />
         </div>

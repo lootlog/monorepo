@@ -6,7 +6,6 @@ import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { authScopesQueryOptions } from "@/hooks/api/use-auth-scopes";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryOptions,
-  getUsersControllerGetCurrentUserGuildsQueryOptions,
   getUsersControllerGetUserPreferencesQueryOptions,
 } from "@/lib/api/generated/main/users/users";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
@@ -47,10 +46,6 @@ export const Route = createFileRoute("/_authenticated")({
         prefetchRouteQuery(
           context.queryClient,
           getUsersControllerGetCurrentUserAccessibleGuildsQueryOptions(),
-        ),
-        prefetchRouteQuery(
-          context.queryClient,
-          getUsersControllerGetCurrentUserGuildsQueryOptions(),
         ),
         prefetchRouteQuery(
           context.queryClient,

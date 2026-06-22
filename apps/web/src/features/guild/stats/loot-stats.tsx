@@ -7,7 +7,10 @@ import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useLootsControllerGetLootStats } from "@/lib/api/generated/main/loots/loots";
+import {
+  getLootsControllerGetLootStatsQueryKey,
+  useLootsControllerGetLootStats,
+} from "@/lib/api/generated/main/loots/loots";
 import type { LootsControllerGetLootStatsPeriod } from "@/lib/api/generated/main/model/loots-controller-get-loot-stats-period";
 import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { LootOverviewCards } from "./components/loot-overview-cards";
@@ -25,13 +28,23 @@ export const LootStats: React.FC = () => {
   const { settings, setPeriod, setWorld, setExcludeColossus } =
     useLootStatsSettings();
   const isMobile = useIsMobile();
+  const lootStatsParams = buildLootStatsParams({
+    period: settings.period,
+    world: settings.world ?? undefined,
+    excludeColossus: settings.excludeColossus,
+  });
   const { data, isLoading } = useLootsControllerGetLootStats(
     { guildId: guildId ?? "" },
-    buildLootStatsParams({
-      period: settings.period,
-      world: settings.world ?? undefined,
-      excludeColossus: settings.excludeColossus,
-    }),
+    lootStatsParams,
+    {
+      query: {
+        enabled: Boolean(guildId && settings.world),
+        queryKey: getLootsControllerGetLootStatsQueryKey(
+          { guildId: guildId ?? "" },
+          lootStatsParams,
+        ),
+      },
+    },
   );
 
   if (!settings.world) {

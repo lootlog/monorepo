@@ -32,6 +32,8 @@ import { formatDurationHuman } from "./utils/format-duration";
 import { formatDateTime } from "./utils/format-date";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
 import {
+  getListEventRankingQueryKey,
+  getShowEventOverviewQueryKey,
   useListEventRanking,
   useShowEventOverview,
 } from "@/lib/api/generated/main/events/events";
@@ -764,15 +766,27 @@ const EventMemberKillsPageContent = ({
     initialHeroId,
   );
   const [showStats, setShowStats] = useState(false);
+  const hasEventRouteParams = Boolean(guildId && eventId);
 
   const {
     data: event,
     isLoading: eventLoading,
     error: eventError,
-  } = useShowEventOverview({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  } = useShowEventOverview(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getShowEventOverviewQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
   const {
     data: killsData,
     fetchNextPage,
@@ -787,10 +801,21 @@ const EventMemberKillsPageContent = ({
     heroId: selectedHeroId,
     limit: 20,
   });
-  const { data: rankings = [] } = useListEventRanking({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  const { data: rankings = [] } = useListEventRanking(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getListEventRankingQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
 
   const heroes = event?.heroNpcs ?? [];
   const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];

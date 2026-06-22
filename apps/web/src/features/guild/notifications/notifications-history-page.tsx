@@ -24,10 +24,12 @@ import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model
 export const NotificationsHistoryPage = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+  const hasGuildId = Boolean(guildId);
   const { data, isLoading } = useNotificationsGuildControllerGetGuildJobs(
     { guildId: guildId ?? "" },
     {
       query: {
+        enabled: hasGuildId,
         queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({
           guildId: guildId ?? "",
         }),
