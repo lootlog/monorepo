@@ -15,6 +15,15 @@ export function isValidTimeZone(timeZone: string): boolean {
   }
 }
 
+export function isRecurringScheduleInterval(
+  intervalType: NotificationScheduleIntervalType,
+): boolean {
+  return (
+    intervalType === NotificationScheduleIntervalType.DAILY ||
+    intervalType === NotificationScheduleIntervalType.WEEKLY
+  );
+}
+
 export function calculateFirstOccurrenceInTimeZone(params: {
   intervalType: NotificationScheduleIntervalType;
   timeOfDay: string;
