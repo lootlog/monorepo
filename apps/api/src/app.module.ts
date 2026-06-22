@@ -35,6 +35,7 @@ import { MemberContextModule } from "src/shared/permissions/member-context.modul
 import { DiagnosticsModule } from "src/shared/diagnostics/diagnostics.module";
 import { PerfDiagnosticsMiddleware } from "src/shared/diagnostics/perf-diagnostics.middleware";
 import { PublicGuildStatsCardModule } from "src/public-guild-stats-card/public-guild-stats-card.module";
+import { DocsModule } from "src/docs/docs.module";
 
 const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
 
@@ -81,6 +82,7 @@ const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
     MapTemplatesModule,
     KillsModule,
     PublicGuildStatsCardModule,
+    DocsModule,
   ],
   controllers: [],
   providers: [

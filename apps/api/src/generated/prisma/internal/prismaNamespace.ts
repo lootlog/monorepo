@@ -429,6 +429,8 @@ export const ModelName = {
   EventPointsEditHistory: 'EventPointsEditHistory',
   EventRespawnWindowSummary: 'EventRespawnWindowSummary',
   MapTemplate: 'MapTemplate',
+  GuildDocument: 'GuildDocument',
+  GuildDocumentHistory: 'GuildDocumentHistory',
   NpcKillStats: 'NpcKillStats',
   UserKillStats: 'UserKillStats',
   GuildKillSummary: 'GuildKillSummary',
@@ -450,7 +452,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "timerHistoryEntry" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "npcKillStats" | "userKillStats" | "guildKillSummary" | "userKillStatsBucket" | "npcKillStatsBucket" | "guildKillSummaryBucket"
+    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "timerHistoryEntry" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "guildDocument" | "guildDocumentHistory" | "npcKillStats" | "userKillStats" | "guildKillSummary" | "userKillStatsBucket" | "npcKillStatsBucket" | "guildKillSummaryBucket"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3784,6 +3786,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    GuildDocument: {
+      payload: Prisma.$GuildDocumentPayload<ExtArgs>
+      fields: Prisma.GuildDocumentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GuildDocumentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GuildDocumentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload>
+        }
+        findFirst: {
+          args: Prisma.GuildDocumentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GuildDocumentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload>
+        }
+        findMany: {
+          args: Prisma.GuildDocumentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload>[]
+        }
+        create: {
+          args: Prisma.GuildDocumentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload>
+        }
+        createMany: {
+          args: Prisma.GuildDocumentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GuildDocumentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload>[]
+        }
+        delete: {
+          args: Prisma.GuildDocumentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload>
+        }
+        update: {
+          args: Prisma.GuildDocumentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload>
+        }
+        deleteMany: {
+          args: Prisma.GuildDocumentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GuildDocumentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GuildDocumentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload>[]
+        }
+        upsert: {
+          args: Prisma.GuildDocumentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentPayload>
+        }
+        aggregate: {
+          args: Prisma.GuildDocumentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGuildDocument>
+        }
+        groupBy: {
+          args: Prisma.GuildDocumentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GuildDocumentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GuildDocumentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GuildDocumentCountAggregateOutputType> | number
+        }
+      }
+    }
+    GuildDocumentHistory: {
+      payload: Prisma.$GuildDocumentHistoryPayload<ExtArgs>
+      fields: Prisma.GuildDocumentHistoryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GuildDocumentHistoryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GuildDocumentHistoryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload>
+        }
+        findFirst: {
+          args: Prisma.GuildDocumentHistoryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GuildDocumentHistoryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload>
+        }
+        findMany: {
+          args: Prisma.GuildDocumentHistoryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload>[]
+        }
+        create: {
+          args: Prisma.GuildDocumentHistoryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload>
+        }
+        createMany: {
+          args: Prisma.GuildDocumentHistoryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GuildDocumentHistoryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload>[]
+        }
+        delete: {
+          args: Prisma.GuildDocumentHistoryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload>
+        }
+        update: {
+          args: Prisma.GuildDocumentHistoryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload>
+        }
+        deleteMany: {
+          args: Prisma.GuildDocumentHistoryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GuildDocumentHistoryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GuildDocumentHistoryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload>[]
+        }
+        upsert: {
+          args: Prisma.GuildDocumentHistoryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDocumentHistoryPayload>
+        }
+        aggregate: {
+          args: Prisma.GuildDocumentHistoryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGuildDocumentHistory>
+        }
+        groupBy: {
+          args: Prisma.GuildDocumentHistoryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GuildDocumentHistoryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GuildDocumentHistoryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GuildDocumentHistoryCountAggregateOutputType> | number
+        }
+      }
+    }
     NpcKillStats: {
       payload: Prisma.$NpcKillStatsPayload<ExtArgs>
       fields: Prisma.NpcKillStatsFieldRefs
@@ -4280,6 +4430,7 @@ export const GuildScalarFieldEnum = {
   reservationTimeGranularityMinutes: 'reservationTimeGranularityMinutes',
   reservationMaxAdvanceDays: 'reservationMaxAdvanceDays',
   reservationActiveLimitPerSpot: 'reservationActiveLimitPerSpot',
+  documentLimit: 'documentLimit',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   active: 'active'
@@ -4986,6 +5137,38 @@ export const MapTemplateScalarFieldEnum = {
 export type MapTemplateScalarFieldEnum = (typeof MapTemplateScalarFieldEnum)[keyof typeof MapTemplateScalarFieldEnum]
 
 
+export const GuildDocumentScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  title: 'title',
+  content: 'content',
+  version: 'version',
+  createdByMemberId: 'createdByMemberId',
+  updatedByMemberId: 'updatedByMemberId',
+  deletedAt: 'deletedAt',
+  deletedByMemberId: 'deletedByMemberId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GuildDocumentScalarFieldEnum = (typeof GuildDocumentScalarFieldEnum)[keyof typeof GuildDocumentScalarFieldEnum]
+
+
+export const GuildDocumentHistoryScalarFieldEnum = {
+  id: 'id',
+  documentId: 'documentId',
+  guildId: 'guildId',
+  version: 'version',
+  title: 'title',
+  content: 'content',
+  action: 'action',
+  actorMemberId: 'actorMemberId',
+  editedAt: 'editedAt'
+} as const
+
+export type GuildDocumentHistoryScalarFieldEnum = (typeof GuildDocumentHistoryScalarFieldEnum)[keyof typeof GuildDocumentHistoryScalarFieldEnum]
+
+
 export const NpcKillStatsScalarFieldEnum = {
   id: 'id',
   guildId: 'guildId',
@@ -5525,6 +5708,20 @@ export type EnumPointsEditTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$P
 export type ListEnumPointsEditTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PointsEditType[]'>
     
 
+
+/**
+ * Reference to a field of type 'GuildDocumentHistoryAction'
+ */
+export type EnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GuildDocumentHistoryAction'>
+    
+
+
+/**
+ * Reference to a field of type 'GuildDocumentHistoryAction[]'
+ */
+export type ListEnumGuildDocumentHistoryActionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GuildDocumentHistoryAction[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -5680,6 +5877,8 @@ export type GlobalOmitConfig = {
   eventPointsEditHistory?: Prisma.EventPointsEditHistoryOmit
   eventRespawnWindowSummary?: Prisma.EventRespawnWindowSummaryOmit
   mapTemplate?: Prisma.MapTemplateOmit
+  guildDocument?: Prisma.GuildDocumentOmit
+  guildDocumentHistory?: Prisma.GuildDocumentHistoryOmit
   npcKillStats?: Prisma.NpcKillStatsOmit
   userKillStats?: Prisma.UserKillStatsOmit
   guildKillSummary?: Prisma.GuildKillSummaryOmit

@@ -265,6 +265,16 @@ export type EventRespawnWindowSummary = Prisma.EventRespawnWindowSummaryModel
  */
 export type MapTemplate = Prisma.MapTemplateModel
 /**
+ * Model GuildDocument
+ * 
+ */
+export type GuildDocument = Prisma.GuildDocumentModel
+/**
+ * Model GuildDocumentHistory
+ * 
+ */
+export type GuildDocumentHistory = Prisma.GuildDocumentHistoryModel
+/**
  * Model NpcKillStats
  * 
  */

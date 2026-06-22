@@ -38,7 +38,9 @@ export const Permission = {
   LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
   LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
   LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
-  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE'
+  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
+  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
+  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE'
 } as const
 
 export type Permission = (typeof Permission)[keyof typeof Permission]
@@ -146,6 +148,15 @@ export const TimerHistoryAction = {
 } as const
 
 export type TimerHistoryAction = (typeof TimerHistoryAction)[keyof typeof TimerHistoryAction]
+
+
+export const GuildDocumentHistoryAction = {
+  SAVE: 'SAVE',
+  DELETE: 'DELETE',
+  RESTORE: 'RESTORE'
+} as const
+
+export type GuildDocumentHistoryAction = (typeof GuildDocumentHistoryAction)[keyof typeof GuildDocumentHistoryAction]
 
 
 export const RefreshJobStatus = {

@@ -30,6 +30,7 @@ import {
   Package,
   Clock,
   CalendarCheck,
+  FileText,
   MessageCircle,
   Bell,
   Settings,
@@ -97,6 +98,13 @@ const PERMISSION_GROUPS = [
       Permission.LOOTLOG_RESERVATIONS_READ,
       Permission.LOOTLOG_RESERVATIONS_WRITE,
     ],
+  },
+  {
+    groupKey: "docs",
+    icon: FileText,
+    color: "text-indigo-500",
+    bgColor: "bg-indigo-500/10",
+    permissions: [Permission.LOOTLOG_DOCS_READ, Permission.LOOTLOG_DOCS_WRITE],
   },
   {
     groupKey: "members",
