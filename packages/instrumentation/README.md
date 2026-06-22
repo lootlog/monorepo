@@ -10,11 +10,8 @@ Shared OpenTelemetry bootstrap helpers for Lootlog services.
 
 ## Exports
 
-- `initObservability`
-- `shutdownObservability`
-- `initHonoObservability`
-- `shutdownHonoObservability`
-- corresponding config types for Nest and Hono services
+- `@lootlog/instrumentation/instrumentation-nest` exports `initObservability`, `shutdownObservability`, and `ObservabilityConfig`.
+- `@lootlog/instrumentation/instrumentation-hono` exports `initHonoObservability`, `shutdownHonoObservability`, and `HonoObservabilityConfig`.
 
 ## Development
 
