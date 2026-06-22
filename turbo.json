@@ -89,6 +89,10 @@
       "cache": false,
       "interactive": false
     },
+    "bench:hot-paths": {
+      "cache": false,
+      "outputs": []
+    },
     "auth:migrate:dev": {
       "cache": false,
       "interactive": false
