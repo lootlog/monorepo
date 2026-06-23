@@ -29,4 +29,4 @@ export {
   openApiYamlDumpOptions,
   sanitizeOpenApiDocument,
   type OpenApiYamlDumpOptions,
-} from "./openapi";
+} from "./openapi/openapi-document";
