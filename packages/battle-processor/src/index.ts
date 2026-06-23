@@ -2113,7 +2113,9 @@ export class BattleProcessor {
           losingTeam = t2;
         }
       } else if (winningTeam === null) {
-        winningTeam = getDefaultOpposingTeam(losingTeam);
+        if (losingTeam !== null) {
+          winningTeam = getDefaultOpposingTeam(losingTeam);
+        }
       } else if (losingTeam === null) {
         losingTeam = getDefaultOpposingTeam(winningTeam);
       }
