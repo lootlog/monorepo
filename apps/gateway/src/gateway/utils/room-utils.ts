@@ -8,8 +8,15 @@ import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
 import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
 import { Platform } from "src/gateway/enums/platform.enum";
 
-export type FeatureName = "chat" | "timers" | "notifications" | "loots";
-export type TierName = NpcRoutingTier;
+const FEATURE_NAMES = ["chat", "timers", "notifications", "loots"] as const;
+const TIER_NAMES = [
+  "base",
+  "titans",
+  "heroes",
+] as const satisfies readonly NpcRoutingTier[];
+
+export type FeatureName = (typeof FEATURE_NAMES)[number];
+export type TierName = (typeof TIER_NAMES)[number];
 
 const FEATURE_ROOMS = {
   chat: {
@@ -32,12 +39,10 @@ const FEATURE_ROOMS = {
     titans: Permission.LOOTLOG_LOOTS_TITANS_READ,
     heroes: Permission.LOOTLOG_LOOTS_HEROES_READ,
   },
-} as const;
+} as const satisfies Record<FeatureName, Record<TierName, Permission>>;
 
 type FeatureRoom = { feature: FeatureName; tier: TierName };
 
-const FEATURE_NAMES = Object.keys(FEATURE_ROOMS) as FeatureName[];
-const TIER_NAMES = Object.keys(FEATURE_ROOMS.chat) as TierName[];
 const ALL_FEATURE_ROOMS: FeatureRoom[] = FEATURE_NAMES.flatMap((feature) =>
   TIER_NAMES.map((tier) => ({ feature, tier })),
 );
