@@ -1,7 +1,6 @@
 import { ItemRarity, type Loot, type Item } from "@/lib/loots/loot-types";
 import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/loots-list/constants/loot-share-color-palette";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { Card } from "@lootlog/ui/components/card";
 import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot-npcs";
@@ -22,33 +21,17 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useThemeMeta } from "@/themes";
+import { buildLootItemOwnerMap } from "@/features/guild/loots-list/utils/build-loot-share-maps";
 
 type Props = {
   loot: Loot;
   isNew?: boolean;
 };
 
-type PlayerColorMap = Record<string, { color: string; idx: number }>;
-type ItemOwnerMap = Record<string, string | undefined>;
 type ItemsByPlayer = Record<string, Item[]>;
 
 const buildLootData = (loot: Loot) => {
-  const playerColorMap = loot.players.reduce<PlayerColorMap>(
-    (acc, player, idx) => {
-      const color =
-        LOOT_SHARE_COLOR_PALETTE[idx % LOOT_SHARE_COLOR_PALETTE.length] ?? "";
-      acc[player.id] = { color, idx };
-      return acc;
-    },
-    {},
-  );
-
-  const itemOwnerMap: ItemOwnerMap = {};
-  Object.entries(loot.lootShare || {}).forEach(([playerId, itemIds]) => {
-    itemIds.forEach((itemId) => {
-      itemOwnerMap[itemId] = playerId;
-    });
-  });
+  const itemOwnerMap = buildLootItemOwnerMap(loot.lootShare);
 
   const itemsByPlayer = loot.players.reduce<ItemsByPlayer>((acc, player) => {
     acc[player.id] = [];
@@ -83,8 +66,6 @@ const buildLootData = (loot: Loot) => {
   });
 
   return {
-    playerColorMap,
-    itemOwnerMap,
     itemsByPlayer,
     unassignedItems,
     hasLegendaryItem,

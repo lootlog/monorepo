@@ -20,7 +20,6 @@ import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { useLootFromCache } from "@/hooks/use-loot-from-cache";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/loots-list/constants/loot-share-color-palette";
 import { useTranslation } from "react-i18next";
 import { ThemeSurfaceOverlay } from "@/themes";
 import type { Loot } from "@/lib/loots/loot-types";
@@ -29,32 +28,9 @@ import {
   getLootsControllerFetchLootByIdQueryKey,
   useLootsControllerFetchLootById,
 } from "@/lib/api/generated/main/loots/loots";
+import { buildLootShareMaps } from "@/features/guild/loots-list/utils/build-loot-share-maps";
 
 const MANAGE_LOOTS_PERMISSIONS = ["LOOTLOG_MANAGE", "ADMIN"] as const;
-
-type PlayerColorMap = Record<string, { color: string; idx: number }>;
-type ItemOwnerMap = Record<string, string | undefined>;
-
-const computeLootMaps = (loot: Loot) => {
-  const playerColorMap = loot.players.reduce<PlayerColorMap>(
-    (acc, player, idx) => {
-      const color =
-        LOOT_SHARE_COLOR_PALETTE[idx % LOOT_SHARE_COLOR_PALETTE.length] ?? "";
-      acc[player.id] = { color, idx };
-      return acc;
-    },
-    {},
-  );
-
-  const itemOwnerMap: ItemOwnerMap = {};
-  Object.entries(loot.lootShare || {}).forEach(([playerId, itemIds]) => {
-    itemIds.forEach((itemId) => {
-      itemOwnerMap[itemId] = playerId;
-    });
-  });
-
-  return { playerColorMap, itemOwnerMap };
-};
 
 const LoadingState: FC = () => (
   <div className="flex items-center justify-center h-64">
@@ -85,7 +61,7 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
   const { t } = useTranslation();
   const date = timestampToDate(loot.createdAt);
   const isMobile = useIsMobile();
-  const { playerColorMap, itemOwnerMap } = computeLootMaps(loot);
+  const { playerColorMap, itemOwnerMap } = buildLootShareMaps(loot);
 
   return (
     <div
