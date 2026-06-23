@@ -149,6 +149,24 @@ describe("PaginationService", () => {
       });
     });
 
+    it("should ignore invalid cursors when reporting previous page state", async () => {
+      drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
+
+      const result = await service.paginateBattles(() => undefined, {
+        cursor: "invalid-cursor",
+        size: 2,
+        sortOrder: "desc",
+        includeTotal: false,
+      });
+
+      expect(result.pagination).toMatchObject({
+        size: 2,
+        hasPrev: false,
+        previousCursor: undefined,
+      });
+      expect(drizzleService.db.query.battles.findMany).toHaveBeenCalledTimes(1);
+    });
+
     it("should work without includeTotal", async () => {
       drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
 
