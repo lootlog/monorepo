@@ -57,6 +57,7 @@ export class PaginationService {
   ): Promise<PaginationResult<StoredBattleWithWarriors>> {
     const startTime = Date.now();
     const { size = 20, cursor, includeTotal } = options;
+    const decodedCursor = this.decodeOptionalCursor(cursor);
 
     const order = options.sortOrder === "asc" ? "asc" : "desc";
 
@@ -64,7 +65,7 @@ export class PaginationService {
       where: {
         RAW: (table: typeof battles) => {
           const base = whereBuilder(table);
-          return this.buildCursorWhere(table, base, cursor, options);
+          return this.buildCursorWhere(table, base, decodedCursor, options);
         },
       },
       limit: size + 1,
@@ -80,7 +81,11 @@ export class PaginationService {
       const lastItem = items[items.length - 1];
       nextCursor = this.encodeCursor(lastItem.createdAt, lastItem.id);
     }
-    const previousCursor = await this.getPreviousCursor(whereBuilder, options);
+    const previousCursor = await this.getPreviousCursor(
+      whereBuilder,
+      decodedCursor,
+      options,
+    );
 
     let total: number | undefined;
     const countStartTime = Date.now();
@@ -92,7 +97,7 @@ export class PaginationService {
     const pagination: CursorPagination = {
       size,
       hasNext,
-      hasPrev: !!cursor,
+      hasPrev: decodedCursor !== null,
       nextCursor,
       previousCursor,
       total,
@@ -115,16 +120,10 @@ export class PaginationService {
   private buildCursorWhere(
     table: typeof battles,
     where: SQL | undefined,
-    cursor: string | undefined,
+    decoded: DecodedCursor | null,
     options: PaginationOptions,
   ): SQL | undefined {
-    if (!cursor) {
-      return where;
-    }
-
-    const decoded = this.decodeCursor(cursor);
     if (!decoded) {
-      this.logger.warn(`Invalid cursor format: ${cursor}`);
       return where;
     }
 
@@ -140,13 +139,9 @@ export class PaginationService {
 
   private async getPreviousCursor(
     whereBuilder: WhereBuilder,
+    decoded: DecodedCursor | null,
     options: PaginationOptions,
   ): Promise<string | undefined> {
-    if (!options.cursor) {
-      return undefined;
-    }
-
-    const decoded = this.decodeCursor(options.cursor);
     if (!decoded) {
       return undefined;
     }
@@ -193,6 +188,20 @@ export class PaginationService {
     return where
       ? and(where, previousCursorCondition)
       : previousCursorCondition;
+  }
+
+  private decodeOptionalCursor(
+    cursor: string | undefined,
+  ): DecodedCursor | null {
+    if (!cursor) {
+      return null;
+    }
+
+    const decoded = this.decodeCursor(cursor);
+    if (!decoded) {
+      this.logger.warn(`Invalid cursor format: ${cursor}`);
+    }
+    return decoded;
   }
 
   private async getEstimatedCount(where: SQL | undefined): Promise<number> {
