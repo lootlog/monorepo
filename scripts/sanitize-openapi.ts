@@ -5,7 +5,7 @@ import {
   openApiYamlDumpOptions,
   type OpenApiYamlDumpOptions,
   sanitizeOpenApiDocument,
-} from "../packages/nest-shared/src/openapi";
+} from "../packages/nest-shared/src/openapi/openapi-document";
 
 type YamlModule = {
   load: (content: string) => unknown;
