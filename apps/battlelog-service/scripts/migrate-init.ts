@@ -7,7 +7,6 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import pg from "pg";
 
 const databaseUrl = process.env.POSTGRESQL_CONNECTION_URI;
@@ -15,8 +14,6 @@ if (!databaseUrl) {
   throw new Error("POSTGRESQL_CONNECTION_URI is required");
 }
 
-// @ts-ignore
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(__dirname, "../drizzle");
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
