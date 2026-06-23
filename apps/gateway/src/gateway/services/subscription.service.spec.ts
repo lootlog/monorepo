@@ -53,15 +53,49 @@ function createPlayer(): SocketUserPlayer {
   };
 }
 
+function createProofToken({
+  socketId = "socket-1",
+  accountId = "20",
+  characterId = "10",
+  clanId,
+  nonce = "0123456789abcdef0123456789abcdef",
+}: {
+  socketId?: string;
+  accountId?: string;
+  characterId?: string;
+  clanId?: number;
+  nonce?: string;
+} = {}) {
+  const characterIdHex = BigInt(characterId).toString(16).padStart(16, "0");
+  const clanIdHex =
+    clanId === undefined
+      ? "ffffffffffffffff"
+      : BigInt(clanId).toString(16).padStart(16, "0");
+
+  return `lootlog:${socketId}:${accountId}:02${characterIdHex}${clanIdHex}${nonce}`;
+}
+
 function createMargonemAccountProof(
   overrides: Partial<MargonemAccountProofDto> = {},
 ): MargonemAccountProofDto {
+  const userId = overrides.userId ?? "20";
+  const characterId = overrides.characterId ?? "10";
+  const clanId = overrides.clanId;
+  const token =
+    overrides.token ??
+    createProofToken({
+      accountId: userId,
+      characterId,
+      clanId,
+    });
+  const ts = overrides.ts ?? 1_700_000_000;
   const proof = {
-    userId: "20",
-    token: "lootlog:socket-1:20:0123456789abcdef0123456789abcdef",
-    ts: 1_700_000_000,
-    validatedString:
-      "20+lootlog:socket-1:20:0123456789abcdef0123456789abcdef+1700000000",
+    userId,
+    characterId,
+    clanId,
+    token,
+    ts,
+    validatedString: `${userId}+${token}+${ts}`,
     signatureBase64: "signature",
     ...overrides,
   };
@@ -169,6 +203,8 @@ describe("SubscriptionService", () => {
       proof: undefined,
       socketId: "socket-1",
       accountId: "20",
+      characterId: "10",
+      clanId: undefined,
     });
     expect(mockGuildsService.getUserGuilds).not.toHaveBeenCalled();
     expect(client.join).not.toHaveBeenCalled();
@@ -223,6 +259,14 @@ describe("SubscriptionService", () => {
       ]),
     );
     expect(client.join).toHaveBeenCalledWith(result.featureRooms);
+    expect(client.data.margonemAccountVerified).toBe(true);
+    expect(mockMargonemAccountProofService.verifyProof).toHaveBeenCalledWith({
+      proof: createMargonemAccountProof(),
+      socketId: "socket-1",
+      accountId: "20",
+      characterId: "10",
+      clanId: undefined,
+    });
     expect(mockPresenceService.emitInitialPresence).toHaveBeenCalledWith(
       mockServer,
       client,

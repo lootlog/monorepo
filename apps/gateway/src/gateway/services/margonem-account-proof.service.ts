@@ -10,12 +10,17 @@ const KEY_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 const MAX_PROOF_AGE_MS = 120 * 1000;
 const MAX_FUTURE_SKEW_MS = 30 * 1000;
 const TOKEN_PREFIX = "lootlog";
-const NONCE_PATTERN = /^[a-f0-9]{32,128}$/;
+const TOKEN_VERSION_PREFIX = "02";
+const NO_CLAN_HEX = "ffffffffffffffff";
+const ENCODED_ID_HEX_LENGTH = 16;
+const NONCE_PATTERN = /^[a-f0-9]{32}$/;
 
 type VerifyMargonemAccountProofInput = {
   proof: MargonemAccountProofDto | undefined;
   socketId: string;
   accountId: string;
+  characterId: string;
+  clanId?: number;
 };
 
 export type MargonemAccountProofVerificationResult =
@@ -33,8 +38,16 @@ export class MargonemAccountProofService {
     proof,
     socketId,
     accountId,
+    characterId,
+    clanId,
   }: VerifyMargonemAccountProofInput): Promise<MargonemAccountProofVerificationResult> {
-    const validation = this.validateProofShape({ proof, socketId, accountId });
+    const validation = this.validateProofShape({
+      proof,
+      socketId,
+      accountId,
+      characterId,
+      clanId,
+    });
 
     if (!validation.valid) {
       return validation;
@@ -56,6 +69,8 @@ export class MargonemAccountProofService {
     proof,
     socketId,
     accountId,
+    characterId,
+    clanId,
   }: VerifyMargonemAccountProofInput): MargonemAccountProofVerificationResult {
     if (!proof) {
       return { valid: false, reason: "missing proof" };
@@ -63,6 +78,14 @@ export class MargonemAccountProofService {
 
     if (proof.userId !== accountId) {
       return { valid: false, reason: "proof account mismatch" };
+    }
+
+    if (proof.characterId !== characterId) {
+      return { valid: false, reason: "proof character mismatch" };
+    }
+
+    if (!this.clanIdsMatch(proof.clanId, clanId)) {
+      return { valid: false, reason: "proof clan mismatch" };
     }
 
     if (
@@ -77,9 +100,23 @@ export class MargonemAccountProofService {
       return { valid: false, reason: "proof token mismatch" };
     }
 
-    const nonce = proof.token.slice(expectedTokenPrefix.length);
+    const tokenPayload = this.parseTokenPayload(
+      proof.token.slice(expectedTokenPrefix.length),
+    );
 
-    if (!NONCE_PATTERN.test(nonce)) {
+    if (!tokenPayload.valid) {
+      return tokenPayload;
+    }
+
+    if (tokenPayload.characterId !== characterId) {
+      return { valid: false, reason: "proof character mismatch" };
+    }
+
+    if (!this.clanIdsMatch(tokenPayload.clanId, clanId)) {
+      return { valid: false, reason: "proof clan mismatch" };
+    }
+
+    if (!NONCE_PATTERN.test(tokenPayload.nonce)) {
       return { valid: false, reason: "invalid proof nonce" };
     }
 
@@ -90,6 +127,59 @@ export class MargonemAccountProofService {
     }
 
     return { valid: true };
+  }
+
+  private parseTokenPayload(
+    payload: string,
+  ):
+    | { valid: true; characterId: string; clanId?: string; nonce: string }
+    | { valid: false; reason: string } {
+    const expectedLength =
+      TOKEN_VERSION_PREFIX.length + ENCODED_ID_HEX_LENGTH * 2 + 32;
+
+    if (
+      payload.length !== expectedLength ||
+      !payload.startsWith(TOKEN_VERSION_PREFIX)
+    ) {
+      return { valid: false, reason: "invalid proof token payload" };
+    }
+
+    const characterIdHex = payload.slice(
+      TOKEN_VERSION_PREFIX.length,
+      TOKEN_VERSION_PREFIX.length + ENCODED_ID_HEX_LENGTH,
+    );
+    const clanIdHex = payload.slice(
+      TOKEN_VERSION_PREFIX.length + ENCODED_ID_HEX_LENGTH,
+      TOKEN_VERSION_PREFIX.length + ENCODED_ID_HEX_LENGTH * 2,
+    );
+    const nonce = payload.slice(
+      TOKEN_VERSION_PREFIX.length + ENCODED_ID_HEX_LENGTH * 2,
+    );
+
+    if (!this.isHex64(characterIdHex) || !this.isHex64(clanIdHex)) {
+      return { valid: false, reason: "invalid proof token payload" };
+    }
+
+    return {
+      valid: true,
+      characterId: BigInt(`0x${characterIdHex}`).toString(10),
+      clanId:
+        clanIdHex === NO_CLAN_HEX
+          ? undefined
+          : BigInt(`0x${clanIdHex}`).toString(10),
+      nonce,
+    };
+  }
+
+  private isHex64(value: string): boolean {
+    return /^[a-f0-9]{16}$/.test(value);
+  }
+
+  private clanIdsMatch(
+    proofClanId: number | string | undefined,
+    playerClanId: number | undefined,
+  ): boolean {
+    return String(proofClanId ?? "") === String(playerClanId ?? "");
   }
 
   private validateTimestamp(

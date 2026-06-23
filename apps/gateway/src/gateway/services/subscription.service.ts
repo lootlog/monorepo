@@ -62,6 +62,8 @@ export class SubscriptionService {
             proof: margonemAccountProof,
             socketId: client.id,
             accountId: player.accountId,
+            characterId: player.characterId,
+            clanId: player.clan?.id,
           });
 
         if (proofVerification.valid === false) {
@@ -75,6 +77,8 @@ export class SubscriptionService {
             message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
           };
         }
+
+        client.data.margonemAccountVerified = true;
       }
 
       const guilds = await this.guildsService.getUserGuilds({

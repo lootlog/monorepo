@@ -27,6 +27,8 @@ const SocketUserPlayerSchema = z.object({
 
 export const MargonemAccountProofSchema = z.object({
   userId: z.string(),
+  characterId: z.string(),
+  clanId: z.number().optional(),
   token: z.string(),
   ts: z.number(),
   validatedString: z.string(),
