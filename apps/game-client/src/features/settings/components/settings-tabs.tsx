@@ -35,10 +35,8 @@ import {
   Volume2,
   type LucideIcon,
 } from "lucide-react";
-import type { FC, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-
-type SettingsTabsProps = {};
 
 type SettingsTabDefinition = {
   value: SettingsTabValue;
@@ -57,7 +55,7 @@ const SETTINGS_TAB_TRIGGER_REGULAR_CLASSES =
 const SETTINGS_TAB_TRIGGER_COMPACT_CLASSES =
   "ll:relative ll:justify-center ll:border-gray-500/40 ll:bg-black/5 ll:px-1.5 ll:text-gray-300 ll:hover:border-gray-300/70 ll:hover:bg-gray-500/18 ll:data-[state=active]:border-purple-300/80 ll:data-[state=active]:bg-purple-500/24 ll:data-[state=active]:text-white";
 
-export const SettingsTabs: FC<SettingsTabsProps> = () => {
+export const SettingsTabs = () => {
   const activeTab = useWindowsStore((state) => state.settings.state?.activeTab);
   const settingsWidth = useWindowsStore((state) => state.settings.size.width);
   const setSettingsActiveTab = useWindowsStore(
