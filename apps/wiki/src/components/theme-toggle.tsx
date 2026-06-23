@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { t } from "@/i18n/messages";
 
 type ThemeMode = "light" | "dark" | "auto";
+type ResolvedThemeMode = Exclude<ThemeMode, "auto">;
 
 function getInitialMode(): ThemeMode {
   if (typeof window === "undefined") {
@@ -17,8 +18,7 @@ function getInitialMode(): ThemeMode {
 }
 
 function applyThemeMode(mode: ThemeMode) {
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const resolved = mode === "auto" ? (prefersDark ? "dark" : "light") : mode;
+  const resolved = resolveThemeMode(mode);
 
   document.documentElement.classList.remove("light", "dark");
   document.documentElement.classList.add(resolved);
@@ -30,6 +30,18 @@ function applyThemeMode(mode: ThemeMode) {
   }
 
   document.documentElement.style.colorScheme = resolved;
+}
+
+function resolveThemeMode(mode: ThemeMode): ResolvedThemeMode {
+  if (mode !== "auto") {
+    return mode;
+  }
+
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    return "dark";
+  }
+
+  return "light";
 }
 
 export default function ThemeToggle() {
