@@ -1,5 +1,7 @@
 import {
   ALL_PROFESSIONS_VALUE,
+  PROFESSION_OPTIONS,
+  type ProfessionFilterValue,
   type OnlinePlayersFiltersValue,
 } from "@/features/online-players/online-players-list.helpers";
 import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
@@ -10,7 +12,16 @@ import { createJSONStorage, persist } from "zustand/middleware";
 const STORAGE_KEY = storageKey("ll-online-players-state");
 const DEFAULT_VIEW_MODE: OnlinePlayersViewMode = "accounts";
 const DEFAULT_FILTERS_VISIBLE = true;
-const VALID_PROFESSIONS = ["all", "p", "w", "h", "m", "b", "t"];
+const VALID_PROFESSIONS: readonly ProfessionFilterValue[] = [
+  ALL_PROFESSIONS_VALUE,
+  ...PROFESSION_OPTIONS,
+];
+
+const isProfessionFilterValue = (
+  value: string,
+): value is ProfessionFilterValue => {
+  return VALID_PROFESSIONS.some((profession) => profession === value);
+};
 
 type OnlinePlayersState = {
   viewMode: OnlinePlayersViewMode;
@@ -38,7 +49,7 @@ const isOnlinePlayersFiltersValue = (
     typeof candidate.minLvl === "number" &&
     typeof candidate.maxLvl === "number" &&
     typeof candidate.selectedProfession === "string" &&
-    VALID_PROFESSIONS.includes(candidate.selectedProfession)
+    isProfessionFilterValue(candidate.selectedProfession)
   );
 };
 
