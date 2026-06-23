@@ -12,6 +12,9 @@ const BOOLEAN_STATS_KEYS = new Set<BattleWarriorStatsKey>([
 ]);
 
 type BattleWarriorStatsSource = Partial<Record<BattleWarriorStatsKey, unknown>>;
+type BattleWarriorStatsFallback = (
+  key: BattleWarriorStatsKey,
+) => BattleWarriorStats[BattleWarriorStatsKey];
 
 export type InflatedBattleWarrior = Omit<
   BattleWarrior,
@@ -35,7 +38,7 @@ function normalizeStatValue(
   key: BattleWarriorStatsKey,
   value: unknown,
   fallback: BattleWarriorStats[BattleWarriorStatsKey],
-): unknown {
+): BattleWarriorStats[BattleWarriorStatsKey] {
   if (key === "spellsUsedMap") {
     return value && typeof value === "object" && !Array.isArray(value)
       ? (value as Record<string, number>)
@@ -49,18 +52,22 @@ function normalizeStatValue(
   return typeof value === "number" ? value : fallback;
 }
 
-export function buildBattleWarriorStats(
+function normalizeBattleWarriorStats(
   source: BattleWarriorStatsSource,
+  getFallback: BattleWarriorStatsFallback,
 ): BattleWarriorStats {
   return BATTLE_WARRIOR_STATS_KEYS.reduce<
     Partial<Record<BattleWarriorStatsKey, unknown>>
   >((stats, key) => {
-    const fallback = getDefaultStatValue(
-      key,
-    ) as BattleWarriorStats[BattleWarriorStatsKey];
-    stats[key] = normalizeStatValue(key, source[key], fallback);
+    stats[key] = normalizeStatValue(key, source[key], getFallback(key));
     return stats;
   }, {}) as BattleWarriorStats;
+}
+
+export function buildBattleWarriorStats(
+  source: BattleWarriorStatsSource,
+): BattleWarriorStats {
+  return normalizeBattleWarriorStats(source, getDefaultStatValue);
 }
 
 function mergeBattleWarriorStats(
@@ -73,16 +80,10 @@ function mergeBattleWarriorStats(
 
   const storedStatsRecord = storedStats as Partial<BattleWarriorStats>;
 
-  return BATTLE_WARRIOR_STATS_KEYS.reduce<
-    Partial<Record<BattleWarriorStatsKey, unknown>>
-  >((stats, key) => {
-    stats[key] = normalizeStatValue(
-      key,
-      storedStatsRecord[key],
-      legacyStats[key],
-    );
-    return stats;
-  }, {}) as BattleWarriorStats;
+  return normalizeBattleWarriorStats(
+    storedStatsRecord,
+    (key) => legacyStats[key],
+  );
 }
 
 export function inflateBattleWarrior(
