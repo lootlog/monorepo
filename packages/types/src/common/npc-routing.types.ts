@@ -8,7 +8,15 @@ export type NpcRoutingData = {
   wt?: number | string | null;
 };
 
-const NPC_TYPE_VALUES = new Set<string>(Object.values(NpcTypeEnum));
+const NPC_TYPE_VALUES = new Set<NpcTypeEnum>(Object.values(NpcTypeEnum));
+const HERO_ROUTING_NPC_TYPES = new Set<NpcTypeEnum>([
+  NpcTypeEnum.HERO,
+  NpcTypeEnum.EVENT_HERO,
+]);
+
+function isNpcTypeEnum(value: string): value is NpcTypeEnum {
+  return NPC_TYPE_VALUES.has(value as NpcTypeEnum);
+}
 
 function normalizeNpcWeight(weight?: number | string | null): number | null {
   if (typeof weight === "number" && Number.isFinite(weight)) {
@@ -33,8 +41,8 @@ export function resolveNpcType(
     return null;
   }
 
-  if (typeof npc.type === "string" && NPC_TYPE_VALUES.has(npc.type)) {
-    return npc.type as NpcTypeEnum;
+  if (typeof npc.type === "string" && isNpcTypeEnum(npc.type)) {
+    return npc.type;
   }
 
   const weight = normalizeNpcWeight(npc.wt);
@@ -58,7 +66,7 @@ export function getNpcRoutingTier(npc?: NpcRoutingData | null): NpcRoutingTier {
     return "titans";
   }
 
-  if (npcType === NpcTypeEnum.HERO || npcType === NpcTypeEnum.EVENT_HERO) {
+  if (npcType && HERO_ROUTING_NPC_TYPES.has(npcType)) {
     return "heroes";
   }
 
