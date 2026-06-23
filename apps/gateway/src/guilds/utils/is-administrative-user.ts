@@ -6,11 +6,6 @@ const ADMINISTRATIVE_PERMISSIONS = [
   Permission.OWNER,
 ] as const;
 
-const OWNER_OR_ADMIN_PERMISSIONS = [
-  Permission.ADMIN,
-  Permission.OWNER,
-] as const;
-
 const hasAnyPermission = (
   permissions: Permission[],
   requiredPermissions: readonly Permission[],
@@ -20,8 +15,13 @@ const hasAnyPermission = (
   );
 };
 
-const getRolePermissions = (roles: GuildRole[]) => {
-  return roles.flatMap((role) => role.permissions);
+const hasAnyRolePermission = (
+  roles: GuildRole[],
+  requiredPermissions: readonly Permission[],
+) => {
+  return roles.some((role) =>
+    hasAnyPermission(role.permissions, requiredPermissions),
+  );
 };
 
 export const isAdministrativeUser = (permissions: Permission[]) => {
@@ -29,13 +29,13 @@ export const isAdministrativeUser = (permissions: Permission[]) => {
 };
 
 export const isAdministrativeUserFromRoles = (roles: GuildRole[]) => {
-  return isAdministrativeUser(getRolePermissions(roles));
+  return hasAnyRolePermission(roles, ADMINISTRATIVE_PERMISSIONS);
 };
 
 export const isOwnerOrAdmin = (permissions: Permission[]) => {
-  return hasAnyPermission(permissions, OWNER_OR_ADMIN_PERMISSIONS);
+  return isAdministrativeUser(permissions);
 };
 
 export const isOwnerOrAdminFromRoles = (roles: GuildRole[]) => {
-  return isOwnerOrAdmin(getRolePermissions(roles));
+  return isAdministrativeUserFromRoles(roles);
 };
