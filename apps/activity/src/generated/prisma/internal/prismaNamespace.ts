@@ -386,7 +386,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   Activity: 'Activity',
   ActivityActorSnapshot: 'ActivityActorSnapshot',
-  MemberActivityStats: 'MemberActivityStats'
+  MemberActivityStats: 'MemberActivityStats',
+  MemberActivitySession: 'MemberActivitySession'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -402,7 +403,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "activity" | "activityActorSnapshot" | "memberActivityStats"
+    modelProps: "activity" | "activityActorSnapshot" | "memberActivityStats" | "memberActivitySession"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -628,6 +629,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MemberActivitySession: {
+      payload: Prisma.$MemberActivitySessionPayload<ExtArgs>
+      fields: Prisma.MemberActivitySessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MemberActivitySessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MemberActivitySessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload>
+        }
+        findFirst: {
+          args: Prisma.MemberActivitySessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MemberActivitySessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload>
+        }
+        findMany: {
+          args: Prisma.MemberActivitySessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload>[]
+        }
+        create: {
+          args: Prisma.MemberActivitySessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload>
+        }
+        createMany: {
+          args: Prisma.MemberActivitySessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MemberActivitySessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload>[]
+        }
+        delete: {
+          args: Prisma.MemberActivitySessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload>
+        }
+        update: {
+          args: Prisma.MemberActivitySessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.MemberActivitySessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MemberActivitySessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MemberActivitySessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.MemberActivitySessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberActivitySessionPayload>
+        }
+        aggregate: {
+          args: Prisma.MemberActivitySessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMemberActivitySession>
+        }
+        groupBy: {
+          args: Prisma.MemberActivitySessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemberActivitySessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MemberActivitySessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemberActivitySessionCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -714,6 +789,21 @@ export const MemberActivityStatsScalarFieldEnum = {
 } as const
 
 export type MemberActivityStatsScalarFieldEnum = (typeof MemberActivityStatsScalarFieldEnum)[keyof typeof MemberActivityStatsScalarFieldEnum]
+
+
+export const MemberActivitySessionScalarFieldEnum = {
+  guildId: 'guildId',
+  discordId: 'discordId',
+  source: 'source',
+  sessionId: 'sessionId',
+  userId: 'userId',
+  userAgent: 'userAgent',
+  world: 'world',
+  connectedAt: 'connectedAt',
+  lastSeenAt: 'lastSeenAt'
+} as const
+
+export type MemberActivitySessionScalarFieldEnum = (typeof MemberActivitySessionScalarFieldEnum)[keyof typeof MemberActivitySessionScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -973,6 +1063,7 @@ export type GlobalOmitConfig = {
   activity?: Prisma.ActivityOmit
   activityActorSnapshot?: Prisma.ActivityActorSnapshotOmit
   memberActivityStats?: Prisma.MemberActivityStatsOmit
+  memberActivitySession?: Prisma.MemberActivitySessionOmit
 }
 
 /* Types for Logging */

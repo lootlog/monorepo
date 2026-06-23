@@ -13,6 +13,9 @@ declare global {
       REDIS_USERNAME: string;
 
       RABBITMQ_URI: string;
+      AUTH_URL: string;
+      MARGONEM_SIGNING_KEY_URL: string;
+      ACTIVITY_EVENT_SIGNATURE_SECRET: string;
 
       OTEL_EXPORTER_OTLP_ENDPOINT: string;
       OTEL_EXPORTER_OTLP_HEADERS: string;

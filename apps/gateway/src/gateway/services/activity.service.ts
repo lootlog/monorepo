@@ -7,8 +7,15 @@ import { RoutingKey } from "src/gateway/enums/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import type { Socket } from "src/gateway/types/socket-user.type";
 import type { UserGuildData } from "src/guilds/types/guild.types";
+import { env } from "src/config/env";
+import {
+  ACTIVITY_EVENT_SIGNATURE_HEADER,
+  signActivityEvent,
+} from "src/gateway/utils/activity-event-signature";
 
 type ActivityPlayer = NonNullable<Socket["data"]["player"]>;
+type ActivityClient = Pick<Socket, "data"> &
+  Partial<Pick<Socket, "request" | "handshake">>;
 
 @Injectable()
 export class ActivityService {
@@ -18,8 +25,20 @@ export class ActivityService {
 
   async publishActivityEvent(
     type: ActivityType.CONNECT_EVENT | ActivityType.DISCONNECT_EVENT,
-    client: Socket,
+    client: ActivityClient,
     guilds: UserGuildData[],
+  ): Promise<void> {
+    await this.publishActivityEventForGuildIds(
+      type,
+      client,
+      guilds.map(({ guild }) => guild.id),
+    );
+  }
+
+  async publishActivityEventForGuildIds(
+    type: ActivityType.CONNECT_EVENT | ActivityType.DISCONNECT_EVENT,
+    client: ActivityClient,
+    guildIds: string[],
   ): Promise<void> {
     const { discordId, userId, sessionId, platform, player } = client.data;
     const source =
@@ -32,28 +51,37 @@ export class ActivityService {
     const timestamp = Date.now();
 
     await Promise.all(
-      guilds.map(async ({ guild }) => {
+      guildIds.map(async (guildId) => {
         const payload = this.buildActivityPayload({
           type,
           userId,
-          guildId: guild.id,
+          guildId,
           discordId,
           source,
           player,
           sessionId,
-          userAgent: client.request.headers["user-agent"],
+          userAgent: this.getUserAgent(client),
           timestamp,
         });
+        const signature = signActivityEvent(
+          payload,
+          env.ACTIVITY_EVENT_SIGNATURE_SECRET,
+        );
 
         try {
           await this.amqpConnection.publish(
             DEFAULT_EXCHANGE_NAME,
             RoutingKey.ACTIVITY_LOG_CREATE,
             payload,
+            {
+              headers: {
+                [ACTIVITY_EVENT_SIGNATURE_HEADER]: signature,
+              },
+            },
           );
         } catch (error) {
           this.logger.error(
-            `Failed to publish ${type} for ${discordId} in guild ${guild.id}: ${error.message}`,
+            `Failed to publish ${type} for ${discordId} in guild ${guildId}: ${error.message}`,
             error.stack,
           );
         }
@@ -100,6 +128,18 @@ export class ActivityService {
         : undefined,
       idempotencyKey: `${type.toLowerCase()}_${sessionId}_${guildId}_${timestamp}`,
     };
+  }
+
+  private getUserAgent(client: ActivityClient): string | undefined {
+    const userAgent =
+      client.request?.headers?.["user-agent"] ??
+      client.handshake?.headers?.["user-agent"];
+
+    if (Array.isArray(userAgent)) {
+      return userAgent[0];
+    }
+
+    return userAgent;
   }
 
   private getGamePlayer(

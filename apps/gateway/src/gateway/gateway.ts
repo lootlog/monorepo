@@ -25,6 +25,7 @@ import {
   PresenceService,
 } from "./services/presence.service";
 import { SubscriptionService } from "./services/subscription.service";
+import { GatewayAuthService } from "./services/gateway-auth.service";
 
 @WebSocketGateway({
   pingInterval: GatewayConfig.SOCKET_PING_INTERVAL_MS,
@@ -37,20 +38,24 @@ export class Gateway {
     private connectionService: ConnectionService,
     private presenceService: PresenceService,
     private subscriptionService: SubscriptionService,
+    private gatewayAuthService: GatewayAuthService,
   ) {}
 
   @WebSocketServer()
   server: Server;
 
   async handleConnection(client: Socket) {
-    const { discordId, platform, userId, devPermissionOverride } =
+    const identity = await this.gatewayAuthService.verifyConnectionIdentity(
+      client.request,
+    );
+    const { platform, devPermissionOverride } =
       this.connectionService.getConnectionMetadata(
         client.request,
         client.handshake?.auth,
       );
 
     const validation = this.connectionService.validateConnection(
-      discordId,
+      identity?.discordId ?? null,
       platform,
     );
     if (!validation.valid) {
@@ -58,8 +63,8 @@ export class Gateway {
     }
 
     client.data = this.connectionService.initializeSocketData(
-      discordId!,
-      userId,
+      identity!.discordId,
+      identity!.userId,
       client.id,
       platform,
       devPermissionOverride,
@@ -89,7 +94,7 @@ export class Gateway {
     @WsUserId() userId: string,
     @ConnectedSocket() client: Socket,
     @MessageBody()
-    { data: player }: JoinGatewayDto,
+    { data: player, margonemAccountProof }: JoinGatewayDto,
   ): Promise<void> {
     const result = await this.subscriptionService.handleJoin(
       this.server,
@@ -97,6 +102,7 @@ export class Gateway {
       discordId,
       userId,
       player,
+      margonemAccountProof,
     );
 
     client.emit(GatewayEvent.JOIN, result);

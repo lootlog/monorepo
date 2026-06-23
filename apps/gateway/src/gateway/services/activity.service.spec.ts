@@ -7,6 +7,11 @@ import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import type { Socket } from "src/gateway/types/socket-user.type";
 import type { UserGuildData } from "src/guilds/types/guild.types";
 import { ActivityService } from "./activity.service";
+import {
+  ACTIVITY_EVENT_SIGNATURE_HEADER,
+  signActivityEvent,
+} from "src/gateway/utils/activity-event-signature";
+import { env } from "src/config/env";
 
 const createGuild = (guildId: string): UserGuildData =>
   ({
@@ -84,7 +89,13 @@ describe("ActivityService", () => {
         actorSnapshot: undefined,
         world: undefined,
       }),
+      {
+        headers: {
+          [ACTIVITY_EVENT_SIGNATURE_HEADER]: expect.any(String),
+        },
+      },
     );
+    expectPublishedSignatureToMatchJsonPayload(publish);
   });
 
   it("publishes web disconnect activity without player data", async () => {
@@ -103,7 +114,13 @@ describe("ActivityService", () => {
         actorSnapshot: undefined,
         world: undefined,
       }),
+      {
+        headers: {
+          [ACTIVITY_EVENT_SIGNATURE_HEADER]: expect.any(String),
+        },
+      },
     );
+    expectPublishedSignatureToMatchJsonPayload(publish);
   });
 
   it("publishes game activity with actor snapshot", async () => {
@@ -133,7 +150,13 @@ describe("ActivityService", () => {
           prof: "w",
         },
       }),
+      {
+        headers: {
+          [ACTIVITY_EVENT_SIGNATURE_HEADER]: expect.any(String),
+        },
+      },
     );
+    expectPublishedSignatureToMatchJsonPayload(publish);
   });
 
   it("does not publish game activity without player data", async () => {
@@ -146,3 +169,14 @@ describe("ActivityService", () => {
     expect(publish).not.toHaveBeenCalled();
   });
 });
+
+function expectPublishedSignatureToMatchJsonPayload(
+  publishMock: ReturnType<typeof vi.fn>,
+) {
+  const [, , payload, options] = publishMock.mock.calls.at(-1)!;
+  const serializedPayload = JSON.parse(JSON.stringify(payload));
+
+  expect(options.headers[ACTIVITY_EVENT_SIGNATURE_HEADER]).toBe(
+    signActivityEvent(serializedPayload, env.ACTIVITY_EVENT_SIGNATURE_SECRET),
+  );
+}

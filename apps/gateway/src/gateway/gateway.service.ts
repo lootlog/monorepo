@@ -38,6 +38,10 @@ import {
   type FeatureName,
   type TierName,
 } from "src/gateway/utils/room-utils";
+import { ActivityService } from "src/gateway/services/activity.service";
+import { PresenceService } from "src/gateway/services/presence.service";
+import { ActivityType } from "src/gateway/enums/activity-type.enum";
+import type { Socket } from "src/gateway/types/socket-user.type";
 
 type FetchedSocket = Awaited<
   ReturnType<Gateway["server"]["fetchSockets"]>
@@ -58,6 +62,8 @@ export class GatewayService {
     private readonly gateway: Gateway,
     private readonly redis: RedisService,
     private readonly guildsService: GuildsService,
+    private readonly activityService: ActivityService,
+    private readonly presenceService: PresenceService,
   ) {}
 
   private emitToFeatureRoom({
@@ -293,6 +299,10 @@ export class GatewayService {
           discordId,
           socket.data.platform,
         );
+        const removedGuildIds = this.getRemovedGuildIds(
+          socket.data.guilds,
+          updatedGuilds,
+        );
 
         const roomsToLeave = currentRooms.filter(
           (room) => !newFeatureRooms.includes(room),
@@ -309,12 +319,18 @@ export class GatewayService {
           socket.join(room);
         }
 
+        await this.cleanupRemovedGuildSessions(socket, removedGuildIds);
+
         socket.data.guilds = updatedGuilds;
 
         socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
           guilds: updatedGuilds,
           featureRooms: newFeatureRooms,
         });
+
+        if (updatedGuilds.length === 0) {
+          socket.disconnect(true);
+        }
       }
     } catch (error) {
       this.logger.error(
@@ -322,6 +338,48 @@ export class GatewayService {
         error.stack,
       );
     }
+  }
+
+  private async cleanupRemovedGuildSessions(
+    socket: FetchedSocket,
+    removedGuildIds: string[],
+  ): Promise<void> {
+    if (removedGuildIds.length === 0) {
+      return;
+    }
+
+    const client = socket as unknown as Socket;
+
+    await this.activityService.publishActivityEventForGuildIds(
+      ActivityType.DISCONNECT_EVENT,
+      client,
+      removedGuildIds,
+    );
+    this.presenceService.emitDisconnectPresenceForGuildIds(
+      this.gateway.server,
+      client,
+      removedGuildIds,
+    );
+    await this.presenceService.broadcastPlayerDisconnectForGuildIds(
+      this.gateway.server,
+      client,
+      removedGuildIds,
+    );
+  }
+
+  private getRemovedGuildIds(
+    currentGuilds: UserGuildData[] | undefined,
+    updatedGuilds: UserGuildData[],
+  ): string[] {
+    if (!currentGuilds || currentGuilds.length === 0) {
+      return [];
+    }
+
+    const updatedGuildIds = new Set(updatedGuilds.map(({ guild }) => guild.id));
+
+    return currentGuilds
+      .map(({ guild }) => guild.id)
+      .filter((guildId) => !updatedGuildIds.has(guildId));
   }
 
   handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {

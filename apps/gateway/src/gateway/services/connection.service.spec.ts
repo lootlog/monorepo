@@ -20,7 +20,7 @@ describe("ConnectionService", () => {
     env.DEV_PERMISSION_OVERRIDE_ENABLED = originalDevPermissionOverrideEnabled;
   });
 
-  it("extracts connection metadata and detects game platform", () => {
+  it("extracts connection metadata and detects game platform without trusting auth headers", () => {
     const metadata = service.getConnectionMetadata({
       headers: {
         "x-auth-discord-id": "discord-1",
@@ -30,13 +30,11 @@ describe("ConnectionService", () => {
     } as never);
 
     expect(metadata).toEqual({
-      discordId: "discord-1",
-      userId: "user-1",
       platform: Platform.GAME,
     });
   });
 
-  it("normalizes repeated auth headers to the first value", () => {
+  it("ignores spoofed auth identity headers", () => {
     const metadata = service.getConnectionMetadata({
       headers: {
         "x-auth-discord-id": ["discord-1", "discord-2"],
@@ -45,8 +43,7 @@ describe("ConnectionService", () => {
       },
     } as never);
 
-    expect(metadata.discordId).toBe("discord-1");
-    expect(metadata.userId).toBe("user-1");
+    expect(metadata).toEqual({ platform: Platform.GAME });
   });
 
   it("ignores dev permission override auth when the gateway flag is disabled", () => {

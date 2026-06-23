@@ -36,6 +36,19 @@ export const CreateActivitySchema = z
     idempotencyKey: z.string().min(1),
   })
   .superRefine((data, ctx) => {
+    if (
+      (data.type === ActivityType.CONNECT_EVENT ||
+        data.type === ActivityType.DISCONNECT_EVENT) &&
+      (typeof data.details?.sessionId !== "string" ||
+        data.details.sessionId.length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "details.sessionId is required for session activity",
+        path: ["details", "sessionId"],
+      });
+    }
+
     if (data.source !== ActivitySource.GAME) return;
 
     if (!data.actorSnapshot) {
