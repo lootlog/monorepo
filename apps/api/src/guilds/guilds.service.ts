@@ -29,6 +29,7 @@ import { ErrorKey } from "src/guilds/enum/error-key.enum";
 import { MembersService } from "src/members/members.service";
 import { RolesService } from "src/roles/roles.service";
 import { generateSlug } from "src/shared/utils/generate-slug";
+import { hasOwnField } from "src/shared/utils/has-own-field";
 import { RESTRICTED_VANITY_URLS } from "src/guilds/constants/restricted-vanity-urls";
 import { DiscordService } from "src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
@@ -1235,7 +1236,7 @@ export class GuildsService {
     const guild = await this.prisma.guild.update({
       where: { id: guildId },
       data: {
-        ...(Object.prototype.hasOwnProperty.call(data, "vanityUrl")
+        ...(hasOwnField(data, "vanityUrl")
           ? { vanityUrl: generateSlug(data.vanityUrl ?? undefined) }
           : {}),
         ...(data.publicStatsCardEnabled !== undefined

@@ -1,14 +1,14 @@
-import { hasOwnUpdateField } from "./has-own-update-field.util";
+import { hasOwnField } from "./has-own-field";
 
-describe("hasOwnUpdateField", () => {
+describe("hasOwnField", () => {
   it("detects nullable fields explicitly present in partial update data", () => {
-    expect(hasOwnUpdateField({ displayName: null }, "displayName")).toBe(true);
+    expect(hasOwnField({ displayName: null }, "displayName")).toBe(true);
   });
 
   it("returns false when the partial update field is omitted", () => {
     const updateData: { displayName?: string | null } = {};
 
-    expect(hasOwnUpdateField(updateData, "displayName")).toBe(false);
+    expect(hasOwnField(updateData, "displayName")).toBe(false);
   });
 
   it("ignores fields inherited from the prototype chain", () => {
@@ -16,6 +16,6 @@ describe("hasOwnUpdateField", () => {
       displayName: "inherited",
     }) as { displayName?: string };
 
-    expect(hasOwnUpdateField(updateData, "displayName")).toBe(false);
+    expect(hasOwnField(updateData, "displayName")).toBe(false);
   });
 });
