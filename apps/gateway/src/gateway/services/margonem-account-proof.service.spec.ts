@@ -25,8 +25,15 @@ function createProof(
   overrides: Partial<MargonemAccountProofDto> = {},
 ): MargonemAccountProofDto {
   const userId = overrides.userId ?? "20";
+  const characterId = overrides.characterId ?? "10";
+  const clanId = overrides.clanId;
   const token =
-    overrides.token ?? "lootlog:socket-1:20:0123456789abcdef0123456789abcdef";
+    overrides.token ??
+    createProofToken({
+      accountId: userId,
+      characterId,
+      clanId,
+    });
   const ts = overrides.ts ?? NOW_MS / 1000;
   const validatedString =
     overrides.validatedString ?? `${userId}+${token}+${ts}`;
@@ -36,11 +43,35 @@ function createProof(
 
   return {
     userId,
+    characterId,
+    clanId,
     token,
     ts,
     validatedString,
     signatureBase64,
   };
+}
+
+function createProofToken({
+  socketId = "socket-1",
+  accountId = "20",
+  characterId = "10",
+  clanId,
+  nonce = "0123456789abcdef0123456789abcdef",
+}: {
+  socketId?: string;
+  accountId?: string;
+  characterId?: string;
+  clanId?: number;
+  nonce?: string;
+} = {}) {
+  const characterIdHex = BigInt(characterId).toString(16).padStart(16, "0");
+  const clanIdHex =
+    clanId === undefined
+      ? "ffffffffffffffff"
+      : BigInt(clanId).toString(16).padStart(16, "0");
+
+  return `lootlog:${socketId}:${accountId}:02${characterIdHex}${clanIdHex}${nonce}`;
 }
 
 describe("MargonemAccountProofService", () => {
@@ -69,6 +100,8 @@ describe("MargonemAccountProofService", () => {
         proof: createProof(),
         socketId: "socket-1",
         accountId: "20",
+        characterId: "10",
+        clanId: undefined,
       }),
     ).resolves.toEqual({ valid: true });
 
@@ -84,6 +117,8 @@ describe("MargonemAccountProofService", () => {
         proof: undefined,
         socketId: "socket-1",
         accountId: "20",
+        characterId: "10",
+        clanId: undefined,
       }),
     ).resolves.toEqual({ valid: false, reason: "missing proof" });
 
@@ -104,6 +139,23 @@ describe("MargonemAccountProofService", () => {
       "proof account mismatch",
     ],
     [
+      "different character",
+      createProof(),
+      { socketId: "socket-1", accountId: "20", characterId: "11" },
+      "proof character mismatch",
+    ],
+    [
+      "different clan",
+      createProof({ clanId: 15191 }),
+      {
+        socketId: "socket-1",
+        accountId: "20",
+        characterId: "10",
+        clanId: 15192,
+      },
+      "proof clan mismatch",
+    ],
+    [
       "stale timestamp",
       createProof({ ts: (NOW_MS - 121_000) / 1000 }),
       { socketId: "socket-1", accountId: "20" },
@@ -118,11 +170,21 @@ describe("MargonemAccountProofService", () => {
   ])(
     "rejects proof for %s before fetching the signing key",
     async (_name, proof, input, reason) => {
+      const verifyInput = {
+        socketId: "socket-1",
+        accountId: "20",
+        characterId: "10",
+        clanId: undefined,
+        ...input,
+      };
+
       await expect(
         service.verifyProof({
           proof,
-          socketId: input.socketId,
-          accountId: input.accountId,
+          socketId: verifyInput.socketId,
+          accountId: verifyInput.accountId,
+          characterId: verifyInput.characterId,
+          clanId: verifyInput.clanId,
         }),
       ).resolves.toEqual({ valid: false, reason });
 
@@ -136,6 +198,8 @@ describe("MargonemAccountProofService", () => {
         proof: createProof({ signatureBase64: "invalid-signature" }),
         socketId: "socket-1",
         accountId: "20",
+        characterId: "10",
+        clanId: undefined,
       }),
     ).resolves.toEqual({ valid: false, reason: "invalid proof signature" });
   });
@@ -149,6 +213,8 @@ describe("MargonemAccountProofService", () => {
         proof: createProof(),
         socketId: "socket-1",
         accountId: "20",
+        characterId: "10",
+        clanId: undefined,
       }),
     ).resolves.toEqual({ valid: true });
 
@@ -163,6 +229,8 @@ describe("MargonemAccountProofService", () => {
         proof,
         socketId: "socket-1",
         accountId: "20",
+        characterId: "10",
+        clanId: undefined,
       }),
     ).resolves.toEqual({ valid: true });
     await expect(
@@ -170,6 +238,8 @@ describe("MargonemAccountProofService", () => {
         proof,
         socketId: "socket-1",
         accountId: "20",
+        characterId: "10",
+        clanId: undefined,
       }),
     ).resolves.toEqual({ valid: true });
 

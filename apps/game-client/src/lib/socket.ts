@@ -52,6 +52,7 @@ type ServerToClientEvents = {
       characterId?: string;
       accountId?: string;
       prof?: string;
+      margonemAccountVerified?: boolean;
       clan?: {
         id?: number;
         name?: string;

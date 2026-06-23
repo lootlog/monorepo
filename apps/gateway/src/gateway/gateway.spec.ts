@@ -181,10 +181,12 @@ describe("Gateway", () => {
         },
         margonemAccountProof: {
           userId: "20",
-          token: "lootlog:socket-1:20:0123456789abcdef0123456789abcdef",
+          characterId: "10",
+          token:
+            "lootlog:socket-1:20:02000000000000000affffffffffffffff0123456789abcdef0123456789abcdef",
           ts: 1_700_000_000,
           validatedString:
-            "20+lootlog:socket-1:20:0123456789abcdef0123456789abcdef+1700000000",
+            "20+lootlog:socket-1:20:02000000000000000affffffffffffffff0123456789abcdef0123456789abcdef+1700000000",
           signatureBase64: "signature",
         },
       } as never,

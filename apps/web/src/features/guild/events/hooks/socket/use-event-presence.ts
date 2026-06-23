@@ -10,6 +10,7 @@ export interface PlayerPresence {
   icon: string;
   lvl: string;
   prof: string;
+  margonemAccountVerified?: boolean;
   mapId?: number;
   mapName?: string;
   isAfk: boolean;

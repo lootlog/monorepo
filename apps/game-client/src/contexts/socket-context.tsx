@@ -62,6 +62,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         const margonemAccountProof = await requestMargonemAccountProof({
           socketId,
           accountId,
+          characterId,
+          clanId: Game.hero.clan?.id,
         });
 
         if (cancelled || !socket.connected) {

@@ -95,6 +95,8 @@ export class PresenceService {
           client.data.player,
           client.id,
           client.data.playerPresence,
+          undefined,
+          client.data.margonemAccountVerified,
         ),
         status: UserPresenceStatus.OFFLINE,
         sessionId: client.data.sessionId,
@@ -114,6 +116,8 @@ export class PresenceService {
       client.data.player,
       client.id,
       client.data.playerPresence,
+      undefined,
+      client.data.margonemAccountVerified,
     );
 
     for (const guildId of guildIds) {
@@ -166,6 +170,8 @@ export class PresenceService {
       client.data.player,
       client.id,
       client.data.playerPresence,
+      undefined,
+      client.data.margonemAccountVerified,
     );
 
     for (const guildId of guildIds) {
@@ -228,6 +234,7 @@ export class PresenceService {
       client.id,
       existingPresence,
       data,
+      client.data.margonemAccountVerified,
     );
 
     client.data.playerPresence = playerPresence;
@@ -430,7 +437,13 @@ export class PresenceService {
     const player = client.data.player;
     if (!player || client.data.platform !== Platform.GAME) return;
 
-    const playerPresence = this.buildPlayerPresence(player, client.id);
+    const playerPresence = this.buildPlayerPresence(
+      player,
+      client.id,
+      undefined,
+      undefined,
+      client.data.margonemAccountVerified,
+    );
 
     client.data.playerPresence = playerPresence;
 
@@ -552,6 +565,7 @@ export class PresenceService {
     sessionId: string,
     existingPresence?: PlayerPresence,
     data?: PlayerPresenceUpdateDto,
+    margonemAccountVerified = false,
   ): PlayerPresence {
     return {
       world: player.world,
@@ -562,6 +576,7 @@ export class PresenceService {
       lvl: player.lvl,
       prof: player.prof,
       clan: player.clan,
+      margonemAccountVerified,
       mapId: data?.mapId ?? existingPresence?.mapId,
       mapName:
         data?.mapName ?? existingPresence?.mapName ?? player.location?.map,
