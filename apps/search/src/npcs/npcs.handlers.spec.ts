@@ -59,6 +59,32 @@ describe("NpcsHandlers", () => {
       });
     });
 
+    it("should default missing npc profession to an empty string", async () => {
+      const payload = [
+        {
+          id: 279068,
+          icon: "e3/arktos.gif",
+          name: "Erktos",
+          lvl: 300,
+          wt: 33,
+          type: "ELITE3",
+          margonemType: 0,
+          world: "gordion",
+        },
+      ];
+
+      await handler.handleNpcsIndex(payload);
+
+      expect(npcsServiceMock.indexNpcs).toHaveBeenCalledWith({
+        npcs: [
+          {
+            ...payload[0],
+            prof: "",
+          },
+        ],
+      });
+    });
+
     it("should log validation errors and skip invalid payload", async () => {
       await handler.handleNpcsIndex([{ id: 1 }]);
 

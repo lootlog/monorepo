@@ -116,6 +116,37 @@ describe("NpcsService", () => {
       ).resolves.toEqual([duplicatedNpc, uniqueNpc]);
     });
 
+    it("should normalize stale hits from Meilisearch before returning them", async () => {
+      const staleNpcHit = {
+        id: 279068,
+        icon: "e3/arktos.gif",
+        name: "Erktos",
+        lvl: 300,
+        wt: 33,
+        type: 0,
+        world: "gordion",
+      };
+
+      indexMock.search.mockResolvedValue({
+        hits: [staleNpcHit],
+      });
+
+      await expect(
+        service.getNpcs({
+          limit: 10,
+          search: "erkt",
+          world: "gordion",
+        }),
+      ).resolves.toEqual([
+        {
+          ...staleNpcHit,
+          prof: "",
+          type: NpcTypeEnum.ELITE3,
+          margonemType: 0,
+        },
+      ]);
+    });
+
     it("should return an empty array when meilisearch search fails", async () => {
       const error = new Error("search failed");
       indexMock.search.mockRejectedValue(error);
