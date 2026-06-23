@@ -1,4 +1,4 @@
-export function hasOwnUpdateField<TData extends object>(
+export function hasOwnField<TData extends object>(
   data: TData,
   field: keyof TData,
 ) {
