@@ -24,8 +24,8 @@
       "default": "./dist/decorators/index.js"
     },
     "./openapi": {
-      "types": "./dist/openapi/index.d.ts",
-      "default": "./dist/openapi/index.js"
+      "types": "./dist/openapi/openapi-document.d.ts",
+      "default": "./dist/openapi/openapi-document.js"
     },
     "./redis": {
       "types": "./dist/redis/index.d.ts",
