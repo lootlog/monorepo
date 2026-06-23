@@ -3,16 +3,14 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { Flag, Trophy, type LucideIcon } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import type {
-  Battle,
-  BattleWarrior as Warrior,
-} from "@/lib/api/battlelog-types";
+import type { Battle } from "@/lib/api/battlelog-types";
 import {
   BATTLE_BADGE_COLORS,
   BATTLE_SURFACE_COLORS,
 } from "./utils/battle-color-palette";
 import { BattleCompactTeam } from "./battle-compact-team";
 import { BattleMetadata } from "./battle-metadata";
+import { getBattleTeamPresentation } from "./utils/battle-team-presentation";
 
 export type BattleCompactOverviewCardProps = {
   battle: Battle;
@@ -41,20 +39,8 @@ export const BattleCompactOverviewCard: FC<BattleCompactOverviewCardProps> = ({
   currentUserCharacterId,
 }) => {
   const { t } = useTranslation();
-  const characterId = currentUserCharacterId ?? battle.characterId;
-  const attackingTeam = battle.warriors.filter(
-    (warrior: Warrior) => warrior.team === 1,
-  );
-  const defendingTeam = battle.warriors.filter(
-    (warrior: Warrior) => warrior.team === 2,
-  );
-  const userWarrior = battle.warriors.find(
-    (warrior: Warrior) => warrior.originalId === characterId,
-  );
-  const leftTeam = userWarrior?.team === 1 ? attackingTeam : defendingTeam;
-  const rightTeam = userWarrior?.team === 1 ? defendingTeam : attackingTeam;
-  const leftTeamNumber = userWarrior?.team === 1 ? 1 : 2;
-  const rightTeamNumber = userWarrior?.team === 1 ? 2 : 1;
+  const { characterId, leftTeam, rightTeam, leftTeamNumber, rightTeamNumber } =
+    getBattleTeamPresentation(battle, currentUserCharacterId);
   const winnerResult = getWinnerResult(battle);
   const isLeftTeamWinner = battle.winningTeam === leftTeamNumber;
   const isRightTeamWinner = battle.winningTeam === rightTeamNumber;
