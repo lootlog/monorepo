@@ -1,3 +1,4 @@
+import { hasRolePermissionInLevelRange } from "@lootlog/api-helpers/permissions";
 import { getNpcRoutingTier, type NpcRoutingTier } from "@lootlog/types";
 import { Permission, type Role } from "src/generated/prisma/client";
 import { MessageType } from "src/chat/dto/send-message.dto";
@@ -22,17 +23,10 @@ const isNpcScopedMessage = (data: ChatStoredMessage) => {
   );
 };
 
-const isNpcLevelInRoleRange = (npc: NpcData, role: Role) => {
-  return role.lvlRangeFrom <= npc.lvl && role.lvlRangeTo >= npc.lvl;
-};
-
 const hasNpcTierPermission = (npc: NpcData, roles: Role[]) => {
   const permission = NPC_TIER_PERMISSIONS[getNpcRoutingTier(npc)];
 
-  return roles.some(
-    (role) =>
-      role.permissions.includes(permission) && isNpcLevelInRoleRange(npc, role),
-  );
+  return hasRolePermissionInLevelRange(roles, permission, npc.lvl);
 };
 
 export const canViewChatMessage = (

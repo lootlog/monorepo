@@ -4,7 +4,7 @@ export type NpcPermissionData = {
 };
 
 export type RolePermissionData = {
-  permissions: string[];
+  permissions: readonly string[];
   lvlRangeFrom: number;
   lvlRangeTo: number;
 };
@@ -37,6 +37,17 @@ const isNpcLevelWithinRoleRange = (
   npcLevel: number,
 ): boolean => role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
 
+export const hasRolePermissionInLevelRange = (
+  roles: readonly RolePermissionData[],
+  permission: string,
+  npcLevel: number,
+): boolean =>
+  roles.some(
+    (role) =>
+      role.permissions.includes(permission) &&
+      isNpcLevelWithinRoleRange(role, npcLevel),
+  );
+
 const getRequiredTimerPermission = (npcType: string): TimerPermission =>
   TIMER_PERMISSION_BY_TIER[
     TIMER_PERMISSION_TIER_BY_NPC_TYPE[npcType] ?? "base"
@@ -44,15 +55,11 @@ const getRequiredTimerPermission = (npcType: string): TimerPermission =>
 
 export const canViewNpcTimer = (
   npc: NpcPermissionData | null,
-  roles: RolePermissionData[],
+  roles: readonly RolePermissionData[],
 ): boolean => {
   if (!npc) return false;
 
   const requiredTimerPermission = getRequiredTimerPermission(npc.type);
 
-  return roles.some(
-    (role) =>
-      role.permissions.includes(requiredTimerPermission) &&
-      isNpcLevelWithinRoleRange(role, npc.lvl),
-  );
+  return hasRolePermissionInLevelRange(roles, requiredTimerPermission, npc.lvl);
 };
