@@ -4,13 +4,11 @@ import { BattleOverviewHeader } from "./battle-overview-header";
 import { BattleTeamSection } from "./battle-team-section";
 import { AnimatedTrophy } from "./animated-trophy";
 import { BattleMetadata } from "./battle-metadata";
-import type {
-  Battle,
-  BattleWarrior as Warrior,
-} from "@/lib/api/battlelog-types";
+import type { Battle } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 import { cn } from "@lootlog/ui/lib/utils";
 import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
+import { getBattleTeamPresentation } from "./utils/battle-team-presentation";
 
 export type BattleOverviewCardProps = {
   battle: Battle;
@@ -38,18 +36,14 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
   showHeader = true,
 }) => {
   const { t } = useTranslation();
-  const attackingTeam = battle.warriors.filter((w: Warrior) => w.team === 1);
-  const defendingTeam = battle.warriors.filter((w: Warrior) => w.team === 2);
-
-  const userTeam = battle.warriors.find(
-    (w: Warrior) =>
-      w.originalId === (currentUserCharacterId || battle.characterId),
-  );
-
-  const leftTeam = userTeam?.team === 1 ? attackingTeam : defendingTeam;
-  const rightTeam = userTeam?.team === 1 ? defendingTeam : attackingTeam;
-  const leftTeamNumber = userTeam?.team === 1 ? 1 : 2;
-  const rightTeamNumber = userTeam?.team === 1 ? 2 : 1;
+  const {
+    characterId,
+    leftTeam,
+    rightTeam,
+    leftTeamNumber,
+    rightTeamNumber,
+    userWarrior,
+  } = getBattleTeamPresentation(battle, currentUserCharacterId);
 
   const handleShareClick = () => {
     onShare?.(battle.id);
@@ -91,8 +85,8 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
             <BattleTeamSection
               team={leftTeam}
               teamNumber={leftTeamNumber}
-              userTeam={userTeam?.team}
-              characterId={currentUserCharacterId || battle.characterId}
+              userTeam={userWarrior?.team}
+              characterId={characterId}
               cdnBaseUrl={cdnBaseUrl}
             />
             <div className="grid grid-cols-3 items-center justify-items-center">
@@ -101,7 +95,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
                   show={
                     battle.winningTeam === leftTeamNumber && !battle.hasFlee
                   }
-                  isUserTeamWinner={userTeam?.team === leftTeamNumber}
+                  isUserTeamWinner={userWarrior?.team === leftTeamNumber}
                 />
               </div>
               <div className="text-center">
@@ -114,7 +108,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
                   show={
                     battle.winningTeam === rightTeamNumber && !battle.hasFlee
                   }
-                  isUserTeamWinner={userTeam?.team === rightTeamNumber}
+                  isUserTeamWinner={userWarrior?.team === rightTeamNumber}
                 />
               </div>
             </div>
@@ -122,8 +116,8 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
             <BattleTeamSection
               team={rightTeam}
               teamNumber={rightTeamNumber}
-              userTeam={userTeam?.team}
-              characterId={currentUserCharacterId || battle.characterId}
+              userTeam={userWarrior?.team}
+              characterId={characterId}
               cdnBaseUrl={cdnBaseUrl}
             />
           </div>
