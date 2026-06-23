@@ -35,6 +35,17 @@ export const rabbitmqConfig: RabbitMQConfig = {
         deadLetterRoutingKey: RoutingKey.ACTIVITY_LOG_CREATE,
       },
     },
+    {
+      name: Queue.GUILDS_MEMBERS_REMOVE_RETRY,
+      exchange: RETRY_EXCHANGE_NAME,
+      routingKey: RoutingKey.GUILDS_MEMBERS_REMOVE_RETRY,
+      options: {
+        durable: true,
+        messageTtl: DEFAULT_TTL,
+        deadLetterExchange: DEFAULT_EXCHANGE_NAME,
+        deadLetterRoutingKey: RoutingKey.GUILDS_MEMBERS_REMOVE,
+      },
+    },
   ],
   channels: {
     default: {

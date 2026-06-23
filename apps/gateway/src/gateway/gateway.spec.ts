@@ -23,6 +23,10 @@ describe("Gateway", () => {
     handleDisconnect: vi.fn(),
   };
 
+  const mockGatewayAuthService = {
+    verifyConnectionIdentity: vi.fn(),
+  };
+
   const mockServer = {};
 
   let gateway: Gateway;
@@ -32,6 +36,7 @@ describe("Gateway", () => {
       mockConnectionService as never,
       mockPresenceService as never,
       mockSubscriptionService as never,
+      mockGatewayAuthService as never,
     );
     gateway.server = mockServer as never;
   });
@@ -44,10 +49,9 @@ describe("Gateway", () => {
     };
 
     mockConnectionService.getConnectionMetadata.mockReturnValue({
-      discordId: null,
-      userId: null,
       platform: Platform.UNKNOWN,
     });
+    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue(null);
     mockConnectionService.validateConnection.mockReturnValue({
       valid: false,
     });
@@ -56,6 +60,38 @@ describe("Gateway", () => {
 
     expect(client.disconnect).toHaveBeenCalled();
     expect(client.on).not.toHaveBeenCalled();
+  });
+
+  it("disconnects spoofed websocket connections without a verified session", async () => {
+    const client = {
+      request: {
+        headers: {
+          "x-auth-discord-id": "spoofed-discord",
+          "x-auth-user-id": "spoofed-user",
+          origin: "https://lootlog.com",
+        },
+      },
+      handshake: {},
+      disconnect: vi.fn(),
+      on: vi.fn(),
+    };
+
+    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue(null);
+    mockConnectionService.getConnectionMetadata.mockReturnValue({
+      platform: Platform.WEB_APP,
+    });
+    mockConnectionService.validateConnection.mockReturnValue({
+      valid: false,
+    });
+
+    await gateway.handleConnection(client as never);
+
+    expect(mockConnectionService.validateConnection).toHaveBeenCalledWith(
+      null,
+      Platform.WEB_APP,
+    );
+    expect(client.disconnect).toHaveBeenCalled();
+    expect(mockConnectionService.initializeSocketData).not.toHaveBeenCalled();
   });
 
   it("initializes socket data and handles disconnecting callbacks", async () => {
@@ -86,9 +122,11 @@ describe("Gateway", () => {
     };
 
     mockConnectionService.getConnectionMetadata.mockReturnValue({
+      platform: Platform.GAME,
+    });
+    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue({
       discordId: "discord-1",
       userId: "user-1",
-      platform: Platform.GAME,
     });
     mockConnectionService.validateConnection.mockReturnValue({ valid: true });
     mockConnectionService.initializeSocketData.mockReturnValue(socketData);
@@ -141,6 +179,14 @@ describe("Gateway", () => {
           prof: "w",
           location: { x: 1, y: 2, map: "Map" },
         },
+        margonemAccountProof: {
+          userId: "20",
+          token: "lootlog:socket-1:20:0123456789abcdef0123456789abcdef",
+          ts: 1_700_000_000,
+          validatedString:
+            "20+lootlog:socket-1:20:0123456789abcdef0123456789abcdef+1700000000",
+          signatureBase64: "signature",
+        },
       } as never,
     );
 
@@ -149,6 +195,7 @@ describe("Gateway", () => {
       client,
       "discord-1",
       "user-1",
+      expect.any(Object),
       expect.any(Object),
     );
     expect(client.emit).toHaveBeenCalledWith(GatewayEvent.JOIN, joinResult);

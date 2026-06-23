@@ -103,6 +103,48 @@ export class PresenceService {
     );
   }
 
+  emitDisconnectPresenceForGuildIds(
+    server: Server,
+    client: Socket,
+    guildIds: string[],
+  ): void {
+    if (!client.data?.player) return;
+
+    const playerPresence = this.buildPlayerPresence(
+      client.data.player,
+      client.id,
+      client.data.playerPresence,
+    );
+
+    for (const guildId of guildIds) {
+      const payload = {
+        guildId,
+        discordId: client.data.discordId,
+        player: playerPresence,
+        status: UserPresenceStatus.OFFLINE,
+        sessionId: client.data.sessionId,
+      };
+
+      this.emitPresenceToOnlinePlayersRoom({
+        server,
+        sourceClient: client,
+        guildId,
+        event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+        payload,
+        excludeSourceSocket: true,
+      });
+
+      this.emitPresenceToOnlinePlayersRoom({
+        server,
+        sourceClient: client,
+        guildId,
+        event: GatewayEvent.EVENT_PRESENCE_UPDATE,
+        payload,
+        excludeSourceSocket: true,
+      });
+    }
+  }
+
   async broadcastPlayerDisconnect(
     server: Server,
     client: Socket,
@@ -110,6 +152,16 @@ export class PresenceService {
     if (!client.data?.guilds || !client.data?.playerPresence) return;
 
     const guildIds = getGuildIds(client.data.guilds);
+    await this.broadcastPlayerDisconnectForGuildIds(server, client, guildIds);
+  }
+
+  async broadcastPlayerDisconnectForGuildIds(
+    server: Server,
+    client: Socket,
+    guildIds: string[],
+  ): Promise<void> {
+    if (!client.data?.playerPresence || !client.data?.player) return;
+
     const playerPresence = this.buildPlayerPresence(
       client.data.player,
       client.id,

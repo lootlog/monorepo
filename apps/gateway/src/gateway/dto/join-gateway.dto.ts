@@ -25,8 +25,21 @@ const SocketUserPlayerSchema = z.object({
   clan: SocketUserPlayerClanSchema.optional(),
 });
 
+export const MargonemAccountProofSchema = z.object({
+  userId: z.string(),
+  token: z.string(),
+  ts: z.number(),
+  validatedString: z.string(),
+  signatureBase64: z.string(),
+});
+
+export type MargonemAccountProofDto = z.infer<
+  typeof MargonemAccountProofSchema
+>;
+
 const JoinGatewaySchema = z.object({
   data: SocketUserPlayerSchema.optional(),
+  margonemAccountProof: MargonemAccountProofSchema.optional(),
 });
 
 export class JoinGatewayDto extends createZodDto(JoinGatewaySchema) {}

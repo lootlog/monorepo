@@ -12,6 +12,9 @@ import { NpcType } from "./enums/npc-type.enum";
 import { GatewayEvent } from "./enums/gateway-event.enum";
 import { Platform } from "./enums/platform.enum";
 import { Permission } from "@lootlog/types";
+import { ActivityType } from "./enums/activity-type.enum";
+import { ActivityService } from "./services/activity.service";
+import { PresenceService } from "./services/presence.service";
 import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
@@ -54,6 +57,15 @@ describe("GatewayService", () => {
     getUserGuilds: vi.fn(),
   };
 
+  const mockActivityService = {
+    publishActivityEventForGuildIds: vi.fn(),
+  };
+
+  const mockPresenceService = {
+    emitDisconnectPresenceForGuildIds: vi.fn(),
+    broadcastPlayerDisconnectForGuildIds: vi.fn(),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -76,6 +88,14 @@ describe("GatewayService", () => {
         {
           provide: GuildsService,
           useValue: mockGuildsService,
+        },
+        {
+          provide: ActivityService,
+          useValue: mockActivityService,
+        },
+        {
+          provide: PresenceService,
+          useValue: mockPresenceService,
         },
       ],
     }).compile();
@@ -1509,6 +1529,97 @@ describe("GatewayService", () => {
           featureRooms: expect.any(Array),
         }),
       );
+    });
+
+    it("should publish disconnect cleanup for guilds removed during rebalance", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+      const updatedGuilds = [
+        {
+          guild: { id: "guild-2", ownerId: "owner-1" },
+          roles: [],
+        },
+      ];
+      const mockUserSocket = {
+        id: "socket-123",
+        data: {
+          discordId,
+          userId,
+          sessionId: "socket-123",
+          platform: Platform.WEB_APP,
+          guilds: [
+            {
+              guild: { id: "guild-1", ownerId: "owner-1" },
+              roles: [],
+            },
+            {
+              guild: { id: "guild-2", ownerId: "owner-1" },
+              roles: [],
+            },
+          ],
+        },
+        rooms: new Set(["socket-123", "guild-1:presence", "guild-2:presence"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+        disconnect: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(
+        mockActivityService.publishActivityEventForGuildIds,
+      ).toHaveBeenCalledWith(ActivityType.DISCONNECT_EVENT, mockUserSocket, [
+        "guild-1",
+      ]);
+      expect(
+        mockPresenceService.emitDisconnectPresenceForGuildIds,
+      ).toHaveBeenCalledWith(mockServer, mockUserSocket, ["guild-1"]);
+      expect(
+        mockPresenceService.broadcastPlayerDisconnectForGuildIds,
+      ).toHaveBeenCalledWith(mockServer, mockUserSocket, ["guild-1"]);
+      expect(mockUserSocket.data.guilds).toEqual(updatedGuilds);
+      expect(mockUserSocket.disconnect).not.toHaveBeenCalled();
+    });
+
+    it("should disconnect sockets after all guild access is removed", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+      const mockUserSocket = {
+        id: "socket-123",
+        data: {
+          discordId,
+          userId,
+          sessionId: "socket-123",
+          platform: Platform.WEB_APP,
+          guilds: [
+            {
+              guild: { id: "guild-1", ownerId: "owner-1" },
+              roles: [],
+            },
+          ],
+        },
+        rooms: new Set(["socket-123", "guild-1:presence"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+        disconnect: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue([]);
+      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(
+        mockActivityService.publishActivityEventForGuildIds,
+      ).toHaveBeenCalledWith(ActivityType.DISCONNECT_EVENT, mockUserSocket, [
+        "guild-1",
+      ]);
+      expect(mockUserSocket.disconnect).toHaveBeenCalledWith(true);
     });
 
     it("should handle case when user has no active sockets", async () => {
