@@ -30,7 +30,7 @@ import {
   isValidTimeZone,
 } from "src/notifications/utils/notification-schedule-time.util";
 import { ensureLimitNotExceeded } from "src/notifications/utils/ensure-limit-not-exceeded.util";
-import { hasOwnUpdateField } from "src/notifications/utils/has-own-update-field.util";
+import { hasOwnField } from "src/shared/utils/has-own-field";
 import {
   type TestTriggerUsage,
   computeTestTriggerUsage,
@@ -374,9 +374,9 @@ export class NotificationRuleService {
     ruleId: number,
     data: UpdateNotificationRuleDto,
   ) {
-    const hasName = hasOwnUpdateField(data, "name");
-    const hasWorld = hasOwnUpdateField(data, "world");
-    const hasContentTemplate = hasOwnUpdateField(data, "contentTemplate");
+    const hasName = hasOwnField(data, "name");
+    const hasWorld = hasOwnField(data, "world");
+    const hasContentTemplate = hasOwnField(data, "contentTemplate");
     const existingRule = await this.ensureRule({ ownerType, ownerId, ruleId });
     const nextTriggerType =
       (data.triggerType as DbNotificationTriggerType | undefined) ??
@@ -767,7 +767,7 @@ export class NotificationRuleService {
       data.scheduleWeekday ?? existingRule?.scheduleWeekday ?? null;
     const timeOfDay =
       data.scheduleTimeOfDay ?? existingRule?.scheduleTimeOfDay ?? null;
-    const hasScheduledUntil = hasOwnUpdateField(data, "scheduledUntil");
+    const hasScheduledUntil = hasOwnField(data, "scheduledUntil");
     let scheduledUntil = existingRule?.scheduledUntil ?? null;
 
     if (hasScheduledUntil) {
