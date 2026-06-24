@@ -8,9 +8,6 @@ import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
 import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
 import { Platform } from "src/gateway/enums/platform.enum";
 
-export type FeatureName = "chat" | "timers" | "notifications" | "loots";
-export type TierName = NpcRoutingTier;
-
 const FEATURE_ROOMS = {
   chat: {
     base: Permission.LOOTLOG_CHAT_READ,
@@ -32,7 +29,10 @@ const FEATURE_ROOMS = {
     titans: Permission.LOOTLOG_LOOTS_TITANS_READ,
     heroes: Permission.LOOTLOG_LOOTS_HEROES_READ,
   },
-} as const;
+} as const satisfies Record<string, Record<NpcRoutingTier, Permission>>;
+
+export type FeatureName = keyof typeof FEATURE_ROOMS;
+export type TierName = keyof (typeof FEATURE_ROOMS)[FeatureName];
 
 type FeatureRoom = { feature: FeatureName; tier: TierName };
 
