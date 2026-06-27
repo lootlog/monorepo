@@ -19,7 +19,9 @@ import {
   isMemberOnlineInGame,
   resolveMemberPresenceGuildId,
 } from "@/features/guild/settings/members/member-game-presence.utils";
+import { isMemberOnlineOnWeb } from "@/features/guild/settings/members/member-web-presence.utils";
 import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
+import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
 import { MemberData } from "@/features/guild/settings/members/components/member-data";
 import { RefreshStatusProvider } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
@@ -45,6 +47,7 @@ const MemberSettingsDetailPageContent = () => {
     memberActivityStatsQueryOptions(resolvedGuildId),
   );
   const memberGamePresenceByDiscordId = useMemberGamePresence(resolvedGuildId);
+  const memberWebPresenceByDiscordId = useMemberWebPresence(resolvedGuildId);
   const memberActivityStatsByDiscordIdAndSource = useMemo(
     () => mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats),
     [memberActivityStats],
@@ -170,6 +173,10 @@ const MemberSettingsDetailPageContent = () => {
             }
             isOnlineInGame={isMemberOnlineInGame(
               memberGamePresenceByDiscordId,
+              member.userId,
+            )}
+            isOnlineOnWeb={isMemberOnlineOnWeb(
+              memberWebPresenceByDiscordId,
               member.userId,
             )}
           />

@@ -4,6 +4,8 @@ export enum GatewayEvent {
   JOIN = "join",
   ONLINE_PLAYERS_PRESENCE_FETCH = "online-players:presence:fetch",
   ONLINE_PLAYERS_PRESENCE_UPDATE = "online-players:presence:update",
+  MEMBER_WEB_PRESENCE_FETCH = "member-web-presence:fetch",
+  MEMBER_WEB_PRESENCE_UPDATE = "member-web-presence:update",
   CHAT_MESSAGE = "chat-message",
   LOOTS_CREATE = "loots-create",
   LOOTS_SHARE_UPDATE = "loots-share-update",
