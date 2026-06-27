@@ -12,6 +12,11 @@ import type { IndexNpcsDto } from "./dto/index-npcs.dto";
 import type { npcHitSchema } from "./dto/npc-hit.schema";
 
 type NpcHit = z.infer<typeof npcHitSchema>;
+type RawNpcHit = Omit<NpcHit, "margonemType" | "prof" | "type"> & {
+  margonemType?: number | null;
+  prof?: string | null;
+  type?: NpcHit["type"] | number | string | null;
+};
 
 @Injectable()
 export class NpcsService {
@@ -21,7 +26,7 @@ export class NpcsService {
   ) {}
 
   async getNpcs({ ids, limit, search, world }: GetNpcsDto) {
-    const index = this.meilisearch.index<NpcHit>(NPCS_INDEX);
+    const index = this.meilisearch.index<RawNpcHit>(NPCS_INDEX);
     const { filter: searchFilter, searchTerm } =
       buildMeilisearchSearchTermFilter("name", search);
 
@@ -47,12 +52,13 @@ export class NpcsService {
 
     try {
       const data = await index.search(searchTerm, query);
+      const hits = data.hits.map((npc) => this.normalizeNpcHit(npc));
 
       if (ids && ids.length > 0) {
-        return data.hits;
+        return hits;
       }
 
-      return this.getUniqueNpcsByNameAndType(data.hits);
+      return this.getUniqueNpcsByNameAndType(hits);
     } catch (error) {
       this.logger.error("NPC search error", { error });
       return [];
@@ -83,17 +89,61 @@ export class NpcsService {
       );
     }
 
-    const npcsWithUid = validNpcs.map((npc) => ({
-      ...npc,
-      type: getNpcTypeByWt(NpcTypeEnum, npc.wt, npc.prof, npc.margonemType),
-      uid: `${npc.id}_${npc.margonemType}_${npc.world}`,
-    }));
+    const npcsWithUid = validNpcs.map((npc) => {
+      const prof = npc.prof ?? "";
+
+      return {
+        ...npc,
+        prof,
+        type: getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType),
+        uid: `${npc.id}_${npc.margonemType}_${npc.world}`,
+      };
+    });
 
     try {
       return await index.addDocuments(npcsWithUid, { primaryKey: "uid" });
     } catch (error) {
       this.logger.error("Error indexing npcs", { error });
     }
+  }
+
+  private normalizeNpcHit(npc: RawNpcHit): NpcHit {
+    const prof = npc.prof ?? "";
+    const margonemType = this.getMargonemType(npc);
+
+    return {
+      ...npc,
+      prof,
+      margonemType,
+      type: this.getNpcType(npc, prof, margonemType),
+    };
+  }
+
+  private getMargonemType(npc: RawNpcHit): number {
+    if (typeof npc.margonemType === "number") {
+      return npc.margonemType;
+    }
+
+    if (typeof npc.type === "number") {
+      return npc.type;
+    }
+
+    return 0;
+  }
+
+  private getNpcType(
+    npc: RawNpcHit,
+    prof: string,
+    margonemType: number,
+  ): NpcTypeEnum {
+    if (
+      typeof npc.type === "string" &&
+      Object.values(NpcTypeEnum).includes(npc.type as NpcTypeEnum)
+    ) {
+      return npc.type as NpcTypeEnum;
+    }
+
+    return getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, margonemType);
   }
 
   private getUniqueNpcsByNameAndType(npcs: NpcHit[]) {

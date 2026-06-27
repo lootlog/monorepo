@@ -96,15 +96,15 @@ function getRowCharacterId(row: HTMLElement): string | null {
 function getRowOther(
   row: HTMLElement,
   othersById: Record<string, Other | undefined>,
+  runtimeOthersById?: Record<string, Other | undefined>,
 ): Other | null {
   const characterId = getRowCharacterId(row);
   if (!characterId) return null;
 
-  return (
-    othersById[characterId] ??
-    getRuntimeWindow().Engine?.others?.check?.()[characterId] ??
-    null
-  );
+  const fallbackOthersById =
+    runtimeOthersById ?? getRuntimeWindow().Engine?.others?.check?.();
+
+  return othersById[characterId] ?? fallbackOthersById?.[characterId] ?? null;
 }
 
 function getWhoIsHereTipContainer(
@@ -182,8 +182,17 @@ export function useWhoIsHereLootlogHighlight(): void {
 
   useEffect(() => {
     const cleanupStyle = installStyle();
+    let animationFrameId: number | null = null;
+    const scheduleMutationRefresh = () => {
+      if (animationFrameId !== null) return;
+
+      animationFrameId = requestAnimationFrame(() => {
+        animationFrameId = null;
+        setMutationVersion((version) => version + 1);
+      });
+    };
     const observer = new MutationObserver(() => {
-      setMutationVersion((version) => version + 1);
+      scheduleMutationRefresh();
     });
 
     observer.observe(document.body, {
@@ -192,6 +201,10 @@ export function useWhoIsHereLootlogHighlight(): void {
     });
 
     return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
       observer.disconnect();
       cleanupStyle();
 
@@ -203,6 +216,7 @@ export function useWhoIsHereLootlogHighlight(): void {
 
   useEffect(() => {
     const rows = getWhoIsHereRows();
+    const runtimeOthersById = getRuntimeWindow().Engine?.others?.check?.();
 
     if (!isShiftPressed || !selectedGuildId) {
       for (const row of rows) {
@@ -212,7 +226,7 @@ export function useWhoIsHereLootlogHighlight(): void {
     }
 
     for (const row of rows) {
-      const other = getRowOther(row, othersById);
+      const other = getRowOther(row, othersById, runtimeOthersById);
       const target = other ? getOtherCatchingGuildsTarget(other) : null;
       const entry = target ? entriesByKey[target.key] : undefined;
 

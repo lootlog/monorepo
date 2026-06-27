@@ -3,6 +3,7 @@ import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSettingsStore } from "@/store/settings.store";
 
 const CONTENT_ANIMATION: Variants = {
   initial: {
@@ -76,6 +77,9 @@ const AccordionContent = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
+  const animationEffectsEnabled = useSettingsStore(
+    (state) => state.animationEffectsEnabled,
+  );
   const [isOpen, setIsOpen] = React.useState(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
@@ -107,18 +111,22 @@ const AccordionContent = React.forwardRef<
       className={cn("ll:overflow-hidden", className)}
       {...props}
     >
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={CONTENT_ANIMATION}
-          >
-            <div className="ll:pt-2 ll:pb-4 ll:px-3">{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {animationEffectsEnabled ? (
+        <AnimatePresence initial={false}>
+          {isOpen && (
+            <motion.div
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={CONTENT_ANIMATION}
+            >
+              <div className="ll:pt-2 ll:pb-4 ll:px-3">{children}</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      ) : isOpen ? (
+        <div className="ll:pt-2 ll:pb-4 ll:px-3">{children}</div>
+      ) : null}
     </AccordionPrimitive.Content>
   );
 });

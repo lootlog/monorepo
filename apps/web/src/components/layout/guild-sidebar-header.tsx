@@ -31,10 +31,12 @@ import {
 
 export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
   const queryClient = useQueryClient();
+  const hasGuildId = Boolean(guildId);
   const { data: guild } = useGuildsControllerGetGuildById(
     { guildId: guildId ?? "" },
     {
       query: {
+        enabled: hasGuildId,
         queryKey: getGuildsControllerGetGuildByIdQueryKey({
           guildId: guildId ?? "",
         }),
@@ -46,6 +48,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
     { guildId: guildId ?? "" },
     {
       query: {
+        enabled: hasGuildId,
         queryKey: getMembersControllerGetMeQueryKey({
           guildId: guildId ?? "",
         }),
@@ -160,7 +163,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 text-muted-foreground hover:text-foreground"
+              className="size-8 text-muted-foreground hover:text-foreground"
               onClick={handleRefreshPermissions}
               disabled={!canTriggerRefresh || refreshMember.isPending}
             >

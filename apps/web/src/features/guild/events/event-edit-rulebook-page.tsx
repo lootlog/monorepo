@@ -14,6 +14,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";
 import {
+  getShowEventOverviewQueryKey,
   useShowEventOverview,
   useUpdateEvent,
 } from "@/lib/api/generated/main/events/events";
@@ -37,8 +38,18 @@ export const EventEditRulebookPage = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   };
+  const hasEventRouteParams = Boolean(guildId && eventId);
 
-  const { data: event, isLoading, error } = useShowEventOverview(routeParams);
+  const {
+    data: event,
+    isLoading,
+    error,
+  } = useShowEventOverview(routeParams, {
+    query: {
+      enabled: hasEventRouteParams,
+      queryKey: getShowEventOverviewQueryKey(routeParams),
+    },
+  });
   const queryClient = useQueryClient();
   const updateEvent = useUpdateEvent({
     mutation: {

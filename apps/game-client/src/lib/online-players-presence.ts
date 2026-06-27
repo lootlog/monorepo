@@ -10,6 +10,7 @@ export type RawPlayerPresencePayload = {
   characterId?: string;
   accountId?: string;
   prof?: string;
+  margonemAccountVerified?: boolean;
   clan?: {
     id?: number;
     name?: string;
@@ -34,6 +35,7 @@ export type PlayerPresence = {
   guildId?: string;
   mapName?: string;
   isAfk: boolean;
+  margonemAccountVerified?: boolean;
   updatedAt?: number;
   player?: {
     world: string;
@@ -156,6 +158,7 @@ export const normalizePresence = (
       normalizedPlayer?.location?.map ??
       undefined,
     isAfk: rawPlayerPresence?.isAfk ?? false,
+    margonemAccountVerified: rawPlayerPresence?.margonemAccountVerified,
     updatedAt: rawPlayerPresence?.updatedAt,
     player: normalizedPlayer,
   };

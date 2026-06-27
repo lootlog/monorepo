@@ -115,6 +115,24 @@ describe("OnlinePlayersAccountListEntry", () => {
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
   });
 
+  it("shows Margonem verification only for verified presence", () => {
+    const { rerender } = render(
+      <OnlinePlayersAccountListEntry presence={createPresence()} />,
+    );
+
+    expect(
+      screen.queryByLabelText("Zweryfikowane konto Margonem"),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <OnlinePlayersAccountListEntry
+        presence={createPresence({ margonemAccountVerified: true })}
+      />,
+    );
+
+    expect(screen.getByLabelText("Zweryfikowane konto Margonem")).toBeVisible();
+  });
+
   it("shows discord member name in a tooltip", async () => {
     const user = userEvent.setup();
 

@@ -43,7 +43,7 @@ export const MembersSettingsHeader = ({
               <span aria-hidden="true">·</span>
               <button
                 type="button"
-                className="inline-flex h-5 items-center rounded-full border border-amber-500/25 bg-amber-500/10 px-2 text-[11px] font-medium text-amber-500 transition-colors hover:bg-amber-500/15"
+                className="inline-flex min-h-8 items-center rounded-full border border-amber-500/25 bg-amber-500/10 px-2 text-[11px] font-medium text-amber-500 transition-colors hover:bg-amber-500/15"
                 onClick={onProblemsClick}
               >
                 {t("settings.members.summary.problems", {

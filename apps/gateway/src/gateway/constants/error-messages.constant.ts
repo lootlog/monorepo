@@ -3,5 +3,7 @@ export const ErrorMessages = {
   NOT_GUILD_MEMBER: "Not a member of this guild",
   NO_GUILDS_FOUND:
     "No guilds found. Please ensure you have access to at least one guild.",
+  MARGONEM_ACCOUNT_PROOF_INVALID:
+    "Could not verify Margonem account ownership.",
   JOIN_FAILED: "Failed to join gateway. Please try again.",
 } as const;

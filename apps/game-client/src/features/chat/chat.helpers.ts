@@ -42,35 +42,78 @@ export const getMessagesForSelectedGuild = (
   messageCache: Record<string, ChatMessageType[]>,
   selectedGuildId?: string,
 ) => {
+  const messages: ChatMessageType[] = [];
+
   if (selectedGuildId === "all") {
-    return Object.values(messageCache)
-      .flat()
-      .filter((message) => !!message.timestamp);
+    for (const guildMessages of Object.values(messageCache)) {
+      for (const message of guildMessages) {
+        if (message.timestamp) {
+          messages.push(message);
+        }
+      }
+    }
+
+    return messages;
   }
 
-  return (messageCache[selectedGuildId ?? ""] ?? []).filter(
-    (message) => !!message.timestamp,
-  );
+  for (const message of messageCache[selectedGuildId ?? ""] ?? []) {
+    if (message.timestamp) {
+      messages.push(message);
+    }
+  }
+
+  return messages;
 };
 
 export const deduplicateChatMessages = (messages: ChatMessageType[]) => {
   const unique: ChatMessageType[] = [];
+  const timestampsByDedupeKeyAndBucket = new Map<
+    string,
+    Map<number, number[]>
+  >();
 
   for (const message of messages) {
     const timestamp = getChatMessageTimestamp(message.timestamp);
     const dedupeKey = getChatMessageDedupeKey(message);
+    const bucket = Math.floor(timestamp / CHAT_MESSAGE_DEDUPE_WINDOW_MS);
+    let isDuplicate = false;
 
-    const duplicate = unique.find(
-      (existingMessage) =>
-        getChatMessageDedupeKey(existingMessage) === dedupeKey &&
-        Math.abs(
-          getChatMessageTimestamp(existingMessage.timestamp) - timestamp,
-        ) <= CHAT_MESSAGE_DEDUPE_WINDOW_MS,
-    );
+    let timestampsByBucket = timestampsByDedupeKeyAndBucket.get(dedupeKey);
 
-    if (!duplicate) {
-      unique.push(message);
+    if (!timestampsByBucket) {
+      timestampsByBucket = new Map<number, number[]>();
+      timestampsByDedupeKeyAndBucket.set(dedupeKey, timestampsByBucket);
     }
+
+    for (
+      let comparedBucket = bucket - 1;
+      comparedBucket <= bucket + 1;
+      comparedBucket += 1
+    ) {
+      const comparedTimestamps = timestampsByBucket.get(comparedBucket);
+      if (!comparedTimestamps) continue;
+
+      for (const comparedTimestamp of comparedTimestamps) {
+        if (
+          Math.abs(comparedTimestamp - timestamp) <=
+          CHAT_MESSAGE_DEDUPE_WINDOW_MS
+        ) {
+          isDuplicate = true;
+          break;
+        }
+      }
+
+      if (isDuplicate) break;
+    }
+
+    if (isDuplicate) {
+      continue;
+    }
+
+    const bucketTimestamps = timestampsByBucket.get(bucket) ?? [];
+    bucketTimestamps.push(timestamp);
+    timestampsByBucket.set(bucket, bucketTimestamps);
+    unique.push(message);
   }
 
   return unique.sort(
@@ -195,60 +238,49 @@ export const getChatRenderableMessages = (
     existingGroup.sortTimestamp = timestamp;
   }
 
-  const groupedRenderables: Array<
-    Exclude<ChatRenderableMessage, { kind: "date-divider" }>
-  > = (Array.isArray(renderables) ? renderables : [])
-    .slice()
-    .sort((firstRenderable, secondRenderable) => {
-      if (firstRenderable.sortTimestamp !== secondRenderable.sortTimestamp) {
-        return firstRenderable.sortTimestamp - secondRenderable.sortTimestamp;
-      }
+  renderables.sort((firstRenderable, secondRenderable) => {
+    if (firstRenderable.sortTimestamp !== secondRenderable.sortTimestamp) {
+      return firstRenderable.sortTimestamp - secondRenderable.sortTimestamp;
+    }
 
-      return firstRenderable.order - secondRenderable.order;
-    })
-    .map((renderable) => {
-      if (renderable.kind === "message") {
-        return {
-          kind: "message" as const,
-          key: renderable.key,
-          message: renderable.message,
-        };
-      }
+    return firstRenderable.order - secondRenderable.order;
+  });
 
-      return {
-        additionalSenderCount: Math.max(renderable.senderIds.size - 1, 0),
-        kind: "npc-group" as const,
-        key: renderable.key,
-        count: renderable.count,
-        message: renderable.message,
-      };
-    });
+  const normalizedRenderables: ChatRenderableMessage[] = [];
+  let previousDayKey: string | null = null;
 
-  const normalizedRenderables: ChatRenderableMessage[] =
-    groupedRenderables.flatMap((renderable, index) => {
-      const previousRenderable = groupedRenderables[index - 1];
-      const previousTimestamp = previousRenderable
-        ? previousRenderable.message.timestamp
-        : null;
-      const currentTimestamp = renderable.message.timestamp;
-      const startsNewDay =
-        !previousTimestamp ||
-        getChatMessageDayKey(previousTimestamp) !==
-          getChatMessageDayKey(currentTimestamp);
+  for (const renderable of renderables) {
+    const publicRenderable: Exclude<
+      ChatRenderableMessage,
+      { kind: "date-divider" }
+    > =
+      renderable.kind === "message"
+        ? {
+            kind: "message",
+            key: renderable.key,
+            message: renderable.message,
+          }
+        : {
+            additionalSenderCount: Math.max(renderable.senderIds.size - 1, 0),
+            kind: "npc-group",
+            key: renderable.key,
+            count: renderable.count,
+            message: renderable.message,
+          };
+    const currentTimestamp = publicRenderable.message.timestamp;
+    const currentDayKey = getChatMessageDayKey(currentTimestamp);
 
-      if (!startsNewDay) {
-        return renderable;
-      }
+    if (previousDayKey !== currentDayKey) {
+      normalizedRenderables.push({
+        kind: "date-divider",
+        key: `date-divider:${currentDayKey}`,
+        timestamp: currentTimestamp,
+      });
+      previousDayKey = currentDayKey;
+    }
 
-      return [
-        {
-          kind: "date-divider" as const,
-          key: `date-divider:${getChatMessageDayKey(currentTimestamp)}`,
-          timestamp: currentTimestamp,
-        },
-        renderable,
-      ];
-    });
+    normalizedRenderables.push(publicRenderable);
+  }
 
   return normalizedRenderables;
 };

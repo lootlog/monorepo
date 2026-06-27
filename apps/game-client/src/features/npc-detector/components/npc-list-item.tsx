@@ -14,6 +14,7 @@ import {
   type GameNpcWithLocation,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { AlertTriangle, Loader2, Megaphone, Users, XIcon } from "lucide-react";
 import {
   getBackgroundColor,
@@ -94,6 +95,9 @@ export const NpcListItem = ({
   const { npcs, removeNpc, setNpcState, clearDetectionAnimation } =
     useNpcDetectorStore();
   const { settings } = useCurrentGameAccountDetectorSettings();
+  const animationEffectsEnabled = useSettingsStore(
+    (state) => state.animationEffectsEnabled,
+  );
   const partyGathering = usePartyFinderStore((state) => state.partyGathering);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const {
@@ -147,7 +151,11 @@ export const NpcListItem = ({
     setMessageButtonCooldownSecondsLeft(
       Math.ceil(BUTTON_UNLOCK_DELAY_MS / 1000),
     );
-    setMessageButtonCooldownRingOffset(0);
+    setMessageButtonCooldownRingOffset(
+      animationEffectsEnabled ? 0 : MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE,
+    );
+
+    if (!animationEffectsEnabled) return;
 
     const animationFrameId = window.requestAnimationFrame(() => {
       setMessageButtonCooldownRingOffset(
@@ -158,7 +166,7 @@ export const NpcListItem = ({
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [npc.notificationSent]);
+  }, [animationEffectsEnabled, npc.notificationSent]);
 
   useEffect(() => {
     if (messageButtonCooldownEndsAt === null) return;
@@ -259,62 +267,45 @@ export const NpcListItem = ({
 
   const background = getBackgroundColor(key, settingsByNpcType?.highlight);
   const borderColor = getBorderColor(key, settingsByNpcType?.highlight);
-
-  return (
-    <motion.div
-      className={cn(
-        "ll:relative ll:overflow-hidden ll:flex ll:items-center ll:py-1 ll:gap-2 ll:px-2",
-        "ll:border ll:rounded-sm",
-        "ll:transition-[background-color] ll:duration-300",
-      )}
-      style={{ background, borderColor }}
-      animate={
-        detectionAnimationCycle === null
-          ? undefined
-          : {
-              y: [-6, 0, 0],
-              scale: [0.988, 1.006, 1],
-            }
-      }
-      transition={{
-        duration: 0.34,
-        times: [0, 0.45, 1],
-        ease: "easeOut",
-      }}
-    >
-      <AnimatePresence mode="wait">
-        {detectionAnimationCycle !== null ? (
-          <motion.div
-            key={detectionAnimationCycle}
-            className="ll:pointer-events-none ll:absolute ll:inset-0 ll:rounded-[inherit]"
-            style={{
-              background: repeatDetectionFlashFrames.overlayBackground,
-              boxShadow: repeatDetectionFlashFrames.glowShadow,
-            }}
-            initial={{
-              opacity: 0,
-              scale: 0.96,
-              filter: "brightness(1)",
-            }}
-            animate={{
-              opacity: [0, 0.72, 0.5, 0],
-              scale: [0.96, 1.01, 1.003, 1],
-              filter: [
-                "brightness(1)",
-                "brightness(1.28)",
-                "brightness(1.12)",
-                "brightness(1)",
-              ],
-            }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: 0.82,
-              times: [0, 0.18, 0.58, 1],
-              ease: "easeOut",
-            }}
-          />
-        ) : null}
-      </AnimatePresence>
+  const shouldPlayDetectionAnimation =
+    animationEffectsEnabled && detectionAnimationCycle !== null;
+  const content = (
+    <>
+      {animationEffectsEnabled ? (
+        <AnimatePresence mode="wait">
+          {shouldPlayDetectionAnimation ? (
+            <motion.div
+              key={detectionAnimationCycle}
+              className="ll:pointer-events-none ll:absolute ll:inset-0 ll:rounded-[inherit]"
+              style={{
+                background: repeatDetectionFlashFrames.overlayBackground,
+                boxShadow: repeatDetectionFlashFrames.glowShadow,
+              }}
+              initial={{
+                opacity: 0,
+                scale: 0.96,
+                filter: "brightness(1)",
+              }}
+              animate={{
+                opacity: [0, 0.72, 0.5, 0],
+                scale: [0.96, 1.01, 1.003, 1],
+                filter: [
+                  "brightness(1)",
+                  "brightness(1.28)",
+                  "brightness(1.12)",
+                  "brightness(1)",
+                ],
+              }}
+              exit={{ opacity: 0 }}
+              transition={{
+                duration: 0.82,
+                times: [0, 0.18, 0.58, 1],
+                ease: "easeOut",
+              }}
+            />
+          ) : null}
+        </AnimatePresence>
+      ) : null}
       <NpcTile
         npc={npc}
         className="ll:w-auto ll:max-w-7 ll:max-h-10 ll:object-contain"
@@ -370,36 +361,38 @@ export const NpcListItem = ({
                 >
                   {isMessageButtonInCooldown ? (
                     <>
-                      <svg
-                        className="ll:absolute ll:inset-0 ll:size-full ll:-rotate-90"
-                        viewBox="0 0 28 28"
-                        aria-hidden="true"
-                      >
-                        <circle
-                          cx="14"
-                          cy="14"
-                          r={MESSAGE_BUTTON_COOLDOWN_RING_RADIUS}
-                          className="ll:stroke-white/15"
-                          fill="none"
-                          strokeWidth="2"
-                        />
-                        <circle
-                          cx="14"
-                          cy="14"
-                          r={MESSAGE_BUTTON_COOLDOWN_RING_RADIUS}
-                          className="ll:stroke-white ll:transition-[stroke-dashoffset] ll:ease-linear"
-                          fill="none"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeDasharray={
-                            MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE
-                          }
-                          strokeDashoffset={messageButtonCooldownRingOffset}
-                          style={{
-                            transitionDuration: `${BUTTON_UNLOCK_DELAY_MS}ms`,
-                          }}
-                        />
-                      </svg>
+                      {animationEffectsEnabled ? (
+                        <svg
+                          className="ll:absolute ll:inset-0 ll:size-full ll:-rotate-90"
+                          viewBox="0 0 28 28"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            cx="14"
+                            cy="14"
+                            r={MESSAGE_BUTTON_COOLDOWN_RING_RADIUS}
+                            className="ll:stroke-white/15"
+                            fill="none"
+                            strokeWidth="2"
+                          />
+                          <circle
+                            cx="14"
+                            cy="14"
+                            r={MESSAGE_BUTTON_COOLDOWN_RING_RADIUS}
+                            className="ll:stroke-white ll:transition-[stroke-dashoffset] ll:ease-linear"
+                            fill="none"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeDasharray={
+                              MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE
+                            }
+                            strokeDashoffset={messageButtonCooldownRingOffset}
+                            style={{
+                              transitionDuration: `${BUTTON_UNLOCK_DELAY_MS}ms`,
+                            }}
+                          />
+                        </svg>
+                      ) : null}
                       <span className="ll:relative ll:text-[10px] ll:font-semibold ll:tabular-nums">
                         {messageButtonCooldownSecondsLeft ||
                           Math.ceil(BUTTON_UNLOCK_DELAY_MS / 1000)}
@@ -454,6 +447,42 @@ export const NpcListItem = ({
           </Button>
         )}
       </div>
+    </>
+  );
+  const className = cn(
+    "ll:relative ll:overflow-hidden ll:flex ll:items-center ll:py-1 ll:gap-2 ll:px-2",
+    "ll:border ll:rounded-sm",
+    "ll:transition-[background-color] ll:duration-300",
+  );
+  const style = { background, borderColor };
+
+  if (!animationEffectsEnabled) {
+    return (
+      <div className={className} style={style}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      className={className}
+      style={style}
+      animate={
+        shouldPlayDetectionAnimation
+          ? {
+              y: [-6, 0, 0],
+              scale: [0.988, 1.006, 1],
+            }
+          : undefined
+      }
+      transition={{
+        duration: 0.34,
+        times: [0, 0.45, 1],
+        ease: "easeOut",
+      }}
+    >
+      {content}
     </motion.div>
   );
 };

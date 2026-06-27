@@ -64,9 +64,11 @@ const executeOrvalFetch = <TData>({
   const headers = new Headers(requestInit.headers);
   applyDevPermissionOverrideHeader(headers);
 
+  const method = requestInit.method ?? "GET";
+
   return executeApiRequest<TData>({
     url: requestUrl,
-    method: requestInit.method ?? "GET",
+    method,
     requestInit: {
       ...requestInit,
       headers,

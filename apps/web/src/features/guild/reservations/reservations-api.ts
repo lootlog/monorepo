@@ -70,6 +70,7 @@ export const reservationsQueryOptions = (guildId: string) =>
     { guildId },
     {
       query: {
+        enabled: Boolean(guildId),
         queryKey: getReservationsControllerGetReservationsQueryKey({
           guildId,
         }),
@@ -84,6 +85,7 @@ export const reservationsCardsQueryOptions = (guildId: string) =>
     { guildId },
     {
       query: {
+        enabled: Boolean(guildId),
         queryKey: getReservationsControllerGetReservationsCardsQueryKey({
           guildId,
         }),

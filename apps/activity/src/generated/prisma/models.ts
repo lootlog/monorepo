@@ -11,4 +11,5 @@
 export type * from './models/Activity'
 export type * from './models/ActivityActorSnapshot'
 export type * from './models/MemberActivityStats'
+export type * from './models/MemberActivitySession'
 export type * from './commonInputTypes'

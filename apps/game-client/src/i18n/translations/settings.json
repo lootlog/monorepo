@@ -22,7 +22,9 @@
     "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",
     "behaviorTitle": "Zachowanie dodatku",
     "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
-    "allowWorldSelectionDescription": "Nie działa na zgrupowanych timerach."
+    "allowWorldSelectionDescription": "Nie działa na zgrupowanych timerach.",
+    "animationEffectsLabel": "Efekty animacji",
+    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi."
   },
   "battlePanel": {
     "title": "Ustawienia panelu walk",

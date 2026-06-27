@@ -24,12 +24,18 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useKillsControllerGetNpcKillers } from "@/lib/api/generated/main/kills/kills";
+import {
+  getKillsControllerGetNpcKillersQueryKey,
+  useKillsControllerGetNpcKillers,
+} from "@/lib/api/generated/main/kills/kills";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile";
 import { buildNpcKillersParams } from "./utils/build-stats-query-params";
-import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
+import {
+  getMembersControllerGetGuildMemberReferencesQueryKey,
+  useMembersControllerGetGuildMemberReferences,
+} from "@/lib/api/generated/main/members/members";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
 import {
   KillStatsPeriodSelect,
@@ -82,20 +88,42 @@ export const NpcKillersPage: React.FC = () => {
   const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
   const { settings, setWorld, setPeriod } = useStatsSettings("npc-killers");
+  const npcKillersParams = buildNpcKillersParams({
+    world: settings.world ?? undefined,
+    period: settings.period,
+  });
   const { data, isLoading } = useKillsControllerGetNpcKillers(
     {
       guildId,
       npcId,
     },
-    buildNpcKillersParams({
-      world: settings.world ?? undefined,
-      period: settings.period,
-    }),
+    npcKillersParams,
+    {
+      query: {
+        enabled: Boolean(guildId && npcId),
+        queryKey: getKillsControllerGetNpcKillersQueryKey(
+          {
+            guildId,
+            npcId,
+          },
+          npcKillersParams,
+        ),
+      },
+    },
   );
   const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
     { guildId },
     {
       includeInactive: true,
+    },
+    {
+      query: {
+        enabled: Boolean(guildId),
+        queryKey: getMembersControllerGetGuildMemberReferencesQueryKey(
+          { guildId },
+          { includeInactive: true },
+        ),
+      },
     },
   );
 
@@ -285,87 +313,141 @@ export const NpcKillersPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <Table className="border-b">
-                  <TableHeader className="bg-background sticky top-0 z-10">
-                    <TableRow className="border-b-1! border-border">
-                      <TableHead className="w-16 text-center">
-                        {t("kills.memberRanking.position")}
-                      </TableHead>
-                      <TableHead>{t("kills.npcKillers.member")}</TableHead>
-                      <TableHead className="text-right">
-                        {t("kills.npcKillers.killCount")}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  <div className="grid gap-2 p-3 md:hidden">
                     {paginatedKillers.map((killer, index) => {
                       const globalIndex = cursor + index;
                       return (
-                        <TableRow
+                        <Link
                           key={killer.memberId}
+                          to="/$guildId/stats/members/$memberId"
+                          params={{
+                            guildId,
+                            memberId: killer.memberId.toString(),
+                          }}
                           className={cn(
-                            "bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors",
-                            globalIndex === 0 && "bg-yellow-500/5",
+                            "min-w-0 rounded-lg border border-border bg-background/60 p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            globalIndex === 0 &&
+                              "border-yellow-500/30 bg-yellow-500/5",
                           )}
                         >
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-medium text-muted-foreground">
                               {getRankIcon(globalIndex) ?? (
-                                <span className="text-sm font-medium text-muted-foreground">
-                                  {globalIndex + 1}
-                                </span>
+                                <span>{globalIndex + 1}</span>
                               )}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Link
-                              to="/$guildId/stats/members/$memberId"
-                              params={{
-                                guildId,
-                                memberId: killer.memberId.toString(),
-                              }}
-                              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-                            >
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage
-                                  src={getDiscordAvatarUrl(
-                                    killer.memberUserId,
-                                    killer.memberAvatar,
-                                    32,
-                                  )}
-                                />
-                                <AvatarFallback className="text-xs">
-                                  {killer.memberName[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                              <MemberNameWithColor
-                                name={killer.memberName}
-                                member={membersMap.get(killer.memberUserId)}
+                            <Avatar className="size-8 shrink-0">
+                              <AvatarImage
+                                src={getDiscordAvatarUrl(
+                                  killer.memberUserId,
+                                  killer.memberAvatar,
+                                  32,
+                                )}
                               />
-                            </Link>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className="font-semibold tabular-nums">
+                              <AvatarFallback className="text-xs">
+                                {killer.memberName[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-semibold">
+                                <MemberNameWithColor
+                                  name={killer.memberName}
+                                  member={membersMap.get(killer.memberUserId)}
+                                />
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {t("kills.npcKillers.killCount")}
+                              </div>
+                            </div>
+                            <span className="shrink-0 rounded-md bg-muted/50 px-2 py-1 text-sm font-semibold tabular-nums">
                               {killer.participationCount.toLocaleString()}
                             </span>
-                          </TableCell>
-                        </TableRow>
+                          </div>
+                        </Link>
                       );
                     })}
-                  </TableBody>
-                </Table>
+                  </div>
+                  <Table className="hidden border-b md:table">
+                    <TableHeader className="bg-background sticky top-0 z-10">
+                      <TableRow className="border-b-1! border-border">
+                        <TableHead className="w-16 text-center">
+                          {t("kills.memberRanking.position")}
+                        </TableHead>
+                        <TableHead>{t("kills.npcKillers.member")}</TableHead>
+                        <TableHead className="text-right">
+                          {t("kills.npcKillers.killCount")}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedKillers.map((killer, index) => {
+                        const globalIndex = cursor + index;
+                        return (
+                          <TableRow
+                            key={killer.memberId}
+                            className={cn(
+                              "bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors",
+                              globalIndex === 0 && "bg-yellow-500/5",
+                            )}
+                          >
+                            <TableCell className="text-center">
+                              <div className="flex items-center justify-center">
+                                {getRankIcon(globalIndex) ?? (
+                                  <span className="text-sm font-medium text-muted-foreground">
+                                    {globalIndex + 1}
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Link
+                                to="/$guildId/stats/members/$memberId"
+                                params={{
+                                  guildId,
+                                  memberId: killer.memberId.toString(),
+                                }}
+                                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                              >
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage
+                                    src={getDiscordAvatarUrl(
+                                      killer.memberUserId,
+                                      killer.memberAvatar,
+                                      32,
+                                    )}
+                                  />
+                                  <AvatarFallback className="text-xs">
+                                    {killer.memberName[0]}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <MemberNameWithColor
+                                  name={killer.memberName}
+                                  member={membersMap.get(killer.memberUserId)}
+                                />
+                              </Link>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="font-semibold tabular-nums">
+                                {killer.participationCount.toLocaleString()}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </>
               )}
             </ScrollArea>
 
-            {killers.length > 0 && (
-              <TablePaginationFooter
-                totalLabel={t("kills.ranking.total", { count: total })}
-                hasPrev={hasPrev}
-                hasNext={hasNext}
-                onPreviousPage={handlePreviousPage}
-                onNextPage={handleNextPage}
-              />
-            )}
+            <TablePaginationFooter
+              totalLabel={t("kills.ranking.total", { count: total })}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
+              onPreviousPage={handlePreviousPage}
+              onNextPage={handleNextPage}
+            />
           </Card>
         </div>
       </ScrollArea>

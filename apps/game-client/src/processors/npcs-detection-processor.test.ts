@@ -286,6 +286,93 @@ describe("NpcsDetectionProcessor", () => {
     expect(mockPlaySound).toHaveBeenCalledWith("detector", "HERO");
   });
 
+  it("retries initial detection when game npcs are not ready yet", () => {
+    vi.useFakeTimers();
+
+    try {
+      readyPreferences({
+        notifySound: true,
+      });
+      mockGame.npcs = [];
+      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
+      mockGetNpcTypeByWt.mockReturnValue("HERO");
+      vi.clearAllTimers();
+
+      processor.handleInitialDetection();
+      processor.handleInitialDetection();
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+
+      mockGame.npcs = [createGameNpc()];
+      vi.advanceTimersByTime(100);
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([
+        expect.objectContaining({
+          id: 501,
+          nick: "Initial npc",
+          icon: "fallback-icon.gif",
+        }),
+      ]);
+      expect(mockPlaySound).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps retrying initial detection while game npcs contain invalid entries", () => {
+    vi.useFakeTimers();
+
+    try {
+      readyPreferences({
+        notifySound: true,
+      });
+      mockGame.npcs = [undefined as unknown as GameNpc];
+      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
+      mockGetNpcTypeByWt.mockReturnValue("HERO");
+      vi.clearAllTimers();
+
+      processor.handleInitialDetection();
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+
+      mockGame.npcs = [createGameNpc()];
+      vi.advanceTimersByTime(100);
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([
+        expect.objectContaining({
+          id: 501,
+          nick: "Initial npc",
+          icon: "fallback-icon.gif",
+        }),
+      ]);
+      expect(mockPlaySound).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops retrying initial detection after the retry limit", () => {
+    vi.useFakeTimers();
+
+    try {
+      readyPreferences();
+      mockGame.npcs = [];
+      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
+      mockGetNpcTypeByWt.mockReturnValue("HERO");
+      vi.clearAllTimers();
+
+      processor.handleInitialDetection();
+
+      vi.advanceTimersByTime(2_000);
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+      expect(mockGetNpcTypeByWt).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("ignores empty npc events and init packets", () => {
     readyPreferences();
 

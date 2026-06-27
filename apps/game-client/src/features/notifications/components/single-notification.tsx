@@ -25,6 +25,7 @@ import {
   type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import {
@@ -167,6 +168,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const clearNotifications = useNotificationsStore(
     (state) => state.clearNotifications,
   );
+  const animationEffectsEnabled = useSettingsStore(
+    (state) => state.animationEffectsEnabled,
+  );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { settings } = useCurrentGameAccountNotificationSettings();
   const { data: membersData } = useGuildMembersSummary({
@@ -207,6 +211,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const background = getBackgroundColor(key, categorySettings?.highlight);
   const borderColor = getBorderColor(key, categorySettings?.highlight);
   const hasAutoHideRing = autoHideDurationMs > 0;
+  const showAutoHideRing = hasAutoHideRing && animationEffectsEnabled;
   const metaText = `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`;
   const senderName = guildMember?.name ?? t("states.unknownSender");
 
@@ -262,7 +267,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   useEffect(() => {
     const path = autoHidePathRef.current;
     const svg = path?.ownerSVGElement;
-    if (!path || !svg || autoHideDurationMs <= 0) return;
+    if (!animationEffectsEnabled || !path || !svg || autoHideDurationMs <= 0) {
+      return;
+    }
 
     const { width, height } = svg.getBoundingClientRect();
     const totalLength = 2 * (width + height);
@@ -316,6 +323,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       path.style.strokeDashoffset = "";
     };
   }, [
+    animationEffectsEnabled,
     autoHideDurationMs,
     autoHideDeadlineMs,
     autoHidePausedRemainingMs,
@@ -351,7 +359,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             fill="none"
             stroke={borderColor}
             strokeWidth={
-              hasAutoHideRing
+              showAutoHideRing
                 ? AUTO_HIDE_BASE_STROKE_WIDTH
                 : DEFAULT_BORDER_STROKE_WIDTH
             }
@@ -359,12 +367,12 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
             opacity={
-              hasAutoHideRing
+              showAutoHideRing
                 ? AUTO_HIDE_BASE_STROKE_OPACITY
                 : AUTO_HIDE_PROGRESS_STROKE_OPACITY
             }
           />
-          {hasAutoHideRing ? (
+          {showAutoHideRing ? (
             <path
               ref={autoHidePathRef}
               d={AUTO_HIDE_RING_PATH}

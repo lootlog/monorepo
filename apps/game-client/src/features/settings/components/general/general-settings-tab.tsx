@@ -7,7 +7,12 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 export const GeneralSettingsTab: FC = () => {
-  const { allowWorldSelection, toggleAllowWorldSelection } = useSettingsStore();
+  const {
+    allowWorldSelection,
+    animationEffectsEnabled,
+    toggleAllowWorldSelection,
+    toggleAnimationEffects,
+  } = useSettingsStore();
   const { t } = useTranslation();
 
   return (
@@ -24,6 +29,16 @@ export const GeneralSettingsTab: FC = () => {
             checked={allowWorldSelection}
             onCheckedChange={toggleAllowWorldSelection}
             id="allow-world-selection"
+          />
+        </SettingsControlRow>
+        <SettingsControlRow
+          label={t("settings.general.animationEffectsLabel")}
+          description={t("settings.general.animationEffectsDescription")}
+        >
+          <Switch
+            checked={animationEffectsEnabled}
+            onCheckedChange={toggleAnimationEffects}
+            id="animation-effects"
           />
         </SettingsControlRow>
       </SettingsSection>

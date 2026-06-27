@@ -65,12 +65,18 @@ const getDeepestSingleChildElement = (element: HTMLElement) => {
   return currentElement;
 };
 
-const getContentMeasurementElements = (contentElement: HTMLDivElement) => {
-  const measurementElements = new Set<HTMLElement>();
-
-  const scrollAreaViewports = contentElement.querySelectorAll<HTMLElement>(
-    RADIX_SCROLL_AREA_VIEWPORT_SELECTOR,
+const getScrollAreaViewports = (contentElement: HTMLDivElement) =>
+  Array.from(
+    contentElement.querySelectorAll<HTMLElement>(
+      RADIX_SCROLL_AREA_VIEWPORT_SELECTOR,
+    ),
   );
+
+const getContentMeasurementElements = (
+  contentElement: HTMLDivElement,
+  scrollAreaViewports = getScrollAreaViewports(contentElement),
+) => {
+  const measurementElements = new Set<HTMLElement>();
 
   if (scrollAreaViewports.length > 0) {
     scrollAreaViewports.forEach((viewportElement) => {
@@ -99,43 +105,45 @@ const getContentMeasurementElements = (contentElement: HTMLDivElement) => {
   return Array.from(measurementElements);
 };
 
-const getMeasuredContentHeight = (contentElement: HTMLDivElement) => {
-  const scrollAreaViewports = contentElement.querySelectorAll<HTMLElement>(
-    RADIX_SCROLL_AREA_VIEWPORT_SELECTOR,
-  );
-
+const getMeasuredContentHeight = (
+  contentElement: HTMLDivElement,
+  scrollAreaViewports = getScrollAreaViewports(contentElement),
+) => {
   if (scrollAreaViewports.length > 0) {
-    return Array.from(scrollAreaViewports).reduce(
-      (maxScrollHeight, viewportElement) => {
-        const viewportContent = viewportElement.firstElementChild;
-        let nextMeasuredHeight = viewportElement.scrollHeight;
+    return scrollAreaViewports.reduce((maxScrollHeight, viewportElement) => {
+      const viewportContent = viewportElement.firstElementChild;
+      let nextMeasuredHeight = viewportElement.scrollHeight;
 
-        if (viewportContent instanceof HTMLElement) {
-          const renderedHeight = Math.ceil(
-            viewportContent.getBoundingClientRect().height,
-          );
-          const scrollHeight = viewportContent.scrollHeight;
-          const isSmallTransformedUndershoot =
-            renderedHeight > 0 &&
-            scrollHeight > renderedHeight &&
-            scrollHeight - renderedHeight <= TRANSFORMED_MEASUREMENT_TOLERANCE;
+      if (viewportContent instanceof HTMLElement) {
+        const renderedHeight = Math.ceil(
+          viewportContent.getBoundingClientRect().height,
+        );
+        const scrollHeight = viewportContent.scrollHeight;
+        const isSmallTransformedUndershoot =
+          renderedHeight > 0 &&
+          scrollHeight > renderedHeight &&
+          scrollHeight - renderedHeight <= TRANSFORMED_MEASUREMENT_TOLERANCE;
 
-          nextMeasuredHeight = isSmallTransformedUndershoot
-            ? scrollHeight
-            : renderedHeight || scrollHeight;
-        }
+        nextMeasuredHeight = isSmallTransformedUndershoot
+          ? scrollHeight
+          : renderedHeight || scrollHeight;
+      }
 
-        return Math.max(maxScrollHeight, nextMeasuredHeight);
-      },
-      0,
-    );
+      return Math.max(maxScrollHeight, nextMeasuredHeight);
+    }, 0);
   }
 
-  return getContentMeasurementElements(contentElement).reduce(
-    (maxScrollHeight, element) =>
-      Math.max(maxScrollHeight, element.scrollHeight),
-    0,
+  const measurementElements = getContentMeasurementElements(
+    contentElement,
+    scrollAreaViewports,
   );
+  let maxScrollHeight = 0;
+
+  for (const element of measurementElements) {
+    maxScrollHeight = Math.max(maxScrollHeight, element.scrollHeight);
+  }
+
+  return maxScrollHeight;
 };
 
 const getNumericStyleValue = (
@@ -208,10 +216,12 @@ const measureWindowContent = ({
   windowBody,
   contentElement,
   titleBar,
+  scrollAreaViewports,
 }: {
   windowBody: HTMLDivElement;
   contentElement: HTMLDivElement;
   titleBar: HTMLDivElement | null;
+  scrollAreaViewports?: HTMLElement[];
 }) => {
   const renderedContentHeight = Math.max(0, contentElement.clientHeight);
   const chromeHeight = getWindowChromeHeight({
@@ -223,7 +233,10 @@ const measureWindowContent = ({
   return {
     chromeHeight,
     renderedContentHeight,
-    measuredContentHeight: getMeasuredContentHeight(contentElement),
+    measuredContentHeight: getMeasuredContentHeight(
+      contentElement,
+      scrollAreaViewports,
+    ),
   };
 };
 
@@ -285,6 +298,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const measuredContentHeightRef = useRef(0);
   const renderedContentHeightRef = useRef(0);
   const windowChromeHeightRef = useRef(0);
+  const resolvedMaxContentHeightRef = useRef<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const windowBodyRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
@@ -540,14 +554,15 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   useLayoutEffect(() => {
     if (!isAutoHeightMode) {
+      resolvedMaxContentHeightRef.current = null;
       setAutoHeight(minHeight);
       return;
     }
 
     let animationFrameId: number | null = null;
+    let observedScrollAreaViewports: HTMLElement[] = [];
 
     const resizeObserver = new ResizeObserver(() => {
-      updateObservedContentElements();
       scheduleAutoHeightUpdate();
     });
     const mutationObserver = new MutationObserver(() => {
@@ -569,6 +584,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
           windowBody,
           contentElement,
           titleBar: titleBarRef.current,
+          scrollAreaViewports: observedScrollAreaViewports,
         });
       windowChromeHeightRef.current = chromeHeight;
       measuredContentHeightRef.current = measuredContentHeight;
@@ -577,7 +593,14 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         resolvedMaxContentHeight ??
         sanitizeMaxContentHeight(localSize.height - chromeHeight) ??
         1;
-      onResolvedMaxContentHeightChange?.(nextResolvedMaxContentHeight);
+
+      if (
+        resolvedMaxContentHeightRef.current !== nextResolvedMaxContentHeight
+      ) {
+        resolvedMaxContentHeightRef.current = nextResolvedMaxContentHeight;
+        onResolvedMaxContentHeightChange?.(nextResolvedMaxContentHeight);
+      }
+
       const nextAutoHeight = Math.max(
         minHeight,
         Math.min(
@@ -614,11 +637,16 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
           resizeObserver.unobserve(element);
         });
         observedContentElements = new Set<HTMLElement>();
+        observedScrollAreaViewports = [];
         return;
       }
 
+      observedScrollAreaViewports = getScrollAreaViewports(contentElement);
       const nextObservedContentElements = new Set(
-        getContentMeasurementElements(contentElement),
+        getContentMeasurementElements(
+          contentElement,
+          observedScrollAreaViewports,
+        ),
       );
 
       observedContentElements.forEach((element) => {
@@ -635,8 +663,6 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
       observedContentElements = nextObservedContentElements;
     };
-
-    updateAutoHeight();
 
     if (titleBarRef.current) {
       resizeObserver.observe(titleBarRef.current);
