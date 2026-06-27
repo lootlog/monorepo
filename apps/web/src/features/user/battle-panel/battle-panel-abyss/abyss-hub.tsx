@@ -1,4 +1,5 @@
-import { CharacterSelector, LevelRangeFilter } from "@/components/filters";
+import { CharacterSelector } from "@/components/filters/character-selector";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { SectionHeader } from "@/components/layout/section-header";
 import { ROUTES } from "@/config/routes";
 import {

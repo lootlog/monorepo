@@ -1,5 +1,6 @@
 import { PlayerTile } from "@/components/battle";
-import { LevelRangeFilter, WarriorSearchFilter } from "@/components/filters";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
+import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
