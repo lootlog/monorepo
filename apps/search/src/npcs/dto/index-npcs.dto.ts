@@ -2,7 +2,10 @@ import { z } from "zod";
 
 const indexNpcSchema = z.object({
   id: z.number(),
-  prof: z.string(),
+  prof: z
+    .string()
+    .nullish()
+    .transform((prof) => prof ?? ""),
   icon: z.string(),
   name: z.string(),
   lvl: z.number(),
