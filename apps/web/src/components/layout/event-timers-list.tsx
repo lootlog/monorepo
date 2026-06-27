@@ -9,7 +9,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useListEventHeroTimers } from "@/lib/api/generated/main/events/events";
+import {
+  getListEventHeroTimersQueryKey,
+  useListEventHeroTimers,
+} from "@/lib/api/generated/main/events/events";
 import type { Event } from "@/features/guild/events/types/api";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { cn } from "@/utils/cn";
@@ -125,6 +128,20 @@ export const EventTimersList: FC<EventTimersListProps> = ({
     },
     {
       world: event.world,
+    },
+    {
+      query: {
+        enabled: Boolean(guildId && event.id && event.world),
+        queryKey: getListEventHeroTimersQueryKey(
+          {
+            guildId,
+            eventId: event.id,
+          },
+          {
+            world: event.world,
+          },
+        ),
+      },
     },
   );
 

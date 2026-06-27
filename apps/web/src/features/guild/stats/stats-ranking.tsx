@@ -22,7 +22,10 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { useKillsControllerGetGuildKillStats } from "@/lib/api/generated/main/kills/kills";
+import {
+  getKillsControllerGetGuildKillStatsQueryKey,
+  useKillsControllerGetGuildKillStats,
+} from "@/lib/api/generated/main/kills/kills";
 import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { LevelFilters } from "./components/level-filters";
@@ -75,15 +78,25 @@ export const StatsRanking: React.FC = () => {
     setPeriod,
   } = useStatsSettings("ranking");
   const [searchQuery, setSearchQuery] = useState("");
+  const killStatsParams = buildGuildKillStatsParams({
+    world: settings.world ?? undefined,
+    minLvl: debouncedMinLvl,
+    maxLvl: debouncedMaxLvl,
+    period: settings.period,
+  });
 
   const { data, isLoading } = useKillsControllerGetGuildKillStats(
     { guildId },
-    buildGuildKillStatsParams({
-      world: settings.world ?? undefined,
-      minLvl: debouncedMinLvl,
-      maxLvl: debouncedMaxLvl,
-      period: settings.period,
-    }),
+    killStatsParams,
+    {
+      query: {
+        enabled: Boolean(guildId),
+        queryKey: getKillsControllerGetGuildKillStatsQueryKey(
+          { guildId },
+          killStatsParams,
+        ),
+      },
+    },
   );
 
   const handleWorldChange = (value: string | null) => {
@@ -265,85 +278,152 @@ export const StatsRanking: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <Table className="border-b">
-                  <TableHeader className="bg-background sticky top-0 z-10">
-                    <TableRow className="border-b-1! border-border">
-                      <TableHead className="whitespace-nowrap w-12 text-center">
-                        #
-                      </TableHead>
-                      <TableHead className="whitespace-nowrap">
-                        {t("kills.memberRanking.member")}
-                      </TableHead>
-                      <TableHead className="whitespace-nowrap text-center">
-                        {t("kills.memberRanking.totalKills")}
-                      </TableHead>
-                      {activeNpcTypes.map((type) => (
-                        <TableHead
-                          key={type}
-                          className="whitespace-nowrap text-center"
-                        >
-                          {t(`npcType.${type}`)}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  <div className="grid gap-2 p-3 md:hidden">
                     {paginatedData.map((member, index) => {
                       const rank = cursor + index + 1;
                       const icon = getRankIcon(rank);
                       return (
-                        <TableRow
+                        <button
                           key={member.memberId}
-                          className="bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors"
+                          type="button"
                           onClick={() => handleRowClick(member.memberId)}
+                          className="min-w-0 rounded-lg border border-border bg-background/60 p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                          <TableCell className="whitespace-nowrap">
-                            <div className="flex items-center justify-center w-8">
-                              {icon ?? (
-                                <span className="text-sm font-medium text-muted-foreground">
-                                  {rank}
-                                </span>
-                              )}
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-medium text-muted-foreground">
+                              {icon ?? rank}
                             </div>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-6 w-6">
-                                <AvatarImage
-                                  src={getDiscordAvatarUrl(
-                                    member.memberUserId,
-                                    member.memberAvatar,
-                                    32,
-                                  )}
-                                />
-                                <AvatarFallback className="text-xs">
-                                  {member.memberName[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium">
+                            <Avatar className="size-8 shrink-0">
+                              <AvatarImage
+                                src={getDiscordAvatarUrl(
+                                  member.memberUserId,
+                                  member.memberAvatar,
+                                  32,
+                                )}
+                              />
+                              <AvatarFallback className="text-xs">
+                                {member.memberName[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-semibold">
                                 {member.memberName}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <div className="text-center font-semibold tabular-nums">
-                              {member.totalParticipations.toLocaleString()}
-                            </div>
-                          </TableCell>
-                          {activeNpcTypes.map((type) => (
-                            <TableCell key={type} className="whitespace-nowrap">
-                              <div className="text-center tabular-nums">
-                                {(
-                                  member.participationsByType[type] ?? 0
-                                ).toLocaleString()}
                               </div>
-                            </TableCell>
-                          ))}
-                        </TableRow>
+                              <div className="text-xs text-muted-foreground">
+                                {t("kills.memberRanking.totalKills")}:{" "}
+                                <span className="font-medium tabular-nums text-foreground">
+                                  {member.totalParticipations.toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          {activeNpcTypes.length > 0 ? (
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              {activeNpcTypes.map((type) => (
+                                <span
+                                  key={type}
+                                  className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+                                >
+                                  <span className="truncate">
+                                    {t(`npcType.${type}`)}
+                                  </span>
+                                  <span className="font-medium tabular-nums text-foreground">
+                                    {(
+                                      member.participationsByType[type] ?? 0
+                                    ).toLocaleString()}
+                                  </span>
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+                        </button>
                       );
                     })}
-                  </TableBody>
-                </Table>
+                  </div>
+                  <Table className="hidden border-b md:table">
+                    <TableHeader className="bg-background sticky top-0 z-10">
+                      <TableRow className="border-b-1! border-border">
+                        <TableHead className="whitespace-nowrap w-12 text-center">
+                          #
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          {t("kills.memberRanking.member")}
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap text-center">
+                          {t("kills.memberRanking.totalKills")}
+                        </TableHead>
+                        {activeNpcTypes.map((type) => (
+                          <TableHead
+                            key={type}
+                            className="whitespace-nowrap text-center"
+                          >
+                            {t(`npcType.${type}`)}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedData.map((member, index) => {
+                        const rank = cursor + index + 1;
+                        const icon = getRankIcon(rank);
+                        return (
+                          <TableRow
+                            key={member.memberId}
+                            className="bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => handleRowClick(member.memberId)}
+                          >
+                            <TableCell className="whitespace-nowrap">
+                              <div className="flex items-center justify-center w-8">
+                                {icon ?? (
+                                  <span className="text-sm font-medium text-muted-foreground">
+                                    {rank}
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage
+                                    src={getDiscordAvatarUrl(
+                                      member.memberUserId,
+                                      member.memberAvatar,
+                                      32,
+                                    )}
+                                  />
+                                  <AvatarFallback className="text-xs">
+                                    {member.memberName[0]}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">
+                                  {member.memberName}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <div className="text-center font-semibold tabular-nums">
+                                {member.totalParticipations.toLocaleString()}
+                              </div>
+                            </TableCell>
+                            {activeNpcTypes.map((type) => (
+                              <TableCell
+                                key={type}
+                                className="whitespace-nowrap"
+                              >
+                                <div className="text-center tabular-nums">
+                                  {(
+                                    member.participationsByType[type] ?? 0
+                                  ).toLocaleString()}
+                                </div>
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </>
               )}
             </ScrollArea>
 

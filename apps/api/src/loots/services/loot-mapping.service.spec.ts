@@ -163,6 +163,30 @@ describe("LootMappingService", () => {
       expect(result.mapped).toHaveLength(2);
       expect(result.mapped[0].wt).toBe(200);
     });
+
+    it("should keep prof as an empty string for NPCs without a profession", () => {
+      const npcs = [
+        {
+          id: 279068,
+          wt: 33,
+          name: "Erktos",
+          lvl: 300,
+          prof: "",
+          icon: "e3/arktos.gif",
+          location: "Kopalnia Krwawej Pychy",
+          type: 0,
+        },
+      ];
+
+      const result = service.processNpcs(npcs);
+
+      expect(result.mapped[0]).toEqual(
+        expect.objectContaining({
+          name: "Erktos",
+          prof: "",
+        }),
+      );
+    });
   });
 
   describe("getLootShareFromMsg", () => {

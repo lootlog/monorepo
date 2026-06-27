@@ -32,18 +32,33 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
 import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
 import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
-import { useGuildsControllerGetGuildDiscordSyncStatus } from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getGuildsControllerGetGuildDiscordSyncStatusQueryKey,
+  useGuildsControllerGetGuildDiscordSyncStatus,
+} from "@/lib/api/generated/main/guilds/guilds";
 
 export const NotificationsSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
-  const { data: syncState } = useGuildsControllerGetGuildDiscordSyncStatus({
-    guildId: guildId ?? "",
-  });
+  const hasGuildId = Boolean(guildId);
+  const { data: syncState } = useGuildsControllerGetGuildDiscordSyncStatus(
+    {
+      guildId: guildId ?? "",
+    },
+    {
+      query: {
+        enabled: hasGuildId,
+        queryKey: getGuildsControllerGetGuildDiscordSyncStatusQueryKey({
+          guildId: guildId ?? "",
+        }),
+      },
+    },
+  );
   const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
     { guildId: guildId ?? "" },
     {
       query: {
+        enabled: hasGuildId,
         queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({
           guildId: guildId ?? "",
         }),
@@ -54,6 +69,7 @@ export const NotificationsSettings = () => {
     { guildId: guildId ?? "" },
     {
       query: {
+        enabled: hasGuildId,
         queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({
           guildId: guildId ?? "",
         }),
@@ -64,6 +80,7 @@ export const NotificationsSettings = () => {
     { guildId: guildId ?? "" },
     {
       query: {
+        enabled: hasGuildId,
         queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({
           guildId: guildId ?? "",
         }),

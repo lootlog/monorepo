@@ -45,8 +45,26 @@ type PendingDetection =
       type: "initial";
     };
 
+type DetectionProcessingContext = {
+  detectorSettings: DetectorSettings;
+  routedGuildIdsByLevel: Map<number, string[]>;
+};
+
+// TODO: Temporary startup workaround. Replace this polling with an explicit
+// NPC-ready signal from the game runtime; retry-based readiness checks are
+// brittle and should not become our long-term pattern.
+const INITIAL_DETECTION_RETRY_DELAY_MS = 100;
+const INITIAL_DETECTION_MAX_RETRIES = 20;
+
+type InitialDetectionSnapshot = {
+  npcs: GameNpc[];
+};
+
 export class NpcsDetectionProcessor {
   private static pendingDetections: PendingDetection[] = [];
+  private initialDetectionRetryTimeout: ReturnType<typeof setTimeout> | null =
+    null;
+  private initialDetectionRetryAttempts = 0;
 
   handle(event: GameEvent): void {
     const accountId = this.getCurrentAccountId();
@@ -66,7 +84,10 @@ export class NpcsDetectionProcessor {
   handleInitialDetection(): void {
     const accountId = this.getCurrentAccountId();
     if (!accountId) return;
-    if (!this.isDetectorReady(accountId)) {
+
+    const detectorReady = this.isDetectorReady(accountId);
+
+    if (!detectorReady) {
       const hasQueuedInitialDetection =
         NpcsDetectionProcessor.pendingDetections.some(
           (pendingDetection) =>
@@ -83,30 +104,37 @@ export class NpcsDetectionProcessor {
       return;
     }
 
-    this.processInitialDetection();
+    this.processInitialDetectionWithRetry();
   }
 
   flushPending(accountId: string): void {
-    if (!this.isDetectorReady(accountId)) {
+    const detectorReady = this.isDetectorReady(accountId);
+
+    if (!detectorReady) {
       return;
     }
 
-    const pendingDetections = NpcsDetectionProcessor.pendingDetections.filter(
-      (pendingDetection) => pendingDetection.accountId === accountId,
-    );
+    const pendingDetections: PendingDetection[] = [];
+    const remainingDetections: PendingDetection[] = [];
+
+    for (const pendingDetection of NpcsDetectionProcessor.pendingDetections) {
+      if (pendingDetection.accountId === accountId) {
+        pendingDetections.push(pendingDetection);
+        continue;
+      }
+
+      remainingDetections.push(pendingDetection);
+    }
 
     if (pendingDetections.length === 0) {
       return;
     }
 
-    NpcsDetectionProcessor.pendingDetections =
-      NpcsDetectionProcessor.pendingDetections.filter(
-        (pendingDetection) => pendingDetection.accountId !== accountId,
-      );
+    NpcsDetectionProcessor.pendingDetections = remainingDetections;
 
     pendingDetections.forEach((pendingDetection) => {
       if (pendingDetection.type === "initial") {
-        this.processInitialDetection();
+        this.processInitialDetectionWithRetry();
         return;
       }
 
@@ -115,9 +143,15 @@ export class NpcsDetectionProcessor {
   }
 
   private processEvent(event: GameEvent): void {
-    if (!event.npcs?.length) return;
-    if (event.f?.init === "1") return;
+    if (!event.npcs?.length) {
+      return;
+    }
 
+    if (event.f?.init === "1") {
+      return;
+    }
+
+    const context = this.createDetectionContext();
     const npcs =
       event.npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
         const tpl =
@@ -135,6 +169,7 @@ export class NpcsDetectionProcessor {
           npc,
           npcType,
           tpl.lvl,
+          context,
           event,
         );
         if (!processedSettings) return acc;
@@ -161,11 +196,87 @@ export class NpcsDetectionProcessor {
     }
   }
 
-  private processInitialDetection(): void {
-    const npcs = Game.npcs;
+  private processInitialDetectionWithRetry(): void {
+    if (this.initialDetectionRetryTimeout !== null) {
+      return;
+    }
+
+    this.initialDetectionRetryAttempts = 0;
+    this.tryProcessInitialDetection();
+  }
+
+  private tryProcessInitialDetection(): void {
+    const snapshot = this.getInitialDetectionSnapshot();
+    const { npcs } = snapshot;
+
+    if (npcs.length > 0) {
+      this.clearInitialDetectionRetry();
+      this.processInitialDetection(npcs);
+      return;
+    }
+
+    if (this.initialDetectionRetryAttempts >= INITIAL_DETECTION_MAX_RETRIES) {
+      this.clearInitialDetectionRetry();
+      return;
+    }
+
+    this.initialDetectionRetryAttempts += 1;
+    this.initialDetectionRetryTimeout = setTimeout(() => {
+      this.initialDetectionRetryTimeout = null;
+      this.tryProcessInitialDetection();
+    }, INITIAL_DETECTION_RETRY_DELAY_MS);
+  }
+
+  private getInitialDetectionSnapshot(): InitialDetectionSnapshot {
+    try {
+      const rawNpcs = (Game.npcs ?? []) as Array<GameNpc | null | undefined>;
+      const npcs = rawNpcs.filter((npc): npc is GameNpc =>
+        this.isInitialDetectionNpcReady(npc),
+      );
+
+      return {
+        npcs,
+      };
+    } catch {
+      return {
+        npcs: [],
+      };
+    }
+  }
+
+  private isInitialDetectionNpcReady(
+    npc: GameNpc | null | undefined,
+  ): npc is GameNpc {
+    return (
+      npc !== null &&
+      npc !== undefined &&
+      typeof npc.id === "number" &&
+      typeof npc.tpl === "number" &&
+      typeof npc.x === "number" &&
+      typeof npc.y === "number" &&
+      typeof npc.nick === "string" &&
+      typeof npc.prof === "string" &&
+      typeof npc.type === "number" &&
+      typeof npc.wt === "number" &&
+      typeof npc.lvl === "number" &&
+      typeof npc.icon === "string"
+    );
+  }
+
+  private clearInitialDetectionRetry(): void {
+    if (this.initialDetectionRetryTimeout !== null) {
+      clearTimeout(this.initialDetectionRetryTimeout);
+    }
+
+    this.initialDetectionRetryTimeout = null;
+    this.initialDetectionRetryAttempts = 0;
+  }
+
+  private processInitialDetection(npcs: GameNpc[]): void {
+    const context = this.createDetectionContext();
 
     const calculatedNpcs =
-      npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
+      npcs.reduce<GameNpcWithLocation[]>((acc, npc) => {
         if (!npc) return acc;
 
         const npcType = getNpcTypeByWt(
@@ -175,7 +286,11 @@ export class NpcsDetectionProcessor {
           npc.type,
         ) as DetectorNpcType;
 
-        const processedSettings = this.processGameNpcSettings(npc, npcType);
+        const processedSettings = this.processGameNpcSettings(
+          npc,
+          npcType,
+          context,
+        );
         if (!processedSettings) return acc;
 
         const composedNpc = composeNpcFromGame(npc, processedSettings);
@@ -202,9 +317,10 @@ export class NpcsDetectionProcessor {
     npc: EventNpc,
     npcType: DetectorNpcType,
     npcLevel: number,
+    context: DetectionProcessingContext,
     event?: GameEvent,
   ): ProcessedNpcSettings | null {
-    const detectorSettings = this.getDetectorSettings();
+    const { detectorSettings } = context;
     const settings = detectorSettings[npcType];
     if (!settings?.detect) return null;
 
@@ -214,10 +330,7 @@ export class NpcsDetectionProcessor {
         ""
       : Game.getNpcIcon(npc.icon.id) || "";
 
-    const { guildIds } = resolveNpcNotificationRouting({
-      routingRules: detectorSettings.routingRules,
-      npcLevel,
-    });
+    const guildIds = this.resolveRoutingGuildIds(context, npcLevel);
     const autoSendNotification = settings.autoSend && guildIds.length > 0;
 
     return {
@@ -231,17 +344,15 @@ export class NpcsDetectionProcessor {
   private processGameNpcSettings(
     npc: GameNpc,
     npcType: DetectorNpcType,
+    context: DetectionProcessingContext,
   ): ProcessedNpcSettings | null {
-    const detectorSettings = this.getDetectorSettings();
+    const { detectorSettings } = context;
     const settings = detectorSettings[npcType];
 
     if (!settings?.detect) return null;
 
     const icon = Game.getNpcIcon(npc.tpl) || npc.icon || "";
-    const { guildIds } = resolveNpcNotificationRouting({
-      routingRules: detectorSettings.routingRules,
-      npcLevel: npc.lvl,
-    });
+    const guildIds = this.resolveRoutingGuildIds(context, npc.lvl);
     const autoSendNotification = settings.autoSend && guildIds.length > 0;
 
     return {
@@ -326,6 +437,29 @@ export class NpcsDetectionProcessor {
     );
 
     return getEffectiveDetectorSettings(preferences);
+  }
+
+  private createDetectionContext(): DetectionProcessingContext {
+    return {
+      detectorSettings: this.getDetectorSettings(),
+      routedGuildIdsByLevel: new Map<number, string[]>(),
+    };
+  }
+
+  private resolveRoutingGuildIds(
+    context: DetectionProcessingContext,
+    npcLevel: number,
+  ): string[] {
+    const cachedGuildIds = context.routedGuildIdsByLevel.get(npcLevel);
+    if (cachedGuildIds) return cachedGuildIds;
+
+    const { guildIds } = resolveNpcNotificationRouting({
+      routingRules: context.detectorSettings.routingRules,
+      npcLevel,
+    });
+
+    context.routedGuildIdsByLevel.set(npcLevel, guildIds);
+    return guildIds;
   }
 
   private getCurrentAccountId() {

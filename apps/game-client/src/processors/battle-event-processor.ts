@@ -63,7 +63,17 @@ const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
   return false;
 };
 
-const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
+type DeadNpc = {
+  id: number;
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  wt: number;
+  type: number;
+};
+
+const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
   const deadNpcs: Array<{
     id: number;
     name: string;
@@ -73,22 +83,42 @@ const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
     wt: number;
     type: number;
   }> = [];
+  let hasNpcInBattle = false;
+  let topNpc: DeadNpc | null = null;
 
   for (const [key, warrior] of Object.entries(warriors)) {
-    if (key.startsWith("-") && isWarriorDead(warrior)) {
-      deadNpcs.push({
-        id: Number.parseInt(key, 10),
-        name: warrior.name,
-        lvl: warrior.lvl,
-        prof: warrior.prof || "",
-        icon: warrior.icon,
-        wt: warrior.wt,
-        type: warrior.type,
-      });
+    if (!key.startsWith("-")) {
+      continue;
+    }
+
+    hasNpcInBattle = true;
+
+    if (!isWarriorDead(warrior)) {
+      continue;
+    }
+
+    const deadNpc = {
+      id: Number.parseInt(key, 10),
+      name: warrior.name,
+      lvl: warrior.lvl,
+      prof: warrior.prof || "",
+      icon: warrior.icon,
+      wt: warrior.wt,
+      type: warrior.type,
+    };
+
+    deadNpcs.push(deadNpc);
+
+    if (!topNpc || deadNpc.wt > topNpc.wt) {
+      topNpc = deadNpc;
     }
   }
 
-  return deadNpcs;
+  return {
+    deadNpcs,
+    hasNpcInBattle,
+    topNpc,
+  };
 };
 
 export class BattleEventProcessor {
@@ -97,10 +127,6 @@ export class BattleEventProcessor {
 
   async handle(event: GameEvent): Promise<void> {
     if (!event.f) return;
-
-    const accountId = Game.hero.account;
-    const characterId = Game.hero.id;
-    const world = Game.getWorldName();
 
     const battlePanelStore = useBattlePanelStore.getState();
     const battleStore = useBattleStore.getState();
@@ -144,88 +170,82 @@ export class BattleEventProcessor {
       useBattleStore.getState().battleState === "in-battle"
     ) {
       const battleWarriors = useBattleStore.getState().battleWarriors;
-      const hasNpcInBattle = Object.keys(battleWarriors).some((key) =>
-        key.startsWith("-"),
-      );
+      const { deadNpcs, hasNpcInBattle, topNpc } =
+        getNpcBattleSummary(battleWarriors);
 
       // Kill tracking — always runs regardless of isBattleCollectionEnabled
-      if (hasNpcInBattle) {
-        const deadNpcs = extractDeadNpcs(battleWarriors);
+      if (hasNpcInBattle && topNpc) {
+        const npcType = getNpcTypeByWt(
+          NpcType,
+          topNpc.wt,
+          topNpc.prof,
+          topNpc.type,
+        );
 
-        if (deadNpcs.length > 0) {
-          const sortedByWt = [...deadNpcs].sort((a, b) => b.wt - a.wt);
-          const topNpc = sortedByWt[0];
+        if (TRACKABLE_NPC_TYPES.has(npcType)) {
+          // Kill hash includes timestamp to prevent ignoring repeat kills of same respawned monster
+          const killHash = await createSHA256Hash(
+            JSON.stringify({
+              ids: deadNpcs.map((npc) => npc.id).sort(),
+              ts: Date.now(),
+            }),
+          );
+          const lastKillHash = useBattleStore.getState().lastKillHash;
 
-          if (topNpc) {
-            const npcType = getNpcTypeByWt(
-              NpcType,
-              topNpc.wt,
-              topNpc.prof,
-              topNpc.type,
-            );
-
-            if (TRACKABLE_NPC_TYPES.has(npcType)) {
-              // Kill hash includes timestamp to prevent ignoring repeat kills of same respawned monster
-              const killHash = await createSHA256Hash(
-                JSON.stringify({
-                  ids: deadNpcs.map((npc) => npc.id).sort(),
-                  ts: Date.now(),
-                }),
+          if (killHash !== lastKillHash) {
+            const hero = Game.hero;
+            const { type: _, ...npcWithoutType } = topNpc;
+            createKill({
+              world: Game.getWorldName(),
+              npc: npcWithoutType,
+              characterId: String(hero.id),
+              accountId: String(hero.account),
+            }).catch((error) => {
+              console.warn(
+                "[BattleEventProcessor] Failed to create kill:",
+                error,
               );
-              const lastKillHash = useBattleStore.getState().lastKillHash;
-
-              if (killHash !== lastKillHash) {
-                const { type: _, ...npcWithoutType } = topNpc;
-                createKill({
-                  world,
-                  npc: npcWithoutType,
-                  characterId: String(characterId),
-                  accountId: String(accountId),
-                }).catch((error) => {
-                  console.warn(
-                    "[BattleEventProcessor] Failed to create kill:",
-                    error,
-                  );
-                });
-                battleStore.setLastKillHash(killHash);
-              }
-            }
+            });
+            battleStore.setLastKillHash(killHash);
           }
         }
       }
 
       // Battle logging — only if enabled
       if (battlePanelStore.isBattleCollectionEnabled) {
-        const battleTurns = useBattleStore
-          .getState()
-          .events.reduce((acc: string[], curr) => {
-            if (!curr.f || !curr.f.m) return acc;
+        const storedEvents = useBattleStore.getState().events;
+        const battleTurns: string[] = [];
 
-            return [...acc, ...curr.f.m];
-          }, []);
+        for (const storedEvent of storedEvents) {
+          if (storedEvent.f?.m) {
+            battleTurns.push(...storedEvent.f.m);
+          }
+        }
 
         const battleHash = await createSHA256Hash(JSON.stringify(battleTurns));
         const lastBattleHash = useBattleStore.getState().lastBattleHash;
 
         if (lastBattleHash !== battleHash) {
-          const events = mapBattleEventsToPayload(
-            useBattleStore.getState().events,
-          );
+          const events = mapBattleEventsToPayload(storedEvents);
 
           // Use incremental hasMultipleTeams flag instead of O(N*M) loop
           if (events && !hasNpcInBattle && this.hasMultipleTeams) {
+            const hero = Game.hero;
+            const accountId = String(hero.account);
+            const characterId = String(hero.id);
+            const world = Game.getWorldName();
             const submissionId = await createSHA256Hash(
               JSON.stringify({
-                accountId: String(accountId),
-                characterId: String(characterId),
+                accountId,
+                characterId,
                 events,
                 world,
               }),
             );
 
             createBattle({
-              accountId: String(accountId),
-              characterId: String(characterId),
+              accountId,
+              characterId,
               submissionId,
               world,
               events,

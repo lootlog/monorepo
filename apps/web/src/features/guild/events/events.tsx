@@ -44,6 +44,7 @@ export const Events = () => {
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const queryClient = useQueryClient();
   const { data: permissions } = useGuildPermissions();
+  const hasGuildId = Boolean(guildId);
   const listEventsParams = {
     activeOnly: "false",
   };
@@ -105,6 +106,12 @@ export const Events = () => {
       guildId: guildId ?? "",
     },
     listEventsParams,
+    {
+      query: {
+        enabled: hasGuildId,
+        queryKey: listEventsQueryKey,
+      },
+    },
   );
 
   const canDeleteEvent =

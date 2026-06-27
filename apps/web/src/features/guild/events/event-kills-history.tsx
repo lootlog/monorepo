@@ -11,7 +11,10 @@ import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { useShowEventOverview } from "@/lib/api/generated/main/events/events";
+import {
+  getShowEventOverviewQueryKey,
+  useShowEventOverview,
+} from "@/lib/api/generated/main/events/events";
 
 export const EventKillsHistory = () => {
   const { guildId, eventId, heroId: urlHeroId } = useParams({ strict: false });
@@ -39,11 +42,23 @@ const EventKillsHistoryContent = ({
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     initialHeroId,
   );
+  const hasEventRouteParams = Boolean(guildId && eventId);
 
-  const { data: event, isLoading: eventLoading } = useShowEventOverview({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  });
+  const { data: event, isLoading: eventLoading } = useShowEventOverview(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getShowEventOverviewQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
 
   const {
     data: killsData,

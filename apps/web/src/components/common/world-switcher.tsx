@@ -5,7 +5,10 @@ import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { cn } from "@lootlog/ui/lib/utils";
 import { GuildContext } from "@/contexts/guild.context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetWorldsByGuildId } from "@/lib/api/generated/main/guilds/guilds";
+import {
+  getGuildsControllerGetWorldsByGuildIdQueryKey,
+  useGuildsControllerGetWorldsByGuildId,
+} from "@/lib/api/generated/main/guilds/guilds";
 import { ThemeSurfaceOverlay } from "@/themes";
 
 const ALL_WORLDS_SENTINEL = "__ALL__";
@@ -31,9 +34,19 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
 }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
-  const { data: fetchedWorlds } = useGuildsControllerGetWorldsByGuildId({
-    guildId: guildId ?? "",
-  });
+  const { data: fetchedWorlds } = useGuildsControllerGetWorldsByGuildId(
+    {
+      guildId: guildId ?? "",
+    },
+    {
+      query: {
+        enabled: Boolean(guildId) && externalWorlds === undefined,
+        queryKey: getGuildsControllerGetWorldsByGuildIdQueryKey({
+          guildId: guildId ?? "",
+        }),
+      },
+    },
+  );
   const worlds = externalWorlds ?? fetchedWorlds;
   const guildContext = useContext(GuildContext);
   const contextWorld = guildContext?.world ?? "";

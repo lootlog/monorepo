@@ -12,7 +12,10 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { LootStatsResponseDtoOutputTopContributorsItem } from "@/lib/api/generated/main/model/loot-stats-response-dto-output-top-contributors-item";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
+import {
+  getMembersControllerGetGuildMemberReferencesQueryKey,
+  useMembersControllerGetGuildMemberReferences,
+} from "@/lib/api/generated/main/members/members";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
 
 type PodiumSlotProps = {
@@ -129,6 +132,15 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
     { guildId: guildId ?? "" },
     {
       includeInactive: true,
+    },
+    {
+      query: {
+        enabled: Boolean(guildId),
+        queryKey: getMembersControllerGetGuildMemberReferencesQueryKey(
+          { guildId: guildId ?? "" },
+          { includeInactive: true },
+        ),
+      },
     },
   );
 

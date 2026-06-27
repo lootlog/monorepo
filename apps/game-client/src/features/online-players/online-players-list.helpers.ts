@@ -115,46 +115,59 @@ export const getFilteredMemberEntries = (
   filters: OnlinePlayersFiltersValue,
 ) => {
   const query = searchQuery.toLowerCase();
+  const entries: Array<readonly [string, PlayerPresence[]]> = [];
 
-  return Object.entries(onlinePlayers)
-    .map(([discordId, presences]) => {
-      const filteredPresences = presences
-        .filter((presence) => matchesPresenceFilters(presence, filters))
-        .sort(comparePlayerPresencesByLevel);
+  for (const [discordId, presences] of Object.entries(onlinePlayers)) {
+    const filteredPresences: PlayerPresence[] = [];
+    let hasMatchingCharacter = false;
 
-      return [discordId, filteredPresences] as const;
-    })
-    .filter(([discordId, presences]) => {
-      if (presences.length === 0) return false;
-      if (!query) return true;
+    for (const presence of presences) {
+      if (!matchesPresenceFilters(presence, filters)) {
+        continue;
+      }
 
+      filteredPresences.push(presence);
+
+      if (
+        query &&
+        !hasMatchingCharacter &&
+        presence.player?.name?.toLowerCase().includes(query)
+      ) {
+        hasMatchingCharacter = true;
+      }
+    }
+
+    if (filteredPresences.length === 0) {
+      continue;
+    }
+
+    if (query) {
       const memberName = guildMembers?.[discordId]?.name?.toLowerCase() ?? "";
-      const hasMatchingMember = memberName.includes(query);
-      const hasMatchingCharacter = presences.some((presence) =>
-        presence.player?.name?.toLowerCase().includes(query),
-      );
+      if (!memberName.includes(query) && !hasMatchingCharacter) {
+        continue;
+      }
+    }
 
-      return hasMatchingMember || hasMatchingCharacter;
-    })
-    .sort(
-      (
-        [firstDiscordId, firstPresences],
-        [secondDiscordId, secondPresences],
-      ) => {
-        const firstTopLevel = firstPresences[0]?.player?.lvl ?? 0;
-        const secondTopLevel = secondPresences[0]?.player?.lvl ?? 0;
-        const levelDiff = secondTopLevel - firstTopLevel;
+    filteredPresences.sort(comparePlayerPresencesByLevel);
+    entries.push([discordId, filteredPresences]);
+  }
 
-        if (levelDiff !== 0) return levelDiff;
+  return entries.sort(
+    ([firstDiscordId, firstPresences], [secondDiscordId, secondPresences]) => {
+      const firstTopLevel = firstPresences[0]?.player?.lvl ?? 0;
+      const secondTopLevel = secondPresences[0]?.player?.lvl ?? 0;
+      const levelDiff = secondTopLevel - firstTopLevel;
 
-        const firstMemberName =
-          guildMembers?.[firstDiscordId]?.name ?? firstDiscordId;
-        const secondMemberName =
-          guildMembers?.[secondDiscordId]?.name ?? secondDiscordId;
+      if (levelDiff !== 0) return levelDiff;
 
-        return firstMemberName.localeCompare(secondMemberName);
-      },
-    );
+      const firstMemberName =
+        guildMembers?.[firstDiscordId]?.name ?? firstDiscordId;
+      const secondMemberName =
+        guildMembers?.[secondDiscordId]?.name ?? secondDiscordId;
+
+      return firstMemberName.localeCompare(secondMemberName);
+    },
+  );
 };
 
 export const getFilteredAccountEntries = (
@@ -167,26 +180,30 @@ export const getFilteredAccountEntries = (
   const query = searchQuery.toLowerCase();
 
   for (const [discordId, presences] of Object.entries(onlinePlayers)) {
+    const memberName = query
+      ? (guildMembers?.[discordId]?.name?.toLowerCase() ?? "")
+      : "";
+
     for (const presence of presences) {
       if (!presence.player || !matchesPresenceFilters(presence, filters)) {
         continue;
       }
 
-      const memberName = guildMembers?.[discordId]?.name?.toLowerCase() ?? "";
-      const playerName = presence.player.name.toLowerCase();
-      const locationName = (
-        presence.player.location?.map ??
-        presence.mapName ??
-        ""
-      ).toLowerCase();
+      if (query) {
+        const playerName = presence.player.name.toLowerCase();
+        const locationName = (
+          presence.player.location?.map ??
+          presence.mapName ??
+          ""
+        ).toLowerCase();
 
-      if (
-        query &&
-        !memberName.includes(query) &&
-        !playerName.includes(query) &&
-        !locationName.includes(query)
-      ) {
-        continue;
+        if (
+          !memberName.includes(query) &&
+          !playerName.includes(query) &&
+          !locationName.includes(query)
+        ) {
+          continue;
+        }
       }
 
       entries.push({ discordId, presence });
