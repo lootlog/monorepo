@@ -139,8 +139,6 @@ function createNonce(): string {
   );
 }
 
-const MAX_UINT64 = 0xffffffffffffffffn;
-
 function encodeUnsignedInt64Hex(value: string | number): string {
   const numericValue = BigInt(value);
 
