@@ -31,10 +31,23 @@ export type PresenceFetchResponse<TPlayers> =
       status: "success";
       players: TPlayers;
     }
+  | OnlinePlayersForbiddenResponse;
+
+type OnlinePlayersForbiddenResponse = {
+  status: "forbidden";
+  code: typeof ONLINE_PLAYERS_ACCESS_DENIED_CODE;
+};
+
+export type MemberWebPresenceSession = {
+  sessionId: string;
+};
+
+export type MemberWebPresenceFetchResponse =
   | {
-      status: "forbidden";
-      code: typeof ONLINE_PLAYERS_ACCESS_DENIED_CODE;
-    };
+      status: "success";
+      sessions: Record<string, MemberWebPresenceSession[]>;
+    }
+  | OnlinePlayersForbiddenResponse;
 
 type FetchedSocket = Awaited<ReturnType<Server["fetchSockets"]>>[number];
 
@@ -147,6 +160,39 @@ export class PresenceService {
         excludeSourceSocket: true,
       });
     }
+  }
+
+  emitMemberWebPresenceUpdate(
+    server: Server,
+    client: Socket,
+    status: UserPresenceStatus,
+  ): void {
+    if (client.data.platform !== Platform.WEB_APP) {
+      return;
+    }
+
+    const { discordId, sessionId } = client.data;
+    if (!discordId || !sessionId) {
+      return;
+    }
+
+    client.rooms.forEach((room) => {
+      const parsed = parseRoomName(room);
+      if (!parsed || parsed.feature !== "presence") return;
+
+      this.emitPresenceToOnlinePlayersRoom({
+        server,
+        sourceClient: client,
+        guildId: parsed.guildId,
+        event: GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE,
+        payload: {
+          guildId: parsed.guildId,
+          discordId,
+          sessionId,
+          status,
+        },
+      });
+    });
   }
 
   async broadcastPlayerDisconnect(
@@ -340,6 +386,52 @@ export class PresenceService {
     };
   }
 
+  async fetchMemberWebPresence(
+    server: Server,
+    client: Socket,
+    guildId: string,
+  ): Promise<MemberWebPresenceFetchResponse> {
+    const presenceRoom = buildRoomName(guildId, "presence");
+    const onlinePlayersRoom = buildRoomName(guildId, "online-players");
+
+    if (
+      !client.rooms.has(presenceRoom) ||
+      !client.rooms.has(onlinePlayersRoom)
+    ) {
+      return this.createOnlinePlayersForbiddenResponse();
+    }
+
+    const viewerGuildData = this.getSocketGuildData(client, guildId);
+    if (!this.canViewOnlinePlayers(client, viewerGuildData)) {
+      return this.createOnlinePlayersForbiddenResponse();
+    }
+
+    const socketsInRoom = await this.fetchSocketsSafely(
+      () => server.in(presenceRoom).fetchSockets(),
+      `member web presence room ${presenceRoom}`,
+    );
+    const sessions: Record<string, MemberWebPresenceSession[]> = {};
+
+    for (const socket of socketsInRoom) {
+      if (socket.data.platform !== Platform.WEB_APP) {
+        continue;
+      }
+
+      const { discordId, sessionId } = socket.data;
+      if (!discordId || !sessionId) {
+        continue;
+      }
+
+      sessions[discordId] ??= [];
+      sessions[discordId].push({ sessionId });
+    }
+
+    return {
+      status: "success",
+      sessions,
+    };
+  }
+
   async fetchOnlinePlayersPresence(
     server: Server,
     client: Socket,
@@ -474,7 +566,7 @@ export class PresenceService {
     }
   }
 
-  private createOnlinePlayersForbiddenResponse(): PresenceFetchResponse<never> {
+  private createOnlinePlayersForbiddenResponse(): OnlinePlayersForbiddenResponse {
     return {
       status: "forbidden",
       code: ONLINE_PLAYERS_ACCESS_DENIED_CODE,

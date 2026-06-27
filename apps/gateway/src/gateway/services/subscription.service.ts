@@ -11,6 +11,7 @@ import { GuildsService } from "src/guilds/guilds.service";
 import { PresenceService } from "./presence.service";
 import { ActivityService } from "./activity.service";
 import { ActivityType } from "src/gateway/enums/activity-type.enum";
+import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
 import type { MargonemAccountProofDto } from "src/gateway/dto/join-gateway.dto";
 import type {
   Socket,
@@ -105,6 +106,11 @@ export class SubscriptionService {
         client,
         user,
         GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+      );
+      this.presenceService.emitMemberWebPresenceUpdate(
+        server,
+        client,
+        UserPresenceStatus.ONLINE,
       );
 
       await this.activityService.publishActivityEvent(

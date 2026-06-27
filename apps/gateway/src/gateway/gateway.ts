@@ -10,10 +10,12 @@ import {
 import type { Server } from "socket.io";
 import type { JoinGatewayDto } from "src/gateway/dto/join-gateway.dto";
 import type { RequestOnlinePlayersPresenceDto } from "src/gateway/dto/request-online-players-presence.dto";
+import type { RequestMemberWebPresenceDto } from "src/gateway/dto/request-member-web-presence.dto";
 import type { PlayerPresenceUpdateDto } from "src/gateway/dto/player-presence-update.dto";
 import type { RequestEventPresenceDto } from "src/gateway/dto/request-event-presence.dto";
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { GatewayConfig } from "src/gateway/constants/gateway-config.constant";
+import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
 import { WsDiscordId, WsUserId } from "src/shared/decorators/user-id.decorator";
 import type {
   Socket,
@@ -21,6 +23,7 @@ import type {
 } from "src/gateway/types/socket-user.type";
 import { ConnectionService } from "./services/connection.service";
 import {
+  type MemberWebPresenceFetchResponse,
   type PresenceFetchResponse,
   PresenceService,
 } from "./services/presence.service";
@@ -73,6 +76,11 @@ export class Gateway {
     client.on(GatewayEvent.DISCONNECTING, async () => {
       if (client.data) {
         this.presenceService.emitDisconnectPresence(this.server, client);
+        this.presenceService.emitMemberWebPresenceUpdate(
+          this.server,
+          client,
+          UserPresenceStatus.OFFLINE,
+        );
 
         if (client.data.guilds) {
           await this.subscriptionService.handleDisconnect(
@@ -119,6 +127,19 @@ export class Gateway {
       client,
       guildId,
       world,
+    );
+  }
+
+  @UseFilters(new BaseWsExceptionFilter())
+  @SubscribeMessage(GatewayEvent.MEMBER_WEB_PRESENCE_FETCH)
+  async handleMemberWebPresenceFetch(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() { guildId }: RequestMemberWebPresenceDto,
+  ): Promise<MemberWebPresenceFetchResponse> {
+    return this.presenceService.fetchMemberWebPresence(
+      this.server,
+      client,
+      guildId,
     );
   }
 
