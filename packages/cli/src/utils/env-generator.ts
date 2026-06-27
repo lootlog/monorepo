@@ -304,28 +304,15 @@ const deriveAuthPostgresValue = (
   sharedValues: Map<string, string>,
 ): string | null => {
   const credentials = getDatabaseCredentials(sharedValues, "users");
+  const postgresValuesByKey: Partial<Record<string, string>> = {
+    POSTGRESQL_HOST: DEFAULT_POSTGRESQL_HOST,
+    POSTGRESQL_PORT: credentials.port,
+    POSTGRESQL_USER: credentials.user,
+    POSTGRESQL_PASSWORD: credentials.password,
+    POSTGRESQL_DATABASE: credentials.database,
+  };
 
-  if (key === "POSTGRESQL_HOST") {
-    return DEFAULT_POSTGRESQL_HOST;
-  }
-
-  if (key === "POSTGRESQL_PORT") {
-    return credentials.port;
-  }
-
-  if (key === "POSTGRESQL_USER") {
-    return credentials.user;
-  }
-
-  if (key === "POSTGRESQL_PASSWORD") {
-    return credentials.password;
-  }
-
-  if (key === "POSTGRESQL_DATABASE") {
-    return credentials.database;
-  }
-
-  return null;
+  return postgresValuesByKey[key] ?? null;
 };
 
 export const enhanceVariablesWithDerivedValues = (
