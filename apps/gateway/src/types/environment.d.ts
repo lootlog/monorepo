@@ -23,6 +23,7 @@ declare global {
       OTEL_TRACES_EXPORTER: string;
       SERVICE_NAMESPACE: string;
       DEV_PERMISSION_OVERRIDE_ENABLED: string;
+      MARGONEM_ACCOUNT_PROOF_REQUIRED: string;
     }
   }
 }

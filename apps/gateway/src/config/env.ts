@@ -38,6 +38,7 @@ const parsedEnv = createEnv(
     AXIOM_DATASET: z.string().optional(),
     AXIOM_TOKEN: z.string().optional(),
     DEV_PERMISSION_OVERRIDE_ENABLED: booleanEnv.default(false),
+    MARGONEM_ACCOUNT_PROOF_REQUIRED: booleanEnv.default(false),
     ACTIVITY_EVENT_SIGNATURE_SECRET: z.string().min(32).optional(),
   }),
 );
