@@ -1,28 +1,28 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
-import type { PlayerPresence } from "@/features/guild/events/hooks/socket/use-event-presence";
 import {
-  applyMemberGamePresenceUpdate,
-  mapMemberGamePresenceByDiscordId,
-  type MemberGamePresenceByDiscordId,
-  type MemberGamePresenceUpdatePayload,
-} from "@/features/guild/settings/members/member-game-presence.utils";
+  applyMemberWebPresenceUpdate,
+  mapMemberWebPresenceByDiscordId,
+  type MemberWebPresenceByDiscordId,
+  type MemberWebPresenceSession,
+  type MemberWebPresenceUpdatePayload,
+} from "@/features/guild/settings/members/member-web-presence.utils";
 
-type MemberGamePresenceFetchPayload =
+type MemberWebPresenceFetchPayload =
   | {
       status: "success";
-      players: Record<string, PlayerPresence[]>;
+      sessions: Record<string, MemberWebPresenceSession[]>;
     }
   | {
       status: "forbidden";
       code: "ONLINE_PLAYERS_ACCESS_DENIED";
     };
 
-export const useMemberGamePresence = (guildId: string | undefined) => {
+export const useMemberWebPresence = (guildId: string | undefined) => {
   const { socket, connected, joined } = useGateway();
   const [presenceByDiscordId, setPresenceByDiscordId] = useState<
-    MemberGamePresenceByDiscordId | undefined
+    MemberWebPresenceByDiscordId | undefined
   >(undefined);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const requestIdRef = useRef(0);
@@ -34,9 +34,9 @@ export const useMemberGamePresence = (guildId: string | undefined) => {
     const requestId = ++requestIdRef.current;
 
     socket.emit(
-      GatewayEvent.EVENT_PRESENCE_FETCH,
+      GatewayEvent.MEMBER_WEB_PRESENCE_FETCH,
       { guildId },
-      (response?: MemberGamePresenceFetchPayload) => {
+      (response?: MemberWebPresenceFetchPayload) => {
         if (requestIdRef.current !== requestId || !response) return;
 
         if (response.status === "forbidden") {
@@ -45,18 +45,18 @@ export const useMemberGamePresence = (guildId: string | undefined) => {
         }
 
         setPresenceByDiscordId(
-          mapMemberGamePresenceByDiscordId(response.players),
+          mapMemberWebPresenceByDiscordId(response.sessions),
         );
       },
     );
   });
 
   const handlePresenceUpdate = useEffectEvent(
-    (payload: MemberGamePresenceUpdatePayload) => {
+    (payload: MemberWebPresenceUpdatePayload) => {
       if (payload.guildId !== guildId) return;
 
       setPresenceByDiscordId((currentPresenceByDiscordId) =>
-        applyMemberGamePresenceUpdate(currentPresenceByDiscordId, payload),
+        applyMemberWebPresenceUpdate(currentPresenceByDiscordId, payload),
       );
     },
   );
@@ -86,10 +86,10 @@ export const useMemberGamePresence = (guildId: string | undefined) => {
 
     requestPresence();
 
-    socket.on(GatewayEvent.EVENT_PRESENCE_UPDATE, handlePresenceUpdate);
+    socket.on(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, handlePresenceUpdate);
 
     return () => {
-      socket.off(GatewayEvent.EVENT_PRESENCE_UPDATE, handlePresenceUpdate);
+      socket.off(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, handlePresenceUpdate);
     };
   }, [socket, connected, joined, guildId, refreshVersion]);
 
