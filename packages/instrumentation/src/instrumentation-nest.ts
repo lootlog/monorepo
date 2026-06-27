@@ -36,6 +36,31 @@ let currentServiceName = "";
 const DYNAMIC_CHANNEL_PATTERN = /[a-zA-Z]+:\d+/;
 const SOCKET_ROOM_PATTERN = /room:[a-zA-Z]+-?\d+/;
 const SOCKET_NAMESPACE_PATTERN = /namespace:[a-zA-Z]+-?\d+/;
+const UUID_PATH_SEGMENT_PATTERN =
+  /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+const NUMERIC_PATH_SEGMENT_PATTERN = /\/[0-9]+/g;
+
+const NORMALIZED_ID_ROUTE_PREFIXES = [
+  "/guilds/",
+  "/loots/",
+  "/users/",
+  "/timers/",
+  "/internal/guilds/",
+  "/battles/",
+  "/battles/public/",
+];
+
+const KNOWN_ROUTE_SUBRESOURCES = [
+  "timers",
+  "members",
+  "chat-messages",
+  "permissions",
+  "worlds",
+  "lootlog-config",
+  "accounts",
+  "user-permissions",
+  "raw",
+];
 
 type HttpServerSpan = {
   updateName: (name: string) => void;
@@ -102,38 +127,18 @@ function normalizePath(path: string | undefined | null): string {
   if (normalized === "/guilds/@me") return normalized;
   if (normalized === "/healthz") return normalized;
 
-  const prefixes = [
-    "/guilds/",
-    "/loots/",
-    "/users/",
-    "/timers/",
-    "/internal/guilds/",
-    "/battles/",
-    "/battles/public/",
-  ];
-
-  for (const prefix of prefixes) {
+  for (const prefix of NORMALIZED_ID_ROUTE_PREFIXES) {
     if (normalized.startsWith(prefix)) {
       const rest = normalized.slice(prefix.length);
       const segments = rest.split("/");
 
-      const knownSubResources = [
-        "timers",
-        "members",
-        "chat-messages",
-        "permissions",
-        "worlds",
-        "lootlog-config",
-        "accounts",
-        "user-permissions",
-        "raw",
-      ];
-
       for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
+
         if (
-          segments[i] &&
-          !knownSubResources.includes(segments[i] as string) &&
-          segments[i] !== "@me"
+          segment &&
+          !KNOWN_ROUTE_SUBRESOURCES.includes(segment) &&
+          segment !== "@me"
         ) {
           segments[i] = ":id";
         }
@@ -144,11 +149,8 @@ function normalizePath(path: string | undefined | null): string {
   }
 
   return normalized
-    .replace(
-      /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
-      "/:id",
-    )
-    .replace(/\/[0-9]+/g, "/:id");
+    .replace(UUID_PATH_SEGMENT_PATTERN, "/:id")
+    .replace(NUMERIC_PATH_SEGMENT_PATTERN, "/:id");
 }
 
 function createNestMetricViews(): ViewOptions[] {
