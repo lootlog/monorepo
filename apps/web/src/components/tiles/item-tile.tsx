@@ -11,18 +11,35 @@ export type ItemTileProps = {
   shareNickname?: string;
 };
 
+const STAT_VALUE_SEPARATOR = ",\u00A0";
+
+const formatStringValue = (rawValue: string) => {
+  return rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
+
 const formatValue = (
   rawValue: string | string[] | number | boolean | undefined,
 ) => {
   if (Array.isArray(rawValue)) {
-    return rawValue.join(",\u00A0");
+    return rawValue.join(STAT_VALUE_SEPARATOR);
   }
 
   if (typeof rawValue === "string") {
-    return rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return formatStringValue(rawValue);
   }
 
   return rawValue;
+};
+
+const mapUntranslatedArrayValues = (rawValues: string[]) => {
+  return rawValues.reduce<Record<string, string>>(
+    (acc, rawValue, valueIndex) => {
+      acc[`value${valueIndex + 1}`] = formatStringValue(rawValue);
+
+      return acc;
+    },
+    {},
+  );
 };
 
 export const ItemTile: FC<ItemTileProps> = ({
@@ -32,6 +49,9 @@ export const ItemTile: FC<ItemTileProps> = ({
   shareNickname,
 }) => {
   const { t } = useTranslation();
+  const typeLabels = item.type
+    ? { [item.type]: t(`itemType.${item.type}`) }
+    : {};
   const labels = {
     obtainedBy: t("loots.list.obtainedBy"),
     rarity: {
@@ -41,10 +61,26 @@ export const ItemTile: FC<ItemTileProps> = ({
       [ItemRarity.UNIQUE]: t("itemRarity.UNIQUE"),
       [ItemRarity.UPGRADED]: t("itemRarity.UPGRADED"),
     },
-    type: {
-      [item.type ?? ""]: item.type ? t(`itemType.${item.type}`) : "",
-    },
+    type: typeLabels,
     typePrefix: t("itemType.prefix"),
+  };
+
+  const getTranslatedValues = (displayValue: ItemDisplayValue) => {
+    if (!Array.isArray(displayValue.value)) {
+      return { value: formatValue(displayValue.value) };
+    }
+
+    if (!displayValue.translateKey) {
+      return mapUntranslatedArrayValues(displayValue.value);
+    }
+
+    return {
+      value: displayValue.value
+        .map((translationKey) =>
+          t(`${displayValue.translateKey}.${translationKey}`),
+        )
+        .join(STAT_VALUE_SEPARATOR),
+    };
   };
 
   const renderStat = (displayValue: ItemDisplayValue) => {
@@ -52,26 +88,7 @@ export const ItemTile: FC<ItemTileProps> = ({
       return null;
     }
 
-    const translatedValues =
-      Array.isArray(displayValue.value) && !displayValue.translateKey
-        ? displayValue.value.reduce(
-            (acc: Record<string, string>, rawValue, valueIndex) => {
-              acc[`value${valueIndex + 1}`] = formatValue(rawValue) as string;
-
-              return acc;
-            },
-            {},
-          )
-        : {
-            value:
-              displayValue.translateKey && Array.isArray(displayValue.value)
-                ? displayValue.value
-                    .map((translationKey) =>
-                      t(`${displayValue.translateKey}.${translationKey}`),
-                    )
-                    .join(",\u00A0")
-                : formatValue(displayValue.value),
-          };
+    const translatedValues = getTranslatedValues(displayValue);
 
     return (
       <Trans
