@@ -1,3 +1,5 @@
+import { RABBIT_REQUEST_TYPE } from "@golevelup/nestjs-rabbitmq";
+import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants";
 import { ActivitySource, ActivityType } from "src/generated/prisma/client";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { ActivitiesEventsService } from "./activities-events.service";
@@ -45,6 +47,23 @@ describe("ActivitiesEventsService", () => {
       logger as never,
     );
   });
+
+  it.each(["handleActivityCreate", "handleGuildMemberRemoved"] as const)(
+    "binds %s AMQP message argument as a RabbitMQ request",
+    (methodName) => {
+      const metadata = Reflect.getMetadata(
+        ROUTE_ARGS_METADATA,
+        ActivitiesEventsService,
+        methodName,
+      );
+
+      expect(metadata).toMatchObject({
+        [`${RABBIT_REQUEST_TYPE}:1`]: {
+          index: 1,
+        },
+      });
+    },
+  );
 
   it("rejects unsigned activity create events", async () => {
     await service.handleActivityCreate(validPayload, {
