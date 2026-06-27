@@ -17,7 +17,9 @@ import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@/lib/api/generated/main/users/users";
 
-const NPC_INITIAL_DETECTION_DEBUG_PREFIX = "[DEBUG-NPC-INIT]";
+// TODO: Temporary startup workaround. Replace this polling with an explicit
+// game account-ready signal; retry-based readiness checks are brittle and
+// should not become our long-term pattern.
 const ACCOUNT_ID_RETRY_DELAY_MS = 100;
 const ACCOUNT_ID_MAX_RETRIES = 20;
 
@@ -52,15 +54,6 @@ export const useGameAccountPreferencesSync = () => {
     const resolveAccountId = () => {
       const nextAccountId = Game.getAccountId();
 
-      console.log(
-        `${NPC_INITIAL_DETECTION_DEBUG_PREFIX} useGameAccountPreferencesSync account id resolve attempt`,
-        {
-          nextAccountId,
-          attempt: accountIdRetryAttemptsRef.current,
-          maxRetries: ACCOUNT_ID_MAX_RETRIES,
-        },
-      );
-
       if (nextAccountId) {
         accountIdRetryAttemptsRef.current = 0;
         setAccountId(nextAccountId);
@@ -68,13 +61,6 @@ export const useGameAccountPreferencesSync = () => {
       }
 
       if (accountIdRetryAttemptsRef.current >= ACCOUNT_ID_MAX_RETRIES) {
-        console.log(
-          `${NPC_INITIAL_DETECTION_DEBUG_PREFIX} useGameAccountPreferencesSync account id resolve limit reached`,
-          {
-            attempts: accountIdRetryAttemptsRef.current,
-            maxRetries: ACCOUNT_ID_MAX_RETRIES,
-          },
-        );
         return true;
       }
 
@@ -170,25 +156,9 @@ export const useGameAccountPreferencesSync = () => {
   ]);
 
   useEffect(() => {
-    console.log(
-      `${NPC_INITIAL_DETECTION_DEBUG_PREFIX} useGameAccountPreferencesSync flush effect`,
-      {
-        accountId,
-        gameInitialized,
-        isFetched,
-      },
-    );
-
     if (!gameInitialized || !accountId || !isFetched) {
       return;
     }
-
-    console.log(
-      `${NPC_INITIAL_DETECTION_DEBUG_PREFIX} useGameAccountPreferencesSync flushPending`,
-      {
-        accountId,
-      },
-    );
 
     npcsDetectionProcessor.flushPending(accountId);
   }, [accountId, gameInitialized, isFetched]);

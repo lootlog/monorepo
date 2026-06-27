@@ -11,8 +11,6 @@ import { AfkProcessor } from "@/processors/afk-processor";
 import { FriendsProcessor } from "@/processors/friends-processor";
 import { PartyProcessor } from "@/processors/party-processor";
 
-const NPC_INITIAL_DETECTION_DEBUG_PREFIX = "[DEBUG-NPC-INIT]";
-
 const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "chat",
   "d",
@@ -114,9 +112,6 @@ export class EventDispatcher {
   };
 
   handleInitialEvents(): void {
-    console.log(
-      `${NPC_INITIAL_DETECTION_DEBUG_PREFIX} EventDispatcher.handleInitialEvents called`,
-    );
     this.npcsDetection.handleInitialDetection();
     this.party.handleInitialDetection();
     gameEventsManager.markStripFriendsFromNextEvent();
