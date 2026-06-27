@@ -95,12 +95,58 @@ export class PresenceService {
           client.data.player,
           client.id,
           client.data.playerPresence,
+          undefined,
+          client.data.margonemAccountVerified,
         ),
         status: UserPresenceStatus.OFFLINE,
         sessionId: client.data.sessionId,
       },
       GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
     );
+  }
+
+  emitDisconnectPresenceForGuildIds(
+    server: Server,
+    client: Socket,
+    guildIds: string[],
+  ): void {
+    if (!client.data?.player) return;
+
+    const playerPresence = this.buildPlayerPresence(
+      client.data.player,
+      client.id,
+      client.data.playerPresence,
+      undefined,
+      client.data.margonemAccountVerified,
+    );
+
+    for (const guildId of guildIds) {
+      const payload = {
+        guildId,
+        discordId: client.data.discordId,
+        player: playerPresence,
+        status: UserPresenceStatus.OFFLINE,
+        sessionId: client.data.sessionId,
+      };
+
+      this.emitPresenceToOnlinePlayersRoom({
+        server,
+        sourceClient: client,
+        guildId,
+        event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+        payload,
+        excludeSourceSocket: true,
+      });
+
+      this.emitPresenceToOnlinePlayersRoom({
+        server,
+        sourceClient: client,
+        guildId,
+        event: GatewayEvent.EVENT_PRESENCE_UPDATE,
+        payload,
+        excludeSourceSocket: true,
+      });
+    }
   }
 
   async broadcastPlayerDisconnect(
@@ -110,10 +156,22 @@ export class PresenceService {
     if (!client.data?.guilds || !client.data?.playerPresence) return;
 
     const guildIds = getGuildIds(client.data.guilds);
+    await this.broadcastPlayerDisconnectForGuildIds(server, client, guildIds);
+  }
+
+  async broadcastPlayerDisconnectForGuildIds(
+    server: Server,
+    client: Socket,
+    guildIds: string[],
+  ): Promise<void> {
+    if (!client.data?.playerPresence || !client.data?.player) return;
+
     const playerPresence = this.buildPlayerPresence(
       client.data.player,
       client.id,
       client.data.playerPresence,
+      undefined,
+      client.data.margonemAccountVerified,
     );
 
     for (const guildId of guildIds) {
@@ -176,6 +234,7 @@ export class PresenceService {
       client.id,
       existingPresence,
       data,
+      client.data.margonemAccountVerified,
     );
 
     client.data.playerPresence = playerPresence;
@@ -378,7 +437,13 @@ export class PresenceService {
     const player = client.data.player;
     if (!player || client.data.platform !== Platform.GAME) return;
 
-    const playerPresence = this.buildPlayerPresence(player, client.id);
+    const playerPresence = this.buildPlayerPresence(
+      player,
+      client.id,
+      undefined,
+      undefined,
+      client.data.margonemAccountVerified,
+    );
 
     client.data.playerPresence = playerPresence;
 
@@ -500,6 +565,7 @@ export class PresenceService {
     sessionId: string,
     existingPresence?: PlayerPresence,
     data?: PlayerPresenceUpdateDto,
+    margonemAccountVerified = false,
   ): PlayerPresence {
     return {
       world: player.world,
@@ -510,6 +576,7 @@ export class PresenceService {
       lvl: player.lvl,
       prof: player.prof,
       clan: player.clan,
+      margonemAccountVerified,
       mapId: data?.mapId ?? existingPresence?.mapId,
       mapName:
         data?.mapName ?? existingPresence?.mapName ?? player.location?.map,

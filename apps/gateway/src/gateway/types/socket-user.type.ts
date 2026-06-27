@@ -37,6 +37,7 @@ export type PlayerPresence = {
   lvl: string;
   prof: string;
   clan?: SocketUserPlayerClan;
+  margonemAccountVerified?: boolean;
 
   // Location/presence data
   mapId?: number;
@@ -58,6 +59,7 @@ export type SocketUser = {
   status?: UserPresenceStatus;
   guilds?: UserGuildData[];
   playerPresence?: PlayerPresence;
+  margonemAccountVerified?: boolean;
 };
 
 export type Socket = SocketIOSocket & { data: SocketUser };

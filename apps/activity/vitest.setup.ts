@@ -15,6 +15,8 @@ vi.mock("src/config/env", () => ({
     REDIS_PASSWORD: "",
     REDIS_USERNAME: "default",
     API_SERVICE_URL: "http://localhost:3000",
+    ACTIVITY_EVENT_SIGNATURE_SECRET:
+      "local-development-activity-event-signature-secret",
   },
 }));
 

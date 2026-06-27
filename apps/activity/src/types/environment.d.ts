@@ -14,6 +14,7 @@ declare global {
       POSTGRESQL_CONNECTION_URI: string;
 
       RABBITMQ_URI: string;
+      ACTIVITY_EVENT_SIGNATURE_SECRET: string;
 
       REDIS_PASSWORD: string;
       REDIS_HOST: string;

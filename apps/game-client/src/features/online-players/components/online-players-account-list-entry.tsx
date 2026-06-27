@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
+import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
 import { Game } from "@/lib/game";
 import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
 import { cn } from "@/lib/utils";
@@ -155,9 +156,14 @@ export const OnlinePlayersAccountListEntry: FC<
                     className="ll:scale-65 ll:-my-2 ll:-ml-1 ll:-mr-1 ll:shrink-0"
                   />
                   <span className="ll:flex ll:min-w-0 ll:flex-col ll:py-0.5 ll:leading-tight">
-                    <span className="ll:text-[11px] ll:font-semibold ll:text-gray-100 ll:truncate">
-                      {player?.name || t("player.unknown")} ({character.lvl}
-                      {character.prof})
+                    <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-1 ll:text-[11px] ll:font-semibold ll:text-gray-100">
+                      <span className="ll:truncate">
+                        {player?.name || t("player.unknown")} ({character.lvl}
+                        {character.prof})
+                      </span>
+                      {presence.margonemAccountVerified ? (
+                        <VerifiedMargonemAccountIcon className="ll:shrink-0" />
+                      ) : null}
                     </span>
                     <span className="ll:text-[10px] ll:text-gray-400 ll:truncate">
                       {locationName} • {world}

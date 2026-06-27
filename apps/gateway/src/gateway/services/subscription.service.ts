@@ -11,14 +11,17 @@ import { GuildsService } from "src/guilds/guilds.service";
 import { PresenceService } from "./presence.service";
 import { ActivityService } from "./activity.service";
 import { ActivityType } from "src/gateway/enums/activity-type.enum";
+import type { MargonemAccountProofDto } from "src/gateway/dto/join-gateway.dto";
 import type {
   Socket,
   SocketUserPlayer,
 } from "src/gateway/types/socket-user.type";
 import type { UserGuildData } from "src/guilds/types/guild.types";
+import { MargonemAccountProofService } from "./margonem-account-proof.service";
 
 interface JoinResult {
   status: ResponseStatus;
+  code?: string;
   message?: string;
   guildsCount?: number;
   guildIds?: string[];
@@ -33,6 +36,7 @@ export class SubscriptionService {
     private guildsService: GuildsService,
     private presenceService: PresenceService,
     private activityService: ActivityService,
+    private margonemAccountProofService: MargonemAccountProofService,
   ) {}
 
   async handleJoin(
@@ -41,8 +45,42 @@ export class SubscriptionService {
     discordId: string,
     userId: string,
     player: SocketUserPlayer | undefined,
+    margonemAccountProof?: MargonemAccountProofDto,
   ): Promise<JoinResult> {
     try {
+      if (client.data.platform === Platform.GAME) {
+        if (!player) {
+          return {
+            status: ResponseStatus.ERROR,
+            code: "MARGONEM_ACCOUNT_PROOF_INVALID",
+            message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
+          };
+        }
+
+        const proofVerification =
+          await this.margonemAccountProofService.verifyProof({
+            proof: margonemAccountProof,
+            socketId: client.id,
+            accountId: player.accountId,
+            characterId: player.characterId,
+            clanId: player.clan?.id,
+          });
+
+        if (proofVerification.valid === false) {
+          this.logger.warn(
+            `Rejected game join for ${discordId}: ${proofVerification.reason}`,
+          );
+
+          return {
+            status: ResponseStatus.ERROR,
+            code: "MARGONEM_ACCOUNT_PROOF_INVALID",
+            message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
+          };
+        }
+
+        client.data.margonemAccountVerified = true;
+      }
+
       const guilds = await this.guildsService.getUserGuilds({
         discordId,
         userId,

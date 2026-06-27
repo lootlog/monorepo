@@ -4,6 +4,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_COMMIT_SHA: string;
+  readonly VITE_MARGONEM_ACCOUNT_VALIDATE_URL?: string;
 }
 
 interface ImportMeta {

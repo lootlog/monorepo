@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyMemberGamePresenceUpdate,
   getMemberGameSessionCount,
+  isMemberGamePresenceVerified,
   getMemberOnlineSources,
   isMemberOnlineInGame,
   mapMemberGamePresenceByDiscordId,
@@ -97,6 +98,23 @@ describe("member game presence utils", () => {
     expect(isMemberOnlineInGame(mapped, "discord-1")).toBe(true);
     expect(isMemberOnlineInGame(mapped, "discord-2")).toBe(false);
     expect(isMemberOnlineInGame(undefined, "discord-1")).toBe(false);
+  });
+
+  it("detects verified Margonem game presence", () => {
+    const mapped = mapMemberGamePresenceByDiscordId({
+      "discord-1": [
+        buildPresence({ sessionId: "session-1" }),
+        buildPresence({
+          sessionId: "session-2",
+          margonemAccountVerified: true,
+        }),
+      ],
+      "discord-2": [buildPresence({ sessionId: "session-3" })],
+    });
+
+    expect(isMemberGamePresenceVerified(mapped, "discord-1")).toBe(true);
+    expect(isMemberGamePresenceVerified(mapped, "discord-2")).toBe(false);
+    expect(isMemberGamePresenceVerified(undefined, "discord-1")).toBe(false);
   });
 
   it("counts active game sessions", () => {
