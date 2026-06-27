@@ -33,6 +33,7 @@ export const usePlayersPresence = (
 
   const selectedGuildIdRef = useRef(selectedGuildId);
   const worldRef = useRef(world);
+  const visibleScopeRef = useRef({ guildId: selectedGuildId, world });
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -42,6 +43,8 @@ export const usePlayersPresence = (
 
   useEffect(() => {
     if (!selectedGuildId || !world) {
+      requestIdRef.current += 1;
+      visibleScopeRef.current = { guildId: selectedGuildId, world };
       setOnlinePlayers({});
       setLoading(false);
       setAccessState("allowed");
@@ -57,8 +60,16 @@ export const usePlayersPresence = (
     )
       return;
 
+    const scopeChanged =
+      visibleScopeRef.current.guildId !== selectedGuildId ||
+      visibleScopeRef.current.world !== world;
     const currentRequestId = ++requestIdRef.current;
-    setOnlinePlayers({});
+    visibleScopeRef.current = { guildId: selectedGuildId, world };
+
+    if (scopeChanged) {
+      setOnlinePlayers({});
+    }
+
     setAccessState("allowed");
     setLoading(true);
 
@@ -157,7 +168,6 @@ export const usePlayersPresence = (
     if (!socket || !connected || !joined) return;
 
     const handlePermissionsUpdated = () => {
-      setOnlinePlayers({});
       setPermissionsVersion((version) => version + 1);
     };
 

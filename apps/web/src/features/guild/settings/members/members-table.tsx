@@ -2,14 +2,15 @@ import { PermissionCategoryTooltip } from "@/features/guild/settings/components/
 import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
 import { MemberDiscordSyncIndicator } from "@/features/guild/settings/members/components/member-discord-sync-indicator";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
-import {
-  isMemberOnlineOnWeb,
-  type MemberActivityStatsByDiscordId,
-} from "@/features/guild/settings/members/member-activity-stats.utils";
+import type { MemberActivityStatsByDiscordId } from "@/features/guild/settings/members/member-activity-stats.utils";
 import {
   isMemberGamePresenceVerified,
   isMemberOnlineInGame,
 } from "@/features/guild/settings/members/member-game-presence.utils";
+import {
+  isMemberOnlineOnWeb,
+  type MemberWebPresenceByDiscordId,
+} from "@/features/guild/settings/members/member-web-presence.utils";
 import { getMemberOnlineSources } from "@/features/guild/settings/members/member-list-item.utils";
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
@@ -64,6 +65,7 @@ type MembersTableProps = {
   isMobile: boolean;
   canManageMembers: boolean;
   memberGamePresenceByDiscordId: Parameters<typeof isMemberOnlineInGame>[0];
+  memberWebPresenceByDiscordId: MemberWebPresenceByDiscordId | undefined;
   guildId: string;
 };
 
@@ -75,6 +77,7 @@ export const MembersTable = ({
   isMobile,
   canManageMembers,
   memberGamePresenceByDiscordId,
+  memberWebPresenceByDiscordId,
   guildId,
 }: MembersTableProps) => {
   const { t } = useTranslation();
@@ -116,7 +119,10 @@ export const MembersTable = ({
           const gameActivityStats = activityStatsByDiscordIdAndSource.get(
             member.userId,
           )?.GAME;
-          const isOnlineOnWeb = isMemberOnlineOnWeb(webActivityStats);
+          const isOnlineOnWeb = isMemberOnlineOnWeb(
+            memberWebPresenceByDiscordId,
+            member.userId,
+          );
           const isOnlineInGame = isMemberOnlineInGame(
             memberGamePresenceByDiscordId,
             member.userId,
@@ -276,7 +282,10 @@ export const MembersTable = ({
           const gameActivityStats = activityStatsByDiscordIdAndSource.get(
             member.userId,
           )?.GAME;
-          const isOnlineOnWeb = isMemberOnlineOnWeb(webActivityStats);
+          const isOnlineOnWeb = isMemberOnlineOnWeb(
+            memberWebPresenceByDiscordId,
+            member.userId,
+          );
           const isOnlineInGame = isMemberOnlineInGame(
             memberGamePresenceByDiscordId,
             member.userId,

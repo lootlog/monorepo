@@ -326,6 +326,13 @@ describe("usePlayersPresence", () => {
   });
 
   it("refetches and clears stale players after permissions are updated", async () => {
+    let resolvePermissionsRefetch: (
+      value: Awaited<ReturnType<typeof emitWithAckSpy>>,
+    ) => void;
+    const permissionsRefetchPromise = new Promise((resolve) => {
+      resolvePermissionsRefetch = resolve;
+    });
+
     emitWithAckSpy
       .mockImplementationOnce(() =>
         Promise.resolve({
@@ -349,12 +356,7 @@ describe("usePlayersPresence", () => {
           },
         }),
       )
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          status: "forbidden",
-          code: "ONLINE_PLAYERS_ACCESS_DENIED",
-        }),
-      );
+      .mockImplementationOnce(() => permissionsRefetchPromise);
 
     const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
 
@@ -364,6 +366,16 @@ describe("usePlayersPresence", () => {
 
     act(() => {
       eventHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({});
+    });
+
+    expect(result.current[0]["discord-1"]).toHaveLength(1);
+
+    await act(async () => {
+      resolvePermissionsRefetch!({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
+      await permissionsRefetchPromise;
     });
 
     await waitFor(() => {
