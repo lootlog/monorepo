@@ -1,9 +1,7 @@
-import {
-  CharacterSelector,
-  PeriodSelector,
-  LevelRangeFilter,
-  WarriorSearchFilter,
-} from "@/components/filters";
+import { CharacterSelector } from "@/components/filters/character-selector";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
+import { PeriodSelector } from "@/components/filters/period-selector";
+import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";

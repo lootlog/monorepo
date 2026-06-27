@@ -41,7 +41,7 @@ import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { Badge } from "@lootlog/ui/components/badge";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import type { BattleFilters } from "./battles-list-filters";
-import { WarriorSearchFilter } from "@/components/filters";
+import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 
