@@ -20,6 +20,7 @@ vi.mock("src/config/env", () => ({
     AXIOM_DATASET: "",
     AXIOM_TOKEN: "",
     DEV_PERMISSION_OVERRIDE_ENABLED: false,
+    MARGONEM_ACCOUNT_PROOF_REQUIRED: false,
     ACTIVITY_EVENT_SIGNATURE_SECRET:
       "local-development-activity-event-signature-secret",
   },

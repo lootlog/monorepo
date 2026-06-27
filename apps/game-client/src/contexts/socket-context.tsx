@@ -64,6 +64,12 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
           accountId,
           characterId,
           clanId: Game.hero.clan?.id,
+        }).catch((error) => {
+          if (import.meta.env.DEV) {
+            console.warn("[Gateway] Failed to verify Margonem account", error);
+          }
+
+          return undefined;
         });
 
         if (cancelled || !socket.connected) {
@@ -92,14 +98,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
               map: Game.map.name,
             },
           },
-          margonemAccountProof,
+          ...(margonemAccountProof ? { margonemAccountProof } : {}),
         });
       }
     };
 
     void emitJoin().catch((error) => {
       if (import.meta.env.DEV) {
-        console.error("[Gateway] Failed to verify Margonem account", error);
+        console.warn("[Gateway] Failed to verify Margonem account", error);
       }
     });
 

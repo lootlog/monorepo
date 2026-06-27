@@ -18,6 +18,7 @@ import type {
 } from "src/gateway/types/socket-user.type";
 import type { UserGuildData } from "src/guilds/types/guild.types";
 import { MargonemAccountProofService } from "./margonem-account-proof.service";
+import { env } from "src/config/env";
 
 interface JoinResult {
   status: ResponseStatus;
@@ -57,28 +58,16 @@ export class SubscriptionService {
           };
         }
 
-        const proofVerification =
-          await this.margonemAccountProofService.verifyProof({
-            proof: margonemAccountProof,
-            socketId: client.id,
-            accountId: player.accountId,
-            characterId: player.characterId,
-            clanId: player.clan?.id,
-          });
+        const proofError = await this.verifyMargonemAccountProof({
+          client,
+          discordId,
+          player,
+          margonemAccountProof,
+        });
 
-        if (proofVerification.valid === false) {
-          this.logger.warn(
-            `Rejected game join for ${discordId}: ${proofVerification.reason}`,
-          );
-
-          return {
-            status: ResponseStatus.ERROR,
-            code: "MARGONEM_ACCOUNT_PROOF_INVALID",
-            message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
-          };
+        if (proofError) {
+          return proofError;
         }
-
-        client.data.margonemAccountVerified = true;
       }
 
       const guilds = await this.guildsService.getUserGuilds({
@@ -161,5 +150,51 @@ export class SubscriptionService {
       client,
       guilds,
     );
+  }
+
+  private async verifyMargonemAccountProof({
+    client,
+    discordId,
+    player,
+    margonemAccountProof,
+  }: {
+    client: Socket;
+    discordId: string;
+    player: SocketUserPlayer;
+    margonemAccountProof?: MargonemAccountProofDto;
+  }): Promise<JoinResult | null> {
+    const proofVerification =
+      await this.margonemAccountProofService.verifyProof({
+        proof: margonemAccountProof,
+        socketId: client.id,
+        accountId: player.accountId,
+        characterId: player.characterId,
+        clanId: player.clan?.id,
+      });
+
+    if (proofVerification.valid) {
+      client.data.margonemAccountVerified = true;
+      return null;
+    }
+
+    client.data.margonemAccountVerified = false;
+
+    if (env.MARGONEM_ACCOUNT_PROOF_REQUIRED) {
+      this.logger.warn(
+        `Rejected game join for ${discordId}: ${proofVerification.reason}`,
+      );
+
+      return {
+        status: ResponseStatus.ERROR,
+        code: "MARGONEM_ACCOUNT_PROOF_INVALID",
+        message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
+      };
+    }
+
+    this.logger.warn(
+      `Accepted unverified game join for ${discordId}: ${proofVerification.reason}`,
+    );
+
+    return null;
   }
 }

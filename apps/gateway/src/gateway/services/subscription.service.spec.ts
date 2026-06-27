@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { Permission } from "@lootlog/types";
 import { SubscriptionService } from "./subscription.service";
 import { Platform } from "../enums/platform.enum";
@@ -8,6 +9,7 @@ import { buildRoomName } from "../utils/room-utils";
 import type { MargonemAccountProofDto } from "../dto/join-gateway.dto";
 import type { SocketUserPlayer } from "../types/socket-user.type";
 import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
+import { env } from "src/config/env";
 
 function createRole(
   permissions: Permission[],
@@ -127,6 +129,7 @@ describe("SubscriptionService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    env.MARGONEM_ACCOUNT_PROOF_REQUIRED = false;
     service = new SubscriptionService(
       mockGuildsService as never,
       mockPresenceService as never,
@@ -167,7 +170,16 @@ describe("SubscriptionService", () => {
     expect(mockMargonemAccountProofService.verifyProof).not.toHaveBeenCalled();
   });
 
-  it("rejects game joins without a valid Margonem account proof before resolving guilds", async () => {
+  it("allows game joins without a valid Margonem account proof during the grace period", async () => {
+    const warnSpy = vi
+      .spyOn(Logger.prototype, "warn")
+      .mockImplementation(() => undefined);
+    const guilds = [
+      createGuild({
+        discordId: "discord-1",
+        permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+      }),
+    ];
     const client = {
       id: "socket-1",
       data: {
@@ -179,6 +191,112 @@ describe("SubscriptionService", () => {
       join: vi.fn(),
       request: { headers: {} },
     };
+
+    mockMargonemAccountProofService.verifyProof.mockResolvedValueOnce({
+      valid: false,
+      reason: "missing proof",
+    });
+    mockGuildsService.getUserGuilds.mockResolvedValue(guilds);
+
+    const result = await service.handleJoin(
+      mockServer as never,
+      client as never,
+      "discord-1",
+      "user-1",
+      createPlayer(),
+      undefined,
+    );
+
+    expect(result.status).toBe(ResponseStatus.SUCCESS);
+    expect(result.guildIds).toEqual(["guild-1"]);
+    expect(mockMargonemAccountProofService.verifyProof).toHaveBeenCalledWith({
+      proof: undefined,
+      socketId: "socket-1",
+      accountId: "20",
+      characterId: "10",
+      clanId: undefined,
+    });
+    expect(client.data.margonemAccountVerified).toBe(false);
+    expect(client.join).toHaveBeenCalledWith(result.featureRooms);
+    expect(mockActivityService.publishActivityEvent).toHaveBeenCalledWith(
+      ActivityType.CONNECT_EVENT,
+      client,
+      guilds,
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Accepted unverified game join for discord-1: missing proof",
+    );
+  });
+
+  it("allows game joins with invalid Margonem account proof during the grace period", async () => {
+    const warnSpy = vi
+      .spyOn(Logger.prototype, "warn")
+      .mockImplementation(() => undefined);
+    const guilds = [
+      createGuild({
+        discordId: "discord-1",
+        permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+      }),
+    ];
+    const client = {
+      id: "socket-1",
+      data: {
+        discordId: "discord-1",
+        sessionId: "socket-1",
+        userId: "user-1",
+        platform: Platform.GAME,
+      },
+      join: vi.fn(),
+      request: { headers: {} },
+    };
+    const proof = createMargonemAccountProof();
+
+    mockMargonemAccountProofService.verifyProof.mockResolvedValueOnce({
+      valid: false,
+      reason: "invalid proof signature",
+    });
+    mockGuildsService.getUserGuilds.mockResolvedValue(guilds);
+
+    const result = await service.handleJoin(
+      mockServer as never,
+      client as never,
+      "discord-1",
+      "user-1",
+      createPlayer(),
+      proof,
+    );
+
+    expect(result.status).toBe(ResponseStatus.SUCCESS);
+    expect(mockMargonemAccountProofService.verifyProof).toHaveBeenCalledWith({
+      proof,
+      socketId: "socket-1",
+      accountId: "20",
+      characterId: "10",
+      clanId: undefined,
+    });
+    expect(client.data.margonemAccountVerified).toBe(false);
+    expect(client.join).toHaveBeenCalledWith(result.featureRooms);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Accepted unverified game join for discord-1: invalid proof signature",
+    );
+  });
+
+  it("rejects game joins without a valid Margonem account proof when proof is required", async () => {
+    const warnSpy = vi
+      .spyOn(Logger.prototype, "warn")
+      .mockImplementation(() => undefined);
+    const client = {
+      id: "socket-1",
+      data: {
+        discordId: "discord-1",
+        sessionId: "socket-1",
+        userId: "user-1",
+        platform: Platform.GAME,
+      },
+      join: vi.fn(),
+      request: { headers: {} },
+    };
+    env.MARGONEM_ACCOUNT_PROOF_REQUIRED = true;
 
     mockMargonemAccountProofService.verifyProof.mockResolvedValueOnce({
       valid: false,
@@ -199,16 +317,12 @@ describe("SubscriptionService", () => {
       code: "MARGONEM_ACCOUNT_PROOF_INVALID",
       message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
     });
-    expect(mockMargonemAccountProofService.verifyProof).toHaveBeenCalledWith({
-      proof: undefined,
-      socketId: "socket-1",
-      accountId: "20",
-      characterId: "10",
-      clanId: undefined,
-    });
     expect(mockGuildsService.getUserGuilds).not.toHaveBeenCalled();
     expect(client.join).not.toHaveBeenCalled();
     expect(mockActivityService.publishActivityEvent).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Rejected game join for discord-1: missing proof",
+    );
   });
 
   it("grants owner full room access and emits initial presence for game clients", async () => {
