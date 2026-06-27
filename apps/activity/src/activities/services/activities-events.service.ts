@@ -1,6 +1,7 @@
 import {
   MessageHandlerErrorBehavior,
   RabbitPayload,
+  RabbitRequest,
   RabbitSubscribe,
 } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
@@ -60,6 +61,7 @@ export class ActivitiesEventsService {
   })
   async handleActivityCreate(
     @RabbitPayload() data: unknown,
+    @RabbitRequest()
     amqpMsg: AmqpMessage,
   ) {
     const headers = amqpMsg?.properties.headers ?? {};
@@ -159,6 +161,7 @@ export class ActivitiesEventsService {
   })
   async handleGuildMemberRemoved(
     @RabbitPayload() data: unknown,
+    @RabbitRequest()
     amqpMsg: AmqpMessage,
   ) {
     const result = GuildMemberRemovedSchema.safeParse(data);
