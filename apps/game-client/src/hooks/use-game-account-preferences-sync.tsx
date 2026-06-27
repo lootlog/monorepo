@@ -17,6 +17,8 @@ import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@/lib/api/generated/main/users/users";
 
+const NPC_INITIAL_DETECTION_DEBUG_PREFIX = "[DEBUG-NPC-INIT]";
+
 export const useGameAccountPreferencesSync = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
@@ -109,9 +111,25 @@ export const useGameAccountPreferencesSync = () => {
   ]);
 
   useEffect(() => {
+    console.log(
+      `${NPC_INITIAL_DETECTION_DEBUG_PREFIX} useGameAccountPreferencesSync flush effect`,
+      {
+        accountId,
+        gameInitialized,
+        isFetched,
+      },
+    );
+
     if (!gameInitialized || !accountId || !isFetched) {
       return;
     }
+
+    console.log(
+      `${NPC_INITIAL_DETECTION_DEBUG_PREFIX} useGameAccountPreferencesSync flushPending`,
+      {
+        accountId,
+      },
+    );
 
     npcsDetectionProcessor.flushPending(accountId);
   }, [accountId, gameInitialized, isFetched]);

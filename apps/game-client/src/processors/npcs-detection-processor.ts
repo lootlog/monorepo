@@ -52,6 +52,7 @@ type DetectionProcessingContext = {
 
 const INITIAL_DETECTION_RETRY_DELAY_MS = 100;
 const INITIAL_DETECTION_MAX_RETRIES = 20;
+const NPC_INITIAL_DETECTION_DEBUG_PREFIX = "[DEBUG-NPC-INIT]";
 
 export class NpcsDetectionProcessor {
   private static pendingDetections: PendingDetection[] = [];
@@ -76,8 +77,21 @@ export class NpcsDetectionProcessor {
 
   handleInitialDetection(): void {
     const accountId = this.getCurrentAccountId();
-    if (!accountId) return;
-    if (!this.isDetectorReady(accountId)) {
+    if (!accountId) {
+      this.debugLog("handleInitialDetection skipped: missing account id");
+      return;
+    }
+
+    const detectorReady = this.isDetectorReady(accountId);
+    this.debugLog("handleInitialDetection called", {
+      accountId,
+      detectorReady,
+      pendingDetectionsCount: NpcsDetectionProcessor.pendingDetections.length,
+      retryActive: this.initialDetectionRetryTimeout !== null,
+      retryAttempts: this.initialDetectionRetryAttempts,
+    });
+
+    if (!detectorReady) {
       const hasQueuedInitialDetection =
         NpcsDetectionProcessor.pendingDetections.some(
           (pendingDetection) =>
@@ -90,6 +104,18 @@ export class NpcsDetectionProcessor {
           accountId,
           type: "initial",
         });
+
+        this.debugLog("queued initial detection until preferences are ready", {
+          accountId,
+          pendingDetectionsCount:
+            NpcsDetectionProcessor.pendingDetections.length,
+        });
+      } else {
+        this.debugLog("initial detection already queued", {
+          accountId,
+          pendingDetectionsCount:
+            NpcsDetectionProcessor.pendingDetections.length,
+        });
       }
       return;
     }
@@ -98,7 +124,24 @@ export class NpcsDetectionProcessor {
   }
 
   flushPending(accountId: string): void {
-    if (!this.isDetectorReady(accountId)) {
+    const detectorReady = this.isDetectorReady(accountId);
+    const accountPendingDetections =
+      NpcsDetectionProcessor.pendingDetections.filter(
+        (pendingDetection) => pendingDetection.accountId === accountId,
+      );
+
+    this.debugLog("flushPending called", {
+      accountId,
+      detectorReady,
+      accountPendingDetectionsCount: accountPendingDetections.length,
+      totalPendingDetectionsCount:
+        NpcsDetectionProcessor.pendingDetections.length,
+    });
+
+    if (!detectorReady) {
+      this.debugLog("flushPending skipped: detector not ready", {
+        accountId,
+      });
       return;
     }
 
@@ -115,10 +158,24 @@ export class NpcsDetectionProcessor {
     }
 
     if (pendingDetections.length === 0) {
+      this.debugLog("flushPending skipped: no pending detections", {
+        accountId,
+      });
       return;
     }
 
     NpcsDetectionProcessor.pendingDetections = remainingDetections;
+
+    this.debugLog("flushPending processing queued detections", {
+      accountId,
+      eventDetectionsCount: pendingDetections.filter(
+        (pendingDetection) => pendingDetection.type === "event",
+      ).length,
+      initialDetectionsCount: pendingDetections.filter(
+        (pendingDetection) => pendingDetection.type === "initial",
+      ).length,
+      remainingDetectionsCount: remainingDetections.length,
+    });
 
     pendingDetections.forEach((pendingDetection) => {
       if (pendingDetection.type === "initial") {
@@ -131,8 +188,19 @@ export class NpcsDetectionProcessor {
   }
 
   private processEvent(event: GameEvent): void {
-    if (!event.npcs?.length) return;
-    if (event.f?.init === "1") return;
+    if (!event.npcs?.length) {
+      this.debugLog("event detection skipped: empty npcs payload", {
+        hasNpcsKey: event.npcs !== undefined,
+      });
+      return;
+    }
+
+    if (event.f?.init === "1") {
+      this.debugLog("event detection skipped: init packet", {
+        eventNpcCount: event.npcs.length,
+      });
+      return;
+    }
 
     const context = this.createDetectionContext();
     const npcs =
@@ -177,32 +245,63 @@ export class NpcsDetectionProcessor {
         highlightOnExisting: true,
       });
     }
+
+    this.debugLog("event detection processed", {
+      calculatedNpcCount: npcs.length,
+      eventNpcCount: event.npcs.length,
+    });
   }
 
   private processInitialDetectionWithRetry(): void {
     if (this.initialDetectionRetryTimeout !== null) {
+      this.debugLog("initial detection retry already active", {
+        retryAttempts: this.initialDetectionRetryAttempts,
+      });
       return;
     }
 
     this.initialDetectionRetryAttempts = 0;
+    this.debugLog("initial detection retry flow started", {
+      maxRetries: INITIAL_DETECTION_MAX_RETRIES,
+      retryDelayMs: INITIAL_DETECTION_RETRY_DELAY_MS,
+    });
     this.tryProcessInitialDetection();
   }
 
   private tryProcessInitialDetection(): void {
     const npcs = this.getInitialDetectionNpcs();
 
+    this.debugLog("initial detection attempt", {
+      attempt: this.initialDetectionRetryAttempts,
+      maxRetries: INITIAL_DETECTION_MAX_RETRIES,
+      snapshotNpcCount: npcs.length,
+      snapshotNpcIds: npcs.map((npc) => npc.id).slice(0, 10),
+    });
+
     if (npcs.length > 0) {
+      this.debugLog("initial detection snapshot ready", {
+        attempt: this.initialDetectionRetryAttempts,
+        snapshotNpcCount: npcs.length,
+      });
       this.clearInitialDetectionRetry();
       this.processInitialDetection(npcs);
       return;
     }
 
     if (this.initialDetectionRetryAttempts >= INITIAL_DETECTION_MAX_RETRIES) {
+      this.debugLog("initial detection retry limit reached", {
+        attempts: this.initialDetectionRetryAttempts,
+        maxRetries: INITIAL_DETECTION_MAX_RETRIES,
+      });
       this.clearInitialDetectionRetry();
       return;
     }
 
     this.initialDetectionRetryAttempts += 1;
+    this.debugLog("initial detection retry scheduled", {
+      nextAttempt: this.initialDetectionRetryAttempts,
+      retryDelayMs: INITIAL_DETECTION_RETRY_DELAY_MS,
+    });
     this.initialDetectionRetryTimeout = setTimeout(() => {
       this.initialDetectionRetryTimeout = null;
       this.tryProcessInitialDetection();
@@ -212,7 +311,10 @@ export class NpcsDetectionProcessor {
   private getInitialDetectionNpcs(): GameNpc[] {
     try {
       return Game.npcs ?? [];
-    } catch {
+    } catch (error) {
+      this.debugLog("initial detection Game.npcs read failed", {
+        error,
+      });
       return [];
     }
   }
@@ -265,6 +367,22 @@ export class NpcsDetectionProcessor {
       useWindowsStore.getState().setOpen("npc-detector", true);
       useNpcDetectorStore.getState().addNpc(calculatedNpcs);
     }
+
+    this.debugLog("initial detection processed", {
+      calculatedNpcCount: calculatedNpcs.length,
+      calculatedNpcIds: calculatedNpcs.map((npc) => npc.id).slice(0, 10),
+      snapshotNpcCount: npcs.length,
+      snapshotNpcIds: npcs.map((npc) => npc.id).slice(0, 10),
+    });
+  }
+
+  private debugLog(message: string, data?: Record<string, unknown>): void {
+    if (data) {
+      console.log(`${NPC_INITIAL_DETECTION_DEBUG_PREFIX} ${message}`, data);
+      return;
+    }
+
+    console.log(`${NPC_INITIAL_DETECTION_DEBUG_PREFIX} ${message}`);
   }
 
   private processNpcSettings(
