@@ -319,6 +319,38 @@ describe("NpcsDetectionProcessor", () => {
     }
   });
 
+  it("keeps retrying initial detection while game npcs contain invalid entries", () => {
+    vi.useFakeTimers();
+
+    try {
+      readyPreferences({
+        notifySound: true,
+      });
+      mockGame.npcs = [undefined as unknown as GameNpc];
+      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
+      mockGetNpcTypeByWt.mockReturnValue("HERO");
+      vi.clearAllTimers();
+
+      processor.handleInitialDetection();
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+
+      mockGame.npcs = [createGameNpc()];
+      vi.advanceTimersByTime(100);
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([
+        expect.objectContaining({
+          id: 501,
+          nick: "Initial npc",
+          icon: "fallback-icon.gif",
+        }),
+      ]);
+      expect(mockPlaySound).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("stops retrying initial detection after the retry limit", () => {
     vi.useFakeTimers();
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useUpdateUserGameAccountPreferences,
@@ -18,6 +18,8 @@ import {
 } from "@/lib/api/generated/main/users/users";
 
 const NPC_INITIAL_DETECTION_DEBUG_PREFIX = "[DEBUG-NPC-INIT]";
+const ACCOUNT_ID_RETRY_DELAY_MS = 100;
+const ACCOUNT_ID_MAX_RETRIES = 20;
 
 export const useGameAccountPreferencesSync = () => {
   const gameInitialized = useGlobalStore(
@@ -30,13 +32,70 @@ export const useGameAccountPreferencesSync = () => {
     isLoading: areGuildsLoading,
   } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const queryClient = useQueryClient();
-  const accountId = Game.getAccountId();
+  const [accountId, setAccountId] = useState<string | null>(() =>
+    Game.getAccountId(),
+  );
   const seededAccountsRef = useRef<Set<string>>(new Set());
+  const accountIdRetryAttemptsRef = useRef(0);
 
   const { data, isLoading, isFetching, isFetched } =
     useUserGameAccountPreferences(accountId, gameInitialized);
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
+
+  useEffect(() => {
+    if (!gameInitialized || accountId) {
+      accountIdRetryAttemptsRef.current = 0;
+      return;
+    }
+
+    const resolveAccountId = () => {
+      const nextAccountId = Game.getAccountId();
+
+      console.log(
+        `${NPC_INITIAL_DETECTION_DEBUG_PREFIX} useGameAccountPreferencesSync account id resolve attempt`,
+        {
+          nextAccountId,
+          attempt: accountIdRetryAttemptsRef.current,
+          maxRetries: ACCOUNT_ID_MAX_RETRIES,
+        },
+      );
+
+      if (nextAccountId) {
+        accountIdRetryAttemptsRef.current = 0;
+        setAccountId(nextAccountId);
+        return true;
+      }
+
+      if (accountIdRetryAttemptsRef.current >= ACCOUNT_ID_MAX_RETRIES) {
+        console.log(
+          `${NPC_INITIAL_DETECTION_DEBUG_PREFIX} useGameAccountPreferencesSync account id resolve limit reached`,
+          {
+            attempts: accountIdRetryAttemptsRef.current,
+            maxRetries: ACCOUNT_ID_MAX_RETRIES,
+          },
+        );
+        return true;
+      }
+
+      accountIdRetryAttemptsRef.current += 1;
+      return false;
+    };
+
+    if (resolveAccountId()) {
+      return;
+    }
+
+    const retryInterval = setInterval(() => {
+      if (resolveAccountId()) {
+        clearInterval(retryInterval);
+      }
+    }, ACCOUNT_ID_RETRY_DELAY_MS);
+
+    return () => {
+      clearInterval(retryInterval);
+    };
+  }, [accountId, gameInitialized]);
 
   useEffect(() => {
     if (
