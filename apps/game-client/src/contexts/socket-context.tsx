@@ -4,6 +4,7 @@ import {
   DEV_PERMISSION_OVERRIDE_EVENT,
   getSerializedDevPermissionOverride,
 } from "@/lib/dev-permission-override";
+import { requestMargonemAccountProof } from "@/lib/margonem-account-proof";
 import { type AppSocket, getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import {
@@ -45,11 +46,29 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   }, [connected, joined, joinedGuilds]);
 
   useEffect(() => {
-    const emitJoin = () => {
+    let cancelled = false;
+
+    const emitJoin = async () => {
       if (gameInitialized && connected) {
         const world = Game.getWorldName();
         const characterId = String(Game.hero.id);
         const accountId = String(Game.hero.account);
+        const socketId = socket.id;
+
+        if (!socketId) {
+          return;
+        }
+
+        const margonemAccountProof = await requestMargonemAccountProof({
+          socketId,
+          accountId,
+          characterId,
+          clanId: Game.hero.clan?.id,
+        });
+
+        if (cancelled || !socket.connected) {
+          return;
+        }
 
         socket.emit(GatewayEvent.JOIN, {
           data: {
@@ -73,11 +92,20 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
               map: Game.map.name,
             },
           },
+          margonemAccountProof,
         });
       }
     };
 
-    emitJoin();
+    void emitJoin().catch((error) => {
+      if (import.meta.env.DEV) {
+        console.error("[Gateway] Failed to verify Margonem account", error);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [gameInitialized, connected, socket]);
 
   useEffect(() => {
@@ -85,15 +113,17 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     const handleDisconnect = () => setConnected(false);
     const handleJoin = (data: {
       status: "success" | "error";
-      guildsCount: number;
-      guildIds: string[];
+      code?: string;
+      message?: string;
+      guildsCount?: number;
+      guildIds?: string[];
     }) => {
       if (data.status === "error") {
         return;
       }
 
       setJoined(true);
-      setJoinedGuilds(data.guildIds);
+      setJoinedGuilds(data.guildIds ?? []);
 
       // Emit initial presence after successful join
       // This ensures presence is sent even after browser refresh

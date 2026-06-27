@@ -6,7 +6,10 @@ import {
   isMemberOnlineOnWeb,
   type MemberActivityStatsByDiscordId,
 } from "@/features/guild/settings/members/member-activity-stats.utils";
-import { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
+import {
+  isMemberGamePresenceVerified,
+  isMemberOnlineInGame,
+} from "@/features/guild/settings/members/member-game-presence.utils";
 import { getMemberOnlineSources } from "@/features/guild/settings/members/member-list-item.utils";
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
@@ -42,6 +45,7 @@ import {
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  BadgeCheck,
   CheckCircle2,
   Crown,
   Gamepad2,
@@ -117,6 +121,10 @@ export const MembersTable = ({
             memberGamePresenceByDiscordId,
             member.userId,
           );
+          const isGamePresenceVerified = isMemberGamePresenceVerified(
+            memberGamePresenceByDiscordId,
+            member.userId,
+          );
           const onlineSources = getMemberOnlineSources({
             isOnlineOnWeb,
             isOnlineInGame,
@@ -171,6 +179,27 @@ export const MembersTable = ({
                         </TooltipProvider>
                       );
                     })}
+                    {isGamePresenceVerified && (
+                      <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <BadgeCheck className="size-3.5" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-sm font-semibold">
+                              {t(
+                                "settings.members.webActivity.onlineSources.margonemVerified",
+                              )}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </span>
                 )}
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
@@ -249,6 +278,10 @@ export const MembersTable = ({
           )?.GAME;
           const isOnlineOnWeb = isMemberOnlineOnWeb(webActivityStats);
           const isOnlineInGame = isMemberOnlineInGame(
+            memberGamePresenceByDiscordId,
+            member.userId,
+          );
+          const isGamePresenceVerified = isMemberGamePresenceVerified(
             memberGamePresenceByDiscordId,
             member.userId,
           );
@@ -369,6 +402,27 @@ export const MembersTable = ({
                               </TooltipProvider>
                             );
                           })}
+                          {isGamePresenceVerified && (
+                            <TooltipProvider delayDuration={100}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    <BadgeCheck className="size-3.5" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <p className="text-sm font-semibold">
+                                    {t(
+                                      "settings.members.webActivity.onlineSources.margonemVerified",
+                                    )}
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                         </span>
                       )}
                     </div>

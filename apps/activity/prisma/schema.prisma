@@ -78,3 +78,20 @@ model MemberActivityStats {
   @@id([guildId, discordId, source])
   @@index([guildId, source])
 }
+
+model MemberActivitySession {
+  guildId     String
+  discordId   String
+  source      ActivitySource
+  sessionId   String
+  userId      String?
+  userAgent   String?        @db.Text
+  world       String?        @db.Text
+  connectedAt DateTime       @default(now()) @db.Timestamptz
+  lastSeenAt  DateTime       @default(now()) @db.Timestamptz
+
+  @@id([guildId, discordId, source, sessionId])
+  @@index([guildId, discordId, source])
+  @@index([guildId, source])
+  @@index([lastSeenAt])
+}

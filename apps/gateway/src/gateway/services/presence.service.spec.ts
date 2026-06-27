@@ -471,6 +471,7 @@ describe("PresenceService", () => {
         id: "session-1",
         data: {
           guilds: [{ guild: { id: "guild-1" } }],
+          margonemAccountVerified: true,
           player: {
             world: "alpha",
             name: "Hero",
@@ -532,6 +533,7 @@ describe("PresenceService", () => {
           player: expect.objectContaining({
             mapId: 2,
             mapName: "Ithan",
+            margonemAccountVerified: true,
             clan: {
               id: 15191,
               name: "Karhu",
@@ -548,6 +550,7 @@ describe("PresenceService", () => {
           player: expect.objectContaining({
             mapId: 2,
             mapName: "Ithan",
+            margonemAccountVerified: true,
           }),
         }),
       );
@@ -560,6 +563,7 @@ describe("PresenceService", () => {
         id: "session-1",
         data: {
           platform: Platform.GAME,
+          margonemAccountVerified: true,
           player: {
             world: "alpha",
             name: "Hero",
@@ -595,6 +599,7 @@ describe("PresenceService", () => {
           discordId: "discord-1",
           player: expect.objectContaining({
             mapName: "Karka-han",
+            margonemAccountVerified: true,
             clan: {
               id: 15191,
               name: "Karhu",

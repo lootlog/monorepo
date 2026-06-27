@@ -36,7 +36,8 @@
     "unknown": "Nieznana lokacja"
   },
   "player": {
-    "unknown": "Nieznany gracz"
+    "unknown": "Nieznany gracz",
+    "verifiedMargonemAccount": "Zweryfikowane konto Margonem"
   },
   "member": {
     "unknown": "Nieznany użytkownik Discord"

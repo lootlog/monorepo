@@ -6,8 +6,6 @@ import { env } from "src/config/env";
 import { RuntimeEnvironment } from "src/types/common.types";
 
 interface ConnectionMetadata {
-  discordId: string | null;
-  userId: string | null;
   platform: Platform;
   devPermissionOverride?: string;
 }
@@ -20,8 +18,6 @@ export class ConnectionService {
     request: Socket["request"],
     auth?: unknown,
   ): ConnectionMetadata {
-    const discordId = this.getHeaderValue(request.headers["x-auth-discord-id"]);
-    const userId = this.getHeaderValue(request.headers["x-auth-user-id"]);
     const platform = this.determineUserPlatform(request.headers.origin);
     const authDevPermissionOverride =
       this.isDevPermissionOverrideEnabled() &&
@@ -33,8 +29,6 @@ export class ConnectionService {
         : undefined;
 
     return {
-      discordId,
-      userId,
       platform,
       devPermissionOverride: authDevPermissionOverride,
     };
@@ -68,7 +62,7 @@ export class ConnectionService {
     platform: Platform,
   ): { valid: boolean; reason?: string } {
     if (!discordId) {
-      this.logger.warn("No discordId found in headers, disconnecting client");
+      this.logger.warn("No verified discordId found, disconnecting client");
       return { valid: false, reason: "No discordId" };
     }
 
@@ -89,15 +83,5 @@ export class ConnectionService {
     }
 
     return env.DEV_PERMISSION_OVERRIDE_ENABLED === true;
-  }
-
-  private getHeaderValue(
-    headerValue: string | string[] | undefined,
-  ): string | null {
-    if (Array.isArray(headerValue)) {
-      return headerValue[0] ?? null;
-    }
-
-    return headerValue ?? null;
   }
 }

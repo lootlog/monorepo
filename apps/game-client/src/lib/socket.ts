@@ -14,6 +14,7 @@ import type {
   PartyFinderVolunteer,
   PartyGatheringSession,
 } from "@/store/party-finder.store";
+import type { MargonemAccountProof } from "@/lib/margonem-account-proof";
 
 type ServerToClientEvents = {
   [GatewayEvent.DISCONNECT]: () => void;
@@ -22,8 +23,10 @@ type ServerToClientEvents = {
 
   [GatewayEvent.JOIN]: (data: {
     status: "success" | "error";
-    guildsCount: number;
-    guildIds: string[];
+    code?: string;
+    message?: string;
+    guildsCount?: number;
+    guildIds?: string[];
   }) => void;
 
   [GatewayEvent.PERMISSIONS_UPDATED]: (data: {
@@ -49,6 +52,7 @@ type ServerToClientEvents = {
       characterId?: string;
       accountId?: string;
       prof?: string;
+      margonemAccountVerified?: boolean;
       clan?: {
         id?: number;
         name?: string;
@@ -108,6 +112,7 @@ type ClientToServerEvents = {
       };
       location: { x: number; y: number; map: string };
     };
+    margonemAccountProof?: MargonemAccountProof;
   }) => void;
 
   [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: (data: {
