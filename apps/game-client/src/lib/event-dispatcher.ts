@@ -26,6 +26,14 @@ const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "party",
 ];
 
+function hasRelevantKey(event: GameEvent): boolean {
+  for (const key of RELEVANT_EVENT_KEYS) {
+    if (event[key] !== undefined) return true;
+  }
+
+  return false;
+}
+
 function runSafe(name: string, handler: () => unknown): void {
   try {
     const result = handler();
@@ -56,22 +64,51 @@ export class EventDispatcher {
   private party = new PartyProcessor();
 
   handleEvent = (event: GameEvent): void => {
-    const hasRelevantKey = RELEVANT_EVENT_KEYS.some(
-      (key) => event[key] !== undefined,
-    );
-    if (!hasRelevantKey) return;
+    if (!hasRelevantKey(event)) return;
 
-    runSafe("chat", () => this.chat.handle(event));
-    runSafe("dialog", () => this.dialog.handle(event));
-    runSafe("battle", () => this.battle.handle(event));
-    runSafe("npc-detection", () => this.npcsDetection.handle(event));
-    runSafe("loot-from-battle", () => this.loot.handleLootFromBattle(event));
-    runSafe("dialog-loot", () => this.loot.handleDialogLoot(event));
-    runSafe("npcs-delete", () => this.npcsDelete.handle(event));
-    runSafe("map-change", () => this.mapChange.handle(event));
-    runSafe("afk", () => this.afk.handle(event));
-    runSafe("friends", () => this.friends.handle(event));
-    runSafe("party", () => this.party.handle(event));
+    if (event.chat !== undefined) {
+      runSafe("chat", () => this.chat.handle(event));
+    }
+
+    if (event.d !== undefined) {
+      runSafe("dialog", () => this.dialog.handle(event));
+    }
+
+    if (event.f !== undefined) {
+      runSafe("battle", () => this.battle.handle(event));
+    }
+
+    if (event.npcs !== undefined) {
+      runSafe("npc-detection", () => this.npcsDetection.handle(event));
+    }
+
+    if (event.item !== undefined && event.loot?.source === "fight") {
+      runSafe("loot-from-battle", () => this.loot.handleLootFromBattle(event));
+    }
+
+    if (event.item !== undefined && event.loot?.source === "dialog") {
+      runSafe("dialog-loot", () => this.loot.handleDialogLoot(event));
+    }
+
+    if (event.npcs_del !== undefined) {
+      runSafe("npcs-delete", () => this.npcsDelete.handle(event));
+    }
+
+    if (event.town !== undefined) {
+      runSafe("map-change", () => this.mapChange.handle(event));
+    }
+
+    if (event.h !== undefined) {
+      runSafe("afk", () => this.afk.handle(event));
+    }
+
+    if (event.friends !== undefined || event.friends_max !== undefined) {
+      runSafe("friends", () => this.friends.handle(event));
+    }
+
+    if (event.party !== undefined) {
+      runSafe("party", () => this.party.handle(event));
+    }
   };
 
   handleInitialEvents(): void {

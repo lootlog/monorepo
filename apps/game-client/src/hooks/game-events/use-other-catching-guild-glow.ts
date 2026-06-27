@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { Other } from "@lootlog/margonem/others";
 import { userLootlogConfigControllerGetPlayersCatchingGuilds } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
 import {
   applyCatchingGuildsError,
@@ -31,13 +32,23 @@ function getCurrentCharacterId(): string | null {
   }
 }
 
-function dedupeTargets(
-  targets: CharacterTooltipCatchingGuildsTarget[],
+function getEntryCharacterId(targetKey: string): string {
+  const separatorIndex = targetKey.lastIndexOf(":");
+  return separatorIndex === -1
+    ? targetKey
+    : targetKey.slice(separatorIndex + 1);
+}
+
+function getVisibleCatchingGuildTargets(
+  othersById: Record<string, Other>,
 ): CharacterTooltipCatchingGuildsTarget[] {
   const targetsByKey = new Map<string, CharacterTooltipCatchingGuildsTarget>();
 
-  for (const target of targets) {
-    if (!targetsByKey.has(target.key)) {
+  for (const characterId in othersById) {
+    const other = othersById[characterId];
+    const target = getOtherCatchingGuildsTarget(other);
+
+    if (target && !targetsByKey.has(target.key)) {
       targetsByKey.set(target.key, target);
     }
   }
@@ -80,18 +91,12 @@ export function useOtherCatchingGuildGlow(): void {
       return;
     }
 
-    const currentCharacterIds = new Set(
-      Object.values(othersById).map((other) => String(other.d.id)),
-    );
+    const visibleCharacterIds = new Set<string>();
 
-    for (const targetKey of Object.keys(entriesByKey)) {
-      const entryCharacterId = targetKey.split(":").at(-1);
-      if (entryCharacterId && !currentCharacterIds.has(entryCharacterId)) {
-        lootlogOtherGlowManager.removeGlow(entryCharacterId);
-      }
-    }
+    for (const characterId in othersById) {
+      const other = othersById[characterId];
+      visibleCharacterIds.add(String(other.d.id));
 
-    for (const other of Object.values(othersById)) {
       const target = getOtherCatchingGuildsTarget(other);
       if (!target) continue;
 
@@ -112,6 +117,13 @@ export function useOtherCatchingGuildGlow(): void {
           : LOOTLOG_OTHER_GLOW_RED_ORANGE,
       );
     }
+
+    for (const targetKey of Object.keys(entriesByKey)) {
+      const entryCharacterId = getEntryCharacterId(targetKey);
+      if (entryCharacterId && !visibleCharacterIds.has(entryCharacterId)) {
+        lootlogOtherGlowManager.removeGlow(entryCharacterId);
+      }
+    }
   }, [
     entriesByKey,
     isShiftPressed,
@@ -128,13 +140,7 @@ export function useOtherCatchingGuildGlow(): void {
     const fetchNextMissingTargetsBatch = (): void => {
       if (cancelled) return;
 
-      const targets = dedupeTargets(
-        Object.values(othersById)
-          .map((other) => getOtherCatchingGuildsTarget(other))
-          .filter((target): target is CharacterTooltipCatchingGuildsTarget =>
-            Boolean(target),
-          ),
-      );
+      const targets = getVisibleCatchingGuildTargets(othersById);
       const missingTargets = getTargetsMissingSuccessfulCatchingGuilds(
         targets,
       ).slice(0, MAX_BATCH_PLAYERS);

@@ -5,6 +5,7 @@ import { storageKey } from "@/lib/storage-key";
 const STORAGE_KEY = storageKey("ll:settings:state");
 
 interface SettingsState {
+  animationEffectsEnabled: boolean;
   allowWorldSelection?: boolean;
   worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
@@ -12,12 +13,14 @@ interface SettingsState {
   setGuildId: (charId: string, guildId: string) => void;
   setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => void;
   setWorld: (guildId: string, world: string) => void;
+  toggleAnimationEffects: () => void;
   toggleAllowWorldSelection: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
+      animationEffectsEnabled: true,
       allowWorldSelection: false,
       worldByGuildId: {},
       guildIdByCharId: {},
@@ -46,6 +49,11 @@ export const useSettingsStore = create<SettingsState>()(
           },
         }));
       },
+      toggleAnimationEffects: () => {
+        set((state) => ({
+          animationEffectsEnabled: !state.animationEffectsEnabled,
+        }));
+      },
       toggleAllowWorldSelection: () => {
         set((state) => ({ allowWorldSelection: !state.allowWorldSelection }));
       },
@@ -53,6 +61,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: STORAGE_KEY,
       partialize: (state) => ({
+        animationEffectsEnabled: state.animationEffectsEnabled,
         allowWorldSelection: state.allowWorldSelection,
         worldByGuildId: state.worldByGuildId,
         guildIdByCharId: state.guildIdByCharId,

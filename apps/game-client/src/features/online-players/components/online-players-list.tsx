@@ -21,6 +21,7 @@ import {
   getFilteredMemberEntries,
   type ProfessionFilterValue,
 } from "@/features/online-players/online-players-list.helpers";
+import { useShallow } from "zustand/react/shallow";
 
 type OnlinePlayersListProps = {
   viewMode: OnlinePlayersViewMode;
@@ -36,7 +37,13 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   const defaultWorld = Game.getWorldName();
 
   const { allowWorldSelection, guildIdByCharId, worldByGuildId } =
-    useSettingsStore();
+    useSettingsStore(
+      useShallow((state) => ({
+        allowWorldSelection: state.allowWorldSelection,
+        guildIdByCharId: state.guildIdByCharId,
+        worldByGuildId: state.worldByGuildId,
+      })),
+    );
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
   const [onlinePlayers, , , accessState] = usePlayersPresence(
@@ -108,19 +115,6 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   useMemberInvalidation(guildId, missingMemberIds);
 
-  const onlinePlayersList = getFilteredMemberEntries(
-    onlinePlayers,
-    guildMembers,
-    searchQuery,
-    filters,
-  );
-  const onlineAccountsList = getFilteredAccountEntries(
-    onlinePlayers,
-    guildMembers,
-    searchQuery,
-    filters,
-  );
-
   let listContent: ReactNode;
 
   if (accessState === "forbidden") {
@@ -129,28 +123,50 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
         {t("emptyState.noAccess")}
       </p>
     );
-  } else if (viewMode === "members" && onlinePlayersList.length > 0) {
-    listContent = onlinePlayersList.map(([discordId, presences]) => (
-      <OnlinePlayersListEntry
-        key={discordId}
-        presences={presences}
-        guildMember={guildMembers?.[discordId]}
-      />
-    ));
-  } else if (viewMode === "accounts" && onlineAccountsList.length > 0) {
-    listContent = onlineAccountsList.map(({ discordId, presence }) => (
-      <OnlinePlayersAccountListEntry
-        key={`${presence.player?.accountId}-${presence.player?.characterId}`}
-        presence={presence}
-        guildMember={guildMembers?.[discordId]}
-      />
-    ));
-  } else {
-    listContent = (
-      <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6">
-        {searchQuery ? t("emptyState.notFound") : t("emptyState.noPlayers")}
-      </p>
+  } else if (viewMode === "members") {
+    const onlinePlayersList = getFilteredMemberEntries(
+      onlinePlayers,
+      guildMembers,
+      searchQuery,
+      filters,
     );
+
+    listContent =
+      onlinePlayersList.length > 0 ? (
+        onlinePlayersList.map(([discordId, presences]) => (
+          <OnlinePlayersListEntry
+            key={discordId}
+            presences={presences}
+            guildMember={guildMembers?.[discordId]}
+          />
+        ))
+      ) : (
+        <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6">
+          {searchQuery ? t("emptyState.notFound") : t("emptyState.noPlayers")}
+        </p>
+      );
+  } else {
+    const onlineAccountsList = getFilteredAccountEntries(
+      onlinePlayers,
+      guildMembers,
+      searchQuery,
+      filters,
+    );
+
+    listContent =
+      onlineAccountsList.length > 0 ? (
+        onlineAccountsList.map(({ discordId, presence }) => (
+          <OnlinePlayersAccountListEntry
+            key={`${presence.player?.accountId}-${presence.player?.characterId}`}
+            presence={presence}
+            guildMember={guildMembers?.[discordId]}
+          />
+        ))
+      ) : (
+        <p className="ll:text-gray-400 ll:w-full ll:flex ll:items-center ll:justify-center ll:mt-6">
+          {searchQuery ? t("emptyState.notFound") : t("emptyState.noPlayers")}
+        </p>
+      );
   }
 
   return (
