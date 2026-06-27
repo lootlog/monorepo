@@ -50,8 +50,14 @@ type DetectionProcessingContext = {
   routedGuildIdsByLevel: Map<number, string[]>;
 };
 
+const INITIAL_DETECTION_RETRY_DELAY_MS = 100;
+const INITIAL_DETECTION_MAX_RETRIES = 20;
+
 export class NpcsDetectionProcessor {
   private static pendingDetections: PendingDetection[] = [];
+  private initialDetectionRetryTimeout: ReturnType<typeof setTimeout> | null =
+    null;
+  private initialDetectionRetryAttempts = 0;
 
   handle(event: GameEvent): void {
     const accountId = this.getCurrentAccountId();
@@ -88,7 +94,7 @@ export class NpcsDetectionProcessor {
       return;
     }
 
-    this.processInitialDetection();
+    this.processInitialDetectionWithRetry();
   }
 
   flushPending(accountId: string): void {
@@ -116,7 +122,7 @@ export class NpcsDetectionProcessor {
 
     pendingDetections.forEach((pendingDetection) => {
       if (pendingDetection.type === "initial") {
-        this.processInitialDetection();
+        this.processInitialDetectionWithRetry();
         return;
       }
 
@@ -173,14 +179,58 @@ export class NpcsDetectionProcessor {
     }
   }
 
-  private processInitialDetection(): void {
-    const npcs = Game.npcs;
-    if (!npcs?.length) return;
+  private processInitialDetectionWithRetry(): void {
+    if (this.initialDetectionRetryTimeout !== null) {
+      return;
+    }
 
+    this.initialDetectionRetryAttempts = 0;
+    this.tryProcessInitialDetection();
+  }
+
+  private tryProcessInitialDetection(): void {
+    const npcs = this.getInitialDetectionNpcs();
+
+    if (npcs.length > 0) {
+      this.clearInitialDetectionRetry();
+      this.processInitialDetection(npcs);
+      return;
+    }
+
+    if (this.initialDetectionRetryAttempts >= INITIAL_DETECTION_MAX_RETRIES) {
+      this.clearInitialDetectionRetry();
+      return;
+    }
+
+    this.initialDetectionRetryAttempts += 1;
+    this.initialDetectionRetryTimeout = setTimeout(() => {
+      this.initialDetectionRetryTimeout = null;
+      this.tryProcessInitialDetection();
+    }, INITIAL_DETECTION_RETRY_DELAY_MS);
+  }
+
+  private getInitialDetectionNpcs(): GameNpc[] {
+    try {
+      return Game.npcs ?? [];
+    } catch {
+      return [];
+    }
+  }
+
+  private clearInitialDetectionRetry(): void {
+    if (this.initialDetectionRetryTimeout !== null) {
+      clearTimeout(this.initialDetectionRetryTimeout);
+    }
+
+    this.initialDetectionRetryTimeout = null;
+    this.initialDetectionRetryAttempts = 0;
+  }
+
+  private processInitialDetection(npcs: GameNpc[]): void {
     const context = this.createDetectionContext();
 
     const calculatedNpcs =
-      npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
+      npcs.reduce<GameNpcWithLocation[]>((acc, npc) => {
         if (!npc) return acc;
 
         const npcType = getNpcTypeByWt(
