@@ -6,14 +6,12 @@ import {
   statusFilters,
 } from "@/features/guild/settings/members/members.constants";
 import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
-import {
-  isMemberOnlineOnWeb,
-  mapMemberActivityStatsByDiscordIdAndSource,
-} from "@/features/guild/settings/members/member-activity-stats.utils";
+import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
 import {
   isMemberOnlineInGame,
   resolveMemberPresenceGuildId,
 } from "@/features/guild/settings/members/member-game-presence.utils";
+import { isMemberOnlineOnWeb } from "@/features/guild/settings/members/member-web-presence.utils";
 import {
   compareMemberListSortValues,
   isMemberProblematic,
@@ -22,6 +20,7 @@ import {
   type MemberStatusFilter,
 } from "@/features/guild/settings/members/member-list-item.utils";
 import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
+import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
@@ -67,6 +66,7 @@ export const MembersSettingsContent = () => {
     memberActivityStatsQueryOptions(resolvedGuildId),
   );
   const memberGamePresenceByDiscordId = useMemberGamePresence(resolvedGuildId);
+  const memberWebPresenceByDiscordId = useMemberWebPresence(resolvedGuildId);
   const memberActivityStatsByDiscordIdAndSource = useMemo(
     () => mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats),
     [memberActivityStats],
@@ -96,11 +96,8 @@ export const MembersSettingsContent = () => {
     };
 
     for (const member of members ?? []) {
-      const activityStats = memberActivityStatsByDiscordIdAndSource.get(
-        member.userId,
-      )?.WEB_APP;
       const isOnline =
-        isMemberOnlineOnWeb(activityStats) ||
+        isMemberOnlineOnWeb(memberWebPresenceByDiscordId, member.userId) ||
         isMemberOnlineInGame(memberGamePresenceByDiscordId, member.userId);
 
       stats.totalMembers += 1;
@@ -120,11 +117,7 @@ export const MembersSettingsContent = () => {
     }
 
     return stats;
-  }, [
-    memberActivityStatsByDiscordIdAndSource,
-    memberGamePresenceByDiscordId,
-    members,
-  ]);
+  }, [memberGamePresenceByDiscordId, memberWebPresenceByDiscordId, members]);
 
   const filteredMembers = useMemo(() => {
     if (!members) return [];
@@ -143,11 +136,8 @@ export const MembersSettingsContent = () => {
       return highestRolePosition;
     };
     const filtered = members.filter((member) => {
-      const activityStats = memberActivityStatsByDiscordIdAndSource.get(
-        member.userId,
-      )?.WEB_APP;
       const isOnline =
-        isMemberOnlineOnWeb(activityStats) ||
+        isMemberOnlineOnWeb(memberWebPresenceByDiscordId, member.userId) ||
         isMemberOnlineInGame(memberGamePresenceByDiscordId, member.userId);
 
       return (
@@ -174,8 +164,8 @@ export const MembersSettingsContent = () => {
     );
   }, [
     guildRolePositionById,
-    memberActivityStatsByDiscordIdAndSource,
     memberGamePresenceByDiscordId,
+    memberWebPresenceByDiscordId,
     members,
     searchValue,
     statusFilter,
@@ -241,6 +231,7 @@ export const MembersSettingsContent = () => {
                     memberGamePresenceByDiscordId={
                       memberGamePresenceByDiscordId
                     }
+                    memberWebPresenceByDiscordId={memberWebPresenceByDiscordId}
                     guildId={routeGuildId ?? ""}
                   />
                 )}

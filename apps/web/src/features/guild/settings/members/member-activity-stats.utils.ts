@@ -32,6 +32,3 @@ export const mapMemberActivityStatsByDiscordId = (
 
   return statsByDiscordId;
 };
-
-export const isMemberOnlineOnWeb = (stats: MemberActivityStats | undefined) =>
-  (stats?.activeSessionCount ?? 0) > 0;

@@ -1,6 +1,7 @@
 import { Gateway } from "./gateway";
 import { GatewayEvent } from "./enums/gateway-event.enum";
 import { Platform } from "./enums/platform.enum";
+import { UserPresenceStatus } from "./enums/user-presence-status.enum";
 
 describe("Gateway", () => {
   const mockConnectionService = {
@@ -13,9 +14,11 @@ describe("Gateway", () => {
     emitDisconnectPresence: vi.fn(),
     broadcastPlayerDisconnect: vi.fn(),
     fetchOnlinePlayersPresence: vi.fn(),
+    fetchMemberWebPresence: vi.fn(),
     updatePlayerPresence: vi.fn(),
     fetchEventPresence: vi.fn(),
     checkPresenceForMap: vi.fn(),
+    emitMemberWebPresenceUpdate: vi.fn(),
   };
 
   const mockSubscriptionService = {
@@ -151,6 +154,53 @@ describe("Gateway", () => {
     );
   });
 
+  it("emits web presence offline when a web socket disconnects", async () => {
+    let disconnectingHandler!: () => Promise<void>;
+
+    const client = {
+      id: "socket-1",
+      request: { headers: {} },
+      disconnect: vi.fn(),
+      on: vi.fn((event: string, handler: () => Promise<void>) => {
+        if (event === GatewayEvent.DISCONNECTING) {
+          disconnectingHandler = handler;
+        }
+      }),
+      data: undefined,
+    };
+    const socketData = {
+      discordId: "discord-1",
+      userId: "user-1",
+      sessionId: "socket-1",
+      platform: Platform.WEB_APP,
+      guilds: [
+        {
+          guild: { id: "guild-1", ownerId: "owner-1" },
+          roles: [],
+        },
+      ],
+    };
+
+    mockConnectionService.getConnectionMetadata.mockReturnValue({
+      platform: Platform.WEB_APP,
+    });
+    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue({
+      discordId: "discord-1",
+      userId: "user-1",
+    });
+    mockConnectionService.validateConnection.mockReturnValue({ valid: true });
+    mockConnectionService.initializeSocketData.mockReturnValue(socketData);
+    mockSubscriptionService.handleDisconnect.mockResolvedValue(undefined);
+    mockPresenceService.broadcastPlayerDisconnect.mockResolvedValue(undefined);
+
+    await gateway.handleConnection(client as never);
+    await disconnectingHandler();
+
+    expect(
+      mockPresenceService.emitMemberWebPresenceUpdate,
+    ).toHaveBeenCalledWith(mockServer, client, UserPresenceStatus.OFFLINE);
+  });
+
   it("emits join result returned by subscription service", async () => {
     const client = {
       emit: vi.fn(),
@@ -227,5 +277,38 @@ describe("Gateway", () => {
         } as never,
       ),
     ).resolves.toEqual(expectedPresence);
+  });
+
+  it("delegates member web presence fetch through the presence service", async () => {
+    const client = {
+      data: {
+        platform: Platform.WEB_APP,
+      },
+      rooms: new Set(["guild-1:presence"]),
+    };
+    const expectedPresence = {
+      status: "success",
+      sessions: {
+        "discord-1": [{ sessionId: "session-1" }],
+      },
+    };
+
+    mockPresenceService.fetchMemberWebPresence.mockResolvedValue(
+      expectedPresence,
+    );
+
+    await expect(
+      gateway.handleMemberWebPresenceFetch(
+        client as never,
+        {
+          guildId: "guild-1",
+        } as never,
+      ),
+    ).resolves.toEqual(expectedPresence);
+    expect(mockPresenceService.fetchMemberWebPresence).toHaveBeenCalledWith(
+      mockServer,
+      client,
+      "guild-1",
+    );
   });
 });
