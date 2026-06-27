@@ -31,7 +31,8 @@ import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import type { BattleFilters } from "./battles-list-filters";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
-import { LevelRangeFilter, WarriorSearchFilter } from "@/components/filters";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
+import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 

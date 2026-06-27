@@ -1,9 +1,7 @@
-import {
-  CharacterSelector,
-  LevelRangeFilter,
-  PeriodSelector,
-  WarriorSearchFilter,
-} from "@/components/filters";
+import { CharacterSelector } from "@/components/filters/character-selector";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
+import { PeriodSelector } from "@/components/filters/period-selector";
+import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { Button } from "@lootlog/ui/components/button";

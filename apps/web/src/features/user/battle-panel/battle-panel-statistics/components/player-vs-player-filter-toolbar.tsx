@@ -1,4 +1,5 @@
-import { LevelRangeFilter, PeriodSelector } from "@/components/filters";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
+import { PeriodSelector } from "@/components/filters/period-selector";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
