@@ -37,6 +37,7 @@ import {
 } from "./chat-unread.helpers";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
 import { useChatGuildData } from "./hooks/use-chat-guild-data";
+import { useShallow } from "zustand/react/shallow";
 
 const chatSelectedGuildKey = (accountId: string, characterId: string) =>
   storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);
@@ -54,7 +55,19 @@ export const Chat = () => {
     filtersVisible,
     toggleFiltersVisible,
     setReplyDraft,
-  } = useChatStore();
+  } = useChatStore(
+    useShallow((state) => ({
+      isIntegratedMode: state.isIntegratedMode,
+      isChatInputEnabled: state.isChatInputEnabled,
+      setChatInputEnabled: state.setChatInputEnabled,
+      toggleChatInputEnabled: state.toggleChatInputEnabled,
+      chatFilter: state.chatFilter,
+      setChatFilter: state.setChatFilter,
+      filtersVisible: state.filtersVisible,
+      toggleFiltersVisible: state.toggleFiltersVisible,
+      setReplyDraft: state.setReplyDraft,
+    })),
+  );
 
   const characterId = String(Game.hero.id);
   const accountId = String(Game.hero.account);

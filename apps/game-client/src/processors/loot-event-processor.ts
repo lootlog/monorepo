@@ -45,28 +45,26 @@ export class LootEventProcessor {
   }
 
   private createLootFromBattle(event: GameEvent): void {
-    const battleStore = useBattleStore.getState();
+    const loot = event.loot;
+    if (!loot || !event.f) return;
 
-    const world = Game.getWorldName();
-    const accountId = Game.hero.account;
-    const characterId = Game.hero.id;
-
-    if (!event.loot || !event.f) return;
-
-    const loots = getLoot(event.item, event.loot);
+    const loots = getLoot(event.item, loot);
     if (!loots.length) return;
 
+    const battleStore = useBattleStore.getState();
     const { npcs, party } = getBattleParticipants(battleStore.battleWarriors);
+    const hero = Game.hero;
+    const map = Game.map;
 
     createLoot({
-      world,
-      source: event.loot.source.toUpperCase(),
-      location: Game.map.name,
+      world: Game.getWorldName(),
+      source: loot.source.toUpperCase(),
+      location: map.name,
       npcs,
       loots,
       players: party,
-      accountId: String(accountId),
-      characterId: String(characterId),
+      accountId: String(hero.account),
+      characterId: String(hero.id),
     })
       .then((response) => {
         useLootStore.getState().setLastLootId(response.id);
@@ -77,33 +75,34 @@ export class LootEventProcessor {
   }
 
   private createLootFromDialog(event: GameEvent): void {
-    const world = Game.getWorldName();
-    const accountId = Game.hero.account;
-    const characterId = Game.hero.id;
+    const loot = event.loot;
+    if (!loot) return;
 
-    if (!event.loot) return;
-
-    const loots = getLoot(event.item, event.loot);
+    const loots = getLoot(event.item, loot);
     if (!loots.length) return;
 
-    const npcs: Npc[] =
-      event.npcs_del
-        ?.map((npc) => Game.getNpc(npc.id))
-        .filter(
-          (npcData): npcData is NonNullable<typeof npcData> =>
-            npcData !== null && npcData !== undefined && !isEmpty(npcData),
-        )
-        .map((npcData) => ({
-          icon: npcData.icon,
-          id: npcData.id,
-          name: npcData.nick,
-          prof: npcData.prof,
-          hpp: 0,
-          type: npcData.type,
-          wt: npcData.wt,
-          lvl: npcData.lvl,
-          location: Game.map.name,
-        })) ?? [];
+    const mapName = Game.map.name;
+    const npcs: Npc[] = [];
+
+    for (const npc of event.npcs_del ?? []) {
+      const npcData = Game.getNpc(npc.id);
+
+      if (!npcData || isEmpty(npcData)) {
+        continue;
+      }
+
+      npcs.push({
+        icon: npcData.icon,
+        id: npcData.id,
+        name: npcData.nick,
+        prof: npcData.prof,
+        hpp: 0,
+        type: npcData.type,
+        wt: npcData.wt,
+        lvl: npcData.lvl,
+        location: mapName,
+      });
+    }
 
     if (npcs.length === 0) return;
 
@@ -123,14 +122,14 @@ export class LootEventProcessor {
     ];
 
     createLoot({
-      world,
-      source: event.loot.source.toUpperCase(),
-      location: Game.map.name,
+      world: Game.getWorldName(),
+      source: loot.source.toUpperCase(),
+      location: mapName,
       loots,
       npcs,
       players,
-      accountId: String(accountId),
-      characterId: String(characterId),
+      accountId: String(hero.account),
+      characterId: String(hero.id),
     })
       .then((response) => {
         useLootStore.getState().setLastLootId(response.id);

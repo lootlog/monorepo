@@ -247,12 +247,15 @@ class LootlogOtherGlowManager {
 
     this.originalGetDrawableList = others.getDrawableList;
     others.getDrawableList = () => {
+      const baseDrawableList = this.getBaseDrawableList(others);
+
+      if (this.glowsByCharacterId.size === 0) {
+        return baseDrawableList;
+      }
+
       this.updateGlows();
 
-      return [
-        ...this.getBaseDrawableList(others),
-        ...this.glowsByCharacterId.values(),
-      ];
+      return [...baseDrawableList, ...this.glowsByCharacterId.values()];
     };
     this.cleanupDrawableListPatch = () => {
       if (this.originalGetDrawableList) {
@@ -265,6 +268,8 @@ class LootlogOtherGlowManager {
   }
 
   setNativeGlowSuppressed(nativeGlowSuppressed: boolean): void {
+    if (this.nativeGlowSuppressed === nativeGlowSuppressed) return;
+
     this.nativeGlowSuppressed = nativeGlowSuppressed;
   }
 
