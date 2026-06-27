@@ -54,6 +54,12 @@ const INITIAL_DETECTION_RETRY_DELAY_MS = 100;
 const INITIAL_DETECTION_MAX_RETRIES = 20;
 const NPC_INITIAL_DETECTION_DEBUG_PREFIX = "[DEBUG-NPC-INIT]";
 
+type InitialDetectionSnapshot = {
+  npcs: GameNpc[];
+  rawNpcCount: number;
+  invalidNpcCount: number;
+};
+
 export class NpcsDetectionProcessor {
   private static pendingDetections: PendingDetection[] = [];
   private initialDetectionRetryTimeout: ReturnType<typeof setTimeout> | null =
@@ -269,19 +275,24 @@ export class NpcsDetectionProcessor {
   }
 
   private tryProcessInitialDetection(): void {
-    const npcs = this.getInitialDetectionNpcs();
+    const snapshot = this.getInitialDetectionSnapshot();
+    const { npcs } = snapshot;
 
     this.debugLog("initial detection attempt", {
       attempt: this.initialDetectionRetryAttempts,
       maxRetries: INITIAL_DETECTION_MAX_RETRIES,
+      rawSnapshotNpcCount: snapshot.rawNpcCount,
       snapshotNpcCount: npcs.length,
+      invalidSnapshotNpcCount: snapshot.invalidNpcCount,
       snapshotNpcIds: npcs.map((npc) => npc.id).slice(0, 10),
     });
 
     if (npcs.length > 0) {
       this.debugLog("initial detection snapshot ready", {
         attempt: this.initialDetectionRetryAttempts,
+        rawSnapshotNpcCount: snapshot.rawNpcCount,
         snapshotNpcCount: npcs.length,
+        invalidSnapshotNpcCount: snapshot.invalidNpcCount,
       });
       this.clearInitialDetectionRetry();
       this.processInitialDetection(npcs);
@@ -308,15 +319,47 @@ export class NpcsDetectionProcessor {
     }, INITIAL_DETECTION_RETRY_DELAY_MS);
   }
 
-  private getInitialDetectionNpcs(): GameNpc[] {
+  private getInitialDetectionSnapshot(): InitialDetectionSnapshot {
     try {
-      return Game.npcs ?? [];
+      const rawNpcs = (Game.npcs ?? []) as Array<GameNpc | null | undefined>;
+      const npcs = rawNpcs.filter((npc): npc is GameNpc =>
+        this.isInitialDetectionNpcReady(npc),
+      );
+
+      return {
+        npcs,
+        rawNpcCount: rawNpcs.length,
+        invalidNpcCount: rawNpcs.length - npcs.length,
+      };
     } catch (error) {
       this.debugLog("initial detection Game.npcs read failed", {
         error,
       });
-      return [];
+      return {
+        npcs: [],
+        rawNpcCount: 0,
+        invalidNpcCount: 0,
+      };
     }
+  }
+
+  private isInitialDetectionNpcReady(
+    npc: GameNpc | null | undefined,
+  ): npc is GameNpc {
+    return (
+      npc !== null &&
+      npc !== undefined &&
+      typeof npc.id === "number" &&
+      typeof npc.tpl === "number" &&
+      typeof npc.x === "number" &&
+      typeof npc.y === "number" &&
+      typeof npc.nick === "string" &&
+      typeof npc.prof === "string" &&
+      typeof npc.type === "number" &&
+      typeof npc.wt === "number" &&
+      typeof npc.lvl === "number" &&
+      typeof npc.icon === "string"
+    );
   }
 
   private clearInitialDetectionRetry(): void {
