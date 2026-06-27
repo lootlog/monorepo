@@ -5,6 +5,7 @@ import { Platform } from "../enums/platform.enum";
 import { ResponseStatus } from "../enums/response-status.enum";
 import { ErrorMessages } from "../constants/error-messages.constant";
 import { ActivityType } from "../enums/activity-type.enum";
+import { UserPresenceStatus } from "../enums/user-presence-status.enum";
 import { buildRoomName } from "../utils/room-utils";
 import type { MargonemAccountProofDto } from "../dto/join-gateway.dto";
 import type { SocketUserPlayer } from "../types/socket-user.type";
@@ -113,6 +114,7 @@ describe("SubscriptionService", () => {
   const mockPresenceService = {
     emitPresenceToRooms: vi.fn(),
     emitInitialPresence: vi.fn(),
+    emitMemberWebPresenceUpdate: vi.fn(),
   };
 
   const mockActivityService = {
@@ -387,6 +389,43 @@ describe("SubscriptionService", () => {
       "discord-owner",
       ["guild-1"],
     );
+  });
+
+  it("emits live web presence when a web client joins", async () => {
+    const guilds = [
+      createGuild({
+        discordId: "discord-1",
+        permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+      }),
+    ];
+    const client = {
+      id: "socket-1",
+      data: {
+        discordId: "discord-1",
+        sessionId: "socket-1",
+        userId: "user-1",
+        platform: Platform.WEB_APP,
+      },
+      join: vi.fn(),
+      request: { headers: { "user-agent": "Vitest" } },
+    };
+
+    mockGuildsService.getUserGuilds.mockResolvedValue(guilds);
+
+    const result = await service.handleJoin(
+      mockServer as never,
+      client as never,
+      "discord-1",
+      "user-1",
+      undefined,
+    );
+
+    expect(result.status).toBe(ResponseStatus.SUCCESS);
+    expect(client.join).toHaveBeenCalledWith(result.featureRooms);
+    expect(
+      mockPresenceService.emitMemberWebPresenceUpdate,
+    ).toHaveBeenCalledWith(mockServer, client, UserPresenceStatus.ONLINE);
+    expect(mockPresenceService.emitInitialPresence).not.toHaveBeenCalled();
   });
 
   it("does not treat LOOTLOG_MANAGE as an admin bypass", async () => {

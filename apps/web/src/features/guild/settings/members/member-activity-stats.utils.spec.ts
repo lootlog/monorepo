@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  isMemberOnlineOnWeb,
   mapMemberActivityStatsByDiscordIdAndSource,
   mapMemberActivityStatsByDiscordId,
 } from "./member-activity-stats.utils";
@@ -47,18 +46,5 @@ describe("member activity stats utils", () => {
 
     expect(mapped.get("discord-1")?.WEB_APP?.visitCount).toBe(2);
     expect(mapped.get("discord-1")?.GAME?.visitCount).toBe(7);
-  });
-
-  it("detects online web sessions", () => {
-    expect(isMemberOnlineOnWeb(buildStats({ activeSessionCount: 1 }))).toBe(
-      true,
-    );
-    expect(isMemberOnlineOnWeb(buildStats({ activeSessionCount: 0 }))).toBe(
-      false,
-    );
-  });
-
-  it("treats missing stats as offline", () => {
-    expect(isMemberOnlineOnWeb(undefined)).toBe(false);
   });
 });

@@ -7,7 +7,6 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";
-import { isMemberOnlineOnWeb } from "@/features/guild/settings/members/member-activity-stats.utils";
 import { format } from "date-fns";
 import {
   Activity,
@@ -31,6 +30,7 @@ export type MemberDataProps = {
   member: GuildMember;
   webActivityStats?: MemberActivityStats;
   gameActivityStats?: MemberActivityStats;
+  isOnlineOnWeb?: boolean;
   isOnlineInGame?: boolean;
 };
 
@@ -82,10 +82,10 @@ export const MemberData = ({
   member,
   webActivityStats,
   gameActivityStats,
+  isOnlineOnWeb = false,
   isOnlineInGame = false,
 }: MemberDataProps) => {
   const { t } = useTranslation();
-  const isOnlineOnWeb = isMemberOnlineOnWeb(webActivityStats);
   const isOnline = isOnlineOnWeb || isOnlineInGame;
   const accessState = getMemberAccessState({ member, isOnline });
   const hasProblem = isMemberProblematic(member);
