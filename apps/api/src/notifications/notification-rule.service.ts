@@ -40,6 +40,9 @@ import {
 
 const GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT = 10;
 const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
+const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_SECONDS = Math.floor(
+  GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000,
+);
 const GUILD_NOTIFICATION_MAX_NPCS_PER_RULE = 5;
 const USER_NOTIFICATION_RULE_LIMIT = 50;
 
@@ -105,9 +108,8 @@ export class NotificationRuleService {
         ruleCount: rules.length,
         maxNpcsPerRule: GUILD_NOTIFICATION_MAX_NPCS_PER_RULE,
         testTriggerLimit: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
-        testTriggerWindowSeconds: Math.floor(
-          GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000,
-        ),
+        testTriggerWindowSeconds:
+          GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_SECONDS,
       },
     };
   }
@@ -212,7 +214,7 @@ export class NotificationRuleService {
         limit: worstUsage?.limit ?? GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
         windowSeconds:
           worstUsage?.windowSeconds ??
-          Math.floor(GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000),
+          GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_SECONDS,
         nextAvailableAt: worstUsage?.nextAvailableAt ?? null,
       });
     }
