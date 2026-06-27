@@ -172,29 +172,29 @@ export class SubscriptionService {
         clanId: player.clan?.id,
       });
 
-    if (proofVerification.valid) {
-      client.data.margonemAccountVerified = true;
+    if (proofVerification.valid === false) {
+      client.data.margonemAccountVerified = false;
+
+      if (env.MARGONEM_ACCOUNT_PROOF_REQUIRED) {
+        this.logger.warn(
+          `Rejected game join for ${discordId}: ${proofVerification.reason}`,
+        );
+
+        return {
+          status: ResponseStatus.ERROR,
+          code: "MARGONEM_ACCOUNT_PROOF_INVALID",
+          message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
+        };
+      }
+
+      this.logger.warn(
+        `Accepted unverified game join for ${discordId}: ${proofVerification.reason}`,
+      );
+
       return null;
     }
 
-    client.data.margonemAccountVerified = false;
-
-    if (env.MARGONEM_ACCOUNT_PROOF_REQUIRED) {
-      this.logger.warn(
-        `Rejected game join for ${discordId}: ${proofVerification.reason}`,
-      );
-
-      return {
-        status: ResponseStatus.ERROR,
-        code: "MARGONEM_ACCOUNT_PROOF_INVALID",
-        message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
-      };
-    }
-
-    this.logger.warn(
-      `Accepted unverified game join for ${discordId}: ${proofVerification.reason}`,
-    );
-
+    client.data.margonemAccountVerified = true;
     return null;
   }
 }
