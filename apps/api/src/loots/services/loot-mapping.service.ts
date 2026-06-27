@@ -131,7 +131,7 @@ export class LootMappingService {
         id: npc.id,
         name: npc.name,
         lvl: npc.lvl,
-        prof: getProfByShortname(npc.prof),
+        prof: npc.prof ? getProfByShortname(npc.prof) : "",
         icon: npc.icon,
         wt: npc.wt,
         location: npc.location,

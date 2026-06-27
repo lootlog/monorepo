@@ -70,6 +70,7 @@ apps/search/src/metadata.ts
 # Profiles & Performance
 apps/api/profiles/
 perf/
+tools/k6/.secrets.local
 
 .codex
 playground
