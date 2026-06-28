@@ -46,17 +46,17 @@ export class GuildsInternalController {
       return Promise.resolve([]);
     }
 
-    const parsedDevPermissionOverride = parseDevPermissionOverrideHeader(
-      devPermissionOverride,
+    const guildPermissionOptions = {
+      devPermissionOverride: parseDevPermissionOverrideHeader(
+        devPermissionOverride,
+      ),
+    };
+
+    return this.guildsService.getUserGuildsWithPermissions(
+      discordId,
+      userId,
+      guildPermissionOptions,
     );
-
-    if (!parsedDevPermissionOverride) {
-      return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
-    }
-
-    return this.guildsService.getUserGuildsWithPermissions(discordId, userId, {
-      devPermissionOverride: parsedDevPermissionOverride,
-    });
   }
 
   @Get(":idOrVanityUrl")

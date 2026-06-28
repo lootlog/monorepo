@@ -79,6 +79,7 @@ describe("GuildsInternalController", () => {
       expect(guildsService.getUserGuildsWithPermissions).toHaveBeenCalledWith(
         "discord-1",
         "user-1",
+        { devPermissionOverride: undefined },
       );
     });
   });
