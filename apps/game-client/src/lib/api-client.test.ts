@@ -211,6 +211,37 @@ describe("api-client", () => {
     expect(new Headers(requestInit.headers).has("Content-Type")).toBe(false);
   });
 
+  it("strips client-only config fields from request init", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    const client = getApiClient("default");
+    await client.get<{ ok: boolean }>("/timers", {
+      params: {
+        world: "pandora",
+      },
+      withCredentials: false,
+    });
+
+    const [requestUrl, requestInit] = mockFetch.mock.calls[0] as [
+      URL,
+      RequestInit,
+    ];
+
+    expect(requestUrl.toString()).toBe(
+      "http://localhost/api/lootlog/timers?world=pandora",
+    );
+    expect("params" in requestInit).toBe(false);
+    expect("withCredentials" in requestInit).toBe(false);
+    expect(requestInit.credentials).toBe("omit");
+  });
+
   it("caches clients per api type", () => {
     expect(getApiClient("default")).toBe(getApiClient("default"));
     expect(getApiClient("default")).not.toBe(getApiClient("public"));

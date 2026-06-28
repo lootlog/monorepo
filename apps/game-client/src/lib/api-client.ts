@@ -248,7 +248,14 @@ const createRequestInit = (
   config: ApiRequestConfig | undefined,
   withCredentials: boolean,
 ) => {
-  const headers = new Headers(config?.headers);
+  const {
+    params: _params,
+    withCredentials: configuredWithCredentials,
+    headers: headerInit,
+    credentials,
+    ...requestInit
+  } = config ?? {};
+  const headers = new Headers(headerInit);
   applyDevPermissionOverrideHeader(headers);
 
   let requestBody: BodyInit | undefined;
@@ -266,11 +273,11 @@ const createRequestInit = (
   }
 
   return {
-    ...config,
+    ...requestInit,
     body: requestBody,
     credentials:
-      config?.credentials ??
-      ((config?.withCredentials ?? withCredentials) ? "include" : "omit"),
+      credentials ??
+      ((configuredWithCredentials ?? withCredentials) ? "include" : "omit"),
     headers,
     method,
   } satisfies RequestInit;
