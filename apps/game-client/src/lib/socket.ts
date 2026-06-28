@@ -29,9 +29,7 @@ type ServerToClientEvents = {
     guildIds?: string[];
   }) => void;
 
-  [GatewayEvent.PERMISSIONS_UPDATED]: (data: {
-    guilds: { guild: { id: string } }[];
-  }) => void;
+  [GatewayEvent.PERMISSIONS_UPDATED]: (data: PermissionsUpdatedPayload) => void;
 
   [GatewayEvent.TIMERS_CREATE]: (data: Timer) => void;
   [GatewayEvent.TIMERS_DELETE]: (data: Timer) => void;
@@ -93,6 +91,10 @@ type ServerToClientEvents = {
     message: string;
   }) => void;
   [GatewayEvent.CHAT_MESSAGES_CLEAR]: (data: { guildId: string }) => void;
+};
+
+export type PermissionsUpdatedPayload = {
+  guilds?: { guild: { id: string } }[];
 };
 
 type ClientToServerEvents = {

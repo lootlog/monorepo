@@ -1,22 +1,32 @@
-import { render, waitFor } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react";
 import { GatewayEvent } from "@/config/gateway";
 import { useGlobalStore } from "@/store/global.store";
 import { SocketProvider } from "./socket-context";
 
-const { mockRequestMargonemAccountProof, mockSocket } = vi.hoisted(() => ({
-  mockRequestMargonemAccountProof: vi.fn(),
-  mockSocket: {
-    auth: {},
-    connected: true,
-    id: "socket-1",
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-    emit: vi.fn(),
-    off: vi.fn(),
-    on: vi.fn(),
-    onAny: vi.fn(),
-  },
-}));
+const { mockRequestMargonemAccountProof, mockSocket, mockSocketHandlers } =
+  vi.hoisted(() => {
+    const socketHandlers = {} as Record<string, (data: unknown) => void>;
+
+    return {
+      mockRequestMargonemAccountProof: vi.fn(),
+      mockSocketHandlers: socketHandlers,
+      mockSocket: {
+        auth: {},
+        connected: true,
+        id: "socket-1",
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        emit: vi.fn(),
+        off: vi.fn((event: string) => {
+          delete socketHandlers[event];
+        }),
+        on: vi.fn((event: string, handler: (data: unknown) => void) => {
+          socketHandlers[event] = handler;
+        }),
+        onAny: vi.fn(),
+      },
+    };
+  });
 
 vi.mock("@/lib/margonem-account-proof", () => ({
   requestMargonemAccountProof: mockRequestMargonemAccountProof,
@@ -69,6 +79,9 @@ describe("SocketProvider", () => {
     mockSocket.auth = {};
     mockSocket.connected = true;
     mockSocket.id = "socket-1";
+    for (const eventName of Object.keys(mockSocketHandlers)) {
+      delete mockSocketHandlers[eventName];
+    }
     useGlobalStore.setState({
       gameState: { gameInitialized: true },
       socketState: { connected: false, joined: false, joinedGuilds: [] },
@@ -121,6 +134,42 @@ describe("SocketProvider", () => {
     await waitFor(() => {
       expect(mockSocket.emit).toHaveBeenCalledWith(GatewayEvent.JOIN, {
         data: expectedJoinData,
+      });
+    });
+  });
+
+  it("clears joined guilds when permissions update payload has no guilds", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    render(
+      <SocketProvider>
+        <div />
+      </SocketProvider>,
+    );
+
+    act(() => {
+      mockSocketHandlers[GatewayEvent.JOIN]?.({
+        status: "success",
+        guildIds: ["guild-1"],
+      });
+    });
+
+    await waitFor(() => {
+      expect(useGlobalStore.getState().socketState).toMatchObject({
+        joined: true,
+        joinedGuilds: ["guild-1"],
+      });
+    });
+
+    act(() => {
+      mockSocketHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({});
+    });
+
+    await waitFor(() => {
+      expect(useGlobalStore.getState().socketState).toMatchObject({
+        joined: false,
+        joinedGuilds: [],
       });
     });
   });
