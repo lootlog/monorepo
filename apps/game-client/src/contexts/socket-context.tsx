@@ -23,6 +23,10 @@ type SocketContextValue = {
   joinedGuilds: string[];
 };
 
+type PermissionsUpdatedPayload = {
+  guilds?: { guild: { id: string } }[];
+};
+
 const SocketContext = createContext<SocketContextValue>({
   socket: null,
   connected: false,
@@ -140,9 +144,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         isAfk: false,
       });
     };
-    const handlePermissionsUpdated = (data: {
-      guilds: { guild: { id: string } }[];
-    }) => {
+    const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
       if (import.meta.env.DEV) {
         console.log("[Gateway] Rooms rebalanced:", data);
       }
@@ -156,7 +158,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      setJoinedGuilds(data.guilds.map((g) => g.guild.id) || []);
+      setJoinedGuilds(data.guilds.map(({ guild }) => guild.id));
     };
 
     socket.on(GatewayEvent.CONNECT, handleConnect);

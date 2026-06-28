@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react";
 import { GatewayEvent } from "@/config/gateway";
 import { useGlobalStore } from "@/store/global.store";
 import { SocketProvider } from "./socket-context";
@@ -63,6 +63,18 @@ const expectedJoinData = {
   world: "alpha",
 };
 
+const getSocketEventHandler = <Payload,>(event: GatewayEvent) => {
+  const handler = mockSocket.on.mock.calls.find(
+    ([registeredEvent]) => registeredEvent === event,
+  )?.[1];
+
+  if (typeof handler !== "function") {
+    throw new Error(`Missing socket handler for ${event}`);
+  }
+
+  return handler as (data: Payload) => void;
+};
+
 describe("SocketProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -122,6 +134,38 @@ describe("SocketProvider", () => {
       expect(mockSocket.emit).toHaveBeenCalledWith(GatewayEvent.JOIN, {
         data: expectedJoinData,
       });
+    });
+  });
+
+  it("syncs joined guild ids from permissions updates", async () => {
+    render(
+      <SocketProvider>
+        <div />
+      </SocketProvider>,
+    );
+
+    await waitFor(() => {
+      expect(mockSocket.on).toHaveBeenCalledWith(
+        GatewayEvent.PERMISSIONS_UPDATED,
+        expect.any(Function),
+      );
+    });
+
+    const handlePermissionsUpdated = getSocketEventHandler<{
+      guilds: { guild: { id: string } }[];
+    }>(GatewayEvent.PERMISSIONS_UPDATED);
+
+    act(() => {
+      handlePermissionsUpdated({
+        guilds: [{ guild: { id: "guild-1" } }, { guild: { id: "guild-2" } }],
+      });
+    });
+
+    await waitFor(() => {
+      expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([
+        "guild-1",
+        "guild-2",
+      ]);
     });
   });
 });
