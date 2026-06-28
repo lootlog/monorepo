@@ -1,10 +1,16 @@
 import { NotificationScheduleIntervalType } from "src/generated/prisma/client";
 import {
+  type LocalDate,
   addDays,
   getDateFormatter,
   getLocalDate,
   toUtcDateFromLocal,
 } from "src/shared/utils/timezone.util";
+
+type TimeOfDayParts = {
+  hours: number;
+  minutes: number;
+};
 
 export function isValidTimeZone(timeZone: string): boolean {
   try {
@@ -24,6 +30,23 @@ export function isRecurringScheduleInterval(
   );
 }
 
+function parseTimeOfDay(timeOfDay: string): TimeOfDayParts {
+  const [hours, minutes] = timeOfDay.split(":").map(Number);
+  return {
+    hours: hours ?? 0,
+    minutes: minutes ?? 0,
+  };
+}
+
+function toUtcDateFromLocalTimeOfDay(
+  localDate: LocalDate,
+  timeOfDay: string,
+  timeZone: string,
+): Date {
+  const { hours, minutes } = parseTimeOfDay(timeOfDay);
+  return toUtcDateFromLocal(localDate, hours, minutes, timeZone);
+}
+
 export function calculateFirstOccurrenceInTimeZone(params: {
   intervalType: NotificationScheduleIntervalType;
   timeOfDay: string;
@@ -31,14 +54,12 @@ export function calculateFirstOccurrenceInTimeZone(params: {
   weekday?: number | null;
   now?: Date;
 }): Date {
-  const [hours, minutes] = params.timeOfDay.split(":").map(Number);
   const now = params.now ?? new Date();
   const currentLocalDate = getLocalDate(now, params.timeZone);
   let candidateLocalDate = currentLocalDate;
-  let candidate = toUtcDateFromLocal(
+  let candidate = toUtcDateFromLocalTimeOfDay(
     candidateLocalDate,
-    hours ?? 0,
-    minutes ?? 0,
+    params.timeOfDay,
     params.timeZone,
   );
 
@@ -61,19 +82,17 @@ export function calculateFirstOccurrenceInTimeZone(params: {
     }
 
     candidateLocalDate = addDays(currentLocalDate, daysUntil);
-    candidate = toUtcDateFromLocal(
+    candidate = toUtcDateFromLocalTimeOfDay(
       candidateLocalDate,
-      hours ?? 0,
-      minutes ?? 0,
+      params.timeOfDay,
       params.timeZone,
     );
 
     if (candidate.getTime() <= now.getTime()) {
       candidateLocalDate = addDays(candidateLocalDate, 7);
-      candidate = toUtcDateFromLocal(
+      candidate = toUtcDateFromLocalTimeOfDay(
         candidateLocalDate,
-        hours ?? 0,
-        minutes ?? 0,
+        params.timeOfDay,
         params.timeZone,
       );
     }
@@ -83,10 +102,9 @@ export function calculateFirstOccurrenceInTimeZone(params: {
 
   if (candidate.getTime() <= now.getTime()) {
     candidateLocalDate = addDays(candidateLocalDate, 1);
-    candidate = toUtcDateFromLocal(
+    candidate = toUtcDateFromLocalTimeOfDay(
       candidateLocalDate,
-      hours ?? 0,
-      minutes ?? 0,
+      params.timeOfDay,
       params.timeZone,
     );
   }
@@ -126,36 +144,24 @@ export function calculateNextOccurrenceInTimeZone(params: {
         return null;
       }
 
-      const [hours, minutes] = timeOfDay.split(":").map(Number);
       const nextLocalDate = addDays(
         getLocalDate(currentScheduledAt, timeZone),
         1,
       );
 
-      return toUtcDateFromLocal(
-        nextLocalDate,
-        hours ?? 0,
-        minutes ?? 0,
-        timeZone,
-      );
+      return toUtcDateFromLocalTimeOfDay(nextLocalDate, timeOfDay, timeZone);
     }
     case NotificationScheduleIntervalType.WEEKLY: {
       if (!timeOfDay || weekday === null) {
         return null;
       }
 
-      const [hours, minutes] = timeOfDay.split(":").map(Number);
       const nextLocalDate = addDays(
         getLocalDate(currentScheduledAt, timeZone),
         7,
       );
 
-      return toUtcDateFromLocal(
-        nextLocalDate,
-        hours ?? 0,
-        minutes ?? 0,
-        timeZone,
-      );
+      return toUtcDateFromLocalTimeOfDay(nextLocalDate, timeOfDay, timeZone);
     }
     default:
       return null;
