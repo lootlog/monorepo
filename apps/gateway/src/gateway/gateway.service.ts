@@ -20,7 +20,7 @@ import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering
 import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { Gateway } from "src/gateway/gateway";
-import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
+import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { UserGuildData } from "src/guilds/types/guild.types";
@@ -97,7 +97,7 @@ export class GatewayService {
 
             // Owner/Admin bypass level checks
             const isOwner = guildData.guild.ownerId === socket.data.discordId;
-            if (isOwner || isOwnerOrAdminFromRoles(guildData.roles)) {
+            if (isOwner || isAdministrativeUserFromRoles(guildData.roles)) {
               socket.emit(event, data);
               return;
             }
@@ -203,7 +203,7 @@ export class GatewayService {
 
           const isOwner = guildData.guild.ownerId === socket.data.discordId;
           const isOwnerOrAdmin =
-            isOwner || isOwnerOrAdminFromRoles(guildData.roles);
+            isOwner || isAdministrativeUserFromRoles(guildData.roles);
 
           if (
             routing.npcLevel !== undefined &&

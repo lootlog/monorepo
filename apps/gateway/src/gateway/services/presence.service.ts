@@ -14,7 +14,7 @@ import {
   hasOnlinePlayersAccess,
   parseRoomName,
 } from "src/gateway/utils/room-utils";
-import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
+import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
 import type {
   Socket,
   SocketUser,
@@ -591,7 +591,7 @@ export class PresenceService {
     const isOwner = guildData.guild.ownerId === viewer.data.discordId;
     return (
       isOwner ||
-      isOwnerOrAdminFromRoles(guildData.roles) ||
+      isAdministrativeUserFromRoles(guildData.roles) ||
       hasOnlinePlayersAccess(guildData.roles)
     );
   }
