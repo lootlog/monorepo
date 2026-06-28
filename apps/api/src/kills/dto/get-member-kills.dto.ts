@@ -4,7 +4,7 @@ import {
   commaSeparatedArray,
   intFromString,
   optionalFromQuery,
-} from "@lootlog/nest-shared/validators";
+} from "@lootlog/nest-shared/validators/query-helpers";
 import { NpcType } from "src/generated/prisma/client";
 import { KillStatsPeriodSchema } from "../utils/kill-stats-period";
 
