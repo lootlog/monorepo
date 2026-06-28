@@ -3,7 +3,7 @@ import { GuildDocEditorPage } from "@/features/guild/docs/guild-doc-editor-page"
 import { GuildDocEditorSkeleton } from "@/features/guild/docs/guild-doc-editor-skeleton";
 import { guildDocDetailQueryOptions } from "@/features/guild/docs/docs-api";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/$guildId/docs/$docId")({
 
         return { document };
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
   component: GuildDocEditorPage,

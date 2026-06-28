@@ -7,7 +7,7 @@ import {
   getBattlesControllerGetBattleRawDataQueryOptions,
 } from "@/lib/api/generated/battlelog/battles/battles";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
@@ -37,7 +37,7 @@ export const Route = createFileRoute(
 
         return { battle };
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
   component: BattlePanelSingleBattle,

@@ -14,8 +14,8 @@ import {
   getMembersControllerGetMeQueryOptions,
 } from "@/lib/api/generated/main/members/members";
 import {
+  rethrowNotFoundOrError,
   throwForbiddenRouteError,
-  throwNotFoundIfResponseMatches,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
@@ -89,7 +89,7 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
           permissions,
         };
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
   errorComponent: GuildRouteError,
