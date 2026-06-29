@@ -44,15 +44,15 @@
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@nestjs/cli": "^11.0.23",
-    "@nestjs/testing": "^11.1.26",
+    "@nestjs/testing": "^11.1.27",
     "@swc/cli": "^0.8.1",
-    "@swc/core": "^1.15.30",
+    "@swc/core": "^1.15.43",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.20.0",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.9",
     "drizzle-kit": "^0.31.10",
     "typescript": "^6.0.3",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
   }
 }
