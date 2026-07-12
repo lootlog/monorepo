@@ -187,6 +187,7 @@ export const useMapPings = () => {
       mapId,
       Game.hero.nick,
     );
+    playSound("pings", "mapPing");
     socket
       .timeout(ACK_TIMEOUT_MS)
       .emit(
