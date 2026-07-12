@@ -414,8 +414,10 @@ describe("UsersService", () => {
       detector: defaultDetectorSettings,
       hasStoredDetector: false,
       hasStoredNotifications: false,
+      hasStoredPings: false,
       hasStoredPreferences: false,
       notifications: defaultNotificationsSettings,
+      pings: { enabled: false },
     });
   });
 
@@ -531,6 +533,7 @@ describe("UsersService", () => {
       detector: defaultDetectorSettings,
       hasStoredDetector: false,
       hasStoredNotifications: true,
+      hasStoredPings: false,
       hasStoredPreferences: true,
       notifications: expect.objectContaining({
         HERO: expect.objectContaining({
@@ -538,6 +541,7 @@ describe("UsersService", () => {
           guildIds: ["guild-3"],
         }),
       }),
+      pings: { enabled: false },
     });
   });
 
@@ -628,9 +632,54 @@ describe("UsersService", () => {
       }),
       hasStoredDetector: true,
       hasStoredNotifications: true,
+      hasStoredPings: false,
       hasStoredPreferences: true,
       notifications: defaultNotificationsSettings,
+      pings: { enabled: false },
     });
+  });
+
+  it("updates map pings without overwriting stored notification and detector settings", async () => {
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+      id: 9,
+      userId: "auth-user-current",
+      accountId: "333",
+      settings: {
+        notifications: defaultNotificationsSettings,
+        detector: defaultDetectorSettings,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({});
+
+    const result = await service.updateUserGameAccountPreferences(
+      "auth-user-current",
+      "333",
+      { pings: { enabled: true } },
+    );
+
+    expect(
+      mockPrismaService.userGameAccountSettings.upsert,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          settings: {
+            notifications: defaultNotificationsSettings,
+            detector: defaultDetectorSettings,
+            pings: { enabled: true },
+          },
+        }),
+      }),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        pings: { enabled: true },
+        notifications: defaultNotificationsSettings,
+        detector: defaultDetectorSettings,
+        hasStoredPings: true,
+      }),
+    );
   });
 
   it("normalizes detector routing rules when reading stored account settings", async () => {
@@ -681,8 +730,10 @@ describe("UsersService", () => {
       }),
       hasStoredDetector: true,
       hasStoredNotifications: false,
+      hasStoredPings: false,
       hasStoredPreferences: true,
       notifications: defaultNotificationsSettings,
+      pings: { enabled: false },
     });
   });
 
@@ -746,8 +797,10 @@ describe("UsersService", () => {
       }),
       hasStoredDetector: true,
       hasStoredNotifications: false,
+      hasStoredPings: false,
       hasStoredPreferences: true,
       notifications: defaultNotificationsSettings,
+      pings: { enabled: false },
     });
   });
 
