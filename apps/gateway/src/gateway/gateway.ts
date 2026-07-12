@@ -13,6 +13,8 @@ import type { RequestOnlinePlayersPresenceDto } from "src/gateway/dto/request-on
 import type { RequestMemberWebPresenceDto } from "src/gateway/dto/request-member-web-presence.dto";
 import type { PlayerPresenceUpdateDto } from "src/gateway/dto/player-presence-update.dto";
 import type { RequestEventPresenceDto } from "src/gateway/dto/request-event-presence.dto";
+import type { MapPingAck } from "@lootlog/types";
+import type { MapPingSendDto } from "src/gateway/dto/map-ping-send.dto";
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { GatewayConfig } from "src/gateway/constants/gateway-config.constant";
 import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
@@ -29,6 +31,7 @@ import {
 } from "./services/presence.service";
 import { SubscriptionService } from "./services/subscription.service";
 import { GatewayAuthService } from "./services/gateway-auth.service";
+import { MapPingService } from "./services/map-ping.service";
 
 @WebSocketGateway({
   pingInterval: GatewayConfig.SOCKET_PING_INTERVAL_MS,
@@ -42,6 +45,7 @@ export class Gateway {
     private presenceService: PresenceService,
     private subscriptionService: SubscriptionService,
     private gatewayAuthService: GatewayAuthService,
+    private mapPingService: MapPingService,
   ) {}
 
   @WebSocketServer()
@@ -156,6 +160,15 @@ export class Gateway {
       data,
       this.server,
     );
+  }
+
+  @UseFilters(new BaseWsExceptionFilter())
+  @SubscribeMessage(GatewayEvent.MAP_PING_SEND)
+  handleMapPing(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: MapPingSendDto,
+  ): Promise<MapPingAck> {
+    return this.mapPingService.send(this.server, client, data);
   }
 
   @UseFilters(new BaseWsExceptionFilter())

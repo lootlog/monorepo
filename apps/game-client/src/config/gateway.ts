@@ -39,6 +39,8 @@ export enum GatewayEvent {
 
   // members
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
+  MAP_PING_SEND = "map-ping:send",
+  MAP_PING_RECEIVE = "map-ping:receive",
 
   // margo events (game-specific)
   EVENT_MAP_STATUS_UPDATE = "event:map-status:update",

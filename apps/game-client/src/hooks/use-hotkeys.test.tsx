@@ -44,4 +44,21 @@ describe("useHotkeys", () => {
 
     expect(useWindowsStore.getState()["quick-access"].open).toBe(true);
   });
+
+  it("runs a global action from an auxiliary mouse binding", () => {
+    useHotkeysStore.getState().setBinding("toggle-quick-access", {
+      type: "mouse",
+      button: 3,
+      shift: false,
+      ctrl: false,
+      alt: false,
+    });
+    renderHook(() => useHotkeys());
+
+    act(() => {
+      window.dispatchEvent(new MouseEvent("mousedown", { button: 3 }));
+    });
+
+    expect(useWindowsStore.getState()["quick-access"].open).toBe(false);
+  });
 });

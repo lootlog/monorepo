@@ -47,6 +47,11 @@ const UpdateUserGameAccountPreferencesSchema = z.object({
       TITAN: PartialDetectorTypeSettingsSchema.optional(),
     })
     .optional(),
+  pings: z
+    .object({
+      enabled: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export class UpdateUserGameAccountPreferencesDto extends createZodDto(

@@ -5,6 +5,8 @@ import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
+import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 
 export const GeneralSettingsTab: FC = () => {
   const {
@@ -14,6 +16,10 @@ export const GeneralSettingsTab: FC = () => {
     toggleAnimationEffects,
   } = useSettingsStore();
   const { t } = useTranslation();
+  const { accountId, data: accountPreferences } =
+    useCurrentGameAccountPreferences();
+  const updateAccountPreferences =
+    useUpdateUserGameAccountPreferences(accountId);
 
   return (
     <SettingsTabLayout
@@ -29,6 +35,19 @@ export const GeneralSettingsTab: FC = () => {
             checked={allowWorldSelection}
             onCheckedChange={toggleAllowWorldSelection}
             id="allow-world-selection"
+          />
+        </SettingsControlRow>
+        <SettingsControlRow
+          label={t("settings.general.mapPingsLabel")}
+          description={t("settings.general.mapPingsDescription")}
+        >
+          <Switch
+            checked={accountPreferences?.pings.enabled ?? false}
+            disabled={!accountPreferences || updateAccountPreferences.isPending}
+            onCheckedChange={(enabled) =>
+              updateAccountPreferences.mutate({ pings: { enabled } })
+            }
+            id="map-pings"
           />
         </SettingsControlRow>
         <SettingsControlRow

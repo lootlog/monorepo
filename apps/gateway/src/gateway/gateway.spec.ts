@@ -30,6 +30,10 @@ describe("Gateway", () => {
     verifyConnectionIdentity: vi.fn(),
   };
 
+  const mockMapPingService = {
+    send: vi.fn(),
+  };
+
   const mockServer = {};
 
   let gateway: Gateway;
@@ -40,6 +44,7 @@ describe("Gateway", () => {
       mockPresenceService as never,
       mockSubscriptionService as never,
       mockGatewayAuthService as never,
+      mockMapPingService as never,
     );
     gateway.server = mockServer as never;
   });
@@ -310,5 +315,27 @@ describe("Gateway", () => {
       client,
       "guild-1",
     );
+  });
+
+  it("returns the map ping acknowledgement from the map ping service", async () => {
+    const client = { id: "socket-1" };
+    const acknowledgement = {
+      status: "accepted" as const,
+      pingId: "ping-1",
+    };
+    mockMapPingService.send.mockResolvedValue(acknowledgement);
+
+    await expect(
+      gateway.handleMapPing(client as never, {
+        expectedMapId: 42,
+        x: 10,
+        y: 12,
+      }),
+    ).resolves.toEqual(acknowledgement);
+    expect(mockMapPingService.send).toHaveBeenCalledWith(mockServer, client, {
+      expectedMapId: 42,
+      x: 10,
+      y: 12,
+    });
   });
 });
