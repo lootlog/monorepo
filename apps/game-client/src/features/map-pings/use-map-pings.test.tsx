@@ -45,6 +45,7 @@ vi.mock("@/hooks/use-current-game-account-preferences", () => ({
 
 vi.mock("@/lib/game", () => ({
   Game: {
+    getAccountId: () => "account-1",
     getWorldName: () => "aether",
     hero: { nick: "Sender" },
     map: { id: 42 },
@@ -52,6 +53,12 @@ vi.mock("@/lib/game", () => ({
 }));
 
 vi.mock("@/lib/sound-playback", () => ({ playSound }));
+
+vi.mock("@/lib/query-client", () => ({
+  queryClient: {
+    getQueryData: () => ({ pings: { enabled: testState.pingsEnabled } }),
+  },
+}));
 
 vi.mock("@/store/global.store", () => ({
   useGlobalStore: (
@@ -110,6 +117,22 @@ describe("useMapPings", () => {
     );
     expect(playSound).toHaveBeenCalledTimes(1);
     expect(playSound).toHaveBeenCalledWith("pings", "mapPing");
+    expect(socket.emit).toHaveBeenCalledWith(
+      GatewayEvent.MAP_PING_SEND,
+      { expectedMapId: 42, x: 12, y: 8 },
+      expect.any(Function),
+    );
+  });
+
+  it("uses the latest cached preference for a local ping trigger", () => {
+    testState.pingsEnabled = false;
+    const { result } = renderHook(() => useMapPings());
+    testState.pingsEnabled = true;
+
+    act(() => {
+      expect(result.current(createMapMouseEvent())).toBe(true);
+    });
+
     expect(socket.emit).toHaveBeenCalledWith(
       GatewayEvent.MAP_PING_SEND,
       { expectedMapId: 42, x: 12, y: 8 },
@@ -195,6 +218,28 @@ describe("useMapPings", () => {
 
     expect(controller.addRemote).toHaveBeenCalledWith(event);
     expect(playSound).toHaveBeenCalledTimes(1);
+    expect(playSound).toHaveBeenCalledWith("pings", "mapPing");
+  });
+
+  it("uses the latest cached preference for a received ping", () => {
+    testState.pingsEnabled = false;
+    renderHook(() => useMapPings());
+    testState.pingsEnabled = true;
+    const event: MapPingEvent = {
+      pingId: "remote-ping-after-enable",
+      world: "aether",
+      mapId: 42,
+      x: 12,
+      y: 8,
+      sender: { characterId: "123", name: "Other" },
+      createdAt: Date.now(),
+    };
+
+    act(() => {
+      socketHandlers.get(GatewayEvent.MAP_PING_RECEIVE)?.(event);
+    });
+
+    expect(controller.addRemote).toHaveBeenCalledWith(event);
     expect(playSound).toHaveBeenCalledWith("pings", "mapPing");
   });
 });

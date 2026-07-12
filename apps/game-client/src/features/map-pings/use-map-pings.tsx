@@ -2,8 +2,11 @@ import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
 import { Game } from "@/lib/game";
+import { queryClient } from "@/lib/query-client";
 import { playSound } from "@/lib/sound-playback";
 import { useGlobalStore } from "@/store/global.store";
+import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
+import type { UserGameAccountPreferencesResponseDtoOutput } from "@/lib/api/generated/main/model";
 import type { MapPingAck, MapPingEvent } from "@lootlog/types";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,6 +24,20 @@ type PointerPosition = {
   canvas: HTMLCanvasElement;
   clientX: number;
   clientY: number;
+};
+
+const areMapPingsEnabled = () => {
+  const accountId = Game.getAccountId();
+  if (!accountId) {
+    return false;
+  }
+
+  const preferences =
+    queryClient.getQueryData<UserGameAccountPreferencesResponseDtoOutput>(
+      getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId }),
+    );
+
+  return preferences?.pings.enabled ?? false;
 };
 
 export const useMapPings = () => {
@@ -97,7 +114,7 @@ export const useMapPings = () => {
     const handleMapPing = (event: MapPingEvent) => {
       const tile = { x: event.x, y: event.y };
       if (
-        !enabled ||
+        !areMapPingsEnabled() ||
         event.world !== Game.getWorldName() ||
         event.mapId !== Game.map.id ||
         !mapPingController.isTileValid(tile)
@@ -172,7 +189,7 @@ export const useMapPings = () => {
   };
 
   return (event: KeyboardEvent | MouseEvent) => {
-    if (!enabled || !socket || !connected || !joined) {
+    if (!areMapPingsEnabled() || !socket || !connected || !joined) {
       return false;
     }
 
