@@ -42,6 +42,7 @@ const areMapPingsEnabled = () => {
 
 export const useMapPings = () => {
   const { socket, connected, joined } = useSocket();
+  const isNewInterface = Game.interface === "ni";
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
@@ -52,7 +53,7 @@ export const useMapPings = () => {
   const { t } = useTranslation("settings");
 
   useEffect(() => {
-    if (!gameInitialized) {
+    if (!gameInitialized || !isNewInterface) {
       return;
     }
 
@@ -70,9 +71,13 @@ export const useMapPings = () => {
       window.clearInterval(retryInterval);
       mapPingController.unregister();
     };
-  }, [gameInitialized]);
+  }, [gameInitialized, isNewInterface]);
 
   useEffect(() => {
+    if (!isNewInterface) {
+      return;
+    }
+
     const handleMouseMove = (event: MouseEvent) => {
       if (!isMapPingSurface(event.target)) {
         pointerRef.current = null;
@@ -88,7 +93,7 @@ export const useMapPings = () => {
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+  }, [isNewInterface]);
 
   useEffect(() => {
     if (enabled) {
@@ -107,7 +112,7 @@ export const useMapPings = () => {
   }, [connected]);
 
   useEffect(() => {
-    if (!socket) {
+    if (!socket || !isNewInterface) {
       return;
     }
 
@@ -131,7 +136,7 @@ export const useMapPings = () => {
     return () => {
       socket.off(GatewayEvent.MAP_PING_RECEIVE, handleMapPing);
     };
-  }, [enabled, socket]);
+  }, [enabled, isNewInterface, socket]);
 
   const showHint = (
     acknowledgement: Extract<MapPingAck, { status: "rejected" }>,
@@ -189,7 +194,13 @@ export const useMapPings = () => {
   };
 
   return (event: KeyboardEvent | MouseEvent) => {
-    if (!areMapPingsEnabled() || !socket || !connected || !joined) {
+    if (
+      !isNewInterface ||
+      !areMapPingsEnabled() ||
+      !socket ||
+      !connected ||
+      !joined
+    ) {
       return false;
     }
 

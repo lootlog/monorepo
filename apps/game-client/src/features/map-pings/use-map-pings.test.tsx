@@ -5,6 +5,7 @@ import { useMapPings } from "./use-map-pings";
 
 const testState = vi.hoisted(() => ({
   connected: true,
+  gameInterface: "ni" as "ni" | "si",
   joined: true,
   pingsEnabled: true,
 }));
@@ -48,6 +49,9 @@ vi.mock("@/lib/game", () => ({
     getAccountId: () => "account-1",
     getWorldName: () => "aether",
     hero: { nick: "Sender" },
+    get interface() {
+      return testState.gameInterface;
+    },
     map: { id: 42 },
   },
 }));
@@ -90,6 +94,7 @@ const createOutsideMouseEvent = () => {
 describe("useMapPings", () => {
   beforeEach(() => {
     testState.connected = true;
+    testState.gameInterface = "ni";
     testState.joined = true;
     testState.pingsEnabled = true;
     socketHandlers.clear();
@@ -138,6 +143,20 @@ describe("useMapPings", () => {
       { expectedMapId: 42, x: 12, y: 8 },
       expect.any(Function),
     );
+  });
+
+  it("does not trigger a local ping on the old interface", () => {
+    testState.gameInterface = "si";
+    const { result } = renderHook(() => useMapPings());
+
+    act(() => {
+      expect(result.current(createMapMouseEvent())).toBe(false);
+    });
+
+    expect(controller.register).not.toHaveBeenCalled();
+    expect(controller.addOptimistic).not.toHaveBeenCalled();
+    expect(playSound).not.toHaveBeenCalled();
+    expect(socket.emit).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -241,5 +260,26 @@ describe("useMapPings", () => {
 
     expect(controller.addRemote).toHaveBeenCalledWith(event);
     expect(playSound).toHaveBeenCalledWith("pings", "mapPing");
+  });
+
+  it("ignores a received ping on the old interface", () => {
+    testState.gameInterface = "si";
+    renderHook(() => useMapPings());
+    const event: MapPingEvent = {
+      pingId: "remote-ping-on-si",
+      world: "aether",
+      mapId: 42,
+      x: 12,
+      y: 8,
+      sender: { characterId: "123", name: "Other" },
+      createdAt: Date.now(),
+    };
+
+    act(() => {
+      socketHandlers.get(GatewayEvent.MAP_PING_RECEIVE)?.(event);
+    });
+
+    expect(controller.addRemote).not.toHaveBeenCalled();
+    expect(playSound).not.toHaveBeenCalled();
   });
 });
