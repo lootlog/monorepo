@@ -4,7 +4,7 @@
 
 Party Finder currently creates a 30-minute gathering, sends it to selected Lootlog guilds, and forwards volunteer payloads only to the organizer's connected sockets. The organizer's game client stores the participant list in `sessionStorage`. Invite state is a local five-second timeout, and a refresh or reconnect cannot recover the authoritative participant state.
 
-This design makes the API the owner of an ephemeral Ready Room stored in Redis. The gateway distributes personalized snapshots to the organizer and participants. The game client becomes a projection of that state, while the existing raw `event.party` pipeline reports observed party membership.
+This design makes the API the owner of an ephemeral Ready Room stored in Redis. The gateway distributes personalized snapshots to the organizer and participants. The game client becomes a projection of that state, while the existing raw `event.party` pipeline reports a complete observed party-membership snapshot.
 
 The Ready Room remains an information and coordination feature. It never moves a character, starts combat, chooses a target, accepts an invitation, or reacts to a game event by executing an action. Explicit party and friend invitations initiated by a user's click remain allowed, including `Invite all`.
 
@@ -40,7 +40,17 @@ These actions may only start from their corresponding click handlers. A socket m
 
 ### Invitation meaning
 
-`SENT` means that Lootlog issued the invitation command. It does not mean that Margonem delivered the invitation or that the player accepted it. A missing response never changes the state to `FAILED`. Retrying requires another explicit user click. `FAILED` is a manual organizer annotation until a reliable read-only failure signal exists.
+`SENT` means either that Lootlog issued the invitation command or that the organizer explicitly annotated an invitation sent outside Lootlog. The invitation record carries `source: LOOTLOG_COMMAND | MANUAL_ANNOTATION`, so the UI can state which one occurred. `SENT` does not mean that Margonem delivered the invitation or that the player accepted it.
+
+An invitation initiated through Lootlog uses a two-phase protocol:
+
+1. The client reserves a unique command ID through the API before calling the game helper.
+2. Only a successful reservation allows that click flow to call the helper once for the reserved target.
+3. The client acknowledges that the command was issued. The API then records `SENT` with `source: LOOTLOG_COMMAND`.
+4. If acknowledgement is lost, the reservation becomes `UNKNOWN`; neither the client nor server retries the game action automatically.
+5. The organizer must explicitly reconcile `UNKNOWN` or click retry, which creates a new command ID.
+
+A helper error is reported to the API and becomes `FAILED` with `source: LOOTLOG_COMMAND`. Acknowledgements are idempotent by command ID and may retry their HTTP request without invoking the game helper again. An acknowledgement applies only while its command ID is the participant's current reservation; a stale command ID returns a conflict. A missing game response never synthesizes `FAILED`.
 
 ### Multiple applications
 
@@ -54,10 +64,10 @@ flowchart LR
     API -->|fixed-TTL aggregate| Redis[(Redis)]
     API -->|personalized snapshots| RabbitMQ[RabbitMQ]
     RabbitMQ --> Gateway[Gateway]
-    Gateway -->|user-specific Socket.IO room| Clients[Organizer and participant clients]
+    Gateway -->|user-and-guild Socket.IO rooms| Clients[Organizer and participant clients]
     RawParty[raw event.party] --> PartyProcessor[PartyProcessor]
     PartyProcessor --> PartyObserver[Ready Room party observer]
-    PartyObserver -->|changed observed member IDs| API
+    PartyObserver -->|changed complete member-ID set| API
 ```
 
 ### API
@@ -72,13 +82,17 @@ The Ready Room aggregate is stored by gathering notification ID. Secondary keys 
 - the accepted Ready Room for a participant;
 - the pending application gathering IDs for a participant.
 
-The repository owns these keys so service code cannot update indexes independently from the aggregate. Mutations use an atomic compare-and-set Lua script over the serialized aggregate. A successful write increments `revision` while preserving the original `expiresAt`; normal activity never extends the 30-minute lifetime.
+The organizer and accepted-room indexes are string keys with the same fixed expiration as the aggregate. Pending applications use a sorted set per user, with `expiresAt` as the score. Reads remove expired or missing members before returning results. The sorted-set key expires at the latest contained score.
 
-Terminal `CLOSED` or `CANCELLED` snapshots remain as short-lived tombstones long enough to propagate and are then deleted. Expiration leaves no history.
+The repository owns all aggregate and index keys so service code cannot update them independently. Command-specific Lua scripts update the aggregate, participant application index, and accepted-room lock atomically. Acceptance uses the accepted-room key as the single arbiter and produces one winner across concurrent rooms. Withdrawal, decline, close, and cancel delete that lock only when its value matches the current room. Natural expiration cannot leave an active lock because the lock and aggregate share `expiresAt`.
+
+Mutations use atomic compare-and-set over the serialized aggregate. A successful write increments `revision` while preserving the original `expiresAt`; normal activity never extends the 30-minute lifetime.
+
+Explicit `CLOSED` or `CANCELLED` transitions remove all secondary indexes atomically and retain a short-lived aggregate tombstone long enough to propagate. Natural expiration produces no realtime tombstone; later reads return `404` and lazily prune pending indexes. Neither path leaves history.
 
 ### RabbitMQ and gateway
 
-After a successful mutation, the API publishes recipient-specific envelopes containing a complete projection and its revision. The gateway joins every authenticated socket to a server-controlled `user:{discordId}` room and emits envelopes only to that room.
+After a successful mutation, the API publishes recipient-specific envelopes containing a complete projection and its revision. The gateway joins every authenticated socket to server-controlled `user:{discordId}:guild:{guildId}` rooms for its current Lootlog guild memberships. A personalized envelope names the selected guild IDs through which the recipient remains eligible. The gateway emits to those user-and-guild rooms, and the client deduplicates copies by notification ID and revision. Existing permission rebalancing removes sockets from rooms after guild access is lost.
 
 The organizer projection contains the full participant list. A participant projection contains the gathering summary and only that participant's state. This avoids broadcasting applicant details across the guild or exposing organizer-only controls.
 
@@ -86,9 +100,9 @@ Realtime delivery is an optimization, not the source of truth. If publish or del
 
 ### Game client
 
-The client store holds the latest Ready Room projection. It replaces state only when an incoming snapshot has a newer revision. The organizer and participant views are separate components and share small presentational status components without placing multiple React components in one file.
+The client store holds projections keyed by `notificationId`, plus derived pending-room IDs and the accepted-room ID. REST responses and socket envelopes merge per room only when their revision is newer than the stored revision. A delayed REST response therefore cannot replace a newer socket snapshot. Terminal tombstones remove the room from derived indexes after their final projection is shown.
 
-The current `inviteStates` timeout state is removed. Explicit invitation commands remain in click handlers and are followed by an API mutation marking the issued command as `SENT`. A command error leaves the prior invitation state unchanged and is surfaced to the organizer.
+The current five-second `inviteStates` failure timeout is removed. Explicit invitation click handlers first reserve a server command ID, then invoke the game helper once, then acknowledge the issued command. A reservation conflict prevents the game helper call. A lost acknowledgement produces `UNKNOWN` and never an automatic retry.
 
 Generated API clients continue to be generated from the OpenAPI contract and are never edited manually.
 
@@ -116,14 +130,33 @@ Participant state is split into independent dimensions:
 
 - `application`: `APPLIED`, `ACCEPTED`, `DECLINED`, `WITHDRAWN`;
 - `readiness`: `NOT_REQUESTED`, `PENDING`, `READY`, `NOT_READY`;
-- `invitation`: `NOT_MARKED`, `SENT`, `FAILED`;
+- `invitation`: `NOT_MARKED`, `COMMAND_RESERVED`, `SENT`, `UNKNOWN`, `FAILED`;
 - `partyPresence`: `OUTSIDE`, `IN_PARTY`.
 
 The UI derives a primary stage from these fields and may show additional badges. The model does not collapse unrelated facts into one lossy enum.
 
+Invitation records also contain their command ID when applicable, source, and update timestamp. `COMMAND_RESERVED` older than 15 seconds is projected as `UNKNOWN`. Reconciliation is an explicit organizer command.
+
 ### Ready-check round
 
 Starting a ready check creates a new monotonically increasing round ID and resets readiness for all currently accepted participants to `PENDING`. Responses name the expected round. A response for an older round is rejected and never carries into the next check.
+
+An applicant accepted while a round is active enters that round as `PENDING`. A participant who is declined or withdraws during a round is removed from the ready-count denominator; the round itself continues.
+
+## Transition Rules
+
+| Command           | Preconditions                                                   | Result                                                                | Accepted-room lock |
+| ----------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------ |
+| Apply or reapply  | Active room, eligible user, state absent/`DECLINED`/`WITHDRAWN` | `APPLIED`; reset readiness, invitation, and party presence            | Unchanged          |
+| Accept            | Organizer, `APPLIED`, no other accepted-room lock               | `ACCEPTED`; readiness is `PENDING` if a round is active               | Acquire atomically |
+| Decline           | Organizer, `APPLIED` or `ACCEPTED`                              | `DECLINED`; reset readiness, invitation, and party presence           | Release if held    |
+| Withdraw          | Same participant, `APPLIED` or `ACCEPTED`                       | `WITHDRAWN`; reset readiness, invitation, and party presence          | Release if held    |
+| Start ready check | Organizer, active room, at least one accepted participant       | New round; all accepted participants become `PENDING`                 | Unchanged          |
+| Ready response    | Same accepted participant, current round                        | `READY` or `NOT_READY`                                                | Unchanged          |
+| Close/cancel      | Organizer, active room                                          | Terminal tombstone                                                    | Release all        |
+| Natural expiry    | `expiresAt` reached                                             | Aggregate and fixed-TTL locks disappear; pending indexes prune lazily | Expire             |
+
+Withdrawing from the Ready Room never leaves an existing Margonem party. Reapplication after `DECLINED` or `WITHDRAWN` is allowed while the room remains active. A terminal room cannot be reopened.
 
 ## Authorization and Transitions
 
@@ -133,8 +166,8 @@ The organizer may:
 
 - accept or decline an `APPLIED` participant;
 - start a ready-check round;
-- mark an accepted participant invitation `SENT` or `FAILED`;
-- report the currently observed party member character IDs;
+- reserve and reconcile invitation commands or add a manual invitation annotation;
+- report the complete currently observed party member character-ID set;
 - close or cancel the gathering;
 - explicitly invite one or all eligible participants through the game client UI.
 
@@ -152,7 +185,9 @@ The participant may not mutate another participant or organizer-only fields.
 
 ### System-derived transitions
 
-Only an authenticated organizer client may report observed party membership for its active gathering. The API intersects the submitted character IDs with accepted participants. It updates `partyPresence` idempotently and does not infer acceptance, readiness, invitation delivery, or failure.
+Only an authenticated organizer client may report observed party membership for its active gathering. The payload is a complete snapshot, including an empty array when the organizer is not in a party. Initial game detection reports once after the Ready Room loads; later reports occur only when the normalized set changes. The API sets matching accepted participants to `IN_PARTY` and all other accepted participants to `OUTSIDE`.
+
+The existing `PartyProcessor` continues treating raw `event.party.members` as the complete party snapshot and clearing the party store for an absent or empty membership set. The Ready Room observer reads that normalized store rather than parsing a second event shape.
 
 Reporting game state is read-only coordination. It never calls a Margonem action API.
 
@@ -168,11 +203,36 @@ Exact DTO names may follow repository conventions, but the contract must provide
 - accept or decline an applicant as organizer;
 - start a ready-check round;
 - respond to the current ready-check round as participant;
-- mark invitation state as organizer;
-- report observed party member character IDs as organizer;
+- reserve a single or batch invitation command as organizer;
+- acknowledge issued or failed reserved commands by command ID;
+- manually reconcile or annotate invitation state as organizer;
+- report a complete observed party member character-ID snapshot as organizer;
 - close or cancel the gathering.
 
-Every mutation includes `expectedRevision`. Successful responses return the new personalized snapshot. A stale mutation returns the latest authorized projection so the client can replace local state.
+Creation has no prior revision. Apply/reapply is identity-idempotent and uses a bounded server-side CAS retry because the applicant may not yet possess a room projection. Background party observation is also idempotent and uses a bounded server-side CAS retry; exhaustion returns the latest projection and waits for the next changed snapshot or resync. Invitation acknowledgement is idempotent by command ID and uses a bounded server-side CAS retry because the game command has already occurred. All other organizer and accepted-participant UI mutations include `expectedRevision`. A stale UI mutation returns the latest authorized projection so the client can replace local state.
+
+### Eligibility
+
+Possession of a notification ID never grants access. Creation preserves the existing selected-guild and send-permission checks. Application preserves the existing common-selected-guild authorization and additionally validates on the server that the submitted world matches the room and the character level is within the configured range. The target organizer comes from the aggregate, not the applicant payload.
+
+Every fetch and mutation requires the authenticated user to be the organizer or named participant and to retain membership in at least one selected guild. Gateway delivery uses the same selected-guild intersection through user-and-guild rooms. Lost guild access therefore removes realtime delivery and causes later API requests to return `403`.
+
+## Command and Recipient Matrix
+
+| Event                    | Revision policy                             | Personalized recipients                                   | Index effect                                            |
+| ------------------------ | ------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| Create                   | None                                        | Organizer                                                 | Add organizer key                                       |
+| Apply/reapply            | Server CAS retry                            | Organizer, applicant                                      | Add pending application                                 |
+| Accept/decline           | Expected revision                           | Organizer, affected applicant                             | Remove pending; acquire on accept or release on decline |
+| Withdraw                 | Expected revision                           | Organizer, withdrawing participant                        | Release accepted lock and remove pending                |
+| Start ready check        | Expected revision                           | Organizer, all accepted participants                      | None                                                    |
+| Ready response           | Expected revision                           | Organizer, responder                                      | None                                                    |
+| Reserve/reconcile invite | Expected revision                           | Organizer, affected participant(s)                        | None                                                    |
+| Acknowledge invite       | Command-ID idempotency and server CAS retry | Organizer, affected participant(s)                        | None                                                    |
+| Party snapshot           | Server CAS retry                            | Organizer, participants whose presence changed            | None                                                    |
+| Close/cancel             | Expected revision                           | Organizer and every participant retained in the aggregate | Remove every secondary index before tombstone           |
+
+Declined and withdrawn participants receive their final personalized projection before they are removed from active indexes. They receive later updates only after reapplying. Natural expiration has no publish event; all clients converge on the next REST resync.
 
 ## User Interface
 
@@ -188,7 +248,7 @@ The Party Finder window shows:
 - manual invitation-status actions where needed;
 - close and cancel controls.
 
-`Invite all` targets accepted participants who are not currently `IN_PARTY`. It issues at most one command per eligible character for that click. It does not select applicants, accept them, retry them, or run because state changed.
+`Invite all` first reserves one batch command containing accepted participants who are not currently `IN_PARTY` and have no active reservation. Only a successful reservation returns the immutable eligible target list for that click. The client issues at most one game command per returned character and acknowledges issued targets. It does not select applicants, accept them, retry them, or run because state changed.
 
 ### Participant view
 
@@ -215,7 +275,9 @@ All user-facing strings use the existing i18n namespaces. Labels distinguish com
 - Socket reconnect or window reopen: fetch full authorized projections from the API before applying later socket snapshots.
 - Out-of-order or duplicate socket envelope: ignore a revision that is not newer than the stored revision.
 - RabbitMQ publish failure: log the failure and retain the committed Redis state. REST resync remains authoritative.
-- Explicit game-command failure: do not mark `SENT`; show an actionable organizer error.
+- Invitation reservation conflict: do not execute a game helper; merge the returned current projection.
+- Lost invitation acknowledgement: show `UNKNOWN`; never retry the game helper automatically.
+- Explicit game-helper failure: acknowledge `FAILED` for that command ID and show an actionable organizer error.
 - Missing game acknowledgement: do not synthesize `FAILED`.
 
 ## Testing Strategy
@@ -227,26 +289,36 @@ All user-facing strings use the existing i18n namespaces. Labels distinguish com
 - Terminal tombstones expire and leave no Ready Room history.
 - Authorization is tested for every organizer and participant command.
 - State-transition tests cover application, acceptance, ready-check rounds, invitation annotations, withdrawal, close, and cancel.
+- Reapplication after decline or withdrawal resets all participant dimensions.
+- An applicant accepted during a ready check enters the current round as `PENDING`.
+- Decline or withdrawal during a round releases the accepted lock and removes the participant from the round count without changing Margonem party membership.
 - A user may have several `APPLIED` states but only one `ACCEPTED` room.
 - Concurrent acceptance by two rooms has one winner and one `ACCEPTED_ELSEWHERE` conflict.
 - Observed party reports only affect accepted matching character IDs.
+- Apply/reapply and background observation CAS retries are bounded and idempotent.
+- Explicit terminal transitions atomically release organizer, accepted-room, and pending-application indexes.
+- Natural expiration and lazy pruning never return expired rooms from an index.
 
 ### Gateway
 
-- Authenticated sockets join only their own server-controlled user room.
+- Authenticated sockets join only their own server-controlled user-and-guild rooms.
 - Organizer and participant envelopes route only to their intended user rooms.
+- A socket that loses a guild leaves its corresponding user-and-guild room during permission rebalance.
 - Queue handlers preserve revision and projection payloads.
 - A guild-wide room never receives Ready Room participant data.
 
 ### Game client
 
-- The store ignores duplicate and older revisions.
+- The store keys projections by notification ID and ignores duplicate or older revisions per room from both REST and sockets.
 - Reconnect and window-open flows replace stale local state with the REST snapshot.
 - Organizer and participant views expose only authorized actions.
 - Starting a later ready-check round clears earlier answers.
 - `PartyProcessor` observation reports only a changed party-member set and never invokes a game action.
-- Single invite calls the party invite helper only after its button click.
-- `Invite all` calls the helper once per eligible participant only after its button click.
+- Single invite calls the party invite helper only after its button click and successful command reservation.
+- `Invite all` calls the helper once per reserved eligible participant only after its button click and successful batch reservation.
+- Lost acknowledgement results in `UNKNOWN` and never automatically reissues a single or batch invite.
+- Invitation acknowledgement is idempotent by command ID, and a stale command ID cannot overwrite a later reservation.
+- The friend-invite helper is reachable only from its dedicated click handler.
 - Socket events, mount effects, timers, ready transitions, reconnects, and raw party events never invoke invitation or friend helpers.
 - A missing invitation acknowledgement does not create `FAILED`.
 - Existing gathering creation, cancellation, chat card, and notification behavior remain covered by regression tests.
