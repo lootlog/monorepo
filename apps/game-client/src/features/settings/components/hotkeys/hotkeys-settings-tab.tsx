@@ -2,6 +2,7 @@ import { SettingsControlRow } from "@/components/settings/settings-control-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
+import { Game } from "@/lib/game";
 import {
   HOTKEY_ACTIONS,
   HOTKEY_CATEGORY_KEYS,
@@ -112,6 +113,10 @@ export const HotkeysSettingsTab = () => {
             title={t(HOTKEY_CATEGORY_KEYS[category])}
           >
             {actions.map((config) => {
+              if (config.action === "map-ping" && Game.interface !== "ni") {
+                return null;
+              }
+
               const binding = bindings[config.action];
               const isCapturing = capturingAction === config.action;
 
