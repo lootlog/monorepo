@@ -8,6 +8,7 @@ import {
 } from "@/hooks/api/use-sound-settings";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
+import { Game } from "@/lib/game";
 import type { SoundCategory } from "@/features/settings/components/sounds/types";
 import { Bell, Clock, Crosshair, Loader2, MapPin, Play } from "lucide-react";
 import { useEffect, useState, type FC, type ReactNode } from "react";
@@ -150,73 +151,75 @@ export const SoundsSettingsTab: FC = () => {
           }}
         />
 
-        <SettingsSection
-          title={t("sounds.categories.pings.label")}
-          description={t("sounds.categories.pings.description")}
-        >
-          <div className="ll:flex ll:items-center ll:gap-2">
-            <CategoryVolumeControl
-              icon=<MapPin className="ll:size-4" />
-              label={t("sounds.categories.pings.label")}
-              volume={localVolumes.pings}
-              isMuted={mutedCategories.pings || localVolumes.pings === 0}
-              onVolumeChange={(value) => {
-                setLocalVolumes((previous) => ({
-                  ...previous,
-                  pings: value[0],
-                }));
-                if (value[0] > 0) {
+        {Game.interface === "ni" ? (
+          <SettingsSection
+            title={t("sounds.categories.pings.label")}
+            description={t("sounds.categories.pings.description")}
+          >
+            <div className="ll:flex ll:items-center ll:gap-2">
+              <CategoryVolumeControl
+                icon=<MapPin className="ll:size-4" />
+                label={t("sounds.categories.pings.label")}
+                volume={localVolumes.pings}
+                isMuted={mutedCategories.pings || localVolumes.pings === 0}
+                onVolumeChange={(value) => {
+                  setLocalVolumes((previous) => ({
+                    ...previous,
+                    pings: value[0],
+                  }));
+                  if (value[0] > 0) {
+                    setMutedCategories((previous) => ({
+                      ...previous,
+                      pings: false,
+                    }));
+                  }
+                }}
+                onVolumeCommit={(value) =>
+                  updateSettings({ pingsVolume: value[0] })
+                }
+                onMuteToggle={(event) => {
+                  event.stopPropagation();
+                  const nextVolume =
+                    mutedCategories.pings || localVolumes.pings === 0 ? 0.5 : 0;
+                  setLocalVolumes((previous) => ({
+                    ...previous,
+                    pings: nextVolume,
+                  }));
                   setMutedCategories((previous) => ({
                     ...previous,
-                    pings: false,
+                    pings: nextVolume === 0,
                   }));
-                }
-              }}
-              onVolumeCommit={(value) =>
-                updateSettings({ pingsVolume: value[0] })
-              }
-              onMuteToggle={(event) => {
-                event.stopPropagation();
-                const nextVolume =
-                  mutedCategories.pings || localVolumes.pings === 0 ? 0.5 : 0;
-                setLocalVolumes((previous) => ({
-                  ...previous,
-                  pings: nextVolume,
-                }));
-                setMutedCategories((previous) => ({
-                  ...previous,
-                  pings: nextVolume === 0,
-                }));
-                updateSettings({ pingsVolume: nextVolume });
-              }}
-              onMuteKeyDown={(event) => {
-                if (event.key !== "Enter" && event.key !== " ") return;
-                event.preventDefault();
-                event.stopPropagation();
-                const nextVolume =
-                  mutedCategories.pings || localVolumes.pings === 0 ? 0.5 : 0;
-                setLocalVolumes((previous) => ({
-                  ...previous,
-                  pings: nextVolume,
-                }));
-                setMutedCategories((previous) => ({
-                  ...previous,
-                  pings: nextVolume === 0,
-                }));
-                updateSettings({ pingsVolume: nextVolume });
-              }}
-            />
-            <Button
-              aria-label={t("sounds.test")}
-              className="ll:size-7 ll:p-0"
-              onClick={() => playSoundTest("pings", "mapPing")}
-              type="button"
-              variant="ghost"
-            >
-              <Play className="ll:size-4" />
-            </Button>
-          </div>
-        </SettingsSection>
+                  updateSettings({ pingsVolume: nextVolume });
+                }}
+                onMuteKeyDown={(event) => {
+                  if (event.key !== "Enter" && event.key !== " ") return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const nextVolume =
+                    mutedCategories.pings || localVolumes.pings === 0 ? 0.5 : 0;
+                  setLocalVolumes((previous) => ({
+                    ...previous,
+                    pings: nextVolume,
+                  }));
+                  setMutedCategories((previous) => ({
+                    ...previous,
+                    pings: nextVolume === 0,
+                  }));
+                  updateSettings({ pingsVolume: nextVolume });
+                }}
+              />
+              <Button
+                aria-label={t("sounds.test")}
+                className="ll:size-7 ll:p-0"
+                onClick={() => playSoundTest("pings", "mapPing")}
+                type="button"
+                variant="ghost"
+              >
+                <Play className="ll:size-4" />
+              </Button>
+            </div>
+          </SettingsSection>
+        ) : null}
 
         <SettingsSection
           title={t("sounds.categoriesTitle")}

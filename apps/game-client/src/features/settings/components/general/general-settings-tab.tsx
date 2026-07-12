@@ -7,6 +7,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
+import { Game } from "@/lib/game";
 
 export const GeneralSettingsTab: FC = () => {
   const {
@@ -37,19 +38,23 @@ export const GeneralSettingsTab: FC = () => {
             id="allow-world-selection"
           />
         </SettingsControlRow>
-        <SettingsControlRow
-          label={t("settings.general.mapPingsLabel")}
-          description={t("settings.general.mapPingsDescription")}
-        >
-          <Switch
-            checked={accountPreferences?.pings.enabled ?? false}
-            disabled={!accountPreferences || updateAccountPreferences.isPending}
-            onCheckedChange={(enabled) =>
-              updateAccountPreferences.mutate({ pings: { enabled } })
-            }
-            id="map-pings"
-          />
-        </SettingsControlRow>
+        {Game.interface === "ni" ? (
+          <SettingsControlRow
+            label={t("settings.general.mapPingsLabel")}
+            description={t("settings.general.mapPingsDescription")}
+          >
+            <Switch
+              checked={accountPreferences?.pings.enabled ?? false}
+              disabled={
+                !accountPreferences || updateAccountPreferences.isPending
+              }
+              onCheckedChange={(enabled) =>
+                updateAccountPreferences.mutate({ pings: { enabled } })
+              }
+              id="map-pings"
+            />
+          </SettingsControlRow>
+        ) : null}
         <SettingsControlRow
           label={t("settings.general.animationEffectsLabel")}
           description={t("settings.general.animationEffectsDescription")}
