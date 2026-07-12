@@ -15,6 +15,11 @@ import type {
   PartyGatheringSession,
 } from "@/store/party-finder.store";
 import type { MargonemAccountProof } from "@/lib/margonem-account-proof";
+import type {
+  MapPingAck,
+  MapPingEvent,
+  MapPingSendPayload,
+} from "@lootlog/types";
 
 type ServerToClientEvents = {
   [GatewayEvent.DISCONNECT]: () => void;
@@ -93,6 +98,7 @@ type ServerToClientEvents = {
     message: string;
   }) => void;
   [GatewayEvent.CHAT_MESSAGES_CLEAR]: (data: { guildId: string }) => void;
+  [GatewayEvent.MAP_PING_RECEIVE]: (data: MapPingEvent) => void;
 };
 
 type ClientToServerEvents = {
@@ -125,6 +131,10 @@ type ClientToServerEvents = {
     mapId?: number;
     mapName?: string;
   }) => void;
+  [GatewayEvent.MAP_PING_SEND]: (
+    data: MapPingSendPayload,
+    acknowledgement: (response: MapPingAck) => void,
+  ) => void;
 };
 
 export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;

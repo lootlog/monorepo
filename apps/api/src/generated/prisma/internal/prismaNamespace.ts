@@ -4930,6 +4930,7 @@ export const UserSoundSettingsScalarFieldEnum = {
   notificationsVolume: 'notificationsVolume',
   detectorVolume: 'detectorVolume',
   timersVolume: 'timersVolume',
+  pingsVolume: 'pingsVolume',
   notificationsConfig: 'notificationsConfig',
   detectorConfig: 'detectorConfig',
   timersConfig: 'timersConfig',

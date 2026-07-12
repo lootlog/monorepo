@@ -6474,9 +6474,18 @@ components:
             - HERO
             - COLOSSUS
             - TITAN
+        pings:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+          required:
+            - enabled
         hasStoredNotifications:
           type: boolean
         hasStoredDetector:
+          type: boolean
+        hasStoredPings:
           type: boolean
         hasStoredPreferences:
           type: boolean
@@ -6484,8 +6493,10 @@ components:
         - accountId
         - notifications
         - detector
+        - pings
         - hasStoredNotifications
         - hasStoredDetector
+        - hasStoredPings
         - hasStoredPreferences
     UpdateUserGameAccountPreferencesDto:
       type: object
@@ -6685,6 +6696,11 @@ components:
                   type: boolean
                 notifySound:
                   type: boolean
+        pings:
+          type: object
+          properties:
+            enabled:
+              type: boolean
     NullableMemberResponseDto:
       type: object
       properties:
@@ -12534,6 +12550,8 @@ components:
           type: number
         timersVolume:
           type: number
+        pingsVolume:
+          type: number
         notificationsConfig:
           $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
         detectorConfig:
@@ -12554,6 +12572,7 @@ components:
         - notificationsVolume
         - detectorVolume
         - timersVolume
+        - pingsVolume
         - notificationsConfig
         - detectorConfig
         - timersConfig
@@ -12575,6 +12594,10 @@ components:
           minimum: 0
           maximum: 1
         timersVolume:
+          type: number
+          minimum: 0
+          maximum: 1
+        pingsVolume:
           type: number
           minimum: 0
           maximum: 1

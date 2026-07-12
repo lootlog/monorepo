@@ -19,6 +19,7 @@ const UpdateSoundSettingsSchema = z.object({
   notificationsVolume: z.number().min(0).max(1).optional(),
   detectorVolume: z.number().min(0).max(1).optional(),
   timersVolume: z.number().min(0).max(1).optional(),
+  pingsVolume: z.number().min(0).max(1).optional(),
   notificationsConfig: SoundConfigMapSchema.optional(),
   detectorConfig: SoundConfigMapSchema.optional(),
   timersConfig: SoundConfigMapSchema.optional(),

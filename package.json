@@ -45,7 +45,7 @@
     "perf:k6:smoke": "node tools/k6/run-k6.mjs --profile smoke",
     "perf:k6:service": "node tools/k6/run-k6.mjs",
     "perf:gateway": "node tools/k6/gateway.mjs",
-    "api:migrate:dev": "turbo run api:migrate:dev",
+    "api:migrate:dev": "turbo run api:migrate:dev --filter=@lootlog/api --ui=tui",
     "api:generate": "turbo run api:generate",
     "api:client:generate": "pnpm openapi:generate && pnpm openapi:check && tsx ./scripts/sanitize-openapi.ts && orval --config ./orval.config.ts",
     "api:studio": "turbo run api:studio",

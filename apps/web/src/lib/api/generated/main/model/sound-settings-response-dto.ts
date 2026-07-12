@@ -13,6 +13,7 @@ export interface SoundSettingsResponseDto {
   notificationsVolume: number;
   detectorVolume: number;
   timersVolume: number;
+  pingsVolume: number;
   notificationsConfig: SoundSettingsResponseDtoSchema0 | null;
   detectorConfig: SoundSettingsResponseDtoSchema0 | null;
   timersConfig: SoundSettingsResponseDtoSchema0 | null;

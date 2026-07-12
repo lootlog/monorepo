@@ -119,6 +119,9 @@ export const useUpdateUserGameAccountPreferences = (
             return nextSettings;
           })()
         : previousData.detector;
+      const nextPings = payload.pings
+        ? { ...previousData.pings, ...payload.pings }
+        : previousData.pings;
 
       queryClient.setQueryData<UserGameAccountPreferencesResponseDtoOutput>(
         queryKey,
@@ -126,11 +129,14 @@ export const useUpdateUserGameAccountPreferences = (
           ...previousData,
           notifications: nextNotifications,
           detector: nextDetector,
+          pings: nextPings,
           hasStoredNotifications:
             previousData.hasStoredNotifications ||
             payload.notifications !== undefined,
           hasStoredDetector:
             previousData.hasStoredDetector || payload.detector !== undefined,
+          hasStoredPings:
+            previousData.hasStoredPings || payload.pings !== undefined,
           hasStoredPreferences: true,
         },
       );

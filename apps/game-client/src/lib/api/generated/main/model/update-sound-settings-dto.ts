@@ -30,6 +30,11 @@ export interface UpdateSoundSettingsDto {
      * @maximum 1
      */
   timersVolume?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  pingsVolume?: number;
   notificationsConfig?: UpdateSoundSettingsDtoNotificationsConfig;
   detectorConfig?: UpdateSoundSettingsDtoDetectorConfig;
   timersConfig?: UpdateSoundSettingsDtoTimersConfig;

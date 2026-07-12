@@ -1,1 +1,1 @@
-export type SoundCategory = "notifications" | "detector" | "timers";
+export type SoundCategory = "notifications" | "detector" | "timers" | "pings";

@@ -2,7 +2,8 @@ import { queryClient } from "@/lib/query-client";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import type { UserSoundSettings } from "@lootlog/types";
 
-type SoundCategory = "notifications" | "detector" | "timers";
+type SoundCategory = "notifications" | "detector" | "timers" | "pings";
+type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
 
 let currentAudio: HTMLAudioElement | null = null;
 
@@ -31,7 +32,10 @@ export function playSound(category: SoundCategory, key: string): void {
 
   if (masterVolume === 0 || categoryVolume === 0) return;
 
-  const soundConfig = settings[`${category}Config`]?.[key];
+  const soundConfig =
+    category === "pings"
+      ? undefined
+      : settings[`${category as ConfigurableSoundCategory}Config`]?.[key];
   const soundUrl =
     soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
       ? DEFAULT_SOUND_URLS[key]

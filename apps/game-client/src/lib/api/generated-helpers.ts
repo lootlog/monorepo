@@ -151,6 +151,7 @@ export const normalizeSoundSettings = (
     notificationsVolume: settings.notificationsVolume,
     detectorVolume: settings.detectorVolume,
     timersVolume: settings.timersVolume,
+    pingsVolume: settings.pingsVolume,
     notificationsConfig: normalizeSoundCategoryConfig(
       settings.notificationsConfig,
     ),
