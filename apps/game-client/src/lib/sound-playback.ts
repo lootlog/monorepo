@@ -1,16 +1,19 @@
 import { queryClient } from "@/lib/query-client";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
+import { getSoundSettingsControllerGetSettingsQueryKey } from "@/lib/api/generated/main/sound-settings/sound-settings";
 import type { UserSoundSettings } from "@lootlog/types";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
 type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
 
 let currentAudio: HTMLAudioElement | null = null;
+const SOUND_SETTINGS_QUERY_KEY =
+  getSoundSettingsControllerGetSettingsQueryKey();
 
 function getSettings(): UserSoundSettings | undefined {
   const cached = queryClient.getQueryData<
     UserSoundSettings | { data: UserSoundSettings }
-  >(["sound-settings"]);
+  >(SOUND_SETTINGS_QUERY_KEY);
 
   if (cached && "masterVolume" in cached) {
     return cached;
