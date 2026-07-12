@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useHotkeysStore } from "@/store/hotkeys.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -60,5 +60,30 @@ describe("useHotkeys", () => {
     });
 
     expect(useWindowsStore.getState()["quick-access"].open).toBe(false);
+  });
+
+  it("triggers a map ping when a text input still has focus", () => {
+    const input = document.createElement("input");
+    const canvas = document.createElement("canvas");
+    canvas.id = "GAME_CANVAS";
+    document.body.append(input, canvas);
+    input.focus();
+    const onMapPing = vi.fn(() => true);
+    renderHook(() => useHotkeys({ onMapPing }));
+
+    const event = new MouseEvent("mousedown", {
+      bubbles: true,
+      button: 1,
+      cancelable: true,
+    });
+    act(() => {
+      canvas.dispatchEvent(event);
+    });
+
+    input.remove();
+    canvas.remove();
+
+    expect(onMapPing).toHaveBeenCalledOnce();
+    expect(event.defaultPrevented).toBe(true);
   });
 });
