@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { migrateHotkeysState, type HotkeyBinding } from "./hotkeys.store";
+import { migrateHotkeysState } from "./hotkeys.store";
 
 describe("migrateHotkeysState", () => {
   it("adds missing default bindings without replacing custom bindings", () => {
-    const customToggleCommand: HotkeyBinding = {
+    const customToggleCommand = {
       key: "X",
       shift: false,
       ctrl: true,
@@ -16,10 +16,21 @@ describe("migrateHotkeysState", () => {
       },
     });
 
-    expect(migrated.bindings["toggle-command"]).toEqual(customToggleCommand);
+    expect(migrated.bindings["toggle-command"]).toEqual({
+      type: "keyboard",
+      ...customToggleCommand,
+    });
     expect(migrated.bindings["toggle-quick-access"]).toEqual({
+      type: "keyboard",
       key: "Q",
       shift: true,
+      ctrl: false,
+      alt: false,
+    });
+    expect(migrated.bindings["map-ping"]).toEqual({
+      type: "mouse",
+      button: 1,
+      shift: false,
       ctrl: false,
       alt: false,
     });

@@ -53,6 +53,10 @@ export interface DetectorSettings {
   TITAN: DetectorTypeSettings;
 }
 
+export interface MapPingPreferences {
+  enabled: boolean;
+}
+
 export type DetectorTypeSettingsPatch = Partial<DetectorTypeSettings>;
 
 export interface DetectorSettingsPatch {
@@ -67,8 +71,10 @@ export interface UserGameAccountPreferences {
   accountId: string;
   notifications: NotificationsSettings;
   detector: DetectorSettings;
+  pings: MapPingPreferences;
   hasStoredNotifications: boolean;
   hasStoredDetector: boolean;
+  hasStoredPings: boolean;
   hasStoredPreferences: boolean;
 }
 
@@ -77,7 +83,12 @@ export interface UpdateUserGameAccountPreferencesPayload {
     Record<NotificationType, Partial<NotificationSettings>>
   >;
   detector?: DetectorSettingsPatch;
+  pings?: Partial<MapPingPreferences>;
 }
+
+export const defaultMapPingPreferences: MapPingPreferences = {
+  enabled: false,
+};
 
 export const defaultNotificationsSettings: NotificationsSettings = {
   ELITE2: {

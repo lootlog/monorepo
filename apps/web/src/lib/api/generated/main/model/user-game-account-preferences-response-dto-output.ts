@@ -7,13 +7,16 @@
  */
 import type { UserGameAccountPreferencesResponseDtoOutputDetector } from './user-game-account-preferences-response-dto-output-detector.js';
 import type { UserGameAccountPreferencesResponseDtoOutputNotifications } from './user-game-account-preferences-response-dto-output-notifications.js';
+import type { UserGameAccountPreferencesResponseDtoOutputPings } from './user-game-account-preferences-response-dto-output-pings.js';
 
 export interface UserGameAccountPreferencesResponseDtoOutput {
   /** @minLength 1 */
   accountId: string;
   notifications: UserGameAccountPreferencesResponseDtoOutputNotifications;
   detector: UserGameAccountPreferencesResponseDtoOutputDetector;
+  pings: UserGameAccountPreferencesResponseDtoOutputPings;
   hasStoredNotifications: boolean;
   hasStoredDetector: boolean;
+  hasStoredPings: boolean;
   hasStoredPreferences: boolean;
 }

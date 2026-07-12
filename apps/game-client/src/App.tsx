@@ -30,6 +30,7 @@ import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferen
 import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-boundary-fallback";
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
+import { useMapPings } from "@/features/map-pings/use-map-pings";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
@@ -47,7 +48,8 @@ function AppContent() {
   useGameEventHandlers();
   useInit();
   useGameAccountPreferencesSync();
-  useHotkeys();
+  const triggerMapPing = useMapPings();
+  useHotkeys({ onMapPing: triggerMapPing });
   useTimerSettingsMutationsRegistry();
   usePartyFinderSocket();
   usePartyGatheringSocket();
