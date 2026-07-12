@@ -31,6 +31,8 @@ import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-bo
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
 import { useMapPings } from "@/features/map-pings/use-map-pings";
+import { GameClientAuthBoundary } from "@/components/auth/game-client-auth-boundary";
+import { useEffect } from "react";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
@@ -39,10 +41,6 @@ type LootlogApiWindow = Window & {
 };
 
 const lootlogApiWindow = window as LootlogApiWindow;
-if (lootlogApiWindow.__lootlogApiTeardown) {
-  lootlogApiWindow.__lootlogApiTeardown();
-}
-lootlogApiWindow.__lootlogApiTeardown = bootstrapPublicApi(queryClient);
 
 function AppContent() {
   useGameEventHandlers();
@@ -53,6 +51,20 @@ function AppContent() {
   useTimerSettingsMutationsRegistry();
   usePartyFinderSocket();
   usePartyGatheringSocket();
+
+  useEffect(() => {
+    lootlogApiWindow.__lootlogApiTeardown?.();
+    const teardown = bootstrapPublicApi(queryClient);
+    lootlogApiWindow.__lootlogApiTeardown = teardown;
+
+    return () => {
+      teardown();
+
+      if (lootlogApiWindow.__lootlogApiTeardown === teardown) {
+        delete lootlogApiWindow.__lootlogApiTeardown;
+      }
+    };
+  }, []);
 
   const { ConflictDialog } = useTimerSettingsSync();
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
@@ -85,16 +97,18 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark-theme" storageKey={THEME_STORAGE_KEY}>
       <QueryClientProvider client={queryClient}>
-        <SocketProvider>
-          <ErrorBoundary
-            FallbackComponent={AppErrorBoundaryFallback}
-            onError={(error, _info) => {
-              console.error("[ErrorBoundary]", error);
-            }}
-          >
-            <AppContent />
-          </ErrorBoundary>
-        </SocketProvider>
+        <ErrorBoundary
+          FallbackComponent={AppErrorBoundaryFallback}
+          onError={(error, _info) => {
+            console.error("[ErrorBoundary]", error);
+          }}
+        >
+          <GameClientAuthBoundary>
+            <SocketProvider>
+              <AppContent />
+            </SocketProvider>
+          </GameClientAuthBoundary>
+        </ErrorBoundary>
       </QueryClientProvider>
     </ThemeProvider>
   );

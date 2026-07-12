@@ -59,6 +59,46 @@ paths:
                 type: array
                 items:
                   type: string
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - SESSION_NOT_FOUND
+                      - ACCOUNT_NOT_FOUND
+                      - TOKEN_NOT_FOUND
+                      - TOKEN_EXPIRED
+                      - TOKEN_REFRESH_FAILED
+                  requiresReauth:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - error
+                  - requiresReauth
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - INTERNAL_ERROR
+                  requiresReauth:
+                    type: boolean
+                    enum:
+                      - false
+                required:
+                  - error
+                  - requiresReauth
       summary: Get scopes for the current user
       tags:
         - auth
@@ -100,6 +140,46 @@ paths:
                   - accessToken
                   - expiresIn
                   - scopes
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - SESSION_NOT_FOUND
+                      - ACCOUNT_NOT_FOUND
+                      - TOKEN_NOT_FOUND
+                      - TOKEN_EXPIRED
+                      - TOKEN_REFRESH_FAILED
+                  requiresReauth:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - error
+                  - requiresReauth
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - INTERNAL_ERROR
+                  requiresReauth:
+                    type: boolean
+                    enum:
+                      - false
+                required:
+                  - error
+                  - requiresReauth
       summary: Issue an IDP token for a user account
       tags:
         - auth

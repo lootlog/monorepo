@@ -5,15 +5,14 @@ import {
   AUTH_API_URL,
   BATTLELOG_API_URL,
 } from "@/config/api";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
-import { authClient } from "@/lib/auth-client";
 import { applyDevPermissionOverrideHeader } from "@/lib/dev-permission-override";
+import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
+import { isAuthErrorResponse } from "@lootlog/types";
 
 type ApiName = "default" | "battlelog" | "auth" | "activity";
 
 type ApiErrorLike = {
   message?: string | string[];
-  requiresReauth?: boolean;
 };
 
 type ApiRequestBody = unknown;
@@ -78,8 +77,6 @@ const BASE_URLS: Record<ApiName, string | undefined> = {
 };
 
 const clients = new Map<ApiName, ApiClient>();
-
-let reauthPromise: Promise<void> | null = null;
 
 const isObject = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null;
@@ -227,11 +224,19 @@ export const executeApiRequest = async <T>({
     return responseData as T;
   }
 
-  handleApiErrorSideEffects({
-    status: response.status,
-    data: responseData,
-    isPublicEndpoint: url.pathname.includes("/public/"),
-  });
+  const isPublicEndpoint = url.pathname.includes("/public/");
+  let authFailure = isAuthErrorResponse(responseData) ? responseData : null;
+
+  if (!authFailure && response.status === 401) {
+    authFailure = {
+      error: "SESSION_NOT_FOUND",
+      requiresReauth: true,
+    };
+  }
+
+  if (!isPublicEndpoint && authFailure?.requiresReauth) {
+    useAuthRecoveryStore.getState().requireRecovery(authFailure);
+  }
 
   throw new ApiError({
     status: response.status,
@@ -243,45 +248,6 @@ export const executeApiRequest = async <T>({
       response.statusText ??
       "Request failed",
   });
-};
-
-const handleReauthentication = (): Promise<void> => {
-  if (reauthPromise) {
-    return reauthPromise;
-  }
-
-  reauthPromise = authClient.signIn
-    .social({
-      provider: "discord",
-      callbackURL: window.location.href,
-      scopes: DISCORD_AUTH_SCOPES,
-    })
-    .then(() => undefined)
-    .catch((error) => {
-      console.warn("Reauthentication failed:", error);
-      throw error;
-    })
-    .finally(() => {
-      reauthPromise = null;
-    });
-
-  return reauthPromise;
-};
-
-const handleApiErrorSideEffects = ({
-  status,
-  data,
-  isPublicEndpoint,
-}: {
-  status?: number;
-  data: unknown;
-  isPublicEndpoint: boolean;
-}) => {
-  const requiresReauth = isApiErrorData(data) && data.requiresReauth === true;
-
-  if ((status === 401 || requiresReauth) && !isPublicEndpoint) {
-    void handleReauthentication();
-  }
 };
 
 const createApiClient = (api: ApiName): ApiClient => {

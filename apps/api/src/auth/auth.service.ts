@@ -118,13 +118,14 @@ export class AuthService {
 
         if (
           response.error === "TOKEN_NOT_FOUND" ||
-          response.error === "TOKEN_EXPIRED"
+          response.error === "TOKEN_EXPIRED" ||
+          response.error === "TOKEN_REFRESH_FAILED"
         ) {
           this.logger.log({
             level: "warn",
             message: `Token error for user ${userId}: ${response.error}`,
           });
-          throw new TokenExpiredError();
+          throw new TokenExpiredError(response.error);
         }
 
         this.logger.log({
@@ -213,7 +214,7 @@ export class AuthService {
   private isAccountNotFoundError(error: unknown): boolean {
     const response = this.getErrorResponse(error);
 
-    if (response?.status === 400 && response.data) {
+    if (response?.status === 401 && response.data) {
       const data = response.data as { error?: string };
       return data.error === "ACCOUNT_NOT_FOUND";
     }
@@ -236,7 +237,11 @@ export class AuthService {
 
     if (response?.data) {
       const data = response.data as { error?: string };
-      return data.error === "TOKEN_NOT_FOUND" || data.error === "TOKEN_EXPIRED";
+      return (
+        data.error === "TOKEN_NOT_FOUND" ||
+        data.error === "TOKEN_EXPIRED" ||
+        data.error === "TOKEN_REFRESH_FAILED"
+      );
     }
 
     return false;

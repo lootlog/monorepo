@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { authClient } from "@/lib/auth-client";
+import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 import { buildRequestUrl, executeApiRequest } from "./api-client";
 
 vi.mock("@/lib/auth-client", () => ({
@@ -15,6 +17,9 @@ describe("buildRequestUrl", () => {
   beforeEach(() => {
     mockFetch.mockReset();
     vi.stubGlobal("fetch", mockFetch);
+    vi.mocked(authClient.signIn.social).mockReset();
+    vi.mocked(authClient.signIn.social).mockResolvedValue({} as never);
+    useAuthRecoveryStore.getState().clearFailure();
   });
 
   it("keeps the API base path for paths starting with a slash", () => {
@@ -80,5 +85,35 @@ describe("buildRequestUrl", () => {
         method: "GET",
       }),
     ).resolves.toEqual({ detail: "Reauthentication required" });
+  });
+
+  it("does not start an OAuth redirect for unauthorized responses", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: "TOKEN_REFRESH_FAILED",
+          requiresReauth: true,
+        }),
+        {
+          status: 401,
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      ),
+    );
+
+    await expect(
+      executeApiRequest({
+        url: new URL("https://api.example.com/protected"),
+        method: "GET",
+      }),
+    ).rejects.toMatchObject({ status: 401 });
+
+    expect(authClient.signIn.social).not.toHaveBeenCalled();
+    expect(useAuthRecoveryStore.getState().failure).toEqual({
+      error: "TOKEN_REFRESH_FAILED",
+      requiresReauth: true,
+    });
   });
 });

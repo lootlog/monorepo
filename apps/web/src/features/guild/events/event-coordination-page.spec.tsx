@@ -57,6 +57,9 @@ vi.mock("@/hooks/api/use-guild-permissions", () => ({
 }));
 
 vi.mock("@/lib/api/generated/main/events/events", () => ({
+  getEventsMonitoringControllerGetCoordinationQueryKey: () => [
+    "event-coordination",
+  ],
   invalidateEventsMonitoringControllerGetCoordination: vi.fn(),
   useEventsAssignmentControllerSelfAssignMember: mocks.selfAssignMember,
   useEventsMonitoringControllerCloseRespawnWindow: mocks.closeRespawnWindow,

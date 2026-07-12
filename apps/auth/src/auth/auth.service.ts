@@ -1,14 +1,15 @@
 import {
-  BadRequestException,
   HttpException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from "@nestjs/common";
 import {
   type JwksKeys,
   validateToken,
 } from "@lootlog/api-helpers/auth/verify-jwt";
+import type { AuthReauthenticationErrorCode } from "@lootlog/types";
 import { APIError } from "better-auth/api";
 import { fromNodeHeaders } from "better-auth/node";
 import type { IncomingHttpHeaders } from "node:http";
@@ -35,6 +36,8 @@ type AccessTokenPayload = Awaited<ReturnType<typeof auth.api.getAccessToken>>;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   getSession(headers: IncomingHttpHeaders) {
     return auth.api.getSession({
       headers: fromNodeHeaders(headers),
@@ -134,11 +137,13 @@ export class AuthService {
           discordId: session.user.discordId,
         },
         {
-          missingException: new BadRequestException({
-            error: "Failed to retrieve IDP token",
+          missingException: new UnauthorizedException({
+            error: "TOKEN_NOT_FOUND",
+            requiresReauth: true,
           }),
           expiredException: new UnauthorizedException({
-            error: "IDP token has expired. Please reconnect your account.",
+            error: "TOKEN_EXPIRED",
+            requiresReauth: true,
           }),
         },
       );
@@ -150,15 +155,13 @@ export class AuthService {
       }
 
       if (error instanceof APIError) {
-        throw new HttpException(
-          { error: error.message },
-          this.getHttpStatus(error.status, 500),
-        );
+        throw this.mapBetterAuthError(error, {
+          userId: session.user.id,
+          discordId: session.user.discordId,
+        });
       }
 
-      throw new InternalServerErrorException({
-        error: "Failed to retrieve IDP token",
-      });
+      throw this.createInternalError();
     }
   }
 
@@ -170,11 +173,13 @@ export class AuthService {
       const token = await this.getDiscordAccessTokenOrThrow(
         { userId, discordId },
         {
-          missingException: new BadRequestException({
+          missingException: new UnauthorizedException({
             error: "TOKEN_NOT_FOUND",
+            requiresReauth: true,
           }),
           expiredException: new UnauthorizedException({
             error: "TOKEN_EXPIRED",
+            requiresReauth: true,
           }),
         },
       );
@@ -190,13 +195,10 @@ export class AuthService {
       }
 
       if (error instanceof APIError) {
-        throw new HttpException(
-          { error: "ACCOUNT_NOT_FOUND" },
-          this.getHttpStatus(error.status, 400),
-        );
+        throw this.mapBetterAuthError(error, { userId, discordId });
       }
 
-      throw new InternalServerErrorException({ error: "INTERNAL_ERROR" });
+      throw this.createInternalError();
     }
   }
 
@@ -232,7 +234,10 @@ export class AuthService {
     const session = await this.getSession(headers);
 
     if (!session) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException({
+        error: "SESSION_NOT_FOUND",
+        requiresReauth: true,
+      });
     }
 
     return session;
@@ -261,8 +266,49 @@ export class AuthService {
     return token as AccessTokenPayload & { accessToken: string };
   }
 
-  private getHttpStatus(status: string | number | undefined, fallback: number) {
-    return typeof status === "number" ? status : fallback;
+  private mapBetterAuthError(
+    error: APIError,
+    identity: AccessTokenRequest,
+  ): HttpException {
+    const betterAuthCode = error.body?.code;
+    let errorCode: AuthReauthenticationErrorCode | null = null;
+
+    if (betterAuthCode === "ACCOUNT_NOT_FOUND") {
+      errorCode = "ACCOUNT_NOT_FOUND";
+    } else if (
+      betterAuthCode === "FAILED_TO_GET_ACCESS_TOKEN" ||
+      betterAuthCode === "REFRESH_TOKEN_NOT_FOUND"
+    ) {
+      errorCode = "TOKEN_REFRESH_FAILED";
+    }
+
+    if (!errorCode) {
+      this.logger.error("Unexpected Better Auth access-token failure", {
+        userId: identity.userId,
+        discordId: identity.discordId,
+        betterAuthCode,
+      });
+      return this.createInternalError();
+    }
+
+    this.logger.warn("Discord access token requires reauthentication", {
+      userId: identity.userId,
+      discordId: identity.discordId,
+      errorCode,
+      betterAuthCode,
+    });
+
+    return new UnauthorizedException({
+      error: errorCode,
+      requiresReauth: true,
+    });
+  }
+
+  private createInternalError() {
+    return new InternalServerErrorException({
+      error: "INTERNAL_ERROR",
+      requiresReauth: false,
+    });
   }
 
   private parseExpiresAt(accessTokenExpiresAt: unknown): Date | null {

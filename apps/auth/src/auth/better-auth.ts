@@ -5,6 +5,7 @@ import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 import { env } from "src/config/env";
 import { betterAuthSchema, db } from "src/database/drizzle";
 import { authRedisSecondaryStorage } from "./auth-redis-storage";
+import { createDiscordProviderOptions } from "./discord-provider-options";
 
 export const auth = betterAuth({
   appName: "@lootlog/auth",
@@ -17,6 +18,10 @@ export const auth = betterAuth({
   secondaryStorage: authRedisSecondaryStorage,
   account: {
     encryptOAuthTokens: true,
+    accountLinking: {
+      enabled: true,
+      updateUserInfoOnLink: true,
+    },
   },
   user: {
     additionalFields: {
@@ -75,18 +80,12 @@ export const auth = betterAuth({
     admin({ adminUserIds: env.ADMIN_ACCOUNT_IDS }),
   ],
   socialProviders: {
-    discord: {
+    discord: createDiscordProviderOptions({
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
       redirectURI: `${env.APP_URL}/idp/callback/discord`,
-      prompt: "consent",
       scopes: DISCORD_AUTH_SCOPES,
-      mapProfileToUser: (profile) => ({
-        firstName: profile.given_name,
-        lastName: profile.family_name,
-        discordId: profile.id,
-      }),
-    },
+    }),
   },
 });
 

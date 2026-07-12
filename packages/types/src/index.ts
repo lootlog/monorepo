@@ -12,3 +12,4 @@ export * from "./common/discord.js";
 export * from "./common/event-settings.types.js";
 export * from "./common/notifications.types.js";
 export * from "./common/map-ping.types.js";
+export * from "./common/auth.types.js";

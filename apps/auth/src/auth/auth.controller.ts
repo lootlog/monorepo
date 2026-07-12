@@ -12,9 +12,12 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import {
   ApiBody,
   ApiHeader,
+  ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
+  type ApiResponseSchemaHost,
 } from "@nestjs/swagger";
 import { ZodSchemaValidationPipe } from "src/common/pipes/zod-schema-validation.pipe";
 import { AuthService } from "./auth.service";
@@ -22,6 +25,33 @@ import {
   type IdpTokenRequestDto,
   idpTokenRequestSchema,
 } from "./dto/idp-token-request.dto";
+
+const reauthenticationErrorSchema: ApiResponseSchemaHost["schema"] = {
+  type: "object",
+  properties: {
+    error: {
+      type: "string",
+      enum: [
+        "SESSION_NOT_FOUND",
+        "ACCOUNT_NOT_FOUND",
+        "TOKEN_NOT_FOUND",
+        "TOKEN_EXPIRED",
+        "TOKEN_REFRESH_FAILED",
+      ],
+    },
+    requiresReauth: { type: "boolean", enum: [true] },
+  },
+  required: ["error", "requiresReauth"],
+};
+
+const internalAuthErrorSchema: ApiResponseSchemaHost["schema"] = {
+  type: "object",
+  properties: {
+    error: { type: "string", enum: ["INTERNAL_ERROR"] },
+    requiresReauth: { type: "boolean", enum: [false] },
+  },
+  required: ["error", "requiresReauth"],
+};
 
 @ApiTags("auth")
 @Controller("auth")
@@ -70,6 +100,8 @@ export class AuthController {
       items: { type: "string" },
     },
   })
+  @ApiUnauthorizedResponse({ schema: reauthenticationErrorSchema })
+  @ApiInternalServerErrorResponse({ schema: internalAuthErrorSchema })
   getScopes(@Req() request: FastifyRequest) {
     return this.authService.getCurrentUserScopes(request.headers);
   }
@@ -100,6 +132,8 @@ export class AuthController {
       required: ["accessToken", "expiresIn", "scopes"],
     },
   })
+  @ApiUnauthorizedResponse({ schema: reauthenticationErrorSchema })
+  @ApiInternalServerErrorResponse({ schema: internalAuthErrorSchema })
   getIdpToken(
     @Body(new ZodSchemaValidationPipe(idpTokenRequestSchema))
     body: IdpTokenRequestDto,

@@ -8,5 +8,13 @@
 
 export * from './auth-controller-get-idp-token-body.js';
 export * from './auth-controller-get-idp-token200.js';
+export * from './auth-controller-get-idp-token401-error.js';
+export * from './auth-controller-get-idp-token401.js';
+export * from './auth-controller-get-idp-token500-error.js';
+export * from './auth-controller-get-idp-token500.js';
+export * from './auth-controller-get-scopes401-error.js';
+export * from './auth-controller-get-scopes401.js';
+export * from './auth-controller-get-scopes500-error.js';
+export * from './auth-controller-get-scopes500.js';
 export * from './auth-controller-verify200-status.js';
 export * from './auth-controller-verify200.js';

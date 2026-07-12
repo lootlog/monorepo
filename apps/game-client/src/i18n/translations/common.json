@@ -26,7 +26,21 @@
     "unmute": "Włącz dźwięk"
   },
   "auth": {
-    "notLoggedIn": "Nie jesteś zalogowany, zaloguj się, aby załadować dodatek"
+    "notLoggedIn": "Nie jesteś zalogowany, zaloguj się, aby załadować dodatek",
+    "reconnect": "Połącz ponownie",
+    "retryButton": "Spróbuj ponownie",
+    "checking": {
+      "title": "Sprawdzanie autoryzacji",
+      "description": "Lootlog uruchomi się po potwierdzeniu sesji i uprawnień Discord."
+    },
+    "reauth": {
+      "title": "Wymagane połączenie z Discordem",
+      "description": "Połącz konto ponownie, aby uruchomić Lootlog w grze."
+    },
+    "retry": {
+      "title": "Autoryzacja jest niedostępna",
+      "description": "Nie udało się sprawdzić sesji. Spróbuj ponownie za moment."
+    }
   },
   "errors": {
     "requestFailed": "Błąd żądania",

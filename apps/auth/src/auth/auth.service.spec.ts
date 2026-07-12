@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   HttpException,
   InternalServerErrorException,
   UnauthorizedException,
@@ -187,12 +186,18 @@ describe("AuthService", () => {
     it("rejects when there is no current session", async () => {
       vi.mocked(auth.api.getSession).mockResolvedValue(null);
 
-      await expect(service.getCurrentUserScopes({})).rejects.toBeInstanceOf(
-        UnauthorizedException,
+      await expect(service.getCurrentUserScopes({})).rejects.toSatisfy(
+        (error: unknown) =>
+          error instanceof UnauthorizedException &&
+          JSON.stringify(error.getResponse()) ===
+            JSON.stringify({
+              error: "SESSION_NOT_FOUND",
+              requiresReauth: true,
+            }),
       );
     });
 
-    it("maps missing discord tokens to a bad request", async () => {
+    it("marks missing discord tokens as requiring reauthentication", async () => {
       vi.mocked(auth.api.getSession).mockResolvedValue({
         session: {} as never,
         user: {
@@ -204,9 +209,12 @@ describe("AuthService", () => {
 
       await expect(service.getCurrentUserScopes({})).rejects.toSatisfy(
         (error: unknown) =>
-          error instanceof BadRequestException &&
+          error instanceof UnauthorizedException &&
           JSON.stringify(error.getResponse()) ===
-            JSON.stringify({ error: "Failed to retrieve IDP token" }),
+            JSON.stringify({
+              error: "TOKEN_NOT_FOUND",
+              requiresReauth: true,
+            }),
       );
     });
 
@@ -224,7 +232,10 @@ describe("AuthService", () => {
         (error: unknown) =>
           error instanceof InternalServerErrorException &&
           JSON.stringify(error.getResponse()) ===
-            JSON.stringify({ error: "Failed to retrieve IDP token" }),
+            JSON.stringify({
+              error: "INTERNAL_ERROR",
+              requiresReauth: false,
+            }),
       );
     });
   });
@@ -264,14 +275,18 @@ describe("AuthService", () => {
         (error: unknown) =>
           error instanceof UnauthorizedException &&
           JSON.stringify(error.getResponse()) ===
-            JSON.stringify({ error: "TOKEN_EXPIRED" }),
+            JSON.stringify({
+              error: "TOKEN_EXPIRED",
+              requiresReauth: true,
+            }),
       );
     });
 
-    it("maps Better Auth API errors to account-not-found responses", async () => {
+    it("maps Better Auth account lookup failures to account-not-found responses", async () => {
       vi.mocked(auth.api.getAccessToken).mockRejectedValue(
         new APIError("BAD_REQUEST", {
           message: "account not found",
+          code: "ACCOUNT_NOT_FOUND",
         }),
       );
 
@@ -283,12 +298,44 @@ describe("AuthService", () => {
       ).rejects.toSatisfy((error: unknown) => {
         return (
           error instanceof HttpException &&
-          error.getStatus() === 400 &&
+          error.getStatus() === 401 &&
           JSON.stringify(error.getResponse()) ===
-            JSON.stringify({ error: "ACCOUNT_NOT_FOUND" })
+            JSON.stringify({
+              error: "ACCOUNT_NOT_FOUND",
+              requiresReauth: true,
+            })
         );
       });
     });
+
+    it.each(["FAILED_TO_GET_ACCESS_TOKEN", "REFRESH_TOKEN_NOT_FOUND"])(
+      "maps Better Auth %s failures to token-refresh responses",
+      async (betterAuthCode) => {
+        vi.mocked(auth.api.getAccessToken).mockRejectedValue(
+          new APIError("BAD_REQUEST", {
+            message: "failed to get a valid access token",
+            code: betterAuthCode,
+          }),
+        );
+
+        await expect(
+          service.getIdpTokenResponse({
+            userId: "user-1",
+            discordId: "discord-1",
+          }),
+        ).rejects.toSatisfy((error: unknown) => {
+          return (
+            error instanceof HttpException &&
+            error.getStatus() === 401 &&
+            JSON.stringify(error.getResponse()) ===
+              JSON.stringify({
+                error: "TOKEN_REFRESH_FAILED",
+                requiresReauth: true,
+              })
+          );
+        });
+      },
+    );
   });
 
   describe("token expiry helpers", () => {

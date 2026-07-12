@@ -42,6 +42,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.4.1",
     "@lootlog/typescript-config": "workspace:*",
     "@nestjs/cli": "^11.0.23",
     "@nestjs/testing": "^11.1.26",

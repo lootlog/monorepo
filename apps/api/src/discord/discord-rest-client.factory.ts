@@ -57,7 +57,7 @@ export class DiscordRestClientFactory {
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         throw new UnauthorizedException({
-          message: "TOKEN_EXPIRED",
+          message: error.code,
           requiresReauth: true,
         });
       }

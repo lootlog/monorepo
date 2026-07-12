@@ -6,6 +6,7 @@ import {
   getApiClient,
   isApiError,
 } from "./api-client";
+import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 
 const mockFetch = vi.fn<typeof fetch>();
 
@@ -13,6 +14,7 @@ describe("api-client", () => {
   beforeEach(() => {
     mockFetch.mockReset();
     vi.stubGlobal("fetch", mockFetch);
+    useAuthRecoveryStore.setState({ failure: null });
   });
 
   it("builds request URLs with repeated array params and skips nullish values", () => {
@@ -150,6 +152,35 @@ describe("api-client", () => {
     }
 
     throw new Error("Expected executeApiRequest to throw");
+  });
+
+  it("requires recovery after an authentication failure", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: "TOKEN_REFRESH_FAILED",
+          requiresReauth: true,
+        }),
+        {
+          status: 401,
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      ),
+    );
+
+    await expect(
+      executeApiRequest({
+        url: new URL("https://api.example.com/protected"),
+        method: "GET",
+      }),
+    ).rejects.toMatchObject({ status: 401 });
+
+    expect(useAuthRecoveryStore.getState().failure).toEqual({
+      error: "TOKEN_REFRESH_FAILED",
+      requiresReauth: true,
+    });
   });
 
   it("serializes json bodies and includes credentials for the default client", async () => {

@@ -24,7 +24,11 @@ import type {
 
 import type {
   AuthControllerGetIdpToken200,
+  AuthControllerGetIdpToken401,
+  AuthControllerGetIdpToken500,
   AuthControllerGetIdpTokenBody,
+  AuthControllerGetScopes401,
+  AuthControllerGetScopes500,
   AuthControllerVerify200
 } from '../model';
 
@@ -187,7 +191,7 @@ export const getAuthControllerGetScopesQueryKey = () => {
     }
 
 
-export const getAuthControllerGetScopesQueryOptions = <TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>, request?: SecondParameter<typeof orvalFetchAuth>}
+export const getAuthControllerGetScopesQueryOptions = <TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<AuthControllerGetScopes401 | AuthControllerGetScopes500>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>, request?: SecondParameter<typeof orvalFetchAuth>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -206,14 +210,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type AuthControllerGetScopesQueryResult = NonNullable<Awaited<ReturnType<typeof authControllerGetScopes>>>
-export type AuthControllerGetScopesQueryError = ErrorType<unknown>
+export type AuthControllerGetScopesQueryError = ErrorType<AuthControllerGetScopes401 | AuthControllerGetScopes500>
 
 
 /**
  * @summary Get scopes for the current user
  */
 
-export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<unknown>>(
+export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<AuthControllerGetScopes401 | AuthControllerGetScopes500>>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>, request?: SecondParameter<typeof orvalFetchAuth>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -228,7 +232,7 @@ export function useAuthControllerGetScopes<TData = Awaited<ReturnType<typeof aut
 /**
  * @summary Get scopes for the current user
  */
-export const prefetchAuthControllerGetScopesQuery = async <TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<unknown>>(
+export const prefetchAuthControllerGetScopesQuery = async <TData = Awaited<ReturnType<typeof authControllerGetScopes>>, TError = ErrorType<AuthControllerGetScopes401 | AuthControllerGetScopes500>>(
  queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof authControllerGetScopes>>, TError, TData>, request?: SecondParameter<typeof orvalFetchAuth>}
 
   ): Promise<QueryClient> => {
@@ -297,7 +301,7 @@ export const authControllerGetIdpToken = async (authControllerGetIdpTokenBody: A
 
 
 
-export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<unknown>,
+export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<AuthControllerGetIdpToken401 | AuthControllerGetIdpToken500>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,{data: BodyType<AuthControllerGetIdpTokenBody>}, TContext>, request?: SecondParameter<typeof orvalFetchAuth>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,{data: BodyType<AuthControllerGetIdpTokenBody>}, TContext> => {
 
@@ -326,12 +330,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AuthControllerGetIdpTokenMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerGetIdpToken>>>
     export type AuthControllerGetIdpTokenMutationBody = BodyType<AuthControllerGetIdpTokenBody>
-    export type AuthControllerGetIdpTokenMutationError = ErrorType<unknown>
+    export type AuthControllerGetIdpTokenMutationError = ErrorType<AuthControllerGetIdpToken401 | AuthControllerGetIdpToken500>
 
     /**
  * @summary Issue an IDP token for a user account
  */
-export const useAuthControllerGetIdpToken = <TError = ErrorType<unknown>,
+export const useAuthControllerGetIdpToken = <TError = ErrorType<AuthControllerGetIdpToken401 | AuthControllerGetIdpToken500>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,{data: BodyType<AuthControllerGetIdpTokenBody>}, TContext>, request?: SecondParameter<typeof orvalFetchAuth>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof authControllerGetIdpToken>>,

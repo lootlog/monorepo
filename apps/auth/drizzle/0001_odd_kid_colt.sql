@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX "account_providerId_accountId_key" ON "account" USING btree ("providerId","accountId");--> statement-breakpoint
+CREATE UNIQUE INDEX "user_discordId_key" ON "user" USING btree ("discordId");

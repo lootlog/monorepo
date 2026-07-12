@@ -36,7 +36,10 @@ export const authUsers = pgTable(
     }),
     discordId: text("discordId").notNull(),
   },
-  (table) => [uniqueIndex("user_email_key").on(table.email)],
+  (table) => [
+    uniqueIndex("user_email_key").on(table.email),
+    uniqueIndex("user_discordId_key").on(table.discordId),
+  ],
 );
 
 export const authSessions = pgTable(
@@ -104,7 +107,13 @@ export const authAccounts = pgTable(
       withTimezone: true,
     }).notNull(),
   },
-  (table) => [index("account_userId_idx").on(table.userId)],
+  (table) => [
+    index("account_userId_idx").on(table.userId),
+    uniqueIndex("account_providerId_accountId_key").on(
+      table.providerId,
+      table.accountId,
+    ),
+  ],
 );
 
 export const authVerifications = pgTable(

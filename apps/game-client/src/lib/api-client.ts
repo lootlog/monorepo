@@ -1,5 +1,7 @@
 import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
 import { applyDevPermissionOverrideHeader } from "@/lib/dev-permission-override";
+import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
+import { isAuthErrorResponse } from "@lootlog/types";
 import { stringify } from "qs";
 
 type ApiType = "default" | "battlelog" | "auth" | "public";
@@ -228,6 +230,19 @@ export const executeApiRequest = async <T>({
 
   if (response.ok) {
     return responseData as T;
+  }
+
+  let authFailure = isAuthErrorResponse(responseData) ? responseData : null;
+
+  if (!authFailure && response.status === 401) {
+    authFailure = {
+      error: "SESSION_NOT_FOUND",
+      requiresReauth: true,
+    };
+  }
+
+  if (authFailure?.requiresReauth) {
+    useAuthRecoveryStore.getState().requireRecovery(authFailure);
   }
 
   throw new ApiError({
