@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SoundSettingsResponseDto } from "@/lib/api/generated/main/model";
 
-const { mockUpdateSettings, mockPlaySoundTest, mockSoundSettings } = vi.hoisted(
-  () => ({
+const { mockUpdateSettings, mockPlaySoundTest, mockSoundSettings, testState } =
+  vi.hoisted(() => ({
     mockUpdateSettings: vi.fn(),
     mockPlaySoundTest: vi.fn(),
     mockSoundSettings: {
@@ -19,8 +19,18 @@ const { mockUpdateSettings, mockPlaySoundTest, mockSoundSettings } = vi.hoisted(
       createdAt: "2024-01-01T00:00:00.000Z",
       updatedAt: "2024-01-01T00:00:00.000Z",
     } as SoundSettingsResponseDto,
-  }),
-);
+    testState: {
+      gameInterface: "ni" as "ni" | "si",
+    },
+  }));
+
+vi.mock("@/lib/game", () => ({
+  Game: {
+    get interface() {
+      return testState.gameInterface;
+    },
+  },
+}));
 
 vi.mock("@/components/settings/settings-section", () => ({
   SettingsSection: ({
@@ -100,6 +110,7 @@ describe("SoundsSettingsTab", () => {
   beforeEach(() => {
     mockUpdateSettings.mockReset();
     mockPlaySoundTest.mockReset();
+    testState.gameInterface = "ni";
   });
 
   it("renders translated settings copy instead of raw settings keys", () => {
@@ -121,5 +132,22 @@ describe("SoundsSettingsTab", () => {
     expect(
       screen.queryByText("settings.sounds.categories.notifications.label"),
     ).not.toBeInTheDocument();
+  });
+
+  it("hides map ping sound settings on the old interface", () => {
+    testState.gameInterface = "si";
+    render(<SoundsSettingsTab />);
+
+    expect(
+      screen.queryByRole("heading", { name: "Pingi na mapie" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows map ping sound settings on the new interface", () => {
+    render(<SoundsSettingsTab />);
+
+    expect(
+      screen.getByRole("heading", { name: "Pingi na mapie" }),
+    ).toBeInTheDocument();
   });
 });
