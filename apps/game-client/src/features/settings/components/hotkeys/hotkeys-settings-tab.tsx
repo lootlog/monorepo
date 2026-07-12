@@ -37,10 +37,21 @@ export const HotkeysSettingsTab = () => {
   const [capturingAction, setCapturingAction] = useState<HotkeyAction | null>(
     null,
   );
+  const [captureError, setCaptureError] = useState<string | null>(null);
   const { t } = useTranslation();
 
   useEffect(() => {
     if (!capturingAction) return;
+
+    const saveBinding = (binding: HotkeyBinding) => {
+      if (!setBinding(capturingAction, binding)) {
+        setCaptureError(t("settings.hotkeys.conflict"));
+        return;
+      }
+
+      setCaptureError(null);
+      setCapturingAction(null);
+    };
 
     const handleCapture = (event: KeyboardEvent) => {
       event.preventDefault();
@@ -54,22 +65,40 @@ export const HotkeysSettingsTab = () => {
         return;
       }
 
-      const binding: HotkeyBinding = {
+      saveBinding({
+        type: "keyboard",
         key: event.key.length === 1 ? event.key.toUpperCase() : event.key,
         shift: event.shiftKey,
         ctrl: event.ctrlKey,
         alt: event.altKey,
-      };
+      });
+    };
 
-      setBinding(capturingAction, binding);
-      setCapturingAction(null);
+    const handleMouseCapture = (event: MouseEvent) => {
+      if (event.button !== 1 && event.button !== 3 && event.button !== 4) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      saveBinding({
+        type: "mouse",
+        button: event.button,
+        shift: event.shiftKey,
+        ctrl: event.ctrlKey,
+        alt: event.altKey,
+      });
     };
 
     window.addEventListener("keydown", handleCapture, { capture: true });
+    window.addEventListener("mousedown", handleMouseCapture, { capture: true });
     return () => {
       window.removeEventListener("keydown", handleCapture, { capture: true });
+      window.removeEventListener("mousedown", handleMouseCapture, {
+        capture: true,
+      });
     };
-  }, [capturingAction, setBinding]);
+  }, [capturingAction, setBinding, t]);
 
   return (
     <SettingsTabLayout
@@ -100,9 +129,10 @@ export const HotkeysSettingsTab = () => {
                           ? "ll:border-blue-400 ll:bg-blue-400/10 ll:text-blue-400 ll:hover:bg-blue-400/20"
                           : ""
                       }`}
-                      onClick={() =>
-                        setCapturingAction(isCapturing ? null : config.action)
-                      }
+                      onClick={() => {
+                        setCaptureError(null);
+                        setCapturingAction(isCapturing ? null : config.action);
+                      }}
                       type="button"
                     >
                       {isCapturing
@@ -118,6 +148,11 @@ export const HotkeysSettingsTab = () => {
                       {t("common:actions.reset")}
                     </Button>
                   </div>
+                  {isCapturing && captureError ? (
+                    <p className="ll:text-[10px] ll:text-red-400">
+                      {captureError}
+                    </p>
+                  ) : null}
                 </SettingsControlRow>
               );
             })}

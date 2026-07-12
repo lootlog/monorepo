@@ -30,6 +30,7 @@ export const useUpdateSoundSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
+    scope: { id: "sound-settings" },
     mutationFn: (payload: UpdateSoundSettingsDto) =>
       soundSettingsControllerUpdateSettings(payload),
     onMutate: async (payload) => {

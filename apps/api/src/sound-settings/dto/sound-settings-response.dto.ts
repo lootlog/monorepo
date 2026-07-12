@@ -11,6 +11,7 @@ const SoundSettingsResponseSchema = z.object({
   notificationsVolume: z.number(),
   detectorVolume: z.number(),
   timersVolume: z.number(),
+  pingsVolume: z.number(),
   notificationsConfig: jsonValueSchema,
   detectorConfig: jsonValueSchema,
   timersConfig: jsonValueSchema,

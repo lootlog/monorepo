@@ -24,7 +24,13 @@
     "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
     "allowWorldSelectionDescription": "Nie działa na zgrupowanych timerach.",
     "animationEffectsLabel": "Efekty animacji",
-    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi."
+    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi.",
+    "mapPingsLabel": "Pingi na mapie",
+    "mapPingsDescription": "Pokazuj i wysyłaj pingi na mapie oraz Podręcznej mapie."
+  },
+  "mapPings": {
+    "rateLimited": "Poczekaj {{seconds}} s przed kolejnym pingiem.",
+    "temporarilyUnavailable": "Pingi są chwilowo niedostępne."
   },
   "battlePanel": {
     "title": "Ustawienia panelu walk",
@@ -35,12 +41,18 @@
   },
   "hotkeys": {
     "title": "Skróty klawiszowe",
-    "description": "Skonfiguruj skróty klawiszowe do otwierania okien.",
-    "capture": "Naciśnij klawisz...",
+    "description": "Skonfiguruj skróty klawiaturowe i przyciski myszy.",
+    "capture": "Naciśnij klawisz lub przycisk myszy...",
+    "conflict": "Ten skrót jest już przypisany do innej akcji.",
     "modifiers": {
       "ctrl": "Ctrl",
       "alt": "Alt",
       "shift": "Shift"
+    },
+    "mouseButtons": {
+      "1": "Środkowy przycisk",
+      "3": "Wstecz",
+      "4": "Dalej"
     },
     "resetTitle": "Reset",
     "restoreDefaultsLabel": "Przywróć domyślne",
@@ -79,6 +91,10 @@
       "invite-all": {
         "label": "Zaproś wszystkich",
         "description": "Zaproś wszystkich z party findera"
+      },
+      "map-ping": {
+        "label": "Ping na mapie",
+        "description": "Oznacz kafelek pod kursorem na mapie lub Podręcznej mapie"
       }
     }
   },
@@ -237,6 +253,7 @@
     "temporarilyUnavailable": "Tymczasowo niedostępne",
     "supportedFormats": "Obsługiwane formaty: mp3, wav, ogg. Zostaw puste, aby użyć domyślnego dźwięku.",
     "masterVolume": "Głośność główna",
+    "test": "Odtwórz dźwięk testowy",
     "categories": {
       "notifications": {
         "label": "Powiadomienia",
@@ -249,6 +266,10 @@
       "timers": {
         "label": "Timery",
         "description": "Dźwięki odgrywane są, gdy timer wejdzie na minimalny czas respawnu."
+      },
+      "pings": {
+        "label": "Pingi na mapie",
+        "description": "Dźwięk odgrywany przy pingach odebranych od innych graczy."
       }
     }
   },

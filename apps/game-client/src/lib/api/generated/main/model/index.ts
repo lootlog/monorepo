@@ -686,6 +686,7 @@ export * from './update-user-game-account-preferences-dto-notifications-message.
 export * from './update-user-game-account-preferences-dto-notifications-party-gathering.js';
 export * from './update-user-game-account-preferences-dto-notifications-tita-n.js';
 export * from './update-user-game-account-preferences-dto-notifications.js';
+export * from './update-user-game-account-preferences-dto-pings.js';
 export * from './update-user-game-account-preferences-dto.js';
 export * from './update-user-preferences-dto-color-mode.js';
 export * from './update-user-preferences-dto-mutes-npcs-item-npc-type.js';
@@ -708,6 +709,7 @@ export * from './user-game-account-preferences-response-dto-output-notifications
 export * from './user-game-account-preferences-response-dto-output-notifications-party-gathering.js';
 export * from './user-game-account-preferences-response-dto-output-notifications-tita-n.js';
 export * from './user-game-account-preferences-response-dto-output-notifications.js';
+export * from './user-game-account-preferences-response-dto-output-pings.js';
 export * from './user-game-account-preferences-response-dto-output.js';
 export * from './user-guild-list-response-dto-output.js';
 export * from './user-guild-permissions-dto-guild.js';

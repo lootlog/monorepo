@@ -822,6 +822,7 @@ model UserSoundSettings {
   notificationsVolume Float    @default(0.5)
   detectorVolume      Float    @default(0.5)
   timersVolume        Float    @default(0.5)
+  pingsVolume         Float    @default(0)
   notificationsConfig Json     @default("{}")
   detectorConfig      Json     @default("{}")
   timersConfig        Json     @default("{}")

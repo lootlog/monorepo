@@ -22,6 +22,8 @@ export enum GatewayEvent {
   CHAT_MESSAGES_CLEAR = "chat-messages-clear",
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
   PERMISSIONS_UPDATED = "permissions-updated",
+  MAP_PING_SEND = "map-ping:send",
+  MAP_PING_RECEIVE = "map-ping:receive",
 
   // Presence events
   PLAYER_PRESENCE_UPDATE = "player-presence:update",

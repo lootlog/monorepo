@@ -9,6 +9,7 @@ export interface UserSoundSettings {
   notificationsVolume: number;
   detectorVolume: number;
   timersVolume: number;
+  pingsVolume: number;
   notificationsConfig: Record<string, NpcTypeSoundConfig>;
   detectorConfig: Record<string, NpcTypeSoundConfig>;
   timersConfig: Record<string, NpcTypeSoundConfig>;
@@ -21,6 +22,7 @@ export interface UpdateSoundSettingsPayload {
   notificationsVolume?: number;
   detectorVolume?: number;
   timersVolume?: number;
+  pingsVolume?: number;
   notificationsConfig?: Record<string, Partial<NpcTypeSoundConfig>>;
   detectorConfig?: Record<string, Partial<NpcTypeSoundConfig>>;
   timersConfig?: Record<string, Partial<NpcTypeSoundConfig>>;

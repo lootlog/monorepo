@@ -166,3 +166,14 @@ export function hasFeatureRoomAccess(
 export function hasOnlinePlayersAccess(roles: GuildRole[]): boolean {
   return hasPermission(roles, Permission.LOOTLOG_ONLINE_PLAYERS_READ);
 }
+
+export function canViewOnlinePlayers(
+  guildData: UserGuildData,
+  discordId: string,
+): boolean {
+  return (
+    guildData.guild.ownerId === discordId ||
+    isOwnerOrAdminFromRoles(guildData.roles) ||
+    hasOnlinePlayersAccess(guildData.roles)
+  );
+}

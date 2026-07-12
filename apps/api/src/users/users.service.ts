@@ -18,6 +18,7 @@ import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.con
 import {
   DETECTOR_NPC_TYPES,
   defaultDetectorSettings,
+  defaultMapPingPreferences,
   defaultNotificationsSettings,
   type DetectorNpcType,
   type DetectorRoutingRule,
@@ -31,6 +32,7 @@ import {
   type NotificationSettings,
   type NotificationType,
   type NotificationsSettings,
+  type MapPingPreferences,
   type UpdateUserGameAccountPreferencesPayload,
   type UserGameAccountPreferences,
   type UserPreferences,
@@ -324,6 +326,7 @@ export class UsersService {
     const hasStoredNotifications =
       storedGameAccountSettings?.notifications !== undefined;
     const hasStoredDetector = storedGameAccountSettings?.detector !== undefined;
+    const hasStoredPings = storedGameAccountSettings?.pings !== undefined;
 
     return {
       accountId,
@@ -333,9 +336,12 @@ export class UsersService {
       detector: this.normalizeDetectorSettings(
         storedGameAccountSettings?.detector,
       ),
+      pings: this.normalizeMapPingPreferences(storedGameAccountSettings?.pings),
       hasStoredNotifications,
       hasStoredDetector,
-      hasStoredPreferences: hasStoredNotifications || hasStoredDetector,
+      hasStoredPings,
+      hasStoredPreferences:
+        hasStoredNotifications || hasStoredDetector || hasStoredPings,
     };
   }
 
@@ -362,6 +368,9 @@ export class UsersService {
     const currentDetector = this.normalizeDetectorSettings(
       storedGameAccountSettings?.detector,
     );
+    const currentPings = this.normalizeMapPingPreferences(
+      storedGameAccountSettings?.pings,
+    );
 
     const nextNotifications = preferences.notifications
       ? this.mergeNotificationsSettings(currentNotifications, {
@@ -373,17 +382,27 @@ export class UsersService {
           detector: preferences.detector,
         })
       : currentDetector;
+    const nextPings = preferences.pings
+      ? this.normalizeMapPingPreferences({
+          ...currentPings,
+          ...preferences.pings,
+        })
+      : currentPings;
     const hasStoredNotifications =
       storedGameAccountSettings?.notifications !== undefined ||
       preferences.notifications !== undefined;
     const hasStoredDetector =
       storedGameAccountSettings?.detector !== undefined ||
       preferences.detector !== undefined;
+    const hasStoredPings =
+      storedGameAccountSettings?.pings !== undefined ||
+      preferences.pings !== undefined;
 
     const nextSettings = {
-      ...(storedGameAccountSettings ?? {}),
+      ...storedGameAccountSettings,
       ...(hasStoredNotifications ? { notifications: nextNotifications } : {}),
       ...(hasStoredDetector ? { detector: nextDetector } : {}),
+      ...(hasStoredPings ? { pings: nextPings } : {}),
     };
 
     await this.prisma.userGameAccountSettings.upsert({
@@ -408,9 +427,12 @@ export class UsersService {
       accountId,
       notifications: nextNotifications,
       detector: nextDetector,
+      pings: nextPings,
       hasStoredNotifications,
       hasStoredDetector,
-      hasStoredPreferences: hasStoredNotifications || hasStoredDetector,
+      hasStoredPings,
+      hasStoredPreferences:
+        hasStoredNotifications || hasStoredDetector || hasStoredPings,
     };
   }
 
@@ -486,6 +508,18 @@ export class UsersService {
     return settings as Prisma.JsonObject & {
       notifications?: Partial<NotificationsSettings>;
       detector?: Partial<DetectorSettings>;
+      pings?: Partial<MapPingPreferences>;
+    };
+  }
+
+  private normalizeMapPingPreferences(
+    preferences: Partial<MapPingPreferences> | undefined,
+  ): MapPingPreferences {
+    return {
+      enabled:
+        typeof preferences?.enabled === "boolean"
+          ? preferences.enabled
+          : defaultMapPingPreferences.enabled,
     };
   }
 
