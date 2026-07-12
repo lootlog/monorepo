@@ -127,8 +127,6 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
     };
 
     const handleMouseDown = (event: MouseEvent) => {
-      if (isEditableElementActive()) return;
-
       const matchingAction = Object.entries(bindings).find(
         ([action, binding]) =>
           binding.type === "mouse" &&
@@ -136,7 +134,11 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
           (hotkeyScopes.get(action as HotkeyAction) === "global" ||
             hotkeyScopes.get(action as HotkeyAction) === "map-surface"),
       );
-      if (!matchingAction || !executeAction(event)) {
+      if (
+        !matchingAction ||
+        (isEditableElementActive() && matchingAction[0] !== "map-ping") ||
+        !executeAction(event)
+      ) {
         return;
       }
 

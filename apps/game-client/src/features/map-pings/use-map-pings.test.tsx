@@ -5,6 +5,7 @@ import { useMapPings } from "./use-map-pings";
 
 const testState = vi.hoisted(() => ({
   connected: true,
+  gameInterface: "ni" as "ni" | "si",
   joined: true,
   pingsEnabled: true,
 }));
@@ -45,13 +46,23 @@ vi.mock("@/hooks/use-current-game-account-preferences", () => ({
 
 vi.mock("@/lib/game", () => ({
   Game: {
+    getAccountId: () => "account-1",
     getWorldName: () => "aether",
     hero: { nick: "Sender" },
+    get interface() {
+      return testState.gameInterface;
+    },
     map: { id: 42 },
   },
 }));
 
 vi.mock("@/lib/sound-playback", () => ({ playSound }));
+
+vi.mock("@/lib/query-client", () => ({
+  queryClient: {
+    getQueryData: () => ({ pings: { enabled: testState.pingsEnabled } }),
+  },
+}));
 
 vi.mock("@/store/global.store", () => ({
   useGlobalStore: (
@@ -83,6 +94,7 @@ const createOutsideMouseEvent = () => {
 describe("useMapPings", () => {
   beforeEach(() => {
     testState.connected = true;
+    testState.gameInterface = "ni";
     testState.joined = true;
     testState.pingsEnabled = true;
     socketHandlers.clear();
@@ -115,6 +127,36 @@ describe("useMapPings", () => {
       { expectedMapId: 42, x: 12, y: 8 },
       expect.any(Function),
     );
+  });
+
+  it("uses the latest cached preference for a local ping trigger", () => {
+    testState.pingsEnabled = false;
+    const { result } = renderHook(() => useMapPings());
+    testState.pingsEnabled = true;
+
+    act(() => {
+      expect(result.current(createMapMouseEvent())).toBe(true);
+    });
+
+    expect(socket.emit).toHaveBeenCalledWith(
+      GatewayEvent.MAP_PING_SEND,
+      { expectedMapId: 42, x: 12, y: 8 },
+      expect.any(Function),
+    );
+  });
+
+  it("does not trigger a local ping on the old interface", () => {
+    testState.gameInterface = "si";
+    const { result } = renderHook(() => useMapPings());
+
+    act(() => {
+      expect(result.current(createMapMouseEvent())).toBe(false);
+    });
+
+    expect(controller.register).not.toHaveBeenCalled();
+    expect(controller.addOptimistic).not.toHaveBeenCalled();
+    expect(playSound).not.toHaveBeenCalled();
+    expect(socket.emit).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -196,5 +238,48 @@ describe("useMapPings", () => {
     expect(controller.addRemote).toHaveBeenCalledWith(event);
     expect(playSound).toHaveBeenCalledTimes(1);
     expect(playSound).toHaveBeenCalledWith("pings", "mapPing");
+  });
+
+  it("uses the latest cached preference for a received ping", () => {
+    testState.pingsEnabled = false;
+    renderHook(() => useMapPings());
+    testState.pingsEnabled = true;
+    const event: MapPingEvent = {
+      pingId: "remote-ping-after-enable",
+      world: "aether",
+      mapId: 42,
+      x: 12,
+      y: 8,
+      sender: { characterId: "123", name: "Other" },
+      createdAt: Date.now(),
+    };
+
+    act(() => {
+      socketHandlers.get(GatewayEvent.MAP_PING_RECEIVE)?.(event);
+    });
+
+    expect(controller.addRemote).toHaveBeenCalledWith(event);
+    expect(playSound).toHaveBeenCalledWith("pings", "mapPing");
+  });
+
+  it("ignores a received ping on the old interface", () => {
+    testState.gameInterface = "si";
+    renderHook(() => useMapPings());
+    const event: MapPingEvent = {
+      pingId: "remote-ping-on-si",
+      world: "aether",
+      mapId: 42,
+      x: 12,
+      y: 8,
+      sender: { characterId: "123", name: "Other" },
+      createdAt: Date.now(),
+    };
+
+    act(() => {
+      socketHandlers.get(GatewayEvent.MAP_PING_RECEIVE)?.(event);
+    });
+
+    expect(controller.addRemote).not.toHaveBeenCalled();
+    expect(playSound).not.toHaveBeenCalled();
   });
 });
