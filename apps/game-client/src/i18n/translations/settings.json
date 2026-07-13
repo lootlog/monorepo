@@ -30,7 +30,17 @@
   },
   "mapPings": {
     "rateLimited": "Poczekaj {{seconds}} s przed kolejnym pingiem.",
-    "temporarilyUnavailable": "Pingi są chwilowo niedostępne."
+    "temporarilyUnavailable": "Pingi są chwilowo niedostępne.",
+    "types": {
+      "attention": "Uwaga",
+      "enemy": "Wróg",
+      "regroup": "Zbiórka",
+      "avoid": "Unikaj"
+    },
+    "wheel": {
+      "cancelHint": "Anuluj",
+      "ariaLabel": "Koło pingów. Wybrano: {{selection}}"
+    }
   },
   "battlePanel": {
     "title": "Ustawienia panelu walk",

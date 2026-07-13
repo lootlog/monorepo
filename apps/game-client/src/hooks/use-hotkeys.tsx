@@ -10,10 +10,17 @@ import {
   canEnqueueReadyRoomInvitations,
   enqueueReadyRoomInvitations,
 } from "@/features/party-finder/ready-room-invitation-coordinator";
+import {
+  createMapPingPressIdentity,
+  isSameMapPingPressIdentity,
+  type MapPingPressIdentity,
+} from "@/features/map-pings/map-ping-interaction-controller";
 
 type HotkeyEvent = KeyboardEvent | MouseEvent;
 type UseHotkeysOptions = {
-  onMapPing?: (event: HotkeyEvent) => boolean;
+  onMapPingCancel?: () => void;
+  onMapPingEnd?: (event: HotkeyEvent) => void;
+  onMapPingStart?: (event: HotkeyEvent) => boolean;
 };
 
 const ACTION_TO_WINDOW: Partial<Record<HotkeyAction, WindowId>> = {
@@ -59,17 +66,49 @@ const hotkeyScopes = new Map(
   HOTKEY_ACTIONS.map(({ action, scope }) => [action, scope]),
 );
 
-export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
+export const useHotkeys = ({
+  onMapPingCancel,
+  onMapPingEnd,
+  onMapPingStart,
+}: UseHotkeysOptions = {}) => {
   const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const bindings = useHotkeysStore((s) => s.bindings);
+  const activeMapPingIdentityRef = useRef<MapPingPressIdentity | null>(null);
   const handledMouseRef = useRef<{
     button: number;
     ctrl: boolean;
     alt: boolean;
     shift: boolean;
   } | null>(null);
+  const handledMouseTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const rememberHandledMouse = (event: MouseEvent) => {
+      if (handledMouseTimeoutRef.current !== null) {
+        window.clearTimeout(handledMouseTimeoutRef.current);
+      }
+      handledMouseRef.current = {
+        button: event.button,
+        ctrl: event.ctrlKey,
+        alt: event.altKey,
+        shift: event.shiftKey,
+      };
+      handledMouseTimeoutRef.current = window.setTimeout(() => {
+        handledMouseRef.current = null;
+        handledMouseTimeoutRef.current = null;
+      }, 1_000);
+    };
+
+    const cancelActiveMapPing = () => {
+      if (!activeMapPingIdentityRef.current) {
+        return false;
+      }
+
+      activeMapPingIdentityRef.current = null;
+      onMapPingCancel?.();
+      return true;
+    };
+
     const executeAction = (event: HotkeyEvent) => {
       for (const [action, binding] of Object.entries(bindings)) {
         if (!matchesBinding(event, binding)) {
@@ -91,7 +130,16 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
         }
 
         if (hotkeyAction === "map-ping") {
-          return onMapPing?.(event) ?? false;
+          if (event instanceof KeyboardEvent && event.repeat) {
+            return activeMapPingIdentityRef.current !== null;
+          }
+
+          const handled = onMapPingStart?.(event) ?? false;
+          if (handled) {
+            activeMapPingIdentityRef.current =
+              createMapPingPressIdentity(event);
+          }
+          return handled || activeMapPingIdentityRef.current !== null;
         }
 
         return false;
@@ -101,10 +149,32 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && cancelActiveMapPing()) {
+        event.preventDefault();
+        return;
+      }
       if (isEditableElementActive()) return;
       if (executeAction(event)) {
         event.preventDefault();
       }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      const activeIdentity = activeMapPingIdentityRef.current;
+      if (
+        !activeIdentity ||
+        activeIdentity.kind !== "keyboard" ||
+        !isSameMapPingPressIdentity(
+          activeIdentity,
+          createMapPingPressIdentity(event),
+        )
+      ) {
+        return;
+      }
+
+      activeMapPingIdentityRef.current = null;
+      onMapPingEnd?.(event);
+      event.preventDefault();
     };
 
     const handleMouseDown = (event: MouseEvent) => {
@@ -124,15 +194,28 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
       }
 
       event.preventDefault();
-      handledMouseRef.current = {
-        button: event.button,
-        ctrl: event.ctrlKey,
-        alt: event.altKey,
-        shift: event.shiftKey,
-      };
-      window.setTimeout(() => {
-        handledMouseRef.current = null;
-      }, 1_000);
+      if (matchingAction[0] !== "map-ping") {
+        rememberHandledMouse(event);
+      }
+    };
+
+    const handleMouseUp = (event: MouseEvent) => {
+      const activeIdentity = activeMapPingIdentityRef.current;
+      if (
+        !activeIdentity ||
+        activeIdentity.kind !== "mouse" ||
+        !isSameMapPingPressIdentity(
+          activeIdentity,
+          createMapPingPressIdentity(event),
+        )
+      ) {
+        return;
+      }
+
+      activeMapPingIdentityRef.current = null;
+      onMapPingEnd?.(event);
+      event.preventDefault();
+      rememberHandledMouse(event);
     };
 
     const suppressHandledMouseEvent = (event: MouseEvent) => {
@@ -149,16 +232,25 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
     };
 
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
     window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mouseup", suppressHandledMouseEvent);
+    window.addEventListener("mouseup", handleMouseUp);
     window.addEventListener("auxclick", suppressHandledMouseEvent);
+    window.addEventListener("blur", cancelActiveMapPing);
     return () => {
+      cancelActiveMapPing();
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mouseup", suppressHandledMouseEvent);
+      window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("auxclick", suppressHandledMouseEvent);
+      window.removeEventListener("blur", cancelActiveMapPing);
+      if (handledMouseTimeoutRef.current !== null) {
+        window.clearTimeout(handledMouseTimeoutRef.current);
+        handledMouseTimeoutRef.current = null;
+      }
     };
-  }, [bindings, toggleOpen, onMapPing]);
+  }, [bindings, onMapPingCancel, onMapPingEnd, onMapPingStart, toggleOpen]);
 
   return null;
 };
