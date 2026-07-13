@@ -14,6 +14,11 @@ import type { NotificationVolunteer } from "@/store/notification-volunteers.stor
 import type { PartyGatheringSession } from "@/types/party-gathering";
 import type { MargonemAccountProof } from "@/lib/margonem-account-proof";
 import type {
+  AirTagObservationAck,
+  AirTagObservationBatch,
+  AirTagSubscriptionAck,
+  AirTagSubscriptionPayload,
+  AirTagUpdateEvent,
   MapPingAck,
   MapPingEvent,
   MapPingSendPayload,
@@ -101,6 +106,7 @@ type ServerToClientEvents = {
   }) => void;
   [GatewayEvent.CHAT_MESSAGES_CLEAR]: (data: { guildId: string }) => void;
   [GatewayEvent.MAP_PING_RECEIVE]: (data: MapPingEvent) => void;
+  [GatewayEvent.AIR_TAG_UPDATE]: (data: AirTagUpdateEvent) => void;
 };
 
 type ClientToServerEvents = {
@@ -136,6 +142,14 @@ type ClientToServerEvents = {
   [GatewayEvent.MAP_PING_SEND]: (
     data: MapPingSendPayload,
     acknowledgement: (response: MapPingAck) => void,
+  ) => void;
+  [GatewayEvent.AIR_TAG_SUBSCRIPTION]: (
+    data: AirTagSubscriptionPayload,
+    acknowledgement: (response: AirTagSubscriptionAck) => void,
+  ) => void;
+  [GatewayEvent.AIR_TAG_OBSERVATION]: (
+    data: AirTagObservationBatch,
+    acknowledgement: (response: AirTagObservationAck) => void,
   ) => void;
 };
 

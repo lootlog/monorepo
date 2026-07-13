@@ -21,6 +21,7 @@ import type {
 } from "./dto/reservation-event.dto";
 import type { ChatMessageEnvelopeDto } from "./dto/chat-message-envelope.dto";
 import type { ChatMessagesClearDto } from "./dto/chat-messages-clear.dto";
+import { AirTagService } from "./services/air-tag.service";
 
 describe("GatewayService", () => {
   let service: GatewayService;
@@ -66,6 +67,10 @@ describe("GatewayService", () => {
     broadcastPlayerDisconnectForGuildIds: vi.fn(),
   };
 
+  const mockAirTagService = {
+    clearSubscription: vi.fn(),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -96,6 +101,10 @@ describe("GatewayService", () => {
         {
           provide: PresenceService,
           useValue: mockPresenceService,
+        },
+        {
+          provide: AirTagService,
+          useValue: mockAirTagService,
         },
       ],
     }).compile();

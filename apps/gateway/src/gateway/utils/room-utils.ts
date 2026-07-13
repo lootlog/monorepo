@@ -70,6 +70,14 @@ export function buildUserGuildRoomName(
   return `user:${discordId}:guild:${guildId}`;
 }
 
+export function buildAirTagRoomName(
+  guildId: string,
+  world: string,
+  mapId: number,
+): string {
+  return `air-tags:${guildId}:${world}:${mapId}`;
+}
+
 export function parseRoomName(
   room: string,
 ): { guildId: string; feature: string; tier?: string } | null {

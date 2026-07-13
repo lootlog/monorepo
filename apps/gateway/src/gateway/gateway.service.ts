@@ -44,6 +44,7 @@ import { ActivityService } from "src/gateway/services/activity.service";
 import { PresenceService } from "src/gateway/services/presence.service";
 import { ActivityType } from "src/gateway/enums/activity-type.enum";
 import type { Socket } from "src/gateway/types/socket-user.type";
+import { AirTagService } from "src/gateway/services/air-tag.service";
 
 type FetchedSocket = Awaited<
   ReturnType<Gateway["server"]["fetchSockets"]>
@@ -66,6 +67,7 @@ export class GatewayService {
     private readonly guildsService: GuildsService,
     private readonly activityService: ActivityService,
     private readonly presenceService: PresenceService,
+    private readonly airTagService: AirTagService,
   ) {}
 
   handlePartyReadyRoomUpdate(data: PartyReadyRoomUpdateEnvelope) {
@@ -331,6 +333,8 @@ export class GatewayService {
         }
 
         await this.cleanupRemovedGuildSessions(socket, removedGuildIds);
+
+        await this.airTagService.clearSubscription(socket as unknown as Socket);
 
         socket.data.guilds = updatedGuilds;
 

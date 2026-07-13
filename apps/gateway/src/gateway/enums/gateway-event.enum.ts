@@ -25,6 +25,9 @@ export enum GatewayEvent {
   PERMISSIONS_UPDATED = "permissions-updated",
   MAP_PING_SEND = "map-ping:send",
   MAP_PING_RECEIVE = "map-ping:receive",
+  AIR_TAG_SUBSCRIPTION = "air-tag:subscription",
+  AIR_TAG_OBSERVATION = "air-tag:observation",
+  AIR_TAG_UPDATE = "air-tag:update",
 
   // Presence events
   PLAYER_PRESENCE_UPDATE = "player-presence:update",

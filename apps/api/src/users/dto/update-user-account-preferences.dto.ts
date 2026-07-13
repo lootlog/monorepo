@@ -52,6 +52,11 @@ const UpdateUserGameAccountPreferencesSchema = z.object({
       enabled: z.boolean().optional(),
     })
     .optional(),
+  airTags: z
+    .object({
+      enabled: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export class UpdateUserGameAccountPreferencesDto extends createZodDto(
