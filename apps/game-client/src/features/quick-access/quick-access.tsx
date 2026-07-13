@@ -71,10 +71,12 @@ export const QuickAccess = ({ hasActiveEventMode }: QuickAccessProps) => {
         title={t("window.title")}
         minHeight={56}
         minWidth={250}
+        widthMode="fit-content"
+        resizable={false}
         onClose={() => setOpen("quick-access", false)}
         closable={false}
       >
-        <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
+        <div className="ll:flex ll:w-max ll:gap-1 ll:px-1 ll:py-1">
           {hasActiveEventMode ? (
             <QuickAccessButton
               id="event-mode"

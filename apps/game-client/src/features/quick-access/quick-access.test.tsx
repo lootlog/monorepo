@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
 import { QuickAccess } from "./quick-access";
@@ -36,6 +36,7 @@ describe("QuickAccess", () => {
 
     expect(screen.getByText("Lootlog")).toBeInTheDocument();
     expect(screen.getByText("Timery")).toBeInTheDocument();
+    expect(document.querySelector("[data-ll-window-resize-handle]")).toBeNull();
   });
 
   it("does not render when quick access is closed", () => {
@@ -59,7 +60,7 @@ describe("QuickAccess", () => {
     expect(screen.queryByText("Tryb wydarzenia")).not.toBeInTheDocument();
 
     rerender(<QuickAccess hasActiveEventMode />);
-    screen.getByRole("button", { name: "Tryb wydarzenia" }).click();
+    fireEvent.click(screen.getByRole("button", { name: "Tryb wydarzenia" }));
 
     expect(useWindowsStore.getState()["event-mode"].open).toBe(true);
   });
