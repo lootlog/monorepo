@@ -22,6 +22,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
 import { useMapPings } from "@/features/map-pings/use-map-pings";
+import { useAirTags } from "@/features/air-tags/use-air-tags";
 import { useNotificationVolunteersSocket } from "@/features/party-finder/hooks/use-notification-volunteers-socket";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party-ready-room-expiry";
@@ -36,6 +37,7 @@ export const AppContent = () => {
   useInit();
   useGameAccountPreferencesSync();
   const mapPingHotkeyHandlers = useMapPings();
+  useAirTags();
   useHotkeys(mapPingHotkeyHandlers);
   useTimerSettingsMutationsRegistry();
   useNotificationVolunteersSocket();

@@ -122,6 +122,9 @@ export const useUpdateUserGameAccountPreferences = (
       const nextPings = payload.pings
         ? { ...previousData.pings, ...payload.pings }
         : previousData.pings;
+      const nextAirTags = payload.airTags
+        ? { ...previousData.airTags, ...payload.airTags }
+        : previousData.airTags;
 
       queryClient.setQueryData<UserGameAccountPreferencesResponseDtoOutput>(
         queryKey,
@@ -130,6 +133,7 @@ export const useUpdateUserGameAccountPreferences = (
           notifications: nextNotifications,
           detector: nextDetector,
           pings: nextPings,
+          airTags: nextAirTags,
           hasStoredNotifications:
             previousData.hasStoredNotifications ||
             payload.notifications !== undefined,
@@ -137,6 +141,8 @@ export const useUpdateUserGameAccountPreferences = (
             previousData.hasStoredDetector || payload.detector !== undefined,
           hasStoredPings:
             previousData.hasStoredPings || payload.pings !== undefined,
+          hasStoredAirTags:
+            previousData.hasStoredAirTags || payload.airTags !== undefined,
           hasStoredPreferences: true,
         },
       );

@@ -17,10 +17,12 @@ import type { Prisma } from "src/generated/prisma/client";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import {
   DETECTOR_NPC_TYPES,
+  defaultAirTagPreferences,
   defaultDetectorSettings,
   defaultMapPingPreferences,
   defaultNotificationsSettings,
   type DetectorNpcType,
+  type AirTagPreferences,
   type DetectorRoutingRule,
   type DetectorSettings,
   type DetectorSettingsPatch,
@@ -327,6 +329,7 @@ export class UsersService {
       storedGameAccountSettings?.notifications !== undefined;
     const hasStoredDetector = storedGameAccountSettings?.detector !== undefined;
     const hasStoredPings = storedGameAccountSettings?.pings !== undefined;
+    const hasStoredAirTags = storedGameAccountSettings?.airTags !== undefined;
 
     return {
       accountId,
@@ -337,11 +340,18 @@ export class UsersService {
         storedGameAccountSettings?.detector,
       ),
       pings: this.normalizeMapPingPreferences(storedGameAccountSettings?.pings),
+      airTags: this.normalizeAirTagPreferences(
+        storedGameAccountSettings?.airTags,
+      ),
       hasStoredNotifications,
       hasStoredDetector,
       hasStoredPings,
+      hasStoredAirTags,
       hasStoredPreferences:
-        hasStoredNotifications || hasStoredDetector || hasStoredPings,
+        hasStoredNotifications ||
+        hasStoredDetector ||
+        hasStoredPings ||
+        hasStoredAirTags,
     };
   }
 
@@ -371,6 +381,9 @@ export class UsersService {
     const currentPings = this.normalizeMapPingPreferences(
       storedGameAccountSettings?.pings,
     );
+    const currentAirTags = this.normalizeAirTagPreferences(
+      storedGameAccountSettings?.airTags,
+    );
 
     const nextNotifications = preferences.notifications
       ? this.mergeNotificationsSettings(currentNotifications, {
@@ -388,6 +401,12 @@ export class UsersService {
           ...preferences.pings,
         })
       : currentPings;
+    const nextAirTags = preferences.airTags
+      ? this.normalizeAirTagPreferences({
+          ...currentAirTags,
+          ...preferences.airTags,
+        })
+      : currentAirTags;
     const hasStoredNotifications =
       storedGameAccountSettings?.notifications !== undefined ||
       preferences.notifications !== undefined;
@@ -397,12 +416,16 @@ export class UsersService {
     const hasStoredPings =
       storedGameAccountSettings?.pings !== undefined ||
       preferences.pings !== undefined;
+    const hasStoredAirTags =
+      storedGameAccountSettings?.airTags !== undefined ||
+      preferences.airTags !== undefined;
 
     const nextSettings = {
       ...storedGameAccountSettings,
       ...(hasStoredNotifications ? { notifications: nextNotifications } : {}),
       ...(hasStoredDetector ? { detector: nextDetector } : {}),
       ...(hasStoredPings ? { pings: nextPings } : {}),
+      ...(hasStoredAirTags ? { airTags: nextAirTags } : {}),
     };
 
     await this.prisma.userGameAccountSettings.upsert({
@@ -428,11 +451,16 @@ export class UsersService {
       notifications: nextNotifications,
       detector: nextDetector,
       pings: nextPings,
+      airTags: nextAirTags,
       hasStoredNotifications,
       hasStoredDetector,
       hasStoredPings,
+      hasStoredAirTags,
       hasStoredPreferences:
-        hasStoredNotifications || hasStoredDetector || hasStoredPings,
+        hasStoredNotifications ||
+        hasStoredDetector ||
+        hasStoredPings ||
+        hasStoredAirTags,
     };
   }
 
@@ -509,6 +537,7 @@ export class UsersService {
       notifications?: Partial<NotificationsSettings>;
       detector?: Partial<DetectorSettings>;
       pings?: Partial<MapPingPreferences>;
+      airTags?: Partial<AirTagPreferences>;
     };
   }
 
@@ -520,6 +549,17 @@ export class UsersService {
         typeof preferences?.enabled === "boolean"
           ? preferences.enabled
           : defaultMapPingPreferences.enabled,
+    };
+  }
+
+  private normalizeAirTagPreferences(
+    preferences: Partial<AirTagPreferences> | undefined,
+  ): AirTagPreferences {
+    return {
+      enabled:
+        typeof preferences?.enabled === "boolean"
+          ? preferences.enabled
+          : defaultAirTagPreferences.enabled,
     };
   }
 

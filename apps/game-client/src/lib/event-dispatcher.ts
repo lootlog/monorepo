@@ -10,6 +10,7 @@ import { MapChangeProcessor } from "@/processors/map-change-processor";
 import { AfkProcessor } from "@/processors/afk-processor";
 import { FriendsProcessor } from "@/processors/friends-processor";
 import { PartyProcessor } from "@/processors/party-processor";
+import { OtherEventProcessor } from "@/processors/other-event-processor";
 
 const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "chat",
@@ -24,6 +25,7 @@ const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "friends",
   "friends_max",
   "party",
+  "other",
 ];
 
 function hasRelevantKey(event: GameEvent): boolean {
@@ -62,6 +64,7 @@ export class EventDispatcher {
   private afk = new AfkProcessor();
   private friends = new FriendsProcessor();
   private party = new PartyProcessor();
+  private other = new OtherEventProcessor();
 
   handleEvent = (event: GameEvent): void => {
     if (!hasRelevantKey(event)) return;
@@ -96,6 +99,10 @@ export class EventDispatcher {
 
     if (event.town !== undefined) {
       runSafe("map-change", () => this.mapChange.handle(event));
+    }
+
+    if (event.other !== undefined) {
+      runSafe("other", () => this.other.handle(event));
     }
 
     if (event.h !== undefined) {

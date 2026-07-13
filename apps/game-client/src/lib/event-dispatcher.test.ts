@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   npcsDeleteHandle: vi.fn(),
   npcsDetectionHandle: vi.fn(),
   npcsInitialDetectionHandle: vi.fn(),
+  otherHandle: vi.fn(),
   partyHandle: vi.fn(),
   partyInitialDetectionHandle: vi.fn(),
   gameEventsManager: {
@@ -99,6 +100,14 @@ vi.mock("@/processors/npcs-detection-processor", () => ({
   },
 }));
 
+vi.mock("@/processors/other-event-processor", () => ({
+  OtherEventProcessor: vi.fn(function OtherEventProcessor() {
+    return {
+      handle: mocks.otherHandle,
+    };
+  }),
+}));
+
 vi.mock("@/processors/party-processor", () => ({
   PartyProcessor: vi.fn(function PartyProcessor() {
     return {
@@ -119,6 +128,7 @@ const expectNoProcessorCalls = () => {
   expect(mocks.mapChangeHandle).not.toHaveBeenCalled();
   expect(mocks.npcsDeleteHandle).not.toHaveBeenCalled();
   expect(mocks.npcsDetectionHandle).not.toHaveBeenCalled();
+  expect(mocks.otherHandle).not.toHaveBeenCalled();
   expect(mocks.partyHandle).not.toHaveBeenCalled();
 };
 
@@ -187,12 +197,13 @@ describe("EventDispatcher", () => {
     expect(mocks.battleHandle).not.toHaveBeenCalled();
   });
 
-  it("routes status, map, friends and party packets independently", () => {
+  it("routes status, map, other, friends and party packets independently", () => {
     const dispatcher = new EventDispatcher();
     const event = {
       friends: [],
       friends_max: 20,
       h: { stasis: 1 },
+      other: { "1": { id: 1, x: 10, y: 20 } },
       party: { members: {} },
       town: { id: 1 },
     } as unknown as GameEvent;
@@ -202,9 +213,13 @@ describe("EventDispatcher", () => {
     expect(mocks.afkHandle).toHaveBeenCalledWith(event);
     expect(mocks.friendsHandle).toHaveBeenCalledWith(event);
     expect(mocks.mapChangeHandle).toHaveBeenCalledWith(event);
+    expect(mocks.otherHandle).toHaveBeenCalledWith(event);
     expect(mocks.partyHandle).toHaveBeenCalledWith(event);
     expect(mocks.chatHandle).not.toHaveBeenCalled();
     expect(mocks.npcsDetectionHandle).not.toHaveBeenCalled();
+    expect(mocks.mapChangeHandle.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.otherHandle.mock.invocationCallOrder[0],
+    );
   });
 
   it("runs initial detections and marks the friends payload strip", () => {
