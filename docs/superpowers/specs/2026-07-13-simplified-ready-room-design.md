@@ -21,18 +21,24 @@ Lootlog nigdy nie wykonuje akcji w grze w odpowiedzi na socket, timer, synchroni
 - Jedna postać, identyfikowana przez `(discordId, accountId, characterId)`, może należeć do jednego aktywnego pokoju. Próba dołączenia do innego pokoju kończy się `ALREADY_JOINED_ELSEWHERE` do czasu wycofania lub usunięcia.
 - Różne postacie należące do tego samego Discord ID pozostają niezależne. Druga postać organizatora może dołączyć do jego pokoju, ale dokładna postać organizująca nie może być uczestnikiem.
 - Status pokoju zostaje ograniczony do `ACTIVE` i `CANCELLED`. Nie istnieje `CLOSED`; aktywny pokój kończy się przez anulowanie albo wygaśnięcie po 30 minutach.
-- Kontrakt i klucze Redis przechodzą bezpośrednio na wersję v3. Nie powstaje migracja, warstwa zgodności ani odczyt v2.
+- Agregat, projekcje i koperty używają wyłącznie `schemaVersion: 3`, a Redis wyłącznie prefiksów `party-ready-room:v3:*`. Nie powstaje migracja, warstwa zgodności ani odczyt v2; stare klucze v2 są ignorowane i wygasają z własnym TTL.
 
 ## API i spójność
 
 - Istniejące `POST /applications` zmienia semantykę na atomowe dołączenie. Operacja w jednym skrypcie Redis zapisuje uczestnika, indeksuje pokój dla Discord ID i zakłada blokadę aktywnego pokoju dla postaci.
 - Powtórne dołączenie tej samej postaci do tego samego pokoju jest idempotentne. Konflikt CAS jest ponawiany maksymalnie cztery razy.
+- Blokada postaci, indeks organizatora i indeks użytkownika mają TTL nie dłuższy niż pozostały czas pokoju. Join usuwa blokadę wskazującą brakujący albo wygasły pokój przed oceną konfliktu; listowanie usuwa wygasłe wyniki i wpisy wskazujące brakujące pokoje.
 - Pozostają operacje: create, list, get, join, withdraw, remove participant, party observation i cancel.
 - Zostają usunięte endpointy i DTO: accept, decline, start/respond ready-check, reserve/acknowledge/annotate/reconcile invitation oraz close.
 - Zamiast rezerwacji zaproszeń powstaje niemutujące rozstrzygnięcie celów. Organizator przekazuje `participantId[]`, a API zwraca tylko nadal aktywne cele `OUTSIDE` jako `{ participantId, characterId }`.
-- Rozstrzygnięcie celów weryfikuje własność pokoju i jego aktywność, ale nie zapisuje statusu, komendy, wyniku ani rewizji. Wycofany, usunięty lub będący już w grupie uczestnik zostaje pominięty.
+- Rozstrzygnięcie celów deduplikuje wejście i wyjście po `participantId`, weryfikuje własność pokoju i jego aktywność, ale nie zapisuje statusu, komendy, wyniku ani rewizji. Wycofany, usunięty lub będący już w grupie uczestnik zostaje pominięty.
 - Projekcja organizatora zawiera wszystkich aktywnych uczestników i `ownedParticipantIds`. Projekcja uczestnika zawiera wyłącznie aktywne wpisy należące do jego Discord ID.
-- Obserwacja składu grupy pozostaje informacyjna i aktualizuje wyłącznie `partyPresence`.
+- Koperta aktualizacji jest dyskryminowaną unią `UPSERT` z projekcją v3 oraz `REMOVE` z `schemaVersion: 3` i `notificationId`. Klient odrzuca wszystkie koperty/projekcje inne niż v3.
+- Przed wycofaniem, usunięciem i anulowaniem serwis zachowuje listę dotychczasowych odbiorców. Użytkownik tracący ostatnią własną postać w pokoju otrzymuje `REMOVE`; jeśli ma inną aktywną postać, otrzymuje nową projekcję. Anulowanie wysyła `REMOVE` do organizatora i wszystkich dotychczasowych uczestników.
+- Autorytatywna synchronizacja REST usuwa lokalne projekcje v2 i nieobecne projekcje v3 z zachowaniem ochrony przed nowszym eventem socketowym. Naturalne wygaśnięcie jest usuwane przez istniejący timer klienta oraz kolejną synchronizację/listowanie.
+- Obserwacja składu grupy pozostaje informacyjna i aktualizuje wyłącznie `partyPresence`. DTO zawiera pełny snapshot identyfikatorów postaci, również pusty, oraz `(organizerAccountId, organizerCharacterId)` zgodne ze snapshotem organizatora.
+- Tylko klient działający na dokładnej postaci organizującej, po połączeniu, dołączeniu socketu i synchronizacji Ready Room, wysyła obserwację. API wymaga Discord ID organizatora oraz zgodności przekazanej tożsamości z agregatem. Wiele sesji tej samej postaci korzysta z CAS; ostatni skutecznie zatwierdzony pełny snapshot jest autorytatywny.
+- Zachowane zostają obecne reguły dostępu: wspólna uprawniona gildia dla create/list/get/join, zgodność świata i zakresu poziomów dla join, własność wpisu dla withdraw oraz własność pokoju dla remove, observation, target resolution i cancel.
 
 ## Klient gry i UI
 
@@ -40,18 +46,21 @@ Lootlog nigdy nie wykonuje akcji w grze w odpowiedzi na socket, timer, synchroni
 - `Zaproś wszystkich` pozostaje stale renderowane. Przycisk pojedynczy, zbiorczy i hotkey korzystają ze wspólnej kolejki FIFO.
 - Każdy zamiar zaproszenia przechowuje identyfikator pokoju, postać organizatora i wybrane `participantId`. Przed rozstrzygnięciem celów i przed każdym helperem klient ponownie sprawdza aktywny pokój oraz `(accountId, characterId)` organizatora.
 - Po odpowiedzi API klient wywołuje `inviteCharacterToParty` najwyżej raz na zwrócony cel w ramach danego zamiaru. Nie wysyła potwierdzenia wyniku do API.
+- Odpowiedź API jest granicą autorytatywnego sprawdzenia serwerowego. Tuż przed każdym helperem klient dodatkowo sprawdza najnowszą lokalną projekcję i lokalny skład grupy; nie istnieje atomowa gwarancja między tym ostatnim sprawdzeniem a komendą gry.
 - Do czasu zaobserwowania `IN_PARTY` kolejne kliknięcia mogą ponownie zapraszać tę samą postać. Jest to zamierzone zachowanie wspierające szybkie wielokrotne naciskanie przycisku.
 - Nowy uczestnik dołączony po utworzeniu wcześniejszego zamiaru nie jest do niego dopisywany; obejmie go następne kliknięcie `Zaproś wszystkich`.
 - Widok uczestnika pokazuje organizatora, obecność w grupie i akcję `Wycofaj się`. Nie pokazuje akceptacji, gotowości ani wyniku zaproszenia.
+- Tryb UI wynika z aktywnej postaci, nie wyłącznie z rodzaju projekcji. Dokładna postać organizująca widzi panel organizatora; druga postać tego samego Discord ID widzi własny status uczestnika i `Wycofaj się`, nawet gdy technicznie otrzymała bogatszą projekcję organizatora.
 - Aktywna postać wybiera swój pokój przez `(accountId, characterId)`. Ręczny selektor wielu pokoi nie jest potrzebny, ponieważ jedna postać może należeć tylko do jednego pokoju.
 - Stopka organizatora zawiera tylko `Zaproś wszystkich` i `Anuluj zbiórkę`. Znikają ready-check oraz `Zamknij po zebraniu grupy`.
 - Wszystkie usunięte etykiety i18n oraz nieużywane hooki i komponenty zostają skasowane zamiast zachowywania martwego interfejsu.
+- `Dodaj do znajomych` pozostaje osobną akcją gry dostępną wyłącznie przez dedykowane kliknięcie użytkownika; żaden socket, observer ani efekt nie może jej wywołać.
 
 ## Obsługa błędów
 
 - Brak połączenia, niesynchronizowany stan, niewłaściwa postać organizatora, wygasły pokój lub brak celów blokują utworzenie zamiaru bez akcji w grze.
 - Zmiana konta, postaci lub pokoju po kliknięciu unieważnia zamiar przed wykonaniem helpera.
-- Błąd rozstrzygnięcia celów nie uruchamia helpera. Błąd helpera jednego celu nie zatrzymuje kolejnych celów w tej samej kolejce.
+- Błąd rozstrzygnięcia celów nie uruchamia helpera dla danego zamiaru, ale kolejka FIFO przechodzi do następnego niezależnie przechwyconego kliknięcia. Błąd helpera jednego celu nie zatrzymuje kolejnych celów w tym samym zamiarze.
 - Wycofanie i usunięcie zwalniają blokadę postaci oraz usuwają indeks pokoju dopiero wtedy, gdy Discord ID nie ma w nim innej aktywnej postaci.
 - Anulowanie zwalnia indeks organizatora, indeksy uczestników i wszystkie blokady postaci, a następnie publikuje końcową projekcję do dotychczasowych odbiorców.
 
@@ -60,10 +69,12 @@ Lootlog nigdy nie wykonuje akcji w grze w odpowiedzi na socket, timer, synchroni
 - Dołączenie od razu umieszcza postać na liście organizatora i udostępnia akcję zaproszenia bez akceptacji.
 - Ta sama postać nie dołącza równocześnie do dwóch pokoi; różne postacie jednego Discord ID mogą należeć do różnych pokoi lub tego samego pokoju.
 - `Zaproś`, `Zaproś wszystkich` i hotkey wykonują akcję tylko po jawnym działaniu użytkownika, zachowują FIFO i pozwalają na kolejne szybkie próby do czasu `IN_PARTY`.
-- Wycofany, usunięty lub już obecny w grupie uczestnik nie jest zwracany przez rozstrzygnięcie celów i nie otrzymuje zaproszenia ze starego zamiaru.
+- Wycofany, usunięty lub już obecny w grupie uczestnik nie jest zwracany przez rozstrzygnięcie celów. Jeżeli zmiana dotrze do klienta przed ostatnim lokalnym sprawdzeniem, helper również zostaje pominięty; testy nie zakładają niemożliwej atomowości z zewnętrzną komendą gry.
 - Sockety, synchronizacja REST, obserwator grupy, timery i efekty React nie importują ani nie wywołują helpera gry.
+- Helper dodania znajomego jest osiągalny wyłącznie z dedykowanego handlera kliknięcia.
 - Testy API obejmują atomowe dołączenie, idempotencję, blokadę między pokojami, wiele postaci jednego Discord ID, wycofanie, usunięcie, anulowanie i rozstrzyganie celów.
-- Testy klienta obejmują pojedyncze i zbiorcze zaproszenia, szybkie wielokrotne kliknięcia, zmianę kontekstu organizatora, pominięcie nieaktualnych celów oraz uproszczone widoki.
+- Testy API/Redis obejmują również wygasłe blokady i indeksy, deduplikację celów oraz koperty `REMOVE` po ostatnim wpisie użytkownika i anulowaniu.
+- Testy klienta obejmują pojedyncze i zbiorcze zaproszenia, szybkie wielokrotne kliknięcia, kontynuację FIFO po błędzie, zmianę kontekstu organizatora, pominięcie celów nieaktualnych przed helperem, czyszczenie v2/v3 oraz uproszczone widoki organizatora i jego drugiej postaci.
 - Po zmianach przechodzą pełne testy API, gateway i game-client, buildy API/gateway/types/game-client, TypeScript web, OpenAPI/Orval, lint, formatowanie i `git diff --check`.
 
 ## Poza zakresem
