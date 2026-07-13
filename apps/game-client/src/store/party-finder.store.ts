@@ -89,6 +89,38 @@ export function selectAcceptedReadyRoomId(
   );
 }
 
+export function selectReadyRoomForCharacter(
+  state: PartyFinderState,
+  identity: ReadyRoomCharacterIdentity | null,
+): PartyReadyRoomProjection | null {
+  const ownedReadyRoom = selectOwnedReadyRoom(state);
+  const isOrganizerCharacter =
+    identity !== null &&
+    ownedReadyRoom !== null &&
+    identity.accountId === ownedReadyRoom.organizerCharacter.accountId &&
+    identity.characterId === ownedReadyRoom.organizerCharacter.characterId;
+
+  if (isOrganizerCharacter) return ownedReadyRoom;
+
+  const acceptedReadyRoomId = selectAcceptedReadyRoomId(state, identity);
+  if (acceptedReadyRoomId) {
+    return state.projections[acceptedReadyRoomId] ?? null;
+  }
+
+  const selectedReadyRoom = state.selectedRoomId
+    ? state.projections[state.selectedRoomId]
+    : undefined;
+  if (selectedReadyRoom?.status === "ACTIVE") return selectedReadyRoom;
+
+  return (
+    ownedReadyRoom ??
+    Object.values(state.projections).find(
+      (projection) => projection.status === "ACTIVE",
+    ) ??
+    null
+  );
+}
+
 export function captureReadyRoomSyncBaseline(
   state: PartyFinderState,
 ): ReadyRoomSyncBaseline {

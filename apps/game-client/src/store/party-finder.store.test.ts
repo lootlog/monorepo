@@ -8,6 +8,7 @@ import {
   selectAcceptedReadyRoomId,
   selectOwnedReadyRoom,
   selectPendingReadyRoomIds,
+  selectReadyRoomForCharacter,
   selectReadyRoomParticipantForCharacter,
   usePartyFinderStore,
 } from "@/store/party-finder.store";
@@ -138,6 +139,39 @@ describe("party-finder Ready Room store", () => {
 
     expect(
       selectOwnedReadyRoom(usePartyFinderStore.getState())?.notificationId,
+    ).toBe("room-1");
+  });
+
+  it("prioritizes the active character room over a room owned by the same Discord user", () => {
+    const ownedReadyRoom: PartyReadyRoomProjection = {
+      ...createProjection(2),
+      viewer: "ORGANIZER",
+      ownedParticipantIds: [],
+    };
+    const acceptedReadyRoom: PartyReadyRoomProjection = {
+      ...createProjection(
+        2,
+        createParticipant({
+          participantId: "participant-accepted",
+          application: "ACCEPTED",
+        }),
+      ),
+      notificationId: "room-2",
+    };
+
+    usePartyFinderStore
+      .getState()
+      .mergeProjections([ownedReadyRoom, acceptedReadyRoom]);
+
+    expect(
+      selectReadyRoomForCharacter(usePartyFinderStore.getState(), identity)
+        ?.notificationId,
+    ).toBe("room-2");
+    expect(
+      selectReadyRoomForCharacter(usePartyFinderStore.getState(), {
+        accountId: "organizer-account",
+        characterId: "organizer-character",
+      })?.notificationId,
     ).toBe("room-1");
   });
 

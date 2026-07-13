@@ -3,8 +3,7 @@ import { AnimatedWindow } from "@/components/animated-window";
 import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
 import {
-  selectAcceptedReadyRoomId,
-  selectOwnedReadyRoom,
+  selectReadyRoomForCharacter,
   usePartyFinderStore,
 } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
@@ -29,27 +28,11 @@ export const PartyFinder = () => {
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   const projections = usePartyFinderStore((state) => state.projections);
-  const selectedRoomId = usePartyFinderStore((state) => state.selectedRoomId);
   const selectRoom = usePartyFinderStore((state) => state.selectRoom);
-  const ownedReadyRoom = usePartyFinderStore(selectOwnedReadyRoom);
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
-  const acceptedReadyRoomId = usePartyFinderStore((state) =>
-    selectAcceptedReadyRoomId(state, currentCharacterIdentity),
+  const readyRoom = usePartyFinderStore((state) =>
+    selectReadyRoomForCharacter(state, currentCharacterIdentity),
   );
-  const activeSelectedRoom = selectedRoomId
-    ? projections[selectedRoomId]
-    : undefined;
-  const firstActiveRoom = Object.values(projections).find(
-    (projection) => projection.status === "ACTIVE",
-  );
-  const readyRoom =
-    ownedReadyRoom ??
-    (acceptedReadyRoomId ? projections[acceptedReadyRoomId] : undefined) ??
-    (activeSelectedRoom?.status === "ACTIVE"
-      ? activeSelectedRoom
-      : undefined) ??
-    firstActiveRoom ??
-    null;
   const participantRooms = Object.values(projections).filter(
     (projection): projection is PartyReadyRoomParticipantProjection =>
       projection.viewer === "PARTICIPANT" && projection.status === "ACTIVE",
