@@ -188,4 +188,31 @@ describe("migrateWindowsState", () => {
     expect(migrated.currentWindowFocus).toBe("online-players");
     expect(migrated.windowFocusHistory).toEqual(["online-players", "chat"]);
   });
+
+  it("adds the Event Mode window to older persisted state", () => {
+    const migrated = migrateWindowsState(
+      {
+        chat: {
+          open: true,
+          position: { x: 10, y: 20 },
+          hasDefinedPosition: true,
+          size: { width: 320, height: 260 },
+          opacity: 3,
+          locked: true,
+        },
+        windowFocusHistory: ["chat"],
+      },
+      8,
+    );
+
+    expect(migrated["event-mode"]).toEqual({
+      open: true,
+      position: { x: 0, y: 0 },
+      hasDefinedPosition: false,
+      size: { width: 290, height: 132 },
+      opacity: 4,
+      locked: false,
+    });
+    expect(migrated.chat.position).toEqual({ x: 10, y: 20 });
+  });
 });

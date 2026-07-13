@@ -9,6 +9,7 @@
     "chat": "Chat",
     "command": "Konsola",
     "settings": "Ustawienia",
+    "eventMode": "Tryb wydarzenia",
     "activePartyGathering": "Aktywne zbieranie grupy"
   },
   "guildPopover": {
