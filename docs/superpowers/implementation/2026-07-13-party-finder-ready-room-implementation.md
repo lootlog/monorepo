@@ -1,109 +1,100 @@
-# Party Finder Ready Room — zapis implementacji
+# Party Finder Ready Room v3 — zapis implementacji
 
-Data zakończenia: 2026-07-13  
+Data zakończenia: 2026-07-13
 Branch: `feature/lootlog-gameplay-coordination`
+Commit funkcjonalny: `3a104152a` (`feat: simplify party ready rooms`)
 
 ## Wynik
 
-Plan z `/Users/kamil/Desktop/lootlog-feature-research.md` został wdrożony jako efemeryczny Party Finder Ready Room obejmujący współdzielone kontrakty, API, Redis, RabbitMQ, gateway i klienta gry. Ready Room jest jedynym właścicielem stanu zbiórki. Nie zapisuje trwałej historii i wygasa po stałych 30 minutach.
+Ready Room został uproszczony do szybkiego klejenia grupy. Zgłoszenie gracza natychmiast dodaje wybraną postać jako aktywnego uczestnika pokoju. Organizator nie akceptuje zgłoszeń, nie prowadzi ręcznych statusów zaproszeń i nie uruchamia sprawdzania gotowości.
 
-Lootlog nie wykonuje automatycznych akcji w grze. Obserwatory, sockety, timery, synchronizacja REST, zmiany gotowości i zdarzenia grupy jedynie aktualizują stan informacyjny. Wywołania helperów gry pozostały wyłącznie w jawnych akcjach użytkownika:
+Zaproszenie w grze nadal jest wyłącznie jawną akcją użytkownika. Lootlog nie zaprasza automatycznie po zgłoszeniu, zdarzeniu socketowym, obserwacji składu ani zmianie stanu. Helper gry może zostać uruchomiony tylko przez:
 
-- pojedyncze zaproszenie do grupy po kliknięciu;
-- `Zaproś wszystkich` po kliknięciu albo użyciu skonfigurowanego hotkeya;
-- dodanie do znajomych po kliknięciu;
-- istniejące jawne akcje w czacie i na liście graczy online.
+- kliknięcie `Zaproś` przy konkretnej postaci;
+- kliknięcie `Zaproś wszystkich`;
+- skonfigurowany hotkey `invite-all`, który również jest świadomą akcją użytkownika.
 
-## Zaimplementowany zakres
+Dodanie do znajomych także pozostaje oddzielnym, jawnym kliknięciem.
 
-### Kontrakty i model domenowy
+## Finalny model v3
 
-- Dodano kontrakt Ready Room w wersji `schemaVersion: 2`, obejmujący stan pokoju, aplikacji, gotowości, zaproszeń, źródła zaproszenia i obecności w grupie.
-- Każde zgłoszenie ma stabilny `participantId` oraz rosnący `applicationVersion`. Komendy dotyczą konkretnego zgłoszenia, a nie całego konta Discord.
-- Dodano prywatne projekcje organizatora i uczestnika. Organizator widzi wszystkich kandydatów i własne `ownedParticipantIds`; uczestnik otrzymuje wyłącznie wpisy należące do jego Discord ID, bez danych obcych kandydatów.
-- Jedno Discord ID może zgłosić wiele różnych postaci, również drugą postać do pokoju organizowanego przez pierwszą. Dokładnie ta sama postać organizująca nie może zostać dodana jako uczestnik, a jedna postać nie może być zaakceptowana równocześnie w wielu pokojach.
-- Ponowne zgłoszenie po odrzuceniu albo wycofaniu zachowuje `participantId`, zwiększa `applicationVersion` i unieważnia komendy dotyczące poprzedniej wersji.
-- Rozdzielono `CLOSED` i `CANCELLED`; odbiorcy końcowej projekcji są pobierani ze stanu sprzed przejścia terminalnego.
+- Kontrakt używa wyłącznie `schemaVersion: 3` oraz kluczy Redis `party-ready-room:v3:*`. Stan v2 nie jest odczytywany ani migrowany.
+- Aktywny uczestnik zawiera tylko `participantId`, `discordId`, postać, `partyPresence` i znaczniki czasu.
+- Usunięto stany aplikacji, gotowość, status i źródło zaproszenia, rezerwacje komend, potwierdzenia, adnotacje oraz `readyCheck`.
+- Agregat ma stan `ACTIVE` albo serwerowy `CANCELLED`. `CANCELLED` jest 60-sekundowym tombstonem i nigdy nie jest wysyłany jako projekcja.
+- Aktualizacja klienta jest unią `UPSERT` albo `REMOVE`. `REMOVE` wygrywa z `UPSERT` o tej samej rewizji, co zapobiega odtwarzaniu usuniętego pokoju przez spóźniony event.
+- Projekcja ma zawsze status `ACTIVE`. Organizator widzi wszystkie wpisy, a uczestnik tylko wpisy należące do jego Discord ID.
 
-### API i Redis
+## Wiele kont i postaci
 
-- Dodano pełne REST API do tworzenia, listowania i pobierania Ready Room oraz do obsługi zgłoszeń, akceptacji, odrzucenia, usunięcia i wycofania.
-- Dodano rundy sprawdzania gotowości wraz z odpowiedziami uczestników.
-- Dodano kompletne obserwacje składu grupy, w tym pustą grupę.
-- Dodano jawne zamknięcie i anulowanie zbiórki.
-- Dodano dwufazowe zaproszenia: semantyczną rezerwację identyfikatorów komend, osobne potwierdzenie każdego celu i idempotencję po `commandId`.
-- Rezerwacja wiąże komendę z `participantId` i `applicationVersion`, serializuje konflikty maksymalnie czterema próbami CAS i jawnie zastępuje poprzednią rezerwację. Spóźnione potwierdzenie starej wersji nie może nadpisać nowej aplikacji.
-- Dodano ręczne oznaczenie zaproszenia oraz jawne rozstrzygnięcie wygasłego `UNKNOWN` jako `SENT`, `FAILED` albo `NOT_MARKED`.
-- Dodano jawny retry tworzący nowy `commandId`; serwer nigdy sam nie ponawia akcji gry.
-- Dodano atomowe operacje Redis/Lua, prefiksy kluczy v2, indeks organizatora, indeks pokoi per Discord ID, blokady zaakceptowanego pokoju per `(discordId, accountId, characterId)`, stały TTL oraz 60-sekundowy tombstone stanu terminalnego.
-- Indeks użytkownika pozostaje aktywny tak długo, jak istnieje choć jedno jego aktywne zgłoszenie; listowanie usuwa duplikaty projekcji.
-- Operacje lokalne uczestnika i potwierdzenia zaproszeń używają maksymalnie czterech prób CAS. Po wyczerpaniu zwracany jest `REVISION_CONFLICT`.
-- Próba utworzenia kolejnej aktywnej zbiórki zwraca `ACTIVE_GATHERING_EXISTS`; poprzedni pokój nie jest po cichu anulowany.
-- Zbiórki rozpoczynane z detektora NPC tworzą ten sam Ready Room z tym samym `notificationId`. Snapshot organizatora jest wymagany w takim żądaniu.
-- Stary, równoległy mechanizm właścicielski zbiórek został usunięty z `MessagingService`. Zwykłe powiadomienia NPC i ich dotychczasowy kanał ochotników pozostały osobnym przepływem.
-- Zaktualizowano OpenAPI i wygenerowano klientów dla game-client oraz web.
+- Tożsamość wpisu oraz rola w interfejsie są wybierane po `accountId + characterId`, a nie wyłącznie po Discord ID.
+- Dwie przeglądarki z tym samym Discord ID mogą niezależnie dodać dwie różne postacie. Oba wpisy pojawiają się w projekcji tego użytkownika.
+- Użytkownik organizujący pokój jedną postacią może dołączyć do tego samego pokoju inną własną postacią.
+- Jedna postać, identyfikowana globalnie przez `(world, characterId)`, może zajmować tylko jeden aktywny Ready Room — jako organizator albo uczestnik.
+- Ponowne dołączenie tej samej postaci przez tego samego właściciela do tego samego pokoju jest idempotentne. Konflikt właściciela zwraca `CHARACTER_ALREADY_JOINED`, a zajęcie innego pokoju `ALREADY_JOINED_ELSEWHERE`.
+- Wycofanie lub usunięcie jednego alta zwalnia tylko jego blokadę. Indeks wspólnego Discord ID pozostaje aktywny, dopóki w pokoju istnieje inny wpis tego użytkownika.
 
-### Publikacja i gateway
+## API, Redis i publikacja
 
-- API publikuje pełną, spersonalizowaną projekcję po udanym commicie; błąd publikacji nie cofa stanu Redis.
-- Dodano routing key `users.party-ready-room.updated`.
-- Gateway dołącza użytkownika do prywatnych pokoi `user:<discordId>:guild:<guildId>` i kieruje projekcję tylko do wskazanego odbiorcy w uprawnionej gildii.
-- Dodano walidację koperty, retry, DLQ i testy prywatności routingu.
+- `POST /applications` wykonuje atomowe dołączenie uczestnika bez kroku akceptacji.
+- Organizator może usunąć uczestnika, uczestnik może wycofać własny wpis, a organizator może anulować zbiórkę.
+- `POST /invitations/targets` jest bezstanowym resolverem maksymalnie 100 identyfikatorów uczestników. Zwraca unikalne, nadal aktywne postacie `OUTSIDE` i nie zapisuje informacji o zaproszeniu.
+- Obserwacja grupy przyjmuje kompletny snapshot, także pusty, oraz dokładną tożsamość konta i postaci organizatora. Aktualizuje wyłącznie `IN_PARTY`/`OUTSIDE`.
+- Redis/Lua atomowo tworzy pokój, zakłada blokadę postaci, dołącza uczestnika, zwalnia pojedynczy wpis i usuwa wszystkie indeksy przy anulowaniu.
+- API publikuje spersonalizowaną kopertę `{ recipientDiscordId, eligibleGuildIds, update }`. Gateway waliduje prywatność i kieruje ją tylko do pokoi właściwego użytkownika i gildii.
+- Zaktualizowano OpenAPI oraz klientów Orval dla game-client i web; usunięto wygenerowane modele i endpointy starego przepływu.
 
-### Game client
+## Game client i interfejs
 
-- Zastąpiono persystowany lokalny stan zbiórki magazynem projekcji v2 indeksowanych po `notificationId`.
-- Merge REST/socket nie cofa rewizji ani nie zastępuje projekcji organizatora równorzędną projekcją uczestnika. Synchronizacja autorytatywna usuwa tylko pokoje niezmienione od jej rozpoczęcia, dzięki czemu nowszy event socketowy nie może zostać przypadkowo skasowany.
-- Dodano synchronizację początkową, aktualizacje socketowe, usuwanie wygasłych pokoi i selektory wpisów po `accountId + characterId`.
-- Bieżąca druga postać wybiera własny zaakceptowany pokój nawet wtedy, gdy to samo Discord ID organizuje inny pokój. Panel organizatora ma pierwszeństwo tylko na faktycznej postaci organizującej.
-- Dodano widok organizatora i uczestnika, listę kandydatów, status aplikacji, gotowości, zaproszenia i obecności w grupie.
-- Widok organizatora pokazuje również status własnej drugiej postaci i pozwala jej odpowiedzieć na gotowość albo wycofać własne zgłoszenie.
-- Dodano akceptację, odrzucenie, usunięcie, wycofanie, rundę gotowości, ręczne statusy zaproszeń, zamknięcie i anulowanie.
-- `Zaproś wszystkich` jest stale renderowane i można je szybko naciskać wielokrotnie. Kolejne kliknięcia i hotkeye trafiają do wspólnej kolejki FIFO; serwer rezerwuje tylko nadal poprawne cele, więc później zaakceptowani gracze mogą zostać objęci kolejnym kliknięciem.
-- Przycisk zbiorczy, przyciski pojedynczych graczy i hotkey `invite-all` używają tego samego koordynatora. Helper gry jest serializowany i uruchamiany najwyżej raz dla każdej skutecznej rezerwacji.
-- Przed rezerwacją oraz przed każdym wywołaniem helpera ponownie sprawdzana jest tożsamość postaci organizującej. Zmiana konta, postaci albo kontekstu zbiórki zatrzymuje akcję; klient nie zaprasza w imieniu niewłaściwej postaci.
-- Potwierdzenie wyniku jest niezależne od wywołania helpera i ma łącznie trzy próby z tym samym `commandId`. Retry potwierdzenia nigdy nie powtarza akcji w grze, a `STALE_COMMAND` jest stanem terminalnym.
-- `Zamknij po zebraniu grupy` jest jawnym kliknięciem kończącym Ready Room jako `CLOSED`. Nie wykonuje akcji w grze i nie jest uruchamiane automatycznie przez skład grupy.
-- Obserwator grupy wysyła wyłącznie znormalizowany snapshot identyfikatorów postaci, począwszy od pełnego pustego snapshotu; nie wykonuje żadnej akcji w grze.
-- Zbiórki z formularza, detektora NPC, powiadomień oraz kart czatu trafiają do Ready Room.
-- Usunięto wcześniejsze ciche anulowanie przed utworzeniem kolejnej zbiórki oraz lokalny pięciosekundowy timeout zaproszeń.
-- Wszystkie nowe teksty interfejsu korzystają z i18n, a komponenty zachowują zasadę jednego komponentu na plik.
+- Usunięto selektor zgłoszeń, akceptację, odrzucenie, gotowość, ręczne oznaczanie zaproszeń oraz `Zamknij po zebraniu grupy`.
+- Widok organizatora zawiera listę aktywnych postaci z akcjami: dodaj do znajomych, zaproś i usuń.
+- Stopka organizatora zawiera stale dostępne `Zaproś wszystkich` oraz `Anuluj zbiórkę`.
+- Widok uczestnika pokazuje organizatora, obecność własnej aktywnej postaci i akcję wycofania.
+- Szybkie, wielokrotne kliknięcia `Zaproś wszystkich` nie są scalane ani blokowane. Każde jawne kliknięcie trafia do wspólnej kolejki FIFO.
+- Przed resolverem oraz przed każdym helperem gry klient ponownie sprawdza pokój, połączenie, aktywne konto i postać organizatora, obecność celu w Ready Room oraz lokalny skład grupy.
+- Błąd jednego celu nie blokuje kolejnych celów ani następnego kliknięcia. Uczestnik pozostaje możliwy do ponownego zaproszenia, dopóki obserwator nie oznaczy go jako `IN_PARTY`.
+- Synchronizacja REST/socket przechowuje watermark rewizji dla stanów `PRESENT` i `REMOVED`. Brak pokoju w autorytatywnym REST tworzy watermark usunięcia bez kasowania nowszego eventu socketowego.
+- Wszystkie teksty interfejsu korzystają z i18n; usunięto nieużywane teksty starego procesu.
+
+## Usunięte funkcjonalności
+
+- akceptowanie i odrzucanie zgłoszeń przez organizatora;
+- stany `APPLIED`, `ACCEPTED`, `DECLINED`, `WITHDRAWN`;
+- sprawdzanie gotowości i odpowiedzi uczestników;
+- ręczne oznaczanie zaproszenia jako wysłane, niewysłane lub nieznane;
+- rezerwacje, potwierdzenia i retry statusów zaproszeń;
+- przycisk i endpoint `Zamknij po zebraniu grupy` oraz stan `CLOSED`;
+- kompatybilność z kontraktem i kluczami Redis v2.
 
 ## Weryfikacja
 
-Wykonane i zakończone powodzeniem:
+Zakończone powodzeniem:
 
-- API: 92 pliki testowe, 947 testów.
-- Gateway: 17 plików testowych, 189 testów.
-- Game client: 143 pliki testowe, 668 testów.
-- Skoncentrowane testy Ready Room API: 5 plików, 35 testów.
-- Skoncentrowany test regresji wyboru pokoju aktywnej postaci: 6 testów magazynu Party Finder.
-- Produkcyjne buildy API, gateway i `@lootlog/types`.
-- Produkcyjny build game-client (`tsc`, Vite i kopiowanie entrypointu).
-- TypeScript web (`tsc -b --pretty false`).
-- Generowanie i kontrola OpenAPI oraz klientów Orval.
-- Pełna kontrola formatowania 2696 plików, `git diff --check`, lint objętych zmianą i hooki pre-commit.
-- Audyt wyszukiwania potwierdził brak starych `silentCancel`, lokalnych `inviteStates` oraz wygenerowanych endpointów starego create/cancel.
-- Audyt wywołań `inviteCharacterToParty` potwierdził, że nowy Party Finder używa go tylko we współdzielonym koordynatorze uruchamianym przez jawny przycisk/hotkey. Sockety, obserwatory, timery i efekty go nie importują ani nie wywołują.
+- API: 92 pliki testowe, 942 testy;
+- Gateway: 17 plików testowych, 189 testów;
+- Game client: 142 pliki testowe, 669 testów;
+- skoncentrowane testy Ready Room API: 5 plików, 30 testów;
+- buildy produkcyjne API, gateway, game-client i web;
+- build `@lootlog/types`;
+- generowanie i kontrola OpenAPI oraz klientów Orval;
+- lint wszystkich plików objętych zmianą: 0 ostrzeżeń i 0 błędów;
+- `git diff --check` oraz pełne hooki pre-commit;
+- audyt wyszukiwania potwierdzający brak starego kontraktu v2 i usuniętych akcji w kodzie Ready Room;
+- audyt wywołań `inviteCharacterToParty`: nowy Party Finder wywołuje go tylko w koordynatorze uruchamianym przez jawne kliknięcie lub hotkey.
 
-Znane, niezwiązane ostrzeżenia builda pozostają bez zmian: istniejąca pseudoklasa CSS `.all:b` oraz ścieżki kursora rozwiązywane w runtime.
+Znane, niezwiązane ostrzeżenia buildów pozostały bez zmian: pseudoklasa CSS `.all:b`, ścieżki kursora rozwiązywane w runtime oraz ostrzeżenie `eval` pochodzące z `lottie-web`.
 
 ## Granice weryfikacji
 
-- Skrypty i adapter Redis zostały pokryte testami granic repozytorium, ale nie wykonano osobnego testu integracyjnego z zewnętrzną, uruchomioną instancją Redis.
-- Zgodnie z instrukcją repozytorium aplikacja nie była uruchamiana. Interfejs przeszedł testy komponentów, TypeScript i build produkcyjny, bez dodatkowego ręcznego smoke testu w działającej grze.
+- Zgodnie z instrukcją repozytorium aplikacja nie była ręcznie uruchamiana.
+- Skrypty Lua i adapter Redis są pokryte testami granic repozytorium, ale nie wykonywano osobnego testu integracyjnego z zewnętrzną instancją Redis.
+- Końcowy, minimalny wyścig między ostatnim lokalnym sprawdzeniem a wywołaniem zewnętrznej komendy gry nie może zostać całkowicie wyeliminowany po stronie klienta.
 
-## Commity implementacji
+## Commity finalnego uproszczenia
 
-- `76e80b929` — kontrakty projekcji Ready Room.
-- `63744ea77` — tworzenie i zgłoszenia.
-- `425e82ca0` — lifecycle, Redis i koordynacja.
-- `a330c3a03` — kontroler HTTP.
-- `a52208bb5` — prywatny routing gatewaya.
-- `0d56351c4` — kompletny kontrakt API, NPC, zaproszenia i wygenerowane klienty.
-- `4325c4d83` — walidacja celu ręcznej mutacji zaproszenia.
-- `35d84801d` — przepływ Ready Room i UI w game-client.
-- `b15b85e85` — specyfikacja wielu postaci jednego użytkownika i kolejki zaproszeń.
-- `2303965b9` — plan implementacji kontraktu v2.
-- `07c1a64f5` — Ready Room v2, wielopostaciowość i koordynator jawnych zaproszeń.
-- `ce20a92df` — priorytet pokoju aktywnej postaci nad pokojem organizowanym przez inne konto tej samej osoby.
+- `bf262dcef` — specyfikacja uproszczonego Ready Room;
+- `8b42e9a39` — doprecyzowanie lifecycle;
+- `cfa39afed` — kolejność eventów i rewizji;
+- `8d4ea70e1` — globalne blokady postaci;
+- `70ca687c6` — plan implementacji;
+- `3a104152a` — kontrakt v3, API, Redis, gateway, klient gry, testy i wygenerowane klienty.
