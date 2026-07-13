@@ -13,13 +13,6 @@ import { useTranslation } from "react-i18next";
 import { ReadyRoomParticipantsList } from "@/features/party-finder/components/ready-room-participants-list";
 import { ReadyRoomParticipantStatus } from "@/features/party-finder/components/ready-room-participant-status";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
-import { useClosePartyGathering } from "@/hooks/api/use-close-party-gathering";
-import type {
-  PartyReadyRoomParticipantProjection,
-  PartyReadyRoomProjection,
-} from "@lootlog/types";
-import { usePartyReadyRoomControllerStartReadyCheck } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
-import { ReadyRoomSelector } from "@/features/party-finder/components/ready-room-selector";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 
 export const PartyFinder = () => {
@@ -27,33 +20,25 @@ export const PartyFinder = () => {
   const open = useWindowsStore((state) => state["party-finder"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
 
-  const projections = usePartyFinderStore((state) => state.projections);
-  const selectRoom = usePartyFinderStore((state) => state.selectRoom);
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
   const readyRoom = usePartyFinderStore((state) =>
     selectReadyRoomForCharacter(state, currentCharacterIdentity),
   );
-  const participantRooms = Object.values(projections).filter(
-    (projection): projection is PartyReadyRoomParticipantProjection =>
-      projection.viewer === "PARTICIPANT" && projection.status === "ACTIVE",
-  );
   const partyMembers = usePartyStore((s) => s.members);
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
     useCancelPartyGathering();
-  const { mutate: closePartyGathering, isPending: isClosing } =
-    useClosePartyGathering();
   const { inviteParticipants, canInviteParticipants } =
     useReadyRoomInvitations();
-  const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
-  const startReadyCheck = usePartyReadyRoomControllerStartReadyCheck();
+  const isOrganizerView =
+    readyRoom?.viewer === "ORGANIZER" &&
+    currentCharacterIdentity?.accountId ===
+      readyRoom.organizerCharacter.accountId &&
+    currentCharacterIdentity.characterId ===
+      readyRoom.organizerCharacter.characterId;
   const invitableParticipantIds =
-    readyRoom?.viewer === "ORGANIZER"
+    isOrganizerView && readyRoom.viewer === "ORGANIZER"
       ? Object.values(readyRoom.participants)
-          .filter(
-            (participant) =>
-              participant.application === "ACCEPTED" &&
-              participant.partyPresence === "OUTSIDE",
-          )
+          .filter((participant) => participant.partyPresence === "OUTSIDE")
           .map(({ participantId }) => participantId)
       : [];
 
@@ -80,29 +65,19 @@ export const PartyFinder = () => {
               {partyMembers.length}/10
             </span>
           </div>
-          {readyRoom.viewer === "PARTICIPANT" && participantRooms.length > 1 ? (
-            <ReadyRoomSelector
-              rooms={participantRooms}
-              selectedRoomId={readyRoom.notificationId}
-              onSelect={selectRoom}
-            />
-          ) : null}
           <ScrollArea className="ll:flex-1">
-            {readyRoom.viewer === "ORGANIZER" ? (
-              <div>
-                <ReadyRoomParticipantStatus room={readyRoom} />
-                <ReadyRoomParticipantsList room={readyRoom} />
-              </div>
+            {isOrganizerView && readyRoom.viewer === "ORGANIZER" ? (
+              <ReadyRoomParticipantsList room={readyRoom} />
             ) : (
               <ReadyRoomParticipantStatus room={readyRoom} />
             )}
           </ScrollArea>
-          {readyRoom.viewer === "ORGANIZER" ? (
+          {isOrganizerView ? (
             <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
               <Button
                 onClick={() => {
                   void inviteParticipants().catch((error: unknown) => {
-                    console.warn("Failed to reserve party invitations", error);
+                    console.warn("Failed to resolve party invitations", error);
                   });
                 }}
                 disabled={
@@ -113,47 +88,9 @@ export const PartyFinder = () => {
               >
                 {t("actions.inviteAll")}
               </Button>
-              {readyRoom.viewer === "ORGANIZER" &&
-              Object.values(readyRoom.participants).some(
-                ({ application }) => application === "ACCEPTED",
-              ) ? (
-                <Button
-                  disabled={startReadyCheck.isPending}
-                  onClick={() =>
-                    startReadyCheck.mutate(
-                      {
-                        pathParams: {
-                          notificationId: readyRoom.notificationId,
-                        },
-                        data: { expectedRevision: readyRoom.revision },
-                      },
-                      {
-                        onSuccess: (projection) =>
-                          mergeProjection(
-                            projection as unknown as PartyReadyRoomProjection,
-                          ),
-                      },
-                    )
-                  }
-                  className="ll:w-full ll:border-amber-500/70 ll:bg-amber-600/15 ll:text-amber-300"
-                >
-                  {startReadyCheck.isPending
-                    ? t("actions.startingReadyCheck")
-                    : t("actions.startReadyCheck")}
-                </Button>
-              ) : null}
-              <Button
-                onClick={() => closePartyGathering()}
-                disabled={isClosing || isCancelling}
-                className="ll:w-full ll:border-emerald-500/70 ll:bg-emerald-600/20 ll:text-emerald-300 ll:hover:bg-emerald-600/30"
-              >
-                {isClosing
-                  ? t("actions.ending")
-                  : t("actions.closePartyGathering")}
-              </Button>
               <Button
                 onClick={() => cancelPartyGathering()}
-                disabled={isCancelling || isClosing}
+                disabled={isCancelling}
                 className="ll:w-full ll:border-red-500 ll:bg-red-600/20 ll:text-red-300 ll:hover:bg-red-600/40"
               >
                 {isCancelling

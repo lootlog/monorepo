@@ -1,13 +1,8 @@
 import type {
-  PartyReadyRoomInvitationBatch,
   PartyReadyRoomInvitationTarget,
   PartyReadyRoomOrganizerProjection,
-  PartyReadyRoomProjection,
 } from "@lootlog/types";
-import {
-  partyReadyRoomControllerAcknowledgeInvitation,
-  partyReadyRoomControllerReserveInvitations,
-} from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import { partyReadyRoomControllerResolveInvitationTargets } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 import { useGlobalStore } from "@/store/global.store";
 import {
@@ -16,15 +11,14 @@ import {
   type ReadyRoomCharacterIdentity,
   usePartyFinderStore,
 } from "@/store/party-finder.store";
+import { usePartyStore } from "@/store/party.store";
 import { inviteCharacterToParty } from "@/utils/game/character-actions";
 
 type InvitationIntent = {
   notificationId: string;
   organizerCharacter: ReadyRoomCharacterIdentity;
-  targets: PartyReadyRoomInvitationTarget[];
+  participantIds: string[];
 };
-
-const ACKNOWLEDGEMENT_ATTEMPTS = 3;
 
 let invitationQueue = Promise.resolve();
 
@@ -64,26 +58,21 @@ function hasReadyRoomGameContext(
   );
 }
 
-function getInvitableTargets(
+function getInvitableParticipantIds(
   room: PartyReadyRoomOrganizerProjection,
   participantIds?: string[],
-): PartyReadyRoomInvitationTarget[] {
+): string[] {
   const requestedParticipantIds = participantIds
     ? new Set(participantIds)
     : null;
-
   return Object.values(room.participants)
     .filter(
       (participant) =>
         (requestedParticipantIds === null ||
           requestedParticipantIds.has(participant.participantId)) &&
-        participant.application === "ACCEPTED" &&
         participant.partyPresence === "OUTSIDE",
     )
-    .map(({ participantId, applicationVersion }) => ({
-      participantId,
-      applicationVersion,
-    }));
+    .map(({ participantId }) => participantId);
 }
 
 function captureInvitationIntent(
@@ -91,83 +80,21 @@ function captureInvitationIntent(
 ): InvitationIntent | null {
   const room = selectOwnedReadyRoom(usePartyFinderStore.getState());
   if (!room || !hasReadyRoomGameContext(room)) return null;
-
-  const targets = getInvitableTargets(room, participantIds);
-  if (targets.length === 0) return null;
-
+  const capturedParticipantIds = getInvitableParticipantIds(
+    room,
+    participantIds,
+  );
+  if (capturedParticipantIds.length === 0) return null;
   return {
     notificationId: room.notificationId,
     organizerCharacter: getOrganizerCharacterIdentity(room),
-    targets,
+    participantIds: capturedParticipantIds,
   };
 }
 
-function getApiErrorCode(error: unknown): string | null {
-  if (typeof error !== "object" || error === null || !("data" in error)) {
-    return null;
-  }
-  const data = error.data;
-  if (typeof data !== "object" || data === null || !("code" in data)) {
-    return null;
-  }
-  return typeof data.code === "string" ? data.code : null;
-}
-
-async function acknowledgeInvitation(
-  notificationId: string,
-  participantId: string,
-  commandId: string,
-  outcome: "SENT" | "FAILED",
-  attempt = 1,
-): Promise<void> {
-  try {
-    const projection = await partyReadyRoomControllerAcknowledgeInvitation(
-      { notificationId },
-      { participantId, commandId, outcome },
-    );
-    usePartyFinderStore
-      .getState()
-      .mergeProjection(projection as unknown as PartyReadyRoomProjection);
-  } catch (error) {
-    if (getApiErrorCode(error) === "STALE_COMMAND") return;
-    if (attempt < ACKNOWLEDGEMENT_ATTEMPTS) {
-      return acknowledgeInvitation(
-        notificationId,
-        participantId,
-        commandId,
-        outcome,
-        attempt + 1,
-      );
-    }
-    console.warn("Failed to acknowledge a party invitation command", error);
-  }
-}
-
-function getExecutableTargets(
-  room: PartyReadyRoomOrganizerProjection,
+function getCurrentIntentRoom(
   intent: InvitationIntent,
-): PartyReadyRoomInvitationTarget[] {
-  const capturedTargets = new Map(
-    intent.targets.map((target) => [target.participantId, target]),
-  );
-
-  return Object.values(room.participants).flatMap((participant) => {
-    const capturedTarget = capturedTargets.get(participant.participantId);
-    if (
-      !capturedTarget ||
-      capturedTarget.applicationVersion !== participant.applicationVersion ||
-      participant.application !== "ACCEPTED" ||
-      participant.partyPresence !== "OUTSIDE"
-    ) {
-      return [];
-    }
-    return [capturedTarget];
-  });
-}
-
-async function executeInvitationIntent(
-  intent: InvitationIntent,
-): Promise<PartyReadyRoomInvitationBatch> {
+): PartyReadyRoomOrganizerProjection | null {
   const projection =
     usePartyFinderStore.getState().projections[intent.notificationId];
   if (
@@ -179,53 +106,53 @@ async function executeInvitationIntent(
     ) ||
     !hasReadyRoomGameContext(projection)
   ) {
-    throw new Error("Ready Room invitation intent is stale");
+    return null;
   }
+  return projection;
+}
 
-  const targets = getExecutableTargets(projection, intent);
-  if (targets.length === 0) {
-    return { batchId: "", reservations: [] };
+function canIssueInvitationTarget(
+  intent: InvitationIntent,
+  target: PartyReadyRoomInvitationTarget,
+): boolean {
+  const room = getCurrentIntentRoom(intent);
+  const participant = room?.participants[target.participantId];
+  if (
+    !participant ||
+    participant.character.characterId !== target.characterId ||
+    participant.partyPresence !== "OUTSIDE"
+  ) {
+    return false;
   }
-
-  const reservation = await partyReadyRoomControllerReserveInvitations(
-    { notificationId: intent.notificationId },
-    { targets },
-  );
-  usePartyFinderStore
+  return !usePartyStore
     .getState()
-    .mergeProjection(
-      reservation.projection as unknown as PartyReadyRoomProjection,
-    );
+    .members.some(({ id }) => String(id) === target.characterId);
+}
 
-  for (const target of reservation.batch.reservations) {
-    let outcome: "SENT" | "FAILED" = "FAILED";
-    const latestProjection =
-      usePartyFinderStore.getState().projections[intent.notificationId];
-    const canIssueGameCommand =
-      latestProjection?.viewer === "ORGANIZER" &&
-      characterIdentitiesMatch(
-        getOrganizerCharacterIdentity(latestProjection),
-        intent.organizerCharacter,
-      ) &&
-      hasReadyRoomGameContext(latestProjection);
-    if (canIssueGameCommand) {
-      try {
-        inviteCharacterToParty(target.characterId);
-        outcome = "SENT";
-      } catch {
-        outcome = "FAILED";
-      }
+async function executeInvitationIntent(
+  intent: InvitationIntent,
+): Promise<{ targets: PartyReadyRoomInvitationTarget[] }> {
+  const room = getCurrentIntentRoom(intent);
+  if (!room) throw new Error("Ready Room invitation intent is stale");
+  const participantIds = getInvitableParticipantIds(
+    room,
+    intent.participantIds,
+  );
+  if (participantIds.length === 0) return { targets: [] };
+
+  const response = await partyReadyRoomControllerResolveInvitationTargets(
+    { notificationId: intent.notificationId },
+    { participantIds },
+  );
+  for (const target of response.targets) {
+    if (!canIssueInvitationTarget(intent, target)) continue;
+    try {
+      inviteCharacterToParty(target.characterId);
+    } catch (error) {
+      console.warn("Failed to invite a Ready Room participant", error);
     }
-
-    void acknowledgeInvitation(
-      intent.notificationId,
-      target.participantId,
-      target.commandId,
-      outcome,
-    );
   }
-
-  return reservation.batch as PartyReadyRoomInvitationBatch;
+  return response as { targets: PartyReadyRoomInvitationTarget[] };
 }
 
 export function canEnqueueReadyRoomInvitations(
@@ -236,12 +163,11 @@ export function canEnqueueReadyRoomInvitations(
 
 export function enqueueReadyRoomInvitations(
   participantIds?: string[],
-): Promise<PartyReadyRoomInvitationBatch> {
+): Promise<{ targets: PartyReadyRoomInvitationTarget[] }> {
   const intent = captureInvitationIntent(participantIds);
   if (!intent) {
     return Promise.reject(new Error("Ready Room invitation is unavailable"));
   }
-
   const result = invitationQueue.then(() => executeInvitationIntent(intent));
   invitationQueue = result.then(
     () => undefined,

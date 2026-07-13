@@ -1,5 +1,6 @@
 import type {
   PartyReadyRoomCharacter,
+  PartyReadyRoomClientUpdate,
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
   PartyReadyRoomProjectionBase,
@@ -21,7 +22,6 @@ function cloneParticipant(
   return {
     ...participant,
     character: cloneCharacter(participant.character),
-    invitation: { ...participant.invitation },
   };
 }
 
@@ -29,7 +29,7 @@ function createProjectionBase(
   aggregate: ReadyRoomAggregate,
 ): PartyReadyRoomProjectionBase {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     notificationId: aggregate.notificationId,
     organizerDiscordId: aggregate.organizerDiscordId,
     organizerCharacter: cloneCharacter(aggregate.organizerCharacter),
@@ -38,24 +38,20 @@ function createProjectionBase(
     description: aggregate.description,
     minLvl: aggregate.minLvl,
     maxLvl: aggregate.maxLvl,
-    status: aggregate.status,
+    status: "ACTIVE",
     revision: aggregate.revision,
     createdAt: aggregate.createdAt,
     updatedAt: aggregate.updatedAt,
     expiresAt: aggregate.expiresAt,
-    readyCheck: aggregate.readyCheck ? { ...aggregate.readyCheck } : null,
   };
 }
 
 export function getReadyRoomActiveRecipientDiscordIds(
   aggregate: ReadyRoomAggregate,
 ): string[] {
-  const participantDiscordIds = Object.values(aggregate.participants)
-    .filter(
-      ({ application }) =>
-        application === "APPLIED" || application === "ACCEPTED",
-    )
-    .map(({ discordId }) => discordId);
+  const participantDiscordIds = Object.values(aggregate.participants).map(
+    ({ discordId }) => discordId,
+  );
 
   return [...new Set([aggregate.organizerDiscordId, ...participantDiscordIds])];
 }
@@ -64,6 +60,7 @@ export function createReadyRoomProjection(
   aggregate: ReadyRoomAggregate,
   viewerDiscordId: string,
 ): PartyReadyRoomProjection | null {
+  if (aggregate.status !== "ACTIVE") return null;
   const base = createProjectionBase(aggregate);
 
   if (viewerDiscordId === aggregate.organizerDiscordId) {
@@ -101,4 +98,22 @@ export function createReadyRoomProjection(
     viewer: "PARTICIPANT",
     participants,
   };
+}
+
+export function createReadyRoomClientUpdate(
+  aggregate: ReadyRoomAggregate,
+  viewerDiscordId: string,
+): PartyReadyRoomClientUpdate {
+  const projection = createReadyRoomProjection(aggregate, viewerDiscordId);
+
+  if (!projection) {
+    return {
+      schemaVersion: 3,
+      type: "REMOVE",
+      notificationId: aggregate.notificationId,
+      revision: aggregate.revision,
+    };
+  }
+
+  return { schemaVersion: 3, type: "UPSERT", projection };
 }

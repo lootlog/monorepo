@@ -10,5 +10,5 @@ export type PartyReadyRoomProjectionDtoOutputSchemaVersion = typeof PartyReadyRo
 
 
 export const PartyReadyRoomProjectionDtoOutputSchemaVersion = {
-  NUMBER_2: 2,
+  NUMBER_3: 3,
 } as const;

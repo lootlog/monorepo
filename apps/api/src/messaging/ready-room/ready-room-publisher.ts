@@ -5,7 +5,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
-import { createReadyRoomProjection } from "src/messaging/ready-room/ready-room-projection";
+import { createReadyRoomClientUpdate } from "src/messaging/ready-room/ready-room-projection";
 import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
 
 @Injectable()
@@ -21,16 +21,15 @@ export class ReadyRoomPublisher {
   ): Promise<void> {
     await Promise.all(
       [...new Set(recipientDiscordIds)].map(async (recipientDiscordId) => {
-        const projection = createReadyRoomProjection(
+        const update = createReadyRoomClientUpdate(
           aggregate,
           recipientDiscordId,
         );
-        if (!projection) return;
 
         const envelope: PartyReadyRoomUpdateEnvelope = {
           recipientDiscordId,
           eligibleGuildIds: [...aggregate.guildIds],
-          projection,
+          update,
         };
         try {
           await this.amqpConnection.publish(

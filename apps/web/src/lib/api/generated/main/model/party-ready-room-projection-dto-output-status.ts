@@ -11,6 +11,4 @@ export type PartyReadyRoomProjectionDtoOutputStatus = typeof PartyReadyRoomProje
 
 export const PartyReadyRoomProjectionDtoOutputStatus = {
   ACTIVE: 'ACTIVE',
-  CLOSED: 'CLOSED',
-  CANCELLED: 'CANCELLED',
 } as const;

@@ -5,15 +5,13 @@ import type {
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   captureReadyRoomSyncBaseline,
-  selectAcceptedReadyRoomId,
   selectOwnedReadyRoom,
-  selectPendingReadyRoomIds,
   selectReadyRoomForCharacter,
   selectReadyRoomParticipantForCharacter,
   usePartyFinderStore,
 } from "@/store/party-finder.store";
 
-const identity = {
+const participantIdentity = {
   accountId: "participant-account",
   characterId: "participant-character",
 };
@@ -23,25 +21,14 @@ function createParticipant(
 ): PartyReadyRoomParticipant {
   return {
     participantId: "participant-1",
-    applicationVersion: 1,
     discordId: "participant",
     character: {
-      accountId: identity.accountId,
-      characterId: identity.characterId,
+      accountId: participantIdentity.accountId,
+      characterId: participantIdentity.characterId,
       icon: "participant.gif",
       lvl: 190,
       nick: "Participant",
       prof: "m",
-    },
-    application: "APPLIED",
-    readiness: "NOT_REQUESTED",
-    invitation: {
-      status: "NOT_MARKED",
-      source: null,
-      commandId: null,
-      batchId: null,
-      reservationExpiresAt: null,
-      updatedAt: "2026-07-13T10:01:00.000Z",
     },
     partyPresence: "OUTSIDE",
     createdAt: "2026-07-13T10:01:00.000Z",
@@ -55,7 +42,7 @@ function createProjection(
   participant = createParticipant(),
 ): PartyReadyRoomProjection {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     notificationId: "room-1",
     organizerDiscordId: "organizer",
     organizerCharacter: {
@@ -73,7 +60,6 @@ function createProjection(
     createdAt: "2026-07-13T10:00:00.000Z",
     updatedAt: "2026-07-13T10:01:00.000Z",
     expiresAt: "2026-07-13T10:30:00.000Z",
-    readyCheck: null,
     viewer: "PARTICIPANT",
     participants: { [participant.participantId]: participant },
   };
@@ -91,15 +77,11 @@ describe("party-finder Ready Room store", () => {
     expect(usePartyFinderStore.getState().projections["room-1"]?.revision).toBe(
       5,
     );
-    expect(
-      selectPendingReadyRoomIds(usePartyFinderStore.getState(), identity),
-    ).toEqual(["room-1"]);
   });
 
-  it("selects the entry matching the active account and character", () => {
-    const acceptedParticipant = createParticipant({
-      participantId: "participant-accepted",
-      application: "ACCEPTED",
+  it("selects the participant entry matching the active account and character", () => {
+    const matchingParticipant = createParticipant({
+      participantId: "participant-matching",
     });
     const otherParticipant = createParticipant({
       participantId: "participant-other",
@@ -108,20 +90,20 @@ describe("party-finder Ready Room store", () => {
         characterId: "other-character",
       },
     });
-    const projection = createProjection(2, acceptedParticipant);
+    const projection = createProjection(2, matchingParticipant);
     projection.participants[otherParticipant.participantId] = otherParticipant;
     usePartyFinderStore.getState().mergeProjection(projection);
 
     expect(
-      selectReadyRoomParticipantForCharacter(projection, identity)
+      selectReadyRoomParticipantForCharacter(projection, participantIdentity)
         ?.participantId,
-    ).toBe("participant-accepted");
+    ).toBe("participant-matching");
     expect(
-      selectAcceptedReadyRoomId(usePartyFinderStore.getState(), identity),
+      selectReadyRoomForCharacter(
+        usePartyFinderStore.getState(),
+        participantIdentity,
+      )?.notificationId,
     ).toBe("room-1");
-    expect(
-      selectPendingReadyRoomIds(usePartyFinderStore.getState(), identity),
-    ).toEqual([]);
   });
 
   it("keeps organizer projection precedence at the same revision", () => {
@@ -142,30 +124,26 @@ describe("party-finder Ready Room store", () => {
     ).toBe("room-1");
   });
 
-  it("prioritizes the active character room over a room owned by the same Discord user", () => {
+  it("uses the active character role when one Discord user has multiple accounts", () => {
     const ownedReadyRoom: PartyReadyRoomProjection = {
       ...createProjection(2),
       viewer: "ORGANIZER",
       ownedParticipantIds: [],
     };
-    const acceptedReadyRoom: PartyReadyRoomProjection = {
-      ...createProjection(
-        2,
-        createParticipant({
-          participantId: "participant-accepted",
-          application: "ACCEPTED",
-        }),
-      ),
+    const participantReadyRoom: PartyReadyRoomProjection = {
+      ...createProjection(2),
       notificationId: "room-2",
     };
 
     usePartyFinderStore
       .getState()
-      .mergeProjections([ownedReadyRoom, acceptedReadyRoom]);
+      .mergeProjections([ownedReadyRoom, participantReadyRoom]);
 
     expect(
-      selectReadyRoomForCharacter(usePartyFinderStore.getState(), identity)
-        ?.notificationId,
+      selectReadyRoomForCharacter(
+        usePartyFinderStore.getState(),
+        participantIdentity,
+      )?.notificationId,
     ).toBe("room-2");
     expect(
       selectReadyRoomForCharacter(usePartyFinderStore.getState(), {
@@ -175,16 +153,13 @@ describe("party-finder Ready Room store", () => {
     ).toBe("room-1");
   });
 
-  it("applies an authoritative v2 snapshot without deleting newer socket state", () => {
-    const baselineProjection = createProjection(2);
-    usePartyFinderStore.getState().mergeProjection(baselineProjection);
+  it("does not delete a newer socket update after an authoritative REST absence", () => {
+    usePartyFinderStore.getState().mergeProjection(createProjection(2));
     const baseline = captureReadyRoomSyncBaseline(
       usePartyFinderStore.getState(),
     );
 
-    usePartyFinderStore
-      .getState()
-      .mergeProjection(createProjection(3, createParticipant()));
+    usePartyFinderStore.getState().mergeProjection(createProjection(3));
     usePartyFinderStore.getState().applyAuthoritativeSync([], baseline);
 
     expect(usePartyFinderStore.getState()).toMatchObject({
@@ -193,14 +168,43 @@ describe("party-finder Ready Room store", () => {
     });
   });
 
-  it("removes unchanged baseline rooms absent from the authoritative response", () => {
+  it("records an authoritative absence as a removal watermark", () => {
     usePartyFinderStore.getState().mergeProjection(createProjection(2));
     const baseline = captureReadyRoomSyncBaseline(
       usePartyFinderStore.getState(),
     );
 
     usePartyFinderStore.getState().applyAuthoritativeSync([], baseline);
+    usePartyFinderStore.getState().mergeProjection(createProjection(2));
+
+    expect(usePartyFinderStore.getState()).toMatchObject({
+      projections: {},
+      roomVersions: {
+        "room-1": { revision: 2, presence: "REMOVED" },
+      },
+    });
+  });
+
+  it("lets REMOVE win at an equal revision and accepts a later UPSERT", () => {
+    usePartyFinderStore.getState().mergeProjection(createProjection(2));
+    usePartyFinderStore.getState().applyUpdate({
+      schemaVersion: 3,
+      type: "REMOVE",
+      notificationId: "room-1",
+      revision: 2,
+    });
+    usePartyFinderStore.getState().mergeProjection(createProjection(2));
 
     expect(usePartyFinderStore.getState().projections).toEqual({});
+
+    usePartyFinderStore.getState().applyUpdate({
+      schemaVersion: 3,
+      type: "UPSERT",
+      projection: createProjection(3),
+    });
+
+    expect(usePartyFinderStore.getState().projections["room-1"]?.revision).toBe(
+      3,
+    );
   });
 });

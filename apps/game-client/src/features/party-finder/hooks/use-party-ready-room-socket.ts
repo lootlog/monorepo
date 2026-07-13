@@ -1,4 +1,4 @@
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+import type { PartyReadyRoomClientUpdate } from "@lootlog/types";
 import { useEffect } from "react";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
@@ -6,20 +6,20 @@ import { usePartyFinderStore } from "@/store/party-finder.store";
 
 export function usePartyReadyRoomSocket(): void {
   const { socket, connected } = useSocket();
-  const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
+  const applyUpdate = usePartyFinderStore((state) => state.applyUpdate);
 
   useEffect(() => {
     if (!socket || !connected) return;
 
-    const handleProjection = (projection: PartyReadyRoomProjection) => {
-      if ((projection as { schemaVersion?: number }).schemaVersion !== 2) {
+    const handleUpdate = (update: PartyReadyRoomClientUpdate) => {
+      if ((update as { schemaVersion?: number }).schemaVersion !== 3) {
         return;
       }
-      mergeProjection(projection);
+      applyUpdate(update);
     };
-    socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, handleProjection);
+    socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, handleUpdate);
     return () => {
-      socket.off(GatewayEvent.PARTY_READY_ROOM_UPDATE, handleProjection);
+      socket.off(GatewayEvent.PARTY_READY_ROOM_UPDATE, handleUpdate);
     };
-  }, [socket, connected, mergeProjection]);
+  }, [socket, connected, applyUpdate]);
 }

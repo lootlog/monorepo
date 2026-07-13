@@ -1,12 +1,11 @@
 import type {
   PartyReadyRoomCharacter,
   PartyReadyRoomParticipant,
-  PartyReadyRoomReadyCheck,
   PartyReadyRoomStatus,
 } from "@lootlog/types";
 
 export interface ReadyRoomAggregate {
-  schemaVersion: 2;
+  schemaVersion: 3;
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomCharacter;
@@ -20,6 +19,5 @@ export interface ReadyRoomAggregate {
   createdAt: string;
   updatedAt: string;
   expiresAt: string;
-  readyCheck: PartyReadyRoomReadyCheck | null;
   participants: Record<string, PartyReadyRoomParticipant>;
 }

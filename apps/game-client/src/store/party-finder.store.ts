@@ -1,4 +1,5 @@
 import type {
+  PartyReadyRoomClientUpdate,
   PartyReadyRoomOrganizerProjection,
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
@@ -10,21 +11,26 @@ export type ReadyRoomCharacterIdentity = {
   characterId: string;
 };
 
-export type ReadyRoomSyncBaseline = Record<string, number>;
+type ReadyRoomVersion = {
+  revision: number;
+  presence: "PRESENT" | "REMOVED";
+};
+
+export type ReadyRoomSyncBaseline = Record<string, ReadyRoomVersion>;
 
 export interface PartyFinderState {
   projections: Record<string, PartyReadyRoomProjection>;
+  roomVersions: Record<string, ReadyRoomVersion>;
   readyRoomsSynchronized: boolean;
-  selectedRoomId: string | null;
   mergeProjection: (projection: PartyReadyRoomProjection) => void;
   mergeProjections: (projections: PartyReadyRoomProjection[]) => void;
+  applyUpdate: (update: PartyReadyRoomClientUpdate) => void;
   applyAuthoritativeSync: (
     projections: PartyReadyRoomProjection[],
     baseline: ReadyRoomSyncBaseline,
   ) => void;
   setReadyRoomsSynchronized: (synchronized: boolean) => void;
   removeProjection: (notificationId: string) => void;
-  selectRoom: (notificationId: string | null) => void;
   clearReadyRooms: () => void;
 }
 
@@ -49,7 +55,6 @@ export function selectReadyRoomParticipantForCharacter(
     projection.viewer === "ORGANIZER"
       ? new Set(projection.ownedParticipantIds)
       : null;
-
   return (
     Object.values(projection.participants).find(
       (participant) =>
@@ -61,100 +66,100 @@ export function selectReadyRoomParticipantForCharacter(
   );
 }
 
-export function selectPendingReadyRoomIds(
-  state: PartyFinderState,
-  identity: ReadyRoomCharacterIdentity | null,
-): string[] {
-  return Object.values(state.projections)
-    .filter(
-      (projection) =>
-        projection.status === "ACTIVE" &&
-        selectReadyRoomParticipantForCharacter(projection, identity)
-          ?.application === "APPLIED",
-    )
-    .map(({ notificationId }) => notificationId);
-}
-
-export function selectAcceptedReadyRoomId(
-  state: PartyFinderState,
-  identity: ReadyRoomCharacterIdentity | null,
-): string | null {
-  return (
-    Object.values(state.projections).find(
-      (projection) =>
-        projection.status === "ACTIVE" &&
-        selectReadyRoomParticipantForCharacter(projection, identity)
-          ?.application === "ACCEPTED",
-    )?.notificationId ?? null
-  );
-}
-
 export function selectReadyRoomForCharacter(
   state: PartyFinderState,
   identity: ReadyRoomCharacterIdentity | null,
 ): PartyReadyRoomProjection | null {
+  if (!identity) return null;
   const ownedReadyRoom = selectOwnedReadyRoom(state);
   const isOrganizerCharacter =
-    identity !== null &&
     ownedReadyRoom !== null &&
     identity.accountId === ownedReadyRoom.organizerCharacter.accountId &&
     identity.characterId === ownedReadyRoom.organizerCharacter.characterId;
-
   if (isOrganizerCharacter) return ownedReadyRoom;
 
-  const acceptedReadyRoomId = selectAcceptedReadyRoomId(state, identity);
-  if (acceptedReadyRoomId) {
-    return state.projections[acceptedReadyRoomId] ?? null;
-  }
-
-  const selectedReadyRoom = state.selectedRoomId
-    ? state.projections[state.selectedRoomId]
-    : undefined;
-  if (selectedReadyRoom?.status === "ACTIVE") return selectedReadyRoom;
-
   return (
-    ownedReadyRoom ??
     Object.values(state.projections).find(
-      (projection) => projection.status === "ACTIVE",
-    ) ??
-    null
+      (projection) =>
+        projection.status === "ACTIVE" &&
+        selectReadyRoomParticipantForCharacter(projection, identity) !== null,
+    ) ?? null
   );
 }
 
 export function captureReadyRoomSyncBaseline(
   state: PartyFinderState,
 ): ReadyRoomSyncBaseline {
-  return Object.fromEntries(
-    Object.values(state.projections).map(({ notificationId, revision }) => [
-      notificationId,
-      revision,
-    ]),
-  );
+  return structuredClone(state.roomVersions);
 }
 
-function isSchemaVersionTwo(
+function isSchemaVersionThree(
   projection: PartyReadyRoomProjection,
 ): projection is PartyReadyRoomProjection {
-  return (projection as { schemaVersion?: number }).schemaVersion === 2;
+  return (projection as { schemaVersion?: number }).schemaVersion === 3;
 }
 
 function mergeProjectionIntoState(
   projections: Record<string, PartyReadyRoomProjection>,
+  roomVersions: Record<string, ReadyRoomVersion>,
   projection: PartyReadyRoomProjection,
-): Record<string, PartyReadyRoomProjection> {
-  if (!isSchemaVersionTwo(projection)) return projections;
-
-  const current = projections[projection.notificationId];
-  if (current && current.revision > projection.revision) return projections;
+): {
+  projections: Record<string, PartyReadyRoomProjection>;
+  roomVersions: Record<string, ReadyRoomVersion>;
+} {
+  if (!isSchemaVersionThree(projection)) return { projections, roomVersions };
+  const notificationId = projection.notificationId;
+  const currentVersion = roomVersions[notificationId];
+  if (currentVersion && currentVersion.revision > projection.revision) {
+    return { projections, roomVersions };
+  }
   if (
-    current &&
-    current.revision === projection.revision &&
-    (current.viewer === "ORGANIZER" || projection.viewer !== "ORGANIZER")
+    currentVersion?.revision === projection.revision &&
+    currentVersion.presence === "REMOVED"
   ) {
-    return projections;
+    return { projections, roomVersions };
   }
 
-  return { ...projections, [projection.notificationId]: projection };
+  const current = projections[notificationId];
+  if (
+    current?.revision === projection.revision &&
+    (current.viewer === "ORGANIZER" || projection.viewer !== "ORGANIZER")
+  ) {
+    return { projections, roomVersions };
+  }
+  return {
+    projections: { ...projections, [notificationId]: projection },
+    roomVersions: {
+      ...roomVersions,
+      [notificationId]: {
+        revision: projection.revision,
+        presence: "PRESENT",
+      },
+    },
+  };
+}
+
+function removeProjectionFromState(
+  projections: Record<string, PartyReadyRoomProjection>,
+  roomVersions: Record<string, ReadyRoomVersion>,
+  notificationId: string,
+  revision: number,
+): {
+  projections: Record<string, PartyReadyRoomProjection>;
+  roomVersions: Record<string, ReadyRoomVersion>;
+} {
+  const currentVersion = roomVersions[notificationId];
+  if (currentVersion && currentVersion.revision > revision) {
+    return { projections, roomVersions };
+  }
+  const { [notificationId]: _removed, ...remainingProjections } = projections;
+  return {
+    projections: remainingProjections,
+    roomVersions: {
+      ...roomVersions,
+      [notificationId]: { revision, presence: "REMOVED" },
+    },
+  };
 }
 
 export function isReadyRoomExpired(
@@ -168,71 +173,115 @@ export function isReadyRoomExpired(
 
 export const usePartyFinderStore = create<PartyFinderState>((set) => ({
   projections: {},
+  roomVersions: {},
   readyRoomsSynchronized: false,
-  selectedRoomId: null,
   mergeProjection: (projection) =>
-    set((state) => ({
-      projections: mergeProjectionIntoState(state.projections, projection),
-    })),
-  mergeProjections: (incomingProjections) =>
-    set((state) => ({
-      projections: incomingProjections.reduce(
-        mergeProjectionIntoState,
+    set((state) =>
+      mergeProjectionIntoState(
         state.projections,
+        state.roomVersions,
+        projection,
       ),
-    })),
+    ),
+  mergeProjections: (incomingProjections) =>
+    set((state) =>
+      incomingProjections.reduce(
+        (currentState, projection) =>
+          mergeProjectionIntoState(
+            currentState.projections,
+            currentState.roomVersions,
+            projection,
+          ),
+        {
+          projections: state.projections,
+          roomVersions: state.roomVersions,
+        },
+      ),
+    ),
+  applyUpdate: (update) =>
+    set((state) => {
+      if (update.schemaVersion !== 3) return state;
+      if (update.type === "UPSERT") {
+        return mergeProjectionIntoState(
+          state.projections,
+          state.roomVersions,
+          update.projection,
+        );
+      }
+      return removeProjectionFromState(
+        state.projections,
+        state.roomVersions,
+        update.notificationId,
+        update.revision,
+      );
+    }),
   applyAuthoritativeSync: (incomingProjections, baseline) =>
     set((state) => {
       const validIncomingProjections =
-        incomingProjections.filter(isSchemaVersionTwo);
+        incomingProjections.filter(isSchemaVersionThree);
       const incomingIds = new Set(
         validIncomingProjections.map(({ notificationId }) => notificationId),
       );
-      let projections = validIncomingProjections.reduce(
-        mergeProjectionIntoState,
-        state.projections,
+      let nextState = validIncomingProjections.reduce(
+        (currentState, projection) =>
+          mergeProjectionIntoState(
+            currentState.projections,
+            currentState.roomVersions,
+            projection,
+          ),
+        {
+          projections: Object.fromEntries(
+            Object.entries(state.projections).filter(([, projection]) =>
+              isSchemaVersionThree(projection),
+            ),
+          ),
+          roomVersions: state.roomVersions,
+        },
       );
 
-      projections = Object.fromEntries(
-        Object.entries(projections).filter(([notificationId, projection]) => {
-          if (!isSchemaVersionTwo(projection)) return false;
-          if (incomingIds.has(notificationId)) return true;
-
-          const baselineRevision = baseline[notificationId];
-          return (
-            baselineRevision === undefined ||
-            projection.revision > baselineRevision
+      for (const [notificationId, baselineVersion] of Object.entries(
+        baseline,
+      )) {
+        if (
+          baselineVersion.presence !== "PRESENT" ||
+          incomingIds.has(notificationId)
+        ) {
+          continue;
+        }
+        const currentVersion = nextState.roomVersions[notificationId];
+        if (
+          currentVersion?.revision === baselineVersion.revision &&
+          currentVersion.presence === "PRESENT"
+        ) {
+          nextState = removeProjectionFromState(
+            nextState.projections,
+            nextState.roomVersions,
+            notificationId,
+            baselineVersion.revision,
           );
-        }),
-      );
-
-      const selectedRoomId =
-        state.selectedRoomId && projections[state.selectedRoomId]
-          ? state.selectedRoomId
-          : null;
-
-      return {
-        projections,
-        readyRoomsSynchronized: true,
-        selectedRoomId,
-      };
+        }
+      }
+      return { ...nextState, readyRoomsSynchronized: true };
     }),
   setReadyRoomsSynchronized: (readyRoomsSynchronized) =>
     set({ readyRoomsSynchronized }),
   removeProjection: (notificationId) =>
     set((state) => {
-      const { [notificationId]: _removed, ...projections } = state.projections;
-      return {
-        projections,
-        selectedRoomId:
-          state.selectedRoomId === notificationId ? null : state.selectedRoomId,
-      };
+      const revision =
+        state.roomVersions[notificationId]?.revision ??
+        state.projections[notificationId]?.revision;
+      if (revision === undefined) return state;
+      return removeProjectionFromState(
+        state.projections,
+        state.roomVersions,
+        notificationId,
+        revision,
+      );
     }),
-  selectRoom: (selectedRoomId) => set({ selectedRoomId }),
   clearReadyRooms: () =>
     set({
       projections: {},
+      roomVersions: {},
       readyRoomsSynchronized: false,
-      selectedRoomId: null,
     }),
 }));

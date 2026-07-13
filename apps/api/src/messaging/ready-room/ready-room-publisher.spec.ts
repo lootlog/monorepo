@@ -3,7 +3,7 @@ import { ReadyRoomPublisher } from "src/messaging/ready-room/ready-room-publishe
 import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
 
 const aggregate: ReadyRoomAggregate = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   notificationId: "room-1",
   organizerDiscordId: "organizer",
   organizerCharacter: {
@@ -21,11 +21,9 @@ const aggregate: ReadyRoomAggregate = {
   createdAt: "2026-07-13T10:00:00.000Z",
   updatedAt: "2026-07-13T10:02:00.000Z",
   expiresAt: "2026-07-13T10:30:00.000Z",
-  readyCheck: null,
   participants: {
     participant: {
       participantId: "participant",
-      applicationVersion: 1,
       discordId: "participant",
       character: {
         accountId: "account-participant",
@@ -35,16 +33,6 @@ const aggregate: ReadyRoomAggregate = {
         nick: "Participant",
         prof: "m",
       },
-      application: "ACCEPTED",
-      readiness: "NOT_REQUESTED",
-      invitation: {
-        status: "NOT_MARKED",
-        source: null,
-        commandId: null,
-        batchId: null,
-        reservationExpiresAt: null,
-        updatedAt: "2026-07-13T10:02:00.000Z",
-      },
       partyPresence: "OUTSIDE",
       createdAt: "2026-07-13T10:01:00.000Z",
       updatedAt: "2026-07-13T10:02:00.000Z",
@@ -52,26 +40,35 @@ const aggregate: ReadyRoomAggregate = {
   },
 };
 
-describe("ReadyRoomPublisher", () => {
-  it("publishes a private projection for every named recipient", async () => {
-    const amqpConnection = {
-      publish: vi
-        .fn<
-          (
-            exchange: string,
-            routingKey: string,
-            payload: unknown,
-          ) => Promise<void>
-        >()
-        .mockResolvedValue(undefined),
-    };
-    const logger = { log: vi.fn<(entry: unknown) => void>() };
-    const publisher = new ReadyRoomPublisher(
-      amqpConnection as never,
-      logger as never,
-    );
+function createPublisher() {
+  const amqpConnection = {
+    publish: vi
+      .fn<
+        (
+          exchange: string,
+          routingKey: string,
+          payload: unknown,
+        ) => Promise<void>
+      >()
+      .mockResolvedValue(undefined),
+  };
+  const logger = { log: vi.fn<(entry: unknown) => void>() };
+  return {
+    amqpConnection,
+    logger,
+    publisher: new ReadyRoomPublisher(amqpConnection as never, logger as never),
+  };
+}
 
-    await publisher.publish(aggregate, ["organizer", "participant"]);
+describe("ReadyRoomPublisher", () => {
+  it("publishes private v3 updates for every deduplicated recipient", async () => {
+    const { amqpConnection, publisher } = createPublisher();
+
+    await publisher.publish(aggregate, [
+      "organizer",
+      "participant",
+      "participant",
+    ]);
 
     expect(amqpConnection.publish).toHaveBeenCalledTimes(2);
     expect(amqpConnection.publish).toHaveBeenNthCalledWith(
@@ -81,7 +78,11 @@ describe("ReadyRoomPublisher", () => {
       expect.objectContaining({
         recipientDiscordId: "organizer",
         eligibleGuildIds: ["guild-1", "guild-2"],
-        projection: expect.objectContaining({ viewer: "ORGANIZER" }),
+        update: expect.objectContaining({
+          schemaVersion: 3,
+          type: "UPSERT",
+          projection: expect.objectContaining({ viewer: "ORGANIZER" }),
+        }),
       }),
     );
     expect(amqpConnection.publish).toHaveBeenNthCalledWith(
@@ -90,35 +91,46 @@ describe("ReadyRoomPublisher", () => {
       "users.party-ready-room.updated",
       expect.objectContaining({
         recipientDiscordId: "participant",
-        projection: expect.objectContaining({
-          viewer: "PARTICIPANT",
-          participants: expect.objectContaining({
-            participant: expect.objectContaining({
-              discordId: "participant",
-            }),
+        update: expect.objectContaining({
+          type: "UPSERT",
+          projection: expect.objectContaining({
+            viewer: "PARTICIPANT",
+            participants: {
+              participant: expect.objectContaining({
+                discordId: "participant",
+              }),
+            },
           }),
         }),
       }),
     );
   });
 
-  it("logs delivery failures without rejecting a committed transition", async () => {
-    const amqpConnection = {
-      publish: vi
-        .fn<
-          (
-            exchange: string,
-            routingKey: string,
-            payload: unknown,
-          ) => Promise<void>
-        >()
-        .mockRejectedValue(new Error("broker unavailable")),
-    };
-    const logger = { log: vi.fn<(entry: unknown) => void>() };
-    const publisher = new ReadyRoomPublisher(
-      amqpConnection as never,
-      logger as never,
+  it("publishes REMOVE for a terminal tombstone", async () => {
+    const { amqpConnection, publisher } = createPublisher();
+
+    await publisher.publish(
+      { ...aggregate, status: "CANCELLED", revision: 4 },
+      ["organizer"],
     );
+
+    expect(amqpConnection.publish).toHaveBeenCalledWith(
+      "default",
+      "users.party-ready-room.updated",
+      expect.objectContaining({
+        update: {
+          schemaVersion: 3,
+          type: "REMOVE",
+          notificationId: "room-1",
+          revision: 4,
+        },
+      }),
+    );
+  });
+
+  it("logs delivery failures without rejecting a committed transition", async () => {
+    const { amqpConnection, logger, publisher } = createPublisher();
+    amqpConnection.publish.mockRejectedValue(new Error("broker unavailable"));
 
     await expect(
       publisher.publish(aggregate, ["organizer"]),

@@ -10,10 +10,7 @@ export function ReadyRoomParticipantsList({
   room,
 }: ReadyRoomParticipantsListProps) {
   const { t } = useTranslation("partyFinder");
-  const participants = Object.values(room.participants).filter(
-    ({ application }) =>
-      application === "APPLIED" || application === "ACCEPTED",
-  );
+  const participants = Object.values(room.participants);
 
   if (participants.length === 0) {
     return (

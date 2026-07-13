@@ -77,7 +77,12 @@ const responseChecks = [
   ["/messaging/party-gathering", "post", "201"],
   ["/messaging/party-gathering", "get", "200"],
   ["/messaging/party-gathering/{notificationId}", "get", "200"],
-  ["/messaging/party-gathering/{notificationId}/close", "post", "201"],
+  ["/messaging/party-gathering/{notificationId}/applications", "post", "201"],
+  [
+    "/messaging/party-gathering/{notificationId}/invitations/targets",
+    "post",
+    "201",
+  ],
   ["/messaging/party-gathering/{notificationId}/cancel", "post", "201"],
 ] as const;
 

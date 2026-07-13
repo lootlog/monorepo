@@ -13,4 +13,14 @@ export interface PartyReadyRoomObservationDto {
      * @items.maxLength 255
      */
   memberCharacterIds: string[];
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  organizerAccountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  organizerCharacterId: string;
 }

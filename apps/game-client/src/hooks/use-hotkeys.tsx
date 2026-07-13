@@ -85,7 +85,7 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
 
         if (hotkeyAction === "invite-all" && canEnqueueReadyRoomInvitations()) {
           void enqueueReadyRoomInvitations().catch((error: unknown) => {
-            console.warn("Failed to reserve party invitations", error);
+            console.warn("Failed to resolve party invitations", error);
           });
           return true;
         }

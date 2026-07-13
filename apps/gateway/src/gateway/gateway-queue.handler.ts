@@ -666,7 +666,11 @@ export class GatewayQueueHandler {
       envelope,
       amqpMsg,
       RoutingKey.USERS_PARTY_READY_ROOM_UPDATED_DLQ,
-      `party ready room: ${envelope.projection.notificationId}:${envelope.recipientDiscordId}`,
+      `party ready room: ${
+        envelope.update.type === "UPSERT"
+          ? envelope.update.projection.notificationId
+          : envelope.update.notificationId
+      }:${envelope.recipientDiscordId}`,
       () => this.gatewayService.handlePartyReadyRoomUpdate(envelope),
     );
   }

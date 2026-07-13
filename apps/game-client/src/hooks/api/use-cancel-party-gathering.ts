@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import type { PartyReadyRoomProjection } from "@lootlog/types";
+import type { PartyReadyRoomClientUpdate } from "@lootlog/types";
 import { partyReadyRoomControllerCancel } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
 import {
   selectOwnedReadyRoom,
@@ -26,7 +26,7 @@ export const useCancelPartyGathering = () => {
         { notificationId: ownedReadyRoom.notificationId },
         { expectedRevision: ownedReadyRoom.revision },
       );
-      state.mergeProjection(response as unknown as PartyReadyRoomProjection);
+      state.applyUpdate(response as unknown as PartyReadyRoomClientUpdate);
 
       return response;
     },

@@ -74,7 +74,7 @@ export class GatewayService {
     );
     this.gateway.server
       .to(rooms)
-      .emit(GatewayEvent.PARTY_READY_ROOM_UPDATE, data.projection);
+      .emit(GatewayEvent.PARTY_READY_ROOM_UPDATE, data.update);
   }
 
   private emitToFeatureRoom({

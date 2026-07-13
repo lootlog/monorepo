@@ -41,7 +41,7 @@ describe("useCancelPartyGathering", () => {
     vi.clearAllMocks();
     usePartyFinderStore.getState().clearReadyRooms();
     usePartyFinderStore.getState().mergeProjection({
-      schemaVersion: 2,
+      schemaVersion: 3,
       notificationId: "notif-123",
       organizerDiscordId: "user-1",
       organizerCharacter: {
@@ -59,19 +59,17 @@ describe("useCancelPartyGathering", () => {
       createdAt: "2026-07-13T10:00:00.000Z",
       updatedAt: "2026-07-13T10:00:00.000Z",
       expiresAt: "2026-07-13T10:30:00.000Z",
-      readyCheck: null,
       viewer: "ORGANIZER",
       participants: {},
       ownedParticipantIds: [],
     });
   });
 
-  it("cancels with the current revision and stores the terminal projection", async () => {
-    const activeProjection =
-      usePartyFinderStore.getState().projections["notif-123"];
+  it("cancels with the current revision and removes the local projection", async () => {
     mockCancelPartyGathering.mockResolvedValue({
-      ...activeProjection,
-      status: "CANCELLED",
+      schemaVersion: 3,
+      type: "REMOVE",
+      notificationId: "notif-123",
       revision: 2,
     });
 
@@ -87,9 +85,12 @@ describe("useCancelPartyGathering", () => {
       { notificationId: "notif-123" },
       { expectedRevision: 1 },
     );
-    expect(
-      usePartyFinderStore.getState().projections["notif-123"],
-    ).toMatchObject({ status: "CANCELLED", revision: 2 });
+    expect(usePartyFinderStore.getState()).toMatchObject({
+      projections: {},
+      roomVersions: {
+        "notif-123": { revision: 2, presence: "REMOVED" },
+      },
+    });
     expect(mockSetOpen).toHaveBeenCalledWith("party-finder", false);
   });
 });

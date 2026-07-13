@@ -5,6 +5,7 @@ export const READY_ROOM_REPOSITORY = Symbol("READY_ROOM_REPOSITORY");
 export type CreateReadyRoomResult =
   | { status: "created"; aggregate: ReadyRoomAggregate }
   | { status: "active-room-exists"; notificationId: string }
+  | { status: "joined-elsewhere"; notificationId: string }
   | { status: "room-exists" };
 
 export type CommitReadyRoomResult =
@@ -12,9 +13,9 @@ export type CommitReadyRoomResult =
   | { status: "conflict" }
   | { status: "missing" };
 
-export type AcceptReadyRoomResult =
+export type JoinReadyRoomResult =
   | CommitReadyRoomResult
-  | { status: "accepted-elsewhere"; notificationId: string };
+  | { status: "joined-elsewhere"; notificationId: string };
 
 export interface ReadyRoomRepository {
   create(aggregate: ReadyRoomAggregate): Promise<CreateReadyRoomResult>;
@@ -24,16 +25,11 @@ export interface ReadyRoomRepository {
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
   ): Promise<CommitReadyRoomResult>;
-  saveApplication(
+  join(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
     participantId: string,
-  ): Promise<CommitReadyRoomResult>;
-  accept(
-    expected: ReadyRoomAggregate,
-    next: ReadyRoomAggregate,
-    participantId: string,
-  ): Promise<AcceptReadyRoomResult>;
+  ): Promise<JoinReadyRoomResult>;
   exitParticipant(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,

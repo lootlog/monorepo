@@ -1,6 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 import { PartyReadyRoomController } from "src/messaging/ready-room/party-ready-room.controller";
 
+function createGuildsService() {
+  return {
+    getGuildsForRequiredPermissions: vi
+      .fn<
+        (
+          discordId: string,
+          permissions: unknown[],
+        ) => Promise<Array<{ id: string }>>
+      >()
+      .mockResolvedValue([{ id: "guild-1" }, { id: "guild-3" }]),
+  };
+}
+
 describe("PartyReadyRoomController", () => {
   it("creates through ReadyRoomService with only authorized selected guilds", async () => {
     const readyRoomService = {
@@ -11,19 +24,9 @@ describe("PartyReadyRoomController", () => {
           viewer: "ORGANIZER",
         }),
     };
-    const guildsService = {
-      getGuildsForRequiredPermissions: vi
-        .fn<
-          (
-            discordId: string,
-            permissions: unknown[],
-          ) => Promise<Array<{ id: string }>>
-        >()
-        .mockResolvedValue([{ id: "guild-1" }, { id: "guild-3" }]),
-    };
     const controller = new PartyReadyRoomController(
       readyRoomService as never,
-      guildsService as never,
+      createGuildsService() as never,
     );
 
     await expect(
@@ -48,85 +51,69 @@ describe("PartyReadyRoomController", () => {
     );
   });
 
-  it("reserves invite-all commands without invoking any game action", async () => {
+  it("turns an application directly into a join command", async () => {
     const readyRoomService = {
-      get: vi
-        .fn<(command: unknown) => Promise<unknown>>()
-        .mockResolvedValue({}),
-      reserveInvitations: vi
-        .fn<(command: unknown) => Promise<unknown>>()
-        .mockResolvedValue({ batch: { batchId: "batch-1", reservations: [] } }),
-    };
-    const guildsService = {
-      getGuildsForRequiredPermissions: vi
-        .fn<
-          (
-            discordId: string,
-            permissions: unknown[],
-          ) => Promise<Array<{ id: string }>>
-        >()
-        .mockResolvedValue([{ id: "guild-1" }]),
+      join: vi.fn<(command: unknown) => Promise<unknown>>().mockResolvedValue({
+        notificationId: "room-1",
+        viewer: "PARTICIPANT",
+      }),
     };
     const controller = new PartyReadyRoomController(
       readyRoomService as never,
-      guildsService as never,
+      createGuildsService() as never,
     );
+    const character = {
+      accountId: "account",
+      characterId: "character",
+      icon: "character.gif",
+      lvl: 190,
+      nick: "Participant",
+      prof: "m",
+    };
 
-    await controller.reserveInvitations("organizer", "room-1", {
-      targets: [
-        { participantId: "participant-1", applicationVersion: 1 },
-        { participantId: "participant-2", applicationVersion: 2 },
-      ],
+    await controller.apply("participant", "room-1", {
+      world: "Fobos",
+      character,
     });
 
-    expect(readyRoomService.reserveInvitations).toHaveBeenCalledWith({
+    expect(readyRoomService.join).toHaveBeenCalledWith({
       notificationId: "room-1",
-      organizerDiscordId: "organizer",
-      targets: [
-        { participantId: "participant-1", applicationVersion: 1 },
-        { participantId: "participant-2", applicationVersion: 2 },
-      ],
+      participantDiscordId: "participant",
+      character,
+      world: "Fobos",
+      accessibleGuildIds: ["guild-1", "guild-3"],
     });
   });
 
-  it("delegates explicit invitation reconciliation without a game action", async () => {
+  it("resolves explicit invitation targets without recording invite state", async () => {
     const readyRoomService = {
       get: vi
         .fn<(command: unknown) => Promise<unknown>>()
         .mockResolvedValue({}),
-      reconcileInvitation: vi
+      resolveInvitationTargets: vi
         .fn<(command: unknown) => Promise<unknown>>()
-        .mockResolvedValue({ notificationId: "room-1", revision: 6 }),
-    };
-    const guildsService = {
-      getGuildsForRequiredPermissions: vi
-        .fn<
-          (
-            discordId: string,
-            permissions: unknown[],
-          ) => Promise<Array<{ id: string }>>
-        >()
-        .mockResolvedValue([{ id: "guild-1" }]),
+        .mockResolvedValue({
+          targets: [
+            {
+              participantId: "participant-1",
+              characterId: "character-1",
+            },
+          ],
+        }),
     };
     const controller = new PartyReadyRoomController(
       readyRoomService as never,
-      guildsService as never,
+      createGuildsService() as never,
     );
 
-    await controller.reconcileInvitation("organizer", "room-1", {
-      participantId: "participant-id",
-      commandId: "command-1",
-      expectedRevision: 5,
-      outcome: "NOT_MARKED",
+    await controller.resolveInvitationTargets("organizer", "room-1", {
+      participantIds: ["participant-1", "participant-1"],
     });
 
-    expect(readyRoomService.reconcileInvitation).toHaveBeenCalledWith({
+    expect(readyRoomService.resolveInvitationTargets).toHaveBeenCalledWith({
       notificationId: "room-1",
       organizerDiscordId: "organizer",
-      participantId: "participant-id",
-      commandId: "command-1",
-      expectedRevision: 5,
-      outcome: "NOT_MARKED",
+      participantIds: ["participant-1", "participant-1"],
     });
   });
 });

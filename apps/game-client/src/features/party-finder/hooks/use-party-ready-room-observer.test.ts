@@ -13,23 +13,30 @@ vi.mock("@/features/party-finder/ready-room-character-identity", () => ({
   }),
 }));
 
-const observeParty =
-  vi.fn<
-    (
-      path: { notificationId: string },
-      data: { memberCharacterIds: string[] },
-    ) => Promise<unknown>
-  >();
+const observeParty = vi.fn<
+  (
+    path: { notificationId: string },
+    data: {
+      memberCharacterIds: string[];
+      organizerAccountId: string;
+      organizerCharacterId: string;
+    },
+  ) => Promise<unknown>
+>();
 
 vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
   partyReadyRoomControllerObserveParty: (
     path: { notificationId: string },
-    data: { memberCharacterIds: string[] },
+    data: {
+      memberCharacterIds: string[];
+      organizerAccountId: string;
+      organizerCharacterId: string;
+    },
   ) => observeParty(path, data),
 }));
 
 const projection = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   notificationId: "room-1",
   organizerDiscordId: "organizer",
   guildIds: ["guild-1"],
@@ -39,7 +46,6 @@ const projection = {
   createdAt: "2026-07-13T10:00:00.000Z",
   updatedAt: "2026-07-13T10:00:00.000Z",
   expiresAt: "2026-07-13T10:30:00.000Z",
-  readyCheck: null,
   viewer: "ORGANIZER",
   organizerCharacter: {
     accountId: "account",
@@ -93,7 +99,11 @@ describe("usePartyReadyRoomObserver", () => {
     expect(observeParty).toHaveBeenNthCalledWith(
       2,
       { notificationId: "room-1" },
-      { memberCharacterIds: ["10", "20"] },
+      {
+        memberCharacterIds: ["10", "20"],
+        organizerAccountId: "account",
+        organizerCharacterId: "character",
+      },
     );
   });
 

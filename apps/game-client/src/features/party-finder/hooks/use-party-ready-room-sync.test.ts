@@ -13,7 +13,7 @@ vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
 
 function createProjection(revision: number): PartyReadyRoomProjection {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     notificationId: "room-1",
     organizerDiscordId: "organizer",
     organizerCharacter: {
@@ -31,7 +31,6 @@ function createProjection(revision: number): PartyReadyRoomProjection {
     createdAt: "2026-07-13T10:00:00.000Z",
     updatedAt: "2026-07-13T10:00:00.000Z",
     expiresAt: "2999-07-13T10:30:00.000Z",
-    readyCheck: null,
     viewer: "PARTICIPANT",
     participants: {},
   };

@@ -17,7 +17,7 @@ import type {
   MapPingAck,
   MapPingEvent,
   MapPingSendPayload,
-  PartyReadyRoomProjection,
+  PartyReadyRoomClientUpdate,
 } from "@lootlog/types";
 
 type ServerToClientEvents = {
@@ -88,7 +88,7 @@ type ServerToClientEvents = {
     notificationId: string;
   }) => void;
   [GatewayEvent.PARTY_READY_ROOM_UPDATE]: (
-    data: PartyReadyRoomProjection,
+    data: PartyReadyRoomClientUpdate,
   ) => void;
   [GatewayEvent.CHAT_MESSAGE_DELETE]: (data: {
     guildId: string;

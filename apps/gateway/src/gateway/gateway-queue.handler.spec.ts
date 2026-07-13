@@ -58,16 +58,20 @@ describe("GatewayQueueHandler", () => {
     const payload = {
       recipientDiscordId: "participant",
       eligibleGuildIds: ["guild-1"],
-      projection: {
-        schemaVersion: 2,
-        notificationId: "room-1",
-        organizerDiscordId: "organizer",
-        guildIds: ["guild-1"],
-        status: "ACTIVE",
-        revision: 2,
-        viewer: "PARTICIPANT",
-        participants: {
-          "participant-1": { discordId: "participant" },
+      update: {
+        schemaVersion: 3,
+        type: "UPSERT",
+        projection: {
+          schemaVersion: 3,
+          notificationId: "room-1",
+          organizerDiscordId: "organizer",
+          guildIds: ["guild-1"],
+          status: "ACTIVE",
+          revision: 2,
+          viewer: "PARTICIPANT",
+          participants: {
+            "participant-1": { discordId: "participant" },
+          },
         },
       },
     };

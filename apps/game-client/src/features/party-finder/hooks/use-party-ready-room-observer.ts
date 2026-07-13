@@ -47,7 +47,11 @@ export function usePartyReadyRoomObserver(): void {
 
     void partyReadyRoomControllerObserveParty(
       { notificationId: ownedReadyRoom.notificationId },
-      { memberCharacterIds },
+      {
+        memberCharacterIds,
+        organizerAccountId: ownedReadyRoom.organizerCharacter.accountId,
+        organizerCharacterId: ownedReadyRoom.organizerCharacter.characterId,
+      },
     )
       .then((projection) => {
         mergeProjection(projection as unknown as PartyReadyRoomProjection);
