@@ -70,4 +70,78 @@ describe("ReadyRoomRedisRepository", () => {
     await expect(repository.get("room-1")).resolves.toEqual(aggregate);
     expect(redis.getJson).toHaveBeenCalledWith("party-ready-room:room:room-1");
   });
+
+  it("preserves the original expiry when committing aggregate-only changes", async () => {
+    const redis = {
+      eval: vi.fn<() => Promise<unknown>>().mockResolvedValue(["COMMITTED"]),
+    };
+    const repository = new ReadyRoomRedisRepository(redis as never, () =>
+      Date.parse("2026-07-13T10:10:00.000Z"),
+    );
+    const next = { ...aggregate, revision: 2 };
+
+    await expect(repository.commit(aggregate, next)).resolves.toEqual({
+      status: "committed",
+      aggregate: next,
+    });
+    expect(redis.eval).toHaveBeenCalledWith(
+      expect.any(String),
+      ["party-ready-room:room:room-1"],
+      [JSON.stringify(aggregate), JSON.stringify(next), 1200],
+    );
+  });
+
+  it("atomically releases participant indexes during an exit", async () => {
+    const redis = {
+      eval: vi.fn<() => Promise<unknown>>().mockResolvedValue(["COMMITTED"]),
+    };
+    const repository = new ReadyRoomRedisRepository(redis as never, () =>
+      Date.parse("2026-07-13T10:00:00.000Z"),
+    );
+    const next = { ...aggregate, revision: 2 };
+
+    await repository.exitParticipant(aggregate, next, "participant");
+
+    expect(redis.eval).toHaveBeenCalledWith(
+      expect.any(String),
+      [
+        "party-ready-room:room:room-1",
+        "party-ready-room:pending:participant",
+        "party-ready-room:accepted:participant",
+      ],
+      [JSON.stringify(aggregate), JSON.stringify(next), "room-1", 1800],
+    );
+  });
+
+  it("uses a short tombstone and clears every terminal secondary index", async () => {
+    const redis = {
+      eval: vi.fn<() => Promise<unknown>>().mockResolvedValue(["COMMITTED"]),
+    };
+    const repository = new ReadyRoomRedisRepository(redis as never, () =>
+      Date.parse("2026-07-13T10:00:00.000Z"),
+    );
+    const next: ReadyRoomAggregate = {
+      ...aggregate,
+      status: "CLOSED",
+      revision: 2,
+    };
+
+    await repository.terminate(aggregate, next, [
+      "participant-1",
+      "participant-2",
+    ]);
+
+    expect(redis.eval).toHaveBeenCalledWith(
+      expect.any(String),
+      [
+        "party-ready-room:room:room-1",
+        "party-ready-room:organizer:organizer",
+        "party-ready-room:pending:participant-1",
+        "party-ready-room:accepted:participant-1",
+        "party-ready-room:pending:participant-2",
+        "party-ready-room:accepted:participant-2",
+      ],
+      [JSON.stringify(aggregate), JSON.stringify(next), "room-1", 60],
+    );
+  });
 });

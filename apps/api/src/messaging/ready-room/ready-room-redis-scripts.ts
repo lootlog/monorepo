@@ -44,3 +44,93 @@ end
 
 return { "COMMITTED" }
 `;
+
+export const ACCEPT_READY_ROOM_PARTICIPANT_SCRIPT = `
+local currentAggregate = redis.call("get", KEYS[1])
+
+if not currentAggregate then
+  return { "MISSING" }
+end
+
+if currentAggregate ~= ARGV[1] then
+  return { "CONFLICT" }
+end
+
+local acceptedRoomId = redis.call("get", KEYS[3])
+if acceptedRoomId and acceptedRoomId ~= ARGV[3] then
+  return { "ACCEPTED_ELSEWHERE", acceptedRoomId }
+end
+
+redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
+redis.call("zrem", KEYS[2], ARGV[3])
+redis.call("set", KEYS[3], ARGV[3], "EX", ARGV[4])
+
+return { "COMMITTED" }
+`;
+
+export const COMMIT_READY_ROOM_SCRIPT = `
+local currentAggregate = redis.call("get", KEYS[1])
+
+if not currentAggregate then
+  return { "MISSING" }
+end
+
+if currentAggregate ~= ARGV[1] then
+  return { "CONFLICT" }
+end
+
+redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[3])
+
+return { "COMMITTED" }
+`;
+
+export const EXIT_READY_ROOM_PARTICIPANT_SCRIPT = `
+local currentAggregate = redis.call("get", KEYS[1])
+
+if not currentAggregate then
+  return { "MISSING" }
+end
+
+if currentAggregate ~= ARGV[1] then
+  return { "CONFLICT" }
+end
+
+redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
+redis.call("zrem", KEYS[2], ARGV[3])
+
+local acceptedRoomId = redis.call("get", KEYS[3])
+if acceptedRoomId == ARGV[3] then
+  redis.call("del", KEYS[3])
+end
+
+return { "COMMITTED" }
+`;
+
+export const TERMINATE_READY_ROOM_SCRIPT = `
+local currentAggregate = redis.call("get", KEYS[1])
+
+if not currentAggregate then
+  return { "MISSING" }
+end
+
+if currentAggregate ~= ARGV[1] then
+  return { "CONFLICT" }
+end
+
+redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
+
+local organizerRoomId = redis.call("get", KEYS[2])
+if organizerRoomId == ARGV[3] then
+  redis.call("del", KEYS[2])
+end
+
+for keyIndex = 3, #KEYS, 2 do
+  redis.call("zrem", KEYS[keyIndex], ARGV[3])
+  local acceptedRoomId = redis.call("get", KEYS[keyIndex + 1])
+  if acceptedRoomId == ARGV[3] then
+    redis.call("del", KEYS[keyIndex + 1])
+  end
+end
+
+return { "COMMITTED" }
+`;

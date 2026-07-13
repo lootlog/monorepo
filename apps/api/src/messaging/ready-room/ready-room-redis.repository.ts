@@ -1,9 +1,14 @@
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
+  ACCEPT_READY_ROOM_PARTICIPANT_SCRIPT,
+  COMMIT_READY_ROOM_SCRIPT,
   CREATE_READY_ROOM_SCRIPT,
+  EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
   SAVE_READY_ROOM_APPLICATION_SCRIPT,
+  TERMINATE_READY_ROOM_SCRIPT,
 } from "src/messaging/ready-room/ready-room-redis-scripts";
 import type {
+  AcceptReadyRoomResult,
   CommitReadyRoomResult,
   CreateReadyRoomResult,
   ReadyRoomRepository,
@@ -15,6 +20,8 @@ type Clock = () => number;
 const ROOM_KEY_PREFIX = "party-ready-room:room:";
 const ORGANIZER_KEY_PREFIX = "party-ready-room:organizer:";
 const PENDING_KEY_PREFIX = "party-ready-room:pending:";
+const ACCEPTED_KEY_PREFIX = "party-ready-room:accepted:";
+const TERMINAL_TOMBSTONE_SECONDS = 60;
 
 function getRoomKey(notificationId: string): string {
   return `${ROOM_KEY_PREFIX}${notificationId}`;
@@ -26,6 +33,28 @@ function getOrganizerKey(discordId: string): string {
 
 function getPendingKey(discordId: string): string {
   return `${PENDING_KEY_PREFIX}${discordId}`;
+}
+
+function getAcceptedKey(discordId: string): string {
+  return `${ACCEPTED_KEY_PREFIX}${discordId}`;
+}
+
+function parseAcceptResult(
+  result: unknown,
+  aggregate: ReadyRoomAggregate,
+): AcceptReadyRoomResult {
+  if (
+    Array.isArray(result) &&
+    result[0] === "ACCEPTED_ELSEWHERE" &&
+    typeof result[1] === "string"
+  ) {
+    return {
+      status: "accepted-elsewhere",
+      notificationId: result[1],
+    };
+  }
+
+  return parseCommitResult(result, aggregate);
 }
 
 function parseCommitResult(
@@ -85,6 +114,123 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
     return this.redisService.getJson<ReadyRoomAggregate>(
       getRoomKey(notificationId),
     );
+  }
+
+  async commit(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+  ): Promise<CommitReadyRoomResult> {
+    const ttlSeconds = this.getRemainingTtlSeconds(next);
+    if (ttlSeconds <= 0) {
+      return { status: "missing" };
+    }
+
+    const result = await this.redisService.eval<unknown>(
+      COMMIT_READY_ROOM_SCRIPT,
+      [getRoomKey(next.notificationId)],
+      [JSON.stringify(expected), JSON.stringify(next), ttlSeconds],
+    );
+
+    return parseCommitResult(result, next);
+  }
+
+  async exitParticipant(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+    participantDiscordId: string,
+  ): Promise<CommitReadyRoomResult> {
+    const ttlSeconds = this.getRemainingTtlSeconds(next);
+    if (ttlSeconds <= 0) {
+      return { status: "missing" };
+    }
+
+    const result = await this.redisService.eval<unknown>(
+      EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
+      [
+        getRoomKey(next.notificationId),
+        getPendingKey(participantDiscordId),
+        getAcceptedKey(participantDiscordId),
+      ],
+      [
+        JSON.stringify(expected),
+        JSON.stringify(next),
+        next.notificationId,
+        ttlSeconds,
+      ],
+    );
+
+    return parseCommitResult(result, next);
+  }
+
+  async terminate(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+    participantDiscordIds: string[],
+  ): Promise<CommitReadyRoomResult> {
+    const remainingTtlSeconds = this.getRemainingTtlSeconds(next);
+    if (remainingTtlSeconds <= 0) {
+      return { status: "missing" };
+    }
+    const tombstoneTtlSeconds = Math.min(
+      remainingTtlSeconds,
+      TERMINAL_TOMBSTONE_SECONDS,
+    );
+    const participantIndexKeys = participantDiscordIds.flatMap(
+      (participantDiscordId) => [
+        getPendingKey(participantDiscordId),
+        getAcceptedKey(participantDiscordId),
+      ],
+    );
+    const result = await this.redisService.eval<unknown>(
+      TERMINATE_READY_ROOM_SCRIPT,
+      [
+        getRoomKey(next.notificationId),
+        getOrganizerKey(next.organizerDiscordId),
+        ...participantIndexKeys,
+      ],
+      [
+        JSON.stringify(expected),
+        JSON.stringify(next),
+        next.notificationId,
+        tombstoneTtlSeconds,
+      ],
+    );
+
+    return parseCommitResult(result, next);
+  }
+
+  async accept(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+    participantDiscordId: string,
+  ): Promise<AcceptReadyRoomResult> {
+    const ttlSeconds = Math.ceil(
+      (Date.parse(next.expiresAt) - this.clock()) / 1000,
+    );
+    if (ttlSeconds <= 0) {
+      return { status: "missing" };
+    }
+
+    const result = await this.redisService.eval<unknown>(
+      ACCEPT_READY_ROOM_PARTICIPANT_SCRIPT,
+      [
+        getRoomKey(next.notificationId),
+        getPendingKey(participantDiscordId),
+        getAcceptedKey(participantDiscordId),
+      ],
+      [
+        JSON.stringify(expected),
+        JSON.stringify(next),
+        next.notificationId,
+        ttlSeconds,
+      ],
+    );
+
+    return parseAcceptResult(result, next);
+  }
+
+  private getRemainingTtlSeconds(aggregate: ReadyRoomAggregate): number {
+    return Math.ceil((Date.parse(aggregate.expiresAt) - this.clock()) / 1000);
   }
 
   async saveApplication(

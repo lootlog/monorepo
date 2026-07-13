@@ -9,6 +9,7 @@ import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.typ
 class InMemoryReadyRoomRepository implements ReadyRoomRepository {
   private readonly rooms = new Map<string, ReadyRoomAggregate>();
   private readonly organizerRooms = new Map<string, string>();
+  private readonly acceptedRooms = new Map<string, string>();
 
   create(aggregate: ReadyRoomAggregate): Promise<CreateReadyRoomResult> {
     const activeRoomId = this.organizerRooms.get(aggregate.organizerDiscordId);
@@ -36,6 +37,60 @@ class InMemoryReadyRoomRepository implements ReadyRoomRepository {
     return Promise.resolve(aggregate ? structuredClone(aggregate) : null);
   }
 
+  commit(expected: ReadyRoomAggregate, next: ReadyRoomAggregate) {
+    const current = this.rooms.get(expected.notificationId);
+    if (!current) return Promise.resolve({ status: "missing" as const });
+    if (current.revision !== expected.revision) {
+      return Promise.resolve({ status: "conflict" as const });
+    }
+
+    this.rooms.set(next.notificationId, structuredClone(next));
+    return Promise.resolve({
+      status: "committed" as const,
+      aggregate: structuredClone(next),
+    });
+  }
+
+  exitParticipant(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+    participantDiscordId: string,
+  ) {
+    const acceptedRoomId = this.acceptedRooms.get(participantDiscordId);
+    const result = this.commit(expected, next);
+    return result.then((commitResult) => {
+      if (
+        commitResult.status === "committed" &&
+        acceptedRoomId === expected.notificationId
+      ) {
+        this.acceptedRooms.delete(participantDiscordId);
+      }
+      return commitResult;
+    });
+  }
+
+  terminate(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+    participantDiscordIds: string[],
+  ) {
+    const result = this.commit(expected, next);
+    return result.then((commitResult) => {
+      if (commitResult.status === "committed") {
+        this.organizerRooms.delete(expected.organizerDiscordId);
+        for (const participantDiscordId of participantDiscordIds) {
+          if (
+            this.acceptedRooms.get(participantDiscordId) ===
+            expected.notificationId
+          ) {
+            this.acceptedRooms.delete(participantDiscordId);
+          }
+        }
+      }
+      return commitResult;
+    });
+  }
+
   saveApplication(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
@@ -48,6 +103,33 @@ class InMemoryReadyRoomRepository implements ReadyRoomRepository {
     }
 
     this.rooms.set(next.notificationId, structuredClone(next));
+    return Promise.resolve({
+      status: "committed" as const,
+      aggregate: structuredClone(next),
+    });
+  }
+
+  accept(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+    participantDiscordId: string,
+  ) {
+    const acceptedRoomId = this.acceptedRooms.get(participantDiscordId);
+    if (acceptedRoomId && acceptedRoomId !== expected.notificationId) {
+      return Promise.resolve({
+        status: "accepted-elsewhere" as const,
+        notificationId: acceptedRoomId,
+      });
+    }
+
+    const current = this.rooms.get(expected.notificationId);
+    if (!current) return Promise.resolve({ status: "missing" as const });
+    if (current.revision !== expected.revision) {
+      return Promise.resolve({ status: "conflict" as const });
+    }
+
+    this.rooms.set(next.notificationId, structuredClone(next));
+    this.acceptedRooms.set(participantDiscordId, next.notificationId);
     return Promise.resolve({
       status: "committed" as const,
       aggregate: structuredClone(next),
@@ -148,5 +230,544 @@ describe("ReadyRoomService", () => {
       },
     });
     expect(projection).not.toHaveProperty("participants");
+  });
+
+  it("allows several applications but accepts a participant in only one room", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    const roomIds = ["room-1", "room-2"];
+    const service = new ReadyRoomService(
+      repository,
+      () => Date.parse("2026-07-13T10:00:00.000Z"),
+      () => roomIds.shift()!,
+    );
+    const organizerCharacter = {
+      accountId: "account-organizer",
+      characterId: "character-organizer",
+      icon: "organizer.gif",
+      lvl: 200,
+      nick: "Organizer",
+      prof: "w",
+    };
+    const applicantCharacter = {
+      accountId: "account-applicant",
+      characterId: "character-applicant",
+      icon: "applicant.gif",
+      lvl: 190,
+      nick: "Applicant",
+      prof: "m",
+    };
+
+    await service.create({
+      organizerDiscordId: "organizer-1",
+      organizerCharacter,
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    await service.create({
+      organizerDiscordId: "organizer-2",
+      organizerCharacter: {
+        ...organizerCharacter,
+        characterId: "character-organizer-2",
+      },
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    for (const notificationId of ["room-1", "room-2"]) {
+      await service.apply({
+        notificationId,
+        participantDiscordId: "applicant",
+        character: applicantCharacter,
+        world: "Fobos",
+        accessibleGuildIds: ["guild-1"],
+      });
+    }
+
+    const accepted = await service.accept({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer-1",
+      participantDiscordId: "applicant",
+      expectedRevision: 2,
+    });
+
+    expect(accepted).toMatchObject({
+      viewer: "ORGANIZER",
+      revision: 3,
+      participants: {
+        applicant: { application: "ACCEPTED" },
+      },
+    });
+    await expect(
+      service.accept({
+        notificationId: "room-2",
+        organizerDiscordId: "organizer-2",
+        participantDiscordId: "applicant",
+        expectedRevision: 2,
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        code: "ACCEPTED_ELSEWHERE",
+        notificationId: "room-1",
+      },
+    });
+  });
+
+  it("starts consecutive ready-check rounds and accepts participant-local responses", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    const service = new ReadyRoomService(
+      repository,
+      () => Date.parse("2026-07-13T10:00:00.000Z"),
+      () => "room-1",
+    );
+    const organizerCharacter = {
+      accountId: "account-organizer",
+      characterId: "character-organizer",
+      icon: "organizer.gif",
+      lvl: 200,
+      nick: "Organizer",
+      prof: "w",
+    };
+    await service.create({
+      organizerDiscordId: "organizer",
+      organizerCharacter,
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    for (const [participantDiscordId, characterId] of [
+      ["participant-1", "character-1"],
+      ["participant-2", "character-2"],
+    ]) {
+      await service.apply({
+        notificationId: "room-1",
+        participantDiscordId,
+        character: {
+          ...organizerCharacter,
+          accountId: `account-${participantDiscordId}`,
+          characterId,
+          nick: participantDiscordId,
+        },
+        world: "Fobos",
+        accessibleGuildIds: ["guild-1"],
+      });
+      const current = await repository.get("room-1");
+      await service.accept({
+        notificationId: "room-1",
+        organizerDiscordId: "organizer",
+        participantDiscordId,
+        expectedRevision: current!.revision,
+      });
+    }
+
+    const current = await repository.get("room-1");
+    const started = await service.startReadyCheck({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      expectedRevision: current!.revision,
+    });
+    expect(started).toMatchObject({
+      readyCheck: { roundId: 1 },
+      participants: {
+        "participant-1": { readiness: "PENDING" },
+        "participant-2": { readiness: "PENDING" },
+      },
+    });
+
+    await Promise.all([
+      service.respondToReadyCheck({
+        notificationId: "room-1",
+        participantDiscordId: "participant-1",
+        roundId: 1,
+        ready: true,
+      }),
+      service.respondToReadyCheck({
+        notificationId: "room-1",
+        participantDiscordId: "participant-2",
+        roundId: 1,
+        ready: false,
+      }),
+    ]);
+    await expect(repository.get("room-1")).resolves.toMatchObject({
+      participants: {
+        "participant-1": { readiness: "READY" },
+        "participant-2": { readiness: "NOT_READY" },
+      },
+    });
+
+    const afterResponses = await repository.get("room-1");
+    const restarted = await service.startReadyCheck({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      expectedRevision: afterResponses!.revision,
+    });
+    expect(restarted).toMatchObject({
+      readyCheck: { roundId: 2 },
+      participants: {
+        "participant-1": { readiness: "PENDING" },
+        "participant-2": { readiness: "PENDING" },
+      },
+    });
+  });
+
+  it("withdraws an accepted participant and releases the cross-room lock", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    const roomIds = ["room-1", "room-2"];
+    const service = new ReadyRoomService(
+      repository,
+      () => Date.parse("2026-07-13T10:00:00.000Z"),
+      () => roomIds.shift()!,
+    );
+    const organizerCharacter = {
+      accountId: "account-organizer",
+      characterId: "character-organizer",
+      icon: "organizer.gif",
+      lvl: 200,
+      nick: "Organizer",
+      prof: "w",
+    };
+    const participantCharacter = {
+      ...organizerCharacter,
+      accountId: "account-participant",
+      characterId: "character-participant",
+      nick: "Participant",
+    };
+    for (const organizerDiscordId of ["organizer-1", "organizer-2"]) {
+      await service.create({
+        organizerDiscordId,
+        organizerCharacter: {
+          ...organizerCharacter,
+          characterId: `character-${organizerDiscordId}`,
+        },
+        guildIds: ["guild-1"],
+        world: "Fobos",
+      });
+    }
+    for (const notificationId of ["room-1", "room-2"]) {
+      await service.apply({
+        notificationId,
+        participantDiscordId: "participant",
+        character: participantCharacter,
+        world: "Fobos",
+        accessibleGuildIds: ["guild-1"],
+      });
+    }
+    await service.accept({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer-1",
+      participantDiscordId: "participant",
+      expectedRevision: 2,
+    });
+
+    const withdrawn = await service.withdraw({
+      notificationId: "room-1",
+      participantDiscordId: "participant",
+    });
+    expect(withdrawn).toMatchObject({
+      participant: {
+        application: "WITHDRAWN",
+        readiness: "NOT_REQUESTED",
+        invitation: { status: "NOT_MARKED" },
+        partyPresence: "OUTSIDE",
+      },
+    });
+    await expect(
+      service.accept({
+        notificationId: "room-2",
+        organizerDiscordId: "organizer-2",
+        participantDiscordId: "participant",
+        expectedRevision: 2,
+      }),
+    ).resolves.toMatchObject({
+      participants: { participant: { application: "ACCEPTED" } },
+    });
+  });
+
+  it("lets the organizer decline applicants and remove accepted participants", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    const service = new ReadyRoomService(
+      repository,
+      () => Date.parse("2026-07-13T10:00:00.000Z"),
+      () => "room-1",
+    );
+    const character = {
+      accountId: "account",
+      characterId: "character",
+      icon: "character.gif",
+      lvl: 200,
+      nick: "Character",
+      prof: "w",
+    };
+    await service.create({
+      organizerDiscordId: "organizer",
+      organizerCharacter: character,
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    for (const participantDiscordId of ["declined", "removed"]) {
+      await service.apply({
+        notificationId: "room-1",
+        participantDiscordId,
+        character: {
+          ...character,
+          characterId: `character-${participantDiscordId}`,
+        },
+        world: "Fobos",
+        accessibleGuildIds: ["guild-1"],
+      });
+    }
+
+    const declined = await service.decline({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "declined",
+      expectedRevision: 3,
+    });
+    expect(declined.participants.declined).toMatchObject({
+      application: "DECLINED",
+      readiness: "NOT_REQUESTED",
+    });
+    await service.accept({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "removed",
+      expectedRevision: 4,
+    });
+    const removed = await service.remove({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "removed",
+      expectedRevision: 5,
+    });
+    expect(removed.participants.removed).toMatchObject({
+      application: "DECLINED",
+      readiness: "NOT_REQUESTED",
+      invitation: { status: "NOT_MARKED" },
+      partyPresence: "OUTSIDE",
+    });
+  });
+
+  it("reserves independent invitation commands and acknowledges each target idempotently", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    const generatedIds = ["room-1", "batch-1", "command-1", "command-2"];
+    const service = new ReadyRoomService(
+      repository,
+      () => Date.parse("2026-07-13T10:00:00.000Z"),
+      () => generatedIds.shift()!,
+    );
+    const character = {
+      accountId: "account",
+      characterId: "character",
+      icon: "character.gif",
+      lvl: 200,
+      nick: "Character",
+      prof: "w",
+    };
+    await service.create({
+      organizerDiscordId: "organizer",
+      organizerCharacter: character,
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    for (const participantDiscordId of ["participant-1", "participant-2"]) {
+      await service.apply({
+        notificationId: "room-1",
+        participantDiscordId,
+        character: {
+          ...character,
+          characterId: `character-${participantDiscordId}`,
+        },
+        world: "Fobos",
+        accessibleGuildIds: ["guild-1"],
+      });
+      const aggregate = await repository.get("room-1");
+      await service.accept({
+        notificationId: "room-1",
+        organizerDiscordId: "organizer",
+        participantDiscordId,
+        expectedRevision: aggregate!.revision,
+      });
+    }
+
+    const aggregate = await repository.get("room-1");
+    const reservation = await service.reserveInvitations({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordIds: ["participant-1", "participant-2"],
+      expectedRevision: aggregate!.revision,
+    });
+    expect(reservation.batch).toEqual({
+      batchId: "batch-1",
+      reservations: [
+        {
+          participantDiscordId: "participant-1",
+          characterId: "character-participant-1",
+          commandId: "command-1",
+        },
+        {
+          participantDiscordId: "participant-2",
+          characterId: "character-participant-2",
+          commandId: "command-2",
+        },
+      ],
+    });
+    expect(
+      reservation.projection.participants["participant-1"].invitation,
+    ).toMatchObject({
+      status: "COMMAND_RESERVED",
+      batchId: "batch-1",
+      commandId: "command-1",
+      reservationExpiresAt: "2026-07-13T10:00:15.000Z",
+    });
+
+    const acknowledged = await service.acknowledgeInvitation({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "participant-1",
+      commandId: "command-1",
+      outcome: "SENT",
+    });
+    expect(acknowledged.participants["participant-1"].invitation).toMatchObject(
+      {
+        status: "SENT",
+        source: "LOOTLOG_COMMAND",
+        commandId: "command-1",
+      },
+    );
+    await expect(
+      service.acknowledgeInvitation({
+        notificationId: "room-1",
+        organizerDiscordId: "organizer",
+        participantDiscordId: "participant-1",
+        commandId: "command-1",
+        outcome: "SENT",
+      }),
+    ).resolves.toMatchObject({
+      participants: {
+        "participant-1": { invitation: { status: "SENT" } },
+        "participant-2": { invitation: { status: "COMMAND_RESERVED" } },
+      },
+    });
+  });
+
+  it("projects complete party snapshots without performing game actions", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    const service = new ReadyRoomService(
+      repository,
+      () => Date.parse("2026-07-13T10:00:00.000Z"),
+      () => "room-1",
+    );
+    const character = {
+      accountId: "account",
+      characterId: "character",
+      icon: "character.gif",
+      lvl: 200,
+      nick: "Character",
+      prof: "w",
+    };
+    await service.create({
+      organizerDiscordId: "organizer",
+      organizerCharacter: character,
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    for (const participantDiscordId of ["participant-1", "participant-2"]) {
+      await service.apply({
+        notificationId: "room-1",
+        participantDiscordId,
+        character: {
+          ...character,
+          characterId: `character-${participantDiscordId}`,
+        },
+        world: "Fobos",
+        accessibleGuildIds: ["guild-1"],
+      });
+      const aggregate = await repository.get("room-1");
+      await service.accept({
+        notificationId: "room-1",
+        organizerDiscordId: "organizer",
+        participantDiscordId,
+        expectedRevision: aggregate!.revision,
+      });
+    }
+
+    const oneMember = await service.observeParty({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      memberCharacterIds: ["character-participant-1"],
+    });
+    expect(oneMember.participants).toMatchObject({
+      "participant-1": { partyPresence: "IN_PARTY" },
+      "participant-2": { partyPresence: "OUTSIDE" },
+    });
+
+    const emptyParty = await service.observeParty({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      memberCharacterIds: [],
+    });
+    expect(emptyParty.participants).toMatchObject({
+      "participant-1": { partyPresence: "OUTSIDE" },
+      "participant-2": { partyPresence: "OUTSIDE" },
+    });
+  });
+
+  it("captures active recipients before close and releases organizer ownership", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    const generatedIds = ["room-1", "room-2"];
+    const service = new ReadyRoomService(
+      repository,
+      () => Date.parse("2026-07-13T10:00:00.000Z"),
+      () => generatedIds.shift()!,
+    );
+    const character = {
+      accountId: "account",
+      characterId: "character",
+      icon: "character.gif",
+      lvl: 200,
+      nick: "Character",
+      prof: "w",
+    };
+    await service.create({
+      organizerDiscordId: "organizer",
+      organizerCharacter: character,
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    for (const participantDiscordId of ["applicant", "accepted"]) {
+      await service.apply({
+        notificationId: "room-1",
+        participantDiscordId,
+        character: {
+          ...character,
+          characterId: `character-${participantDiscordId}`,
+        },
+        world: "Fobos",
+        accessibleGuildIds: ["guild-1"],
+      });
+    }
+    await service.accept({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "accepted",
+      expectedRevision: 3,
+    });
+
+    const closed = await service.close({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      expectedRevision: 4,
+    });
+    expect(closed.recipientDiscordIds).toEqual([
+      "organizer",
+      "applicant",
+      "accepted",
+    ]);
+    expect(closed.projection).toMatchObject({ status: "CLOSED", revision: 5 });
+    await expect(
+      service.create({
+        organizerDiscordId: "organizer",
+        organizerCharacter: character,
+        guildIds: ["guild-1"],
+        world: "Fobos",
+      }),
+    ).resolves.toMatchObject({ notificationId: "room-2", status: "ACTIVE" });
   });
 });

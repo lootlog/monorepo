@@ -12,12 +12,35 @@ export type CommitReadyRoomResult =
   | { status: "conflict" }
   | { status: "missing" };
 
+export type AcceptReadyRoomResult =
+  | CommitReadyRoomResult
+  | { status: "accepted-elsewhere"; notificationId: string };
+
 export interface ReadyRoomRepository {
   create(aggregate: ReadyRoomAggregate): Promise<CreateReadyRoomResult>;
   get(notificationId: string): Promise<ReadyRoomAggregate | null>;
+  commit(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+  ): Promise<CommitReadyRoomResult>;
   saveApplication(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
     participantDiscordId: string,
+  ): Promise<CommitReadyRoomResult>;
+  accept(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+    participantDiscordId: string,
+  ): Promise<AcceptReadyRoomResult>;
+  exitParticipant(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+    participantDiscordId: string,
+  ): Promise<CommitReadyRoomResult>;
+  terminate(
+    expected: ReadyRoomAggregate,
+    next: ReadyRoomAggregate,
+    participantDiscordIds: string[],
   ): Promise<CommitReadyRoomResult>;
 }
