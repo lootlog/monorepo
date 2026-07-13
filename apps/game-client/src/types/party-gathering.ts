@@ -13,3 +13,15 @@ export type PartyGatheringCharacter = PartyGatheringCharacterBase & {
     name?: string;
   };
 };
+
+export type PartyGatheringSession = {
+  notificationId: string;
+  discordId: string;
+  character: PartyGatheringCharacter;
+  description?: string;
+  minLvl?: number;
+  maxLvl?: number;
+  world: string;
+  createdAt: string;
+  guildIds?: string[];
+};

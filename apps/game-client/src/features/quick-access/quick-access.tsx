@@ -19,7 +19,11 @@ import { useTranslation } from "react-i18next";
 
 export const QuickAccess = () => {
   const { t } = useTranslation("quickAccess");
-  const partyGathering = usePartyFinderStore((s) => s.partyGathering);
+  const hasActiveReadyRoom = usePartyFinderStore((state) =>
+    Object.values(state.projections).some(
+      (projection) => projection.status === "ACTIVE",
+    ),
+  );
   const open = useWindowsStore((state) => state["quick-access"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const buttons: QuickAccessButtonProps[] = [
@@ -66,13 +70,13 @@ export const QuickAccess = () => {
         closable={false}
       >
         <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
-          {partyGathering && (
+          {hasActiveReadyRoom ? (
             <QuickAccessButton
               id="party-finder"
               title={t("buttons.activePartyGathering")}
               icon=<Swords size="16" className="ll:text-green-500" />
             />
-          )}
+          ) : null}
           {buttons.map((button) => (
             <QuickAccessButton
               key={button.id}

@@ -2,60 +2,50 @@ import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import {
+  selectReadyRoomForCharacter,
+  usePartyFinderStore,
+} from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
-import { useSession } from "@/hooks/auth/use-session";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
-import { VolunteersList } from "@/features/party-finder/components/volunteers-list";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { inviteCharacterToParty } from "@/utils/game/character-actions";
-import { Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ReadyRoomParticipantsList } from "@/features/party-finder/components/ready-room-participants-list";
+import { ReadyRoomParticipantStatus } from "@/features/party-finder/components/ready-room-participant-status";
+import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
+import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 
 export const PartyFinder = () => {
   const { t } = useTranslation("partyFinder");
   const open = useWindowsStore((state) => state["party-finder"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
 
-  const partyGathering = usePartyFinderStore((s) => s.partyGathering);
-  const volunteers = usePartyFinderStore((s) => s.volunteers);
+  const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
+  const readyRoom = usePartyFinderStore((state) =>
+    selectReadyRoomForCharacter(state, currentCharacterIdentity),
+  );
   const partyMembers = usePartyStore((s) => s.members);
-  const { data: session } = useSession();
-  const discordId = session?.user?.discordId;
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
     useCancelPartyGathering();
-  const setInviteState = usePartyFinderStore((s) => s.setInviteState);
-  const [isInvitingAll, setIsInvitingAll] = useState(false);
-  const isMountedRef = useRef(true);
+  const { inviteParticipants, canInviteParticipants } =
+    useReadyRoomInvitations();
+  const isOrganizerView =
+    readyRoom?.viewer === "ORGANIZER" &&
+    currentCharacterIdentity?.accountId ===
+      readyRoom.organizerCharacter.accountId &&
+    currentCharacterIdentity.characterId ===
+      readyRoom.organizerCharacter.characterId;
+  const invitableParticipantIds =
+    isOrganizerView && readyRoom.viewer === "ORGANIZER"
+      ? Object.values(readyRoom.participants)
+          .filter((participant) => participant.partyPresence === "OUTSIDE")
+          .map(({ participantId }) => participantId)
+      : [];
 
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-
-  const isOwner = partyGathering && partyGathering.discordId === discordId;
-
-  const invitableVolunteers = volunteers.filter(
-    (v) => !partyMembers.some((m) => m.id === Number.parseInt(v.characterId)),
-  );
-
-  const handleInviteAll = async () => {
-    setIsInvitingAll(true);
-    for (const v of invitableVolunteers) {
-      if (!isMountedRef.current) break;
-      setInviteState(v.characterId, "pending");
-      inviteCharacterToParty(v.characterId);
-      await new Promise((r) => setTimeout(r, 200));
-    }
-    if (isMountedRef.current) {
-      setIsInvitingAll(false);
-    }
-  };
+  if (!readyRoom) return null;
 
   return (
-    <AnimatedWindow isOpen={open && !!partyGathering} windowKey="party-finder">
+    <AnimatedWindow isOpen={open} windowKey="party-finder">
       <DraggableWindow
         id="party-finder"
         title={t("window.title")}
@@ -76,37 +66,39 @@ export const PartyFinder = () => {
             </span>
           </div>
           <ScrollArea className="ll:flex-1">
-            <VolunteersList />
+            {isOrganizerView && readyRoom.viewer === "ORGANIZER" ? (
+              <ReadyRoomParticipantsList room={readyRoom} />
+            ) : (
+              <ReadyRoomParticipantStatus room={readyRoom} />
+            )}
           </ScrollArea>
-          {isOwner && (
+          {isOrganizerView ? (
             <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
-              {invitableVolunteers.length > 0 && (
-                <Button
-                  onClick={handleInviteAll}
-                  disabled={isInvitingAll}
-                  className="ll:w-full ll:border-green-500 ll:text-green-400 ll:hover:bg-green-600/20"
-                >
-                  {isInvitingAll ? (
-                    <>
-                      <Loader2 className="ll:w-3 ll:h-3 ll:animate-spin ll:mr-1" />
-                      {t("actions.inviting")}
-                    </>
-                  ) : (
-                    t("actions.inviteAll")
-                  )}
-                </Button>
-              )}
+              <Button
+                onClick={() => {
+                  void inviteParticipants().catch((error: unknown) => {
+                    console.warn("Failed to resolve party invitations", error);
+                  });
+                }}
+                disabled={
+                  invitableParticipantIds.length === 0 ||
+                  !canInviteParticipants()
+                }
+                className="ll:w-full ll:border-green-500 ll:text-green-400 ll:hover:bg-green-600/20"
+              >
+                {t("actions.inviteAll")}
+              </Button>
               <Button
                 onClick={() => cancelPartyGathering()}
                 disabled={isCancelling}
-                className="ll:w-full ll:bg-red-600/30 ll:border-red-500 ll:hover:bg-red-600/50"
+                className="ll:w-full ll:border-red-500 ll:bg-red-600/20 ll:text-red-300 ll:hover:bg-red-600/40"
               >
                 {isCancelling
                   ? t("actions.ending")
-                  : t("actions.endPartyGathering")}
+                  : t("actions.cancelPartyGathering")}
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       </DraggableWindow>
     </AnimatedWindow>

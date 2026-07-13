@@ -22,7 +22,10 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { resolveNpcNotificationRouting } from "@/utils/notifications-and-detector/npc-notification";
 import { useEffect, useState } from "react";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import {
+  selectOwnedReadyRoom,
+  usePartyFinderStore,
+} from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
 import { useTranslation } from "react-i18next";
@@ -98,7 +101,7 @@ export const NpcListItem = ({
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
-  const partyGathering = usePartyFinderStore((state) => state.partyGathering);
+  const ownedReadyRoom = usePartyFinderStore(selectOwnedReadyRoom);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const {
     isCreatingNpcPartyGathering,
@@ -124,7 +127,7 @@ export const NpcListItem = ({
   const key = npcType;
   const repeatDetectionFlashFrames = getRepeatDetectionFlashFrames(key);
 
-  const hasActivePartyGathering = partyGathering !== null;
+  const hasActivePartyGathering = ownedReadyRoom !== null;
   const isMessageButtonInCooldown = npc.notificationSent;
 
   useEffect(() => {
@@ -235,7 +238,7 @@ export const NpcListItem = ({
 
       setOpen("party-finder", true);
     } catch (error) {
-      console.error("Failed to send notification:", error);
+      console.warn("Failed to send notification:", error);
       window.message(t("actions.messageFailed"));
     }
   };
@@ -260,7 +263,7 @@ export const NpcListItem = ({
         notificationSent: true,
       });
     } catch (error) {
-      console.error("Failed to gather party:", error);
+      console.warn("Failed to gather party:", error);
       window.message(t("actions.gatherPartyFailed"));
     }
   };

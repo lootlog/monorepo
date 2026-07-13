@@ -5,6 +5,7 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { CreateNotificationDtoCharacter } from './create-notification-dto-character.js';
 import type { CreateNotificationDtoNpc } from './create-notification-dto-npc.js';
 
 export interface CreateNotificationDto {
@@ -23,4 +24,5 @@ export interface CreateNotificationDto {
      */
   world: string;
   isGatheringParty?: boolean;
+  character?: CreateNotificationDtoCharacter;
 }

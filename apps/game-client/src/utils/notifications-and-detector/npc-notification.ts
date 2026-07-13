@@ -4,7 +4,10 @@ import type {
   SendChatMessageOptions,
 } from "@/api/chat.api";
 import type { CreateNotificationOptions } from "@/api/messaging.api";
-import { buildChatCharacterData } from "@/lib/api/generated-helpers";
+import {
+  buildChatCharacterData,
+  buildCurrentCharacterPayload,
+} from "@/lib/api/generated-helpers";
 import { resolveDetectorGuildIds } from "@/lib/game-account-preferences";
 import { Game } from "@/lib/game";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
@@ -80,7 +83,9 @@ export const buildNpcNotificationPayload = ({
   npc: buildNotificationNpcPayload(npc),
   world,
   guildIds,
-  ...(isGatheringParty ? { isGatheringParty } : {}),
+  ...(isGatheringParty
+    ? { isGatheringParty, character: buildCurrentCharacterPayload() }
+    : {}),
 });
 
 export const buildNpcChatMessagePayload = ({

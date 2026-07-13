@@ -57,6 +57,10 @@ export enum RoutingKey {
   GUILDS_PARTY_GATHERING_RETRY = "guilds.party-gathering.retry",
   GUILDS_PARTY_GATHERING_CANCEL = "guilds.party-gathering.cancel",
 
+  USERS_PARTY_READY_ROOM_UPDATED = "users.party-ready-room.updated",
+  USERS_PARTY_READY_ROOM_UPDATED_DLQ = "users.party-ready-room.updated.dlq",
+  USERS_PARTY_READY_ROOM_UPDATED_RETRY = "users.party-ready-room.updated.retry",
+
   GUILDS_DELETE_MESSAGE = "guilds.delete.message",
   GUILDS_UPDATE_MESSAGE = "guilds.update.message",
   GUILDS_CLEAR_MESSAGES = "guilds.clear.messages",
