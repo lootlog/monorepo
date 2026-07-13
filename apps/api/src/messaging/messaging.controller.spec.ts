@@ -11,7 +11,7 @@ describe("MessagingController", () => {
   let controller: MessagingController;
 
   const mockMessagingService = {
-    cancelPartyGathering: mockFn(),
+    sendNotification: mockFn(),
   };
 
   beforeEach(async () => {
@@ -29,52 +29,19 @@ describe("MessagingController", () => {
     vi.clearAllMocks();
   });
 
-  describe("cancelPartyGathering", () => {
-    const discordId = "123456";
-    const notificationId = "notif-abc";
-
-    it("should return 200 with guildIds on success", async () => {
-      mockMessagingService.cancelPartyGathering.mockResolvedValue({
-        status: "success",
-        guildIds: ["guild-1"],
-      });
-
-      const mockReply = {
-        status: mockFn().mockReturnThis(),
-        send: mockFn().mockReturnThis(),
-      };
-
-      await controller.cancelPartyGathering(
-        discordId,
-        notificationId,
-        mockReply as never,
-      );
-
-      expect(mockReply.status).toHaveBeenCalledWith(200);
-      expect(mockReply.send).toHaveBeenCalledWith({
-        success: true,
-        guildIds: ["guild-1"],
-      });
+  it("delegates ordinary notifications to MessagingService", async () => {
+    const data = { guildIds: ["guild-1"], message: "message" };
+    mockMessagingService.sendNotification.mockResolvedValue({
+      notificationId: "notification-1",
+      guildIds: ["guild-1"],
     });
 
-    it("should return 204 with empty body for expired notification", async () => {
-      mockMessagingService.cancelPartyGathering.mockResolvedValue({
-        status: "expired",
-      });
-
-      const mockReply = {
-        status: mockFn().mockReturnThis(),
-        send: mockFn().mockReturnThis(),
-      };
-
-      await controller.cancelPartyGathering(
-        discordId,
-        notificationId,
-        mockReply as never,
-      );
-
-      expect(mockReply.status).toHaveBeenCalledWith(204);
-      expect(mockReply.send).toHaveBeenCalledWith();
-    });
+    await expect(
+      controller.sendNotification("discord-1", data),
+    ).resolves.toMatchObject({ notificationId: "notification-1" });
+    expect(mockMessagingService.sendNotification).toHaveBeenCalledWith(
+      "discord-1",
+      data,
+    );
   });
 });

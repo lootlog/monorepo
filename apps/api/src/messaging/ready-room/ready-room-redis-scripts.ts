@@ -134,3 +134,33 @@ end
 
 return { "COMMITTED" }
 `;
+
+export const FIND_READY_ROOM_IDS_SCRIPT = `
+redis.call("zremrangebyscore", KEYS[3], "-inf", ARGV[1])
+
+local roomIds = {}
+local organizerRoomId = redis.call("get", KEYS[1])
+if organizerRoomId then
+  table.insert(roomIds, organizerRoomId)
+end
+
+local acceptedRoomId = redis.call("get", KEYS[2])
+if acceptedRoomId then
+  table.insert(roomIds, acceptedRoomId)
+end
+
+local pendingRoomIds = redis.call("zrange", KEYS[3], 0, -1)
+for _, pendingRoomId in ipairs(pendingRoomIds) do
+  table.insert(roomIds, pendingRoomId)
+end
+
+return roomIds
+`;
+
+export const PRUNE_READY_ROOM_PENDING_SCRIPT = `
+for _, notificationId in ipairs(ARGV) do
+  redis.call("zrem", KEYS[1], notificationId)
+end
+
+return { "PRUNED" }
+`;

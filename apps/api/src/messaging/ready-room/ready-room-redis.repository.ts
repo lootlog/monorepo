@@ -4,6 +4,8 @@ import {
   COMMIT_READY_ROOM_SCRIPT,
   CREATE_READY_ROOM_SCRIPT,
   EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
+  FIND_READY_ROOM_IDS_SCRIPT,
+  PRUNE_READY_ROOM_PENDING_SCRIPT,
   SAVE_READY_ROOM_APPLICATION_SCRIPT,
   TERMINATE_READY_ROOM_SCRIPT,
 } from "src/messaging/ready-room/ready-room-redis-scripts";
@@ -113,6 +115,41 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
   get(notificationId: string): Promise<ReadyRoomAggregate | null> {
     return this.redisService.getJson<ReadyRoomAggregate>(
       getRoomKey(notificationId),
+    );
+  }
+
+  async findForUser(discordId: string): Promise<ReadyRoomAggregate[]> {
+    const roomIdsResult = await this.redisService.eval<unknown>(
+      FIND_READY_ROOM_IDS_SCRIPT,
+      [
+        getOrganizerKey(discordId),
+        getAcceptedKey(discordId),
+        getPendingKey(discordId),
+      ],
+      [this.clock()],
+    );
+    if (
+      !Array.isArray(roomIdsResult) ||
+      !roomIdsResult.every((roomId) => typeof roomId === "string")
+    ) {
+      throw new Error("Invalid Ready Room index result from Redis");
+    }
+
+    const roomIds = [...new Set(roomIdsResult as string[])];
+    const aggregates = await Promise.all(
+      roomIds.map((notificationId) => this.get(notificationId)),
+    );
+    const missingRoomIds = roomIds.filter((_, index) => !aggregates[index]);
+    if (missingRoomIds.length > 0) {
+      await this.redisService.eval(
+        PRUNE_READY_ROOM_PENDING_SCRIPT,
+        [getPendingKey(discordId)],
+        missingRoomIds,
+      );
+    }
+
+    return aggregates.filter(
+      (aggregate): aggregate is ReadyRoomAggregate => aggregate !== null,
     );
   }
 

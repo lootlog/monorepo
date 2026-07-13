@@ -19,6 +19,7 @@ export type AcceptReadyRoomResult =
 export interface ReadyRoomRepository {
   create(aggregate: ReadyRoomAggregate): Promise<CreateReadyRoomResult>;
   get(notificationId: string): Promise<ReadyRoomAggregate | null>;
+  findForUser(discordId: string): Promise<ReadyRoomAggregate[]>;
   commit(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,

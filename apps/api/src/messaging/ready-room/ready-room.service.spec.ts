@@ -37,6 +37,20 @@ class InMemoryReadyRoomRepository implements ReadyRoomRepository {
     return Promise.resolve(aggregate ? structuredClone(aggregate) : null);
   }
 
+  findForUser(discordId: string): Promise<ReadyRoomAggregate[]> {
+    return Promise.resolve(
+      [...this.rooms.values()]
+        .filter(
+          (aggregate) =>
+            aggregate.status === "ACTIVE" &&
+            (aggregate.organizerDiscordId === discordId ||
+              aggregate.participants[discordId]?.application === "APPLIED" ||
+              aggregate.participants[discordId]?.application === "ACCEPTED"),
+        )
+        .map((aggregate) => structuredClone(aggregate)),
+    );
+  }
+
   commit(expected: ReadyRoomAggregate, next: ReadyRoomAggregate) {
     const current = this.rooms.get(expected.notificationId);
     if (!current) return Promise.resolve({ status: "missing" as const });
@@ -138,6 +152,69 @@ class InMemoryReadyRoomRepository implements ReadyRoomRepository {
 }
 
 describe("ReadyRoomService", () => {
+  it("lists only private projections reachable through a retained guild", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    const roomIds = ["room-1", "room-2"];
+    const service = new ReadyRoomService(
+      repository,
+      () => Date.parse("2026-07-13T10:00:00.000Z"),
+      () => roomIds.shift() ?? "unexpected-room",
+    );
+    const character = {
+      accountId: "account",
+      characterId: "character",
+      icon: "character.gif",
+      lvl: 200,
+      nick: "Character",
+      prof: "w",
+    };
+    await service.create({
+      organizerDiscordId: "organizer-1",
+      organizerCharacter: character,
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    await service.create({
+      organizerDiscordId: "organizer-2",
+      organizerCharacter: character,
+      guildIds: ["guild-2"],
+      world: "Fobos",
+    });
+    await service.apply({
+      notificationId: "room-1",
+      participantDiscordId: "participant",
+      character,
+      world: "Fobos",
+      accessibleGuildIds: ["guild-1", "guild-2"],
+    });
+    await service.apply({
+      notificationId: "room-2",
+      participantDiscordId: "participant",
+      character,
+      world: "Fobos",
+      accessibleGuildIds: ["guild-1", "guild-2"],
+    });
+
+    await expect(
+      service.list({
+        viewerDiscordId: "participant",
+        accessibleGuildIds: ["guild-1"],
+      }),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        notificationId: "room-1",
+        viewer: "PARTICIPANT",
+      }),
+    ]);
+    await expect(
+      service.get({
+        notificationId: "room-2",
+        viewerDiscordId: "participant",
+        accessibleGuildIds: ["guild-1"],
+      }),
+    ).rejects.toMatchObject({ response: { code: "FORBIDDEN" } });
+  });
+
   it("creates a live organizer room with a fixed thirty-minute lifetime", async () => {
     const repository = new InMemoryReadyRoomRepository();
     const service = new ReadyRoomService(
