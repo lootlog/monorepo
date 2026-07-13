@@ -5,11 +5,21 @@ import { MapChangeProcessor } from "./map-change-processor";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
 const mockEmit = vi.fn();
+const cancelMapPingInteraction = vi.hoisted(() => vi.fn());
+const clearMapPings = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/socket", () => ({
   getSocket: () => ({
     emit: mockEmit,
   }),
+}));
+
+vi.mock("@/features/map-pings/map-ping-controller", () => ({
+  mapPingController: { clear: clearMapPings },
+}));
+
+vi.mock("@/features/map-pings/map-ping-interaction-controller", () => ({
+  mapPingInteractionController: { cancel: cancelMapPingInteraction },
 }));
 
 const createMapChangeEvent = (id: number, name: string): GameEvent =>
@@ -87,6 +97,8 @@ describe("MapChangeProcessor", () => {
     processor.handle(createMapChangeEvent(12, "Torneg"));
 
     expect(mockEmit).toHaveBeenCalledTimes(1);
+    expect(cancelMapPingInteraction).toHaveBeenCalledTimes(1);
+    expect(clearMapPings).toHaveBeenCalledTimes(1);
   });
 
   it("emits again when map id changes", () => {
@@ -109,5 +121,7 @@ describe("MapChangeProcessor", () => {
         mapName: "Nithal",
       },
     );
+    expect(cancelMapPingInteraction).toHaveBeenCalledTimes(2);
+    expect(clearMapPings).toHaveBeenCalledTimes(2);
   });
 });

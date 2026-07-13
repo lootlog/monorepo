@@ -3,6 +3,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { GatewayEvent } from "@/config/gateway";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { mapPingController } from "@/features/map-pings/map-ping-controller";
+import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 
 export class MapChangeProcessor {
   private previousMapId: number | null = null;
@@ -16,6 +17,7 @@ export class MapChangeProcessor {
     if (this.previousMapId === mapId) return;
 
     this.previousMapId = mapId;
+    mapPingInteractionController.cancel();
     mapPingController.clear();
 
     const { connected, joinedGuilds } = useGlobalStore.getState().socketState;
