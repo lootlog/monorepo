@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export type MessagingControllerCancelPartyGatheringPathParameters = {
- notificationId: string,
- }
+export type PartyReadyRoomProjectionDtoOutputParticipantsCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};

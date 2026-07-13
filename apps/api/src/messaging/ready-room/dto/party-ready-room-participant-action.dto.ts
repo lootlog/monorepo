@@ -2,7 +2,7 @@ import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 
 const ExpectedRevisionSchema = z.object({
-  expectedRevision: z.number().int().positive(),
+  expectedRevision: z.number().int().min(1),
 });
 
 const PartyReadyRoomParticipantActionSchema = ExpectedRevisionSchema.extend({

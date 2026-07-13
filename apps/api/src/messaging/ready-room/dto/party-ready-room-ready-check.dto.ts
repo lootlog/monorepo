@@ -2,7 +2,7 @@ import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 
 const PartyReadyRoomReadyResponseSchema = z.object({
-  roundId: z.number().int().positive(),
+  roundId: z.number().int().min(1),
   ready: z.boolean(),
 });
 

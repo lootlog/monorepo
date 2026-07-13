@@ -17,6 +17,8 @@ import { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gatherin
 import { PartyReadyRoomApplicationDto } from "src/messaging/ready-room/dto/party-ready-room-application.dto";
 import {
   PartyReadyRoomAcknowledgeInvitationDto,
+  PartyReadyRoomAnnotateInvitationDto,
+  PartyReadyRoomReconcileInvitationDto,
   PartyReadyRoomReserveInvitationsDto,
 } from "src/messaging/ready-room/dto/party-ready-room-invitation.dto";
 import { PartyReadyRoomObservationDto } from "src/messaging/ready-room/dto/party-ready-room-observation.dto";
@@ -222,6 +224,36 @@ export class PartyReadyRoomController {
   ) {
     await this.assertAccess(notificationId, discordId);
     return this.readyRoomService.acknowledgeInvitation({
+      ...data,
+      notificationId,
+      organizerDiscordId: discordId,
+    });
+  }
+
+  @Post(":notificationId/invitations/annotate")
+  @ZodResponse({ status: 201, type: PartyReadyRoomProjectionDto })
+  async annotateInvitation(
+    @DiscordId() discordId: string,
+    @Param("notificationId") notificationId: string,
+    @Body() data: PartyReadyRoomAnnotateInvitationDto,
+  ) {
+    await this.assertAccess(notificationId, discordId);
+    return this.readyRoomService.annotateInvitation({
+      ...data,
+      notificationId,
+      organizerDiscordId: discordId,
+    });
+  }
+
+  @Post(":notificationId/invitations/reconcile")
+  @ZodResponse({ status: 201, type: PartyReadyRoomProjectionDto })
+  async reconcileInvitation(
+    @DiscordId() discordId: string,
+    @Param("notificationId") notificationId: string,
+    @Body() data: PartyReadyRoomReconcileInvitationDto,
+  ) {
+    await this.assertAccess(notificationId, discordId);
+    return this.readyRoomService.reconcileInvitation({
       ...data,
       notificationId,
       organizerDiscordId: discordId,

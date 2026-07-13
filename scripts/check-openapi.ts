@@ -75,8 +75,10 @@ const responseChecks = [
   ["/guilds/{guildId}/chat-messages/{messageId}", "delete", "200"],
   ["/messaging", "post", "201"],
   ["/messaging/party-gathering", "post", "201"],
-  ["/messaging/party-gathering", "delete", "200"],
-  ["/messaging/party-gathering/{notificationId}", "delete", "200"],
+  ["/messaging/party-gathering", "get", "200"],
+  ["/messaging/party-gathering/{notificationId}", "get", "200"],
+  ["/messaging/party-gathering/{notificationId}/close", "post", "201"],
+  ["/messaging/party-gathering/{notificationId}/cancel", "post", "201"],
 ] as const;
 
 for (const [pathKey, method, statusCode] of responseChecks) {

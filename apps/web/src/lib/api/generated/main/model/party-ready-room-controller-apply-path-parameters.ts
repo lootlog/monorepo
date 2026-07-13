@@ -6,8 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface CancelPartyGatheringResponseDtoOutput {
-  success: boolean;
-  /** @items.minLength 1 */
-  guildIds: string[];
-}
+export type PartyReadyRoomControllerApplyPathParameters = {
+ notificationId: string,
+ }

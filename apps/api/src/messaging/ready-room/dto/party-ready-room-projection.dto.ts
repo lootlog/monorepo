@@ -32,13 +32,13 @@ const ProjectionBaseSchema = z.object({
   minLvl: z.number().optional(),
   maxLvl: z.number().optional(),
   status: z.enum(["ACTIVE", "CLOSED", "CANCELLED"]),
-  revision: z.number().int().positive(),
+  revision: z.number().int().min(1),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   expiresAt: z.string().datetime(),
   readyCheck: z
     .object({
-      roundId: z.number().int().positive(),
+      roundId: z.number().int().min(1),
       startedAt: z.string().datetime(),
     })
     .nullable(),

@@ -448,6 +448,40 @@ describe("ReadyRoomService", () => {
       },
     });
 
+    await service.apply({
+      notificationId: "room-1",
+      participantDiscordId: "participant-3",
+      character: {
+        ...organizerCharacter,
+        accountId: "account-participant-3",
+        characterId: "character-3",
+        nick: "participant-3",
+      },
+      world: "Fobos",
+      accessibleGuildIds: ["guild-1"],
+    });
+    const beforeMidRoundAccept = await repository.get("room-1");
+    const acceptedMidRound = await service.accept({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "participant-3",
+      expectedRevision: beforeMidRoundAccept!.revision,
+    });
+    expect(acceptedMidRound.participants["participant-3"]).toMatchObject({
+      application: "ACCEPTED",
+      readiness: "PENDING",
+    });
+    const removedMidRound = await service.remove({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "participant-3",
+      expectedRevision: acceptedMidRound.revision,
+    });
+    expect(removedMidRound.participants["participant-3"]).toMatchObject({
+      application: "DECLINED",
+      readiness: "NOT_REQUESTED",
+    });
+
     await Promise.all([
       service.respondToReadyCheck({
         notificationId: "room-1",
@@ -724,6 +758,93 @@ describe("ReadyRoomService", () => {
     });
   });
 
+  it("reconciles expired reservations and supports explicit manual annotations", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    let currentTime = Date.parse("2026-07-13T10:00:00.000Z");
+    const generatedIds = ["room-1", "batch-1", "command-1"];
+    const service = new ReadyRoomService(
+      repository,
+      () => currentTime,
+      () => generatedIds.shift()!,
+    );
+    const character = {
+      accountId: "account",
+      characterId: "character",
+      icon: "character.gif",
+      lvl: 200,
+      nick: "Character",
+      prof: "w",
+    };
+    await service.create({
+      organizerDiscordId: "organizer",
+      organizerCharacter: character,
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    await service.apply({
+      notificationId: "room-1",
+      participantDiscordId: "participant",
+      character,
+      world: "Fobos",
+      accessibleGuildIds: ["guild-1"],
+    });
+    await service.accept({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "participant",
+      expectedRevision: 2,
+    });
+    await service.reserveInvitations({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordIds: ["participant"],
+      expectedRevision: 3,
+    });
+
+    await expect(
+      service.annotateInvitation({
+        notificationId: "room-1",
+        organizerDiscordId: "organizer",
+        participantDiscordId: "participant",
+        expectedRevision: 4,
+        outcome: "SENT",
+      }),
+    ).rejects.toMatchObject({
+      response: { code: "INVALID_STATE_TRANSITION" },
+    });
+
+    currentTime = Date.parse("2026-07-13T10:00:16.000Z");
+    const reconciled = await service.reconcileInvitation({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "participant",
+      commandId: "command-1",
+      expectedRevision: 4,
+      outcome: "NOT_MARKED",
+    });
+    expect(reconciled.participants.participant.invitation).toMatchObject({
+      status: "NOT_MARKED",
+      source: null,
+      commandId: null,
+      reservationExpiresAt: null,
+    });
+
+    const annotated = await service.annotateInvitation({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "participant",
+      expectedRevision: 5,
+      outcome: "SENT",
+    });
+    expect(annotated.participants.participant.invitation).toMatchObject({
+      status: "SENT",
+      source: "MANUAL_ANNOTATION",
+      commandId: null,
+      batchId: null,
+      reservationExpiresAt: null,
+    });
+  });
+
   it("projects complete party snapshots without performing game actions", async () => {
     const repository = new InMemoryReadyRoomRepository();
     const service = new ReadyRoomService(
@@ -784,6 +905,57 @@ describe("ReadyRoomService", () => {
       "participant-1": { partyPresence: "OUTSIDE" },
       "participant-2": { partyPresence: "OUTSIDE" },
     });
+  });
+
+  it("stops participant-local CAS retries after four conflicts", async () => {
+    const repository = new InMemoryReadyRoomRepository();
+    const service = new ReadyRoomService(
+      repository,
+      () => Date.parse("2026-07-13T10:00:00.000Z"),
+      () => "room-1",
+    );
+    const character = {
+      accountId: "account",
+      characterId: "character",
+      icon: "character.gif",
+      lvl: 200,
+      nick: "Character",
+      prof: "w",
+    };
+    await service.create({
+      organizerDiscordId: "organizer",
+      organizerCharacter: character,
+      guildIds: ["guild-1"],
+      world: "Fobos",
+    });
+    await service.apply({
+      notificationId: "room-1",
+      participantDiscordId: "participant",
+      character,
+      world: "Fobos",
+      accessibleGuildIds: ["guild-1"],
+    });
+    await service.accept({
+      notificationId: "room-1",
+      organizerDiscordId: "organizer",
+      participantDiscordId: "participant",
+      expectedRevision: 2,
+    });
+
+    let commitAttempts = 0;
+    repository.commit = () => {
+      commitAttempts += 1;
+      return Promise.resolve({ status: "conflict" as const });
+    };
+
+    await expect(
+      service.observeParty({
+        notificationId: "room-1",
+        organizerDiscordId: "organizer",
+        memberCharacterIds: ["character"],
+      }),
+    ).rejects.toMatchObject({ response: { code: "REVISION_CONFLICT" } });
+    expect(commitAttempts).toBe(4);
   });
 
   it("captures active recipients before close and releases organizer ownership", async () => {

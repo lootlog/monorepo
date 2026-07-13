@@ -38,6 +38,7 @@ const INVITATION_RESERVATION_MS = 15 * 1000;
 const MAX_CAS_ATTEMPTS = 4;
 
 export interface CreateReadyRoomCommand {
+  notificationId?: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomCharacter;
   guildIds: string[];
@@ -93,6 +94,23 @@ export interface AcknowledgeReadyRoomInvitationCommand {
   participantDiscordId: string;
   commandId: string;
   outcome: "SENT" | "FAILED";
+}
+
+export interface AnnotateReadyRoomInvitationCommand {
+  notificationId: string;
+  organizerDiscordId: string;
+  participantDiscordId: string;
+  expectedRevision: number;
+  outcome: "SENT" | "FAILED";
+}
+
+export interface ReconcileReadyRoomInvitationCommand {
+  notificationId: string;
+  organizerDiscordId: string;
+  participantDiscordId: string;
+  commandId: string;
+  expectedRevision: number;
+  outcome: "NOT_MARKED" | "SENT" | "FAILED";
 }
 
 export interface ObserveReadyRoomPartyCommand {
@@ -325,13 +343,7 @@ export class ReadyRoomService {
       if (attempt + 1 < MAX_CAS_ATTEMPTS) {
         return this.observePartyWithRetry(command, attempt + 1);
       }
-      const latestAggregate = await this.getLiveAggregate(
-        command.notificationId,
-      );
-      return createReadyRoomProjection(
-        latestAggregate,
-        command.organizerDiscordId,
-      ) as PartyReadyRoomOrganizerProjection;
+      throw new ConflictException({ code: "REVISION_CONFLICT" });
     }
     await this.publish(result.aggregate, [
       command.organizerDiscordId,
@@ -443,7 +455,7 @@ export class ReadyRoomService {
     if (aggregate.organizerDiscordId !== command.organizerDiscordId) {
       throw new ForbiddenException({ code: "FORBIDDEN" });
     }
-    const participant = aggregate.participants[command.participantDiscordId];
+    const participant = aggregate.participants[command.participantDiscordId]!;
     if (
       participant?.invitation.commandId !== command.commandId ||
       participant.application !== "ACCEPTED"
@@ -493,6 +505,117 @@ export class ReadyRoomService {
       }
       return this.acknowledgeInvitationWithRetry(command, attempt + 1);
     }
+    await this.publish(result.aggregate, [
+      command.organizerDiscordId,
+      command.participantDiscordId,
+    ]);
+
+    return createReadyRoomProjection(
+      result.aggregate,
+      command.organizerDiscordId,
+    ) as PartyReadyRoomOrganizerProjection;
+  }
+
+  async annotateInvitation(
+    command: AnnotateReadyRoomInvitationCommand,
+  ): Promise<PartyReadyRoomOrganizerProjection> {
+    const aggregate = await this.getLiveAggregate(command.notificationId);
+    this.assertOrganizerRevision(
+      aggregate,
+      command.organizerDiscordId,
+      command.expectedRevision,
+    );
+    const participant = aggregate.participants[command.participantDiscordId];
+    const reservationExpiresAt = participant?.invitation.reservationExpiresAt;
+    const hasUnexpiredReservation =
+      participant?.invitation.status === "COMMAND_RESERVED" &&
+      reservationExpiresAt !== null &&
+      Date.parse(reservationExpiresAt) > this.clock();
+    if (participant?.application !== "ACCEPTED" || hasUnexpiredReservation) {
+      throw new UnprocessableEntityException({
+        code: "INVALID_STATE_TRANSITION",
+      });
+    }
+
+    return this.commitInvitationMutation(aggregate, command, {
+      status: command.outcome,
+      source: "MANUAL_ANNOTATION",
+      commandId: null,
+      batchId: null,
+      reservationExpiresAt: null,
+    });
+  }
+
+  async reconcileInvitation(
+    command: ReconcileReadyRoomInvitationCommand,
+  ): Promise<PartyReadyRoomOrganizerProjection> {
+    const aggregate = await this.getLiveAggregate(command.notificationId);
+    this.assertOrganizerRevision(
+      aggregate,
+      command.organizerDiscordId,
+      command.expectedRevision,
+    );
+    const participant = aggregate.participants[command.participantDiscordId];
+    if (
+      participant?.application !== "ACCEPTED" ||
+      participant.invitation.status !== "COMMAND_RESERVED" ||
+      participant.invitation.commandId !== command.commandId
+    ) {
+      throw new ConflictException({ code: "STALE_COMMAND" });
+    }
+    const reservationExpiresAt = participant.invitation.reservationExpiresAt;
+    if (
+      reservationExpiresAt === null ||
+      Date.parse(reservationExpiresAt) > this.clock()
+    ) {
+      throw new UnprocessableEntityException({
+        code: "INVALID_STATE_TRANSITION",
+      });
+    }
+
+    if (command.outcome === "NOT_MARKED") {
+      return this.commitInvitationMutation(aggregate, command, {
+        status: "NOT_MARKED",
+        source: null,
+        commandId: null,
+        batchId: null,
+        reservationExpiresAt: null,
+      });
+    }
+
+    return this.commitInvitationMutation(aggregate, command, {
+      status: command.outcome,
+      source: "LOOTLOG_COMMAND",
+      commandId: command.commandId,
+      batchId: participant.invitation.batchId,
+      reservationExpiresAt: null,
+    });
+  }
+
+  private async commitInvitationMutation(
+    aggregate: ReadyRoomAggregate,
+    command:
+      | AnnotateReadyRoomInvitationCommand
+      | ReconcileReadyRoomInvitationCommand,
+    invitation: Omit<PartyReadyRoomParticipant["invitation"], "updatedAt">,
+  ): Promise<PartyReadyRoomOrganizerProjection> {
+    const participant = aggregate.participants[command.participantDiscordId]!;
+    const updatedAt = new Date(this.clock()).toISOString();
+    const nextAggregate: ReadyRoomAggregate = {
+      ...aggregate,
+      revision: aggregate.revision + 1,
+      updatedAt,
+      participants: {
+        ...aggregate.participants,
+        [command.participantDiscordId]: {
+          ...participant,
+          invitation: { ...invitation, updatedAt },
+          updatedAt,
+        },
+      },
+    };
+    const result = await this.repository.commit(aggregate, nextAggregate);
+    this.assertOrganizerCommitResult(result);
     await this.publish(result.aggregate, [
       command.organizerDiscordId,
       command.participantDiscordId,
@@ -950,7 +1073,7 @@ export class ReadyRoomService {
     const createdAtMs = this.clock();
     const createdAt = new Date(createdAtMs).toISOString();
     const aggregate: ReadyRoomAggregate = {
-      notificationId: this.idGenerator(),
+      notificationId: command.notificationId ?? this.idGenerator(),
       organizerDiscordId: command.organizerDiscordId,
       organizerCharacter: structuredClone(command.organizerCharacter),
       guildIds: [...command.guildIds],
