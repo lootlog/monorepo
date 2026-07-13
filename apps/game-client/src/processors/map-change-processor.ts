@@ -4,6 +4,7 @@ import { GatewayEvent } from "@/config/gateway";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { mapPingController } from "@/features/map-pings/map-ping-controller";
 import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
+import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
 
 export class MapChangeProcessor {
   private previousMapId: number | null = null;
@@ -22,13 +23,14 @@ export class MapChangeProcessor {
 
     const { connected, joinedGuilds } = useGlobalStore.getState().socketState;
 
-    if (!connected) return;
-    if (joinedGuilds.length === 0) return;
+    if (connected && joinedGuilds.length > 0) {
+      const socket = getSocket();
+      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
+        mapId,
+        mapName,
+      });
+    }
 
-    const socket = getSocket();
-    socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
-      mapId,
-      mapName,
-    });
+    airTagRuntime.handleMapChange(mapId, mapName);
   }
 }

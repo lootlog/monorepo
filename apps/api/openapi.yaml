@@ -6658,11 +6658,20 @@ components:
               type: boolean
           required:
             - enabled
+        airTags:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+          required:
+            - enabled
         hasStoredNotifications:
           type: boolean
         hasStoredDetector:
           type: boolean
         hasStoredPings:
+          type: boolean
+        hasStoredAirTags:
           type: boolean
         hasStoredPreferences:
           type: boolean
@@ -6671,9 +6680,11 @@ components:
         - notifications
         - detector
         - pings
+        - airTags
         - hasStoredNotifications
         - hasStoredDetector
         - hasStoredPings
+        - hasStoredAirTags
         - hasStoredPreferences
     UpdateUserGameAccountPreferencesDto:
       type: object
@@ -6874,6 +6885,11 @@ components:
                 notifySound:
                   type: boolean
         pings:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+        airTags:
           type: object
           properties:
             enabled:

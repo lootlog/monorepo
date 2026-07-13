@@ -39,21 +39,38 @@ export const GeneralSettingsTab: FC = () => {
           />
         </SettingsControlRow>
         {Game.interface === "ni" ? (
-          <SettingsControlRow
-            label={t("settings.general.mapPingsLabel")}
-            description={t("settings.general.mapPingsDescription")}
-          >
-            <Switch
-              checked={accountPreferences?.pings.enabled ?? false}
-              disabled={
-                !accountPreferences || updateAccountPreferences.isPending
-              }
-              onCheckedChange={(enabled) =>
-                updateAccountPreferences.mutate({ pings: { enabled } })
-              }
-              id="map-pings"
-            />
-          </SettingsControlRow>
+          <>
+            <SettingsControlRow
+              label={t("settings.general.mapPingsLabel")}
+              description={t("settings.general.mapPingsDescription")}
+            >
+              <Switch
+                checked={accountPreferences?.pings.enabled ?? false}
+                disabled={
+                  !accountPreferences || updateAccountPreferences.isPending
+                }
+                onCheckedChange={(enabled) =>
+                  updateAccountPreferences.mutate({ pings: { enabled } })
+                }
+                id="map-pings"
+              />
+            </SettingsControlRow>
+            <SettingsControlRow
+              label={t("settings.general.airTagsLabel")}
+              description={t("settings.general.airTagsDescription")}
+            >
+              <Switch
+                checked={accountPreferences?.airTags?.enabled ?? false}
+                disabled={
+                  !accountPreferences || updateAccountPreferences.isPending
+                }
+                onCheckedChange={(enabled) =>
+                  updateAccountPreferences.mutate({ airTags: { enabled } })
+                }
+                id="air-tags"
+              />
+            </SettingsControlRow>
+          </>
         ) : null}
         <SettingsControlRow
           label={t("settings.general.animationEffectsLabel")}

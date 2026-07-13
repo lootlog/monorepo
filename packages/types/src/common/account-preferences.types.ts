@@ -57,6 +57,10 @@ export interface MapPingPreferences {
   enabled: boolean;
 }
 
+export interface AirTagPreferences {
+  enabled: boolean;
+}
+
 export type DetectorTypeSettingsPatch = Partial<DetectorTypeSettings>;
 
 export interface DetectorSettingsPatch {
@@ -72,9 +76,11 @@ export interface UserGameAccountPreferences {
   notifications: NotificationsSettings;
   detector: DetectorSettings;
   pings: MapPingPreferences;
+  airTags: AirTagPreferences;
   hasStoredNotifications: boolean;
   hasStoredDetector: boolean;
   hasStoredPings: boolean;
+  hasStoredAirTags: boolean;
   hasStoredPreferences: boolean;
 }
 
@@ -84,9 +90,14 @@ export interface UpdateUserGameAccountPreferencesPayload {
   >;
   detector?: DetectorSettingsPatch;
   pings?: Partial<MapPingPreferences>;
+  airTags?: Partial<AirTagPreferences>;
 }
 
 export const defaultMapPingPreferences: MapPingPreferences = {
+  enabled: false,
+};
+
+export const defaultAirTagPreferences: AirTagPreferences = {
   enabled: false,
 };
 
