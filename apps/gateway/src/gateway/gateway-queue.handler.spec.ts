@@ -8,6 +8,7 @@ describe("GatewayQueueHandler", () => {
     rebalanceUserSocketRooms: vi.fn(),
     handleGuildsLootCreate: vi.fn(),
     handleGuildsLootShareUpdate: vi.fn(),
+    handlePartyReadyRoomUpdate: vi.fn(),
   };
 
   const mockRetryService = {
@@ -29,6 +30,7 @@ describe("GatewayQueueHandler", () => {
     mockGatewayService.rebalanceUserSocketRooms.mockResolvedValue(undefined);
     mockGatewayService.handleGuildsLootCreate.mockResolvedValue(undefined);
     mockGatewayService.handleGuildsLootShareUpdate.mockResolvedValue(undefined);
+    mockGatewayService.handlePartyReadyRoomUpdate.mockResolvedValue(undefined);
     mockRetryService.getRetryCount.mockReturnValue(1);
   });
 
@@ -51,6 +53,34 @@ describe("GatewayQueueHandler", () => {
     ...memberPayload,
     roleId: "role-1",
   };
+
+  it("routes personalized Ready Room envelopes through retry logic", async () => {
+    const payload = {
+      recipientDiscordId: "participant",
+      eligibleGuildIds: ["guild-1"],
+      projection: {
+        notificationId: "room-1",
+        organizerDiscordId: "organizer",
+        guildIds: ["guild-1"],
+        status: "ACTIVE",
+        revision: 2,
+        viewer: "PARTICIPANT",
+        participant: { discordId: "participant" },
+      },
+    };
+
+    await handler.handlePartyReadyRoomUpdate(payload, message as never);
+
+    expect(mockRetryService.handleRetryLogic).toHaveBeenCalledWith(
+      expect.objectContaining({ recipientDiscordId: "participant" }),
+      message.properties.headers,
+      RoutingKey.USERS_PARTY_READY_ROOM_UPDATED_DLQ,
+      "party ready room: room-1:participant",
+    );
+    expect(mockGatewayService.handlePartyReadyRoomUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ recipientDiscordId: "participant" }),
+    );
+  });
 
   it("routes loot create events through retry logic", async () => {
     const payload = { guildId: "guild-1", lootId: 123 };

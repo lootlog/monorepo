@@ -11,7 +11,7 @@ import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto";
 import { NpcType } from "./enums/npc-type.enum";
 import { GatewayEvent } from "./enums/gateway-event.enum";
 import { Platform } from "./enums/platform.enum";
-import { Permission } from "@lootlog/types";
+import { Permission, type PartyReadyRoomUpdateEnvelope } from "@lootlog/types";
 import { ActivityType } from "./enums/activity-type.enum";
 import { ActivityService } from "./services/activity.service";
 import { PresenceService } from "./services/presence.service";
@@ -101,6 +101,69 @@ describe("GatewayService", () => {
     }).compile();
 
     service = module.get<GatewayService>(GatewayService);
+  });
+
+  it("emits a Ready Room projection only to the recipient's user-and-guild rooms", () => {
+    const envelope = {
+      recipientDiscordId: "participant",
+      eligibleGuildIds: ["guild-1", "guild-2"],
+      projection: {
+        notificationId: "room-1",
+        organizerDiscordId: "organizer",
+        organizerCharacter: {
+          accountId: "account",
+          characterId: "character",
+          icon: "character.gif",
+          lvl: 200,
+          nick: "Organizer",
+          prof: "w",
+        },
+        guildIds: ["guild-1", "guild-2"],
+        world: "Fobos",
+        status: "ACTIVE",
+        revision: 2,
+        createdAt: "2026-07-13T10:00:00.000Z",
+        updatedAt: "2026-07-13T10:01:00.000Z",
+        expiresAt: "2026-07-13T10:30:00.000Z",
+        readyCheck: null,
+        viewer: "PARTICIPANT",
+        participant: {
+          discordId: "participant",
+          character: {
+            accountId: "participant-account",
+            characterId: "participant-character",
+            icon: "participant.gif",
+            lvl: 190,
+            nick: "Participant",
+            prof: "m",
+          },
+          application: "APPLIED",
+          readiness: "NOT_REQUESTED",
+          invitation: {
+            status: "NOT_MARKED",
+            source: null,
+            commandId: null,
+            batchId: null,
+            reservationExpiresAt: null,
+            updatedAt: "2026-07-13T10:01:00.000Z",
+          },
+          partyPresence: "OUTSIDE",
+          createdAt: "2026-07-13T10:01:00.000Z",
+          updatedAt: "2026-07-13T10:01:00.000Z",
+        },
+      },
+    } satisfies PartyReadyRoomUpdateEnvelope;
+
+    service.handlePartyReadyRoomUpdate(envelope);
+
+    expect(mockServer.to).toHaveBeenCalledWith([
+      "user:participant:guild:guild-1",
+      "user:participant:guild:guild-2",
+    ]);
+    expect(mockServer.emit).toHaveBeenCalledWith(
+      GatewayEvent.PARTY_READY_ROOM_UPDATE,
+      envelope.projection,
+    );
   });
 
   // Helper function to wait for all promises

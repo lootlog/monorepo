@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import type { PartyReadyRoomUpdateEnvelope } from "@lootlog/types";
 import { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
 import type { ChatMessageDeleteDto } from "src/gateway/dto/chat-message-delete.dto";
 import type { ChatMessageEnvelopeDto } from "src/gateway/dto/chat-message-envelope.dto";
@@ -32,6 +33,7 @@ import type {
 } from "src/gateway/types/margo-event.types";
 import {
   buildRoomName,
+  buildUserGuildRoomName,
   calculateUserRooms,
   getNpcTier,
   hasFeatureRoomAccess,
@@ -65,6 +67,15 @@ export class GatewayService {
     private readonly activityService: ActivityService,
     private readonly presenceService: PresenceService,
   ) {}
+
+  handlePartyReadyRoomUpdate(data: PartyReadyRoomUpdateEnvelope) {
+    const rooms = data.eligibleGuildIds.map((guildId) =>
+      buildUserGuildRoomName(data.recipientDiscordId, guildId),
+    );
+    this.gateway.server
+      .to(rooms)
+      .emit(GatewayEvent.PARTY_READY_ROOM_UPDATE, data.projection);
+  }
 
   private emitToFeatureRoom({
     guildId,
