@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Game } from "@/lib/game";
 import { useEventModeSelectionStore } from "@/store/event-mode-selection.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { EventMode } from "./event-mode";
 
 const mocks = vi.hoisted(() => ({
@@ -14,10 +15,6 @@ const mocks = vi.hoisted(() => ({
     margonemAccountId: "account-1",
     normalizedWorld: "tempest",
   },
-}));
-
-vi.mock("./use-event-mode-query", () => ({
-  useEventModeQuery: () => mocks.query,
 }));
 
 vi.mock("./use-event-mode-clock", () => ({
@@ -39,15 +36,22 @@ vi.mock("@/components/draggable-window", () => ({
     actions,
     children,
     closable,
+    onClose,
     title,
   }: {
     actions?: ReactNode;
     children: ReactNode;
     closable?: boolean;
+    onClose?: () => void;
     title: string;
   }) => (
     <div data-testid="event-mode-window" data-closable={String(closable)}>
       <span>{title}</span>
+      {closable ? (
+        <button aria-label="close-event-mode" onClick={onClose} type="button">
+          close
+        </button>
+      ) : null}
       {actions}
       {children}
     </div>
@@ -63,16 +67,20 @@ describe("EventMode", () => {
     mocks.query.margonemAccountId = "account-1";
     mocks.query.normalizedWorld = "tempest";
     useEventModeSelectionStore.setState({ selectedEventIdByScope: {} });
+    useWindowsStore.setState((state) => ({
+      ...state,
+      "event-mode": { ...state["event-mode"], open: true },
+    }));
     vi.spyOn(Game, "map", "get").mockReturnValue({ id: 200 } as never);
   });
 
   it("renders nothing during initial loading or an initial error", () => {
-    const { rerender } = render(<EventMode />);
+    const { rerender } = renderEventMode();
 
     expect(screen.queryByTestId("event-mode-window")).not.toBeInTheDocument();
 
     mocks.query.isError = true;
-    rerender(<EventMode />);
+    rerender(<EventMode query={mocks.query as never} />);
 
     expect(screen.queryByTestId("event-mode-window")).not.toBeInTheDocument();
   });
@@ -80,7 +88,7 @@ describe("EventMode", () => {
   it("renders nothing after an empty successful response", () => {
     mocks.query.data = createResponse([]);
 
-    render(<EventMode />);
+    renderEventMode();
 
     expect(screen.queryByTestId("event-mode-window")).not.toBeInTheDocument();
   });
@@ -92,7 +100,7 @@ describe("EventMode", () => {
       }),
     ]);
 
-    render(<EventMode />);
+    renderEventMode();
 
     expect(screen.getByText("Tryb wydarzenia")).toBeInTheDocument();
     expect(screen.getByText("Polowanie")).toBeInTheDocument();
@@ -103,8 +111,24 @@ describe("EventMode", () => {
     expect(screen.getByText("Otwarte · 00:30:00")).toBeInTheDocument();
     expect(screen.getByTestId("event-mode-window")).toHaveAttribute(
       "data-closable",
-      "false",
+      "true",
     );
+  });
+
+  it("respects the persisted window state and can be closed", () => {
+    mocks.query.data = createResponse([createEvent()]);
+    useWindowsStore.getState().setOpen("event-mode", false);
+
+    const { rerender } = renderEventMode();
+
+    expect(screen.queryByTestId("event-mode-window")).not.toBeInTheDocument();
+
+    act(() => useWindowsStore.getState().setOpen("event-mode", true));
+    rerender(<EventMode query={mocks.query as never} />);
+    fireEvent.click(screen.getByRole("button", { name: "close-event-mode" }));
+
+    expect(useWindowsStore.getState()["event-mode"].open).toBe(false);
+    expect(screen.queryByTestId("event-mode-window")).not.toBeInTheDocument();
   });
 
   it("keeps successful data visible with a stale indicator after an error", () => {
@@ -112,7 +136,7 @@ describe("EventMode", () => {
     mocks.query.dataUpdatedAt = Date.parse("2026-07-13T11:59:00.000Z");
     mocks.query.isError = true;
 
-    render(<EventMode />);
+    renderEventMode();
 
     expect(screen.getByText("Polowanie")).toBeInTheDocument();
     expect(
@@ -120,6 +144,10 @@ describe("EventMode", () => {
     ).toBeInTheDocument();
   });
 });
+
+function renderEventMode() {
+  return render(<EventMode query={mocks.query as never} />);
+}
 
 function createResponse(events = [createEvent()]) {
   return {

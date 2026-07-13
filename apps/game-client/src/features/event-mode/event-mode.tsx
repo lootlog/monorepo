@@ -5,17 +5,23 @@ import {
   createEventModeSelectionScope,
   useEventModeSelectionStore,
 } from "@/store/event-mode-selection.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { EventModeContent } from "./event-mode-content";
 import { resolveSelectedEvent } from "./event-mode.helpers";
 import { EventModeSelector } from "./event-mode-selector";
 import { useEventModeClock } from "./use-event-mode-clock";
-import { useEventModeQuery } from "./use-event-mode-query";
+import type { useEventModeQuery } from "./use-event-mode-query";
 
-export const EventMode = () => {
+interface EventModeProps {
+  query: ReturnType<typeof useEventModeQuery>;
+}
+
+export const EventMode = ({ query }: EventModeProps) => {
   const { t } = useTranslation("eventMode");
-  const query = useEventModeQuery();
+  const open = useWindowsStore((state) => state["event-mode"].open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const events = query.data?.events ?? [];
   const selectionScope = query.enabled
     ? createEventModeSelectionScope(
@@ -52,7 +58,7 @@ export const EventMode = () => {
   const isStale = query.isError && query.data !== undefined;
 
   return (
-    <AnimatedWindow isOpen windowKey="event-mode">
+    <AnimatedWindow isOpen={open} windowKey="event-mode">
       <DraggableWindow
         id="event-mode"
         title={t("window.title")}
@@ -72,7 +78,8 @@ export const EventMode = () => {
         minWidth={290}
         minHeight={132}
         dynamicHeight
-        closable={false}
+        onClose={() => setOpen("event-mode", false)}
+        closable
       >
         <EventModeContent
           event={selectedEvent}
