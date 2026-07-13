@@ -2529,6 +2529,12 @@ paths:
           in: path
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomParticipantIdentityDto"
       responses:
         "200":
           description: ""
@@ -10549,6 +10555,10 @@ components:
     PartyReadyRoomProjectionDto_Output:
       type: object
       properties:
+        schemaVersion:
+          type: number
+          enum:
+            - 2
         notificationId:
           type: string
         organizerDiscordId:
@@ -10652,6 +10662,12 @@ components:
           additionalProperties:
             type: object
             properties:
+              participantId:
+                type: string
+              applicationVersion:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
               discordId:
                 type: string
               character:
@@ -10760,6 +10776,8 @@ components:
                 format: date-time
                 pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
             required:
+              - participantId
+              - applicationVersion
               - discordId
               - character
               - application
@@ -10768,126 +10786,12 @@ components:
               - partyPresence
               - createdAt
               - updatedAt
-        participant:
-          type: object
-          properties:
-            discordId:
-              type: string
-            character:
-              type: object
-              properties:
-                lvl:
-                  type: number
-                nick:
-                  type: string
-                  minLength: 1
-                  maxLength: 255
-                accountId:
-                  type: string
-                  minLength: 1
-                  maxLength: 255
-                characterId:
-                  type: string
-                  minLength: 1
-                  maxLength: 255
-                prof:
-                  type: string
-                  minLength: 1
-                  maxLength: 100
-                icon:
-                  type: string
-                  minLength: 1
-                  maxLength: 2048
-                clan:
-                  type: object
-                  properties:
-                    id:
-                      type: number
-                    name:
-                      type: string
-                      maxLength: 255
-              required:
-                - lvl
-                - nick
-                - accountId
-                - characterId
-                - prof
-                - icon
-            application:
-              type: string
-              enum:
-                - APPLIED
-                - ACCEPTED
-                - DECLINED
-                - WITHDRAWN
-            readiness:
-              type: string
-              enum:
-                - NOT_REQUESTED
-                - PENDING
-                - READY
-                - NOT_READY
-            invitation:
-              type: object
-              properties:
-                status:
-                  type: string
-                  enum:
-                    - NOT_MARKED
-                    - COMMAND_RESERVED
-                    - SENT
-                    - FAILED
-                source:
-                  type: string
-                  enum:
-                    - LOOTLOG_COMMAND
-                    - MANUAL_ANNOTATION
-                  nullable: true
-                commandId:
-                  type: string
-                  nullable: true
-                batchId:
-                  type: string
-                  nullable: true
-                reservationExpiresAt:
-                  type: string
-                  format: date-time
-                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                  nullable: true
-                updatedAt:
-                  type: string
-                  format: date-time
-                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-              required:
-                - status
-                - source
-                - commandId
-                - batchId
-                - reservationExpiresAt
-                - updatedAt
-            partyPresence:
-              type: string
-              enum:
-                - OUTSIDE
-                - IN_PARTY
-            createdAt:
-              type: string
-              format: date-time
-              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            updatedAt:
-              type: string
-              format: date-time
-              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-          required:
-            - discordId
-            - character
-            - application
-            - readiness
-            - invitation
-            - partyPresence
-            - createdAt
-            - updatedAt
+        ownedParticipantIds:
+          type: array
+          items:
+            type: string
       required:
+        - schemaVersion
         - notificationId
         - organizerDiscordId
         - organizerCharacter
@@ -10900,6 +10804,7 @@ components:
         - expiresAt
         - readyCheck
         - viewer
+        - participants
     PartyReadyRoomApplicationDto:
       type: object
       properties:
@@ -10950,6 +10855,15 @@ components:
       required:
         - world
         - character
+    PartyReadyRoomParticipantIdentityDto:
+      type: object
+      properties:
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - participantId
     PartyReadyRoomParticipantActionDto:
       type: object
       properties:
@@ -10957,13 +10871,13 @@ components:
           type: integer
           minimum: 1
           maximum: 9007199254740991
-        participantDiscordId:
+        participantId:
           type: string
           minLength: 1
-          maxLength: 50
+          maxLength: 100
       required:
         - expectedRevision
-        - participantDiscordId
+        - participantId
     PartyReadyRoomExpectedRevisionDto:
       type: object
       properties:
@@ -10976,6 +10890,10 @@ components:
     PartyReadyRoomReadyResponseDto:
       type: object
       properties:
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 100
         roundId:
           type: integer
           minimum: 1
@@ -10983,32 +10901,42 @@ components:
         ready:
           type: boolean
       required:
+        - participantId
         - roundId
         - ready
     PartyReadyRoomReserveInvitationsDto:
       type: object
       properties:
-        expectedRevision:
-          type: integer
-          minimum: 1
-          maximum: 9007199254740991
-        participantDiscordIds:
+        targets:
           minItems: 1
           maxItems: 20
           type: array
           items:
-            type: string
-            minLength: 1
-            maxLength: 50
+            type: object
+            properties:
+              participantId:
+                type: string
+                minLength: 1
+                maxLength: 100
+              applicationVersion:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+            required:
+              - participantId
+              - applicationVersion
       required:
-        - expectedRevision
-        - participantDiscordIds
+        - targets
     PartyReadyRoomInvitationReservationDto_Output:
       type: object
       properties:
         projection:
           type: object
           properties:
+            schemaVersion:
+              type: number
+              enum:
+                - 2
             notificationId:
               type: string
             organizerDiscordId:
@@ -11111,6 +11039,12 @@ components:
               additionalProperties:
                 type: object
                 properties:
+                  participantId:
+                    type: string
+                  applicationVersion:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
                   discordId:
                     type: string
                   character:
@@ -11219,6 +11153,8 @@ components:
                     format: date-time
                     pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
                 required:
+                  - participantId
+                  - applicationVersion
                   - discordId
                   - character
                   - application
@@ -11227,7 +11163,12 @@ components:
                   - partyPresence
                   - createdAt
                   - updatedAt
+            ownedParticipantIds:
+              type: array
+              items:
+                type: string
           required:
+            - schemaVersion
             - notificationId
             - organizerDiscordId
             - organizerCharacter
@@ -11241,6 +11182,7 @@ components:
             - readyCheck
             - viewer
             - participants
+            - ownedParticipantIds
         batch:
           type: object
           properties:
@@ -11251,14 +11193,19 @@ components:
               items:
                 type: object
                 properties:
-                  participantDiscordId:
+                  participantId:
                     type: string
+                  applicationVersion:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
                   characterId:
                     type: string
                   commandId:
                     type: string
                 required:
-                  - participantDiscordId
+                  - participantId
+                  - applicationVersion
                   - characterId
                   - commandId
           required:
@@ -11270,10 +11217,10 @@ components:
     PartyReadyRoomAcknowledgeInvitationDto:
       type: object
       properties:
-        participantDiscordId:
+        participantId:
           type: string
           minLength: 1
-          maxLength: 50
+          maxLength: 100
         commandId:
           type: string
           minLength: 1
@@ -11284,16 +11231,16 @@ components:
             - SENT
             - FAILED
       required:
-        - participantDiscordId
+        - participantId
         - commandId
         - outcome
     PartyReadyRoomAnnotateInvitationDto:
       type: object
       properties:
-        participantDiscordId:
+        participantId:
           type: string
           minLength: 1
-          maxLength: 50
+          maxLength: 100
         expectedRevision:
           type: integer
           minimum: 1
@@ -11304,16 +11251,16 @@ components:
             - SENT
             - FAILED
       required:
-        - participantDiscordId
+        - participantId
         - expectedRevision
         - outcome
     PartyReadyRoomReconcileInvitationDto:
       type: object
       properties:
-        participantDiscordId:
+        participantId:
           type: string
           minLength: 1
-          maxLength: 50
+          maxLength: 100
         commandId:
           type: string
           minLength: 1
@@ -11329,7 +11276,7 @@ components:
             - SENT
             - FAILED
       required:
-        - participantDiscordId
+        - participantId
         - commandId
         - expectedRevision
         - outcome

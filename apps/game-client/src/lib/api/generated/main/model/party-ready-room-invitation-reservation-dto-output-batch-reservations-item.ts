@@ -7,7 +7,12 @@
  */
 
 export type PartyReadyRoomInvitationReservationDtoOutputBatchReservationsItem = {
-  participantDiscordId: string;
+  participantId: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  applicationVersion: number;
   characterId: string;
   commandId: string;
 };

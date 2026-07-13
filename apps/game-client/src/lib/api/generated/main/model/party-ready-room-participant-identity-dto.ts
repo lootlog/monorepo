@@ -6,8 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 
-export type PartyReadyRoomProjectionDtoOutputParticipantCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
+export interface PartyReadyRoomParticipantIdentityDto {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  participantId: string;
+}

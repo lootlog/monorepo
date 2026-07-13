@@ -6,13 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 import type { PartyReadyRoomProjectionDtoOutputOrganizerCharacter } from './party-ready-room-projection-dto-output-organizer-character.js';
-import type { PartyReadyRoomProjectionDtoOutputParticipant } from './party-ready-room-projection-dto-output-participant.js';
 import type { PartyReadyRoomProjectionDtoOutputParticipants } from './party-ready-room-projection-dto-output-participants.js';
 import type { PartyReadyRoomProjectionDtoOutputReadyCheck } from './party-ready-room-projection-dto-output-ready-check.js';
+import type { PartyReadyRoomProjectionDtoOutputSchemaVersion } from './party-ready-room-projection-dto-output-schema-version.js';
 import type { PartyReadyRoomProjectionDtoOutputStatus } from './party-ready-room-projection-dto-output-status.js';
 import type { PartyReadyRoomProjectionDtoOutputViewer } from './party-ready-room-projection-dto-output-viewer.js';
 
 export interface PartyReadyRoomProjectionDtoOutput {
+  schemaVersion: PartyReadyRoomProjectionDtoOutputSchemaVersion;
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomProjectionDtoOutputOrganizerCharacter;
@@ -36,6 +37,6 @@ export interface PartyReadyRoomProjectionDtoOutput {
   /** @nullable */
   readyCheck: PartyReadyRoomProjectionDtoOutputReadyCheck;
   viewer: PartyReadyRoomProjectionDtoOutputViewer;
-  participants?: PartyReadyRoomProjectionDtoOutputParticipants;
-  participant?: PartyReadyRoomProjectionDtoOutputParticipant;
+  participants: PartyReadyRoomProjectionDtoOutputParticipants;
+  ownedParticipantIds?: string[];
 }

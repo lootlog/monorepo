@@ -12,6 +12,12 @@ import type { PartyReadyRoomInvitationReservationDtoOutputProjectionParticipants
 import type { PartyReadyRoomInvitationReservationDtoOutputProjectionParticipantsReadiness } from './party-ready-room-invitation-reservation-dto-output-projection-participants-readiness.js';
 
 export type PartyReadyRoomInvitationReservationDtoOutputProjectionParticipants = {[key: string]: {
+  participantId: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  applicationVersion: number;
   discordId: string;
   character: PartyReadyRoomInvitationReservationDtoOutputProjectionParticipantsCharacter;
   application: PartyReadyRoomInvitationReservationDtoOutputProjectionParticipantsApplication;

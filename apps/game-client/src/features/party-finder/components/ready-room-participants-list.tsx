@@ -26,7 +26,7 @@ export function ReadyRoomParticipantsList({
   return (
     <ul className="ll:p-1.5">
       {participants.map((participant) => (
-        <li key={participant.discordId}>
+        <li key={participant.participantId}>
           <ReadyRoomParticipantItem room={room} participant={participant} />
         </li>
       ))}

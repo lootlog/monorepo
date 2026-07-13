@@ -4,6 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
+import { useGlobalStore } from "@/store/global.store";
+
+vi.mock("@/features/party-finder/ready-room-character-identity", () => ({
+  getCurrentReadyRoomCharacterIdentity: () => ({
+    accountId: "account",
+    characterId: "character",
+  }),
+}));
 
 const observeParty =
   vi.fn<
@@ -21,6 +29,7 @@ vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
 }));
 
 const projection = {
+  schemaVersion: 2,
   notificationId: "room-1",
   organizerDiscordId: "organizer",
   guildIds: ["guild-1"],
@@ -41,6 +50,7 @@ const projection = {
     prof: "w",
   },
   participants: {},
+  ownedParticipantIds: [],
 } satisfies PartyReadyRoomOrganizerProjection;
 
 describe("usePartyReadyRoomObserver", () => {
@@ -49,6 +59,8 @@ describe("usePartyReadyRoomObserver", () => {
     observeParty.mockResolvedValue(projection);
     usePartyFinderStore.getState().clearReadyRooms();
     usePartyFinderStore.getState().mergeProjection(projection);
+    usePartyFinderStore.getState().setReadyRoomsSynchronized(true);
+    useGlobalStore.getState().setSocketState({ connected: true, joined: true });
     usePartyStore.getState().clearParty();
   });
 
@@ -83,5 +95,21 @@ describe("usePartyReadyRoomObserver", () => {
       { notificationId: "room-1" },
       { memberCharacterIds: ["10", "20"] },
     );
+  });
+
+  it("does not report another character's party for the organizer", async () => {
+    usePartyFinderStore.getState().mergeProjection({
+      ...projection,
+      revision: 2,
+      organizerCharacter: {
+        ...projection.organizerCharacter,
+        characterId: "different-character",
+      },
+    });
+
+    renderHook(() => usePartyReadyRoomObserver());
+    await Promise.resolve();
+
+    expect(observeParty).not.toHaveBeenCalled();
   });
 });

@@ -12,6 +12,9 @@ export function usePartyReadyRoomSocket(): void {
     if (!socket || !connected) return;
 
     const handleProjection = (projection: PartyReadyRoomProjection) => {
+      if ((projection as { schemaVersion?: number }).schemaVersion !== 2) {
+        return;
+      }
       mergeProjection(projection);
     };
     socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, handleProjection);

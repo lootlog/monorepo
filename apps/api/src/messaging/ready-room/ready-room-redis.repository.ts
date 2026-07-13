@@ -5,7 +5,7 @@ import {
   CREATE_READY_ROOM_SCRIPT,
   EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
   FIND_READY_ROOM_IDS_SCRIPT,
-  PRUNE_READY_ROOM_PENDING_SCRIPT,
+  PRUNE_READY_ROOM_USER_INDEX_SCRIPT,
   SAVE_READY_ROOM_APPLICATION_SCRIPT,
   TERMINATE_READY_ROOM_SCRIPT,
 } from "src/messaging/ready-room/ready-room-redis-scripts";
@@ -19,10 +19,10 @@ import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.typ
 
 type Clock = () => number;
 
-const ROOM_KEY_PREFIX = "party-ready-room:room:";
-const ORGANIZER_KEY_PREFIX = "party-ready-room:organizer:";
-const PENDING_KEY_PREFIX = "party-ready-room:pending:";
-const ACCEPTED_KEY_PREFIX = "party-ready-room:accepted:";
+const ROOM_KEY_PREFIX = "party-ready-room:v2:room:";
+const ORGANIZER_KEY_PREFIX = "party-ready-room:v2:organizer:";
+const USER_KEY_PREFIX = "party-ready-room:v2:user:";
+const ACCEPTED_KEY_PREFIX = "party-ready-room:v2:accepted:";
 const TERMINAL_TOMBSTONE_SECONDS = 60;
 
 function getRoomKey(notificationId: string): string {
@@ -33,12 +33,16 @@ function getOrganizerKey(discordId: string): string {
   return `${ORGANIZER_KEY_PREFIX}${discordId}`;
 }
 
-function getPendingKey(discordId: string): string {
-  return `${PENDING_KEY_PREFIX}${discordId}`;
+function getUserKey(discordId: string): string {
+  return `${USER_KEY_PREFIX}${discordId}`;
 }
 
-function getAcceptedKey(discordId: string): string {
-  return `${ACCEPTED_KEY_PREFIX}${discordId}`;
+function getAcceptedKey(
+  discordId: string,
+  accountId: string,
+  characterId: string,
+): string {
+  return `${ACCEPTED_KEY_PREFIX}${encodeURIComponent(discordId)}:${encodeURIComponent(accountId)}:${encodeURIComponent(characterId)}`;
 }
 
 function parseAcceptResult(
@@ -121,11 +125,7 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
   async findForUser(discordId: string): Promise<ReadyRoomAggregate[]> {
     const roomIdsResult = await this.redisService.eval<unknown>(
       FIND_READY_ROOM_IDS_SCRIPT,
-      [
-        getOrganizerKey(discordId),
-        getAcceptedKey(discordId),
-        getPendingKey(discordId),
-      ],
+      [getOrganizerKey(discordId), getUserKey(discordId)],
       [this.clock()],
     );
     if (
@@ -142,8 +142,8 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
     const missingRoomIds = roomIds.filter((_, index) => !aggregates[index]);
     if (missingRoomIds.length > 0) {
       await this.redisService.eval(
-        PRUNE_READY_ROOM_PENDING_SCRIPT,
-        [getPendingKey(discordId)],
+        PRUNE_READY_ROOM_USER_INDEX_SCRIPT,
+        [getUserKey(discordId)],
         missingRoomIds,
       );
     }
@@ -174,25 +174,40 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
   async exitParticipant(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-    participantDiscordId: string,
+    participantId: string,
   ): Promise<CommitReadyRoomResult> {
     const ttlSeconds = this.getRemainingTtlSeconds(next);
     if (ttlSeconds <= 0) {
       return { status: "missing" };
     }
 
+    const participant = expected.participants[participantId];
+    if (!participant) return { status: "conflict" };
+    const ownerHasAnotherActiveParticipant = Object.values(
+      next.participants,
+    ).some(
+      (candidate) =>
+        candidate.discordId === participant.discordId &&
+        (candidate.application === "APPLIED" ||
+          candidate.application === "ACCEPTED"),
+    );
     const result = await this.redisService.eval<unknown>(
       EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
       [
         getRoomKey(next.notificationId),
-        getPendingKey(participantDiscordId),
-        getAcceptedKey(participantDiscordId),
+        getUserKey(participant.discordId),
+        getAcceptedKey(
+          participant.discordId,
+          participant.character.accountId,
+          participant.character.characterId,
+        ),
       ],
       [
         JSON.stringify(expected),
         JSON.stringify(next),
         next.notificationId,
         ttlSeconds,
+        ownerHasAnotherActiveParticipant ? 1 : 0,
       ],
     );
 
@@ -202,7 +217,6 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
   async terminate(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-    participantDiscordIds: string[],
   ): Promise<CommitReadyRoomResult> {
     const remainingTtlSeconds = this.getRemainingTtlSeconds(next);
     if (remainingTtlSeconds <= 0) {
@@ -212,10 +226,14 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
       remainingTtlSeconds,
       TERMINAL_TOMBSTONE_SECONDS,
     );
-    const participantIndexKeys = participantDiscordIds.flatMap(
-      (participantDiscordId) => [
-        getPendingKey(participantDiscordId),
-        getAcceptedKey(participantDiscordId),
+    const participantIndexKeys = Object.values(expected.participants).flatMap(
+      (participant) => [
+        getUserKey(participant.discordId),
+        getAcceptedKey(
+          participant.discordId,
+          participant.character.accountId,
+          participant.character.characterId,
+        ),
       ],
     );
     const result = await this.redisService.eval<unknown>(
@@ -239,7 +257,7 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
   async accept(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-    participantDiscordId: string,
+    participantId: string,
   ): Promise<AcceptReadyRoomResult> {
     const ttlSeconds = Math.ceil(
       (Date.parse(next.expiresAt) - this.clock()) / 1000,
@@ -248,18 +266,25 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
       return { status: "missing" };
     }
 
+    const participant = next.participants[participantId];
+    if (!participant) return { status: "conflict" };
     const result = await this.redisService.eval<unknown>(
       ACCEPT_READY_ROOM_PARTICIPANT_SCRIPT,
       [
         getRoomKey(next.notificationId),
-        getPendingKey(participantDiscordId),
-        getAcceptedKey(participantDiscordId),
+        getUserKey(participant.discordId),
+        getAcceptedKey(
+          participant.discordId,
+          participant.character.accountId,
+          participant.character.characterId,
+        ),
       ],
       [
         JSON.stringify(expected),
         JSON.stringify(next),
         next.notificationId,
         ttlSeconds,
+        Date.parse(next.expiresAt),
       ],
     );
 
@@ -273,7 +298,7 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
   async saveApplication(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-    participantDiscordId: string,
+    participantId: string,
   ): Promise<CommitReadyRoomResult> {
     const ttlSeconds = Math.ceil(
       (Date.parse(next.expiresAt) - this.clock()) / 1000,
@@ -282,9 +307,11 @@ export class ReadyRoomRedisRepository implements ReadyRoomRepository {
       return { status: "missing" };
     }
 
+    const participant = next.participants[participantId];
+    if (!participant) return { status: "conflict" };
     const result = await this.redisService.eval<unknown>(
       SAVE_READY_ROOM_APPLICATION_SCRIPT,
-      [getRoomKey(next.notificationId), getPendingKey(participantDiscordId)],
+      [getRoomKey(next.notificationId), getUserKey(participant.discordId)],
       [
         JSON.stringify(expected),
         JSON.stringify(next),

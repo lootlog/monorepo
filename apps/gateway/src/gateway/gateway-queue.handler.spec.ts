@@ -59,13 +59,16 @@ describe("GatewayQueueHandler", () => {
       recipientDiscordId: "participant",
       eligibleGuildIds: ["guild-1"],
       projection: {
+        schemaVersion: 2,
         notificationId: "room-1",
         organizerDiscordId: "organizer",
         guildIds: ["guild-1"],
         status: "ACTIVE",
         revision: 2,
         viewer: "PARTICIPANT",
-        participant: { discordId: "participant" },
+        participants: {
+          "participant-1": { discordId: "participant" },
+        },
       },
     };
 

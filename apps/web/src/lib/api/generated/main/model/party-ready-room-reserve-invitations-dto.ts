@@ -5,18 +5,12 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { PartyReadyRoomReserveInvitationsDtoTargetsItem } from './party-ready-room-reserve-invitations-dto-targets-item.js';
 
 export interface PartyReadyRoomReserveInvitationsDto {
   /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  expectedRevision: number;
-  /**
      * @minItems 1
      * @maxItems 20
-     * @items.minLength 1
-     * @items.maxLength 50
      */
-  participantDiscordIds: string[];
+  targets: PartyReadyRoomReserveInvitationsDtoTargetsItem[];
 }

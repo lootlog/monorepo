@@ -72,6 +72,8 @@ export interface PartyReadyRoomInvitation {
 }
 
 export interface PartyReadyRoomParticipant {
+  participantId: string;
+  applicationVersion: number;
   discordId: string;
   character: PartyReadyRoomCharacter;
   application: PartyReadyRoomApplicationState;
@@ -88,6 +90,7 @@ export interface PartyReadyRoomReadyCheck {
 }
 
 export interface PartyReadyRoomProjectionBase {
+  schemaVersion: 2;
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomCharacter;
@@ -107,11 +110,12 @@ export interface PartyReadyRoomProjectionBase {
 export interface PartyReadyRoomOrganizerProjection extends PartyReadyRoomProjectionBase {
   viewer: "ORGANIZER";
   participants: Record<string, PartyReadyRoomParticipant>;
+  ownedParticipantIds: string[];
 }
 
 export interface PartyReadyRoomParticipantProjection extends PartyReadyRoomProjectionBase {
   viewer: "PARTICIPANT";
-  participant: PartyReadyRoomParticipant;
+  participants: Record<string, PartyReadyRoomParticipant>;
 }
 
 export type PartyReadyRoomProjection =
@@ -125,9 +129,15 @@ export interface PartyReadyRoomUpdateEnvelope {
 }
 
 export interface PartyReadyRoomInvitationReservation {
-  participantDiscordId: string;
+  participantId: string;
+  applicationVersion: number;
   characterId: string;
   commandId: string;
+}
+
+export interface PartyReadyRoomInvitationTarget {
+  participantId: string;
+  applicationVersion: number;
 }
 
 export interface PartyReadyRoomInvitationBatch {

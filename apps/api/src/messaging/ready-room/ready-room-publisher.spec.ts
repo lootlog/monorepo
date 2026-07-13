@@ -3,6 +3,7 @@ import { ReadyRoomPublisher } from "src/messaging/ready-room/ready-room-publishe
 import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
 
 const aggregate: ReadyRoomAggregate = {
+  schemaVersion: 2,
   notificationId: "room-1",
   organizerDiscordId: "organizer",
   organizerCharacter: {
@@ -23,6 +24,8 @@ const aggregate: ReadyRoomAggregate = {
   readyCheck: null,
   participants: {
     participant: {
+      participantId: "participant",
+      applicationVersion: 1,
       discordId: "participant",
       character: {
         accountId: "account-participant",
@@ -89,7 +92,11 @@ describe("ReadyRoomPublisher", () => {
         recipientDiscordId: "participant",
         projection: expect.objectContaining({
           viewer: "PARTICIPANT",
-          participant: expect.objectContaining({ discordId: "participant" }),
+          participants: expect.objectContaining({
+            participant: expect.objectContaining({
+              discordId: "participant",
+            }),
+          }),
         }),
       }),
     );

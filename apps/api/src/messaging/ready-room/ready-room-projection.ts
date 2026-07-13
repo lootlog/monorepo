@@ -29,6 +29,7 @@ function createProjectionBase(
   aggregate: ReadyRoomAggregate,
 ): PartyReadyRoomProjectionBase {
   return {
+    schemaVersion: 2,
     notificationId: aggregate.notificationId,
     organizerDiscordId: aggregate.organizerDiscordId,
     organizerCharacter: cloneCharacter(aggregate.organizerCharacter),
@@ -56,7 +57,7 @@ export function getReadyRoomActiveRecipientDiscordIds(
     )
     .map(({ discordId }) => discordId);
 
-  return [aggregate.organizerDiscordId, ...participantDiscordIds];
+  return [...new Set([aggregate.organizerDiscordId, ...participantDiscordIds])];
 }
 
 export function createReadyRoomProjection(
@@ -71,23 +72,33 @@ export function createReadyRoomProjection(
       viewer: "ORGANIZER",
       participants: Object.fromEntries(
         Object.entries(aggregate.participants).map(
-          ([discordId, participant]) => [
-            discordId,
+          ([participantId, participant]) => [
+            participantId,
             cloneParticipant(participant),
           ],
         ),
       ),
+      ownedParticipantIds: Object.values(aggregate.participants)
+        .filter(({ discordId }) => discordId === viewerDiscordId)
+        .map(({ participantId }) => participantId),
     };
   }
 
-  const participant = aggregate.participants[viewerDiscordId];
-  if (!participant) {
+  const participants = Object.fromEntries(
+    Object.values(aggregate.participants)
+      .filter(({ discordId }) => discordId === viewerDiscordId)
+      .map((participant) => [
+        participant.participantId,
+        cloneParticipant(participant),
+      ]),
+  );
+  if (Object.keys(participants).length === 0) {
     return null;
   }
 
   return {
     ...base,
     viewer: "PARTICIPANT",
-    participant: cloneParticipant(participant),
+    participants,
   };
 }

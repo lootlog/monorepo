@@ -10,7 +10,6 @@ import {
 import { usePartyStore } from "@/store/party.store";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ReadyRoomParticipantsList } from "@/features/party-finder/components/ready-room-participants-list";
 import { ReadyRoomParticipantStatus } from "@/features/party-finder/components/ready-room-participant-status";
@@ -22,6 +21,7 @@ import type {
 } from "@lootlog/types";
 import { usePartyReadyRoomControllerStartReadyCheck } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
 import { ReadyRoomSelector } from "@/features/party-finder/components/ready-room-selector";
+import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 
 export const PartyFinder = () => {
   const { t } = useTranslation("partyFinder");
@@ -32,7 +32,10 @@ export const PartyFinder = () => {
   const selectedRoomId = usePartyFinderStore((state) => state.selectedRoomId);
   const selectRoom = usePartyFinderStore((state) => state.selectRoom);
   const ownedReadyRoom = usePartyFinderStore(selectOwnedReadyRoom);
-  const acceptedReadyRoomId = usePartyFinderStore(selectAcceptedReadyRoomId);
+  const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
+  const acceptedReadyRoomId = usePartyFinderStore((state) =>
+    selectAcceptedReadyRoomId(state, currentCharacterIdentity),
+  );
   const activeSelectedRoom = selectedRoomId
     ? projections[selectedRoomId]
     : undefined;
@@ -56,23 +59,19 @@ export const PartyFinder = () => {
     useCancelPartyGathering();
   const { mutate: closePartyGathering, isPending: isClosing } =
     useClosePartyGathering();
-  const { inviteParticipants, isInviting } = useReadyRoomInvitations();
+  const { inviteParticipants, canInviteParticipants } =
+    useReadyRoomInvitations();
   const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
   const startReadyCheck = usePartyReadyRoomControllerStartReadyCheck();
-  const isOwner = readyRoom?.viewer === "ORGANIZER";
-  const invitableParticipantDiscordIds =
+  const invitableParticipantIds =
     readyRoom?.viewer === "ORGANIZER"
       ? Object.values(readyRoom.participants)
           .filter(
             (participant) =>
               participant.application === "ACCEPTED" &&
-              participant.partyPresence === "OUTSIDE" &&
-              (participant.invitation.status !== "COMMAND_RESERVED" ||
-                participant.invitation.reservationExpiresAt === null ||
-                Date.parse(participant.invitation.reservationExpiresAt) <=
-                  Date.now()),
+              participant.partyPresence === "OUTSIDE",
           )
-          .map(({ discordId }) => discordId)
+          .map(({ participantId }) => participantId)
       : [];
 
   if (!readyRoom) return null;
@@ -107,31 +106,30 @@ export const PartyFinder = () => {
           ) : null}
           <ScrollArea className="ll:flex-1">
             {readyRoom.viewer === "ORGANIZER" ? (
-              <ReadyRoomParticipantsList room={readyRoom} />
+              <div>
+                <ReadyRoomParticipantStatus room={readyRoom} />
+                <ReadyRoomParticipantsList room={readyRoom} />
+              </div>
             ) : (
               <ReadyRoomParticipantStatus room={readyRoom} />
             )}
           </ScrollArea>
-          {isOwner ? (
+          {readyRoom.viewer === "ORGANIZER" ? (
             <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
-              {invitableParticipantDiscordIds.length > 0 ? (
-                <Button
-                  onClick={() =>
-                    void inviteParticipants(invitableParticipantDiscordIds)
-                  }
-                  disabled={isInviting}
-                  className="ll:w-full ll:border-green-500 ll:text-green-400 ll:hover:bg-green-600/20"
-                >
-                  {isInviting ? (
-                    <>
-                      <Loader2 className="ll:w-3 ll:h-3 ll:animate-spin ll:mr-1" />
-                      {t("actions.inviting")}
-                    </>
-                  ) : (
-                    t("actions.inviteAll")
-                  )}
-                </Button>
-              ) : null}
+              <Button
+                onClick={() => {
+                  void inviteParticipants().catch((error: unknown) => {
+                    console.warn("Failed to reserve party invitations", error);
+                  });
+                }}
+                disabled={
+                  invitableParticipantIds.length === 0 ||
+                  !canInviteParticipants()
+                }
+                className="ll:w-full ll:border-green-500 ll:text-green-400 ll:hover:bg-green-600/20"
+              >
+                {t("actions.inviteAll")}
+              </Button>
               {readyRoom.viewer === "ORGANIZER" &&
               Object.values(readyRoom.participants).some(
                 ({ application }) => application === "ACCEPTED",

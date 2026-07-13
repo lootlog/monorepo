@@ -5,7 +5,6 @@ import type {
 } from "@lootlog/types";
 import {
   Check,
-  Loader2,
   MailCheck,
   MailX,
   Plus,
@@ -47,7 +46,8 @@ export function ReadyRoomParticipantItem({
   const isFriend = useFriendsStore((state) =>
     state.isFriend(participant.character.characterId),
   );
-  const { inviteParticipants, isInviting } = useReadyRoomInvitations();
+  const { inviteParticipants, canInviteParticipants } =
+    useReadyRoomInvitations();
   const { annotateInvitation, reconcileInvitation, isUpdatingInvitation } =
     useReadyRoomInvitationStatusActions();
   const invitation = participant.invitation;
@@ -80,7 +80,7 @@ export function ReadyRoomParticipantItem({
     try {
       const path = { notificationId: room.notificationId };
       const data = {
-        participantDiscordId: participant.discordId,
+        participantId: participant.participantId,
         expectedRevision: room.revision,
       };
       if (action === "ACCEPT") {
@@ -120,14 +120,14 @@ export function ReadyRoomParticipantItem({
   ) => {
     if (reservationUnknown && invitation.commandId) {
       await reconcileInvitation(
-        participant.discordId,
+        participant.participantId,
         invitation.commandId,
         outcome,
       );
       return;
     }
     if (outcome !== "NOT_MARKED") {
-      await annotateInvitation(participant.discordId, outcome);
+      await annotateInvitation(participant.participantId, outcome);
     }
   };
   const sameClan =
@@ -231,21 +231,19 @@ export function ReadyRoomParticipantItem({
               <Button
                 className="ll:p-0"
                 title={t("actions.invite")}
-                disabled={
-                  isInviting ||
-                  (!reservationUnknown &&
-                    invitation.status === "COMMAND_RESERVED")
-                }
-                onClick={() => void inviteParticipants([participant.discordId])}
+                disabled={!canInviteParticipants([participant.participantId])}
+                onClick={() => {
+                  void inviteParticipants([participant.participantId]).catch(
+                    (error: unknown) => {
+                      console.warn(
+                        "Failed to reserve a party invitation",
+                        error,
+                      );
+                    },
+                  );
+                }}
               >
-                {isInviting ? (
-                  <Loader2
-                    size={17}
-                    className="ll:animate-spin ll:text-amber-300"
-                  />
-                ) : (
-                  <Plus size={17} className="ll:text-green-400" />
-                )}
+                <Plus size={17} className="ll:text-green-400" />
               </Button>
             ) : null}
             <Button

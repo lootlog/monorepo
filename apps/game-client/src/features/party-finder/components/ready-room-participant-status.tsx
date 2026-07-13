@@ -1,7 +1,4 @@
-import type {
-  PartyReadyRoomParticipantProjection,
-  PartyReadyRoomProjection,
-} from "@lootlog/types";
+import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -9,27 +6,38 @@ import {
   partyReadyRoomControllerRespondToReadyCheck,
   partyReadyRoomControllerWithdraw,
 } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import {
+  selectReadyRoomParticipantForCharacter,
+  usePartyFinderStore,
+} from "@/store/party-finder.store";
+import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 
 type ReadyRoomParticipantStatusProps = {
-  room: PartyReadyRoomParticipantProjection;
+  room: PartyReadyRoomProjection;
 };
 
 export function ReadyRoomParticipantStatus({
   room,
 }: ReadyRoomParticipantStatusProps) {
   const { t } = useTranslation("partyFinder");
-  const participant = room.participant;
+  const participant = selectReadyRoomParticipantForCharacter(
+    room,
+    getCurrentReadyRoomCharacterIdentity(),
+  );
   const [isUpdating, setIsUpdating] = useState(false);
   const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
 
   const respondToReadyCheck = async (ready: boolean) => {
-    if (!room.readyCheck) return;
+    if (!room.readyCheck || !participant) return;
     setIsUpdating(true);
     try {
       const projection = await partyReadyRoomControllerRespondToReadyCheck(
         { notificationId: room.notificationId },
-        { roundId: room.readyCheck.roundId, ready },
+        {
+          participantId: participant.participantId,
+          roundId: room.readyCheck.roundId,
+          ready,
+        },
       );
       mergeProjection(projection as unknown as PartyReadyRoomProjection);
     } finally {
@@ -38,16 +46,20 @@ export function ReadyRoomParticipantStatus({
   };
 
   const withdraw = async () => {
+    if (!participant) return;
     setIsUpdating(true);
     try {
-      const projection = await partyReadyRoomControllerWithdraw({
-        notificationId: room.notificationId,
-      });
+      const projection = await partyReadyRoomControllerWithdraw(
+        { notificationId: room.notificationId },
+        { participantId: participant.participantId },
+      );
       mergeProjection(projection as unknown as PartyReadyRoomProjection);
     } finally {
       setIsUpdating(false);
     }
   };
+
+  if (!participant) return null;
 
   return (
     <div className="ll:m-2 ll:rounded ll:border ll:border-gray-700 ll:bg-gray-950/60 ll:p-2">

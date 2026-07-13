@@ -29,6 +29,7 @@ describe("usePartyReadyRoomSocket", () => {
       ([event]) => event === GatewayEvent.PARTY_READY_ROOM_UPDATE,
     )?.[1] as ((projection: PartyReadyRoomProjection) => void) | undefined;
     const projection = {
+      schemaVersion: 2,
       notificationId: "room-1",
       revision: 4,
     } as PartyReadyRoomProjection;

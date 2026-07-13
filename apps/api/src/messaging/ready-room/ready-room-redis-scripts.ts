@@ -37,8 +37,8 @@ end
 redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[5])
 redis.call("zadd", KEYS[2], ARGV[3], ARGV[4])
 
-local pendingIndexTtl = redis.call("ttl", KEYS[2])
-if pendingIndexTtl < tonumber(ARGV[5]) then
+local userIndexTtl = redis.call("ttl", KEYS[2])
+if userIndexTtl < tonumber(ARGV[5]) then
   redis.call("expire", KEYS[2], ARGV[5])
 end
 
@@ -62,7 +62,11 @@ if acceptedRoomId and acceptedRoomId ~= ARGV[3] then
 end
 
 redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
-redis.call("zrem", KEYS[2], ARGV[3])
+redis.call("zadd", KEYS[2], ARGV[5], ARGV[3])
+local userIndexTtl = redis.call("ttl", KEYS[2])
+if userIndexTtl < tonumber(ARGV[4]) then
+  redis.call("expire", KEYS[2], ARGV[4])
+end
 redis.call("set", KEYS[3], ARGV[3], "EX", ARGV[4])
 
 return { "COMMITTED" }
@@ -96,7 +100,9 @@ if currentAggregate ~= ARGV[1] then
 end
 
 redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
-redis.call("zrem", KEYS[2], ARGV[3])
+if ARGV[5] == "0" then
+  redis.call("zrem", KEYS[2], ARGV[3])
+end
 
 local acceptedRoomId = redis.call("get", KEYS[3])
 if acceptedRoomId == ARGV[3] then
@@ -136,7 +142,7 @@ return { "COMMITTED" }
 `;
 
 export const FIND_READY_ROOM_IDS_SCRIPT = `
-redis.call("zremrangebyscore", KEYS[3], "-inf", ARGV[1])
+redis.call("zremrangebyscore", KEYS[2], "-inf", ARGV[1])
 
 local roomIds = {}
 local organizerRoomId = redis.call("get", KEYS[1])
@@ -144,20 +150,15 @@ if organizerRoomId then
   table.insert(roomIds, organizerRoomId)
 end
 
-local acceptedRoomId = redis.call("get", KEYS[2])
-if acceptedRoomId then
-  table.insert(roomIds, acceptedRoomId)
-end
-
-local pendingRoomIds = redis.call("zrange", KEYS[3], 0, -1)
-for _, pendingRoomId in ipairs(pendingRoomIds) do
-  table.insert(roomIds, pendingRoomId)
+local userRoomIds = redis.call("zrange", KEYS[2], 0, -1)
+for _, userRoomId in ipairs(userRoomIds) do
+  table.insert(roomIds, userRoomId)
 end
 
 return roomIds
 `;
 
-export const PRUNE_READY_ROOM_PENDING_SCRIPT = `
+export const PRUNE_READY_ROOM_USER_INDEX_SCRIPT = `
 for _, notificationId in ipairs(ARGV) do
   redis.call("zrem", KEYS[1], notificationId)
 end

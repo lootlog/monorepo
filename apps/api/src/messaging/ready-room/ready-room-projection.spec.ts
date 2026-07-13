@@ -6,6 +6,7 @@ import {
 import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
 
 const aggregate: ReadyRoomAggregate = {
+  schemaVersion: 2,
   notificationId: "room-1",
   organizerDiscordId: "organizer",
   organizerCharacter: {
@@ -26,6 +27,8 @@ const aggregate: ReadyRoomAggregate = {
   readyCheck: null,
   participants: {
     applicant: {
+      participantId: "applicant",
+      applicationVersion: 1,
       discordId: "applicant",
       character: {
         accountId: "account-applicant",
@@ -50,6 +53,8 @@ const aggregate: ReadyRoomAggregate = {
       updatedAt: "2026-07-13T10:01:00.000Z",
     },
     accepted: {
+      participantId: "accepted",
+      applicationVersion: 1,
       discordId: "accepted",
       character: {
         accountId: "account-accepted",
@@ -96,9 +101,11 @@ describe("createReadyRoomProjection", () => {
     });
     expect(participantProjection).toMatchObject({
       viewer: "PARTICIPANT",
-      participant: { discordId: "accepted" },
+      participants: {
+        accepted: { discordId: "accepted" },
+      },
     });
-    expect(participantProjection).not.toHaveProperty("participants");
+    expect(participantProjection).not.toHaveProperty("ownedParticipantIds");
   });
 
   it("selects only the organizer and active participants for updates", () => {
@@ -108,11 +115,13 @@ describe("createReadyRoomProjection", () => {
         ...aggregate.participants,
         declined: {
           ...aggregate.participants.applicant,
+          participantId: "declined",
           discordId: "declined",
           application: "DECLINED",
         },
         withdrawn: {
           ...aggregate.participants.applicant,
+          participantId: "withdrawn",
           discordId: "withdrawn",
           application: "WITHDRAWN",
         },
@@ -122,5 +131,36 @@ describe("createReadyRoomProjection", () => {
     expect(
       getReadyRoomActiveRecipientDiscordIds(aggregateWithInactiveParticipants),
     ).toEqual(["organizer", "applicant", "accepted"]);
+  });
+
+  it("deduplicates recipients and exposes every entry owned by one participant", () => {
+    const aggregateWithSharedOwner: ReadyRoomAggregate = {
+      ...aggregate,
+      participants: {
+        first: {
+          ...aggregate.participants.applicant,
+          participantId: "first",
+          discordId: "shared",
+        },
+        second: {
+          ...aggregate.participants.accepted,
+          participantId: "second",
+          discordId: "shared",
+        },
+      },
+    };
+
+    expect(
+      createReadyRoomProjection(aggregateWithSharedOwner, "shared"),
+    ).toMatchObject({
+      viewer: "PARTICIPANT",
+      participants: {
+        first: { participantId: "first" },
+        second: { participantId: "second" },
+      },
+    });
+    expect(
+      getReadyRoomActiveRecipientDiscordIds(aggregateWithSharedOwner),
+    ).toEqual(["organizer", "shared"]);
   });
 });

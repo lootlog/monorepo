@@ -41,6 +41,7 @@ describe("useCancelPartyGathering", () => {
     vi.clearAllMocks();
     usePartyFinderStore.getState().clearReadyRooms();
     usePartyFinderStore.getState().mergeProjection({
+      schemaVersion: 2,
       notificationId: "notif-123",
       organizerDiscordId: "user-1",
       organizerCharacter: {
@@ -61,16 +62,17 @@ describe("useCancelPartyGathering", () => {
       readyCheck: null,
       viewer: "ORGANIZER",
       participants: {},
+      ownedParticipantIds: [],
     });
   });
 
   it("cancels with the current revision and stores the terminal projection", async () => {
+    const activeProjection =
+      usePartyFinderStore.getState().projections["notif-123"];
     mockCancelPartyGathering.mockResolvedValue({
-      notificationId: "notif-123",
-      guildIds: ["guild-1"],
+      ...activeProjection,
       status: "CANCELLED",
       revision: 2,
-      viewer: "ORGANIZER",
     });
 
     const { result } = renderHook(() => useCancelPartyGathering(), {

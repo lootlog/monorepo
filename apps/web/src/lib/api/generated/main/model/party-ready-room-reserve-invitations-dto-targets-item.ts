@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface PartyReadyRoomReadyResponseDto {
+export type PartyReadyRoomReserveInvitationsDtoTargetsItem = {
   /**
      * @minLength 1
      * @maxLength 100
@@ -16,6 +16,5 @@ export interface PartyReadyRoomReadyResponseDto {
      * @minimum 1
      * @maximum 9007199254740991
      */
-  roundId: number;
-  ready: boolean;
-}
+  applicationVersion: number;
+};

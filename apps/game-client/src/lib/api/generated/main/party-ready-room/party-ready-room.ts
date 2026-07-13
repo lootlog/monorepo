@@ -46,6 +46,7 @@ import type {
   PartyReadyRoomInvitationReservationDtoOutput,
   PartyReadyRoomObservationDto,
   PartyReadyRoomParticipantActionDto,
+  PartyReadyRoomParticipantIdentityDto,
   PartyReadyRoomProjectionDtoOutput,
   PartyReadyRoomReadyResponseDto,
   PartyReadyRoomReconcileInvitationDto,
@@ -401,14 +402,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return `/messaging/party-gathering/${notificationId}/applications/me`
 }
 
-export const partyReadyRoomControllerWithdraw = async ({ notificationId }: PartyReadyRoomControllerWithdrawPathParameters, options?: RequestInit): Promise<PartyReadyRoomProjectionDtoOutput> => {
+export const partyReadyRoomControllerWithdraw = async ({ notificationId }: PartyReadyRoomControllerWithdrawPathParameters,
+    partyReadyRoomParticipantIdentityDto: PartyReadyRoomParticipantIdentityDto, options?: RequestInit): Promise<PartyReadyRoomProjectionDtoOutput> => {
 
   return orvalFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerWithdrawUrl({ notificationId }),
   {
     ...options,
-    method: 'DELETE'
-
-
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(partyReadyRoomParticipantIdentityDto)
   }
 );}
 
@@ -416,8 +418,8 @@ export const partyReadyRoomControllerWithdraw = async ({ notificationId }: Party
 
 
 export const getPartyReadyRoomControllerWithdrawMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,{pathParams: PartyReadyRoomControllerWithdrawPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,{pathParams: PartyReadyRoomControllerWithdrawPathParameters}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,{pathParams: PartyReadyRoomControllerWithdrawPathParameters;data: BodyType<PartyReadyRoomParticipantIdentityDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,{pathParams: PartyReadyRoomControllerWithdrawPathParameters;data: BodyType<PartyReadyRoomParticipantIdentityDto>}, TContext> => {
 
 const mutationKey = ['partyReadyRoomControllerWithdraw'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -429,10 +431,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, {pathParams: PartyReadyRoomControllerWithdrawPathParameters}> = (props) => {
-          const {pathParams} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, {pathParams: PartyReadyRoomControllerWithdrawPathParameters;data: BodyType<PartyReadyRoomParticipantIdentityDto>}> = (props) => {
+          const {pathParams,data} = props ?? {};
 
-          return  partyReadyRoomControllerWithdraw(pathParams,requestOptions)
+          return  partyReadyRoomControllerWithdraw(pathParams,data,requestOptions)
         }
 
 
@@ -443,15 +445,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type PartyReadyRoomControllerWithdrawMutationResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>>
-
+    export type PartyReadyRoomControllerWithdrawMutationBody = BodyType<PartyReadyRoomParticipantIdentityDto>
     export type PartyReadyRoomControllerWithdrawMutationError = ErrorType<unknown>
 
     export const usePartyReadyRoomControllerWithdraw = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,{pathParams: PartyReadyRoomControllerWithdrawPathParameters}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,{pathParams: PartyReadyRoomControllerWithdrawPathParameters;data: BodyType<PartyReadyRoomParticipantIdentityDto>}, TContext>, request?: SecondParameter<typeof orvalFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>,
         TError,
-        {pathParams: PartyReadyRoomControllerWithdrawPathParameters},
+        {pathParams: PartyReadyRoomControllerWithdrawPathParameters;data: BodyType<PartyReadyRoomParticipantIdentityDto>},
         TContext
       > => {
       return useMutation(getPartyReadyRoomControllerWithdrawMutationOptions(options));

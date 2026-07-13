@@ -6,7 +6,11 @@ const ExpectedRevisionSchema = z.object({
 });
 
 const PartyReadyRoomParticipantActionSchema = ExpectedRevisionSchema.extend({
-  participantDiscordId: z.string().min(1).max(50),
+  participantId: z.string().min(1).max(100),
+});
+
+const PartyReadyRoomParticipantIdentitySchema = z.object({
+  participantId: z.string().min(1).max(100),
 });
 
 export class PartyReadyRoomExpectedRevisionDto extends createZodDto(
@@ -15,4 +19,8 @@ export class PartyReadyRoomExpectedRevisionDto extends createZodDto(
 
 export class PartyReadyRoomParticipantActionDto extends createZodDto(
   PartyReadyRoomParticipantActionSchema,
+) {}
+
+export class PartyReadyRoomParticipantIdentityDto extends createZodDto(
+  PartyReadyRoomParticipantIdentitySchema,
 ) {}

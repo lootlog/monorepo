@@ -108,6 +108,7 @@ describe("GatewayService", () => {
       recipientDiscordId: "participant",
       eligibleGuildIds: ["guild-1", "guild-2"],
       projection: {
+        schemaVersion: 2,
         notificationId: "room-1",
         organizerDiscordId: "organizer",
         organizerCharacter: {
@@ -127,29 +128,33 @@ describe("GatewayService", () => {
         expiresAt: "2026-07-13T10:30:00.000Z",
         readyCheck: null,
         viewer: "PARTICIPANT",
-        participant: {
-          discordId: "participant",
-          character: {
-            accountId: "participant-account",
-            characterId: "participant-character",
-            icon: "participant.gif",
-            lvl: 190,
-            nick: "Participant",
-            prof: "m",
-          },
-          application: "APPLIED",
-          readiness: "NOT_REQUESTED",
-          invitation: {
-            status: "NOT_MARKED",
-            source: null,
-            commandId: null,
-            batchId: null,
-            reservationExpiresAt: null,
+        participants: {
+          "participant-1": {
+            participantId: "participant-1",
+            applicationVersion: 1,
+            discordId: "participant",
+            character: {
+              accountId: "participant-account",
+              characterId: "participant-character",
+              icon: "participant.gif",
+              lvl: 190,
+              nick: "Participant",
+              prof: "m",
+            },
+            application: "APPLIED",
+            readiness: "NOT_REQUESTED",
+            invitation: {
+              status: "NOT_MARKED",
+              source: null,
+              commandId: null,
+              batchId: null,
+              reservationExpiresAt: null,
+              updatedAt: "2026-07-13T10:01:00.000Z",
+            },
+            partyPresence: "OUTSIDE",
+            createdAt: "2026-07-13T10:01:00.000Z",
             updatedAt: "2026-07-13T10:01:00.000Z",
           },
-          partyPresence: "OUTSIDE",
-          createdAt: "2026-07-13T10:01:00.000Z",
-          updatedAt: "2026-07-13T10:01:00.000Z",
         },
       },
     } satisfies PartyReadyRoomUpdateEnvelope;

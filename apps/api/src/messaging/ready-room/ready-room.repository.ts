@@ -27,21 +27,20 @@ export interface ReadyRoomRepository {
   saveApplication(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-    participantDiscordId: string,
+    participantId: string,
   ): Promise<CommitReadyRoomResult>;
   accept(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-    participantDiscordId: string,
+    participantId: string,
   ): Promise<AcceptReadyRoomResult>;
   exitParticipant(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-    participantDiscordId: string,
+    participantId: string,
   ): Promise<CommitReadyRoomResult>;
   terminate(
     expected: ReadyRoomAggregate,
     next: ReadyRoomAggregate,
-    participantDiscordIds: string[],
   ): Promise<CommitReadyRoomResult>;
 }

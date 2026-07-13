@@ -12,6 +12,12 @@ import type { PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence } from 
 import type { PartyReadyRoomProjectionDtoOutputParticipantsReadiness } from './party-ready-room-projection-dto-output-participants-readiness.js';
 
 export type PartyReadyRoomProjectionDtoOutputParticipants = {[key: string]: {
+  participantId: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  applicationVersion: number;
   discordId: string;
   character: PartyReadyRoomProjectionDtoOutputParticipantsCharacter;
   application: PartyReadyRoomProjectionDtoOutputParticipantsApplication;

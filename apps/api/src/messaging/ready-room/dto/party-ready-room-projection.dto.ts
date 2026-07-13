@@ -12,6 +12,8 @@ const InvitationSchema = z.object({
 });
 
 const ParticipantSchema = z.object({
+  participantId: z.string(),
+  applicationVersion: z.number().int().min(1),
   discordId: z.string(),
   character: CharacterSchema,
   application: z.enum(["APPLIED", "ACCEPTED", "DECLINED", "WITHDRAWN"]),
@@ -23,6 +25,7 @@ const ParticipantSchema = z.object({
 });
 
 const ProjectionBaseSchema = z.object({
+  schemaVersion: z.literal(2),
   notificationId: z.string(),
   organizerDiscordId: z.string(),
   organizerCharacter: CharacterSchema,
@@ -48,27 +51,29 @@ export const PartyReadyRoomOrganizerProjectionSchema =
   ProjectionBaseSchema.extend({
     viewer: z.literal("ORGANIZER"),
     participants: z.record(z.string(), ParticipantSchema),
+    ownedParticipantIds: z.array(z.string()),
   });
 
 export const PartyReadyRoomProjectionSchema = z.discriminatedUnion("viewer", [
   PartyReadyRoomOrganizerProjectionSchema,
   ProjectionBaseSchema.extend({
     viewer: z.literal("PARTICIPANT"),
-    participant: ParticipantSchema,
+    participants: z.record(z.string(), ParticipantSchema),
   }),
 ]);
 
 const PartyReadyRoomProjectionResponseSchema = ProjectionBaseSchema.extend({
   viewer: z.enum(["ORGANIZER", "PARTICIPANT"]),
-  participants: z.record(z.string(), ParticipantSchema).optional(),
-  participant: ParticipantSchema.optional(),
+  participants: z.record(z.string(), ParticipantSchema),
+  ownedParticipantIds: z.array(z.string()).optional(),
 });
 
 const InvitationBatchSchema = z.object({
   batchId: z.string(),
   reservations: z.array(
     z.object({
-      participantDiscordId: z.string(),
+      participantId: z.string(),
+      applicationVersion: z.number().int().min(1),
       characterId: z.string(),
       commandId: z.string(),
     }),

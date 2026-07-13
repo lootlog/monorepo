@@ -6,6 +6,7 @@ import type {
 } from "@lootlog/types";
 
 export interface ReadyRoomAggregate {
+  schemaVersion: 2;
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomCharacter;

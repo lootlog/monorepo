@@ -10,9 +10,9 @@ import type { PartyReadyRoomAnnotateInvitationDtoOutcome } from './party-ready-r
 export interface PartyReadyRoomAnnotateInvitationDto {
   /**
      * @minLength 1
-     * @maxLength 50
+     * @maxLength 100
      */
-  participantDiscordId: string;
+  participantId: string;
   /**
      * @minimum 1
      * @maximum 9007199254740991

@@ -73,15 +73,19 @@ describe("PartyReadyRoomController", () => {
     );
 
     await controller.reserveInvitations("organizer", "room-1", {
-      expectedRevision: 4,
-      participantDiscordIds: ["participant-1", "participant-2"],
+      targets: [
+        { participantId: "participant-1", applicationVersion: 1 },
+        { participantId: "participant-2", applicationVersion: 2 },
+      ],
     });
 
     expect(readyRoomService.reserveInvitations).toHaveBeenCalledWith({
       notificationId: "room-1",
       organizerDiscordId: "organizer",
-      expectedRevision: 4,
-      participantDiscordIds: ["participant-1", "participant-2"],
+      targets: [
+        { participantId: "participant-1", applicationVersion: 1 },
+        { participantId: "participant-2", applicationVersion: 2 },
+      ],
     });
   });
 
@@ -110,7 +114,7 @@ describe("PartyReadyRoomController", () => {
     );
 
     await controller.reconcileInvitation("organizer", "room-1", {
-      participantDiscordId: "participant",
+      participantId: "participant-id",
       commandId: "command-1",
       expectedRevision: 5,
       outcome: "NOT_MARKED",
@@ -119,7 +123,7 @@ describe("PartyReadyRoomController", () => {
     expect(readyRoomService.reconcileInvitation).toHaveBeenCalledWith({
       notificationId: "room-1",
       organizerDiscordId: "organizer",
-      participantDiscordId: "participant",
+      participantId: "participant-id",
       commandId: "command-1",
       expectedRevision: 5,
       outcome: "NOT_MARKED",

@@ -25,6 +25,7 @@ import { PartyReadyRoomObservationDto } from "src/messaging/ready-room/dto/party
 import {
   PartyReadyRoomExpectedRevisionDto,
   PartyReadyRoomParticipantActionDto,
+  PartyReadyRoomParticipantIdentityDto,
 } from "src/messaging/ready-room/dto/party-ready-room-participant-action.dto";
 import {
   PartyReadyRoomInvitationReservationDto,
@@ -117,11 +118,13 @@ export class PartyReadyRoomController {
   async withdraw(
     @DiscordId() discordId: string,
     @Param("notificationId") notificationId: string,
+    @Body() data: PartyReadyRoomParticipantIdentityDto,
   ) {
     await this.assertAccess(notificationId, discordId);
     return this.readyRoomService.withdraw({
       notificationId,
       participantDiscordId: discordId,
+      participantId: data.participantId,
     });
   }
 

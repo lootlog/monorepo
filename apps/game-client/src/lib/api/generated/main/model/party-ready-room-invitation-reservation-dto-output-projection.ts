@@ -8,10 +8,12 @@
 import type { PartyReadyRoomInvitationReservationDtoOutputProjectionOrganizerCharacter } from './party-ready-room-invitation-reservation-dto-output-projection-organizer-character.js';
 import type { PartyReadyRoomInvitationReservationDtoOutputProjectionParticipants } from './party-ready-room-invitation-reservation-dto-output-projection-participants.js';
 import type { PartyReadyRoomInvitationReservationDtoOutputProjectionReadyCheck } from './party-ready-room-invitation-reservation-dto-output-projection-ready-check.js';
+import type { PartyReadyRoomInvitationReservationDtoOutputProjectionSchemaVersion } from './party-ready-room-invitation-reservation-dto-output-projection-schema-version.js';
 import type { PartyReadyRoomInvitationReservationDtoOutputProjectionStatus } from './party-ready-room-invitation-reservation-dto-output-projection-status.js';
 import type { PartyReadyRoomInvitationReservationDtoOutputProjectionViewer } from './party-ready-room-invitation-reservation-dto-output-projection-viewer.js';
 
 export type PartyReadyRoomInvitationReservationDtoOutputProjection = {
+  schemaVersion: PartyReadyRoomInvitationReservationDtoOutputProjectionSchemaVersion;
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomInvitationReservationDtoOutputProjectionOrganizerCharacter;
@@ -36,4 +38,5 @@ export type PartyReadyRoomInvitationReservationDtoOutputProjection = {
   readyCheck: PartyReadyRoomInvitationReservationDtoOutputProjectionReadyCheck;
   viewer: PartyReadyRoomInvitationReservationDtoOutputProjectionViewer;
   participants: PartyReadyRoomInvitationReservationDtoOutputProjectionParticipants;
+  ownedParticipantIds: string[];
 };

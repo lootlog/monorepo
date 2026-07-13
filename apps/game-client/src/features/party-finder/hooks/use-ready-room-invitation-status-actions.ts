@@ -20,7 +20,7 @@ export function useReadyRoomInvitationStatusActions() {
   };
 
   const annotateInvitation = async (
-    participantDiscordId: string,
+    participantId: string,
     outcome: "SENT" | "FAILED",
   ) => {
     const { state, ownedReadyRoom } = getOwnedReadyRoom();
@@ -29,7 +29,7 @@ export function useReadyRoomInvitationStatusActions() {
       const projection = await partyReadyRoomControllerAnnotateInvitation(
         { notificationId: ownedReadyRoom.notificationId },
         {
-          participantDiscordId,
+          participantId,
           expectedRevision: ownedReadyRoom.revision,
           outcome,
         },
@@ -41,7 +41,7 @@ export function useReadyRoomInvitationStatusActions() {
   };
 
   const reconcileInvitation = async (
-    participantDiscordId: string,
+    participantId: string,
     commandId: string,
     outcome: "NOT_MARKED" | "SENT" | "FAILED",
   ) => {
@@ -51,7 +51,7 @@ export function useReadyRoomInvitationStatusActions() {
       const projection = await partyReadyRoomControllerReconcileInvitation(
         { notificationId: ownedReadyRoom.notificationId },
         {
-          participantDiscordId,
+          participantId,
           commandId,
           expectedRevision: ownedReadyRoom.revision,
           outcome,

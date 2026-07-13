@@ -8,6 +8,11 @@
 
 export interface PartyReadyRoomReadyResponseDto {
   /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  participantId: string;
+  /**
      * @minimum 1
      * @maximum 9007199254740991
      */

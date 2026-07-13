@@ -7,16 +7,17 @@ const PartyReadyRoomUpdateEnvelopeSchema = z
     eligibleGuildIds: z.array(z.string().min(1)).min(1),
     projection: z
       .object({
+        schemaVersion: z.literal(2),
         notificationId: z.string().min(1),
         organizerDiscordId: z.string().min(1),
         guildIds: z.array(z.string().min(1)).min(1),
         status: z.enum(["ACTIVE", "CLOSED", "CANCELLED"]),
         revision: z.number().int().positive(),
         viewer: z.enum(["ORGANIZER", "PARTICIPANT"]),
-        participant: z
-          .object({ discordId: z.string().min(1) })
-          .passthrough()
-          .optional(),
+        participants: z.record(
+          z.string().min(1),
+          z.object({ discordId: z.string().min(1) }).passthrough(),
+        ),
       })
       .passthrough(),
   })
@@ -32,7 +33,10 @@ const PartyReadyRoomUpdateEnvelopeSchema = z
     }
     if (
       envelope.projection.viewer === "PARTICIPANT" &&
-      envelope.projection.participant?.discordId !== envelope.recipientDiscordId
+      (Object.keys(envelope.projection.participants).length === 0 ||
+        Object.values(envelope.projection.participants).some(
+          ({ discordId }) => discordId !== envelope.recipientDiscordId,
+        ))
     ) {
       context.addIssue({
         code: "custom",

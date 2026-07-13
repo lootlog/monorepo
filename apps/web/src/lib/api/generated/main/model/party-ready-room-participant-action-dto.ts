@@ -14,7 +14,7 @@ export interface PartyReadyRoomParticipantActionDto {
   expectedRevision: number;
   /**
      * @minLength 1
-     * @maxLength 50
+     * @maxLength 100
      */
-  participantDiscordId: string;
+  participantId: string;
 }

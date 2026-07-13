@@ -10,9 +10,9 @@ import type { PartyReadyRoomReconcileInvitationDtoOutcome } from './party-ready-
 export interface PartyReadyRoomReconcileInvitationDto {
   /**
      * @minLength 1
-     * @maxLength 50
+     * @maxLength 100
      */
-  participantDiscordId: string;
+  participantId: string;
   /**
      * @minLength 1
      * @maxLength 100

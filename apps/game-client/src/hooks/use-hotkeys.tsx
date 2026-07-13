@@ -5,12 +5,11 @@ import {
   type HotkeyAction,
   type HotkeyBinding,
 } from "@/store/hotkeys.store";
-import {
-  selectOwnedReadyRoom,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
 import { useEffect, useRef } from "react";
-import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
+import {
+  canEnqueueReadyRoomInvitations,
+  enqueueReadyRoomInvitations,
+} from "@/features/party-finder/ready-room-invitation-coordinator";
 
 type HotkeyEvent = KeyboardEvent | MouseEvent;
 type UseHotkeysOptions = {
@@ -63,8 +62,6 @@ const hotkeyScopes = new Map(
 export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
   const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const bindings = useHotkeysStore((s) => s.bindings);
-  const { inviteParticipants } = useReadyRoomInvitations();
-  const isInvitingRef = useRef(false);
   const handledMouseRef = useRef<{
     button: number;
     ctrl: boolean;
@@ -86,22 +83,9 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
           return true;
         }
 
-        if (hotkeyAction === "invite-all" && !isInvitingRef.current) {
-          const ownedReadyRoom = selectOwnedReadyRoom(
-            usePartyFinderStore.getState(),
-          );
-          const participantDiscordIds = ownedReadyRoom
-            ? Object.values(ownedReadyRoom.participants)
-                .filter(
-                  ({ application, partyPresence }) =>
-                    application === "ACCEPTED" && partyPresence === "OUTSIDE",
-                )
-                .map(({ discordId }) => discordId)
-            : [];
-          if (participantDiscordIds.length === 0) return false;
-          isInvitingRef.current = true;
-          void inviteParticipants(participantDiscordIds).finally(() => {
-            isInvitingRef.current = false;
+        if (hotkeyAction === "invite-all" && canEnqueueReadyRoomInvitations()) {
+          void enqueueReadyRoomInvitations().catch((error: unknown) => {
+            console.warn("Failed to reserve party invitations", error);
           });
           return true;
         }
@@ -174,7 +158,7 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
       window.removeEventListener("mouseup", suppressHandledMouseEvent);
       window.removeEventListener("auxclick", suppressHandledMouseEvent);
     };
-  }, [bindings, toggleOpen, inviteParticipants, onMapPing]);
+  }, [bindings, toggleOpen, onMapPing]);
 
   return null;
 };

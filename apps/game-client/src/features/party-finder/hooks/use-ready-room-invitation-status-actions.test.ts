@@ -13,6 +13,7 @@ vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
 }));
 
 const projection = {
+  schemaVersion: 2,
   notificationId: "room-1",
   organizerDiscordId: "organizer",
   guildIds: ["guild-1"],
@@ -33,6 +34,7 @@ const projection = {
     prof: "w",
   },
   participants: {},
+  ownedParticipantIds: [],
 } satisfies PartyReadyRoomOrganizerProjection;
 
 describe("useReadyRoomInvitationStatusActions", () => {
@@ -48,7 +50,9 @@ describe("useReadyRoomInvitationStatusActions", () => {
     const { result } = renderHook(() => useReadyRoomInvitationStatusActions());
 
     expect(annotateInvitation).not.toHaveBeenCalled();
-    await act(() => result.current.annotateInvitation("participant", "SENT"));
+    await act(() =>
+      result.current.annotateInvitation("participant-id", "SENT"),
+    );
     expect(annotateInvitation).toHaveBeenCalledTimes(1);
   });
 
@@ -58,7 +62,7 @@ describe("useReadyRoomInvitationStatusActions", () => {
     expect(reconcileInvitation).not.toHaveBeenCalled();
     await act(() =>
       result.current.reconcileInvitation(
-        "participant",
+        "participant-id",
         "command-1",
         "NOT_MARKED",
       ),

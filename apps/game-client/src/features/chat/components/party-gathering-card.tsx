@@ -41,7 +41,9 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
     member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
 
   const heroLvl = Game.hero.lvl;
-  const isOwnMessage = message.characterData.nick === Game.hero.nick;
+  const isOrganizingCharacter =
+    String(message.characterData.acc) === String(Game.hero.account) &&
+    String(message.characterData.id) === String(Game.hero.id);
   const partyGathering = message.partyGathering;
 
   if (!partyGathering) {
@@ -174,7 +176,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             })}
           </p>
         )}
-        {!isOwnMessage &&
+        {!isOrganizingCharacter &&
           (() => {
             const minLvl = partyGathering?.minLvl ?? 1;
             const maxLvl = partyGathering?.maxLvl ?? 500;

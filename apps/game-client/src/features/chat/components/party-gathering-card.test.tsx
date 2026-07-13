@@ -33,6 +33,8 @@ vi.mock("@/components/ui/button", () => ({
 vi.mock("@/lib/game", () => ({
   Game: {
     hero: {
+      account: 999,
+      id: 999,
       lvl: 200,
       nick: "CurrentHero",
     },
@@ -163,5 +165,28 @@ describe("PartyGatheringCard", () => {
       },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
+  });
+
+  it("allows another character with the same nickname to apply", () => {
+    render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        member={member}
+        message={makeMessage({
+          characterData: {
+            nick: "CurrentHero",
+            id: 1,
+            acc: 1,
+            lvl: 200,
+            prof: "w",
+            icon: "leader.png",
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Join party" })).toBeVisible();
   });
 });
