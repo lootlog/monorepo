@@ -10,15 +10,14 @@ import { io, type Socket } from "socket.io-client";
 import { getSerializedDevPermissionOverride } from "@/lib/dev-permission-override";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { msgpackParser } from "@lootlog/socket-parser";
-import type {
-  PartyFinderVolunteer,
-  PartyGatheringSession,
-} from "@/store/party-finder.store";
+import type { NotificationVolunteer } from "@/store/notification-volunteers.store";
+import type { PartyGatheringSession } from "@/types/party-gathering";
 import type { MargonemAccountProof } from "@/lib/margonem-account-proof";
 import type {
   MapPingAck,
   MapPingEvent,
   MapPingSendPayload,
+  PartyReadyRoomClientUpdate,
 } from "@lootlog/types";
 
 type ServerToClientEvents = {
@@ -80,7 +79,7 @@ type ServerToClientEvents = {
   }) => void;
   [GatewayEvent.NOTIFICATIONS_VOLUNTEER]: (data: {
     notificationId: string;
-    volunteer: PartyFinderVolunteer;
+    volunteer: NotificationVolunteer;
   }) => void;
   [GatewayEvent.PARTY_GATHERING_SEND]: (
     data: PartyGatheringSession & { guildId: string },
@@ -88,6 +87,9 @@ type ServerToClientEvents = {
   [GatewayEvent.PARTY_GATHERING_CANCEL]: (data: {
     notificationId: string;
   }) => void;
+  [GatewayEvent.PARTY_READY_ROOM_UPDATE]: (
+    data: PartyReadyRoomClientUpdate,
+  ) => void;
   [GatewayEvent.CHAT_MESSAGE_DELETE]: (data: {
     guildId: string;
     messageId: string;

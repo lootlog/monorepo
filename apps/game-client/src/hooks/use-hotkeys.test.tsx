@@ -4,8 +4,16 @@ import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useHotkeysStore } from "@/store/hotkeys.store";
 import { useWindowsStore } from "@/store/windows.store";
 
+const enqueueReadyRoomInvitations = vi.fn(() => Promise.resolve());
+
+vi.mock("@/features/party-finder/ready-room-invitation-coordinator", () => ({
+  canEnqueueReadyRoomInvitations: () => true,
+  enqueueReadyRoomInvitations: () => enqueueReadyRoomInvitations(),
+}));
+
 describe("useHotkeys", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     useHotkeysStore.getState().resetAll();
     useWindowsStore.setState((state) => ({
       ...state,
@@ -85,5 +93,20 @@ describe("useHotkeys", () => {
 
     expect(onMapPing).toHaveBeenCalledOnce();
     expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("enqueues every explicit rapid invite-all hotkey activation", () => {
+    renderHook(() => useHotkeys());
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "I", shiftKey: true }),
+      );
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "I", shiftKey: true }),
+      );
+    });
+
+    expect(enqueueReadyRoomInvitations).toHaveBeenCalledTimes(2);
   });
 });

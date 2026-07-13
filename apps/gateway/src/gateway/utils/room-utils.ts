@@ -63,6 +63,13 @@ export function buildRoomName(
   return tier ? `${guildId}:${feature}:${tier}` : `${guildId}:${feature}`;
 }
 
+export function buildUserGuildRoomName(
+  discordId: string,
+  guildId: string,
+): string {
+  return `user:${discordId}:guild:${guildId}`;
+}
+
 export function parseRoomName(
   room: string,
 ): { guildId: string; feature: string; tier?: string } | null {
@@ -98,6 +105,7 @@ export function calculateUserRooms(
       guild.ownerId === discordId || isOwnerOrAdminFromRoles(roles);
 
     // Everyone gets presence and events rooms
+    guildRooms.push(buildUserGuildRoomName(discordId, guild.id));
     guildRooms.push(buildRoomName(guild.id, "presence"));
     guildRooms.push(buildRoomName(guild.id, "events"));
 

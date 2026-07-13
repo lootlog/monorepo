@@ -5,10 +5,11 @@ import {
   type HotkeyAction,
   type HotkeyBinding,
 } from "@/store/hotkeys.store";
-import { usePartyFinderStore } from "@/store/party-finder.store";
-import { usePartyStore } from "@/store/party.store";
-import { inviteCharacterToParty } from "@/utils/game/character-actions";
 import { useEffect, useRef } from "react";
+import {
+  canEnqueueReadyRoomInvitations,
+  enqueueReadyRoomInvitations,
+} from "@/features/party-finder/ready-room-invitation-coordinator";
 
 type HotkeyEvent = KeyboardEvent | MouseEvent;
 type UseHotkeysOptions = {
@@ -58,28 +59,9 @@ const hotkeyScopes = new Map(
   HOTKEY_ACTIONS.map(({ action, scope }) => [action, scope]),
 );
 
-const inviteAll = async (
-  setInviteState: (id: string, state: "pending" | "failed") => void,
-) => {
-  const volunteers = usePartyFinderStore.getState().volunteers;
-  const partyMembers = usePartyStore.getState().members;
-
-  const invitable = volunteers.filter(
-    (v) => !partyMembers.some((m) => m.id === Number.parseInt(v.characterId)),
-  );
-
-  for (const v of invitable) {
-    setInviteState(v.characterId, "pending");
-    inviteCharacterToParty(v.characterId);
-    await new Promise((r) => setTimeout(r, 200));
-  }
-};
-
 export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
   const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const bindings = useHotkeysStore((s) => s.bindings);
-  const setInviteState = usePartyFinderStore((s) => s.setInviteState);
-  const isInvitingRef = useRef(false);
   const handledMouseRef = useRef<{
     button: number;
     ctrl: boolean;
@@ -101,10 +83,9 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
           return true;
         }
 
-        if (hotkeyAction === "invite-all" && !isInvitingRef.current) {
-          isInvitingRef.current = true;
-          inviteAll(setInviteState).finally(() => {
-            isInvitingRef.current = false;
+        if (hotkeyAction === "invite-all" && canEnqueueReadyRoomInvitations()) {
+          void enqueueReadyRoomInvitations().catch((error: unknown) => {
+            console.warn("Failed to resolve party invitations", error);
           });
           return true;
         }
@@ -177,7 +158,7 @@ export const useHotkeys = ({ onMapPing }: UseHotkeysOptions = {}) => {
       window.removeEventListener("mouseup", suppressHandledMouseEvent);
       window.removeEventListener("auxclick", suppressHandledMouseEvent);
     };
-  }, [bindings, toggleOpen, setInviteState, onMapPing]);
+  }, [bindings, toggleOpen, onMapPing]);
 
   return null;
 };
