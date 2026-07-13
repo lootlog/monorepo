@@ -7,6 +7,7 @@ import { useWindowsStore } from "@/store/windows.store";
 const resizeObserverCallbacks: Array<() => void> = [];
 const resizeObserverObservedElements: Element[] = [];
 const mutationObserverCallbacks: Array<() => void> = [];
+const initialWindowInnerWidth = window.innerWidth;
 
 class ResizeObserverMock {
   constructor(private readonly callback: () => void) {
@@ -183,6 +184,83 @@ describe("DraggableWindow", () => {
     resizeObserverCallbacks.length = 0;
     resizeObserverObservedElements.length = 0;
     mutationObserverCallbacks.length = 0;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: initialWindowInnerWidth,
+    });
+  });
+
+  it("fits width to changing content and caps it at the viewport", async () => {
+    const { container } = render(
+      <DraggableWindow
+        id="notifications"
+        title="Powiadomienia"
+        minWidth={250}
+        minHeight={56}
+        widthMode="fit-content"
+        resizable={false}
+      >
+        <div className="ll:w-max">Treść</div>
+      </DraggableWindow>,
+    );
+    const { windowElement, windowBody, contentElement } = getWindowElements(
+      container,
+      { requireResizeHandle: false },
+    );
+    const contentRoot = contentElement.firstElementChild;
+
+    if (!(contentRoot instanceof HTMLDivElement)) {
+      throw new Error("Expected draggable window content root");
+    }
+
+    Object.defineProperty(windowBody, "offsetWidth", {
+      configurable: true,
+      value: 250,
+    });
+    Object.defineProperty(contentElement, "clientWidth", {
+      configurable: true,
+      value: 240,
+    });
+    Object.defineProperty(contentRoot, "scrollWidth", {
+      configurable: true,
+      value: 320,
+    });
+
+    await triggerResizeObservers();
+    await flushAnimationFrame();
+
+    await waitFor(() => {
+      expect(windowElement.style.width).toBe("330px");
+    });
+
+    Object.defineProperty(contentRoot, "scrollWidth", {
+      configurable: true,
+      value: 180,
+    });
+    await triggerResizeObservers();
+    await flushAnimationFrame();
+
+    await waitFor(() => {
+      expect(windowElement.style.width).toBe("250px");
+    });
+
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 300,
+    });
+    Object.defineProperty(contentRoot, "scrollWidth", {
+      configurable: true,
+      value: 500,
+    });
+    window.dispatchEvent(new Event("resize"));
+    await flushAnimationFrame();
+
+    await waitFor(() => {
+      expect(windowElement.style.width).toBe("300px");
+    });
+    expect(
+      container.querySelector("[data-ll-window-resize-handle]"),
+    ).toBeNull();
   });
 
   it("caps auto height using the provided content limit", async () => {

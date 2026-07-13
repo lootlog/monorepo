@@ -6,6 +6,8 @@ import { Chat } from "@/features/chat/chat";
 import { CommandWindow } from "@/features/command/command";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { MapPingWheel } from "@/features/map-pings/map-ping-wheel";
+import { EventMode } from "@/features/event-mode/event-mode";
+import { useEventModeQuery } from "@/features/event-mode/use-event-mode-query";
 import { Notifications } from "@/features/notifications/notifications";
 import { NpcDetector } from "@/features/npc-detector/npc-detector";
 import { OnlinePlayers } from "@/features/online-players/online-players";
@@ -44,6 +46,7 @@ export const AppContent = () => {
   usePartyReadyRoomObserver();
 
   const { ConflictDialog } = useTimerSettingsSync();
+  const eventModeQuery = useEventModeQuery();
   const gameInitialized = useGlobalStore((state) =>
     Boolean(state.gameState.gameInitialized),
   );
@@ -63,13 +66,16 @@ export const AppContent = () => {
       <OnlinePlayers />
       <NpcDetector />
       <Notifications />
-      <QuickAccess />
+      <QuickAccess
+        hasActiveEventMode={Boolean(eventModeQuery.data?.events.length)}
+      />
       <CatchingWhitelistWarning />
       <BackendPreferencesWarning />
       <Toaster />
       <PartyFinder />
       <CreatePartyGathering />
       <MapPingWheel />
+      <EventMode query={eventModeQuery} />
       {ConflictDialog}
     </>
   );
