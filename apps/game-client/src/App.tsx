@@ -23,7 +23,7 @@ import { SocketProvider } from "@/contexts/socket-context";
 import { ErrorBoundary } from "react-error-boundary";
 import { PartyFinder } from "@/features/party-finder/party-finder";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
-import { usePartyFinderSocket } from "@/features/party-finder/hooks/use-party-finder-socket";
+import { useNotificationVolunteersSocket } from "@/features/party-finder/hooks/use-notification-volunteers-socket";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { bootstrapPublicApi } from "@/features/public-api";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
@@ -31,6 +31,10 @@ import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-bo
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
 import { useMapPings } from "@/features/map-pings/use-map-pings";
+import { usePartyReadyRoomSocket } from "@/features/party-finder/hooks/use-party-ready-room-socket";
+import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-ready-room-sync";
+import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party-ready-room-expiry";
+import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
@@ -51,8 +55,12 @@ function AppContent() {
   const triggerMapPing = useMapPings();
   useHotkeys({ onMapPing: triggerMapPing });
   useTimerSettingsMutationsRegistry();
-  usePartyFinderSocket();
+  useNotificationVolunteersSocket();
   usePartyGatheringSocket();
+  usePartyReadyRoomSocket();
+  usePartyReadyRoomSync();
+  usePartyReadyRoomExpiry();
+  usePartyReadyRoomObserver();
 
   const { ConflictDialog } = useTimerSettingsSync();
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);

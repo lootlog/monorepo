@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type {
@@ -11,9 +11,11 @@ vi.mock("@/hooks/discord/use-member-color", () => ({
   useMemberColor: () => "abcdef",
 }));
 
-vi.mock("@/lib/api/generated/main/messaging/messaging", () => ({
-  useMessagingControllerVolunteer: () => ({
-    mutate: vi.fn(),
+const applyToReadyRoom = vi.fn();
+
+vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+  usePartyReadyRoomControllerApply: () => ({
+    mutate: applyToReadyRoom,
     isPending: false,
   }),
 }));
@@ -139,5 +141,27 @@ describe("PartyGatheringCard", () => {
     expect(npcRow?.className).toContain("ll:overflow-hidden");
     expect(joinButton.className).toContain("ll:box-border");
     expect(joinButton.className).toContain("ll:max-w-full");
+  });
+
+  it("applies to the Ready Room from the explicit join click", () => {
+    render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        member={member}
+        message={makeMessage()}
+      />,
+    );
+
+    expect(applyToReadyRoom).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Join party" }));
+    expect(applyToReadyRoom).toHaveBeenCalledWith(
+      {
+        pathParams: { notificationId: "notification-1" },
+        data: { character: {}, world: "tempest" },
+      },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
   });
 });

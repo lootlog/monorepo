@@ -13,7 +13,7 @@ import {
 } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useRef } from "react";
-import type { PartyGatheringSession } from "@/store/party-finder.store";
+import type { PartyGatheringSession } from "@/types/party-gathering";
 
 type PartyGatheringPayload = PartyGatheringSession & { guildId: string };
 

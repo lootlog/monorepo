@@ -1,132 +1,95 @@
+import type {
+  PartyReadyRoomOrganizerProjection,
+  PartyReadyRoomProjection,
+} from "@lootlog/types";
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-import { storageKey } from "@/lib/storage-key";
-import type { PartyGatheringCharacter } from "@/types/party-gathering";
 
-const STORAGE_KEY = storageKey("ll-party-finder-storage");
-
-type PartyFinderNpc = {
-  id: number;
-  name: string;
-  lvl: number;
-  prof: string;
-  location: string;
-  world: string;
-  icon: string;
-  x?: number;
-  y?: number;
-};
-
-export type Clan = {
-  id?: number;
-  name?: string;
-};
-
-export type PartyFinderVolunteer = {
-  discordId: string;
-  nick: string;
-  lvl: number;
-  prof: string;
-  characterId: string;
-  accountId: string;
-  icon: string;
-  world: string;
-  clan?: Clan;
-};
-
-export type { PartyGatheringCharacter };
-
-export type PartyGatheringSession = {
-  notificationId: string;
-  discordId: string;
-  character: PartyGatheringCharacter;
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
-  world: string;
-  createdAt: string;
-  guildIds?: string[];
-};
-
-interface PartyFinderState {
-  notificationId: string | null;
-  npc: PartyFinderNpc | null;
-  volunteers: PartyFinderVolunteer[];
-  partyGathering: PartyGatheringSession | null;
-  inviteStates: Record<string, "pending" | "failed">;
-  setNotification: (notificationId: string, npc: PartyFinderNpc) => void;
-  addVolunteer: (volunteer: PartyFinderVolunteer) => void;
-  removeVolunteer: (characterId: string) => void;
-  clearPartyFinder: () => void;
-  setPartyGathering: (session: PartyGatheringSession) => void;
-  clearPartyGathering: () => void;
-  setInviteState: (characterId: string, state: "pending" | "failed") => void;
-  clearInviteState: (characterId: string) => void;
+export interface PartyFinderState {
+  projections: Record<string, PartyReadyRoomProjection>;
+  selectedRoomId: string | null;
+  mergeProjection: (projection: PartyReadyRoomProjection) => void;
+  mergeProjections: (projections: PartyReadyRoomProjection[]) => void;
+  removeProjection: (notificationId: string) => void;
+  selectRoom: (notificationId: string | null) => void;
+  clearReadyRooms: () => void;
 }
 
-export const usePartyFinderStore = create<PartyFinderState>()(
-  persist(
-    (set) => ({
-      notificationId: null,
-      npc: null,
-      volunteers: [],
-      partyGathering: null,
-      inviteStates: {},
-      setNotification: (notificationId, npc) =>
-        set({ notificationId, npc, volunteers: [] }),
-      addVolunteer: (volunteer) =>
-        set((state) => {
-          if (
-            state.volunteers.some(
-              (v) => v.characterId === volunteer.characterId,
-            )
-          ) {
-            return state;
-          }
-          return { volunteers: [...state.volunteers, volunteer] };
-        }),
-      removeVolunteer: (characterId) =>
-        set((state) => ({
-          volunteers: state.volunteers.filter(
-            (v) => v.characterId !== characterId,
-          ),
-        })),
-      clearPartyFinder: () =>
-        set({
-          notificationId: null,
-          npc: null,
-          volunteers: [],
-          partyGathering: null,
-          inviteStates: {},
-        }),
-      setPartyGathering: (session) =>
-        set({
-          partyGathering: session,
-          notificationId: session.notificationId,
-          npc: null,
-          volunteers: [],
-          inviteStates: {},
-        }),
-      clearPartyGathering: () => set({ partyGathering: null }),
-      setInviteState: (characterId, state) =>
-        set((s) => ({
-          inviteStates: { ...s.inviteStates, [characterId]: state },
-        })),
-      clearInviteState: (characterId) =>
-        set((s) => {
-          const { [characterId]: _, ...rest } = s.inviteStates;
-          return { inviteStates: rest };
-        }),
+export function selectOwnedReadyRoom(
+  state: PartyFinderState,
+): PartyReadyRoomOrganizerProjection | null {
+  return (
+    Object.values(state.projections).find(
+      (projection): projection is PartyReadyRoomOrganizerProjection =>
+        projection.viewer === "ORGANIZER" && projection.status === "ACTIVE",
+    ) ?? null
+  );
+}
+
+export function selectPendingReadyRoomIds(state: PartyFinderState): string[] {
+  return Object.values(state.projections)
+    .filter(
+      (projection) =>
+        projection.viewer === "PARTICIPANT" &&
+        projection.status === "ACTIVE" &&
+        projection.participant.application === "APPLIED",
+    )
+    .map(({ notificationId }) => notificationId);
+}
+
+export function selectAcceptedReadyRoomId(
+  state: PartyFinderState,
+): string | null {
+  return (
+    Object.values(state.projections).find(
+      (projection) =>
+        projection.viewer === "PARTICIPANT" &&
+        projection.status === "ACTIVE" &&
+        projection.participant.application === "ACCEPTED",
+    )?.notificationId ?? null
+  );
+}
+
+function mergeProjectionIntoState(
+  projections: Record<string, PartyReadyRoomProjection>,
+  projection: PartyReadyRoomProjection,
+): Record<string, PartyReadyRoomProjection> {
+  const current = projections[projection.notificationId];
+  if (current && current.revision >= projection.revision) return projections;
+  return { ...projections, [projection.notificationId]: projection };
+}
+
+export function isReadyRoomExpired(
+  projection: PartyReadyRoomProjection,
+  now = Date.now(),
+): boolean {
+  return (
+    projection.status !== "ACTIVE" || Date.parse(projection.expiresAt) <= now
+  );
+}
+
+export const usePartyFinderStore = create<PartyFinderState>((set) => ({
+  projections: {},
+  selectedRoomId: null,
+  mergeProjection: (projection) =>
+    set((state) => ({
+      projections: mergeProjectionIntoState(state.projections, projection),
+    })),
+  mergeProjections: (incomingProjections) =>
+    set((state) => ({
+      projections: incomingProjections.reduce(
+        mergeProjectionIntoState,
+        state.projections,
+      ),
+    })),
+  removeProjection: (notificationId) =>
+    set((state) => {
+      const { [notificationId]: _removed, ...projections } = state.projections;
+      return {
+        projections,
+        selectedRoomId:
+          state.selectedRoomId === notificationId ? null : state.selectedRoomId,
+      };
     }),
-    {
-      name: STORAGE_KEY,
-      storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({
-        partyGathering: state.partyGathering,
-        notificationId: state.notificationId,
-        npc: state.npc,
-        volunteers: state.volunteers,
-      }),
-    },
-  ),
-);
+  selectRoom: (selectedRoomId) => set({ selectedRoomId }),
+  clearReadyRooms: () => set({ projections: {}, selectedRoomId: null }),
+}));

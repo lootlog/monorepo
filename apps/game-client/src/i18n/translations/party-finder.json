@@ -10,10 +10,59 @@
     "inviteAll": "Zaproś wszystkich",
     "inviting": "Zapraszanie...",
     "ending": "Kończenie...",
-    "endPartyGathering": "Zakończ zbieranie grupy"
+    "endPartyGathering": "Zakończ zbieranie grupy",
+    "closePartyGathering": "Zamknij po zebraniu grupy",
+    "cancelPartyGathering": "Anuluj zbiórkę",
+    "accept": "Akceptuj zgłoszenie",
+    "decline": "Odrzuć zgłoszenie",
+    "remove": "Usuń z Ready Room",
+    "invite": "Zaproś do grupy",
+    "markInvitationSent": "Oznacz zaproszenie jako wysłane",
+    "markInvitationFailed": "Oznacz zaproszenie jako niewysłane",
+    "clearInvitationStatus": "Wyczyść nieznany status zaproszenia",
+    "addFriend": "Dodaj do znajomych",
+    "ready": "Gotowy",
+    "notReady": "Niegotowy",
+    "withdraw": "Wycofaj zgłoszenie",
+    "startReadyCheck": "Rozpocznij sprawdzanie gotowości",
+    "startingReadyCheck": "Uruchamianie..."
   },
   "list": {
     "waiting": "Oczekiwanie na graczy..."
+  },
+  "labels": {
+    "readiness": "Gotowość",
+    "partyPresence": "Obecność w grupie",
+    "applications": "Twoje zgłoszenia"
+  },
+  "states": {
+    "application": {
+      "APPLIED": "oczekuje",
+      "ACCEPTED": "zaakceptowany",
+      "DECLINED": "odrzucony",
+      "WITHDRAWN": "wycofany"
+    },
+    "readiness": {
+      "NOT_REQUESTED": "nie pytano",
+      "PENDING": "oczekuje",
+      "READY": "gotowy",
+      "NOT_READY": "niegotowy"
+    },
+    "partyPresence": {
+      "OUTSIDE": "poza grupą",
+      "IN_PARTY": "w grupie"
+    },
+    "invitation": {
+      "NOT_MARKED": "bez zaproszenia",
+      "COMMAND_RESERVED": "wysyłanie",
+      "SENT": "wysłano",
+      "FAILED": "błąd",
+      "SENT_LOOTLOG": "polecenie zaproszenia wysłane",
+      "SENT_MANUAL": "ręcznie oznaczono jako wysłane",
+      "FAILED_LOOTLOG": "polecenie zaproszenia nie powiodło się",
+      "FAILED_MANUAL": "ręcznie oznaczono jako niewysłane",
+      "UNKNOWN": "status nieznany"
+    }
   },
   "form": {
     "validation": {
