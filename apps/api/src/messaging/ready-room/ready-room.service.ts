@@ -455,7 +455,7 @@ export class ReadyRoomService {
     if (aggregate.organizerDiscordId !== command.organizerDiscordId) {
       throw new ForbiddenException({ code: "FORBIDDEN" });
     }
-    const participant = aggregate.participants[command.participantDiscordId]!;
+    const participant = aggregate.participants[command.participantDiscordId];
     if (
       participant?.invitation.commandId !== command.commandId ||
       participant.application !== "ACCEPTED"
@@ -599,7 +599,10 @@ export class ReadyRoomService {
       | ReconcileReadyRoomInvitationCommand,
     invitation: Omit<PartyReadyRoomParticipant["invitation"], "updatedAt">,
   ): Promise<PartyReadyRoomOrganizerProjection> {
-    const participant = aggregate.participants[command.participantDiscordId]!;
+    const participant = aggregate.participants[command.participantDiscordId];
+    if (!participant) {
+      throw new ConflictException({ code: "STALE_COMMAND" });
+    }
     const updatedAt = new Date(this.clock()).toISOString();
     const nextAggregate: ReadyRoomAggregate = {
       ...aggregate,
