@@ -15,6 +15,9 @@ vi.mock("@/hooks/use-hotkeys", () => ({ useHotkeys }));
 vi.mock("@/features/map-pings/map-ping-wheel", () => ({
   MapPingWheel: () => <div data-testid="map-ping-wheel" />,
 }));
+vi.mock("@/features/event-mode/event-mode", () => ({
+  EventMode: () => <div data-testid="event-mode" />,
+}));
 
 vi.mock("@/store/global.store", () => ({
   useGlobalStore: (
@@ -99,5 +102,6 @@ describe("AppContent map ping integration", () => {
 
     expect(useHotkeys).toHaveBeenCalledWith(mapPingHotkeyHandlers);
     expect(screen.getByTestId("map-ping-wheel")).toBeInTheDocument();
+    expect(screen.getByTestId("event-mode")).toBeInTheDocument();
   });
 });
