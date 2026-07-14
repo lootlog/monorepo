@@ -10,15 +10,19 @@ import { io, type Socket } from "socket.io-client";
 import { getSerializedDevPermissionOverride } from "@/lib/dev-permission-override";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { msgpackParser } from "@lootlog/socket-parser";
-import type {
-  PartyFinderVolunteer,
-  PartyGatheringSession,
-} from "@/store/party-finder.store";
+import type { NotificationVolunteer } from "@/store/notification-volunteers.store";
+import type { PartyGatheringSession } from "@/types/party-gathering";
 import type { MargonemAccountProof } from "@/lib/margonem-account-proof";
 import type {
+  AirTagObservationAck,
+  AirTagObservationBatch,
+  AirTagSubscriptionAck,
+  AirTagSubscriptionPayload,
+  AirTagUpdateEvent,
   MapPingAck,
   MapPingEvent,
   MapPingSendPayload,
+  PartyReadyRoomClientUpdate,
 } from "@lootlog/types";
 
 type ServerToClientEvents = {
@@ -80,7 +84,7 @@ type ServerToClientEvents = {
   }) => void;
   [GatewayEvent.NOTIFICATIONS_VOLUNTEER]: (data: {
     notificationId: string;
-    volunteer: PartyFinderVolunteer;
+    volunteer: NotificationVolunteer;
   }) => void;
   [GatewayEvent.PARTY_GATHERING_SEND]: (
     data: PartyGatheringSession & { guildId: string },
@@ -88,6 +92,9 @@ type ServerToClientEvents = {
   [GatewayEvent.PARTY_GATHERING_CANCEL]: (data: {
     notificationId: string;
   }) => void;
+  [GatewayEvent.PARTY_READY_ROOM_UPDATE]: (
+    data: PartyReadyRoomClientUpdate,
+  ) => void;
   [GatewayEvent.CHAT_MESSAGE_DELETE]: (data: {
     guildId: string;
     messageId: string;
@@ -99,6 +106,7 @@ type ServerToClientEvents = {
   }) => void;
   [GatewayEvent.CHAT_MESSAGES_CLEAR]: (data: { guildId: string }) => void;
   [GatewayEvent.MAP_PING_RECEIVE]: (data: MapPingEvent) => void;
+  [GatewayEvent.AIR_TAG_UPDATE]: (data: AirTagUpdateEvent) => void;
 };
 
 type ClientToServerEvents = {
@@ -134,6 +142,14 @@ type ClientToServerEvents = {
   [GatewayEvent.MAP_PING_SEND]: (
     data: MapPingSendPayload,
     acknowledgement: (response: MapPingAck) => void,
+  ) => void;
+  [GatewayEvent.AIR_TAG_SUBSCRIPTION]: (
+    data: AirTagSubscriptionPayload,
+    acknowledgement: (response: AirTagSubscriptionAck) => void,
+  ) => void;
+  [GatewayEvent.AIR_TAG_OBSERVATION]: (
+    data: AirTagObservationBatch,
+    acknowledgement: (response: AirTagObservationAck) => void,
   ) => void;
 };
 

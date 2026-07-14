@@ -36,6 +36,22 @@ describe("getCreatePartyGatheringErrorMessage", () => {
     ).toBe("Opis jest za długi");
   });
 
+  it("explains an existing organizer room", () => {
+    expect(
+      getCreatePartyGatheringErrorMessage(
+        createApiError(409, { code: "ACTIVE_GATHERING_EXISTS" }),
+      ),
+    ).toBe("Masz już aktywną zbiórkę grupy");
+  });
+
+  it("explains a character occupied by another room", () => {
+    expect(
+      getCreatePartyGatheringErrorMessage(
+        createApiError(409, { code: "ALREADY_JOINED_ELSEWHERE" }),
+      ),
+    ).toBe("Ta postać jest już w innym Ready Roomie");
+  });
+
   it("falls back to the default message for non-API errors", () => {
     expect(getCreatePartyGatheringErrorMessage(new Error("boom"))).toBe(
       "Nie udało się utworzyć ogłoszenia",

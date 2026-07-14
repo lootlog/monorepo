@@ -1,10 +1,12 @@
-import type { MapPingEvent } from "@lootlog/types";
+import type { MapPingEvent, MapPingType } from "@lootlog/types";
+import {
+  getMapPingPresentation,
+  type MapPingSymbol,
+} from "./map-ping-presentation";
 
-export const MAP_PING_DURATION_MS = 2_500;
 const MAIN_MAP_CANVAS_ID = "GAME_CANVAS";
 const HANDHELD_MINI_MAP_CANVAS_CLASS = "handheld-mini-map-canvas";
 const DEFAULT_TILE_SIZE = 32;
-const PING_COLOR = "#f59e0b";
 const MAX_NETWORK_COORDINATE = 65_535;
 
 export type MapTile = { x: number; y: number };
@@ -59,6 +61,8 @@ type ActiveMapPing = {
   y: number;
   senderName: string;
   startedAt: number;
+  type: MapPingType;
+  typeLabel: string;
 };
 
 type MainMapGeometry = {
@@ -197,7 +201,13 @@ export class MapPingController {
     this.clear();
   }
 
-  addOptimistic(tile: MapTile, mapId: number, senderName: string) {
+  addOptimistic(
+    tile: MapTile,
+    mapId: number,
+    senderName: string,
+    type: MapPingType,
+    typeLabel: string,
+  ) {
     const id = `local-${crypto.randomUUID()}`;
     this.activePings.set(id, {
       id,
@@ -206,11 +216,13 @@ export class MapPingController {
       y: tile.y,
       senderName,
       startedAt: this.now(),
+      type,
+      typeLabel,
     });
     return id;
   }
 
-  addRemote(event: MapPingEvent) {
+  addRemote(event: MapPingEvent, typeLabel: string) {
     if (this.activePings.has(event.pingId)) {
       return false;
     }
@@ -222,6 +234,8 @@ export class MapPingController {
       y: event.y,
       senderName: event.sender.name,
       startedAt: this.now(),
+      type: event.type,
+      typeLabel,
     });
     return true;
   }
@@ -349,30 +363,88 @@ export class MapPingController {
     showSender: boolean,
   ) {
     const elapsed = this.now() - ping.startedAt;
-    const progress = Math.min(1, elapsed / MAP_PING_DURATION_MS);
+    const presentation = getMapPingPresentation(ping.type);
+    const progress = Math.min(1, elapsed / presentation.durationMs);
     const pulse = 1 + Math.sin(elapsed / 120) * 0.18;
 
     context.save();
     context.globalAlpha = 1 - progress;
-    context.strokeStyle = PING_COLOR;
-    context.fillStyle = PING_COLOR;
+    context.strokeStyle = presentation.color;
+    context.fillStyle = presentation.color;
     context.lineWidth = 2;
     context.beginPath();
     context.arc(x, y, baseRadius * pulse, 0, Math.PI * 2);
     context.stroke();
-    context.beginPath();
-    context.arc(x, y, 3, 0, Math.PI * 2);
-    context.fill();
+    this.drawSymbol(
+      context,
+      presentation.symbol,
+      x,
+      y,
+      Math.max(4, baseRadius * 0.55),
+    );
 
     if (showSender) {
-      context.font = "bold 11px Arial";
       context.textAlign = "center";
       context.textBaseline = "bottom";
       context.lineWidth = 3;
       context.strokeStyle = "rgba(0, 0, 0, 0.85)";
-      context.strokeText(ping.senderName, x, y - baseRadius - 5);
-      context.fillStyle = "#fff7d6";
-      context.fillText(ping.senderName, x, y - baseRadius - 5);
+      context.font = "bold 10px Arial";
+      context.strokeText(ping.typeLabel, x, y - baseRadius - 17);
+      context.fillStyle = presentation.color;
+      context.fillText(ping.typeLabel, x, y - baseRadius - 17);
+      context.font = "bold 11px Arial";
+      context.strokeText(ping.senderName, x, y - baseRadius - 4);
+      context.fillStyle = "#ffffff";
+      context.fillText(ping.senderName, x, y - baseRadius - 4);
+    }
+
+    context.restore();
+  }
+
+  private drawSymbol(
+    context: CanvasRenderingContext2D,
+    symbol: MapPingSymbol,
+    x: number,
+    y: number,
+    size: number,
+  ) {
+    context.save();
+    context.strokeStyle = "#ffffff";
+    context.fillStyle = "#ffffff";
+    context.lineCap = "round";
+    context.lineWidth = Math.max(1.5, size * 0.22);
+
+    if (symbol === "exclamation") {
+      context.font = `bold ${Math.max(10, size * 2)}px Arial`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText("!", x, y + 1);
+    } else if (symbol === "crosshair") {
+      const radius = size * 0.62;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.moveTo(x - size, y);
+      context.lineTo(x - radius * 0.45, y);
+      context.moveTo(x + radius * 0.45, y);
+      context.lineTo(x + size, y);
+      context.moveTo(x, y - size);
+      context.lineTo(x, y - radius * 0.45);
+      context.moveTo(x, y + radius * 0.45);
+      context.lineTo(x, y + size);
+      context.stroke();
+    } else if (symbol === "regroup") {
+      context.beginPath();
+      context.arc(x, y, size * 0.72, 0, Math.PI * 2);
+      context.arc(x, y, size * 0.3, 0, Math.PI * 2);
+      context.stroke();
+    } else {
+      const extent = size * 0.72;
+      context.beginPath();
+      context.moveTo(x - extent, y - extent);
+      context.lineTo(x + extent, y + extent);
+      context.moveTo(x + extent, y - extent);
+      context.lineTo(x - extent, y + extent);
+      context.stroke();
     }
 
     context.restore();
@@ -381,7 +453,8 @@ export class MapPingController {
   private pruneExpired() {
     const now = this.now();
     for (const [id, ping] of this.activePings) {
-      if (now - ping.startedAt >= MAP_PING_DURATION_MS) {
+      const durationMs = getMapPingPresentation(ping.type).durationMs;
+      if (now - ping.startedAt >= durationMs) {
         this.activePings.delete(id);
       }
     }

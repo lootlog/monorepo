@@ -3,6 +3,7 @@ import { Platform } from "src/gateway/enums/platform.enum";
 import type { GuildRole, UserGuildData } from "src/guilds/types/guild.types";
 import {
   buildRoomName,
+  buildUserGuildRoomName,
   calculateUserRooms,
   getNpcTier,
   hasFeatureRoomAccess,
@@ -143,6 +144,28 @@ describe("room-utils", () => {
   });
 
   describe("calculateUserRooms", () => {
+    it("adds a private user-and-guild room that another user cannot share", () => {
+      const guilds = [createGuildData("user-1", [], "guild-1")];
+
+      const firstUserRooms = calculateUserRooms(
+        guilds,
+        "user-1",
+        Platform.GAME,
+      ).rooms;
+      const secondUserRooms = calculateUserRooms(
+        guilds,
+        "user-2",
+        Platform.GAME,
+      ).rooms;
+
+      expect(firstUserRooms).toContain(
+        buildUserGuildRoomName("user-1", "guild-1"),
+      );
+      expect(secondUserRooms).not.toContain(
+        buildUserGuildRoomName("user-1", "guild-1"),
+      );
+    });
+
     it("returns union of feature rooms across multiple roles for a game user", () => {
       const discordId = "user-1";
       const guilds = [

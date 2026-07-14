@@ -1,11 +1,16 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
 import { QuickAccess } from "./quick-access";
 
 vi.mock("@/features/quick-access/components/quick-access-button", () => ({
-  QuickAccessButton: ({ title }: { title: string }) => (
-    <button type="button">{title}</button>
+  QuickAccessButton: ({ id, title }: { id: string; title: string }) => (
+    <button
+      onClick={() => useWindowsStore.getState().toggleOpen(id as "event-mode")}
+      type="button"
+    >
+      {title}
+    </button>
   ),
 }));
 
@@ -27,10 +32,11 @@ describe("QuickAccess", () => {
   });
 
   it("renders when quick access is open", () => {
-    render(<QuickAccess />);
+    render(<QuickAccess hasActiveEventMode={false} />);
 
     expect(screen.getByText("Lootlog")).toBeInTheDocument();
     expect(screen.getByText("Timery")).toBeInTheDocument();
+    expect(document.querySelector("[data-ll-window-resize-handle]")).toBeNull();
   });
 
   it("does not render when quick access is closed", () => {
@@ -42,8 +48,20 @@ describe("QuickAccess", () => {
       },
     }));
 
-    render(<QuickAccess />);
+    render(<QuickAccess hasActiveEventMode={false} />);
 
     expect(screen.queryByText("Lootlog")).not.toBeInTheDocument();
+  });
+
+  it("shows Event Mode only for an active event and reopens its window", () => {
+    useWindowsStore.getState().setOpen("event-mode", false);
+    const { rerender } = render(<QuickAccess hasActiveEventMode={false} />);
+
+    expect(screen.queryByText("Tryb wydarzenia")).not.toBeInTheDocument();
+
+    rerender(<QuickAccess hasActiveEventMode />);
+    fireEvent.click(screen.getByRole("button", { name: "Tryb wydarzenia" }));
+
+    expect(useWindowsStore.getState()["event-mode"].open).toBe(true);
   });
 });

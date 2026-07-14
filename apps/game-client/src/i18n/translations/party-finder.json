@@ -8,12 +8,21 @@
   },
   "actions": {
     "inviteAll": "Zaproś wszystkich",
-    "inviting": "Zapraszanie...",
     "ending": "Kończenie...",
-    "endPartyGathering": "Zakończ zbieranie grupy"
+    "cancelPartyGathering": "Anuluj zbiórkę",
+    "remove": "Usuń z Ready Room",
+    "invite": "Zaproś do grupy",
+    "addFriend": "Dodaj do znajomych",
+    "withdraw": "Wycofaj zgłoszenie"
   },
   "list": {
     "waiting": "Oczekiwanie na graczy..."
+  },
+  "states": {
+    "partyPresence": {
+      "OUTSIDE": "poza grupą",
+      "IN_PARTY": "w grupie"
+    }
   },
   "form": {
     "validation": {
@@ -31,7 +40,9 @@
     "defaultCreate": "Nie udało się utworzyć ogłoszenia",
     "forbidden": "Brak uprawnień do wysyłania ogłoszeń",
     "tooManyRequests": "Zbyt wiele prób. Spróbuj za chwilę.",
-    "invalidData": "Nieprawidłowe dane"
+    "invalidData": "Nieprawidłowe dane",
+    "activeGatheringExists": "Masz już aktywną zbiórkę grupy",
+    "characterAlreadyInReadyRoom": "Ta postać jest już w innym Ready Roomie"
   },
   "messages": {
     "cancelSuccess": "Zbieranie grupy zakończone",

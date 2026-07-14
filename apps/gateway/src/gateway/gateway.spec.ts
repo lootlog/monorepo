@@ -34,6 +34,11 @@ describe("Gateway", () => {
     send: vi.fn(),
   };
 
+  const mockAirTagService = {
+    updateSubscription: vi.fn(),
+    publishObservations: vi.fn(),
+  };
+
   const mockServer = {};
 
   let gateway: Gateway;
@@ -45,6 +50,7 @@ describe("Gateway", () => {
       mockSubscriptionService as never,
       mockGatewayAuthService as never,
       mockMapPingService as never,
+      mockAirTagService as never,
     );
     gateway.server = mockServer as never;
   });

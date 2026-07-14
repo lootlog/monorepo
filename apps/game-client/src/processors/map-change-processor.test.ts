@@ -5,11 +5,26 @@ import { MapChangeProcessor } from "./map-change-processor";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
 const mockEmit = vi.fn();
+const cancelMapPingInteraction = vi.hoisted(() => vi.fn());
+const clearMapPings = vi.hoisted(() => vi.fn());
+const handleAirTagMapChange = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/socket", () => ({
   getSocket: () => ({
     emit: mockEmit,
   }),
+}));
+
+vi.mock("@/features/map-pings/map-ping-controller", () => ({
+  mapPingController: { clear: clearMapPings },
+}));
+
+vi.mock("@/features/map-pings/map-ping-interaction-controller", () => ({
+  mapPingInteractionController: { cancel: cancelMapPingInteraction },
+}));
+
+vi.mock("@/features/air-tags/air-tag-runtime", () => ({
+  airTagRuntime: { handleMapChange: handleAirTagMapChange },
 }));
 
 const createMapChangeEvent = (id: number, name: string): GameEvent =>
@@ -39,6 +54,7 @@ describe("MapChangeProcessor", () => {
     processor.handle({});
 
     expect(mockEmit).not.toHaveBeenCalled();
+    expect(handleAirTagMapChange).not.toHaveBeenCalled();
   });
 
   it("ignores map changes when socket is not ready", () => {
@@ -55,6 +71,8 @@ describe("MapChangeProcessor", () => {
     processor.handle(createMapChangeEvent(13, "Nithal"));
 
     expect(mockEmit).not.toHaveBeenCalled();
+    expect(handleAirTagMapChange).toHaveBeenNthCalledWith(1, 12, "Torneg");
+    expect(handleAirTagMapChange).toHaveBeenNthCalledWith(2, 13, "Nithal");
   });
 
   it("emits player presence update for the first distinct map", () => {
@@ -72,6 +90,10 @@ describe("MapChangeProcessor", () => {
       mapId: 12,
       mapName: "Torneg",
     });
+    expect(handleAirTagMapChange).toHaveBeenCalledWith(12, "Torneg");
+    expect(mockEmit.mock.invocationCallOrder[0]).toBeLessThan(
+      handleAirTagMapChange.mock.invocationCallOrder[0],
+    );
   });
 
   it("does not emit for repeated map ids", () => {
@@ -87,6 +109,9 @@ describe("MapChangeProcessor", () => {
     processor.handle(createMapChangeEvent(12, "Torneg"));
 
     expect(mockEmit).toHaveBeenCalledTimes(1);
+    expect(cancelMapPingInteraction).toHaveBeenCalledTimes(1);
+    expect(clearMapPings).toHaveBeenCalledTimes(1);
+    expect(handleAirTagMapChange).toHaveBeenCalledTimes(1);
   });
 
   it("emits again when map id changes", () => {
@@ -109,5 +134,8 @@ describe("MapChangeProcessor", () => {
         mapName: "Nithal",
       },
     );
+    expect(cancelMapPingInteraction).toHaveBeenCalledTimes(2);
+    expect(clearMapPings).toHaveBeenCalledTimes(2);
+    expect(handleAirTagMapChange).toHaveBeenNthCalledWith(2, 13, "Nithal");
   });
 });

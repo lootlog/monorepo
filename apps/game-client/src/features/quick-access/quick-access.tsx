@@ -8,6 +8,7 @@ import { GuildListPopover } from "@/features/quick-access/components/guild-list-
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
+  CalendarClock,
   MessagesSquare,
   Settings,
   Swords,
@@ -17,9 +18,17 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export const QuickAccess = () => {
+interface QuickAccessProps {
+  hasActiveEventMode: boolean;
+}
+
+export const QuickAccess = ({ hasActiveEventMode }: QuickAccessProps) => {
   const { t } = useTranslation("quickAccess");
-  const partyGathering = usePartyFinderStore((s) => s.partyGathering);
+  const hasActiveReadyRoom = usePartyFinderStore((state) =>
+    Object.values(state.projections).some(
+      (projection) => projection.status === "ACTIVE",
+    ),
+  );
   const open = useWindowsStore((state) => state["quick-access"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const buttons: QuickAccessButtonProps[] = [
@@ -62,17 +71,26 @@ export const QuickAccess = () => {
         title={t("window.title")}
         minHeight={56}
         minWidth={250}
+        widthMode="fit-content"
+        resizable={false}
         onClose={() => setOpen("quick-access", false)}
         closable={false}
       >
-        <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
-          {partyGathering && (
+        <div className="ll:flex ll:w-max ll:gap-1 ll:px-1 ll:py-1">
+          {hasActiveEventMode ? (
+            <QuickAccessButton
+              id="event-mode"
+              title={t("buttons.eventMode")}
+              icon=<CalendarClock size="16" className="ll:text-amber-400" />
+            />
+          ) : null}
+          {hasActiveReadyRoom ? (
             <QuickAccessButton
               id="party-finder"
               title={t("buttons.activePartyGathering")}
               icon=<Swords size="16" className="ll:text-green-500" />
             />
-          )}
+          ) : null}
           {buttons.map((button) => (
             <QuickAccessButton
               key={button.id}

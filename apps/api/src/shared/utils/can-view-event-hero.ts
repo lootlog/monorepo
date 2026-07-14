@@ -5,6 +5,8 @@ interface EventHeroWithLevel {
   npcLvl: number | null;
 }
 
+type EventHeroVisibilityRole = Pick<Role, "lvlRangeFrom" | "lvlRangeTo">;
+
 /**
  * Check if a user can view an event hero based on level restrictions.
  *
@@ -15,7 +17,7 @@ interface EventHeroWithLevel {
  */
 function canViewEventHero(
   hero: EventHeroWithLevel,
-  roles: Role[],
+  roles: EventHeroVisibilityRole[],
   permissions: Permission[],
 ): boolean {
   if (PermissionResolver.isAdministrative(permissions)) {
@@ -40,7 +42,7 @@ function canViewEventHero(
  */
 export function filterHeroesByLevel<T extends EventHeroWithLevel>(
   heroes: T[],
-  roles: Role[],
+  roles: EventHeroVisibilityRole[],
   permissions: Permission[],
 ): T[] {
   return heroes.filter((hero) => canViewEventHero(hero, roles, permissions));

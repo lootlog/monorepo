@@ -75,3 +75,6 @@ tools/k6/.secrets.local
 .codex
 playground
 playground/**
+
+# Local planning documents
+/docs/

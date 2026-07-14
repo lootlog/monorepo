@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import type {
-  MapPingAck,
-  MapPingEvent,
-  MapPingSendPayload,
+import {
+  isMapPingType,
+  type MapPingAck,
+  type MapPingEvent,
+  type MapPingSendPayload,
 } from "@lootlog/types";
 import type { Server } from "socket.io";
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
@@ -51,7 +52,7 @@ export class MapPingService {
     client: Socket,
     payload: MapPingSendPayload,
   ): Promise<MapPingAck> {
-    if (!this.hasValidCoordinates(payload)) {
+    if (!this.hasValidPayload(payload)) {
       return { status: "rejected", code: "invalid-payload" };
     }
 
@@ -92,6 +93,7 @@ export class MapPingService {
       pingId,
       world: context.world,
       mapId: context.mapId,
+      type: payload.type,
       x: payload.x,
       y: payload.y,
       sender: {
@@ -138,10 +140,15 @@ export class MapPingService {
     };
   }
 
-  private hasValidCoordinates({ x, y }: MapPingSendPayload) {
-    return [x, y].every(
-      (coordinate) =>
-        Number.isInteger(coordinate) && coordinate >= 0 && coordinate <= 65_535,
+  private hasValidPayload({ type, x, y }: MapPingSendPayload) {
+    return (
+      isMapPingType(type) &&
+      [x, y].every(
+        (coordinate) =>
+          Number.isInteger(coordinate) &&
+          coordinate >= 0 &&
+          coordinate <= 65_535,
+      )
     );
   }
 

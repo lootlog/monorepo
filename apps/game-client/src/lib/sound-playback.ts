@@ -6,6 +6,11 @@ import type { UserSoundSettings } from "@lootlog/types";
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
 type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
 
+export type SoundPlaybackProfile = {
+  playbackRate?: number;
+  preservesPitch?: boolean;
+};
+
 let currentAudio: HTMLAudioElement | null = null;
 const SOUND_SETTINGS_QUERY_KEY =
   getSoundSettingsControllerGetSettingsQueryKey();
@@ -26,7 +31,11 @@ function getSettings(): UserSoundSettings | undefined {
   return undefined;
 }
 
-export function playSound(category: SoundCategory, key: string): void {
+export function playSound(
+  category: SoundCategory,
+  key: string,
+  profile: SoundPlaybackProfile = {},
+): void {
   const settings = getSettings();
   if (!settings) return;
 
@@ -53,6 +62,12 @@ export function playSound(category: SoundCategory, key: string): void {
 
   const audio = new Audio(soundUrl);
   audio.volume = categoryVolume * masterVolume;
+  if (profile.playbackRate !== undefined) {
+    audio.playbackRate = profile.playbackRate;
+  }
+  if (profile.preservesPitch !== undefined) {
+    audio.preservesPitch = profile.preservesPitch;
+  }
   currentAudio = audio;
 
   audio.play().catch(() => {});

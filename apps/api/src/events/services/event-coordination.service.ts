@@ -3,9 +3,12 @@ import { CoverageGapType } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import { TimersService } from "src/timers/timers.service";
 import { buildTimerKey } from "src/timers/utils/timer-key";
+import {
+  getEventRespawnWindowStatus,
+  type EventRespawnWindowStatus,
+} from "../utils/event-respawn-window.util";
 
 type CoordinationPriority = "CRITICAL" | "WARNING" | "OK" | "IDLE";
-type WindowStatus = "OPEN" | "WAITING" | "OVERDUE" | "NONE";
 type RecommendedAction =
   | "CLOSE_WINDOW"
   | "ASSIGN_MAPS"
@@ -56,7 +59,7 @@ const PRIORITY_RANK: Record<CoordinationPriority, number> = {
   IDLE: 3,
 };
 
-const WINDOW_STATUS_RANK: Record<WindowStatus, number> = {
+const WINDOW_STATUS_RANK: Record<EventRespawnWindowStatus, number> = {
   OPEN: 0,
   OVERDUE: 1,
   WAITING: 2,
@@ -141,7 +144,7 @@ export class EventCoordinationService {
     const heroes = event.heroNpcs
       .map((hero) => {
         const timer = findHeroTimer(hero, timersByKey, timersByNpcName);
-        const status = getWindowStatus(timer, now);
+        const status = getEventRespawnWindowStatus(timer, now);
         const heroActiveGaps = activeGapsByHeroId.get(hero.id) ?? [];
         const activeGapMapIds = new Set(heroActiveGaps.map((gap) => gap.mapId));
         const uncoveredGapMapIds = new Set(
@@ -285,27 +288,8 @@ function extractNpcName(npc: unknown): string {
   return typeof name === "string" ? name : "";
 }
 
-function getWindowStatus(
-  timer: EventTimerForCoordination | null,
-  now: Date,
-): WindowStatus {
-  if (!timer) {
-    return "NONE";
-  }
-
-  if (now >= timer.maxSpawnTime) {
-    return "OVERDUE";
-  }
-
-  if (now >= timer.minSpawnTime) {
-    return "OPEN";
-  }
-
-  return "WAITING";
-}
-
 function getPriority(
-  status: WindowStatus,
+  status: EventRespawnWindowStatus,
   coverage: {
     activeGapCount: number;
     unassignedMaps: number;
@@ -337,7 +321,7 @@ function getPriority(
 }
 
 function getRecommendedAction(
-  status: WindowStatus,
+  status: EventRespawnWindowStatus,
   coverage: {
     unassignedMaps: number;
     uncoveredMaps: number;
@@ -385,12 +369,12 @@ function compareActiveGaps(
 function compareCoordinationHeroes(
   first: {
     priority: CoordinationPriority;
-    timer: { status: WindowStatus; minSpawnTime: Date } | null;
+    timer: { status: EventRespawnWindowStatus; minSpawnTime: Date } | null;
     npcName: string;
   },
   second: {
     priority: CoordinationPriority;
-    timer: { status: WindowStatus; minSpawnTime: Date } | null;
+    timer: { status: EventRespawnWindowStatus; minSpawnTime: Date } | null;
     npcName: string;
   },
 ) {
@@ -422,7 +406,7 @@ function compareCoordinationHeroes(
 
 function getCoordinationSortRank(
   priority: CoordinationPriority,
-  status: WindowStatus,
+  status: EventRespawnWindowStatus,
 ) {
   if (priority === "CRITICAL") {
     return 0;
