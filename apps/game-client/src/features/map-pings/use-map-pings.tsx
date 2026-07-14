@@ -7,7 +7,11 @@ import { playSound } from "@/lib/sound-playback";
 import { useGlobalStore } from "@/store/global.store";
 import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
 import type { UserGameAccountPreferencesResponseDtoOutput } from "@/lib/api/generated/main/model";
-import type { MapPingAck, MapPingEvent } from "@lootlog/types";
+import {
+  isMapPingType,
+  type MapPingAck,
+  type MapPingEvent,
+} from "@lootlog/types";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -15,6 +19,13 @@ import {
   mapPingController,
   type MapTile,
 } from "./map-ping-controller";
+import {
+  createMapPingPressIdentity,
+  mapPingInteractionController,
+  type ClientPoint,
+  type MapPingSubmission,
+} from "./map-ping-interaction-controller";
+import { getMapPingPresentation } from "./map-ping-presentation";
 
 const ACK_TIMEOUT_MS = 1_500;
 const HINT_THROTTLE_MS = 2_000;
@@ -24,6 +35,11 @@ type PointerPosition = {
   canvas: HTMLCanvasElement;
   clientX: number;
   clientY: number;
+};
+
+type ResolvedTrigger = {
+  origin: ClientPoint;
+  tile: MapTile;
 };
 
 const areMapPingsEnabled = () => {
@@ -79,6 +95,10 @@ export const useMapPings = () => {
     }
 
     const handleMouseMove = (event: MouseEvent) => {
+      mapPingInteractionController.updatePointer({
+        x: event.clientX,
+        y: event.clientY,
+      });
       if (!isMapPingSurface(event.target)) {
         pointerRef.current = null;
         return;
@@ -96,20 +116,20 @@ export const useMapPings = () => {
   }, [isNewInterface]);
 
   useEffect(() => {
-    if (enabled) {
+    if (enabled && connected && joined) {
       return;
     }
 
+    mapPingInteractionController.cancel();
     mapPingController.clear();
-  }, [enabled]);
+  }, [connected, enabled, joined]);
 
-  useEffect(() => {
-    if (connected) {
-      return;
-    }
-
-    mapPingController.clear();
-  }, [connected]);
+  useEffect(
+    () => () => {
+      mapPingInteractionController.cancel();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!socket || !isNewInterface) {
@@ -119,6 +139,7 @@ export const useMapPings = () => {
     const handleMapPing = (event: MapPingEvent) => {
       const tile = { x: event.x, y: event.y };
       if (
+        !isMapPingType(event.type) ||
         !areMapPingsEnabled() ||
         event.world !== Game.getWorldName() ||
         event.mapId !== Game.map.id ||
@@ -127,8 +148,11 @@ export const useMapPings = () => {
         return;
       }
 
-      if (mapPingController.addRemote(event)) {
-        playSound("pings", "mapPing");
+      const presentation = getMapPingPresentation(event.type);
+      const typeLabel = t(presentation.translationKey);
+      if (mapPingController.addRemote(event, typeLabel)) {
+        const { key, ...soundProfile } = presentation.sound;
+        playSound("pings", key, soundProfile);
       }
     };
 
@@ -136,7 +160,7 @@ export const useMapPings = () => {
     return () => {
       socket.off(GatewayEvent.MAP_PING_RECEIVE, handleMapPing);
     };
-  }, [enabled, isNewInterface, socket]);
+  }, [enabled, isNewInterface, socket, t]);
 
   const showHint = (
     acknowledgement: Extract<MapPingAck, { status: "rejected" }>,
@@ -166,19 +190,22 @@ export const useMapPings = () => {
     window.message?.(message);
   };
 
-  const resolveTriggerTile = (
+  const resolveTrigger = (
     event: KeyboardEvent | MouseEvent,
-  ): MapTile | null => {
+  ): ResolvedTrigger | null => {
     if (event instanceof MouseEvent) {
       if (!isMapPingSurface(event.target)) {
         return null;
       }
 
-      return mapPingController.resolveTile(
+      const tile = mapPingController.resolveTile(
         event.target,
         event.clientX,
         event.clientY,
       );
+      return tile
+        ? { origin: { x: event.clientX, y: event.clientY }, tile }
+        : null;
     }
 
     const pointer = pointerRef.current;
@@ -186,14 +213,64 @@ export const useMapPings = () => {
       return null;
     }
 
-    return mapPingController.resolveTile(
+    const tile = mapPingController.resolveTile(
       pointer.canvas,
       pointer.clientX,
       pointer.clientY,
     );
+    return tile
+      ? {
+          origin: { x: pointer.clientX, y: pointer.clientY },
+          tile,
+        }
+      : null;
   };
 
-  return (event: KeyboardEvent | MouseEvent) => {
+  const sendMapPing = (submission: MapPingSubmission) => {
+    if (
+      !socket ||
+      !connected ||
+      !joined ||
+      !areMapPingsEnabled() ||
+      Game.map.id !== submission.mapId ||
+      !mapPingController.isTileValid(submission.tile)
+    ) {
+      return;
+    }
+
+    const presentation = getMapPingPresentation(submission.type);
+    const typeLabel = t(presentation.translationKey);
+    const localPingId = mapPingController.addOptimistic(
+      submission.tile,
+      submission.mapId,
+      Game.hero.nick,
+      submission.type,
+      typeLabel,
+    );
+    const { key, ...soundProfile } = presentation.sound;
+    playSound("pings", key, soundProfile);
+    socket.timeout(ACK_TIMEOUT_MS).emit(
+      GatewayEvent.MAP_PING_SEND,
+      {
+        expectedMapId: submission.mapId,
+        type: submission.type,
+        x: submission.tile.x,
+        y: submission.tile.y,
+      },
+      (error: Error | null, acknowledgement?: MapPingAck) => {
+        if (error || !acknowledgement) {
+          return;
+        }
+
+        if (acknowledgement.status === "rejected") {
+          mapPingController.remove(localPingId);
+          showHint(acknowledgement);
+        }
+      },
+    );
+  };
+
+  const onMapPingStart = (event: KeyboardEvent | MouseEvent) => {
     if (
       !isNewInterface ||
       !areMapPingsEnabled() ||
@@ -204,35 +281,36 @@ export const useMapPings = () => {
       return false;
     }
 
-    const tile = resolveTriggerTile(event);
+    const trigger = resolveTrigger(event);
     const mapId = Game.map.id;
-    if (!tile || !Number.isInteger(mapId)) {
+    if (!trigger || !Number.isInteger(mapId)) {
       return false;
     }
 
-    const localPingId = mapPingController.addOptimistic(
-      tile,
+    return mapPingInteractionController.begin({
+      identity: createMapPingPressIdentity(event),
       mapId,
-      Game.hero.nick,
+      origin: trigger.origin,
+      tile: trigger.tile,
+    });
+  };
+
+  const onMapPingEnd = (event: KeyboardEvent | MouseEvent) => {
+    const submission = mapPingInteractionController.complete(
+      createMapPingPressIdentity(event),
     );
-    playSound("pings", "mapPing");
-    socket
-      .timeout(ACK_TIMEOUT_MS)
-      .emit(
-        GatewayEvent.MAP_PING_SEND,
-        { expectedMapId: mapId, x: tile.x, y: tile.y },
-        (error: Error | null, acknowledgement?: MapPingAck) => {
-          if (error || !acknowledgement) {
-            return;
-          }
+    if (submission) {
+      sendMapPing(submission);
+    }
+  };
 
-          if (acknowledgement.status === "rejected") {
-            mapPingController.remove(localPingId);
-            showHint(acknowledgement);
-          }
-        },
-      );
+  const onMapPingCancel = () => {
+    mapPingInteractionController.cancel();
+  };
 
-    return true;
+  return {
+    onMapPingCancel,
+    onMapPingEnd,
+    onMapPingStart,
   };
 };

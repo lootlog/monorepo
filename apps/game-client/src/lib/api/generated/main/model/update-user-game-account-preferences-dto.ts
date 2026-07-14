@@ -5,6 +5,7 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { UpdateUserGameAccountPreferencesDtoAirTags } from './update-user-game-account-preferences-dto-air-tags.js';
 import type { UpdateUserGameAccountPreferencesDtoDetector } from './update-user-game-account-preferences-dto-detector.js';
 import type { UpdateUserGameAccountPreferencesDtoNotifications } from './update-user-game-account-preferences-dto-notifications.js';
 import type { UpdateUserGameAccountPreferencesDtoPings } from './update-user-game-account-preferences-dto-pings.js';
@@ -13,4 +14,5 @@ export interface UpdateUserGameAccountPreferencesDto {
   notifications?: UpdateUserGameAccountPreferencesDtoNotifications;
   detector?: UpdateUserGameAccountPreferencesDtoDetector;
   pings?: UpdateUserGameAccountPreferencesDtoPings;
+  airTags?: UpdateUserGameAccountPreferencesDtoAirTags;
 }

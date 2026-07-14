@@ -8,6 +8,8 @@ const audioInstances: AudioMock[] = [];
 
 class AudioMock {
   volume = 1;
+  playbackRate = 1;
+  preservesPitch = true;
   onended: (() => void) | null = null;
   readonly pause = vi.fn();
   readonly play = vi.fn<() => Promise<void>>().mockResolvedValue();
@@ -66,5 +68,20 @@ describe("playSound", () => {
     playSound("pings", "mapPing");
 
     expect(audioInstances).toHaveLength(0);
+  });
+
+  it("applies a contextual ping playback profile", () => {
+    queryClient.setQueryData(
+      getSoundSettingsControllerGetSettingsQueryKey(),
+      createSoundSettings(),
+    );
+
+    playSound("pings", "mapPing", {
+      playbackRate: 1.35,
+      preservesPitch: false,
+    });
+
+    expect(audioInstances[0]?.playbackRate).toBe(1.35);
+    expect(audioInstances[0]?.preservesPitch).toBe(false);
   });
 });

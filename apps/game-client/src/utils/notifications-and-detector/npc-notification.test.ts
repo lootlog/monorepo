@@ -102,6 +102,26 @@ describe("npc notification helpers", () => {
     });
   });
 
+  it("includes the current character in party gathering notifications", () => {
+    expect(
+      buildNpcNotificationPayload({
+        npc,
+        guildIds: ["guild-1"],
+        isGatheringParty: true,
+      }),
+    ).toMatchObject({
+      isGatheringParty: true,
+      character: {
+        accountId: "202",
+        characterId: "101",
+        icon: "hero.gif",
+        lvl: 230,
+        nick: "Tester",
+        prof: "w",
+      },
+    });
+  });
+
   it("builds chat payloads with current character data", () => {
     expect(
       buildNpcChatMessagePayload({

@@ -60,6 +60,14 @@ export type SocketUser = {
   guilds?: UserGuildData[];
   playerPresence?: PlayerPresence;
   margonemAccountVerified?: boolean;
+  airTagScopes?: AirTagSocketScope[];
+};
+
+export type AirTagSocketScope = {
+  guildId: string;
+  world: string;
+  mapId: number;
+  roomName: string;
 };
 
 export type Socket = SocketIOSocket & { data: SocketUser };

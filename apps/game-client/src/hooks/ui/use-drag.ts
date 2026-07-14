@@ -367,12 +367,25 @@ export const useDrag = ({
 
   // Usunięto clampowanie pozycji i setFinalPosition z efektu mount/ref
 
-  const recalculate = (width: number, height: number) => {
-    const { current } = ref;
-    if (!current) return;
-    const { top, left, width: w, height: h } = current.getBoundingClientRect();
-    updateFinalPosition(width ?? w, height ?? h, left, top);
-  };
+  const recalculate = useCallback(
+    (width?: number, height?: number) => {
+      const { current } = ref;
+      if (!current) return;
+      const {
+        top,
+        left,
+        width: renderedWidth,
+        height: renderedHeight,
+      } = current.getBoundingClientRect();
+      updateFinalPosition(
+        width ?? renderedWidth,
+        height ?? renderedHeight,
+        left,
+        top,
+      );
+    },
+    [updateFinalPosition],
+  );
 
   return {
     position: finalPosition,

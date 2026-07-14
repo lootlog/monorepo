@@ -33,6 +33,9 @@ import { EventSettingsService } from "./services/event-settings.service";
 import { EventCoordinationService } from "./services/event-coordination.service";
 import { EventsSettingsController } from "./events-settings.controller";
 import { TimersModule } from "src/timers/timers.module";
+import { GuildsModule } from "src/guilds/guilds.module";
+import { EventModeController } from "./event-mode.controller";
+import { EventModeService } from "./services/event-mode.service";
 
 @Module({
   imports: [
@@ -48,6 +51,7 @@ import { TimersModule } from "src/timers/timers.module";
     RedisModule,
     RedlockModule,
     TimersModule,
+    GuildsModule,
   ],
   providers: [
     EventsService,
@@ -65,6 +69,7 @@ import { TimersModule } from "src/timers/timers.module";
     EventWrappedService,
     EventSettingsService,
     EventCoordinationService,
+    EventModeService,
 
     EventsQueueHandler,
     EventHeroKillProcessor,
@@ -75,6 +80,7 @@ import { TimersModule } from "src/timers/timers.module";
     EventsRankingController,
     EventsMonitoringController,
     EventsSettingsController,
+    EventModeController,
   ],
   exports: [EventsService],
 })

@@ -11,7 +11,7 @@ import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto";
 import { NpcType } from "./enums/npc-type.enum";
 import { GatewayEvent } from "./enums/gateway-event.enum";
 import { Platform } from "./enums/platform.enum";
-import { Permission } from "@lootlog/types";
+import { Permission, type PartyReadyRoomUpdateEnvelope } from "@lootlog/types";
 import { ActivityType } from "./enums/activity-type.enum";
 import { ActivityService } from "./services/activity.service";
 import { PresenceService } from "./services/presence.service";
@@ -21,6 +21,7 @@ import type {
 } from "./dto/reservation-event.dto";
 import type { ChatMessageEnvelopeDto } from "./dto/chat-message-envelope.dto";
 import type { ChatMessagesClearDto } from "./dto/chat-messages-clear.dto";
+import { AirTagService } from "./services/air-tag.service";
 
 describe("GatewayService", () => {
   let service: GatewayService;
@@ -66,6 +67,10 @@ describe("GatewayService", () => {
     broadcastPlayerDisconnectForGuildIds: vi.fn(),
   };
 
+  const mockAirTagService = {
+    clearSubscription: vi.fn(),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -97,10 +102,74 @@ describe("GatewayService", () => {
           provide: PresenceService,
           useValue: mockPresenceService,
         },
+        {
+          provide: AirTagService,
+          useValue: mockAirTagService,
+        },
       ],
     }).compile();
 
     service = module.get<GatewayService>(GatewayService);
+  });
+
+  it("emits a Ready Room update only to the recipient's user-and-guild rooms", () => {
+    const envelope = {
+      recipientDiscordId: "participant",
+      eligibleGuildIds: ["guild-1", "guild-2"],
+      update: {
+        schemaVersion: 3,
+        type: "UPSERT",
+        projection: {
+          schemaVersion: 3,
+          notificationId: "room-1",
+          organizerDiscordId: "organizer",
+          organizerCharacter: {
+            accountId: "account",
+            characterId: "character",
+            icon: "character.gif",
+            lvl: 200,
+            nick: "Organizer",
+            prof: "w",
+          },
+          guildIds: ["guild-1", "guild-2"],
+          world: "Fobos",
+          status: "ACTIVE",
+          revision: 2,
+          createdAt: "2026-07-13T10:00:00.000Z",
+          updatedAt: "2026-07-13T10:01:00.000Z",
+          expiresAt: "2026-07-13T10:30:00.000Z",
+          viewer: "PARTICIPANT",
+          participants: {
+            "participant-1": {
+              participantId: "participant-1",
+              discordId: "participant",
+              character: {
+                accountId: "participant-account",
+                characterId: "participant-character",
+                icon: "participant.gif",
+                lvl: 190,
+                nick: "Participant",
+                prof: "m",
+              },
+              partyPresence: "OUTSIDE",
+              createdAt: "2026-07-13T10:01:00.000Z",
+              updatedAt: "2026-07-13T10:01:00.000Z",
+            },
+          },
+        },
+      },
+    } satisfies PartyReadyRoomUpdateEnvelope;
+
+    service.handlePartyReadyRoomUpdate(envelope);
+
+    expect(mockServer.to).toHaveBeenCalledWith([
+      "user:participant:guild:guild-1",
+      "user:participant:guild:guild-2",
+    ]);
+    expect(mockServer.emit).toHaveBeenCalledWith(
+      GatewayEvent.PARTY_READY_ROOM_UPDATE,
+      envelope.update,
+    );
   });
 
   // Helper function to wait for all promises

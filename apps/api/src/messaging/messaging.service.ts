@@ -11,14 +11,13 @@ import type { Logger } from "winston";
 import { NpcType, Permission } from "src/generated/prisma/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { GuildsService } from "src/guilds/guilds.service";
-import { ChatService } from "src/chat/chat.service";
 import type { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
-import type { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
 import type { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
 import { Error } from "src/messaging/enum/error.enum";
 import { v4 as uuid } from "uuid";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
+import { ReadyRoomService } from "src/messaging/ready-room/ready-room.service";
 
 const NOTIFICATION_TTL_SECONDS = 1800; // 30 minutes
 
@@ -35,7 +34,7 @@ export class MessagingService {
     private readonly amqpConnection: AmqpConnection,
     private readonly guildsService: GuildsService,
     private readonly redisService: RedisService,
-    private readonly chatService: ChatService,
+    private readonly readyRoomService: ReadyRoomService,
   ) {}
 
   private getNotificationKey(notificationId: string): string {
@@ -54,10 +53,6 @@ export class MessagingService {
       JSON.stringify(metadata),
       NOTIFICATION_TTL_SECONDS,
     );
-  }
-
-  private getPartyGatheringUserKey(discordId: string): string {
-    return `party-gathering:user:${discordId}`;
   }
 
   private async getNotificationMetadata(
@@ -120,6 +115,20 @@ export class MessagingService {
       notificationId,
       createdAt,
     };
+    if (data.isGatheringParty) {
+      if (!data.character) {
+        throw new BadRequestException(
+          "Party gathering notifications require a character",
+        );
+      }
+      await this.readyRoomService.create({
+        notificationId,
+        organizerDiscordId: discordId,
+        organizerCharacter: data.character,
+        guildIds,
+        world: data.world,
+      });
+    }
     await this.storeNotificationMetadata(
       notificationId,
       discordId,
@@ -205,162 +214,5 @@ export class MessagingService {
         character: data.character,
       },
     );
-  }
-
-  async sendPartyGathering(discordId: string, data: CreatePartyGatheringDto) {
-    const existingGathering = await this.redisService.get(
-      this.getPartyGatheringUserKey(discordId),
-    );
-    if (existingGathering) {
-      await this.cancelPartyGatheringByUser(discordId);
-    }
-
-    const notificationId = uuid();
-    const createdAt = new Date().toISOString();
-
-    if (
-      data.minLvl !== undefined &&
-      data.maxLvl !== undefined &&
-      data.minLvl > data.maxLvl
-    ) {
-      throw new BadRequestException("minLvl cannot be greater than maxLvl");
-    }
-
-    const userGuilds = await this.guildsService.getGuildsForRequiredPermissions(
-      discordId,
-      [
-        Permission.LOOTLOG_NOTIFICATIONS_SEND,
-        Permission.OWNER,
-        Permission.ADMIN,
-        Permission.LOOTLOG_MANAGE,
-      ],
-    );
-
-    if (userGuilds.length === 0) {
-      this.logger.log({
-        level: "warn",
-        message: `User ${discordId} has no permission to send party gathering`,
-      });
-      throw new ForbiddenException();
-    }
-
-    const guildIds = userGuilds
-      .map((g) => g.id)
-      .filter((id) => data.guildIds.includes(id));
-
-    if (!guildIds.length) {
-      this.logger.log({
-        level: "warn",
-        message: `User ${discordId} tried to send party gathering to unauthorized guilds: ${data.guildIds}`,
-      });
-      throw new ForbiddenException();
-    }
-
-    await this.storeNotificationMetadata(
-      notificationId,
-      discordId,
-      guildIds,
-      createdAt,
-    );
-
-    await this.redisService.set(
-      this.getPartyGatheringUserKey(discordId),
-      notificationId,
-      NOTIFICATION_TTL_SECONDS,
-    );
-
-    guildIds.forEach((guildId) => {
-      this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_PARTY_GATHERING,
-        {
-          guildId,
-          discordId,
-          notificationId,
-          createdAt,
-          world: data.world,
-          character: data.character,
-          description: data.description,
-          minLvl: data.minLvl,
-          maxLvl: data.maxLvl,
-        },
-      );
-    });
-
-    return { notificationId, guildIds };
-  }
-
-  async cancelPartyGathering(
-    discordId: string,
-    notificationId: string,
-  ): Promise<
-    { status: "success"; guildIds: string[] } | { status: "expired" }
-  > {
-    const metadata = await this.getNotificationMetadata(notificationId);
-
-    if (!metadata) {
-      await this.redisService.del(this.getNotificationKey(notificationId));
-      await this.redisService.del(this.getPartyGatheringUserKey(discordId));
-      return { status: "expired" };
-    }
-
-    if (metadata.discordId !== discordId) {
-      this.logger.log({
-        level: "warn",
-        message: `User ${discordId} tried to cancel notification ${notificationId} owned by ${metadata.discordId}`,
-      });
-      throw new ForbiddenException("Not the owner of this notification");
-    }
-
-    await this.redisService.del(this.getNotificationKey(notificationId));
-    await this.redisService.del(this.getPartyGatheringUserKey(discordId));
-    await this.chatService.endPartyGatheringMessages(
-      notificationId,
-      metadata.guildIds,
-    );
-
-    metadata.guildIds.forEach((guildId) => {
-      this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
-        { guildId, notificationId },
-      );
-    });
-
-    return { status: "success", guildIds: metadata.guildIds };
-  }
-
-  async cancelPartyGatheringByUser(discordId: string) {
-    const notificationId = await this.redisService.get(
-      this.getPartyGatheringUserKey(discordId),
-    );
-
-    if (!notificationId) {
-      return { success: true, guildIds: [] };
-    }
-
-    const metadata = await this.getNotificationMetadata(notificationId);
-
-    await this.redisService.del(this.getNotificationKey(notificationId));
-    await this.redisService.del(this.getPartyGatheringUserKey(discordId));
-
-    const guildIds = metadata?.guildIds ?? [];
-
-    if (notificationId && guildIds.length > 0) {
-      await this.chatService.endPartyGatheringMessages(
-        notificationId,
-        guildIds,
-      );
-    }
-
-    guildIds.forEach((guildId) => {
-      this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
-        { guildId, notificationId },
-      );
-    });
-
-    return { success: true, guildIds };
   }
 }

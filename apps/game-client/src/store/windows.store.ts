@@ -38,7 +38,8 @@ export type WindowId =
   | "catching-whitelist-warning"
   | "backend-preferences-warning"
   | "party-finder"
-  | "create-party-gathering";
+  | "create-party-gathering"
+  | "event-mode";
 
 interface WindowPositionState {
   x: number;
@@ -80,6 +81,7 @@ interface WindowsState {
   "backend-preferences-warning": WindowData;
   "party-finder": WindowData;
   "create-party-gathering": WindowData;
+  "event-mode": WindowData;
   currentWindowFocus?: WindowId;
   windowFocusHistory: WindowId[];
   setCurrentWindowFocus: (key: WindowId) => void;
@@ -97,6 +99,15 @@ interface WindowsState {
 const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
+
+const createDefaultEventModeWindow = (): WindowData => ({
+  open: true,
+  position: DEFAULT_POSITION,
+  hasDefinedPosition: false,
+  size: { width: 290, height: 132 },
+  opacity: DEFAULT_OPACITY,
+  locked: false,
+});
 
 const sanitizeMaxContentHeight = (height: number) => {
   if (!Number.isFinite(height)) {
@@ -216,6 +227,10 @@ export const migrateWindowsState = (
   if (onlinePlayers && typeof onlinePlayers === "object") {
     const { state: _, ...windowState } = onlinePlayers;
     state["online-players"] = windowState;
+  }
+
+  if (version < 9 && !state["event-mode"]) {
+    state["event-mode"] = createDefaultEventModeWindow();
   }
 
   return state as unknown as WindowsState;
@@ -363,6 +378,7 @@ export const useWindowsStore = create<WindowsState>()(
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
+      "event-mode": createDefaultEventModeWindow(),
       currentWindowFocus: undefined,
       windowFocusHistory: [],
       setCurrentWindowFocus: (key: WindowId) =>
@@ -486,9 +502,10 @@ export const useWindowsStore = create<WindowsState>()(
         "backend-preferences-warning": state["backend-preferences-warning"],
         "party-finder": state["party-finder"],
         "create-party-gathering": state["create-party-gathering"],
+        "event-mode": state["event-mode"],
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 8,
+      version: 9,
       migrate: migrateWindowsState,
     },
   ),

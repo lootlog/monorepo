@@ -14,6 +14,7 @@ export enum RoutingKey {
   GUILDS_NOTIFICATIONS_VOLUNTEER = "guilds.notifications.volunteer",
   GUILDS_PARTY_GATHERING = "guilds.party-gathering",
   GUILDS_PARTY_GATHERING_CANCEL = "guilds.party-gathering.cancel",
+  USERS_PARTY_READY_ROOM_UPDATED = "users.party-ready-room.updated",
   NOTIFICATIONS_TIMER_UPDATED = "notifications.timer.updated",
   NOTIFICATIONS_TIMER_DELETED = "notifications.timer.deleted",
   NOTIFICATIONS_LOOT_CREATED = "notifications.loot.created",

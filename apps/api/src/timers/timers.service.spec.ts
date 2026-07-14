@@ -1957,4 +1957,107 @@ describe("TimersService", () => {
       expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
     });
   });
+
+  describe("getTimersForEventHeroLookups", () => {
+    it("batches keyed and name-only lookups across guilds", async () => {
+      const keyedTimer = {
+        guildId: "guild-1",
+        npcId: 101,
+        timerKey: buildTimerKey(101, "Heros"),
+        world: "tempest",
+        minSpawnTime: new Date("2026-07-13T11:00:00.000Z"),
+        maxSpawnTime: new Date("2026-07-13T12:00:00.000Z"),
+        npc: { name: "Heros" },
+      };
+      const nameTimer = {
+        guildId: "guild-2",
+        npcId: 202,
+        timerKey: buildTimerKey(202, "Tytan bez ID"),
+        world: "tempest",
+        minSpawnTime: new Date("2026-07-13T13:00:00.000Z"),
+        maxSpawnTime: new Date("2026-07-13T14:00:00.000Z"),
+        npc: { name: "Tytan bez ID" },
+      };
+      mockPrismaService.timer.findMany.mockResolvedValue([keyedTimer]);
+      mockPrismaService.$queryRaw.mockResolvedValue([nameTimer]);
+
+      const result = await service.getTimersForEventHeroLookups([
+        {
+          guildId: "guild-1",
+          world: "tempest",
+          npcId: 101,
+          npcName: "Heros",
+        },
+        {
+          guildId: "guild-2",
+          world: "tempest",
+          npcId: null,
+          npcName: "Tytan bez ID",
+        },
+      ]);
+
+      expect(mockPrismaService.timer.findMany).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.timer.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            {
+              guildId: "guild-1",
+              world: "tempest",
+              timerKey: buildTimerKey(101, "Heros"),
+            },
+          ],
+        },
+        select: {
+          guildId: true,
+          npcId: true,
+          timerKey: true,
+          world: true,
+          minSpawnTime: true,
+          maxSpawnTime: true,
+          npc: true,
+        },
+      });
+      expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(result).toEqual([keyedTimer, nameTimer]);
+    });
+
+    it("deduplicates lookups and resulting timers", async () => {
+      const timer = {
+        guildId: "guild-1",
+        npcId: 101,
+        timerKey: buildTimerKey(101, "Heros"),
+        world: "tempest",
+        minSpawnTime: new Date("2026-07-13T11:00:00.000Z"),
+        maxSpawnTime: new Date("2026-07-13T12:00:00.000Z"),
+        npc: { name: "Heros" },
+      };
+      mockPrismaService.timer.findMany.mockResolvedValue([timer, timer]);
+
+      const lookup = {
+        guildId: "guild-1",
+        world: "tempest",
+        npcId: 101,
+        npcName: "Heros",
+      };
+      const result = await service.getTimersForEventHeroLookups([
+        lookup,
+        lookup,
+      ]);
+
+      expect(mockPrismaService.timer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              {
+                guildId: "guild-1",
+                world: "tempest",
+                timerKey: buildTimerKey(101, "Heros"),
+              },
+            ],
+          },
+        }),
+      );
+      expect(result).toEqual([timer]);
+    });
+  });
 });

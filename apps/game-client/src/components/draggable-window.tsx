@@ -28,6 +28,7 @@ type DraggableWindowProps = {
   onClose?: () => void;
   variant?: "default" | "small";
   heightMode?: "fixed" | "auto-up-to-max";
+  widthMode?: "fixed" | "fit-content";
   resizable?: boolean;
   minWidth?: number;
   minHeight?: number;
@@ -146,6 +147,26 @@ const getMeasuredContentHeight = (
   return maxScrollHeight;
 };
 
+const getMeasuredContentWidth = (contentElement: HTMLDivElement) => {
+  const measurementElements = getContentMeasurementElements(contentElement);
+  let maxScrollWidth = 0;
+
+  for (const element of measurementElements) {
+    maxScrollWidth = Math.max(
+      maxScrollWidth,
+      element.scrollWidth,
+      Math.ceil(element.getBoundingClientRect().width),
+    );
+  }
+
+  return maxScrollWidth;
+};
+
+const getWindowHorizontalChromeWidth = (
+  windowBody: HTMLDivElement,
+  contentElement: HTMLDivElement,
+) => Math.max(0, windowBody.offsetWidth - contentElement.clientWidth);
+
 const getNumericStyleValue = (
   styles: CSSStyleDeclaration,
   propertyName: keyof CSSStyleDeclaration,
@@ -248,6 +269,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   onClose,
   variant: _variant = "small",
   heightMode = "fixed",
+  widthMode = "fixed",
   resizable = true,
   minWidth = 242,
   minHeight = 240,
@@ -291,6 +313,8 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   });
   const [isResizing, setIsResizing] = useState(false);
   const [autoHeight, setAutoHeight] = useState(minHeight);
+  const [autoWidth, setAutoWidth] = useState(minWidth);
+  const autoWidthRef = useRef(minWidth);
   const [previewMaxContentHeight, setPreviewMaxContentHeight] = useState<
     number | null
   >(null);
@@ -303,9 +327,11 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const windowBodyRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
   const isAutoHeightMode = heightMode === "auto-up-to-max";
+  const isAutoWidthMode = widthMode === "fit-content";
   const resolvedMaxContentHeight = sanitizeMaxContentHeight(maxContentHeight);
-  const allowsHorizontalResize = resizable;
-  const allowsVerticalResize = !isAutoHeightMode || isMaxHeightAdjustmentArmed;
+  const allowsHorizontalResize = resizable && !isAutoWidthMode;
+  const allowsVerticalResize =
+    resizable && (!isAutoHeightMode || isMaxHeightAdjustmentArmed);
   const isAdjustingMaxHeight =
     isAutoHeightMode &&
     isMaxHeightAdjustmentArmed &&
@@ -330,6 +356,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     return autoHeight;
   };
   const effectiveHeight = getEffectiveHeight();
+  const effectiveWidth = isAutoWidthMode ? autoWidth : localSize.width;
 
   const getResolvedMaxContentHeight = useCallback(() => {
     const windowBody = windowBodyRef.current;
@@ -355,14 +382,14 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const getClampedPosition = useCallback(
     (pos: { x: number; y: number }) => {
       if (typeof window === "undefined") return pos;
-      const maxX = window.innerWidth - localSize.width;
+      const maxX = window.innerWidth - effectiveWidth;
       const maxY = window.innerHeight - effectiveHeight;
       return {
         x: Math.max(0, Math.min(pos.x, maxX)),
         y: Math.max(0, Math.min(pos.y, maxY)),
       };
     },
-    [effectiveHeight, localSize.width],
+    [effectiveHeight, effectiveWidth],
   );
 
   const defaultPosition = isLocked
@@ -384,6 +411,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     handleTouchStart,
     isDragging,
     cancelDrag,
+    recalculate,
   } = useDrag({
     ref: draggableRef,
     defaultState: defaultPosition,
@@ -542,8 +570,8 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   useEffect(() => {
     if (isResizing) return;
-    setSizeInStore(id, { height: localSize.height, width: localSize.width });
-  }, [localSize.height, localSize.width, isResizing, id, setSizeInStore]);
+    setSizeInStore(id, { height: localSize.height, width: effectiveWidth });
+  }, [effectiveWidth, localSize.height, isResizing, id, setSizeInStore]);
 
   useEffect(() => {
     if (!isMaxHeightAdjustmentArmed) {
@@ -551,6 +579,126 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       setPreviewMaxContentHeight(null);
     }
   }, [isMaxHeightAdjustmentArmed]);
+
+  useLayoutEffect(() => {
+    if (!isAutoWidthMode) {
+      autoWidthRef.current = minWidth;
+      setAutoWidth(minWidth);
+      return;
+    }
+
+    let animationFrameId: number | null = null;
+    let observedContentElements = new Set<HTMLElement>();
+
+    const updateAutoWidth = () => {
+      const windowBody = windowBodyRef.current;
+      const contentElement = contentRef.current;
+
+      if (!windowBody || !contentElement) {
+        return;
+      }
+
+      const viewportWidth = Math.max(
+        1,
+        Math.floor(window.visualViewport?.width ?? window.innerWidth),
+      );
+      const resolvedMaxWidth = Math.min(
+        maxWidth ?? viewportWidth,
+        viewportWidth,
+      );
+      const measuredContentWidth = getMeasuredContentWidth(contentElement);
+      const horizontalChromeWidth = getWindowHorizontalChromeWidth(
+        windowBody,
+        contentElement,
+      );
+      const nextAutoWidth = Math.max(
+        1,
+        Math.min(
+          Math.max(minWidth, measuredContentWidth + horizontalChromeWidth),
+          resolvedMaxWidth,
+        ),
+      );
+
+      if (Math.abs(autoWidthRef.current - nextAutoWidth) < 1) {
+        return;
+      }
+
+      autoWidthRef.current = nextAutoWidth;
+      setAutoWidth(nextAutoWidth);
+      recalculate(nextAutoWidth, effectiveHeight);
+    };
+
+    const scheduleAutoWidthUpdate = () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
+      animationFrameId = requestAnimationFrame(() => {
+        animationFrameId = null;
+        updateAutoWidth();
+      });
+    };
+
+    const resizeObserver = new ResizeObserver(scheduleAutoWidthUpdate);
+    const updateObservedContentElements = () => {
+      const contentElement = contentRef.current;
+
+      if (!contentElement) {
+        observedContentElements.forEach((element) => {
+          resizeObserver.unobserve(element);
+        });
+        observedContentElements = new Set<HTMLElement>();
+        return;
+      }
+
+      const nextObservedContentElements = new Set(
+        getContentMeasurementElements(contentElement),
+      );
+
+      observedContentElements.forEach((element) => {
+        if (!nextObservedContentElements.has(element)) {
+          resizeObserver.unobserve(element);
+        }
+      });
+
+      nextObservedContentElements.forEach((element) => {
+        if (!observedContentElements.has(element)) {
+          resizeObserver.observe(element);
+        }
+      });
+
+      observedContentElements = nextObservedContentElements;
+    };
+    const mutationObserver = new MutationObserver(() => {
+      updateObservedContentElements();
+      scheduleAutoWidthUpdate();
+    });
+    const visualViewport = window.visualViewport;
+
+    if (contentRef.current) {
+      mutationObserver.observe(contentRef.current, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
+
+    window.addEventListener("resize", scheduleAutoWidthUpdate);
+    visualViewport?.addEventListener("resize", scheduleAutoWidthUpdate);
+    updateObservedContentElements();
+    updateAutoWidth();
+    scheduleAutoWidthUpdate();
+
+    return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      window.removeEventListener("resize", scheduleAutoWidthUpdate);
+      visualViewport?.removeEventListener("resize", scheduleAutoWidthUpdate);
+      mutationObserver.disconnect();
+      resizeObserver.disconnect();
+    };
+  }, [effectiveHeight, isAutoWidthMode, maxWidth, minWidth, recalculate]);
 
   useLayoutEffect(() => {
     if (!isAutoHeightMode) {
@@ -697,8 +845,8 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   ]);
 
   const style = dynamicHeight
-    ? { height: "auto", width: localSize.width }
-    : { width: localSize.width, height: effectiveHeight };
+    ? { height: "auto", width: effectiveWidth }
+    : { width: effectiveWidth, height: effectiveHeight };
   const contentHeight = isAdjustingMaxHeight
     ? (previewMaxContentHeight ?? 0)
     : renderedContentHeightRef.current;
@@ -739,6 +887,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       data-ll-draggable-window={id}
       style={{
         ...style,
+        maxWidth,
         maxHeight,
         top: position.y,
         left: position.x,

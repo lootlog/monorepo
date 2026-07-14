@@ -11,7 +11,8 @@ import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query"
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { useMessagingControllerVolunteer } from "@/lib/api/generated/main/messaging/messaging";
+import type { PartyReadyRoomProjection } from "@lootlog/types";
+import { usePartyReadyRoomControllerApply } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
 import {
   buildCurrentCharacterPayload,
   mapGuildMembersByUserId,
@@ -27,6 +28,7 @@ import {
 } from "@/store/notifications.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
+import { usePartyFinderStore } from "@/store/party-finder.store";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import {
   getBackgroundColor,
@@ -178,7 +180,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   });
   const members = mapGuildMembersByUserId(membersData);
   const guildMember = members[notification.discordId];
-  const volunteer = useMessagingControllerVolunteer();
+  const applyToReadyRoom = usePartyReadyRoomControllerApply();
+  const mergeReadyRoomProjection = usePartyFinderStore(
+    (state) => state.mergeProjection,
+  );
   const autoHidePathRef = useRef<SVGPathElement>(null);
 
   useMemberInvalidation(
@@ -223,19 +228,28 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const handleRemoveNotification = () =>
     removeNotification(notification.notificationId);
 
-  const handleVolunteer = () => {
-    volunteer.mutate({
-      pathParams: {
-        notificationId: notification.notificationId,
+  const handleJoinReadyRoom = () => {
+    applyToReadyRoom.mutate(
+      {
+        pathParams: {
+          notificationId: notification.notificationId,
+        },
+        data: {
+          world: notification.world,
+          character: buildCurrentCharacterPayload(),
+        },
       },
-      data: {
-        targetDiscordId: notification.discordId,
-        world: notification.world,
-        character: buildCurrentCharacterPayload(),
+      {
+        onSuccess: (projection) => {
+          mergeReadyRoomProjection(
+            projection as unknown as PartyReadyRoomProjection,
+          );
+          setOpen("notifications", false);
+          setOpen("party-finder", true);
+          clearNotifications();
+        },
       },
-    });
-    setOpen("notifications", false);
-    clearNotifications();
+    );
   };
 
   const showPartyGatheringAction = isPartyGathering;
@@ -411,12 +425,13 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
                   variant="ghost"
                   aria-label={t("actions.joinAria")}
                   className="ll:size-7 ll:px-0"
-                  onClick={handleVolunteer}
+                  onClick={handleJoinReadyRoom}
                   disabled={
-                    volunteer.isPending || (isPartyGathering && !meetsLevelReq)
+                    applyToReadyRoom.isPending ||
+                    (isPartyGathering && !meetsLevelReq)
                   }
                 >
-                  {volunteer.isPending ? (
+                  {applyToReadyRoom.isPending ? (
                     <LoaderCircle size={12} className="ll:animate-spin" />
                   ) : (
                     <Swords size={12} />
@@ -433,10 +448,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
                   variant="ghost"
                   aria-label={t("actions.joinAria")}
                   className="ll:size-7 ll:px-0"
-                  onClick={handleVolunteer}
-                  disabled={volunteer.isPending}
+                  onClick={handleJoinReadyRoom}
+                  disabled={applyToReadyRoom.isPending}
                 >
-                  {volunteer.isPending ? (
+                  {applyToReadyRoom.isPending ? (
                     <LoaderCircle size={12} className="ll:animate-spin" />
                   ) : (
                     <Swords size={12} />

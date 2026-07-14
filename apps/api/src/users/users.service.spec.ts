@@ -411,7 +411,9 @@ describe("UsersService", () => {
     });
     expect(result).toEqual({
       accountId: "12345",
+      airTags: { enabled: false },
       detector: defaultDetectorSettings,
+      hasStoredAirTags: false,
       hasStoredDetector: false,
       hasStoredNotifications: false,
       hasStoredPings: false,
@@ -530,7 +532,9 @@ describe("UsersService", () => {
     });
     expect(result).toEqual({
       accountId: "111",
+      airTags: { enabled: false },
       detector: defaultDetectorSettings,
+      hasStoredAirTags: false,
       hasStoredDetector: false,
       hasStoredNotifications: true,
       hasStoredPings: false,
@@ -618,6 +622,7 @@ describe("UsersService", () => {
     });
     expect(result).toEqual({
       accountId: "222",
+      airTags: { enabled: false },
       detector: expect.objectContaining({
         routingRules: [
           {
@@ -630,6 +635,7 @@ describe("UsersService", () => {
           },
         ],
       }),
+      hasStoredAirTags: false,
       hasStoredDetector: true,
       hasStoredNotifications: true,
       hasStoredPings: false,
@@ -682,6 +688,49 @@ describe("UsersService", () => {
     );
   });
 
+  it("updates AirTags without overwriting stored notification and detector settings", async () => {
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
+      id: 9,
+      userId: "auth-user-current",
+      accountId: "333",
+      settings: {
+        notifications: defaultNotificationsSettings,
+        detector: defaultDetectorSettings,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockPrismaService.userGameAccountSettings.upsert.mockResolvedValue({});
+
+    const result = await service.updateUserGameAccountPreferences(
+      "auth-user-current",
+      "333",
+      { airTags: { enabled: true } },
+    );
+
+    expect(
+      mockPrismaService.userGameAccountSettings.upsert,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          settings: {
+            notifications: defaultNotificationsSettings,
+            detector: defaultDetectorSettings,
+            airTags: { enabled: true },
+          },
+        }),
+      }),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        airTags: { enabled: true },
+        notifications: defaultNotificationsSettings,
+        detector: defaultDetectorSettings,
+        hasStoredAirTags: true,
+      }),
+    );
+  });
+
   it("normalizes detector routing rules when reading stored account settings", async () => {
     mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue({
       id: 9,
@@ -717,6 +766,7 @@ describe("UsersService", () => {
 
     expect(result).toEqual({
       accountId: "333",
+      airTags: { enabled: false },
       detector: expect.objectContaining({
         routingRules: [
           {
@@ -728,6 +778,7 @@ describe("UsersService", () => {
           },
         ],
       }),
+      hasStoredAirTags: false,
       hasStoredDetector: true,
       hasStoredNotifications: false,
       hasStoredPings: false,
@@ -778,6 +829,7 @@ describe("UsersService", () => {
 
     expect(result).toEqual({
       accountId: "444",
+      airTags: { enabled: false },
       detector: expect.objectContaining({
         routingRules: [
           {
@@ -795,6 +847,7 @@ describe("UsersService", () => {
           },
         ],
       }),
+      hasStoredAirTags: false,
       hasStoredDetector: true,
       hasStoredNotifications: false,
       hasStoredPings: false,

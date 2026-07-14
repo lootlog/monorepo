@@ -25,7 +25,7 @@ vi.mock("@/store/settings.store", () => ({
 vi.mock("@/hooks/use-current-game-account-preferences", () => ({
   useCurrentGameAccountPreferences: () => ({
     accountId: "account-1",
-    data: { pings: { enabled: true } },
+    data: { airTags: { enabled: false }, pings: { enabled: true } },
   }),
 }));
 
@@ -45,6 +45,7 @@ describe("GeneralSettingsTab", () => {
     const { container } = render(<GeneralSettingsTab />);
 
     expect(container.querySelector("#map-pings")).not.toBeInTheDocument();
+    expect(container.querySelector("#air-tags")).not.toBeInTheDocument();
   });
 
   it("shows map ping settings on the new interface", () => {
@@ -52,5 +53,6 @@ describe("GeneralSettingsTab", () => {
     const { container } = render(<GeneralSettingsTab />);
 
     expect(container.querySelector("#map-pings")).toBeInTheDocument();
+    expect(container.querySelector("#air-tags")).toBeInTheDocument();
   });
 });

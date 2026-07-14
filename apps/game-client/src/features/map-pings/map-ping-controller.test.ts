@@ -116,6 +116,7 @@ describe("map ping coordinates", () => {
       pingId: "ping-1",
       world: "aether",
       mapId: 42,
+      type: "attention" as const,
       x: 10,
       y: 20,
       sender: { characterId: "123", name: "Sender" },
@@ -123,8 +124,8 @@ describe("map ping coordinates", () => {
     };
 
     expect(controller.register()).toBe(true);
-    expect(controller.addRemote(event)).toBe(true);
-    expect(controller.addRemote(event)).toBe(false);
+    expect(controller.addRemote(event, "Uwaga")).toBe(true);
+    expect(controller.addRemote(event, "Uwaga")).toBe(false);
     drawFrame();
     expect(renderer.add).toHaveBeenCalledTimes(1);
 

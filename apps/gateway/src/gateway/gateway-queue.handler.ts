@@ -25,6 +25,7 @@ import type { SendMessageDto } from "src/gateway/dto/send-message.dto";
 import type { SendNotificationDto } from "src/gateway/dto/send-notification.dto";
 import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering.dto";
 import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
+import { parsePartyReadyRoomUpdateEnvelope } from "src/gateway/dto/party-ready-room-update.dto";
 import type {
   EventMapStatusUpdatePayload,
   EventHeroKilledPayload,
@@ -646,6 +647,42 @@ export class GatewayQueueHandler {
     amqpMsg: AmqpMessage,
   ) {
     this.logDeadLetterMessage("Volunteer Notification", data, amqpMsg);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.USERS_PARTY_READY_ROOM_UPDATED,
+    queue: Queue.USERS_PARTY_READY_ROOM_UPDATED,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: RETRY_EXCHANGE_NAME,
+      deadLetterRoutingKey: RoutingKey.USERS_PARTY_READY_ROOM_UPDATED_RETRY,
+    },
+  })
+  async handlePartyReadyRoomUpdate(data: unknown, amqpMsg: AmqpMessage) {
+    const envelope = parsePartyReadyRoomUpdateEnvelope(data);
+    await this.handleWithRetry(
+      envelope,
+      amqpMsg,
+      RoutingKey.USERS_PARTY_READY_ROOM_UPDATED_DLQ,
+      `party ready room: ${
+        envelope.update.type === "UPSERT"
+          ? envelope.update.projection.notificationId
+          : envelope.update.notificationId
+      }:${envelope.recipientDiscordId}`,
+      () => this.gatewayService.handlePartyReadyRoomUpdate(envelope),
+    );
+  }
+
+  @RabbitSubscribe({
+    exchange: DEAD_LETTER_EXCHANGE_NAME,
+    routingKey: RoutingKey.USERS_PARTY_READY_ROOM_UPDATED_DLQ,
+    queue: Queue.USERS_PARTY_READY_ROOM_UPDATED_DLQ,
+    queueOptions: { durable: true },
+  })
+  handlePartyReadyRoomUpdateDLQ(data: unknown, amqpMsg: AmqpMessage) {
+    this.logDeadLetterMessage("Party Ready Room", data, amqpMsg);
   }
 
   @RabbitSubscribe({
