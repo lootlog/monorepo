@@ -11,9 +11,13 @@ import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-toolti
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGlobalStore } from "@/store/global.store";
 
 const mocks = vi.hoisted(() => ({
+  afterGameEventHandler: undefined as (() => void) | undefined,
+  getAccessibleGuilds: vi.fn(),
   getPlayersCatchingGuilds: vi.fn(),
+  getUserPreferences: vi.fn(),
 }));
 
 vi.mock(
@@ -24,7 +28,33 @@ vi.mock(
   }),
 );
 
+vi.mock("@/lib/api/generated/main/users/users", () => ({
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
+    "accessible-guilds",
+  ],
+  useUsersControllerGetCurrentUserAccessibleGuilds: () =>
+    mocks.getAccessibleGuilds(),
+}));
+
+vi.mock("@/hooks/api/use-user-preferences", () => ({
+  useUserPreferences: () => mocks.getUserPreferences(),
+}));
+
+vi.mock("@/lib/game-events-manager", () => ({
+  gameEventsManager: {
+    subscribeAfterGameEvent: (handler: () => void) => {
+      mocks.afterGameEventHandler = handler;
+      return () => {
+        if (mocks.afterGameEventHandler === handler) {
+          mocks.afterGameEventHandler = undefined;
+        }
+      };
+    },
+  },
+}));
+
 import { useOtherCatchingGuildGlow } from "./use-other-catching-guild-glow";
+import { useSelectedLootlogGuildInitialization } from "../use-selected-lootlog-guild";
 
 const originalWindowEngine = window.Engine;
 
@@ -65,13 +95,13 @@ function setOnlineOwners(others: Record<string, Other>): void {
   });
 }
 
-function setRuntime(): void {
+function setRuntime(heroId: number | null | undefined = 101): void {
   Object.defineProperty(window, "Engine", {
     configurable: true,
     value: {
       hero: {
         d: {
-          id: "hero-1",
+          id: heroId,
         },
       },
       imgLoader: {
@@ -97,11 +127,25 @@ function setRuntime(): void {
 
 describe("useOtherCatchingGuildGlow", () => {
   beforeEach(() => {
+    mocks.afterGameEventHandler = undefined;
+    mocks.getAccessibleGuilds.mockReset();
     mocks.getPlayersCatchingGuilds.mockReset();
+    mocks.getUserPreferences.mockReset();
+    mocks.getAccessibleGuilds.mockReturnValue({
+      data: [{ id: "guild-blue", name: "Blue Guild", icon: null }],
+      isFetched: true,
+    });
+    mocks.getUserPreferences.mockReturnValue({
+      data: { guildsOrder: ["guild-blue"] },
+      isFetched: true,
+    });
     lootlogOtherGlowManager.cleanup();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
+    useGlobalStore.setState({
+      gameState: { gameInitialized: true },
+    });
     useSettingsStore.setState({
       guildIdByCharId: {},
     });
@@ -116,6 +160,113 @@ describe("useOtherCatchingGuildGlow", () => {
     });
   });
 
+  it("uses the default guild on the first shift without a manual guild change", async () => {
+    const other = createOther("1");
+    setRuntime(undefined);
+    mocks.getAccessibleGuilds.mockReturnValue({
+      data: [
+        { id: "guild-red", name: "Red Guild", icon: null },
+        { id: "guild-blue", name: "Blue Guild", icon: null },
+      ],
+      isFetched: true,
+    });
+    useOthersStore.getState().setMany({ "1": other });
+    setOnlineOwners({ "1": other });
+    mocks.getPlayersCatchingGuilds.mockResolvedValue({
+      players: [
+        {
+          userId: "player-discord",
+          accountId: String(other.d.account),
+          characterId: String(other.d.id),
+          guilds: [{ id: "guild-blue", name: "Blue Guild" }],
+        },
+      ],
+    });
+
+    renderHook(() => {
+      useSelectedLootlogGuildInitialization();
+      useOtherCatchingGuildGlow();
+    });
+
+    expect(useSettingsStore.getState().guildIdByCharId).not.toHaveProperty(
+      "undefined",
+    );
+
+    window.Engine.hero.d.id = 101;
+    act(() => {
+      mocks.afterGameEventHandler?.();
+    });
+
+    await waitFor(() => {
+      expect(useSettingsStore.getState().guildIdByCharId["101"]).toBe(
+        "guild-blue",
+      );
+    });
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    await waitFor(() => {
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
+      expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
+        LOOTLOG_OTHER_GLOW_BLUE,
+      );
+    });
+  });
+
+  it("does not create a selection from a null character ID", () => {
+    setRuntime(null);
+
+    renderHook(() => useSelectedLootlogGuildInitialization());
+
+    expect(useSettingsStore.getState().guildIdByCharId).toEqual({});
+  });
+
+  it("uses API guild order when preferences finish without data", async () => {
+    mocks.getAccessibleGuilds.mockReturnValue({
+      data: [
+        { id: "guild-red", name: "Red Guild", icon: null },
+        { id: "guild-blue", name: "Blue Guild", icon: null },
+      ],
+      isFetched: true,
+    });
+    mocks.getUserPreferences.mockReturnValue({
+      data: undefined,
+      isFetched: true,
+    });
+
+    renderHook(() => useSelectedLootlogGuildInitialization());
+
+    await waitFor(() => {
+      expect(useSettingsStore.getState().guildIdByCharId["101"]).toBe(
+        "guild-red",
+      );
+    });
+  });
+
+  it("initializes a separate default after the current character changes", async () => {
+    renderHook(() => useSelectedLootlogGuildInitialization());
+
+    await waitFor(() => {
+      expect(useSettingsStore.getState().guildIdByCharId["101"]).toBe(
+        "guild-blue",
+      );
+    });
+
+    window.Engine.hero.d.id = 202;
+    act(() => {
+      mocks.afterGameEventHandler?.();
+    });
+
+    await waitFor(() => {
+      expect(useSettingsStore.getState().guildIdByCharId).toEqual({
+        "101": "guild-blue",
+        "202": "guild-blue",
+      });
+    });
+  });
+
   it("does one batch request for many others and colors successful entries by selected guild", async () => {
     const others = Object.fromEntries(
       Array.from({ length: 50 }, (_, index) => {
@@ -127,7 +278,7 @@ describe("useOtherCatchingGuildGlow", () => {
     setOnlineOwners(others);
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockResolvedValue({
@@ -181,7 +332,7 @@ describe("useOtherCatchingGuildGlow", () => {
     setOnlineOwners(others);
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockImplementation(
@@ -223,7 +374,7 @@ describe("useOtherCatchingGuildGlow", () => {
     setOnlineOwners(others);
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockRejectedValue(new Error("broken"));
@@ -266,7 +417,7 @@ describe("useOtherCatchingGuildGlow", () => {
     useOthersStore.getState().setMany({ "1": other });
     setOnlineOwners({ "1": other });
     useSettingsStore.setState({
-      guildIdByCharId: { "hero-1": "all" },
+      guildIdByCharId: { "101": "all" },
     });
 
     renderHook(() => useOtherCatchingGuildGlow());
@@ -285,7 +436,7 @@ describe("useOtherCatchingGuildGlow", () => {
     });
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
 
@@ -308,7 +459,7 @@ describe("useOtherCatchingGuildGlow", () => {
     });
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockResolvedValue({
@@ -368,7 +519,7 @@ describe("useOtherCatchingGuildGlow", () => {
     setOnlineOwners({ "1": firstOther, "2": secondOther });
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds
@@ -438,7 +589,7 @@ describe("useOtherCatchingGuildGlow", () => {
     setOnlineOwners({ "1": other });
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockResolvedValue({

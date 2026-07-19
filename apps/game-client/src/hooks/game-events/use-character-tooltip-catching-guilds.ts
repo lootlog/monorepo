@@ -3,13 +3,10 @@ import { characterTooltipCatchingGuildsCoordinator } from "@/lib/character-toolt
 import { appendCatchingGuildsTooltipSection } from "@/lib/margonem-tooltips/catching-guilds";
 import { refreshActiveOtherCanvasTooltip } from "@/lib/margonem-tooltips/patcher";
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
-import {
-  getSelectedLootlogGuildId,
-  isConcreteLootlogGuildId,
-} from "@/lib/selected-lootlog-guild";
+import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
-import { useSettingsStore } from "@/store/settings.store";
 
 function refreshActiveOtherTooltip(): void {
   refreshActiveOtherCanvasTooltip();
@@ -39,8 +36,7 @@ export function useCharacterTooltipCatchingGuilds(): void {
   const ownersByCharacterKey = useOnlineCharacterOwnersStore(
     (state) => state.ownersByCharacterKey,
   );
-  const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
-  const selectedGuildId = getSelectedLootlogGuildId(guildIdByCharId);
+  const selectedGuildId = useSelectedLootlogGuildId();
 
   useEffect(() => {
     return characterTooltipTransforms.register(

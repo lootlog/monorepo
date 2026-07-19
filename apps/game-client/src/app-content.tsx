@@ -31,10 +31,12 @@ import { usePartyReadyRoomSocket } from "@/features/party-finder/hooks/use-party
 import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-ready-room-sync";
 import { useTimerSettingsMutationsRegistry } from "@/hooks/use-timer-settings-mutations-registry";
 import { useTimerSettingsSync } from "@/hooks/use-timer-settings-sync";
+import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-lootlog-guild";
 
 export const AppContent = () => {
   useGameEventHandlers();
   useInit();
+  useSelectedLootlogGuildInitialization();
   useGameAccountPreferencesSync();
   const mapPingHotkeyHandlers = useMapPings();
   useAirTags();
