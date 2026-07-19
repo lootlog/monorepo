@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { normalizePresence } from "./online-players-presence";
+import { describe, expect, it, vi } from "vitest";
+import {
+  normalizePresence,
+  requestServerPresence,
+} from "./online-players-presence";
 
 describe("online players presence", () => {
   it("preserves Margonem verification from player presence payloads", () => {
@@ -29,5 +32,22 @@ describe("online players presence", () => {
         }),
       }),
     );
+  });
+
+  it("uses an acknowledgement timeout and retries once", async () => {
+    const response = { status: "success" as const, players: {} };
+    const emitWithAck = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("ack timeout"))
+      .mockResolvedValueOnce(response);
+    const timeout = vi.fn(() => ({ emitWithAck }));
+
+    await expect(
+      requestServerPresence({ timeout }, "guild-1", "tempest"),
+    ).resolves.toEqual(response);
+    expect(timeout).toHaveBeenCalledTimes(2);
+    expect(timeout).toHaveBeenNthCalledWith(1, 5_000);
+    expect(timeout).toHaveBeenNthCalledWith(2, 5_000);
+    expect(emitWithAck).toHaveBeenCalledTimes(2);
   });
 });

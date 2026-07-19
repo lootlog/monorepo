@@ -9,18 +9,17 @@ import {
   requestServerPresence,
   type PlayerPresenceUpdatePayload,
 } from "@/lib/online-players-presence";
+import {
+  getSelectedLootlogGuildId,
+  isConcreteLootlogGuildId,
+} from "@/lib/selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
-import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
+import {
+  type GuildMembersByUserId,
+  useOnlineCharacterOwnersStore,
+} from "@/store/online-character-owners.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useEffect, useRef } from "react";
-
-function getCurrentCharacterId(): string | null {
-  try {
-    return String(Game.hero.id);
-  } catch {
-    return null;
-  }
-}
 
 function getCurrentWorld(): string | undefined {
   try {
@@ -30,17 +29,57 @@ function getCurrentWorld(): string | undefined {
   }
 }
 
+function hydrateOnlineCharacterOwners({
+  guildId,
+  guildMembersByUserId,
+  requestIdRef,
+  socket,
+  world,
+}: {
+  guildId: string;
+  guildMembersByUserId: GuildMembersByUserId;
+  requestIdRef: { current: number };
+  socket: Parameters<typeof requestServerPresence>[0];
+  world: string;
+}): void {
+  const currentRequestId = ++requestIdRef.current;
+  useOnlineCharacterOwnersStore.getState().setLoading();
+
+  void requestServerPresence(socket, guildId, world)
+    .then((response) => {
+      if (requestIdRef.current !== currentRequestId) return;
+      if (!response) {
+        useOnlineCharacterOwnersStore.getState().setError();
+        return;
+      }
+      if (response.status === "forbidden") {
+        useOnlineCharacterOwnersStore.getState().setForbidden();
+        return;
+      }
+
+      useOnlineCharacterOwnersStore
+        .getState()
+        .setPresenceResponse(
+          normalizePresenceResponse(response.players),
+          guildMembersByUserId,
+        );
+    })
+    .catch(() => {
+      if (requestIdRef.current === currentRequestId) {
+        useOnlineCharacterOwnersStore.getState().setError();
+      }
+    });
+}
+
 export function useOnlineCharacterOwners(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
+  const ownersStatus = useOnlineCharacterOwnersStore((state) => state.status);
   const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
   const worldByGuildId = useSettingsStore((state) => state.worldByGuildId);
-  const currentCharacterId = getCurrentCharacterId();
-  const selectedGuildId = currentCharacterId
-    ? guildIdByCharId[currentCharacterId]
-    : undefined;
-  const selectedWorld = selectedGuildId
+  const selectedGuildId = getSelectedLootlogGuildId(guildIdByCharId);
+  const selectedWorld = isConcreteLootlogGuildId(selectedGuildId)
     ? (worldByGuildId[selectedGuildId] ?? getCurrentWorld())
     : undefined;
   const { connected, joined, socket } = useSocket();
@@ -48,10 +87,7 @@ export function useOnlineCharacterOwners(): void {
     { guildId: selectedGuildId ?? "" },
     {
       query: {
-        enabled:
-          isShiftPressed &&
-          Boolean(selectedGuildId) &&
-          selectedGuildId !== "all",
+        enabled: isConcreteLootlogGuildId(selectedGuildId),
         select: mapGuildMembersByUserId,
       },
     },
@@ -60,6 +96,7 @@ export function useOnlineCharacterOwners(): void {
   const selectedGuildIdRef = useRef(selectedGuildId);
   const selectedWorldRef = useRef(selectedWorld);
   const requestIdRef = useRef(0);
+  const previousShiftPressedRef = useRef(isShiftPressed);
 
   useEffect(() => {
     guildMembersByUserIdRef.current = guildMembersByUserId;
@@ -74,12 +111,40 @@ export function useOnlineCharacterOwners(): void {
   }, [selectedGuildId, selectedWorld]);
 
   useEffect(() => {
+    if (
+      !joined ||
+      !connected ||
+      !socket ||
+      !selectedGuildId ||
+      selectedGuildId === "all" ||
+      !selectedWorld
+    ) {
+      requestIdRef.current += 1;
+      useOnlineCharacterOwnersStore.getState().clearOwners();
+      return;
+    }
+
     useOnlineCharacterOwnersStore.getState().clearOwners();
-  }, [selectedGuildId, selectedWorld]);
+    hydrateOnlineCharacterOwners({
+      guildId: selectedGuildId,
+      guildMembersByUserId: guildMembersByUserIdRef.current,
+      requestIdRef,
+      socket,
+      world: selectedWorld,
+    });
+
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [connected, joined, selectedGuildId, selectedWorld, socket]);
 
   useEffect(() => {
+    const wasShiftPressed = previousShiftPressedRef.current;
+    previousShiftPressedRef.current = isShiftPressed;
     if (
       !isShiftPressed ||
+      wasShiftPressed ||
+      ownersStatus !== "error" ||
       !joined ||
       !connected ||
       !socket ||
@@ -90,32 +155,18 @@ export function useOnlineCharacterOwners(): void {
       return;
     }
 
-    const currentRequestId = ++requestIdRef.current;
-
-    void requestServerPresence(socket, selectedGuildId, selectedWorld)
-      .then((response) => {
-        if (requestIdRef.current !== currentRequestId) return;
-        if (!response || response.status === "forbidden") {
-          useOnlineCharacterOwnersStore.getState().clearOwners();
-          return;
-        }
-
-        useOnlineCharacterOwnersStore
-          .getState()
-          .setPresenceResponse(
-            normalizePresenceResponse(response.players),
-            guildMembersByUserIdRef.current,
-          );
-      })
-      .catch(() => {
-        if (requestIdRef.current === currentRequestId) {
-          useOnlineCharacterOwnersStore.getState().clearOwners();
-        }
-      });
+    hydrateOnlineCharacterOwners({
+      guildId: selectedGuildId,
+      guildMembersByUserId: guildMembersByUserIdRef.current,
+      requestIdRef,
+      socket,
+      world: selectedWorld,
+    });
   }, [
     connected,
     isShiftPressed,
     joined,
+    ownersStatus,
     selectedGuildId,
     selectedWorld,
     socket,

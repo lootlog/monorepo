@@ -9,7 +9,6 @@ import {
   toUserLootlogConfigResponse,
   type UserLootlogPlayersCatchingGuildsRequest,
   type UserLootlogPlayersCatchingGuildsResponse,
-  type UserLootlogPlayerCatchingGuildsResponse,
 } from "src/shared/dto/user-lootlog-config-response.dto";
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 60;
@@ -36,18 +35,6 @@ export class UserLootlogConfigService {
     return `user-lootlog-config:${discordId}:character:${accountId}:${characterId}`;
   }
 
-  private getPlayersCatchingGuildsCacheKey(
-    discordId: string,
-    players: Array<{ userId: string; accountId: string; characterId: string }>,
-  ) {
-    return [
-      "user-lootlog-config",
-      discordId,
-      "players-catching",
-      Buffer.from(this.stableSerialize(players)).toString("base64url"),
-    ].join(":");
-  }
-
   private async invalidateUserLootlogConfig(discordId: string) {
     try {
       await this.redis.deleteByPattern(
@@ -56,27 +43,6 @@ export class UserLootlogConfigService {
     } catch (error) {
       this.logger.warn("Failed to invalidate user lootlog config cache", error);
     }
-  }
-
-  private stableSerialize(value: unknown): string {
-    if (Array.isArray(value)) {
-      return `[${value.map((entry) => this.stableSerialize(entry)).join(",")}]`;
-    }
-
-    if (value && typeof value === "object") {
-      const entries = Object.entries(value)
-        .filter(([, entry]) => entry !== undefined)
-        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
-
-      return `{${entries
-        .map(
-          ([key, entry]) =>
-            `${JSON.stringify(key)}:${this.stableSerialize(entry)}`,
-        )
-        .join(",")}}`;
-    }
-
-    return JSON.stringify(value);
   }
 
   private async getWritableLootlogGuildIds(discordId: string) {
@@ -237,26 +203,6 @@ export class UserLootlogConfigService {
     };
   }
 
-  async getPlayerCatchingGuilds(
-    discordId: string,
-    userId: string,
-    accountId: string,
-    characterId: string,
-  ): Promise<UserLootlogPlayerCatchingGuildsResponse> {
-    const response = await this.getPlayersCatchingGuilds(discordId, {
-      players: [{ userId, accountId, characterId }],
-    });
-
-    return (
-      response.players[0] ?? {
-        userId,
-        accountId,
-        characterId,
-        guilds: [],
-      }
-    );
-  }
-
   getPlayersCatchingGuilds(
     discordId: string,
     data: UserLootlogPlayersCatchingGuildsRequest,
@@ -275,13 +221,7 @@ export class UserLootlogConfigService {
 
     const players = [...playersByKey.values()];
 
-    return this.redis.getOrSetJsonBestEffort({
-      key: this.getPlayersCatchingGuildsCacheKey(discordId, players),
-      ttlSeconds: USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS,
-      onError: (error) =>
-        this.logger.warn("User lootlog players cache unavailable", error),
-      factory: () => this.getPlayersCatchingGuildsUncached(discordId, players),
-    });
+    return this.getPlayersCatchingGuildsUncached(discordId, players);
   }
 
   async createOrUpdateLootlogCharacterConfig(

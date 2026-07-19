@@ -5,6 +5,10 @@ import type {
 } from "@/lib/online-players-presence";
 import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
 
+export type GuildMembersByUserId =
+  | Record<string, MemberSummaryResponseDtoOutput>
+  | undefined;
+
 export type OnlineCharacterOwner = {
   accountId: string;
   characterId: string;
@@ -13,30 +17,33 @@ export type OnlineCharacterOwner = {
   userId: string;
 };
 
+export type OnlineCharacterOwnersStatus =
+  | "idle"
+  | "loading"
+  | "success"
+  | "error"
+  | "forbidden";
+
 type OnlineCharacterOwnersState = {
   ownersByCharacterKey: Record<string, OnlineCharacterOwner | undefined>;
+  status: OnlineCharacterOwnersStatus;
   clearOwners: () => void;
   getOwner: (
     accountId: string,
     characterId: string,
   ) => OnlineCharacterOwner | undefined;
   removePresence: (presence: PlayerPresence) => void;
-  setGuildMembers: (
-    guildMembersByUserId:
-      | Record<string, MemberSummaryResponseDtoOutput>
-      | undefined,
-  ) => void;
+  setError: () => void;
+  setForbidden: () => void;
+  setGuildMembers: (guildMembersByUserId: GuildMembersByUserId) => void;
   setPresenceResponse: (
     response: PlayerPresenceResponse,
-    guildMembersByUserId?:
-      | Record<string, MemberSummaryResponseDtoOutput>
-      | undefined,
+    guildMembersByUserId?: GuildMembersByUserId,
   ) => void;
+  setLoading: () => void;
   upsertPresence: (
     presence: PlayerPresence,
-    guildMembersByUserId?:
-      | Record<string, MemberSummaryResponseDtoOutput>
-      | undefined,
+    guildMembersByUserId?: GuildMembersByUserId,
   ) => void;
 };
 
@@ -49,9 +56,7 @@ export function getOnlineCharacterOwnerKey(
 
 function toOwner(
   presence: PlayerPresence,
-  guildMembersByUserId?:
-    | Record<string, MemberSummaryResponseDtoOutput>
-    | undefined,
+  guildMembersByUserId?: GuildMembersByUserId,
 ): OnlineCharacterOwner | null {
   const player = presence.player;
   if (!player?.accountId || !player.characterId) {
@@ -69,9 +74,7 @@ function toOwner(
 
 function withGuildMemberNames(
   ownersByCharacterKey: Record<string, OnlineCharacterOwner | undefined>,
-  guildMembersByUserId:
-    | Record<string, MemberSummaryResponseDtoOutput>
-    | undefined,
+  guildMembersByUserId: GuildMembersByUserId,
 ) {
   return Object.fromEntries(
     Object.entries(ownersByCharacterKey).map(([key, owner]) => [
@@ -89,7 +92,8 @@ function withGuildMemberNames(
 export const useOnlineCharacterOwnersStore =
   create<OnlineCharacterOwnersState>()((set, get) => ({
     ownersByCharacterKey: {},
-    clearOwners: () => set({ ownersByCharacterKey: {} }),
+    status: "idle",
+    clearOwners: () => set({ ownersByCharacterKey: {}, status: "idle" }),
     getOwner: (accountId, characterId) =>
       get().ownersByCharacterKey[
         getOnlineCharacterOwnerKey(accountId, characterId)
@@ -124,6 +128,8 @@ export const useOnlineCharacterOwnersStore =
           state.ownersByCharacterKey;
         return { ownersByCharacterKey };
       }),
+    setError: () => set({ ownersByCharacterKey: {}, status: "error" }),
+    setForbidden: () => set({ ownersByCharacterKey: {}, status: "forbidden" }),
     setGuildMembers: (guildMembersByUserId) =>
       set((state) => ({
         ownersByCharacterKey: withGuildMemberNames(
@@ -143,7 +149,9 @@ export const useOnlineCharacterOwnersStore =
               owner,
             ]),
         ),
+        status: "success",
       }),
+    setLoading: () => set({ status: "loading" }),
     upsertPresence: (presence, guildMembersByUserId) =>
       set((state) => {
         const owner = toOwner(presence, guildMembersByUserId);
