@@ -22,6 +22,7 @@ describe("usePlayersPresence", () => {
     off: vi.fn((event: string) => {
       delete eventHandlers[event];
     }),
+    timeout: vi.fn(() => mockSocket),
   };
 
   beforeEach(() => {

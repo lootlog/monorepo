@@ -4,6 +4,7 @@ import type { Other } from "@lootlog/margonem/others";
 import {
   LOOTLOG_OTHER_GLOW_BLUE,
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
+  LOOTLOG_OTHER_GLOW_UNKNOWN,
   lootlogOtherGlowManager,
 } from "@/lib/lootlog-other-glow-manager";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
@@ -147,13 +148,16 @@ describe("useOtherCatchingGuildGlow", () => {
     await waitFor(() => {
       expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
     });
-    expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith({
-      players: Object.values(others).map((other) => ({
-        userId: "player-discord",
-        accountId: String(other.d.account),
-        characterId: String(other.d.id),
-      })),
-    });
+    expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith(
+      {
+        players: Object.values(others).map((other) => ({
+          userId: "player-discord",
+          accountId: String(other.d.account),
+          characterId: String(other.d.id),
+        })),
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
 
     await waitFor(() => {
       expect(lootlogOtherGlowManager.getGlowCount()).toBe(50);
@@ -208,7 +212,7 @@ describe("useOtherCatchingGuildGlow", () => {
     ).toHaveLength(25);
   });
 
-  it("stops fetching further batches after a batch error", async () => {
+  it("finishes every queued batch after an earlier batch error", async () => {
     const others = Object.fromEntries(
       Array.from({ length: 125 }, (_, index) => {
         const characterId = String(index + 1);
@@ -231,7 +235,12 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
+      expect(
+        useCharacterTooltipCatchingGuildsStore.getState().entriesByKey[
+          "9822301:125"
+        ]?.status,
+      ).toBe("error");
     });
   });
 
@@ -243,6 +252,24 @@ describe("useOtherCatchingGuildGlow", () => {
 
     renderHook(() => useOtherCatchingGuildGlow());
 
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
+    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
+    expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
+  });
+
+  it("does not run or suppress native glow when all Discords are selected", () => {
+    const other = createOther("1");
+    useOthersStore.getState().setMany({ "1": other });
+    setOnlineOwners({ "1": other });
+    useSettingsStore.setState({
+      guildIdByCharId: { "hero-1": "all" },
+    });
+
+    renderHook(() => useOtherCatchingGuildGlow());
     act(() => {
       useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     });
@@ -269,7 +296,9 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
-    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
+    expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
+      LOOTLOG_OTHER_GLOW_UNKNOWN,
+    );
   });
 
   it("requests visible characters when online owners become known after shift", async () => {
@@ -306,16 +335,101 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith({
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith(
+        {
+          players: [
+            {
+              userId: "player-discord",
+              accountId: String(other.d.account),
+              characterId: String(other.d.id),
+            },
+          ],
+        },
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+    });
+  });
+
+  it("finishes an in-flight batch when another player appears", async () => {
+    const firstOther = createOther("1");
+    const secondOther = createOther("2");
+    let resolveFirstBatch:
+      | ((value: {
+          players: Array<{
+            accountId: string;
+            characterId: string;
+            guilds: Array<{ id: string; name: string }>;
+            userId: string;
+          }>;
+        }) => void)
+      | undefined;
+
+    useOthersStore.getState().setMany({ "1": firstOther });
+    setOnlineOwners({ "1": firstOther, "2": secondOther });
+    useSettingsStore.setState({
+      guildIdByCharId: {
+        "hero-1": "guild-blue",
+      },
+    });
+    mocks.getPlayersCatchingGuilds
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirstBatch = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        ({ players }: { players: Array<{ characterId: string }> }) =>
+          Promise.resolve({
+            players: players.map((player) => ({
+              userId: "player-discord",
+              accountId: "9822301",
+              characterId: player.characterId,
+              guilds: [],
+            })),
+          }),
+      );
+
+    renderHook(() => useOtherCatchingGuildGlow());
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    await waitFor(() => {
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
+    });
+
+    act(() => {
+      useOthersStore.getState().setMany({ "1": firstOther, "2": secondOther });
+    });
+
+    act(() => {
+      resolveFirstBatch?.({
         players: [
           {
             userId: "player-discord",
-            accountId: String(other.d.account),
-            characterId: String(other.d.id),
+            accountId: "9822301",
+            characterId: "1",
+            guilds: [{ id: "guild-blue", name: "Blue Guild" }],
           },
         ],
       });
     });
+
+    await waitFor(() => {
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
+    });
+
+    await waitFor(() => {
+      expect(lootlogOtherGlowManager.getGlowCount()).toBe(2);
+    });
+    expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
+      LOOTLOG_OTHER_GLOW_BLUE,
+    );
+    expect(lootlogOtherGlowManager.getGlowColor("2")).toBe(
+      LOOTLOG_OTHER_GLOW_RED_ORANGE,
+    );
   });
 
   it("clears glows when shift is released", async () => {

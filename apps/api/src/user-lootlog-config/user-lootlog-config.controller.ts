@@ -24,7 +24,6 @@ import {
   UserLootlogConfigAccountResponseDto,
   UserLootlogPlayersCatchingGuildsRequestDto,
   UserLootlogPlayersCatchingGuildsResponseDto,
-  UserLootlogPlayerCatchingGuildsResponseDto,
   UserLootlogConfigResponseDto,
 } from "src/shared/dto/user-lootlog-config-response.dto";
 
@@ -60,46 +59,6 @@ export class UserLootlogConfigController {
     return this.userLootlogConfigService.getLootlogAccountConfig(
       discordId,
       accountId,
-    );
-  }
-
-  @Get("players/:userId/:accountId/:characterId/catching-guilds")
-  @ApiOperation({
-    summary: "Get visible player catching guilds",
-    description:
-      "Retrieve shared accessible Lootlog guilds where a player has catching enabled",
-  })
-  @ApiParam({
-    name: "userId",
-    description: "Hovered player Discord ID",
-    example: "123456789012345678",
-  })
-  @ApiParam({
-    name: "accountId",
-    description: "Hovered player account ID",
-    example: "9822301",
-  })
-  @ApiParam({
-    name: "characterId",
-    description: "Hovered player character ID",
-    example: "617",
-  })
-  @ZodResponse({
-    status: 200,
-    description: "Visible player catching guilds",
-    type: UserLootlogPlayerCatchingGuildsResponseDto,
-  })
-  getPlayerCatchingGuilds(
-    @DiscordId() discordId: string,
-    @Param("userId") userId: string,
-    @Param("accountId") accountId: string,
-    @Param("characterId") characterId: string,
-  ) {
-    return this.userLootlogConfigService.getPlayerCatchingGuilds(
-      discordId,
-      userId,
-      accountId,
-      characterId,
     );
   }
 
