@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Other } from "@lootlog/margonem/others";
-import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import {
+  getOtherCatchingGuildsTarget,
+  useCharacterTooltipCatchingGuildsStore,
+} from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { appendCatchingGuildsTooltipSection } from "./catching-guilds";
 
 const createOther = (): Other =>
@@ -49,10 +53,26 @@ function setOnlineOwner(guildMemberName?: string): void {
   );
 }
 
+function getTarget() {
+  const target = getOtherCatchingGuildsTarget(createOther());
+  if (!target) {
+    throw new Error("Expected an online character owner");
+  }
+
+  return target;
+}
+
 describe("appendCatchingGuildsTooltipSection", () => {
   beforeEach(() => {
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOnlineCharacterOwnersStore.getState().clearOwners();
+    useSettingsStore.setState({
+      guildIdByCharId: { "hero-1": "guild-1" },
+    });
+    Object.defineProperty(window, "Engine", {
+      configurable: true,
+      value: { hero: { d: { id: "hero-1" } } },
+    });
   });
 
   it("does not extend non-other tooltips", () => {
@@ -69,6 +89,22 @@ describe("appendCatchingGuildsTooltipSection", () => {
   });
 
   it("does not extend other tooltips while shift is not pressed", () => {
+    expect(
+      appendCatchingGuildsTooltipSection({
+        baseHtml: "<div>Other</div>",
+        character: createOther(),
+        currentHtml: "<div>Other</div>",
+        kind: "other",
+      }),
+    ).toBe("<div>Other</div>");
+  });
+
+  it("does not extend tooltips when all Discords are selected", () => {
+    useSettingsStore.setState({
+      guildIdByCharId: { "hero-1": "all" },
+    });
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+
     expect(
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
@@ -97,7 +133,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
     const store = useCharacterTooltipCatchingGuildsStore.getState();
     store.setShiftPressed(true);
     setOnlineOwner();
-    store.setLoading("player-discord:9822301:617");
+    store.setLoading(getTarget());
 
     expect(
       appendCatchingGuildsTooltipSection({
@@ -113,10 +149,14 @@ describe("appendCatchingGuildsTooltipSection", () => {
     const store = useCharacterTooltipCatchingGuildsStore.getState();
     store.setShiftPressed(true);
     setOnlineOwner("Member <One>");
-    store.setSuccess("player-discord:9822301:617", [
-      { id: "guild-1", name: "Alpha <One>" },
-      { id: "guild-2", name: "Beta & Co" },
-    ]);
+    store.setSuccess(
+      getTarget(),
+      [
+        { id: "guild-1", name: "Alpha <One>" },
+        { id: "guild-2", name: "Beta & Co" },
+      ],
+      Date.now(),
+    );
 
     const result = appendCatchingGuildsTooltipSection({
       baseHtml: "<div>Other</div>",
@@ -136,7 +176,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
     const store = useCharacterTooltipCatchingGuildsStore.getState();
     store.setShiftPressed(true);
     setOnlineOwner();
-    store.setSuccess("player-discord:9822301:617", []);
+    store.setSuccess(getTarget(), [], Date.now());
 
     expect(
       appendCatchingGuildsTooltipSection({
@@ -165,7 +205,21 @@ describe("appendCatchingGuildsTooltipSection", () => {
     const store = useCharacterTooltipCatchingGuildsStore.getState();
     store.setShiftPressed(true);
     setOnlineOwner();
-    store.setError("player-discord:9822301:617");
+    store.setError(getTarget());
+
+    expect(
+      appendCatchingGuildsTooltipSection({
+        baseHtml: "<div>Other</div>",
+        character: createOther(),
+        currentHtml: "<div>Other</div>",
+        kind: "other",
+      }),
+    ).toContain("Nie udało się pobrać serwerów");
+  });
+
+  it("shows an error state when the presence snapshot fails", () => {
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    useOnlineCharacterOwnersStore.getState().setError();
 
     expect(
       appendCatchingGuildsTooltipSection({

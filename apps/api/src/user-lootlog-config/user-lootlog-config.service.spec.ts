@@ -94,115 +94,50 @@ describe("UserLootlogConfigService", () => {
     });
   });
 
-  describe("getPlayerCatchingGuilds", () => {
-    it("returns only catching guilds where the requesting user has Lootlog access", async () => {
+  describe("getPlayersCatchingGuilds", () => {
+    it("reads every batch from current source data after another player changes configuration", async () => {
       mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
         { id: "guild1", name: "Alpha" },
-        { id: "guild2", name: "Beta" },
       ]);
-      mockPrismaService.userCharactersLootlogSettings.findMany.mockResolvedValue(
-        [
+      mockPrismaService.userCharactersLootlogSettings.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
           {
             userId: "player-discord",
             accountId: "account1",
             characterId: "character1",
-            catchingGuildIds: ["guild1", "guild3", "guild2", "guild2"],
+            catchingGuildIds: ["guild1"],
+          },
+        ]);
+      const request = {
+        players: [
+          {
+            userId: "player-discord",
+            accountId: "account1",
+            characterId: "character1",
           },
         ],
-      );
+      };
 
-      const result = await service.getPlayerCatchingGuilds(
+      const beforeChange = await service.getPlayersCatchingGuilds(
         "viewer-discord",
-        "player-discord",
-        "account1",
-        "character1",
+        request,
       );
-
-      expect(
-        mockGuildsService.getGuildsForRequiredPermissions,
-      ).toHaveBeenCalledWith("viewer-discord", [Permission.LOOTLOG_ACCESS]);
-      expect(
-        mockPrismaService.userCharactersLootlogSettings.findMany,
-      ).toHaveBeenCalledWith({
-        where: {
-          OR: [
-            {
-              userId: "player-discord",
-              accountId: "account1",
-              characterId: "character1",
-            },
-          ],
-          catchingGuildIds: {
-            hasSome: ["guild1", "guild2"],
-          },
-        },
-        select: {
-          userId: true,
-          accountId: true,
-          characterId: true,
-          catchingGuildIds: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-      expect(result).toEqual({
-        userId: "player-discord",
-        accountId: "account1",
-        characterId: "character1",
-        guilds: [
-          { id: "guild1", name: "Alpha" },
-          { id: "guild2", name: "Beta" },
-        ],
-      });
-    });
-
-    it("returns the same empty response when the requester has no accessible Lootlog guilds", async () => {
-      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([]);
-
-      const result = await service.getPlayerCatchingGuilds(
+      const afterChange = await service.getPlayersCatchingGuilds(
         "viewer-discord",
-        "player-discord",
-        "account1",
-        "character1",
+        request,
       );
 
-      expect(result).toEqual({
-        userId: "player-discord",
-        accountId: "account1",
-        characterId: "character1",
-        guilds: [],
-      });
-      expect(
-        mockPrismaService.userCharactersLootlogSettings.findMany,
-      ).not.toHaveBeenCalled();
-    });
-
-    it("returns the same empty response when player config does not overlap accessible guilds", async () => {
-      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+      expect(beforeChange.players[0]?.guilds).toEqual([]);
+      expect(afterChange.players[0]?.guilds).toEqual([
         { id: "guild1", name: "Alpha" },
       ]);
-      mockPrismaService.userCharactersLootlogSettings.findMany.mockResolvedValue(
-        [],
-      );
-
-      const result = await service.getPlayerCatchingGuilds(
-        "viewer-discord",
-        "unknown-discord",
-        "unknown-account",
-        "unknown-character",
-      );
-
-      expect(result).toEqual({
-        userId: "unknown-discord",
-        accountId: "unknown-account",
-        characterId: "unknown-character",
-        guilds: [],
-      });
+      expect(mockRedisService.getOrSetJsonBestEffort).not.toHaveBeenCalled();
+      expect(
+        mockPrismaService.userCharactersLootlogSettings.findMany,
+      ).toHaveBeenCalledTimes(2);
     });
-  });
 
-  describe("getPlayersCatchingGuilds", () => {
     it("deduplicates requested players and returns only shared accessible guilds", async () => {
       mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
         { id: "guild1", name: "Alpha" },

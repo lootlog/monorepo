@@ -1291,44 +1291,6 @@ paths:
       summary: Create or update lootlog character configuration
       tags:
         - user-lootlog-config
-  /users/@me/lootlog-config/players/{userId}/{accountId}/{characterId}/catching-guilds:
-    get:
-      description: Retrieve shared accessible Lootlog guilds where a player has catching enabled
-      operationId: UserLootlogConfigController_getPlayerCatchingGuilds
-      parameters:
-        - name: userId
-          required: true
-          in: path
-          description: Hovered player Discord ID
-          schema:
-            example: "123456789012345678"
-            type: string
-        - name: accountId
-          required: true
-          in: path
-          description: Hovered player account ID
-          schema:
-            example: "9822301"
-            type: string
-        - name: characterId
-          required: true
-          in: path
-          description: Hovered player character ID
-          schema:
-            example: "617"
-            type: string
-      responses:
-        "200":
-          description: Visible player catching guilds
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserLootlogPlayerCatchingGuildsResponseDto_Output"
-      security:
-        - bearer: []
-      summary: Get visible player catching guilds
-      tags:
-        - user-lootlog-config
   /users/@me/lootlog-config/players/catching-guilds/batch:
     post:
       description: Retrieve shared accessible Lootlog guilds where visible players have catching enabled
@@ -8555,32 +8517,6 @@ components:
           - accountId
           - characterId
           - catchingGuildIds
-    UserLootlogPlayerCatchingGuildsResponseDto_Output:
-      type: object
-      properties:
-        userId:
-          type: string
-        accountId:
-          type: string
-        characterId:
-          type: string
-        guilds:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              name:
-                type: string
-            required:
-              - id
-              - name
-      required:
-        - userId
-        - accountId
-        - characterId
-        - guilds
     UserLootlogPlayersCatchingGuildsRequestDto:
       type: object
       properties:

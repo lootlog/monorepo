@@ -1,11 +1,15 @@
 import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { characterTooltipCatchingGuildsCoordinator } from "@/lib/character-tooltip-catching-guilds-coordinator";
 import { appendCatchingGuildsTooltipSection } from "@/lib/margonem-tooltips/catching-guilds";
 import { refreshActiveOtherCanvasTooltip } from "@/lib/margonem-tooltips/patcher";
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
-import { fetchSingleCatchingGuilds } from "@/lib/character-tooltip-catching-guilds-cache";
+import {
+  getSelectedLootlogGuildId,
+  isConcreteLootlogGuildId,
+} from "@/lib/selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
+import { useSettingsStore } from "@/store/settings.store";
 
 function refreshActiveOtherTooltip(): void {
   refreshActiveOtherCanvasTooltip();
@@ -35,7 +39,8 @@ export function useCharacterTooltipCatchingGuilds(): void {
   const ownersByCharacterKey = useOnlineCharacterOwnersStore(
     (state) => state.ownersByCharacterKey,
   );
-  const queryClient = useQueryClient();
+  const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
+  const selectedGuildId = getSelectedLootlogGuildId(guildIdByCharId);
 
   useEffect(() => {
     return characterTooltipTransforms.register(
@@ -86,21 +91,18 @@ export function useCharacterTooltipCatchingGuilds(): void {
   }, [activeOther, ownersByCharacterKey]);
 
   useEffect(() => {
-    if (!isShiftPressed || !activeOther || !activeTarget) return;
-
-    const state = useCharacterTooltipCatchingGuildsStore.getState();
-    const entry = state.entriesByKey[activeTarget.key];
-    if (entry?.status === "loading" || entry?.status === "success") {
+    if (
+      !isShiftPressed ||
+      !activeOther ||
+      !activeTarget ||
+      !isConcreteLootlogGuildId(selectedGuildId)
+    ) {
       return;
     }
 
-    const fetchPromise = fetchSingleCatchingGuilds(queryClient, activeTarget);
+    characterTooltipCatchingGuildsCoordinator.prioritize(activeTarget);
     refreshActiveOtherTooltipIfCurrent(activeTarget.key);
-
-    void fetchPromise.finally(() => {
-      refreshActiveOtherTooltipIfCurrent(activeTarget.key);
-    });
-  }, [activeOther, activeTarget, isShiftPressed, queryClient]);
+  }, [activeOther, activeTarget, isShiftPressed, selectedGuildId]);
 
   useEffect(() => {
     if (!isShiftPressed || !activeTarget || !activeEntry) return;

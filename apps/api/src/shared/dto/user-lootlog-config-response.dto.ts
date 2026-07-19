@@ -38,10 +38,6 @@ export type UserLootlogConfigResponse = z.infer<
   typeof UserLootlogConfigResponseSchema
 >;
 
-export type UserLootlogPlayerCatchingGuildsResponse = z.infer<
-  typeof UserLootlogPlayerCatchingGuildsResponseSchema
->;
-
 export type UserLootlogPlayersCatchingGuildsRequest = z.infer<
   typeof UserLootlogPlayersCatchingGuildsRequestSchema
 >;
@@ -67,10 +63,6 @@ export class UserLootlogConfigResponseDto extends createZodDto(
 
 export class UserLootlogConfigAccountResponseDto extends createZodDto(
   z.record(z.string(), UserLootlogConfigResponseSchema),
-) {}
-
-export class UserLootlogPlayerCatchingGuildsResponseDto extends createZodDto(
-  UserLootlogPlayerCatchingGuildsResponseSchema,
 ) {}
 
 export class UserLootlogPlayersCatchingGuildsRequestDto extends createZodDto(
