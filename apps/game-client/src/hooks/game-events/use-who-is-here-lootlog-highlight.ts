@@ -2,17 +2,14 @@ import type { Other } from "@lootlog/margonem/others";
 import { useEffect, useRef, useState } from "react";
 import { getLootlogOtherGlowColor } from "@/lib/lootlog-other-glow-manager";
 import { patchOtherCharacterTooltip } from "@/lib/margonem-tooltips/patcher";
-import {
-  getSelectedLootlogGuildId,
-  isConcreteLootlogGuildId,
-} from "@/lib/selected-lootlog-guild";
+import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {
   getOtherCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
-import { useSettingsStore } from "@/store/settings.store";
 
 const HIGHLIGHT_CLASS = "ll-who-is-here-lootlog-highlight";
 const STYLE_ELEMENT_ID = "ll-who-is-here-lootlog-style";
@@ -162,12 +159,11 @@ export function useWhoIsHereLootlogHighlight(): void {
   const activeTarget = useCharacterTooltipCatchingGuildsStore(
     (state) => state.activeTarget,
   );
-  const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
   const othersById = useOthersStore((state) => state.othersById);
   const ownersByCharacterKey = useOnlineCharacterOwnersStore(
     (state) => state.ownersByCharacterKey,
   );
-  const selectedGuildId = getSelectedLootlogGuildId(guildIdByCharId);
+  const selectedGuildId = useSelectedLootlogGuildId();
 
   useEffect(() => {
     const cleanupStyle = installStyle();
