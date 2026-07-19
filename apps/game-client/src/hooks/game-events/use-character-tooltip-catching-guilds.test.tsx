@@ -1,22 +1,24 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReactNode } from "react";
 import type { Other } from "@lootlog/margonem/others";
-import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import {
+  getOtherCatchingGuildsTarget,
+  useCharacterTooltipCatchingGuildsStore,
+} from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 
 const mocks = vi.hoisted(() => ({
-  getPlayerCatchingGuilds: vi.fn(),
+  getPlayersCatchingGuilds: vi.fn(),
   refreshActiveOtherCanvasTooltip: vi.fn(),
 }));
 
 vi.mock(
   "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config",
   () => ({
-    userLootlogConfigControllerGetPlayerCatchingGuilds:
-      mocks.getPlayerCatchingGuilds,
+    userLootlogConfigControllerGetPlayersCatchingGuilds:
+      mocks.getPlayersCatchingGuilds,
   }),
 );
 
@@ -25,14 +27,6 @@ vi.mock("@/lib/margonem-tooltips/patcher", () => ({
 }));
 
 import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
-
-function createWrapper(queryClient: QueryClient) {
-  return function TestWrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-  };
-}
 
 function createOther(): Other {
   const other = {
@@ -72,34 +66,34 @@ function setOnlineOwner(characterId = "617"): void {
 }
 
 describe("useCharacterTooltipCatchingGuilds", () => {
-  let queryClient: QueryClient;
-
   beforeEach(() => {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
     characterTooltipTransforms.clear();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOnlineCharacterOwnersStore.getState().clearOwners();
-    mocks.getPlayerCatchingGuilds.mockReset();
+    useSettingsStore.setState({
+      guildIdByCharId: { "hero-1": "guild-1" },
+    });
+    Object.defineProperty(window, "Engine", {
+      configurable: true,
+      value: { hero: { d: { id: "hero-1" } } },
+    });
+    mocks.getPlayersCatchingGuilds.mockReset();
     mocks.refreshActiveOtherCanvasTooltip.mockReset();
   });
 
   it("fetches catching guilds on shift for the active other and caches the result", async () => {
-    mocks.getPlayerCatchingGuilds.mockResolvedValue({
-      userId: "player-discord",
-      accountId: "9822301",
-      characterId: "617",
-      guilds: [{ id: "guild-1", name: "Alpha" }],
+    mocks.getPlayersCatchingGuilds.mockResolvedValue({
+      players: [
+        {
+          userId: "player-discord",
+          accountId: "9822301",
+          characterId: "617",
+          guilds: [{ id: "guild-1", name: "Alpha" }],
+        },
+      ],
     });
 
-    renderHook(() => useCharacterTooltipCatchingGuilds(), {
-      wrapper: createWrapper(queryClient),
-    });
+    renderHook(() => useCharacterTooltipCatchingGuilds());
 
     const other = createOther();
     act(() => {
@@ -109,21 +103,25 @@ describe("useCharacterTooltipCatchingGuilds", () => {
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayerCatchingGuilds).toHaveBeenCalledWith({
-        userId: "player-discord",
-        accountId: "9822301",
-        characterId: "617",
-      });
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith(
+        {
+          players: [
+            {
+              userId: "player-discord",
+              accountId: "9822301",
+              characterId: "617",
+            },
+          ],
+        },
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
     });
     await waitFor(() => {
       expect(
         useCharacterTooltipCatchingGuildsStore.getState().entriesByKey[
-          "player-discord:9822301:617"
-        ],
-      ).toEqual({
-        guilds: [{ id: "guild-1", name: "Alpha" }],
-        status: "success",
-      });
+          "9822301:617"
+        ]?.status,
+      ).toBe("success");
     });
 
     act(() => {
@@ -131,15 +129,13 @@ describe("useCharacterTooltipCatchingGuilds", () => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));
     });
 
-    expect(mocks.getPlayerCatchingGuilds).toHaveBeenCalledOnce();
+    expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
   });
 
   it("stores an error state when the request fails", async () => {
-    mocks.getPlayerCatchingGuilds.mockRejectedValue(new Error("broken"));
+    mocks.getPlayersCatchingGuilds.mockRejectedValue(new Error("broken"));
 
-    renderHook(() => useCharacterTooltipCatchingGuilds(), {
-      wrapper: createWrapper(queryClient),
-    });
+    renderHook(() => useCharacterTooltipCatchingGuilds());
 
     act(() => {
       setOnlineOwner();
@@ -152,29 +148,35 @@ describe("useCharacterTooltipCatchingGuilds", () => {
     await waitFor(() => {
       expect(
         useCharacterTooltipCatchingGuildsStore.getState().entriesByKey[
-          "player-discord:9822301:617"
+          "9822301:617"
         ]?.status,
       ).toBe("error");
     });
   });
 
   it("fetches again when the same other object points at a different character", async () => {
-    mocks.getPlayerCatchingGuilds.mockResolvedValueOnce({
-      userId: "player-discord",
-      accountId: "9822301",
-      characterId: "617",
-      guilds: [{ id: "guild-1", name: "Alpha" }],
+    mocks.getPlayersCatchingGuilds.mockResolvedValueOnce({
+      players: [
+        {
+          userId: "player-discord",
+          accountId: "9822301",
+          characterId: "617",
+          guilds: [{ id: "guild-1", name: "Alpha" }],
+        },
+      ],
     });
-    mocks.getPlayerCatchingGuilds.mockResolvedValueOnce({
-      userId: "player-discord",
-      accountId: "9822301",
-      characterId: "30016",
-      guilds: [{ id: "guild-2", name: "Beta" }],
+    mocks.getPlayersCatchingGuilds.mockResolvedValueOnce({
+      players: [
+        {
+          userId: "player-discord",
+          accountId: "9822301",
+          characterId: "30016",
+          guilds: [{ id: "guild-2", name: "Beta" }],
+        },
+      ],
     });
 
-    renderHook(() => useCharacterTooltipCatchingGuilds(), {
-      wrapper: createWrapper(queryClient),
-    });
+    renderHook(() => useCharacterTooltipCatchingGuilds());
 
     const other = createOther();
     act(() => {
@@ -184,10 +186,14 @@ describe("useCharacterTooltipCatchingGuilds", () => {
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayerCatchingGuilds).toHaveBeenCalledWith({
-        userId: "player-discord",
-        accountId: "9822301",
-        characterId: "617",
+      expect(mocks.getPlayersCatchingGuilds.mock.calls[0]?.[0]).toEqual({
+        players: [
+          {
+            userId: "player-discord",
+            accountId: "9822301",
+            characterId: "617",
+          },
+        ],
       });
     });
 
@@ -198,19 +204,21 @@ describe("useCharacterTooltipCatchingGuilds", () => {
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayerCatchingGuilds).toHaveBeenCalledWith({
-        userId: "player-discord",
-        accountId: "9822301",
-        characterId: "30016",
+      expect(mocks.getPlayersCatchingGuilds.mock.calls[1]?.[0]).toEqual({
+        players: [
+          {
+            userId: "player-discord",
+            accountId: "9822301",
+            characterId: "30016",
+          },
+        ],
       });
     });
-    expect(mocks.getPlayerCatchingGuilds).toHaveBeenCalledTimes(2);
+    expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
   });
 
   it("does not fetch when the active other has no online owner", () => {
-    renderHook(() => useCharacterTooltipCatchingGuilds(), {
-      wrapper: createWrapper(queryClient),
-    });
+    renderHook(() => useCharacterTooltipCatchingGuilds());
 
     act(() => {
       useCharacterTooltipCatchingGuildsStore
@@ -219,20 +227,39 @@ describe("useCharacterTooltipCatchingGuilds", () => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));
     });
 
-    expect(mocks.getPlayerCatchingGuilds).not.toHaveBeenCalled();
+    expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
+  });
+
+  it("does not fetch when all Discords are selected", () => {
+    useSettingsStore.setState({
+      guildIdByCharId: { "hero-1": "all" },
+    });
+    renderHook(() => useCharacterTooltipCatchingGuilds());
+
+    act(() => {
+      setOnlineOwner();
+      useCharacterTooltipCatchingGuildsStore
+        .getState()
+        .setActiveOther(createOther());
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));
+    });
+
+    expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
   });
 
   it("fetches when the online owner becomes known after hovering", async () => {
-    mocks.getPlayerCatchingGuilds.mockResolvedValue({
-      userId: "player-discord",
-      accountId: "9822301",
-      characterId: "617",
-      guilds: [{ id: "guild-1", name: "Alpha" }],
+    mocks.getPlayersCatchingGuilds.mockResolvedValue({
+      players: [
+        {
+          userId: "player-discord",
+          accountId: "9822301",
+          characterId: "617",
+          guilds: [{ id: "guild-1", name: "Alpha" }],
+        },
+      ],
     });
 
-    renderHook(() => useCharacterTooltipCatchingGuilds(), {
-      wrapper: createWrapper(queryClient),
-    });
+    renderHook(() => useCharacterTooltipCatchingGuilds());
 
     act(() => {
       useCharacterTooltipCatchingGuildsStore
@@ -241,33 +268,35 @@ describe("useCharacterTooltipCatchingGuilds", () => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));
     });
 
-    expect(mocks.getPlayerCatchingGuilds).not.toHaveBeenCalled();
+    expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
 
     act(() => {
       setOnlineOwner();
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayerCatchingGuilds).toHaveBeenCalledWith({
-        userId: "player-discord",
-        accountId: "9822301",
-        characterId: "617",
+      expect(mocks.getPlayersCatchingGuilds.mock.calls[0]?.[0]).toEqual({
+        players: [
+          {
+            userId: "player-discord",
+            accountId: "9822301",
+            characterId: "617",
+          },
+        ],
       });
     });
   });
 
-  it("refreshes the active tooltip when batch cache updates without single fetch", async () => {
+  it("refreshes the active tooltip when the coordinator cache updates", async () => {
     const other = createOther();
-    renderHook(() => useCharacterTooltipCatchingGuilds(), {
-      wrapper: createWrapper(queryClient),
-    });
+    renderHook(() => useCharacterTooltipCatchingGuilds());
 
     act(() => {
       setOnlineOwner();
       useCharacterTooltipCatchingGuildsStore.getState().setActiveOther(other);
-      useCharacterTooltipCatchingGuildsStore
-        .getState()
-        .setLoading("player-discord:9822301:617");
+      const target = getOtherCatchingGuildsTarget(other);
+      if (!target) throw new Error("Expected an online player target");
+      useCharacterTooltipCatchingGuildsStore.getState().setLoading(target);
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));
     });
 
@@ -277,23 +306,21 @@ describe("useCharacterTooltipCatchingGuilds", () => {
     mocks.refreshActiveOtherCanvasTooltip.mockClear();
 
     act(() => {
+      const target = getOtherCatchingGuildsTarget(other);
+      if (!target) throw new Error("Expected an online player target");
       useCharacterTooltipCatchingGuildsStore
         .getState()
-        .setSuccess("player-discord:9822301:617", [
-          { id: "guild-1", name: "Alpha" },
-        ]);
+        .setSuccess(target, [{ id: "guild-1", name: "Alpha" }], Date.now());
     });
 
     await waitFor(() => {
       expect(mocks.refreshActiveOtherCanvasTooltip).toHaveBeenCalledOnce();
     });
-    expect(mocks.getPlayerCatchingGuilds).not.toHaveBeenCalled();
+    expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
   });
 
   it("resets shift state on window blur", () => {
-    renderHook(() => useCharacterTooltipCatchingGuilds(), {
-      wrapper: createWrapper(queryClient),
-    });
+    renderHook(() => useCharacterTooltipCatchingGuilds());
 
     act(() => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));

@@ -1,16 +1,19 @@
 import type { Other } from "@lootlog/margonem/others";
 import { create } from "zustand";
-import type { UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem } from "@/lib/api/generated/main/model";
+import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem } from "@/lib/api/generated/main/model";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 
 export type CharacterTooltipCatchingGuildsStatus =
   | "idle"
   | "loading"
   | "success"
-  | "error";
+  | "error"
+  | "unavailable";
 
 export type CharacterTooltipCatchingGuildsEntry = {
-  guilds: UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem[];
+  fetchedAt?: number;
+  guilds: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem[];
+  requestKey?: string;
   status: CharacterTooltipCatchingGuildsStatus;
 };
 
@@ -20,6 +23,7 @@ export type CharacterTooltipCatchingGuildsTarget = {
   key: string;
   ownerName?: string;
   playerName: string;
+  requestKey: string;
   userId: string;
 };
 
@@ -32,14 +36,24 @@ type CharacterTooltipCatchingGuildsState = {
   clearActiveOther: () => void;
   getEntry: (key: string) => CharacterTooltipCatchingGuildsEntry | undefined;
   setActiveOther: (other: Other) => void;
-  setError: (key: string) => void;
-  setLoading: (key: string) => void;
+  setError: (target: CharacterTooltipCatchingGuildsTarget) => void;
+  setIdle: (target: CharacterTooltipCatchingGuildsTarget) => void;
+  setLoading: (target: CharacterTooltipCatchingGuildsTarget) => void;
   setShiftPressed: (isShiftPressed: boolean) => void;
   setSuccess: (
-    key: string,
-    guilds: UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem[],
+    target: CharacterTooltipCatchingGuildsTarget,
+    guilds: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem[],
+    fetchedAt: number,
   ) => void;
+  setUnavailable: (key: string) => void;
 };
+
+export function getCharacterTooltipCatchingGuildsCharacterKey(
+  accountId: string,
+  characterId: string,
+): string {
+  return `${accountId}:${characterId}`;
+}
 
 export function getOtherCatchingGuildsTarget(
   other: Other,
@@ -61,11 +75,19 @@ export function getOtherCatchingGuildsTarget(
   return {
     accountId,
     characterId,
-    key: `${owner.userId}:${accountId}:${characterId}`,
+    key: getCharacterTooltipCatchingGuildsCharacterKey(accountId, characterId),
     ownerName: owner.guildMemberName ?? owner.userId,
     playerName: owner.playerName,
+    requestKey: `${owner.userId}:${accountId}:${characterId}`,
     userId: owner.userId,
   };
+}
+
+function canApplyTargetEntry(
+  entry: CharacterTooltipCatchingGuildsEntry | undefined,
+  target: CharacterTooltipCatchingGuildsTarget,
+): boolean {
+  return !entry || entry.requestKey === target.requestKey;
 }
 
 export const useCharacterTooltipCatchingGuildsStore =
@@ -100,40 +122,89 @@ export const useCharacterTooltipCatchingGuildsStore =
 
         return { activeOther: other, activeTarget };
       }),
-    setError: (key) =>
+    setError: (target) =>
+      set((state) => {
+        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
+          return state;
+        }
+
+        return {
+          entriesByKey: {
+            ...state.entriesByKey,
+            [target.key]: {
+              guilds: [],
+              requestKey: target.requestKey,
+              status: "error",
+            },
+          },
+        };
+      }),
+    setIdle: (target) =>
       set((state) => ({
         entriesByKey: {
           ...state.entriesByKey,
-          [key]: {
+          [target.key]: {
             guilds: [],
-            status: "error",
+            requestKey: target.requestKey,
+            status: "idle",
           },
         },
       })),
-    setLoading: (key) =>
-      set((state) => ({
-        entriesByKey: {
-          ...state.entriesByKey,
-          [key]: {
-            guilds: state.entriesByKey[key]?.guilds ?? [],
-            status: "loading",
+    setLoading: (target) =>
+      set((state) => {
+        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
+          return state;
+        }
+
+        return {
+          entriesByKey: {
+            ...state.entriesByKey,
+            [target.key]: {
+              guilds: state.entriesByKey[target.key]?.guilds ?? [],
+              requestKey: target.requestKey,
+              status: "loading",
+            },
           },
-        },
-      })),
+        };
+      }),
     setShiftPressed: (isShiftPressed) =>
       set((state) => {
         if (state.isShiftPressed === isShiftPressed) return state;
 
         return { isShiftPressed };
       }),
-    setSuccess: (key, guilds) =>
-      set((state) => ({
-        entriesByKey: {
-          ...state.entriesByKey,
-          [key]: {
-            guilds,
-            status: "success",
+    setSuccess: (target, guilds, fetchedAt) =>
+      set((state) => {
+        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
+          return state;
+        }
+
+        return {
+          entriesByKey: {
+            ...state.entriesByKey,
+            [target.key]: {
+              fetchedAt,
+              guilds,
+              requestKey: target.requestKey,
+              status: "success",
+            },
           },
-        },
-      })),
+        };
+      }),
+    setUnavailable: (key) =>
+      set((state) => {
+        if (state.entriesByKey[key]?.status === "unavailable") {
+          return state;
+        }
+
+        return {
+          entriesByKey: {
+            ...state.entriesByKey,
+            [key]: {
+              guilds: [],
+              status: "unavailable",
+            },
+          },
+        };
+      }),
   }));

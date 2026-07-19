@@ -1,9 +1,15 @@
 import type { Other } from "@lootlog/margonem/others";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
+  getSelectedLootlogGuildId,
+  isConcreteLootlogGuildId,
+} from "@/lib/selected-lootlog-guild";
+import {
   getOtherCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
+import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { escapeTooltipHtml } from "./html";
 import type { CharacterTooltipTransform } from "./types";
 
@@ -60,12 +66,23 @@ export const appendCatchingGuildsTooltipSection: CharacterTooltipTransform = ({
   }
 
   const state = useCharacterTooltipCatchingGuildsStore.getState();
-  if (!state.isShiftPressed) {
+  const selectedGuildId = getSelectedLootlogGuildId(
+    useSettingsStore.getState().guildIdByCharId,
+  );
+  if (!state.isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
     return currentHtml;
   }
 
   const target = getOtherCatchingGuildsTarget(character as Other);
   if (!target) {
+    const ownersStatus = useOnlineCharacterOwnersStore.getState().status;
+    if (ownersStatus === "loading") {
+      return appendCatchingGuildsSection(currentHtml, "loading", []);
+    }
+    if (ownersStatus === "error") {
+      return appendCatchingGuildsSection(currentHtml, "error", []);
+    }
+
     return appendCatchingGuildsSection(currentHtml, "unavailable", []);
   }
 
