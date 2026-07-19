@@ -1,7 +1,22 @@
 import type { Other } from "@lootlog/margonem/others";
+import type { CharacterTooltipCatchingGuildsEntry } from "@/store/character-tooltip-catching-guilds.store";
 
 export const LOOTLOG_OTHER_GLOW_BLUE = "#3ed1de";
 export const LOOTLOG_OTHER_GLOW_RED_ORANGE = "#ff5a2f";
+export const LOOTLOG_OTHER_GLOW_UNKNOWN = "#e879f9";
+
+export function getLootlogOtherGlowColor(
+  entry: CharacterTooltipCatchingGuildsEntry | undefined,
+  selectedGuildId: string,
+): string {
+  if (entry?.status !== "success") {
+    return LOOTLOG_OTHER_GLOW_UNKNOWN;
+  }
+
+  return entry.guilds.some((guild) => guild.id === selectedGuildId)
+    ? LOOTLOG_OTHER_GLOW_BLUE
+    : LOOTLOG_OTHER_GLOW_RED_ORANGE;
+}
 
 type RuntimeOther = Other & {
   d: Other["d"] & {

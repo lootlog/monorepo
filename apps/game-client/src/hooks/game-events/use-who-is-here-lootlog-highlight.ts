@@ -1,11 +1,11 @@
 import type { Other } from "@lootlog/margonem/others";
 import { useEffect, useRef, useState } from "react";
-import { Game } from "@/lib/game";
-import {
-  LOOTLOG_OTHER_GLOW_BLUE,
-  LOOTLOG_OTHER_GLOW_RED_ORANGE,
-} from "@/lib/lootlog-other-glow-manager";
+import { getLootlogOtherGlowColor } from "@/lib/lootlog-other-glow-manager";
 import { patchOtherCharacterTooltip } from "@/lib/margonem-tooltips/patcher";
+import {
+  getSelectedLootlogGuildId,
+  isConcreteLootlogGuildId,
+} from "@/lib/selected-lootlog-guild";
 import {
   getOtherCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
@@ -40,14 +40,6 @@ type RuntimeWindow = Window &
 
 function getRuntimeWindow(): RuntimeWindow {
   return window as RuntimeWindow;
-}
-
-function getCurrentCharacterId(): string | null {
-  try {
-    return String(Game.hero.id);
-  } catch {
-    return null;
-  }
 }
 
 function getWhoIsHereRows(): HTMLElement[] {
@@ -175,10 +167,7 @@ export function useWhoIsHereLootlogHighlight(): void {
   const ownersByCharacterKey = useOnlineCharacterOwnersStore(
     (state) => state.ownersByCharacterKey,
   );
-  const currentCharacterId = getCurrentCharacterId();
-  const selectedGuildId = currentCharacterId
-    ? guildIdByCharId[currentCharacterId]
-    : undefined;
+  const selectedGuildId = getSelectedLootlogGuildId(guildIdByCharId);
 
   useEffect(() => {
     const cleanupStyle = installStyle();
@@ -218,7 +207,7 @@ export function useWhoIsHereLootlogHighlight(): void {
     const rows = getWhoIsHereRows();
     const runtimeOthersById = getRuntimeWindow().Engine?.others?.check?.();
 
-    if (!isShiftPressed || !selectedGuildId) {
+    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
       for (const row of rows) {
         clearRowHighlight(row);
       }
@@ -230,21 +219,12 @@ export function useWhoIsHereLootlogHighlight(): void {
       const target = other ? getOtherCatchingGuildsTarget(other) : null;
       const entry = target ? entriesByKey[target.key] : undefined;
 
-      if (!target || entry?.status !== "success") {
+      if (!other) {
         clearRowHighlight(row);
         continue;
       }
 
-      const hasSelectedGuild = entry.guilds.some(
-        (guild) => guild.id === selectedGuildId,
-      );
-
-      setRowHighlight(
-        row,
-        hasSelectedGuild
-          ? LOOTLOG_OTHER_GLOW_BLUE
-          : LOOTLOG_OTHER_GLOW_RED_ORANGE,
-      );
+      setRowHighlight(row, getLootlogOtherGlowColor(entry, selectedGuildId));
     }
   }, [
     entriesByKey,

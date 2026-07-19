@@ -207,18 +207,33 @@ export const normalizePresenceResponse = (
   );
 };
 
-export const requestServerPresence = (
-  socket: { emitWithAck: unknown },
+export const ONLINE_PLAYERS_PRESENCE_ACK_TIMEOUT_MS = 5_000;
+
+type PresenceAckSocket = {
+  timeout: (timeoutMs: number) => {
+    emitWithAck: (
+      event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH,
+      data: { guildId: string; world: string },
+    ) => Promise<PlayerPresenceAckPayload | undefined>;
+  };
+};
+
+export const requestServerPresence = async (
+  socket: PresenceAckSocket,
   guildId: string,
   world: string,
 ) => {
-  return (
-    socket.emitWithAck as (
-      event: GatewayEvent,
-      data: { guildId: string; world: string },
-    ) => Promise<PlayerPresenceAckPayload | undefined>
-  )(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
-    guildId,
-    world,
-  });
+  const requestPresence = () =>
+    socket
+      .timeout(ONLINE_PLAYERS_PRESENCE_ACK_TIMEOUT_MS)
+      .emitWithAck(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
+        guildId,
+        world,
+      });
+
+  try {
+    return await requestPresence();
+  } catch {
+    return requestPresence();
+  }
 };

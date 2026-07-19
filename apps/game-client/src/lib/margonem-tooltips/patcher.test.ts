@@ -307,12 +307,12 @@ describe("installCharacterTooltipTransforms", () => {
     runtimeCanvasTip.show({}, first);
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
-    ).toBe("player-discord:9822301:617");
+    ).toBe("9822301:617");
 
     second.tipUpdate?.();
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
-    ).toBe("player-discord:9822301:617");
+    ).toBe("9822301:617");
 
     runtimeCanvasTip.hide({});
     expect(
@@ -347,7 +347,7 @@ describe("installCharacterTooltipTransforms", () => {
     runtimeCanvasTip.show({}, other);
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
-    ).toBe("player-discord:9822301:617");
+    ).toBe("9822301:617");
 
     cleanup();
 
