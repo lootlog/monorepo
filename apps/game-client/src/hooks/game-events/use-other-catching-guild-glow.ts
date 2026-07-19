@@ -6,10 +6,8 @@ import {
   LOOTLOG_OTHER_GLOW_UNKNOWN,
   lootlogOtherGlowManager,
 } from "@/lib/lootlog-other-glow-manager";
-import {
-  getSelectedLootlogGuildId,
-  isConcreteLootlogGuildId,
-} from "@/lib/selected-lootlog-guild";
+import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {
   getOtherCatchingGuildsTarget,
   getCharacterTooltipCatchingGuildsCharacterKey,
@@ -18,7 +16,6 @@ import {
 } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
-import { useSettingsStore } from "@/store/settings.store";
 
 function getEntryCharacterId(targetKey: string): string {
   const separatorIndex = targetKey.lastIndexOf(":");
@@ -51,12 +48,11 @@ export function useOtherCatchingGuildGlow(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
-  const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
   const othersById = useOthersStore((state) => state.othersById);
   const ownersByCharacterKey = useOnlineCharacterOwnersStore(
     (state) => state.ownersByCharacterKey,
   );
-  const selectedGuildId = getSelectedLootlogGuildId(guildIdByCharId);
+  const selectedGuildId = useSelectedLootlogGuildId();
 
   useEffect(() => {
     lootlogOtherGlowManager.install();
