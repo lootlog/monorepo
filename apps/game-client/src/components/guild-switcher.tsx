@@ -6,14 +6,14 @@ import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type FC, useEffect, useRef } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
-import { Game } from "@/lib/game";
 import { GuildButton } from "@/components/guild-button";
-import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@/lib/api/generated/main/users/users";
 import { useTranslation } from "react-i18next";
+import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
+import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";
 
 type GuildSwitcherProps = {
   disabled?: boolean;
@@ -28,30 +28,6 @@ type GuildSwitcherProps = {
   selectedValues?: string[];
   unreadCountByGuildId?: Record<string, number>;
   value?: string;
-};
-
-const orderGuilds = (
-  guilds: GuildIdentity[] | undefined,
-  guildsOrder?: string[],
-) => {
-  if (!guilds?.length) {
-    return [];
-  }
-
-  if (!guildsOrder?.length) {
-    return guilds;
-  }
-
-  const guildsById = new Map(guilds.map((guild) => [guild.id, guild] as const));
-  const orderedGuilds = guildsOrder
-    .map((guildId) => guildsById.get(guildId))
-    .filter((guild): guild is GuildIdentity => guild !== undefined);
-  const orderedGuildIds = new Set(orderedGuilds.map((guild) => guild.id));
-  const remainingGuilds = guilds.filter(
-    (guild) => !orderedGuildIds.has(guild.id),
-  );
-
-  return [...orderedGuilds, ...remainingGuilds];
 };
 
 export const GuildSwitcher: FC<GuildSwitcherProps> = ({
@@ -70,7 +46,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
 }) => {
   const { t } = useTranslation("common");
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const characterId = String(Game.hero.id);
+  const characterId = useCurrentCharacterId();
   const { data: guilds, isFetched } =
     useUsersControllerGetCurrentUserAccessibleGuilds({
       query: {
@@ -82,33 +58,20 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   const { data: userPreferences } = useUserPreferences();
   const { setGuildId, guildIdByCharId } = useSettingsStore();
   const guildsOrder = userPreferences?.guildsOrder;
-  const orderedGuilds = orderGuilds(guilds, guildsOrder);
+  const orderedGuilds = orderLootlogGuilds(guilds ?? [], guildsOrder);
 
-  const guildId = guildIdByCharId[characterId];
+  const guildId = characterId ? guildIdByCharId[characterId] : undefined;
 
   useEffect(() => {
     if (!isFetched || orderedGuilds.length === 0) return;
     if (multiple) return;
-    const currentValue = value !== undefined ? value : guildId;
+    if (!onChange) return;
+    const currentValue = value;
     if (allowAll && currentValue === "all") return;
     const exists = orderedGuilds.some((guild) => guild.id === currentValue);
     if (exists) return;
-    if (onChange) {
-      onChange(orderedGuilds[0].id);
-    } else {
-      setGuildId(characterId, orderedGuilds[0].id);
-    }
-  }, [
-    isFetched,
-    orderedGuilds,
-    guildId,
-    value,
-    allowAll,
-    multiple,
-    onChange,
-    characterId,
-    setGuildId,
-  ]);
+    onChange(orderedGuilds[0].id);
+  }, [isFetched, orderedGuilds, value, allowAll, multiple, onChange]);
 
   const selectedValue = value !== undefined ? value : guildId;
   const selectedGuildIds = selectedValues ?? [];
@@ -127,7 +90,9 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       return;
     }
 
-    setGuildId(characterId, newGuildId);
+    if (characterId) {
+      setGuildId(characterId, newGuildId);
+    }
   };
 
   useEffect(() => {
