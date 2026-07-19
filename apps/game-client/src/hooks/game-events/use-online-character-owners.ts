@@ -9,10 +9,8 @@ import {
   requestServerPresence,
   type PlayerPresenceUpdatePayload,
 } from "@/lib/online-players-presence";
-import {
-  getSelectedLootlogGuildId,
-  isConcreteLootlogGuildId,
-} from "@/lib/selected-lootlog-guild";
+import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import {
   type GuildMembersByUserId,
@@ -76,9 +74,8 @@ export function useOnlineCharacterOwners(): void {
     (state) => state.isShiftPressed,
   );
   const ownersStatus = useOnlineCharacterOwnersStore((state) => state.status);
-  const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
   const worldByGuildId = useSettingsStore((state) => state.worldByGuildId);
-  const selectedGuildId = getSelectedLootlogGuildId(guildIdByCharId);
+  const selectedGuildId = useSelectedLootlogGuildId();
   const selectedWorld = isConcreteLootlogGuildId(selectedGuildId)
     ? (worldByGuildId[selectedGuildId] ?? getCurrentWorld())
     : undefined;

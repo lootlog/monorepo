@@ -1,11 +1,38 @@
 import { Game } from "@/lib/game";
+import type { GuildIdentity } from "@/lib/api/generated-helpers";
 
 export function getCurrentCharacterId(): string | null {
   try {
-    return String(Game.hero.id);
+    const characterId = Game.hero?.id;
+    if (characterId === undefined || characterId === null) {
+      return null;
+    }
+
+    const normalizedCharacterId = String(characterId).trim();
+    return normalizedCharacterId || null;
   } catch {
     return null;
   }
+}
+
+export function orderLootlogGuilds(
+  guilds: GuildIdentity[],
+  guildsOrder?: string[],
+): GuildIdentity[] {
+  if (!guildsOrder?.length) {
+    return guilds;
+  }
+
+  const guildsById = new Map(guilds.map((guild) => [guild.id, guild] as const));
+  const orderedGuilds = guildsOrder
+    .map((guildId) => guildsById.get(guildId))
+    .filter((guild): guild is GuildIdentity => guild !== undefined);
+  const orderedGuildIds = new Set(orderedGuilds.map((guild) => guild.id));
+
+  return [
+    ...orderedGuilds,
+    ...guilds.filter((guild) => !orderedGuildIds.has(guild.id)),
+  ];
 }
 
 export function getSelectedLootlogGuildId(

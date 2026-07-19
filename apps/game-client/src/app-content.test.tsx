@@ -8,6 +8,7 @@ const mapPingHotkeyHandlers = vi.hoisted(() => ({
 }));
 const useHotkeys = vi.hoisted(() => vi.fn());
 const useAirTags = vi.hoisted(() => vi.fn());
+const useSelectedLootlogGuildInitialization = vi.hoisted(() => vi.fn());
 const eventModeQuery = vi.hoisted(() => ({
   data: {
     generatedAt: "2026-07-13T12:00:00.000Z",
@@ -20,6 +21,9 @@ vi.mock("@/features/map-pings/use-map-pings", () => ({
 }));
 vi.mock("@/features/air-tags/use-air-tags", () => ({ useAirTags }));
 vi.mock("@/hooks/use-hotkeys", () => ({ useHotkeys }));
+vi.mock("@/hooks/use-selected-lootlog-guild", () => ({
+  useSelectedLootlogGuildInitialization,
+}));
 vi.mock("@/features/map-pings/map-ping-wheel", () => ({
   MapPingWheel: () => <div data-testid="map-ping-wheel" />,
 }));
@@ -123,6 +127,7 @@ describe("AppContent map ping integration", () => {
 
     expect(useHotkeys).toHaveBeenCalledWith(mapPingHotkeyHandlers);
     expect(useAirTags).toHaveBeenCalledOnce();
+    expect(useSelectedLootlogGuildInitialization).toHaveBeenCalledOnce();
     expect(screen.getByTestId("map-ping-wheel")).toBeInTheDocument();
     expect(screen.getByTestId("event-mode")).toHaveAttribute(
       "data-has-query",

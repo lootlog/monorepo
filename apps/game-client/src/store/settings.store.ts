@@ -10,6 +10,7 @@ interface SettingsState {
   worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
   selectedGuildIdsForTimersByCharId: Record<string, string[]>;
+  ensureGuildId: (charId: string, orderedGuildIds: string[]) => void;
   setGuildId: (charId: string, guildId: string) => void;
   setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => void;
   setWorld: (guildId: string, world: string) => void;
@@ -25,6 +26,29 @@ export const useSettingsStore = create<SettingsState>()(
       worldByGuildId: {},
       guildIdByCharId: {},
       selectedGuildIdsForTimersByCharId: {},
+      ensureGuildId: (charId: string, orderedGuildIds: string[]) => {
+        set((state) => {
+          const currentGuildId = state.guildIdByCharId[charId];
+          if (
+            currentGuildId === "all" ||
+            (currentGuildId && orderedGuildIds.includes(currentGuildId))
+          ) {
+            return state;
+          }
+
+          const fallbackGuildId = orderedGuildIds[0];
+          if (!fallbackGuildId) {
+            return state;
+          }
+
+          return {
+            guildIdByCharId: {
+              ...state.guildIdByCharId,
+              [charId]: fallbackGuildId,
+            },
+          };
+        });
+      },
       setGuildId: (charId: string, guildId: string) => {
         set((state) => ({
           guildIdByCharId: {
