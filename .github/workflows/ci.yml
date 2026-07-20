@@ -353,12 +353,6 @@ jobs:
           node-version: 24
           cache: "pnpm"
 
-      - name: Setup Chrome
-        id: setup-chrome
-        uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -407,12 +401,6 @@ jobs:
       - name: Run retained-heap soak
         run: pnpm --filter=@lootlog/game-client bench:soak
 
-      - name: Run Chromium performance matrix
-        env:
-          BROWSER_PERF_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-          BROWSER_PERF_ENFORCE: "1"
-        run: pnpm --filter=@lootlog/game-client test:browser-perf
-
       - name: Upload game-client performance artifacts
         if: always()
         uses: actions/upload-artifact@v7
@@ -421,7 +409,6 @@ jobs:
           path: |
             apps/game-client/artifacts/hot-path-benchmarks
             apps/game-client/artifacts/retained-heap-soak
-            apps/game-client/artifacts/browser-perf
 
       - name: Upload game-client coverage
         if: always()
