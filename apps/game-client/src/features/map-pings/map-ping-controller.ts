@@ -8,6 +8,7 @@ const MAIN_MAP_CANVAS_ID = "GAME_CANVAS";
 const HANDHELD_MINI_MAP_CANVAS_CLASS = "handheld-mini-map-canvas";
 const DEFAULT_TILE_SIZE = 32;
 const MAX_NETWORK_COORDINATE = 65_535;
+const MAX_ACTIVE_MAP_PINGS = 256;
 
 export type MapTile = { x: number; y: number };
 
@@ -166,6 +167,8 @@ export const isMapPingSurface = (
 export class MapPingController {
   private readonly activePings = new Map<string, ActiveMapPing>();
   private registeredEvent: string | null = null;
+  private expiryTimeoutId: number | null = null;
+  private enabled = false;
   private readonly drawable: MapPingDrawable;
 
   constructor(private readonly now: () => number = () => performance.now()) {
@@ -180,25 +183,21 @@ export class MapPingController {
   register() {
     const gameWindow = window as MapPingWindow;
     const event = gameWindow.Engine?.apiData?.CALL_DRAW_ADD_TO_RENDERER;
-    if (!event || !gameWindow.API || this.registeredEvent) {
+    if (!event || !gameWindow.API || this.enabled) {
       return false;
     }
 
-    gameWindow.API.addCallbackToEvent(event, this.handleDrawFrame);
-    this.registeredEvent = event;
+    this.enabled = true;
+    this.ensureDrawRegistration();
+    this.scheduleExpiry();
     return true;
   }
 
   unregister() {
-    const gameWindow = window as MapPingWindow;
-    if (this.registeredEvent && gameWindow.API) {
-      gameWindow.API.removeCallbackFromEvent(
-        this.registeredEvent,
-        this.handleDrawFrame,
-      );
-    }
-    this.registeredEvent = null;
-    this.clear();
+    this.enabled = false;
+    this.cancelExpiry();
+    this.detachDrawRegistration();
+    this.activePings.clear();
   }
 
   addOptimistic(
@@ -209,6 +208,7 @@ export class MapPingController {
     typeLabel: string,
   ) {
     const id = `local-${crypto.randomUUID()}`;
+    this.retainCapacityFor(id);
     this.activePings.set(id, {
       id,
       mapId,
@@ -219,6 +219,8 @@ export class MapPingController {
       type,
       typeLabel,
     });
+    this.ensureDrawRegistration();
+    this.scheduleExpiry();
     return id;
   }
 
@@ -227,6 +229,7 @@ export class MapPingController {
       return false;
     }
 
+    this.retainCapacityFor(event.pingId);
     this.activePings.set(event.pingId, {
       id: event.pingId,
       mapId: event.mapId,
@@ -237,15 +240,25 @@ export class MapPingController {
       type: event.type,
       typeLabel,
     });
+    this.ensureDrawRegistration();
+    this.scheduleExpiry();
     return true;
   }
 
   remove(id: string) {
     this.activePings.delete(id);
+    if (this.activePings.size === 0) {
+      this.cancelExpiry();
+      this.detachDrawRegistration();
+      return;
+    }
+    this.scheduleExpiry();
   }
 
   clear() {
     this.activePings.clear();
+    this.cancelExpiry();
+    this.detachDrawRegistration();
   }
 
   resolveTile(canvas: HTMLCanvasElement, clientX: number, clientY: number) {
@@ -296,9 +309,12 @@ export class MapPingController {
   private readonly handleDrawFrame = () => {
     this.pruneExpired();
     if (this.activePings.size === 0) {
+      this.cancelExpiry();
+      this.detachDrawRegistration();
       return;
     }
 
+    this.scheduleExpiry();
     this.getEngine()?.renderer?.add(this.drawable);
     this.drawHandheldMiniMap();
   };
@@ -458,6 +474,76 @@ export class MapPingController {
         this.activePings.delete(id);
       }
     }
+  }
+
+  private retainCapacityFor(id: string): void {
+    if (
+      this.activePings.has(id) ||
+      this.activePings.size < MAX_ACTIVE_MAP_PINGS
+    ) {
+      return;
+    }
+
+    const oldestId = this.activePings.keys().next().value;
+    if (oldestId !== undefined) {
+      this.activePings.delete(oldestId);
+    }
+  }
+
+  private scheduleExpiry(): void {
+    this.cancelExpiry();
+    if (!this.enabled || this.activePings.size === 0) return;
+
+    const now = this.now();
+    let nearestExpiryAt = Number.POSITIVE_INFINITY;
+    for (const ping of this.activePings.values()) {
+      const expiresAt =
+        ping.startedAt + getMapPingPresentation(ping.type).durationMs;
+      nearestExpiryAt = Math.min(nearestExpiryAt, expiresAt);
+    }
+
+    this.expiryTimeoutId = window.setTimeout(
+      () => {
+        this.expiryTimeoutId = null;
+        this.pruneExpired();
+        if (this.activePings.size === 0) {
+          this.detachDrawRegistration();
+          return;
+        }
+        this.scheduleExpiry();
+      },
+      Math.max(0, Math.ceil(nearestExpiryAt - now)),
+    );
+  }
+
+  private cancelExpiry(): void {
+    if (this.expiryTimeoutId === null) return;
+    window.clearTimeout(this.expiryTimeoutId);
+    this.expiryTimeoutId = null;
+  }
+
+  private ensureDrawRegistration(): void {
+    if (!this.enabled || this.registeredEvent || this.activePings.size === 0) {
+      return;
+    }
+
+    const gameWindow = window as MapPingWindow;
+    const event = gameWindow.Engine?.apiData?.CALL_DRAW_ADD_TO_RENDERER;
+    if (!event || !gameWindow.API) return;
+
+    gameWindow.API.addCallbackToEvent(event, this.handleDrawFrame);
+    this.registeredEvent = event;
+  }
+
+  private detachDrawRegistration(): void {
+    const gameWindow = window as MapPingWindow;
+    if (this.registeredEvent && gameWindow.API) {
+      gameWindow.API.removeCallbackFromEvent(
+        this.registeredEvent,
+        this.handleDrawFrame,
+      );
+    }
+    this.registeredEvent = null;
   }
 
   private getEngine() {

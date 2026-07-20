@@ -27,7 +27,7 @@ type DraggableWindowProps = {
   title: string;
   onClose?: () => void;
   variant?: "default" | "small";
-  heightMode?: "fixed" | "auto-up-to-max";
+  heightMode?: "fixed" | "auto-up-to-max" | "css-auto-up-to-max";
   widthMode?: "fixed" | "fit-content";
   resizable?: boolean;
   minWidth?: number;
@@ -326,7 +326,9 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const windowBodyRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
-  const isAutoHeightMode = heightMode === "auto-up-to-max";
+  const isMeasuredAutoHeightMode = heightMode === "auto-up-to-max";
+  const isCssAutoHeightMode = heightMode === "css-auto-up-to-max";
+  const isAutoHeightMode = isMeasuredAutoHeightMode || isCssAutoHeightMode;
   const isAutoWidthMode = widthMode === "fit-content";
   const resolvedMaxContentHeight = sanitizeMaxContentHeight(maxContentHeight);
   const allowsHorizontalResize = resizable && !isAutoWidthMode;
@@ -405,19 +407,13 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     [id, setPositionInStore],
   );
 
-  const {
-    position,
-    handleMouseDown,
-    handleTouchStart,
-    isDragging,
-    cancelDrag,
-    recalculate,
-  } = useDrag({
-    ref: draggableRef,
-    defaultState: defaultPosition,
-    onDragStop,
-    isLocked,
-  });
+  const { position, handlePointerDown, isDragging, cancelDrag, recalculate } =
+    useDrag({
+      ref: draggableRef,
+      defaultState: defaultPosition,
+      onDragStop,
+      isLocked,
+    });
 
   const handleResize = useCallback(
     (newSize: { width: number; height: number }) => {
@@ -544,29 +540,14 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     e.stopPropagation();
   }, []);
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      cancelWindowResizeSession();
-      handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
-    },
-    [handleMouseDown],
-  );
+  const onPointerDown = (event: React.PointerEvent) => {
+    cancelWindowResizeSession();
+    handlePointerDown(event as React.PointerEvent<HTMLElement>);
+  };
 
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      cancelWindowResizeSession();
-      handleTouchStart(e as React.TouchEvent<HTMLElement>);
-    },
-    [handleTouchStart],
-  );
-
-  const onMouseDownCapture = useCallback(() => {
+  const onPointerDownCapture = () => {
     setCurrentWindowFocus(id);
-  }, [id, setCurrentWindowFocus]);
-
-  const onTouchStartCapture = useCallback(() => {
-    setCurrentWindowFocus(id);
-  }, [id, setCurrentWindowFocus]);
+  };
 
   useEffect(() => {
     if (isResizing) return;
@@ -701,7 +682,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   }, [effectiveHeight, isAutoWidthMode, maxWidth, minWidth, recalculate]);
 
   useLayoutEffect(() => {
-    if (!isAutoHeightMode) {
+    if (!isMeasuredAutoHeightMode) {
       resolvedMaxContentHeightRef.current = null;
       setAutoHeight(minHeight);
       return;
@@ -836,7 +817,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       resizeObserver.disconnect();
     };
   }, [
-    isAutoHeightMode,
+    isMeasuredAutoHeightMode,
     localSize.height,
     localSize.width,
     resolvedMaxContentHeight,
@@ -844,9 +825,22 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     onResolvedMaxContentHeightChange,
   ]);
 
-  const style = dynamicHeight
-    ? { height: "auto", width: effectiveWidth }
-    : { width: effectiveWidth, height: effectiveHeight };
+  let style: { width: number; height: number | "auto" } = {
+    width: effectiveWidth,
+    height: effectiveHeight,
+  };
+
+  if (dynamicHeight || isCssAutoHeightMode) {
+    style = {
+      width: effectiveWidth,
+      height:
+        isCssAutoHeightMode && isAdjustingMaxHeight ? effectiveHeight : "auto",
+    };
+  }
+
+  const cssMaxContentHeight = isCssAutoHeightMode
+    ? (previewMaxContentHeight ?? resolvedMaxContentHeight)
+    : undefined;
   const contentHeight = isAdjustingMaxHeight
     ? (previewMaxContentHeight ?? 0)
     : renderedContentHeightRef.current;
@@ -892,12 +886,12 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         top: position.y,
         left: position.x,
         zIndex,
+        contain: "layout style",
         cursor: getWindowCursor({ isLocked, isDragging }),
+        touchAction: disableTitle || draggableContent ? "none" : undefined,
       }}
-      onMouseDownCapture={onMouseDownCapture}
-      onTouchStartCapture={onTouchStartCapture}
-      onMouseDown={onMouseDown}
-      onTouchStart={disableTitle ? onTouchStart : undefined}
+      onPointerDownCapture={onPointerDownCapture}
+      onPointerDown={disableTitle ? onPointerDown : undefined}
       onWheel={(e) => e.stopPropagation()}
       onClick={handleClick}
       id={`ll-${id}`}
@@ -928,7 +922,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
               onOpacityChange={handleOpacityChange}
               onLockToggle={handleLockToggle}
               onClose={onClose}
-              onTouchStart={onTouchStart}
+              onPointerDown={onPointerDown}
             />
           </div>
         )}
@@ -938,9 +932,11 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             "ll:flex-1 ll:overflow-hidden ll:cursor-auto ll:relative",
             contentClassName,
           )}
-          onTouchStart={(e) => e.stopPropagation()}
-          onMouseDown={
-            draggableContent ? onMouseDown : (e) => e.stopPropagation()
+          style={{ maxHeight: cssMaxContentHeight }}
+          onPointerDown={
+            draggableContent
+              ? onPointerDown
+              : (event) => event.stopPropagation()
           }
         >
           {isAdjustingMaxHeight && (

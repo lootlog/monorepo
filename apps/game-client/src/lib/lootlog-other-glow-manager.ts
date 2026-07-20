@@ -381,11 +381,13 @@ class LootlogOtherGlowManager {
     if (this.originalOtherUpdates.has(other) || !other.update) return;
 
     const originalUpdate = other.update;
-    const manager = this;
+    const updateGlowForOther = (updatedOther: RuntimeOther) => {
+      this.updateGlowForOther(updatedOther);
+    };
     this.originalOtherUpdates.set(other, originalUpdate);
     other.update = function lootlogOtherUpdatePatch(...args) {
       const result = originalUpdate.apply(this, args);
-      manager.updateGlowForOther(this);
+      updateGlowForOther(this);
 
       return result;
     };

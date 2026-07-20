@@ -14,3 +14,4 @@ export * from "./common/notifications.types.js";
 export * from "./common/map-ping.types.js";
 export * from "./common/air-tag.types.js";
 export * from "./common/party-ready-room.types.js";
+export * from "./common/chat.types.js";

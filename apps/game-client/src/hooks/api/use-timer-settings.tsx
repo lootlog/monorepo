@@ -2,24 +2,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UpdateTimerSettingsPayload } from "@lootlog/types";
 import {
   getTimerSettingsControllerGetGlobalSettingsQueryKey,
-  getTimerSettingsControllerGetGuildSettingsQueryKey,
   timerSettingsControllerMigrateSettings,
   timerSettingsControllerUpdateGlobalSettings,
-  timerSettingsControllerUpdateGuildSettings,
   useTimerSettingsControllerGetGlobalSettings,
-  useTimerSettingsControllerGetGuildSettings,
 } from "@/lib/api/generated/main/timer-settings/timer-settings";
 import type {
   MigrateTimerSettingsDto,
-  UpdateGuildTimerSettingsDto,
   UpdateTimerSettingsDto,
 } from "@/lib/api/generated/main/model";
 
 const TIMER_SETTINGS_QUERY_KEY =
   getTimerSettingsControllerGetGlobalSettingsQueryKey();
-
-const GUILD_TIMER_SETTINGS_QUERY_KEY = (guildId: string) =>
-  getTimerSettingsControllerGetGuildSettingsQueryKey({ guildId });
 
 const toUpdateTimerSettingsDto = (
   payload: UpdateTimerSettingsPayload,

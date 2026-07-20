@@ -141,6 +141,30 @@ describe("AirTagObservationController", () => {
     expect(publisher.mock.calls[1]?.[0].observations).toHaveLength(5);
   });
 
+  it("retains at most 100 local targets for the active scope", () => {
+    const publisher = vi.fn();
+    const controller = new AirTagObservationController();
+    controller.configure({
+      enabled: true,
+      canPublish: true,
+      mapId: 42,
+      publisher,
+    });
+    const entries: Other = {};
+    for (let index = 0; index < 101; index += 1) {
+      entries[String(index)] = createOther({ nick: `Target ${index}` });
+    }
+
+    controller.handle(entries);
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS * 3);
+
+    const publishedCount = publisher.mock.calls.reduce(
+      (count, [batch]) => count + batch.observations.length,
+      0,
+    );
+    expect(publishedCount).toBe(100);
+  });
+
   it("does not observe while disabled or disconnected", () => {
     const publisher = vi.fn();
     const controller = new AirTagObservationController();

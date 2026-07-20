@@ -139,6 +139,22 @@ describe("timers-utils", () => {
     expect(timer.maxTimeLeft).toBe(150_000);
   });
 
+  it("calculates time left from the epoch emitted by the visible timer clock", () => {
+    const initialEpoch = new Date("2026-04-22T10:00:00.000Z").getTime();
+    const sourceTimers = [
+      createTimerWithTimeLeft({
+        minSpawnTime: "2026-04-22T10:01:00.000Z",
+        maxSpawnTime: "2026-04-22T10:02:30.000Z",
+      }),
+    ];
+
+    const [initialTimer] = calculateTimeLeft(sourceTimers, initialEpoch);
+    const [nextTimer] = calculateTimeLeft(sourceTimers, initialEpoch + 1_000);
+
+    expect(nextTimer.minTimeLeft).toBe(initialTimer.minTimeLeft - 1_000);
+    expect(nextTimer.maxTimeLeft).toBe(initialTimer.maxTimeLeft - 1_000);
+  });
+
   it("calculates deleted timer time left from deletedAt", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-22T10:00:00.000Z"));
@@ -153,6 +169,70 @@ describe("timers-utils", () => {
 
     expect(timer.minTimeLeft).toBe(-30_000);
     expect(timer.maxTimeLeft).toBe(-30_000);
+  });
+
+  it("preserves the legacy timer pipeline for deleted, pinned, and expired timers", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-22T10:00:00.000Z"));
+
+    const calculatedTimers = calculateTimeLeft([
+      createTimerWithTimeLeft({
+        timerKey: "active",
+        minSpawnTime: "2026-04-22T10:01:00.000Z",
+        maxSpawnTime: "2026-04-22T10:02:00.000Z",
+        npc: { ...createTimer().npc, name: "Active" },
+      }),
+      createTimerWithTimeLeft({
+        timerKey: "deleted",
+        minSpawnTime: "2026-04-22T10:08:00.000Z",
+        maxSpawnTime: "2026-04-22T10:09:00.000Z",
+        deletedAt: "2026-04-22T09:59:30.000Z",
+        npc: { ...createTimer().npc, name: "Deleted" },
+      }),
+      createTimerWithTimeLeft({
+        timerKey: "expired",
+        minSpawnTime: "2026-04-22T09:58:00.000Z",
+        maxSpawnTime: "2026-04-22T09:59:00.000Z",
+        npc: { ...createTimer().npc, name: "Expired" },
+      }),
+      createTimerWithTimeLeft({
+        timerKey: "pinned",
+        minSpawnTime: "2026-04-22T10:02:30.000Z",
+        maxSpawnTime: "2026-04-22T10:03:00.000Z",
+        npc: { ...createTimer().npc, name: "Pinned" },
+      }),
+    ]);
+
+    expect(
+      calculatedTimers.map((timer) => ({
+        timerKey: timer.timerKey,
+        minTimeLeft: timer.minTimeLeft,
+        maxTimeLeft: timer.maxTimeLeft,
+      })),
+    ).toEqual([
+      { timerKey: "active", minTimeLeft: 60_000, maxTimeLeft: 120_000 },
+      { timerKey: "deleted", minTimeLeft: -30_000, maxTimeLeft: -30_000 },
+      { timerKey: "expired", minTimeLeft: -120_000, maxTimeLeft: -60_000 },
+      { timerKey: "pinned", minTimeLeft: 150_000, maxTimeLeft: 180_000 },
+    ]);
+    expect(
+      sortTimersByPinnedAndTime(
+        calculatedTimers,
+        ["Pinned"],
+        "asc",
+        true,
+        30_000,
+      ).map((timer) => timer.timerKey),
+    ).toEqual(["pinned", "active", "deleted", "expired"]);
+    expect(
+      sortTimersByPinnedAndTime(
+        calculatedTimers,
+        ["Pinned"],
+        "desc",
+        true,
+        30_000,
+      ).map((timer) => timer.timerKey),
+    ).toEqual(["pinned", "active", "expired", "deleted"]);
   });
 
   it("filters timers by removal threshold, guild, visibility, search, npc type, level, and color", () => {

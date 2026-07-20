@@ -32,6 +32,7 @@ const createTarget = (overrides: Partial<AirTagTarget> = {}): AirTagTarget => ({
 describe("AirTagRenderer", () => {
   afterEach(() => {
     airTagReceiveController.clear();
+    vi.useRealTimers();
   });
 
   it("keeps full alpha before fade and reaches zero at TTL", () => {
@@ -43,6 +44,81 @@ describe("AirTagRenderer", () => {
       ),
     ).toBeCloseTo(0.5);
     expect(getAirTagMarkerAlpha(AIR_TAG_TARGET_TTL_MS)).toBe(0);
+  });
+
+  it("keeps the draw listener detached until a renderable target exists", () => {
+    const addCallbackToEvent = vi.fn();
+    const removeCallbackFromEvent = vi.fn();
+    window.Engine = {
+      apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
+    } as never;
+    window.API = {
+      addCallbackToEvent,
+      removeCallbackFromEvent,
+    } as never;
+    const renderer = new AirTagRenderer(() => 2_000);
+
+    expect(renderer.register()).toBe(true);
+    expect(addCallbackToEvent).not.toHaveBeenCalled();
+
+    airTagReceiveController.beginSubscription("request", "aether", 42);
+    airTagReceiveController.applySubscriptionAck({
+      status: "accepted",
+      requestId: "request",
+      scopes: [
+        {
+          guildId: "guild-1",
+          world: "aether",
+          mapId: 42,
+          epochId: "epoch",
+          epochStartedAt: 100,
+          revision: 1,
+          targets: [createTarget()],
+        },
+      ],
+    });
+
+    expect(addCallbackToEvent).toHaveBeenCalledTimes(1);
+    renderer.unregister();
+    expect(removeCallbackFromEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it("expires targets and detaches drawing even when no draw frame arrives", () => {
+    vi.useFakeTimers();
+    let now = 2_000;
+    const removeCallbackFromEvent = vi.fn();
+    window.Engine = {
+      apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
+    } as never;
+    window.API = {
+      addCallbackToEvent: vi.fn(),
+      removeCallbackFromEvent,
+    } as never;
+    airTagReceiveController.beginSubscription("request", "aether", 42);
+    airTagReceiveController.applySubscriptionAck({
+      status: "accepted",
+      requestId: "request",
+      scopes: [
+        {
+          guildId: "guild-1",
+          world: "aether",
+          mapId: 42,
+          epochId: "epoch",
+          epochStartedAt: 100,
+          revision: 1,
+          targets: [createTarget()],
+        },
+      ],
+    });
+    const renderer = new AirTagRenderer(() => now);
+
+    renderer.register();
+    now += AIR_TAG_TARGET_TTL_MS;
+    vi.advanceTimersByTime(AIR_TAG_TARGET_TTL_MS);
+
+    const removalCountBeforeCleanup = removeCallbackFromEvent.mock.calls.length;
+    renderer.unregister();
+    expect(removalCountBeforeCleanup).toBe(1);
   });
 
   it("draws every target on the minimap and only CLAN_ENEMY on main canvas", () => {

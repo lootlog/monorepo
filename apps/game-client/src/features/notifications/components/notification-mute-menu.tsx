@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
-  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Tooltip,
@@ -15,9 +15,8 @@ import {
   createMutedNpcPreference,
   createMutedPlayerPreference,
 } from "@/features/notifications/utils/notification-mutes";
-import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
-import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
 import type { StoredNotification } from "@/store/notifications.store";
+import type { NotificationMutes, NotificationMutesPatch } from "@lootlog/types";
 import { BellOff } from "lucide-react";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,6 +24,10 @@ import { useTranslation } from "react-i18next";
 type NotificationMuteMenuProps = {
   notification: StoredNotification;
   senderName: string;
+  isReady: boolean;
+  isPending: boolean;
+  mutes: NotificationMutes;
+  onUpdateMutes: (mutes: NotificationMutesPatch) => void;
   onOpenChange?: (open: boolean) => void;
   onMuted?: () => void;
 };
@@ -32,16 +35,18 @@ type NotificationMuteMenuProps = {
 export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
   notification,
   senderName,
+  isReady,
+  isPending,
+  mutes,
+  onUpdateMutes,
   onOpenChange,
   onMuted,
 }) => {
   const { t } = useTranslation("notifications");
   const [open, setOpen] = useState(false);
-  const { isReady, mutes } = useCurrentUserNotificationMutes();
-  const updateUserPreferences = useUpdateUserPreferences();
   const mutedNpc = createMutedNpcPreference(notification);
   const mutedPlayer = createMutedPlayerPreference(notification, senderName);
-  const isDisabled = !isReady || updateUserPreferences.isPending;
+  const isDisabled = !isReady || isPending;
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -53,10 +58,8 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
       return;
     }
 
-    updateUserPreferences.mutate({
-      mutes: {
-        players: appendMutedPlayer(mutes, mutedPlayer),
-      },
+    onUpdateMutes({
+      players: appendMutedPlayer(mutes, mutedPlayer),
     });
     onMuted?.();
     handleOpenChange(false);
@@ -72,29 +75,43 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
       return;
     }
 
-    updateUserPreferences.mutate({
-      mutes: {
-        npcs: appendMutedNpc(mutes, mutedNpc),
-      },
+    onUpdateMutes({
+      npcs: appendMutedNpc(mutes, mutedNpc),
     });
     onMuted?.();
     handleOpenChange(false);
   };
 
+  const muteButton = (
+    <Button
+      variant="ghost"
+      aria-expanded={open}
+      aria-haspopup="menu"
+      aria-label={t("actions.muteOptionsAria")}
+      disabled={isDisabled}
+      className="ll:size-7 ll:px-0"
+      onClick={() => handleOpenChange(!open)}
+    >
+      <BellOff size={12} />
+    </Button>
+  );
+
+  if (!open) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{muteButton}</TooltipTrigger>
+        <TooltipContent side="top">
+          {t("actions.muteOptionsAria")}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              aria-label={t("actions.muteOptionsAria")}
-              disabled={isDisabled}
-              className="ll:size-7 ll:px-0"
-            >
-              <BellOff size={12} />
-            </Button>
-          </PopoverTrigger>
+          <PopoverAnchor asChild>{muteButton}</PopoverAnchor>
         </TooltipTrigger>
         <TooltipContent side="top">
           {t("actions.muteOptionsAria")}

@@ -174,6 +174,27 @@ describe("installCharacterTooltipTransforms", () => {
     expect(other.createStrTip?.()).toBe("<div>Other</div>");
   });
 
+  it("restores an own tooltip method when an other leaves the current map", () => {
+    const hero = createCharacter("Hero");
+    const other = createCharacter("Other");
+    const originalOtherCreateStrTip = other.createStrTip;
+    setRuntime(hero, { 1: other });
+    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    characterTooltipTransforms.register(() => "<div>replacement</div>");
+    const cleanup = installCharacterTooltipTransforms();
+
+    try {
+      expect(other.createStrTip?.()).toBe("<div>replacement</div>");
+
+      useOthersStore.getState().applyBatch({ removeIds: ["1"] });
+
+      expect(other.createStrTip).toBe(originalOtherCreateStrTip);
+      expect(other.createStrTip?.()).toBe("<div>Other</div>");
+    } finally {
+      cleanup();
+    }
+  });
+
   it("patches a single new other character", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");

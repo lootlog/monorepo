@@ -32,6 +32,7 @@ jobs:
       search: ${{ steps.filter.outputs.search }}
       battlelog-service: ${{ steps.filter.outputs.battlelog-service }}
       developer: ${{ steps.filter.outputs.developer }}
+      game-client: ${{ steps.filter.outputs.game-client }}
       packages: ${{ steps.filter.outputs.packages }}
     steps:
       - name: Checkout code
@@ -63,6 +64,13 @@ jobs:
             developer:
               - 'apps/developer/**'
               - 'packages/**'
+            game-client:
+              - 'apps/game-client/**'
+              - 'packages/margonem/**'
+              - 'packages/socket-parser/**'
+              - 'packages/types/**'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
             packages:
               - 'packages/**'
 
@@ -78,6 +86,7 @@ jobs:
       needs.changes.outputs.search == 'true' ||
       needs.changes.outputs.battlelog-service == 'true' ||
       needs.changes.outputs.developer == 'true' ||
+      needs.changes.outputs.game-client == 'true' ||
       needs.changes.outputs.packages == 'true'
     timeout-minutes: 15
     steps:
@@ -320,6 +329,105 @@ jobs:
           flags: battlelog-service
           name: battlelog-service-coverage
 
+  test-game-client:
+    name: Test Game Client Performance
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.game-client == 'true'
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10.32.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Setup Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check types
+        run: pnpm --filter=@lootlog/game-client check-types
+
+      - name: Run coverage suite
+        run: pnpm --filter=@lootlog/game-client test:coverage
+
+      - name: Enforce changed-code coverage
+        if: github.event_name == 'pull_request'
+        env:
+          COVERAGE_BASE_REF: ${{ github.event.pull_request.base.sha }}
+        run: pnpm --filter=@lootlog/game-client check:changed-coverage
+
+      - name: Build release userscript and enforce bundle budget
+        run: pnpm --filter=@lootlog/game-client build
+
+      - name: Measure base hot paths
+        id: base-benchmark
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          base_worktree="$RUNNER_TEMP/game-client-base"
+          base_output="$RUNNER_TEMP/game-client-base-benchmark"
+          git worktree add --detach "$base_worktree" "$BASE_SHA"
+          if [[ -f "$base_worktree/apps/game-client/benchmarks/hot-paths/run-hot-path-benchmarks.ts" ]]; then
+            pnpm --dir "$base_worktree" install --frozen-lockfile
+            BENCH_OUTPUT_DIR="$base_output" pnpm --dir "$base_worktree" --filter=@lootlog/game-client bench:hot-paths
+            echo "baseline_path=$base_output/hot-paths.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "Benchmark harness is not present on the base commit; using the measured legacy baseline."
+            echo "baseline_path=$GITHUB_WORKSPACE/apps/game-client/benchmarks/hot-paths/legacy-baseline.json" >> "$GITHUB_OUTPUT"
+          fi
+          git worktree remove "$base_worktree" --force
+
+      - name: Run candidate hot-path benchmarks
+        env:
+          BENCH_BASELINE: ${{ steps.base-benchmark.outputs.baseline_path }}
+        run: pnpm --filter=@lootlog/game-client bench:hot-paths
+
+      - name: Run retained-heap soak
+        run: pnpm --filter=@lootlog/game-client bench:soak
+
+      - name: Run Chromium performance matrix
+        env:
+          BROWSER_PERF_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          BROWSER_PERF_ENFORCE: "1"
+        run: pnpm --filter=@lootlog/game-client test:browser-perf
+
+      - name: Upload game-client performance artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: game-client-performance
+          path: |
+            apps/game-client/artifacts/hot-path-benchmarks
+            apps/game-client/artifacts/retained-heap-soak
+            apps/game-client/artifacts/browser-perf
+
+      - name: Upload game-client coverage
+        if: always()
+        uses: codecov/codecov-action@v6
+        with:
+          files: ./apps/game-client/coverage/lcov.info
+          flags: game-client
+          name: game-client-coverage
+
   build:
     name: Build All Services
     runs-on: ubuntu-latest
@@ -332,6 +440,7 @@ jobs:
       needs.changes.outputs.search == 'true' ||
       needs.changes.outputs.battlelog-service == 'true' ||
       needs.changes.outputs.developer == 'true' ||
+      needs.changes.outputs.game-client == 'true' ||
       needs.changes.outputs.packages == 'true'
     timeout-minutes: 20
     steps:
@@ -367,6 +476,7 @@ jobs:
       needs.changes.outputs.search == 'true' ||
       needs.changes.outputs.battlelog-service == 'true' ||
       needs.changes.outputs.developer == 'true' ||
+      needs.changes.outputs.game-client == 'true' ||
       needs.changes.outputs.packages == 'true'
     timeout-minutes: 30
     steps:
@@ -391,7 +501,7 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [lint, build, docker-build]
+    needs: [lint, test-game-client, build, docker-build]
     if: always()
     timeout-minutes: 5
 
@@ -399,6 +509,7 @@ jobs:
       - name: Check job results
         run: |
           if [[ "${{ needs.lint.result }}" == "failure" ]] || \
+             [[ "${{ needs.test-game-client.result }}" == "failure" ]] || \
              [[ "${{ needs.build.result }}" == "failure" ]] || \
              [[ "${{ needs.docker-build.result }}" == "failure" ]]; then
             echo "CI failed"

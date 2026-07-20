@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
@@ -17,6 +17,9 @@ const mocks = vi.hoisted(() => ({
       return this;
     },
   },
+  useGuildMembersSummary: vi.fn((..._arguments: unknown[]) => ({
+    data: undefined,
+  })),
 }));
 
 vi.mock("@/contexts/socket-context", () => ({
@@ -28,7 +31,8 @@ vi.mock("@/contexts/socket-context", () => ({
 }));
 
 vi.mock("@/hooks/api/guild-members-summary-query", () => ({
-  useGuildMembersSummary: () => ({ data: undefined }),
+  useGuildMembersSummary: (...arguments_: unknown[]) =>
+    mocks.useGuildMembersSummary(...arguments_),
 }));
 
 import { useOnlineCharacterOwners } from "./use-online-character-owners";
@@ -57,20 +61,46 @@ describe("useOnlineCharacterOwners", () => {
     });
   });
 
-  it("hydrates online character owners as soon as the socket is joined", async () => {
+  it("does no owner query or socket work until Shift is pressed", async () => {
     renderHook(() => useOnlineCharacterOwners());
+
+    expect(mocks.emitWithAck).not.toHaveBeenCalled();
+    expect(mocks.socketOn).not.toHaveBeenCalled();
+    expect(mocks.useGuildMembersSummary).toHaveBeenLastCalledWith(
+      { guildId: "guild-1" },
+      expect.objectContaining({
+        query: expect.objectContaining({ enabled: false }),
+      }),
+    );
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
 
     await waitFor(() => {
       expect(mocks.emitWithAck).toHaveBeenCalledWith(
         GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH,
         { guildId: "guild-1", world: "tempest" },
       );
+      expect(mocks.socketOn).toHaveBeenCalledWith(
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+        expect.any(Function),
+      );
+      expect(mocks.useGuildMembersSummary).toHaveBeenLastCalledWith(
+        { guildId: "guild-1" },
+        expect.objectContaining({
+          query: expect.objectContaining({ enabled: true }),
+        }),
+      );
     });
   });
 
-  it("retries a failed initial snapshot when shift is pressed", async () => {
+  it("retries a failed acknowledgement and permits a fresh Shift activation", async () => {
     mocks.emitWithAck.mockRejectedValue(new Error("ack timeout"));
     renderHook(() => useOnlineCharacterOwners());
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
 
     await waitFor(() => {
       expect(mocks.emitWithAck).toHaveBeenCalledTimes(2);
@@ -78,7 +108,18 @@ describe("useOnlineCharacterOwners", () => {
     });
 
     mocks.emitWithAck.mockResolvedValue({ status: "success", players: {} });
-    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
+    });
+    await waitFor(() => {
+      expect(mocks.socketOff).toHaveBeenCalledWith(
+        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+        expect.any(Function),
+      );
+    });
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
 
     await waitFor(() => {
       expect(mocks.emitWithAck).toHaveBeenCalledTimes(3);

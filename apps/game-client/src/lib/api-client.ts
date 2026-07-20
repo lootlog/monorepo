@@ -1,6 +1,5 @@
 import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
 import { applyDevPermissionOverrideHeader } from "@/lib/dev-permission-override";
-import { stringify } from "qs";
 
 type ApiType = "default" | "battlelog" | "auth" | "public";
 
@@ -117,6 +116,63 @@ const normalizeRequestPath = (path: string) => {
   return path.replace(/^\/+/, "");
 };
 
+const encodeQueryComponent = (value: string) =>
+  encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+
+const appendQueryValue = (
+  entries: string[],
+  key: string,
+  value: unknown,
+  ancestors: Set<object>,
+): void => {
+  if (value === null || value === undefined) {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => appendQueryValue(entries, key, item, ancestors));
+    return;
+  }
+
+  if (value instanceof Date) {
+    entries.push(
+      `${encodeQueryComponent(key)}=${encodeQueryComponent(value.toISOString())}`,
+    );
+    return;
+  }
+
+  if (isObject(value)) {
+    if (ancestors.has(value)) {
+      throw new RangeError("Cannot serialize circular query parameters");
+    }
+
+    ancestors.add(value);
+    Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+      appendQueryValue(entries, `${key}[${nestedKey}]`, nestedValue, ancestors);
+    });
+    ancestors.delete(value);
+    return;
+  }
+
+  entries.push(
+    `${encodeQueryComponent(key)}=${encodeQueryComponent(String(value))}`,
+  );
+};
+
+const serializeQueryParams = (params: Record<string, unknown>): string => {
+  const entries: string[] = [];
+  const ancestors = new Set<object>();
+
+  Object.entries(params).forEach(([key, value]) => {
+    appendQueryValue(entries, key, value, ancestors);
+  });
+
+  return entries.join("&");
+};
+
 const getApiMessageFromData = (data: unknown): string | undefined => {
   if (typeof data === "string") {
     return data.trim().length > 0 ? data : undefined;
@@ -178,13 +234,7 @@ export const buildRequestUrl = ({
   const url = isAbsoluteUrl(path)
     ? new URL(path)
     : new URL(normalizeRequestPath(path), normalizeBaseUrl(baseURL));
-  const serializedParams = params
-    ? stringify(params, {
-        addQueryPrefix: false,
-        arrayFormat: "repeat",
-        skipNulls: true,
-      })
-    : "";
+  const serializedParams = params ? serializeQueryParams(params) : "";
 
   if (serializedParams.length > 0) {
     url.search = serializedParams;

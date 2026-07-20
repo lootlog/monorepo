@@ -4,37 +4,35 @@ import { storageKey } from "@/lib/storage-key";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SocketProvider } from "@/contexts/socket-context";
 import { ErrorBoundary } from "react-error-boundary";
-import { bootstrapPublicApi } from "@/features/public-api";
 import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-boundary-fallback";
 import { AppContent } from "@/app-content";
+import { disposeSoundPlayback } from "@/lib/sound-playback";
+import { BrowserPerfFixtureBridge } from "@/perf-fixture/browser-perf-fixture-bridge";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
-
-type LootlogApiWindow = Window & {
-  __lootlogApiTeardown?: () => void;
-};
-
-const lootlogApiWindow = window as LootlogApiWindow;
-if (lootlogApiWindow.__lootlogApiTeardown) {
-  lootlogApiWindow.__lootlogApiTeardown();
-}
-lootlogApiWindow.__lootlogApiTeardown = bootstrapPublicApi(queryClient);
 
 function App() {
   return (
     <ThemeProvider defaultTheme="dark-theme" storageKey={THEME_STORAGE_KEY}>
-      <QueryClientProvider client={queryClient}>
-        <SocketProvider>
-          <ErrorBoundary
-            FallbackComponent={AppErrorBoundaryFallback}
-            onError={(error, _info) => {
-              console.error("[ErrorBoundary]", error);
-            }}
-          >
-            <AppContent />
-          </ErrorBoundary>
-        </SocketProvider>
-      </QueryClientProvider>
+      <TooltipProvider>
+        <QueryClientProvider client={queryClient}>
+          <SocketProvider>
+            {import.meta.env.VITE_PERF_FIXTURE === "1" ? (
+              <BrowserPerfFixtureBridge />
+            ) : null}
+            <ErrorBoundary
+              FallbackComponent={AppErrorBoundaryFallback}
+              onError={(error, _info) => {
+                disposeSoundPlayback();
+                console.warn("[ErrorBoundary]", error);
+              }}
+            >
+              <AppContent />
+            </ErrorBoundary>
+          </SocketProvider>
+        </QueryClientProvider>
+      </TooltipProvider>
     </ThemeProvider>
   );
 }

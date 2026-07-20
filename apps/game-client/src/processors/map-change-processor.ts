@@ -5,6 +5,7 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import { mapPingController } from "@/features/map-pings/map-ping-controller";
 import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
+import { useNpcDetectorStore } from "@/store/npc-detector.store";
 
 export class MapChangeProcessor {
   private previousMapId: number | null = null;
@@ -14,10 +15,14 @@ export class MapChangeProcessor {
 
     const mapId = event.town.id;
     const mapName = event.town.name;
+    const previousMapId = this.previousMapId;
 
-    if (this.previousMapId === mapId) return;
+    if (previousMapId === mapId) return;
 
     this.previousMapId = mapId;
+    if (previousMapId !== null) {
+      useNpcDetectorStore.getState().clearNpcs();
+    }
     mapPingInteractionController.cancel();
     mapPingController.clear();
 

@@ -14,7 +14,11 @@ import {
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { getNpcRoutingTier, type NpcRoutingTier } from "@lootlog/types";
+import {
+  CHAT_MESSAGE_LIMIT,
+  getNpcRoutingTier,
+  type NpcRoutingTier,
+} from "@lootlog/types";
 import { v6 } from "uuid";
 import { GuildsService } from "src/guilds/guilds.service";
 import { Permission, type Role } from "src/generated/prisma/client";
@@ -26,8 +30,6 @@ import {
   canEditChatMessage,
 } from "src/chat/chat-message-permissions";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
-
-const MAX_MESSAGES = 300;
 
 type MessageRouting = {
   tier: NpcRoutingTier;
@@ -63,7 +65,7 @@ export class ChatService {
     };
 
     await this.redisService.rpush(key, JSON.stringify(msg));
-    await this.redisService.ltrim(key, -MAX_MESSAGES, -1);
+    await this.redisService.ltrim(key, -CHAT_MESSAGE_LIMIT, -1);
     this.emitMessage(msg);
 
     return this.toChatMessageEnvelope(msg, {

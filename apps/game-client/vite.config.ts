@@ -9,15 +9,31 @@ import { visualizer } from "rollup-plugin-visualizer";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "");
+  const shouldAnalyzeBundle =
+    env.ANALYZE === "1" || process.env.ANALYZE === "1";
+  const useFastLocalMinifier =
+    env.FAST_BUILD === "1" || process.env.FAST_BUILD === "1";
+  const isBrowserPerformanceFixture =
+    env.VITE_PERF_FIXTURE === "1" || process.env.VITE_PERF_FIXTURE === "1";
   const commitSha =
     env.VITE_COMMIT_SHA ||
     env.WORKERS_CI_COMMIT_SHA ||
     process.env.WORKERS_CI_COMMIT_SHA ||
     "";
+  const runtimeVersion =
+    env.VITE_GAME_CLIENT_VERSION ||
+    commitSha ||
+    process.env.npm_package_version ||
+    "development";
 
   return {
     define: {
       "import.meta.env.VITE_COMMIT_SHA": JSON.stringify(commitSha),
+      "import.meta.env.VITE_GAME_CLIENT_VERSION":
+        JSON.stringify(runtimeVersion),
+      "import.meta.env.VITE_PERF_FIXTURE": JSON.stringify(
+        isBrowserPerformanceFixture ? "1" : "0",
+      ),
     },
     server: {
       host: "localhost",
@@ -43,7 +59,7 @@ export default defineConfig(({ mode }) => {
       ],
     },
     build: {
-      minify: "terser",
+      minify: useFastLocalMinifier ? "oxc" : "terser",
       terserOptions: {
         compress: {
           drop_debugger: true,
@@ -80,11 +96,18 @@ export default defineConfig(({ mode }) => {
         },
         build: {},
       }),
-      visualizer({
-        filename: "dist/stats.html",
-        gzipSize: true,
-        brotliSize: true,
-      }),
+      ...(shouldAnalyzeBundle
+        ? [
+            visualizer({
+              filename: path.resolve(
+                __dirname,
+                "../../artifacts/game-client/bundle-stats.html",
+              ),
+              gzipSize: true,
+              brotliSize: true,
+            }),
+          ]
+        : []),
     ],
   };
 });

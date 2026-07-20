@@ -29,6 +29,7 @@ let originalCanvasTipHide: OriginalCanvasTipHide | null = null;
 let originalCanvasTipShow: OriginalCanvasTipShow | null = null;
 let lastOtherCanvasTipEvent: unknown = null;
 const patchedCharacters = new Set<MargonemTooltipCharacter>();
+const patchedOtherPrototypes = new Set<MargonemTooltipCharacter>();
 
 function getRuntimeWindow(): RuntimeWindow {
   return window as RuntimeWindow;
@@ -111,7 +112,37 @@ function patchOtherPrototype(other: MargonemTooltipCharacter): boolean {
   };
 
   patchedCharacters.add(prototypeAsCharacter);
+  patchedOtherPrototypes.add(prototypeAsCharacter);
   return true;
+}
+
+function prunePatchedCharacters(): void {
+  const engine = getRuntimeWindow().Engine;
+  const currentOthers = Object.values(
+    useOthersStore.getState().othersById,
+  ) as MargonemTooltipCharacter[];
+  const retainedCharacters = new Set<MargonemTooltipCharacter>(currentOthers);
+  if (engine?.hero) {
+    retainedCharacters.add(engine.hero);
+  }
+  const retainedPrototypes = new Set(
+    currentOthers.map(
+      (other) => Object.getPrototypeOf(other) as MargonemTooltipCharacter,
+    ),
+  );
+
+  for (const character of patchedCharacters) {
+    const isRetainedPrototype =
+      patchedOtherPrototypes.has(character) &&
+      retainedPrototypes.has(character);
+    if (retainedCharacters.has(character) || isRetainedPrototype) {
+      continue;
+    }
+
+    restoreCreateStrTip(character);
+    patchedCharacters.delete(character);
+    patchedOtherPrototypes.delete(character);
+  }
 }
 
 function hasOwnCreateStrTip(character: MargonemTooltipCharacter): boolean {
@@ -183,6 +214,7 @@ function patchCanvasTip(runtimeWindow: RuntimeWindow): (() => void) | null {
 }
 
 export function refreshCharacterTooltips(): void {
+  prunePatchedCharacters();
   const engine = getRuntimeWindow().Engine;
   if (!engine) return;
 
@@ -227,6 +259,7 @@ export function refreshActiveOtherCanvasTooltip(): void {
 }
 
 export function patchOtherCharacterTooltips(others: Other[]): void {
+  prunePatchedCharacters();
   for (const other of others) {
     patchOtherCharacterTooltip(other);
   }
@@ -243,6 +276,9 @@ export function installCharacterTooltipTransforms(): () => void {
     return () => undefined;
   }
   const cleanupCanvasTip = patchCanvasTip(runtimeWindow);
+  const unsubscribeOthersStore = useOthersStore.subscribe(
+    prunePatchedCharacters,
+  );
 
   if (patchCreateStrTip(engine.hero, "hero") && engine.hero) {
     patchedCharacters.add(engine.hero);
@@ -254,6 +290,7 @@ export function installCharacterTooltipTransforms(): () => void {
   );
 
   cleanupCurrentInstallation = () => {
+    unsubscribeOthersStore();
     cleanupCanvasTip?.();
 
     for (const character of patchedCharacters) {
@@ -261,6 +298,7 @@ export function installCharacterTooltipTransforms(): () => void {
       refreshCharacterTooltip(character);
     }
     patchedCharacters.clear();
+    patchedOtherPrototypes.clear();
 
     cleanupCurrentInstallation = null;
   };

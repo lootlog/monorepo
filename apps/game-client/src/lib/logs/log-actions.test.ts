@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { runSingleLoggedAction } from "@/lib/logs/log-actions";
+import {
+  LOG_VALUE_BYTE_CAP,
+  serializeLogValue,
+  runSingleLoggedAction,
+} from "@/lib/logs/log-actions";
 import { useLogsStore } from "@/store/logs.store";
 
 const retry = {
@@ -115,5 +119,25 @@ describe("log actions retry", () => {
 
     expect(execute).toHaveBeenCalledTimes(1);
     expect(useLogsStore.getState().actions[0].requests).toHaveLength(1);
+  });
+});
+
+describe("log value retention", () => {
+  it("serializes cyclic and oversized values into a bounded diagnostic", () => {
+    const payload: Record<string, unknown> = {
+      events: Array.from({ length: 1_100 }, (_, index) => ({
+        index,
+        message: "x".repeat(20_000),
+      })),
+    };
+    payload.self = payload;
+
+    const serialized = serializeLogValue(payload);
+    const serializedBytes = new TextEncoder().encode(
+      JSON.stringify(serialized),
+    ).byteLength;
+
+    expect(serializedBytes).toBeLessThanOrEqual(LOG_VALUE_BYTE_CAP);
+    expect(JSON.stringify(serialized)).toContain("truncated");
   });
 });

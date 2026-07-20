@@ -18,6 +18,14 @@ export type GuildIdentity = Pick<
   "id" | "name" | "icon" | "vanityUrl"
 >;
 
+const EMPTY_GUILD_IDS: string[] = [];
+const EMPTY_GUILD_NAMES_BY_ID: Record<string, string> = {};
+const guildIdsCache = new WeakMap<GuildIdentity[], string[]>();
+const guildNamesByIdCache = new WeakMap<
+  GuildIdentity[],
+  Record<string, string>
+>();
+
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 };
@@ -40,7 +48,14 @@ const getString = (value: unknown, fallback = "") => {
 };
 
 export const getGuildIds = (guilds?: GuildIdentity[]) => {
-  return guilds?.map((guild) => guild.id) ?? [];
+  if (!guilds) return EMPTY_GUILD_IDS;
+
+  const cachedGuildIds = guildIdsCache.get(guilds);
+  if (cachedGuildIds) return cachedGuildIds;
+
+  const guildIds = guilds.map((guild) => guild.id);
+  guildIdsCache.set(guilds, guildIds);
+  return guildIds;
 };
 
 export const normalizeGuild = (guild: GuildIdentity): Guild => {
@@ -57,12 +72,20 @@ export const normalizeGuilds = (guilds: GuildIdentity[] = []) => {
 };
 
 export const getGuildNamesById = (guilds?: GuildIdentity[]) => {
-  return (
-    guilds?.reduce<Record<string, string>>((result, guild) => {
+  if (!guilds) return EMPTY_GUILD_NAMES_BY_ID;
+
+  const cachedGuildNamesById = guildNamesByIdCache.get(guilds);
+  if (cachedGuildNamesById) return cachedGuildNamesById;
+
+  const guildNamesById = guilds.reduce<Record<string, string>>(
+    (result, guild) => {
       result[guild.id] = guild.name;
       return result;
-    }, {}) ?? {}
+    },
+    {},
   );
+  guildNamesByIdCache.set(guilds, guildNamesById);
+  return guildNamesById;
 };
 
 export const mapGuildMembersByUserId = (
