@@ -61,8 +61,15 @@ export const updateChatMessagesCache = ({
   queryClient: QueryClient;
   updater: ChatMessagesCacheUpdater;
 }) => {
-  queryClient.setQueryData(
-    getChatControllerGetChatMessagesQueryKey({ guildId }),
-    updater,
-  );
+  const queryKey = getChatControllerGetChatMessagesQueryKey({ guildId });
+  const queryState = queryClient.getQueryState<ChatMessageType[]>(queryKey);
+
+  if (
+    queryState?.data === undefined &&
+    queryState?.fetchStatus !== "fetching"
+  ) {
+    return;
+  }
+
+  queryClient.setQueryData<ChatMessageType[]>(queryKey, updater);
 };

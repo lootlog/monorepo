@@ -48,6 +48,45 @@ describe("useTimersCache", () => {
   const wrapper = ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
+  it("keeps an unseen timer list fetchable after an incremental upsert", async () => {
+    const fetchTimers = vi
+      .fn()
+      .mockResolvedValue([createTimer({ timerKey: "server-timer" })]);
+    const { result } = renderHook(() => useTimersCache(), { wrapper });
+
+    result.current.upsertTimer(createTimer({ timerKey: "socket-timer" }));
+
+    const timers = await queryClient.fetchQuery({
+      queryKey: queryKeys.timers("pandora"),
+      queryFn: fetchTimers,
+      staleTime: 30_000,
+    });
+
+    expect(fetchTimers).toHaveBeenCalledOnce();
+    expect(timers).toEqual([createTimer({ timerKey: "server-timer" })]);
+  });
+
+  it("keeps an unseen timer list fetchable after an incremental removal", async () => {
+    const serverTimers = [createTimer({ timerKey: "server-timer" })];
+    const fetchTimers = vi.fn().mockResolvedValue(serverTimers);
+    const { result } = renderHook(() => useTimersCache(), { wrapper });
+
+    result.current.removeTimer({
+      world: "pandora",
+      guildId: "guild-1",
+      timerKey: "socket-timer",
+    });
+
+    const timers = await queryClient.fetchQuery({
+      queryKey: queryKeys.timers("pandora"),
+      queryFn: fetchTimers,
+      staleTime: 30_000,
+    });
+
+    expect(fetchTimers).toHaveBeenCalledOnce();
+    expect(timers).toEqual(serverTimers);
+  });
+
   it("upserts timers by identity and clears their pending flag", () => {
     queryClient.setQueryData(queryKeys.timers("pandora"), [
       createTimer({

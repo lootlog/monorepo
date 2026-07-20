@@ -360,6 +360,12 @@ const runChatWorkload = (
     { length: CHAT_GUILD_COUNT },
     (_, index) => `soak-guild-${index}`,
   );
+  for (const guildId of guildIds) {
+    queryClient.setQueryData(
+      getChatControllerGetChatMessagesQueryKey({ guildId }),
+      [],
+    );
+  }
 
   for (let index = 0; index < CHAT_MESSAGE_COUNT; index += 1) {
     const guildId = guildIds[index % guildIds.length];

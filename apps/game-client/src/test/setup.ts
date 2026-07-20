@@ -22,6 +22,12 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 class ResizeObserverMock {
+  readonly callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+
   observe = vi.fn();
   unobserve = vi.fn();
   disconnect = vi.fn();

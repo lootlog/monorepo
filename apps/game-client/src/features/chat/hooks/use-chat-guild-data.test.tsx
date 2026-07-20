@@ -3,6 +3,8 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
+import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
+import { upsertChatMessage } from "@/features/chat/chat.helpers";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
 import { useChatGuildData } from "./use-chat-guild-data";
 
@@ -76,6 +78,55 @@ describe("useChatGuildData", () => {
     }
     queryClients.length = 0;
     mocks.getChatMessages.mockReset();
+  });
+
+  it("merges a socket message received during the initial history request", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClients.push(queryClient);
+    let resolveRequest: (messages: ChatMessageType[]) => void = () => undefined;
+    mocks.getChatMessages.mockReturnValue(
+      new Promise<ChatMessageType[]>((resolve) => {
+        resolveRequest = resolve;
+      }),
+    );
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(
+      () =>
+        useChatGuildData({
+          currentCharacterNick: "Hero",
+          guilds: [{ id: "guild-1", name: "Guild" }],
+          selectedGuildId: "guild-1",
+        }),
+      { wrapper },
+    );
+
+    await waitFor(() => {
+      expect(mocks.getChatMessages).toHaveBeenCalledTimes(1);
+    });
+    const socketMessage = createMessage(
+      "message-2",
+      "2026-01-01T10:02:00.000Z",
+    );
+    act(() => {
+      updateChatMessagesCache({
+        guildId: "guild-1",
+        queryClient,
+        updater: (messages) => upsertChatMessage(messages, socketMessage),
+      });
+      resolveRequest([createMessage("message-1", "2026-01-01T10:01:00.000Z")]);
+    });
+
+    await waitFor(() => {
+      expect(
+        result.current.messagesByGuildId["guild-1"]?.map(
+          (message) => message.id,
+        ),
+      ).toEqual(["message-1", "message-2"]);
+    });
   });
 
   it("merges a reconnect response with a socket message received during refetch", async () => {

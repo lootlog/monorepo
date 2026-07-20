@@ -13,32 +13,30 @@ export const useTimersCache = () => {
   const upsertTimer = (timer: Timer) => {
     if (!timer.world) return;
 
-    queryClient.setQueryData<Timer[]>(
-      queryKeys.timers(timer.world),
-      (old = []) => {
-        const updated = [...old];
+    queryClient.setQueryData<Timer[]>(queryKeys.timers(timer.world), (old) => {
+      if (old === undefined) return undefined;
 
-        const index = updated.findIndex((t) => isSameTimer(t, timer));
+      const updated = [...old];
 
-        const next = { ...timer, isPending: false };
+      const index = updated.findIndex((t) => isSameTimer(t, timer));
 
-        if (index !== -1) {
-          updated[index] = next;
-        } else {
-          updated.push(next);
-        }
+      const next = { ...timer, isPending: false };
 
-        return updated;
-      },
-    );
+      if (index !== -1) {
+        updated[index] = next;
+      } else {
+        updated.push(next);
+      }
+
+      return updated;
+    });
   };
 
   const removeTimer = (timer: TimerIdentity) => {
     if (!timer.world) return;
 
-    queryClient.setQueryData<Timer[]>(
-      queryKeys.timers(timer.world),
-      (old = []) => old.filter((t) => !isSameTimer(t, timer)),
+    queryClient.setQueryData<Timer[]>(queryKeys.timers(timer.world), (old) =>
+      old?.filter((t) => !isSameTimer(t, timer)),
     );
   };
 
