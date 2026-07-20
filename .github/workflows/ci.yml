@@ -362,6 +362,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build game client workspace dependencies
+        run: pnpm turbo run build --filter=@lootlog/game-client^...
+
       - name: Check types
         run: pnpm --filter=@lootlog/game-client check-types
 
