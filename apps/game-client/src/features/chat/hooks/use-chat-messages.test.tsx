@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
       roles: [],
     }),
     getQueryData: vi.fn((): unknown => []),
+    getQueryState: vi.fn(() => ({ data: [], fetchStatus: "idle" })),
     invalidateQueries: vi.fn(),
     prefetchQuery: vi.fn(),
     removeQueries: vi.fn(),
@@ -73,6 +74,7 @@ describe("useChatMessagesListener", () => {
     mocks.socketState.joinedGuilds = ["guild-1"];
     mocks.queryClient.fetchQuery.mockClear();
     mocks.queryClient.getQueryData.mockClear();
+    mocks.queryClient.getQueryState.mockClear();
     mocks.queryClient.invalidateQueries.mockClear();
     mocks.queryClient.prefetchQuery.mockClear();
     mocks.queryClient.removeQueries.mockClear();

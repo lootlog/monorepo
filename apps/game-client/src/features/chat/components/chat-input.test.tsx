@@ -189,6 +189,7 @@ vi.mock("@tanstack/react-query", async () => {
   return {
     ...actual,
     useQueryClient: () => ({
+      getQueryState: () => ({ data: [], fetchStatus: "idle" }),
       setQueryData: mockSetQueryData,
     }),
   };
