@@ -124,28 +124,29 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
 export class BattleEventProcessor {
   private observedTeams = new Set<number>();
   private hasMultipleTeams = false;
+  private hasWarnedCaptureOverflow = false;
+  private battleGeneration = 0;
+  private finalizingGeneration: number | null = null;
 
   async handle(event: GameEvent): Promise<void> {
     if (!event.f) return;
 
     const battlePanelStore = useBattlePanelStore.getState();
     const battleStore = useBattleStore.getState();
+    const stateAtIngress = useBattleStore.getState();
+    const startsBattle = event.f.init === "1";
 
-    if (event.f.init === "1") {
+    if (startsBattle) {
+      this.battleGeneration += 1;
       battleStore.clearEvents();
-      battleStore.setBattleState("in-battle");
-      battleStore.updateBattleWarriors(null);
       this.observedTeams.clear();
       this.hasMultipleTeams = false;
+      this.hasWarnedCaptureOverflow = false;
     }
 
+    let battleWarriors = startsBattle ? {} : stateAtIngress.battleWarriors;
     if (event.f.w) {
-      const previousBattleWarriors = useBattleStore.getState().battleWarriors;
-      const battleWarriorsWithAccountId = addAccountIdsToWarriors(
-        event.f.w,
-        previousBattleWarriors,
-      );
-      battleStore.updateBattleWarriors(battleWarriorsWithAccountId);
+      battleWarriors = addAccountIdsToWarriors(event.f.w, battleWarriors);
 
       // Incremental team detection — O(1) amortized instead of O(N*M)
       if (!this.hasMultipleTeams) {
@@ -161,17 +162,38 @@ export class BattleEventProcessor {
       }
     }
 
+    const battleState = startsBattle ? "in-battle" : stateAtIngress.battleState;
+    const endsBattle = event.f.endBattle === 1 && battleState === "in-battle";
+
+    if (endsBattle && this.finalizingGeneration === this.battleGeneration) {
+      return;
+    }
+
     if (battlePanelStore.isBattleCollectionEnabled) {
       battleStore.addEvent(event);
     }
 
-    if (
-      event.f.endBattle === 1 &&
-      useBattleStore.getState().battleState === "in-battle"
-    ) {
-      const battleWarriors = useBattleStore.getState().battleWarriors;
+    if (!endsBattle) {
+      battleStore.applyBatch({
+        battleState: startsBattle ? "in-battle" : undefined,
+        battleWarriors: startsBattle || event.f.w ? battleWarriors : undefined,
+      });
+      return;
+    }
+
+    const endingGeneration = this.battleGeneration;
+    this.finalizingGeneration = endingGeneration;
+    const capture = battlePanelStore.isBattleCollectionEnabled
+      ? battleStore.getCaptureSnapshot()
+      : null;
+
+    try {
       const { deadNpcs, hasNpcInBattle, topNpc } =
         getNpcBattleSummary(battleWarriors);
+      let nextLastKillHash = stateAtIngress.lastKillHash;
+      let nextLastBattleHash = stateAtIngress.lastBattleHash;
+      let killIntent: Parameters<typeof createKill>[0] | null = null;
+      let battleIntent: Parameters<typeof createBattle>[0] | null = null;
 
       // Kill tracking — always runs regardless of isBattleCollectionEnabled
       if (hasNpcInBattle && topNpc) {
@@ -190,83 +212,100 @@ export class BattleEventProcessor {
               ts: Date.now(),
             }),
           );
-          const lastKillHash = useBattleStore.getState().lastKillHash;
 
-          if (killHash !== lastKillHash) {
+          if (killHash !== nextLastKillHash) {
             const hero = Game.hero;
             const { type: _, ...npcWithoutType } = topNpc;
-            createKill({
+            killIntent = {
               world: Game.getWorldName(),
               npc: npcWithoutType,
               characterId: String(hero.id),
               accountId: String(hero.account),
-            }).catch((error) => {
-              console.warn(
-                "[BattleEventProcessor] Failed to create kill:",
-                error,
-              );
-            });
-            battleStore.setLastKillHash(killHash);
+            };
+            nextLastKillHash = killHash;
           }
         }
       }
 
       // Battle logging — only if enabled
-      if (battlePanelStore.isBattleCollectionEnabled) {
-        const storedEvents = useBattleStore.getState().events;
-        const battleTurns: string[] = [];
-
-        for (const storedEvent of storedEvents) {
-          if (storedEvent.f?.m) {
-            battleTurns.push(...storedEvent.f.m);
+      if (capture) {
+        if (capture.overflowed) {
+          if (!this.hasWarnedCaptureOverflow) {
+            this.hasWarnedCaptureOverflow = true;
+            console.warn(
+              "[BattleEventProcessor] Battle capture exceeded its safety budget; skipping the partial payload.",
+            );
           }
-        }
+        } else {
+          const battleHash = await createSHA256Hash(
+            JSON.stringify(capture.turns),
+          );
 
-        const battleHash = await createSHA256Hash(JSON.stringify(battleTurns));
-        const lastBattleHash = useBattleStore.getState().lastBattleHash;
+          if (nextLastBattleHash !== battleHash) {
+            const events = mapBattleEventsToPayload(capture.events);
 
-        if (lastBattleHash !== battleHash) {
-          const events = mapBattleEventsToPayload(storedEvents);
+            // Use incremental hasMultipleTeams flag instead of O(N*M) loop
+            if (events && !hasNpcInBattle && this.hasMultipleTeams) {
+              const hero = Game.hero;
+              const accountId = String(hero.account);
+              const characterId = String(hero.id);
+              const world = Game.getWorldName();
+              const submissionId = await createSHA256Hash(
+                JSON.stringify({
+                  accountId,
+                  characterId,
+                  events,
+                  world,
+                }),
+              );
 
-          // Use incremental hasMultipleTeams flag instead of O(N*M) loop
-          if (events && !hasNpcInBattle && this.hasMultipleTeams) {
-            const hero = Game.hero;
-            const accountId = String(hero.account);
-            const characterId = String(hero.id);
-            const world = Game.getWorldName();
-            const submissionId = await createSHA256Hash(
-              JSON.stringify({
+              battleIntent = {
                 accountId,
                 characterId,
+                submissionId,
                 events,
                 world,
-              }),
-            );
-
-            createBattle({
-              accountId,
-              characterId,
-              submissionId,
-              world,
-              events,
-            })
-              .then((response) => {
-                showBattleCreatedToast(response.battleId);
-              })
-              .catch((error) => {
-                console.warn(
-                  "[BattleEventProcessor] Failed to create battle:",
-                  error,
-                );
-              });
+              };
+            }
           }
+          nextLastBattleHash = battleHash;
         }
+      }
 
-        battleStore.setLastBattleHash(battleHash);
+      if (endingGeneration !== this.battleGeneration) {
+        return;
       }
 
       battleStore.clearEvents();
-      battleStore.setBattleState("idle");
+      battleStore.applyBatch({
+        battleState: "idle",
+        battleWarriors,
+        lastBattleHash: nextLastBattleHash,
+        lastKillHash: nextLastKillHash,
+      });
+
+      if (killIntent) {
+        createKill(killIntent).catch((error) => {
+          console.warn("[BattleEventProcessor] Failed to create kill:", error);
+        });
+      }
+
+      if (battleIntent) {
+        createBattle(battleIntent)
+          .then((response) => {
+            showBattleCreatedToast(response.battleId);
+          })
+          .catch((error) => {
+            console.warn(
+              "[BattleEventProcessor] Failed to create battle:",
+              error,
+            );
+          });
+      }
+    } finally {
+      if (this.finalizingGeneration === endingGeneration) {
+        this.finalizingGeneration = null;
+      }
     }
   }
 }

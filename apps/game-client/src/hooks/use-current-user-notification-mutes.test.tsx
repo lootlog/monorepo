@@ -51,4 +51,27 @@ describe("useCurrentUserNotificationMutes", () => {
     expect(result.current.isReady).toBe(true);
     expect(result.current.mutes).toEqual(defaultNotificationMutes);
   });
+
+  it("keeps the effective mutes reference stable while query data is unchanged", () => {
+    const preferences = {
+      mutes: {
+        players: [{ discordId: "discord-1", guildId: "guild-1" }],
+        npcs: [],
+      },
+    };
+    mockUseUserPreferences.mockReturnValue({
+      data: preferences,
+      isFetched: true,
+      isLoading: false,
+    });
+
+    const { result, rerender } = renderHook(() =>
+      useCurrentUserNotificationMutes(),
+    );
+    const firstMutes = result.current.mutes;
+
+    rerender();
+
+    expect(result.current.mutes).toBe(firstMutes);
+  });
 });

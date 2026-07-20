@@ -1,5 +1,5 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventDispatcher } from "./event-dispatcher";
 
 const mocks = vi.hoisted(() => ({
@@ -132,9 +132,39 @@ const expectNoProcessorCalls = () => {
   expect(mocks.partyHandle).not.toHaveBeenCalled();
 };
 
+const processorHandlers = {
+  afk: mocks.afkHandle,
+  battle: mocks.battleHandle,
+  chat: mocks.chatHandle,
+  dialog: mocks.dialogHandle,
+  dialogLoot: mocks.dialogLootHandle,
+  friends: mocks.friendsHandle,
+  lootFromBattle: mocks.lootFromBattleHandle,
+  mapChange: mocks.mapChangeHandle,
+  npcsDelete: mocks.npcsDeleteHandle,
+  npcsDetection: mocks.npcsDetectionHandle,
+  other: mocks.otherHandle,
+  party: mocks.partyHandle,
+};
+
+const getProcessorCallOrder = () =>
+  Object.entries(processorHandlers)
+    .flatMap(([processorName, handler]) =>
+      handler.mock.invocationCallOrder.map((callOrder) => ({
+        callOrder,
+        processorName,
+      })),
+    )
+    .sort((left, right) => left.callOrder - right.callOrder)
+    .map(({ processorName }) => processorName);
+
 describe("EventDispatcher", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("ignores events without relevant keys", () => {
@@ -219,6 +249,80 @@ describe("EventDispatcher", () => {
     expect(mocks.npcsDetectionHandle).not.toHaveBeenCalled();
     expect(mocks.mapChangeHandle.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.otherHandle.mock.invocationCallOrder[0],
+    );
+  });
+
+  it.each([
+    ["chat", { chat: { channels: [] } }, ["chat"]],
+    ["dialog", { d: {} }, ["dialog"]],
+    ["battle", { f: { m: ["turn"] } }, ["battle"]],
+    ["npcs", { npcs: [] }, ["npcsDetection"]],
+    ["fight loot", { item: {}, loot: { source: "fight" } }, ["lootFromBattle"]],
+    ["dialog loot", { item: {}, loot: { source: "dialog" } }, ["dialogLoot"]],
+    ["npc deletion", { npcs_del: [] }, ["npcsDelete"]],
+    ["map change", { town: { id: 1 } }, ["mapChange"]],
+    ["other players", { other: {} }, ["other"]],
+    ["hero status", { h: {} }, ["afk"]],
+    ["friends", { friends: [] }, ["friends"]],
+    ["friends capacity", { friends_max: 50 }, ["friends"]],
+    ["party", { party: {} }, ["party"]],
+    [
+      "combined packet",
+      {
+        chat: { channels: [] },
+        d: {},
+        f: { m: ["turn"] },
+        friends: [],
+        h: {},
+        item: {},
+        loot: { source: "fight" },
+        npcs: [],
+        npcs_del: [],
+        other: {},
+        party: {},
+        town: { id: 1 },
+      },
+      [
+        "chat",
+        "dialog",
+        "battle",
+        "mapChange",
+        "npcsDetection",
+        "lootFromBattle",
+        "npcsDelete",
+        "other",
+        "afk",
+        "friends",
+        "party",
+      ],
+    ],
+  ])("golden-routes the %s event in stable order", (_name, event, expected) => {
+    const dispatcher = new EventDispatcher();
+    const gameEvent = event as unknown as GameEvent;
+
+    dispatcher.handleEvent(gameEvent);
+
+    expect(getProcessorCallOrder()).toEqual(expected);
+    for (const processorName of expected) {
+      expect(
+        processorHandlers[processorName as keyof typeof processorHandlers],
+      ).toHaveBeenCalledWith(gameEvent);
+    }
+  });
+
+  it("reconciles the map before applying an NPC snapshot from the same packet", () => {
+    const dispatcher = new EventDispatcher();
+    const event = {
+      npcs: [],
+      town: { id: 13, name: "Nithal" },
+    } as unknown as GameEvent;
+
+    dispatcher.handleEvent(event);
+
+    expect(mocks.mapChangeHandle).toHaveBeenCalledWith(event);
+    expect(mocks.npcsDetectionHandle).toHaveBeenCalledWith(event);
+    expect(mocks.mapChangeHandle.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.npcsDetectionHandle.mock.invocationCallOrder[0],
     );
   });
 

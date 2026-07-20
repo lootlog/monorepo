@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 
 type Theme = "dark-theme" | "light" | "system";
 
@@ -22,7 +22,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "dark-theme",
+  defaultTheme: _defaultTheme = "dark-theme",
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
@@ -60,12 +60,3 @@ export function ThemeProvider({
     </ThemeProviderContext.Provider>
   );
 }
-
-const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-
-  if (context === undefined)
-    throw new Error("useTheme must be used within a ThemeProvider");
-
-  return context;
-};

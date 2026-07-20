@@ -179,7 +179,9 @@ describe("timers controls", () => {
     );
 
     const colorButtons = screen.getAllByRole("button");
-    await user.click(colorButtons.at(-1)!);
+    const lastColorButton = colorButtons.at(-1);
+    if (!lastColorButton) throw new Error("Expected a color button");
+    await user.click(lastColorButton);
     expect(mockSetTimersFilters).toHaveBeenCalledWith(
       "guild-1",
       expect.objectContaining({

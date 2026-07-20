@@ -8,6 +8,7 @@ import {
 } from "@lootlog/types";
 
 const MAX_QUEUED_UPDATES = 1_000;
+const MAX_TARGETS_PER_SCOPE = 100;
 
 type AirTagScopeState = Omit<AirTagScopeSnapshot, "targets"> & {
   targets: Map<string, AirTagTarget>;
@@ -33,6 +34,7 @@ const compareEpoch = (
 
 export class AirTagReceiveController {
   private readonly scopes = new Map<string, AirTagScopeState>();
+  private readonly changeListeners = new Set<() => void>();
   private queuedUpdates: AirTagUpdateEvent[] = [];
   private currentRequestId: string | null = null;
   private currentWorld: string | null = null;
@@ -45,6 +47,13 @@ export class AirTagReceiveController {
     this.currentMapId = mapId;
   }
 
+  subscribe(listener: () => void): () => void {
+    this.changeListeners.add(listener);
+    return () => {
+      this.changeListeners.delete(listener);
+    };
+  }
+
   applySubscriptionAck(acknowledgement: AirTagSubscriptionAck): void {
     if (acknowledgement.requestId !== this.currentRequestId) return;
 
@@ -54,6 +63,7 @@ export class AirTagReceiveController {
 
     if (acknowledgement.status === "rejected") {
       this.scopes.clear();
+      this.notifyChange();
       return;
     }
 
@@ -62,9 +72,7 @@ export class AirTagReceiveController {
 
       this.scopes.set(getScopeKey(snapshot), {
         ...snapshot,
-        targets: new Map(
-          snapshot.targets.map((target) => [target.targetId, target]),
-        ),
+        targets: this.createTargetMap(snapshot.targets),
       });
     }
 
@@ -74,6 +82,7 @@ export class AirTagReceiveController {
         return epochOrder === 0 ? first.revision - second.revision : epochOrder;
       })
       .forEach((update) => this.applyUpdate(update));
+    this.notifyChange();
   }
 
   handleUpdate(value: unknown): void {
@@ -87,7 +96,9 @@ export class AirTagReceiveController {
       return;
     }
 
-    this.applyUpdate(value);
+    if (this.applyUpdate(value)) {
+      this.notifyChange();
+    }
   }
 
   getRenderableTargets(now: number, ttlMs: number): AirTagTarget[] {
@@ -131,14 +142,15 @@ export class AirTagReceiveController {
     this.currentRequestId = null;
     this.currentWorld = null;
     this.currentMapId = null;
+    this.notifyChange();
   }
 
-  private applyUpdate(update: AirTagUpdateEvent): void {
+  private applyUpdate(update: AirTagUpdateEvent): boolean {
     const scope = this.scopes.get(getScopeKey(update));
-    if (!scope) return;
+    if (!scope) return false;
 
     const epochOrder = compareEpoch(update, scope);
-    if (epochOrder < 0) return;
+    if (epochOrder < 0) return false;
 
     if (epochOrder > 0) {
       this.scopes.set(getScopeKey(update), {
@@ -148,15 +160,48 @@ export class AirTagReceiveController {
         epochId: update.epochId,
         epochStartedAt: update.epochStartedAt,
         revision: update.revision,
-        targets: new Map([[update.target.targetId, update.target]]),
+        targets: this.createTargetMap([update.target]),
       });
-      return;
+      return true;
     }
 
-    if (update.revision <= scope.revision) return;
+    if (update.revision <= scope.revision) return false;
 
     scope.revision = update.revision;
-    scope.targets.set(update.target.targetId, update.target);
+    this.setTarget(scope.targets, update.target);
+    return true;
+  }
+
+  private createTargetMap(targets: AirTagTarget[]): Map<string, AirTagTarget> {
+    const targetMap = new Map<string, AirTagTarget>();
+    for (const target of targets) {
+      this.setTarget(targetMap, target);
+    }
+    return targetMap;
+  }
+
+  private setTarget(
+    targets: Map<string, AirTagTarget>,
+    target: AirTagTarget,
+  ): void {
+    targets.set(target.targetId, target);
+    if (targets.size <= MAX_TARGETS_PER_SCOPE) return;
+
+    let oldestTarget: AirTagTarget | undefined;
+    for (const candidate of targets.values()) {
+      if (
+        !oldestTarget ||
+        candidate.observedAt < oldestTarget.observedAt ||
+        (candidate.observedAt === oldestTarget.observedAt &&
+          candidate.targetId.localeCompare(oldestTarget.targetId) < 0)
+      ) {
+        oldestTarget = candidate;
+      }
+    }
+
+    if (oldestTarget) {
+      targets.delete(oldestTarget.targetId);
+    }
   }
 
   private isCurrentSnapshot(value: unknown): value is AirTagScopeSnapshot {
@@ -176,6 +221,12 @@ export class AirTagReceiveController {
     if (first === undefined) return second;
     if (second === undefined) return first;
     return Math.max(first, second);
+  }
+
+  private notifyChange(): void {
+    for (const listener of this.changeListeners) {
+      listener();
+    }
   }
 }
 

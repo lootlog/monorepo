@@ -1,19 +1,17 @@
 import { useWindowsStore, type WindowId } from "@/store/windows.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { AnimatePresence, motion } from "framer-motion";
-import type { ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type AnimationEvent,
+  type ReactNode,
+} from "react";
 
-const WINDOW_ANIMATION = {
-  initial: { opacity: 0, scale: 0.96, y: 8 },
-  animate: { opacity: 1, scale: 1, y: 0 },
-  exit: { opacity: 0, scale: 0.98, y: 4 },
-  transition: {
-    type: "spring" as const,
-    stiffness: 500,
-    damping: 30,
-    duration: 0.15,
-  },
-};
+const WINDOW_ENTRY_ANIMATION_CLASS =
+  "ll:animate-in ll:fade-in-0 ll:zoom-in-95 ll:slide-in-from-bottom-2 ll:duration-150";
+const WINDOW_EXIT_ANIMATION_CLASS =
+  "ll:animate-out ll:fade-out-0 ll:zoom-out-95 ll:slide-out-to-bottom-1 ll:duration-100";
+const WINDOW_EXIT_RETENTION_MS = 150;
 
 interface AnimatedWindowProps {
   isOpen: boolean;
@@ -35,27 +33,52 @@ export const AnimatedWindow = ({
   const windowZIndex = windowFocusHistory.indexOf(windowKey);
   const zIndex =
     windowZIndex === -1 ? 0 : windowFocusHistory.length - windowZIndex;
+  const [retainedForExit, setRetainedForExit] = useState(isOpen);
 
-  if (!animationEffectsEnabled) {
-    return isOpen ? (
-      <div style={{ zIndex, position: "relative" }}>{children}</div>
-    ) : null;
+  useEffect(() => {
+    if (isOpen) {
+      setRetainedForExit(true);
+      return;
+    }
+
+    if (!animationEffectsEnabled) {
+      setRetainedForExit(false);
+    }
+  }, [animationEffectsEnabled, isOpen]);
+
+  useEffect(() => {
+    if (isOpen || !animationEffectsEnabled || !retainedForExit) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setRetainedForExit(false);
+    }, WINDOW_EXIT_RETENTION_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [animationEffectsEnabled, isOpen, retainedForExit]);
+
+  if (!isOpen && (!animationEffectsEnabled || !retainedForExit)) {
+    return null;
+  }
+
+  const handleExitAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
+    if (!isOpen && event.currentTarget === event.target) {
+      setRetainedForExit(false);
+    }
+  };
+  let animationClassName: string | undefined;
+  if (animationEffectsEnabled) {
+    animationClassName = isOpen
+      ? WINDOW_ENTRY_ANIMATION_CLASS
+      : WINDOW_EXIT_ANIMATION_CLASS;
   }
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          key={windowKey}
-          initial={WINDOW_ANIMATION.initial}
-          animate={WINDOW_ANIMATION.animate}
-          exit={WINDOW_ANIMATION.exit}
-          transition={WINDOW_ANIMATION.transition}
-          style={{ zIndex, position: "relative" }}
-        >
-          {children}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div
+      className={animationClassName}
+      onAnimationEnd={handleExitAnimationEnd}
+      style={{ zIndex, position: "relative" }}
+    >
+      {children}
+    </div>
   );
 };

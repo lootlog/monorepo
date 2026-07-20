@@ -12,9 +12,21 @@ export type ReadyRoomCharacterIdentity = {
 };
 
 type ReadyRoomVersion = {
+  observedAtMs: number;
+  observedSequence: number;
   revision: number;
   presence: "PRESENT" | "REMOVED";
 };
+
+export const READY_ROOM_TOMBSTONE_TTL_MS = 120_000;
+export const READY_ROOM_TOMBSTONE_CAP = 512;
+
+let readyRoomObservationSequence = 0;
+
+function getNextReadyRoomObservationSequence(): number {
+  readyRoomObservationSequence += 1;
+  return readyRoomObservationSequence;
+}
 
 export type ReadyRoomSyncBaseline = Record<string, ReadyRoomVersion>;
 
@@ -99,6 +111,37 @@ function isSchemaVersionThree(
   return (projection as { schemaVersion?: number }).schemaVersion === 3;
 }
 
+function pruneExpiredRoomTombstones(
+  roomVersions: Record<string, ReadyRoomVersion>,
+  now: number,
+): Record<string, ReadyRoomVersion> {
+  const roomVersionEntries = Object.entries(roomVersions);
+  const presentVersions = roomVersionEntries.filter(
+    ([, version]) => version.presence === "PRESENT",
+  );
+  const retainedTombstones = roomVersionEntries
+    .filter(
+      ([, version]) =>
+        version.presence === "REMOVED" &&
+        now - version.observedAtMs <= READY_ROOM_TOMBSTONE_TTL_MS,
+    )
+    .sort(([, firstVersion], [, secondVersion]) => {
+      const timeDifference =
+        secondVersion.observedAtMs - firstVersion.observedAtMs;
+      if (timeDifference !== 0) return timeDifference;
+
+      return secondVersion.observedSequence - firstVersion.observedSequence;
+    })
+    .slice(0, READY_ROOM_TOMBSTONE_CAP);
+  const retainedVersions = [...presentVersions, ...retainedTombstones];
+
+  if (retainedVersions.length === roomVersionEntries.length) {
+    return roomVersions;
+  }
+
+  return Object.fromEntries(retainedVersions);
+}
+
 function mergeProjectionIntoState(
   projections: Record<string, PartyReadyRoomProjection>,
   roomVersions: Record<string, ReadyRoomVersion>,
@@ -107,17 +150,24 @@ function mergeProjectionIntoState(
   projections: Record<string, PartyReadyRoomProjection>;
   roomVersions: Record<string, ReadyRoomVersion>;
 } {
-  if (!isSchemaVersionThree(projection)) return { projections, roomVersions };
+  const observedAtMs = Date.now();
+  const retainedRoomVersions = pruneExpiredRoomTombstones(
+    roomVersions,
+    observedAtMs,
+  );
+  if (!isSchemaVersionThree(projection)) {
+    return { projections, roomVersions: retainedRoomVersions };
+  }
   const notificationId = projection.notificationId;
-  const currentVersion = roomVersions[notificationId];
+  const currentVersion = retainedRoomVersions[notificationId];
   if (currentVersion && currentVersion.revision > projection.revision) {
-    return { projections, roomVersions };
+    return { projections, roomVersions: retainedRoomVersions };
   }
   if (
     currentVersion?.revision === projection.revision &&
     currentVersion.presence === "REMOVED"
   ) {
-    return { projections, roomVersions };
+    return { projections, roomVersions: retainedRoomVersions };
   }
 
   const current = projections[notificationId];
@@ -125,13 +175,15 @@ function mergeProjectionIntoState(
     current?.revision === projection.revision &&
     (current.viewer === "ORGANIZER" || projection.viewer !== "ORGANIZER")
   ) {
-    return { projections, roomVersions };
+    return { projections, roomVersions: retainedRoomVersions };
   }
   return {
     projections: { ...projections, [notificationId]: projection },
     roomVersions: {
-      ...roomVersions,
+      ...retainedRoomVersions,
       [notificationId]: {
+        observedAtMs,
+        observedSequence: getNextReadyRoomObservationSequence(),
         revision: projection.revision,
         presence: "PRESENT",
       },
@@ -148,17 +200,30 @@ function removeProjectionFromState(
   projections: Record<string, PartyReadyRoomProjection>;
   roomVersions: Record<string, ReadyRoomVersion>;
 } {
-  const currentVersion = roomVersions[notificationId];
+  const observedAtMs = Date.now();
+  const retainedRoomVersions = pruneExpiredRoomTombstones(
+    roomVersions,
+    observedAtMs,
+  );
+  const currentVersion = retainedRoomVersions[notificationId];
   if (currentVersion && currentVersion.revision > revision) {
-    return { projections, roomVersions };
+    return { projections, roomVersions: retainedRoomVersions };
   }
   const { [notificationId]: _removed, ...remainingProjections } = projections;
   return {
     projections: remainingProjections,
-    roomVersions: {
-      ...roomVersions,
-      [notificationId]: { revision, presence: "REMOVED" },
-    },
+    roomVersions: pruneExpiredRoomTombstones(
+      {
+        ...retainedRoomVersions,
+        [notificationId]: {
+          observedAtMs,
+          observedSequence: getNextReadyRoomObservationSequence(),
+          revision,
+          presence: "REMOVED",
+        },
+      },
+      observedAtMs,
+    ),
   };
 }
 
@@ -194,7 +259,10 @@ export const usePartyFinderStore = create<PartyFinderState>((set) => ({
           ),
         {
           projections: state.projections,
-          roomVersions: state.roomVersions,
+          roomVersions: pruneExpiredRoomTombstones(
+            state.roomVersions,
+            Date.now(),
+          ),
         },
       ),
     ),
@@ -278,10 +346,12 @@ export const usePartyFinderStore = create<PartyFinderState>((set) => ({
         revision,
       );
     }),
-  clearReadyRooms: () =>
+  clearReadyRooms: () => {
+    readyRoomObservationSequence = 0;
     set({
       projections: {},
       roomVersions: {},
       readyRoomsSynchronized: false,
-    }),
+    });
+  },
 }));

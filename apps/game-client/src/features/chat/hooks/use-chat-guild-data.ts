@@ -1,4 +1,6 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { CHAT_QUERY_GC_TIME_MS } from "@/features/chat/chat.constants";
+import { mergeChatMessageHistories } from "@/features/chat/chat.helpers";
 import { getGuildMembersSummaryQueryOptions } from "@/hooks/api/guild-members-summary-query";
 import {
   chatControllerGetChatMessages,
@@ -39,27 +41,84 @@ type ChatGuildData = {
   messages: ChatMessageType[];
 };
 
+const getGuildIdsToLoad = (
+  guildIds: string[],
+  selectedGuildId: string | undefined,
+) => {
+  if (selectedGuildId === "all") return guildIds;
+  if (!selectedGuildId) return [];
+  return [selectedGuildId];
+};
+
+const reconcileChatMessageRefetch = ({
+  cachedMessagesAfterRequest,
+  cachedMessagesBeforeRequest,
+  serverMessages,
+}: {
+  cachedMessagesAfterRequest?: ChatMessageType[];
+  cachedMessagesBeforeRequest?: ChatMessageType[];
+  serverMessages: ChatMessageType[];
+}) => {
+  const messagesBeforeRequestById = new Map(
+    cachedMessagesBeforeRequest?.map((message) => [message.id, message]),
+  );
+  const messageIdsAfterRequest = new Set(
+    cachedMessagesAfterRequest?.map((message) => message.id),
+  );
+  const removedMessageIds = new Set(
+    cachedMessagesBeforeRequest
+      ?.filter((message) => !messageIdsAfterRequest.has(message.id))
+      .map((message) => message.id),
+  );
+  const messagesChangedDuringRequest =
+    cachedMessagesAfterRequest?.filter(
+      (message) => messagesBeforeRequestById.get(message.id) !== message,
+    ) ?? [];
+
+  return mergeChatMessageHistories(
+    serverMessages.filter((message) => !removedMessageIds.has(message.id)),
+    messagesChangedDuringRequest,
+  );
+};
+
 export const useChatGuildData = ({
   currentCharacterNick,
   guilds,
   selectedGuildId,
 }: UseChatGuildDataOptions) => {
+  const queryClient = useQueryClient();
   const guildIds = getGuildIds(guilds);
-  const guildIdsToLoad =
-    selectedGuildId === "all"
-      ? guildIds
-      : selectedGuildId
-        ? [selectedGuildId]
-        : [];
+  const guildIdsToLoad = getGuildIdsToLoad(guildIds, selectedGuildId);
 
   const messageQueries = useQueries({
-    queries: guildIdsToLoad.map((guildId) => ({
-      queryKey: getChatControllerGetChatMessagesQueryKey({ guildId }),
-      queryFn: () => chatControllerGetChatMessages({ guildId }),
-      enabled: Boolean(guildId),
-      gcTime: Infinity,
-      staleTime: 5 * 60 * 1000,
-    })),
+    queries: guildIdsToLoad.map((guildId) => {
+      const queryKey = getChatControllerGetChatMessagesQueryKey({ guildId });
+
+      return {
+        queryKey,
+        queryFn: async ({ signal }) => {
+          const cachedMessagesBeforeRequest =
+            queryClient.getQueryData<ChatMessageType[]>(queryKey);
+          const serverMessages = await chatControllerGetChatMessages(
+            {
+              guildId,
+            },
+            { signal },
+          );
+          const cachedMessagesAfterRequest =
+            queryClient.getQueryData<ChatMessageType[]>(queryKey);
+
+          return reconcileChatMessageRefetch({
+            cachedMessagesAfterRequest,
+            cachedMessagesBeforeRequest,
+            serverMessages,
+          });
+        },
+        enabled: Boolean(guildId),
+        gcTime: CHAT_QUERY_GC_TIME_MS,
+        staleTime: 5 * 60 * 1000,
+      };
+    }),
   });
   const memberQueries = useQueries({
     queries: guildIdsToLoad.map((guildId) =>
@@ -82,7 +141,7 @@ export const useChatGuildData = ({
       queryKey: getMembersControllerGetMeQueryKey({ guildId }),
       queryFn: () => membersControllerGetMe({ guildId }),
       enabled: Boolean(guildId) && hasMentionCandidatesByGuildId[guildId],
-      gcTime: Infinity,
+      gcTime: CHAT_QUERY_GC_TIME_MS,
       staleTime: 5 * 60 * 1000,
     })),
   });
@@ -91,7 +150,7 @@ export const useChatGuildData = ({
       queryKey: getRolesControllerGetGuildRolesQueryKey({ guildId }),
       queryFn: () => rolesControllerGetGuildRoles({ guildId }),
       enabled: Boolean(guildId) && hasMentionCandidatesByGuildId[guildId],
-      gcTime: Infinity,
+      gcTime: CHAT_QUERY_GC_TIME_MS,
       staleTime: 5 * 60 * 1000,
     })),
   });

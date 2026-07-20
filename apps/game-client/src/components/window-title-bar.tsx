@@ -19,7 +19,7 @@ interface WindowTitleBarProps {
   onOpacityChange: (opacity: WindowOpacity) => void;
   onLockToggle: () => void;
   onClose?: () => void;
-  onTouchStart?: (e: React.TouchEvent<HTMLDivElement>) => void;
+  onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
 export const WindowTitleBar: FC<WindowTitleBarProps> = ({
@@ -31,7 +31,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   onOpacityChange,
   onLockToggle,
   onClose,
-  onTouchStart,
+  onPointerDown,
 }) => {
   const { t } = useTranslation("common");
   const handleOpacityChange = () => {
@@ -43,7 +43,8 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   return (
     <div
       className="ll:flex ll:items-center ll:justify-between ll:px-1 ll:shrink-0"
-      onTouchStart={onTouchStart}
+      onPointerDown={onPointerDown}
+      style={{ touchAction: "none" }}
     >
       <div
         className="ll:flex ll:items-center ll:gap-1"

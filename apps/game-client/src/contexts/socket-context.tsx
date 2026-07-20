@@ -144,12 +144,12 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       guilds: { guild: { id: string } }[];
     }) => {
       if (import.meta.env.DEV) {
-        console.log("[Gateway] Rooms rebalanced:", data);
+        console.warn("[Gateway] Rooms rebalanced:", data);
       }
 
       if (!data.guilds) {
         if (import.meta.env.DEV) {
-          console.error("[Gateway] No guilds data in permissions update");
+          console.warn("[Gateway] No guilds data in permissions update");
         }
         setJoinedGuilds([]);
         setJoined(false);
@@ -178,10 +178,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.connect();
     };
 
+    const handleAnyDevelopmentEvent = (event: string, ...args: unknown[]) => {
+      if (import.meta.env.DEV) {
+        console.warn(`[Gateway] Event: ${event}`, args);
+      }
+    };
+
     if (import.meta.env.DEV) {
-      socket.onAny((event, ...args) => {
-        console.log(`[Gateway] Event: ${event}`, args);
-      });
+      socket.onAny(handleAnyDevelopmentEvent);
     }
 
     socket.auth = {
@@ -199,6 +203,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      if (import.meta.env.DEV) {
+        socket.offAny(handleAnyDevelopmentEvent);
+      }
       window.removeEventListener(
         DEV_PERMISSION_OVERRIDE_EVENT,
         handleDevPermissionOverrideChange,

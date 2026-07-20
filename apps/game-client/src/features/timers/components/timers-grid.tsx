@@ -5,6 +5,11 @@ import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@/lib/api/generated/main/users/users";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  getGuildsControllerGetGuildPermissionsQueryOptions,
+} from "@/lib/api/generated/main/guilds/guilds";
+import { useQueries } from "@tanstack/react-query";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 type TimersGridProps = {
@@ -29,6 +34,30 @@ export const TimersGrid: FC<TimersGridProps> = ({
   });
   const guildIds = getGuildIds(guilds);
   const guildNamesById = getGuildNamesById(guilds);
+  const timerGuildIds = [...new Set(timers.map((timer) => timer.guildId))];
+  const guildPermissionQueries = useQueries({
+    queries: timerGuildIds.map((guildId) =>
+      getGuildsControllerGetGuildPermissionsQueryOptions(
+        { guildId },
+        {
+          query: {
+            queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+              guildId,
+            }),
+            refetchOnMount: false,
+            staleTime: 5 * 60 * 1000,
+          },
+        },
+      ),
+    ),
+  });
+  const guildPermissionsById = Object.fromEntries(
+    timerGuildIds.map((guildId, index) => [
+      guildId,
+      guildPermissionQueries[index]?.data ?? [],
+    ]),
+  );
+  const hiddenTimerNames = new Set(hiddenTimers);
 
   return (
     <span
@@ -38,12 +67,13 @@ export const TimersGrid: FC<TimersGridProps> = ({
       }}
     >
       {timers.map((timer) => {
-        const isHidden = hiddenTimers.includes(timer.npc.name);
+        const isHidden = hiddenTimerNames.has(timer.npc.name);
         return (
           <SingleTimer
             key={`${timer.timerKey}-${timer.guildId}`}
             guildIds={guildIds}
             guildNamesById={guildNamesById}
+            guildPermissions={guildPermissionsById[timer.guildId] ?? []}
             timer={timer}
             maxTimeLeft={timer.maxTimeLeft}
             minTimeLeft={timer.minTimeLeft}

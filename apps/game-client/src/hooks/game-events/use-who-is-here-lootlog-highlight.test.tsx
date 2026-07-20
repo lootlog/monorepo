@@ -157,6 +157,43 @@ function setSelectedGuild(): void {
   });
 }
 
+function installMutationObserverMock() {
+  const disconnect = vi.fn();
+  const observe = vi.fn();
+  let callback: MutationCallback | undefined;
+
+  class MutationObserverMock {
+    disconnect = disconnect;
+    observe = observe;
+
+    constructor(nextCallback: MutationCallback) {
+      callback = nextCallback;
+    }
+
+    takeRecords(): MutationRecord[] {
+      return [];
+    }
+  }
+
+  vi.stubGlobal("MutationObserver", MutationObserverMock);
+
+  return {
+    disconnect,
+    emit: () => {
+      if (!callback) {
+        throw new Error("MutationObserver has not been created");
+      }
+
+      callback([], {
+        disconnect,
+        observe,
+        takeRecords: () => [],
+      } as unknown as MutationObserver);
+    },
+    observe,
+  };
+}
+
 describe("useWhoIsHereLootlogHighlight", () => {
   beforeEach(() => {
     document.head.innerHTML = "";
@@ -172,6 +209,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     Object.defineProperty(window, "Engine", {
       configurable: true,
       value: originalWindowEngine,
@@ -180,6 +218,123 @@ describe("useWhoIsHereLootlogHighlight", () => {
       configurable: true,
       value: originalWindowDollar,
     });
+  });
+
+  it("does not observe DOM mutations without shift and a selected guild", () => {
+    const { observe } = installMutationObserverMock();
+
+    const { unmount } = renderHook(() => useWhoIsHereLootlogHighlight());
+
+    expect(observe).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it("observes the whoIsHere window instead of the document body when active", () => {
+    appendWhoIsHereRow();
+    setRuntime(createOther());
+    setSelectedGuild();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    const { observe } = installMutationObserverMock();
+
+    const { unmount } = renderHook(() => useWhoIsHereLootlogHighlight());
+
+    expect(observe).toHaveBeenCalledWith(
+      document.querySelector(".whoishere-window"),
+      {
+        childList: true,
+        subtree: true,
+      },
+    );
+    expect(observe).not.toHaveBeenCalledWith(document.body, expect.anything());
+
+    unmount();
+  });
+
+  it("disconnects the DOM observer when shift is released", () => {
+    appendWhoIsHereRow();
+    setRuntime(createOther());
+    setSelectedGuild();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    const { disconnect, observe } = installMutationObserverMock();
+
+    const { unmount } = renderHook(() => useWhoIsHereLootlogHighlight());
+
+    expect(observe).toHaveBeenCalledOnce();
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
+    });
+
+    expect(disconnect).toHaveBeenCalledOnce();
+    expect(observe).toHaveBeenCalledOnce();
+
+    unmount();
+  });
+
+  it("discovers a newly opened whoIsHere window without observing document body", () => {
+    vi.useFakeTimers();
+    const other = createOther();
+    setRuntime(other);
+    setSelectedGuild();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    const { observe } = installMutationObserverMock();
+
+    const { unmount } = renderHook(() => useWhoIsHereLootlogHighlight());
+
+    expect(observe).not.toHaveBeenCalled();
+
+    const whoIsHereWindow = document.createElement("div");
+    whoIsHereWindow.className = "whoishere-window";
+    document.body.append(whoIsHereWindow);
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+
+    expect(observe).toHaveBeenCalledOnce();
+    expect(observe).toHaveBeenCalledWith(whoIsHereWindow, {
+      childList: true,
+      subtree: true,
+    });
+    expect(observe).not.toHaveBeenCalledWith(document.body, expect.anything());
+
+    unmount();
+    vi.useRealTimers();
+  });
+
+  it("refreshes mutated rows without rerendering the hook", () => {
+    const row = appendWhoIsHereRow();
+    const other = createOther();
+    useOthersStore.getState().setMany({ "617": other });
+    setRuntime(other);
+    setSelectedGuild();
+    setOnlineOwner();
+    setSuccess();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    const { emit } = installMutationObserverMock();
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    let renderCount = 0;
+
+    const { unmount } = renderHook(() => {
+      renderCount += 1;
+      useWhoIsHereLootlogHighlight();
+    });
+    const renderCountBeforeMutation = renderCount;
+    row.classList.remove("ll-who-is-here-lootlog-highlight");
+    row.style.removeProperty("--ll-who-is-here-lootlog-color");
+
+    act(() => {
+      emit();
+    });
+
+    expect(row).toHaveClass("ll-who-is-here-lootlog-highlight");
+    expect(renderCount).toBe(renderCountBeforeMutation);
+
+    unmount();
   });
 
   it("highlights a whoIsHere row blue when selected guild catches the player", async () => {

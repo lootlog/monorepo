@@ -274,14 +274,14 @@ describe("AddTimerForm", () => {
     expect(mockSetOpen).toHaveBeenCalledWith("add-timer", false);
   });
 
-  it("uses the initial guild over the saved guild", async () => {
+  it("uses the initial guild over the saved guild", () => {
     render(<AddTimerForm initialGuildId="guild-1" />);
 
     expect(screen.getByLabelText("Serwer")).toHaveValue("guild-1");
     expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();
   });
 
-  it("does not rewrite the saved guild when the initial guild already matches", async () => {
+  it("does not rewrite the saved guild when the initial guild already matches", () => {
     mockSelectedGuildIdsForTimersByCharId = {
       "101": ["guild-1"],
     };

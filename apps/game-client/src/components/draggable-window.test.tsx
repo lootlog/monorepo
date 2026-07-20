@@ -190,6 +190,18 @@ describe("DraggableWindow", () => {
     });
   });
 
+  it("contains layout and style invalidation within each overlay window", () => {
+    const { container } = render(
+      <DraggableWindow id="notifications" title="Powiadomienia">
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+
+    const { windowElement } = getWindowElements(container);
+
+    expect(windowElement.style.contain).toBe("layout style");
+  });
+
   it("fits width to changing content and caps it at the viewport", async () => {
     const { container } = render(
       <DraggableWindow
@@ -309,6 +321,27 @@ describe("DraggableWindow", () => {
     await waitFor(() => {
       expect(windowElement.style.height).toBe("130px");
     });
+  });
+
+  it("uses CSS auto height without content observers", () => {
+    const { container } = render(
+      <DraggableWindow
+        id="notifications"
+        title="Powiadomienia"
+        minWidth={242}
+        minHeight={64}
+        heightMode="css-auto-up-to-max"
+        maxContentHeight={180}
+      >
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+    const { windowElement, contentElement } = getWindowElements(container);
+
+    expect(windowElement.style.height).toBe("auto");
+    expect(contentElement.style.maxHeight).toBe("180px");
+    expect(resizeObserverCallbacks).toHaveLength(0);
+    expect(mutationObserverCallbacks).toHaveLength(0);
   });
 
   it("resizes only width when auto height mode is not armed", async () => {

@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { usePlayersPresence } from "./use-players-presence";
 
@@ -38,6 +38,10 @@ describe("usePlayersPresence", () => {
       joined: true,
       joinedGuilds: ["guild-1"],
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("normalizes initial presence fetch payloads from player location", async () => {
@@ -242,7 +246,9 @@ describe("usePlayersPresence", () => {
       });
     });
 
-    expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Ithan");
+    await waitFor(() => {
+      expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Ithan");
+    });
     expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
     expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
       "Ithan",
@@ -252,6 +258,122 @@ describe("usePlayersPresence", () => {
       name: "Karhu",
       rank: 100,
     });
+  });
+
+  it("preserves untouched account references during a presence update", async () => {
+    const createPlayer = (discordId: string, characterId: string) => ({
+      discordId,
+      platform: "game",
+      player: {
+        accountId: characterId,
+        characterId,
+        icon: "hero.png",
+        lvl: 123,
+        mapName: "Karka-han",
+        name: `Hero ${characterId}`,
+        prof: "w",
+        world: "alpha",
+      },
+    });
+    emitWithAckSpy.mockImplementation(() =>
+      Promise.resolve({
+        status: "success",
+        players: {
+          "discord-1": [createPlayer("discord-1", "10")],
+          "discord-2": [createPlayer("discord-2", "20")],
+        },
+      }),
+    );
+    const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
+    await waitFor(() => {
+      expect(result.current[0]["discord-2"]).toHaveLength(1);
+    });
+    const untouchedAccount = result.current[0]["discord-2"];
+
+    act(() => {
+      eventHandlers[GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE]?.({
+        guildId: "guild-1",
+        discordId: "discord-1",
+        player: {
+          ...createPlayer("discord-1", "10").player,
+          mapName: "Ithan",
+        },
+      });
+    });
+
+    expect(result.current[0]["discord-2"]).toBe(untouchedAccount);
+  });
+
+  it("coalesces gateway update bursts into one render per animation frame", async () => {
+    let renderCount = 0;
+    let scheduledFrame: FrameRequestCallback | null = null;
+    const requestAnimationFrame = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        scheduledFrame = callback;
+        return 1;
+      });
+    emitWithAckSpy.mockImplementation(() =>
+      Promise.resolve({
+        status: "success",
+        players: {
+          "discord-1": [
+            {
+              discordId: "discord-1",
+              platform: "game",
+              player: {
+                world: "alpha",
+                name: "Hero",
+                lvl: 123,
+                icon: "hero.png",
+                characterId: "10",
+                accountId: "20",
+                prof: "w",
+                mapName: "Karka-han",
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const { result } = renderHook(() => {
+      renderCount += 1;
+      return usePlayersPresence("guild-1", "alpha");
+    });
+    await waitFor(() => {
+      expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Karka-han");
+    });
+    const renderCountBeforeBurst = renderCount;
+
+    act(() => {
+      for (const mapName of ["Ithan", "Torneg", "Karka-han II"]) {
+        eventHandlers[GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE]?.({
+          guildId: "guild-1",
+          discordId: "discord-1",
+          player: {
+            world: "alpha",
+            name: "Hero",
+            lvl: 123,
+            icon: "hero.png",
+            characterId: "10",
+            accountId: "20",
+            prof: "w",
+            mapName,
+          },
+        });
+      }
+    });
+
+    expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+    expect(renderCount).toBe(renderCountBeforeBurst);
+    expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Karka-han");
+
+    act(() => {
+      scheduledFrame?.(16);
+    });
+
+    expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Karka-han II");
+    expect(renderCount).toBe(renderCountBeforeBurst + 1);
   });
 
   it("stores an offline tombstone when gateway reports offline status", async () => {
@@ -306,7 +428,9 @@ describe("usePlayersPresence", () => {
       });
     });
 
-    expect(result.current[0]["discord-1"]).toBeUndefined();
+    await waitFor(() => {
+      expect(result.current[0]["discord-1"]).toBeUndefined();
+    });
   });
 
   it("clears players and exposes forbidden access state when gateway denies access", async () => {
@@ -372,7 +496,10 @@ describe("usePlayersPresence", () => {
     expect(result.current[0]["discord-1"]).toHaveLength(1);
 
     await act(async () => {
-      resolvePermissionsRefetch!({
+      if (!resolvePermissionsRefetch) {
+        throw new Error("Expected permissions refetch resolver");
+      }
+      resolvePermissionsRefetch({
         status: "forbidden",
         code: "ONLINE_PLAYERS_ACCESS_DENIED",
       });

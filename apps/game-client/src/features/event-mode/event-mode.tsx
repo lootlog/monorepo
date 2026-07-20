@@ -36,7 +36,7 @@ export const EventMode = ({ query }: EventModeProps) => {
     (state) => state.setSelectedEventId,
   );
   const selectedEvent = resolveSelectedEvent(events, storedEventId);
-  const nowMs = useEventModeClock(events.length > 0);
+  const nowMs = useEventModeClock(open && events.length > 0);
 
   useEffect(() => {
     if (

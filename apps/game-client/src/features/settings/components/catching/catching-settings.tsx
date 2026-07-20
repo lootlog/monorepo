@@ -116,7 +116,7 @@ export const CatchingSettings = () => {
       queryClient.setQueryData<UserLootlogConfigAccountResponseDtoOutput>(
         queryKey,
         (currentData) => {
-          const nextData = { ...(currentData ?? {}) };
+          const nextData = { ...currentData };
 
           targetCharacterIds.forEach((characterId) => {
             const currentCharacterConfig = nextData[characterId];

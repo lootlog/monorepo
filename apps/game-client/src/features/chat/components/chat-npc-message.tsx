@@ -5,7 +5,7 @@ import type {
   MemberSummaryResponseDtoOutput as GuildMember,
 } from "@/lib/api/generated/main/model";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format } from "@/utils/local-date";
 import type { FC } from "react";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import {

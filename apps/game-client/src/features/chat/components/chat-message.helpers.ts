@@ -4,7 +4,7 @@ import {
 } from "@/api/chat.api";
 import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@/lib/api/generated/main/model";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
-import { isYesterday } from "date-fns";
+import { isYesterday } from "@/utils/local-date";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/api/npcs.api";
 

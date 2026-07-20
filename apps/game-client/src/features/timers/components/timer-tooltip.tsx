@@ -1,5 +1,5 @@
 import type { Timer } from "@/api/timers.api";
-import { format } from "date-fns";
+import { format } from "@/utils/local-date";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

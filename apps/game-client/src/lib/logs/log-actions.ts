@@ -8,6 +8,20 @@ import { getFixedT } from "@/i18n/get-fixed-t";
 
 type RecordValue = Record<string, unknown>;
 
+export const LOG_VALUE_BYTE_CAP = 256 * 1024;
+export const LOG_VALUE_MAX_DEPTH = 10;
+export const LOG_VALUE_MAX_ARRAY_ITEMS = 1_000;
+export const LOG_VALUE_MAX_STRING_BYTES = 16 * 1024;
+
+type SerializationContext = {
+  bytes: number;
+  ancestors: WeakSet<object>;
+};
+
+class LogValueBudgetExceeded extends Error {}
+
+const textEncoder = new TextEncoder();
+
 type StartLoggedActionInput = {
   actionType: LogActionType;
   payload: unknown;
@@ -67,34 +81,180 @@ const isRecord = (value: unknown): value is RecordValue => {
   return typeof value === "object" && value !== null;
 };
 
-export const serializeLogValue = (value: unknown): SerializableValue => {
+const getUtf8ByteLength = (value: string): number =>
+  textEncoder.encode(value).byteLength;
+
+const consumeSerializationBudget = (
+  context: SerializationContext,
+  bytes: number,
+): void => {
+  if (context.bytes + bytes > LOG_VALUE_BYTE_CAP) {
+    throw new LogValueBudgetExceeded();
+  }
+
+  context.bytes += bytes;
+};
+
+const createTruncatedValue = (
+  reason: string,
+  metadata: Record<string, SerializableValue> = {},
+): SerializableValue => ({
+  truncated: true,
+  reason,
+  ...metadata,
+});
+
+const serializeTruncationMarker = (
+  context: SerializationContext,
+  reason: string,
+  metadata?: Record<string, SerializableValue>,
+): SerializableValue => {
+  const marker = createTruncatedValue(reason, metadata);
+  consumeSerializationBudget(
+    context,
+    getUtf8ByteLength(JSON.stringify(marker)),
+  );
+  return marker;
+};
+
+const serializeLogValueWithinBudget = (
+  value: unknown,
+  context: SerializationContext,
+  depth: number,
+): SerializableValue => {
   if (
     value === null ||
-    typeof value === "string" ||
     typeof value === "number" ||
     typeof value === "boolean"
   ) {
+    consumeSerializationBudget(
+      context,
+      getUtf8ByteLength(JSON.stringify(value)),
+    );
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const valueBytes = getUtf8ByteLength(value);
+    if (valueBytes > LOG_VALUE_MAX_STRING_BYTES) {
+      return serializeTruncationMarker(context, "max-string-bytes", {
+        originalBytes: valueBytes,
+      });
+    }
+
+    consumeSerializationBudget(
+      context,
+      getUtf8ByteLength(JSON.stringify(value)),
+    );
     return value;
   }
 
   if (value instanceof Date) {
-    return value.toISOString();
+    const serializedDate = value.toISOString();
+    consumeSerializationBudget(
+      context,
+      getUtf8ByteLength(JSON.stringify(serializedDate)),
+    );
+    return serializedDate;
+  }
+
+  if (depth >= LOG_VALUE_MAX_DEPTH && isRecord(value)) {
+    return serializeTruncationMarker(context, "max-depth");
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => serializeLogValue(item));
+    if (context.ancestors.has(value)) {
+      return serializeTruncationMarker(context, "circular-reference");
+    }
+
+    context.ancestors.add(value);
+    consumeSerializationBudget(context, 2);
+
+    const hasOverflow = value.length > LOG_VALUE_MAX_ARRAY_ITEMS;
+    const itemLimit = hasOverflow
+      ? LOG_VALUE_MAX_ARRAY_ITEMS - 1
+      : value.length;
+    const serializedItems: SerializableValue[] = [];
+
+    try {
+      for (let index = 0; index < itemLimit; index += 1) {
+        if (index > 0) {
+          consumeSerializationBudget(context, 1);
+        }
+        serializedItems.push(
+          serializeLogValueWithinBudget(value[index], context, depth + 1),
+        );
+      }
+
+      if (hasOverflow) {
+        if (serializedItems.length > 0) {
+          consumeSerializationBudget(context, 1);
+        }
+        serializedItems.push(
+          serializeTruncationMarker(context, "max-array-items", {
+            originalLength: value.length,
+          }),
+        );
+      }
+    } finally {
+      context.ancestors.delete(value);
+    }
+
+    return serializedItems;
   }
 
   if (isRecord(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, nestedValue]) => [
-        key,
-        serializeLogValue(nestedValue),
-      ]),
-    );
+    if (context.ancestors.has(value)) {
+      return serializeTruncationMarker(context, "circular-reference");
+    }
+
+    context.ancestors.add(value);
+    consumeSerializationBudget(context, 2);
+    const serializedRecord: Record<string, SerializableValue> = {};
+
+    try {
+      for (const [index, [key, nestedValue]] of Object.entries(
+        value,
+      ).entries()) {
+        if (index > 0) {
+          consumeSerializationBudget(context, 1);
+        }
+        consumeSerializationBudget(
+          context,
+          getUtf8ByteLength(JSON.stringify(key)) + 1,
+        );
+        serializedRecord[key] = serializeLogValueWithinBudget(
+          nestedValue,
+          context,
+          depth + 1,
+        );
+      }
+    } finally {
+      context.ancestors.delete(value);
+    }
+
+    return serializedRecord;
   }
 
-  return String(value);
+  return serializeLogValueWithinBudget(String(value), context, depth);
+};
+
+export const serializeLogValue = (value: unknown): SerializableValue => {
+  try {
+    return serializeLogValueWithinBudget(
+      value,
+      { bytes: 0, ancestors: new WeakSet() },
+      0,
+    );
+  } catch (error) {
+    if (!(error instanceof LogValueBudgetExceeded)) {
+      throw error;
+    }
+
+    return createTruncatedValue("max-bytes", {
+      limitBytes: LOG_VALUE_BYTE_CAP,
+    });
+  }
 };
 
 const getResponseStatusCode = (response: unknown): number | null => {

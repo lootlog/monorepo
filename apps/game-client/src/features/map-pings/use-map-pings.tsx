@@ -69,7 +69,7 @@ export const useMapPings = () => {
   const { t } = useTranslation("settings");
 
   useEffect(() => {
-    if (!gameInitialized || !isNewInterface) {
+    if (!enabled || !gameInitialized || !isNewInterface) {
       return;
     }
 
@@ -87,10 +87,10 @@ export const useMapPings = () => {
       window.clearInterval(retryInterval);
       mapPingController.unregister();
     };
-  }, [gameInitialized, isNewInterface]);
+  }, [enabled, gameInitialized, isNewInterface]);
 
   useEffect(() => {
-    if (!isNewInterface) {
+    if (!enabled || !gameInitialized || !isNewInterface) {
       return;
     }
 
@@ -112,8 +112,11 @@ export const useMapPings = () => {
     };
 
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [isNewInterface]);
+    return () => {
+      pointerRef.current = null;
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [enabled, gameInitialized, isNewInterface]);
 
   useEffect(() => {
     if (enabled && connected && joined) {
@@ -132,7 +135,7 @@ export const useMapPings = () => {
   );
 
   useEffect(() => {
-    if (!socket || !isNewInterface) {
+    if (!enabled || !connected || !joined || !socket || !isNewInterface) {
       return;
     }
 
@@ -160,7 +163,7 @@ export const useMapPings = () => {
     return () => {
       socket.off(GatewayEvent.MAP_PING_RECEIVE, handleMapPing);
     };
-  }, [enabled, isNewInterface, socket, t]);
+  }, [connected, enabled, isNewInterface, joined, socket, t]);
 
   const showHint = (
     acknowledgement: Extract<MapPingAck, { status: "rejected" }>,

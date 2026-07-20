@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api-client";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
+import { renderHook, waitFor } from "@testing-library/react";
 
 const mockHideTimer = vi.fn();
 const mockRevealTimer = vi.fn();
 const mockPinTimer = vi.fn();
 const mockUnpinTimer = vi.fn();
 const mockSetTimerColor = vi.fn();
+const mockShowExpiredTimerAlways = vi.fn();
+const mockHideExpiredTimerAlways = vi.fn();
 const mockResetTimer = vi.fn();
 const mockDeleteTimer = vi.fn();
 const mockActorCharacter = {
@@ -23,25 +26,27 @@ const mockT = vi.fn(
 );
 
 vi.mock("@/store/timers.store", () => ({
-  useTimersStore: () => ({
-    hideTimer: mockHideTimer,
-    revealTimer: mockRevealTimer,
-    pinTimer: mockPinTimer,
-    unpinTimer: mockUnpinTimer,
-    pinnedTimers: {
-      "guild-1": ["Tanroth"],
-    },
-    setTimerColor: mockSetTimerColor,
-  }),
+  useTimersStore: (selector: (state: unknown) => unknown) =>
+    selector({
+      hideTimer: mockHideTimer,
+      revealTimer: mockRevealTimer,
+      pinTimer: mockPinTimer,
+      unpinTimer: mockUnpinTimer,
+      pinnedTimers: {
+        "guild-1": ["Tanroth"],
+      },
+      alwaysVisibleExpiredTimers: {},
+      setTimerColor: mockSetTimerColor,
+      showExpiredTimerAlways: mockShowExpiredTimerAlways,
+      hideExpiredTimerAlways: mockHideExpiredTimerAlways,
+    }),
 }));
 
 vi.mock("@/lib/api/generated/main/timers/timers", () => ({
-  useTimersControllerResetTimer: () => ({
-    mutateAsync: mockResetTimer,
-  }),
-  useTimersControllerDeleteTimer: () => ({
-    mutate: mockDeleteTimer,
-  }),
+  timersControllerResetTimer: (pathParameters: unknown, data: unknown) =>
+    mockResetTimer(pathParameters, data),
+  timersControllerDeleteTimer: (pathParameters: unknown, params: unknown) =>
+    mockDeleteTimer(pathParameters, params),
 }));
 
 vi.mock("@/i18n/get-fixed-t", () => ({
@@ -82,6 +87,9 @@ const createTimer = (
   mergedGuildIds: overrides?.mergedGuildIds,
 });
 
+const renderTimerActions = (...args: Parameters<typeof useTimerActions>) =>
+  renderHook(() => useTimerActions(...args)).result.current;
+
 describe("useTimerActions", () => {
   beforeEach(() => {
     mockHideTimer.mockReset();
@@ -89,6 +97,8 @@ describe("useTimerActions", () => {
     mockPinTimer.mockReset();
     mockUnpinTimer.mockReset();
     mockSetTimerColor.mockReset();
+    mockShowExpiredTimerAlways.mockReset();
+    mockHideExpiredTimerAlways.mockReset();
     mockResetTimer.mockReset();
     mockDeleteTimer.mockReset();
     mockT.mockClear();
@@ -96,7 +106,7 @@ describe("useTimerActions", () => {
   });
 
   it("hides, reveals, colors, and unpins timers in local and global scopes", () => {
-    const actions = useTimerActions(createTimer(), "guild-1", "pandora", [
+    const actions = renderTimerActions(createTimer(), "guild-1", "pandora", [
       "guild-1",
       "guild-2",
     ]);
@@ -124,7 +134,7 @@ describe("useTimerActions", () => {
   });
 
   it("pins all timers when the local timer is not pinned", () => {
-    const actions = useTimerActions(
+    const actions = renderTimerActions(
       createTimer({
         npc: {
           ...createTimer().npc,
@@ -148,7 +158,7 @@ describe("useTimerActions", () => {
 
   it("resets grouped timers and reports success", async () => {
     mockResetTimer.mockResolvedValue(undefined);
-    const actions = useTimerActions(
+    const actions = renderTimerActions(
       createTimer({
         mergedGuildIds: [
           { guildId: "guild-1", npcId: 10, timerKey: "timer-1" },
@@ -165,26 +175,26 @@ describe("useTimerActions", () => {
     await actions.handleRestartTimer();
 
     expect(mockResetTimer).toHaveBeenCalledTimes(2);
-    expect(mockResetTimer).toHaveBeenCalledWith({
-      pathParams: {
+    expect(mockResetTimer).toHaveBeenCalledWith(
+      {
         guildId: "guild-1",
         timerIdentifier: "timer-1",
       },
-      data: {
+      {
         world: "pandora",
         actorCharacter: mockActorCharacter,
       },
-    });
-    expect(mockResetTimer).toHaveBeenCalledWith({
-      pathParams: {
+    );
+    expect(mockResetTimer).toHaveBeenCalledWith(
+      {
         guildId: "guild-2",
         timerIdentifier: "timer-2",
       },
-      data: {
+      {
         world: "pandora",
         actorCharacter: mockActorCharacter,
       },
-    });
+    );
     expect(window.message).toHaveBeenCalledWith(
       "messages.resetSuccess:Tanroth",
     );
@@ -192,22 +202,22 @@ describe("useTimerActions", () => {
 
   it("resets a single timer with current actor character data", async () => {
     mockResetTimer.mockResolvedValue(undefined);
-    const actions = useTimerActions(createTimer(), "guild-1", "pandora", [
+    const actions = renderTimerActions(createTimer(), "guild-1", "pandora", [
       "guild-1",
     ]);
 
     await actions.handleRestartTimer();
 
-    expect(mockResetTimer).toHaveBeenCalledWith({
-      pathParams: {
+    expect(mockResetTimer).toHaveBeenCalledWith(
+      {
         guildId: "guild-1",
         timerIdentifier: "timer-1",
       },
-      data: {
+      {
         world: "pandora",
         actorCharacter: mockActorCharacter,
       },
-    });
+    );
   });
 
   it("maps reset API errors to translated messages", async () => {
@@ -223,7 +233,7 @@ describe("useTimerActions", () => {
       }),
     );
 
-    const actions = useTimerActions(createTimer(), "guild-1", "pandora", [
+    const actions = renderTimerActions(createTimer(), "guild-1", "pandora", [
       "guild-1",
     ]);
 
@@ -234,40 +244,29 @@ describe("useTimerActions", () => {
     );
   });
 
-  it("deletes timers and maps delete errors", () => {
-    const actions = useTimerActions(createTimer(), "guild-1", "pandora", [
+  it("deletes timers and maps delete errors", async () => {
+    mockDeleteTimer.mockResolvedValueOnce(undefined);
+    const actions = renderTimerActions(createTimer(), "guild-1", "pandora", [
       "guild-1",
     ]);
 
     actions.handleDeleteTimer("guild-1", "timer-1");
 
-    expect(mockDeleteTimer).toHaveBeenCalledWith(
+    expect(mockDeleteTimer).toHaveBeenNthCalledWith(
+      1,
       {
-        pathParams: {
-          guildId: "guild-1",
-          timerIdentifier: "timer-1",
-        },
-        params: {
-          world: "pandora",
-        },
+        guildId: "guild-1",
+        timerIdentifier: "timer-1",
       },
-      expect.objectContaining({
-        onSuccess: expect.any(Function),
-        onError: expect.any(Function),
-      }),
+      { world: "pandora" },
+    );
+    await waitFor(() =>
+      expect(window.message).toHaveBeenCalledWith(
+        "messages.deleteSuccess:Tanroth",
+      ),
     );
 
-    const callbacks = mockDeleteTimer.mock.calls[0]?.[1] as {
-      onSuccess: () => void;
-      onError: (error: unknown) => void;
-    };
-
-    callbacks.onSuccess();
-    expect(window.message).toHaveBeenCalledWith(
-      "messages.deleteSuccess:Tanroth",
-    );
-
-    callbacks.onError(
+    mockDeleteTimer.mockRejectedValueOnce(
       new ApiError({
         status: 400,
         data: {
@@ -278,8 +277,12 @@ describe("useTimerActions", () => {
         message: "boom",
       }),
     );
-    expect(window.message).toHaveBeenCalledWith(
-      "messages.deleteEventWindowForbidden",
+    actions.handleDeleteTimer("guild-1", "timer-1");
+
+    await waitFor(() =>
+      expect(window.message).toHaveBeenCalledWith(
+        "messages.deleteEventWindowForbidden",
+      ),
     );
   });
 });
