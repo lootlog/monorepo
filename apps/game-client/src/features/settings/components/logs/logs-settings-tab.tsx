@@ -1,8 +1,10 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsControlRow } from "@/components/settings/settings-control-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -25,6 +27,7 @@ import {
   type LoggedAction,
   type LoggedApiRequest,
 } from "@/store/logs.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { toast } from "sonner";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -38,6 +41,12 @@ const FILTER_CONTROL_CLASS_NAME = "ll:w-full ll:text-xs";
 export const LogsSettingsTab: FC = () => {
   const actions = useLogsStore((state) => state.actions);
   const clearActions = useLogsStore((state) => state.clearActions);
+  const lootDebugLoggingEnabled = useSettingsStore(
+    (state) => state.lootDebugLoggingEnabled,
+  );
+  const setLootDebugLoggingEnabled = useSettingsStore(
+    (state) => state.setLootDebugLoggingEnabled,
+  );
   const [actionTypeFilter, setActionTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<LogStatusFilter>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -143,6 +152,19 @@ export const LogsSettingsTab: FC = () => {
         </div>
       }
     >
+      <SettingsSection title={t("settings.logs.consoleDebugTitle")}>
+        <SettingsControlRow
+          label={t("settings.logs.lootDebugLoggingLabel")}
+          description={t("settings.logs.lootDebugLoggingDescription")}
+        >
+          <Switch
+            checked={lootDebugLoggingEnabled}
+            id="loot-debug-logging"
+            onCheckedChange={setLootDebugLoggingEnabled}
+          />
+        </SettingsControlRow>
+      </SettingsSection>
+
       <SettingsSection
         title={t("settings.logs.filtersTitle")}
         description={t("settings.logs.filtersDescription")}

@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LogsSettingsTab } from "./logs-settings-tab";
 import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
+import { useSettingsStore } from "@/store/settings.store";
 
 const toastMocks = vi.hoisted(() => ({
   success: vi.fn(),
@@ -31,6 +32,7 @@ describe("LogsSettingsTab", () => {
     vi.clearAllMocks();
     window.localStorage.removeItem(LOGS_STORAGE_KEY);
     useLogsStore.getState().clearActions();
+    useSettingsStore.getState().setLootDebugLoggingEnabled(false);
 
     const clipboard = {
       writeText: mockClipboardWriteText,
@@ -101,6 +103,22 @@ describe("LogsSettingsTab", () => {
         },
       ],
     });
+  });
+
+  it("enables loot debug console logging", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<LogsSettingsTab />);
+    const toggle = container.querySelector("#loot-debug-logging");
+
+    expect(toggle).toBeInTheDocument();
+    expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(false);
+    if (!toggle) {
+      throw new Error("Loot debug logging toggle was not rendered");
+    }
+
+    await user.click(toggle);
+
+    expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(true);
   });
 
   it("filters actions by search, type and status", async () => {

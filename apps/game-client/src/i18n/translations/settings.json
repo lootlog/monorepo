@@ -291,6 +291,9 @@
   "logs": {
     "title": "Logi",
     "description": "Zapisane akcje użytkownika z rozwijanymi wywołaniami API, payloadem, odpowiedzią i statusem.",
+    "consoleDebugTitle": "Diagnostyka konsoli",
+    "lootDebugLoggingLabel": "Loguj tworzenie łupów",
+    "lootDebugLoggingDescription": "Zapisuje w konsoli przeglądarki pełny przebieg tworzenia łupów z walk i dialogów. Logi zawierają pełne payloady, w tym nazwy oraz identyfikatory kont, postaci i NPC.",
     "filtersTitle": "Filtry",
     "filtersDescription": "Zawęź wpisy po typie, statusie lub fragmencie treści.",
     "searchPlaceholder": "Szukaj w logach",
