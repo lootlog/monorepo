@@ -1,4 +1,8 @@
 import { getApiClient } from "@/lib/api-client";
+import {
+  logLootCreateDebug,
+  type LootCreateDebugContext,
+} from "@/lib/loot-create-debug";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 import type { Item } from "@lootlog/margonem/game-events";
@@ -48,8 +52,10 @@ type CreateLootResponse = {
 
 export async function createLoot(
   options: CreateLootOptions,
+  debugContext: LootCreateDebugContext,
 ): Promise<CreateLootResponse> {
   const client = getApiClient("default");
+  let attempt = 0;
   const response = await runSingleLoggedAction({
     actionType: "create_loot",
     actionPayload: options,
@@ -58,7 +64,36 @@ export async function createLoot(
       endpoint: "/loots",
       payload: options,
     },
-    execute: () => client.post<CreateLootResponse>("/loots", options),
+    execute: async () => {
+      attempt += 1;
+      logLootCreateDebug("http-request", {
+        ...debugContext,
+        attempt,
+        endpoint: "/loots",
+        method: "POST",
+        payload: options,
+      });
+
+      try {
+        const requestResponse = await client.post<CreateLootResponse>(
+          "/loots",
+          options,
+        );
+        logLootCreateDebug("http-success", {
+          ...debugContext,
+          attempt,
+          response: requestResponse.data,
+        });
+        return requestResponse;
+      } catch (error) {
+        logLootCreateDebug("http-error", {
+          ...debugContext,
+          attempt,
+          error,
+        });
+        throw error;
+      }
+    },
     retry: GAME_EVENT_RETRY_OPTIONS,
   });
 

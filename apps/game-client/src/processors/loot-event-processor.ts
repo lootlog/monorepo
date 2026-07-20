@@ -1,4 +1,9 @@
 import { Game } from "@/lib/game";
+import {
+  createLootDebugContext,
+  logLootCreateDebug,
+  type LootCreateDebugContext,
+} from "@/lib/loot-create-debug";
 import { getLoot } from "@/utils/game/get-loots";
 import {
   getBattleParticipants,
@@ -16,47 +21,97 @@ export class LootEventProcessor {
   handleLootFromBattle(event: GameEvent): void {
     if (!event.item || event.loot?.source !== "fight") return;
 
+    const debugContext = createLootDebugContext("fight");
     const battleStore = useBattleStore.getState();
     const lootStore = useLootStore.getState();
 
-    if (isEmpty(battleStore.battleWarriors)) return;
+    logLootCreateDebug("event-detected", {
+      ...debugContext,
+      battleWarriors: battleStore.battleWarriors,
+      event,
+    });
+
+    if (isEmpty(battleStore.battleWarriors)) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        reason: "missing-battle-warriors",
+      });
+      return;
+    }
 
     lootStore.setLastLootId(null);
-    this.createLootFromBattle(event);
+    this.createLootFromBattle(event, debugContext);
   }
 
   handleDialogLoot(event: GameEvent): void {
     if (!event.item || event.loot?.source !== "dialog") return;
 
+    const debugContext = createLootDebugContext("dialog");
     const dialogStore = useDialogStore.getState();
-    if (!dialogStore.talkingNpcId) return;
+    logLootCreateDebug("event-detected", {
+      ...debugContext,
+      event,
+      talkingNpcId: dialogStore.talkingNpcId,
+    });
+    if (!dialogStore.talkingNpcId) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        reason: "missing-talking-npc-id",
+      });
+      return;
+    }
 
     const lootStore = useLootStore.getState();
     lootStore.setLastLootId(null);
 
     if (event.npcs_del?.length) {
-      this.createLootFromDialog(event);
+      this.createLootFromDialog(event, debugContext);
     } else if (dialogStore.talkingNpcId) {
       const npc = Game.getNpc(+dialogStore.talkingNpcId);
       if (npc) {
-        this.createLootFromDialog({ ...event, npcs_del: [{ id: npc.id }] });
+        this.createLootFromDialog(
+          { ...event, npcs_del: [{ id: npc.id }] },
+          debugContext,
+        );
+      } else {
+        logLootCreateDebug("skipped", {
+          ...debugContext,
+          npcId: dialogStore.talkingNpcId,
+          reason: "missing-fallback-npc",
+        });
       }
     }
   }
 
-  private createLootFromBattle(event: GameEvent): void {
+  private createLootFromBattle(
+    event: GameEvent,
+    debugContext: LootCreateDebugContext,
+  ): void {
     const loot = event.loot;
-    if (!loot || !event.f) return;
+    if (!loot) return;
+    if (!event.f) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        reason: "missing-fight-data",
+      });
+      return;
+    }
 
     const loots = getLoot(event.item, loot);
-    if (!loots.length) return;
+    if (!loots.length) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        reason: "empty-parsed-loots",
+      });
+      return;
+    }
 
     const battleStore = useBattleStore.getState();
     const { npcs, party } = getBattleParticipants(battleStore.battleWarriors);
     const hero = Game.hero;
     const map = Game.map;
 
-    createLoot({
+    const payload = {
       world: Game.getWorldName(),
       source: loot.source.toUpperCase(),
       location: map.name,
@@ -65,21 +120,46 @@ export class LootEventProcessor {
       players: party,
       accountId: String(hero.account),
       characterId: String(hero.id),
-    })
+    };
+
+    logLootCreateDebug("request-prepared", {
+      ...debugContext,
+      payload,
+    });
+
+    createLoot(payload, debugContext)
       .then((response) => {
         useLootStore.getState().setLastLootId(response.id);
+        logLootCreateDebug("completed", {
+          ...debugContext,
+          lastLootId: response.id,
+          response,
+        });
       })
       .catch((error) => {
+        logLootCreateDebug("failed", {
+          ...debugContext,
+          error,
+        });
         console.warn("[LootEventProcessor] Failed to create loot:", error);
       });
   }
 
-  private createLootFromDialog(event: GameEvent): void {
+  private createLootFromDialog(
+    event: GameEvent,
+    debugContext: LootCreateDebugContext,
+  ): void {
     const loot = event.loot;
     if (!loot) return;
 
     const loots = getLoot(event.item, loot);
-    if (!loots.length) return;
+    if (!loots.length) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        reason: "empty-parsed-loots",
+      });
+      return;
+    }
 
     const mapName = Game.map.name;
     const npcs: Npc[] = [];
@@ -104,7 +184,14 @@ export class LootEventProcessor {
       });
     }
 
-    if (npcs.length === 0) return;
+    if (npcs.length === 0) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        npcIds: (event.npcs_del ?? []).map((npc) => npc.id),
+        reason: "unresolved-dialog-npcs",
+      });
+      return;
+    }
 
     const hero = Game.hero;
     const players: PartyMember[] = [
@@ -121,7 +208,7 @@ export class LootEventProcessor {
       },
     ];
 
-    createLoot({
+    const payload = {
       world: Game.getWorldName(),
       source: loot.source.toUpperCase(),
       location: mapName,
@@ -130,11 +217,27 @@ export class LootEventProcessor {
       players,
       accountId: String(hero.account),
       characterId: String(hero.id),
-    })
+    };
+
+    logLootCreateDebug("request-prepared", {
+      ...debugContext,
+      payload,
+    });
+
+    createLoot(payload, debugContext)
       .then((response) => {
         useLootStore.getState().setLastLootId(response.id);
+        logLootCreateDebug("completed", {
+          ...debugContext,
+          lastLootId: response.id,
+          response,
+        });
       })
       .catch((error) => {
+        logLootCreateDebug("failed", {
+          ...debugContext,
+          error,
+        });
         console.warn(
           "[LootEventProcessor] Failed to create dialog loot:",
           error,
