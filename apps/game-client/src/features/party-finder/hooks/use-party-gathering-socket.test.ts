@@ -5,10 +5,8 @@ import { usePartyGatheringSocket } from "./use-party-gathering-socket";
 
 const mockOn = vi.fn();
 const mockOff = vi.fn();
-const mockPushNotification = vi.fn();
+const mockPresentNotifications = vi.fn();
 const mockRemoveNotification = vi.fn();
-const mockSetOpen = vi.fn();
-const mockPlaySound = vi.fn();
 
 let notificationSettingsState: {
   accountId: string | null;
@@ -59,31 +57,20 @@ vi.mock("@/hooks/use-current-user-notification-mutes", () => ({
   useCurrentUserNotificationMutes: () => notificationMutesState,
 }));
 
-vi.mock("@/hooks/use-sound-playback", () => ({
-  useSoundPlayback: () => ({
-    playSound: mockPlaySound,
+vi.mock("@/features/notifications/hooks/use-notification-presenter", () => ({
+  useNotificationPresenter: () => ({
+    presentNotifications: mockPresentNotifications,
   }),
 }));
 
 vi.mock("@/store/notifications.store", () => ({
   useNotificationsStore: (
     selector: (state: {
-      pushNotification: typeof mockPushNotification;
       removeNotification: typeof mockRemoveNotification;
     }) => unknown,
   ) =>
     selector({
-      pushNotification: mockPushNotification,
       removeNotification: mockRemoveNotification,
-    }),
-}));
-
-vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (
-    selector: (state: { setOpen: typeof mockSetOpen }) => unknown,
-  ) =>
-    selector({
-      setOpen: mockSetOpen,
     }),
 }));
 
@@ -98,10 +85,8 @@ describe("usePartyGatheringSocket", () => {
   beforeEach(() => {
     mockOn.mockReset();
     mockOff.mockReset();
-    mockPushNotification.mockReset();
+    mockPresentNotifications.mockReset();
     mockRemoveNotification.mockReset();
-    mockSetOpen.mockReset();
-    mockPlaySound.mockReset();
 
     notificationSettingsState = {
       accountId: null,
@@ -179,13 +164,15 @@ describe("usePartyGatheringSocket", () => {
     };
     rerender();
 
-    expect(mockPushNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
-        notificationId: "notification-1",
-        servers: ["guild-1"],
-        type: "party-gathering",
-      }),
-    );
+    expect(mockPresentNotifications).toHaveBeenCalledWith([
+      {
+        notification: expect.objectContaining({
+          notificationId: "notification-1",
+          servers: ["guild-1"],
+          type: "party-gathering",
+        }),
+      },
+    ]);
   });
 
   it("caps queued party gathering notifications before readiness", () => {
@@ -238,17 +225,19 @@ describe("usePartyGatheringSocket", () => {
 
     rerender();
 
-    expect(mockPushNotification).toHaveBeenCalledTimes(100);
-    expect(mockPushNotification).not.toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(mockPresentNotifications).toHaveBeenCalledTimes(1);
+    const presentedBatch = mockPresentNotifications.mock.calls[0]?.[0];
+    expect(presentedBatch).toHaveLength(100);
+    expect(presentedBatch).not.toContainEqual({
+      notification: expect.objectContaining({
         notificationId: "notification-0",
       }),
-    );
-    expect(mockPushNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
+    });
+    expect(presentedBatch).toContainEqual({
+      notification: expect.objectContaining({
         notificationId: "notification-104",
       }),
-    );
+    });
   });
 
   it("drops queued party gathering notifications that were cancelled before readiness", () => {
@@ -304,7 +293,7 @@ describe("usePartyGatheringSocket", () => {
     };
     rerender();
 
-    expect(mockPushNotification).not.toHaveBeenCalled();
+    expect(mockPresentNotifications).not.toHaveBeenCalled();
     expect(mockRemoveNotification).not.toHaveBeenCalled();
   });
 });

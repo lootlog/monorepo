@@ -17,6 +17,7 @@ import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { usePartyCommand } from "./hooks/use-party-command";
 import { useTranslation } from "react-i18next";
 import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
+import { useShallow } from "zustand/react/shallow";
 
 const FormSchema = z.object({
   message: z.string().min(1).max(120),
@@ -25,7 +26,12 @@ type FormData = z.infer<typeof FormSchema>;
 
 export const CommandWindow = () => {
   const { t } = useTranslation("command");
-  const { selectedInputGuildIds, setSelectedInputGuildIds } = useChatStore();
+  const { selectedInputGuildIds, setSelectedInputGuildIds } = useChatStore(
+    useShallow((state) => ({
+      selectedInputGuildIds: state.selectedInputGuildIds,
+      setSelectedInputGuildIds: state.setSelectedInputGuildIds,
+    })),
+  );
 
   const characterId = String(Game.hero.id);
   const world = Game.getWorldName();

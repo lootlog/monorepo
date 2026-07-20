@@ -13,6 +13,13 @@ export const CATCHING_GUILDS_BATCH_SIZE = 100;
 export const CATCHING_GUILDS_CACHE_TIME_MS = 60_000;
 export const CATCHING_GUILDS_REQUEST_TIMEOUT_MS = 5_000;
 export const CATCHING_GUILDS_RETRY_DELAY_MS = 300;
+export const CATCHING_GUILDS_FAILURE_TTL_MS = 5 * 60 * 1000;
+export const CATCHING_GUILDS_FAILURE_CAP = 500;
+
+type FailedActivation = {
+  activation: number;
+  failedAt: number;
+};
 
 type FetchPlayersCatchingGuilds = (
   players: UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem[],
@@ -77,14 +84,35 @@ export class CharacterTooltipCatchingGuildsCoordinator {
   private readonly inFlightRequestKeys = new Set<string>();
   private readonly queuedRequestKeys = new Set<string>();
   private queue: CharacterTooltipCatchingGuildsTarget[] = [];
-  private readonly failedActivationByRequestKey = new Map<string, number>();
+  private readonly failedActivationByRequestKey = new Map<
+    string,
+    FailedActivation
+  >();
   private visibleTargetsByRequestKey = new Map<
     string,
     CharacterTooltipCatchingGuildsTarget
   >();
+  private lifecycleGeneration = 0;
+  private readonly activeAbortControllers = new Set<AbortController>();
 
   constructor(dependencies: Partial<CoordinatorDependencies> = {}) {
     this.dependencies = { ...defaultDependencies, ...dependencies };
+  }
+
+  dispose(): void {
+    this.lifecycleGeneration += 1;
+    this.active = false;
+    this.activation = 0;
+    this.inFlight = false;
+    this.queue = [];
+    this.inFlightRequestKeys.clear();
+    this.queuedRequestKeys.clear();
+    this.failedActivationByRequestKey.clear();
+    this.visibleTargetsByRequestKey.clear();
+    for (const abortController of this.activeAbortControllers) {
+      abortController.abort();
+    }
+    this.activeAbortControllers.clear();
   }
 
   sync(targets: CharacterTooltipCatchingGuildsTarget[], active: boolean): void {
@@ -92,9 +120,15 @@ export class CharacterTooltipCatchingGuildsCoordinator {
       this.activation += 1;
     }
     this.active = active;
+    const visibleTargets = active ? targets : [];
     this.visibleTargetsByRequestKey = new Map(
-      targets.map((target) => [target.requestKey, target]),
+      visibleTargets.map((target) => [target.requestKey, target]),
     );
+    useCharacterTooltipCatchingGuildsStore.getState().pruneEntries(
+      visibleTargets.map((target) => target.key),
+      this.dependencies.now(),
+    );
+    this.pruneFailedActivations(this.dependencies.now());
 
     if (!active) {
       this.queue = [];
@@ -168,7 +202,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
 
     if (
       entry?.status === "error" &&
-      this.failedActivationByRequestKey.get(target.requestKey) ===
+      this.failedActivationByRequestKey.get(target.requestKey)?.activation ===
         this.activation
     ) {
       return;
@@ -208,7 +242,12 @@ export class CharacterTooltipCatchingGuildsCoordinator {
       store.setLoading(target);
     }
 
-    void this.fetchBatch(batch).finally(() => {
+    const lifecycleGeneration = this.lifecycleGeneration;
+    void this.fetchBatch(batch, lifecycleGeneration).finally(() => {
+      if (lifecycleGeneration !== this.lifecycleGeneration) {
+        return;
+      }
+
       for (const target of batch) {
         this.inFlightRequestKeys.delete(target.requestKey);
       }
@@ -219,9 +258,16 @@ export class CharacterTooltipCatchingGuildsCoordinator {
 
   private async fetchBatch(
     batch: CharacterTooltipCatchingGuildsTarget[],
+    lifecycleGeneration: number,
   ): Promise<void> {
     try {
-      const response = await this.fetchWithRetry(batch.map(toRequestPlayer));
+      const response = await this.fetchWithRetry(
+        batch.map(toRequestPlayer),
+        lifecycleGeneration,
+      );
+      if (lifecycleGeneration !== this.lifecycleGeneration) {
+        return;
+      }
       const playersByRequestKey = new Map(
         response.players.map((player) => [
           `${player.userId}:${player.accountId}:${player.characterId}`,
@@ -234,10 +280,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
       for (const target of batch) {
         const player = playersByRequestKey.get(target.requestKey);
         if (!player) {
-          this.failedActivationByRequestKey.set(
-            target.requestKey,
-            this.activation,
-          );
+          this.recordFailedActivation(target.requestKey);
           store.setError(target);
           continue;
         }
@@ -246,12 +289,13 @@ export class CharacterTooltipCatchingGuildsCoordinator {
         store.setSuccess(target, player.guilds, fetchedAt);
       }
     } catch {
+      if (lifecycleGeneration !== this.lifecycleGeneration) {
+        return;
+      }
+
       const store = useCharacterTooltipCatchingGuildsStore.getState();
       for (const target of batch) {
-        this.failedActivationByRequestKey.set(
-          target.requestKey,
-          this.activation,
-        );
+        this.recordFailedActivation(target.requestKey);
         store.setError(target);
       }
     }
@@ -259,6 +303,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
 
   private async fetchWithRetry(
     players: UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem[],
+    lifecycleGeneration: number,
   ): Promise<UserLootlogPlayersCatchingGuildsResponseDtoOutput> {
     try {
       return await this.fetchAttempt(players);
@@ -272,6 +317,9 @@ export class CharacterTooltipCatchingGuildsCoordinator {
     }
 
     await this.dependencies.sleep(this.dependencies.retryDelayMs);
+    if (lifecycleGeneration !== this.lifecycleGeneration) {
+      throw new Error("Catching guilds coordinator lifecycle changed");
+    }
     return this.fetchAttempt(players);
   }
 
@@ -279,6 +327,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
     players: UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem[],
   ): Promise<UserLootlogPlayersCatchingGuildsResponseDtoOutput> {
     const abortController = new AbortController();
+    this.activeAbortControllers.add(abortController);
     const timeoutId = globalThis.setTimeout(
       () => abortController.abort(),
       this.dependencies.requestTimeoutMs,
@@ -297,6 +346,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
       throw error;
     } finally {
       globalThis.clearTimeout(timeoutId);
+      this.activeAbortControllers.delete(abortController);
     }
   }
 
@@ -308,6 +358,40 @@ export class CharacterTooltipCatchingGuildsCoordinator {
     this.queue = this.queue.filter(
       (queuedTarget) => queuedTarget.requestKey !== requestKey,
     );
+  }
+
+  private recordFailedActivation(requestKey: string): void {
+    const now = this.dependencies.now();
+    this.failedActivationByRequestKey.set(requestKey, {
+      activation: this.activation,
+      failedAt: now,
+    });
+    this.pruneFailedActivations(now);
+  }
+
+  private pruneFailedActivations(now: number): void {
+    for (const [requestKey, failure] of this.failedActivationByRequestKey) {
+      if (now - failure.failedAt > CATCHING_GUILDS_FAILURE_TTL_MS) {
+        this.failedActivationByRequestKey.delete(requestKey);
+      }
+    }
+
+    if (this.failedActivationByRequestKey.size <= CATCHING_GUILDS_FAILURE_CAP) {
+      return;
+    }
+
+    const retainedRequestKeys = new Set(
+      [...this.failedActivationByRequestKey.entries()]
+        .sort(([, first], [, second]) => second.failedAt - first.failedAt)
+        .slice(0, CATCHING_GUILDS_FAILURE_CAP)
+        .map(([requestKey]) => requestKey),
+    );
+
+    for (const requestKey of this.failedActivationByRequestKey.keys()) {
+      if (!retainedRequestKeys.has(requestKey)) {
+        this.failedActivationByRequestKey.delete(requestKey);
+      }
+    }
   }
 }
 

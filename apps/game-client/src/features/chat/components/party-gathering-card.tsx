@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Game } from "@/lib/game";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
-import { format } from "date-fns";
+import { format } from "@/utils/local-date";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

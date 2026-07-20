@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect } from "react";
 import { useSoundSettings } from "@/hooks/api/use-sound-settings";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { useQueryClient } from "@tanstack/react-query";
@@ -6,21 +6,99 @@ import type { UserSoundSettings } from "@lootlog/types";
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
 import { getSoundSettingsControllerGetSettingsQueryKey } from "@/lib/api/generated/main/sound-settings/sound-settings";
 import type { SoundSettingsResponseDto } from "@/lib/api/generated/main/model";
+import {
+  acquireSoundPlayback,
+  playSoundRequest,
+  preloadSoundUrl,
+} from "@/lib/shared-audio-playback";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
 type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
 
 const SOUND_SETTINGS_QUERY_KEY =
   getSoundSettingsControllerGetSettingsQueryKey();
+let hasAudioInteraction = navigator.userActivation?.hasBeenActive ?? false;
+
+const getSoundUrl = (
+  settings: UserSoundSettings,
+  category: SoundCategory,
+  key: string,
+) => {
+  const soundConfig =
+    category === "pings"
+      ? undefined
+      : settings[`${category as ConfigurableSoundCategory}Config`]?.[key];
+
+  if (soundConfig?.soundUrl) {
+    return soundConfig.soundUrl;
+  }
+
+  return DEFAULT_SOUND_URLS[key];
+};
 
 export const useSoundPlayback = () => {
   const { data: soundSettingsData } = useSoundSettings();
   const queryClient = useQueryClient();
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const testAudioRef = useRef<HTMLAudioElement | null>(null);
   const soundSettings = soundSettingsData
     ? normalizeSoundSettings(soundSettingsData)
     : undefined;
+
+  useEffect(() => acquireSoundPlayback(), []);
+
+  useEffect(() => {
+    if (!soundSettings || soundSettings.masterVolume === 0) {
+      return;
+    }
+
+    const preloadConfiguredSounds = () => {
+      const configurableCategories: ConfigurableSoundCategory[] = [
+        "notifications",
+        "detector",
+        "timers",
+      ];
+      for (const category of configurableCategories) {
+        if (soundSettings[`${category}Volume`] === 0) {
+          continue;
+        }
+
+        const categoryConfig = soundSettings[`${category}Config`];
+        for (const key of Object.keys(categoryConfig)) {
+          const soundUrl = getSoundUrl(soundSettings, category, key);
+          if (soundUrl) {
+            preloadSoundUrl(soundUrl);
+          }
+        }
+      }
+
+      if (soundSettings.pingsVolume > 0 && DEFAULT_SOUND_URLS.mapPing) {
+        preloadSoundUrl(DEFAULT_SOUND_URLS.mapPing);
+      }
+    };
+
+    if (hasAudioInteraction || navigator.userActivation?.hasBeenActive) {
+      hasAudioInteraction = true;
+      preloadConfiguredSounds();
+      return;
+    }
+
+    const handleFirstInteraction = () => {
+      hasAudioInteraction = true;
+      window.removeEventListener("keydown", handleFirstInteraction);
+      window.removeEventListener("pointerdown", handleFirstInteraction);
+      preloadConfiguredSounds();
+    };
+
+    window.addEventListener("keydown", handleFirstInteraction, { once: true });
+    window.addEventListener("pointerdown", handleFirstInteraction, {
+      once: true,
+      passive: true,
+    });
+
+    return () => {
+      window.removeEventListener("keydown", handleFirstInteraction);
+      window.removeEventListener("pointerdown", handleFirstInteraction);
+    };
+  }, [soundSettings]);
 
   const getLatestSettings = (): UserSoundSettings | undefined => {
     const cached = queryClient.getQueryData<SoundSettingsResponseDto>(
@@ -34,7 +112,7 @@ export const useSoundPlayback = () => {
     return soundSettings;
   };
 
-  const playSound = (category: SoundCategory, key: string) => {
+  const playSounds = (category: SoundCategory, keys: Iterable<string>) => {
     const settings = getLatestSettings();
     if (!settings) {
       return;
@@ -47,35 +125,25 @@ export const useSoundPlayback = () => {
       return;
     }
 
-    const soundConfig =
-      category === "pings"
-        ? undefined
-        : settings[`${category as ConfigurableSoundCategory}Config`]?.[key];
-    const soundUrl =
-      soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
-        ? DEFAULT_SOUND_URLS[key]
-        : soundConfig.soundUrl;
+    const resolvedSoundUrls = new Set<string>();
+    for (const key of keys) {
+      const soundUrl = getSoundUrl(settings, category, key);
 
-    if (!soundUrl) {
-      return;
-    }
-
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current = null;
-    }
-
-    const audio = new Audio(soundUrl);
-    audio.volume = categoryVolume * masterVolume;
-    currentAudioRef.current = audio;
-
-    audio.play().catch(() => {});
-
-    audio.onended = () => {
-      if (currentAudioRef.current === audio) {
-        currentAudioRef.current = null;
+      if (soundUrl) {
+        resolvedSoundUrls.add(soundUrl);
       }
-    };
+    }
+
+    for (const soundUrl of resolvedSoundUrls) {
+      playSoundRequest({
+        url: soundUrl,
+        volume: categoryVolume * masterVolume,
+      });
+    }
+  };
+
+  const playSound = (category: SoundCategory, key: string) => {
+    playSounds(category, [key]);
   };
 
   const playSoundTest = (
@@ -91,23 +159,10 @@ export const useSoundPlayback = () => {
     const categoryVolume = settings[`${category}Volume`];
     const masterVolume = settings.masterVolume;
 
-    const soundConfig =
-      category === "pings"
-        ? undefined
-        : settings[`${category as ConfigurableSoundCategory}Config`]?.[key];
-    const soundUrl =
-      customSoundUrl ||
-      (soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
-        ? DEFAULT_SOUND_URLS[key]
-        : soundConfig.soundUrl);
+    const soundUrl = customSoundUrl || getSoundUrl(settings, category, key);
 
     if (!soundUrl) {
       return;
-    }
-
-    if (testAudioRef.current) {
-      testAudioRef.current.pause();
-      testAudioRef.current = null;
     }
 
     const effectiveVolume =
@@ -115,18 +170,12 @@ export const useSoundPlayback = () => {
         ? 1.0
         : categoryVolume * masterVolume;
 
-    const audio = new Audio(soundUrl);
-    audio.volume = effectiveVolume;
-    testAudioRef.current = audio;
-
-    audio.play().catch(() => {});
-
-    audio.onended = () => {
-      if (testAudioRef.current === audio) {
-        testAudioRef.current = null;
-      }
-    };
+    playSoundRequest({
+      channel: "preview",
+      url: soundUrl,
+      volume: effectiveVolume,
+    });
   };
 
-  return { playSound, playSoundTest };
+  return { playSound, playSounds, playSoundTest };
 };

@@ -9,6 +9,7 @@ import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
 import { NpcType } from "@/api/npcs.api";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useShallow } from "zustand/react/shallow";
 
 export const NpcDetector = () => {
   const { t } = useTranslation("npcDetector");
@@ -23,7 +24,12 @@ export const NpcDetector = () => {
   const setMaxContentHeight = useWindowsStore(
     (state) => state.setMaxContentHeight,
   );
-  const { npcs, clearNpcs } = useNpcDetectorStore();
+  const { npcs, clearNpcs } = useNpcDetectorStore(
+    useShallow((state) => ({
+      npcs: state.npcs,
+      clearNpcs: state.clearNpcs,
+    })),
+  );
   const { settings } = useCurrentGameAccountDetectorSettings();
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
@@ -85,7 +91,7 @@ export const NpcDetector = () => {
         minWidth={242}
       >
         <div className="ll:flex ll:flex-col ll:h-full ll:w-full ll:overflow-hidden">
-          <NpcsList npcs={filteredNpcs} />
+          <NpcsList detectorSettings={settings} npcs={filteredNpcs} />
         </div>
       </DraggableWindow>
     </AnimatedWindow>

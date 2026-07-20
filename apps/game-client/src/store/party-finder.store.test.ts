@@ -2,7 +2,7 @@ import type {
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
 } from "@lootlog/types";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   captureReadyRoomSyncBaseline,
   selectOwnedReadyRoom,
@@ -206,5 +206,57 @@ describe("party-finder Ready Room store", () => {
     expect(usePartyFinderStore.getState().projections["room-1"]?.revision).toBe(
       3,
     );
+  });
+
+  it("allows an equal revision after the removal watermark expires", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
+
+    try {
+      usePartyFinderStore.getState().mergeProjection(createProjection(2));
+      usePartyFinderStore.getState().applyUpdate({
+        schemaVersion: 3,
+        type: "REMOVE",
+        notificationId: "room-1",
+        revision: 2,
+      });
+      usePartyFinderStore.getState().mergeProjection(createProjection(2));
+      expect(usePartyFinderStore.getState().projections).toEqual({});
+
+      vi.advanceTimersByTime(120_001);
+      usePartyFinderStore.getState().mergeProjection(createProjection(2));
+
+      expect(
+        usePartyFinderStore.getState().projections["room-1"]?.revision,
+      ).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps only the newest 512 removal watermarks", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
+
+    try {
+      for (let index = 0; index < 513; index += 1) {
+        usePartyFinderStore.getState().applyUpdate({
+          schemaVersion: 3,
+          type: "REMOVE",
+          notificationId: `room-${index}`,
+          revision: index,
+        });
+      }
+
+      const roomVersions = usePartyFinderStore.getState().roomVersions;
+      expect(Object.keys(roomVersions)).toHaveLength(512);
+      expect(roomVersions["room-0"]).toBeUndefined();
+      expect(roomVersions["room-512"]).toMatchObject({
+        presence: "REMOVED",
+        revision: 512,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

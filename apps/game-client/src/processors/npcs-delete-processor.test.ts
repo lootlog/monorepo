@@ -5,6 +5,8 @@ import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey }
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { NpcsDeleteProcessor } from "./npcs-delete-processor";
+import type * as ApiModule from "@/api";
+import type * as LootlogTypesModule from "@lootlog/types";
 
 const { mockCreateAutoTimer, mockGetNpcTypeByWt, mockGame } = vi.hoisted(
   () => ({
@@ -26,7 +28,7 @@ const { mockCreateAutoTimer, mockGetNpcTypeByWt, mockGame } = vi.hoisted(
 );
 
 vi.mock("@/api", async (importOriginal) => {
-  const originalModule = await importOriginal<typeof import("@/api")>();
+  const originalModule = await importOriginal<typeof ApiModule>();
 
   return {
     ...originalModule,
@@ -35,8 +37,7 @@ vi.mock("@/api", async (importOriginal) => {
 });
 
 vi.mock("@lootlog/types", async (importOriginal) => {
-  const originalModule =
-    await importOriginal<typeof import("@lootlog/types")>();
+  const originalModule = await importOriginal<typeof LootlogTypesModule>();
   return {
     ...originalModule,
     getNpcTypeByWt: (...args: unknown[]) => mockGetNpcTypeByWt(...args),
@@ -138,6 +139,53 @@ describe("NpcsDeleteProcessor", () => {
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
     expect(useNotificationsStore.getState().notifications).toEqual([]);
     expect(mockCreateAutoTimer).not.toHaveBeenCalled();
+  });
+
+  it("publishes at most once to each local store for a deletion batch", () => {
+    mockGame.getNpc.mockReturnValue(undefined);
+    useNpcDetectorStore.setState({
+      npcs: [createTrackedNpc(), { ...createTrackedNpc(), id: 501 }],
+    });
+    useNotificationsStore.setState({
+      notifications: [
+        {
+          notificationId: "notification-1",
+          listKey: "notification-1",
+          receivedAtMs: Date.now(),
+          servers: ["guild-1"],
+          world: "pandora",
+          npc: { id: 500 },
+        } as never,
+        {
+          notificationId: "notification-2",
+          listKey: "notification-2",
+          receivedAtMs: Date.now(),
+          servers: ["guild-1"],
+          world: "pandora",
+          npc: { id: 501 },
+        } as never,
+      ],
+    });
+    let detectorPublications = 0;
+    let notificationPublications = 0;
+    const unsubscribeDetector = useNpcDetectorStore.subscribe(() => {
+      detectorPublications += 1;
+    });
+    const unsubscribeNotifications = useNotificationsStore.subscribe(() => {
+      notificationPublications += 1;
+    });
+
+    processor.handle({
+      npcs_del: [
+        { id: 500, respBaseSeconds: 30 },
+        { id: 501, respBaseSeconds: 30 },
+      ],
+    });
+
+    expect(detectorPublications).toBe(1);
+    expect(notificationPublications).toBe(1);
+    unsubscribeDetector();
+    unsubscribeNotifications();
   });
 
   it("stops when respBaseSeconds is missing or npc weight is too low", () => {

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { NotificationsSettings } from "@lootlog/types";
+import { useShallow } from "zustand/react/shallow";
 import {
   type MentionNotification,
   type StoredNotification,
@@ -19,6 +20,7 @@ interface UseVisibleNotificationsOptions {
 interface UseVisibleNotificationsResult {
   notifications: StoredNotification[];
   all: StoredNotification[];
+  settings: Partial<NotificationsSettings>;
 }
 
 type NotificationAutoHideStates = Record<
@@ -127,12 +129,18 @@ const isNotificationVisible = ({
 export const useVisibleNotifications = ({
   autoCleanup = true,
 }: UseVisibleNotificationsOptions = {}): UseVisibleNotificationsResult => {
-  const { notifications, notificationAutoHideByListKey, removeNotification } =
-    useNotificationsStore();
+  const { notifications, notificationAutoHideByListKey, removeNotifications } =
+    useNotificationsStore(
+      useShallow((state) => ({
+        notifications: state.notifications,
+        notificationAutoHideByListKey: state.notificationAutoHideByListKey,
+        removeNotifications: state.removeNotifications,
+      })),
+    );
   const { settings } = useCurrentGameAccountNotificationSettings();
   const world = Game.getWorldName();
-  const removeRef = useRef(removeNotification);
-  removeRef.current = removeNotification;
+  const removeRef = useRef(removeNotifications);
+  removeRef.current = removeNotifications;
 
   useEffect(() => {
     if (!autoCleanup) {
@@ -168,11 +176,17 @@ export const useVisibleNotifications = ({
       () => {
         const currentTimeMs = Date.now();
 
-        scheduledExpirations.forEach(({ expirationTimeMs, notification }) => {
-          if (currentTimeMs >= expirationTimeMs) {
-            removeRef.current(notification.notificationId);
-          }
-        });
+        const expiredNotificationIds = scheduledExpirations.flatMap(
+          ({ expirationTimeMs, notification }) => {
+            if (currentTimeMs < expirationTimeMs) {
+              return [];
+            }
+
+            return [notification.notificationId];
+          },
+        );
+
+        removeRef.current(expiredNotificationIds);
       },
       Math.max(0, nearestExpirationTimeMs - Date.now()),
     );
@@ -186,5 +200,5 @@ export const useVisibleNotifications = ({
     isNotificationVisible({ notification, settings, world }),
   );
 
-  return { notifications: visible, all: notifications };
+  return { notifications: visible, all: notifications, settings };
 };

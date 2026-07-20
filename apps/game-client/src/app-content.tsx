@@ -19,11 +19,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
 import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handlers";
 import { useGlobalStore } from "@/store/global.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
 import { useMapPings } from "@/features/map-pings/use-map-pings";
 import { useAirTags } from "@/features/air-tags/use-air-tags";
-import { useNotificationVolunteersSocket } from "@/features/party-finder/hooks/use-notification-volunteers-socket";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party-ready-room-expiry";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
@@ -42,7 +42,6 @@ export const AppContent = () => {
   useAirTags();
   useHotkeys(mapPingHotkeyHandlers);
   useTimerSettingsMutationsRegistry();
-  useNotificationVolunteersSocket();
   usePartyGatheringSocket();
   usePartyReadyRoomSocket();
   usePartyReadyRoomSync();
@@ -50,7 +49,12 @@ export const AppContent = () => {
   usePartyReadyRoomObserver();
 
   const { ConflictDialog } = useTimerSettingsSync();
-  const eventModeQuery = useEventModeQuery();
+  const isEventModePresentationVisible = useWindowsStore(
+    (state) => state["event-mode"].open || state["quick-access"].open,
+  );
+  const eventModeQuery = useEventModeQuery({
+    active: isEventModePresentationVisible,
+  });
   const gameInitialized = useGlobalStore((state) =>
     Boolean(state.gameState.gameInitialized),
   );

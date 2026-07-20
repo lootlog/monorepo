@@ -5,9 +5,7 @@ import { useNotifications } from "@/features/notifications/hooks/use-notificatio
 
 const mockOn = vi.fn();
 const mockOff = vi.fn();
-const mockPushNotification = vi.fn();
-const mockSetOpen = vi.fn();
-const mockPlaySound = vi.fn();
+const mockPresentNotifications = vi.fn();
 
 let notificationSettingsState: {
   accountId: string | null;
@@ -58,29 +56,9 @@ vi.mock("@/hooks/use-current-user-notification-mutes", () => ({
   useCurrentUserNotificationMutes: () => notificationMutesState,
 }));
 
-vi.mock("@/store/notifications.store", () => ({
-  useNotificationsStore: (
-    selector: (state: {
-      pushNotification: typeof mockPushNotification;
-    }) => unknown,
-  ) =>
-    selector({
-      pushNotification: mockPushNotification,
-    }),
-}));
-
-vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (
-    selector: (state: { setOpen: typeof mockSetOpen }) => unknown,
-  ) =>
-    selector({
-      setOpen: mockSetOpen,
-    }),
-}));
-
-vi.mock("@/hooks/use-sound-playback", () => ({
-  useSoundPlayback: () => ({
-    playSound: mockPlaySound,
+vi.mock("@/features/notifications/hooks/use-notification-presenter", () => ({
+  useNotificationPresenter: () => ({
+    presentNotifications: mockPresentNotifications,
   }),
 }));
 
@@ -94,9 +72,7 @@ describe("useNotifications", () => {
   beforeEach(() => {
     mockOn.mockReset();
     mockOff.mockReset();
-    mockPushNotification.mockReset();
-    mockSetOpen.mockReset();
-    mockPlaySound.mockReset();
+    mockPresentNotifications.mockReset();
 
     notificationSettingsState = {
       accountId: null,
@@ -157,12 +133,13 @@ describe("useNotifications", () => {
     };
     rerender();
 
-    expect(mockSetOpen).toHaveBeenCalledWith("notifications", true);
-    expect(mockPushNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
-        notificationId: "notification-1",
-        servers: ["guild-1"],
-      }),
-    );
+    expect(mockPresentNotifications).toHaveBeenCalledWith([
+      {
+        notification: expect.objectContaining({
+          notificationId: "notification-1",
+          servers: ["guild-1"],
+        }),
+      },
+    ]);
   });
 });

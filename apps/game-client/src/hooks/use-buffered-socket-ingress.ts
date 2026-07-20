@@ -10,7 +10,7 @@ type BufferedSocketIngressBaseOptions<TPayload> = {
   accountId: string | null | undefined;
   isReady: boolean;
   event: GatewayEvent;
-  onProcess: (payload: TPayload) => void;
+  onProcessBatch: (payloads: readonly TPayload[]) => void;
   maxPendingItems?: number;
 };
 
@@ -46,41 +46,62 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
   accountId,
   isReady,
   event,
-  onProcess,
+  onProcessBatch,
   maxPendingItems = DEFAULT_MAX_PENDING_ITEMS,
   ...cancelOptions
 }: UseBufferedSocketIngressOptions<TPayload, TCancelPayload>) => {
   const isReadyRef = useRef(isReady);
-  const onProcessRef = useRef(onProcess);
+  const onProcessBatchRef = useRef(onProcessBatch);
   const onCancelRef = useRef(cancelOptions.onCancel);
   const getPayloadIdRef = useRef(cancelOptions.getPayloadId);
   const getCancelIdRef = useRef(cancelOptions.getCancelId);
   const pendingItemsRef = useRef<TPayload[]>([]);
   const pendingCancelIdsRef = useRef<Set<string>>(new Set());
   const previousAccountIdRef = useRef<string | null>(accountId ?? null);
+  const flushScheduledRef = useRef(false);
+  const listenerGenerationRef = useRef(0);
 
   isReadyRef.current = isReady;
-  onProcessRef.current = onProcess;
+  onProcessBatchRef.current = onProcessBatch;
   onCancelRef.current = cancelOptions.onCancel;
   getPayloadIdRef.current = cancelOptions.getPayloadId;
   getCancelIdRef.current = cancelOptions.getCancelId;
 
-  const processPayloadRef = useRef<(payload: TPayload) => void>(
+  const processPayloadsRef = useRef<(payloads: readonly TPayload[]) => void>(
     () => undefined,
   );
-  processPayloadRef.current = (payload) => {
+  processPayloadsRef.current = (payloads) => {
     const getPayloadId = getPayloadIdRef.current;
 
-    if (getPayloadId) {
+    if (!getPayloadId) {
+      onProcessBatchRef.current(payloads);
+      return;
+    }
+
+    const acceptedPayloads = payloads.filter((payload) => {
       const payloadId = getPayloadId(payload);
 
       if (pendingCancelIdsRef.current.has(payloadId)) {
         pendingCancelIdsRef.current.delete(payloadId);
-        return;
+        return false;
       }
+
+      return true;
+    });
+
+    if (acceptedPayloads.length > 0) {
+      onProcessBatchRef.current(acceptedPayloads);
+    }
+  };
+  const flushPendingItemsRef = useRef<() => void>(() => undefined);
+  flushPendingItemsRef.current = () => {
+    if (!isReadyRef.current || pendingItemsRef.current.length === 0) {
+      return;
     }
 
-    onProcessRef.current(payload);
+    const pendingItems = pendingItemsRef.current;
+    pendingItemsRef.current = [];
+    processPayloadsRef.current(pendingItems);
   };
 
   useEffect(() => {
@@ -100,23 +121,39 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
       return;
     }
 
-    const handleEvent = (payload: TPayload) => {
-      if (!isReadyRef.current) {
-        if (pendingItemsRef.current.length >= maxPendingItems) {
-          pendingItemsRef.current.shift();
-        }
+    const listenerGeneration = listenerGenerationRef.current + 1;
+    listenerGenerationRef.current = listenerGeneration;
 
-        pendingItemsRef.current.push(payload);
+    const handleEvent = (payload: TPayload) => {
+      if (pendingItemsRef.current.length >= maxPendingItems) {
+        pendingItemsRef.current.shift();
+      }
+
+      pendingItemsRef.current.push(payload);
+
+      if (!isReadyRef.current || flushScheduledRef.current) {
         return;
       }
 
-      processPayloadRef.current(payload);
+      flushScheduledRef.current = true;
+      queueMicrotask(() => {
+        flushScheduledRef.current = false;
+        if (listenerGenerationRef.current !== listenerGeneration) {
+          return;
+        }
+
+        flushPendingItemsRef.current();
+      });
     };
 
     socket.on(event as never, handleEvent as never);
 
     return () => {
       socket.off(event as never, handleEvent as never);
+      if (listenerGenerationRef.current === listenerGeneration) {
+        listenerGenerationRef.current += 1;
+        flushScheduledRef.current = false;
+      }
     };
   }, [connected, event, maxPendingItems, socket]);
 
@@ -166,6 +203,7 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
         return;
       }
 
+      flushPendingItemsRef.current();
       onCancelRef.current?.(payload);
     };
 
@@ -190,11 +228,6 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
       return;
     }
 
-    const pendingItems = [...pendingItemsRef.current];
-    pendingItemsRef.current = [];
-
-    pendingItems.forEach((pendingItem) => {
-      processPayloadRef.current(pendingItem);
-    });
+    flushPendingItemsRef.current();
   }, [isReady]);
 };

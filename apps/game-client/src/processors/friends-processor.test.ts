@@ -61,4 +61,16 @@ describe("FriendsProcessor", () => {
 
     expect(useFriendsStore.getState().friendsMax).toBe(50);
   });
+
+  it("publishes at most once when one event contains both fields", () => {
+    let publications = 0;
+    const unsubscribe = useFriendsStore.subscribe(() => {
+      publications += 1;
+    });
+
+    processor.handle({ friends: [], friends_max: 50 });
+
+    unsubscribe();
+    expect(publications).toBe(1);
+  });
 });

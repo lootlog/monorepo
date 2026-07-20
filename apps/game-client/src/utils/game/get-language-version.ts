@@ -8,7 +8,7 @@ export const getLanguageVersion = (url: string): LanguageVersion => {
     if (parsedUrl.hostname === EN_DOMAIN) {
       return LanguageVersion.EN;
     }
-  } catch (e) {
+  } catch {
     // If the URL can't be parsed, fall through to PL
   }
 

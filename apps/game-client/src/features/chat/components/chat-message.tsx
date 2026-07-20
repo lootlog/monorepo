@@ -1,6 +1,6 @@
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format } from "@/utils/local-date";
 import { useState, type FC } from "react";
 import { MessageType } from "@/api/chat.api";
 import type {
@@ -44,6 +44,7 @@ import {
   updateChatMessage,
 } from "@/features/chat/chat.helpers";
 import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview";
+import { dispatchChatScrollToMessage } from "@/features/chat/chat-scroll-to-message";
 import { Button } from "@/components/ui/button";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import {
@@ -153,11 +154,16 @@ export const ChatMessage: FC<ChatMessageProps> = ({
       `[data-chat-message-id="${message.replyTo.messageId}"]`,
     );
 
-    originalMessage?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-      inline: "nearest",
-    });
+    if (originalMessage) {
+      originalMessage.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+      return;
+    }
+
+    dispatchChatScrollToMessage(message.replyTo.messageId);
   };
 
   return (

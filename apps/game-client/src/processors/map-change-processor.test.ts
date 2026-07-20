@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useGlobalStore } from "@/store/global.store";
+import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { MapChangeProcessor } from "./map-change-processor";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
@@ -48,6 +49,7 @@ describe("MapChangeProcessor", () => {
         joinedGuilds: [],
       },
     });
+    useNpcDetectorStore.getState().clearNpcs();
   });
 
   it("ignores events without town data", () => {
@@ -94,6 +96,41 @@ describe("MapChangeProcessor", () => {
     expect(mockEmit.mock.invocationCallOrder[0]).toBeLessThan(
       handleAirTagMapChange.mock.invocationCallOrder[0],
     );
+  });
+
+  it("keeps the initial NPC snapshot when first observing its current map", () => {
+    useNpcDetectorStore.setState({
+      npcs: [
+        {
+          id: 101,
+          location: "Torneg",
+          name: "Old map NPC",
+          notificationSent: false,
+        } as never,
+      ],
+    });
+
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+
+    expect(useNpcDetectorStore.getState().npcs).toHaveLength(1);
+  });
+
+  it("clears NPCs retained from the previous map without an npcs_del packet", () => {
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+    useNpcDetectorStore.setState({
+      npcs: [
+        {
+          id: 101,
+          location: "Torneg",
+          name: "Old map NPC",
+          notificationSent: false,
+        } as never,
+      ],
+    });
+
+    processor.handle(createMapChangeEvent(13, "Nithal"));
+
+    expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   });
 
   it("does not emit for repeated map ids", () => {

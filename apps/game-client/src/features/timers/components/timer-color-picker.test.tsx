@@ -49,8 +49,8 @@ describe("TimerColorPicker", () => {
     );
     expect(colorButtons.length).toBeGreaterThan(2);
 
-    fireEvent.click(colorButtons[0]!);
-    fireEvent.click(colorButtons[colorButtons.length - 1]!);
+    fireEvent.click(colorButtons[0]);
+    fireEvent.click(colorButtons[colorButtons.length - 1]);
 
     expect(onColorChange).toHaveBeenCalledWith("red");
     expect(onColorChange).toHaveBeenCalledWith("custom-1");

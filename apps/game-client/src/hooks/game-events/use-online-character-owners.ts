@@ -73,7 +73,6 @@ export function useOnlineCharacterOwners(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
-  const ownersStatus = useOnlineCharacterOwnersStore((state) => state.status);
   const worldByGuildId = useSettingsStore((state) => state.worldByGuildId);
   const selectedGuildId = useSelectedLootlogGuildId();
   const selectedWorld = isConcreteLootlogGuildId(selectedGuildId)
@@ -84,7 +83,7 @@ export function useOnlineCharacterOwners(): void {
     { guildId: selectedGuildId ?? "" },
     {
       query: {
-        enabled: isConcreteLootlogGuildId(selectedGuildId),
+        enabled: isShiftPressed && isConcreteLootlogGuildId(selectedGuildId),
         select: mapGuildMembersByUserId,
       },
     },
@@ -93,7 +92,8 @@ export function useOnlineCharacterOwners(): void {
   const selectedGuildIdRef = useRef(selectedGuildId);
   const selectedWorldRef = useRef(selectedWorld);
   const requestIdRef = useRef(0);
-  const previousShiftPressedRef = useRef(isShiftPressed);
+  const activeHydrationKeyRef = useRef<string | null>(null);
+  const activeHydrationSocketRef = useRef(socket);
 
   useEffect(() => {
     guildMembersByUserIdRef.current = guildMembersByUserId;
@@ -111,47 +111,30 @@ export function useOnlineCharacterOwners(): void {
     if (
       !joined ||
       !connected ||
+      !isShiftPressed ||
       !socket ||
       !selectedGuildId ||
       selectedGuildId === "all" ||
       !selectedWorld
     ) {
       requestIdRef.current += 1;
+      activeHydrationKeyRef.current = null;
+      activeHydrationSocketRef.current = socket;
       useOnlineCharacterOwnersStore.getState().clearOwners();
       return;
     }
 
-    useOnlineCharacterOwnersStore.getState().clearOwners();
-    hydrateOnlineCharacterOwners({
-      guildId: selectedGuildId,
-      guildMembersByUserId: guildMembersByUserIdRef.current,
-      requestIdRef,
-      socket,
-      world: selectedWorld,
-    });
-
-    return () => {
-      requestIdRef.current += 1;
-    };
-  }, [connected, joined, selectedGuildId, selectedWorld, socket]);
-
-  useEffect(() => {
-    const wasShiftPressed = previousShiftPressedRef.current;
-    previousShiftPressedRef.current = isShiftPressed;
+    const hydrationKey = `${selectedGuildId}\u0000${selectedWorld}`;
     if (
-      !isShiftPressed ||
-      wasShiftPressed ||
-      ownersStatus !== "error" ||
-      !joined ||
-      !connected ||
-      !socket ||
-      !selectedGuildId ||
-      selectedGuildId === "all" ||
-      !selectedWorld
+      activeHydrationKeyRef.current === hydrationKey &&
+      activeHydrationSocketRef.current === socket
     ) {
       return;
     }
 
+    activeHydrationKeyRef.current = hydrationKey;
+    activeHydrationSocketRef.current = socket;
+    useOnlineCharacterOwnersStore.getState().clearOwners();
     hydrateOnlineCharacterOwners({
       guildId: selectedGuildId,
       guildMembersByUserId: guildMembersByUserIdRef.current,
@@ -163,14 +146,21 @@ export function useOnlineCharacterOwners(): void {
     connected,
     isShiftPressed,
     joined,
-    ownersStatus,
     selectedGuildId,
     selectedWorld,
     socket,
   ]);
 
+  useEffect(
+    () => () => {
+      requestIdRef.current += 1;
+      activeHydrationKeyRef.current = null;
+    },
+    [],
+  );
+
   useEffect(() => {
-    if (!socket || !connected || !joined) return;
+    if (!isShiftPressed || !socket || !connected || !joined) return;
 
     const handleOnlinePlayersPresenceUpdate = (
       data: PlayerPresenceUpdatePayload,
@@ -204,5 +194,5 @@ export function useOnlineCharacterOwners(): void {
         handleOnlinePlayersPresenceUpdate,
       );
     };
-  }, [connected, joined, socket]);
+  }, [connected, isShiftPressed, joined, socket]);
 }

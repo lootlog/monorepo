@@ -1,4 +1,4 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
@@ -174,5 +174,20 @@ describe("useTimerDisplay", () => {
       },
       timeLeft: -100,
     });
+  });
+
+  it("does not rerender a timer when an unrelated timer setting changes", () => {
+    let renderCount = 0;
+
+    renderHook(() => {
+      renderCount += 1;
+      return useTimerDisplay(createTimer(), 5_000, 15_000);
+    });
+
+    act(() => {
+      useTimersStore.setState({ timerFiltersSearchText: "unrelated" });
+    });
+
+    expect(renderCount).toBe(1);
   });
 });

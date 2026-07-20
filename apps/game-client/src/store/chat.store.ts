@@ -1,14 +1,12 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
-import { MessageType } from "@/api/chat.api";
+import type { MessageType } from "@/api/chat.api";
 
 const STORAGE_KEY = storageKey("ll:chat:state");
 
 export type ChatFilter = "all" | "normal" | "npc" | "party";
-type ReplyableMessageType =
-  | typeof MessageType.NORMAL
-  | typeof MessageType.NOTIFICATION;
+type ReplyableMessageType = Extract<MessageType, "NORMAL" | "NOTIFICATION">;
 
 export type ChatReplyDraft = {
   guildId: string;

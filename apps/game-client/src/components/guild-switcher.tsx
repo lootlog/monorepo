@@ -14,6 +14,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";
+import { useShallow } from "zustand/react/shallow";
 
 type GuildSwitcherProps = {
   disabled?: boolean;
@@ -56,12 +57,14 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       },
     });
   const { data: userPreferences } = useUserPreferences();
-  const { setGuildId, guildIdByCharId } = useSettingsStore();
+  const { setGuildId, guildId } = useSettingsStore(
+    useShallow((state) => ({
+      setGuildId: state.setGuildId,
+      guildId: characterId ? state.guildIdByCharId[characterId] : undefined,
+    })),
+  );
   const guildsOrder = userPreferences?.guildsOrder;
   const orderedGuilds = orderLootlogGuilds(guilds ?? [], guildsOrder);
-
-  const guildId = characterId ? guildIdByCharId[characterId] : undefined;
-
   useEffect(() => {
     if (!isFetched || orderedGuilds.length === 0) return;
     if (multiple) return;

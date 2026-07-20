@@ -107,10 +107,10 @@ const createHistoryEntry = (
       characterId: 100,
       accountId: 200,
     },
-    minSpawnTime: "2026-05-03T10:05:00.000Z",
-    maxSpawnTime: "2026-05-03T10:10:00.000Z",
+    minSpawnTime: new Date(2026, 4, 3, 12, 5).toISOString(),
+    maxSpawnTime: new Date(2026, 4, 3, 12, 10).toISOString(),
     canRestore: true,
-    createdAt: "2026-05-03T10:01:02.000Z",
+    createdAt: new Date(2026, 4, 3, 12, 1, 2).toISOString(),
     ...overrides,
   }) as TimerHistoryResponseDto;
 

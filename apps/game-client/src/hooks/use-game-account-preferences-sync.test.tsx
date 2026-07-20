@@ -196,7 +196,7 @@ describe("useGameAccountPreferencesSync", () => {
     });
   });
 
-  it("resolves account id after game initialization before flushing queued detector events", async () => {
+  it("resolves account id after game initialization before flushing queued detector events", () => {
     vi.useFakeTimers();
 
     try {

@@ -28,30 +28,38 @@ export function useCharacterTooltipGameEvents(): void {
 
   useEffect(() => {
     return gameEventsManager.subscribeAfterGameEvent((event) => {
+      const othersStore = useOthersStore.getState();
+      const removeIds = event.town ? Object.keys(othersStore.othersById) : [];
+      const upserts: Record<string, RuntimeOther> = {};
+      const changedOthers: RuntimeOther[] = [];
+
       if (event.town) {
-        useOthersStore.getState().clearOthers();
         useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
       }
 
-      if (!event.other) return;
+      if (!event.other) {
+        if (removeIds.length > 0) {
+          othersStore.applyBatch({ removeIds });
+        }
+        return;
+      }
 
       const runtimeOthers = getRuntimeOthers();
-      const changedOthers: RuntimeOther[] = [];
-      const othersStore = useOthersStore.getState();
 
       for (const [id, entry] of Object.entries(event.other)) {
         if (isDeletedOther(entry)) {
-          othersStore.removeOther(id);
+          removeIds.push(id);
           continue;
         }
 
         const runtimeOther = runtimeOthers[id];
         if (!runtimeOther) continue;
 
-        othersStore.upsertOther(id, runtimeOther);
+        upserts[id] = runtimeOther;
         changedOthers.push(runtimeOther);
       }
 
+      othersStore.applyBatch({ removeIds, upserts });
       patchOtherCharacterTooltips(changedOthers);
     });
   }, []);

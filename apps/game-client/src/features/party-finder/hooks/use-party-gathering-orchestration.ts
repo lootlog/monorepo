@@ -13,7 +13,6 @@ import {
 } from "@/lib/api/generated-helpers";
 import { Game } from "@/lib/game";
 import { usePartyFinderStore } from "@/store/party-finder.store";
-import { useNotificationVolunteersStore } from "@/store/notification-volunteers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   buildNpcChatMessagePayload,
@@ -64,29 +63,8 @@ export const usePartyGatheringOrchestration = () => {
   const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
   const { data: session } = useSession();
   const discordId = session?.user?.discordId ?? "";
-  const setNotification = useNotificationVolunteersStore(
-    (state) => state.setNotification,
-  );
   const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
   const setOpen = useWindowsStore((state) => state.setOpen);
-
-  const setNpcNotificationState = (
-    notificationId: string,
-    npc: GameNpcWithLocation,
-    world: string,
-  ) => {
-    setNotification(notificationId, {
-      id: npc.id,
-      name: npc.nick,
-      lvl: npc.lvl,
-      prof: npc.prof,
-      location: npc.location,
-      world,
-      icon: npc.icon,
-      x: npc.x,
-      y: npc.y,
-    });
-  };
 
   const finalizePartyGathering = async ({
     notificationId,
@@ -216,8 +194,6 @@ export const usePartyGatheringOrchestration = () => {
       });
       const resolvedGuildIds = response.guildIds ?? guildIds;
 
-      setNpcNotificationState(response.notificationId, npc, world);
-
       await sendChatMessageAsync(
         buildNpcChatMessagePayload({
           npc,
@@ -244,3 +220,7 @@ export const usePartyGatheringOrchestration = () => {
     startNpcPartyGathering,
   };
 };
+
+export type PartyGatheringOrchestration = ReturnType<
+  typeof usePartyGatheringOrchestration
+>;

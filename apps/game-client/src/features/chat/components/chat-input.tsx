@@ -27,6 +27,7 @@ import {
   type ChatInputSuggestion,
 } from "@/features/chat/components/chat-mention-suggestions";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
+import { CHAT_QUERY_GC_TIME_MS } from "@/features/chat/chat.constants";
 import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
 import {
   filterCommandSuggestions,
@@ -188,7 +189,7 @@ export const ChatInput: FC<ChatInputProps> = ({
             guildId: selectedGuildId ?? "",
           }),
           enabled: shouldLoadMentionData,
-          gcTime: Infinity,
+          gcTime: CHAT_QUERY_GC_TIME_MS,
           staleTime: 5 * 60 * 1000,
         },
       },
@@ -201,7 +202,7 @@ export const ChatInput: FC<ChatInputProps> = ({
           guildId: selectedGuildId ?? "",
         }),
         enabled: shouldLoadMentionData,
-        gcTime: Infinity,
+        gcTime: CHAT_QUERY_GC_TIME_MS,
         staleTime: 5 * 60 * 1000,
       },
     },

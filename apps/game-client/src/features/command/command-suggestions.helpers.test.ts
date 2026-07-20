@@ -57,7 +57,7 @@ describe("command-suggestions.helpers", () => {
         description: "suggestions.partySearchDescription",
       },
     ]);
-    expect(getCommandSuggestionInsertValue(filteredSuggestions[0]!)).toBe(
+    expect(getCommandSuggestionInsertValue(filteredSuggestions[0])).toBe(
       "/grp ",
     );
   });

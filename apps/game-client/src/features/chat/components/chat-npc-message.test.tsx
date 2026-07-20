@@ -134,13 +134,16 @@ describe("ChatNpcMessage", () => {
   });
 
   it("omits the location row when npc location is empty", () => {
+    const npc = makeChatMessage().npc;
+    if (!npc) throw new Error("Expected NPC fixture data");
+
     render(
       <ChatNpcMessage
         all={false}
         guildName="Guild"
         message={makeChatMessage({
           npc: {
-            ...makeChatMessage().npc!,
+            ...npc,
             location: "   ",
             x: undefined,
             y: undefined,

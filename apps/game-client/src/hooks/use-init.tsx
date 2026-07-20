@@ -6,39 +6,37 @@ import { Game } from "@/lib/game";
 import { installCharacterTooltipTransforms } from "@/lib/margonem-tooltips/patcher";
 
 export const useInit = () => {
-  const { setGameState } = useGlobalStore();
+  const setGameState = useGlobalStore((state) => state.setGameState);
   const initialized = useRef(false);
   const cleanupTooltipTransforms = useRef<(() => void) | null>(null);
 
-  const checkAndInitialize = () => {
-    if (initialized.current) {
-      return false;
-    }
-
-    const isGameLoaded = Game.getInitializeState();
-    if (!isGameLoaded) {
-      return false;
-    }
-
-    initialized.current = true;
-
-    setGameState({
-      gameInitialized: true,
-    });
-
-    gameEventsManager.setReady(true);
-    cleanupTooltipTransforms.current = installCharacterTooltipTransforms();
-
-    return true;
-  };
-
   useEffect(() => {
-    const init = initialized;
+    const checkAndInitialize = () => {
+      if (initialized.current) {
+        return false;
+      }
+
+      const isGameLoaded = Game.getInitializeState();
+      if (!isGameLoaded) {
+        return false;
+      }
+
+      initialized.current = true;
+
+      setGameState({
+        gameInitialized: true,
+      });
+
+      gameEventsManager.setReady(true);
+      cleanupTooltipTransforms.current = installCharacterTooltipTransforms();
+
+      return true;
+    };
 
     gameEventsManager.setupProxies();
 
     gameEventsManager.setGameInitCallback(() => {
-      if (!init.current) {
+      if (!initialized.current) {
         return checkAndInitialize();
       }
 
@@ -50,5 +48,5 @@ export const useInit = () => {
       cleanupTooltipTransforms.current = null;
       gameEventsManager.cleanup();
     };
-  }, []);
+  }, [setGameState]);
 };

@@ -5,10 +5,28 @@ import {
 } from "@/features/error-boundary/error-boundary.constants";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  persist,
+  createJSONStorage,
+  type StateStorage,
+} from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
+
+export const createDeduplicatingStateStorage = (
+  storage: Pick<Storage, "getItem" | "removeItem" | "setItem">,
+): StateStorage => ({
+  getItem: (key) => storage.getItem(key),
+  removeItem: (key) => storage.removeItem(key),
+  setItem: (key, value) => {
+    if (storage.getItem(key) === value) {
+      return;
+    }
+
+    storage.setItem(key, value);
+  },
+});
 
 type CreateNotificationState = {
   npc?: GameNpc;
@@ -233,6 +251,11 @@ export const migrateWindowsState = (
     state["event-mode"] = createDefaultEventModeWindow();
   }
 
+  if (version < 10) {
+    state.currentWindowFocus = undefined;
+    state.windowFocusHistory = [];
+  }
+
   return state as unknown as WindowsState;
 };
 
@@ -383,6 +406,13 @@ export const useWindowsStore = create<WindowsState>()(
       windowFocusHistory: [],
       setCurrentWindowFocus: (key: WindowId) =>
         set((state) => {
+          if (
+            state.currentWindowFocus === key &&
+            state.windowFocusHistory[0] === key
+          ) {
+            return state;
+          }
+
           const newHistory = [
             key,
             ...state.windowFocusHistory.filter((id) => id !== key),
@@ -394,46 +424,122 @@ export const useWindowsStore = create<WindowsState>()(
         }),
       setOpen: <T = unknown>(key: WindowId, open: boolean, windowState?: T) => {
         return set((state) => {
-          const newHistory = open
-            ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
-            : state.windowFocusHistory.filter((id) => id !== key);
           const currentWindow = state[key];
           const hasWindowState = "state" in currentWindow;
+          let nextState: unknown = hasWindowState
+            ? currentWindow.state
+            : undefined;
 
-          const nextState =
-            windowState !== undefined
-              ? windowState
-              : key === "settings" && !open
-                ? {}
-                : hasWindowState
-                  ? currentWindow.state
-                  : undefined;
+          if (windowState !== undefined) {
+            nextState = windowState;
+          } else if (key === "settings" && !open) {
+            const currentSettingsState = hasWindowState
+              ? currentWindow.state
+              : undefined;
+            const isAlreadyEmpty =
+              typeof currentSettingsState === "object" &&
+              currentSettingsState !== null &&
+              Object.keys(currentSettingsState).length === 0;
+            nextState = isAlreadyEmpty ? currentSettingsState : {};
+          }
+
+          let nextHistory = state.windowFocusHistory;
+
+          if (open) {
+            const isAlreadyFirst = state.windowFocusHistory[0] === key;
+
+            if (!isAlreadyFirst) {
+              nextHistory = [
+                key,
+                ...state.windowFocusHistory.filter((id) => id !== key),
+              ];
+            }
+          } else if (state.windowFocusHistory.includes(key)) {
+            nextHistory = state.windowFocusHistory.filter((id) => id !== key);
+          }
+
+          let nextCurrentWindowFocus = state.currentWindowFocus;
+
+          if (open) {
+            nextCurrentWindowFocus = key;
+          } else if (state.currentWindowFocus === key) {
+            nextCurrentWindowFocus = undefined;
+          }
+
+          const hasSameWindowState =
+            nextState === undefined ||
+            (hasWindowState && Object.is(currentWindow.state, nextState));
+
+          if (
+            currentWindow.open === open &&
+            hasSameWindowState &&
+            state.currentWindowFocus === nextCurrentWindowFocus &&
+            state.windowFocusHistory === nextHistory
+          ) {
+            return state;
+          }
+
+          let nextWindow: WindowsState[WindowId] = {
+            ...currentWindow,
+            open,
+          };
+
+          if (nextState !== undefined) {
+            nextWindow = {
+              ...currentWindow,
+              open,
+              state: nextState,
+            } as WindowsState[WindowId];
+          }
 
           return {
-            [key]:
-              nextState === undefined
-                ? { ...currentWindow, open }
-                : { ...currentWindow, open, state: nextState },
-            currentWindowFocus: open ? key : undefined,
-            windowFocusHistory: newHistory,
+            [key]: nextWindow,
+            currentWindowFocus: nextCurrentWindowFocus,
+            windowFocusHistory: nextHistory,
           };
         });
       },
       setPosition: (key: WindowId, pos) =>
-        set((state) => ({
-          [key]: {
-            ...state[key],
-            position: pos,
-            hasDefinedPosition: true,
-          },
-        })),
+        set((state) => {
+          const currentWindow = state[key];
+          if (
+            currentWindow.hasDefinedPosition &&
+            currentWindow.position.x === pos.x &&
+            currentWindow.position.y === pos.y
+          ) {
+            return state;
+          }
+
+          return {
+            [key]: {
+              ...currentWindow,
+              position: pos,
+              hasDefinedPosition: true,
+            },
+          };
+        }),
       setSize: (key: WindowId, size) =>
-        set((state) => ({ [key]: { ...state[key], size } })),
+        set((state) => {
+          const currentSize = state[key].size;
+
+          if (
+            currentSize.width === size.width &&
+            currentSize.height === size.height
+          ) {
+            return state;
+          }
+
+          return { [key]: { ...state[key], size } };
+        }),
       setMaxContentHeight: (key: WindowId, height: number) =>
         set((state) => {
           const nextMaxContentHeight = sanitizeMaxContentHeight(height);
 
           if (nextMaxContentHeight === undefined) {
+            return state;
+          }
+
+          if (state[key].maxContentHeight === nextMaxContentHeight) {
             return state;
           }
 
@@ -445,21 +551,39 @@ export const useWindowsStore = create<WindowsState>()(
           };
         }),
       setOpacity: (key: WindowId, opacity: WindowOpacity) =>
-        set((state) => ({ [key]: { ...state[key], opacity } })),
+        set((state) =>
+          state[key].opacity === opacity
+            ? state
+            : { [key]: { ...state[key], opacity } },
+        ),
       setLocked: (key: WindowId, locked: boolean) =>
-        set((state) => ({ [key]: { ...state[key], locked } })),
+        set((state) =>
+          state[key].locked === locked
+            ? state
+            : { [key]: { ...state[key], locked } },
+        ),
       setAutofocus: (key: WindowId, autofocus: boolean) =>
-        set((state) => ({ [key]: { ...state[key], autofocus } })),
+        set((state) =>
+          state[key].autofocus === autofocus
+            ? state
+            : { [key]: { ...state[key], autofocus } },
+        ),
       setSettingsActiveTab: (activeTab) =>
-        set((state) => ({
-          settings: {
-            ...state.settings,
-            state: {
-              ...state.settings.state,
-              activeTab,
+        set((state) => {
+          if (state.settings.state.activeTab === activeTab) {
+            return state;
+          }
+
+          return {
+            settings: {
+              ...state.settings,
+              state: {
+                ...state.settings.state,
+                activeTab,
+              },
             },
-          },
-        })),
+          };
+        }),
       toggleOpen: (key: WindowId, autofocus?: boolean) => {
         const curr = get()[key].open;
         set((state) => {
@@ -489,8 +613,6 @@ export const useWindowsStore = create<WindowsState>()(
         "add-timer": state["add-timer"],
         "npc-detector": state["npc-detector"],
         notifications: state["notifications"],
-        currentWindowFocus: state.currentWindowFocus,
-        windowFocusHistory: state.windowFocusHistory,
         "create-notification": {
           size: state["create-notification"].size,
           position: state["create-notification"].position,
@@ -504,8 +626,10 @@ export const useWindowsStore = create<WindowsState>()(
         "create-party-gathering": state["create-party-gathering"],
         "event-mode": state["event-mode"],
       }),
-      storage: createJSONStorage(() => localStorage),
-      version: 9,
+      storage: createJSONStorage(() =>
+        createDeduplicatingStateStorage(localStorage),
+      ),
+      version: 10,
       migrate: migrateWindowsState,
     },
   ),

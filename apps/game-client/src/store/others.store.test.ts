@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Other } from "@lootlog/margonem/others";
 import { useOthersStore } from "./others.store";
 
@@ -62,5 +62,23 @@ describe("useOthersStore", () => {
     useOthersStore.getState().upsertOther("1", other);
 
     expect(useOthersStore.getState().othersById).toBe(firstState);
+  });
+
+  it("applies mixed changes in one store publication", () => {
+    const removed = createOther("removed");
+    const updated = createOther("updated");
+    const added = createOther("added");
+    useOthersStore.getState().setMany({ removed, updated });
+    const publish = vi.fn();
+    const unsubscribe = useOthersStore.subscribe(publish);
+
+    useOthersStore.getState().applyBatch({
+      removeIds: ["removed"],
+      upserts: { added, updated },
+    });
+
+    expect(useOthersStore.getState().othersById).toEqual({ added, updated });
+    expect(publish).toHaveBeenCalledOnce();
+    unsubscribe();
   });
 });

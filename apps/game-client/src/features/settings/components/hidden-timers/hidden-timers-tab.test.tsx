@@ -3,14 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTimersStore } from "@/store/timers.store";
 import { HiddenTimersTab } from "./hidden-timers-tab";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import * as UsersModule from "@/lib/api/generated/main/users/users";
 
 const hiddenTimersSpy = vi.fn();
 
 vi.mock("@/lib/api/generated/main/users/users", async () => {
-  const actual = await vi.importActual<
-    typeof import("@/lib/api/generated/main/users/users")
-  >("@/lib/api/generated/main/users/users");
+  const actual = await vi.importActual<typeof UsersModule>(
+    "@/lib/api/generated/main/users/users",
+  );
 
   return {
     ...actual,
@@ -41,15 +41,17 @@ describe("HiddenTimersTab", () => {
   it("auto-selects the first guild and lets the user switch the scope", async () => {
     const user = userEvent.setup();
 
-    vi.mocked(useUsersControllerGetCurrentUserAccessibleGuilds).mockReturnValue(
-      {
-        data: [
-          { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
-          { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-1" },
-        ],
-        isFetched: true,
-      } as ReturnType<typeof useUsersControllerGetCurrentUserAccessibleGuilds>,
-    );
+    vi.mocked(
+      UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds,
+    ).mockReturnValue({
+      data: [
+        { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
+        { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-1" },
+      ],
+      isFetched: true,
+    } as ReturnType<
+      typeof UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds
+    >);
 
     render(<HiddenTimersTab />);
 
@@ -69,14 +71,14 @@ describe("HiddenTimersTab", () => {
   });
 
   it("hides the selector when grouping is enabled", () => {
-    vi.mocked(useUsersControllerGetCurrentUserAccessibleGuilds).mockReturnValue(
-      {
-        data: [
-          { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
-        ],
-        isFetched: true,
-      } as ReturnType<typeof useUsersControllerGetCurrentUserAccessibleGuilds>,
-    );
+    vi.mocked(
+      UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds,
+    ).mockReturnValue({
+      data: [{ id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" }],
+      isFetched: true,
+    } as ReturnType<
+      typeof UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds
+    >);
     useTimersStore.setState((state) => ({
       ...state,
       generalConfig: {

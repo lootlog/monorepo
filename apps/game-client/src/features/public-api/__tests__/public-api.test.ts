@@ -69,6 +69,15 @@ const makeTimer = (overrides?: Partial<Timer>): Timer => ({
   ...overrides,
 });
 
+const getPublicApi = () => {
+  const publicApi = window.lootlogGameClientApi;
+  if (!publicApi) {
+    throw new Error("Public API was not registered");
+  }
+
+  return publicApi;
+};
+
 describe("Public API", () => {
   let queryClient: QueryClient;
   let teardown: () => void;
@@ -97,7 +106,7 @@ describe("Public API", () => {
     });
 
     it("has correct apiVersion", () => {
-      expect(window.lootlogGameClientApi!.apiVersion).toBe(1);
+      expect(getPublicApi().apiVersion).toBe(1);
     });
 
     it("is frozen", () => {
@@ -105,7 +114,7 @@ describe("Public API", () => {
     });
 
     it("starts with ready = false", () => {
-      expect(window.lootlogGameClientApi!.ready).toBe(false);
+      expect(getPublicApi().ready).toBe(false);
     });
 
     it("removes API on teardown", () => {
@@ -113,17 +122,61 @@ describe("Public API", () => {
       expect(window.lootlogGameClientApi).toBeUndefined();
       teardown = bootstrapPublicApi(queryClient);
     });
+
+    it("keeps backing subscriptions idle until the first listener", () => {
+      teardown();
+      const querySubscribeSpy = vi.spyOn(
+        queryClient.getQueryCache(),
+        "subscribe",
+      );
+      const storeSubscribeSpy = vi.spyOn(useGlobalStore, "subscribe");
+      teardown = bootstrapPublicApi(queryClient);
+
+      expect(querySubscribeSpy).not.toHaveBeenCalled();
+      expect(storeSubscribeSpy).not.toHaveBeenCalled();
+
+      const unsubscribeGuilds = getPublicApi().subscribe(
+        "guilds:changed",
+        vi.fn(),
+      );
+      const unsubscribeTimers = getPublicApi().subscribe(
+        "timers:changed",
+        vi.fn(),
+      );
+      const unsubscribeReady = getPublicApi().subscribe("ready", vi.fn());
+
+      expect(querySubscribeSpy).toHaveBeenCalledOnce();
+      expect(storeSubscribeSpy).toHaveBeenCalledOnce();
+
+      unsubscribeGuilds();
+      const unsubscribeGuildsAgain = getPublicApi().subscribe(
+        "guilds:changed",
+        vi.fn(),
+      );
+      expect(querySubscribeSpy).toHaveBeenCalledOnce();
+
+      unsubscribeGuildsAgain();
+      unsubscribeTimers();
+      unsubscribeReady();
+
+      const unsubscribeAfterIdle = getPublicApi().subscribe(
+        "guilds:changed",
+        vi.fn(),
+      );
+      expect(querySubscribeSpy).toHaveBeenCalledTimes(2);
+      unsubscribeAfterIdle();
+    });
   });
 
   describe("ready", () => {
     it("becomes true when gameInitialized", () => {
       useGlobalStore.getState().setGameState({ gameInitialized: true });
-      expect(window.lootlogGameClientApi!.ready).toBe(true);
+      expect(getPublicApi().ready).toBe(true);
     });
 
     it("emits ready event on transition", () => {
       const listener = vi.fn();
-      window.lootlogGameClientApi!.subscribe("ready", listener);
+      getPublicApi().subscribe("ready", listener);
 
       useGlobalStore.getState().setGameState({ gameInitialized: true });
 
@@ -132,7 +185,7 @@ describe("Public API", () => {
 
     it("does not emit ready twice", () => {
       const listener = vi.fn();
-      window.lootlogGameClientApi!.subscribe("ready", listener);
+      getPublicApi().subscribe("ready", listener);
 
       useGlobalStore.getState().setGameState({ gameInitialized: true });
       useGlobalStore.getState().setGameState({ gameInitialized: true });
@@ -143,12 +196,12 @@ describe("Public API", () => {
 
   describe("getGuilds", () => {
     it("returns undefined when no data", () => {
-      expect(window.lootlogGameClientApi!.getGuilds()).toBeUndefined();
+      expect(getPublicApi().getGuilds()).toBeUndefined();
     });
 
     it("returns mapped guilds", () => {
       queryClient.setQueryData(queryKeys.guilds(), [makeGuild()]);
-      const result = window.lootlogGameClientApi!.getGuilds();
+      const result = getPublicApi().getGuilds();
       expect(result).toEqual([
         {
           id: "guild-1",
@@ -161,49 +214,47 @@ describe("Public API", () => {
 
     it("returns cloned data (no shared references)", () => {
       queryClient.setQueryData(queryKeys.guilds(), [makeGuild()]);
-      const a = window.lootlogGameClientApi!.getGuilds();
-      const b = window.lootlogGameClientApi!.getGuilds();
+      const a = getPublicApi().getGuilds();
+      const b = getPublicApi().getGuilds();
       expect(a).not.toBe(b);
-      expect(a![0]).not.toBe(b![0]);
+      expect(a?.[0]).not.toBe(b?.[0]);
     });
   });
 
   describe("getTimers", () => {
     it("returns undefined without world argument", () => {
-      expect(window.lootlogGameClientApi!.getTimers()).toBeUndefined();
+      expect(getPublicApi().getTimers()).toBeUndefined();
     });
 
     it("returns undefined for unknown world", () => {
-      expect(
-        window.lootlogGameClientApi!.getTimers({ world: "unknown" }),
-      ).toBeUndefined();
+      expect(getPublicApi().getTimers({ world: "unknown" })).toBeUndefined();
     });
 
     it("returns mapped timers with ISO dates", () => {
       queryClient.setQueryData(queryKeys.timers("tempest"), [makeTimer()]);
-      const result = window.lootlogGameClientApi!.getTimers({
+      const result = getPublicApi().getTimers({
         world: "tempest",
       });
       expect(result).toHaveLength(1);
-      expect(result![0].minSpawnTime).toBe("2026-01-01T12:00:00.000Z");
-      expect(result![0].maxSpawnTime).toBe("2026-01-01T13:00:00.000Z");
-      expect(result![0].updatedAt).toBe("2026-01-01T11:00:00.000Z");
+      expect(result?.[0].minSpawnTime).toBe("2026-01-01T12:00:00.000Z");
+      expect(result?.[0].maxSpawnTime).toBe("2026-01-01T13:00:00.000Z");
+      expect(result?.[0].updatedAt).toBe("2026-01-01T11:00:00.000Z");
     });
 
     it("returns cloned data", () => {
       queryClient.setQueryData(queryKeys.timers("tempest"), [makeTimer()]);
-      const a = window.lootlogGameClientApi!.getTimers({ world: "tempest" });
-      const b = window.lootlogGameClientApi!.getTimers({ world: "tempest" });
+      const a = getPublicApi().getTimers({ world: "tempest" });
+      const b = getPublicApi().getTimers({ world: "tempest" });
       expect(a).not.toBe(b);
-      expect(a![0]).not.toBe(b![0]);
-      expect(a![0].npc).not.toBe(b![0].npc);
-      expect(a![0].member).not.toBe(b![0].member);
+      expect(a?.[0]).not.toBe(b?.[0]);
+      expect(a?.[0].npc).not.toBe(b?.[0].npc);
+      expect(a?.[0].member).not.toBe(b?.[0].member);
     });
   });
 
   describe("getSocketState", () => {
     it("returns current socket state", () => {
-      const state = window.lootlogGameClientApi!.getSocketState();
+      const state = getPublicApi().getSocketState();
       expect(state).toEqual({
         connected: false,
         joined: false,
@@ -213,8 +264,8 @@ describe("Public API", () => {
 
     it("returns cloned joinedGuilds", () => {
       useGlobalStore.getState().setSocketState({ joinedGuilds: ["g1"] });
-      const a = window.lootlogGameClientApi!.getSocketState();
-      const b = window.lootlogGameClientApi!.getSocketState();
+      const a = getPublicApi().getSocketState();
+      const b = getPublicApi().getSocketState();
       expect(a.joinedGuilds).not.toBe(b.joinedGuilds);
     });
   });
@@ -222,7 +273,7 @@ describe("Public API", () => {
   describe("guilds:changed event", () => {
     it("emits when guilds data changes", () => {
       const listener = vi.fn();
-      window.lootlogGameClientApi!.subscribe("guilds:changed", listener);
+      getPublicApi().subscribe("guilds:changed", listener);
 
       queryClient.setQueryData(queryKeys.guilds(), [makeGuild()]);
 
@@ -234,7 +285,7 @@ describe("Public API", () => {
 
     it("does not emit for unrelated query updates", () => {
       const listener = vi.fn();
-      window.lootlogGameClientApi!.subscribe("guilds:changed", listener);
+      getPublicApi().subscribe("guilds:changed", listener);
 
       queryClient.setQueryData(
         getMembersControllerGetGuildMembersSummaryQueryKey({
@@ -248,7 +299,7 @@ describe("Public API", () => {
 
     it("deduplicates identical data", () => {
       const listener = vi.fn();
-      window.lootlogGameClientApi!.subscribe("guilds:changed", listener);
+      getPublicApi().subscribe("guilds:changed", listener);
 
       const guilds = [makeGuild()];
       queryClient.setQueryData(queryKeys.guilds(), guilds);
@@ -261,7 +312,7 @@ describe("Public API", () => {
   describe("timers:changed event", () => {
     it("emits with world and guildId", () => {
       const listener = vi.fn();
-      window.lootlogGameClientApi!.subscribe("timers:changed", listener);
+      getPublicApi().subscribe("timers:changed", listener);
 
       queryClient.setQueryData(queryKeys.timers("tempest"), [makeTimer()]);
 
@@ -276,7 +327,7 @@ describe("Public API", () => {
 
     it("emits separately per guild", () => {
       const listener = vi.fn();
-      window.lootlogGameClientApi!.subscribe("timers:changed", listener);
+      getPublicApi().subscribe("timers:changed", listener);
 
       queryClient.setQueryData(queryKeys.timers("tempest"), [
         makeTimer({ guildId: "guild-1" }),
@@ -299,7 +350,7 @@ describe("Public API", () => {
         makeTimer({ guildId: "guild-2", timerKey: "timer-2" }),
       ]);
 
-      window.lootlogGameClientApi!.subscribe("timers:changed", listener);
+      getPublicApi().subscribe("timers:changed", listener);
 
       queryClient.setQueryData(queryKeys.timers("tempest"), [
         makeTimer({ guildId: "guild-1" }),
@@ -310,14 +361,29 @@ describe("Public API", () => {
         (c: unknown[]) => (c[0] as { guildId: string }).guildId === "guild-2",
       );
       expect(guild2Call).toBeDefined();
-      expect((guild2Call![0] as { timers: unknown[] }).timers).toEqual([]);
+      if (!guild2Call) {
+        throw new Error("Expected a timers update for guild-2");
+      }
+      expect((guild2Call[0] as { timers: unknown[] }).timers).toEqual([]);
+    });
+
+    it("forgets timer deduplication state when a world query is removed", () => {
+      const listener = vi.fn();
+      const queryKey = queryKeys.timers("tempest");
+      getPublicApi().subscribe("timers:changed", listener);
+
+      queryClient.setQueryData(queryKey, [makeTimer()]);
+      queryClient.removeQueries({ queryKey, exact: true });
+      queryClient.setQueryData(queryKey, [makeTimer()]);
+
+      expect(listener).toHaveBeenCalledTimes(2);
     });
   });
 
   describe("socket:state-changed event", () => {
     it("emits on connected change", () => {
       const listener = vi.fn();
-      window.lootlogGameClientApi!.subscribe("socket:state-changed", listener);
+      getPublicApi().subscribe("socket:state-changed", listener);
 
       useGlobalStore.getState().setSocketState({ connected: true });
 
@@ -329,7 +395,7 @@ describe("Public API", () => {
 
     it("emits on joinedGuilds change", () => {
       const listener = vi.fn();
-      window.lootlogGameClientApi!.subscribe("socket:state-changed", listener);
+      getPublicApi().subscribe("socket:state-changed", listener);
 
       useGlobalStore.getState().setSocketState({ joinedGuilds: ["g1", "g2"] });
 
@@ -341,10 +407,7 @@ describe("Public API", () => {
   describe("unsubscribe", () => {
     it("stops receiving events after unsubscribe", () => {
       const listener = vi.fn();
-      const unsub = window.lootlogGameClientApi!.subscribe(
-        "guilds:changed",
-        listener,
-      );
+      const unsub = getPublicApi().subscribe("guilds:changed", listener);
 
       unsub();
 
@@ -356,7 +419,7 @@ describe("Public API", () => {
 
   describe("isolation", () => {
     it("does not expose internal objects", () => {
-      const api = window.lootlogGameClientApi!;
+      const api = getPublicApi();
       const keys = Object.keys(api);
       expect(keys).not.toContain("queryClient");
       expect(keys).not.toContain("socket");

@@ -3,6 +3,7 @@ import { create } from "zustand";
 
 export const LOGS_STORAGE_KEY = storageKey("ll:logs:state");
 export const LOGS_CAP = 200;
+export const LOGS_BYTE_CAP = 5 * 1024 * 1024;
 
 let nextLogSequence = 0;
 
@@ -82,12 +83,79 @@ const createLogId = (): string => {
   return `${Date.now()}-${nextLogSequence}`;
 };
 
-const withCap = (actions: LoggedAction[]): LoggedAction[] => {
-  if (actions.length <= LOGS_CAP) {
-    return actions;
+const textEncoder = new TextEncoder();
+
+const getSerializedByteLength = (value: SerializableValue | LoggedAction) =>
+  textEncoder.encode(JSON.stringify(value)).byteLength;
+
+const trimActionRequestsToFit = (
+  action: LoggedAction,
+  byteCap: number,
+): LoggedAction | null => {
+  if (getSerializedByteLength(action) <= byteCap) {
+    return action;
   }
 
-  return actions.slice(-LOGS_CAP);
+  let minimumRequestIndex = 0;
+  let maximumRequestIndex = action.requests.length;
+
+  while (minimumRequestIndex < maximumRequestIndex) {
+    const candidateRequestIndex = Math.floor(
+      (minimumRequestIndex + maximumRequestIndex) / 2,
+    );
+    const candidate = {
+      ...action,
+      requests: action.requests.slice(candidateRequestIndex),
+    };
+
+    if (getSerializedByteLength(candidate) <= byteCap) {
+      maximumRequestIndex = candidateRequestIndex;
+    } else {
+      minimumRequestIndex = candidateRequestIndex + 1;
+    }
+  }
+
+  const trimmedAction = {
+    ...action,
+    requests: action.requests.slice(minimumRequestIndex),
+  };
+
+  return getSerializedByteLength(trimmedAction) <= byteCap
+    ? trimmedAction
+    : null;
+};
+
+const withRetentionLimits = (actions: LoggedAction[]): LoggedAction[] => {
+  const countCappedActions = actions.slice(-LOGS_CAP);
+  const retainedActions: LoggedAction[] = [];
+  let retainedBytes = 2;
+
+  for (let index = countCappedActions.length - 1; index >= 0; index -= 1) {
+    const sourceAction = countCappedActions[index];
+    if (!sourceAction) {
+      continue;
+    }
+
+    const availableBytes = LOGS_BYTE_CAP - retainedBytes;
+    const action =
+      retainedActions.length === 0
+        ? trimActionRequestsToFit(sourceAction, availableBytes)
+        : sourceAction;
+    if (!action) {
+      return [];
+    }
+
+    const separatorBytes = retainedActions.length > 0 ? 1 : 0;
+    const actionBytes = getSerializedByteLength(action);
+    if (retainedBytes + separatorBytes + actionBytes > LOGS_BYTE_CAP) {
+      break;
+    }
+
+    retainedActions.unshift(action);
+    retainedBytes += separatorBytes + actionBytes;
+  }
+
+  return retainedActions;
 };
 
 export const useLogsStore = create<LogsState>()((set) => ({
@@ -105,24 +173,26 @@ export const useLogsStore = create<LogsState>()((set) => ({
     };
 
     set((state) => ({
-      actions: withCap([...state.actions, action]),
+      actions: withRetentionLimits([...state.actions, action]),
     }));
 
     return actionId;
   },
   updateAction: ({ actionId, status, details }) => {
     set((state) => ({
-      actions: state.actions.map((action) => {
-        if (action.id !== actionId) {
-          return action;
-        }
+      actions: withRetentionLimits(
+        state.actions.map((action) => {
+          if (action.id !== actionId) {
+            return action;
+          }
 
-        return {
-          ...action,
-          status,
-          details: details ?? action.details,
-        };
-      }),
+          return {
+            ...action,
+            status,
+            details: details ?? action.details,
+          };
+        }),
+      ),
     }));
   },
   appendRequest: ({
@@ -146,16 +216,18 @@ export const useLogsStore = create<LogsState>()((set) => ({
     };
 
     set((state) => ({
-      actions: state.actions.map((action) => {
-        if (action.id !== actionId) {
-          return action;
-        }
+      actions: withRetentionLimits(
+        state.actions.map((action) => {
+          if (action.id !== actionId) {
+            return action;
+          }
 
-        return {
-          ...action,
-          requests: [...action.requests, request],
-        };
-      }),
+          return {
+            ...action,
+            requests: [...action.requests, request],
+          };
+        }),
+      ),
     }));
   },
   clearActions: () => {

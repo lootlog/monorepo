@@ -5,7 +5,11 @@ import type {
 } from "@lootlog/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
-import { resetReadyRoomInvitationCoordinatorForTests } from "@/features/party-finder/ready-room-invitation-coordinator";
+import {
+  READY_ROOM_INVITATION_PARTICIPANT_CAP,
+  READY_ROOM_INVITATION_TIMEOUT_MS,
+  resetReadyRoomInvitationCoordinatorForTests,
+} from "@/features/party-finder/ready-room-invitation-coordinator";
 import { useGlobalStore } from "@/store/global.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 
@@ -111,6 +115,7 @@ describe("useReadyRoomInvitations", () => {
     expect(resolveInvitationTargets).toHaveBeenCalledWith(
       { notificationId: "room-1" },
       { participantIds: ["participant-1"] },
+      { signal: expect.any(AbortSignal) },
     );
     expect(inviteCharacterToParty).toHaveBeenCalledOnce();
     expect(inviteCharacterToParty).toHaveBeenCalledWith(
@@ -154,6 +159,38 @@ describe("useReadyRoomInvitations", () => {
       ["participant-character"],
       ["participant-character"],
     ]);
+  });
+
+  it("coalesces an arbitrary number of queued clicks into one pending promise", async () => {
+    const firstResolution = createDeferred<unknown>();
+    const response = {
+      targets: [
+        {
+          participantId: "participant-1",
+          characterId: "participant-character",
+        },
+      ],
+    };
+    resolveInvitationTargets
+      .mockImplementationOnce(() => firstResolution.promise)
+      .mockResolvedValueOnce(response);
+    const { result } = renderHook(() => useReadyRoomInvitations());
+
+    const firstIntent = result.current.inviteParticipants();
+    const queuedIntents = Array.from({ length: 1_000 }, () =>
+      result.current.inviteParticipants(),
+    );
+
+    expect(new Set(queuedIntents).size).toBe(1);
+    await waitFor(() =>
+      expect(resolveInvitationTargets).toHaveBeenCalledOnce(),
+    );
+    firstResolution.resolve(response);
+    await act(() => firstIntent);
+    await waitFor(() =>
+      expect(resolveInvitationTargets).toHaveBeenCalledTimes(2),
+    );
+    await act(() => queuedIntents[0]);
   });
 
   it("keeps an outside participant available for repeated clicks", () => {
@@ -207,6 +244,60 @@ describe("useReadyRoomInvitations", () => {
       act(() => result.current.inviteParticipants(["participant-1"])),
     ).rejects.toThrow("resolver conflict");
     expect(inviteCharacterToParty).not.toHaveBeenCalled();
+  });
+
+  it("aborts target resolution after five seconds", async () => {
+    vi.useFakeTimers();
+
+    try {
+      resolveInvitationTargets.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useReadyRoomInvitations());
+      const invitation = result.current.inviteParticipants();
+      const rejection = expect(invitation).rejects.toThrow(
+        "Ready Room invitation request timed out",
+      );
+
+      await vi.advanceTimersByTimeAsync(READY_ROOM_INVITATION_TIMEOUT_MS);
+      await rejection;
+
+      const requestOptions = resolveInvitationTargets.mock.calls[0]?.[2] as
+        | { signal?: AbortSignal }
+        | undefined;
+      expect(requestOptions?.signal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("limits one target-resolution request to 100 participants", async () => {
+    const participants = Object.fromEntries(
+      Array.from(
+        { length: READY_ROOM_INVITATION_PARTICIPANT_CAP + 25 },
+        (_, index) => {
+          const nextParticipant = createParticipant(
+            `participant-${index}`,
+            `character-${index}`,
+          );
+          return [nextParticipant.participantId, nextParticipant];
+        },
+      ),
+    );
+    usePartyFinderStore.getState().mergeProjection({
+      ...projection,
+      revision: 4,
+      participants,
+    });
+    resolveInvitationTargets.mockResolvedValue({ targets: [] });
+    const { result } = renderHook(() => useReadyRoomInvitations());
+
+    await act(() => result.current.inviteParticipants());
+
+    const request = resolveInvitationTargets.mock.calls[0]?.[1] as
+      | { participantIds?: string[] }
+      | undefined;
+    expect(request?.participantIds).toHaveLength(
+      READY_ROOM_INVITATION_PARTICIPANT_CAP,
+    );
   });
 
   it("continues with later targets when one game helper call fails", async () => {

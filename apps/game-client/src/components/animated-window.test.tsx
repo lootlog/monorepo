@@ -1,20 +1,8 @@
-import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { AnimatedWindow } from "./animated-window";
-
-vi.mock("framer-motion", () => ({
-  AnimatePresence: ({ children }: { children: ReactNode }) => (
-    <div data-testid="animate-presence">{children}</div>
-  ),
-  motion: {
-    div: ({ children }: { children: ReactNode }) => (
-      <div data-testid="motion-window">{children}</div>
-    ),
-  },
-}));
 
 describe("AnimatedWindow", () => {
   afterEach(() => {
@@ -22,7 +10,7 @@ describe("AnimatedWindow", () => {
     useWindowsStore.setState(useWindowsStore.getInitialState(), true);
   });
 
-  it("renders with framer motion when animation effects are enabled", () => {
+  it("uses a CSS-only entry animation when animation effects are enabled", () => {
     useSettingsStore.setState({ animationEffectsEnabled: true });
 
     render(
@@ -31,10 +19,14 @@ describe("AnimatedWindow", () => {
       </AnimatedWindow>,
     );
 
-    expect(screen.getByTestId("motion-window")).toBeInTheDocument();
+    expect(screen.getByText("Window content").parentElement).toHaveClass(
+      "ll:animate-in",
+      "ll:fade-in-0",
+      "ll:zoom-in-95",
+    );
   });
 
-  it("renders without framer motion when animation effects are disabled", () => {
+  it("renders without an animation class when animation effects are disabled", () => {
     useSettingsStore.setState({ animationEffectsEnabled: false });
 
     render(
@@ -43,8 +35,35 @@ describe("AnimatedWindow", () => {
       </AnimatedWindow>,
     );
 
-    expect(screen.queryByTestId("motion-window")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("animate-presence")).not.toBeInTheDocument();
-    expect(screen.getByText("Window content")).toBeInTheDocument();
+    expect(screen.getByText("Window content").parentElement).not.toHaveClass(
+      "ll:animate-in",
+    );
+  });
+
+  it("keeps the window mounted through its CSS exit animation", () => {
+    useSettingsStore.setState({ animationEffectsEnabled: true });
+
+    const { rerender } = render(
+      <AnimatedWindow isOpen windowKey="settings">
+        <span>Window content</span>
+      </AnimatedWindow>,
+    );
+
+    rerender(
+      <AnimatedWindow isOpen={false} windowKey="settings">
+        <span>Window content</span>
+      </AnimatedWindow>,
+    );
+
+    const windowElement = screen.getByText("Window content").parentElement;
+    expect(windowElement).toHaveClass(
+      "ll:animate-out",
+      "ll:fade-out-0",
+      "ll:zoom-out-95",
+    );
+
+    fireEvent.animationEnd(windowElement as HTMLElement);
+
+    expect(screen.queryByText("Window content")).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
+import { CHAT_MESSAGE_LIMIT } from "@lootlog/types";
 import type { ChatFilter } from "@/store/chat.store";
 import { MessageType } from "@/api/chat.api";
 
@@ -325,6 +326,52 @@ export const hasVisibleChatMessages = (
   });
 };
 
+export const mergeChatMessageHistories = (
+  cachedMessages: ChatMessageType[] = [],
+  serverMessages: ChatMessageType[] = [],
+) => {
+  const messagesById = new Map<
+    string,
+    { message: ChatMessageType; insertionOrder: number }
+  >();
+  let nextInsertionOrder = 0;
+
+  for (const message of cachedMessages) {
+    messagesById.set(message.id, {
+      message,
+      insertionOrder: nextInsertionOrder,
+    });
+    nextInsertionOrder += 1;
+  }
+
+  for (const message of serverMessages) {
+    const cachedMessage = messagesById.get(message.id);
+    messagesById.set(message.id, {
+      message,
+      insertionOrder: cachedMessage?.insertionOrder ?? nextInsertionOrder,
+    });
+
+    if (!cachedMessage) {
+      nextInsertionOrder += 1;
+    }
+  }
+
+  return [...messagesById.values()]
+    .sort((firstEntry, secondEntry) => {
+      const timestampDifference =
+        getChatMessageTimestamp(firstEntry.message.timestamp) -
+        getChatMessageTimestamp(secondEntry.message.timestamp);
+
+      if (Number.isFinite(timestampDifference) && timestampDifference !== 0) {
+        return timestampDifference;
+      }
+
+      return firstEntry.insertionOrder - secondEntry.insertionOrder;
+    })
+    .slice(-CHAT_MESSAGE_LIMIT)
+    .map((entry) => entry.message);
+};
+
 export const upsertChatMessage = (
   messages: ChatMessageType[] = [],
   nextMessage: ChatMessageType,
@@ -333,13 +380,14 @@ export const upsertChatMessage = (
     (message) => message.id === nextMessage.id,
   );
 
-  if (existingMessageIndex === -1) {
-    return [...messages, nextMessage];
-  }
+  const updatedMessages =
+    existingMessageIndex === -1
+      ? [...messages, nextMessage]
+      : messages.map((message) =>
+          message.id === nextMessage.id ? nextMessage : message,
+        );
 
-  return messages.map((message) =>
-    message.id === nextMessage.id ? nextMessage : message,
-  );
+  return updatedMessages.slice(-CHAT_MESSAGE_LIMIT);
 };
 
 export const removeChatMessage = (

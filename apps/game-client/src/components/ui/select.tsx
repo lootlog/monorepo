@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { cn } from "@/lib/utils";
+import { getLootlogPortalContainer } from "./theme-boundary";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -70,7 +71,7 @@ const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => (
-  <SelectPrimitive.Portal>
+  <SelectPrimitive.Portal container={getLootlogPortalContainer()}>
     <SelectPrimitive.Content
       ref={ref}
       className={cn(

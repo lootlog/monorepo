@@ -220,17 +220,20 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
 
   const watchedData = watch();
   const routingRules = watchedData.routingRules ?? [];
+  const routingRuleIdsJson = JSON.stringify(
+    routingRules.map((rule) => rule.id),
+  );
   const availableGuildIds = guilds?.map((guild) => guild.id) ?? [];
 
   useEffect(() => {
-    const availableRuleIds = new Set(routingRules.map((rule) => rule.id));
+    const availableRuleIds = new Set<string>(JSON.parse(routingRuleIdsJson));
 
     setOpenRuleIds((currentOpenRuleIds) => {
       return currentOpenRuleIds.filter((ruleId) =>
         availableRuleIds.has(ruleId),
       );
     });
-  }, [routingRules]);
+  }, [routingRuleIdsJson]);
 
   const syncCurrentValues = () => {
     if (!accountId || !guilds || !isFetched) {
@@ -336,12 +339,10 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
             return (
               <DetectorRoutingRuleCard
                 key={field.fieldKey}
-                fieldIdInput={
-                  <input
-                    type="hidden"
-                    {...register(`routingRules.${index}.id`)}
-                  />
-                }
+                fieldIdInput=<input
+                  type="hidden"
+                  {...register(`routingRules.${index}.id`)}
+                />
                 guilds={guilds}
                 index={index}
                 isOpen={openRuleIds.includes(ruleId)}
