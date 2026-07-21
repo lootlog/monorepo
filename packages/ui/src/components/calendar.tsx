@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -10,6 +9,7 @@ import {
 import {
   type DayButton,
   DayPicker,
+  defaultDateLib,
   getDefaultClassNames,
 } from "react-day-picker";
 
@@ -41,9 +41,8 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) =>
-          // @ts-expect-error locale type mismatch
-          format(date, "LLLL", { locale: props.locale }),
+        formatMonthDropdown: (date, dateLib) =>
+          (dateLib ?? defaultDateLib).format(date, "LLLL"),
         ...formatters,
       }}
       classNames={{
