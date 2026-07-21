@@ -8,6 +8,15 @@ import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
 import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
 import { Platform } from "src/gateway/enums/platform.enum";
 
+const FEATURE_NAMES = ["chat", "timers", "notifications", "loots"] as const;
+const TIER_NAMES = [
+  "base",
+  "titans",
+  "heroes",
+] as const satisfies readonly NpcRoutingTier[];
+
+export type FeatureName = (typeof FEATURE_NAMES)[number];
+export type TierName = (typeof TIER_NAMES)[number];
 const FEATURE_ROOMS = {
   chat: {
     base: Permission.LOOTLOG_CHAT_READ,
@@ -29,26 +38,22 @@ const FEATURE_ROOMS = {
     titans: Permission.LOOTLOG_LOOTS_TITANS_READ,
     heroes: Permission.LOOTLOG_LOOTS_HEROES_READ,
   },
-} as const satisfies Record<string, Record<NpcRoutingTier, Permission>>;
-
-export type FeatureName = keyof typeof FEATURE_ROOMS;
-export type TierName = keyof (typeof FEATURE_ROOMS)[FeatureName];
+} as const satisfies Record<FeatureName, Record<TierName, Permission>>;
 
 type FeatureRoom = { feature: FeatureName; tier: TierName };
 
-const FEATURE_NAMES = Object.keys(FEATURE_ROOMS) as FeatureName[];
-const TIER_NAMES = Object.keys(FEATURE_ROOMS.chat) as TierName[];
 const ALL_FEATURE_ROOMS: FeatureRoom[] = FEATURE_NAMES.flatMap((feature) =>
   TIER_NAMES.map((tier) => ({ feature, tier })),
 );
-const PLATFORM_EXCLUDED_FEATURES: Record<Platform, readonly FeatureName[]> = {
+const PLATFORM_EXCLUDED_FEATURES = {
   [Platform.GAME]: ["loots"],
   [Platform.WEB_APP]: ["chat", "notifications"],
   [Platform.UNKNOWN]: ["loots"],
-};
+} as const satisfies Record<Platform, readonly FeatureName[]>;
 
 function getApplicableFeatureRooms(platform: Platform): FeatureRoom[] {
-  const excludedFeatures = PLATFORM_EXCLUDED_FEATURES[platform];
+  const excludedFeatures: readonly FeatureName[] =
+    PLATFORM_EXCLUDED_FEATURES[platform];
 
   return ALL_FEATURE_ROOMS.filter(
     ({ feature }) => !excludedFeatures.includes(feature),
@@ -189,7 +194,7 @@ export function canViewOnlinePlayers(
 ): boolean {
   return (
     guildData.guild.ownerId === discordId ||
-    isOwnerOrAdminFromRoles(guildData.roles) ||
+    isAdministrativeUserFromRoles(guildData.roles) ||
     hasOnlinePlayersAccess(guildData.roles)
   );
 }
