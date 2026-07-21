@@ -7,7 +7,10 @@ import {
   type ChatScrollController,
 } from "../chat-scroll-controller";
 import { subscribeToChatScrollToMessage } from "../chat-scroll-to-message";
-import type { ChatRenderableMessage } from "../chat.helpers";
+import {
+  getChatRenderableMessagesSignature,
+  type ChatRenderableMessage,
+} from "../chat.helpers";
 import { ChatDateDivider } from "./chat-date-divider";
 import { ChatMessage } from "./chat-message";
 import { ChatNpcMessage } from "./chat-npc-message";
@@ -73,6 +76,19 @@ const getChatRowMeasurementSource = (renderable: ChatRenderableMessage) =>
   renderable.kind === "date-divider"
     ? renderable.timestamp
     : renderable.message;
+
+const refreshDisplayedChatRenderables = (
+  displayedRenderables: ChatRenderableMessage[],
+  latestRenderables: ChatRenderableMessage[],
+) => {
+  const latestRenderablesByKey = new Map(
+    latestRenderables.map((renderable) => [renderable.key, renderable]),
+  );
+
+  return displayedRenderables.map(
+    (renderable) => latestRenderablesByKey.get(renderable.key) ?? renderable,
+  );
+};
 
 const getEstimatedChatRowHeight = (
   renderable: ChatRenderableMessage,
@@ -234,6 +250,16 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       hasRenderableMessages: latestHasRenderableMessages,
       renderSignature: latestRenderSignature,
       renderables: latestRenderables,
+    };
+  } else {
+    const refreshedRenderables = refreshDisplayedChatRenderables(
+      displayedMessagesRef.current.renderables,
+      latestRenderables,
+    );
+    displayedMessagesRef.current = {
+      ...displayedMessagesRef.current,
+      renderSignature: getChatRenderableMessagesSignature(refreshedRenderables),
+      renderables: refreshedRenderables,
     };
   }
   const { hasRenderableMessages, renderSignature, renderables } =

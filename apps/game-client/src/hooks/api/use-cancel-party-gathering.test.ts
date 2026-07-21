@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
 import { useCancelPartyGathering } from "./use-cancel-party-gathering";
 import { usePartyFinderStore } from "@/store/party-finder.store";
+import { getChatControllerGetChatMessagesQueryKey } from "@/lib/api/generated/main/chat/chat";
 
 const mockCancelPartyGathering = vi.fn();
 const mockSetOpen = vi.fn();
@@ -28,10 +29,11 @@ vi.mock("@/lib/game", () => ({
   Game: { hero: { nick: "TestPlayer" } },
 }));
 
-function createWrapper() {
-  const queryClient = new QueryClient({
+function createWrapper(
+  queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
-  });
+  }),
+) {
   return ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 }
@@ -92,5 +94,30 @@ describe("useCancelPartyGathering", () => {
       },
     });
     expect(mockSetOpen).toHaveBeenCalledWith("party-finder", false);
+  });
+
+  it("invalidates affected chat histories after cancellation", async () => {
+    mockCancelPartyGathering.mockResolvedValue({
+      schemaVersion: 3,
+      type: "REMOVE",
+      notificationId: "notif-123",
+      revision: 2,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { mutations: { retry: false } },
+    });
+    const chatQueryKey = getChatControllerGetChatMessagesQueryKey({
+      guildId: "guild-1",
+    });
+    queryClient.setQueryData(chatQueryKey, [{ id: "message-1" }]);
+    const { result } = renderHook(() => useCancelPartyGathering(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(queryClient.getQueryState(chatQueryKey)?.isInvalidated).toBe(true);
   });
 });
