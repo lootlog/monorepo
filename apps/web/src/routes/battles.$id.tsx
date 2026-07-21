@@ -8,7 +8,7 @@ import {
   getPublicBattlesControllerGetPublicBattleTimelineQueryOptions,
 } from "@/lib/api/generated/battlelog/public-battles/public-battles";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/battles/$id")({
 
         return null;
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
   component: PublicBattle,
