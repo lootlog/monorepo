@@ -1,4 +1,5 @@
 import type { PartyReadyRoomCharacter } from "@lootlog/types";
+import { ConflictException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   CommitReadyRoomResult,
@@ -349,6 +350,12 @@ describe("ReadyRoomService", () => {
       "organizer",
       createCharacter("other-character"),
     ).catch((error: unknown) => error);
+    expect(sameOrganizerError).toBeInstanceOf(ConflictException);
+    expect((sameOrganizerError as ConflictException).getStatus()).toBe(409);
+    expect((sameOrganizerError as ConflictException).getResponse()).toEqual({
+      code: "ACTIVE_GATHERING_EXISTS",
+      notificationId: "room-1",
+    });
     expect(getErrorCode(sameOrganizerError)).toMatchObject({
       code: "ACTIVE_GATHERING_EXISTS",
       notificationId: "room-1",

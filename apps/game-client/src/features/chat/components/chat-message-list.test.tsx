@@ -73,8 +73,19 @@ vi.mock("./chat-date-divider", () => ({
 }));
 
 vi.mock("./chat-message", () => ({
-  ChatMessage: ({ message }: { message: { id: string; message?: string } }) => (
-    <div data-testid={message.id}>{message.message}</div>
+  ChatMessage: ({
+    message,
+  }: {
+    message: {
+      id: string;
+      message?: string;
+      partyGathering?: { notificationId: string };
+    };
+  }) => (
+    <div data-testid={message.id}>
+      {message.message}
+      {message.partyGathering && <button type="button">Join party</button>}
+    </div>
   ),
 }));
 
@@ -388,6 +399,54 @@ describe("ChatMessageList", () => {
     expect(viewport.scrollTop).toBe(0);
     expect(screen.getByTestId("message-0")).toBeInTheDocument();
     expect(screen.queryByTestId("message-300")).not.toBeInTheDocument();
+  });
+
+  it("shows updates to an existing party gathering while the user reads history", () => {
+    const initialRenderables = createRenderables(300);
+    const initialGathering = initialRenderables[0];
+    if (!initialGathering || initialGathering.kind !== "message") {
+      throw new Error("Expected the first renderable to be a message");
+    }
+    initialRenderables[0] = {
+      ...initialGathering,
+      message: {
+        ...initialGathering.message,
+        message: "Gathering open",
+        partyGathering: {
+          discordId: "organizer-1",
+          notificationId: "gathering-1",
+          world: "tempest",
+        },
+      },
+    };
+    const { rerender } = renderMessageList(initialRenderables);
+    const viewport = screen.getByTestId("chat-scroll-viewport");
+
+    fireEvent.wheel(viewport, { deltaY: -500 });
+    viewport.scrollTop = 0;
+    fireEvent.scroll(viewport);
+
+    expect(screen.getByRole("button", { name: "Join party" })).toBeVisible();
+
+    const updatedRenderables = initialRenderables.map((renderable) =>
+      renderable.kind === "message" && renderable.key === "message-0"
+        ? {
+            ...renderable,
+            message: {
+              ...renderable.message,
+              message: "Hero zakonczyl zbieranie grupy",
+              partyGathering: undefined,
+            },
+          }
+        : renderable,
+    );
+    rerender(createMessageListElement(updatedRenderables));
+
+    expect(screen.getByText("Hero zakonczyl zbieranie grupy")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Join party" }),
+    ).not.toBeInTheDocument();
+    expect(viewport.scrollTop).toBe(0);
   });
 
   it("freezes the rendered snapshot when history evicts its oldest message", () => {
