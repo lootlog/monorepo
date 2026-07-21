@@ -254,6 +254,10 @@ describe("ReadyRoomService", () => {
   };
   let service: ReadyRoomService;
   let participantNumber: number;
+  const chatService = {
+    endPartyGatheringMessages:
+      vi.fn<(notificationId: string, guildIds: string[]) => Promise<void>>(),
+  };
 
   beforeEach(() => {
     repository = new InMemoryReadyRoomRepository();
@@ -268,8 +272,10 @@ describe("ReadyRoomService", () => {
         .mockResolvedValue(undefined),
     };
     participantNumber = 0;
+    chatService.endPartyGatheringMessages.mockReset().mockResolvedValue();
     service = new ReadyRoomService(
       repository,
+      chatService as never,
       () => now,
       () => "generated-room",
       publisher as never,
@@ -640,6 +646,13 @@ describe("ReadyRoomService", () => {
       expect.objectContaining({ status: "CANCELLED", revision: 3 }),
       ["organizer", "participant"],
     );
+    expect(chatService.endPartyGatheringMessages).toHaveBeenCalledWith(
+      "room-1",
+      ["guild-1"],
+    );
+    expect(
+      chatService.endPartyGatheringMessages.mock.invocationCallOrder[0],
+    ).toBeLessThan(publisher.publish.mock.invocationCallOrder.at(-1) ?? 0);
 
     await expect(
       createRoom("room-2", "organizer", organizerCharacter),

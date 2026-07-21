@@ -64,7 +64,12 @@
     "levelRange": "Poziom: {{min}} - {{max}}",
     "volunteering": "Zgłaszanie...",
     "requiredLevel": "Wymagany poziom {{min}}-{{max}}",
-    "joinParty": "Dołącz do grupy"
+    "joinParty": "Dołącz do grupy",
+    "joined": "Zapisano do grupy",
+    "joinedElsewhere": "Zapisano do innej grupy",
+    "registration": {
+      "organizer": "Zapisano do grupy: {{organizer}}"
+    }
   },
   "errors": {
     "sendFailed": "Nie udało się wysłać wiadomości na czat"

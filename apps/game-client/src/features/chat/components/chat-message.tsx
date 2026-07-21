@@ -13,12 +13,6 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { CharacterTile } from "@/components/character-tile";
 import { Game } from "@/lib/game";
 import { PartyGatheringCard } from "./party-gathering-card";
 import {
@@ -47,6 +41,7 @@ import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview"
 import { dispatchChatScrollToMessage } from "@/features/chat/chat-scroll-to-message";
 import { Button } from "@/components/ui/button";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
+import { ChatCharacterTooltip } from "@/features/chat/components/chat-character-tooltip";
 import {
   inviteCharacterToFriends,
   inviteCharacterToParty,
@@ -194,32 +189,16 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                 [{guildName}]{" "}
               </span>
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span
-                  className={cn(
-                    "ll:inline-block ll:font-bold ll:mr-0.5 ll:select-text",
-                  )}
-                  style={{ color: `#${memberColor}` }}
-                >
-                  {senderName}:
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="ll:bg-black ll:px-1.5 ll:py-1">
-                <div className="ll:flex ll:items-center ll:gap-1">
-                  <CharacterTile
-                    character={message.characterData}
-                    className="ll:max-h-6 ll:origin-left ll:scale-75 ll:-my-1 ll:-ml-1"
-                  />
-                  <div className="ll:leading-tight">
-                    <div className="ll:font-semibold ll:text-[11px]">
-                      {message.characterData.nick} ({message.characterData.lvl}
-                      {message.characterData.prof})
-                    </div>
-                  </div>
-                </div>
-              </TooltipContent>
-            </Tooltip>
+            <ChatCharacterTooltip character={message.characterData}>
+              <span
+                className={cn(
+                  "ll:inline-block ll:font-bold ll:mr-0.5 ll:select-text",
+                )}
+                style={{ color: `#${memberColor}` }}
+              >
+                {senderName}:
+              </span>
+            </ChatCharacterTooltip>
           </span>{" "}
           {isEditing ? (
             <form

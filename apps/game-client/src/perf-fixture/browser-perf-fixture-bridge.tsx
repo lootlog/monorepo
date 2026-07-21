@@ -34,6 +34,7 @@ import {
   useWindowsStore,
 } from "@/store/windows.store";
 import {
+  CHAT_MESSAGE_LIMIT,
   defaultAirTagPreferences,
   defaultDetectorSettings,
   defaultMapPingPreferences,
@@ -121,6 +122,13 @@ export type BrowserPerfMeasurement = BrowserPerfSnapshot & {
 };
 
 export type BrowserPerfFixtureApi = {
+  appendVisualChatMessage: (
+    guildId: string,
+    options?: {
+      messageLength?: "long" | "short";
+      waitForFrames?: number;
+    },
+  ) => Promise<void>;
   configure: (configuration: BrowserPerfConfiguration) => Promise<void>;
   prepareVisualWindow: (
     configuration: BrowserPerfVisualConfiguration,
@@ -554,7 +562,7 @@ const seedVisualChat = () => {
   );
   queryClient.setQueryData(
     getChatControllerGetChatMessagesQueryKey({ guildId: "guild-2" }),
-    createVisualChatMessages("guild-2", 160),
+    createVisualChatMessages("guild-2", CHAT_MESSAGE_LIMIT - 3),
   );
 };
 
@@ -862,6 +870,40 @@ export const BrowserPerfFixtureBridge = () => {
   useEffect(() => {
     const pendingMeasurements = pendingMeasurementsRef.current;
     const api: BrowserPerfFixtureApi = {
+      appendVisualChatMessage: async (guildId, options) => {
+        const queryKey = getChatControllerGetChatMessagesQueryKey({ guildId });
+        queryClient.setQueryData<ChatMessageResponseDtoOutput[]>(
+          queryKey,
+          (messages = []) => {
+            const nextIndex = messages.length;
+            return [
+              ...messages,
+              {
+                canDelete: false,
+                canEdit: false,
+                characterData: {
+                  acc: 90_000 + nextIndex,
+                  icon: "visual-chat-character.gif",
+                  id: 91_000 + nextIndex,
+                  lvl: 200,
+                  nick: "FixtureIncoming",
+                  prof: "w",
+                },
+                guildId,
+                id: `${guildId}-incoming-${nextIndex}`,
+                message:
+                  options?.messageLength === "long"
+                    ? `Incoming fixture message ${nextIndex} ${"with variable height content ".repeat(12)}`
+                    : `Incoming fixture message ${nextIndex}`,
+                senderId: `${guildId}-incoming-sender`,
+                timestamp: new Date(Date.now() + nextIndex).toISOString(),
+                type: MessageType.NORMAL,
+              },
+            ].slice(-CHAT_MESSAGE_LIMIT);
+          },
+        );
+        await waitForAnimationFrames(options?.waitForFrames ?? 20);
+      },
       configure: async (configuration) => {
         configureQueryData(configuration);
         await waitForAnimationFrames();
