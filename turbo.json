@@ -67,10 +67,6 @@
       "env": ["COVERAGE_BASE_REF"],
       "outputs": []
     },
-    "check:bundle-budget": {
-      "dependsOn": ["build"],
-      "outputs": []
-    },
     "doctor": {
       "cache": false,
       "outputs": []

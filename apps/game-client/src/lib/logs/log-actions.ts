@@ -5,6 +5,11 @@ import {
   type SerializableValue,
 } from "@/store/logs.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
+import {
+  reportApiActionFailure,
+  type ApiActionMonitoringContext,
+  type FailedApiRequestDiagnostic,
+} from "@/lib/error-monitoring";
 
 type RecordValue = Record<string, unknown>;
 
@@ -24,6 +29,7 @@ const textEncoder = new TextEncoder();
 
 type StartLoggedActionInput = {
   actionType: LogActionType;
+  monitoringContext?: ApiActionMonitoringContext;
   payload: unknown;
   details?: unknown;
 };
@@ -74,6 +80,7 @@ type RunSingleLoggedActionInput<TResponse> = {
   execute: () => Promise<TResponse>;
   getSuccessDetails?: (response: TResponse) => unknown;
   getErrorDetails?: (error: unknown) => unknown;
+  monitoringContext?: ApiActionMonitoringContext;
   retry?: LoggedActionRetryOptions;
 };
 
@@ -366,6 +373,7 @@ export const getAggregateActionStatus = (
 
 export const startLoggedAction = ({
   actionType,
+  monitoringContext,
   payload,
   details,
 }: StartLoggedActionInput): LoggedActionController => {
@@ -374,6 +382,8 @@ export const startLoggedAction = ({
     payload: serializeLogValue(payload),
     details: details ? serializeLogValue(details) : undefined,
   });
+  const failedRequests: FailedApiRequestDiagnostic[] = [];
+  let requestAttemptCount = 0;
 
   return {
     actionId,
@@ -384,6 +394,16 @@ export const startLoggedAction = ({
         status,
         details: nextDetails ? serializeLogValue(nextDetails) : undefined,
       });
+      if (status === "error" || status === "partial") {
+        reportApiActionFailure({
+          actionId,
+          actionType,
+          failedRequests,
+          monitoringContext,
+          requestAttemptCount,
+          status,
+        });
+      }
     },
     logRequestSuccess: ({
       method,
@@ -392,6 +412,7 @@ export const startLoggedAction = ({
       response,
       statusCode,
     }) => {
+      requestAttemptCount += 1;
       useLogsStore.getState().appendRequest({
         actionId,
         method,
@@ -403,6 +424,13 @@ export const startLoggedAction = ({
       });
     },
     logRequestError: ({ method, endpoint, payload: requestPayload, error }) => {
+      requestAttemptCount += 1;
+      failedRequests.push({
+        endpoint,
+        error,
+        method,
+        statusCode: getErrorStatusCode(error),
+      });
       useLogsStore.getState().appendRequest({
         actionId,
         method,
@@ -516,10 +544,12 @@ export const runSingleLoggedAction = async <TResponse>({
   execute,
   getSuccessDetails,
   getErrorDetails,
+  monitoringContext,
   retry,
 }: RunSingleLoggedActionInput<TResponse>): Promise<TResponse> => {
   const action = startLoggedAction({
     actionType,
+    monitoringContext,
     payload: actionPayload,
   });
 

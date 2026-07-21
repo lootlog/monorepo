@@ -371,7 +371,7 @@ jobs:
           COVERAGE_BASE_REF: ${{ github.event.pull_request.base.sha }}
         run: pnpm --filter=@lootlog/game-client check:changed-coverage
 
-      - name: Build release userscript and enforce bundle budget
+      - name: Build release userscript
         run: pnpm --filter=@lootlog/game-client build
 
       - name: Upload game-client coverage

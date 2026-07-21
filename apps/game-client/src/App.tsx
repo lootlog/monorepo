@@ -9,6 +9,7 @@ import { AppContent } from "@/app-content";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { BrowserPerfFixtureBridge } from "@/perf-fixture/browser-perf-fixture-bridge";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { captureReactError } from "@/lib/error-monitoring";
 
 const THEME_STORAGE_KEY = storageKey("lootlog-theme");
 
@@ -23,7 +24,8 @@ function App() {
             ) : null}
             <ErrorBoundary
               FallbackComponent={AppErrorBoundaryFallback}
-              onError={(error, _info) => {
+              onError={(error, errorInfo) => {
+                captureReactError(error, errorInfo);
                 disposeSoundPlayback();
                 console.warn("[ErrorBoundary]", error);
               }}

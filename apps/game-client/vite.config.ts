@@ -5,6 +5,9 @@ import path from "node:path";
 import monkey from "vite-plugin-monkey";
 import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
+
+const SENTRY_APPLICATION_KEY = "lootlog-game-client";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -25,7 +28,6 @@ export default defineConfig(({ mode }) => {
     commitSha ||
     process.env.npm_package_version ||
     "development";
-
   return {
     define: {
       "import.meta.env.VITE_COMMIT_SHA": JSON.stringify(commitSha),
@@ -60,6 +62,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       minify: useFastLocalMinifier ? "oxc" : "terser",
+      sourcemap: false,
       terserOptions: {
         compress: {
           drop_debugger: true,
@@ -108,6 +111,25 @@ export default defineConfig(({ mode }) => {
             }),
           ]
         : []),
+      sentryVitePlugin({
+        applicationKey: SENTRY_APPLICATION_KEY,
+        bundleSizeOptimizations: {
+          excludeDebugStatements: true,
+          excludeReplayIframe: true,
+          excludeReplayShadowDom: true,
+          excludeTracing: true,
+        },
+        release: {
+          create: false,
+          inject: true,
+          name: runtimeVersion,
+        },
+        silent: true,
+        sourcemaps: {
+          disable: true,
+        },
+        telemetry: false,
+      }),
     ],
   };
 });
