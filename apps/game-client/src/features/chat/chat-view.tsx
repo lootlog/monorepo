@@ -1,4 +1,4 @@
-import { useEffect, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { AnimatedWindow } from "@/components/animated-window";
@@ -40,6 +40,7 @@ export const ChatView = ({
   unreadCountByGuildId,
 }: ChatViewProps) => {
   const { t } = useTranslation("chat");
+  const [scrollToBottomRequest, setScrollToBottomRequest] = useState(0);
   const {
     isChatInputEnabled,
     setChatInputEnabled,
@@ -178,11 +179,17 @@ export const ChatView = ({
               onReplyToMessage={handleReplyToMessage}
               renderSignature={currentRenderSignature}
               renderables={currentRenderableMessages}
+              scrollToBottomRequest={scrollToBottomRequest}
               selectedGuildId={selectedGuildId}
             />
           </div>
           {selectedGuildId !== "all" && isChatInputEnabled && (
-            <ChatInput selectedGuildId={selectedGuildId} />
+            <ChatInput
+              onMessageSent={() =>
+                setScrollToBottomRequest((currentRequest) => currentRequest + 1)
+              }
+              selectedGuildId={selectedGuildId}
+            />
           )}
         </div>
       </DraggableWindow>

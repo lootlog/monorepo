@@ -307,8 +307,10 @@ vi.mock("@/lib/api/generated/main/roles/roles", () => ({
 
 vi.mock("@/lib/game", () => ({
   Game: {
+    getAccountId: () => null,
     getWorldName: () => "tempest",
     hero: {
+      id: 1,
       nick: "CurrentHero",
     },
   },
@@ -782,8 +784,11 @@ describe("ChatInput", () => {
 
   it("restores editor focus after sending a message", async () => {
     const user = userEvent.setup();
+    const onMessageSent = vi.fn();
     mockSendChatMessage.mockResolvedValue(createSentMessageResponse());
-    render(<ChatInput selectedGuildId="guild-1" />);
+    render(
+      <ChatInput onMessageSent={onMessageSent} selectedGuildId="guild-1" />,
+    );
 
     const editor = getEditor();
     await user.click(editor);
@@ -796,6 +801,7 @@ describe("ChatInput", () => {
     await waitFor(() => {
       expect(editor).toHaveFocus();
     });
+    expect(onMessageSent).toHaveBeenCalledTimes(1);
     expect(editor.textContent).toBe("");
   });
 });

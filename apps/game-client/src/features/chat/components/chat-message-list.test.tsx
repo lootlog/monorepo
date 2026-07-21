@@ -6,6 +6,19 @@ import type { ChatRenderableMessage } from "../chat.helpers";
 import { ChatMessageList, pruneChatRowMeasurements } from "./chat-message-list";
 
 const resizeObserverHarnesses = new Set<ResizeObserverHarness>();
+const scrollRequests: ScrollToOptions[] = [];
+let animationFrameCallbacks = new Map<number, FrameRequestCallback>();
+let nextAnimationFrameId = 1;
+
+const flushAnimationFrames = (frameCount: number) => {
+  for (let frame = 0; frame < frameCount; frame += 1) {
+    const callbacks = [...animationFrameCallbacks.values()];
+    animationFrameCallbacks = new Map();
+    act(() => {
+      for (const callback of callbacks) callback(performance.now());
+    });
+  }
+};
 
 class ResizeObserverHarness implements ResizeObserver {
   readonly observedElements = new Set<Element>();
@@ -111,6 +124,18 @@ const renderMessageList = (renderables: ChatRenderableMessage[]) =>
 
 describe("ChatMessageList", () => {
   beforeEach(() => {
+    animationFrameCallbacks = new Map();
+    nextAnimationFrameId = 1;
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      const animationFrameId = nextAnimationFrameId;
+      nextAnimationFrameId += 1;
+      animationFrameCallbacks.set(animationFrameId, callback);
+      return animationFrameId;
+    });
+    vi.stubGlobal("cancelAnimationFrame", (animationFrameId: number) => {
+      animationFrameCallbacks.delete(animationFrameId);
+    });
+    scrollRequests.length = 0;
     Object.defineProperty(HTMLElement.prototype, "clientHeight", {
       configurable: true,
       value: 240,
@@ -130,6 +155,9 @@ describe("ChatMessageList", () => {
           Math.max(requestedScrollTop, 0),
           maximumScrollTop,
         );
+        if (typeof options !== "number") {
+          scrollRequests.push(options);
+        }
       },
     });
     Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
@@ -189,8 +217,10 @@ describe("ChatMessageList", () => {
     renderMessageList(createRenderables(300));
     const viewport = screen.getByTestId("chat-scroll-viewport");
 
+    fireEvent.wheel(viewport, { deltaY: -500 });
     viewport.scrollTop = 0;
     fireEvent.scroll(viewport);
+    scrollRequests.length = 0;
 
     expect(screen.getByTestId("message-0")).toBeInTheDocument();
     expect(screen.queryByTestId("message-299")).not.toBeInTheDocument();
@@ -222,6 +252,7 @@ describe("ChatMessageList", () => {
     );
 
     renderMessageList(createRenderables(3));
+    flushAnimationFrames(2);
 
     expect(
       document.querySelector<HTMLElement>('[data-chat-virtual-index="1"]')
@@ -229,7 +260,7 @@ describe("ChatMessageList", () => {
     ).toBe("124px");
   });
 
-  it("keeps a small upward user scroll anchored during row remeasurement", () => {
+  it("keeps the exact scroll position while history rows are remeasured", () => {
     vi.stubGlobal("ResizeObserver", ResizeObserverHarness);
     const measuredHeightsByIndex = new Map<number, number>();
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
@@ -258,6 +289,7 @@ describe("ChatMessageList", () => {
 
     renderMessageList(createRenderables(120));
     const viewport = screen.getByTestId("chat-scroll-viewport");
+    flushAnimationFrames(30);
     const initialBottomScrollTop = viewport.scrollTop;
     expect(initialBottomScrollTop).toBe(
       viewport.scrollHeight - viewport.clientHeight,
@@ -281,7 +313,49 @@ describe("ChatMessageList", () => {
 
     act(() => triggerResizeObserver(rowAboveViewport as HTMLElement));
 
-    expect(viewport.scrollTop).toBe(userScrollTop + 24);
+    expect(viewport.scrollTop).toBe(userScrollTop);
+  });
+
+  it("stays pinned to the physical bottom through late initialization measurements", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverHarness);
+    const measuredHeightsByIndex = new Map<number, number>();
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function getBoundingClientRect(this: HTMLElement) {
+        const rowIndex = Number(this.dataset.chatVirtualIndex ?? 0);
+        const height = measuredHeightsByIndex.get(rowIndex) ?? 40;
+        return {
+          bottom: height,
+          height,
+          left: 0,
+          right: 100,
+          top: 0,
+          width: 100,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        };
+      },
+    );
+
+    renderMessageList(createRenderables(120));
+    const viewport = screen.getByTestId("chat-scroll-viewport");
+
+    for (const height of [64, 88, 72]) {
+      const newestMountedRow = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-chat-virtual-index]"),
+      ).at(-1);
+      expect(newestMountedRow).toBeDefined();
+      measuredHeightsByIndex.set(
+        Number(newestMountedRow?.dataset.chatVirtualIndex),
+        height,
+      );
+      act(() => triggerResizeObserver(newestMountedRow as HTMLElement));
+      flushAnimationFrames(4);
+
+      expect(viewport.scrollTop).toBe(
+        viewport.scrollHeight - viewport.clientHeight,
+      );
+    }
   });
 
   it("does not jump to a new message while the user reads history", () => {
@@ -289,8 +363,10 @@ describe("ChatMessageList", () => {
     const { rerender } = renderMessageList(initialRenderables);
     const viewport = screen.getByTestId("chat-scroll-viewport");
 
+    fireEvent.wheel(viewport, { deltaY: -500 });
     viewport.scrollTop = 0;
     fireEvent.scroll(viewport);
+    scrollRequests.length = 0;
 
     const nextRenderables = createRenderables(301);
     rerender(
@@ -308,9 +384,139 @@ describe("ChatMessageList", () => {
       />,
     );
 
+    expect(scrollRequests).toEqual([]);
     expect(viewport.scrollTop).toBe(0);
     expect(screen.getByTestId("message-0")).toBeInTheDocument();
     expect(screen.queryByTestId("message-300")).not.toBeInTheDocument();
+  });
+
+  it("freezes the rendered snapshot when history evicts its oldest message", () => {
+    const initialRenderables = createRenderables(300);
+    const { rerender } = renderMessageList(initialRenderables);
+    const viewport = screen.getByTestId("chat-scroll-viewport");
+
+    fireEvent.wheel(viewport, { deltaY: -500 });
+    viewport.scrollTop = 5_000;
+    fireEvent.scroll(viewport);
+
+    const userScrollTop = viewport.scrollTop;
+    const mountedMessageId = document.querySelector<HTMLElement>(
+      "[data-chat-virtual-index] [data-testid]",
+    )?.dataset.testid;
+    expect(mountedMessageId).toBeDefined();
+
+    const renderablesAfterEviction = createRenderables(301).slice(1);
+    rerender(createMessageListElement(renderablesAfterEviction));
+    expect(viewport.scrollTop).toBe(userScrollTop);
+    expect(screen.getByTestId(mountedMessageId as string)).toBeInTheDocument();
+    expect(screen.queryByTestId("message-300")).not.toBeInTheDocument();
+  });
+
+  it("smoothly follows consecutive messages while anchored at the bottom", () => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function getBoundingClientRect(this: HTMLElement) {
+        const rowIndex = Number(this.dataset.chatVirtualIndex ?? 0);
+        const height = 48 + (rowIndex % 2) * 12;
+        return {
+          bottom: height,
+          height,
+          left: 0,
+          right: 100,
+          top: 0,
+          width: 100,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        };
+      },
+    );
+    const initialRenderables = createRenderables(100);
+    const { rerender } = render(
+      createMessageListElement(initialRenderables, "guild-1", "guild-1"),
+    );
+    const viewport = screen.getByTestId("chat-scroll-viewport");
+    flushAnimationFrames(30);
+    scrollRequests.length = 0;
+
+    const withFirstMessage = createRenderables(101);
+    rerender(createMessageListElement(withFirstMessage, "guild-1", "guild-1"));
+    fireEvent.scroll(viewport);
+
+    const withSecondMessage = createRenderables(102);
+    rerender(createMessageListElement(withSecondMessage, "guild-1", "guild-1"));
+    for (let frameBatch = 0; frameBatch < 5; frameBatch += 1) {
+      flushAnimationFrames(4);
+      fireEvent.scroll(viewport);
+    }
+
+    expect(scrollRequests.length).toBeGreaterThan(0);
+    expect(scrollRequests.every(({ behavior }) => behavior === "smooth")).toBe(
+      true,
+    );
+    expect(
+      scrollRequests.every(
+        ({ top }, index) =>
+          index === 0 || (top ?? 0) >= (scrollRequests[index - 1]?.top ?? 0),
+      ),
+    ).toBe(true);
+    expect(viewport.scrollTop).toBe(
+      viewport.scrollHeight - viewport.clientHeight,
+    );
+  });
+
+  it("smoothly returns to the latest message after sending from history", () => {
+    const initialRenderables = createRenderables(100);
+    const { rerender } = render(
+      <ChatMessageList
+        ariaLabel="Chat messages"
+        emptyStateLabel="No messages"
+        guildNamesById={{ "guild-1": "Guild" }}
+        hasRenderableMessages
+        membersByGuildId={{}}
+        mentionContextsByGuildId={{}}
+        onReplyToMessage={vi.fn()}
+        renderSignature={initialRenderables.map((item) => item.key).join("|")}
+        renderables={initialRenderables}
+        scrollToBottomRequest={0}
+        selectedGuildId="guild-1"
+      />,
+    );
+    const viewport = screen.getByTestId("chat-scroll-viewport");
+    fireEvent.wheel(viewport, { deltaY: -500 });
+    viewport.scrollTop = 100;
+    fireEvent.scroll(viewport);
+    scrollRequests.length = 0;
+
+    const renderablesWithSentMessage = createRenderables(101);
+    rerender(
+      <ChatMessageList
+        ariaLabel="Chat messages"
+        emptyStateLabel="No messages"
+        guildNamesById={{ "guild-1": "Guild" }}
+        hasRenderableMessages
+        membersByGuildId={{}}
+        mentionContextsByGuildId={{}}
+        onReplyToMessage={vi.fn()}
+        renderSignature={renderablesWithSentMessage
+          .map((item) => item.key)
+          .join("|")}
+        renderables={renderablesWithSentMessage}
+        scrollToBottomRequest={1}
+        selectedGuildId="guild-1"
+      />,
+    );
+    for (let frameBatch = 0; frameBatch < 5; frameBatch += 1) {
+      flushAnimationFrames(4);
+      fireEvent.scroll(viewport);
+    }
+
+    expect(scrollRequests.length).toBeGreaterThan(0);
+    expect(scrollRequests.every(({ behavior }) => behavior === "smooth")).toBe(
+      true,
+    );
+    expect(viewport.scrollTop).toBe(
+      viewport.scrollHeight - viewport.clientHeight,
+    );
   });
 
   it("reveals an unmounted reply target through virtual scrolling", () => {
@@ -318,6 +524,7 @@ describe("ChatMessageList", () => {
 
     expect(screen.queryByTestId("message-0")).not.toBeInTheDocument();
     act(() => dispatchChatScrollToMessage("message-0"));
+    fireEvent.scroll(screen.getByTestId("chat-scroll-viewport"));
 
     expect(screen.getByTestId("message-0")).toBeInTheDocument();
     expect(screen.getByTestId("chat-scroll-viewport").scrollTop).toBe(0);

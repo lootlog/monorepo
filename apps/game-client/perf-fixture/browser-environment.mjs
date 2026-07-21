@@ -412,7 +412,7 @@ export const installBrowserEnvironment = ({ gameInterface }) => {
     userId: "fixture-user",
   };
 
-  window.fetch = (input) => {
+  window.fetch = (input, requestInit) => {
     let url;
     if (typeof input === "string") {
       url = input;
@@ -425,8 +425,38 @@ export const installBrowserEnvironment = ({ gameInterface }) => {
     }
     instrumentation.fetchUrls.push(url);
     let payload = [];
+    const requestMethod =
+      requestInit?.method ?? (input instanceof Request ? input.method : "GET");
 
-    if (url.includes("/game-preferences/accounts/")) {
+    if (
+      requestMethod === "POST" &&
+      /\/guilds\/[^/]+\/chat-messages(?:\?|$)/.test(url)
+    ) {
+      const guildId =
+        url.match(/\/guilds\/([^/]+)\/chat-messages/)?.[1] ?? "guild-2";
+      const requestBody =
+        typeof requestInit?.body === "string"
+          ? JSON.parse(requestInit.body)
+          : { message: "Fixture sent message", type: "NORMAL" };
+      payload = {
+        canDelete: false,
+        canEdit: false,
+        characterData: {
+          acc: hero.account,
+          icon: hero.img,
+          id: hero.id,
+          lvl: hero.lvl,
+          nick: hero.nick,
+          prof: hero.prof,
+        },
+        guildId,
+        id: `${guildId}-sent-${Date.now()}`,
+        message: requestBody.message,
+        senderId: "fixture-user",
+        timestamp: new Date().toISOString(),
+        type: requestBody.type,
+      };
+    } else if (url.includes("/game-preferences/accounts/")) {
       payload = accountPreferences;
     } else if (url.includes("/timer-settings")) {
       payload = {

@@ -267,50 +267,83 @@ const findChromeExecutable = () => {
 
 const buildUserscript = (temporaryDirectory) => {
   const suppliedBundle = process.env.BROWSER_PERF_BUNDLE;
+  let userscriptPath;
+
   if (suppliedBundle) {
-    return resolve(suppliedBundle);
-  }
-
-  const outputDirectory = join(temporaryDirectory, "dist");
-  const viteExecutable = resolve(appDirectory, "node_modules/vite/bin/vite.js");
-  const build = spawnSync(
-    process.execPath,
-    [viteExecutable, "build", "--outDir", outputDirectory],
-    {
-      cwd: appDirectory,
-      encoding: "utf8",
-      env: {
-        ...process.env,
-        VITE_API_URL: "https://fixture.local/api/lootlog",
-        VITE_AUTH_SERVICE_URL: "https://fixture.local/api/auth",
-        VITE_BATTLELOG_API_URL: "https://fixture.local/api/battlelog",
-        VITE_GAME_CLIENT_VERSION: "browser-perf-fixture",
-        VITE_GATEWAY_SOCKET_PATH: "/gateway",
-        VITE_GATEWAY_URL: "https://fixture.local",
-        VITE_LOOTLOG_APP_URL: "https://fixture.local",
-        VITE_PERF_FIXTURE: "1",
-      },
-    },
-  );
-
-  if (build.status !== 0) {
-    throw new Error(
-      `Fixture userscript build failed.\n${build.stdout}\n${build.stderr}`,
+    userscriptPath = resolve(suppliedBundle);
+  } else {
+    const outputDirectory = join(temporaryDirectory, "dist");
+    const viteExecutable = resolve(
+      appDirectory,
+      "node_modules/vite/bin/vite.js",
     );
+    const build = spawnSync(
+      process.execPath,
+      [viteExecutable, "build", "--outDir", outputDirectory],
+      {
+        cwd: appDirectory,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          VITE_API_URL: "https://fixture.local/api/lootlog",
+          VITE_AUTH_SERVICE_URL: "https://fixture.local/api/auth",
+          VITE_BATTLELOG_API_URL: "https://fixture.local/api/battlelog",
+          VITE_GAME_CLIENT_VERSION: "browser-perf-fixture",
+          VITE_GATEWAY_SOCKET_PATH: "/gateway",
+          VITE_GATEWAY_URL: "https://fixture.local",
+          VITE_LOOTLOG_APP_URL: "https://fixture.local",
+          VITE_PERF_FIXTURE: "1",
+        },
+      },
+    );
+
+    if (build.status !== 0) {
+      throw new Error(
+        `Fixture userscript build failed.\n${build.stdout}\n${build.stderr}`,
+      );
+    }
+
+    userscriptPath = join(outputDirectory, "@lootlog/game-client.user.js");
   }
 
-  const userscriptPath = join(outputDirectory, "@lootlog/game-client.user.js");
   if (!existsSync(userscriptPath)) {
     throw new Error(`Built userscript not found at ${userscriptPath}`);
   }
 
-  return userscriptPath;
+  const localEntrypointPath = join(
+    temporaryDirectory,
+    "game-client-local.user.js",
+  );
+  const entrypointGeneratorPath = resolve(
+    appDirectory,
+    "src/scripts/generate-local-entrypoint.mjs",
+  );
+  const generateEntrypoint = spawnSync(
+    process.execPath,
+    [
+      entrypointGeneratorPath,
+      "--output",
+      localEntrypointPath,
+      "--bundle-url",
+      "http://127.0.0.1:4173/@lootlog/game-client.user.js",
+    ],
+    { cwd: appDirectory, encoding: "utf8" },
+  );
+
+  if (generateEntrypoint.status !== 0) {
+    throw new Error(
+      `Fixture local entrypoint generation failed.\n${generateEntrypoint.stdout}\n${generateEntrypoint.stderr}`,
+    );
+  }
+
+  return { localEntrypointPath, userscriptPath };
 };
 
 const createFixturePage = async ({
   browser,
   cpuRate,
   gameInterface,
+  localEntrypointPath,
   userscriptPath,
 }) => {
   const context = await browser.newContext({
@@ -358,7 +391,29 @@ const createFixturePage = async ({
     await route.fulfill({ body: "", status: 204 });
   });
   await page.goto(`https://fixture-${gameInterface}.margonem.pl/`);
-  await page.addScriptTag({ path: userscriptPath });
+  const [localEntrypoint, userscript] = await Promise.all([
+    readFile(localEntrypointPath, "utf8"),
+    readFile(userscriptPath, "utf8"),
+  ]);
+  const frameTree = await devtoolsSession.send("Page.getFrameTree");
+  const { executionContextId } = await devtoolsSession.send(
+    "Page.createIsolatedWorld",
+    {
+      frameId: frameTree.frameTree.frame.id,
+      grantUniveralAccess: true,
+      worldName: "lootlog-local-loader-fixture",
+    },
+  );
+  const localLoaderEvaluation = await devtoolsSession.send("Runtime.evaluate", {
+    awaitPromise: true,
+    contextId: executionContextId,
+    expression: `globalThis.GM_xmlhttpRequest = ({ onload }) => onload({ responseText: ${JSON.stringify(userscript)}, status: 200 });\n${localEntrypoint}`,
+  });
+  if (localLoaderEvaluation.exceptionDetails) {
+    throw new Error(
+      `Fixture local loader failed: ${localLoaderEvaluation.exceptionDetails.text}`,
+    );
+  }
   try {
     await page.waitForFunction(
       () =>
@@ -1016,7 +1071,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
     return selectedGuildButtons?.length === 1 && renderedSetSize >= 160;
   });
   await page.evaluate(() =>
-    window.__lootlogBrowserPerf.waitForAnimationFrames(8),
+    window.__lootlogBrowserPerf.waitForAnimationFrames(20),
   );
 
   const afterGuildSwitch = await getChatScrollState(locator);
@@ -1027,14 +1082,85 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
     };
   }
 
-  const intendedScrollTop = Math.max(afterGuildSwitch.scrollTop - 32, 0);
+  await locator.evaluate((windowElement) => {
+    const messageList = windowElement.querySelector('[role="list"]');
+    const viewport = messageList?.closest("[data-radix-scroll-area-viewport]");
+    if (!(viewport instanceof HTMLElement)) return;
+
+    const instrumentedViewport = viewport;
+    instrumentedViewport.__lootlogOriginalScrollTo ??=
+      viewport.scrollTo.bind(viewport);
+    window.__lootlogChatScrollTrace = {
+      behaviors: [],
+      framePositions: [],
+      positions: [],
+    };
+    viewport.scrollTo = (options) => {
+      if (typeof options !== "number") {
+        window.__lootlogChatScrollTrace?.behaviors.push(
+          options.behavior ?? "auto",
+        );
+      }
+      instrumentedViewport.__lootlogOriginalScrollTo(options);
+    };
+    viewport.addEventListener("scroll", () => {
+      window.__lootlogChatScrollTrace?.positions.push(viewport.scrollTop);
+    });
+  });
+
+  await page.evaluate(async () => {
+    const viewport = document
+      .querySelector('[data-ll-draggable-window="chat"] [role="list"]')
+      ?.closest("[data-radix-scroll-area-viewport]");
+    const sampleFrames = (frameCount) =>
+      new Promise((resolve) => {
+        let sampledFrames = 0;
+        const sampleNextFrame = () => {
+          if (viewport instanceof HTMLElement) {
+            window.__lootlogChatScrollTrace?.framePositions.push(
+              viewport.scrollTop,
+            );
+          }
+          sampledFrames += 1;
+          if (sampledFrames >= frameCount) {
+            resolve();
+            return;
+          }
+          requestAnimationFrame(sampleNextFrame);
+        };
+        requestAnimationFrame(sampleNextFrame);
+      });
+    const frameSampling = sampleFrames(48);
+    await window.__lootlogBrowserPerf.appendVisualChatMessage("guild-2", {
+      messageLength: "short",
+      waitForFrames: 1,
+    });
+    await window.__lootlogBrowserPerf.appendVisualChatMessage("guild-2", {
+      messageLength: "long",
+      waitForFrames: 1,
+    });
+    await window.__lootlogBrowserPerf.appendVisualChatMessage("guild-2", {
+      messageLength: "short",
+      waitForFrames: 1,
+    });
+    await frameSampling;
+  });
+  const afterConsecutiveMessages = await getChatScrollState(locator);
+  const chatScrollTrace = await page.evaluate(
+    () => window.__lootlogChatScrollTrace,
+  );
+
+  const intendedScrollTop = Math.max(
+    (afterConsecutiveMessages?.scrollTop ?? afterGuildSwitch.scrollTop) - 120,
+    0,
+  );
   await locator.evaluate((windowElement, nextScrollTop) => {
     const messageList = windowElement.querySelector('[role="list"]');
     const viewport = messageList?.closest("[data-radix-scroll-area-viewport]");
     if (!(viewport instanceof HTMLElement)) return;
 
     viewport.dispatchEvent(
-      new WheelEvent("wheel", { bubbles: true, deltaY: -32 }),
+      new WheelEvent("wheel", { bubbles: true, deltaY: -120 }),
     );
     viewport.scrollTop = nextScrollTop;
     viewport.dispatchEvent(new Event("scroll", { bubbles: true }));
@@ -1043,19 +1169,178 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
     window.__lootlogBrowserPerf.waitForAnimationFrames(8),
   );
   const afterSmallUpwardScroll = await getChatScrollState(locator);
+  await page.evaluate(async () => {
+    const viewport = document
+      .querySelector('[data-ll-draggable-window="chat"] [role="list"]')
+      ?.closest("[data-radix-scroll-area-viewport]");
+    if (!(viewport instanceof HTMLElement)) return;
+
+    const anchorRow = Array.from(
+      viewport.querySelectorAll('[role="listitem"]'),
+    ).reduce((closestRow, row) => {
+      if (!(row instanceof HTMLElement)) return closestRow;
+      if (!(closestRow instanceof HTMLElement)) return row;
+      const viewportTop = viewport.getBoundingClientRect().top;
+      return Math.abs(row.getBoundingClientRect().top - viewportTop) <
+        Math.abs(closestRow.getBoundingClientRect().top - viewportTop)
+        ? row
+        : closestRow;
+    }, null);
+    const anchorKey =
+      anchorRow instanceof HTMLElement ? anchorRow.dataset.chatRowKey : null;
+    const getAnchorOffset = () => {
+      if (!anchorKey) return null;
+      const currentAnchorRow = viewport.querySelector(
+        `[data-chat-row-key="${CSS.escape(anchorKey)}"]`,
+      );
+      return currentAnchorRow instanceof HTMLElement
+        ? currentAnchorRow.getBoundingClientRect().top -
+            viewport.getBoundingClientRect().top
+        : null;
+    };
+
+    window.__lootlogChatScrollTrace = {
+      anchorKey,
+      anchorOffsets: [getAnchorOffset()],
+      behaviors: [],
+      framePositions: [],
+      positions: [],
+    };
+    const sampleFrames = (frameCount) =>
+      new Promise((resolve) => {
+        let sampledFrames = 0;
+        const sampleNextFrame = () => {
+          window.__lootlogChatScrollTrace?.anchorOffsets.push(
+            getAnchorOffset(),
+          );
+          window.__lootlogChatScrollTrace?.framePositions.push(
+            viewport.scrollTop,
+          );
+          sampledFrames += 1;
+          if (sampledFrames >= frameCount) {
+            resolve();
+            return;
+          }
+          requestAnimationFrame(sampleNextFrame);
+        };
+        requestAnimationFrame(sampleNextFrame);
+      });
+    const frameSampling = sampleFrames(40);
+    await window.__lootlogBrowserPerf.appendVisualChatMessage("guild-2", {
+      messageLength: "long",
+      waitForFrames: 1,
+    });
+    await window.__lootlogBrowserPerf.appendVisualChatMessage("guild-2", {
+      messageLength: "short",
+      waitForFrames: 1,
+    });
+    await window.__lootlogBrowserPerf.appendVisualChatMessage("guild-2", {
+      messageLength: "long",
+      waitForFrames: 1,
+    });
+    await frameSampling;
+  });
+  const afterMessageWhileReadingHistory = await getChatScrollState(locator);
+  const historyScrollTrace = await page.evaluate(
+    () => window.__lootlogChatScrollTrace,
+  );
+
+  await locator.evaluate((windowElement) => {
+    const messageList = windowElement.querySelector('[role="list"]');
+    const viewport = messageList?.closest("[data-radix-scroll-area-viewport]");
+    if (!(viewport instanceof HTMLElement)) return;
+    window.__lootlogChatScrollTrace = {
+      behaviors: [],
+      framePositions: [],
+      positions: [],
+    };
+  });
+  const chatInput = locator.locator('[data-slot="chat-input"]');
+  await chatInput.fill("Fixture own message from history");
+  await chatInput.press("Enter");
+  await page.evaluate(() =>
+    window.__lootlogBrowserPerf.waitForAnimationFrames(64),
+  );
+  const afterOwnMessage = await getChatScrollState(locator);
+  const ownMessageScrollTrace = await page.evaluate(
+    () => window.__lootlogChatScrollTrace,
+  );
+
+  const remountBottomStates = [];
+  const captureRemountBottomState = async (guildButtonIndex) => {
+    await guildButtons.nth(guildButtonIndex).click();
+    await page.evaluate(() =>
+      window.__lootlogBrowserPerf.waitForAnimationFrames(20),
+    );
+    remountBottomStates.push(await getChatScrollState(locator));
+  };
+  await captureRemountBottomState(1);
+  await captureRemountBottomState(2);
+  await captureRemountBottomState(1);
+  await captureRemountBottomState(2);
 
   const guildSwitchAtBottom =
     Math.abs(afterGuildSwitch.distanceFromBottom) <= 1;
+  const consecutiveMessagesAtBottom =
+    afterConsecutiveMessages !== null &&
+    Math.abs(afterConsecutiveMessages.distanceFromBottom) <= 1;
+  const smoothScrollRequests =
+    chatScrollTrace?.behaviors.filter((behavior) => behavior === "smooth")
+      .length ?? 0;
+  const onlySmoothScrollRequests =
+    (chatScrollTrace?.behaviors.length ?? 0) > 0 &&
+    chatScrollTrace.behaviors.every((behavior) => behavior === "smooth");
+  const monotonicAnimation =
+    chatScrollTrace?.framePositions.every(
+      (position, index, positions) =>
+        index === 0 || position + 0.5 >= positions[index - 1],
+    ) ?? false;
   const smallUpwardScrollPreserved =
     afterSmallUpwardScroll !== null &&
-    afterSmallUpwardScroll.distanceFromBottom >= 16 &&
-    afterSmallUpwardScroll.distanceFromBottom <= 80;
+    afterSmallUpwardScroll.distanceFromBottom >= 16;
+  const initialHistoryAnchorOffset = historyScrollTrace?.anchorOffsets[0];
+  const historyPositionFrozenEveryFrame =
+    typeof initialHistoryAnchorOffset === "number" &&
+    (historyScrollTrace?.behaviors.length ?? 0) === 0 &&
+    (historyScrollTrace?.anchorOffsets.every(
+      (offset) =>
+        typeof offset === "number" &&
+        Math.abs(offset - initialHistoryAnchorOffset) <= 1,
+    ) ??
+      false);
+  const ownMessageReachedBottom =
+    afterOwnMessage !== null &&
+    Math.abs(afterOwnMessage.distanceFromBottom) <= 1 &&
+    (ownMessageScrollTrace?.behaviors.includes("smooth") ?? false) &&
+    (ownMessageScrollTrace?.behaviors.every(
+      (behavior) => behavior === "smooth",
+    ) ??
+      false);
+  const everyRemountReachedBottom = remountBottomStates.every(
+    (state) => state !== null && Math.abs(state.distanceFromBottom) <= 1,
+  );
 
   return {
+    afterConsecutiveMessages,
     afterGuildSwitch,
+    afterMessageWhileReadingHistory,
+    afterOwnMessage,
     afterSmallUpwardScroll,
+    chatScrollTrace,
+    historyScrollTrace,
     intendedScrollTop,
-    pass: guildSwitchAtBottom && smallUpwardScrollPreserved,
+    ownMessageScrollTrace,
+    remountBottomStates,
+    pass:
+      guildSwitchAtBottom &&
+      consecutiveMessagesAtBottom &&
+      smoothScrollRequests >= 1 &&
+      onlySmoothScrollRequests &&
+      monotonicAnimation &&
+      smallUpwardScrollPreserved &&
+      historyPositionFrozenEveryFrame &&
+      ownMessageReachedBottom &&
+      everyRemountReachedBottom,
   };
 };
 
@@ -1733,7 +2018,8 @@ const run = async () => {
   let browser;
 
   try {
-    const userscriptPath = buildUserscript(temporaryDirectory);
+    const { localEntrypointPath, userscriptPath } =
+      buildUserscript(temporaryDirectory);
     const userscript = await readFile(userscriptPath);
     const chromeExecutable = findChromeExecutable();
     browser = await chromium.launch({
@@ -1758,6 +2044,7 @@ const run = async () => {
           browser,
           cpuRate,
           gameInterface,
+          localEntrypointPath,
           userscriptPath,
         });
 

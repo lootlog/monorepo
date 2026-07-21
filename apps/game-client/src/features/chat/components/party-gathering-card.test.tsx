@@ -1,11 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type {
   ChatMessageResponseDtoOutput,
   MemberSummaryResponseDtoOutput,
 } from "@/lib/api/generated/main/model";
 import { PartyGatheringCard } from "./party-gathering-card";
+import { usePartyFinderStore } from "@/store/party-finder.store";
+import { useWindowsStore } from "@/store/windows.store";
 
 vi.mock("@/hooks/discord/use-member-color", () => ({
   useMemberColor: () => "abcdef",
@@ -26,12 +28,25 @@ vi.mock("@/components/character-tile", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="character-tooltip-content">{children}</div>
+  ),
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
 vi.mock("@/components/ui/button", () => ({
   Button: (props: React.ComponentProps<"button">) => <button {...props} />,
 }));
 
 vi.mock("@/lib/game", () => ({
   Game: {
+    getAccountId: () => "999",
     hero: {
       account: 999,
       id: 999,
@@ -62,6 +77,9 @@ vi.mock("react-i18next", () => ({
 
       if (key === "partyGathering.requiredLevel") {
         return `Required ${values?.min}-${values?.max}`;
+      }
+      if (key === "partyGathering.joined") {
+        return "Joined party";
       }
 
       return "Join party";
@@ -120,6 +138,12 @@ const makeMessage = (
 });
 
 describe("PartyGatheringCard", () => {
+  beforeEach(() => {
+    applyToReadyRoom.mockReset();
+    usePartyFinderStore.getState().clearReadyRooms();
+    useWindowsStore.getState().setOpen("party-finder", false);
+  });
+
   it("keeps width-constrained classes on the card rows and button", () => {
     render(
       <PartyGatheringCard
@@ -131,7 +155,9 @@ describe("PartyGatheringCard", () => {
       />,
     );
 
-    const characterRow = screen.getByText("Leader tile").parentElement;
+    const characterRow = screen
+      .getAllByText("Leader tile")
+      .at(-1)?.parentElement;
     const npcRow = screen.getByText("Hydra (250m)").parentElement;
     const card = characterRow?.parentElement;
     const joinButton = screen.getByRole("button", { name: "Join party" });
@@ -143,6 +169,38 @@ describe("PartyGatheringCard", () => {
     expect(npcRow?.className).toContain("ll:overflow-hidden");
     expect(joinButton.className).toContain("ll:box-border");
     expect(joinButton.className).toContain("ll:max-w-full");
+  });
+
+  it("shows the organizer character tooltip", () => {
+    render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        member={member}
+        message={makeMessage()}
+      />,
+    );
+
+    expect(screen.getByTestId("character-tooltip-content")).toHaveTextContent(
+      "Leader (200w)",
+    );
+  });
+
+  it("keeps the organizer tooltip after the gathering ends", () => {
+    render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        member={member}
+        message={makeMessage({ partyGathering: undefined })}
+      />,
+    );
+
+    expect(screen.getByTestId("character-tooltip-content")).toHaveTextContent(
+      "Leader (200w)",
+    );
   });
 
   it("applies to the Ready Room from the explicit join click", () => {
@@ -165,6 +223,41 @@ describe("PartyGatheringCard", () => {
       },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
+
+    const mutationOptions = applyToReadyRoom.mock.calls[0]?.[1] as {
+      onSuccess: (projection: unknown) => void;
+    };
+    mutationOptions.onSuccess({ schemaVersion: 2 });
+    expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
+  });
+
+  it("shows that the current character is already registered", () => {
+    usePartyFinderStore.getState().mergeProjection({
+      schemaVersion: 3,
+      notificationId: "notification-1",
+      revision: 2,
+      status: "ACTIVE",
+      viewer: "PARTICIPANT",
+      participants: {
+        participant: {
+          participantId: "participant",
+          discordId: "discord-1",
+          character: { accountId: "999", characterId: "999" },
+        },
+      },
+    } as never);
+
+    render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        member={member}
+        message={makeMessage()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Joined party" })).toBeDisabled();
   });
 
   it("allows another character with the same nickname to apply", () => {
