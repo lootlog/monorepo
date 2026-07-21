@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { TimerHistoryResponseDto } from "@/lib/api/generated/main/model";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format } from "@/utils/local-date";
 import { Plus, RotateCcw, Trash2, Undo2 } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";

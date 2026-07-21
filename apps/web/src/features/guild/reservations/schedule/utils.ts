@@ -1,18 +1,20 @@
 import type { ReservationSegment } from "./types";
 
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
 const formatTime = (date: Date) =>
   `${date.getHours().toString().padStart(2, "0")}:${date
     .getMinutes()
     .toString()
     .padStart(2, "0")}`;
 
-export const formatSegmentTime = (date: Date, reference: Date) => {
-  const isSameDay =
-    date.getFullYear() === reference.getFullYear() &&
-    date.getMonth() === reference.getMonth() &&
-    date.getDate() === reference.getDate();
+const isSameCalendarDay = (date: Date, reference: Date) =>
+  date.getFullYear() === reference.getFullYear() &&
+  date.getMonth() === reference.getMonth() &&
+  date.getDate() === reference.getDate();
 
-  if (isSameDay) {
+export const formatSegmentTime = (date: Date, reference: Date) => {
+  if (isSameCalendarDay(date, reference)) {
     return formatTime(date);
   }
 
@@ -37,11 +39,7 @@ export const shouldShowEndDateOnFirstSegment = (
   const reservationEnd = segment.reservation.toDate;
   const segmentStart = segment.segmentStart;
 
-  return !(
-    reservationEnd.getFullYear() === segmentStart.getFullYear() &&
-    reservationEnd.getMonth() === segmentStart.getMonth() &&
-    reservationEnd.getDate() === segmentStart.getDate()
-  );
+  return !isSameCalendarDay(reservationEnd, segmentStart);
 };
 
 export function getISOWeek(date = new Date()) {
@@ -55,7 +53,7 @@ export function getISOWeek(date = new Date()) {
   }
   const weekNumber =
     1 +
-    Math.ceil((Number(firstThursday) - Number(target.valueOf())) / 604800000);
+    Math.ceil((Number(firstThursday) - Number(target.valueOf())) / MS_PER_WEEK);
   return weekNumber;
 }
 
@@ -74,7 +72,10 @@ export function getDateOfISOWeek(week: number, year: number) {
   const simple = new Date(year, 0, 1 + (week - 1) * 7);
   const dow = simple.getDay();
   const ISOweekStart = simple;
-  if (dow <= 4) ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-  else ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+  if (dow <= 4) {
+    ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+  } else {
+    ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+  }
   return ISOweekStart;
 }

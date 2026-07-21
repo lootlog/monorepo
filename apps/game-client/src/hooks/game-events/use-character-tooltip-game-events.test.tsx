@@ -305,6 +305,27 @@ describe("useCharacterTooltipGameEvents", () => {
     ).toBeNull();
   });
 
+  it("publishes one others update for a mixed game event", () => {
+    const removed = createRuntimeOther("removed");
+    const added = createRuntimeOther("added");
+    useOthersStore.getState().setMany({ removed });
+    setRuntimeOthers({ added });
+    renderHook(() => useCharacterTooltipGameEvents());
+    const publish = vi.fn();
+    const unsubscribe = useOthersStore.subscribe(publish);
+
+    mocks.state.afterGameEventHandler?.({
+      other: {
+        added: { dir: 2, x: 10, y: 11 },
+        removed: { del: 1 },
+      },
+    });
+
+    expect(useOthersStore.getState().othersById).toEqual({ added });
+    expect(publish).toHaveBeenCalledOnce();
+    unsubscribe();
+  });
+
   it("unsubscribes on unmount", () => {
     const { unmount } = renderHook(() => useCharacterTooltipGameEvents());
 

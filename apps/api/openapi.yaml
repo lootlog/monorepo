@@ -1291,44 +1291,6 @@ paths:
       summary: Create or update lootlog character configuration
       tags:
         - user-lootlog-config
-  /users/@me/lootlog-config/players/{userId}/{accountId}/{characterId}/catching-guilds:
-    get:
-      description: Retrieve shared accessible Lootlog guilds where a player has catching enabled
-      operationId: UserLootlogConfigController_getPlayerCatchingGuilds
-      parameters:
-        - name: userId
-          required: true
-          in: path
-          description: Hovered player Discord ID
-          schema:
-            example: "123456789012345678"
-            type: string
-        - name: accountId
-          required: true
-          in: path
-          description: Hovered player account ID
-          schema:
-            example: "9822301"
-            type: string
-        - name: characterId
-          required: true
-          in: path
-          description: Hovered player character ID
-          schema:
-            example: "617"
-            type: string
-      responses:
-        "200":
-          description: Visible player catching guilds
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserLootlogPlayerCatchingGuildsResponseDto_Output"
-      security:
-        - bearer: []
-      summary: Get visible player catching guilds
-      tags:
-        - user-lootlog-config
   /users/@me/lootlog-config/players/catching-guilds/batch:
     post:
       description: Retrieve shared accessible Lootlog guilds where visible players have catching enabled
@@ -2438,8 +2400,7 @@ paths:
         - messaging
   /messaging/party-gathering:
     post:
-      description: Send a party gathering (LFG) notification to guild members
-      operationId: MessagingController_createPartyGathering
+      operationId: PartyReadyRoomController_create
       parameters: []
       requestBody:
         required: true
@@ -2449,36 +2410,35 @@ paths:
               $ref: "#/components/schemas/CreatePartyGatheringDto"
       responses:
         "201":
-          description: Party gathering notification sent successfully
+          description: ""
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationResponseDto_Output"
+                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
       security:
         - bearer: []
-      summary: Create party gathering notification
+      summary: Create a party gathering Ready Room
       tags:
-        - messaging
-    delete:
-      description: Cancel the active party gathering for the current user without requiring a notificationId
-      operationId: MessagingController_cancelPartyGatheringByUser
+        - party-ready-room
+    get:
+      operationId: PartyReadyRoomController_list
       parameters: []
       responses:
         "200":
-          description: Party gathering notification cancelled successfully
+          description: ""
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CancelPartyGatheringResponseDto_Output"
+                type: array
+                items:
+                  $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
       security:
         - bearer: []
-      summary: Cancel party gathering by user
       tags:
-        - messaging
+        - party-ready-room
   /messaging/party-gathering/{notificationId}:
-    delete:
-      description: Cancel an active party gathering notification
-      operationId: MessagingController_cancelPartyGathering
+    get:
+      operationId: PartyReadyRoomController_get
       parameters:
         - name: notificationId
           required: true
@@ -2487,20 +2447,171 @@ paths:
             type: string
       responses:
         "200":
-          description: Party gathering notification cancelled successfully
+          description: ""
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CancelPartyGatheringResponseDto_Output"
-        "204":
-          description: Notification already expired or not found (idempotent)
-        "403":
-          description: Not the owner of this notification
+                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
       security:
         - bearer: []
-      summary: Cancel party gathering notification
       tags:
-        - messaging
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/applications:
+    post:
+      operationId: PartyReadyRoomController_apply
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomApplicationDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/applications/me:
+    delete:
+      operationId: PartyReadyRoomController_withdraw
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomParticipantIdentityDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/participants:
+    delete:
+      operationId: PartyReadyRoomController_remove
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomParticipantActionDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/invitations/targets:
+    post:
+      operationId: PartyReadyRoomController_resolveInvitationTargets
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomResolveInvitationTargetsDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomInvitationTargetsDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/party-observation:
+    post:
+      operationId: PartyReadyRoomController_observeParty
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomObservationDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/cancel:
+    post:
+      operationId: PartyReadyRoomController_cancel
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomExpectedRevisionDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
   /guilds/{guildId}/notifications/targets:
     get:
       description: Retrieve configured notification targets for a guild
@@ -4984,6 +5095,34 @@ paths:
       summary: Update guild event settings
       tags:
         - event-settings
+  /users/@me/event-mode:
+    get:
+      description: Get active pinned events, assignments, and the next respawn for the authenticated user
+      operationId: EventModeController_getEventMode
+      parameters:
+        - name: world
+          required: true
+          in: query
+          schema:
+            minLength: 1
+            type: string
+        - name: x-lootlog-dev-permission-override
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Current user Event Mode projection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventModeResponseDto"
+      security:
+        - bearer: []
+      summary: Get current user event mode
+      tags:
+        - event-mode
   /maps:
     get:
       description: Returns a list of all game maps from Margonem, cached for 1 hour
@@ -6474,9 +6613,27 @@ components:
             - HERO
             - COLOSSUS
             - TITAN
+        pings:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+          required:
+            - enabled
+        airTags:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+          required:
+            - enabled
         hasStoredNotifications:
           type: boolean
         hasStoredDetector:
+          type: boolean
+        hasStoredPings:
+          type: boolean
+        hasStoredAirTags:
           type: boolean
         hasStoredPreferences:
           type: boolean
@@ -6484,8 +6641,12 @@ components:
         - accountId
         - notifications
         - detector
+        - pings
+        - airTags
         - hasStoredNotifications
         - hasStoredDetector
+        - hasStoredPings
+        - hasStoredAirTags
         - hasStoredPreferences
     UpdateUserGameAccountPreferencesDto:
       type: object
@@ -6685,6 +6846,16 @@ components:
                   type: boolean
                 notifySound:
                   type: boolean
+        pings:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+        airTags:
+          type: object
+          properties:
+            enabled:
+              type: boolean
     NullableMemberResponseDto:
       type: object
       properties:
@@ -8346,32 +8517,6 @@ components:
           - accountId
           - characterId
           - catchingGuildIds
-    UserLootlogPlayerCatchingGuildsResponseDto_Output:
-      type: object
-      properties:
-        userId:
-          type: string
-        accountId:
-          type: string
-        characterId:
-          type: string
-        guilds:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              name:
-                type: string
-            required:
-              - id
-              - name
-      required:
-        - userId
-        - accountId
-        - characterId
-        - guilds
     UserLootlogPlayersCatchingGuildsRequestDto:
       type: object
       properties:
@@ -9998,6 +10143,46 @@ components:
           maxLength: 50
         isGatheringParty:
           type: boolean
+        character:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
       required:
         - guildIds
         - world
@@ -10139,19 +10324,511 @@ components:
         - guildIds
         - world
         - character
-    CancelPartyGatheringResponseDto_Output:
+    PartyReadyRoomProjectionDto_Output:
       type: object
       properties:
-        success:
-          type: boolean
+        schemaVersion:
+          type: number
+          enum:
+            - 3
+        notificationId:
+          type: string
+        organizerDiscordId:
+          type: string
+        organizerCharacter:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
         guildIds:
           type: array
           items:
             type: string
-            minLength: 1
+        world:
+          type: string
+        description:
+          type: string
+        minLvl:
+          type: number
+        maxLvl:
+          type: number
+        status:
+          type: string
+          enum:
+            - ACTIVE
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        expiresAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        viewer:
+          type: string
+          enum:
+            - ORGANIZER
+            - PARTICIPANT
+        participants:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              participantId:
+                type: string
+              discordId:
+                type: string
+              character:
+                type: object
+                properties:
+                  lvl:
+                    type: number
+                  nick:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  accountId:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  characterId:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  prof:
+                    type: string
+                    minLength: 1
+                    maxLength: 100
+                  icon:
+                    type: string
+                    minLength: 1
+                    maxLength: 2048
+                  clan:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      name:
+                        type: string
+                        maxLength: 255
+                required:
+                  - lvl
+                  - nick
+                  - accountId
+                  - characterId
+                  - prof
+                  - icon
+              partyPresence:
+                type: string
+                enum:
+                  - OUTSIDE
+                  - IN_PARTY
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - participantId
+              - discordId
+              - character
+              - partyPresence
+              - createdAt
+              - updatedAt
+        ownedParticipantIds:
+          type: array
+          items:
+            type: string
       required:
-        - success
+        - schemaVersion
+        - notificationId
+        - organizerDiscordId
+        - organizerCharacter
         - guildIds
+        - world
+        - status
+        - revision
+        - createdAt
+        - updatedAt
+        - expiresAt
+        - viewer
+        - participants
+    PartyReadyRoomApplicationDto:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+          maxLength: 50
+        character:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
+      required:
+        - world
+        - character
+    PartyReadyRoomParticipantIdentityDto:
+      type: object
+      properties:
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - participantId
+    PartyReadyRoomClientUpdateDto_Output:
+      type: object
+      properties:
+        schemaVersion:
+          type: number
+          enum:
+            - 3
+        type:
+          type: string
+          enum:
+            - UPSERT
+            - REMOVE
+        projection:
+          type: object
+          properties:
+            schemaVersion:
+              type: number
+              enum:
+                - 3
+            notificationId:
+              type: string
+            organizerDiscordId:
+              type: string
+            organizerCharacter:
+              type: object
+              properties:
+                lvl:
+                  type: number
+                nick:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                accountId:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                characterId:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                prof:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                icon:
+                  type: string
+                  minLength: 1
+                  maxLength: 2048
+                clan:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    name:
+                      type: string
+                      maxLength: 255
+              required:
+                - lvl
+                - nick
+                - accountId
+                - characterId
+                - prof
+                - icon
+            guildIds:
+              type: array
+              items:
+                type: string
+            world:
+              type: string
+            description:
+              type: string
+            minLvl:
+              type: number
+            maxLvl:
+              type: number
+            status:
+              type: string
+              enum:
+                - ACTIVE
+            revision:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+            createdAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            updatedAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            expiresAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            viewer:
+              type: string
+              enum:
+                - ORGANIZER
+                - PARTICIPANT
+            participants:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  participantId:
+                    type: string
+                  discordId:
+                    type: string
+                  character:
+                    type: object
+                    properties:
+                      lvl:
+                        type: number
+                      nick:
+                        type: string
+                        minLength: 1
+                        maxLength: 255
+                      accountId:
+                        type: string
+                        minLength: 1
+                        maxLength: 255
+                      characterId:
+                        type: string
+                        minLength: 1
+                        maxLength: 255
+                      prof:
+                        type: string
+                        minLength: 1
+                        maxLength: 100
+                      icon:
+                        type: string
+                        minLength: 1
+                        maxLength: 2048
+                      clan:
+                        type: object
+                        properties:
+                          id:
+                            type: number
+                          name:
+                            type: string
+                            maxLength: 255
+                    required:
+                      - lvl
+                      - nick
+                      - accountId
+                      - characterId
+                      - prof
+                      - icon
+                  partyPresence:
+                    type: string
+                    enum:
+                      - OUTSIDE
+                      - IN_PARTY
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - participantId
+                  - discordId
+                  - character
+                  - partyPresence
+                  - createdAt
+                  - updatedAt
+            ownedParticipantIds:
+              type: array
+              items:
+                type: string
+          required:
+            - schemaVersion
+            - notificationId
+            - organizerDiscordId
+            - organizerCharacter
+            - guildIds
+            - world
+            - status
+            - revision
+            - createdAt
+            - updatedAt
+            - expiresAt
+            - viewer
+            - participants
+        notificationId:
+          type: string
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+      required:
+        - schemaVersion
+        - type
+    PartyReadyRoomParticipantActionDto:
+      type: object
+      properties:
+        expectedRevision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - expectedRevision
+        - participantId
+    PartyReadyRoomResolveInvitationTargetsDto:
+      type: object
+      properties:
+        participantIds:
+          minItems: 1
+          maxItems: 100
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+      required:
+        - participantIds
+    PartyReadyRoomInvitationTargetsDto_Output:
+      type: object
+      properties:
+        targets:
+          type: array
+          items:
+            type: object
+            properties:
+              participantId:
+                type: string
+              characterId:
+                type: string
+            required:
+              - participantId
+              - characterId
+      required:
+        - targets
+    PartyReadyRoomObservationDto:
+      type: object
+      properties:
+        memberCharacterIds:
+          maxItems: 20
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 255
+        organizerAccountId:
+          type: string
+          minLength: 1
+          maxLength: 255
+        organizerCharacterId:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+        - memberCharacterIds
+        - organizerAccountId
+        - organizerCharacterId
+    PartyReadyRoomExpectedRevisionDto:
+      type: object
+      properties:
+        expectedRevision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+      required:
+        - expectedRevision
     NotificationTargetResponseDto:
       type: object
       properties:
@@ -12534,6 +13211,8 @@ components:
           type: number
         timersVolume:
           type: number
+        pingsVolume:
+          type: number
         notificationsConfig:
           $ref: "#/components/schemas/SoundSettingsResponseDto__schema0"
         detectorConfig:
@@ -12554,6 +13233,7 @@ components:
         - notificationsVolume
         - detectorVolume
         - timersVolume
+        - pingsVolume
         - notificationsConfig
         - detectorConfig
         - timersConfig
@@ -12575,6 +13255,10 @@ components:
           minimum: 0
           maximum: 1
         timersVolume:
+          type: number
+          minimum: 0
+          maximum: 1
+        pingsVolume:
           type: number
           minimum: 0
           maximum: 1
@@ -15628,6 +16312,105 @@ components:
           type: array
           items:
             type: string
+    EventModeResponseDto:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              world:
+                type: string
+              guild:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                required:
+                  - id
+                  - name
+              assignments:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    eventMapId:
+                      type: string
+                    heroId:
+                      type: string
+                    npcId:
+                      type: number
+                      nullable: true
+                    npcName:
+                      type: string
+                    npcIcon:
+                      type: string
+                      nullable: true
+                    margonemMapId:
+                      type: number
+                    mapName:
+                      type: string
+                  required:
+                    - eventMapId
+                    - heroId
+                    - npcId
+                    - npcName
+                    - npcIcon
+                    - margonemMapId
+                    - mapName
+              nextRespawn:
+                type: object
+                properties:
+                  heroId:
+                    type: string
+                  npcId:
+                    type: number
+                    nullable: true
+                  npcName:
+                    type: string
+                  minSpawnTime:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  maxSpawnTime:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  status:
+                    type: string
+                    enum:
+                      - WAITING
+                      - OPEN
+                      - OVERDUE
+                required:
+                  - heroId
+                  - npcId
+                  - npcName
+                  - minSpawnTime
+                  - maxSpawnTime
+                  - status
+                nullable: true
+            required:
+              - id
+              - name
+              - world
+              - guild
+              - assignments
+              - nextRespawn
+      required:
+        - generatedAt
+        - events
     GameMapResponseDto_Output:
       type: object
       properties:

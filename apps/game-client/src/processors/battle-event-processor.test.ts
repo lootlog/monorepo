@@ -68,6 +68,7 @@ describe("BattleEventProcessor", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     processor = new BattleEventProcessor();
+    useBattleStore.getState().clearEvents();
     useBattleStore.setState({
       events: [],
       battleState: "idle",
@@ -102,6 +103,36 @@ describe("BattleEventProcessor", () => {
 
       const state = useBattleStore.getState();
       expect(state.battleState).toBe("idle");
+    });
+
+    it("publishes one store transaction for a combined init and warrior event", async () => {
+      let publications = 0;
+      const unsubscribe = useBattleStore.subscribe(() => {
+        publications += 1;
+      });
+
+      await processor.handle({
+        f: {
+          init: "1",
+          w: {
+            "12345": {
+              id: 12345,
+              originalId: 12345,
+              name: "Player1",
+              lvl: 100,
+              hpp: 100,
+              team: 1,
+              icon: "icon.gif",
+              prof: "w",
+              wt: 0,
+              type: 0,
+            },
+          },
+        },
+      });
+
+      unsubscribe();
+      expect(publications).toBe(1);
     });
   });
 
@@ -146,6 +177,65 @@ describe("BattleEventProcessor", () => {
       const state = useBattleStore.getState();
       expect(state.events).toHaveLength(0);
     });
+  });
+
+  describe("battle capture limits", () => {
+    it("never submits a partial battle after the capture overflows", async () => {
+      const oversizedTurn = "x".repeat(2_700_000);
+
+      await processor.handle({
+        f: {
+          init: "1",
+          m: [oversizedTurn],
+          w: {
+            "111": {
+              id: 111,
+              originalId: 111,
+              name: "Player1",
+              team: 1,
+              hpp: 100,
+              lvl: 100,
+              icon: "",
+              prof: "w",
+              wt: 0,
+              type: 0,
+            },
+            "222": {
+              id: 222,
+              originalId: 222,
+              name: "Player2",
+              team: 2,
+              hpp: 100,
+              lvl: 100,
+              icon: "",
+              prof: "m",
+              wt: 0,
+              type: 0,
+            },
+          },
+        },
+      });
+
+      await processor.handle({ f: { endBattle: 1, m: ["final"] } });
+
+      expect(mockCreateBattle).not.toHaveBeenCalled();
+      expect(useBattleStore.getState().events).toEqual([]);
+      expect(useBattleStore.getState().battleState).toBe("idle");
+    });
+  });
+
+  it("publishes one final store transaction for an end event", async () => {
+    useBattleStore.setState({ battleState: "in-battle" });
+    let publications = 0;
+    const unsubscribe = useBattleStore.subscribe(() => {
+      publications += 1;
+    });
+
+    await processor.handle({ f: { endBattle: 1, m: ["final"] } });
+
+    unsubscribe();
+    expect(publications).toBe(1);
+    expect(useBattleStore.getState().battleState).toBe("idle");
   });
 
   describe("end battle - PvP", () => {
@@ -1057,6 +1147,50 @@ describe("BattleEventProcessor", () => {
   });
 
   describe("battle state management", () => {
+    it("submits one immutable snapshot while the digest is pending", async () => {
+      const { createSHA256Hash } =
+        await import("@/helpers/create-sha-256-hash");
+      const { mapBattleEventsToPayload } =
+        await import("@/helpers/mappers/battlelog.mappers");
+      let resolveBattleHash: ((hash: string) => void) | undefined;
+      const pendingBattleHash = new Promise<string>((resolve) => {
+        resolveBattleHash = resolve;
+      });
+      vi.mocked(createSHA256Hash)
+        .mockImplementationOnce(() => pendingBattleHash)
+        .mockResolvedValue("submission-hash");
+      const startEvent = {
+        f: {
+          init: "1",
+          m: ["start"],
+          w: {
+            "111": { id: 111, name: "One", team: 1 },
+            "222": { id: 222, name: "Two", team: 2 },
+          },
+        },
+      } as unknown as GameEvent;
+      const endEvent = { f: { endBattle: 1, m: ["end"] } } as GameEvent;
+
+      await processor.handle(startEvent);
+      const pendingEnd = processor.handle(endEvent);
+      expect(createSHA256Hash).toHaveBeenCalledTimes(1);
+
+      await processor.handle({ f: { m: ["late-turn"] } });
+      await processor.handle({ f: { endBattle: 1, m: ["duplicate-end"] } });
+      resolveBattleHash?.("battle-hash");
+      await pendingEnd;
+
+      expect(mapBattleEventsToPayload).toHaveBeenCalledTimes(1);
+      expect(mapBattleEventsToPayload).toHaveBeenCalledWith([
+        startEvent,
+        endEvent,
+      ]);
+      expect(createSHA256Hash).toHaveBeenCalledTimes(2);
+      expect(mockCreateBattle).toHaveBeenCalledTimes(1);
+      expect(useBattleStore.getState().events).toEqual([]);
+      expect(useBattleStore.getState().lastBattleHash).toBe("battle-hash");
+    });
+
     it("should reset battle state after end battle", async () => {
       useBattleStore.setState({
         battleState: "in-battle",

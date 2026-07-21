@@ -1,17 +1,22 @@
 import { MessageType, type SendChatMessageOptions } from "@/api/chat.api";
-import { useSilentCancelPartyGathering } from "@/hooks/api/use-silent-cancel-party-gathering";
+import { ActivePartyGatheringError } from "@/features/party-finder/active-party-gathering-error";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
-import { useSession } from "@/hooks/auth/use-session";
+import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
 import {
-  useMessagingControllerCreatePartyGathering,
-  useMessagingControllerSendNotification,
-} from "@/lib/api/generated/main/messaging/messaging";
+  partyReadyRoomControllerGet,
+  usePartyReadyRoomControllerCreate,
+} from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import type { PartyReadyRoomProjection } from "@lootlog/types";
 import {
   buildChatCharacterData,
   buildCurrentCharacterPayload,
 } from "@/lib/api/generated-helpers";
+import { isApiError } from "@/lib/api-client";
 import { Game } from "@/lib/game";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import {
+  selectOwnedReadyRoom,
+  usePartyFinderStore,
+} from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   buildNpcChatMessagePayload,
@@ -44,12 +49,25 @@ type StartNpcNotificationOptions = {
 type FinalizePartyGatheringOptions = {
   notificationId: string;
   guildIds: string[];
-  world: string;
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
   closeCreateWindow?: boolean;
   chatMessageOptions: SendChatMessageOptions;
+};
+
+const getActivePartyGatheringNotificationId = (error: unknown) => {
+  if (
+    !isApiError(error) ||
+    error.status !== 409 ||
+    typeof error.data !== "object" ||
+    error.data === null
+  ) {
+    return undefined;
+  }
+
+  const { code, notificationId } = error.data as Record<string, unknown>;
+  return code === "ACTIVE_GATHERING_EXISTS" &&
+    typeof notificationId === "string"
+    ? notificationId
+    : undefined;
 };
 
 export const usePartyGatheringOrchestration = () => {
@@ -60,66 +78,33 @@ export const usePartyGatheringOrchestration = () => {
   const [isSendingNpcNotification, setIsSendingNpcNotification] =
     useState(false);
   const { mutateAsync: createPartyGatheringAsync } =
-    useMessagingControllerCreatePartyGathering();
+    usePartyReadyRoomControllerCreate();
   const { mutateAsync: createNotificationAsync } =
     useMessagingControllerSendNotification();
   const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
-  const { data: session } = useSession();
-  const discordId = session?.user?.discordId ?? "";
-  const setNotification = usePartyFinderStore((state) => state.setNotification);
-  const setPartyGathering = usePartyFinderStore(
-    (state) => state.setPartyGathering,
-  );
+  const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const silentCancel = useSilentCancelPartyGathering();
 
-  const setNpcNotificationState = (
-    notificationId: string,
-    npc: GameNpcWithLocation,
-    world: string,
-  ) => {
-    setNotification(notificationId, {
-      id: npc.id,
-      name: npc.nick,
-      lvl: npc.lvl,
-      prof: npc.prof,
-      location: npc.location,
-      world,
-      icon: npc.icon,
-      x: npc.x,
-      y: npc.y,
-    });
+  const openPartyFinder = (closeCreateWindow = false) => {
+    if (closeCreateWindow) {
+      setOpen("create-party-gathering", false);
+    }
+    setOpen("party-finder", true);
   };
 
   const finalizePartyGathering = async ({
     notificationId,
     guildIds,
-    world,
-    description,
-    minLvl,
-    maxLvl,
     closeCreateWindow,
     chatMessageOptions,
   }: FinalizePartyGatheringOptions) => {
-    setPartyGathering({
-      notificationId,
-      discordId,
-      character: buildCurrentCharacterPayload(),
-      description,
-      minLvl,
-      maxLvl,
-      world,
-      createdAt: new Date().toISOString(),
-      guildIds,
-    });
+    openPartyFinder(closeCreateWindow);
 
-    await sendChatMessageAsync(chatMessageOptions);
-
-    if (closeCreateWindow) {
-      setOpen("create-party-gathering", false);
+    try {
+      await sendChatMessageAsync(chatMessageOptions);
+    } catch {
+      // The Ready Room is already committed and remains the source of truth.
     }
-
-    setOpen("party-finder", true);
 
     return {
       notificationId,
@@ -135,30 +120,45 @@ export const usePartyGatheringOrchestration = () => {
     maxLvl,
     closeCreateWindow = false,
   }: StartPartyGatheringOptions) => {
+    const ownedReadyRoom = selectOwnedReadyRoom(usePartyFinderStore.getState());
+    if (ownedReadyRoom) {
+      openPartyFinder(closeCreateWindow);
+      throw new ActivePartyGatheringError(ownedReadyRoom.notificationId);
+    }
+
     setIsCreatingPartyGathering(true);
 
     try {
-      await silentCancel();
-
-      const response = await createPartyGatheringAsync({
-        data: {
-          guildIds,
-          world,
-          character: buildCurrentCharacterPayload(),
-          description,
-          minLvl,
-          maxLvl,
-        },
-      });
-      const resolvedGuildIds = response.guildIds ?? guildIds;
+      let response: Awaited<ReturnType<typeof createPartyGatheringAsync>>;
+      try {
+        response = await createPartyGatheringAsync({
+          data: {
+            guildIds,
+            world,
+            character: buildCurrentCharacterPayload(),
+            description,
+            minLvl,
+            maxLvl,
+          },
+        });
+      } catch (error) {
+        const notificationId = getActivePartyGatheringNotificationId(error);
+        if (notificationId) {
+          const existingProjection = (await partyReadyRoomControllerGet({
+            notificationId,
+          })) as unknown as PartyReadyRoomProjection;
+          mergeProjection(existingProjection);
+          openPartyFinder(closeCreateWindow);
+        }
+        throw error;
+      }
+      const projection = response as unknown as PartyReadyRoomProjection;
+      mergeProjection(projection);
+      const resolvedGuildIds = projection.guildIds;
 
       return await finalizePartyGathering({
-        notificationId: response.notificationId,
+        notificationId: projection.notificationId,
         guildIds: resolvedGuildIds,
-        world,
-        description,
-        minLvl,
-        maxLvl,
         closeCreateWindow,
         chatMessageOptions: {
           message: Game.hero.nick,
@@ -166,8 +166,8 @@ export const usePartyGatheringOrchestration = () => {
           type: MessageType.PARTY_GATHERING,
           characterData: buildChatCharacterData(),
           partyGathering: {
-            notificationId: response.notificationId,
-            discordId,
+            notificationId: projection.notificationId,
+            discordId: projection.organizerDiscordId,
             description,
             minLvl,
             maxLvl,
@@ -188,8 +188,6 @@ export const usePartyGatheringOrchestration = () => {
     setIsCreatingNpcPartyGathering(true);
 
     try {
-      await silentCancel();
-
       const response = await createNotificationAsync({
         data: buildNpcNotificationPayload({
           npc,
@@ -199,11 +197,14 @@ export const usePartyGatheringOrchestration = () => {
         }),
       });
       const resolvedGuildIds = response.guildIds ?? guildIds;
+      const projection = (await partyReadyRoomControllerGet({
+        notificationId: response.notificationId,
+      })) as unknown as PartyReadyRoomProjection;
+      mergeProjection(projection);
 
       return await finalizePartyGathering({
         notificationId: response.notificationId,
         guildIds: resolvedGuildIds,
-        world,
         chatMessageOptions: buildNpcChatMessagePayload({
           npc,
           guildIds: resolvedGuildIds,
@@ -211,7 +212,7 @@ export const usePartyGatheringOrchestration = () => {
           message: `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
           partyGathering: {
             notificationId: response.notificationId,
-            discordId,
+            discordId: projection.organizerDiscordId,
             world,
           },
         }),
@@ -237,8 +238,6 @@ export const usePartyGatheringOrchestration = () => {
         }),
       });
       const resolvedGuildIds = response.guildIds ?? guildIds;
-
-      setNpcNotificationState(response.notificationId, npc, world);
 
       await sendChatMessageAsync(
         buildNpcChatMessagePayload({
@@ -266,3 +265,7 @@ export const usePartyGatheringOrchestration = () => {
     startNpcPartyGathering,
   };
 };
+
+export type PartyGatheringOrchestration = ReturnType<
+  typeof usePartyGatheringOrchestration
+>;

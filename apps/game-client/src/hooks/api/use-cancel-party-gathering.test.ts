@@ -4,16 +4,23 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
 import { useCancelPartyGathering } from "./use-cancel-party-gathering";
 import { usePartyFinderStore } from "@/store/party-finder.store";
+import { getChatControllerGetChatMessagesQueryKey } from "@/lib/api/generated/main/chat/chat";
 
 const mockCancelPartyGathering = vi.fn();
+const mockSetOpen = vi.fn();
 
-vi.mock("@/api", () => ({
-  cancelPartyGathering: (...args: unknown[]) =>
+type MockWindowsStoreState = {
+  setOpen: typeof mockSetOpen;
+};
+
+vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+  partyReadyRoomControllerCancel: (...args: unknown[]) =>
     mockCancelPartyGathering(...args),
 }));
 
 vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (selector: any) => selector({ setOpen: vi.fn() }),
+  useWindowsStore: (selector: (state: MockWindowsStoreState) => unknown) =>
+    selector({ setOpen: mockSetOpen }),
 }));
 
 vi.stubGlobal("message", vi.fn());
@@ -22,10 +29,11 @@ vi.mock("@/lib/game", () => ({
   Game: { hero: { nick: "TestPlayer" } },
 }));
 
-function createWrapper() {
-  const queryClient = new QueryClient({
+function createWrapper(
+  queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
-  });
+  }),
+) {
   return ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 }
@@ -33,33 +41,38 @@ function createWrapper() {
 describe("useCancelPartyGathering", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    usePartyFinderStore.setState({
-      partyGathering: {
-        notificationId: "notif-123",
-        discordId: "user-1",
-        character: {
-          nick: "Test",
-          lvl: 100,
-          prof: "w",
-          characterId: "1",
-          accountId: "1",
-          icon: "test.gif",
-        },
-        world: "pandora",
-        createdAt: new Date().toISOString(),
+    usePartyFinderStore.getState().clearReadyRooms();
+    usePartyFinderStore.getState().mergeProjection({
+      schemaVersion: 3,
+      notificationId: "notif-123",
+      organizerDiscordId: "user-1",
+      organizerCharacter: {
+        nick: "Test",
+        lvl: 100,
+        prof: "w",
+        characterId: "1",
+        accountId: "1",
+        icon: "test.gif",
       },
+      guildIds: ["guild-1"],
+      world: "pandora",
+      status: "ACTIVE",
+      revision: 1,
+      createdAt: "2026-07-13T10:00:00.000Z",
+      updatedAt: "2026-07-13T10:00:00.000Z",
+      expiresAt: "2026-07-13T10:30:00.000Z",
+      viewer: "ORGANIZER",
+      participants: {},
+      ownedParticipantIds: [],
     });
   });
 
-  it("should handle 200 response with guildIds", async () => {
+  it("cancels with the current revision and removes the local projection", async () => {
     mockCancelPartyGathering.mockResolvedValue({
-      success: true,
-      guildIds: ["guild-1"],
-      requestSummary: {
-        totalRequests: 2,
-        successCount: 2,
-        failureCount: 0,
-      },
+      schemaVersion: 3,
+      type: "REMOVE",
+      notificationId: "notif-123",
+      revision: 2,
     });
 
     const { result } = renderHook(() => useCancelPartyGathering(), {
@@ -71,33 +84,40 @@ describe("useCancelPartyGathering", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(mockCancelPartyGathering).toHaveBeenCalledWith(
-      expect.objectContaining({
-        partyGathering: expect.objectContaining({
-          notificationId: "notif-123",
-        }),
-      }),
+      { notificationId: "notif-123" },
+      { expectedRevision: 1 },
     );
-  });
-
-  it("should handle 204 response with no body", async () => {
-    mockCancelPartyGathering.mockResolvedValue({
-      success: true,
-      guildIds: [],
-      requestSummary: {
-        totalRequests: 1,
-        successCount: 1,
-        failureCount: 0,
+    expect(usePartyFinderStore.getState()).toMatchObject({
+      projections: {},
+      roomVersions: {
+        "notif-123": { revision: 2, presence: "REMOVED" },
       },
     });
+    expect(mockSetOpen).toHaveBeenCalledWith("party-finder", false);
+  });
 
+  it("invalidates affected chat histories after cancellation", async () => {
+    mockCancelPartyGathering.mockResolvedValue({
+      schemaVersion: 3,
+      type: "REMOVE",
+      notificationId: "notif-123",
+      revision: 2,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { mutations: { retry: false } },
+    });
+    const chatQueryKey = getChatControllerGetChatMessagesQueryKey({
+      guildId: "guild-1",
+    });
+    queryClient.setQueryData(chatQueryKey, [{ id: "message-1" }]);
     const { result } = renderHook(() => useCancelPartyGathering(), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper(queryClient),
     });
 
     result.current.mutate();
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(usePartyFinderStore.getState().partyGathering).toBeNull();
+    expect(queryClient.getQueryState(chatQueryKey)?.isInvalidated).toBe(true);
   });
 });

@@ -13,6 +13,9 @@ declare global {
       REDIS_USERNAME: string;
 
       RABBITMQ_URI: string;
+      AUTH_URL: string;
+      MARGONEM_SIGNING_KEY_URL: string;
+      ACTIVITY_EVENT_SIGNATURE_SECRET: string;
 
       OTEL_EXPORTER_OTLP_ENDPOINT: string;
       OTEL_EXPORTER_OTLP_HEADERS: string;
@@ -20,6 +23,7 @@ declare global {
       OTEL_TRACES_EXPORTER: string;
       SERVICE_NAMESPACE: string;
       DEV_PERMISSION_OVERRIDE_ENABLED: string;
+      MARGONEM_ACCOUNT_PROOF_REQUIRED: string;
     }
   }
 }

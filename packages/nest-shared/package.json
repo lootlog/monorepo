@@ -4,6 +4,10 @@
   "private": true,
   "description": "Shared NestJS modules, services, and utilities for backend microservices",
   "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -20,16 +24,16 @@
       "default": "./dist/decorators/index.js"
     },
     "./openapi": {
-      "types": "./dist/openapi/index.d.ts",
-      "default": "./dist/openapi/index.js"
+      "types": "./dist/openapi/openapi-document.d.ts",
+      "default": "./dist/openapi/openapi-document.js"
     },
     "./redis": {
       "types": "./dist/redis/index.d.ts",
       "default": "./dist/redis/index.js"
     },
-    "./validators": {
-      "types": "./dist/validators/index.d.ts",
-      "default": "./dist/validators/index.js"
+    "./validators/query-helpers": {
+      "types": "./dist/validators/query-helpers.d.ts",
+      "default": "./dist/validators/query-helpers.js"
     }
   },
   "scripts": {

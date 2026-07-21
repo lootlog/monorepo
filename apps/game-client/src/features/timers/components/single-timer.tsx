@@ -19,17 +19,16 @@ import { useTimerActions } from "../hooks/use-timer-actions";
 import { useTimerDisplay } from "../hooks/use-timer-display";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { Game } from "@/lib/game";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
+import type { GuildsControllerGetGuildPermissions200Item } from "@/lib/api/generated/main/model";
+import { useShallow } from "zustand/react/shallow";
 
 type SingleTimerProps = {
   guildIds: string[];
   guildNamesById: Record<string, string>;
+  guildPermissions: GuildsControllerGetGuildPermissions200Item[];
   timer: TimerWithTimeLeft;
   settingsKey: string;
   minTimeLeft?: number;
@@ -40,6 +39,7 @@ type SingleTimerProps = {
 export const SingleTimer: FC<SingleTimerProps> = ({
   guildIds,
   guildNamesById,
+  guildPermissions,
   timer,
   minTimeLeft = 0,
   maxTimeLeft = 0,
@@ -52,21 +52,16 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     defaultColorNames,
     overriddenDefaultColors,
     hiddenDefaultColors,
-    generalConfig,
-  } = useTimersStore();
-
-  const { data: guildPermissions = [] } =
-    useGuildsControllerGetGuildPermissions(
-      { guildId: timer.guildId },
-      {
-        query: {
-          queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-            guildId: timer.guildId,
-          }),
-          staleTime: 5 * 60 * 1000,
-        },
-      },
-    );
+    timersGrouping,
+  } = useTimersStore(
+    useShallow((state) => ({
+      customColors: state.customColors,
+      defaultColorNames: state.defaultColorNames,
+      overriddenDefaultColors: state.overriddenDefaultColors,
+      hiddenDefaultColors: state.hiddenDefaultColors,
+      timersGrouping: state.generalConfig.timersGrouping,
+    })),
+  );
 
   const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
     guildPermissions.includes(perm),
@@ -90,13 +85,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     handleToggleAlwaysVisibleExpiredTimer,
     handleRestartTimer,
     handleDeleteTimer,
-  } = useTimerActions(
-    timer,
-    settingsKey,
-    world,
-    guildIds,
-    generalConfig.timersGrouping,
-  );
+  } = useTimerActions(timer, settingsKey, world, guildIds, timersGrouping);
 
   const {
     isPending,
@@ -192,7 +181,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             isHidden={isHidden}
             canDelete={canDelete}
             canReset={canReset}
-            timersGrouping={generalConfig.timersGrouping}
+            timersGrouping={timersGrouping}
             selectedColor={selectedColor}
             customColors={customColors}
             defaultColorNames={defaultColorNames}

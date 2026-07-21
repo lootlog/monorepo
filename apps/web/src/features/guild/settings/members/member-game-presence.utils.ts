@@ -1,5 +1,8 @@
 import type { PlayerPresence } from "@/features/guild/events/hooks/socket/use-event-presence";
-import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
+import {
+  isMemberOnlineOnWeb,
+  type MemberWebPresenceByDiscordId,
+} from "@/features/guild/settings/members/member-web-presence.utils";
 
 export type MemberGamePresenceByDiscordId = Map<string, PlayerPresence[]>;
 export type MemberGamePresenceGuild = {
@@ -81,21 +84,29 @@ export const isMemberOnlineInGame = (
   discordId: string,
 ) => (presenceByDiscordId?.get(discordId)?.length ?? 0) > 0;
 
+export const isMemberGamePresenceVerified = (
+  presenceByDiscordId: MemberGamePresenceByDiscordId | undefined,
+  discordId: string,
+) =>
+  presenceByDiscordId
+    ?.get(discordId)
+    ?.some((presence) => presence.margonemAccountVerified === true) ?? false;
+
 export const getMemberGameSessionCount = (
   presenceByDiscordId: MemberGamePresenceByDiscordId | undefined,
   discordId: string,
 ) => presenceByDiscordId?.get(discordId)?.length ?? 0;
 
 export const getMemberOnlineSources = ({
-  activityStats,
+  webPresenceByDiscordId,
   gamePresenceByDiscordId,
   discordId,
 }: {
-  activityStats?: MemberActivityStats;
+  webPresenceByDiscordId?: MemberWebPresenceByDiscordId;
   gamePresenceByDiscordId?: MemberGamePresenceByDiscordId;
   discordId: string;
 }) => {
-  const web = (activityStats?.activeSessionCount ?? 0) > 0;
+  const web = isMemberOnlineOnWeb(webPresenceByDiscordId, discordId);
   const game = isMemberOnlineInGame(gamePresenceByDiscordId, discordId);
 
   return {

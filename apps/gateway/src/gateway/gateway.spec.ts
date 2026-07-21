@@ -1,6 +1,7 @@
 import { Gateway } from "./gateway";
 import { GatewayEvent } from "./enums/gateway-event.enum";
 import { Platform } from "./enums/platform.enum";
+import { UserPresenceStatus } from "./enums/user-presence-status.enum";
 
 describe("Gateway", () => {
   const mockConnectionService = {
@@ -13,14 +14,29 @@ describe("Gateway", () => {
     emitDisconnectPresence: vi.fn(),
     broadcastPlayerDisconnect: vi.fn(),
     fetchOnlinePlayersPresence: vi.fn(),
+    fetchMemberWebPresence: vi.fn(),
     updatePlayerPresence: vi.fn(),
     fetchEventPresence: vi.fn(),
     checkPresenceForMap: vi.fn(),
+    emitMemberWebPresenceUpdate: vi.fn(),
   };
 
   const mockSubscriptionService = {
     handleJoin: vi.fn(),
     handleDisconnect: vi.fn(),
+  };
+
+  const mockGatewayAuthService = {
+    verifyConnectionIdentity: vi.fn(),
+  };
+
+  const mockMapPingService = {
+    send: vi.fn(),
+  };
+
+  const mockAirTagService = {
+    updateSubscription: vi.fn(),
+    publishObservations: vi.fn(),
   };
 
   const mockServer = {};
@@ -32,6 +48,9 @@ describe("Gateway", () => {
       mockConnectionService as never,
       mockPresenceService as never,
       mockSubscriptionService as never,
+      mockGatewayAuthService as never,
+      mockMapPingService as never,
+      mockAirTagService as never,
     );
     gateway.server = mockServer as never;
   });
@@ -44,10 +63,9 @@ describe("Gateway", () => {
     };
 
     mockConnectionService.getConnectionMetadata.mockReturnValue({
-      discordId: null,
-      userId: null,
       platform: Platform.UNKNOWN,
     });
+    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue(null);
     mockConnectionService.validateConnection.mockReturnValue({
       valid: false,
     });
@@ -56,6 +74,38 @@ describe("Gateway", () => {
 
     expect(client.disconnect).toHaveBeenCalled();
     expect(client.on).not.toHaveBeenCalled();
+  });
+
+  it("disconnects spoofed websocket connections without a verified session", async () => {
+    const client = {
+      request: {
+        headers: {
+          "x-auth-discord-id": "spoofed-discord",
+          "x-auth-user-id": "spoofed-user",
+          origin: "https://lootlog.com",
+        },
+      },
+      handshake: {},
+      disconnect: vi.fn(),
+      on: vi.fn(),
+    };
+
+    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue(null);
+    mockConnectionService.getConnectionMetadata.mockReturnValue({
+      platform: Platform.WEB_APP,
+    });
+    mockConnectionService.validateConnection.mockReturnValue({
+      valid: false,
+    });
+
+    await gateway.handleConnection(client as never);
+
+    expect(mockConnectionService.validateConnection).toHaveBeenCalledWith(
+      null,
+      Platform.WEB_APP,
+    );
+    expect(client.disconnect).toHaveBeenCalled();
+    expect(mockConnectionService.initializeSocketData).not.toHaveBeenCalled();
   });
 
   it("initializes socket data and handles disconnecting callbacks", async () => {
@@ -86,9 +136,11 @@ describe("Gateway", () => {
     };
 
     mockConnectionService.getConnectionMetadata.mockReturnValue({
+      platform: Platform.GAME,
+    });
+    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue({
       discordId: "discord-1",
       userId: "user-1",
-      platform: Platform.GAME,
     });
     mockConnectionService.validateConnection.mockReturnValue({ valid: true });
     mockConnectionService.initializeSocketData.mockReturnValue(socketData);
@@ -111,6 +163,53 @@ describe("Gateway", () => {
       mockServer,
       client,
     );
+  });
+
+  it("emits web presence offline when a web socket disconnects", async () => {
+    let disconnectingHandler!: () => Promise<void>;
+
+    const client = {
+      id: "socket-1",
+      request: { headers: {} },
+      disconnect: vi.fn(),
+      on: vi.fn((event: string, handler: () => Promise<void>) => {
+        if (event === GatewayEvent.DISCONNECTING) {
+          disconnectingHandler = handler;
+        }
+      }),
+      data: undefined,
+    };
+    const socketData = {
+      discordId: "discord-1",
+      userId: "user-1",
+      sessionId: "socket-1",
+      platform: Platform.WEB_APP,
+      guilds: [
+        {
+          guild: { id: "guild-1", ownerId: "owner-1" },
+          roles: [],
+        },
+      ],
+    };
+
+    mockConnectionService.getConnectionMetadata.mockReturnValue({
+      platform: Platform.WEB_APP,
+    });
+    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue({
+      discordId: "discord-1",
+      userId: "user-1",
+    });
+    mockConnectionService.validateConnection.mockReturnValue({ valid: true });
+    mockConnectionService.initializeSocketData.mockReturnValue(socketData);
+    mockSubscriptionService.handleDisconnect.mockResolvedValue(undefined);
+    mockPresenceService.broadcastPlayerDisconnect.mockResolvedValue(undefined);
+
+    await gateway.handleConnection(client as never);
+    await disconnectingHandler();
+
+    expect(
+      mockPresenceService.emitMemberWebPresenceUpdate,
+    ).toHaveBeenCalledWith(mockServer, client, UserPresenceStatus.OFFLINE);
   });
 
   it("emits join result returned by subscription service", async () => {
@@ -141,6 +240,16 @@ describe("Gateway", () => {
           prof: "w",
           location: { x: 1, y: 2, map: "Map" },
         },
+        margonemAccountProof: {
+          userId: "20",
+          characterId: "10",
+          token:
+            "lootlog:socket-1:20:02000000000000000affffffffffffffff0123456789abcdef0123456789abcdef",
+          ts: 1_700_000_000,
+          validatedString:
+            "20+lootlog:socket-1:20:02000000000000000affffffffffffffff0123456789abcdef0123456789abcdef+1700000000",
+          signatureBase64: "signature",
+        },
       } as never,
     );
 
@@ -149,6 +258,7 @@ describe("Gateway", () => {
       client,
       "discord-1",
       "user-1",
+      expect.any(Object),
       expect.any(Object),
     );
     expect(client.emit).toHaveBeenCalledWith(GatewayEvent.JOIN, joinResult);
@@ -178,5 +288,60 @@ describe("Gateway", () => {
         } as never,
       ),
     ).resolves.toEqual(expectedPresence);
+  });
+
+  it("delegates member web presence fetch through the presence service", async () => {
+    const client = {
+      data: {
+        platform: Platform.WEB_APP,
+      },
+      rooms: new Set(["guild-1:presence"]),
+    };
+    const expectedPresence = {
+      status: "success",
+      sessions: {
+        "discord-1": [{ sessionId: "session-1" }],
+      },
+    };
+
+    mockPresenceService.fetchMemberWebPresence.mockResolvedValue(
+      expectedPresence,
+    );
+
+    await expect(
+      gateway.handleMemberWebPresenceFetch(
+        client as never,
+        {
+          guildId: "guild-1",
+        } as never,
+      ),
+    ).resolves.toEqual(expectedPresence);
+    expect(mockPresenceService.fetchMemberWebPresence).toHaveBeenCalledWith(
+      mockServer,
+      client,
+      "guild-1",
+    );
+  });
+
+  it("returns the map ping acknowledgement from the map ping service", async () => {
+    const client = { id: "socket-1" };
+    const acknowledgement = {
+      status: "accepted" as const,
+      pingId: "ping-1",
+    };
+    mockMapPingService.send.mockResolvedValue(acknowledgement);
+
+    await expect(
+      gateway.handleMapPing(client as never, {
+        expectedMapId: 42,
+        x: 10,
+        y: 12,
+      }),
+    ).resolves.toEqual(acknowledgement);
+    expect(mockMapPingService.send).toHaveBeenCalledWith(mockServer, client, {
+      expectedMapId: 42,
+      x: 10,
+      y: 12,
+    });
   });
 });

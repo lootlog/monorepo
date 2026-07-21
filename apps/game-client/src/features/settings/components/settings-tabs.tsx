@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
@@ -35,10 +35,8 @@ import {
   Volume2,
   type LucideIcon,
 } from "lucide-react";
-import type { FC, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-
-type SettingsTabsProps = {};
 
 type SettingsTabDefinition = {
   value: SettingsTabValue;
@@ -57,7 +55,7 @@ const SETTINGS_TAB_TRIGGER_REGULAR_CLASSES =
 const SETTINGS_TAB_TRIGGER_COMPACT_CLASSES =
   "ll:relative ll:justify-center ll:border-gray-500/40 ll:bg-black/5 ll:px-1.5 ll:text-gray-300 ll:hover:border-gray-300/70 ll:hover:bg-gray-500/18 ll:data-[state=active]:border-purple-300/80 ll:data-[state=active]:bg-purple-500/24 ll:data-[state=active]:text-white";
 
-export const SettingsTabs: FC<SettingsTabsProps> = () => {
+export const SettingsTabs = () => {
   const activeTab = useWindowsStore((state) => state.settings.state?.activeTab);
   const settingsWidth = useWindowsStore((state) => state.settings.size.width);
   const setSettingsActiveTab = useWindowsStore(
@@ -165,10 +163,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
           }`}
         >
           <div className="ll:pointer-events-none ll:absolute ll:inset-y-0 ll:right-0 ll:w-px ll:bg-gray-400/30" />
-          <ScrollArea
-            className="ll:h-full ll:w-full ll:min-h-0 ll:flex-1 ll:box-border"
-            type="hover"
-          >
+          <NativeScrollArea className="ll:h-full ll:w-full ll:min-h-0 ll:flex-1 ll:box-border">
             <TabsList className="ll:flex ll:w-full ll:flex-col ll:items-stretch ll:justify-start ll:gap-1 ll:rounded-none ll:pt-0.5">
               {tabsList.map((tab) => {
                 const Icon = tab.icon;
@@ -214,7 +209,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
                 );
               })}
             </TabsList>
-          </ScrollArea>
+          </NativeScrollArea>
           {!isCompactSidebar && hasCommitSha ? (
             <div className="ll:mt-2 ll:shrink-0 ll:px-2 ll:pb-1.5">
               <Tooltip>
@@ -229,10 +224,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
           ) : null}
         </div>
         <div className="ll:flex ll:min-w-0 ll:flex-1 ll:min-h-0 ll:flex-col ll:pl-2 ll:pb-2">
-          <ScrollArea
-            className="ll:h-full ll:w-full ll:box-border ll:pr-2"
-            type="hover"
-          >
+          <NativeScrollArea className="ll:h-full ll:w-full ll:box-border ll:pr-2">
             {tabsList.map((tab) => (
               <TabsContent
                 key={tab.value}
@@ -242,7 +234,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
                 {tab.content}
               </TabsContent>
             ))}
-          </ScrollArea>
+          </NativeScrollArea>
         </div>
       </Tabs>
     </div>

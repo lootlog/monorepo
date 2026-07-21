@@ -10,7 +10,6 @@ describe("UserLootlogConfigController", () => {
   const mockUserLootlogConfigService = {
     createOrUpdateLootlogCharacterConfig: mockFn(),
     getLootlogAccountConfig: mockFn(),
-    getPlayerCatchingGuilds: mockFn(),
     getPlayersCatchingGuilds: mockFn(),
   };
 
@@ -30,39 +29,6 @@ describe("UserLootlogConfigController", () => {
     );
 
     vi.clearAllMocks();
-  });
-
-  describe("getPlayerCatchingGuilds", () => {
-    it("delegates to service using authenticated user and hovered character refs", async () => {
-      mockUserLootlogConfigService.getPlayerCatchingGuilds.mockResolvedValue({
-        userId: "player-discord",
-        accountId: "9822301",
-        characterId: "617",
-        guilds: [{ id: "guild1", name: "Alpha" }],
-      });
-
-      const result = await controller.getPlayerCatchingGuilds(
-        "viewer-discord",
-        "player-discord",
-        "9822301",
-        "617",
-      );
-
-      expect(
-        mockUserLootlogConfigService.getPlayerCatchingGuilds,
-      ).toHaveBeenCalledWith(
-        "viewer-discord",
-        "player-discord",
-        "9822301",
-        "617",
-      );
-      expect(result).toEqual({
-        userId: "player-discord",
-        accountId: "9822301",
-        characterId: "617",
-        guilds: [{ id: "guild1", name: "Alpha" }],
-      });
-    });
   });
 
   describe("getPlayersCatchingGuilds", () => {

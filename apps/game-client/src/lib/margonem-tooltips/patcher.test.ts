@@ -174,6 +174,27 @@ describe("installCharacterTooltipTransforms", () => {
     expect(other.createStrTip?.()).toBe("<div>Other</div>");
   });
 
+  it("restores an own tooltip method when an other leaves the current map", () => {
+    const hero = createCharacter("Hero");
+    const other = createCharacter("Other");
+    const originalOtherCreateStrTip = other.createStrTip;
+    setRuntime(hero, { 1: other });
+    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    characterTooltipTransforms.register(() => "<div>replacement</div>");
+    const cleanup = installCharacterTooltipTransforms();
+
+    try {
+      expect(other.createStrTip?.()).toBe("<div>replacement</div>");
+
+      useOthersStore.getState().applyBatch({ removeIds: ["1"] });
+
+      expect(other.createStrTip).toBe(originalOtherCreateStrTip);
+      expect(other.createStrTip?.()).toBe("<div>Other</div>");
+    } finally {
+      cleanup();
+    }
+  });
+
   it("patches a single new other character", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");
@@ -307,12 +328,12 @@ describe("installCharacterTooltipTransforms", () => {
     runtimeCanvasTip.show({}, first);
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
-    ).toBe("player-discord:9822301:617");
+    ).toBe("9822301:617");
 
     second.tipUpdate?.();
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
-    ).toBe("player-discord:9822301:617");
+    ).toBe("9822301:617");
 
     runtimeCanvasTip.hide({});
     expect(
@@ -347,7 +368,7 @@ describe("installCharacterTooltipTransforms", () => {
     runtimeCanvasTip.show({}, other);
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeTarget?.key,
-    ).toBe("player-discord:9822301:617");
+    ).toBe("9822301:617");
 
     cleanup();
 

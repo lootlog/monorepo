@@ -26,6 +26,7 @@ export const useMemberGamePresence = (guildId: string | undefined) => {
   >(undefined);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const requestIdRef = useRef(0);
+  const visibleGuildIdRef = useRef(guildId);
 
   const requestPresence = useEffectEvent(() => {
     if (!socket || !connected || !joined || !guildId) return;
@@ -62,13 +63,13 @@ export const useMemberGamePresence = (guildId: string | undefined) => {
 
   const handlePermissionsUpdated = useEffectEvent(() => {
     requestIdRef.current += 1;
-    setPresenceByDiscordId(undefined);
     setRefreshVersion((version) => version + 1);
   });
 
   useEffect(() => {
     if (!guildId) {
       requestIdRef.current += 1;
+      visibleGuildIdRef.current = guildId;
       setPresenceByDiscordId(undefined);
     }
   }, [guildId]);
@@ -76,6 +77,11 @@ export const useMemberGamePresence = (guildId: string | undefined) => {
   useEffect(() => {
     if (!socket || !connected || !joined || !guildId) {
       return;
+    }
+
+    if (visibleGuildIdRef.current !== guildId) {
+      visibleGuildIdRef.current = guildId;
+      setPresenceByDiscordId(undefined);
     }
 
     requestPresence();

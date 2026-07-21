@@ -1,6 +1,7 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import {
+  applyPresenceUpdates,
   getPresenceKey,
   normalizePresence,
   normalizePresenceResponse,
@@ -33,15 +34,28 @@ export const usePlayersPresence = (
 
   const selectedGuildIdRef = useRef(selectedGuildId);
   const worldRef = useRef(world);
+  const visibleScopeRef = useRef({ guildId: selectedGuildId, world });
   const requestIdRef = useRef(0);
+  const presenceUpdateControllerRef = useRef({
+    pendingUpdates: new Map<string, PlayerPresence>(),
+    frame: null as number | null,
+  });
 
   useEffect(() => {
     selectedGuildIdRef.current = selectedGuildId;
     worldRef.current = world;
+    const presenceUpdateController = presenceUpdateControllerRef.current;
+    presenceUpdateController.pendingUpdates.clear();
+    if (presenceUpdateController.frame !== null) {
+      window.cancelAnimationFrame(presenceUpdateController.frame);
+      presenceUpdateController.frame = null;
+    }
   }, [selectedGuildId, world]);
 
   useEffect(() => {
     if (!selectedGuildId || !world) {
+      requestIdRef.current += 1;
+      visibleScopeRef.current = { guildId: selectedGuildId, world };
       setOnlinePlayers({});
       setLoading(false);
       setAccessState("allowed");
@@ -57,8 +71,16 @@ export const usePlayersPresence = (
     )
       return;
 
+    const scopeChanged =
+      visibleScopeRef.current.guildId !== selectedGuildId ||
+      visibleScopeRef.current.world !== world;
     const currentRequestId = ++requestIdRef.current;
-    setOnlinePlayers({});
+    visibleScopeRef.current = { guildId: selectedGuildId, world };
+
+    if (scopeChanged) {
+      setOnlinePlayers({});
+    }
+
     setAccessState("allowed");
     setLoading(true);
 
@@ -88,6 +110,7 @@ export const usePlayersPresence = (
 
   useEffect(() => {
     if (!socket || !connected || !joined) return;
+    const presenceUpdateController = presenceUpdateControllerRef.current;
 
     const handleOnlinePlayersPresenceUpdate = (
       data: PlayerPresenceUpdatePayload,
@@ -100,43 +123,18 @@ export const usePlayersPresence = (
       )
         return;
 
-      setOnlinePlayers((prev) => {
-        const updated = structuredClone(prev);
-        const key = getPresenceKey(normalizedPresence);
-        const list = updated[normalizedPresence.discordId] || [];
+      const presenceKey = `${normalizedPresence.discordId}:${getPresenceKey(normalizedPresence)}`;
+      presenceUpdateController.pendingUpdates.set(
+        presenceKey,
+        normalizedPresence,
+      );
+      if (presenceUpdateController.frame !== null) return;
 
-        if (normalizedPresence.status === "offline") {
-          const newList = list.filter((p) => getPresenceKey(p) !== key);
-          if (newList.length > 0) {
-            updated[normalizedPresence.discordId] = newList;
-          } else {
-            delete updated[normalizedPresence.discordId];
-          }
-
-          return updated;
-        }
-
-        if (!normalizedPresence.player) {
-          return prev;
-        }
-
-        const existingPresenceIndex = list.findIndex(
-          (presence) => getPresenceKey(presence) === key,
-        );
-
-        if (existingPresenceIndex === -1) {
-          updated[normalizedPresence.discordId] = [...list, normalizedPresence];
-          return updated;
-        }
-
-        updated[normalizedPresence.discordId][existingPresenceIndex] = {
-          ...list[existingPresenceIndex],
-          ...normalizedPresence,
-          player: normalizedPresence.player,
-          mapName: normalizedPresence.mapName,
-        };
-
-        return updated;
+      presenceUpdateController.frame = window.requestAnimationFrame(() => {
+        presenceUpdateController.frame = null;
+        const updates = [...presenceUpdateController.pendingUpdates.values()];
+        presenceUpdateController.pendingUpdates.clear();
+        setOnlinePlayers((previous) => applyPresenceUpdates(previous, updates));
       });
     };
 
@@ -146,6 +144,11 @@ export const usePlayersPresence = (
     );
 
     return () => {
+      presenceUpdateController.pendingUpdates.clear();
+      if (presenceUpdateController.frame !== null) {
+        window.cancelAnimationFrame(presenceUpdateController.frame);
+        presenceUpdateController.frame = null;
+      }
       socket.off(
         GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         handleOnlinePlayersPresenceUpdate,
@@ -157,7 +160,6 @@ export const usePlayersPresence = (
     if (!socket || !connected || !joined) return;
 
     const handlePermissionsUpdated = () => {
-      setOnlinePlayers({});
       setPermissionsVersion((version) => version + 1);
     };
 

@@ -84,10 +84,9 @@ export const CatchingWhitelistWarning: FC = () => {
     handleClose();
   };
 
-  if (!windowState.open) return null;
-
   return (
     <DraggableWindow
+      isOpen={windowState.open}
       id="catching-whitelist-warning"
       title={t("window.title")}
       onClose={handleClose}

@@ -26,10 +26,11 @@ import type { CreateNotificationRuleDto } from "src/notifications/dto/create-not
 import type { UpdateNotificationRuleDto } from "src/notifications/dto/update-notification-rule.dto";
 import {
   calculateFirstOccurrenceInTimeZone,
+  isRecurringScheduleInterval,
   isValidTimeZone,
 } from "src/notifications/utils/notification-schedule-time.util";
 import { ensureLimitNotExceeded } from "src/notifications/utils/ensure-limit-not-exceeded.util";
-import { hasOwnUpdateField } from "src/notifications/utils/has-own-update-field.util";
+import { hasOwnField } from "src/shared/utils/has-own-field";
 import {
   type TestTriggerUsage,
   computeTestTriggerUsage,
@@ -39,6 +40,9 @@ import {
 
 const GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT = 10;
 const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS = 15 * 60_000;
+const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_SECONDS = Math.floor(
+  GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000,
+);
 const GUILD_NOTIFICATION_MAX_NPCS_PER_RULE = 5;
 const USER_NOTIFICATION_RULE_LIMIT = 50;
 
@@ -104,9 +108,8 @@ export class NotificationRuleService {
         ruleCount: rules.length,
         maxNpcsPerRule: GUILD_NOTIFICATION_MAX_NPCS_PER_RULE,
         testTriggerLimit: GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
-        testTriggerWindowSeconds: Math.floor(
-          GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000,
-        ),
+        testTriggerWindowSeconds:
+          GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_SECONDS,
       },
     };
   }
@@ -211,7 +214,7 @@ export class NotificationRuleService {
         limit: worstUsage?.limit ?? GUILD_NOTIFICATION_TEST_TRIGGER_LIMIT,
         windowSeconds:
           worstUsage?.windowSeconds ??
-          Math.floor(GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_MS / 1000),
+          GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_SECONDS,
         nextAvailableAt: worstUsage?.nextAvailableAt ?? null,
       });
     }
@@ -373,9 +376,9 @@ export class NotificationRuleService {
     ruleId: number,
     data: UpdateNotificationRuleDto,
   ) {
-    const hasName = hasOwnUpdateField(data, "name");
-    const hasWorld = hasOwnUpdateField(data, "world");
-    const hasContentTemplate = hasOwnUpdateField(data, "contentTemplate");
+    const hasName = hasOwnField(data, "name");
+    const hasWorld = hasOwnField(data, "world");
+    const hasContentTemplate = hasOwnField(data, "contentTemplate");
     const existingRule = await this.ensureRule({ ownerType, ownerId, ruleId });
     const nextTriggerType =
       (data.triggerType as DbNotificationTriggerType | undefined) ??
@@ -766,7 +769,7 @@ export class NotificationRuleService {
       data.scheduleWeekday ?? existingRule?.scheduleWeekday ?? null;
     const timeOfDay =
       data.scheduleTimeOfDay ?? existingRule?.scheduleTimeOfDay ?? null;
-    const hasScheduledUntil = hasOwnUpdateField(data, "scheduledUntil");
+    const hasScheduledUntil = hasOwnField(data, "scheduledUntil");
     let scheduledUntil = existingRule?.scheduledUntil ?? null;
 
     if (hasScheduledUntil) {
@@ -783,8 +786,7 @@ export class NotificationRuleService {
 
     if (
       ownerType === DbNotificationOwnerType.USER &&
-      (intervalType === DbNotificationScheduleIntervalType.DAILY ||
-        intervalType === DbNotificationScheduleIntervalType.WEEKLY) &&
+      isRecurringScheduleInterval(intervalType) &&
       !scheduleTimezone
     ) {
       throw new BadRequestException(
@@ -802,8 +804,7 @@ export class NotificationRuleService {
 
     if (
       !scheduledAt &&
-      (intervalType === DbNotificationScheduleIntervalType.DAILY ||
-        intervalType === DbNotificationScheduleIntervalType.WEEKLY) &&
+      isRecurringScheduleInterval(intervalType) &&
       timeOfDay &&
       scheduleTimezone
     ) {

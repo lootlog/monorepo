@@ -52,6 +52,10 @@ export enum Queue {
   GUILDS_PARTY_GATHERING_RETRY = "gateway-guilds-party-gathering.retry",
   GUILDS_PARTY_GATHERING_CANCEL = "gateway-guilds-party-gathering-cancel",
 
+  USERS_PARTY_READY_ROOM_UPDATED = "gateway-users-party-ready-room-updated",
+  USERS_PARTY_READY_ROOM_UPDATED_DLQ = "gateway-users-party-ready-room-updated.dlq",
+  USERS_PARTY_READY_ROOM_UPDATED_RETRY = "gateway-users-party-ready-room-updated.retry",
+
   GUILDS_DELETE_MESSAGE = "gateway-guilds-delete-message",
   GUILDS_UPDATE_MESSAGE = "gateway-guilds-update-message",
   GUILDS_CLEAR_MESSAGES = "gateway-guilds-clear-messages",

@@ -1,12 +1,13 @@
 import {
-  useTimersControllerDeleteTimer,
-  useTimersControllerResetTimer,
+  timersControllerDeleteTimer,
+  timersControllerResetTimer,
 } from "@/lib/api/generated/main/timers/timers";
 import { isApiError } from "@/lib/api-client";
 import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-helpers";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
+import { useShallow } from "zustand/react/shallow";
 
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
@@ -21,14 +22,28 @@ export const useTimerActions = (
     revealTimer,
     pinTimer,
     unpinTimer,
-    pinnedTimers,
     setTimerColor,
-    alwaysVisibleExpiredTimers,
     showExpiredTimerAlways,
     hideExpiredTimerAlways,
-  } = useTimersStore();
-  const { mutateAsync: resetTimer } = useTimersControllerResetTimer();
-  const { mutate: deleteTimer } = useTimersControllerDeleteTimer();
+    isPinned,
+    isAlwaysVisibleExpiredTimer,
+  } = useTimersStore(
+    useShallow((state) => ({
+      hideTimer: state.hideTimer,
+      revealTimer: state.revealTimer,
+      pinTimer: state.pinTimer,
+      unpinTimer: state.unpinTimer,
+      setTimerColor: state.setTimerColor,
+      showExpiredTimerAlways: state.showExpiredTimerAlways,
+      hideExpiredTimerAlways: state.hideExpiredTimerAlways,
+      isPinned:
+        state.pinnedTimers[settingsKey]?.includes(timer.npc.name) ?? false,
+      isAlwaysVisibleExpiredTimer:
+        state.alwaysVisibleExpiredTimers[timer.world]?.includes(
+          timer.timerKey,
+        ) ?? false,
+    })),
+  );
   const getResetTimerErrorMessage = (error: unknown) => {
     const apiMessage =
       isApiError(error) &&
@@ -61,11 +76,6 @@ export const useTimerActions = (
 
     return t("messages.deleteFailed", { name: timer.npc.name });
   };
-
-  const isPinned = pinnedTimers[settingsKey]?.includes(timer.npc.name);
-  const isAlwaysVisibleExpiredTimer =
-    alwaysVisibleExpiredTimers?.[timer.world]?.includes(timer.timerKey) ??
-    false;
 
   const handleHideTimer = () => {
     if (!settingsKey) return;
@@ -149,31 +159,31 @@ export const useTimerActions = (
           timer.mergedGuildIds.flatMap(({ guildId, timerKey }) =>
             timerKey
               ? [
-                  resetTimer({
-                    pathParams: {
+                  timersControllerResetTimer(
+                    {
                       guildId,
                       timerIdentifier: timerKey,
                     },
-                    data: {
+                    {
                       world,
                       actorCharacter,
                     },
-                  }),
+                  ),
                 ]
               : [],
           ),
         );
       } else {
-        await resetTimer({
-          pathParams: {
+        await timersControllerResetTimer(
+          {
             guildId: timer.guildId,
             timerIdentifier: timer.timerKey,
           },
-          data: {
+          {
             world,
             actorCharacter,
           },
-        });
+        );
       }
 
       window.message?.(t("messages.resetSuccess", { name: timer.npc.name }));
@@ -185,23 +195,18 @@ export const useTimerActions = (
   const handleDeleteTimer = (guildId: string, timerKey: string) => {
     if (!world) return;
 
-    deleteTimer(
+    void timersControllerDeleteTimer(
       {
-        pathParams: {
-          guildId,
-          timerIdentifier: timerKey,
-        },
-        params: world ? { world } : undefined,
+        guildId,
+        timerIdentifier: timerKey,
       },
-      {
-        onSuccess: () => {
-          window.message?.(
-            t("messages.deleteSuccess", { name: timer.npc.name }),
-          );
-        },
-        onError: (error) => {
-          window.message?.(getDeleteTimerErrorMessage(error));
-        },
+      world ? { world } : undefined,
+    ).then(
+      () => {
+        window.message?.(t("messages.deleteSuccess", { name: timer.npc.name }));
+      },
+      (error) => {
+        window.message?.(getDeleteTimerErrorMessage(error));
       },
     );
   };

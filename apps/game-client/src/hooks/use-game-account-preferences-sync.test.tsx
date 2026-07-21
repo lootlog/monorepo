@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -15,6 +15,9 @@ const mockUseUserGameAccountPreferences = vi.fn();
 const mockUseUpdateUserGameAccountPreferences = vi.fn();
 const mockFlushPending = vi.fn();
 const mockMutate = vi.fn();
+const { mockGetAccountId } = vi.hoisted(() => ({
+  mockGetAccountId: vi.fn((): string | null => "202"),
+}));
 
 vi.mock("@/lib/api/generated/main/users/users", async () => {
   const actual = await vi.importActual<typeof UsersApi>(
@@ -40,7 +43,7 @@ vi.mock("@/lib/game", () => ({
     hero: {
       account: 202,
     },
-    getAccountId: () => "202",
+    getAccountId: () => mockGetAccountId(),
   },
 }));
 
@@ -87,6 +90,8 @@ describe("useGameAccountPreferencesSync", () => {
     });
     mockMutate.mockReset();
     mockFlushPending.mockReset();
+    mockGetAccountId.mockReset();
+    mockGetAccountId.mockReturnValue("202");
   });
 
   const wrapper = ({ children }: { children: ReactNode }) =>
@@ -189,5 +194,36 @@ describe("useGameAccountPreferencesSync", () => {
     await waitFor(() => {
       expect(mockFlushPending).toHaveBeenCalledWith("202");
     });
+  });
+
+  it("resolves account id after game initialization before flushing queued detector events", () => {
+    vi.useFakeTimers();
+
+    try {
+      mockGetAccountId.mockReturnValue(null);
+      mockUseUserGameAccountPreferences.mockImplementation(
+        (accountId: string | null) => ({
+          data: undefined,
+          isLoading: false,
+          isFetching: false,
+          isFetched: accountId === "202",
+        }),
+      );
+
+      renderHook(() => useGameAccountPreferencesSync(), {
+        wrapper,
+      });
+
+      expect(mockFlushPending).not.toHaveBeenCalled();
+
+      mockGetAccountId.mockReturnValue("202");
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+
+      expect(mockFlushPending).toHaveBeenCalledWith("202");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

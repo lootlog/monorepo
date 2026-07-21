@@ -87,46 +87,153 @@ export class ActivitiesService {
     dto: CreateActivityDto,
   ): Promise<void> {
     if (dto.type === ActivityType.CONNECT_EVENT) {
-      const lastSeenAt = new Date();
-
-      await tx.memberActivityStats.upsert({
-        where: {
-          guildId_discordId_source: {
-            guildId: dto.guildId,
-            discordId: dto.discordId,
-            source: dto.source,
-          },
-        },
-        update: {
-          lastSeenAt,
-          visitCount: { increment: 1 },
-          activeSessionCount: { increment: 1 },
-        },
-        create: {
-          guildId: dto.guildId,
-          discordId: dto.discordId,
-          source: dto.source,
-          lastSeenAt,
-          visitCount: 1,
-          activeSessionCount: 1,
-        },
-      });
+      await this.updateMemberActivityStatsForConnect(tx, dto);
       return;
     }
 
     if (dto.type === ActivityType.DISCONNECT_EVENT) {
-      await tx.memberActivityStats.updateMany({
-        where: {
+      await this.updateMemberActivityStatsForDisconnect(tx, dto);
+    }
+  }
+
+  private async updateMemberActivityStatsForConnect(
+    tx: Prisma.TransactionClient,
+    dto: CreateActivityDto,
+  ): Promise<void> {
+    const sessionId = this.getActivitySessionId(dto);
+    const lastSeenAt = new Date();
+    const createdSession = await tx.memberActivitySession.createMany({
+      data: {
+        guildId: dto.guildId,
+        discordId: dto.discordId,
+        source: dto.source,
+        sessionId,
+        userId: dto.userId,
+        userAgent: this.getDetailsString(dto, "userAgent"),
+        world: dto.world,
+        lastSeenAt,
+      },
+      skipDuplicates: true,
+    });
+    const activeSessionCount = await tx.memberActivitySession.count({
+      where: {
+        guildId: dto.guildId,
+        discordId: dto.discordId,
+        source: dto.source,
+      },
+    });
+    const visitCountIncrement = createdSession.count;
+
+    await tx.memberActivityStats.upsert({
+      where: {
+        guildId_discordId_source: {
           guildId: dto.guildId,
           discordId: dto.discordId,
           source: dto.source,
+        },
+      },
+      update: {
+        lastSeenAt,
+        ...(visitCountIncrement > 0
+          ? { visitCount: { increment: visitCountIncrement } }
+          : {}),
+        activeSessionCount,
+      },
+      create: {
+        guildId: dto.guildId,
+        discordId: dto.discordId,
+        source: dto.source,
+        lastSeenAt,
+        visitCount: visitCountIncrement,
+        activeSessionCount,
+      },
+    });
+  }
+
+  private async updateMemberActivityStatsForDisconnect(
+    tx: Prisma.TransactionClient,
+    dto: CreateActivityDto,
+  ): Promise<void> {
+    const sessionId = this.getActivitySessionId(dto);
+
+    await tx.memberActivitySession.deleteMany({
+      where: {
+        guildId: dto.guildId,
+        discordId: dto.discordId,
+        source: dto.source,
+        sessionId,
+      },
+    });
+    const activeSessionCount = await tx.memberActivitySession.count({
+      where: {
+        guildId: dto.guildId,
+        discordId: dto.discordId,
+        source: dto.source,
+      },
+    });
+
+    await tx.memberActivityStats.updateMany({
+      where: {
+        guildId: dto.guildId,
+        discordId: dto.discordId,
+        source: dto.source,
+      },
+      data: {
+        activeSessionCount,
+      },
+    });
+  }
+
+  async clearActiveSessionsForMember(member: {
+    guildId: string;
+    discordId: string;
+  }): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.memberActivitySession.deleteMany({
+        where: {
+          guildId: member.guildId,
+          discordId: member.discordId,
+        },
+      });
+
+      await tx.memberActivityStats.updateMany({
+        where: {
+          guildId: member.guildId,
+          discordId: member.discordId,
           activeSessionCount: { gt: 0 },
         },
         data: {
-          activeSessionCount: { decrement: 1 },
+          activeSessionCount: 0,
         },
       });
+    });
+  }
+
+  private getActivitySessionId(dto: CreateActivityDto): string {
+    const sessionId = this.getDetailsString(dto, "sessionId");
+
+    if (!sessionId) {
+      throw new Error(
+        `${dto.type} activity for ${dto.discordId} in ${dto.guildId} is missing details.sessionId`,
+      );
     }
+
+    return sessionId;
+  }
+
+  private getDetailsString(
+    dto: CreateActivityDto,
+    key: string,
+  ): string | undefined {
+    const details = dto.details;
+
+    if (!details || Array.isArray(details) || typeof details !== "object") {
+      return undefined;
+    }
+
+    const value = details[key];
+
+    return typeof value === "string" && value.length > 0 ? value : undefined;
   }
 
   async deleteOne(id: string, guildId: string): Promise<number> {

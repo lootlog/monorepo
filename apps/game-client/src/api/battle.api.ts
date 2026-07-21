@@ -80,9 +80,13 @@ export async function createBattle(
   options: CreateBattleOptions,
 ): Promise<CreateBattleResponse> {
   const client = getApiClient("battlelog");
+  const { events, ...battleContext } = options;
   const response = await runSingleLoggedAction({
     actionType: "create_battle",
-    actionPayload: options,
+    actionPayload: {
+      ...battleContext,
+      eventCount: events.length,
+    },
     request: {
       method: "POST",
       endpoint: "/battles",

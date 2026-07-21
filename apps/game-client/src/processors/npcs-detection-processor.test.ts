@@ -150,6 +150,13 @@ const createNpcTpl = (overrides?: Partial<NpcTpl>): NpcTpl =>
     ...overrides,
   }) as NpcTpl;
 
+const flushAsyncIntents = async () => {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+};
+
 describe("NpcsDetectionProcessor", () => {
   let processor: NpcsDetectionProcessor;
 
@@ -232,6 +239,34 @@ describe("NpcsDetectionProcessor", () => {
     }
   });
 
+  it("replaces an overflowing account queue with one authoritative rescan", () => {
+    mockGetNpcTypeByWt.mockReturnValue("HERO");
+
+    for (let index = 0; index < 201; index += 1) {
+      processor.handle({
+        ...createNpcEvent(),
+        npcs: [
+          {
+            id: index,
+            x: 12,
+            y: 18,
+            tpl: 900,
+            icon: { id: 44 },
+          },
+        ],
+      } as GameEvent);
+    }
+
+    mockGame.npcs = [createGameNpc({ id: 999 })];
+    mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
+    readyPreferences();
+    processor.flushPending("202");
+
+    expect(useNpcDetectorStore.getState().npcs).toEqual([
+      expect.objectContaining({ id: 999 }),
+    ]);
+  });
+
   it("does not flush pending detections when preferences are still not ready", () => {
     mockGetNpcTypeByWt.mockReturnValue("HERO");
 
@@ -239,6 +274,37 @@ describe("NpcsDetectionProcessor", () => {
     processor.flushPending("202");
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+  });
+
+  it("clears pending detections and retry timers during teardown", () => {
+    vi.useFakeTimers();
+    try {
+      processor.handle(createNpcEvent());
+      readyPreferences();
+      mockGame.npcs = [];
+      processor.handleInitialDetection();
+
+      processor.cleanup();
+      processor.flushPending("202");
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+      expect(
+        (
+          processor as unknown as {
+            initialDetectionRetryTimeout: ReturnType<typeof setTimeout> | null;
+          }
+        ).initialDetectionRetryTimeout,
+      ).toBeNull();
+      expect(
+        (
+          NpcsDetectionProcessor as unknown as {
+            pendingDetections: unknown[];
+          }
+        ).pendingDetections,
+      ).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("returns early when there is nothing pending to flush", () => {
@@ -284,6 +350,93 @@ describe("NpcsDetectionProcessor", () => {
       }),
     ]);
     expect(mockPlaySound).toHaveBeenCalledWith("detector", "HERO");
+  });
+
+  it("retries initial detection when game npcs are not ready yet", () => {
+    vi.useFakeTimers();
+
+    try {
+      readyPreferences({
+        notifySound: true,
+      });
+      mockGame.npcs = [];
+      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
+      mockGetNpcTypeByWt.mockReturnValue("HERO");
+      vi.clearAllTimers();
+
+      processor.handleInitialDetection();
+      processor.handleInitialDetection();
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+
+      mockGame.npcs = [createGameNpc()];
+      vi.advanceTimersByTime(100);
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([
+        expect.objectContaining({
+          id: 501,
+          nick: "Initial npc",
+          icon: "fallback-icon.gif",
+        }),
+      ]);
+      expect(mockPlaySound).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps retrying initial detection while game npcs contain invalid entries", () => {
+    vi.useFakeTimers();
+
+    try {
+      readyPreferences({
+        notifySound: true,
+      });
+      mockGame.npcs = [undefined as unknown as GameNpc];
+      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
+      mockGetNpcTypeByWt.mockReturnValue("HERO");
+      vi.clearAllTimers();
+
+      processor.handleInitialDetection();
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+
+      mockGame.npcs = [createGameNpc()];
+      vi.advanceTimersByTime(100);
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([
+        expect.objectContaining({
+          id: 501,
+          nick: "Initial npc",
+          icon: "fallback-icon.gif",
+        }),
+      ]);
+      expect(mockPlaySound).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops retrying initial detection after the retry limit", () => {
+    vi.useFakeTimers();
+
+    try {
+      readyPreferences();
+      mockGame.npcs = [];
+      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
+      mockGetNpcTypeByWt.mockReturnValue("HERO");
+      vi.clearAllTimers();
+
+      processor.handleInitialDetection();
+
+      vi.advanceTimersByTime(2_000);
+
+      expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+      expect(mockGetNpcTypeByWt).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("ignores empty npc events and init packets", () => {
@@ -384,8 +537,7 @@ describe("NpcsDetectionProcessor", () => {
 
     processor.handle(createNpcEvent());
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushAsyncIntents();
 
     expect(mockCreateNotification).toHaveBeenCalledWith({
       npc: {
@@ -459,8 +611,7 @@ describe("NpcsDetectionProcessor", () => {
 
     processor.handle(createNpcEvent());
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushAsyncIntents();
 
     expect(mockCreateNotification).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -505,8 +656,7 @@ describe("NpcsDetectionProcessor", () => {
 
     processor.flushPending("202");
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushAsyncIntents();
 
     expect(mockCreateNotification).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -547,8 +697,7 @@ describe("NpcsDetectionProcessor", () => {
 
     processor.handle(createNpcEvent());
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushAsyncIntents();
 
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       "[NpcsDetectionProcessor] Failed to send notification:",
@@ -582,8 +731,7 @@ describe("NpcsDetectionProcessor", () => {
 
     processor.handle(createNpcEvent());
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushAsyncIntents();
 
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       "[NpcsDetectionProcessor] Failed to send chat message:",
@@ -608,8 +756,7 @@ describe("NpcsDetectionProcessor", () => {
 
     processor.handle(createNpcEvent());
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushAsyncIntents();
 
     expect(mockCreateNotification).not.toHaveBeenCalled();
     expect(mockSendChatMessage).not.toHaveBeenCalled();

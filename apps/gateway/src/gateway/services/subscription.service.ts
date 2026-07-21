@@ -11,14 +11,19 @@ import { GuildsService } from "src/guilds/guilds.service";
 import { PresenceService } from "./presence.service";
 import { ActivityService } from "./activity.service";
 import { ActivityType } from "src/gateway/enums/activity-type.enum";
+import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
+import type { MargonemAccountProofDto } from "src/gateway/dto/join-gateway.dto";
 import type {
   Socket,
   SocketUserPlayer,
 } from "src/gateway/types/socket-user.type";
 import type { UserGuildData } from "src/guilds/types/guild.types";
+import { MargonemAccountProofService } from "./margonem-account-proof.service";
+import { env } from "src/config/env";
 
 interface JoinResult {
   status: ResponseStatus;
+  code?: string;
   message?: string;
   guildsCount?: number;
   guildIds?: string[];
@@ -33,6 +38,7 @@ export class SubscriptionService {
     private guildsService: GuildsService,
     private presenceService: PresenceService,
     private activityService: ActivityService,
+    private margonemAccountProofService: MargonemAccountProofService,
   ) {}
 
   async handleJoin(
@@ -41,8 +47,30 @@ export class SubscriptionService {
     discordId: string,
     userId: string,
     player: SocketUserPlayer | undefined,
+    margonemAccountProof?: MargonemAccountProofDto,
   ): Promise<JoinResult> {
     try {
+      if (client.data.platform === Platform.GAME) {
+        if (!player) {
+          return {
+            status: ResponseStatus.ERROR,
+            code: "MARGONEM_ACCOUNT_PROOF_INVALID",
+            message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
+          };
+        }
+
+        const proofError = await this.verifyMargonemAccountProof({
+          client,
+          discordId,
+          player,
+          margonemAccountProof,
+        });
+
+        if (proofError) {
+          return proofError;
+        }
+      }
+
       const guilds = await this.guildsService.getUserGuilds({
         discordId,
         userId,
@@ -78,6 +106,11 @@ export class SubscriptionService {
         client,
         user,
         GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+      );
+      this.presenceService.emitMemberWebPresenceUpdate(
+        server,
+        client,
+        UserPresenceStatus.ONLINE,
       );
 
       await this.activityService.publishActivityEvent(
@@ -123,5 +156,51 @@ export class SubscriptionService {
       client,
       guilds,
     );
+  }
+
+  private async verifyMargonemAccountProof({
+    client,
+    discordId,
+    player,
+    margonemAccountProof,
+  }: {
+    client: Socket;
+    discordId: string;
+    player: SocketUserPlayer;
+    margonemAccountProof?: MargonemAccountProofDto;
+  }): Promise<JoinResult | null> {
+    const proofVerification =
+      await this.margonemAccountProofService.verifyProof({
+        proof: margonemAccountProof,
+        socketId: client.id,
+        accountId: player.accountId,
+        characterId: player.characterId,
+        clanId: player.clan?.id,
+      });
+
+    if (proofVerification.valid === false) {
+      client.data.margonemAccountVerified = false;
+
+      if (env.MARGONEM_ACCOUNT_PROOF_REQUIRED) {
+        this.logger.warn(
+          `Rejected game join for ${discordId}: ${proofVerification.reason}`,
+        );
+
+        return {
+          status: ResponseStatus.ERROR,
+          code: "MARGONEM_ACCOUNT_PROOF_INVALID",
+          message: ErrorMessages.MARGONEM_ACCOUNT_PROOF_INVALID,
+        };
+      }
+
+      this.logger.warn(
+        `Accepted unverified game join for ${discordId}: ${proofVerification.reason}`,
+      );
+
+      return null;
+    }
+
+    client.data.margonemAccountVerified = true;
+    return null;
   }
 }

@@ -41,7 +41,11 @@
     "openapi:check": "tsx ./scripts/check-openapi.ts",
     "knip": "knip",
     "knip:fix": "knip --fix",
-    "api:migrate:dev": "turbo run api:migrate:dev",
+    "perf:k6": "node tools/k6/run-k6.mjs",
+    "perf:k6:smoke": "node tools/k6/run-k6.mjs --profile smoke",
+    "perf:k6:service": "node tools/k6/run-k6.mjs",
+    "perf:gateway": "node tools/k6/gateway.mjs",
+    "api:migrate:dev": "turbo run api:migrate:dev --filter=@lootlog/api --ui=tui",
     "api:generate": "turbo run api:generate",
     "api:client:generate": "pnpm openapi:generate && pnpm openapi:check && tsx ./scripts/sanitize-openapi.ts && orval --config ./orval.config.ts",
     "api:studio": "turbo run api:studio",
@@ -73,6 +77,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
+    "@lootlog/socket-parser": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "husky": "^9.1.7",
     "knip": "^6.5.0",
@@ -80,6 +85,7 @@
     "orval": "^8.17.0",
     "oxfmt": "^0.43.0",
     "oxlint": "^1.61.0",
+    "socket.io-client": "^4.8.3",
     "tsx": "^4.22.4",
     "turbo": "^2.9.18",
     "typescript": "6.0.3"

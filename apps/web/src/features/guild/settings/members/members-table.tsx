@@ -2,11 +2,15 @@ import { PermissionCategoryTooltip } from "@/features/guild/settings/components/
 import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
 import { MemberDiscordSyncIndicator } from "@/features/guild/settings/members/components/member-discord-sync-indicator";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
+import type { MemberActivityStatsByDiscordId } from "@/features/guild/settings/members/member-activity-stats.utils";
+import {
+  isMemberGamePresenceVerified,
+  isMemberOnlineInGame,
+} from "@/features/guild/settings/members/member-game-presence.utils";
 import {
   isMemberOnlineOnWeb,
-  type MemberActivityStatsByDiscordId,
-} from "@/features/guild/settings/members/member-activity-stats.utils";
-import { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
+  type MemberWebPresenceByDiscordId,
+} from "@/features/guild/settings/members/member-web-presence.utils";
 import { getMemberOnlineSources } from "@/features/guild/settings/members/member-list-item.utils";
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
@@ -42,6 +46,7 @@ import {
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  BadgeCheck,
   CheckCircle2,
   Crown,
   Gamepad2,
@@ -60,6 +65,7 @@ type MembersTableProps = {
   isMobile: boolean;
   canManageMembers: boolean;
   memberGamePresenceByDiscordId: Parameters<typeof isMemberOnlineInGame>[0];
+  memberWebPresenceByDiscordId: MemberWebPresenceByDiscordId | undefined;
   guildId: string;
 };
 
@@ -71,6 +77,7 @@ export const MembersTable = ({
   isMobile,
   canManageMembers,
   memberGamePresenceByDiscordId,
+  memberWebPresenceByDiscordId,
   guildId,
 }: MembersTableProps) => {
   const { t } = useTranslation();
@@ -112,8 +119,15 @@ export const MembersTable = ({
           const gameActivityStats = activityStatsByDiscordIdAndSource.get(
             member.userId,
           )?.GAME;
-          const isOnlineOnWeb = isMemberOnlineOnWeb(webActivityStats);
+          const isOnlineOnWeb = isMemberOnlineOnWeb(
+            memberWebPresenceByDiscordId,
+            member.userId,
+          );
           const isOnlineInGame = isMemberOnlineInGame(
+            memberGamePresenceByDiscordId,
+            member.userId,
+          );
+          const isGamePresenceVerified = isMemberGamePresenceVerified(
             memberGamePresenceByDiscordId,
             member.userId,
           );
@@ -171,6 +185,27 @@ export const MembersTable = ({
                         </TooltipProvider>
                       );
                     })}
+                    {isGamePresenceVerified && (
+                      <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <BadgeCheck className="size-3.5" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-sm font-semibold">
+                              {t(
+                                "settings.members.webActivity.onlineSources.margonemVerified",
+                              )}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </span>
                 )}
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
@@ -247,8 +282,15 @@ export const MembersTable = ({
           const gameActivityStats = activityStatsByDiscordIdAndSource.get(
             member.userId,
           )?.GAME;
-          const isOnlineOnWeb = isMemberOnlineOnWeb(webActivityStats);
+          const isOnlineOnWeb = isMemberOnlineOnWeb(
+            memberWebPresenceByDiscordId,
+            member.userId,
+          );
           const isOnlineInGame = isMemberOnlineInGame(
+            memberGamePresenceByDiscordId,
+            member.userId,
+          );
+          const isGamePresenceVerified = isMemberGamePresenceVerified(
             memberGamePresenceByDiscordId,
             member.userId,
           );
@@ -369,6 +411,27 @@ export const MembersTable = ({
                               </TooltipProvider>
                             );
                           })}
+                          {isGamePresenceVerified && (
+                            <TooltipProvider delayDuration={100}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    <BadgeCheck className="size-3.5" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <p className="text-sm font-semibold">
+                                    {t(
+                                      "settings.members.webActivity.onlineSources.margonemVerified",
+                                    )}
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                         </span>
                       )}
                     </div>

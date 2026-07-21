@@ -63,7 +63,17 @@ const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
   return false;
 };
 
-const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
+type DeadNpc = {
+  id: number;
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  wt: number;
+  type: number;
+};
+
+const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
   const deadNpcs: Array<{
     id: number;
     name: string;
@@ -73,53 +83,70 @@ const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
     wt: number;
     type: number;
   }> = [];
+  let hasNpcInBattle = false;
+  let topNpc: DeadNpc | null = null;
 
   for (const [key, warrior] of Object.entries(warriors)) {
-    if (key.startsWith("-") && isWarriorDead(warrior)) {
-      deadNpcs.push({
-        id: Number.parseInt(key, 10),
-        name: warrior.name,
-        lvl: warrior.lvl,
-        prof: warrior.prof || "",
-        icon: warrior.icon,
-        wt: warrior.wt,
-        type: warrior.type,
-      });
+    if (!key.startsWith("-")) {
+      continue;
+    }
+
+    hasNpcInBattle = true;
+
+    if (!isWarriorDead(warrior)) {
+      continue;
+    }
+
+    const deadNpc = {
+      id: Number.parseInt(key, 10),
+      name: warrior.name,
+      lvl: warrior.lvl,
+      prof: warrior.prof || "",
+      icon: warrior.icon,
+      wt: warrior.wt,
+      type: warrior.type,
+    };
+
+    deadNpcs.push(deadNpc);
+
+    if (!topNpc || deadNpc.wt > topNpc.wt) {
+      topNpc = deadNpc;
     }
   }
 
-  return deadNpcs;
+  return {
+    deadNpcs,
+    hasNpcInBattle,
+    topNpc,
+  };
 };
 
 export class BattleEventProcessor {
   private observedTeams = new Set<number>();
   private hasMultipleTeams = false;
+  private hasWarnedCaptureOverflow = false;
+  private battleGeneration = 0;
+  private finalizingGeneration: number | null = null;
 
   async handle(event: GameEvent): Promise<void> {
     if (!event.f) return;
 
-    const accountId = Game.hero.account;
-    const characterId = Game.hero.id;
-    const world = Game.getWorldName();
-
     const battlePanelStore = useBattlePanelStore.getState();
     const battleStore = useBattleStore.getState();
+    const stateAtIngress = useBattleStore.getState();
+    const startsBattle = event.f.init === "1";
 
-    if (event.f.init === "1") {
+    if (startsBattle) {
+      this.battleGeneration += 1;
       battleStore.clearEvents();
-      battleStore.setBattleState("in-battle");
-      battleStore.updateBattleWarriors(null);
       this.observedTeams.clear();
       this.hasMultipleTeams = false;
+      this.hasWarnedCaptureOverflow = false;
     }
 
+    let battleWarriors = startsBattle ? {} : stateAtIngress.battleWarriors;
     if (event.f.w) {
-      const previousBattleWarriors = useBattleStore.getState().battleWarriors;
-      const battleWarriorsWithAccountId = addAccountIdsToWarriors(
-        event.f.w,
-        previousBattleWarriors,
-      );
-      battleStore.updateBattleWarriors(battleWarriorsWithAccountId);
+      battleWarriors = addAccountIdsToWarriors(event.f.w, battleWarriors);
 
       // Incremental team detection — O(1) amortized instead of O(N*M)
       if (!this.hasMultipleTeams) {
@@ -135,118 +162,150 @@ export class BattleEventProcessor {
       }
     }
 
+    const battleState = startsBattle ? "in-battle" : stateAtIngress.battleState;
+    const endsBattle = event.f.endBattle === 1 && battleState === "in-battle";
+
+    if (endsBattle && this.finalizingGeneration === this.battleGeneration) {
+      return;
+    }
+
     if (battlePanelStore.isBattleCollectionEnabled) {
       battleStore.addEvent(event);
     }
 
-    if (
-      event.f.endBattle === 1 &&
-      useBattleStore.getState().battleState === "in-battle"
-    ) {
-      const battleWarriors = useBattleStore.getState().battleWarriors;
-      const hasNpcInBattle = Object.keys(battleWarriors).some((key) =>
-        key.startsWith("-"),
-      );
+    if (!endsBattle) {
+      battleStore.applyBatch({
+        battleState: startsBattle ? "in-battle" : undefined,
+        battleWarriors: startsBattle || event.f.w ? battleWarriors : undefined,
+      });
+      return;
+    }
+
+    const endingGeneration = this.battleGeneration;
+    this.finalizingGeneration = endingGeneration;
+    const capture = battlePanelStore.isBattleCollectionEnabled
+      ? battleStore.getCaptureSnapshot()
+      : null;
+
+    try {
+      const { deadNpcs, hasNpcInBattle, topNpc } =
+        getNpcBattleSummary(battleWarriors);
+      let nextLastKillHash = stateAtIngress.lastKillHash;
+      let nextLastBattleHash = stateAtIngress.lastBattleHash;
+      let killIntent: Parameters<typeof createKill>[0] | null = null;
+      let battleIntent: Parameters<typeof createBattle>[0] | null = null;
 
       // Kill tracking — always runs regardless of isBattleCollectionEnabled
-      if (hasNpcInBattle) {
-        const deadNpcs = extractDeadNpcs(battleWarriors);
+      if (hasNpcInBattle && topNpc) {
+        const npcType = getNpcTypeByWt(
+          NpcType,
+          topNpc.wt,
+          topNpc.prof,
+          topNpc.type,
+        );
 
-        if (deadNpcs.length > 0) {
-          const sortedByWt = [...deadNpcs].sort((a, b) => b.wt - a.wt);
-          const topNpc = sortedByWt[0];
+        if (TRACKABLE_NPC_TYPES.has(npcType)) {
+          // Kill hash includes timestamp to prevent ignoring repeat kills of same respawned monster
+          const killHash = await createSHA256Hash(
+            JSON.stringify({
+              ids: deadNpcs.map((npc) => npc.id).sort(),
+              ts: Date.now(),
+            }),
+          );
 
-          if (topNpc) {
-            const npcType = getNpcTypeByWt(
-              NpcType,
-              topNpc.wt,
-              topNpc.prof,
-              topNpc.type,
-            );
-
-            if (TRACKABLE_NPC_TYPES.has(npcType)) {
-              // Kill hash includes timestamp to prevent ignoring repeat kills of same respawned monster
-              const killHash = await createSHA256Hash(
-                JSON.stringify({
-                  ids: deadNpcs.map((npc) => npc.id).sort(),
-                  ts: Date.now(),
-                }),
-              );
-              const lastKillHash = useBattleStore.getState().lastKillHash;
-
-              if (killHash !== lastKillHash) {
-                const { type: _, ...npcWithoutType } = topNpc;
-                createKill({
-                  world,
-                  npc: npcWithoutType,
-                  characterId: String(characterId),
-                  accountId: String(accountId),
-                }).catch((error) => {
-                  console.warn(
-                    "[BattleEventProcessor] Failed to create kill:",
-                    error,
-                  );
-                });
-                battleStore.setLastKillHash(killHash);
-              }
-            }
+          if (killHash !== nextLastKillHash) {
+            const hero = Game.hero;
+            const { type: _, ...npcWithoutType } = topNpc;
+            killIntent = {
+              world: Game.getWorldName(),
+              npc: npcWithoutType,
+              characterId: String(hero.id),
+              accountId: String(hero.account),
+            };
+            nextLastKillHash = killHash;
           }
         }
       }
 
       // Battle logging — only if enabled
-      if (battlePanelStore.isBattleCollectionEnabled) {
-        const battleTurns = useBattleStore
-          .getState()
-          .events.reduce((acc: string[], curr) => {
-            if (!curr.f || !curr.f.m) return acc;
-
-            return [...acc, ...curr.f.m];
-          }, []);
-
-        const battleHash = await createSHA256Hash(JSON.stringify(battleTurns));
-        const lastBattleHash = useBattleStore.getState().lastBattleHash;
-
-        if (lastBattleHash !== battleHash) {
-          const events = mapBattleEventsToPayload(
-            useBattleStore.getState().events,
+      if (capture) {
+        if (capture.overflowed) {
+          if (!this.hasWarnedCaptureOverflow) {
+            this.hasWarnedCaptureOverflow = true;
+            console.warn(
+              "[BattleEventProcessor] Battle capture exceeded its safety budget; skipping the partial payload.",
+            );
+          }
+        } else {
+          const battleHash = await createSHA256Hash(
+            JSON.stringify(capture.turns),
           );
 
-          // Use incremental hasMultipleTeams flag instead of O(N*M) loop
-          if (events && !hasNpcInBattle && this.hasMultipleTeams) {
-            const submissionId = await createSHA256Hash(
-              JSON.stringify({
-                accountId: String(accountId),
-                characterId: String(characterId),
+          if (nextLastBattleHash !== battleHash) {
+            const events = mapBattleEventsToPayload(capture.events);
+
+            // Use incremental hasMultipleTeams flag instead of O(N*M) loop
+            if (events && !hasNpcInBattle && this.hasMultipleTeams) {
+              const hero = Game.hero;
+              const accountId = String(hero.account);
+              const characterId = String(hero.id);
+              const world = Game.getWorldName();
+              const submissionId = await createSHA256Hash(
+                JSON.stringify({
+                  accountId,
+                  characterId,
+                  events,
+                  world,
+                }),
+              );
+
+              battleIntent = {
+                accountId,
+                characterId,
+                submissionId,
                 events,
                 world,
-              }),
-            );
-
-            createBattle({
-              accountId: String(accountId),
-              characterId: String(characterId),
-              submissionId,
-              world,
-              events,
-            })
-              .then((response) => {
-                showBattleCreatedToast(response.battleId);
-              })
-              .catch((error) => {
-                console.warn(
-                  "[BattleEventProcessor] Failed to create battle:",
-                  error,
-                );
-              });
+              };
+            }
           }
+          nextLastBattleHash = battleHash;
         }
+      }
 
-        battleStore.setLastBattleHash(battleHash);
+      if (endingGeneration !== this.battleGeneration) {
+        return;
       }
 
       battleStore.clearEvents();
-      battleStore.setBattleState("idle");
+      battleStore.applyBatch({
+        battleState: "idle",
+        battleWarriors,
+        lastBattleHash: nextLastBattleHash,
+        lastKillHash: nextLastKillHash,
+      });
+
+      if (killIntent) {
+        createKill(killIntent).catch((error) => {
+          console.warn("[BattleEventProcessor] Failed to create kill:", error);
+        });
+      }
+
+      if (battleIntent) {
+        createBattle(battleIntent)
+          .then((response) => {
+            showBattleCreatedToast(response.battleId);
+          })
+          .catch((error) => {
+            console.warn(
+              "[BattleEventProcessor] Failed to create battle:",
+              error,
+            );
+          });
+      }
+    } finally {
+      if (this.finalizingGeneration === endingGeneration) {
+        this.finalizingGeneration = null;
+      }
     }
   }
 }

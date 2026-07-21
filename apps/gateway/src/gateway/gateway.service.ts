@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import type { PartyReadyRoomUpdateEnvelope } from "@lootlog/types";
 import { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
 import type { ChatMessageDeleteDto } from "src/gateway/dto/chat-message-delete.dto";
 import type { ChatMessageEnvelopeDto } from "src/gateway/dto/chat-message-envelope.dto";
@@ -20,7 +21,7 @@ import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering
 import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { Gateway } from "src/gateway/gateway";
-import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
+import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { UserGuildData } from "src/guilds/types/guild.types";
@@ -32,12 +33,18 @@ import type {
 } from "src/gateway/types/margo-event.types";
 import {
   buildRoomName,
+  buildUserGuildRoomName,
   calculateUserRooms,
   getNpcTier,
   hasFeatureRoomAccess,
   type FeatureName,
   type TierName,
 } from "src/gateway/utils/room-utils";
+import { ActivityService } from "src/gateway/services/activity.service";
+import { PresenceService } from "src/gateway/services/presence.service";
+import { ActivityType } from "src/gateway/enums/activity-type.enum";
+import type { Socket } from "src/gateway/types/socket-user.type";
+import { AirTagService } from "src/gateway/services/air-tag.service";
 
 type FetchedSocket = Awaited<
   ReturnType<Gateway["server"]["fetchSockets"]>
@@ -58,7 +65,19 @@ export class GatewayService {
     private readonly gateway: Gateway,
     private readonly redis: RedisService,
     private readonly guildsService: GuildsService,
+    private readonly activityService: ActivityService,
+    private readonly presenceService: PresenceService,
+    private readonly airTagService: AirTagService,
   ) {}
+
+  handlePartyReadyRoomUpdate(data: PartyReadyRoomUpdateEnvelope) {
+    const rooms = data.eligibleGuildIds.map((guildId) =>
+      buildUserGuildRoomName(data.recipientDiscordId, guildId),
+    );
+    this.gateway.server
+      .to(rooms)
+      .emit(GatewayEvent.PARTY_READY_ROOM_UPDATE, data.update);
+  }
 
   private emitToFeatureRoom({
     guildId,
@@ -91,7 +110,7 @@ export class GatewayService {
 
             // Owner/Admin bypass level checks
             const isOwner = guildData.guild.ownerId === socket.data.discordId;
-            if (isOwner || isOwnerOrAdminFromRoles(guildData.roles)) {
+            if (isOwner || isAdministrativeUserFromRoles(guildData.roles)) {
               socket.emit(event, data);
               return;
             }
@@ -197,7 +216,7 @@ export class GatewayService {
 
           const isOwner = guildData.guild.ownerId === socket.data.discordId;
           const isOwnerOrAdmin =
-            isOwner || isOwnerOrAdminFromRoles(guildData.roles);
+            isOwner || isAdministrativeUserFromRoles(guildData.roles);
 
           if (
             routing.npcLevel !== undefined &&
@@ -293,6 +312,10 @@ export class GatewayService {
           discordId,
           socket.data.platform,
         );
+        const removedGuildIds = this.getRemovedGuildIds(
+          socket.data.guilds,
+          updatedGuilds,
+        );
 
         const roomsToLeave = currentRooms.filter(
           (room) => !newFeatureRooms.includes(room),
@@ -309,12 +332,20 @@ export class GatewayService {
           socket.join(room);
         }
 
+        await this.cleanupRemovedGuildSessions(socket, removedGuildIds);
+
+        await this.airTagService.clearSubscription(socket as unknown as Socket);
+
         socket.data.guilds = updatedGuilds;
 
         socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
           guilds: updatedGuilds,
           featureRooms: newFeatureRooms,
         });
+
+        if (updatedGuilds.length === 0) {
+          socket.disconnect(true);
+        }
       }
     } catch (error) {
       this.logger.error(
@@ -322,6 +353,48 @@ export class GatewayService {
         error.stack,
       );
     }
+  }
+
+  private async cleanupRemovedGuildSessions(
+    socket: FetchedSocket,
+    removedGuildIds: string[],
+  ): Promise<void> {
+    if (removedGuildIds.length === 0) {
+      return;
+    }
+
+    const client = socket as unknown as Socket;
+
+    await this.activityService.publishActivityEventForGuildIds(
+      ActivityType.DISCONNECT_EVENT,
+      client,
+      removedGuildIds,
+    );
+    this.presenceService.emitDisconnectPresenceForGuildIds(
+      this.gateway.server,
+      client,
+      removedGuildIds,
+    );
+    await this.presenceService.broadcastPlayerDisconnectForGuildIds(
+      this.gateway.server,
+      client,
+      removedGuildIds,
+    );
+  }
+
+  private getRemovedGuildIds(
+    currentGuilds: UserGuildData[] | undefined,
+    updatedGuilds: UserGuildData[],
+  ): string[] {
+    if (!currentGuilds || currentGuilds.length === 0) {
+      return [];
+    }
+
+    const updatedGuildIds = new Set(updatedGuilds.map(({ guild }) => guild.id));
+
+    return currentGuilds
+      .map(({ guild }) => guild.id)
+      .filter((guildId) => !updatedGuildIds.has(guildId));
   }
 
   handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {

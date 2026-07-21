@@ -5,15 +5,21 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { UserGameAccountPreferencesResponseDtoOutputAirTags } from './user-game-account-preferences-response-dto-output-air-tags.js';
 import type { UserGameAccountPreferencesResponseDtoOutputDetector } from './user-game-account-preferences-response-dto-output-detector.js';
 import type { UserGameAccountPreferencesResponseDtoOutputNotifications } from './user-game-account-preferences-response-dto-output-notifications.js';
+import type { UserGameAccountPreferencesResponseDtoOutputPings } from './user-game-account-preferences-response-dto-output-pings.js';
 
 export interface UserGameAccountPreferencesResponseDtoOutput {
   /** @minLength 1 */
   accountId: string;
   notifications: UserGameAccountPreferencesResponseDtoOutputNotifications;
   detector: UserGameAccountPreferencesResponseDtoOutputDetector;
+  pings: UserGameAccountPreferencesResponseDtoOutputPings;
+  airTags: UserGameAccountPreferencesResponseDtoOutputAirTags;
   hasStoredNotifications: boolean;
   hasStoredDetector: boolean;
+  hasStoredPings: boolean;
+  hasStoredAirTags: boolean;
   hasStoredPreferences: boolean;
 }

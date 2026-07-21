@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DraggableWindow } from "@/components/draggable-window";
@@ -7,6 +13,7 @@ import { useWindowsStore } from "@/store/windows.store";
 const resizeObserverCallbacks: Array<() => void> = [];
 const resizeObserverObservedElements: Element[] = [];
 const mutationObserverCallbacks: Array<() => void> = [];
+const initialWindowInnerWidth = window.innerWidth;
 
 class ResizeObserverMock {
   constructor(private readonly callback: () => void) {
@@ -76,7 +83,7 @@ const mockElementRenderedHeight = (element: HTMLElement, height: number) => {
 
 const createScrollAreaChildren = () => (
   <div className="ll:flex ll:h-full ll:w-full ll:flex-col ll:overflow-hidden">
-    <div data-radix-scroll-area-viewport="">
+    <div data-ll-native-scroll-area="">
       <div>
         <div>Treść</div>
       </div>
@@ -130,7 +137,7 @@ const getNestedScrollAreaElements = (container: HTMLElement) => {
   const { windowElement, windowBody, titleBarElement, contentElement } =
     getWindowElements(container, { requireResizeHandle: false });
   const viewportElement = container.querySelector(
-    "[data-radix-scroll-area-viewport]",
+    "[data-ll-native-scroll-area]",
   );
   const viewportContent = viewportElement?.firstElementChild;
   const measuredContentElement = viewportContent?.firstElementChild;
@@ -183,11 +190,141 @@ describe("DraggableWindow", () => {
     resizeObserverCallbacks.length = 0;
     resizeObserverObservedElements.length = 0;
     mutationObserverCallbacks.length = 0;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: initialWindowInnerWidth,
+    });
+  });
+
+  it("contains layout and style invalidation within each overlay window", () => {
+    const { container } = render(
+      <DraggableWindow isOpen id="notifications" title="Powiadomienia">
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+
+    const { windowElement } = getWindowElements(container);
+
+    expect(windowElement.style.contain).toBe("layout style");
+  });
+
+  it("animates the visual surface and disables interaction during exit", () => {
+    const { container, rerender } = render(
+      <DraggableWindow isOpen id="notifications" title="Powiadomienia">
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+    const { windowBody, windowElement } = getWindowElements(container);
+
+    expect(windowBody).toHaveClass("ll-window-enter");
+    expect(windowElement).not.toHaveClass("ll-window-enter");
+    expect(windowElement.style.transform).toBe("");
+
+    fireEvent.animationEnd(windowBody);
+
+    expect(windowBody).not.toHaveClass("ll-window-enter");
+
+    rerender(
+      <DraggableWindow isOpen={false} id="notifications" title="Powiadomienia">
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+
+    expect(windowBody).toHaveClass("ll-window-exit");
+    expect(windowElement).toHaveAttribute("aria-hidden", "true");
+    expect(windowElement.style.pointerEvents).toBe("none");
+
+    fireEvent.animationEnd(screen.getByText("Treść"));
+
+    expect(
+      container.querySelector('[data-ll-draggable-window="notifications"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.animationEnd(windowBody);
+
+    expect(
+      container.querySelector('[data-ll-draggable-window="notifications"]'),
+    ).toBeNull();
+  });
+
+  it("fits width to changing content and caps it at the viewport", async () => {
+    const { container } = render(
+      <DraggableWindow
+        isOpen
+        id="notifications"
+        title="Powiadomienia"
+        minWidth={250}
+        minHeight={56}
+        widthMode="fit-content"
+        resizable={false}
+      >
+        <div className="ll:w-max">Treść</div>
+      </DraggableWindow>,
+    );
+    const { windowElement, windowBody, contentElement } = getWindowElements(
+      container,
+      { requireResizeHandle: false },
+    );
+    const contentRoot = contentElement.firstElementChild;
+
+    if (!(contentRoot instanceof HTMLDivElement)) {
+      throw new Error("Expected draggable window content root");
+    }
+
+    Object.defineProperty(windowBody, "offsetWidth", {
+      configurable: true,
+      value: 250,
+    });
+    Object.defineProperty(contentElement, "clientWidth", {
+      configurable: true,
+      value: 240,
+    });
+    Object.defineProperty(contentRoot, "scrollWidth", {
+      configurable: true,
+      value: 320,
+    });
+
+    await triggerResizeObservers();
+    await flushAnimationFrame();
+
+    await waitFor(() => {
+      expect(windowElement.style.width).toBe("330px");
+    });
+
+    Object.defineProperty(contentRoot, "scrollWidth", {
+      configurable: true,
+      value: 180,
+    });
+    await triggerResizeObservers();
+    await flushAnimationFrame();
+
+    await waitFor(() => {
+      expect(windowElement.style.width).toBe("250px");
+    });
+
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 300,
+    });
+    Object.defineProperty(contentRoot, "scrollWidth", {
+      configurable: true,
+      value: 500,
+    });
+    window.dispatchEvent(new Event("resize"));
+    await flushAnimationFrame();
+
+    await waitFor(() => {
+      expect(windowElement.style.width).toBe("300px");
+    });
+    expect(
+      container.querySelector("[data-ll-window-resize-handle]"),
+    ).toBeNull();
   });
 
   it("caps auto height using the provided content limit", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -233,10 +370,33 @@ describe("DraggableWindow", () => {
     });
   });
 
+  it("uses CSS auto height without content observers", () => {
+    const { container } = render(
+      <DraggableWindow
+        isOpen
+        id="notifications"
+        title="Powiadomienia"
+        minWidth={242}
+        minHeight={64}
+        heightMode="css-auto-up-to-max"
+        maxContentHeight={180}
+      >
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+    const { windowElement, contentElement } = getWindowElements(container);
+
+    expect(windowElement.style.height).toBe("auto");
+    expect(contentElement.style.maxHeight).toBe("180px");
+    expect(resizeObserverCallbacks).toHaveLength(0);
+    expect(mutationObserverCallbacks).toHaveLength(0);
+  });
+
   it("resizes only width when auto height mode is not armed", async () => {
     const handleMaxContentHeightChange = vi.fn();
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         minWidth={242}
@@ -286,6 +446,7 @@ describe("DraggableWindow", () => {
 
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         minWidth={242}
@@ -379,6 +540,7 @@ describe("DraggableWindow", () => {
   it("measures nested scroll area content and grows with a larger max content height", async () => {
     const { container, rerender } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -441,6 +603,7 @@ describe("DraggableWindow", () => {
 
     rerender(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -498,6 +661,7 @@ describe("DraggableWindow", () => {
   it("does not undershoot nested scroll area height when rendered content uses fractional pixels", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -557,6 +721,7 @@ describe("DraggableWindow", () => {
   it("does not undershoot nested scroll area height while the window opening scale transform is active", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -616,6 +781,7 @@ describe("DraggableWindow", () => {
   it("shrinks with the content when nested scroll area content gets smaller", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -702,6 +868,7 @@ describe("DraggableWindow", () => {
   it("does not overshoot height when content growth temporarily lags behind the window body resize", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         minWidth={242}

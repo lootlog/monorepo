@@ -32,6 +32,18 @@ const createPresenceSocket = (
     },
   }) as Socket;
 
+const createWebPresenceSocket = (
+  discordId: string,
+  sessionId: string,
+): Socket =>
+  ({
+    data: {
+      discordId,
+      platform: Platform.WEB_APP,
+      sessionId,
+    },
+  }) as Socket;
+
 const createViewerClient = (
   guildId: string,
   permissions: Permission[] = [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
@@ -98,6 +110,58 @@ describe("PresenceService", () => {
   async function flushPromises() {
     return new Promise((resolve) => setImmediate(resolve));
   }
+
+  describe("fetchMemberWebPresence", () => {
+    it("returns active web sessions grouped by discord id", async () => {
+      const guildId = "guild-1";
+      const client = createViewerClient(guildId);
+      const gameSocket = {
+        data: {
+          discordId: "discord-game",
+          platform: Platform.GAME,
+          sessionId: "session-game",
+        },
+      };
+
+      mockFetchSockets.mockResolvedValue([
+        createWebPresenceSocket("discord-1", "session-1"),
+        createWebPresenceSocket("discord-1", "session-2"),
+        createWebPresenceSocket("discord-2", "session-3"),
+        gameSocket,
+      ]);
+
+      const result = await service.fetchMemberWebPresence(
+        mockServer as never,
+        client,
+        guildId,
+      );
+
+      expect(result).toEqual({
+        status: "success",
+        sessions: {
+          "discord-1": [{ sessionId: "session-1" }, { sessionId: "session-2" }],
+          "discord-2": [{ sessionId: "session-3" }],
+        },
+      });
+    });
+
+    it("returns forbidden when viewer cannot access online players", async () => {
+      const guildId = "guild-1";
+      const client = createViewerClient(guildId, []);
+
+      const result = await service.fetchMemberWebPresence(
+        mockServer as never,
+        client,
+        guildId,
+      );
+
+      expect(result).toEqual({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
+      expect(mockServer.in).not.toHaveBeenCalled();
+    });
+  });
 
   describe("fetchEventPresence", () => {
     it("returns all guild presence when world is not provided", async () => {
@@ -471,6 +535,7 @@ describe("PresenceService", () => {
         id: "session-1",
         data: {
           guilds: [{ guild: { id: "guild-1" } }],
+          margonemAccountVerified: true,
           player: {
             world: "alpha",
             name: "Hero",
@@ -532,6 +597,7 @@ describe("PresenceService", () => {
           player: expect.objectContaining({
             mapId: 2,
             mapName: "Ithan",
+            margonemAccountVerified: true,
             clan: {
               id: 15191,
               name: "Karhu",
@@ -548,6 +614,7 @@ describe("PresenceService", () => {
           player: expect.objectContaining({
             mapId: 2,
             mapName: "Ithan",
+            margonemAccountVerified: true,
           }),
         }),
       );
@@ -560,6 +627,7 @@ describe("PresenceService", () => {
         id: "session-1",
         data: {
           platform: Platform.GAME,
+          margonemAccountVerified: true,
           player: {
             world: "alpha",
             name: "Hero",
@@ -595,6 +663,7 @@ describe("PresenceService", () => {
           discordId: "discord-1",
           player: expect.objectContaining({
             mapName: "Karka-han",
+            margonemAccountVerified: true,
             clan: {
               id: 15191,
               name: "Karhu",

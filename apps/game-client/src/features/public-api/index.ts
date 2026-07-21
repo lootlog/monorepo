@@ -22,6 +22,9 @@ declare global {
 export function bootstrapPublicApi(queryClient: QueryClient): () => void {
   const emitter = new Emitter<ApiEventMap>();
 
+  const subscriptions = setupSubscriptions(queryClient, emitter);
+  const listenerCounts = new Map<ApiEventName, number>();
+
   const api: LootlogGameClientApi = Object.freeze({
     apiVersion: 1 as const,
 
@@ -58,7 +61,29 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
       eventName: E,
       listener: (payload: ApiEventMap[E]) => void,
     ): () => void {
-      return emitter.on(eventName, listener);
+      const listenerCount = listenerCounts.get(eventName) ?? 0;
+      if (listenerCount === 0) {
+        subscriptions.activate(eventName);
+      }
+      listenerCounts.set(eventName, listenerCount + 1);
+
+      const unsubscribeEmitter = emitter.on(eventName, listener);
+      let active = true;
+      return () => {
+        if (!active) {
+          return;
+        }
+
+        active = false;
+        unsubscribeEmitter();
+        const nextListenerCount = (listenerCounts.get(eventName) ?? 1) - 1;
+        if (nextListenerCount === 0) {
+          listenerCounts.delete(eventName);
+          subscriptions.deactivate(eventName);
+          return;
+        }
+        listenerCounts.set(eventName, nextListenerCount);
+      };
     },
   });
 
@@ -69,10 +94,9 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
     configurable: true,
   });
 
-  const teardown = setupSubscriptions(queryClient, emitter);
-
   return () => {
-    teardown();
+    subscriptions.teardown();
+    listenerCounts.clear();
     emitter.clear();
     delete window.lootlogGameClientApi;
   };

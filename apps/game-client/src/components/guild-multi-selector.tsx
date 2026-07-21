@@ -8,8 +8,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type FC, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import type { Viewport } from "@radix-ui/react-scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 type GuildMultiSelectorProps = {
@@ -25,7 +24,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
   onChange,
   value,
 }) => {
-  const scrollContainerRef = useRef<React.ElementRef<typeof Viewport>>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
 
   useEffect(() => {
@@ -61,10 +60,10 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
 
   return (
     <TooltipProvider>
-      <ScrollArea
+      <NativeScrollArea
         className={cn("ll:w-full", className)}
+        orientation="horizontal"
         ref={scrollContainerRef}
-        type="hover"
       >
         <div className="ll:flex ll:gap-1 ll:mt-1">
           {guilds?.map((guild) => {
@@ -109,11 +108,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
             );
           })}
         </div>
-        <ScrollBar
-          orientation="horizontal"
-          className="ll:my-0 ll:mx-0 ll:w-full"
-        />
-      </ScrollArea>
+      </NativeScrollArea>
     </TooltipProvider>
   );
 };

@@ -2,32 +2,42 @@ import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 import { cn } from "@/lib/utils";
+import { getLootlogPortalContainer } from "./theme-boundary";
+
+const TooltipProviderContext = React.createContext(false);
 
 function TooltipProvider({
   delayDuration = 0,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
   return (
-    <TooltipPrimitive.Provider
-      data-slot="tooltip-provider"
-      delayDuration={delayDuration}
-      {...props}
-    />
+    <TooltipProviderContext.Provider value>
+      <TooltipPrimitive.Provider
+        data-slot="tooltip-provider"
+        delayDuration={delayDuration}
+        {...props}
+      />
+    </TooltipProviderContext.Provider>
   );
 }
 
 function Tooltip({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return (
-    <TooltipProvider>
-      <TooltipPrimitive.Root
-        data-slot="tooltip"
-        disableHoverableContent
-        {...props}
-      />
-    </TooltipProvider>
+  const hasProvider = React.useContext(TooltipProviderContext);
+  const tooltip = (
+    <TooltipPrimitive.Root
+      data-slot="tooltip"
+      disableHoverableContent
+      {...props}
+    />
   );
+
+  if (hasProvider) {
+    return tooltip;
+  }
+
+  return <TooltipProvider>{tooltip}</TooltipProvider>;
 }
 
 function TooltipTrigger({
@@ -43,7 +53,7 @@ function TooltipContent({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
   return (
-    <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Portal container={getLootlogPortalContainer()}>
       <TooltipPrimitive.Content
         data-slot="tooltip-content"
         sideOffset={sideOffset}

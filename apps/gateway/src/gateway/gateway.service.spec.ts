@@ -11,13 +11,17 @@ import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto";
 import { NpcType } from "./enums/npc-type.enum";
 import { GatewayEvent } from "./enums/gateway-event.enum";
 import { Platform } from "./enums/platform.enum";
-import { Permission } from "@lootlog/types";
+import { Permission, type PartyReadyRoomUpdateEnvelope } from "@lootlog/types";
+import { ActivityType } from "./enums/activity-type.enum";
+import { ActivityService } from "./services/activity.service";
+import { PresenceService } from "./services/presence.service";
 import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
 } from "./dto/reservation-event.dto";
 import type { ChatMessageEnvelopeDto } from "./dto/chat-message-envelope.dto";
 import type { ChatMessagesClearDto } from "./dto/chat-messages-clear.dto";
+import { AirTagService } from "./services/air-tag.service";
 
 describe("GatewayService", () => {
   let service: GatewayService;
@@ -54,6 +58,19 @@ describe("GatewayService", () => {
     getUserGuilds: vi.fn(),
   };
 
+  const mockActivityService = {
+    publishActivityEventForGuildIds: vi.fn(),
+  };
+
+  const mockPresenceService = {
+    emitDisconnectPresenceForGuildIds: vi.fn(),
+    broadcastPlayerDisconnectForGuildIds: vi.fn(),
+  };
+
+  const mockAirTagService = {
+    clearSubscription: vi.fn(),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -77,10 +94,82 @@ describe("GatewayService", () => {
           provide: GuildsService,
           useValue: mockGuildsService,
         },
+        {
+          provide: ActivityService,
+          useValue: mockActivityService,
+        },
+        {
+          provide: PresenceService,
+          useValue: mockPresenceService,
+        },
+        {
+          provide: AirTagService,
+          useValue: mockAirTagService,
+        },
       ],
     }).compile();
 
     service = module.get<GatewayService>(GatewayService);
+  });
+
+  it("emits a Ready Room update only to the recipient's user-and-guild rooms", () => {
+    const envelope = {
+      recipientDiscordId: "participant",
+      eligibleGuildIds: ["guild-1", "guild-2"],
+      update: {
+        schemaVersion: 3,
+        type: "UPSERT",
+        projection: {
+          schemaVersion: 3,
+          notificationId: "room-1",
+          organizerDiscordId: "organizer",
+          organizerCharacter: {
+            accountId: "account",
+            characterId: "character",
+            icon: "character.gif",
+            lvl: 200,
+            nick: "Organizer",
+            prof: "w",
+          },
+          guildIds: ["guild-1", "guild-2"],
+          world: "Fobos",
+          status: "ACTIVE",
+          revision: 2,
+          createdAt: "2026-07-13T10:00:00.000Z",
+          updatedAt: "2026-07-13T10:01:00.000Z",
+          expiresAt: "2026-07-13T10:30:00.000Z",
+          viewer: "PARTICIPANT",
+          participants: {
+            "participant-1": {
+              participantId: "participant-1",
+              discordId: "participant",
+              character: {
+                accountId: "participant-account",
+                characterId: "participant-character",
+                icon: "participant.gif",
+                lvl: 190,
+                nick: "Participant",
+                prof: "m",
+              },
+              partyPresence: "OUTSIDE",
+              createdAt: "2026-07-13T10:01:00.000Z",
+              updatedAt: "2026-07-13T10:01:00.000Z",
+            },
+          },
+        },
+      },
+    } satisfies PartyReadyRoomUpdateEnvelope;
+
+    service.handlePartyReadyRoomUpdate(envelope);
+
+    expect(mockServer.to).toHaveBeenCalledWith([
+      "user:participant:guild:guild-1",
+      "user:participant:guild:guild-2",
+    ]);
+    expect(mockServer.emit).toHaveBeenCalledWith(
+      GatewayEvent.PARTY_READY_ROOM_UPDATE,
+      envelope.update,
+    );
   });
 
   // Helper function to wait for all promises
@@ -1509,6 +1598,97 @@ describe("GatewayService", () => {
           featureRooms: expect.any(Array),
         }),
       );
+    });
+
+    it("should publish disconnect cleanup for guilds removed during rebalance", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+      const updatedGuilds = [
+        {
+          guild: { id: "guild-2", ownerId: "owner-1" },
+          roles: [],
+        },
+      ];
+      const mockUserSocket = {
+        id: "socket-123",
+        data: {
+          discordId,
+          userId,
+          sessionId: "socket-123",
+          platform: Platform.WEB_APP,
+          guilds: [
+            {
+              guild: { id: "guild-1", ownerId: "owner-1" },
+              roles: [],
+            },
+            {
+              guild: { id: "guild-2", ownerId: "owner-1" },
+              roles: [],
+            },
+          ],
+        },
+        rooms: new Set(["socket-123", "guild-1:presence", "guild-2:presence"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+        disconnect: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(
+        mockActivityService.publishActivityEventForGuildIds,
+      ).toHaveBeenCalledWith(ActivityType.DISCONNECT_EVENT, mockUserSocket, [
+        "guild-1",
+      ]);
+      expect(
+        mockPresenceService.emitDisconnectPresenceForGuildIds,
+      ).toHaveBeenCalledWith(mockServer, mockUserSocket, ["guild-1"]);
+      expect(
+        mockPresenceService.broadcastPlayerDisconnectForGuildIds,
+      ).toHaveBeenCalledWith(mockServer, mockUserSocket, ["guild-1"]);
+      expect(mockUserSocket.data.guilds).toEqual(updatedGuilds);
+      expect(mockUserSocket.disconnect).not.toHaveBeenCalled();
+    });
+
+    it("should disconnect sockets after all guild access is removed", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+      const mockUserSocket = {
+        id: "socket-123",
+        data: {
+          discordId,
+          userId,
+          sessionId: "socket-123",
+          platform: Platform.WEB_APP,
+          guilds: [
+            {
+              guild: { id: "guild-1", ownerId: "owner-1" },
+              roles: [],
+            },
+          ],
+        },
+        rooms: new Set(["socket-123", "guild-1:presence"]),
+        leave: vi.fn(),
+        join: vi.fn(),
+        emit: vi.fn(),
+        disconnect: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue([]);
+      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+
+      await service.rebalanceUserSocketRooms(discordId, userId);
+
+      expect(
+        mockActivityService.publishActivityEventForGuildIds,
+      ).toHaveBeenCalledWith(ActivityType.DISCONNECT_EVENT, mockUserSocket, [
+        "guild-1",
+      ]);
+      expect(mockUserSocket.disconnect).toHaveBeenCalledWith(true);
     });
 
     it("should handle case when user has no active sockets", async () => {

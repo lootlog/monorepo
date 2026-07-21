@@ -2,6 +2,7 @@ import { CharacterTile } from "@/components/character-tile";
 import { Tile } from "@/components/ui/tile";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
+import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
@@ -30,12 +31,19 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
       </div>
       <span className="ll:flex ll:flex-row ll:flex-wrap ll:justify-end ll:-mr-2">
         {presences.map((presence) => (
-          <CharacterTile
+          <span
             key={`${presence.player?.accountId}-${presence.player?.characterId}`}
-            character={getPresenceCharacter(presence)}
-            isAfk={presence.isAfk}
-            className="ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-2"
-          />
+            className="ll:relative ll:inline-flex"
+          >
+            <CharacterTile
+              character={getPresenceCharacter(presence)}
+              isAfk={presence.isAfk}
+              className="ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-2"
+            />
+            {presence.margonemAccountVerified ? (
+              <VerifiedMargonemAccountIcon className="ll:absolute ll:-right-1 ll:-top-1 ll:z-20 ll:size-3.5 ll:bg-gray-950/90" />
+            ) : null}
+          </span>
         ))}
       </span>
     </Tile>

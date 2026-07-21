@@ -14,7 +14,7 @@ import {
   hasOnlinePlayersAccess,
   parseRoomName,
 } from "src/gateway/utils/room-utils";
-import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
+import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
 import type {
   Socket,
   SocketUser,
@@ -31,10 +31,23 @@ export type PresenceFetchResponse<TPlayers> =
       status: "success";
       players: TPlayers;
     }
+  | OnlinePlayersForbiddenResponse;
+
+type OnlinePlayersForbiddenResponse = {
+  status: "forbidden";
+  code: typeof ONLINE_PLAYERS_ACCESS_DENIED_CODE;
+};
+
+export type MemberWebPresenceSession = {
+  sessionId: string;
+};
+
+export type MemberWebPresenceFetchResponse =
   | {
-      status: "forbidden";
-      code: typeof ONLINE_PLAYERS_ACCESS_DENIED_CODE;
-    };
+      status: "success";
+      sessions: Record<string, MemberWebPresenceSession[]>;
+    }
+  | OnlinePlayersForbiddenResponse;
 
 type FetchedSocket = Awaited<ReturnType<Server["fetchSockets"]>>[number];
 
@@ -95,12 +108,91 @@ export class PresenceService {
           client.data.player,
           client.id,
           client.data.playerPresence,
+          undefined,
+          client.data.margonemAccountVerified,
         ),
         status: UserPresenceStatus.OFFLINE,
         sessionId: client.data.sessionId,
       },
       GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
     );
+  }
+
+  emitDisconnectPresenceForGuildIds(
+    server: Server,
+    client: Socket,
+    guildIds: string[],
+  ): void {
+    if (!client.data?.player) return;
+
+    const playerPresence = this.buildPlayerPresence(
+      client.data.player,
+      client.id,
+      client.data.playerPresence,
+      undefined,
+      client.data.margonemAccountVerified,
+    );
+
+    for (const guildId of guildIds) {
+      const payload = {
+        guildId,
+        discordId: client.data.discordId,
+        player: playerPresence,
+        status: UserPresenceStatus.OFFLINE,
+        sessionId: client.data.sessionId,
+      };
+
+      this.emitPresenceToOnlinePlayersRoom({
+        server,
+        sourceClient: client,
+        guildId,
+        event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+        payload,
+        excludeSourceSocket: true,
+      });
+
+      this.emitPresenceToOnlinePlayersRoom({
+        server,
+        sourceClient: client,
+        guildId,
+        event: GatewayEvent.EVENT_PRESENCE_UPDATE,
+        payload,
+        excludeSourceSocket: true,
+      });
+    }
+  }
+
+  emitMemberWebPresenceUpdate(
+    server: Server,
+    client: Socket,
+    status: UserPresenceStatus,
+  ): void {
+    if (client.data.platform !== Platform.WEB_APP) {
+      return;
+    }
+
+    const { discordId, sessionId } = client.data;
+    if (!discordId || !sessionId) {
+      return;
+    }
+
+    client.rooms.forEach((room) => {
+      const parsed = parseRoomName(room);
+      if (!parsed || parsed.feature !== "presence") return;
+
+      this.emitPresenceToOnlinePlayersRoom({
+        server,
+        sourceClient: client,
+        guildId: parsed.guildId,
+        event: GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE,
+        payload: {
+          guildId: parsed.guildId,
+          discordId,
+          sessionId,
+          status,
+        },
+      });
+    });
   }
 
   async broadcastPlayerDisconnect(
@@ -110,10 +202,22 @@ export class PresenceService {
     if (!client.data?.guilds || !client.data?.playerPresence) return;
 
     const guildIds = getGuildIds(client.data.guilds);
+    await this.broadcastPlayerDisconnectForGuildIds(server, client, guildIds);
+  }
+
+  async broadcastPlayerDisconnectForGuildIds(
+    server: Server,
+    client: Socket,
+    guildIds: string[],
+  ): Promise<void> {
+    if (!client.data?.playerPresence || !client.data?.player) return;
+
     const playerPresence = this.buildPlayerPresence(
       client.data.player,
       client.id,
       client.data.playerPresence,
+      undefined,
+      client.data.margonemAccountVerified,
     );
 
     for (const guildId of guildIds) {
@@ -176,6 +280,7 @@ export class PresenceService {
       client.id,
       existingPresence,
       data,
+      client.data.margonemAccountVerified,
     );
 
     client.data.playerPresence = playerPresence;
@@ -281,6 +386,52 @@ export class PresenceService {
     };
   }
 
+  async fetchMemberWebPresence(
+    server: Server,
+    client: Socket,
+    guildId: string,
+  ): Promise<MemberWebPresenceFetchResponse> {
+    const presenceRoom = buildRoomName(guildId, "presence");
+    const onlinePlayersRoom = buildRoomName(guildId, "online-players");
+
+    if (
+      !client.rooms.has(presenceRoom) ||
+      !client.rooms.has(onlinePlayersRoom)
+    ) {
+      return this.createOnlinePlayersForbiddenResponse();
+    }
+
+    const viewerGuildData = this.getSocketGuildData(client, guildId);
+    if (!this.canViewOnlinePlayers(client, viewerGuildData)) {
+      return this.createOnlinePlayersForbiddenResponse();
+    }
+
+    const socketsInRoom = await this.fetchSocketsSafely(
+      () => server.in(presenceRoom).fetchSockets(),
+      `member web presence room ${presenceRoom}`,
+    );
+    const sessions: Record<string, MemberWebPresenceSession[]> = {};
+
+    for (const socket of socketsInRoom) {
+      if (socket.data.platform !== Platform.WEB_APP) {
+        continue;
+      }
+
+      const { discordId, sessionId } = socket.data;
+      if (!discordId || !sessionId) {
+        continue;
+      }
+
+      sessions[discordId] ??= [];
+      sessions[discordId].push({ sessionId });
+    }
+
+    return {
+      status: "success",
+      sessions,
+    };
+  }
+
   async fetchOnlinePlayersPresence(
     server: Server,
     client: Socket,
@@ -378,7 +529,13 @@ export class PresenceService {
     const player = client.data.player;
     if (!player || client.data.platform !== Platform.GAME) return;
 
-    const playerPresence = this.buildPlayerPresence(player, client.id);
+    const playerPresence = this.buildPlayerPresence(
+      player,
+      client.id,
+      undefined,
+      undefined,
+      client.data.margonemAccountVerified,
+    );
 
     client.data.playerPresence = playerPresence;
 
@@ -409,7 +566,7 @@ export class PresenceService {
     }
   }
 
-  private createOnlinePlayersForbiddenResponse(): PresenceFetchResponse<never> {
+  private createOnlinePlayersForbiddenResponse(): OnlinePlayersForbiddenResponse {
     return {
       status: "forbidden",
       code: ONLINE_PLAYERS_ACCESS_DENIED_CODE,
@@ -434,7 +591,7 @@ export class PresenceService {
     const isOwner = guildData.guild.ownerId === viewer.data.discordId;
     return (
       isOwner ||
-      isOwnerOrAdminFromRoles(guildData.roles) ||
+      isAdministrativeUserFromRoles(guildData.roles) ||
       hasOnlinePlayersAccess(guildData.roles)
     );
   }
@@ -500,6 +657,7 @@ export class PresenceService {
     sessionId: string,
     existingPresence?: PlayerPresence,
     data?: PlayerPresenceUpdateDto,
+    margonemAccountVerified = false,
   ): PlayerPresence {
     return {
       world: player.world,
@@ -510,6 +668,7 @@ export class PresenceService {
       lvl: player.lvl,
       prof: player.prof,
       clan: player.clan,
+      margonemAccountVerified,
       mapId: data?.mapId ?? existingPresence?.mapId,
       mapName:
         data?.mapName ?? existingPresence?.mapName ?? player.location?.map,

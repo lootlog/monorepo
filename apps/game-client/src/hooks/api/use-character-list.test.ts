@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchCharacterList, normalizeCharacterList } from "@/api";
+import {
+  CHARACTER_LIST_CACHE_STALE_TTL_MS,
+  fetchCharacterList,
+  normalizeCharacterList,
+} from "@/api";
 import { LanguageVersion } from "@/store/global.store";
 
 const createCharacter = (overrides?: {
@@ -285,5 +289,58 @@ describe("use-character-list helpers", () => {
 
     expect(result).toEqual([createCharacter({ id: 4, nick: "Recovered" })]);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("removes a persistent character cache entry after its stale TTL", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValueOnce(createJsonResponse([createCharacter()]));
+    const options = {
+      accountId: 123,
+      world: "fobos",
+      languageVersion: LanguageVersion.PL,
+    };
+
+    await fetchCharacterList(options);
+    const cacheKey = getCharacterListCacheKey();
+    vi.advanceTimersByTime(CHARACTER_LIST_CACHE_STALE_TTL_MS + 1);
+    window.getCookie = vi.fn(() => null);
+
+    await expect(fetchCharacterList(options)).rejects.toThrow(
+      "Missing required authentication cookie",
+    );
+    expect(window.localStorage.getItem(cacheKey)).toBeNull();
+  });
+
+  it("keeps only the 20 newest persistent character cache entries", async () => {
+    const cachePrefix = "lootlog:margonem-character-list:v1";
+    const now = Date.now();
+
+    for (let index = 0; index < 25; index += 1) {
+      window.localStorage.setItem(
+        `${cachePrefix}:test:${index}:world-${index}`,
+        JSON.stringify({ cachedAt: now, characters: [] }),
+      );
+    }
+    window.getCookie = vi.fn(() => null);
+
+    await expect(
+      fetchCharacterList({
+        accountId: 999,
+        world: "missing",
+        languageVersion: LanguageVersion.PL,
+      }),
+    ).rejects.toThrow("Missing required authentication cookie");
+
+    const retainedKeys = Array.from(
+      { length: window.localStorage.length },
+      (_, index) => window.localStorage.key(index),
+    ).filter((key) => key?.startsWith(`${cachePrefix}:`));
+    expect(retainedKeys).toHaveLength(20);
+    expect(
+      window.localStorage.getItem(`${cachePrefix}:test:0:world-0`),
+    ).toBeNull();
+    expect(
+      window.localStorage.getItem(`${cachePrefix}:test:24:world-24`),
+    ).not.toBeNull();
   });
 });

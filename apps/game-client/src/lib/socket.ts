@@ -10,10 +10,19 @@ import { io, type Socket } from "socket.io-client";
 import { getSerializedDevPermissionOverride } from "@/lib/dev-permission-override";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { msgpackParser } from "@lootlog/socket-parser";
+import type { PartyGatheringSession } from "@/types/party-gathering";
+import type { MargonemAccountProof } from "@/lib/margonem-account-proof";
 import type {
-  PartyFinderVolunteer,
-  PartyGatheringSession,
-} from "@/store/party-finder.store";
+  AirTagObservationAck,
+  AirTagObservationBatch,
+  AirTagSubscriptionAck,
+  AirTagSubscriptionPayload,
+  AirTagUpdateEvent,
+  MapPingAck,
+  MapPingEvent,
+  MapPingSendPayload,
+  PartyReadyRoomClientUpdate,
+} from "@lootlog/types";
 
 type ServerToClientEvents = {
   [GatewayEvent.DISCONNECT]: () => void;
@@ -22,8 +31,10 @@ type ServerToClientEvents = {
 
   [GatewayEvent.JOIN]: (data: {
     status: "success" | "error";
-    guildsCount: number;
-    guildIds: string[];
+    code?: string;
+    message?: string;
+    guildsCount?: number;
+    guildIds?: string[];
   }) => void;
 
   [GatewayEvent.PERMISSIONS_UPDATED]: (data: {
@@ -49,6 +60,7 @@ type ServerToClientEvents = {
       characterId?: string;
       accountId?: string;
       prof?: string;
+      margonemAccountVerified?: boolean;
       clan?: {
         id?: number;
         name?: string;
@@ -69,16 +81,15 @@ type ServerToClientEvents = {
     id: string;
     endsAt: string;
   }) => void;
-  [GatewayEvent.NOTIFICATIONS_VOLUNTEER]: (data: {
-    notificationId: string;
-    volunteer: PartyFinderVolunteer;
-  }) => void;
   [GatewayEvent.PARTY_GATHERING_SEND]: (
     data: PartyGatheringSession & { guildId: string },
   ) => void;
   [GatewayEvent.PARTY_GATHERING_CANCEL]: (data: {
     notificationId: string;
   }) => void;
+  [GatewayEvent.PARTY_READY_ROOM_UPDATE]: (
+    data: PartyReadyRoomClientUpdate,
+  ) => void;
   [GatewayEvent.CHAT_MESSAGE_DELETE]: (data: {
     guildId: string;
     messageId: string;
@@ -89,6 +100,8 @@ type ServerToClientEvents = {
     message: string;
   }) => void;
   [GatewayEvent.CHAT_MESSAGES_CLEAR]: (data: { guildId: string }) => void;
+  [GatewayEvent.MAP_PING_RECEIVE]: (data: MapPingEvent) => void;
+  [GatewayEvent.AIR_TAG_UPDATE]: (data: AirTagUpdateEvent) => void;
 };
 
 type ClientToServerEvents = {
@@ -108,6 +121,7 @@ type ClientToServerEvents = {
       };
       location: { x: number; y: number; map: string };
     };
+    margonemAccountProof?: MargonemAccountProof;
   }) => void;
 
   [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: (data: {
@@ -120,6 +134,18 @@ type ClientToServerEvents = {
     mapId?: number;
     mapName?: string;
   }) => void;
+  [GatewayEvent.MAP_PING_SEND]: (
+    data: MapPingSendPayload,
+    acknowledgement: (response: MapPingAck) => void,
+  ) => void;
+  [GatewayEvent.AIR_TAG_SUBSCRIPTION]: (
+    data: AirTagSubscriptionPayload,
+    acknowledgement: (response: AirTagSubscriptionAck) => void,
+  ) => void;
+  [GatewayEvent.AIR_TAG_OBSERVATION]: (
+    data: AirTagObservationBatch,
+    acknowledgement: (response: AirTagObservationAck) => void,
+  ) => void;
 };
 
 export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -128,6 +154,15 @@ let socket: AppSocket | null = null;
 
 export const getSocket = (): AppSocket => {
   if (!socket) {
+    const fixtureSocket = (
+      window as Window & { __lootlogPerfSocket?: AppSocket }
+    ).__lootlogPerfSocket;
+
+    if (import.meta.env.VITE_PERF_FIXTURE === "1" && fixtureSocket) {
+      socket = fixtureSocket;
+      return socket;
+    }
+
     socket = io(GATEWAY_URL, {
       transports: ["websocket"],
       path: `${GATEWAY_SOCKET_PATH ?? ""}/socket.io`,
@@ -145,4 +180,15 @@ export const getSocket = (): AppSocket => {
   }
 
   return socket;
+};
+
+export const disposeSocket = (): void => {
+  const activeSocket = socket;
+  if (!activeSocket) {
+    return;
+  }
+
+  socket = null;
+  activeSocket.disconnect();
+  activeSocket.removeAllListeners();
 };

@@ -4,6 +4,7 @@ import {
   DEV_PERMISSION_OVERRIDE_EVENT,
   getSerializedDevPermissionOverride,
 } from "@/lib/dev-permission-override";
+import { requestMargonemAccountProof } from "@/lib/margonem-account-proof";
 import { type AppSocket, getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import {
@@ -45,11 +46,35 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   }, [connected, joined, joinedGuilds]);
 
   useEffect(() => {
-    const emitJoin = () => {
+    let cancelled = false;
+
+    const emitJoin = async () => {
       if (gameInitialized && connected) {
         const world = Game.getWorldName();
         const characterId = String(Game.hero.id);
         const accountId = String(Game.hero.account);
+        const socketId = socket.id;
+
+        if (!socketId) {
+          return;
+        }
+
+        const margonemAccountProof = await requestMargonemAccountProof({
+          socketId,
+          accountId,
+          characterId,
+          clanId: Game.hero.clan?.id,
+        }).catch((error) => {
+          if (import.meta.env.DEV) {
+            console.warn("[Gateway] Failed to verify Margonem account", error);
+          }
+
+          return undefined;
+        });
+
+        if (cancelled || !socket.connected) {
+          return;
+        }
 
         socket.emit(GatewayEvent.JOIN, {
           data: {
@@ -73,11 +98,20 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
               map: Game.map.name,
             },
           },
+          ...(margonemAccountProof ? { margonemAccountProof } : {}),
         });
       }
     };
 
-    emitJoin();
+    void emitJoin().catch((error) => {
+      if (import.meta.env.DEV) {
+        console.warn("[Gateway] Failed to verify Margonem account", error);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [gameInitialized, connected, socket]);
 
   useEffect(() => {
@@ -85,15 +119,17 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     const handleDisconnect = () => setConnected(false);
     const handleJoin = (data: {
       status: "success" | "error";
-      guildsCount: number;
-      guildIds: string[];
+      code?: string;
+      message?: string;
+      guildsCount?: number;
+      guildIds?: string[];
     }) => {
       if (data.status === "error") {
         return;
       }
 
       setJoined(true);
-      setJoinedGuilds(data.guildIds);
+      setJoinedGuilds(data.guildIds ?? []);
 
       // Emit initial presence after successful join
       // This ensures presence is sent even after browser refresh
@@ -108,12 +144,12 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       guilds: { guild: { id: string } }[];
     }) => {
       if (import.meta.env.DEV) {
-        console.log("[Gateway] Rooms rebalanced:", data);
+        console.warn("[Gateway] Rooms rebalanced:", data);
       }
 
       if (!data.guilds) {
         if (import.meta.env.DEV) {
-          console.error("[Gateway] No guilds data in permissions update");
+          console.warn("[Gateway] No guilds data in permissions update");
         }
         setJoinedGuilds([]);
         setJoined(false);
@@ -142,10 +178,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.connect();
     };
 
+    const handleAnyDevelopmentEvent = (event: string, ...args: unknown[]) => {
+      if (import.meta.env.DEV) {
+        console.warn(`[Gateway] Event: ${event}`, args);
+      }
+    };
+
     if (import.meta.env.DEV) {
-      socket.onAny((event, ...args) => {
-        console.log(`[Gateway] Event: ${event}`, args);
-      });
+      socket.onAny(handleAnyDevelopmentEvent);
     }
 
     socket.auth = {
@@ -163,6 +203,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      if (import.meta.env.DEV) {
+        socket.offAny(handleAnyDevelopmentEvent);
+      }
       window.removeEventListener(
         DEV_PERMISSION_OVERRIDE_EVENT,
         handleDevPermissionOverrideChange,

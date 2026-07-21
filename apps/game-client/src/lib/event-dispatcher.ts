@@ -10,21 +10,7 @@ import { MapChangeProcessor } from "@/processors/map-change-processor";
 import { AfkProcessor } from "@/processors/afk-processor";
 import { FriendsProcessor } from "@/processors/friends-processor";
 import { PartyProcessor } from "@/processors/party-processor";
-
-const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
-  "chat",
-  "d",
-  "npcs",
-  "npcs_del",
-  "item",
-  "loot",
-  "f",
-  "h",
-  "town",
-  "friends",
-  "friends_max",
-  "party",
-];
+import { OtherEventProcessor } from "@/processors/other-event-processor";
 
 function runSafe(name: string, handler: () => unknown): void {
   try {
@@ -54,24 +40,56 @@ export class EventDispatcher {
   private afk = new AfkProcessor();
   private friends = new FriendsProcessor();
   private party = new PartyProcessor();
+  private other = new OtherEventProcessor();
 
   handleEvent = (event: GameEvent): void => {
-    const hasRelevantKey = RELEVANT_EVENT_KEYS.some(
-      (key) => event[key] !== undefined,
-    );
-    if (!hasRelevantKey) return;
+    if (event.chat !== undefined) {
+      runSafe("chat", () => this.chat.handle(event));
+    }
 
-    runSafe("chat", () => this.chat.handle(event));
-    runSafe("dialog", () => this.dialog.handle(event));
-    runSafe("battle", () => this.battle.handle(event));
-    runSafe("npc-detection", () => this.npcsDetection.handle(event));
-    runSafe("loot-from-battle", () => this.loot.handleLootFromBattle(event));
-    runSafe("dialog-loot", () => this.loot.handleDialogLoot(event));
-    runSafe("npcs-delete", () => this.npcsDelete.handle(event));
-    runSafe("map-change", () => this.mapChange.handle(event));
-    runSafe("afk", () => this.afk.handle(event));
-    runSafe("friends", () => this.friends.handle(event));
-    runSafe("party", () => this.party.handle(event));
+    if (event.d !== undefined) {
+      runSafe("dialog", () => this.dialog.handle(event));
+    }
+
+    if (event.f !== undefined) {
+      runSafe("battle", () => this.battle.handle(event));
+    }
+
+    if (event.town !== undefined) {
+      runSafe("map-change", () => this.mapChange.handle(event));
+    }
+
+    if (event.npcs !== undefined) {
+      runSafe("npc-detection", () => this.npcsDetection.handle(event));
+    }
+
+    if (event.item !== undefined && event.loot?.source === "fight") {
+      runSafe("loot-from-battle", () => this.loot.handleLootFromBattle(event));
+    }
+
+    if (event.item !== undefined && event.loot?.source === "dialog") {
+      runSafe("dialog-loot", () => this.loot.handleDialogLoot(event));
+    }
+
+    if (event.npcs_del !== undefined) {
+      runSafe("npcs-delete", () => this.npcsDelete.handle(event));
+    }
+
+    if (event.other !== undefined) {
+      runSafe("other", () => this.other.handle(event));
+    }
+
+    if (event.h !== undefined) {
+      runSafe("afk", () => this.afk.handle(event));
+    }
+
+    if (event.friends !== undefined || event.friends_max !== undefined) {
+      runSafe("friends", () => this.friends.handle(event));
+    }
+
+    if (event.party !== undefined) {
+      runSafe("party", () => this.party.handle(event));
+    }
   };
 
   handleInitialEvents(): void {
@@ -86,5 +104,6 @@ export class EventDispatcher {
 
   cleanup(): void {
     gameEventsManager.removeProcessor();
+    this.npcsDetection.cleanup();
   }
 }

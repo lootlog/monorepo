@@ -1,23 +1,22 @@
 import type { Other } from "@lootlog/margonem/others";
-import { useEffect, useRef, useState } from "react";
-import { Game } from "@/lib/game";
-import {
-  LOOTLOG_OTHER_GLOW_BLUE,
-  LOOTLOG_OTHER_GLOW_RED_ORANGE,
-} from "@/lib/lootlog-other-glow-manager";
+import { useEffect, useEffectEvent, useRef } from "react";
+import { getLootlogOtherGlowColor } from "@/lib/lootlog-other-glow-manager";
 import { patchOtherCharacterTooltip } from "@/lib/margonem-tooltips/patcher";
+import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {
   getOtherCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
-import { useSettingsStore } from "@/store/settings.store";
 
 const HIGHLIGHT_CLASS = "ll-who-is-here-lootlog-highlight";
 const STYLE_ELEMENT_ID = "ll-who-is-here-lootlog-style";
+const WHO_IS_HERE_ROOT_SELECTOR = ".whoishere-window";
 const WHO_IS_HERE_ROW_SELECTOR = ".whoishere-window .one-other[data-id]";
 const WHO_IS_HERE_COLOR_PROPERTY = "--ll-who-is-here-lootlog-color";
+const WHO_IS_HERE_DISCOVERY_INTERVAL_MS = 250;
 
 type JQueryLike = {
   find?: (selector: string) => unknown;
@@ -40,14 +39,6 @@ type RuntimeWindow = Window &
 
 function getRuntimeWindow(): RuntimeWindow {
   return window as RuntimeWindow;
-}
-
-function getCurrentCharacterId(): string | null {
-  try {
-    return String(Game.hero.id);
-  } catch {
-    return null;
-  }
 }
 
 function getWhoIsHereRows(): HTMLElement[] {
@@ -96,15 +87,15 @@ function getRowCharacterId(row: HTMLElement): string | null {
 function getRowOther(
   row: HTMLElement,
   othersById: Record<string, Other | undefined>,
+  runtimeOthersById?: Record<string, Other | undefined>,
 ): Other | null {
   const characterId = getRowCharacterId(row);
   if (!characterId) return null;
 
-  return (
-    othersById[characterId] ??
-    getRuntimeWindow().Engine?.others?.check?.()[characterId] ??
-    null
-  );
+  const fallbackOthersById =
+    runtimeOthersById ?? getRuntimeWindow().Engine?.others?.check?.();
+
+  return othersById[characterId] ?? fallbackOthersById?.[characterId] ?? null;
 }
 
 function getWhoIsHereTipContainer(
@@ -160,7 +151,6 @@ function isMovingInsideRow(
 
 export function useWhoIsHereLootlogHighlight(): void {
   const hoveredRowRef = useRef<HTMLElement | null>(null);
-  const [mutationVersion, setMutationVersion] = useState(0);
   const entriesByKey = useCharacterTooltipCatchingGuildsStore(
     (state) => state.entriesByKey,
   );
@@ -170,29 +160,40 @@ export function useWhoIsHereLootlogHighlight(): void {
   const activeTarget = useCharacterTooltipCatchingGuildsStore(
     (state) => state.activeTarget,
   );
-  const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
   const othersById = useOthersStore((state) => state.othersById);
   const ownersByCharacterKey = useOnlineCharacterOwnersStore(
     (state) => state.ownersByCharacterKey,
   );
-  const currentCharacterId = getCurrentCharacterId();
-  const selectedGuildId = currentCharacterId
-    ? guildIdByCharId[currentCharacterId]
-    : undefined;
+  const selectedGuildId = useSelectedLootlogGuildId();
+  const refreshRows = useEffectEvent(() => {
+    const rows = getWhoIsHereRows();
+    const runtimeOthersById = getRuntimeWindow().Engine?.others?.check?.();
+
+    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
+      for (const row of rows) {
+        clearRowHighlight(row);
+      }
+      return;
+    }
+
+    for (const row of rows) {
+      const other = getRowOther(row, othersById, runtimeOthersById);
+      const target = other ? getOtherCatchingGuildsTarget(other) : null;
+      const entry = target ? entriesByKey[target.key] : undefined;
+
+      if (!other) {
+        clearRowHighlight(row);
+        continue;
+      }
+
+      setRowHighlight(row, getLootlogOtherGlowColor(entry, selectedGuildId));
+    }
+  });
 
   useEffect(() => {
     const cleanupStyle = installStyle();
-    const observer = new MutationObserver(() => {
-      setMutationVersion((version) => version + 1);
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
 
     return () => {
-      observer.disconnect();
       cleanupStyle();
 
       for (const row of getWhoIsHereRows()) {
@@ -202,40 +203,66 @@ export function useWhoIsHereLootlogHighlight(): void {
   }, []);
 
   useEffect(() => {
-    const rows = getWhoIsHereRows();
-
-    if (!isShiftPressed || !selectedGuildId) {
-      for (const row of rows) {
-        clearRowHighlight(row);
-      }
+    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
       return;
     }
 
-    for (const row of rows) {
-      const other = getRowOther(row, othersById);
-      const target = other ? getOtherCatchingGuildsTarget(other) : null;
-      const entry = target ? entriesByKey[target.key] : undefined;
+    let animationFrameId: number | null = null;
+    const scheduleMutationRefresh = () => {
+      if (animationFrameId !== null) return;
 
-      if (!target || entry?.status !== "success") {
-        clearRowHighlight(row);
-        continue;
+      animationFrameId = requestAnimationFrame(() => {
+        animationFrameId = null;
+        refreshRows();
+      });
+    };
+    const observer = new MutationObserver(scheduleMutationRefresh);
+    let discoveryIntervalId: number | null = null;
+    const observeWhoIsHereRoot = () => {
+      const whoIsHereRoot = document.querySelector<HTMLElement>(
+        WHO_IS_HERE_ROOT_SELECTOR,
+      );
+      if (!whoIsHereRoot) {
+        return false;
       }
 
-      const hasSelectedGuild = entry.guilds.some(
-        (guild) => guild.id === selectedGuildId,
-      );
+      observer.observe(whoIsHereRoot, {
+        childList: true,
+        subtree: true,
+      });
+      return true;
+    };
 
-      setRowHighlight(
-        row,
-        hasSelectedGuild
-          ? LOOTLOG_OTHER_GLOW_BLUE
-          : LOOTLOG_OTHER_GLOW_RED_ORANGE,
-      );
+    if (!observeWhoIsHereRoot()) {
+      discoveryIntervalId = window.setInterval(() => {
+        if (!observeWhoIsHereRoot()) {
+          return;
+        }
+
+        window.clearInterval(discoveryIntervalId ?? undefined);
+        discoveryIntervalId = null;
+        scheduleMutationRefresh();
+      }, WHO_IS_HERE_DISCOVERY_INTERVAL_MS);
     }
+
+    return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
+      if (discoveryIntervalId !== null) {
+        window.clearInterval(discoveryIntervalId);
+      }
+
+      observer.disconnect();
+    };
+  }, [isShiftPressed, selectedGuildId]);
+
+  useEffect(() => {
+    refreshRows();
   }, [
     entriesByKey,
     isShiftPressed,
-    mutationVersion,
     othersById,
     ownersByCharacterKey,
     selectedGuildId,

@@ -1,23 +1,20 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import { useSettingsStore } from "@/store/settings.store";
 import { GuildSwitcher } from "./guild-switcher";
 
 const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserPreferences = vi.fn();
+const runtime = vi.hoisted(() => ({ heroId: 123 as number | undefined }));
 
-vi.mock("@/lib/api/generated/main/users/users", async () => {
-  const actual = await vi.importActual<
-    typeof import("@/lib/api/generated/main/users/users")
-  >("@/lib/api/generated/main/users/users");
-
-  return {
-    ...actual,
-    useUsersControllerGetCurrentUserAccessibleGuilds: () =>
-      mockUseAccessibleGuilds(),
-  };
-});
+vi.mock("@/lib/api/generated/main/users/users", () => ({
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
+    "accessible-guilds",
+  ],
+  useUsersControllerGetCurrentUserAccessibleGuilds: () =>
+    mockUseAccessibleGuilds(),
+}));
 
 vi.mock("@/hooks/api/use-user-preferences", () => ({
   useUserPreferences: () => mockUseUserPreferences(),
@@ -26,7 +23,9 @@ vi.mock("@/hooks/api/use-user-preferences", () => ({
 vi.mock("@/lib/game", () => ({
   Game: {
     hero: {
-      id: 123,
+      get id() {
+        return runtime.heroId;
+      },
     },
   },
 }));
@@ -40,6 +39,8 @@ const createGuild = (id: string, name: string): GuildIdentity => ({
 describe("GuildSwitcher", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    runtime.heroId = 123;
+    useSettingsStore.setState({ guildIdByCharId: {} });
 
     mockUseAccessibleGuilds.mockReturnValue({
       data: [
@@ -53,6 +54,31 @@ describe("GuildSwitcher", () => {
       data: {
         guildsOrder: [],
       },
+    });
+  });
+
+  it("does not initialize the global selection from an uncontrolled switcher", () => {
+    render(<GuildSwitcher />);
+
+    expect(useSettingsStore.getState().guildIdByCharId["123"]).toBeUndefined();
+  });
+
+  it("does not write a selection before the character identity is available", () => {
+    runtime.heroId = undefined;
+    render(<GuildSwitcher />);
+
+    fireEvent.click(screen.getAllByRole("button")[0]);
+
+    expect(useSettingsStore.getState().guildIdByCharId).toEqual({});
+  });
+
+  it("stores an explicitly clicked guild for the current character", () => {
+    render(<GuildSwitcher />);
+
+    fireEvent.click(screen.getAllByRole("button")[1]);
+
+    expect(useSettingsStore.getState().guildIdByCharId).toEqual({
+      "123": "guild-2",
     });
   });
 
@@ -88,9 +114,7 @@ describe("GuildSwitcher", () => {
 
   it("scrolls horizontally when the user uses the mouse wheel", () => {
     const { container } = render(<GuildSwitcher />);
-    const viewport = container.querySelector(
-      "[data-radix-scroll-area-viewport]",
-    );
+    const viewport = container.querySelector("[data-ll-native-scroll-area]");
 
     if (!(viewport instanceof HTMLDivElement)) {
       throw new Error("Expected scroll area viewport");

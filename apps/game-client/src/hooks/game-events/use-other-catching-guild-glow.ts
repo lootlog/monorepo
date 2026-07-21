@@ -1,43 +1,39 @@
 import { useEffect } from "react";
-import { userLootlogConfigControllerGetPlayersCatchingGuilds } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
+import type { Other } from "@lootlog/margonem/others";
+import { characterTooltipCatchingGuildsCoordinator } from "@/lib/character-tooltip-catching-guilds-coordinator";
 import {
-  applyCatchingGuildsError,
-  applyCatchingGuildsLoading,
-  applyCatchingGuildsSuccess,
-  getTargetsMissingSuccessfulCatchingGuilds,
-} from "@/lib/character-tooltip-catching-guilds-cache";
-import {
-  LOOTLOG_OTHER_GLOW_BLUE,
-  LOOTLOG_OTHER_GLOW_RED_ORANGE,
+  getLootlogOtherGlowColor,
+  LOOTLOG_OTHER_GLOW_UNKNOWN,
   lootlogOtherGlowManager,
 } from "@/lib/lootlog-other-glow-manager";
-import { Game } from "@/lib/game";
+import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {
   getOtherCatchingGuildsTarget,
+  getCharacterTooltipCatchingGuildsCharacterKey,
   type CharacterTooltipCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
-import { useSettingsStore } from "@/store/settings.store";
 
-const MAX_BATCH_PLAYERS = 100;
-
-function getCurrentCharacterId(): string | null {
-  try {
-    return String(Game.hero.id);
-  } catch {
-    return null;
-  }
+function getEntryCharacterId(targetKey: string): string {
+  const separatorIndex = targetKey.lastIndexOf(":");
+  return separatorIndex === -1
+    ? targetKey
+    : targetKey.slice(separatorIndex + 1);
 }
 
-function dedupeTargets(
-  targets: CharacterTooltipCatchingGuildsTarget[],
+function getVisibleCatchingGuildTargets(
+  othersById: Record<string, Other>,
 ): CharacterTooltipCatchingGuildsTarget[] {
   const targetsByKey = new Map<string, CharacterTooltipCatchingGuildsTarget>();
 
-  for (const target of targets) {
-    if (!targetsByKey.has(target.key)) {
+  for (const characterId in othersById) {
+    const other = othersById[characterId];
+    const target = getOtherCatchingGuildsTarget(other);
+
+    if (target && !targetsByKey.has(target.key)) {
       targetsByKey.set(target.key, target);
     }
   }
@@ -52,15 +48,11 @@ export function useOtherCatchingGuildGlow(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
-  const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
   const othersById = useOthersStore((state) => state.othersById);
   const ownersByCharacterKey = useOnlineCharacterOwnersStore(
     (state) => state.ownersByCharacterKey,
   );
-  const currentCharacterId = getCurrentCharacterId();
-  const selectedGuildId = currentCharacterId
-    ? guildIdByCharId[currentCharacterId]
-    : undefined;
+  const selectedGuildId = useSelectedLootlogGuildId();
 
   useEffect(() => {
     lootlogOtherGlowManager.install();
@@ -72,45 +64,37 @@ export function useOtherCatchingGuildGlow(): void {
 
   useEffect(() => {
     lootlogOtherGlowManager.setNativeGlowSuppressed(
-      isShiftPressed && Boolean(selectedGuildId),
+      isShiftPressed && isConcreteLootlogGuildId(selectedGuildId),
     );
 
-    if (!isShiftPressed || !selectedGuildId) {
+    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
       lootlogOtherGlowManager.clear();
       return;
     }
 
-    const currentCharacterIds = new Set(
-      Object.values(othersById).map((other) => String(other.d.id)),
-    );
+    const visibleCharacterIds = new Set<string>();
 
-    for (const targetKey of Object.keys(entriesByKey)) {
-      const entryCharacterId = targetKey.split(":").at(-1);
-      if (entryCharacterId && !currentCharacterIds.has(entryCharacterId)) {
-        lootlogOtherGlowManager.removeGlow(entryCharacterId);
-      }
-    }
+    for (const characterId in othersById) {
+      const other = othersById[characterId];
+      visibleCharacterIds.add(String(other.d.id));
 
-    for (const other of Object.values(othersById)) {
       const target = getOtherCatchingGuildsTarget(other);
-      if (!target) continue;
-
-      const entry = entriesByKey[target.key];
-      if (entry?.status !== "success") {
-        lootlogOtherGlowManager.removeGlow(target.characterId);
+      if (!target) {
+        lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_UNKNOWN);
         continue;
       }
 
-      const hasSelectedGuild = entry.guilds.some(
-        (guild) => guild.id === selectedGuildId,
-      );
-
       lootlogOtherGlowManager.setGlow(
         other,
-        hasSelectedGuild
-          ? LOOTLOG_OTHER_GLOW_BLUE
-          : LOOTLOG_OTHER_GLOW_RED_ORANGE,
+        getLootlogOtherGlowColor(entriesByKey[target.key], selectedGuildId),
       );
+    }
+
+    for (const targetKey of Object.keys(entriesByKey)) {
+      const entryCharacterId = getEntryCharacterId(targetKey);
+      if (entryCharacterId && !visibleCharacterIds.has(entryCharacterId)) {
+        lootlogOtherGlowManager.removeGlow(entryCharacterId);
+      }
     }
   }, [
     entriesByKey,
@@ -121,57 +105,37 @@ export function useOtherCatchingGuildGlow(): void {
   ]);
 
   useEffect(() => {
-    if (!isShiftPressed || !selectedGuildId) return;
+    const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
 
-    let cancelled = false;
+    if (active) {
+      for (const other of Object.values(othersById)) {
+        if (getOtherCatchingGuildsTarget(other)) continue;
 
-    const fetchNextMissingTargetsBatch = (): void => {
-      if (cancelled) return;
+        const accountId = String(other.d.account ?? "");
+        const characterId = String(other.d.id ?? "");
+        if (!accountId || !characterId) continue;
 
-      const targets = dedupeTargets(
-        Object.values(othersById)
-          .map((other) => getOtherCatchingGuildsTarget(other))
-          .filter((target): target is CharacterTooltipCatchingGuildsTarget =>
-            Boolean(target),
-          ),
-      );
-      const missingTargets = getTargetsMissingSuccessfulCatchingGuilds(
-        targets,
-      ).slice(0, MAX_BATCH_PLAYERS);
+        useCharacterTooltipCatchingGuildsStore
+          .getState()
+          .setUnavailable(
+            getCharacterTooltipCatchingGuildsCharacterKey(
+              accountId,
+              characterId,
+            ),
+          );
+      }
+    }
 
-      if (missingTargets.length === 0) return;
-
-      applyCatchingGuildsLoading(missingTargets);
-
-      void Promise.resolve(
-        userLootlogConfigControllerGetPlayersCatchingGuilds({
-          players: missingTargets.map((target) => ({
-            userId: target.userId,
-            accountId: target.accountId,
-            characterId: target.characterId,
-          })),
-        }),
-      )
-        .then((response) => {
-          if (cancelled) return;
-
-          for (const player of response.players) {
-            applyCatchingGuildsSuccess(player);
-          }
-
-          fetchNextMissingTargetsBatch();
-        })
-        .catch(() => {
-          if (!cancelled) {
-            applyCatchingGuildsError(missingTargets);
-          }
-        });
-    };
-
-    fetchNextMissingTargetsBatch();
-
-    return () => {
-      cancelled = true;
-    };
+    characterTooltipCatchingGuildsCoordinator.sync(
+      getVisibleCatchingGuildTargets(othersById),
+      active,
+    );
   }, [isShiftPressed, othersById, ownersByCharacterKey, selectedGuildId]);
+
+  useEffect(
+    () => () => {
+      characterTooltipCatchingGuildsCoordinator.sync([], false);
+    },
+    [],
+  );
 }

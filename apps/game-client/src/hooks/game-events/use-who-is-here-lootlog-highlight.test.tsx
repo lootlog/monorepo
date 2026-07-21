@@ -1,28 +1,30 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReactNode } from "react";
 import type { Other } from "@lootlog/margonem/others";
 import {
   LOOTLOG_OTHER_GLOW_BLUE,
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
+  LOOTLOG_OTHER_GLOW_UNKNOWN,
 } from "@/lib/lootlog-other-glow-manager";
 import { appendCatchingGuildsTooltipSection } from "@/lib/margonem-tooltips/catching-guilds";
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
-import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import {
+  getOtherCatchingGuildsTarget,
+  useCharacterTooltipCatchingGuildsStore,
+} from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
 
 const mocks = vi.hoisted(() => ({
-  getPlayerCatchingGuilds: vi.fn(),
+  getPlayersCatchingGuilds: vi.fn(),
 }));
 
 vi.mock(
   "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config",
   () => ({
-    userLootlogConfigControllerGetPlayerCatchingGuilds:
-      mocks.getPlayerCatchingGuilds,
+    userLootlogConfigControllerGetPlayersCatchingGuilds:
+      mocks.getPlayersCatchingGuilds,
   }),
 );
 
@@ -37,14 +39,6 @@ type WhoIsHereEntry = {
     find: ReturnType<typeof vi.fn>;
   };
 };
-
-function createWrapper(queryClient: QueryClient) {
-  return function TestWrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-  };
-}
 
 function createOther(id = "617"): Other {
   const other = {
@@ -119,9 +113,11 @@ function setSuccess(
   characterId = "617",
   guilds = [{ id: "guild-blue", name: "Blue Guild" }],
 ): void {
+  const target = getOtherCatchingGuildsTarget(createOther(characterId));
+  if (!target) throw new Error("Expected an online player target");
   useCharacterTooltipCatchingGuildsStore
     .getState()
-    .setSuccess(`player-discord:9822301:${characterId}`, guilds);
+    .setSuccess(target, guilds, Date.now());
 }
 
 function setRuntime(other: Other, createTipWrapper = vi.fn()): void {
@@ -161,12 +157,49 @@ function setSelectedGuild(): void {
   });
 }
 
+function installMutationObserverMock() {
+  const disconnect = vi.fn();
+  const observe = vi.fn();
+  let callback: MutationCallback | undefined;
+
+  class MutationObserverMock {
+    disconnect = disconnect;
+    observe = observe;
+
+    constructor(nextCallback: MutationCallback) {
+      callback = nextCallback;
+    }
+
+    takeRecords(): MutationRecord[] {
+      return [];
+    }
+  }
+
+  vi.stubGlobal("MutationObserver", MutationObserverMock);
+
+  return {
+    disconnect,
+    emit: () => {
+      if (!callback) {
+        throw new Error("MutationObserver has not been created");
+      }
+
+      callback([], {
+        disconnect,
+        observe,
+        takeRecords: () => [],
+      } as unknown as MutationObserver);
+    },
+    observe,
+  };
+}
+
 describe("useWhoIsHereLootlogHighlight", () => {
   beforeEach(() => {
     document.head.innerHTML = "";
     document.body.innerHTML = "";
     characterTooltipTransforms.clear();
-    mocks.getPlayerCatchingGuilds.mockReset();
+    mocks.getPlayersCatchingGuilds.mockReset();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
@@ -176,6 +209,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     Object.defineProperty(window, "Engine", {
       configurable: true,
       value: originalWindowEngine,
@@ -184,6 +218,123 @@ describe("useWhoIsHereLootlogHighlight", () => {
       configurable: true,
       value: originalWindowDollar,
     });
+  });
+
+  it("does not observe DOM mutations without shift and a selected guild", () => {
+    const { observe } = installMutationObserverMock();
+
+    const { unmount } = renderHook(() => useWhoIsHereLootlogHighlight());
+
+    expect(observe).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it("observes the whoIsHere window instead of the document body when active", () => {
+    appendWhoIsHereRow();
+    setRuntime(createOther());
+    setSelectedGuild();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    const { observe } = installMutationObserverMock();
+
+    const { unmount } = renderHook(() => useWhoIsHereLootlogHighlight());
+
+    expect(observe).toHaveBeenCalledWith(
+      document.querySelector(".whoishere-window"),
+      {
+        childList: true,
+        subtree: true,
+      },
+    );
+    expect(observe).not.toHaveBeenCalledWith(document.body, expect.anything());
+
+    unmount();
+  });
+
+  it("disconnects the DOM observer when shift is released", () => {
+    appendWhoIsHereRow();
+    setRuntime(createOther());
+    setSelectedGuild();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    const { disconnect, observe } = installMutationObserverMock();
+
+    const { unmount } = renderHook(() => useWhoIsHereLootlogHighlight());
+
+    expect(observe).toHaveBeenCalledOnce();
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
+    });
+
+    expect(disconnect).toHaveBeenCalledOnce();
+    expect(observe).toHaveBeenCalledOnce();
+
+    unmount();
+  });
+
+  it("discovers a newly opened whoIsHere window without observing document body", () => {
+    vi.useFakeTimers();
+    const other = createOther();
+    setRuntime(other);
+    setSelectedGuild();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    const { observe } = installMutationObserverMock();
+
+    const { unmount } = renderHook(() => useWhoIsHereLootlogHighlight());
+
+    expect(observe).not.toHaveBeenCalled();
+
+    const whoIsHereWindow = document.createElement("div");
+    whoIsHereWindow.className = "whoishere-window";
+    document.body.append(whoIsHereWindow);
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+
+    expect(observe).toHaveBeenCalledOnce();
+    expect(observe).toHaveBeenCalledWith(whoIsHereWindow, {
+      childList: true,
+      subtree: true,
+    });
+    expect(observe).not.toHaveBeenCalledWith(document.body, expect.anything());
+
+    unmount();
+    vi.useRealTimers();
+  });
+
+  it("refreshes mutated rows without rerendering the hook", () => {
+    const row = appendWhoIsHereRow();
+    const other = createOther();
+    useOthersStore.getState().setMany({ "617": other });
+    setRuntime(other);
+    setSelectedGuild();
+    setOnlineOwner();
+    setSuccess();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    const { emit } = installMutationObserverMock();
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    let renderCount = 0;
+
+    const { unmount } = renderHook(() => {
+      renderCount += 1;
+      useWhoIsHereLootlogHighlight();
+    });
+    const renderCountBeforeMutation = renderCount;
+    row.classList.remove("ll-who-is-here-lootlog-highlight");
+    row.style.removeProperty("--ll-who-is-here-lootlog-color");
+
+    act(() => {
+      emit();
+    });
+
+    expect(row).toHaveClass("ll-who-is-here-lootlog-highlight");
+    expect(renderCount).toBe(renderCountBeforeMutation);
+
+    unmount();
   });
 
   it("highlights a whoIsHere row blue when selected guild catches the player", async () => {
@@ -266,7 +417,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     });
   });
 
-  it("does not highlight loading, error, or unknown-owner rows", async () => {
+  it("highlights loading, error, and unknown-owner rows fuchsia", async () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
     useOthersStore.getState().setMany({ "617": other });
@@ -280,28 +431,35 @@ describe("useWhoIsHereLootlogHighlight", () => {
     });
 
     await waitFor(() => {
-      expect(row).not.toHaveClass("ll-who-is-here-lootlog-highlight");
+      expect(row).toHaveClass("ll-who-is-here-lootlog-highlight");
+      expect(row.style.getPropertyValue("--ll-who-is-here-lootlog-color")).toBe(
+        LOOTLOG_OTHER_GLOW_UNKNOWN,
+      );
     });
 
     act(() => {
       setOnlineOwner();
-      useCharacterTooltipCatchingGuildsStore
-        .getState()
-        .setLoading("player-discord:9822301:617");
+      const target = getOtherCatchingGuildsTarget(other);
+      if (!target) throw new Error("Expected an online player target");
+      useCharacterTooltipCatchingGuildsStore.getState().setLoading(target);
     });
 
     await waitFor(() => {
-      expect(row).not.toHaveClass("ll-who-is-here-lootlog-highlight");
+      expect(row.style.getPropertyValue("--ll-who-is-here-lootlog-color")).toBe(
+        LOOTLOG_OTHER_GLOW_UNKNOWN,
+      );
     });
 
     act(() => {
-      useCharacterTooltipCatchingGuildsStore
-        .getState()
-        .setError("player-discord:9822301:617");
+      const target = getOtherCatchingGuildsTarget(other);
+      if (!target) throw new Error("Expected an online player target");
+      useCharacterTooltipCatchingGuildsStore.getState().setError(target);
     });
 
     await waitFor(() => {
-      expect(row).not.toHaveClass("ll-who-is-here-lootlog-highlight");
+      expect(row.style.getPropertyValue("--ll-who-is-here-lootlog-color")).toBe(
+        LOOTLOG_OTHER_GLOW_UNKNOWN,
+      );
     });
   });
 
@@ -409,34 +567,26 @@ describe("useWhoIsHereLootlogHighlight", () => {
   });
 
   it("fetches tooltip data when online owner becomes known after whoIsHere hover", async () => {
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
     const row = appendWhoIsHereRow();
     const other = createOther();
     useOthersStore.getState().setMany({ "617": other });
     setRuntime(other);
     setSelectedGuild();
-    mocks.getPlayerCatchingGuilds.mockResolvedValue({
-      userId: "player-discord",
-      accountId: "9822301",
-      characterId: "617",
-      guilds: [{ id: "guild-blue", name: "Blue Guild" }],
+    mocks.getPlayersCatchingGuilds.mockResolvedValue({
+      players: [
+        {
+          userId: "player-discord",
+          accountId: "9822301",
+          characterId: "617",
+          guilds: [{ id: "guild-blue", name: "Blue Guild" }],
+        },
+      ],
     });
 
-    renderHook(
-      () => {
-        useCharacterTooltipCatchingGuilds();
-        useWhoIsHereLootlogHighlight();
-      },
-      {
-        wrapper: createWrapper(queryClient),
-      },
-    );
+    renderHook(() => {
+      useCharacterTooltipCatchingGuilds();
+      useWhoIsHereLootlogHighlight();
+    });
 
     act(() => {
       useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
@@ -447,18 +597,25 @@ describe("useWhoIsHereLootlogHighlight", () => {
       );
     });
 
-    expect(mocks.getPlayerCatchingGuilds).not.toHaveBeenCalled();
+    expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
 
     act(() => {
       setOnlineOwner();
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayerCatchingGuilds).toHaveBeenCalledWith({
-        userId: "player-discord",
-        accountId: "9822301",
-        characterId: "617",
-      });
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith(
+        {
+          players: [
+            {
+              userId: "player-discord",
+              accountId: "9822301",
+              characterId: "617",
+            },
+          ],
+        },
+        { signal: expect.any(AbortSignal) },
+      );
     });
   });
 

@@ -1,68 +1,23 @@
-import { useEffect, useState, useRef } from "react";
-import {
-  calculateTimeLeft,
-  filterTimersByExpiredVisibility,
-  type TimerWithTimeLeft,
-} from "../utils/timers-utils";
+import { useEffect, useState } from "react";
 
-const getTimersSignature = (timers: TimerWithTimeLeft[]) =>
-  timers
-    .map((timer) =>
-      [
-        timer.guildId,
-        timer.world,
-        timer.timerKey,
-        timer.npcId,
-        timer.minSpawnTime,
-        timer.maxSpawnTime,
-        timer.wasReset,
-        timer.updatedAt,
-        timer.member?.id,
-        timer.actorCharacter?.accountId,
-        timer.actorCharacter?.characterId,
-        timer.actorCharacter?.name,
-        timer.actorCharacter?.lvl,
-        timer.actorCharacter?.prof,
-      ].join(":"),
-    )
-    .join("|");
-
-export const useTimersUpdate = (
-  activeTimers: TimerWithTimeLeft[],
-  removeTimerAfterMs: number,
-  alwaysVisibleExpiredTimers: Record<string, string[]> = {},
-) => {
-  const [calculatedTimers, setCalculatedTimers] =
-    useState<TimerWithTimeLeft[]>(activeTimers);
-  const activeTimersSignatureRef = useRef(getTimersSignature(activeTimers));
+export const useTimersUpdate = (enabled = true) => {
+  const [clockEpoch, setClockEpoch] = useState(Date.now);
 
   useEffect(() => {
-    const activeTimersSignature = getTimersSignature(activeTimers);
+    if (!enabled) return;
 
-    if (activeTimersSignature === activeTimersSignatureRef.current) {
-      return;
-    }
+    const updateClock = () => {
+      setClockEpoch(Date.now());
+    };
 
-    activeTimersSignatureRef.current = activeTimersSignature;
-    setCalculatedTimers(activeTimers);
-  }, [activeTimers]);
-
-  useEffect(() => {
+    updateClock();
     const interval = setInterval(() => {
-      setCalculatedTimers((prev) => {
-        const updated = calculateTimeLeft(prev);
-        const filtered = filterTimersByExpiredVisibility(
-          updated,
-          removeTimerAfterMs,
-          alwaysVisibleExpiredTimers,
-        );
-        return filtered;
-      });
+      updateClock();
     }, 1000);
     return () => {
       clearInterval(interval);
     };
-  }, [alwaysVisibleExpiredTimers, removeTimerAfterMs]);
+  }, [enabled]);
 
-  return calculatedTimers;
+  return clockEpoch;
 };

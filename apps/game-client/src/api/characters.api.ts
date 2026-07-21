@@ -8,6 +8,7 @@ const MARGONEM_CHARACTER_LIST_EN_URL =
 
 export const CHARACTER_LIST_CACHE_FRESH_TTL_MS = 15 * 60 * 1000;
 export const CHARACTER_LIST_CACHE_STALE_TTL_MS = 24 * 60 * 60 * 1000;
+export const CHARACTER_LIST_CACHE_ENTRY_CAP = 20;
 
 const CHARACTER_LIST_CACHE_KEY_PREFIX = "lootlog:margonem-character-list:v1";
 const MARGONEM_LOCAL_STORAGE_KEY = "Margonem";
@@ -265,6 +266,17 @@ const removeLocalStorageItem = (key: string): void => {
   }
 };
 
+const getLocalStorageKeys = (): string[] => {
+  try {
+    return Array.from(
+      { length: window.localStorage?.length ?? 0 },
+      (_, index) => window.localStorage?.key(index) ?? null,
+    ).filter((key): key is string => key !== null);
+  } catch {
+    return [];
+  }
+};
+
 const getPersistentCharacterListCacheKey = ({
   accountId,
   world,
@@ -289,6 +301,44 @@ const isCharacterListCacheEntry = (
   );
 };
 
+const sweepPersistentCharacterListCache = (now = Date.now()): void => {
+  const retainedEntries: Array<{
+    cachedAt: number;
+    key: string;
+    storageIndex: number;
+  }> = [];
+
+  for (const [storageIndex, key] of getLocalStorageKeys().entries()) {
+    if (!key.startsWith(`${CHARACTER_LIST_CACHE_KEY_PREFIX}:`)) {
+      continue;
+    }
+
+    const parsed = parseJsonOrNull(getLocalStorageItem(key));
+    if (!isCharacterListCacheEntry(parsed)) {
+      removeLocalStorageItem(key);
+      continue;
+    }
+
+    const ageMs = now - parsed.cachedAt;
+    if (ageMs < 0 || ageMs > CHARACTER_LIST_CACHE_STALE_TTL_MS) {
+      removeLocalStorageItem(key);
+      continue;
+    }
+
+    retainedEntries.push({ cachedAt: parsed.cachedAt, key, storageIndex });
+  }
+
+  retainedEntries.sort((firstEntry, secondEntry) => {
+    const timeDifference = secondEntry.cachedAt - firstEntry.cachedAt;
+    if (timeDifference !== 0) return timeDifference;
+
+    return secondEntry.storageIndex - firstEntry.storageIndex;
+  });
+  for (const entry of retainedEntries.slice(CHARACTER_LIST_CACHE_ENTRY_CAP)) {
+    removeLocalStorageItem(entry.key);
+  }
+};
+
 const readPersistentCharacterListCache = (
   options: FetchCharacterListOptions,
   maxAgeMs: number,
@@ -306,7 +356,12 @@ const readPersistentCharacterListCache = (
 
   const ageMs = Date.now() - parsed.cachedAt;
 
-  if (ageMs < 0 || ageMs > maxAgeMs) {
+  if (ageMs < 0 || ageMs > CHARACTER_LIST_CACHE_STALE_TTL_MS) {
+    removeLocalStorageItem(cacheKey);
+    return [];
+  }
+
+  if (ageMs > maxAgeMs) {
     return [];
   }
 
@@ -329,6 +384,7 @@ const writePersistentCharacterListCache = (
     getPersistentCharacterListCacheKey(options),
     JSON.stringify(cacheEntry),
   );
+  sweepPersistentCharacterListCache(cacheEntry.cachedAt);
 };
 
 const readMargonemCharacterListCache = ({
@@ -354,6 +410,7 @@ export async function fetchCharacterList({
   world,
   languageVersion,
 }: FetchCharacterListOptions): Promise<MargonemCharacter[]> {
+  sweepPersistentCharacterListCache();
   const options = { accountId, world, languageVersion };
   const filteredCached = readMargonemCharacterListCache(options);
 
