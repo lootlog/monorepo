@@ -16,6 +16,7 @@ import { useBattleStore } from "@/store/game-store/battle.store";
 import { isEmpty } from "@/utils/object-utils";
 import { useLootStore } from "@/store/game-store/loot.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
+import { reportLootSkipped } from "@/lib/error-monitoring";
 
 export class LootEventProcessor {
   handleLootFromBattle(event: GameEvent): void {
@@ -35,6 +36,14 @@ export class LootEventProcessor {
       logLootCreateDebug("skipped", {
         ...debugContext,
         reason: "missing-battle-warriors",
+      });
+      reportLootSkipped({
+        ...debugContext,
+        battleWarriorCount: Object.keys(battleStore.battleWarriors).length,
+        hasFightData: Boolean(event.f),
+        mapName: Game.map.name,
+        reason: "missing-battle-warriors",
+        world: Game.getWorldName(),
       });
       return;
     }
@@ -58,6 +67,12 @@ export class LootEventProcessor {
         ...debugContext,
         reason: "missing-talking-npc-id",
       });
+      reportLootSkipped({
+        ...debugContext,
+        mapName: Game.map.name,
+        reason: "missing-talking-npc-id",
+        world: Game.getWorldName(),
+      });
       return;
     }
 
@@ -79,6 +94,14 @@ export class LootEventProcessor {
           npcId: dialogStore.talkingNpcId,
           reason: "missing-fallback-npc",
         });
+        reportLootSkipped({
+          ...debugContext,
+          mapName: Game.map.name,
+          reason: "missing-fallback-npc",
+          requestedNpcIds: [+dialogStore.talkingNpcId],
+          resolvedNpcCount: 0,
+          world: Game.getWorldName(),
+        });
       }
     }
   }
@@ -94,6 +117,16 @@ export class LootEventProcessor {
         ...debugContext,
         reason: "missing-fight-data",
       });
+      reportLootSkipped({
+        ...debugContext,
+        battleWarriorCount: Object.keys(
+          useBattleStore.getState().battleWarriors,
+        ).length,
+        hasFightData: false,
+        mapName: Game.map.name,
+        reason: "missing-fight-data",
+        world: Game.getWorldName(),
+      });
       return;
     }
 
@@ -102,6 +135,17 @@ export class LootEventProcessor {
       logLootCreateDebug("skipped", {
         ...debugContext,
         reason: "empty-parsed-loots",
+      });
+      reportLootSkipped({
+        ...debugContext,
+        battleWarriorCount: Object.keys(
+          useBattleStore.getState().battleWarriors,
+        ).length,
+        hasFightData: true,
+        mapName: Game.map.name,
+        parsedLootCount: 0,
+        reason: "empty-parsed-loots",
+        world: Game.getWorldName(),
       });
       return;
     }
@@ -154,9 +198,18 @@ export class LootEventProcessor {
 
     const loots = getLoot(event.item, loot);
     if (!loots.length) {
+      const requestedNpcIds = (event.npcs_del ?? []).map((npc) => npc.id);
       logLootCreateDebug("skipped", {
         ...debugContext,
         reason: "empty-parsed-loots",
+      });
+      reportLootSkipped({
+        ...debugContext,
+        mapName: Game.map.name,
+        parsedLootCount: 0,
+        reason: "empty-parsed-loots",
+        requestedNpcIds,
+        world: Game.getWorldName(),
       });
       return;
     }
@@ -185,10 +238,19 @@ export class LootEventProcessor {
     }
 
     if (npcs.length === 0) {
+      const requestedNpcIds = (event.npcs_del ?? []).map((npc) => npc.id);
       logLootCreateDebug("skipped", {
         ...debugContext,
-        npcIds: (event.npcs_del ?? []).map((npc) => npc.id),
+        npcIds: requestedNpcIds,
         reason: "unresolved-dialog-npcs",
+      });
+      reportLootSkipped({
+        ...debugContext,
+        mapName,
+        reason: "unresolved-dialog-npcs",
+        requestedNpcIds,
+        resolvedNpcCount: 0,
+        world: Game.getWorldName(),
       });
       return;
     }
