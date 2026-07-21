@@ -8,7 +8,6 @@ import { ThemeInteractiveFrame } from "@/themes";
 
 export const SidebarNavItem = ({
   url,
-  path,
   available,
   isActive,
   icon,
@@ -20,7 +19,6 @@ export const SidebarNavItem = ({
   onItemClick,
 }: {
   url: string;
-  path: string;
   available: boolean;
   isActive: boolean;
   icon: ReactNode;
@@ -92,7 +90,6 @@ export const SidebarNavItem = ({
       ) : null}
       <Link
         to={url}
-        key={path}
         preload="intent"
         onClick={(e) => {
           if (!available) e.preventDefault();

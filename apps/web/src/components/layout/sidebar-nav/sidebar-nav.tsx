@@ -1,5 +1,5 @@
 import { Separator } from "@lootlog/ui/components/separator";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { useLocation } from "@tanstack/react-router";
 import type { MenuItem } from "./types";
 import { SidebarNavItem } from "./sidebar-nav-item";
@@ -15,7 +15,7 @@ interface SidebarNavProps {
   header?: ReactNode;
   beforeItems?: ReactNode;
   footer?: ReactNode;
-  onItemClick?: (item: MenuItem, event: React.MouseEvent) => void;
+  onItemClick?: (item: MenuItem, event: MouseEvent) => void;
 }
 
 export const SidebarNav = ({
@@ -39,8 +39,8 @@ export const SidebarNav = ({
       )}
       {beforeItems}
       <div key={basePath} className="flex flex-col gap-1.5">
-        {items.map(
-          ({
+        {items.map((item) => {
+          const {
             divided,
             icon,
             path,
@@ -50,49 +50,45 @@ export const SidebarNav = ({
             badge,
             highlight,
             childPaths,
-          }) => {
-            if (!enabled) return null;
+          } = item;
 
-            const url = `${basePath}${path}`;
-            const normalizedPathname = pathname.replace(/\/$/, "");
-            const normalizedUrl = url.replace(/\/$/, "");
-            const isActive =
-              path === ""
-                ? normalizedPathname === normalizedUrl ||
-                  (childPaths?.some(
-                    (cp) =>
-                      normalizedPathname === `${normalizedUrl}${cp}` ||
-                      pathname.startsWith(`${normalizedUrl}${cp}/`),
-                  ) ??
-                    false)
-                : normalizedPathname === normalizedUrl ||
-                  pathname.startsWith(`${normalizedUrl}/`);
+          if (!enabled) return null;
 
-            return (
-              <div key={path}>
-                {divided && <Separator className="mb-1.5" />}
-                <SidebarNavItem
-                  url={url}
-                  path={path}
-                  available={available}
-                  isActive={isActive}
-                  icon={icon}
-                  label={label}
-                  badge={badge}
-                  highlight={highlight}
-                  isRukiaTheme={isRukiaTheme}
-                  isCatTheme={isCatTheme}
-                  onItemClick={(e) => {
-                    const item = items.find((item) => item.path === path);
-                    if (item) {
-                      onItemClick?.(item, e);
-                    }
-                  }}
-                />
-              </div>
-            );
-          },
-        )}
+          const url = `${basePath}${path}`;
+          const normalizedPathname = pathname.replace(/\/$/, "");
+          const normalizedUrl = url.replace(/\/$/, "");
+          const isActive =
+            path === ""
+              ? normalizedPathname === normalizedUrl ||
+                (childPaths?.some(
+                  (cp) =>
+                    normalizedPathname === `${normalizedUrl}${cp}` ||
+                    pathname.startsWith(`${normalizedUrl}${cp}/`),
+                ) ??
+                  false)
+              : normalizedPathname === normalizedUrl ||
+                pathname.startsWith(`${normalizedUrl}/`);
+
+          return (
+            <div key={path}>
+              {divided && <Separator className="mb-1.5" />}
+              <SidebarNavItem
+                url={url}
+                available={available}
+                isActive={isActive}
+                icon={icon}
+                label={label}
+                badge={badge}
+                highlight={highlight}
+                isRukiaTheme={isRukiaTheme}
+                isCatTheme={isCatTheme}
+                onItemClick={(e) => {
+                  onItemClick?.(item, e);
+                }}
+              />
+            </div>
+          );
+        })}
       </div>
       {footer ? (
         <div className="relative mt-auto px-2 pb-2">{footer}</div>
