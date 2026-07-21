@@ -31,11 +31,3 @@ export const isAdministrativeUser = (permissions: Permission[]) => {
 export const isAdministrativeUserFromRoles = (roles: GuildRole[]) => {
   return hasAnyRolePermission(roles, ADMINISTRATIVE_PERMISSIONS);
 };
-
-export const isOwnerOrAdmin = (permissions: Permission[]) => {
-  return isAdministrativeUser(permissions);
-};
-
-export const isOwnerOrAdminFromRoles = (roles: GuildRole[]) => {
-  return isAdministrativeUserFromRoles(roles);
-};

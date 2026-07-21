@@ -5,7 +5,7 @@ import {
   type NpcRoutingTier,
 } from "@lootlog/types";
 import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
-import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
+import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
 import { Platform } from "src/gateway/enums/platform.enum";
 
 const FEATURE_ROOMS = {
@@ -110,7 +110,7 @@ export function calculateUserRooms(
   for (const { guild, roles } of guilds) {
     const guildRooms: string[] = [];
     const hasFullGuildAccess =
-      guild.ownerId === discordId || isOwnerOrAdminFromRoles(roles);
+      guild.ownerId === discordId || isAdministrativeUserFromRoles(roles);
 
     // Everyone gets presence and events rooms
     guildRooms.push(buildUserGuildRoomName(discordId, guild.id));
