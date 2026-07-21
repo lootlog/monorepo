@@ -51,6 +51,108 @@ const isNodeInsideEditor = ({
   return node === editor || editor.contains(node);
 };
 
+const syncEditorScrollToCaret = ({
+  editor,
+  currentCaretIndex,
+  messageLength,
+}: {
+  editor: HTMLDivElement;
+  currentCaretIndex: number;
+  messageLength: number;
+}) => {
+  const maxScrollLeft = Math.max(0, editor.scrollWidth - editor.clientWidth);
+
+  if (maxScrollLeft === 0) {
+    editor.scrollLeft = 0;
+    return;
+  }
+
+  const selection = editor.ownerDocument.getSelection();
+
+  if (!selection || selection.rangeCount === 0) {
+    return;
+  }
+
+  const selectionRange = selection.getRangeAt(0);
+
+  if (
+    !isNodeInsideEditor({
+      editor,
+      node: selectionRange.startContainer,
+    }) ||
+    !isNodeInsideEditor({
+      editor,
+      node: selectionRange.endContainer,
+    })
+  ) {
+    return;
+  }
+
+  const caretRange = selectionRange.cloneRange();
+  caretRange.collapse(false);
+
+  const caretRect =
+    caretRange.getClientRects()[0] ?? caretRange.getBoundingClientRect();
+
+  if (caretRect.width === 0 && caretRect.left === 0 && caretRect.right === 0) {
+    if (currentCaretIndex <= 0) {
+      editor.scrollLeft = 0;
+      return;
+    }
+
+    if (currentCaretIndex >= messageLength) {
+      editor.scrollLeft = maxScrollLeft;
+    }
+
+    return;
+  }
+
+  const editorRect = editor.getBoundingClientRect();
+  const overflowRight =
+    caretRect.right - (editorRect.right - CARET_SCROLL_PADDING);
+  const overflowLeft = editorRect.left + CARET_SCROLL_PADDING - caretRect.left;
+
+  if (overflowRight > 0) {
+    editor.scrollLeft = Math.min(
+      maxScrollLeft,
+      editor.scrollLeft + overflowRight,
+    );
+    return;
+  }
+
+  if (overflowLeft > 0) {
+    editor.scrollLeft = Math.max(0, editor.scrollLeft - overflowLeft);
+  }
+};
+
+const syncEditorSelectionOffsets = ({
+  editor,
+  messageLength,
+  onCaretChange,
+}: {
+  editor: HTMLDivElement | null;
+  messageLength: number;
+  onCaretChange: (caretIndex: number) => void;
+}) => {
+  if (!editor) {
+    return null;
+  }
+
+  const selectionOffsets = getChatEditorSelectionOffsets(editor);
+
+  if (!selectionOffsets) {
+    return null;
+  }
+
+  syncEditorScrollToCaret({
+    editor,
+    currentCaretIndex: selectionOffsets.end,
+    messageLength,
+  });
+  onCaretChange(selectionOffsets.end);
+  return selectionOffsets;
+};
+
 export const ChatInputEditor: FC<ChatInputEditorProps> = ({
   autoFocus,
   caretIndex,
@@ -67,104 +169,6 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
   const isComposingRef = useRef(false);
   const hasAutoFocusedRef = useRef(false);
   const mentionSegments = getChatMentionSegments(message, mentionContext);
-
-  const syncEditorScrollToCaret = ({
-    editor,
-    currentCaretIndex,
-  }: {
-    editor: HTMLDivElement;
-    currentCaretIndex: number;
-  }) => {
-    const maxScrollLeft = Math.max(0, editor.scrollWidth - editor.clientWidth);
-
-    if (maxScrollLeft === 0) {
-      editor.scrollLeft = 0;
-      return;
-    }
-
-    const selection = editor.ownerDocument.getSelection();
-
-    if (!selection || selection.rangeCount === 0) {
-      return;
-    }
-
-    const selectionRange = selection.getRangeAt(0);
-
-    if (
-      !isNodeInsideEditor({
-        editor,
-        node: selectionRange.startContainer,
-      }) ||
-      !isNodeInsideEditor({
-        editor,
-        node: selectionRange.endContainer,
-      })
-    ) {
-      return;
-    }
-
-    const caretRange = selectionRange.cloneRange();
-    caretRange.collapse(false);
-
-    const caretRect =
-      caretRange.getClientRects()[0] ?? caretRange.getBoundingClientRect();
-
-    if (
-      caretRect.width === 0 &&
-      caretRect.left === 0 &&
-      caretRect.right === 0
-    ) {
-      if (currentCaretIndex <= 0) {
-        editor.scrollLeft = 0;
-        return;
-      }
-
-      if (currentCaretIndex >= message.length) {
-        editor.scrollLeft = maxScrollLeft;
-      }
-
-      return;
-    }
-
-    const editorRect = editor.getBoundingClientRect();
-    const overflowRight =
-      caretRect.right - (editorRect.right - CARET_SCROLL_PADDING);
-    const overflowLeft =
-      editorRect.left + CARET_SCROLL_PADDING - caretRect.left;
-
-    if (overflowRight > 0) {
-      editor.scrollLeft = Math.min(
-        maxScrollLeft,
-        editor.scrollLeft + overflowRight,
-      );
-      return;
-    }
-
-    if (overflowLeft > 0) {
-      editor.scrollLeft = Math.max(0, editor.scrollLeft - overflowLeft);
-    }
-  };
-
-  const syncSelectionOffsets = () => {
-    const editor = editorRef.current;
-
-    if (!editor) {
-      return null;
-    }
-
-    const selectionOffsets = getChatEditorSelectionOffsets(editor);
-
-    if (!selectionOffsets) {
-      return null;
-    }
-
-    syncEditorScrollToCaret({
-      editor,
-      currentCaretIndex: selectionOffsets.end,
-    });
-    onCaretChange(selectionOffsets.end);
-    return selectionOffsets;
-  };
 
   const syncMessageFromDom = () => {
     const editor = editorRef.current;
@@ -228,6 +232,7 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
     syncEditorScrollToCaret({
       editor,
       currentCaretIndex: message.length,
+      messageLength: message.length,
     });
     onCaretChange(message.length);
     hasAutoFocusedRef.current = true;
@@ -235,7 +240,11 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
 
   useEffect(() => {
     const handleSelectionChange = () => {
-      syncSelectionOffsets();
+      syncEditorSelectionOffsets({
+        editor: editorRef.current,
+        messageLength: message.length,
+        onCaretChange,
+      });
     };
 
     document.addEventListener("selectionchange", handleSelectionChange);
@@ -243,7 +252,7 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
     return () => {
       document.removeEventListener("selectionchange", handleSelectionChange);
     };
-  }, [editorRef, onCaretChange]);
+  }, [editorRef, message.length, onCaretChange]);
 
   useLayoutEffect(() => {
     const editor = editorRef.current;
@@ -263,8 +272,9 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
     syncEditorScrollToCaret({
       editor,
       currentCaretIndex: caretIndex,
+      messageLength: message.length,
     });
-  }, [caretIndex, editorRef, message]);
+  }, [caretIndex, editorRef, message.length]);
 
   const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -433,7 +443,11 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
           event.stopPropagation();
         }}
         onFocus={() => {
-          syncSelectionOffsets();
+          syncEditorSelectionOffsets({
+            editor: editorRef.current,
+            messageLength: message.length,
+            onCaretChange,
+          });
         }}
         onInput={(event: FormEvent<HTMLDivElement>) => {
           const nativeInputEvent = event.nativeEvent as InputEvent;
@@ -449,10 +463,18 @@ export const ChatInputEditor: FC<ChatInputEditorProps> = ({
         onKeyDown={handleEditorKeyDown}
         onKeyUp={(event) => {
           event.stopPropagation();
-          syncSelectionOffsets();
+          syncEditorSelectionOffsets({
+            editor: editorRef.current,
+            messageLength: message.length,
+            onCaretChange,
+          });
         }}
         onMouseUp={() => {
-          syncSelectionOffsets();
+          syncEditorSelectionOffsets({
+            editor: editorRef.current,
+            messageLength: message.length,
+            onCaretChange,
+          });
         }}
         onPaste={handlePaste}
         onCut={handleCut}

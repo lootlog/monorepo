@@ -11,6 +11,7 @@ export const AIR_TAG_BATCH_INTERVAL_MS = 250;
 export const AIR_TAG_HEARTBEAT_INTERVAL_MS = 5_000;
 export const AIR_TAG_HEARTBEAT_SCAN_INTERVAL_MS = 5_000;
 export const AIR_TAG_MOVEMENT_THRESHOLD_TILES = 3;
+const MAX_LOCAL_TARGETS_PER_SCOPE = 100;
 
 type ObservationPublisher = (batch: AirTagObservationBatch) => void;
 
@@ -171,6 +172,7 @@ export class AirTagObservationController {
       lastPublishedX: observation.x,
       lastPublishedY: observation.y,
     };
+    this.retainTargetCapacity(targetId);
     this.targets.set(targetId, target);
     this.queue(target, now);
     this.startHeartbeatTimer();
@@ -301,6 +303,21 @@ export class AirTagObservationController {
       this.batchTimer = null;
     }
     this.stopHeartbeatTimer();
+  }
+
+  private retainTargetCapacity(targetId: string): void {
+    if (
+      this.targets.has(targetId) ||
+      this.targets.size < MAX_LOCAL_TARGETS_PER_SCOPE
+    ) {
+      return;
+    }
+
+    const oldestTargetId = this.targets.keys().next().value;
+    if (oldestTargetId !== undefined) {
+      this.targets.delete(oldestTargetId);
+      this.pending.delete(oldestTargetId);
+    }
   }
 
   private isActive(): boolean {

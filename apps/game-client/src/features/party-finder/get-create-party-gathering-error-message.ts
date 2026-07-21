@@ -1,9 +1,14 @@
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { isApiError } from "@/lib/api-client";
+import { ActivePartyGatheringError } from "./active-party-gathering-error";
 
 export const getCreatePartyGatheringErrorMessage = (error: unknown): string => {
   const t = getFixedT("partyFinder");
   const defaultMessage = t("errors.defaultCreate");
+
+  if (error instanceof ActivePartyGatheringError) {
+    return t("errors.activeGatheringExists");
+  }
 
   if (!isApiError(error)) {
     return defaultMessage;

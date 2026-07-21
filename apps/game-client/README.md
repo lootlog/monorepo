@@ -16,9 +16,29 @@ Run commands from the monorepo root:
 pnpm --filter @lootlog/game-client dev
 ```
 
+## Local Production Build
+
+To build the fully minified client against the production Lootlog services and
+serve it to Tampermonkey locally, run:
+
+```bash
+pnpm --filter @lootlog/game-client local:prod
+```
+
+The command prints an installation URL for
+`@lootlog/game-client-local`. Install that userscript once, disable the regular
+`@lootlog/game-client` userscript, and reload the game while the command keeps
+running. Re-run the command after code changes to rebuild the bundle.
+
+The local loader fetches the bundle from `127.0.0.1:4173` and executes it in the
+game page context. Installing `dist/@lootlog/game-client.user.js` directly is
+not supported because Tampermonkey may execute it in an isolated context where
+Margonem globals such as `window.Engine` and `window.g` are unavailable.
+
 ## Key Scripts
 
 - `pnpm --filter @lootlog/game-client build`
+- `pnpm --filter @lootlog/game-client local:prod`
 - `pnpm --filter @lootlog/game-client preview`
 - `pnpm --filter @lootlog/game-client test`
 - `pnpm --filter @lootlog/game-client test:coverage`

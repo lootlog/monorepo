@@ -19,6 +19,7 @@ export default defineConfig({
     "import.meta.env.VITE_LOOTLOG_APP_URL": '"http://localhost"',
     "import.meta.env.VITE_COMMIT_SHA":
       '"0123456789abcdef0123456789abcdef01234567"',
+    "import.meta.env.VITE_GAME_CLIENT_VERSION": '"game-client-test"',
     "import.meta.env.VITE_GATEWAY_SOCKET_PATH": '"/gateway"',
   },
   test: {
@@ -29,15 +30,27 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "json", "html"],
+      reporter: ["text", "json", "html", "lcov"],
+      include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "node_modules/",
+        "src/benchmarks/",
+        "src/perf-fixture/",
         "src/test/",
+        "src/lib/api/generated/",
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.spec.{ts,tsx}",
         "**/*.d.ts",
         "**/*.config.*",
         "**/mockData",
         "**/__mocks__",
       ],
+      thresholds: {
+        statements: 65,
+        branches: 58,
+        functions: 63,
+        lines: 66,
+      },
     },
   },
 });

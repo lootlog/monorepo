@@ -14,6 +14,10 @@ interface EventModeQueryIdentity {
   normalizedWorld: string;
 }
 
+type UseEventModeQueryOptions = {
+  active: boolean;
+};
+
 export const createEventModeQueryKey = (identity: EventModeQueryIdentity) =>
   [
     "event-mode",
@@ -22,7 +26,7 @@ export const createEventModeQueryKey = (identity: EventModeQueryIdentity) =>
     identity.normalizedWorld,
   ] as const;
 
-export const useEventModeQuery = () => {
+export const useEventModeQuery = ({ active }: UseEventModeQueryOptions) => {
   const queryClient = useQueryClient();
   const { connected } = useSocket();
   const { data: sessionData } = useSession();
@@ -35,6 +39,7 @@ export const useEventModeQuery = () => {
     ? Game.getWorldName().trim().toLowerCase()
     : "";
   const enabled = Boolean(
+    active &&
     authenticatedLootlogUserId &&
     margonemAccountId &&
     normalizedWorld &&
@@ -47,10 +52,17 @@ export const useEventModeQuery = () => {
   });
   const query = useQuery({
     queryKey,
-    queryFn: () => eventModeControllerGetEventMode({ world: normalizedWorld }),
+    queryFn: async () => {
+      const response = await eventModeControllerGetEventMode({
+        world: normalizedWorld,
+      });
+
+      return { events: response.events };
+    },
     enabled,
+    notifyOnChangeProps: ["data", "isError"],
     refetchInterval: enabled ? EVENT_MODE_REFETCH_INTERVAL_MS : false,
-    refetchOnWindowFocus: "always",
+    refetchOnWindowFocus: enabled ? "always" : false,
   });
   const disconnectedSinceMountRef = useRef(false);
 
@@ -69,7 +81,9 @@ export const useEventModeQuery = () => {
   }, [connected, enabled, queryClient, queryKey]);
 
   return {
-    ...query,
+    data: query.data,
+    dataUpdatedAt: query.dataUpdatedAt,
+    isError: query.isError,
     authenticatedLootlogUserId,
     margonemAccountId,
     normalizedWorld,

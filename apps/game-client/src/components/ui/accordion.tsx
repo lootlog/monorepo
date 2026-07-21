@@ -1,33 +1,8 @@
 import * as React from "react";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/settings.store";
-
-const CONTENT_ANIMATION: Variants = {
-  initial: {
-    opacity: 0,
-    scaleY: 0.95,
-    transformOrigin: "top",
-  },
-  animate: {
-    opacity: 1,
-    scaleY: 1,
-    transition: {
-      duration: 0.15,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-  exit: {
-    opacity: 0,
-    scaleY: 0.95,
-    transition: {
-      duration: 0.1,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
 
 const Accordion = AccordionPrimitive.Root;
 
@@ -80,53 +55,19 @@ const AccordionContent = React.forwardRef<
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
-  const [isOpen, setIsOpen] = React.useState(false);
-  const contentRef = React.useRef<HTMLDivElement>(null);
-
-  React.useImperativeHandle(ref, () => contentRef.current!);
-
-  React.useEffect(() => {
-    const element = contentRef.current;
-    if (!element) return;
-
-    const observer = new MutationObserver(() => {
-      const state = element.getAttribute("data-state");
-      setIsOpen(state === "open");
-    });
-
-    observer.observe(element, {
-      attributes: true,
-      attributeFilter: ["data-state"],
-    });
-
-    const initialState = element.getAttribute("data-state");
-    setIsOpen(initialState === "open");
-
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <AccordionPrimitive.Content
-      ref={contentRef}
-      className={cn("ll:overflow-hidden", className)}
+      ref={ref}
+      className={cn(
+        "ll:overflow-hidden ll:origin-top",
+        animationEffectsEnabled &&
+          "data-[state=open]:ll:animate-in data-[state=open]:ll:fade-in-0 data-[state=open]:ll:zoom-in-95 data-[state=open]:ll:duration-150 data-[state=closed]:ll:animate-out data-[state=closed]:ll:fade-out-0 data-[state=closed]:ll:zoom-out-95 data-[state=closed]:ll:duration-100",
+        className,
+      )}
       {...props}
     >
-      {animationEffectsEnabled ? (
-        <AnimatePresence initial={false}>
-          {isOpen && (
-            <motion.div
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              variants={CONTENT_ANIMATION}
-            >
-              <div className="ll:pt-2 ll:pb-4 ll:px-3">{children}</div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      ) : isOpen ? (
-        <div className="ll:pt-2 ll:pb-4 ll:px-3">{children}</div>
-      ) : null}
+      <div className="ll:pt-2 ll:pb-4 ll:px-3">{children}</div>
     </AccordionPrimitive.Content>
   );
 });

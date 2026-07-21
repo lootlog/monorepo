@@ -5,7 +5,8 @@ import { useUpdateTimerSettings } from "./api/use-timer-settings";
 export const useTimerSettingsMutationsRegistry = () => {
   const { mutate: mutateGlobalSettings } = useUpdateTimerSettings();
 
-  useEffect(() => {
-    registerGlobalSettingsMutation(mutateGlobalSettings);
-  }, [mutateGlobalSettings]);
+  useEffect(
+    () => registerGlobalSettingsMutation(mutateGlobalSettings),
+    [mutateGlobalSettings],
+  );
 };

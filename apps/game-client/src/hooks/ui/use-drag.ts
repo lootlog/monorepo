@@ -1,8 +1,7 @@
 import {
-  type MouseEvent as ReactMouseEvent,
-  type TouchEvent as ReactTouchEvent,
-  useCallback,
+  type PointerEvent as ReactPointerEvent,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -14,8 +13,17 @@ const getScale = () => {
   return window.visualViewport?.scale ?? 1;
 };
 
-const DEFAULT_STATE = { x: 0, y: 0 };
-const DEFAULT_DRAG_INFO = {
+type Position = { x: number; y: number };
+
+type DragInfo = {
+  offsetX: number;
+  offsetY: number;
+  width: number;
+  height: number;
+};
+
+const DEFAULT_STATE: Position = { x: 0, y: 0 };
+const DEFAULT_DRAG_INFO: DragInfo = {
   offsetX: 0,
   offsetY: 0,
   width: 0,
@@ -25,25 +33,11 @@ const DEFAULT_DRAG_INFO = {
 let dragSessionCounter = 0;
 let activeDragSessionId: number | null = null;
 
-const getTouchByIdentifier = (touchList: TouchList, identifier: number) => {
-  for (let i = 0; i < touchList.length; i += 1) {
-    const touch = touchList.item(i);
-    if (touch && touch.identifier === identifier) {
-      return touch;
-    }
-  }
-  return null;
-};
-
-const hasTouchIdentifier = (touchList: TouchList, identifier: number) => {
-  return getTouchByIdentifier(touchList, identifier) !== null;
-};
-
 type UseDragConfig = {
   ref: React.RefObject<HTMLDivElement | null>;
   calculateFor?: "topLeft" | "bottomRight";
-  defaultState?: { x: number; y: number };
-  onDragStop: (position: { x: number; y: number }) => void;
+  defaultState?: Position;
+  onDragStop: (position: Position) => void;
   isLocked?: boolean;
 };
 
@@ -54,237 +48,223 @@ export const useDrag = ({
   onDragStop,
   isLocked = false,
 }: UseDragConfig) => {
-  const [dragInfo, setDragInfo] = useState(DEFAULT_DRAG_INFO);
   const [finalPosition, setFinalPosition] = useState(defaultState);
   const [isDragging, setIsDragging] = useState(false);
-  const [wasJustDragging, setWasJustDragging] = useState(false);
-  const activeTouchIdRef = useRef<number | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const dragInfoRef = useRef<DragInfo>(DEFAULT_DRAG_INFO);
   const dragSessionRef = useRef<number | null>(null);
+  const finalPositionRef = useRef(defaultState);
+  const dragOriginPositionRef = useRef(defaultState);
+  const isDraggingRef = useRef(false);
+  const hasDragStylesRef = useRef(false);
+  const pendingPositionRef = useRef<Position | null>(null);
+  const positionFrameRef = useRef<number | null>(null);
+  const calculateForRef = useRef(calculateFor);
+  const isLockedRef = useRef(isLocked);
+  const onDragStopRef = useRef(onDragStop);
 
-  const updateFinalPosition = useCallback(
-    (width: number, height: number, x: number, y: number) => {
-      const scale = getScale();
-      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
-      const viewportHeight =
-        window.visualViewport?.height ?? window.innerHeight;
+  calculateForRef.current = calculateFor;
+  isLockedRef.current = isLocked;
+  onDragStopRef.current = onDragStop;
 
-      const scaledViewportWidth = viewportWidth * scale;
-      const scaledViewportHeight = viewportHeight * scale;
-      const scaledWidth = width * scale;
-      const scaledHeight = height * scale;
+  const queuePosition = (
+    width: number,
+    height: number,
+    x: number,
+    y: number,
+  ) => {
+    const scale = getScale();
+    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const scaledViewportWidth = viewportWidth * scale;
+    const scaledViewportHeight = viewportHeight * scale;
+    const scaledWidth = width * scale;
+    const scaledHeight = height * scale;
+    let nextPosition: Position;
 
-      let newPos: { x: number; y: number };
-      if (calculateFor === "bottomRight") {
-        newPos = {
-          x: Math.max(
-            Math.min(
-              scaledViewportWidth - scaledWidth,
-              scaledViewportWidth - (x + scaledWidth),
-            ),
-            0,
+    if (calculateForRef.current === "bottomRight") {
+      nextPosition = {
+        x: Math.max(
+          Math.min(
+            scaledViewportWidth - scaledWidth,
+            scaledViewportWidth - (x + scaledWidth),
           ),
-          y: Math.max(
-            Math.min(
-              scaledViewportHeight - scaledHeight,
-              scaledViewportHeight - (y + scaledHeight),
-            ),
-            0,
+          0,
+        ),
+        y: Math.max(
+          Math.min(
+            scaledViewportHeight - scaledHeight,
+            scaledViewportHeight - (y + scaledHeight),
           ),
-        };
-      } else {
-        newPos = {
-          x: Math.min(Math.max(0, x), scaledViewportWidth - scaledWidth),
-          y: Math.min(Math.max(0, y), scaledViewportHeight - scaledHeight),
-        };
+          0,
+        ),
+      };
+    } else {
+      nextPosition = {
+        x: Math.min(Math.max(0, x), scaledViewportWidth - scaledWidth),
+        y: Math.min(Math.max(0, y), scaledViewportHeight - scaledHeight),
+      };
+    }
+
+    if (
+      nextPosition.x === finalPositionRef.current.x &&
+      nextPosition.y === finalPositionRef.current.y
+    ) {
+      return;
+    }
+
+    finalPositionRef.current = nextPosition;
+    pendingPositionRef.current = nextPosition;
+    if (positionFrameRef.current !== null) return;
+
+    positionFrameRef.current = window.requestAnimationFrame(() => {
+      positionFrameRef.current = null;
+      const pendingPosition = pendingPositionRef.current;
+      pendingPositionRef.current = null;
+      if (!pendingPosition) return;
+
+      if (isDraggingRef.current) {
+        const draggableElement = ref.current;
+        if (!draggableElement) return;
+        const dragOriginPosition = dragOriginPositionRef.current;
+        const translateX = pendingPosition.x - dragOriginPosition.x;
+        const translateY = pendingPosition.y - dragOriginPosition.y;
+        draggableElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0)`;
+        return;
       }
-      setFinalPosition(newPos);
-    },
-    [calculateFor],
-  );
+
+      setFinalPosition(pendingPosition);
+    });
+  };
+  const queuePositionRef = useRef(queuePosition);
+  queuePositionRef.current = queuePosition;
+
+  const finishDrag = () => {
+    activePointerIdRef.current = null;
+    if (
+      dragSessionRef.current !== null &&
+      dragSessionRef.current === activeDragSessionId
+    ) {
+      activeDragSessionId = null;
+    }
+    dragSessionRef.current = null;
+    if (!isDraggingRef.current) return;
+
+    isDraggingRef.current = false;
+    if (positionFrameRef.current !== null) {
+      window.cancelAnimationFrame(positionFrameRef.current);
+      positionFrameRef.current = null;
+    }
+    const stoppedPosition =
+      pendingPositionRef.current ?? finalPositionRef.current;
+    pendingPositionRef.current = null;
+    finalPositionRef.current = stoppedPosition;
+    setFinalPosition(stoppedPosition);
+    onDragStopRef.current(stoppedPosition);
+    setIsDragging(false);
+  };
+  const finishDragRef = useRef(finishDrag);
+  finishDragRef.current = finishDrag;
 
   const startDrag = (x: number, y: number) => {
-    if (isLocked) return;
-    const { current } = ref;
-    if (!current) return;
-    const { width, height } = current.getBoundingClientRect();
+    if (isLockedRef.current) return false;
+    const draggableElement = ref.current;
+    if (!draggableElement) return false;
+    const { width, height } = draggableElement.getBoundingClientRect();
     const sessionId = ++dragSessionCounter;
 
     activeDragSessionId = sessionId;
     dragSessionRef.current = sessionId;
-    setIsDragging(true);
-    setDragInfo({
-      offsetX: x - finalPosition.x,
-      offsetY: y - finalPosition.y,
+    dragInfoRef.current = {
+      offsetX: x - finalPositionRef.current.x,
+      offsetY: y - finalPositionRef.current.y,
       width,
       height,
-    });
+    };
+    dragOriginPositionRef.current = finalPositionRef.current;
+    isDraggingRef.current = true;
+    draggableElement.style.willChange = "transform";
+    hasDragStylesRef.current = true;
+    setIsDragging(true);
+    return true;
   };
 
-  const dragTo = useCallback(
-    (x: number, y: number) => {
-      if (!isDragging) return;
-      if (
-        dragSessionRef.current === null ||
-        dragSessionRef.current !== activeDragSessionId
-      ) {
-        return;
-      }
-      const { offsetX, offsetY, width, height } = dragInfo;
-
-      updateFinalPosition(width, height, x - offsetX, y - offsetY);
-    },
-    [isDragging, dragInfo, updateFinalPosition],
-  );
-
-  const endDrag = useCallback(() => {
-    activeTouchIdRef.current = null;
-    if (
-      dragSessionRef.current !== null &&
-      dragSessionRef.current === activeDragSessionId
-    ) {
-      activeDragSessionId = null;
-    }
-    dragSessionRef.current = null;
-    if (isDragging) {
-      setWasJustDragging(true);
-      setIsDragging(false);
-    }
-  }, [isDragging]);
-
-  const cancelDrag = useCallback(() => {
-    activeTouchIdRef.current = null;
-    if (
-      dragSessionRef.current !== null &&
-      dragSessionRef.current === activeDragSessionId
-    ) {
-      activeDragSessionId = null;
-    }
-    dragSessionRef.current = null;
-    if (isDragging) {
-      onDragStop(finalPosition);
-      setIsDragging(false);
-      setWasJustDragging(true);
-    }
-  }, [isDragging, finalPosition, onDragStop]);
-
-  const handleMouseDown = (evt: ReactMouseEvent<HTMLElement>) => {
-    if (isLocked) return;
+  const handlePointerDown = (evt: ReactPointerEvent<HTMLElement>) => {
+    if (isLockedRef.current) return;
+    if (!evt.isPrimary || evt.button !== 0) return;
     if (!(evt.target instanceof HTMLElement)) return;
     if (evt.target.getAttribute("data-state") === "input") return;
     if (evt.target.getAttribute("data-slot") === "hidden") return;
     if (evt.target.closest("[data-ll-draggable='false']")) return;
 
+    const scale = evt.pointerType === "touch" ? getScale() : 1;
+    if (!startDrag(evt.clientX * scale, evt.clientY * scale)) return;
+
+    activePointerIdRef.current = evt.pointerId;
     evt.stopPropagation();
-    startDrag(evt.clientX, evt.clientY);
   };
 
-  const handleTouchStart = (evt: ReactTouchEvent<HTMLElement>) => {
-    if (isLocked) return;
-    if (evt.touches.length > 1) return;
-    if (!(evt.target instanceof HTMLElement)) return;
-    if (evt.target.getAttribute("data-state") === "input") return;
-    if (evt.target.getAttribute("data-slot") === "hidden") return;
-    if (evt.target.closest("[data-ll-draggable='false']")) return;
-    const touch = evt.touches[0];
-    activeTouchIdRef.current = touch.identifier;
-    evt.stopPropagation();
-    const scale = getScale();
-    const clientX = (touch.pageX - window.scrollX) * scale;
-    const clientY = (touch.pageY - window.scrollY) * scale;
-    startDrag(clientX, clientY);
-  };
-
-  const handleMouseMove = useCallback(
-    (evt: MouseEvent) => {
-      if (!isDragging) return;
-      if ((evt.buttons & 1) === 0) {
-        endDrag();
-        return;
+  useEffect(
+    () => () => {
+      if (positionFrameRef.current !== null) {
+        window.cancelAnimationFrame(positionFrameRef.current);
       }
-      evt.preventDefault();
-      dragTo(evt.clientX, evt.clientY);
-    },
-    [isDragging, dragTo, endDrag],
-  );
-
-  const handleTouchMove = useCallback(
-    (evt: TouchEvent) => {
-      if (!isDragging || evt.touches.length > 1) return;
-      const activeTouchId = activeTouchIdRef.current;
-      const touch =
-        activeTouchId === null
-          ? evt.touches[0]
-          : getTouchByIdentifier(evt.touches, activeTouchId);
-      if (!touch) return;
-      evt.preventDefault();
-      const scale = getScale();
-      const clientX = (touch.pageX - window.scrollX) * scale;
-      const clientY = (touch.pageY - window.scrollY) * scale;
-      dragTo(clientX, clientY);
-    },
-    [isDragging, dragTo],
-  );
-
-  const handleMouseUp = useCallback(() => endDrag(), [endDrag]);
-  const handleTouchEnd = useCallback(
-    (evt: TouchEvent) => {
-      const activeTouchId = activeTouchIdRef.current;
-      if (activeTouchId !== null) {
-        const activeTouchStillPresent = hasTouchIdentifier(
-          evt.touches,
-          activeTouchId,
-        );
-        if (activeTouchStillPresent) return;
-      } else if (evt.touches.length > 0 && isDragging) {
-        return;
+      if (dragSessionRef.current === activeDragSessionId) {
+        activeDragSessionId = null;
       }
-      endDrag();
-    },
-    [endDrag, isDragging],
-  );
-
-  const handleTouchCancel = useCallback(
-    (evt: TouchEvent) => {
-      const activeTouchId = activeTouchIdRef.current;
-      if (activeTouchId !== null) {
-        const activeTouchStillPresent = hasTouchIdentifier(
-          evt.touches,
-          activeTouchId,
-        );
-        if (activeTouchStillPresent) return;
+      activePointerIdRef.current = null;
+      dragSessionRef.current = null;
+      isDraggingRef.current = false;
+      const draggableElement = ref.current;
+      if (draggableElement && hasDragStylesRef.current) {
+        draggableElement.style.transform = "";
+        draggableElement.style.willChange = "";
       }
-      endDrag();
+      hasDragStylesRef.current = false;
     },
-    [endDrag],
+    [ref],
   );
 
-  useEffect(() => {
-    if (wasJustDragging && !isDragging) {
-      onDragStop(finalPosition);
-      setWasJustDragging(false);
-    }
-  }, [isDragging, wasJustDragging, finalPosition, onDragStop]);
+  useLayoutEffect(() => {
+    if (isDragging || !hasDragStylesRef.current) return;
+    const draggableElement = ref.current;
+    if (!draggableElement) return;
+
+    draggableElement.style.transform = "";
+    draggableElement.style.willChange = "";
+    hasDragStylesRef.current = false;
+  }, [finalPosition, isDragging, ref]);
 
   useEffect(() => {
     if (isLocked) return;
     let timeoutId: number | undefined;
 
     const handleResize = () => {
-      if (timeoutId) {
+      if (timeoutId !== undefined) {
         clearTimeout(timeoutId);
       }
       timeoutId = window.setTimeout(() => {
-        if (isLocked) return;
-        const { current: draggableElement } = ref;
+        if (isLockedRef.current) return;
+        const draggableElement = ref.current;
         if (!draggableElement) return;
         const { width, height } = draggableElement.getBoundingClientRect();
-        setFinalPosition((prev) => {
-          const x = Math.min(Math.max(0, prev.x), window.innerWidth - width);
-          const y = Math.min(Math.max(0, prev.y), window.innerHeight - height);
-          if (x !== prev.x || y !== prev.y) {
-            setTimeout(() => onDragStop({ x, y }), 0);
+        setFinalPosition((previousPosition) => {
+          const x = Math.min(
+            Math.max(0, previousPosition.x),
+            window.innerWidth - width,
+          );
+          const y = Math.min(
+            Math.max(0, previousPosition.y),
+            window.innerHeight - height,
+          );
+          if (x === previousPosition.x && y === previousPosition.y) {
+            return previousPosition;
           }
-          return { x, y };
+
+          const nextPosition = { x, y };
+          finalPositionRef.current = nextPosition;
+          window.setTimeout(() => onDragStopRef.current(nextPosition), 0);
+          return nextPosition;
         });
       }, 100);
     };
@@ -292,107 +272,101 @@ export const useDrag = ({
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
-      if (timeoutId) {
+      if (timeoutId !== undefined) {
         clearTimeout(timeoutId);
       }
     };
-  }, [ref, isLocked, onDragStop]);
+  }, [ref, isLocked]);
 
   useEffect(() => {
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.addEventListener("touchmove", handleTouchMove, { passive: false });
-    document.addEventListener("touchend", handleTouchEnd);
-    document.addEventListener("touchcancel", handleTouchCancel);
-    window.addEventListener("touchend", handleTouchEnd);
-    window.addEventListener("touchcancel", handleTouchCancel);
+    if (!isDragging) return;
+    if (isLocked) {
+      finishDragRef.current();
+      return;
+    }
 
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("touchend", handleTouchEnd);
-      document.removeEventListener("touchcancel", handleTouchCancel);
-      window.removeEventListener("touchend", handleTouchEnd);
-      window.removeEventListener("touchcancel", handleTouchCancel);
-    };
-  }, [
-    handleMouseMove,
-    handleTouchMove,
-    handleMouseUp,
-    handleTouchEnd,
-    handleTouchCancel,
-  ]);
-
-  useEffect(() => {
-    const handleGlobalMouseDown = (evt: MouseEvent) => {
-      if (!isDragging) return;
-      const current = ref.current;
-      if (!current) return;
-      if (!(evt.target instanceof Node)) return;
-      if (!current.contains(evt.target)) {
-        cancelDrag();
-      }
-    };
-
-    const handleGlobalTouchStart = (evt: TouchEvent) => {
-      if (!isDragging) return;
-      const current = ref.current;
-      if (!current) return;
-      if (!(evt.target instanceof Node)) {
-        cancelDrag();
+    const handlePointerMove = (evt: PointerEvent) => {
+      if (evt.pointerId !== activePointerIdRef.current) return;
+      if (evt.pointerType === "mouse" && (evt.buttons & 1) === 0) {
+        finishDragRef.current();
         return;
       }
-      if (!current.contains(evt.target)) {
-        cancelDrag();
+      if (
+        dragSessionRef.current === null ||
+        dragSessionRef.current !== activeDragSessionId
+      ) {
+        return;
+      }
+
+      evt.preventDefault();
+      const scale = evt.pointerType === "touch" ? getScale() : 1;
+      const { offsetX, offsetY, width, height } = dragInfoRef.current;
+      queuePositionRef.current(
+        width,
+        height,
+        evt.clientX * scale - offsetX,
+        evt.clientY * scale - offsetY,
+      );
+    };
+    const handlePointerEnd = (evt: PointerEvent) => {
+      if (evt.pointerId === activePointerIdRef.current) {
+        finishDragRef.current();
       }
     };
-
+    const handleGlobalPointerDown = (evt: PointerEvent) => {
+      const draggableElement = ref.current;
+      if (!draggableElement || !(evt.target instanceof Node)) return;
+      if (!draggableElement.contains(evt.target)) {
+        finishDragRef.current();
+      }
+    };
     const handleWindowBlur = () => {
-      if (isDragging) {
-        cancelDrag();
-      }
+      finishDragRef.current();
     };
 
-    document.addEventListener("mousedown", handleGlobalMouseDown, true);
-    document.addEventListener("touchstart", handleGlobalTouchStart, true);
+    document.addEventListener("pointermove", handlePointerMove, {
+      passive: false,
+    });
+    document.addEventListener("pointerup", handlePointerEnd);
+    document.addEventListener("pointercancel", handlePointerEnd);
+    document.addEventListener("pointerdown", handleGlobalPointerDown, true);
     window.addEventListener("blur", handleWindowBlur);
 
     return () => {
-      document.removeEventListener("mousedown", handleGlobalMouseDown, true);
-      document.removeEventListener("touchstart", handleGlobalTouchStart, true);
+      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerup", handlePointerEnd);
+      document.removeEventListener("pointercancel", handlePointerEnd);
+      document.removeEventListener(
+        "pointerdown",
+        handleGlobalPointerDown,
+        true,
+      );
       window.removeEventListener("blur", handleWindowBlur);
     };
-  }, [isDragging, cancelDrag, ref]);
+  }, [isDragging, isLocked, ref]);
 
-  // Usunięto clampowanie pozycji i setFinalPosition z efektu mount/ref
-
-  const recalculate = useCallback(
-    (width?: number, height?: number) => {
-      const { current } = ref;
-      if (!current) return;
-      const {
-        top,
-        left,
-        width: renderedWidth,
-        height: renderedHeight,
-      } = current.getBoundingClientRect();
-      updateFinalPosition(
-        width ?? renderedWidth,
-        height ?? renderedHeight,
-        left,
-        top,
-      );
-    },
-    [updateFinalPosition],
-  );
+  const recalculate = (width?: number, height?: number) => {
+    const draggableElement = ref.current;
+    if (!draggableElement) return;
+    const {
+      top,
+      left,
+      width: renderedWidth,
+      height: renderedHeight,
+    } = draggableElement.getBoundingClientRect();
+    queuePositionRef.current(
+      width ?? renderedWidth,
+      height ?? renderedHeight,
+      left,
+      top,
+    );
+  };
 
   return {
     position: finalPosition,
-    handleMouseDown,
-    handleTouchStart,
+    handlePointerDown,
     recalculate,
     isDragging,
-    cancelDrag,
+    cancelDrag: () => finishDragRef.current(),
   };
 };

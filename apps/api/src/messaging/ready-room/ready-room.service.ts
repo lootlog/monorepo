@@ -16,6 +16,7 @@ import type {
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
 } from "@lootlog/types";
+import { ChatService } from "src/chat/chat.service";
 import {
   createReadyRoomClientUpdate,
   createReadyRoomProjection,
@@ -134,6 +135,7 @@ export class ReadyRoomService {
   constructor(
     @Inject(READY_ROOM_REPOSITORY)
     private readonly repository: ReadyRoomRepository,
+    private readonly chatService: ChatService,
     @Optional()
     @Inject(READY_ROOM_CLOCK)
     private readonly clock: Clock = Date.now,
@@ -533,6 +535,10 @@ export class ReadyRoomService {
     };
     const result = await this.repository.terminate(aggregate, nextAggregate);
     this.assertCommitResult(result);
+    await this.chatService.endPartyGatheringMessages(
+      result.aggregate.notificationId,
+      result.aggregate.guildIds,
+    );
     await this.publish(result.aggregate, recipientDiscordIds);
     return createReadyRoomClientUpdate(
       result.aggregate,

@@ -72,6 +72,9 @@ export class AirTagRenderer {
   private readonly drawable: AirTagDrawable;
   private readonly now: () => number;
   private registeredEvent: string | null = null;
+  private expiryTimeoutId: number | null = null;
+  private enabled = false;
+  private unsubscribeTargets: (() => void) | null = null;
   private frameTargets: AirTagTarget[] = [];
   private frameTime = 0;
 
@@ -88,22 +91,22 @@ export class AirTagRenderer {
   register(): boolean {
     const gameWindow = window as AirTagWindow;
     const event = gameWindow.Engine?.apiData?.CALL_DRAW_ADD_TO_RENDERER;
-    if (!event || !gameWindow.API || this.registeredEvent) return false;
+    if (!event || !gameWindow.API || this.enabled) return false;
 
-    gameWindow.API.addCallbackToEvent(event, this.handleDrawFrame);
-    this.registeredEvent = event;
+    this.enabled = true;
+    this.unsubscribeTargets = airTagReceiveController.subscribe(
+      this.refreshDrawRegistration,
+    );
+    this.refreshDrawRegistration();
     return true;
   }
 
   unregister(): void {
-    const gameWindow = window as AirTagWindow;
-    if (this.registeredEvent && gameWindow.API) {
-      gameWindow.API.removeCallbackFromEvent(
-        this.registeredEvent,
-        this.handleDrawFrame,
-      );
-    }
-    this.registeredEvent = null;
+    this.enabled = false;
+    this.unsubscribeTargets?.();
+    this.unsubscribeTargets = null;
+    this.cancelExpiry();
+    this.detachDrawRegistration();
     this.frameTargets = [];
   }
 
@@ -113,7 +116,11 @@ export class AirTagRenderer {
       this.frameTime,
       AIR_TAG_TARGET_TTL_MS,
     );
-    if (this.frameTargets.length === 0) return;
+    if (this.frameTargets.length === 0) {
+      this.cancelExpiry();
+      this.detachDrawRegistration();
+      return;
+    }
 
     const hasClanEnemy = this.frameTargets.some(
       (target) =>
@@ -254,6 +261,65 @@ export class AirTagRenderer {
 
   private getEngine(): AirTagEngine | undefined {
     return (window as AirTagWindow).Engine;
+  }
+
+  private readonly refreshDrawRegistration = () => {
+    if (!this.enabled) return;
+
+    const targets = airTagReceiveController.getRenderableTargets(
+      this.now(),
+      AIR_TAG_TARGET_TTL_MS,
+    );
+    if (targets.length === 0) {
+      this.cancelExpiry();
+      this.detachDrawRegistration();
+      return;
+    }
+
+    this.scheduleExpiry(targets);
+    if (this.registeredEvent) return;
+    const gameWindow = window as AirTagWindow;
+    const event = gameWindow.Engine?.apiData?.CALL_DRAW_ADD_TO_RENDERER;
+    if (!event || !gameWindow.API) return;
+
+    gameWindow.API.addCallbackToEvent(event, this.handleDrawFrame);
+    this.registeredEvent = event;
+  };
+
+  private scheduleExpiry(targets: readonly AirTagTarget[]): void {
+    this.cancelExpiry();
+    if (!this.enabled || targets.length === 0) return;
+
+    const now = this.now();
+    const nearestExpiryAt = targets.reduce(
+      (earliestExpiryAt, target) =>
+        Math.min(earliestExpiryAt, target.observedAt + AIR_TAG_TARGET_TTL_MS),
+      Number.POSITIVE_INFINITY,
+    );
+    this.expiryTimeoutId = window.setTimeout(
+      () => {
+        this.expiryTimeoutId = null;
+        this.refreshDrawRegistration();
+      },
+      Math.max(0, Math.ceil(nearestExpiryAt - now)),
+    );
+  }
+
+  private cancelExpiry(): void {
+    if (this.expiryTimeoutId === null) return;
+    window.clearTimeout(this.expiryTimeoutId);
+    this.expiryTimeoutId = null;
+  }
+
+  private detachDrawRegistration(): void {
+    const gameWindow = window as AirTagWindow;
+    if (this.registeredEvent && gameWindow.API) {
+      gameWindow.API.removeCallbackFromEvent(
+        this.registeredEvent,
+        this.handleDrawFrame,
+      );
+    }
+    this.registeredEvent = null;
   }
 }
 

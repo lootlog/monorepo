@@ -20,7 +20,22 @@ type InvitationIntent = {
   participantIds: string[];
 };
 
-let invitationQueue = Promise.resolve();
+type InvitationResult = { targets: PartyReadyRoomInvitationTarget[] };
+
+type PendingInvitation = {
+  intent: InvitationIntent;
+  promise: Promise<InvitationResult>;
+  reject: (reason?: unknown) => void;
+  resolve: (result: InvitationResult) => void;
+};
+
+export const READY_ROOM_INVITATION_PARTICIPANT_CAP = 100;
+export const READY_ROOM_INVITATION_TIMEOUT_MS = 5_000;
+
+let activeInvitation: Promise<InvitationResult> | null = null;
+let activeAbortController: AbortController | null = null;
+let pendingInvitation: PendingInvitation | null = null;
+let coordinatorGeneration = 0;
 
 function characterIdentitiesMatch(
   first: ReadyRoomCharacterIdentity | null,
@@ -72,7 +87,8 @@ function getInvitableParticipantIds(
           requestedParticipantIds.has(participant.participantId)) &&
         participant.partyPresence === "OUTSIDE",
     )
-    .map(({ participantId }) => participantId);
+    .map(({ participantId }) => participantId)
+    .slice(0, READY_ROOM_INVITATION_PARTICIPANT_CAP);
 }
 
 function captureInvitationIntent(
@@ -131,7 +147,7 @@ function canIssueInvitationTarget(
 
 async function executeInvitationIntent(
   intent: InvitationIntent,
-): Promise<{ targets: PartyReadyRoomInvitationTarget[] }> {
+): Promise<InvitationResult> {
   const room = getCurrentIntentRoom(intent);
   if (!room) throw new Error("Ready Room invitation intent is stale");
   const participantIds = getInvitableParticipantIds(
@@ -140,10 +156,36 @@ async function executeInvitationIntent(
   );
   if (participantIds.length === 0) return { targets: [] };
 
-  const response = await partyReadyRoomControllerResolveInvitationTargets(
-    { notificationId: intent.notificationId },
-    { participantIds },
-  );
+  const abortController = new AbortController();
+  activeAbortController = abortController;
+  let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timeoutId = globalThis.setTimeout(() => {
+      abortController.abort();
+      reject(new Error("Ready Room invitation request timed out"));
+    }, READY_ROOM_INVITATION_TIMEOUT_MS);
+  });
+  let response: Awaited<
+    ReturnType<typeof partyReadyRoomControllerResolveInvitationTargets>
+  >;
+
+  try {
+    response = await Promise.race([
+      partyReadyRoomControllerResolveInvitationTargets(
+        { notificationId: intent.notificationId },
+        { participantIds },
+        { signal: abortController.signal },
+      ),
+      timeout,
+    ]);
+  } finally {
+    if (timeoutId !== undefined) {
+      globalThis.clearTimeout(timeoutId);
+    }
+    if (activeAbortController === abortController) {
+      activeAbortController = null;
+    }
+  }
   for (const target of response.targets) {
     if (!canIssueInvitationTarget(intent, target)) continue;
     try {
@@ -155,6 +197,75 @@ async function executeInvitationIntent(
   return response as { targets: PartyReadyRoomInvitationTarget[] };
 }
 
+function invitationIntentsMatch(
+  first: InvitationIntent,
+  second: InvitationIntent,
+): boolean {
+  return (
+    first.notificationId === second.notificationId &&
+    characterIdentitiesMatch(
+      first.organizerCharacter,
+      second.organizerCharacter,
+    )
+  );
+}
+
+function mergeInvitationIntents(
+  current: InvitationIntent,
+  incoming: InvitationIntent,
+): InvitationIntent {
+  if (!invitationIntentsMatch(current, incoming)) {
+    return incoming;
+  }
+
+  return {
+    ...current,
+    participantIds: [
+      ...new Set([...current.participantIds, ...incoming.participantIds]),
+    ].slice(0, READY_ROOM_INVITATION_PARTICIPANT_CAP),
+  };
+}
+
+function createPendingInvitation(intent: InvitationIntent): PendingInvitation {
+  let resolve!: (result: InvitationResult) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<InvitationResult>(
+    (promiseResolve, promiseReject) => {
+      resolve = promiseResolve;
+      reject = promiseReject;
+    },
+  );
+
+  return { intent, promise, reject, resolve };
+}
+
+function startInvitation(
+  intent: InvitationIntent,
+  generation: number,
+): Promise<InvitationResult> {
+  const invitation = executeInvitationIntent(intent);
+  activeInvitation = invitation;
+
+  const settleInvitation = () => {
+    if (generation !== coordinatorGeneration) {
+      return;
+    }
+
+    activeInvitation = null;
+    const pending = pendingInvitation;
+    pendingInvitation = null;
+    if (!pending) {
+      return;
+    }
+
+    const nextInvitation = startInvitation(pending.intent, generation);
+    void nextInvitation.then(pending.resolve, pending.reject);
+  };
+  void invitation.then(settleInvitation, settleInvitation);
+
+  return invitation;
+}
+
 export function canEnqueueReadyRoomInvitations(
   participantIds?: string[],
 ): boolean {
@@ -163,19 +274,35 @@ export function canEnqueueReadyRoomInvitations(
 
 export function enqueueReadyRoomInvitations(
   participantIds?: string[],
-): Promise<{ targets: PartyReadyRoomInvitationTarget[] }> {
+): Promise<InvitationResult> {
   const intent = captureInvitationIntent(participantIds);
   if (!intent) {
     return Promise.reject(new Error("Ready Room invitation is unavailable"));
   }
-  const result = invitationQueue.then(() => executeInvitationIntent(intent));
-  invitationQueue = result.then(
-    () => undefined,
-    () => undefined,
-  );
-  return result;
+  if (!activeInvitation) {
+    return startInvitation(intent, coordinatorGeneration);
+  }
+
+  if (!pendingInvitation) {
+    pendingInvitation = createPendingInvitation(intent);
+  } else {
+    pendingInvitation.intent = mergeInvitationIntents(
+      pendingInvitation.intent,
+      intent,
+    );
+  }
+
+  return pendingInvitation.promise;
 }
 
-export function resetReadyRoomInvitationCoordinatorForTests(): void {
-  invitationQueue = Promise.resolve();
+export function disposeReadyRoomInvitationCoordinator(): void {
+  coordinatorGeneration += 1;
+  activeAbortController?.abort();
+  activeAbortController = null;
+  activeInvitation = null;
+  pendingInvitation?.resolve({ targets: [] });
+  pendingInvitation = null;
 }
+
+export const resetReadyRoomInvitationCoordinatorForTests =
+  disposeReadyRoomInvitationCoordinator;

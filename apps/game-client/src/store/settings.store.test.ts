@@ -14,6 +14,34 @@ describe("useSettingsStore", () => {
     expect(useSettingsStore.getState().animationEffectsEnabled).toBe(true);
   });
 
+  it("disables loot debug logging by default", () => {
+    expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(false);
+  });
+
+  it("updates loot debug logging", () => {
+    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+
+    expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(true);
+
+    useSettingsStore.getState().setLootDebugLoggingEnabled(false);
+
+    expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(false);
+  });
+
+  it("persists loot debug logging in settings storage", () => {
+    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+
+    const storedSettings = JSON.parse(
+      localStorage.getItem(SETTINGS_STORAGE_KEY) ?? "{}",
+    ) as {
+      state?: {
+        lootDebugLoggingEnabled?: boolean;
+      };
+    };
+
+    expect(storedSettings.state?.lootDebugLoggingEnabled).toBe(true);
+  });
+
   it("toggles animation effects", () => {
     useSettingsStore.getState().toggleAnimationEffects();
 

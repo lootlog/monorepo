@@ -2,19 +2,27 @@ import type { UserSoundSettings } from "@lootlog/types";
 import { getSoundSettingsControllerGetSettingsQueryKey } from "@/lib/api/generated/main/sound-settings/sound-settings";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { queryClient } from "@/lib/query-client";
-import { playSound } from "./sound-playback";
+import { disposeSoundPlayback, playSound } from "./sound-playback";
 
 const audioInstances: AudioMock[] = [];
 
 class AudioMock {
+  currentTime = 4;
   volume = 1;
   playbackRate = 1;
   preservesPitch = true;
+  preload = "";
+  src: string;
   onended: (() => void) | null = null;
+  readonly load = vi.fn();
   readonly pause = vi.fn();
   readonly play = vi.fn<() => Promise<void>>().mockResolvedValue();
+  readonly removeAttribute = vi.fn((attribute: string) => {
+    if (attribute === "src") this.src = "";
+  });
 
-  constructor(readonly src: string) {
+  constructor(src: string) {
+    this.src = src;
     audioInstances.push(this);
   }
 }
@@ -36,12 +44,14 @@ const createSoundSettings = (
 
 describe("playSound", () => {
   beforeEach(() => {
+    disposeSoundPlayback();
     queryClient.clear();
     audioInstances.length = 0;
     vi.stubGlobal("Audio", AudioMock);
   });
 
   afterEach(() => {
+    disposeSoundPlayback();
     vi.unstubAllGlobals();
   });
 
@@ -56,7 +66,24 @@ describe("playSound", () => {
     expect(audioInstances).toHaveLength(1);
     expect(audioInstances[0]?.src).toBe(DEFAULT_SOUND_URLS.mapPing);
     expect(audioInstances[0]?.volume).toBe(0.4);
+    expect(audioInstances[0]?.preload).toBe("auto");
     expect(audioInstances[0]?.play).toHaveBeenCalledTimes(1);
+  });
+
+  it("reuses the preloaded media element for repeated pings", () => {
+    queryClient.setQueryData(
+      getSoundSettingsControllerGetSettingsQueryKey(),
+      createSoundSettings(),
+    );
+
+    playSound("pings", "mapPing");
+    playSound("pings", "mapPing");
+
+    expect(audioInstances).toHaveLength(1);
+    expect(audioInstances[0]?.load).toHaveBeenCalledTimes(1);
+    expect(audioInstances[0]?.play).toHaveBeenCalledTimes(2);
+    expect(audioInstances[0]?.pause).toHaveBeenCalledTimes(1);
+    expect(audioInstances[0]?.currentTime).toBe(0);
   });
 
   it("stays silent when ping sounds are muted", () => {

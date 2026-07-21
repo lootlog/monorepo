@@ -101,10 +101,6 @@ vi.mock("@/hooks/use-init", () => ({ useInit: () => undefined }));
 vi.mock("@/hooks/use-timer-settings-mutations-registry", () => ({
   useTimerSettingsMutationsRegistry: () => undefined,
 }));
-vi.mock(
-  "@/features/party-finder/hooks/use-notification-volunteers-socket",
-  () => ({ useNotificationVolunteersSocket: () => undefined }),
-);
 vi.mock("@/features/party-finder/hooks/use-party-gathering-socket", () => ({
   usePartyGatheringSocket: () => undefined,
 }));

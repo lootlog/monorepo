@@ -1,4 +1,3 @@
-import { AnimatedWindow } from "@/components/animated-window";
 import { DraggableWindow } from "@/components/draggable-window";
 import { Game } from "@/lib/game";
 import {
@@ -36,7 +35,7 @@ export const EventMode = ({ query }: EventModeProps) => {
     (state) => state.setSelectedEventId,
   );
   const selectedEvent = resolveSelectedEvent(events, storedEventId);
-  const nowMs = useEventModeClock(events.length > 0);
+  const nowMs = useEventModeClock(open && events.length > 0);
 
   useEffect(() => {
     if (
@@ -58,35 +57,34 @@ export const EventMode = ({ query }: EventModeProps) => {
   const isStale = query.isError && query.data !== undefined;
 
   return (
-    <AnimatedWindow isOpen={open} windowKey="event-mode">
-      <DraggableWindow
-        id="event-mode"
-        title={t("window.title")}
-        actions=<EventModeSelector
-          events={events}
-          selectedEventId={selectedEvent.id}
-          isStale={isStale}
-          lastUpdatedAt={query.dataUpdatedAt}
-          onEventChange={(eventId) => {
-            if (selectionScope) {
-              setSelectedEventId(selectionScope, eventId);
-            }
-          }}
-        />
-        variant="small"
-        resizable={false}
-        minWidth={290}
-        minHeight={132}
-        dynamicHeight
-        onClose={() => setOpen("event-mode", false)}
-        closable
-      >
-        <EventModeContent
-          event={selectedEvent}
-          currentMapId={currentMapId}
-          nowMs={nowMs}
-        />
-      </DraggableWindow>
-    </AnimatedWindow>
+    <DraggableWindow
+      isOpen={open}
+      id="event-mode"
+      title={t("window.title")}
+      actions=<EventModeSelector
+        events={events}
+        selectedEventId={selectedEvent.id}
+        isStale={isStale}
+        lastUpdatedAt={query.dataUpdatedAt}
+        onEventChange={(eventId) => {
+          if (selectionScope) {
+            setSelectedEventId(selectionScope, eventId);
+          }
+        }}
+      />
+      variant="small"
+      resizable={false}
+      minWidth={290}
+      minHeight={132}
+      dynamicHeight
+      onClose={() => setOpen("event-mode", false)}
+      closable
+    >
+      <EventModeContent
+        event={selectedEvent}
+        currentMapId={currentMapId}
+        nowMs={nowMs}
+      />
+    </DraggableWindow>
   );
 };

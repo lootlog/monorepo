@@ -1,4 +1,5 @@
 import type { PartyReadyRoomCharacter } from "@lootlog/types";
+import { ConflictException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   CommitReadyRoomResult,
@@ -254,6 +255,10 @@ describe("ReadyRoomService", () => {
   };
   let service: ReadyRoomService;
   let participantNumber: number;
+  const chatService = {
+    endPartyGatheringMessages:
+      vi.fn<(notificationId: string, guildIds: string[]) => Promise<void>>(),
+  };
 
   beforeEach(() => {
     repository = new InMemoryReadyRoomRepository();
@@ -268,8 +273,10 @@ describe("ReadyRoomService", () => {
         .mockResolvedValue(undefined),
     };
     participantNumber = 0;
+    chatService.endPartyGatheringMessages.mockReset().mockResolvedValue();
     service = new ReadyRoomService(
       repository,
+      chatService as never,
       () => now,
       () => "generated-room",
       publisher as never,
@@ -343,6 +350,12 @@ describe("ReadyRoomService", () => {
       "organizer",
       createCharacter("other-character"),
     ).catch((error: unknown) => error);
+    expect(sameOrganizerError).toBeInstanceOf(ConflictException);
+    expect((sameOrganizerError as ConflictException).getStatus()).toBe(409);
+    expect((sameOrganizerError as ConflictException).getResponse()).toEqual({
+      code: "ACTIVE_GATHERING_EXISTS",
+      notificationId: "room-1",
+    });
     expect(getErrorCode(sameOrganizerError)).toMatchObject({
       code: "ACTIVE_GATHERING_EXISTS",
       notificationId: "room-1",
@@ -640,6 +653,13 @@ describe("ReadyRoomService", () => {
       expect.objectContaining({ status: "CANCELLED", revision: 3 }),
       ["organizer", "participant"],
     );
+    expect(chatService.endPartyGatheringMessages).toHaveBeenCalledWith(
+      "room-1",
+      ["guild-1"],
+    );
+    expect(
+      chatService.endPartyGatheringMessages.mock.invocationCallOrder[0],
+    ).toBeLessThan(publisher.publish.mock.invocationCallOrder.at(-1) ?? 0);
 
     await expect(
       createRoom("room-2", "organizer", organizerCharacter),

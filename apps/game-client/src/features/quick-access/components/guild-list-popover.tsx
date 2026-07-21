@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -81,7 +81,7 @@ export const GuildListPopover = () => {
             )}
 
             {guilds && guilds.length > 0 ? (
-              <ScrollArea
+              <NativeScrollArea
                 className={`ll:max-h-[240px] ${guilds.length <= 6 ? "ll:h-auto" : ""}`}
               >
                 <div className="ll:space-y-0.5">
@@ -110,7 +110,7 @@ export const GuildListPopover = () => {
                     </Button>
                   ))}
                 </div>
-              </ScrollArea>
+              </NativeScrollArea>
             ) : (
               <div className="ll:px-2 ll:py-2 ll:text-center ll:text-xs ll:text-gray-400">
                 {t("guildPopover.emptyGuilds")}

@@ -230,6 +230,24 @@ describe("useMapPings", () => {
     expect(socket.emit).not.toHaveBeenCalled();
   });
 
+  it("installs no controller, pointer, or socket listeners while disabled", () => {
+    testState.pingsEnabled = false;
+    const windowAddEventListener = vi.spyOn(window, "addEventListener");
+
+    renderHook(() => useMapPings());
+
+    expect(controller.register).not.toHaveBeenCalled();
+    expect(
+      windowAddEventListener.mock.calls.some(
+        ([eventName]) => eventName === "mousemove",
+      ),
+    ).toBe(false);
+    expect(socket.on).not.toHaveBeenCalledWith(
+      GatewayEvent.MAP_PING_RECEIVE,
+      expect.any(Function),
+    );
+  });
+
   it.each([
     {
       name: "pings are disabled",
@@ -315,10 +333,11 @@ describe("useMapPings", () => {
     });
   });
 
-  it("uses the latest cached preference for a received ping", () => {
+  it("subscribes for received pings after the preference becomes enabled", () => {
     testState.pingsEnabled = false;
-    renderHook(() => useMapPings());
+    const { rerender } = renderHook(() => useMapPings());
     testState.pingsEnabled = true;
+    rerender();
     const event: MapPingEvent = {
       pingId: "remote-ping-after-enable",
       world: "aether",

@@ -4,7 +4,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type FC, useEffect, useRef } from "react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { GuildButton } from "@/components/guild-button";
 import {
@@ -14,6 +14,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";
+import { useShallow } from "zustand/react/shallow";
 
 type GuildSwitcherProps = {
   disabled?: boolean;
@@ -56,12 +57,14 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       },
     });
   const { data: userPreferences } = useUserPreferences();
-  const { setGuildId, guildIdByCharId } = useSettingsStore();
+  const { setGuildId, guildId } = useSettingsStore(
+    useShallow((state) => ({
+      setGuildId: state.setGuildId,
+      guildId: characterId ? state.guildIdByCharId[characterId] : undefined,
+    })),
+  );
   const guildsOrder = userPreferences?.guildsOrder;
   const orderedGuilds = orderLootlogGuilds(guilds ?? [], guildsOrder);
-
-  const guildId = characterId ? guildIdByCharId[characterId] : undefined;
-
   useEffect(() => {
     if (!isFetched || orderedGuilds.length === 0) return;
     if (multiple) return;
@@ -186,19 +189,15 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
 
   return (
     <TooltipProvider>
-      <ScrollArea
+      <NativeScrollArea
         className={cn("ll:w-full", className)}
+        orientation="horizontal"
         ref={scrollContainerRef}
-        type="hover"
       >
         <div className="ll:mt-1 ll:flex ll:w-max ll:min-w-full ll:gap-1">
           {content}
         </div>
-        <ScrollBar
-          orientation="horizontal"
-          className="ll:my-0 ll:mx-0 ll:w-full"
-        />
-      </ScrollArea>
+      </NativeScrollArea>
     </TooltipProvider>
   );
 };

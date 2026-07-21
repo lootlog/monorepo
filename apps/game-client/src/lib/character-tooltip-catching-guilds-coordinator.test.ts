@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api-client";
 import {
   CATCHING_GUILDS_CACHE_TIME_MS,
+  CATCHING_GUILDS_FAILURE_TTL_MS,
   CharacterTooltipCatchingGuildsCoordinator,
 } from "@/lib/character-tooltip-catching-guilds-coordinator";
 import {
+  CHARACTER_TOOLTIP_ENTRY_TTL_MS,
   type CharacterTooltipCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
@@ -69,6 +71,31 @@ function getEntry(target: CharacterTooltipCatchingGuildsTarget) {
 describe("CharacterTooltipCatchingGuildsCoordinator", () => {
   beforeEach(() => {
     useCharacterTooltipCatchingGuildsStore.getState().clear();
+  });
+
+  it("protects visible cache entries while pruning expired inactive players", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
+
+    try {
+      const visibleTarget = createTarget("visible");
+      const inactiveTarget = createTarget("inactive");
+      const recentTarget = createTarget("recent");
+      const store = useCharacterTooltipCatchingGuildsStore.getState();
+      store.setSuccess(visibleTarget, [], Date.now());
+      store.setSuccess(inactiveTarget, [], Date.now());
+      const coordinator = new CharacterTooltipCatchingGuildsCoordinator();
+
+      coordinator.sync([visibleTarget], true);
+      vi.advanceTimersByTime(CHARACTER_TOOLTIP_ENTRY_TTL_MS + 1);
+      store.setSuccess(recentTarget, [], Date.now());
+
+      expect(getEntry(visibleTarget)).toBeDefined();
+      expect(getEntry(inactiveTarget)).toBeUndefined();
+      expect(getEntry(recentTarget)).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("marks every missing item in a partial response as error", async () => {
@@ -178,6 +205,28 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
       expect(getEntry(lateTarget)?.status).toBe("success");
     });
     expect(fetchPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
+  });
+
+  it("aborts and ignores an in-flight result after dispose", async () => {
+    const target = createTarget("1");
+    const request = createDeferred<ReturnType<typeof createResponse>>();
+    let requestSignal: AbortSignal | undefined;
+    const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
+      fetchPlayersCatchingGuilds: vi.fn((_players, signal) => {
+        requestSignal = signal;
+        return request.promise;
+      }),
+    });
+    coordinator.sync([target], true);
+
+    coordinator.dispose();
+    useCharacterTooltipCatchingGuildsStore.getState().clear();
+    request.resolve(createResponse([target]));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(requestSignal?.aborted).toBe(true);
+    expect(getEntry(target)).toBeUndefined();
   });
 
   it("moves a hovered player to the front of the shared queue", async () => {
@@ -300,6 +349,33 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
       expect(getEntry(target)?.status).toBe("error");
     });
     coordinator.sync([], false);
+    coordinator.sync([target], true);
+
+    await vi.waitFor(() => {
+      expect(getEntry(target)?.status).toBe("success");
+    });
+    expect(fetchPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries an expired failure without requiring a new activation", async () => {
+    const target = createTarget("1");
+    let now = 1_000;
+    const fetchPlayersCatchingGuilds = vi
+      .fn()
+      .mockRejectedValueOnce(createApiError(400))
+      .mockResolvedValueOnce(createResponse([target]));
+    const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
+      fetchPlayersCatchingGuilds,
+      now: () => now,
+    });
+
+    coordinator.sync([target], true);
+    await vi.waitFor(() => {
+      expect(getEntry(target)?.status).toBe("error");
+    });
+
+    coordinator.sync([], true);
+    now += CATCHING_GUILDS_FAILURE_TTL_MS + 1;
     coordinator.sync([target], true);
 
     await vi.waitFor(() => {

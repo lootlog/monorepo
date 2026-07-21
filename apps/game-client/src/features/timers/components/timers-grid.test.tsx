@@ -3,6 +3,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 const singleTimerSpy = vi.fn();
+const permissionQueryOptionsSpy = vi.fn(
+  ({ guildId }: { guildId: string }, _options?: unknown) => ({
+    queryKey: ["permissions", guildId],
+  }),
+);
+const useQueriesSpy = vi.fn(
+  ({ queries }: { queries: Array<{ queryKey: string[] }> }) =>
+    queries.map(({ queryKey }) => ({
+      data:
+        queryKey[1] === "guild-1"
+          ? ["LOOTLOG_TIMERS_DELETE"]
+          : ["LOOTLOG_TIMERS_RESET"],
+    })),
+);
 
 let mockGuilds = [{ id: "guild-1", name: "Alpha" }];
 
@@ -11,6 +25,23 @@ vi.mock("@/lib/api/generated/main/users/users", () => ({
   useUsersControllerGetCurrentUserAccessibleGuilds: () => ({
     data: mockGuilds,
   }),
+}));
+
+vi.mock("@/lib/api/generated/main/guilds/guilds", () => ({
+  getGuildsControllerGetGuildPermissionsQueryKey: ({
+    guildId,
+  }: {
+    guildId: string;
+  }) => ["permissions", guildId],
+  getGuildsControllerGetGuildPermissionsQueryOptions: (
+    parameters: { guildId: string },
+    options?: unknown,
+  ) => permissionQueryOptionsSpy(parameters, options),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueries: (options: { queries: Array<{ queryKey: string[] }> }) =>
+    useQueriesSpy(options),
 }));
 
 vi.mock("@/lib/api/generated-helpers", () => ({
@@ -29,10 +60,10 @@ vi.mock("./single-timer", () => ({
 
 import { TimersGrid } from "./timers-grid";
 
-const createTimer = (name: string): TimerWithTimeLeft =>
+const createTimer = (name: string, guildId = "guild-1"): TimerWithTimeLeft =>
   ({
     id: `timer-${name}`,
-    guildId: "guild-1",
+    guildId,
     timerKey: `timer-${name}`,
     world: "pandora",
     npcId: 10,
@@ -58,6 +89,8 @@ const createTimer = (name: string): TimerWithTimeLeft =>
 describe("TimersGrid", () => {
   beforeEach(() => {
     singleTimerSpy.mockReset();
+    permissionQueryOptionsSpy.mockClear();
+    useQueriesSpy.mockClear();
     mockGuilds = [{ id: "guild-1", name: "Alpha" }];
   });
 
@@ -76,6 +109,7 @@ describe("TimersGrid", () => {
       1,
       expect.objectContaining({
         guildIds: ["guild-1"],
+        guildPermissions: ["LOOTLOG_TIMERS_DELETE"],
         guildNamesById: { "guild-1": "Alpha" },
         settingsKey: "guild-1",
         isHidden: false,
@@ -85,6 +119,41 @@ describe("TimersGrid", () => {
       2,
       expect.objectContaining({
         isHidden: true,
+      }),
+    );
+  });
+
+  it("creates one permissions observer per unique guild instead of per timer", () => {
+    render(
+      <TimersGrid
+        timers={[
+          createTimer("Tanroth", "guild-1"),
+          createTimer("Mushita", "guild-1"),
+          createTimer("Furruk", "guild-2"),
+        ]}
+        settingsKey="guild-1"
+        hiddenTimers={[]}
+        minColumnWidth={120}
+      />,
+    );
+
+    expect(permissionQueryOptionsSpy).toHaveBeenCalledTimes(2);
+    expect(permissionQueryOptionsSpy).toHaveBeenNthCalledWith(
+      1,
+      { guildId: "guild-1" },
+      expect.objectContaining({
+        query: expect.objectContaining({ staleTime: 5 * 60 * 1000 }),
+      }),
+    );
+    expect(permissionQueryOptionsSpy).toHaveBeenNthCalledWith(
+      2,
+      { guildId: "guild-2" },
+      expect.anything(),
+    );
+    expect(singleTimerSpy).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        guildPermissions: ["LOOTLOG_TIMERS_RESET"],
       }),
     );
   });

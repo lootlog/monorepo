@@ -6,6 +6,7 @@ const STORAGE_KEY = storageKey("ll:settings:state");
 
 interface SettingsState {
   animationEffectsEnabled: boolean;
+  lootDebugLoggingEnabled: boolean;
   allowWorldSelection?: boolean;
   worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
@@ -13,6 +14,7 @@ interface SettingsState {
   ensureGuildId: (charId: string, orderedGuildIds: string[]) => void;
   setGuildId: (charId: string, guildId: string) => void;
   setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => void;
+  setLootDebugLoggingEnabled: (enabled: boolean) => void;
   setWorld: (guildId: string, world: string) => void;
   toggleAnimationEffects: () => void;
   toggleAllowWorldSelection: () => void;
@@ -22,6 +24,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       animationEffectsEnabled: true,
+      lootDebugLoggingEnabled: false,
       allowWorldSelection: false,
       worldByGuildId: {},
       guildIdByCharId: {},
@@ -65,6 +68,9 @@ export const useSettingsStore = create<SettingsState>()(
           },
         }));
       },
+      setLootDebugLoggingEnabled: (lootDebugLoggingEnabled) => {
+        set({ lootDebugLoggingEnabled });
+      },
       setWorld: (guildId: string, world: string) => {
         set((state) => ({
           worldByGuildId: {
@@ -86,6 +92,7 @@ export const useSettingsStore = create<SettingsState>()(
       name: STORAGE_KEY,
       partialize: (state) => ({
         animationEffectsEnabled: state.animationEffectsEnabled,
+        lootDebugLoggingEnabled: state.lootDebugLoggingEnabled,
         allowWorldSelection: state.allowWorldSelection,
         worldByGuildId: state.worldByGuildId,
         guildIdByCharId: state.guildIdByCharId,

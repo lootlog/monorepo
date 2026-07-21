@@ -2,11 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useLootStore } from "@/store/game-store/loot.store";
 import { ChatEventProcessor } from "./chat-event-processor";
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import type * as ApiModule from "@/api";
 
 const mockUpdateLoot = vi.fn();
 
 vi.mock("@/api", async (importOriginal) => {
-  const originalModule = await importOriginal<typeof import("@/api")>();
+  const originalModule = await importOriginal<typeof ApiModule>();
 
   return {
     ...originalModule,
