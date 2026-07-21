@@ -173,7 +173,7 @@ export const initializeErrorMonitoring = (): void => {
           ...integrations,
           Sentry.thirdPartyErrorFilterIntegration({
             filterKeys: [SENTRY_APPLICATION_KEY],
-            behaviour: "drop-error-if-exclusively-contains-third-party-frames",
+            behaviour: "drop-error-if-contains-third-party-frames",
           }),
         ];
       },
