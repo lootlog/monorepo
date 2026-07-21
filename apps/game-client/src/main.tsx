@@ -1,3 +1,5 @@
+import "./instrument";
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
@@ -8,6 +10,10 @@ import { queryClient } from "@/lib/query-client";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { disposeSocket } from "@/lib/socket";
 import { resetTransientRuntimeState } from "@/lib/runtime-state";
+import {
+  captureBootstrapError,
+  getReactRootErrorHandlers,
+} from "@/lib/error-monitoring";
 
 const ROOT_Z_INDEX_BY_INTERFACE = {
   ni: 11,
@@ -85,7 +91,7 @@ export function bootstrapGameClient(): GameClientRuntime {
   let root: ReturnType<typeof ReactDOM.createRoot>;
 
   try {
-    root = ReactDOM.createRoot(rootElement);
+    root = ReactDOM.createRoot(rootElement, getReactRootErrorHandlers());
   } catch (error) {
     rootElement.remove();
     throw error;
@@ -156,4 +162,9 @@ export function bootstrapGameClient(): GameClientRuntime {
   return runtime;
 }
 
-bootstrapGameClient();
+try {
+  bootstrapGameClient();
+} catch (error) {
+  captureBootstrapError(error);
+  throw error;
+}
