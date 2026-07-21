@@ -62,23 +62,24 @@ export class GuildsController {
     required: false,
     description: "Legacy source selector kept for backward compatibility",
   })
-  async getUserGuilds(
+  getUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Query("source") source?: string,
     @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ) {
-    const parsedDevPermissionOverride = parseDevPermissionOverrideHeader(
-      devPermissionOverride,
+    const guildPermissionOptions = {
+      devPermissionOverride: parseDevPermissionOverrideHeader(
+        devPermissionOverride,
+      ),
+    };
+
+    return this.guildsService.getUserGuilds(
+      discordId,
+      userId,
+      source,
+      guildPermissionOptions,
     );
-
-    if (!parsedDevPermissionOverride) {
-      return this.guildsService.getUserGuilds(discordId, userId, source);
-    }
-
-    return this.guildsService.getUserGuilds(discordId, userId, source, {
-      devPermissionOverride: parsedDevPermissionOverride,
-    });
   }
 
   @Get("/@me/permissions")
@@ -98,17 +99,17 @@ export class GuildsController {
     @UserId() userId: string,
     @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ): Promise<UserGuildPermissionsDto[]> {
-    const parsedDevPermissionOverride = parseDevPermissionOverrideHeader(
-      devPermissionOverride,
+    const guildPermissionOptions = {
+      devPermissionOverride: parseDevPermissionOverrideHeader(
+        devPermissionOverride,
+      ),
+    };
+
+    return this.guildsService.getUserGuildsWithPermissions(
+      discordId,
+      userId,
+      guildPermissionOptions,
     );
-
-    if (!parsedDevPermissionOverride) {
-      return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
-    }
-
-    return this.guildsService.getUserGuildsWithPermissions(discordId, userId, {
-      devPermissionOverride: parsedDevPermissionOverride,
-    });
   }
 
   @Get("/@me/manageable")

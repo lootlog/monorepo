@@ -61,6 +61,7 @@ describe("GuildsController", () => {
       "discord-user-current",
       "auth-user-current",
       "game",
+      { devPermissionOverride: undefined },
     );
   });
 
@@ -75,6 +76,7 @@ describe("GuildsController", () => {
     expect(mockGuildsService.getUserGuildsWithPermissions).toHaveBeenCalledWith(
       "discord-user-current",
       "auth-user-current",
+      { devPermissionOverride: undefined },
     );
   });
 });

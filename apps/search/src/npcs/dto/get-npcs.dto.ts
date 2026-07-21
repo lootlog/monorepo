@@ -1,35 +1,18 @@
 import { createZodDto, type ZodDto } from "nestjs-zod";
+import {
+  parseCommaSeparatedQueryList,
+  parseSearchTermsQuery,
+} from "src/shared/query-list.utils";
 import { z } from "zod";
-
-function parseCommaSeparatedQuery(value: unknown) {
-  if (typeof value !== "string") {
-    return value;
-  }
-
-  return value
-    .split(",")
-    .map((searchTerm) => searchTerm.trim())
-    .filter(Boolean);
-}
 
 export const getNpcsQuerySchema = z.object({
   ids: z
-    .preprocess(parseCommaSeparatedQuery, z.array(z.coerce.number().int()))
+    .preprocess(parseCommaSeparatedQueryList, z.array(z.coerce.number().int()))
     .optional(),
   limit: z.coerce.number().optional().default(10),
   search: z
     .preprocess(
-      (value) => {
-        if (typeof value !== "string") {
-          return value;
-        }
-
-        if (!value.includes(",")) {
-          return value;
-        }
-
-        return parseCommaSeparatedQuery(value);
-      },
+      parseSearchTermsQuery,
       z.union([z.string(), z.array(z.string())]),
     )
     .optional(),
