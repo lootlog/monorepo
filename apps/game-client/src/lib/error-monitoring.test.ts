@@ -51,7 +51,7 @@ describe("error monitoring", () => {
     );
   });
 
-  it("initializes errors-only monitoring when a Sentry DSN is configured", async () => {
+  it("drops errors containing non-game-client frames", async () => {
     vi.stubEnv("VITE_SENTRY_DSN", "https://public@example.ingest.sentry.io/1");
 
     const { initializeErrorMonitoring } = await import("./error-monitoring");
@@ -84,7 +84,7 @@ describe("error monitoring", () => {
       ]),
     ).toEqual([{ name: "GlobalHandlers" }, { name: "ThirdPartyErrorFilter" }]);
     expect(sentryMocks.thirdPartyErrorFilterIntegration).toHaveBeenCalledWith({
-      behaviour: "drop-error-if-exclusively-contains-third-party-frames",
+      behaviour: "drop-error-if-contains-third-party-frames",
       filterKeys: ["lootlog-game-client"],
     });
   });
