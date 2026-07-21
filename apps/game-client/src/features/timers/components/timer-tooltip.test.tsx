@@ -8,9 +8,9 @@ const createTimer = (overrides?: Partial<Timer>): Timer => ({
   timerKey: "timer-1",
   world: "pandora",
   npcId: 10,
-  minSpawnTime: "2026-04-22T10:00:00.000Z",
-  maxSpawnTime: "2026-04-22T10:05:00.000Z",
-  updatedAt: "2026-04-22T09:59:00.000Z",
+  minSpawnTime: new Date(2026, 3, 22, 12).toISOString(),
+  maxSpawnTime: new Date(2026, 3, 22, 12, 5).toISOString(),
+  updatedAt: new Date(2026, 3, 22, 11, 59).toISOString(),
   wasReset: overrides?.wasReset ?? true,
   npc: {
     id: 10,

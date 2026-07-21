@@ -5,6 +5,111 @@ import {
 } from "./map-ping-controller";
 
 describe("map ping coordinates", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("keeps the per-frame draw listener detached while there are no pings", () => {
+    const originalEngine = window.Engine;
+    const originalApi = window.API;
+    const addCallbackToEvent = vi.fn();
+    const removeCallbackFromEvent = vi.fn();
+    window.Engine = {
+      apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
+    } as never;
+    window.API = {
+      addCallbackToEvent,
+      removeCallbackFromEvent,
+    } as never;
+    const controller = new MapPingController(() => 1_000);
+
+    expect(controller.register()).toBe(true);
+    expect(addCallbackToEvent).not.toHaveBeenCalled();
+
+    controller.addRemote(
+      {
+        pingId: "ping-1",
+        world: "aether",
+        mapId: 42,
+        type: "attention",
+        x: 10,
+        y: 20,
+        sender: { characterId: "123", name: "Sender" },
+        createdAt: 1_700_000_000_000,
+      },
+      "Uwaga",
+    );
+    expect(addCallbackToEvent).toHaveBeenCalledTimes(1);
+
+    controller.remove("ping-1");
+    expect(removeCallbackFromEvent).toHaveBeenCalledTimes(1);
+
+    controller.unregister();
+    window.Engine = originalEngine;
+    window.API = originalApi;
+  });
+
+  it("retains at most the newest 256 active pings", () => {
+    const controller = new MapPingController(() => 1_000);
+    const createEvent = (index: number) => ({
+      pingId: `ping-${index}`,
+      world: "aether",
+      mapId: 42,
+      type: "attention" as const,
+      x: 10,
+      y: 20,
+      sender: { characterId: "123", name: "Sender" },
+      createdAt: 1_700_000_000_000,
+    });
+
+    for (let index = 0; index < 257; index += 1) {
+      expect(controller.addRemote(createEvent(index), "Uwaga")).toBe(true);
+    }
+
+    expect(controller.addRemote(createEvent(0), "Uwaga")).toBe(true);
+    expect(controller.addRemote(createEvent(256), "Uwaga")).toBe(false);
+  });
+
+  it("expires pings and detaches drawing even when no draw frame arrives", () => {
+    vi.useFakeTimers();
+    let now = 1_000;
+    const originalEngine = window.Engine;
+    const originalApi = window.API;
+    const removeCallbackFromEvent = vi.fn();
+    window.Engine = {
+      apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
+    } as never;
+    window.API = {
+      addCallbackToEvent: vi.fn(),
+      removeCallbackFromEvent,
+    } as never;
+    const controller = new MapPingController(() => now);
+
+    controller.register();
+    controller.addRemote(
+      {
+        pingId: "ping-without-frame",
+        world: "aether",
+        mapId: 42,
+        type: "attention",
+        x: 10,
+        y: 20,
+        sender: { characterId: "123", name: "Sender" },
+        createdAt: 1_700_000_000_000,
+      },
+      "Uwaga",
+    );
+    now += 10_000;
+
+    vi.advanceTimersByTime(10_000);
+
+    const removalCountBeforeCleanup = removeCallbackFromEvent.mock.calls.length;
+    controller.unregister();
+    window.Engine = originalEngine;
+    window.API = originalApi;
+    expect(removalCountBeforeCleanup).toBe(1);
+  });
+
   it("resolves a main-map tile through CSS scaling and camera offset", () => {
     const canvas = document.createElement("canvas");
     canvas.width = 600;

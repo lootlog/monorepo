@@ -10,12 +10,16 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Game } from "@/lib/game";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
-import { format } from "date-fns";
+import { format } from "@/utils/local-date";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { usePartyFinderStore } from "@/store/party-finder.store";
-import { useWindowsStore } from "@/store/windows.store";
+import {
+  selectReadyRoomForCharacter,
+  usePartyFinderStore,
+} from "@/store/party-finder.store";
+import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
+import { ChatCharacterTooltip } from "./chat-character-tooltip";
 
 type PartyGatheringCardProps = {
   message: ChatMessageResponseDtoOutput;
@@ -36,7 +40,10 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   const memberColor = useMemberColor(member);
   const applyToReadyRoom = usePartyReadyRoomControllerApply();
   const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
-  const setOpen = useWindowsStore((state) => state.setOpen);
+  const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
+  const currentReadyRoom = usePartyFinderStore((state) =>
+    selectReadyRoomForCharacter(state, currentCharacterIdentity),
+  );
   const senderName =
     member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
 
@@ -69,12 +76,14 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
               [{guildName}]{" "}
             </span>
           )}
-          <span
-            className="ll:font-bold ll:select-text"
-            style={{ color: `#${memberColor}` }}
-          >
-            {senderName}:
-          </span>{" "}
+          <ChatCharacterTooltip character={message.characterData}>
+            <span
+              className="ll:font-bold ll:select-text"
+              style={{ color: `#${memberColor}` }}
+            >
+              {senderName}:
+            </span>
+          </ChatCharacterTooltip>{" "}
           <span
             className="ll:font-bold ll:select-text"
             style={{ color: "#9CA3AF" }}
@@ -100,7 +109,6 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
       {
         onSuccess: (projection) => {
           mergeProjection(projection as unknown as PartyReadyRoomProjection);
-          setOpen("party-finder", true);
         },
       },
     );
@@ -128,12 +136,14 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             [{guildName}]{" "}
           </span>
         )}
-        <span
-          className="ll:font-bold ll:select-text"
-          style={{ color: `#${memberColor}` }}
-        >
-          {senderName}:
-        </span>{" "}
+        <ChatCharacterTooltip character={message.characterData}>
+          <span
+            className="ll:font-bold ll:select-text"
+            style={{ color: `#${memberColor}` }}
+          >
+            {senderName}:
+          </span>
+        </ChatCharacterTooltip>{" "}
         <span
           className="ll:font-bold ll:select-text"
           style={{ color: "#FF8C00" }}
@@ -181,11 +191,20 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             const minLvl = partyGathering?.minLvl ?? 1;
             const maxLvl = partyGathering?.maxLvl ?? 500;
             const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
+            const isJoinedToThisGathering =
+              currentReadyRoom?.viewer === "PARTICIPANT" &&
+              currentReadyRoom.notificationId === partyGathering.notificationId;
+            const isRegisteredElsewhere =
+              currentReadyRoom !== null && !isJoinedToThisGathering;
 
             return (
               <Button
                 onClick={handleVolunteer}
-                disabled={applyToReadyRoom.isPending || !meetsLevelReq}
+                disabled={
+                  applyToReadyRoom.isPending ||
+                  !meetsLevelReq ||
+                  currentReadyRoom !== null
+                }
                 className="ll:box-border ll:w-full ll:min-w-0 ll:max-w-full ll:mt-0.5 ll:text-[11px] ll:h-6 ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
               >
                 {applyToReadyRoom.isPending ? (
@@ -198,6 +217,10 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
                     min: minLvl,
                     max: maxLvl,
                   })
+                ) : isJoinedToThisGathering ? (
+                  t("partyGathering.joined")
+                ) : isRegisteredElsewhere ? (
+                  t("partyGathering.joinedElsewhere")
                 ) : (
                   t("partyGathering.joinParty")
                 )}

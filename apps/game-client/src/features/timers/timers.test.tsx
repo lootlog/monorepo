@@ -17,6 +17,7 @@ const timersActionsSpy = vi.fn();
 const timersUnderBagActionsSpy = vi.fn();
 
 let gameInterface = "si";
+let timersOpen = true;
 let worldByGuildId: Record<string, string> = {
   "guild-1": "gefion",
 };
@@ -69,7 +70,7 @@ vi.mock("@/store/windows.store", () => ({
     }) => unknown,
   ) =>
     selector({
-      timers: { open: true },
+      timers: { open: timersOpen },
       toggleOpen: mockToggleOpen,
       setOpen: mockSetOpen,
     }),
@@ -126,33 +127,19 @@ vi.mock("@/lib/game", () => ({
   },
 }));
 
-vi.mock("@/components/animated-window", () => ({
-  AnimatedWindow: ({
-    children,
-    isOpen,
-    windowKey,
-  }: {
-    children: ReactNode;
-    isOpen: boolean;
-    windowKey: string;
-  }) => (
-    <div data-testid={`animated-${windowKey}`} data-open={String(isOpen)}>
-      {children}
-    </div>
-  ),
-}));
-
 vi.mock("@/components/draggable-window", () => ({
   DraggableWindow: ({
     children,
+    isOpen,
     title,
     actions,
   }: {
     children: ReactNode;
+    isOpen: boolean;
     title: string;
     actions?: ReactNode;
   }) => (
-    <div>
+    <div data-testid="draggable-window" data-open={String(isOpen)}>
       <h1>{title}</h1>
       {actions}
       {children}
@@ -228,6 +215,7 @@ describe("Timers", () => {
     timersUnderBagActionsSpy.mockReset();
 
     gameInterface = "si";
+    timersOpen = true;
     worldByGuildId = {
       "guild-1": "gefion",
     };
@@ -268,7 +256,6 @@ describe("Timers", () => {
     mockUseTimers.mockReturnValue({
       data: [],
     });
-    mockUseTimersUpdate.mockImplementation((timers: unknown) => timers);
     mockUseTimersFiltering.mockImplementation(
       ({ calculatedTimers }: { calculatedTimers: unknown }) => calculatedTimers,
     );
@@ -300,7 +287,11 @@ describe("Timers", () => {
       world: "gefion",
     });
     expect(mockUseTimersSocket).toHaveBeenCalledTimes(1);
-    expect(mockUseTimersUpdate.mock.calls[0]?.[0]).toHaveLength(1);
+    const filteringInput = mockUseTimersFiltering.mock.calls[0]?.[0] as
+      | { calculatedTimers: unknown[] }
+      | undefined;
+    expect(filteringInput?.calculatedTimers).toHaveLength(1);
+    expect(mockUseTimersUpdate).toHaveBeenCalledWith(true);
     expect(mockUseTimersFiltering).toHaveBeenCalledWith(
       expect.objectContaining({
         guildId: "guild-1",
@@ -358,11 +349,43 @@ describe("Timers", () => {
     });
     expect(screen.getByTestId("under-bag")).toBeInTheDocument();
     expect(screen.getByText("TimersUnderBagActions")).toBeInTheDocument();
-    expect(screen.queryByTestId("animated-timers")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("draggable-window")).not.toBeInTheDocument();
+    expect(mockUseTimersUpdate).toHaveBeenCalledWith(true);
     expect(timersContentSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         isUnderBag: true,
       }),
     );
+  });
+
+  it("keeps the under-bag clock idle when every timer is filtered out", () => {
+    gameInterface = "ni";
+    timersStoreState = {
+      ...timersStoreState,
+      generalConfig: {
+        ...timersStoreState.generalConfig,
+        timersUnderBag: true,
+      },
+    };
+    mockUseTimers.mockReturnValue({ data: [createTimer()] });
+    mockUseTimersFiltering.mockReturnValue([]);
+
+    render(<Timers />);
+
+    expect(mockUseTimersUpdate).toHaveBeenCalledWith(false);
+    expect(timersContentSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ sortedTimers: [] }),
+    );
+  });
+
+  it("keeps only socket ingress active while the timers window is hidden", () => {
+    timersOpen = false;
+
+    render(<Timers />);
+
+    expect(mockUseTimersSocket).toHaveBeenCalledOnce();
+    expect(mockUseTimers).not.toHaveBeenCalled();
+    expect(mockUseTimersUpdate).not.toHaveBeenCalled();
+    expect(timersContentSpy).not.toHaveBeenCalled();
   });
 });

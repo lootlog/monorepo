@@ -46,7 +46,7 @@ export const useUpdateUserGameAccountPreferences = (
     mutationKey: accountId
       ? ["usersControllerUpdateUserGameAccountPreferences", accountId]
       : ["usersControllerUpdateUserGameAccountPreferences", "disabled"],
-    mutationFn: async (payload: UpdateUserGameAccountPreferencesDto) => {
+    mutationFn: (payload: UpdateUserGameAccountPreferencesDto) => {
       if (!accountId) {
         throw new Error("Account ID is required");
       }

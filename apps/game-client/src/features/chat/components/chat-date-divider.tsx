@@ -1,4 +1,4 @@
-import { format, isToday, isYesterday } from "date-fns";
+import { format, isToday, isYesterday } from "@/utils/local-date";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 

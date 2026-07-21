@@ -69,6 +69,7 @@ apps/search/src/metadata.ts
 
 # Profiles & Performance
 apps/api/profiles/
+/artifacts/game-client/
 perf/
 tools/k6/.secrets.local
 

@@ -91,6 +91,59 @@ export const getPresenceKey = (presence: PlayerPresence) => {
   return `${presence.player.accountId}-${presence.player.characterId}`;
 };
 
+export const applyPresenceUpdates = (
+  previous: PlayerPresenceResponse,
+  updates: readonly PlayerPresence[],
+): PlayerPresenceResponse => {
+  let next = previous;
+
+  for (const update of updates) {
+    const presenceKey = getPresenceKey(update);
+    const currentAccountPresences = next[update.discordId] ?? [];
+    let updatedAccountPresences: PlayerPresence[] | undefined;
+
+    if (update.status === "offline") {
+      const filteredPresences = currentAccountPresences.filter(
+        (presence) => getPresenceKey(presence) !== presenceKey,
+      );
+      if (filteredPresences.length === currentAccountPresences.length) {
+        continue;
+      }
+
+      updatedAccountPresences = filteredPresences;
+    } else {
+      if (!update.player) continue;
+
+      const existingPresenceIndex = currentAccountPresences.findIndex(
+        (presence) => getPresenceKey(presence) === presenceKey,
+      );
+      if (existingPresenceIndex === -1) {
+        updatedAccountPresences = [...currentAccountPresences, update];
+      } else {
+        updatedAccountPresences = [...currentAccountPresences];
+        updatedAccountPresences[existingPresenceIndex] = {
+          ...currentAccountPresences[existingPresenceIndex],
+          ...update,
+          player: update.player,
+          mapName: update.mapName,
+        };
+      }
+    }
+
+    if (next === previous) {
+      next = { ...previous };
+    }
+
+    if (updatedAccountPresences.length === 0) {
+      delete next[update.discordId];
+    } else {
+      next[update.discordId] = updatedAccountPresences;
+    }
+  }
+
+  return next;
+};
+
 const normalizePresenceLevel = (level?: number | string) => {
   if (typeof level === "number" && Number.isFinite(level)) {
     return level;

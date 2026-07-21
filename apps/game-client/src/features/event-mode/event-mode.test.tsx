@@ -21,41 +21,34 @@ vi.mock("./use-event-mode-clock", () => ({
   useEventModeClock: () => Date.parse("2026-07-13T12:00:00.000Z"),
 }));
 
-vi.mock("@/components/animated-window", () => ({
-  AnimatedWindow: ({
-    isOpen,
-    children,
-  }: {
-    isOpen: boolean;
-    children: ReactNode;
-  }) => (isOpen ? <div data-testid="animated-window">{children}</div> : null),
-}));
-
 vi.mock("@/components/draggable-window", () => ({
   DraggableWindow: ({
     actions,
     children,
     closable,
+    isOpen,
     onClose,
     title,
   }: {
     actions?: ReactNode;
     children: ReactNode;
     closable?: boolean;
+    isOpen: boolean;
     onClose?: () => void;
     title: string;
-  }) => (
-    <div data-testid="event-mode-window" data-closable={String(closable)}>
-      <span>{title}</span>
-      {closable ? (
-        <button aria-label="close-event-mode" onClick={onClose} type="button">
-          close
-        </button>
-      ) : null}
-      {actions}
-      {children}
-    </div>
-  ),
+  }) =>
+    isOpen ? (
+      <div data-testid="event-mode-window" data-closable={String(closable)}>
+        <span>{title}</span>
+        {closable ? (
+          <button aria-label="close-event-mode" onClick={onClose} type="button">
+            close
+          </button>
+        ) : null}
+        {actions}
+        {children}
+      </div>
+    ) : null,
 }));
 
 describe("EventMode", () => {

@@ -3,7 +3,7 @@
 @import "tw-animate-css";
 @source "src/**/*.{ts,tsx}";
 
-@variant dark (.dark-theme *);
+@variant dark (:is(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme) *);
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -52,8 +52,8 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
-/* @layer base { */
-:root {
+#lootlog-root,
+.ll-theme-boundary {
   --background: oklch(0.965 0.002 250);
   --foreground: oklch(0.109 0.081 252.71);
   --card: oklch(1 0 0);
@@ -107,7 +107,8 @@
   --spacing: 0.25rem;
 }
 
-.dark-theme {
+#lootlog-root.dark-theme,
+.ll-theme-boundary.dark-theme {
   --background: oklch(0.071 0.011 250);
   --foreground: oklch(0.98 0.024 213);
   --card: oklch(0.106 0.007 250);
@@ -159,26 +160,17 @@
   --shadow-2xl: 0px 5px 15px 0px hsl(0 0% 0% / 1);
 }
 
-body {
+#lootlog-root,
+.ll-theme-boundary {
   letter-spacing: var(--tracking-normal);
 }
-/* } */
 
-body {
-  background-color: #000;
-}
-
-body.si {
-  background-color: #000;
-  color: #fff;
-}
-
-body.si > #lootlog-root * {
+body.si :is(#lootlog-root, .ll-theme-boundary) * {
   /* Matches NI behaviour */
   user-select: none;
 }
 
-body.si > #lootlog-root .ll-custom-cursor-pointer * {
+body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
   /* Needed because SI has * { cursor: default } */
   cursor: inherit;
 }
@@ -192,13 +184,50 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   pointer-events: auto;
 }
 
-#lootlog-root * {
+#lootlog-root *,
+.ll-theme-boundary * {
   font-family: Arimo, Calibri, Segoe;
 }
 
-#lootlog-root.ll-reduced-motion *,
-#lootlog-root.ll-reduced-motion *::before,
-#lootlog-root.ll-reduced-motion *::after {
+@keyframes ll-window-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes ll-window-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.97);
+  }
+}
+
+.ll-window-enter {
+  animation: ll-window-enter 190ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+
+.ll-window-exit {
+  animation: ll-window-exit 130ms cubic-bezier(0.4, 0, 1, 1) both;
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+
+:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion *,
+:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion *::before,
+:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion *::after {
   scroll-behavior: auto !important;
   transition-delay: 0ms !important;
   transition-duration: 0ms !important;
@@ -207,45 +236,117 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   animation-iteration-count: 1 !important;
 }
 
-#lootlog-root.ll-reduced-motion .ll\:animate-spin {
+:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion .ll\:animate-spin {
   animation-duration: 1s !important;
   animation-iteration-count: infinite !important;
 }
 
-.ll-custom-cursor-pointer {
-  cursor:
-    url(../img/gui/cursor/5n.png?v=1747722915506) 4 0,
-    url(../img/gui/cursor/5n.cur?v=1747722915506) 4 0,
-    auto;
+@keyframes ll-npc-detection-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: brightness(1);
+  }
+  18% {
+    opacity: 0.72;
+    transform: scale(1.01);
+    filter: brightness(1.28);
+  }
+  58% {
+    opacity: 0.5;
+    transform: scale(1.003);
+    filter: brightness(1.12);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+    filter: brightness(1);
+  }
 }
 
-.inner-wrapper {
+@keyframes ll-npc-detection-bounce {
+  0% {
+    transform: translateY(-6px) scale(0.988);
+  }
+  45% {
+    transform: translateY(0) scale(1.006);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ll-npc-list-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+#lootlog-root .ll-npc-detection-flash {
+  animation: ll-npc-detection-flash 820ms ease-out both;
+}
+
+#lootlog-root .ll-npc-detection-bounce {
+  animation: ll-npc-detection-bounce 340ms ease-out both;
+}
+
+#lootlog-root .ll-npc-list-enter {
+  animation: ll-npc-list-enter 180ms ease-out both;
+}
+
+#lootlog-root .ll-npc-list-row {
+  content-visibility: auto;
+  contain-intrinsic-block-size: 48px;
+}
+
+#lootlog-root .ll-chat-message-list > * {
+  content-visibility: auto;
+  contain-intrinsic-block-size: 48px;
+}
+
+:is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer {
+  cursor: pointer;
+}
+
+body:has(> #lootlog-root) .inner-wrapper {
   height: 100%;
 }
 
-.right-main-column-wrapper {
+body:has(> #lootlog-root) .right-main-column-wrapper {
   height: 100%;
 }
 
-.inner-wrapper > .right-main-column-wrapper > .bottom-wrapper {
+body:has(> #lootlog-root)
+  .inner-wrapper
+  > .right-main-column-wrapper
+  > .bottom-wrapper {
   height: calc(100% - 406px);
   width: 253px !important;
 }
 
-.b_wrapper {
+body:has(> #lootlog-root) .b_wrapper {
   display: none;
 }
 
-.all:b {
+body:has(> #lootlog-root) .all\:b {
   display: none !important;
 }
 
-.input-no-spinner::-webkit-inner-spin-button,
-.input-no-spinner::-webkit-outer-spin-button {
+:is(#lootlog-root, .ll-theme-boundary)
+  .input-no-spinner::-webkit-inner-spin-button,
+:is(#lootlog-root, .ll-theme-boundary)
+  .input-no-spinner::-webkit-outer-spin-button {
   -webkit-appearance: none;
+  appearance: none;
   margin: 0;
 }
 
-.input-no-spinner {
-  -moz-appearance: textfield; /* Firefox */
+:is(#lootlog-root, .ll-theme-boundary) .input-no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }

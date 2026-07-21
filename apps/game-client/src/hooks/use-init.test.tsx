@@ -11,9 +11,12 @@ const mockGetInitializeState = vi.fn();
 let capturedGameInitCallback: (() => boolean) | null = null;
 
 vi.mock("@/store/global.store", () => ({
-  useGlobalStore: () => ({
-    setGameState: mockSetGameState,
-  }),
+  useGlobalStore: (
+    selector: (state: { setGameState: typeof mockSetGameState }) => unknown,
+  ) =>
+    selector({
+      setGameState: mockSetGameState,
+    }),
 }));
 
 vi.mock("@/lib/game-events-manager", () => ({

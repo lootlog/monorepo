@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Permission } from "@lootlog/types";
+import type * as ReactQueryModule from "@tanstack/react-query";
 
 const mockUseQueries = vi.fn();
 
@@ -12,7 +13,7 @@ let mockGuilds = [
 ];
 
 vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual<typeof import("@tanstack/react-query")>(
+  const actual = await vi.importActual<typeof ReactQueryModule>(
     "@tanstack/react-query",
   );
 

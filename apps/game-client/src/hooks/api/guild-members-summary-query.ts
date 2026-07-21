@@ -9,6 +9,7 @@ import {
 import type { MembersControllerGetGuildMembersSummaryPathParameters } from "@/lib/api/generated/main/model";
 
 export const GUILD_MEMBERS_SUMMARY_STALE_TIME = 5 * 60 * 1000;
+export const GUILD_MEMBERS_SUMMARY_GC_TIME = 30 * 60 * 1000;
 
 type GuildMembersSummaryQuery<
   TData = MembersControllerGetGuildMembersSummaryQueryResult,
@@ -43,7 +44,7 @@ export const getGuildMembersSummaryQueryOptions = <
   return getGeneratedGuildMembersSummaryQueryOptions(pathParameters, {
     ...options,
     query: {
-      gcTime: Infinity,
+      gcTime: GUILD_MEMBERS_SUMMARY_GC_TIME,
       staleTime: GUILD_MEMBERS_SUMMARY_STALE_TIME,
       ...options?.query,
     } as UseQueryOptions<
@@ -64,7 +65,7 @@ export const useGuildMembersSummary = <
   return useMembersControllerGetGuildMembersSummary(pathParameters, {
     ...options,
     query: {
-      gcTime: Infinity,
+      gcTime: GUILD_MEMBERS_SUMMARY_GC_TIME,
       staleTime: GUILD_MEMBERS_SUMMARY_STALE_TIME,
       ...options?.query,
     } as UseQueryOptions<

@@ -109,10 +109,6 @@ vi.mock("@/components/ui/checkbox", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/scroll-area", () => ({
-  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock("@/components/ui/select", () => ({
   Select: ({
     children,
@@ -245,6 +241,21 @@ describe("AddTimerForm", () => {
     expect(guildSelect).toHaveValue("guild-2");
     expect(nameInput).toHaveAttribute("maxLength", "50");
 
+    const scrollContainer = screen.getByTestId("add-timer-scroll-container");
+
+    expect(scrollContainer).toHaveClass(
+      "ll:h-full",
+      "ll:overflow-y-auto",
+      "ll:overflow-x-hidden",
+      "ll:scrollbar-thin",
+      "ll:scrollbar-gutter-stable",
+      "ll:scrollbar-thumb-transparent",
+      "ll:scrollbar-track-transparent",
+      "ll:hover:scrollbar-thumb-gray-400/50",
+      "ll:hover:scrollbar-track-gray-600/60",
+    );
+    expect(scrollContainer).toHaveAttribute("data-ll-native-scroll-area", "");
+
     await user.selectOptions(guildSelect, "guild-1");
     expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();
 
@@ -274,14 +285,14 @@ describe("AddTimerForm", () => {
     expect(mockSetOpen).toHaveBeenCalledWith("add-timer", false);
   });
 
-  it("uses the initial guild over the saved guild", async () => {
+  it("uses the initial guild over the saved guild", () => {
     render(<AddTimerForm initialGuildId="guild-1" />);
 
     expect(screen.getByLabelText("Serwer")).toHaveValue("guild-1");
     expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();
   });
 
-  it("does not rewrite the saved guild when the initial guild already matches", async () => {
+  it("does not rewrite the saved guild when the initial guild already matches", () => {
     mockSelectedGuildIdsForTimersByCharId = {
       "101": ["guild-1"],
     };

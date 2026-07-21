@@ -10,7 +10,7 @@ export const useSendChatMessage = () => {
     mutationKey,
     mutationFn: (options: SendChatMessageOptions) => sendChatMessage(options),
     onError: (error) => {
-      console.error("Chat message error:", error);
+      console.warn("Chat message error:", error);
       window.message(t("errors.sendFailed"));
     },
   });

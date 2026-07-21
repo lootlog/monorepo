@@ -189,6 +189,7 @@ vi.mock("@tanstack/react-query", async () => {
   return {
     ...actual,
     useQueryClient: () => ({
+      getQueryState: () => ({ data: [], fetchStatus: "idle" }),
       setQueryData: mockSetQueryData,
     }),
   };
@@ -306,8 +307,10 @@ vi.mock("@/lib/api/generated/main/roles/roles", () => ({
 
 vi.mock("@/lib/game", () => ({
   Game: {
+    getAccountId: () => null,
     getWorldName: () => "tempest",
     hero: {
+      id: 1,
       nick: "CurrentHero",
     },
   },
@@ -460,7 +463,10 @@ describe("ChatInput", () => {
 
     const listbox = screen.getByRole("listbox");
     expect(listbox).toBeInTheDocument();
-    expect(document.querySelector("#scrollbar")).not.toBeNull();
+    expect(listbox.closest("[data-ll-native-scroll-area]")).toHaveClass(
+      "ll:scrollbar-thumb-gray-400/50",
+      "ll:scrollbar-track-gray-600/60",
+    );
     expect(screen.getByText("Role")).toBeInTheDocument();
     expect(screen.getByText("Nicki")).toBeInTheDocument();
 
@@ -781,8 +787,11 @@ describe("ChatInput", () => {
 
   it("restores editor focus after sending a message", async () => {
     const user = userEvent.setup();
+    const onMessageSent = vi.fn();
     mockSendChatMessage.mockResolvedValue(createSentMessageResponse());
-    render(<ChatInput selectedGuildId="guild-1" />);
+    render(
+      <ChatInput onMessageSent={onMessageSent} selectedGuildId="guild-1" />,
+    );
 
     const editor = getEditor();
     await user.click(editor);
@@ -795,6 +804,7 @@ describe("ChatInput", () => {
     await waitFor(() => {
       expect(editor).toHaveFocus();
     });
+    expect(onMessageSent).toHaveBeenCalledTimes(1);
     expect(editor.textContent).toBe("");
   });
 });

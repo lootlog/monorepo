@@ -7,6 +7,14 @@ import type {
 } from "@/lib/api/generated/main/model";
 import { ChatMessage } from "./chat-message";
 
+const mocks = vi.hoisted(() => ({
+  dispatchChatScrollToMessage: vi.fn(),
+}));
+
+vi.mock("@/features/chat/chat-scroll-to-message", () => ({
+  dispatchChatScrollToMessage: mocks.dispatchChatScrollToMessage,
+}));
+
 vi.mock("@/hooks/discord/use-member-color", () => ({
   useMemberColor: () => "abcdef",
 }));
@@ -255,6 +263,7 @@ describe("ChatMessage", () => {
   });
 
   it("scrolls to the replied message without forcing horizontal movement", () => {
+    mocks.dispatchChatScrollToMessage.mockClear();
     const originalMessage = document.createElement("div");
     const scrollIntoView = vi.fn();
     originalMessage.scrollIntoView = scrollIntoView;
@@ -289,6 +298,33 @@ describe("ChatMessage", () => {
       block: "center",
       inline: "nearest",
     });
+    expect(mocks.dispatchChatScrollToMessage).not.toHaveBeenCalled();
+  });
+
+  it("asks the virtual list to reveal an unmounted replied message", () => {
+    mocks.dispatchChatScrollToMessage.mockClear();
+    vi.spyOn(document, "querySelector").mockReturnValue(null);
+
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        member={member}
+        message={makeChatMessage({
+          replyTo: {
+            messageId: "message-0",
+            senderNick: "QuotedHero",
+            message: "quoted message",
+            type: MessageType.NORMAL,
+          },
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("quoted message"));
+
+    expect(mocks.dispatchChatScrollToMessage).toHaveBeenCalledOnce();
+    expect(mocks.dispatchChatScrollToMessage).toHaveBeenCalledWith("message-0");
   });
 
   it("highlights targeted mentions in the message body", () => {

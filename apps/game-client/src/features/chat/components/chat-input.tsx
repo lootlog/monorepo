@@ -27,6 +27,7 @@ import {
   type ChatInputSuggestion,
 } from "@/features/chat/components/chat-mention-suggestions";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
+import { CHAT_QUERY_GC_TIME_MS } from "@/features/chat/chat.constants";
 import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
 import {
   filterCommandSuggestions,
@@ -74,10 +75,12 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { ChatReadyRoomIndicator } from "@/features/chat/components/chat-ready-room-indicator";
 
 type ChatInputProps = {
   selectedGuildId?: string;
   autofocus?: boolean;
+  onMessageSent?: () => void;
 };
 
 type TabCompletionSession = {
@@ -96,6 +99,7 @@ const CHAT_INPUT_FOCUS_CLASS =
 export const ChatInput: FC<ChatInputProps> = ({
   selectedGuildId,
   autofocus,
+  onMessageSent,
 }) => {
   const { t } = useTranslation("chat");
   const { t: tCommand } = useTranslation("command");
@@ -188,7 +192,7 @@ export const ChatInput: FC<ChatInputProps> = ({
             guildId: selectedGuildId ?? "",
           }),
           enabled: shouldLoadMentionData,
-          gcTime: Infinity,
+          gcTime: CHAT_QUERY_GC_TIME_MS,
           staleTime: 5 * 60 * 1000,
         },
       },
@@ -201,7 +205,7 @@ export const ChatInput: FC<ChatInputProps> = ({
           guildId: selectedGuildId ?? "",
         }),
         enabled: shouldLoadMentionData,
-        gcTime: Infinity,
+        gcTime: CHAT_QUERY_GC_TIME_MS,
         staleTime: 5 * 60 * 1000,
       },
     },
@@ -501,6 +505,7 @@ export const ChatInput: FC<ChatInputProps> = ({
         updater: (old: ChatMessageResponseDtoOutput[] | undefined) =>
           upsertChatMessage(old, response),
       });
+      onMessageSent?.();
       resetInputState();
       focusEditorCaret(0);
     } catch {
@@ -606,6 +611,7 @@ export const ChatInput: FC<ChatInputProps> = ({
 
   return (
     <form className="ll:flex ll:justify-center ll:flex-col ll:mt-1 ll:mr-0.5">
+      <ChatReadyRoomIndicator />
       {replyDraft && (
         <div className="ll:mb-1">
           <Label className="ll:text-[9px] ll:text-gray-400">

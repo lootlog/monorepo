@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
@@ -163,10 +163,7 @@ export const SettingsTabs = () => {
           }`}
         >
           <div className="ll:pointer-events-none ll:absolute ll:inset-y-0 ll:right-0 ll:w-px ll:bg-gray-400/30" />
-          <ScrollArea
-            className="ll:h-full ll:w-full ll:min-h-0 ll:flex-1 ll:box-border"
-            type="hover"
-          >
+          <NativeScrollArea className="ll:h-full ll:w-full ll:min-h-0 ll:flex-1 ll:box-border">
             <TabsList className="ll:flex ll:w-full ll:flex-col ll:items-stretch ll:justify-start ll:gap-1 ll:rounded-none ll:pt-0.5">
               {tabsList.map((tab) => {
                 const Icon = tab.icon;
@@ -212,7 +209,7 @@ export const SettingsTabs = () => {
                 );
               })}
             </TabsList>
-          </ScrollArea>
+          </NativeScrollArea>
           {!isCompactSidebar && hasCommitSha ? (
             <div className="ll:mt-2 ll:shrink-0 ll:px-2 ll:pb-1.5">
               <Tooltip>
@@ -227,10 +224,7 @@ export const SettingsTabs = () => {
           ) : null}
         </div>
         <div className="ll:flex ll:min-w-0 ll:flex-1 ll:min-h-0 ll:flex-col ll:pl-2 ll:pb-2">
-          <ScrollArea
-            className="ll:h-full ll:w-full ll:box-border ll:pr-2"
-            type="hover"
-          >
+          <NativeScrollArea className="ll:h-full ll:w-full ll:box-border ll:pr-2">
             {tabsList.map((tab) => (
               <TabsContent
                 key={tab.value}
@@ -240,7 +234,7 @@ export const SettingsTabs = () => {
                 {tab.content}
               </TabsContent>
             ))}
-          </ScrollArea>
+          </NativeScrollArea>
         </div>
       </Tabs>
     </div>

@@ -10,6 +10,7 @@ import { type FC, useEffect, useMemo } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { storageKey } from "@/lib/storage-key";
 import { useTranslation } from "react-i18next";
+import { useShallow } from "zustand/react/shallow";
 
 const recentWorldsKey = (accountId: string, characterId: string) =>
   storageKey(`ll:recent-worlds:${accountId}:${characterId}`);
@@ -30,9 +31,18 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   const accountId = String(Game.hero.account);
   const defaultWorld = Game.getWorldName();
 
-  const { guildIdByCharId, worldByGuildId, setWorld } = useSettingsStore();
-  const guildId = guildIdByCharId[characterId];
-  const world = guildId ? worldByGuildId[guildId] : undefined;
+  const { guildId, world, setWorld } = useSettingsStore(
+    useShallow((state) => {
+      const currentGuildId = state.guildIdByCharId[characterId];
+      return {
+        guildId: currentGuildId,
+        world: currentGuildId
+          ? state.worldByGuildId[currentGuildId]
+          : undefined,
+        setWorld: state.setWorld,
+      };
+    }),
+  );
   const { data: worlds, isFetched } = useGuildsControllerGetWorldsByGuildId(
     { guildId: guildId ?? "" },
     {

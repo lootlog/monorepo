@@ -2,6 +2,7 @@ import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 
 import { cn } from "@/lib/utils";
+import { getLootlogPortalContainer } from "./theme-boundary";
 
 function Popover({
   ...props
@@ -22,7 +23,7 @@ function PopoverContent({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Content>) {
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal container={getLootlogPortalContainer()}>
       <PopoverPrimitive.Content
         data-slot="popover-content"
         align={align}

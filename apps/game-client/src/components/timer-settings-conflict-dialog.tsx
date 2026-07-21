@@ -5,6 +5,7 @@ import { type FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 interface TimerSettingsConflictDialogProps {
+  isOpen: boolean;
   onResolve: (choice: "local" | "remote") => void;
   localUpdatedAt?: number;
   remoteUpdatedAt?: Date;
@@ -12,15 +13,17 @@ interface TimerSettingsConflictDialogProps {
 
 export const TimerSettingsConflictDialog: FC<
   TimerSettingsConflictDialogProps
-> = ({ onResolve, localUpdatedAt, remoteUpdatedAt }) => {
+> = ({ isOpen, onResolve, localUpdatedAt, remoteUpdatedAt }) => {
   const { t } = useTranslation(["timers", "common"]);
   const setPosition = useWindowsStore((state) => state.setPosition);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     const centerX = (window.innerWidth - 420) / 2;
     const centerY = (window.innerHeight - 320) / 2;
     setPosition("timer-settings-conflict", { x: centerX, y: centerY });
-  }, [setPosition]);
+  }, [isOpen, setPosition]);
 
   const formatDate = (date: Date | number | undefined) => {
     if (!date) return t("common:states.unknown");
@@ -30,6 +33,7 @@ export const TimerSettingsConflictDialog: FC<
 
   return (
     <DraggableWindow
+      isOpen={isOpen}
       id="timer-settings-conflict"
       title={t("window.conflictTitle")}
       closable={false}

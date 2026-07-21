@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LOGS_CAP, LOGS_STORAGE_KEY, useLogsStore } from "./logs.store";
+import {
+  LOGS_BYTE_CAP,
+  LOGS_CAP,
+  LOGS_STORAGE_KEY,
+  useLogsStore,
+} from "./logs.store";
 
 describe("useLogsStore", () => {
   beforeEach(() => {
@@ -70,6 +75,26 @@ describe("useLogsStore", () => {
     expect(actions.at(-1)).toMatchObject({
       payload: { index: LOGS_CAP + 4 },
     });
+  });
+
+  it("evicts oldest actions before the in-memory byte budget is exceeded", () => {
+    const payload = "x".repeat(1024 * 1024);
+
+    for (let index = 0; index < 6; index += 1) {
+      useLogsStore.getState().appendAction({
+        actionType: `action-${index}`,
+        payload,
+      });
+    }
+
+    const actions = useLogsStore.getState().actions;
+    const serializedBytes = new TextEncoder().encode(
+      JSON.stringify(actions),
+    ).byteLength;
+
+    expect(serializedBytes).toBeLessThanOrEqual(LOGS_BYTE_CAP);
+    expect(actions.at(-1)?.actionType).toBe("action-5");
+    expect(actions[0]?.actionType).not.toBe("action-0");
   });
 
   it("keeps requests nested under their parent action", () => {

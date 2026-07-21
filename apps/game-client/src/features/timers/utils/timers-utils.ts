@@ -15,6 +15,34 @@ export type TimerWithTimeLeft = Timer & {
 
 const MANUAL_TIMER_MARGONEM_TYPE = 999;
 
+const TIMER_EPOCH_CACHE_LIMIT = 20_000;
+const timerEpochByTimestamp = new Map<string, number>();
+
+export const clearTimerEpochCache = (): void => {
+  timerEpochByTimestamp.clear();
+};
+
+const getTimerEpoch = (timestamp: string): number => {
+  const cachedEpoch = timerEpochByTimestamp.get(timestamp);
+
+  if (cachedEpoch !== undefined) {
+    return cachedEpoch;
+  }
+
+  const epoch = new Date(timestamp).getTime();
+
+  if (timerEpochByTimestamp.size >= TIMER_EPOCH_CACHE_LIMIT) {
+    const oldestTimestamp = timerEpochByTimestamp.keys().next().value;
+
+    if (oldestTimestamp !== undefined) {
+      timerEpochByTimestamp.delete(oldestTimestamp);
+    }
+  }
+
+  timerEpochByTimestamp.set(timestamp, epoch);
+  return epoch;
+};
+
 export const isManualTimer = (timer: Timer) =>
   Number(timer.npc.margonemType) === MANUAL_TIMER_MARGONEM_TYPE;
 
@@ -54,63 +82,64 @@ const createMergedTimer = (timer: Timer): TimerWithTimeLeft => {
   };
 };
 
-const mergeTimerCollections = (
-  existingTimer: TimerWithTimeLeft,
-  timer: Timer,
-) => {
-  return {
-    members: [...(existingTimer.members ?? []), ...getTimerMembers(timer)],
-    actorCharactersByMemberId: {
-      ...(existingTimer.actorCharactersByMemberId ?? {}),
-      ...getTimerActorCharactersByMemberId(timer),
-    },
-    mergedGuildIds: [
-      ...(existingTimer.mergedGuildIds ?? []),
-      getMergedGuildEntry(timer),
-    ],
-  };
-};
-
 export const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
-  const map = new Map<string, TimerWithTimeLeft>();
+  const timerGroups = new Map<
+    string,
+    {
+      actorCharactersByMemberId: NonNullable<
+        Timer["actorCharactersByMemberId"]
+      >;
+      baseTimer: Timer;
+      maxSpawnTimeMs: number;
+      members: GuildMember[];
+      mergedGuildIds: NonNullable<TimerWithTimeLeft["mergedGuildIds"]>;
+    }
+  >();
 
   for (const timer of timers) {
     const key = getTimerKey(timer);
-    const existingTimer = map.get(key);
+    const existingGroup = timerGroups.get(key);
+    const maxSpawnTimeMs = getTimerEpoch(timer.maxSpawnTime);
 
-    if (!existingTimer) {
-      map.set(key, createMergedTimer(timer));
-      continue;
-    }
-
-    const mergedCollections = mergeTimerCollections(existingTimer, timer);
-
-    if (new Date(timer.maxSpawnTime) > new Date(existingTimer.maxSpawnTime)) {
-      map.set(key, {
-        ...createMergedTimer(timer),
-        ...mergedCollections,
+    if (!existingGroup) {
+      timerGroups.set(key, {
+        actorCharactersByMemberId: {
+          ...getTimerActorCharactersByMemberId(timer),
+        },
+        baseTimer: timer,
+        maxSpawnTimeMs,
+        members: getTimerMembers(timer),
+        mergedGuildIds: [getMergedGuildEntry(timer)],
       });
       continue;
     }
 
-    map.set(key, {
-      ...existingTimer,
-      ...mergedCollections,
-    });
+    existingGroup.members.push(...getTimerMembers(timer));
+    Object.assign(
+      existingGroup.actorCharactersByMemberId,
+      getTimerActorCharactersByMemberId(timer),
+    );
+    existingGroup.mergedGuildIds.push(getMergedGuildEntry(timer));
+    if (maxSpawnTimeMs > existingGroup.maxSpawnTimeMs) {
+      existingGroup.baseTimer = timer;
+      existingGroup.maxSpawnTimeMs = maxSpawnTimeMs;
+    }
   }
 
-  return Array.from(map.values());
+  return Array.from(timerGroups.values(), (group) => ({
+    ...createMergedTimer(group.baseTimer),
+    actorCharactersByMemberId: group.actorCharactersByMemberId,
+    members: group.members,
+    mergedGuildIds: group.mergedGuildIds,
+  }));
 };
 
 export const calculateTimeLeft = (
   timers: TimerWithTimeLeft[],
+  now = Date.now(),
 ): TimerWithTimeLeft[] => {
-  const now = Date.now();
-
   return timers.map((timer) => {
-    const deletedAt = timer.deletedAt
-      ? new Date(timer.deletedAt).getTime()
-      : null;
+    const deletedAt = timer.deletedAt ? getTimerEpoch(timer.deletedAt) : null;
 
     if (deletedAt !== null) {
       const deletedTimeLeft = deletedAt - now;
@@ -124,8 +153,8 @@ export const calculateTimeLeft = (
 
     return {
       ...timer,
-      maxTimeLeft: new Date(timer.maxSpawnTime).getTime() - now,
-      minTimeLeft: new Date(timer.minSpawnTime).getTime() - now,
+      maxTimeLeft: getTimerEpoch(timer.maxSpawnTime) - now,
+      minTimeLeft: getTimerEpoch(timer.minSpawnTime) - now,
     };
   });
 };
@@ -142,14 +171,19 @@ export const filterTimersByExpiredVisibility = (
   removeTimerAfterMs: number,
   alwaysVisibleExpiredTimers: Record<string, string[]>,
 ): TimerWithTimeLeft[] => {
-  return timers.filter((timer) => {
-    const alwaysVisibleTimerKeys =
-      alwaysVisibleExpiredTimers[timer.world] ?? [];
+  const alwaysVisibleTimerKeysByWorld = new Map(
+    Object.entries(alwaysVisibleExpiredTimers).map(([world, timerKeys]) => [
+      world,
+      new Set(timerKeys),
+    ]),
+  );
 
-    if (
-      !isManualTimer(timer) &&
-      alwaysVisibleTimerKeys.includes(timer.timerKey)
-    ) {
+  return timers.filter((timer) => {
+    const alwaysVisibleTimerKeys = alwaysVisibleTimerKeysByWorld.get(
+      timer.world,
+    );
+
+    if (!isManualTimer(timer) && alwaysVisibleTimerKeys?.has(timer.timerKey)) {
       return true;
     }
 
@@ -170,7 +204,8 @@ export const filterTimersByVisibility = (
   showHiddenTimers: boolean,
 ): TimerWithTimeLeft[] => {
   if (showHiddenTimers) return timers;
-  return timers.filter((t) => !hiddenTimers.includes(t.npc?.name));
+  const hiddenTimerNames = new Set(hiddenTimers);
+  return timers.filter((timer) => !hiddenTimerNames.has(timer.npc?.name));
 };
 
 export const filterTimersBySearchText = (
@@ -178,8 +213,9 @@ export const filterTimersBySearchText = (
   searchText: string,
 ): TimerWithTimeLeft[] => {
   if (!searchText) return timers;
-  return timers.filter((t) =>
-    t.npc.name.toLowerCase().includes(searchText.toLowerCase()),
+  const normalizedSearchText = searchText.toLowerCase();
+  return timers.filter((timer) =>
+    timer.npc.name.toLowerCase().includes(normalizedSearchText),
   );
 };
 
@@ -187,11 +223,12 @@ export const filterTimersByNpcType = (
   timers: TimerWithTimeLeft[],
   selectedNpcTypes: string[],
 ): TimerWithTimeLeft[] => {
+  const selectedNpcTypeSet = new Set(selectedNpcTypes);
   return timers.filter(
-    (t) =>
-      selectedNpcTypes.includes(t.npc.type) ||
-      t.npc.lvl === 0 ||
-      t.npc.type === NpcType.NPC,
+    (timer) =>
+      selectedNpcTypeSet.has(timer.npc.type) ||
+      timer.npc.lvl === 0 ||
+      timer.npc.type === NpcType.NPC,
   );
 };
 
@@ -211,9 +248,10 @@ export const filterTimersByColor = (
   timersColors: Record<string, string>,
 ): TimerWithTimeLeft[] => {
   if (selectedColors.length === 0) return timers;
-  return timers.filter((t) => {
-    const timerColor = timersColors[t.npc.name] ?? "white";
-    return timerColor && selectedColors.includes(timerColor);
+  const selectedColorSet = new Set(selectedColors);
+  return timers.filter((timer) => {
+    const timerColor = timersColors[timer.npc.name] ?? "white";
+    return timerColor && selectedColorSet.has(timerColor);
   });
 };
 
@@ -224,15 +262,27 @@ export const sortTimersByPinnedAndTime = (
   expiredTimersAtBottom = false,
   removeTimerAfterMs = 0,
 ): TimerWithTimeLeft[] => {
+  const pinnedTimerNames = new Set(pinnedTimers);
+  const spawnTimeByTimer = new Map<TimerWithTimeLeft, number>();
+
+  for (const timer of timers) {
+    spawnTimeByTimer.set(
+      timer,
+      timer.deletedAt !== null && timer.deletedAt !== undefined
+        ? getTimerEpoch(timer.deletedAt)
+        : getTimerEpoch(timer.maxSpawnTime),
+    );
+  }
   const sortByPinnedAndTime =
     (order: "asc" | "desc") => (a: TimerWithTimeLeft, b: TimerWithTimeLeft) => {
-      const pinA = pinnedTimers.includes(a.npc.name);
-      const pinB = pinnedTimers.includes(b.npc.name);
+      const pinA = pinnedTimerNames.has(a.npc.name);
+      const pinB = pinnedTimerNames.has(b.npc.name);
       if (pinA && !pinB) return -1;
       if (!pinA && pinB) return 1;
 
-      const timeA = new Date(a.deletedAt ?? a.maxSpawnTime).getTime();
-      const timeB = new Date(b.deletedAt ?? b.maxSpawnTime).getTime();
+      const timeA = spawnTimeByTimer.get(a);
+      const timeB = spawnTimeByTimer.get(b);
+      if (timeA === undefined || timeB === undefined) return 0;
 
       return order === "asc" ? timeA - timeB : timeB - timeA;
     };

@@ -46,6 +46,24 @@ describe("api-client", () => {
     );
   });
 
+  it("serializes nested values, dates, and reserved characters like qs", () => {
+    const url = buildRequestUrl({
+      baseURL: "https://api.example.com",
+      path: "/search",
+      params: {
+        filter: {
+          createdAt: new Date("2026-07-20T10:00:00.000Z"),
+          names: ["A B", "C&D"],
+          omitted: null,
+        },
+      },
+    });
+
+    expect(url.toString()).toBe(
+      "https://api.example.com/search?filter%5BcreatedAt%5D=2026-07-20T10%3A00%3A00.000Z&filter%5Bnames%5D=A%20B&filter%5Bnames%5D=C%26D",
+    );
+  });
+
   it("parses successful JSON responses", async () => {
     mockFetch.mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {

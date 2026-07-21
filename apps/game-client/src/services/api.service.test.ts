@@ -4,16 +4,29 @@ import {
   createNotification,
   MessageType,
   sendChatMessage,
+  updateLoot,
 } from "@/api";
 import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
+import { LOOT_CREATE_DEBUG_PREFIX } from "@/lib/loot-create-debug";
+import { useSettingsStore } from "@/store/settings.store";
 
-const { mockPost, mockPatch, mockSendNotification, mockSendChatMessage } =
-  vi.hoisted(() => ({
-    mockPost: vi.fn(),
-    mockPatch: vi.fn(),
-    mockSendNotification: vi.fn(),
-    mockSendChatMessage: vi.fn(),
-  }));
+const {
+  mockPost,
+  mockPatch,
+  mockReportApiActionFailure,
+  mockSendNotification,
+  mockSendChatMessage,
+} = vi.hoisted(() => ({
+  mockPost: vi.fn(),
+  mockPatch: vi.fn(),
+  mockReportApiActionFailure: vi.fn(),
+  mockSendNotification: vi.fn(),
+  mockSendChatMessage: vi.fn(),
+}));
+
+vi.mock("@/lib/error-monitoring", () => ({
+  reportApiActionFailure: mockReportApiActionFailure,
+}));
 
 vi.mock("@/lib/api-client", () => ({
   getApiClient: () => ({
@@ -35,30 +48,19 @@ describe("api.service logging", () => {
     vi.clearAllMocks();
     window.localStorage.removeItem(LOGS_STORAGE_KEY);
     useLogsStore.getState().clearActions();
+    useSettingsStore.getState().setLootDebugLoggingEnabled(false);
   });
 
   it("logs createLoot action and successful API response", async () => {
-    mockPost.mockResolvedValueOnce({
-      status: 201,
-      data: {
-        id: 77,
-        submittedGuilds: [
-          {
-            guildId: "guild-1",
-            guildName: "Guild One",
-          },
-        ],
-        rejectedGuilds: [
-          {
-            guildId: "guild-2",
-            guildName: "Guild Two",
-            reason: "NOT_ON_CHARACTER_WHITELIST",
-          },
-        ],
-      },
-    });
-
-    const response = await createLoot({
+    const consoleLogSpy = vi
+      .spyOn(console, "log")
+      .mockImplementation(() => undefined);
+    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+    const debugContext = {
+      attemptId: "attempt-fight-1",
+      source: "fight" as const,
+    };
+    const payload = {
       world: "pandora",
       source: "FIGHT",
       location: "Karka-han",
@@ -67,7 +69,29 @@ describe("api.service logging", () => {
       players: [],
       accountId: "10",
       characterId: "20",
+    };
+    const responseData = {
+      id: 77,
+      submittedGuilds: [
+        {
+          guildId: "guild-1",
+          guildName: "Guild One",
+        },
+      ],
+      rejectedGuilds: [
+        {
+          guildId: "guild-2",
+          guildName: "Guild Two",
+          reason: "NOT_ON_CHARACTER_WHITELIST",
+        },
+      ],
+    };
+    mockPost.mockResolvedValueOnce({
+      status: 201,
+      data: responseData,
     });
+
+    const response = await createLoot(payload, debugContext);
 
     expect(response).toEqual({
       id: 77,
@@ -116,9 +140,31 @@ describe("api.service logging", () => {
         status: "success",
       }),
     ]);
+    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
+      ...debugContext,
+      attempt: 1,
+      endpoint: "/loots",
+      method: "POST",
+      payload,
+      stage: "http-request",
+    });
+    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
+      ...debugContext,
+      attempt: 1,
+      response: responseData,
+      stage: "http-success",
+    });
   });
 
   it("logs createLoot error responses and marks the action as failed", async () => {
+    const consoleLogSpy = vi
+      .spyOn(console, "log")
+      .mockImplementation(() => undefined);
+    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+    const debugContext = {
+      attemptId: "attempt-dialog-1",
+      source: "dialog" as const,
+    };
     const apiError = {
       message: "Request failed",
       status: 400,
@@ -128,16 +174,19 @@ describe("api.service logging", () => {
     mockPost.mockRejectedValueOnce(apiError);
 
     await expect(
-      createLoot({
-        world: "pandora",
-        source: "DIALOG",
-        location: "Karka-han",
-        npcs: [],
-        loots: [{ name: "Tarcza" }],
-        players: [],
-        accountId: "10",
-        characterId: "20",
-      }),
+      createLoot(
+        {
+          world: "pandora",
+          source: "DIALOG",
+          location: "Karka-han",
+          npcs: [],
+          loots: [{ name: "Tarcza" }],
+          players: [],
+          accountId: "10",
+          characterId: "20",
+        },
+        debugContext,
+      ),
     ).rejects.toBe(apiError);
 
     const [action] = useLogsStore.getState().actions;
@@ -157,6 +206,132 @@ describe("api.service logging", () => {
         },
       }),
     ]);
+    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
+      ...debugContext,
+      attempt: 1,
+      endpoint: "/loots",
+      method: "POST",
+      payload: expect.objectContaining({ source: "DIALOG" }),
+      stage: "http-request",
+    });
+    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
+      ...debugContext,
+      attempt: 1,
+      error: apiError,
+      stage: "http-error",
+    });
+    expect(mockReportApiActionFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: "create_loot",
+        monitoringContext: {
+          attemptId: "attempt-dialog-1",
+          feature: "loot",
+          itemCount: 1,
+          lootSource: "dialog",
+          mapName: "Karka-han",
+          npcCount: 0,
+          npcIds: [],
+          npcTypes: [],
+          playerCount: 0,
+          world: "pandora",
+        },
+        status: "error",
+      }),
+    );
+  });
+
+  it("logs every createLoot retry with the same correlation context", async () => {
+    vi.useFakeTimers();
+    const consoleLogSpy = vi
+      .spyOn(console, "log")
+      .mockImplementation(() => undefined);
+    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+    const debugContext = {
+      attemptId: "attempt-fight-retry",
+      source: "fight" as const,
+    };
+    const payload = {
+      world: "pandora",
+      source: "FIGHT",
+      location: "Karka-han",
+      npcs: [],
+      loots: [{ name: "Miecz" }],
+      players: [],
+      accountId: "10",
+      characterId: "20",
+    };
+    const retryableError = {
+      message: "Temporary failure",
+      status: 500,
+      data: { message: "retry" },
+    };
+    const responseData = {
+      id: 88,
+      submittedGuilds: [],
+      rejectedGuilds: [],
+    };
+    mockPost
+      .mockRejectedValueOnce(retryableError)
+      .mockResolvedValueOnce({ data: responseData, status: 201 });
+
+    try {
+      const responsePromise = createLoot(payload, debugContext);
+
+      await vi.runAllTimersAsync();
+
+      await expect(responsePromise).resolves.toEqual(responseData);
+      expect(mockPost).toHaveBeenCalledTimes(2);
+      expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
+        ...debugContext,
+        attempt: 1,
+        error: retryableError,
+        stage: "http-error",
+      });
+      expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
+        ...debugContext,
+        attempt: 2,
+        endpoint: "/loots",
+        method: "POST",
+        payload,
+        stage: "http-request",
+      });
+      expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
+        ...debugContext,
+        attempt: 2,
+        response: responseData,
+        stage: "http-success",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("reports an updateLoot failure without the distribution message", async () => {
+    const apiError = {
+      message: "Request failed",
+      status: 500,
+      data: { message: "upstream failed" },
+    };
+    mockPatch.mockRejectedValueOnce(apiError);
+
+    await expect(
+      updateLoot({ id: 77, msg: "Podział łupów: Tester" }),
+    ).rejects.toBe(apiError);
+
+    expect(mockReportApiActionFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: "update_loot",
+        monitoringContext: {
+          feature: "loot",
+          lootId: 77,
+        },
+        status: "error",
+      }),
+    );
+    const [reportedFailure] = mockReportApiActionFailure.mock.calls;
+    expect(reportedFailure?.[0]).not.toHaveProperty(
+      "monitoringContext.message",
+    );
   });
 
   it("logs createNotification action and returns created notification", async () => {

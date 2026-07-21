@@ -23,26 +23,33 @@ export const useMemberInvalidation = (
   const checkedIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!guildId || !memberIds || !data) return;
+    if (!guildId || !memberIds || !data) {
+      checkedIdsRef.current.clear();
+      return;
+    }
 
     const idsToCheck = Array.isArray(memberIds) ? memberIds : [memberIds];
+    const nextCheckedIds = new Set<string>();
+    let shouldInvalidate = false;
 
     idsToCheck.forEach((memberId) => {
       if (!memberId) return;
 
       const checkKey = `${guildId}:${memberId}`;
-      if (checkedIdsRef.current.has(checkKey)) return;
-
       const member = guildMembers[memberId];
+      if (member) return;
 
-      if (!member) {
-        checkedIdsRef.current.add(checkKey);
-        queryClient.invalidateQueries({
-          queryKey: getGuildMembersSummaryQueryKey({
-            guildId,
-          }),
-        });
+      nextCheckedIds.add(checkKey);
+      if (!checkedIdsRef.current.has(checkKey)) {
+        shouldInvalidate = true;
       }
     });
+
+    checkedIdsRef.current = nextCheckedIds;
+    if (shouldInvalidate) {
+      void queryClient.invalidateQueries({
+        queryKey: getGuildMembersSummaryQueryKey({ guildId }),
+      });
+    }
   }, [data, guildId, guildMembers, memberIds, queryClient]);
 };

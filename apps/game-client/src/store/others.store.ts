@@ -3,8 +3,14 @@ import { create } from "zustand";
 
 type OthersById = Record<string, Other>;
 
+type OthersBatch = {
+  removeIds?: readonly string[];
+  upserts?: Readonly<OthersById>;
+};
+
 interface OthersState {
   othersById: OthersById;
+  applyBatch: (batch: OthersBatch) => void;
   clearOthers: () => void;
   getOther: (id: string) => Other | undefined;
   removeOther: (id: string) => void;
@@ -14,6 +20,27 @@ interface OthersState {
 
 export const useOthersStore = create<OthersState>()((set, get) => ({
   othersById: {},
+  applyBatch: ({ removeIds = [], upserts = {} }) =>
+    set((state) => {
+      const othersById = { ...state.othersById };
+      let changed = false;
+
+      for (const id of removeIds) {
+        if (!(id in othersById)) continue;
+
+        delete othersById[id];
+        changed = true;
+      }
+
+      for (const [id, other] of Object.entries(upserts)) {
+        if (othersById[id] === other) continue;
+
+        othersById[id] = other;
+        changed = true;
+      }
+
+      return changed ? { othersById } : state;
+    }),
   clearOthers: () => set({ othersById: {} }),
   getOther: (id) => get().othersById[id],
   removeOther: (id) =>

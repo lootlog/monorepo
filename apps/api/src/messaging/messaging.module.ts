@@ -12,12 +12,14 @@ import { ReadyRoomPublisher } from "src/messaging/ready-room/ready-room-publishe
 import { ReadyRoomRedisRepository } from "src/messaging/ready-room/ready-room-redis.repository";
 import { READY_ROOM_REPOSITORY } from "src/messaging/ready-room/ready-room.repository";
 import { ReadyRoomService } from "src/messaging/ready-room/ready-room.service";
+import { ChatModule } from "src/chat/chat.module";
 
 @Module({
   imports: [
     MembersModule,
     GuildsModule,
     RedisModule,
+    ChatModule,
     RabbitMQModule.forRoot(rabbitmqConfig),
   ],
   controllers: [MessagingController, PartyReadyRoomController],

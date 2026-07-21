@@ -1,6 +1,10 @@
 import { queryClient } from "@/lib/query-client";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { getSoundSettingsControllerGetSettingsQueryKey } from "@/lib/api/generated/main/sound-settings/sound-settings";
+import {
+  disposeSoundPlayback,
+  playSoundRequest,
+} from "@/lib/shared-audio-playback";
 import type { UserSoundSettings } from "@lootlog/types";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
@@ -11,7 +15,6 @@ export type SoundPlaybackProfile = {
   preservesPitch?: boolean;
 };
 
-let currentAudio: HTMLAudioElement | null = null;
 const SOUND_SETTINGS_QUERY_KEY =
   getSoundSettingsControllerGetSettingsQueryKey();
 
@@ -55,26 +58,11 @@ export function playSound(
 
   if (!soundUrl) return;
 
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-
-  const audio = new Audio(soundUrl);
-  audio.volume = categoryVolume * masterVolume;
-  if (profile.playbackRate !== undefined) {
-    audio.playbackRate = profile.playbackRate;
-  }
-  if (profile.preservesPitch !== undefined) {
-    audio.preservesPitch = profile.preservesPitch;
-  }
-  currentAudio = audio;
-
-  audio.play().catch(() => {});
-
-  audio.onended = () => {
-    if (currentAudio === audio) {
-      currentAudio = null;
-    }
-  };
+  playSoundRequest({
+    url: soundUrl,
+    volume: categoryVolume * masterVolume,
+    ...profile,
+  });
 }
+
+export { disposeSoundPlayback };

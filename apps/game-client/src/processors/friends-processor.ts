@@ -4,13 +4,16 @@ import { parseFriendsListFromEvent } from "@/utils/game/events/parse-friends-lis
 
 export class FriendsProcessor {
   handle(event: GameEvent): void {
-    if (event.friends !== undefined) {
-      const friends = parseFriendsListFromEvent(event.friends);
-      useFriendsStore.getState().setFriends(friends);
+    if (event.friends === undefined && event.friends_max === undefined) {
+      return;
     }
 
-    if (event.friends_max !== undefined) {
-      useFriendsStore.getState().setFriendsMax(event.friends_max);
-    }
+    useFriendsStore.getState().applyBatch({
+      friends:
+        event.friends === undefined
+          ? undefined
+          : parseFriendsListFromEvent(event.friends),
+      friendsMax: event.friends_max,
+    });
   }
 }

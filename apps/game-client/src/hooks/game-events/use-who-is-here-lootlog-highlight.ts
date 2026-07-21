@@ -1,5 +1,5 @@
 import type { Other } from "@lootlog/margonem/others";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { getLootlogOtherGlowColor } from "@/lib/lootlog-other-glow-manager";
 import { patchOtherCharacterTooltip } from "@/lib/margonem-tooltips/patcher";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
@@ -13,8 +13,10 @@ import { useOthersStore } from "@/store/others.store";
 
 const HIGHLIGHT_CLASS = "ll-who-is-here-lootlog-highlight";
 const STYLE_ELEMENT_ID = "ll-who-is-here-lootlog-style";
+const WHO_IS_HERE_ROOT_SELECTOR = ".whoishere-window";
 const WHO_IS_HERE_ROW_SELECTOR = ".whoishere-window .one-other[data-id]";
 const WHO_IS_HERE_COLOR_PROPERTY = "--ll-who-is-here-lootlog-color";
+const WHO_IS_HERE_DISCOVERY_INTERVAL_MS = 250;
 
 type JQueryLike = {
   find?: (selector: string) => unknown;
@@ -149,7 +151,6 @@ function isMovingInsideRow(
 
 export function useWhoIsHereLootlogHighlight(): void {
   const hoveredRowRef = useRef<HTMLElement | null>(null);
-  const [mutationVersion, setMutationVersion] = useState(0);
   const entriesByKey = useCharacterTooltipCatchingGuildsStore(
     (state) => state.entriesByKey,
   );
@@ -164,42 +165,7 @@ export function useWhoIsHereLootlogHighlight(): void {
     (state) => state.ownersByCharacterKey,
   );
   const selectedGuildId = useSelectedLootlogGuildId();
-
-  useEffect(() => {
-    const cleanupStyle = installStyle();
-    let animationFrameId: number | null = null;
-    const scheduleMutationRefresh = () => {
-      if (animationFrameId !== null) return;
-
-      animationFrameId = requestAnimationFrame(() => {
-        animationFrameId = null;
-        setMutationVersion((version) => version + 1);
-      });
-    };
-    const observer = new MutationObserver(() => {
-      scheduleMutationRefresh();
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    return () => {
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-      }
-
-      observer.disconnect();
-      cleanupStyle();
-
-      for (const row of getWhoIsHereRows()) {
-        clearRowHighlight(row);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
+  const refreshRows = useEffectEvent(() => {
     const rows = getWhoIsHereRows();
     const runtimeOthersById = getRuntimeWindow().Engine?.others?.check?.();
 
@@ -222,10 +188,81 @@ export function useWhoIsHereLootlogHighlight(): void {
 
       setRowHighlight(row, getLootlogOtherGlowColor(entry, selectedGuildId));
     }
+  });
+
+  useEffect(() => {
+    const cleanupStyle = installStyle();
+
+    return () => {
+      cleanupStyle();
+
+      for (const row of getWhoIsHereRows()) {
+        clearRowHighlight(row);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
+      return;
+    }
+
+    let animationFrameId: number | null = null;
+    const scheduleMutationRefresh = () => {
+      if (animationFrameId !== null) return;
+
+      animationFrameId = requestAnimationFrame(() => {
+        animationFrameId = null;
+        refreshRows();
+      });
+    };
+    const observer = new MutationObserver(scheduleMutationRefresh);
+    let discoveryIntervalId: number | null = null;
+    const observeWhoIsHereRoot = () => {
+      const whoIsHereRoot = document.querySelector<HTMLElement>(
+        WHO_IS_HERE_ROOT_SELECTOR,
+      );
+      if (!whoIsHereRoot) {
+        return false;
+      }
+
+      observer.observe(whoIsHereRoot, {
+        childList: true,
+        subtree: true,
+      });
+      return true;
+    };
+
+    if (!observeWhoIsHereRoot()) {
+      discoveryIntervalId = window.setInterval(() => {
+        if (!observeWhoIsHereRoot()) {
+          return;
+        }
+
+        window.clearInterval(discoveryIntervalId ?? undefined);
+        discoveryIntervalId = null;
+        scheduleMutationRefresh();
+      }, WHO_IS_HERE_DISCOVERY_INTERVAL_MS);
+    }
+
+    return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
+      if (discoveryIntervalId !== null) {
+        window.clearInterval(discoveryIntervalId);
+      }
+
+      observer.disconnect();
+    };
+  }, [isShiftPressed, selectedGuildId]);
+
+  useEffect(() => {
+    refreshRows();
   }, [
     entriesByKey,
     isShiftPressed,
-    mutationVersion,
     othersById,
     ownersByCharacterKey,
     selectedGuildId,

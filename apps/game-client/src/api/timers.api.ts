@@ -41,7 +41,7 @@ type CreateTimerOptions = {
 
 export type CreateAutoTimerResponse = CreateAutoTimerResponseDtoOutput;
 
-export async function createAutoTimer(
+export function createAutoTimer(
   timer: CreateTimerOptions,
 ): Promise<CreateAutoTimerResponse> {
   const payload = {
@@ -268,7 +268,7 @@ export type ResetTimerOptions = {
   guildId: string;
 };
 
-export async function resetTimer({
+export function resetTimer({
   guildId,
   timerKey,
   ...rest

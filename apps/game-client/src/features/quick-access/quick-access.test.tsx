@@ -36,7 +36,21 @@ describe("QuickAccess", () => {
 
     expect(screen.getByText("Lootlog")).toBeInTheDocument();
     expect(screen.getByText("Timery")).toBeInTheDocument();
-    expect(document.querySelector("[data-ll-window-resize-handle]")).toBeNull();
+    expect(
+      document.querySelector("[data-ll-window-resize-handle]"),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector("[data-ll-quick-access-horizontal-scroll]"),
+    ).toBeInTheDocument();
+    const scrollViewport = document.querySelector(
+      "[data-ll-native-scroll-area]",
+    );
+
+    expect(scrollViewport).toBeInTheDocument();
+    expect(scrollViewport).toHaveClass(
+      "ll:overflow-x-auto",
+      "ll:overflow-y-hidden",
+    );
   });
 
   it("does not render when quick access is closed", () => {
@@ -63,5 +77,23 @@ describe("QuickAccess", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tryb wydarzenia" }));
 
     expect(useWindowsStore.getState()["event-mode"].open).toBe(true);
+  });
+
+  it("keeps the user-defined size when a conditional button appears", () => {
+    useWindowsStore
+      .getState()
+      .setSize("quick-access", { width: 340, height: 84 });
+    const { rerender } = render(<QuickAccess hasActiveEventMode={false} />);
+    const quickAccessWindow = document.querySelector<HTMLElement>(
+      '[data-ll-draggable-window="quick-access"]',
+    );
+
+    expect(quickAccessWindow?.style.width).toBe("340px");
+    expect(quickAccessWindow?.style.height).toBe("84px");
+
+    rerender(<QuickAccess hasActiveEventMode />);
+
+    expect(quickAccessWindow?.style.width).toBe("340px");
+    expect(quickAccessWindow?.style.height).toBe("84px");
   });
 });

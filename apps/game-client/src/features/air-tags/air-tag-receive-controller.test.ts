@@ -42,6 +42,35 @@ const createUpdate = (
 });
 
 describe("AirTagReceiveController", () => {
+  it("retains at most the 100 freshest targets in each scope", () => {
+    const controller = new AirTagReceiveController();
+    controller.beginSubscription("request-1", "aether", 42);
+    controller.applySubscriptionAck({
+      status: "accepted",
+      requestId: "request-1",
+      scopes: [
+        createSnapshot({
+          targets: Array.from({ length: 105 }, (_, index) =>
+            createTarget({
+              targetId: `target-${index}`,
+              observedAt: index,
+            }),
+          ),
+        }),
+      ],
+    });
+
+    const targets = controller.getRenderableTargets(105, 10_000);
+
+    expect(targets).toHaveLength(100);
+    expect(targets.some((target) => target.targetId === "target-0")).toBe(
+      false,
+    );
+    expect(targets.some((target) => target.targetId === "target-104")).toBe(
+      true,
+    );
+  });
+
   it("applies queued deltas newer than the subscription snapshot", () => {
     const controller = new AirTagReceiveController();
     controller.beginSubscription("request-1", "aether", 42);

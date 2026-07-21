@@ -10,7 +10,6 @@ import { io, type Socket } from "socket.io-client";
 import { getSerializedDevPermissionOverride } from "@/lib/dev-permission-override";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { msgpackParser } from "@lootlog/socket-parser";
-import type { NotificationVolunteer } from "@/store/notification-volunteers.store";
 import type { PartyGatheringSession } from "@/types/party-gathering";
 import type { MargonemAccountProof } from "@/lib/margonem-account-proof";
 import type {
@@ -81,10 +80,6 @@ type ServerToClientEvents = {
   [GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE]: (data: {
     id: string;
     endsAt: string;
-  }) => void;
-  [GatewayEvent.NOTIFICATIONS_VOLUNTEER]: (data: {
-    notificationId: string;
-    volunteer: NotificationVolunteer;
   }) => void;
   [GatewayEvent.PARTY_GATHERING_SEND]: (
     data: PartyGatheringSession & { guildId: string },
@@ -159,6 +154,15 @@ let socket: AppSocket | null = null;
 
 export const getSocket = (): AppSocket => {
   if (!socket) {
+    const fixtureSocket = (
+      window as Window & { __lootlogPerfSocket?: AppSocket }
+    ).__lootlogPerfSocket;
+
+    if (import.meta.env.VITE_PERF_FIXTURE === "1" && fixtureSocket) {
+      socket = fixtureSocket;
+      return socket;
+    }
+
     socket = io(GATEWAY_URL, {
       transports: ["websocket"],
       path: `${GATEWAY_SOCKET_PATH ?? ""}/socket.io`,
@@ -176,4 +180,15 @@ export const getSocket = (): AppSocket => {
   }
 
   return socket;
+};
+
+export const disposeSocket = (): void => {
+  const activeSocket = socket;
+  if (!activeSocket) {
+    return;
+  }
+
+  socket = null;
+  activeSocket.disconnect();
+  activeSocket.removeAllListeners();
 };

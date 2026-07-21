@@ -13,6 +13,7 @@ const { mockRequestMargonemAccountProof, mockSocket } = vi.hoisted(() => ({
     disconnect: vi.fn(),
     emit: vi.fn(),
     off: vi.fn(),
+    offAny: vi.fn(),
     on: vi.fn(),
     onAny: vi.fn(),
   },
@@ -123,5 +124,19 @@ describe("SocketProvider", () => {
         data: expectedJoinData,
       });
     });
+  });
+
+  it("removes the development catch-all listener on unmount", () => {
+    const { unmount } = render(
+      <SocketProvider>
+        <div />
+      </SocketProvider>,
+    );
+    const developmentListener = mockSocket.onAny.mock.calls[0]?.[0];
+
+    unmount();
+
+    expect(developmentListener).toBeTypeOf("function");
+    expect(mockSocket.offAny).toHaveBeenCalledWith(developmentListener);
   });
 });

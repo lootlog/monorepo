@@ -1,6 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { runSingleLoggedAction } from "@/lib/logs/log-actions";
+import {
+  LOG_VALUE_BYTE_CAP,
+  runLoggedRequest,
+  serializeLogValue,
+  runSingleLoggedAction,
+  startLoggedAction,
+} from "@/lib/logs/log-actions";
 import { useLogsStore } from "@/store/logs.store";
+
+const { mockReportApiActionFailure } = vi.hoisted(() => ({
+  mockReportApiActionFailure: vi.fn(),
+}));
+
+vi.mock("@/lib/error-monitoring", () => ({
+  reportApiActionFailure: mockReportApiActionFailure,
+}));
 
 const retry = {
   maxAttempts: 3,
@@ -59,6 +73,50 @@ describe("log actions retry", () => {
         response: { ok: true },
       }),
     ]);
+    expect(mockReportApiActionFailure).not.toHaveBeenCalled();
+  });
+
+  it("reports one warning for a partially failed multi-request action", async () => {
+    const action = startLoggedAction({
+      actionType: "send_chat_message",
+      payload: { guildCount: 2 },
+    });
+    const error = { message: "Guild unavailable", status: 503 };
+
+    await expect(
+      runLoggedRequest({
+        action,
+        endpoint: "/guilds/123/chat-messages",
+        method: "POST",
+        payload: {},
+        request: () => Promise.reject(error),
+      }),
+    ).rejects.toBe(error);
+    await runLoggedRequest({
+      action,
+      endpoint: "/guilds/456/chat-messages",
+      method: "POST",
+      payload: {},
+      request: () => Promise.resolve({ data: { id: "message-1" } }),
+    });
+    action.complete({ status: "partial" });
+
+    expect(mockReportApiActionFailure).toHaveBeenCalledTimes(1);
+    expect(mockReportApiActionFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: "send_chat_message",
+        requestAttemptCount: 2,
+        failedRequests: [
+          {
+            endpoint: "/guilds/123/chat-messages",
+            error,
+            method: "POST",
+            statusCode: 503,
+          },
+        ],
+        status: "partial",
+      }),
+    );
   });
 
   it("retries transient HTTP statuses", async () => {
@@ -115,5 +173,40 @@ describe("log actions retry", () => {
 
     expect(execute).toHaveBeenCalledTimes(1);
     expect(useLogsStore.getState().actions[0].requests).toHaveLength(1);
+    expect(mockReportApiActionFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: "create_kill",
+        requestAttemptCount: 1,
+        failedRequests: [
+          {
+            endpoint: "/kills",
+            error: expect.objectContaining({ message: "Bad request" }),
+            method: "POST",
+            statusCode: 400,
+          },
+        ],
+        status: "error",
+      }),
+    );
+  });
+});
+
+describe("log value retention", () => {
+  it("serializes cyclic and oversized values into a bounded diagnostic", () => {
+    const payload: Record<string, unknown> = {
+      events: Array.from({ length: 1_100 }, (_, index) => ({
+        index,
+        message: "x".repeat(20_000),
+      })),
+    };
+    payload.self = payload;
+
+    const serialized = serializeLogValue(payload);
+    const serializedBytes = new TextEncoder().encode(
+      JSON.stringify(serialized),
+    ).byteLength;
+
+    expect(serializedBytes).toBeLessThanOrEqual(LOG_VALUE_BYTE_CAP);
+    expect(JSON.stringify(serialized)).toContain("truncated");
   });
 });

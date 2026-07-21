@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getUsersControllerGetUserPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
+import * as UsersModule from "@/lib/api/generated/main/users/users";
 import type {
   UpdateUserPreferencesDtoTheme,
   UpdateUserPreferencesDto,
@@ -15,9 +15,9 @@ const { mockUpdateUserPreferences } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/api/generated/main/users/users", async () => {
-  const actual = await vi.importActual<
-    typeof import("@/lib/api/generated/main/users/users")
-  >("@/lib/api/generated/main/users/users");
+  const actual = await vi.importActual<typeof UsersModule>(
+    "@/lib/api/generated/main/users/users",
+  );
 
   return {
     ...actual,
@@ -93,7 +93,7 @@ describe("useUpdateUserPreferences", () => {
 
     mockUpdateUserPreferences.mockReturnValue(deferred.promise);
     queryClient.setQueryData(
-      getUsersControllerGetUserPreferencesQueryKey(),
+      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
     );
 
@@ -108,7 +108,7 @@ describe("useUpdateUserPreferences", () => {
     await waitFor(() => {
       expect(
         queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-          getUsersControllerGetUserPreferencesQueryKey(),
+          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
         ),
       ).toEqual({
         ...previousData,
@@ -145,7 +145,7 @@ describe("useUpdateUserPreferences", () => {
 
     mockUpdateUserPreferences.mockReturnValue(deferred.promise);
     queryClient.setQueryData(
-      getUsersControllerGetUserPreferencesQueryKey(),
+      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
     );
 
@@ -160,7 +160,7 @@ describe("useUpdateUserPreferences", () => {
     await waitFor(() => {
       expect(
         queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-          getUsersControllerGetUserPreferencesQueryKey(),
+          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
         ),
       ).toEqual({
         ...previousData,
@@ -185,7 +185,7 @@ describe("useUpdateUserPreferences", () => {
 
     mockUpdateUserPreferences.mockRejectedValue(new Error("Request failed"));
     queryClient.setQueryData(
-      getUsersControllerGetUserPreferencesQueryKey(),
+      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
     );
 
@@ -200,7 +200,7 @@ describe("useUpdateUserPreferences", () => {
     await waitFor(() => {
       expect(
         queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-          getUsersControllerGetUserPreferencesQueryKey(),
+          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
         ),
       ).toEqual(previousData);
     });
@@ -221,7 +221,7 @@ describe("useUpdateUserPreferences", () => {
 
     mockUpdateUserPreferences.mockResolvedValue(serverData);
     queryClient.setQueryData(
-      getUsersControllerGetUserPreferencesQueryKey(),
+      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
     );
 
@@ -238,7 +238,7 @@ describe("useUpdateUserPreferences", () => {
     await waitFor(() => {
       expect(
         queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-          getUsersControllerGetUserPreferencesQueryKey(),
+          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
         ),
       ).toEqual(serverData);
     });

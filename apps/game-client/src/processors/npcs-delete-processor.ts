@@ -18,6 +18,13 @@ export class NpcsDeleteProcessor {
     const world = Game.getWorldName();
     const npcDetectorStore = useNpcDetectorStore.getState();
     const notificationsStore = useNotificationsStore.getState();
+    const deletedNpcs = event.npcs_del.map((deletion) => ({
+      data: Game.getNpc(deletion.id),
+      deletion,
+    }));
+    const deletedNpcIds = event.npcs_del.map((deletion) => deletion.id);
+    npcDetectorStore.removeNpc(deletedNpcIds);
+    notificationsStore.removeNotificationsByNpcIds(deletedNpcIds, world);
     let timerContext: {
       accountId: string;
       characterId: string;
@@ -54,17 +61,12 @@ export class NpcsDeleteProcessor {
       return timerContext;
     };
 
-    event.npcs_del.forEach((npc) => {
-      npcDetectorStore.removeNpc(npc.id);
-      notificationsStore.removeNotificationByNpcId(npc.id, world);
-
-      const data = Game.getNpc(npc.id);
-
-      if (!data || !npc.respBaseSeconds || data.wt < MIN_NPC_WT) {
+    deletedNpcs.forEach(({ data, deletion }) => {
+      if (!data || !deletion.respBaseSeconds || data.wt < MIN_NPC_WT) {
         return;
       }
 
-      if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) {
+      if (deletion.respBaseSeconds < MIN_RESP_BASE_SECONDS) {
         return;
       }
 
@@ -80,7 +82,7 @@ export class NpcsDeleteProcessor {
 
       createAutoTimer({
         respawnRandomness: data.resp_rand,
-        respBaseSeconds: npc.respBaseSeconds,
+        respBaseSeconds: deletion.respBaseSeconds,
         characterId: context.characterId,
         accountId: context.accountId,
         world,

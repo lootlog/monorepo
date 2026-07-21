@@ -17,6 +17,10 @@ export const useAirTags = (): void => {
   }, [connected, enabled, joined]);
 
   useEffect(() => {
+    if (!enabled || !connected || !joined) {
+      return;
+    }
+
     const socket = getSocket();
     const handleUpdate = (event: AirTagUpdateEvent) => {
       airTagRuntime.handleUpdate(event);
@@ -31,7 +35,7 @@ export const useAirTags = (): void => {
       socket.off(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     };
-  }, []);
+  }, [connected, enabled, joined]);
 
   useEffect(() => {
     return () => airTagRuntime.shutdown();

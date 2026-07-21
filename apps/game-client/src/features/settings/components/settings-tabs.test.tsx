@@ -2,13 +2,14 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
+import type * as AppConfigModule from "@/config/app";
 
 const { mockCommitSha } = vi.hoisted(() => ({
   mockCommitSha: { value: "" },
 }));
 
 vi.mock("@/config/app", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/config/app")>();
+  const actual = await importOriginal<typeof AppConfigModule>();
 
   return {
     ...actual,

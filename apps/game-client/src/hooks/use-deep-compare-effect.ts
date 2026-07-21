@@ -39,9 +39,7 @@ const deepEqual = (left: unknown, right: unknown): boolean => {
   return false;
 };
 
-const useDeepCompareMemoize = (
-  dependencies: DependencyList,
-): DependencyList => {
+const useDeepCompareSignal = (dependencies: DependencyList): number => {
   const dependenciesRef = useRef<DependencyList>(dependencies);
   const signalRef = useRef(0);
 
@@ -50,12 +48,16 @@ const useDeepCompareMemoize = (
     signalRef.current += 1;
   }
 
-  return [signalRef.current];
+  return signalRef.current;
 };
 
 export const useDeepCompareEffect = (
   effect: EffectCallback,
   dependencies: DependencyList,
 ) => {
-  useEffect(effect, useDeepCompareMemoize(dependencies));
+  const effectRef = useRef(effect);
+  effectRef.current = effect;
+  const dependencySignal = useDeepCompareSignal(dependencies);
+
+  useEffect(() => effectRef.current(), [dependencySignal]);
 };

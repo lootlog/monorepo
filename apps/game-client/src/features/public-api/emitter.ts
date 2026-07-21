@@ -7,13 +7,14 @@ export class Emitter<EventMap extends Record<string, unknown>> {
     event: E,
     fn: Listener<EventMap[E]>,
   ): () => void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
+    let listeners = this.listeners.get(event);
+    if (!listeners) {
+      listeners = new Set();
+      this.listeners.set(event, listeners);
     }
-    const set = this.listeners.get(event)!;
-    set.add(fn as Listener<never>);
+    listeners.add(fn as Listener<never>);
     return () => {
-      set.delete(fn as Listener<never>);
+      listeners.delete(fn as Listener<never>);
     };
   }
 
@@ -23,8 +24,8 @@ export class Emitter<EventMap extends Record<string, unknown>> {
     for (const fn of set) {
       try {
         (fn as Listener<EventMap[E]>)(payload);
-      } catch (e) {
-        console.error("[LootlogAPI]", e);
+      } catch (error) {
+        console.warn("[LootlogAPI]", error);
       }
     }
   }

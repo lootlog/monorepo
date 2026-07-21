@@ -1,16 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 const footerSpy = vi.fn();
 const gridSpy = vi.fn();
 const emptyStateSpy = vi.fn();
-
-vi.mock("@/components/ui/scroll-area", () => ({
-  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
 
 vi.mock("@/components/guild-switcher", () => ({
   GuildSwitcher: () => <div>GuildSwitcher</div>,
@@ -116,6 +111,69 @@ describe("TimersContent", () => {
         world: "pandora",
       }),
     );
+
+    const scrollContainer = screen.getByTestId("timers-scroll-container");
+
+    expect(scrollContainer).toHaveClass(
+      "ll:min-h-0",
+      "ll:flex-1",
+      "ll:overflow-y-auto",
+      "ll:overflow-x-hidden",
+      "ll:scrollbar-thin",
+      "ll:scrollbar-gutter-stable",
+      "ll:scrollbar-thumb-transparent",
+      "ll:scrollbar-track-transparent",
+      "ll:hover:scrollbar-thumb-gray-400/50",
+      "ll:hover:scrollbar-track-gray-600/60",
+    );
+    expect(scrollContainer).toHaveAttribute("data-ll-native-scroll-area", "");
+  });
+
+  it("keeps timer content draggable while preventing drag from the native scrollbar gutter", () => {
+    const onPointerDown = vi.fn();
+
+    render(
+      <div onPointerDown={onPointerDown}>
+        <TimersContent
+          sortedTimers={[timer]}
+          settingsKey="guild-1"
+          hiddenTimers={[]}
+          areFiltersActive={false}
+          colorStatistics={[]}
+          isGrouping={false}
+          allowWorldSelection={false}
+          timerFiltersEnabled={false}
+          isUnderBag={false}
+          minColumnWidth={180}
+          onAddTimer={vi.fn()}
+        />
+      </div>,
+    );
+
+    const scrollContainer = screen.getByTestId("timers-scroll-container");
+    const timerContent = screen.getByText("TimersGrid");
+
+    Object.defineProperties(scrollContainer, {
+      clientWidth: { configurable: true, value: 190 },
+      offsetWidth: { configurable: true, value: 200 },
+    });
+    vi.spyOn(scrollContainer, "getBoundingClientRect").mockReturnValue({
+      bottom: 300,
+      height: 300,
+      left: 0,
+      right: 200,
+      top: 0,
+      width: 200,
+      x: 0,
+      y: 0,
+      toJSON: vi.fn(),
+    });
+
+    fireEvent.pointerDown(scrollContainer, { clientX: 195 });
+    expect(onPointerDown).not.toHaveBeenCalled();
+
+    fireEvent.pointerDown(timerContent, { clientX: 100 });
+    expect(onPointerDown).toHaveBeenCalledOnce();
   });
 
   it("renders the empty state and suppresses footer/filters when compact or empty", () => {

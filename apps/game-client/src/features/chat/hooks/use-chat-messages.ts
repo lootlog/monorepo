@@ -16,6 +16,7 @@ import {
   updateChatMessage,
   upsertChatMessage,
 } from "@/features/chat/chat.helpers";
+import { useNotificationPresenter } from "@/features/notifications/hooks/use-notification-presenter";
 import {
   getChatMentionNotificationId,
   getCurrentUserMentionNames,
@@ -25,28 +26,55 @@ import {
 } from "@/features/chat/chat-mentions.helpers";
 import { useSession } from "@/hooks/auth/use-session";
 import { Game } from "@/lib/game";
-import { useNotificationsStore } from "@/store/notifications.store";
-import { useWindowsStore } from "@/store/windows.store";
-import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
+import {
+  invalidateChatMessagesQueries,
+  removeAllChatMessagesQueries,
+  removeChatMessagesQueriesOutsideGuilds,
+  updateChatMessagesCache,
+} from "@/features/chat/chat-query-cache.helpers";
 
 type UseChatMessagesListenerOptions = {
   onRemoteMessage?: (data: ChatMessage) => void;
+  prefetchMembers?: boolean;
 };
 
 export const useChatMessagesListener = (
   options?: UseChatMessagesListenerOptions,
 ) => {
   const queryClient = useQueryClient();
-  const { connected, socket } = useSocket();
+  const { connected, joined, joinedGuilds, socket } = useSocket();
   const { data: sessionData } = useSession();
-  const pushNotification = useNotificationsStore(
-    (state) => state.pushNotification,
-  );
-  const setOpen = useWindowsStore((state) => state.setOpen);
+  const { presentNotifications } = useNotificationPresenter();
   const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
   const onRemoteMessageRef = useRef(options?.onRemoteMessage);
+  const wasConnectedRef = useRef(connected);
+  const accountCacheIdentity = `${sessionData?.user?.discordId ?? ""}\u0000${String(Game.hero.account ?? "")}`;
+  const previousAccountCacheIdentityRef = useRef(accountCacheIdentity);
   sessionDiscordIdRef.current = sessionData?.user?.discordId;
   onRemoteMessageRef.current = options?.onRemoteMessage;
+
+  useEffect(() => {
+    if (connected && !wasConnectedRef.current) {
+      void invalidateChatMessagesQueries(queryClient);
+    }
+
+    wasConnectedRef.current = connected;
+  }, [connected, queryClient]);
+
+  useEffect(() => {
+    if (previousAccountCacheIdentityRef.current !== accountCacheIdentity) {
+      removeAllChatMessagesQueries(queryClient);
+      previousAccountCacheIdentityRef.current = accountCacheIdentity;
+    }
+  }, [accountCacheIdentity, queryClient]);
+
+  useEffect(() => {
+    if (!joined) {
+      return;
+    }
+
+    removeChatMessagesQueriesOutsideGuilds(queryClient, joinedGuilds);
+  }, [joined, joinedGuilds, queryClient]);
 
   const handlerRef = useRef<(data: ChatMessage) => void>(() => undefined);
   handlerRef.current = (data) => {
@@ -55,6 +83,10 @@ export const useChatMessagesListener = (
       queryClient,
       updater: (old: ChatMessage[] | undefined) => upsertChatMessage(old, data),
     });
+
+    if (!options?.prefetchMembers) {
+      return;
+    }
 
     const membersQueryKey = getGuildMembersSummaryQueryKey({
       guildId: data.guildId,
@@ -106,22 +138,26 @@ export const useChatMessagesListener = (
         return;
       }
 
-      setOpen("notifications", true);
-      pushNotification({
-        type: "chat-mention",
-        notificationId: getChatMentionNotificationId({
-          guildId: data.guildId,
-          messageId: data.id,
-        }),
-        discordId: data.senderId,
-        guildId: data.guildId,
-        world: Game.getWorldName() ?? "",
-        createdAt: data.timestamp,
-        message: data.message,
-        servers: [data.guildId],
-      });
+      presentNotifications([
+        {
+          notification: {
+            type: "chat-mention",
+            notificationId: getChatMentionNotificationId({
+              guildId: data.guildId,
+              messageId: data.id,
+            }),
+            discordId: data.senderId,
+            guildId: data.guildId,
+            world: Game.getWorldName() ?? "",
+            createdAt: data.timestamp,
+            message: data.message,
+            servers: [data.guildId],
+          },
+          playSound: false,
+        },
+      ]);
     } catch {
-      return;
+      // Mention resolution is best-effort and must not interrupt chat ingestion.
     }
   };
 
