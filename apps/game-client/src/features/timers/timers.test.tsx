@@ -127,33 +127,19 @@ vi.mock("@/lib/game", () => ({
   },
 }));
 
-vi.mock("@/components/animated-window", () => ({
-  AnimatedWindow: ({
-    children,
-    isOpen,
-    windowKey,
-  }: {
-    children: ReactNode;
-    isOpen: boolean;
-    windowKey: string;
-  }) => (
-    <div data-testid={`animated-${windowKey}`} data-open={String(isOpen)}>
-      {isOpen ? children : null}
-    </div>
-  ),
-}));
-
 vi.mock("@/components/draggable-window", () => ({
   DraggableWindow: ({
     children,
+    isOpen,
     title,
     actions,
   }: {
     children: ReactNode;
+    isOpen: boolean;
     title: string;
     actions?: ReactNode;
   }) => (
-    <div>
+    <div data-testid="draggable-window" data-open={String(isOpen)}>
       <h1>{title}</h1>
       {actions}
       {children}
@@ -363,7 +349,7 @@ describe("Timers", () => {
     });
     expect(screen.getByTestId("under-bag")).toBeInTheDocument();
     expect(screen.getByText("TimersUnderBagActions")).toBeInTheDocument();
-    expect(screen.queryByTestId("animated-timers")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("draggable-window")).not.toBeInTheDocument();
     expect(mockUseTimersUpdate).toHaveBeenCalledWith(true);
     expect(timersContentSpy).toHaveBeenCalledWith(
       expect.objectContaining({

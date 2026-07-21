@@ -1,4 +1,3 @@
-import { AnimatedWindow } from "@/components/animated-window";
 import { DraggableWindow } from "@/components/draggable-window";
 import { Button } from "@/components/ui/button";
 import { storageKey } from "@/lib/storage-key";
@@ -62,37 +61,32 @@ export const BackendPreferencesWarning: FC = () => {
     handleClose();
   };
 
-  if (!open || !isPositionReady) {
-    return null;
-  }
-
   return (
-    <AnimatedWindow isOpen={open} windowKey="backend-preferences-warning">
-      <DraggableWindow
-        id="backend-preferences-warning"
-        title={t("window.title")}
-        onClose={handleClose}
-        variant="small"
-        resizable={false}
-        minWidth={WINDOW_WIDTH}
-        minHeight={WINDOW_HEIGHT}
-        dynamicHeight
-      >
-        <div className="ll:flex ll:flex-col ll:gap-4 ll:p-4">
-          <div className="ll:text-sm ll:text-gray-200">
-            <p className="ll:mb-3">{t("content.title")}</p>
-            <p>{t("content.description")}</p>
-          </div>
-          <div className="ll:flex ll:justify-end ll:gap-2">
-            <Button onClick={handleClose} className="ll:px-3 ll:py-1">
-              {t("common:actions.close")}
-            </Button>
-            <Button onClick={handleOpenSettings} className="ll:px-3 ll:py-1">
-              {t("common:actions.openSettings")}
-            </Button>
-          </div>
+    <DraggableWindow
+      isOpen={open && isPositionReady}
+      id="backend-preferences-warning"
+      title={t("window.title")}
+      onClose={handleClose}
+      variant="small"
+      resizable={false}
+      minWidth={WINDOW_WIDTH}
+      minHeight={WINDOW_HEIGHT}
+      dynamicHeight
+    >
+      <div className="ll:flex ll:flex-col ll:gap-4 ll:p-4">
+        <div className="ll:text-sm ll:text-gray-200">
+          <p className="ll:mb-3">{t("content.title")}</p>
+          <p>{t("content.description")}</p>
         </div>
-      </DraggableWindow>
-    </AnimatedWindow>
+        <div className="ll:flex ll:justify-end ll:gap-2">
+          <Button onClick={handleClose} className="ll:px-3 ll:py-1">
+            {t("common:actions.close")}
+          </Button>
+          <Button onClick={handleOpenSettings} className="ll:px-3 ll:py-1">
+            {t("common:actions.openSettings")}
+          </Button>
+        </div>
+      </div>
+    </DraggableWindow>
   );
 };

@@ -123,6 +123,32 @@ describe("createDeduplicatingStateStorage", () => {
 });
 
 describe("migrateWindowsState", () => {
+  it("resets only the legacy automatic quick access width", () => {
+    const migrated = migrateWindowsState(
+      {
+        "quick-access": {
+          open: true,
+          position: { x: 30, y: 40 },
+          hasDefinedPosition: true,
+          size: { width: 412, height: 88 },
+          opacity: 2,
+          locked: true,
+        },
+        windowFocusHistory: [],
+      },
+      10,
+    );
+
+    expect(migrated["quick-access"]).toEqual({
+      open: true,
+      position: { x: 30, y: 40 },
+      hasDefinedPosition: true,
+      size: { width: 250, height: 88 },
+      opacity: 2,
+      locked: true,
+    });
+  });
+
   it("drops legacy focus state while preserving persisted window geometry", () => {
     const migrated = migrateWindowsState(
       {

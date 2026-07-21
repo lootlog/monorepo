@@ -463,7 +463,10 @@ describe("ChatInput", () => {
 
     const listbox = screen.getByRole("listbox");
     expect(listbox).toBeInTheDocument();
-    expect(document.querySelector("#scrollbar")).not.toBeNull();
+    expect(listbox.closest("[data-ll-native-scroll-area]")).toHaveClass(
+      "ll:scrollbar-thumb-gray-400/50",
+      "ll:scrollbar-track-gray-600/60",
+    );
     expect(screen.getByText("Role")).toBeInTheDocument();
     expect(screen.getByText("Nicki")).toBeInTheDocument();
 

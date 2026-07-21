@@ -1,6 +1,7 @@
 import {
   type PointerEvent as ReactPointerEvent,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -53,7 +54,9 @@ export const useDrag = ({
   const dragInfoRef = useRef<DragInfo>(DEFAULT_DRAG_INFO);
   const dragSessionRef = useRef<number | null>(null);
   const finalPositionRef = useRef(defaultState);
+  const dragOriginPositionRef = useRef(defaultState);
   const isDraggingRef = useRef(false);
+  const hasDragStylesRef = useRef(false);
   const pendingPositionRef = useRef<Position | null>(null);
   const positionFrameRef = useRef<number | null>(null);
   const calculateForRef = useRef(calculateFor);
@@ -118,9 +121,19 @@ export const useDrag = ({
       positionFrameRef.current = null;
       const pendingPosition = pendingPositionRef.current;
       pendingPositionRef.current = null;
-      if (pendingPosition) {
-        setFinalPosition(pendingPosition);
+      if (!pendingPosition) return;
+
+      if (isDraggingRef.current) {
+        const draggableElement = ref.current;
+        if (!draggableElement) return;
+        const dragOriginPosition = dragOriginPositionRef.current;
+        const translateX = pendingPosition.x - dragOriginPosition.x;
+        const translateY = pendingPosition.y - dragOriginPosition.y;
+        draggableElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0)`;
+        return;
       }
+
+      setFinalPosition(pendingPosition);
     });
   };
   const queuePositionRef = useRef(queuePosition);
@@ -168,7 +181,10 @@ export const useDrag = ({
       width,
       height,
     };
+    dragOriginPositionRef.current = finalPositionRef.current;
     isDraggingRef.current = true;
+    draggableElement.style.willChange = "transform";
+    hasDragStylesRef.current = true;
     setIsDragging(true);
     return true;
   };
@@ -199,9 +215,25 @@ export const useDrag = ({
       activePointerIdRef.current = null;
       dragSessionRef.current = null;
       isDraggingRef.current = false;
+      const draggableElement = ref.current;
+      if (draggableElement && hasDragStylesRef.current) {
+        draggableElement.style.transform = "";
+        draggableElement.style.willChange = "";
+      }
+      hasDragStylesRef.current = false;
     },
-    [],
+    [ref],
   );
+
+  useLayoutEffect(() => {
+    if (isDragging || !hasDragStylesRef.current) return;
+    const draggableElement = ref.current;
+    if (!draggableElement) return;
+
+    draggableElement.style.transform = "";
+    draggableElement.style.willChange = "";
+    hasDragStylesRef.current = false;
+  }, [finalPosition, isDragging, ref]);
 
   useEffect(() => {
     if (isLocked) return;

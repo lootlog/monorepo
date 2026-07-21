@@ -1,5 +1,4 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { AnimatedWindow } from "@/components/animated-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { MessageType } from "@/api/chat.api";
 import { Game } from "@/lib/game";
@@ -120,64 +119,63 @@ export const CommandWindow = () => {
   };
 
   return (
-    <AnimatedWindow isOpen={open} windowKey="command">
-      <DraggableWindow
-        id="command"
-        title={t("window.title")}
-        onClose={() => setOpen("command", false)}
-        minHeight={116}
-        minWidth={242}
-        actions=<CommandActions />
-        contentClassName="ll:overflow-visible"
-      >
-        <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
-          <div className="ll:shrink-0 ll:pt-1 ll:pb-1">
-            <GuildMultiSelector
-              value={selectedInputGuildIds}
-              onChange={setSelectedInputGuildIds}
+    <DraggableWindow
+      isOpen={open}
+      id="command"
+      title={t("window.title")}
+      onClose={() => setOpen("command", false)}
+      minHeight={116}
+      minWidth={242}
+      actions=<CommandActions />
+      contentClassName="ll:overflow-visible"
+    >
+      <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
+        <div className="ll:shrink-0 ll:pt-1 ll:pb-1">
+          <GuildMultiSelector
+            value={selectedInputGuildIds}
+            onChange={setSelectedInputGuildIds}
+          />
+        </div>
+        <div className="ll:flex ll:flex-col ll:flex-1 ll:pb-1 ll:mt-1">
+          <div className="ll:relative ll:flex ll:flex-1">
+            <CommandSuggestions
+              onSelect={(prefix) => setValue("message", prefix)}
+              filtered={suggestions.filtered}
+              isOpen={suggestions.isOpen}
+              selectedIndex={suggestions.selectedIndex}
             />
-          </div>
-          <div className="ll:flex ll:flex-col ll:flex-1 ll:pb-1 ll:mt-1">
-            <div className="ll:relative ll:flex ll:flex-1">
-              <CommandSuggestions
-                onSelect={(prefix) => setValue("message", prefix)}
-                filtered={suggestions.filtered}
-                isOpen={suggestions.isOpen}
-                selectedIndex={suggestions.selectedIndex}
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="ll:flex ll:flex-1"
+            >
+              <textarea
+                spellCheck={false}
+                data-slot="input"
+                onMouseDown={(evt) => evt.stopPropagation()}
+                autoCorrect="off"
+                autoCapitalize="off"
+                onKeyDown={(e) => {
+                  if (suggestions.handleKeyDown(e)) return;
+                  if (e.key === "Escape") {
+                    setValue("message", "");
+                    setOpen("command", false);
+                    return;
+                  }
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    e.currentTarget.form?.requestSubmit();
+                  }
+                }}
+                placeholder={t("input.placeholder")}
+                autoFocus={autofocus}
+                value={messageValue}
+                onChange={(e) => setValue("message", e.target.value)}
+                className="ll:h-full ll:w-full ll:overflow-hidden ll:resize-none ll:outline-none ll:rounded-sm ll:border ll:border-gray-400 ll:bg-transparent ll:px-1 ll:py-1 ll:text-xs ll:text-white ll:placeholder:text-muted-foreground ll:box-border ll:transition-[color,box-shadow] ll:disabled:pointer-events-none ll:disabled:opacity-50"
               />
-              <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="ll:flex ll:flex-1"
-              >
-                <textarea
-                  spellCheck={false}
-                  data-slot="input"
-                  onMouseDown={(evt) => evt.stopPropagation()}
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  onKeyDown={(e) => {
-                    if (suggestions.handleKeyDown(e)) return;
-                    if (e.key === "Escape") {
-                      setValue("message", "");
-                      setOpen("command", false);
-                      return;
-                    }
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      e.currentTarget.form?.requestSubmit();
-                    }
-                  }}
-                  placeholder={t("input.placeholder")}
-                  autoFocus={autofocus}
-                  value={messageValue}
-                  onChange={(e) => setValue("message", e.target.value)}
-                  className="ll:h-full ll:w-full ll:overflow-hidden ll:resize-none ll:outline-none ll:rounded-sm ll:border ll:border-gray-400 ll:bg-transparent ll:px-1 ll:py-1 ll:text-xs ll:text-white ll:placeholder:text-muted-foreground ll:box-border ll:transition-[color,box-shadow] ll:disabled:pointer-events-none ll:disabled:opacity-50"
-                />
-              </form>
-            </div>
+            </form>
           </div>
         </div>
-      </DraggableWindow>
-    </AnimatedWindow>
+      </div>
+    </DraggableWindow>
   );
 };

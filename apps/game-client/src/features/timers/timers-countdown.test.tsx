@@ -124,7 +124,7 @@ describe("visible timer countdown", () => {
   });
 
   it("updates an under-bag timer after every one-second clock tick", () => {
-    render(<TimersView isUnderBag />);
+    render(<TimersView isOpen isUnderBag />);
 
     expect(screen.getByTestId("timer-countdown")).toHaveTextContent("5000");
 
@@ -139,7 +139,7 @@ describe("visible timer countdown", () => {
     const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
     testState.timers = [];
 
-    render(<TimersView isUnderBag />);
+    render(<TimersView isOpen isUnderBag />);
 
     expect(setIntervalSpy).not.toHaveBeenCalled();
     expect(vi.getTimerCount()).toBe(0);
