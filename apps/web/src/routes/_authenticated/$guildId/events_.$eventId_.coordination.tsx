@@ -3,7 +3,7 @@ import { EventCoordinationPage } from "@/features/guild/events/event-coordinatio
 import { EventCoordinationSkeleton } from "@/features/guild/events/event-coordination-skeleton";
 import { getEventsMonitoringControllerGetCoordinationQueryOptions } from "@/lib/api/generated/main/events/events";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
@@ -22,7 +22,7 @@ export const Route = createFileRoute(
           }),
         );
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
 });

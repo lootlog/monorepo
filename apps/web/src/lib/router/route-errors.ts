@@ -66,5 +66,3 @@ export const rethrowNotFoundOrError = (error: unknown): never => {
 
   throw error;
 };
-
-export const throwNotFoundIfResponseMatches = rethrowNotFoundOrError;
