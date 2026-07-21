@@ -14,6 +14,7 @@ import {
   getChatNpcTextColor,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
+import { ChatCharacterTooltip } from "./chat-character-tooltip";
 
 type ChatNpcMessageProps = {
   additionalSenderCount?: number;
@@ -84,14 +85,16 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
             [{guildName}]{" "}
           </span>
         )}
-        <span
-          className={cn("ll:font-bold ll:select-text", {
-            "ll:text-gray-100": isMsgYesterday,
-          })}
-          style={{ color: `#${memberColor}` }}
-        >
-          {senderName}:
-        </span>{" "}
+        <ChatCharacterTooltip character={message.characterData}>
+          <span
+            className={cn("ll:font-bold ll:select-text", {
+              "ll:text-gray-100": isMsgYesterday,
+            })}
+            style={{ color: `#${memberColor}` }}
+          >
+            {senderName}:
+          </span>
+        </ChatCharacterTooltip>{" "}
         {count > 1 && (
           <span className="ll:ml-1 ll:inline-flex ll:rounded-full ll:bg-red-600 ll:px-1.5 ll:py-px ll:text-[10px] ll:font-bold ll:leading-none ll:text-white">
             x{count}

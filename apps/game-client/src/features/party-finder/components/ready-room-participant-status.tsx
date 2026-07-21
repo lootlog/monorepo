@@ -1,16 +1,7 @@
-import type {
-  PartyReadyRoomClientUpdate,
-  PartyReadyRoomProjection,
-} from "@lootlog/types";
-import { useState } from "react";
+import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
-import { partyReadyRoomControllerWithdraw } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
-import {
-  selectReadyRoomParticipantForCharacter,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+import { useReadyRoomWithdrawal } from "@/features/party-finder/hooks/use-ready-room-withdrawal";
 
 type ReadyRoomParticipantStatusProps = {
   room: PartyReadyRoomProjection;
@@ -20,26 +11,7 @@ export function ReadyRoomParticipantStatus({
   room,
 }: ReadyRoomParticipantStatusProps) {
   const { t } = useTranslation("partyFinder");
-  const participant = selectReadyRoomParticipantForCharacter(
-    room,
-    getCurrentReadyRoomCharacterIdentity(),
-  );
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const applyUpdate = usePartyFinderStore((state) => state.applyUpdate);
-
-  const withdraw = async () => {
-    if (!participant) return;
-    setIsWithdrawing(true);
-    try {
-      const update = await partyReadyRoomControllerWithdraw(
-        { notificationId: room.notificationId },
-        { participantId: participant.participantId },
-      );
-      applyUpdate(update as unknown as PartyReadyRoomClientUpdate);
-    } finally {
-      setIsWithdrawing(false);
-    }
-  };
+  const { isWithdrawing, participant, withdraw } = useReadyRoomWithdrawal(room);
 
   if (!participant) return null;
 
