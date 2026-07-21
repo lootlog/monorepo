@@ -1,5 +1,4 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { AnimatedWindow } from "@/components/animated-window";
 import { WindowMaxHeightAction } from "@/components/window-max-height-action";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
@@ -62,38 +61,34 @@ export const NpcDetector = () => {
   });
 
   return (
-    <AnimatedWindow
+    <DraggableWindow
       isOpen={open && filteredNpcs.length > 0}
-      windowKey="npc-detector"
-    >
-      <DraggableWindow
-        id="npc-detector"
-        title={t("window.title")}
-        actions=<WindowMaxHeightAction
-          currentMaxHeight={resolvedMaxContentHeight}
-          isArmed={isMaxHeightAdjustmentArmed}
-          onClick={() =>
-            setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
-          }
-        />
-        onClose={handleClose}
-        heightMode="auto-up-to-max"
-        maxContentHeight={storedMaxContentHeight}
-        isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
-        onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}
-        onMaxContentHeightChange={(nextMaxContentHeight) =>
-          setMaxContentHeight("npc-detector", nextMaxContentHeight)
+      id="npc-detector"
+      title={t("window.title")}
+      actions=<WindowMaxHeightAction
+        currentMaxHeight={resolvedMaxContentHeight}
+        isArmed={isMaxHeightAdjustmentArmed}
+        onClick={() =>
+          setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
         }
-        onResolvedMaxContentHeightChange={setResolvedMaxContentHeight}
-        resizable
-        minHeight={82}
-        maxHeight={600}
-        minWidth={242}
-      >
-        <div className="ll:flex ll:flex-col ll:h-full ll:w-full ll:overflow-hidden">
-          <NpcsList detectorSettings={settings} npcs={filteredNpcs} />
-        </div>
-      </DraggableWindow>
-    </AnimatedWindow>
+      />
+      onClose={handleClose}
+      heightMode="auto-up-to-max"
+      maxContentHeight={storedMaxContentHeight}
+      isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
+      onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}
+      onMaxContentHeightChange={(nextMaxContentHeight) =>
+        setMaxContentHeight("npc-detector", nextMaxContentHeight)
+      }
+      onResolvedMaxContentHeightChange={setResolvedMaxContentHeight}
+      resizable
+      minHeight={82}
+      maxHeight={600}
+      minWidth={242}
+    >
+      <div className="ll:flex ll:flex-col ll:h-full ll:w-full ll:overflow-hidden">
+        <NpcsList detectorSettings={settings} npcs={filteredNpcs} />
+      </div>
+    </DraggableWindow>
   );
 };

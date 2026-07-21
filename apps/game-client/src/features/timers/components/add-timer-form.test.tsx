@@ -109,10 +109,6 @@ vi.mock("@/components/ui/checkbox", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/scroll-area", () => ({
-  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock("@/components/ui/select", () => ({
   Select: ({
     children,
@@ -244,6 +240,21 @@ describe("AddTimerForm", () => {
 
     expect(guildSelect).toHaveValue("guild-2");
     expect(nameInput).toHaveAttribute("maxLength", "50");
+
+    const scrollContainer = screen.getByTestId("add-timer-scroll-container");
+
+    expect(scrollContainer).toHaveClass(
+      "ll:h-full",
+      "ll:overflow-y-auto",
+      "ll:overflow-x-hidden",
+      "ll:scrollbar-thin",
+      "ll:scrollbar-gutter-stable",
+      "ll:scrollbar-thumb-transparent",
+      "ll:scrollbar-track-transparent",
+      "ll:hover:scrollbar-thumb-gray-400/50",
+      "ll:hover:scrollbar-track-gray-600/60",
+    );
+    expect(scrollContainer).toHaveAttribute("data-ll-native-scroll-area", "");
 
     await user.selectOptions(guildSelect, "guild-1");
     expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();

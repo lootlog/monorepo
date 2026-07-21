@@ -22,31 +22,19 @@ vi.mock("@/store/windows.store", () => ({
     }),
 }));
 
-vi.mock("@/components/animated-window", () => ({
-  AnimatedWindow: ({
-    children,
-    isOpen,
-  }: {
-    children: ReactNode;
-    isOpen: boolean;
-  }) => (
-    <div data-testid="animated-window" data-open={String(isOpen)}>
-      {children}
-    </div>
-  ),
-}));
-
 vi.mock("@/components/draggable-window", () => ({
   DraggableWindow: ({
     children,
+    isOpen,
     title,
     onClose,
   }: {
     children: ReactNode;
+    isOpen: boolean;
     title: string;
     onClose?: () => void;
   }) => (
-    <section>
+    <section data-testid="draggable-window" data-open={String(isOpen)}>
       <h1>{title}</h1>
       <button type="button" onClick={onClose}>
         close
@@ -78,7 +66,7 @@ describe("AddTimer", () => {
 
     render(<AddTimer />);
 
-    expect(screen.getByTestId("animated-window")).toHaveAttribute(
+    expect(screen.getByTestId("draggable-window")).toHaveAttribute(
       "data-open",
       "true",
     );

@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import { SingleNotification } from "@/features/notifications/components/single-notification";
 import { useNotificationGuildMembers } from "@/features/notifications/hooks/use-notification-guild-members";
 import {
@@ -225,10 +225,9 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   };
 
   return (
-    <ScrollArea
+    <NativeScrollArea
       ref={scrollViewportRef}
       className="ll:h-full ll:max-h-[inherit] ll:w-full ll:box-border"
-      type="hover"
     >
       <div className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:pt-1">
         {renderedNotifications.map((notification) => {
@@ -252,6 +251,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
           );
         })}
       </div>
-    </ScrollArea>
+    </NativeScrollArea>
   );
 };

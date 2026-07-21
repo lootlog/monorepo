@@ -1,7 +1,6 @@
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Chat } from "./chat";
-import type { ReactNode } from "react";
 
 const mocks = vi.hoisted(() => ({
   chatOpen: false,
@@ -18,16 +17,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/features/chat/hooks/use-chat-messages", () => ({
   useChatMessagesListener: (...arguments_: unknown[]) =>
     mocks.useChatMessagesListener(arguments_),
-}));
-
-vi.mock("@/components/animated-window", () => ({
-  AnimatedWindow: ({
-    children,
-    isOpen,
-  }: {
-    children: ReactNode;
-    isOpen: boolean;
-  }) => (isOpen ? children : null),
 }));
 
 vi.mock("@/features/chat/hooks/use-chat-guild-data", () => ({

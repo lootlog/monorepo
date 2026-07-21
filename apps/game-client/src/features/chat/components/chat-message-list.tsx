@@ -1,5 +1,5 @@
 import { MessageType } from "@/api/chat.api";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import type { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
 import {
@@ -590,22 +590,22 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
 
   if (renderables.length === 0) {
     return (
-      <ScrollArea
+      <NativeScrollArea
         ref={scrollAreaRef}
         className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400 ll:p-1"
       >
         <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
           {emptyStateLabel}
         </div>
-      </ScrollArea>
+      </NativeScrollArea>
     );
   }
 
   return (
-    <ScrollArea
+    <NativeScrollArea
       ref={scrollAreaRef}
       className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400 ll:p-1"
-      viewportStyle={{ overflowAnchor: "none" }}
+      style={{ overflowAnchor: "none" }}
     >
       <div
         aria-label={ariaLabel}
@@ -664,6 +664,6 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
           );
         })}
       </div>
-    </ScrollArea>
+    </NativeScrollArea>
   );
 };

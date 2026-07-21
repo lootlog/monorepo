@@ -315,8 +315,7 @@ const getNotificationElements = () =>
 const getNotificationViewport = (): HTMLElement | null => {
   const notification = getNotificationElements()[0];
   return (
-    notification?.closest<HTMLElement>("[data-radix-scroll-area-viewport]") ??
-    null
+    notification?.closest<HTMLElement>("[data-ll-native-scroll-area]") ?? null
   );
 };
 

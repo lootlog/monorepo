@@ -114,9 +114,7 @@ describe("GuildSwitcher", () => {
 
   it("scrolls horizontally when the user uses the mouse wheel", () => {
     const { container } = render(<GuildSwitcher />);
-    const viewport = container.querySelector(
-      "[data-radix-scroll-area-viewport]",
-    );
+    const viewport = container.querySelector("[data-ll-native-scroll-area]");
 
     if (!(viewport instanceof HTMLDivElement)) {
       throw new Error("Expected scroll area viewport");

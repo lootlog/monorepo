@@ -1,5 +1,4 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { AnimatedWindow } from "@/components/animated-window";
 import { SettingsTabs } from "@/features/settings/components/settings-tabs";
 import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useState } from "react";
@@ -36,22 +35,17 @@ export const Settings = () => {
     setIsPositionReady(true);
   }, [hasDefinedPosition, open, setPosition, size.height, size.width]);
 
-  if (!open || !isPositionReady) {
-    return null;
-  }
-
   return (
-    <AnimatedWindow isOpen={open} windowKey="settings">
-      <DraggableWindow
-        id="settings"
-        title={t("settings.window.title")}
-        onClose={() => setOpen("settings", false)}
-        variant="default"
-        minHeight={440}
-        minWidth={420}
-      >
-        <SettingsTabs />
-      </DraggableWindow>
-    </AnimatedWindow>
+    <DraggableWindow
+      isOpen={open && isPositionReady}
+      id="settings"
+      title={t("settings.window.title")}
+      onClose={() => setOpen("settings", false)}
+      variant="default"
+      minHeight={440}
+      minWidth={420}
+    >
+      <SettingsTabs />
+    </DraggableWindow>
   );
 };
