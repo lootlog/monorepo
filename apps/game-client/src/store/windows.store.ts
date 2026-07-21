@@ -116,6 +116,7 @@ interface WindowsState {
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
+const DEFAULT_QUICK_ACCESS_WIDTH = 250;
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 
 const createDefaultEventModeWindow = (): WindowData => ({
@@ -256,6 +257,25 @@ export const migrateWindowsState = (
     state.windowFocusHistory = [];
   }
 
+  if (version < 11) {
+    const quickAccess = state["quick-access"] as
+      | Record<string, unknown>
+      | undefined;
+    const quickAccessSize = quickAccess?.size as
+      | Record<string, unknown>
+      | undefined;
+
+    if (quickAccess && quickAccessSize) {
+      state["quick-access"] = {
+        ...quickAccess,
+        size: {
+          ...quickAccessSize,
+          width: DEFAULT_QUICK_ACCESS_WIDTH,
+        },
+      };
+    }
+  }
+
   return state as unknown as WindowsState;
 };
 
@@ -357,7 +377,7 @@ export const useWindowsStore = create<WindowsState>()(
         open: true,
         position: DEFAULT_POSITION,
         hasDefinedPosition: false,
-        size: { width: 250, height: 56 },
+        size: { width: DEFAULT_QUICK_ACCESS_WIDTH, height: 56 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
@@ -629,7 +649,7 @@ export const useWindowsStore = create<WindowsState>()(
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 10,
+      version: 11,
       migrate: migrateWindowsState,
     },
   ),

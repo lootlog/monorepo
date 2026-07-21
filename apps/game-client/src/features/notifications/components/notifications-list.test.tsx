@@ -8,8 +8,8 @@ import {
 } from "@/store/notifications.store";
 import { NotificationsList } from "./notifications-list";
 
-vi.mock("@/components/ui/scroll-area", () => ({
-  ScrollArea: ({ children }: { children: ReactNode }) => (
+vi.mock("@/components/ui/native-scroll-area", () => ({
+  NativeScrollArea: ({ children }: { children: ReactNode }) => (
     <div data-testid="scroll-area">{children}</div>
   ),
 }));

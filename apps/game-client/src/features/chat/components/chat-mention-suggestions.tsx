@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import type { CommandSuggestion } from "@/features/command/command-suggestions.helpers";
 import {
   getChatMentionSuggestionDisplayLabel,
@@ -60,7 +60,10 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
             : t("input.mentionSuggestions.noResults")}
         </p>
       ) : (
-        <ScrollArea className="ll:max-h-44 ll:w-full" type="always">
+        <NativeScrollArea
+          className="ll:max-h-44 ll:w-full"
+          scrollbarVisibility="always"
+        >
           <div role="listbox" className="ll:py-1">
             {suggestions.map((suggestion, index) => {
               if (suggestion.type === "command") {
@@ -161,7 +164,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
               );
             })}
           </div>
-        </ScrollArea>
+        </NativeScrollArea>
       )}
     </div>
   );

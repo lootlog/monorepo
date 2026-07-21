@@ -51,10 +51,11 @@ const normalizeUngroupedTimers = (timers: Timer[]) =>
   }));
 
 interface TimersViewProps {
+  isOpen: boolean;
   isUnderBag: boolean;
 }
 
-export const TimersView = ({ isUnderBag }: TimersViewProps) => {
+export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const { t } = useTranslation("timers");
   const characterId = String(Game.hero.id);
   const defaultWorld = Game.getWorldName();
@@ -209,6 +210,7 @@ export const TimersView = ({ isUnderBag }: TimersViewProps) => {
 
   return (
     <DraggableWindow
+      isOpen={isOpen}
       id="timers"
       title={t("window.title")}
       onClose={() => setOpen("timers", false)}

@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DraggableWindow } from "@/components/draggable-window";
@@ -77,7 +83,7 @@ const mockElementRenderedHeight = (element: HTMLElement, height: number) => {
 
 const createScrollAreaChildren = () => (
   <div className="ll:flex ll:h-full ll:w-full ll:flex-col ll:overflow-hidden">
-    <div data-radix-scroll-area-viewport="">
+    <div data-ll-native-scroll-area="">
       <div>
         <div>Treść</div>
       </div>
@@ -131,7 +137,7 @@ const getNestedScrollAreaElements = (container: HTMLElement) => {
   const { windowElement, windowBody, titleBarElement, contentElement } =
     getWindowElements(container, { requireResizeHandle: false });
   const viewportElement = container.querySelector(
-    "[data-radix-scroll-area-viewport]",
+    "[data-ll-native-scroll-area]",
   );
   const viewportContent = viewportElement?.firstElementChild;
   const measuredContentElement = viewportContent?.firstElementChild;
@@ -192,7 +198,7 @@ describe("DraggableWindow", () => {
 
   it("contains layout and style invalidation within each overlay window", () => {
     const { container } = render(
-      <DraggableWindow id="notifications" title="Powiadomienia">
+      <DraggableWindow isOpen id="notifications" title="Powiadomienia">
         <div>Treść</div>
       </DraggableWindow>,
     );
@@ -202,9 +208,49 @@ describe("DraggableWindow", () => {
     expect(windowElement.style.contain).toBe("layout style");
   });
 
+  it("animates the visual surface and disables interaction during exit", () => {
+    const { container, rerender } = render(
+      <DraggableWindow isOpen id="notifications" title="Powiadomienia">
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+    const { windowBody, windowElement } = getWindowElements(container);
+
+    expect(windowBody).toHaveClass("ll-window-enter");
+    expect(windowElement).not.toHaveClass("ll-window-enter");
+    expect(windowElement.style.transform).toBe("");
+
+    fireEvent.animationEnd(windowBody);
+
+    expect(windowBody).not.toHaveClass("ll-window-enter");
+
+    rerender(
+      <DraggableWindow isOpen={false} id="notifications" title="Powiadomienia">
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+
+    expect(windowBody).toHaveClass("ll-window-exit");
+    expect(windowElement).toHaveAttribute("aria-hidden", "true");
+    expect(windowElement.style.pointerEvents).toBe("none");
+
+    fireEvent.animationEnd(screen.getByText("Treść"));
+
+    expect(
+      container.querySelector('[data-ll-draggable-window="notifications"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.animationEnd(windowBody);
+
+    expect(
+      container.querySelector('[data-ll-draggable-window="notifications"]'),
+    ).toBeNull();
+  });
+
   it("fits width to changing content and caps it at the viewport", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         minWidth={250}
@@ -278,6 +324,7 @@ describe("DraggableWindow", () => {
   it("caps auto height using the provided content limit", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -326,6 +373,7 @@ describe("DraggableWindow", () => {
   it("uses CSS auto height without content observers", () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         minWidth={242}
@@ -348,6 +396,7 @@ describe("DraggableWindow", () => {
     const handleMaxContentHeightChange = vi.fn();
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         minWidth={242}
@@ -397,6 +446,7 @@ describe("DraggableWindow", () => {
 
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         minWidth={242}
@@ -490,6 +540,7 @@ describe("DraggableWindow", () => {
   it("measures nested scroll area content and grows with a larger max content height", async () => {
     const { container, rerender } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -552,6 +603,7 @@ describe("DraggableWindow", () => {
 
     rerender(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -609,6 +661,7 @@ describe("DraggableWindow", () => {
   it("does not undershoot nested scroll area height when rendered content uses fractional pixels", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -668,6 +721,7 @@ describe("DraggableWindow", () => {
   it("does not undershoot nested scroll area height while the window opening scale transform is active", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -727,6 +781,7 @@ describe("DraggableWindow", () => {
   it("shrinks with the content when nested scroll area content gets smaller", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         resizable={false}
@@ -813,6 +868,7 @@ describe("DraggableWindow", () => {
   it("does not overshoot height when content growth temporarily lags behind the window body resize", async () => {
     const { container } = render(
       <DraggableWindow
+        isOpen
         id="notifications"
         title="Powiadomienia"
         minWidth={242}

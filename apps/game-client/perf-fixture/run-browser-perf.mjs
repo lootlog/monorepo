@@ -1035,7 +1035,7 @@ const inspectTimerVisualRegression = async ({ locator, page }) => {
 const getChatScrollState = (locator) =>
   locator.evaluate((windowElement) => {
     const messageList = windowElement.querySelector('[role="list"]');
-    const viewport = messageList?.closest("[data-radix-scroll-area-viewport]");
+    const viewport = messageList?.closest("[data-ll-native-scroll-area]");
 
     if (!(viewport instanceof HTMLElement)) {
       return null;
@@ -1084,7 +1084,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
 
   await locator.evaluate((windowElement) => {
     const messageList = windowElement.querySelector('[role="list"]');
-    const viewport = messageList?.closest("[data-radix-scroll-area-viewport]");
+    const viewport = messageList?.closest("[data-ll-native-scroll-area]");
     if (!(viewport instanceof HTMLElement)) return;
 
     const instrumentedViewport = viewport;
@@ -1111,7 +1111,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
   await page.evaluate(async () => {
     const viewport = document
       .querySelector('[data-ll-draggable-window="chat"] [role="list"]')
-      ?.closest("[data-radix-scroll-area-viewport]");
+      ?.closest("[data-ll-native-scroll-area]");
     const sampleFrames = (frameCount) =>
       new Promise((resolve) => {
         let sampledFrames = 0;
@@ -1156,7 +1156,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
   );
   await locator.evaluate((windowElement, nextScrollTop) => {
     const messageList = windowElement.querySelector('[role="list"]');
-    const viewport = messageList?.closest("[data-radix-scroll-area-viewport]");
+    const viewport = messageList?.closest("[data-ll-native-scroll-area]");
     if (!(viewport instanceof HTMLElement)) return;
 
     viewport.dispatchEvent(
@@ -1172,7 +1172,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
   await page.evaluate(async () => {
     const viewport = document
       .querySelector('[data-ll-draggable-window="chat"] [role="list"]')
-      ?.closest("[data-radix-scroll-area-viewport]");
+      ?.closest("[data-ll-native-scroll-area]");
     if (!(viewport instanceof HTMLElement)) return;
 
     const anchorRow = Array.from(
@@ -1247,7 +1247,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
 
   await locator.evaluate((windowElement) => {
     const messageList = windowElement.querySelector('[role="list"]');
-    const viewport = messageList?.closest("[data-radix-scroll-area-viewport]");
+    const viewport = messageList?.closest("[data-ll-native-scroll-area]");
     if (!(viewport instanceof HTMLElement)) return;
     window.__lootlogChatScrollTrace = {
       behaviors: [],

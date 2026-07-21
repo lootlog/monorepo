@@ -65,6 +65,7 @@ describe("useDrag", () => {
         target: element,
       } as unknown as ReactPointerEvent<HTMLElement>);
     });
+    expect(element.style.willChange).toBe("transform");
 
     expect(
       documentAddEventListener.mock.calls.map(([eventName]) => eventName),
@@ -75,7 +76,7 @@ describe("useDrag", () => {
     ).toContain("pointermove");
   });
 
-  it("coalesces a burst of drag moves into one position update per frame", () => {
+  it("moves with a coalesced transform and commits the position on drag end", () => {
     let scheduledFrame: FrameRequestCallback | null = null;
     const requestAnimationFrame = vi
       .spyOn(window, "requestAnimationFrame")
@@ -99,7 +100,8 @@ describe("useDrag", () => {
       toJSON: () => ({}),
     });
     const ref = { current: element } as RefObject<HTMLDivElement | null>;
-    const { result } = renderHook(() => useDrag({ ref, onDragStop: vi.fn() }));
+    const onDragStop = vi.fn();
+    const { result } = renderHook(() => useDrag({ ref, onDragStop }));
 
     act(() => {
       result.current.handlePointerDown({
@@ -135,7 +137,20 @@ describe("useDrag", () => {
       scheduledFrame?.(16);
     });
 
+    expect(result.current.position).toEqual({ x: 0, y: 0 });
+    expect(element.style.transform).toBe("translate3d(29px, 39px, 0)");
+
+    act(() => {
+      document.dispatchEvent(
+        Object.assign(new Event("pointerup"), { pointerId: 1 }),
+      );
+    });
+
     expect(result.current.position).toEqual({ x: 29, y: 39 });
+    expect(element.style.transform).toBe("");
+    expect(element.style.willChange).toBe("");
+    expect(onDragStop).toHaveBeenCalledOnce();
+    expect(onDragStop).toHaveBeenCalledWith({ x: 29, y: 39 });
   });
 
   it("ignores another pointer and ends the active session on pointer cancel", () => {

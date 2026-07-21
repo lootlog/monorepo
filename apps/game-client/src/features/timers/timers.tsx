@@ -1,5 +1,5 @@
-import { AnimatedWindow } from "@/components/animated-window";
 import { TimersView } from "@/features/timers/timers-view";
+import { useWindowPresence } from "@/hooks/ui/use-window-presence";
 import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
 import { Game } from "@/lib/game";
 import { useTimersStore } from "@/store/timers.store";
@@ -13,14 +13,15 @@ export const Timers = () => {
     (state) => state.generalConfig.timersUnderBag,
   );
   const isUnderBag = timersUnderBag && Game.interface === "ni";
+  const { shouldRender: shouldRenderTimersView } = useWindowPresence(open);
 
   if (isUnderBag) {
-    return <TimersView isUnderBag />;
+    return <TimersView isOpen isUnderBag />;
   }
 
-  return (
-    <AnimatedWindow isOpen={open} windowKey="timers">
-      <TimersView isUnderBag={false} />
-    </AnimatedWindow>
-  );
+  if (!shouldRenderTimersView) {
+    return null;
+  }
+
+  return <TimersView isOpen={open} isUnderBag={false} />;
 };

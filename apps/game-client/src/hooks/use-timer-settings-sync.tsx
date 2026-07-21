@@ -225,12 +225,13 @@ export const useTimerSettingsSync = () => {
 
   return {
     showConflict,
-    ConflictDialog: showConflict ? (
+    ConflictDialog: (
       <TimerSettingsConflictDialog
+        isOpen={showConflict}
         onResolve={handleConflictResolve}
         localUpdatedAt={localUpdatedAt}
         remoteUpdatedAt={remoteUpdatedAt}
       />
-    ) : null,
+    ),
   };
 };

@@ -1,7 +1,6 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { AnimatedWindow } from "@/components/animated-window";
 import { DraggableWindow } from "@/components/draggable-window";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { ChatInput } from "@/features/chat/components/chat-input";
@@ -29,12 +28,14 @@ import { canReplyToChatMessage } from "./chat-reply.helpers";
 import type { ChatUnreadCountByGuildId } from "./chat-unread.helpers";
 
 interface ChatViewProps {
+  isOpen: boolean;
   selectedGuildId: string;
   setSelectedGuildId: Dispatch<SetStateAction<string>>;
   unreadCountByGuildId: ChatUnreadCountByGuildId;
 }
 
 export const ChatView = ({
+  isOpen,
   selectedGuildId,
   setSelectedGuildId,
   unreadCountByGuildId,
@@ -125,74 +126,73 @@ export const ChatView = ({
   };
 
   return (
-    <AnimatedWindow isOpen windowKey="chat">
-      <DraggableWindow
-        id="chat"
-        title={t("window.title")}
-        onClose={() => setOpen("chat", false)}
-        minHeight={116}
-        minWidth={242}
-        actions=<ChatWindowActions
-          chatInputEnabled={isChatInputEnabled}
-          toggleChatInputEnabled={toggleChatInputEnabled}
-          filtersVisible={filtersVisible}
-          toggleFiltersVisible={toggleFiltersVisible}
-        />
-      >
-        <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
-          <div className="ll:shrink-0 ll:pt-1 ll:pb-1">
-            <GuildSwitcher
-              allowAll
-              value={selectedGuildId}
-              onChange={setSelectedGuildId}
-              unreadCountByGuildId={unreadCountByGuildId}
-            />
-          </div>
-          {filtersVisible && (
-            <div className="ll:shrink-0 ll:flex ll:gap-0.5 ll:px-1 ll:pb-1">
-              {chatFilters.map((filter) => (
-                <button
-                  key={filter.key}
-                  type="button"
-                  onClick={() => setChatFilter(filter.key)}
-                  className={cn(
-                    "ll:flex-1 ll:text-[10px] ll:py-0.5 ll:rounded-sm ll:border ll:transition-colors",
-                    chatFilter === filter.key
-                      ? "ll:bg-gray-600 ll:border-gray-500 ll:text-white"
-                      : "ll:bg-transparent ll:border-gray-700 ll:text-gray-400 ll:hover:text-gray-300 ll:hover:border-gray-600",
-                  )}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="ll:flex-1 ll:overflow-hidden">
-            <ChatMessageList
-              key={`${selectedGuildId}:${chatFilter}`}
-              ariaLabel={t("window.title")}
-              emptyStateLabel={t("emptyState.noMessages")}
-              guildNamesById={guildNamesById}
-              hasRenderableMessages={hasRenderableMessages}
-              membersByGuildId={membersByGuildId}
-              mentionContextsByGuildId={mentionContextsByGuildId}
-              onReplyToMessage={handleReplyToMessage}
-              renderSignature={currentRenderSignature}
-              renderables={currentRenderableMessages}
-              scrollToBottomRequest={scrollToBottomRequest}
-              selectedGuildId={selectedGuildId}
-            />
-          </div>
-          {selectedGuildId !== "all" && isChatInputEnabled && (
-            <ChatInput
-              onMessageSent={() =>
-                setScrollToBottomRequest((currentRequest) => currentRequest + 1)
-              }
-              selectedGuildId={selectedGuildId}
-            />
-          )}
+    <DraggableWindow
+      isOpen={isOpen}
+      id="chat"
+      title={t("window.title")}
+      onClose={() => setOpen("chat", false)}
+      minHeight={116}
+      minWidth={242}
+      actions=<ChatWindowActions
+        chatInputEnabled={isChatInputEnabled}
+        toggleChatInputEnabled={toggleChatInputEnabled}
+        filtersVisible={filtersVisible}
+        toggleFiltersVisible={toggleFiltersVisible}
+      />
+    >
+      <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
+        <div className="ll:shrink-0 ll:pt-1 ll:pb-1">
+          <GuildSwitcher
+            allowAll
+            value={selectedGuildId}
+            onChange={setSelectedGuildId}
+            unreadCountByGuildId={unreadCountByGuildId}
+          />
         </div>
-      </DraggableWindow>
-    </AnimatedWindow>
+        {filtersVisible && (
+          <div className="ll:shrink-0 ll:flex ll:gap-0.5 ll:px-1 ll:pb-1">
+            {chatFilters.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() => setChatFilter(filter.key)}
+                className={cn(
+                  "ll:flex-1 ll:text-[10px] ll:py-0.5 ll:rounded-sm ll:border ll:transition-colors",
+                  chatFilter === filter.key
+                    ? "ll:bg-gray-600 ll:border-gray-500 ll:text-white"
+                    : "ll:bg-transparent ll:border-gray-700 ll:text-gray-400 ll:hover:text-gray-300 ll:hover:border-gray-600",
+                )}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="ll:flex-1 ll:overflow-hidden">
+          <ChatMessageList
+            key={`${selectedGuildId}:${chatFilter}`}
+            ariaLabel={t("window.title")}
+            emptyStateLabel={t("emptyState.noMessages")}
+            guildNamesById={guildNamesById}
+            hasRenderableMessages={hasRenderableMessages}
+            membersByGuildId={membersByGuildId}
+            mentionContextsByGuildId={mentionContextsByGuildId}
+            onReplyToMessage={handleReplyToMessage}
+            renderSignature={currentRenderSignature}
+            renderables={currentRenderableMessages}
+            scrollToBottomRequest={scrollToBottomRequest}
+            selectedGuildId={selectedGuildId}
+          />
+        </div>
+        {selectedGuildId !== "all" && isChatInputEnabled && (
+          <ChatInput
+            onMessageSent={() =>
+              setScrollToBottomRequest((currentRequest) => currentRequest + 1)
+            }
+            selectedGuildId={selectedGuildId}
+          />
+        )}
+      </div>
+    </DraggableWindow>
   );
 };

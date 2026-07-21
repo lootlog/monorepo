@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useWindowPresence } from "@/hooks/ui/use-window-presence";
 import { Game } from "@/lib/game";
 import { storageKey } from "@/lib/storage-key";
 import { useChatStore } from "@/store/chat.store";
@@ -29,6 +30,8 @@ export const Chat = () => {
     useState<ChatUnreadCountByGuildId>({});
   const isChatViewVisible =
     open && !(isIntegratedMode && Game.interface === "ni");
+  const { shouldRender: shouldRenderChatView } =
+    useWindowPresence(isChatViewVisible);
 
   useChatMessagesListener({
     prefetchMembers: isChatViewVisible,
@@ -68,12 +71,13 @@ export const Chat = () => {
     );
   }, [selectedGuildId]);
 
-  if (!isChatViewVisible) {
+  if (!shouldRenderChatView) {
     return null;
   }
 
   return (
     <ChatView
+      isOpen={isChatViewVisible}
       selectedGuildId={selectedGuildId}
       setSelectedGuildId={setSelectedGuildId}
       unreadCountByGuildId={unreadCountByGuildId}

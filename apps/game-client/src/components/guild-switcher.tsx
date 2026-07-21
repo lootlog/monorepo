@@ -4,7 +4,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type FC, useEffect, useRef } from "react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { GuildButton } from "@/components/guild-button";
 import {
@@ -189,19 +189,15 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
 
   return (
     <TooltipProvider>
-      <ScrollArea
+      <NativeScrollArea
         className={cn("ll:w-full", className)}
+        orientation="horizontal"
         ref={scrollContainerRef}
-        type="hover"
       >
         <div className="ll:mt-1 ll:flex ll:w-max ll:min-w-full ll:gap-1">
           {content}
         </div>
-        <ScrollBar
-          orientation="horizontal"
-          className="ll:my-0 ll:mx-0 ll:w-full"
-        />
-      </ScrollArea>
+      </NativeScrollArea>
     </TooltipProvider>
   );
 };

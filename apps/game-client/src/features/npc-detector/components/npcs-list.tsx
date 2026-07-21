@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import { NpcListItem } from "@/features/npc-detector/components/npc-list-item";
 import {
   type GameNpcWithLocation,
@@ -311,10 +311,9 @@ export const NpcsList: FC<NpcsListProps> = ({ detectorSettings, npcs }) => {
   );
 
   return (
-    <ScrollArea
+    <NativeScrollArea
       ref={scrollViewportRef}
       className="ll:w-full ll:box-border ll:h-full"
-      type="hover"
     >
       <div
         ref={listContentRef}
@@ -396,6 +395,6 @@ export const NpcsList: FC<NpcsListProps> = ({ detectorSettings, npcs }) => {
           </div>
         ))}
       </div>
-    </ScrollArea>
+    </NativeScrollArea>
   );
 };

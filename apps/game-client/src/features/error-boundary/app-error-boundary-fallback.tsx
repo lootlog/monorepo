@@ -74,12 +74,9 @@ export const AppErrorBoundaryFallback = ({ error }: FallbackProps) => {
         ? translations.copyErrorButton
         : translations.copyButton;
 
-  if (!isVisible || !isPositionReady) {
-    return null;
-  }
-
   return (
     <DraggableWindow
+      isOpen={isVisible && isPositionReady}
       id={APP_ERROR_WINDOW_ID}
       title={translations.title}
       onClose={handleClose}

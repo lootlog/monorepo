@@ -1,5 +1,5 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { AnimatedWindow } from "@/components/animated-window";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import {
   QuickAccessButton,
   type QuickAccessButtonProps,
@@ -65,16 +65,19 @@ export const QuickAccess = ({ hasActiveEventMode }: QuickAccessProps) => {
   ];
 
   return (
-    <AnimatedWindow isOpen={open} windowKey="quick-access">
-      <DraggableWindow
-        id="quick-access"
-        title={t("window.title")}
-        minHeight={56}
-        minWidth={250}
-        widthMode="fit-content"
-        resizable={false}
-        onClose={() => setOpen("quick-access", false)}
-        closable={false}
+    <DraggableWindow
+      isOpen={open}
+      id="quick-access"
+      title={t("window.title")}
+      minHeight={56}
+      minWidth={250}
+      onClose={() => setOpen("quick-access", false)}
+      closable={false}
+    >
+      <NativeScrollArea
+        className="ll:h-full ll:w-full"
+        data-ll-quick-access-horizontal-scroll=""
+        orientation="horizontal"
       >
         <div className="ll:flex ll:w-max ll:gap-1 ll:px-1 ll:py-1">
           {hasActiveEventMode ? (
@@ -103,7 +106,7 @@ export const QuickAccess = ({ hasActiveEventMode }: QuickAccessProps) => {
 
           <GuildListPopover />
         </div>
-      </DraggableWindow>
-    </AnimatedWindow>
+      </NativeScrollArea>
+    </DraggableWindow>
   );
 };
