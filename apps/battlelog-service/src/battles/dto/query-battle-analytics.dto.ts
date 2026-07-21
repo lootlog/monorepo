@@ -3,7 +3,7 @@ import { createZodDto } from "nestjs-zod";
 import {
   booleanFromString,
   intFromString,
-} from "@lootlog/nest-shared/validators";
+} from "@lootlog/nest-shared/validators/query-helpers";
 
 const QueryBattleAnalyticsSchema = z.object({
   characterId: z.string().optional(),

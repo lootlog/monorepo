@@ -4,7 +4,7 @@ import {
   commaSeparatedArray,
   intFromString,
   optionalFromQuery,
-} from "@lootlog/nest-shared/validators";
+} from "@lootlog/nest-shared/validators/query-helpers";
 import { MAX_PAGE_LIMIT } from "../config/pagination";
 
 const FetchLootsParamsSchema = z.object({
