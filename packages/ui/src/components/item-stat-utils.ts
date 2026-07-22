@@ -25,11 +25,15 @@ function isString(value: unknown): value is string {
 }
 
 const parseItemStat = (stat: string): ItemStat => {
-  const [key = "undefined", ...rawValueParts] = stat.split("=");
+  const separatorIndex = stat.indexOf("=");
+
+  if (separatorIndex === -1) {
+    return { key: stat, value: true };
+  }
 
   return {
-    key,
-    value: rawValueParts.length === 0 ? true : rawValueParts.join("="),
+    key: stat.slice(0, separatorIndex),
+    value: stat.slice(separatorIndex + 1),
   };
 };
 
