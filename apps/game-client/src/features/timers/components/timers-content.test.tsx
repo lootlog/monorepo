@@ -113,23 +113,22 @@ describe("TimersContent", () => {
     );
 
     const scrollContainer = screen.getByTestId("timers-scroll-container");
+    const scrollViewport = scrollContainer.querySelector(
+      "[data-ll-scroll-area-viewport]",
+    );
 
     expect(scrollContainer).toHaveClass(
       "ll:min-h-0",
       "ll:flex-1",
-      "ll:overflow-y-auto",
-      "ll:overflow-x-hidden",
-      "ll:scrollbar-thin",
-      "ll:scrollbar-gutter-stable",
-      "ll:scrollbar-thumb-transparent",
-      "ll:scrollbar-track-transparent",
-      "ll:hover:scrollbar-thumb-gray-400/50",
-      "ll:hover:scrollbar-track-gray-600/60",
+      "ll:overflow-hidden",
     );
-    expect(scrollContainer).toHaveAttribute("data-ll-native-scroll-area", "");
+    expect(scrollViewport).toHaveStyle({
+      overflowX: "hidden",
+      overflowY: "scroll",
+    });
   });
 
-  it("keeps timer content draggable while preventing drag from the native scrollbar gutter", () => {
+  it("keeps timer content draggable with the scrollbar hidden", () => {
     const onPointerDown = vi.fn();
 
     render(
@@ -153,27 +152,11 @@ describe("TimersContent", () => {
     const scrollContainer = screen.getByTestId("timers-scroll-container");
     const timerContent = screen.getByText("TimersGrid");
 
-    Object.defineProperties(scrollContainer, {
-      clientWidth: { configurable: true, value: 190 },
-      offsetWidth: { configurable: true, value: 200 },
-    });
-    vi.spyOn(scrollContainer, "getBoundingClientRect").mockReturnValue({
-      bottom: 300,
-      height: 300,
-      left: 0,
-      right: 200,
-      top: 0,
-      width: 200,
-      x: 0,
-      y: 0,
-      toJSON: vi.fn(),
-    });
-
-    fireEvent.pointerDown(scrollContainer, { clientX: 195 });
-    expect(onPointerDown).not.toHaveBeenCalled();
-
-    fireEvent.pointerDown(timerContent, { clientX: 100 });
+    fireEvent.pointerDown(scrollContainer);
     expect(onPointerDown).toHaveBeenCalledOnce();
+
+    fireEvent.pointerDown(timerContent);
+    expect(onPointerDown).toHaveBeenCalledTimes(2);
   });
 
   it("renders the empty state and suppresses footer/filters when compact or empty", () => {

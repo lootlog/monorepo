@@ -1,5 +1,5 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   QuickAccessButton,
   type QuickAccessButtonProps,
@@ -74,7 +74,7 @@ export const QuickAccess = ({ hasActiveEventMode }: QuickAccessProps) => {
       onClose={() => setOpen("quick-access", false)}
       closable={false}
     >
-      <NativeScrollArea
+      <ScrollArea
         className="ll:h-full ll:w-full"
         data-ll-quick-access-horizontal-scroll=""
         orientation="horizontal"
@@ -106,7 +106,7 @@ export const QuickAccess = ({ hasActiveEventMode }: QuickAccessProps) => {
 
           <GuildListPopover />
         </div>
-      </NativeScrollArea>
+      </ScrollArea>
     </DraggableWindow>
   );
 };

@@ -35,6 +35,10 @@ class ResizeObserverMock {
 
 global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
+if (typeof HTMLElement.prototype.getAnimations !== "function") {
+  HTMLElement.prototype.getAnimations = () => [];
+}
+
 Object.defineProperty(window, "scrollTo", {
   writable: true,
   value: vi.fn(),

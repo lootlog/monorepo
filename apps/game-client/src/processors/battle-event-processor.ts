@@ -187,6 +187,10 @@ export class BattleEventProcessor {
       ? battleStore.getCaptureSnapshot()
       : null;
 
+    if (event.f.w) {
+      battleStore.applyBatch({ battleWarriors });
+    }
+
     try {
       const { deadNpcs, hasNpcInBattle, topNpc } =
         getNpcBattleSummary(battleWarriors);

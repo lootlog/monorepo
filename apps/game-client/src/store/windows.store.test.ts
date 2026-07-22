@@ -101,6 +101,28 @@ describe("windows store", () => {
     expect(persisted.state).not.toHaveProperty("currentWindowFocus");
     expect(persisted.state).not.toHaveProperty("windowFocusHistory");
   });
+
+  it("preserves the active settings tab while closing and reopening", () => {
+    useWindowsStore.setState((state) => ({
+      settings: {
+        ...state.settings,
+        open: true,
+        state: { activeTab: "notifications" },
+      },
+    }));
+
+    useWindowsStore.getState().setOpen("settings", false);
+
+    expect(useWindowsStore.getState().settings.state.activeTab).toBe(
+      "notifications",
+    );
+
+    useWindowsStore.getState().setOpen("settings", true);
+
+    expect(useWindowsStore.getState().settings.state.activeTab).toBe(
+      "notifications",
+    );
+  });
 });
 
 describe("createDeduplicatingStateStorage", () => {

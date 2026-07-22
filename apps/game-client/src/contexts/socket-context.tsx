@@ -182,16 +182,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.connect();
     };
 
-    const handleAnyDevelopmentEvent = (event: string, ...args: unknown[]) => {
-      if (import.meta.env.DEV) {
-        console.warn(`[Gateway] Event: ${event}`, args);
-      }
-    };
-
-    if (import.meta.env.DEV) {
-      socket.onAny(handleAnyDevelopmentEvent);
-    }
-
     socket.auth = {
       ...(typeof socket.auth === "object" ? socket.auth : {}),
       devPermissionOverride: getSerializedDevPermissionOverride(),
@@ -207,9 +197,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-      if (import.meta.env.DEV) {
-        socket.offAny(handleAnyDevelopmentEvent);
-      }
       window.removeEventListener(
         DEV_PERMISSION_OVERRIDE_EVENT,
         handleDevPermissionOverrideChange,

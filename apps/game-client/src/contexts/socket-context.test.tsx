@@ -198,17 +198,13 @@ describe("SocketProvider", () => {
     });
   });
 
-  it("removes the development catch-all listener on unmount", () => {
-    const { unmount } = render(
+  it("does not register a development catch-all listener", () => {
+    render(
       <SocketProvider>
         <div />
       </SocketProvider>,
     );
-    const developmentListener = mockSocket.onAny.mock.calls[0]?.[0];
 
-    unmount();
-
-    expect(developmentListener).toBeTypeOf("function");
-    expect(mockSocket.offAny).toHaveBeenCalledWith(developmentListener);
+    expect(mockSocket.onAny).not.toHaveBeenCalled();
   });
 });

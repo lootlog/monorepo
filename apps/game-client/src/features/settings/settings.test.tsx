@@ -1,11 +1,29 @@
-import { render, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
 import { Settings } from "./settings";
 
-vi.mock("@/features/settings/components/settings-tabs", () => ({
-  SettingsTabs: () => <div>Settings tabs</div>,
-}));
+vi.mock("@/features/settings/components/settings-tabs", async () => {
+  const { useWindowsStore: useMockWindowsStore } = await vi.importActual<{
+    useWindowsStore: typeof useWindowsStore;
+  }>("@/store/windows.store");
+
+  return {
+    SettingsTabs: () => {
+      const activeTab = useMockWindowsStore(
+        (state) => state.settings.state.activeTab,
+      );
+
+      return <div>{activeTab ?? "general"}</div>;
+    },
+  };
+});
 
 describe("Settings", () => {
   beforeEach(() => {
@@ -92,5 +110,42 @@ describe("Settings", () => {
       x: 0,
       y: 0,
     });
+  });
+
+  it("keeps the selected tab visible while closing and after reopening", async () => {
+    useWindowsStore.setState((state) => ({
+      ...state,
+      settings: {
+        ...state.settings,
+        open: true,
+        hasDefinedPosition: true,
+        state: { activeTab: "notifications" },
+      },
+    }));
+
+    render(<Settings />);
+
+    expect(await screen.findByText("notifications")).toBeInTheDocument();
+
+    act(() => useWindowsStore.getState().setOpen("settings", false));
+
+    expect(screen.getByText("notifications")).toBeInTheDocument();
+    expect(screen.queryByText("general")).toBeNull();
+
+    const windowElement = document.querySelector(
+      '[data-ll-draggable-window="settings"]',
+    );
+    const windowBody = windowElement?.firstElementChild;
+    if (!(windowBody instanceof HTMLElement)) {
+      throw new Error("Expected settings window body");
+    }
+
+    fireEvent.animationEnd(windowBody, { animationName: "ll-window-exit" });
+
+    expect(screen.queryByText("notifications")).toBeNull();
+
+    act(() => useWindowsStore.getState().setOpen("settings", true));
+
+    expect(await screen.findByText("notifications")).toBeInTheDocument();
   });
 });
