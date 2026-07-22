@@ -5,7 +5,11 @@ import {
   getSerializedDevPermissionOverride,
 } from "@/lib/dev-permission-override";
 import { requestMargonemAccountProof } from "@/lib/margonem-account-proof";
-import { type AppSocket, getSocket } from "@/lib/socket";
+import {
+  type AppSocket,
+  getSocket,
+  type PermissionsUpdatedPayload,
+} from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import {
   createContext,
@@ -140,14 +144,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         isAfk: false,
       });
     };
-    const handlePermissionsUpdated = (data: {
-      guilds: { guild: { id: string } }[];
-    }) => {
+    const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
       if (import.meta.env.DEV) {
         console.warn("[Gateway] Rooms rebalanced:", data);
       }
 
-      if (!data.guilds) {
+      const updatedGuildIds = data.guilds?.map((guild) => guild.guild.id);
+
+      if (!updatedGuildIds) {
         if (import.meta.env.DEV) {
           console.warn("[Gateway] No guilds data in permissions update");
         }
@@ -156,7 +160,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      setJoinedGuilds(data.guilds.map((g) => g.guild.id) || []);
+      setJoinedGuilds(updatedGuildIds);
     };
 
     socket.on(GatewayEvent.CONNECT, handleConnect);
