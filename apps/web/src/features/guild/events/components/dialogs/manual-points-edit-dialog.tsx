@@ -12,6 +12,7 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Textarea } from "@lootlog/ui/components/textarea";
+import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 import { parseEditablePoints } from "../../utils/parse-editable-points";
 
 interface ManualPointsEditDialogProps {
@@ -26,10 +27,6 @@ interface ManualPointsEditDialogProps {
     comment?: string;
   }) => Promise<void>;
 }
-
-const formatPoints = (points: number): string => {
-  return Number.isInteger(points) ? String(points) : points.toFixed(2);
-};
 
 export const ManualPointsEditDialog = ({
   open,
@@ -117,9 +114,7 @@ export const ManualPointsEditDialog = ({
               <p className="font-semibold">
                 {parsedPointsDelta === null
                   ? t("events.points.previewUnavailable")
-                  : parsedPointsDelta > 0
-                    ? `+${formatPoints(parsedPointsDelta)}`
-                    : formatPoints(parsedPointsDelta)}
+                  : formatSignedPoints(parsedPointsDelta)}
               </p>
             </div>
             <div className="rounded-md border border-border/60 bg-primary/5 px-3 py-2">
