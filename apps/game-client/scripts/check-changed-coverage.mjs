@@ -54,9 +54,7 @@ function isProductionSource(filePath) {
     /\.(?:ts|tsx)$/.test(filePath) &&
     !/\.(?:test|spec)\.(?:ts|tsx)$/.test(filePath) &&
     !filePath.endsWith(".d.ts") &&
-    !filePath.includes("/benchmarks/") &&
     !filePath.includes("/lib/api/generated/") &&
-    !filePath.includes("/perf-fixture/") &&
     !filePath.includes("/test/")
   );
 }

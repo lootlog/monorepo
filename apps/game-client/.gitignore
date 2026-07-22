@@ -10,10 +10,6 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-/artifacts/hot-path-benchmarks/
-/artifacts/browser-perf/
-/artifacts/browser-perf-checkpoint-*/
-/artifacts/retained-heap-soak/
 *.local
 
 # Editor directories and files
