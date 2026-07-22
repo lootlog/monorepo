@@ -481,6 +481,23 @@ const configure = (page, configuration) =>
     configuration,
   );
 
+const checkWindowAnimation = async (page) => {
+  const hostileAnimationOverride = await page.addStyleTag({
+    content:
+      ":not(.captcha img) { animation: none !important; transition-property: none !important; }",
+  });
+
+  try {
+    return await page.evaluate(() =>
+      window.__lootlogBrowserPerf.checkWindowAnimation(),
+    );
+  } finally {
+    await hostileAnimationOverride.evaluate((styleElement) =>
+      styleElement.remove(),
+    );
+  }
+};
+
 const reset = (page) =>
   page.evaluate(() => window.__lootlogBrowserPerf.reset());
 
@@ -1035,7 +1052,7 @@ const inspectTimerVisualRegression = async ({ locator, page }) => {
 const getChatScrollState = (locator) =>
   locator.evaluate((windowElement) => {
     const messageList = windowElement.querySelector('[role="list"]');
-    const viewport = messageList?.closest("[data-ll-native-scroll-area]");
+    const viewport = messageList?.closest("[data-ll-scroll-area-viewport]");
 
     if (!(viewport instanceof HTMLElement)) {
       return null;
@@ -1084,7 +1101,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
 
   await locator.evaluate((windowElement) => {
     const messageList = windowElement.querySelector('[role="list"]');
-    const viewport = messageList?.closest("[data-ll-native-scroll-area]");
+    const viewport = messageList?.closest("[data-ll-scroll-area-viewport]");
     if (!(viewport instanceof HTMLElement)) return;
 
     const instrumentedViewport = viewport;
@@ -1111,7 +1128,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
   await page.evaluate(async () => {
     const viewport = document
       .querySelector('[data-ll-draggable-window="chat"] [role="list"]')
-      ?.closest("[data-ll-native-scroll-area]");
+      ?.closest("[data-ll-scroll-area-viewport]");
     const sampleFrames = (frameCount) =>
       new Promise((resolve) => {
         let sampledFrames = 0;
@@ -1156,7 +1173,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
   );
   await locator.evaluate((windowElement, nextScrollTop) => {
     const messageList = windowElement.querySelector('[role="list"]');
-    const viewport = messageList?.closest("[data-ll-native-scroll-area]");
+    const viewport = messageList?.closest("[data-ll-scroll-area-viewport]");
     if (!(viewport instanceof HTMLElement)) return;
 
     viewport.dispatchEvent(
@@ -1172,7 +1189,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
   await page.evaluate(async () => {
     const viewport = document
       .querySelector('[data-ll-draggable-window="chat"] [role="list"]')
-      ?.closest("[data-ll-native-scroll-area]");
+      ?.closest("[data-ll-scroll-area-viewport]");
     if (!(viewport instanceof HTMLElement)) return;
 
     const anchorRow = Array.from(
@@ -1247,7 +1264,7 @@ const inspectChatScrollRegression = async ({ locator, page }) => {
 
   await locator.evaluate((windowElement) => {
     const messageList = windowElement.querySelector('[role="list"]');
-    const viewport = messageList?.closest("[data-ll-native-scroll-area]");
+    const viewport = messageList?.closest("[data-ll-scroll-area-viewport]");
     if (!(viewport instanceof HTMLElement)) return;
     window.__lootlogChatScrollTrace = {
       behaviors: [],
@@ -1528,6 +1545,30 @@ const addGate = (gates, gate) => {
 
 const evaluateGates = (profiles, idleMeasurement, visualMatrix) => {
   const gates = [];
+  for (const profile of profiles) {
+    const windowAnimation = profile.windowAnimation;
+    const windowAnimationPassed =
+      windowAnimation.preparedClassName.includes("ll-window-preparing") &&
+      windowAnimation.enteringClassName.includes("ll-window-enter") &&
+      windowAnimation.enterAnimationName === "ll-window-enter" &&
+      Number.isFinite(windowAnimation.enterCurrentTimeBeforeMs) &&
+      Number.isFinite(windowAnimation.enterCurrentTimeAfterMs) &&
+      windowAnimation.enterCurrentTimeAfterMs >
+        windowAnimation.enterCurrentTimeBeforeMs &&
+      windowAnimation.enterOpacityBefore === 0 &&
+      windowAnimation.enterOpacityAfter > windowAnimation.enterOpacityBefore &&
+      windowAnimation.enterTransformAfter !==
+        windowAnimation.enterTransformBefore &&
+      windowAnimation.exitAnimationName === "ll-window-exit" &&
+      !windowAnimation.renderedAfterExit;
+    addGate(gates, {
+      actual: windowAnimationPassed ? 0 : 1,
+      limit: 0,
+      name: `${profile.gameInterface.toUpperCase()} ${profile.cpuRate}x CPU: draggable window animation timeline`,
+      pass: windowAnimationPassed,
+      unit: "failures",
+    });
+  }
   for (const profile of profiles) {
     const profileName = `${profile.gameInterface.toUpperCase()} ${profile.cpuRate}× CPU`;
     const regularMeasurements = profile.scenarios.flatMap(
@@ -2049,6 +2090,7 @@ const run = async () => {
         });
 
         try {
+          const windowAnimation = await checkWindowAnimation(fixturePage.page);
           const scenarios = await runSequentially(SCENARIOS, (scenario) =>
             runScenario(fixturePage.page, scenario),
           );
@@ -2080,6 +2122,7 @@ const run = async () => {
             overlay,
             scenarios,
             sounds,
+            windowAnimation,
           };
         } finally {
           await fixturePage.context.close();

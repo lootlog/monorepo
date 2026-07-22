@@ -43,14 +43,14 @@ describe("QuickAccess", () => {
       document.querySelector("[data-ll-quick-access-horizontal-scroll]"),
     ).toBeInTheDocument();
     const scrollViewport = document.querySelector(
-      "[data-ll-native-scroll-area]",
+      "[data-ll-scroll-area-viewport]",
     );
 
     expect(scrollViewport).toBeInTheDocument();
-    expect(scrollViewport).toHaveClass(
-      "ll:overflow-x-auto",
-      "ll:overflow-y-hidden",
-    );
+    expect(scrollViewport).toHaveStyle({
+      overflowX: "scroll",
+      overflowY: "hidden",
+    });
   });
 
   it("does not render when quick access is closed", () => {

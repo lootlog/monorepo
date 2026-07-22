@@ -7,7 +7,7 @@ import {
 } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
 import { ReadyRoomParticipantsList } from "@/features/party-finder/components/ready-room-participants-list";
 import { ReadyRoomParticipantStatus } from "@/features/party-finder/components/ready-room-participant-status";
@@ -64,13 +64,13 @@ export const PartyFinder = () => {
             {partyMembers.length}/10
           </span>
         </div>
-        <NativeScrollArea className="ll:flex-1">
+        <ScrollArea className="ll:flex-1">
           {isOrganizerView && readyRoom.viewer === "ORGANIZER" ? (
             <ReadyRoomParticipantsList room={readyRoom} />
           ) : (
             <ReadyRoomParticipantStatus room={readyRoom} />
           )}
-        </NativeScrollArea>
+        </ScrollArea>
         {isOrganizerView ? (
           <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
             <Button

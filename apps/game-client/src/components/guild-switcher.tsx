@@ -3,8 +3,8 @@ import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { type FC, useEffect, useRef } from "react";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { type FC, useEffect } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { GuildButton } from "@/components/guild-button";
 import {
@@ -46,7 +46,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   value,
 }) => {
   const { t } = useTranslation("common");
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const characterId = useCurrentCharacterId();
   const { data: guilds, isFetched } =
     useUsersControllerGetCurrentUserAccessibleGuilds({
@@ -97,35 +96,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       setGuildId(characterId, newGuildId);
     }
   };
-
-  useEffect(() => {
-    if (layout !== "scroll") {
-      return;
-    }
-
-    const scrollContainer = scrollContainerRef.current;
-
-    if (!scrollContainer) {
-      return;
-    }
-
-    const handleWheel = (event: WheelEvent) => {
-      if (event.deltaY === 0) {
-        return;
-      }
-
-      event.preventDefault();
-      scrollContainer.scrollLeft += event.deltaY;
-    };
-
-    scrollContainer.addEventListener("wheel", handleWheel, {
-      passive: false,
-    });
-
-    return () => {
-      scrollContainer.removeEventListener("wheel", handleWheel);
-    };
-  }, [layout]);
 
   const content = (
     <>
@@ -189,15 +159,14 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
 
   return (
     <TooltipProvider>
-      <NativeScrollArea
+      <ScrollArea
         className={cn("ll:w-full", className)}
         orientation="horizontal"
-        ref={scrollContainerRef}
       >
         <div className="ll:mt-1 ll:flex ll:w-max ll:min-w-full ll:gap-1">
           {content}
         </div>
-      </NativeScrollArea>
+      </ScrollArea>
     </TooltipProvider>
   );
 };

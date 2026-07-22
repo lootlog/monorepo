@@ -6,9 +6,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { type FC, useEffect, useRef } from "react";
+import type { FC } from "react";
 import { Button } from "@/components/ui/button";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
 
 type GuildMultiSelectorProps = {
@@ -24,24 +24,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
   onChange,
   value,
 }) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      scrollContainer.scrollLeft += e.deltaY;
-    };
-
-    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      scrollContainer.removeEventListener("wheel", handleWheel);
-    };
-  }, []);
 
   const handleToggle = (guildId: string) => {
     if (disabled) return;
@@ -60,10 +43,9 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
 
   return (
     <TooltipProvider>
-      <NativeScrollArea
+      <ScrollArea
         className={cn("ll:w-full", className)}
         orientation="horizontal"
-        ref={scrollContainerRef}
       >
         <div className="ll:flex ll:gap-1 ll:mt-1">
           {guilds?.map((guild) => {
@@ -108,7 +90,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
             );
           })}
         </div>
-      </NativeScrollArea>
+      </ScrollArea>
     </TooltipProvider>
   );
 };
