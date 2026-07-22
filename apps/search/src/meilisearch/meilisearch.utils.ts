@@ -1,12 +1,15 @@
-type MeilisearchErrorCause = {
-  cause?: {
-    code?: unknown;
-  };
-};
+type UnknownRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null;
+}
 
 export function getMeilisearchErrorCode(error: unknown): string | null {
-  const code = (error as MeilisearchErrorCause | null)?.cause?.code;
+  if (!isRecord(error) || !isRecord(error.cause)) {
+    return null;
+  }
 
+  const { code } = error.cause;
   return typeof code === "string" ? code : null;
 }
 
