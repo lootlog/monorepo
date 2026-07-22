@@ -7,7 +7,7 @@ describe("NotificationMatchingService", () => {
   beforeEach(() => {
     service = new NotificationMatchingService({
       member: {
-        findMany: vi.fn(),
+        findMany: vi.fn<() => Promise<unknown[]>>(),
       },
     } as never);
   });
@@ -90,6 +90,25 @@ describe("NotificationMatchingService", () => {
         ],
         NpcType.TITAN,
         300,
+      ),
+    ).toBe(true);
+  });
+
+  it("allows access for unknown npc levels when tier permissions match", () => {
+    expect(
+      service.canRolesViewNpc(
+        [
+          {
+            permissions: [
+              Permission.LOOTLOG_LOOTS_READ,
+              Permission.LOOTLOG_LOOTS_TITANS_READ,
+            ],
+            lvlRangeFrom: 250,
+            lvlRangeTo: 350,
+          },
+        ],
+        NpcType.TITAN,
+        null,
       ),
     ).toBe(true);
   });
