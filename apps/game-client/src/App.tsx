@@ -7,7 +7,6 @@ import { ErrorBoundary } from "react-error-boundary";
 import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-boundary-fallback";
 import { AppContent } from "@/app-content";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
-import { BrowserPerfFixtureBridge } from "@/perf-fixture/browser-perf-fixture-bridge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { captureReactError } from "@/lib/error-monitoring";
 
@@ -19,9 +18,6 @@ function App() {
       <TooltipProvider>
         <QueryClientProvider client={queryClient}>
           <SocketProvider>
-            {import.meta.env.VITE_PERF_FIXTURE === "1" ? (
-              <BrowserPerfFixtureBridge />
-            ) : null}
             <ErrorBoundary
               FallbackComponent={AppErrorBoundaryFallback}
               onError={(error, errorInfo) => {

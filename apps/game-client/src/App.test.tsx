@@ -47,10 +47,6 @@ vi.mock("@/contexts/socket-context", () => ({
   SocketProvider: ({ children }: PropsWithChildren) => children,
 }));
 
-vi.mock("@/perf-fixture/browser-perf-fixture-bridge", () => ({
-  BrowserPerfFixtureBridge: () => null,
-}));
-
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, "warn").mockImplementation(() => undefined);

@@ -95,40 +95,6 @@
       "cache": false,
       "interactive": false
     },
-    "bench:hot-paths": {
-      "cache": false,
-      "env": [
-        "BENCH_BASELINE",
-        "BENCH_COLLECT_HEAP",
-        "BENCH_JSON",
-        "BENCH_MARKDOWN",
-        "BENCH_OUTPUT_DIR",
-        "BENCH_SAMPLES",
-        "BENCH_WARMUPS"
-      ],
-      "outputs": ["artifacts/hot-path-benchmarks/**"]
-    },
-    "bench:soak": {
-      "cache": false,
-      "env": ["SOAK_JSON", "SOAK_MARKDOWN", "SOAK_OUTPUT_DIR"],
-      "outputs": ["artifacts/retained-heap-soak/**"]
-    },
-    "test:browser-perf": {
-      "cache": false,
-      "env": [
-        "BROWSER_PERF_BUNDLE",
-        "BROWSER_PERF_CHROME",
-        "BROWSER_PERF_CPU_RATES",
-        "BROWSER_PERF_ENFORCE",
-        "BROWSER_PERF_IDLE_MS",
-        "BROWSER_PERF_INTERFACES",
-        "BROWSER_PERF_KEEP_BUILD",
-        "BROWSER_PERF_QUICK",
-        "BROWSER_PERF_SAMPLES",
-        "BROWSER_PERF_WARMUPS"
-      ],
-      "outputs": ["artifacts/browser-perf/**"]
-    },
     "test:coverage": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
