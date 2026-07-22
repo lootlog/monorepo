@@ -16,8 +16,6 @@ export default defineConfig(({ mode }) => {
     env.ANALYZE === "1" || process.env.ANALYZE === "1";
   const useFastLocalMinifier =
     env.FAST_BUILD === "1" || process.env.FAST_BUILD === "1";
-  const isBrowserPerformanceFixture =
-    env.VITE_PERF_FIXTURE === "1" || process.env.VITE_PERF_FIXTURE === "1";
   const commitSha =
     env.VITE_COMMIT_SHA ||
     env.WORKERS_CI_COMMIT_SHA ||
@@ -33,9 +31,6 @@ export default defineConfig(({ mode }) => {
       "import.meta.env.VITE_COMMIT_SHA": JSON.stringify(commitSha),
       "import.meta.env.VITE_GAME_CLIENT_VERSION":
         JSON.stringify(runtimeVersion),
-      "import.meta.env.VITE_PERF_FIXTURE": JSON.stringify(
-        isBrowserPerformanceFixture ? "1" : "0",
-      ),
     },
     server: {
       host: "localhost",

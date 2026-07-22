@@ -157,15 +157,6 @@ let socket: AppSocket | null = null;
 
 export const getSocket = (): AppSocket => {
   if (!socket) {
-    const fixtureSocket = (
-      window as Window & { __lootlogPerfSocket?: AppSocket }
-    ).__lootlogPerfSocket;
-
-    if (import.meta.env.VITE_PERF_FIXTURE === "1" && fixtureSocket) {
-      socket = fixtureSocket;
-      return socket;
-    }
-
     socket = io(GATEWAY_URL, {
       transports: ["websocket"],
       path: `${GATEWAY_SOCKET_PATH ?? ""}/socket.io`,

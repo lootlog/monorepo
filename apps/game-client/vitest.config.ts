@@ -34,8 +34,6 @@ export default defineConfig({
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "node_modules/",
-        "src/benchmarks/",
-        "src/perf-fixture/",
         "src/test/",
         "src/lib/api/generated/",
         "src/**/*.test.{ts,tsx}",
