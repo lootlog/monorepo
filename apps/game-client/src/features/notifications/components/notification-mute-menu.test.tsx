@@ -4,17 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import type { StoredNotification } from "@/store/notifications.store";
 
-const mockUseCurrentUserNotificationMutes = vi.fn();
-const mockUseUpdateUserPreferences = vi.fn();
-const mockMutate = vi.fn();
-
-vi.mock("@/hooks/use-current-user-notification-mutes", () => ({
-  useCurrentUserNotificationMutes: () => mockUseCurrentUserNotificationMutes(),
-}));
-
-vi.mock("@/hooks/api/use-user-preferences", () => ({
-  useUpdateUserPreferences: () => mockUseUpdateUserPreferences(),
-}));
+const mockUpdateMutes = vi.fn();
 
 const notification: StoredNotification = {
   notificationId: "notif-1",
@@ -30,26 +20,22 @@ const notification: StoredNotification = {
 
 describe("NotificationMuteMenu", () => {
   beforeEach(() => {
-    mockMutate.mockReset();
-    mockUseUpdateUserPreferences.mockReset();
-    mockUseUpdateUserPreferences.mockReturnValue({
-      mutate: mockMutate,
-      isPending: false,
-    });
-    mockUseCurrentUserNotificationMutes.mockReset();
+    mockUpdateMutes.mockReset();
   });
 
   it("disables mute actions until notification mutes are loaded", () => {
-    mockUseCurrentUserNotificationMutes.mockReturnValue({
-      isReady: false,
-      mutes: {
-        players: [],
-        npcs: [],
-      },
-    });
-
     render(
-      <NotificationMuteMenu notification={notification} senderName="Tester" />,
+      <NotificationMuteMenu
+        notification={notification}
+        senderName="Tester"
+        isReady={false}
+        isPending={false}
+        mutes={{
+          players: [],
+          npcs: [],
+        }}
+        onUpdateMutes={mockUpdateMutes}
+      />,
     );
 
     expect(
@@ -62,21 +48,23 @@ describe("NotificationMuteMenu", () => {
   it("uses the fetched mute list when muting a player", async () => {
     const user = userEvent.setup();
 
-    mockUseCurrentUserNotificationMutes.mockReturnValue({
-      isReady: true,
-      mutes: {
-        players: [
-          {
-            discordId: "discord-existing",
-            displayName: "Istniejacy",
-          },
-        ],
-        npcs: [],
-      },
-    });
-
     render(
-      <NotificationMuteMenu notification={notification} senderName="Tester" />,
+      <NotificationMuteMenu
+        notification={notification}
+        senderName="Tester"
+        isReady
+        isPending={false}
+        mutes={{
+          players: [
+            {
+              discordId: "discord-existing",
+              displayName: "Istniejacy",
+            },
+          ],
+          npcs: [],
+        }}
+        onUpdateMutes={mockUpdateMutes}
+      />,
     );
 
     await user.click(
@@ -90,19 +78,17 @@ describe("NotificationMuteMenu", () => {
       }),
     );
 
-    expect(mockMutate).toHaveBeenCalledWith({
-      mutes: {
-        players: [
-          {
-            discordId: "discord-existing",
-            displayName: "Istniejacy",
-          },
-          {
-            discordId: "discord-1",
-            displayName: "Tester",
-          },
-        ],
-      },
+    expect(mockUpdateMutes).toHaveBeenCalledWith({
+      players: [
+        {
+          discordId: "discord-existing",
+          displayName: "Istniejacy",
+        },
+        {
+          discordId: "discord-1",
+          displayName: "Tester",
+        },
+      ],
     });
   });
 });

@@ -32,6 +32,7 @@ export type UserSoundSettingsAvgAggregateOutputType = {
   notificationsVolume: number | null
   detectorVolume: number | null
   timersVolume: number | null
+  pingsVolume: number | null
 }
 
 export type UserSoundSettingsSumAggregateOutputType = {
@@ -40,6 +41,7 @@ export type UserSoundSettingsSumAggregateOutputType = {
   notificationsVolume: number | null
   detectorVolume: number | null
   timersVolume: number | null
+  pingsVolume: number | null
 }
 
 export type UserSoundSettingsMinAggregateOutputType = {
@@ -49,6 +51,7 @@ export type UserSoundSettingsMinAggregateOutputType = {
   notificationsVolume: number | null
   detectorVolume: number | null
   timersVolume: number | null
+  pingsVolume: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -60,6 +63,7 @@ export type UserSoundSettingsMaxAggregateOutputType = {
   notificationsVolume: number | null
   detectorVolume: number | null
   timersVolume: number | null
+  pingsVolume: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -71,6 +75,7 @@ export type UserSoundSettingsCountAggregateOutputType = {
   notificationsVolume: number
   detectorVolume: number
   timersVolume: number
+  pingsVolume: number
   notificationsConfig: number
   detectorConfig: number
   timersConfig: number
@@ -86,6 +91,7 @@ export type UserSoundSettingsAvgAggregateInputType = {
   notificationsVolume?: true
   detectorVolume?: true
   timersVolume?: true
+  pingsVolume?: true
 }
 
 export type UserSoundSettingsSumAggregateInputType = {
@@ -94,6 +100,7 @@ export type UserSoundSettingsSumAggregateInputType = {
   notificationsVolume?: true
   detectorVolume?: true
   timersVolume?: true
+  pingsVolume?: true
 }
 
 export type UserSoundSettingsMinAggregateInputType = {
@@ -103,6 +110,7 @@ export type UserSoundSettingsMinAggregateInputType = {
   notificationsVolume?: true
   detectorVolume?: true
   timersVolume?: true
+  pingsVolume?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -114,6 +122,7 @@ export type UserSoundSettingsMaxAggregateInputType = {
   notificationsVolume?: true
   detectorVolume?: true
   timersVolume?: true
+  pingsVolume?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -125,6 +134,7 @@ export type UserSoundSettingsCountAggregateInputType = {
   notificationsVolume?: true
   detectorVolume?: true
   timersVolume?: true
+  pingsVolume?: true
   notificationsConfig?: true
   detectorConfig?: true
   timersConfig?: true
@@ -226,6 +236,7 @@ export type UserSoundSettingsGroupByOutputType = {
   notificationsVolume: number
   detectorVolume: number
   timersVolume: number
+  pingsVolume: number
   notificationsConfig: runtime.JsonValue
   detectorConfig: runtime.JsonValue
   timersConfig: runtime.JsonValue
@@ -263,6 +274,7 @@ export type UserSoundSettingsWhereInput = {
   notificationsVolume?: Prisma.FloatFilter<"UserSoundSettings"> | number
   detectorVolume?: Prisma.FloatFilter<"UserSoundSettings"> | number
   timersVolume?: Prisma.FloatFilter<"UserSoundSettings"> | number
+  pingsVolume?: Prisma.FloatFilter<"UserSoundSettings"> | number
   notificationsConfig?: Prisma.JsonFilter<"UserSoundSettings">
   detectorConfig?: Prisma.JsonFilter<"UserSoundSettings">
   timersConfig?: Prisma.JsonFilter<"UserSoundSettings">
@@ -277,6 +289,7 @@ export type UserSoundSettingsOrderByWithRelationInput = {
   notificationsVolume?: Prisma.SortOrder
   detectorVolume?: Prisma.SortOrder
   timersVolume?: Prisma.SortOrder
+  pingsVolume?: Prisma.SortOrder
   notificationsConfig?: Prisma.SortOrder
   detectorConfig?: Prisma.SortOrder
   timersConfig?: Prisma.SortOrder
@@ -294,6 +307,7 @@ export type UserSoundSettingsWhereUniqueInput = Prisma.AtLeast<{
   notificationsVolume?: Prisma.FloatFilter<"UserSoundSettings"> | number
   detectorVolume?: Prisma.FloatFilter<"UserSoundSettings"> | number
   timersVolume?: Prisma.FloatFilter<"UserSoundSettings"> | number
+  pingsVolume?: Prisma.FloatFilter<"UserSoundSettings"> | number
   notificationsConfig?: Prisma.JsonFilter<"UserSoundSettings">
   detectorConfig?: Prisma.JsonFilter<"UserSoundSettings">
   timersConfig?: Prisma.JsonFilter<"UserSoundSettings">
@@ -308,6 +322,7 @@ export type UserSoundSettingsOrderByWithAggregationInput = {
   notificationsVolume?: Prisma.SortOrder
   detectorVolume?: Prisma.SortOrder
   timersVolume?: Prisma.SortOrder
+  pingsVolume?: Prisma.SortOrder
   notificationsConfig?: Prisma.SortOrder
   detectorConfig?: Prisma.SortOrder
   timersConfig?: Prisma.SortOrder
@@ -330,6 +345,7 @@ export type UserSoundSettingsScalarWhereWithAggregatesInput = {
   notificationsVolume?: Prisma.FloatWithAggregatesFilter<"UserSoundSettings"> | number
   detectorVolume?: Prisma.FloatWithAggregatesFilter<"UserSoundSettings"> | number
   timersVolume?: Prisma.FloatWithAggregatesFilter<"UserSoundSettings"> | number
+  pingsVolume?: Prisma.FloatWithAggregatesFilter<"UserSoundSettings"> | number
   notificationsConfig?: Prisma.JsonWithAggregatesFilter<"UserSoundSettings">
   detectorConfig?: Prisma.JsonWithAggregatesFilter<"UserSoundSettings">
   timersConfig?: Prisma.JsonWithAggregatesFilter<"UserSoundSettings">
@@ -343,6 +359,7 @@ export type UserSoundSettingsCreateInput = {
   notificationsVolume?: number
   detectorVolume?: number
   timersVolume?: number
+  pingsVolume?: number
   notificationsConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   detectorConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -357,6 +374,7 @@ export type UserSoundSettingsUncheckedCreateInput = {
   notificationsVolume?: number
   detectorVolume?: number
   timersVolume?: number
+  pingsVolume?: number
   notificationsConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   detectorConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -370,6 +388,7 @@ export type UserSoundSettingsUpdateInput = {
   notificationsVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   detectorVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   timersVolume?: Prisma.FloatFieldUpdateOperationsInput | number
+  pingsVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   notificationsConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   detectorConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -384,6 +403,7 @@ export type UserSoundSettingsUncheckedUpdateInput = {
   notificationsVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   detectorVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   timersVolume?: Prisma.FloatFieldUpdateOperationsInput | number
+  pingsVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   notificationsConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   detectorConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -398,6 +418,7 @@ export type UserSoundSettingsCreateManyInput = {
   notificationsVolume?: number
   detectorVolume?: number
   timersVolume?: number
+  pingsVolume?: number
   notificationsConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   detectorConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -411,6 +432,7 @@ export type UserSoundSettingsUpdateManyMutationInput = {
   notificationsVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   detectorVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   timersVolume?: Prisma.FloatFieldUpdateOperationsInput | number
+  pingsVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   notificationsConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   detectorConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -425,6 +447,7 @@ export type UserSoundSettingsUncheckedUpdateManyInput = {
   notificationsVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   detectorVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   timersVolume?: Prisma.FloatFieldUpdateOperationsInput | number
+  pingsVolume?: Prisma.FloatFieldUpdateOperationsInput | number
   notificationsConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   detectorConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   timersConfig?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -439,6 +462,7 @@ export type UserSoundSettingsCountOrderByAggregateInput = {
   notificationsVolume?: Prisma.SortOrder
   detectorVolume?: Prisma.SortOrder
   timersVolume?: Prisma.SortOrder
+  pingsVolume?: Prisma.SortOrder
   notificationsConfig?: Prisma.SortOrder
   detectorConfig?: Prisma.SortOrder
   timersConfig?: Prisma.SortOrder
@@ -452,6 +476,7 @@ export type UserSoundSettingsAvgOrderByAggregateInput = {
   notificationsVolume?: Prisma.SortOrder
   detectorVolume?: Prisma.SortOrder
   timersVolume?: Prisma.SortOrder
+  pingsVolume?: Prisma.SortOrder
 }
 
 export type UserSoundSettingsMaxOrderByAggregateInput = {
@@ -461,6 +486,7 @@ export type UserSoundSettingsMaxOrderByAggregateInput = {
   notificationsVolume?: Prisma.SortOrder
   detectorVolume?: Prisma.SortOrder
   timersVolume?: Prisma.SortOrder
+  pingsVolume?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -472,6 +498,7 @@ export type UserSoundSettingsMinOrderByAggregateInput = {
   notificationsVolume?: Prisma.SortOrder
   detectorVolume?: Prisma.SortOrder
   timersVolume?: Prisma.SortOrder
+  pingsVolume?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -482,6 +509,7 @@ export type UserSoundSettingsSumOrderByAggregateInput = {
   notificationsVolume?: Prisma.SortOrder
   detectorVolume?: Prisma.SortOrder
   timersVolume?: Prisma.SortOrder
+  pingsVolume?: Prisma.SortOrder
 }
 
 export type FloatFieldUpdateOperationsInput = {
@@ -501,6 +529,7 @@ export type UserSoundSettingsSelect<ExtArgs extends runtime.Types.Extensions.Int
   notificationsVolume?: boolean
   detectorVolume?: boolean
   timersVolume?: boolean
+  pingsVolume?: boolean
   notificationsConfig?: boolean
   detectorConfig?: boolean
   timersConfig?: boolean
@@ -515,6 +544,7 @@ export type UserSoundSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.T
   notificationsVolume?: boolean
   detectorVolume?: boolean
   timersVolume?: boolean
+  pingsVolume?: boolean
   notificationsConfig?: boolean
   detectorConfig?: boolean
   timersConfig?: boolean
@@ -529,6 +559,7 @@ export type UserSoundSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   notificationsVolume?: boolean
   detectorVolume?: boolean
   timersVolume?: boolean
+  pingsVolume?: boolean
   notificationsConfig?: boolean
   detectorConfig?: boolean
   timersConfig?: boolean
@@ -543,6 +574,7 @@ export type UserSoundSettingsSelectScalar = {
   notificationsVolume?: boolean
   detectorVolume?: boolean
   timersVolume?: boolean
+  pingsVolume?: boolean
   notificationsConfig?: boolean
   detectorConfig?: boolean
   timersConfig?: boolean
@@ -550,7 +582,7 @@ export type UserSoundSettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserSoundSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "masterVolume" | "notificationsVolume" | "detectorVolume" | "timersVolume" | "notificationsConfig" | "detectorConfig" | "timersConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["userSoundSettings"]>
+export type UserSoundSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "masterVolume" | "notificationsVolume" | "detectorVolume" | "timersVolume" | "pingsVolume" | "notificationsConfig" | "detectorConfig" | "timersConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["userSoundSettings"]>
 
 export type $UserSoundSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UserSoundSettings"
@@ -562,6 +594,7 @@ export type $UserSoundSettingsPayload<ExtArgs extends runtime.Types.Extensions.I
     notificationsVolume: number
     detectorVolume: number
     timersVolume: number
+    pingsVolume: number
     notificationsConfig: runtime.JsonValue
     detectorConfig: runtime.JsonValue
     timersConfig: runtime.JsonValue
@@ -996,6 +1029,7 @@ export interface UserSoundSettingsFieldRefs {
   readonly notificationsVolume: Prisma.FieldRef<"UserSoundSettings", 'Float'>
   readonly detectorVolume: Prisma.FieldRef<"UserSoundSettings", 'Float'>
   readonly timersVolume: Prisma.FieldRef<"UserSoundSettings", 'Float'>
+  readonly pingsVolume: Prisma.FieldRef<"UserSoundSettings", 'Float'>
   readonly notificationsConfig: Prisma.FieldRef<"UserSoundSettings", 'Json'>
   readonly detectorConfig: Prisma.FieldRef<"UserSoundSettings", 'Json'>
   readonly timersConfig: Prisma.FieldRef<"UserSoundSettings", 'Json'>

@@ -32,6 +32,7 @@ jobs:
       search: ${{ steps.filter.outputs.search }}
       battlelog-service: ${{ steps.filter.outputs.battlelog-service }}
       developer: ${{ steps.filter.outputs.developer }}
+      game-client: ${{ steps.filter.outputs.game-client }}
       packages: ${{ steps.filter.outputs.packages }}
     steps:
       - name: Checkout code
@@ -63,6 +64,13 @@ jobs:
             developer:
               - 'apps/developer/**'
               - 'packages/**'
+            game-client:
+              - 'apps/game-client/**'
+              - 'packages/margonem/**'
+              - 'packages/socket-parser/**'
+              - 'packages/types/**'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
             packages:
               - 'packages/**'
 
@@ -78,6 +86,7 @@ jobs:
       needs.changes.outputs.search == 'true' ||
       needs.changes.outputs.battlelog-service == 'true' ||
       needs.changes.outputs.developer == 'true' ||
+      needs.changes.outputs.game-client == 'true' ||
       needs.changes.outputs.packages == 'true'
     timeout-minutes: 15
     steps:
@@ -320,6 +329,59 @@ jobs:
           flags: battlelog-service
           name: battlelog-service-coverage
 
+  test-game-client:
+    name: Test Game Client
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.game-client == 'true'
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10.32.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build game client workspace dependencies
+        run: pnpm turbo run build --filter=@lootlog/game-client^...
+
+      - name: Check types
+        run: pnpm --filter=@lootlog/game-client check-types
+
+      - name: Run coverage suite
+        run: pnpm --filter=@lootlog/game-client test:coverage
+
+      - name: Enforce changed-code coverage
+        if: github.event_name == 'pull_request'
+        env:
+          COVERAGE_BASE_REF: ${{ github.event.pull_request.base.sha }}
+        run: pnpm --filter=@lootlog/game-client check:changed-coverage
+
+      - name: Build release userscript
+        run: pnpm --filter=@lootlog/game-client build
+
+      - name: Upload game-client coverage
+        if: always()
+        uses: codecov/codecov-action@v6
+        with:
+          files: ./apps/game-client/coverage/lcov.info
+          flags: game-client
+          name: game-client-coverage
+
   build:
     name: Build All Services
     runs-on: ubuntu-latest
@@ -332,6 +394,7 @@ jobs:
       needs.changes.outputs.search == 'true' ||
       needs.changes.outputs.battlelog-service == 'true' ||
       needs.changes.outputs.developer == 'true' ||
+      needs.changes.outputs.game-client == 'true' ||
       needs.changes.outputs.packages == 'true'
     timeout-minutes: 20
     steps:
@@ -367,6 +430,7 @@ jobs:
       needs.changes.outputs.search == 'true' ||
       needs.changes.outputs.battlelog-service == 'true' ||
       needs.changes.outputs.developer == 'true' ||
+      needs.changes.outputs.game-client == 'true' ||
       needs.changes.outputs.packages == 'true'
     timeout-minutes: 30
     steps:
@@ -391,7 +455,7 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [lint, build, docker-build]
+    needs: [lint, test-game-client, build, docker-build]
     if: always()
     timeout-minutes: 5
 
@@ -399,6 +463,7 @@ jobs:
       - name: Check job results
         run: |
           if [[ "${{ needs.lint.result }}" == "failure" ]] || \
+             [[ "${{ needs.test-game-client.result }}" == "failure" ]] || \
              [[ "${{ needs.build.result }}" == "failure" ]] || \
              [[ "${{ needs.docker-build.result }}" == "failure" ]]; then
             echo "CI failed"

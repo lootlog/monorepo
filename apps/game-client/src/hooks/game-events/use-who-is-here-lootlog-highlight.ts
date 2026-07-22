@@ -1,23 +1,22 @@
 import type { Other } from "@lootlog/margonem/others";
-import { useEffect, useRef, useState } from "react";
-import { Game } from "@/lib/game";
-import {
-  LOOTLOG_OTHER_GLOW_BLUE,
-  LOOTLOG_OTHER_GLOW_RED_ORANGE,
-} from "@/lib/lootlog-other-glow-manager";
+import { useEffect, useEffectEvent, useRef } from "react";
+import { getLootlogOtherGlowColor } from "@/lib/lootlog-other-glow-manager";
 import { patchOtherCharacterTooltip } from "@/lib/margonem-tooltips/patcher";
+import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {
   getOtherCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
-import { useSettingsStore } from "@/store/settings.store";
 
 const HIGHLIGHT_CLASS = "ll-who-is-here-lootlog-highlight";
 const STYLE_ELEMENT_ID = "ll-who-is-here-lootlog-style";
+const WHO_IS_HERE_ROOT_SELECTOR = ".whoishere-window";
 const WHO_IS_HERE_ROW_SELECTOR = ".whoishere-window .one-other[data-id]";
 const WHO_IS_HERE_COLOR_PROPERTY = "--ll-who-is-here-lootlog-color";
+const WHO_IS_HERE_DISCOVERY_INTERVAL_MS = 250;
 
 type JQueryLike = {
   find?: (selector: string) => unknown;
@@ -40,14 +39,6 @@ type RuntimeWindow = Window &
 
 function getRuntimeWindow(): RuntimeWindow {
   return window as RuntimeWindow;
-}
-
-function getCurrentCharacterId(): string | null {
-  try {
-    return String(Game.hero.id);
-  } catch {
-    return null;
-  }
 }
 
 function getWhoIsHereRows(): HTMLElement[] {
@@ -160,7 +151,6 @@ function isMovingInsideRow(
 
 export function useWhoIsHereLootlogHighlight(): void {
   const hoveredRowRef = useRef<HTMLElement | null>(null);
-  const [mutationVersion, setMutationVersion] = useState(0);
   const entriesByKey = useCharacterTooltipCatchingGuildsStore(
     (state) => state.entriesByKey,
   );
@@ -170,55 +160,16 @@ export function useWhoIsHereLootlogHighlight(): void {
   const activeTarget = useCharacterTooltipCatchingGuildsStore(
     (state) => state.activeTarget,
   );
-  const guildIdByCharId = useSettingsStore((state) => state.guildIdByCharId);
   const othersById = useOthersStore((state) => state.othersById);
   const ownersByCharacterKey = useOnlineCharacterOwnersStore(
     (state) => state.ownersByCharacterKey,
   );
-  const currentCharacterId = getCurrentCharacterId();
-  const selectedGuildId = currentCharacterId
-    ? guildIdByCharId[currentCharacterId]
-    : undefined;
-
-  useEffect(() => {
-    const cleanupStyle = installStyle();
-    let animationFrameId: number | null = null;
-    const scheduleMutationRefresh = () => {
-      if (animationFrameId !== null) return;
-
-      animationFrameId = requestAnimationFrame(() => {
-        animationFrameId = null;
-        setMutationVersion((version) => version + 1);
-      });
-    };
-    const observer = new MutationObserver(() => {
-      scheduleMutationRefresh();
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    return () => {
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-      }
-
-      observer.disconnect();
-      cleanupStyle();
-
-      for (const row of getWhoIsHereRows()) {
-        clearRowHighlight(row);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
+  const selectedGuildId = useSelectedLootlogGuildId();
+  const refreshRows = useEffectEvent(() => {
     const rows = getWhoIsHereRows();
     const runtimeOthersById = getRuntimeWindow().Engine?.others?.check?.();
 
-    if (!isShiftPressed || !selectedGuildId) {
+    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
       for (const row of rows) {
         clearRowHighlight(row);
       }
@@ -230,26 +181,88 @@ export function useWhoIsHereLootlogHighlight(): void {
       const target = other ? getOtherCatchingGuildsTarget(other) : null;
       const entry = target ? entriesByKey[target.key] : undefined;
 
-      if (!target || entry?.status !== "success") {
+      if (!other) {
         clearRowHighlight(row);
         continue;
       }
 
-      const hasSelectedGuild = entry.guilds.some(
-        (guild) => guild.id === selectedGuildId,
-      );
-
-      setRowHighlight(
-        row,
-        hasSelectedGuild
-          ? LOOTLOG_OTHER_GLOW_BLUE
-          : LOOTLOG_OTHER_GLOW_RED_ORANGE,
-      );
+      setRowHighlight(row, getLootlogOtherGlowColor(entry, selectedGuildId));
     }
+  });
+
+  useEffect(() => {
+    const cleanupStyle = installStyle();
+
+    return () => {
+      cleanupStyle();
+
+      for (const row of getWhoIsHereRows()) {
+        clearRowHighlight(row);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
+      return;
+    }
+
+    let animationFrameId: number | null = null;
+    const scheduleMutationRefresh = () => {
+      if (animationFrameId !== null) return;
+
+      animationFrameId = requestAnimationFrame(() => {
+        animationFrameId = null;
+        refreshRows();
+      });
+    };
+    const observer = new MutationObserver(scheduleMutationRefresh);
+    let discoveryIntervalId: number | null = null;
+    const observeWhoIsHereRoot = () => {
+      const whoIsHereRoot = document.querySelector<HTMLElement>(
+        WHO_IS_HERE_ROOT_SELECTOR,
+      );
+      if (!whoIsHereRoot) {
+        return false;
+      }
+
+      observer.observe(whoIsHereRoot, {
+        childList: true,
+        subtree: true,
+      });
+      return true;
+    };
+
+    if (!observeWhoIsHereRoot()) {
+      discoveryIntervalId = window.setInterval(() => {
+        if (!observeWhoIsHereRoot()) {
+          return;
+        }
+
+        window.clearInterval(discoveryIntervalId ?? undefined);
+        discoveryIntervalId = null;
+        scheduleMutationRefresh();
+      }, WHO_IS_HERE_DISCOVERY_INTERVAL_MS);
+    }
+
+    return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
+      if (discoveryIntervalId !== null) {
+        window.clearInterval(discoveryIntervalId);
+      }
+
+      observer.disconnect();
+    };
+  }, [isShiftPressed, selectedGuildId]);
+
+  useEffect(() => {
+    refreshRows();
   }, [
     entriesByKey,
     isShiftPressed,
-    mutationVersion,
     othersById,
     ownersByCharacterKey,
     selectedGuildId,

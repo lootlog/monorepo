@@ -91,6 +91,59 @@ export const getPresenceKey = (presence: PlayerPresence) => {
   return `${presence.player.accountId}-${presence.player.characterId}`;
 };
 
+export const applyPresenceUpdates = (
+  previous: PlayerPresenceResponse,
+  updates: readonly PlayerPresence[],
+): PlayerPresenceResponse => {
+  let next = previous;
+
+  for (const update of updates) {
+    const presenceKey = getPresenceKey(update);
+    const currentAccountPresences = next[update.discordId] ?? [];
+    let updatedAccountPresences: PlayerPresence[] | undefined;
+
+    if (update.status === "offline") {
+      const filteredPresences = currentAccountPresences.filter(
+        (presence) => getPresenceKey(presence) !== presenceKey,
+      );
+      if (filteredPresences.length === currentAccountPresences.length) {
+        continue;
+      }
+
+      updatedAccountPresences = filteredPresences;
+    } else {
+      if (!update.player) continue;
+
+      const existingPresenceIndex = currentAccountPresences.findIndex(
+        (presence) => getPresenceKey(presence) === presenceKey,
+      );
+      if (existingPresenceIndex === -1) {
+        updatedAccountPresences = [...currentAccountPresences, update];
+      } else {
+        updatedAccountPresences = [...currentAccountPresences];
+        updatedAccountPresences[existingPresenceIndex] = {
+          ...currentAccountPresences[existingPresenceIndex],
+          ...update,
+          player: update.player,
+          mapName: update.mapName,
+        };
+      }
+    }
+
+    if (next === previous) {
+      next = { ...previous };
+    }
+
+    if (updatedAccountPresences.length === 0) {
+      delete next[update.discordId];
+    } else {
+      next[update.discordId] = updatedAccountPresences;
+    }
+  }
+
+  return next;
+};
+
 const normalizePresenceLevel = (level?: number | string) => {
   if (typeof level === "number" && Number.isFinite(level)) {
     return level;
@@ -207,18 +260,33 @@ export const normalizePresenceResponse = (
   );
 };
 
-export const requestServerPresence = (
-  socket: { emitWithAck: unknown },
+export const ONLINE_PLAYERS_PRESENCE_ACK_TIMEOUT_MS = 5_000;
+
+type PresenceAckSocket = {
+  timeout: (timeoutMs: number) => {
+    emitWithAck: (
+      event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH,
+      data: { guildId: string; world: string },
+    ) => Promise<PlayerPresenceAckPayload | undefined>;
+  };
+};
+
+export const requestServerPresence = async (
+  socket: PresenceAckSocket,
   guildId: string,
   world: string,
 ) => {
-  return (
-    socket.emitWithAck as (
-      event: GatewayEvent,
-      data: { guildId: string; world: string },
-    ) => Promise<PlayerPresenceAckPayload | undefined>
-  )(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
-    guildId,
-    world,
-  });
+  const requestPresence = () =>
+    socket
+      .timeout(ONLINE_PLAYERS_PRESENCE_ACK_TIMEOUT_MS)
+      .emitWithAck(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
+        guildId,
+        world,
+      });
+
+  try {
+    return await requestPresence();
+  } catch {
+    return requestPresence();
+  }
 };

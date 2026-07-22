@@ -46,6 +46,24 @@ describe("api-client", () => {
     );
   });
 
+  it("serializes nested values, dates, and reserved characters like qs", () => {
+    const url = buildRequestUrl({
+      baseURL: "https://api.example.com",
+      path: "/search",
+      params: {
+        filter: {
+          createdAt: new Date("2026-07-20T10:00:00.000Z"),
+          names: ["A B", "C&D"],
+          omitted: null,
+        },
+      },
+    });
+
+    expect(url.toString()).toBe(
+      "https://api.example.com/search?filter%5BcreatedAt%5D=2026-07-20T10%3A00%3A00.000Z&filter%5Bnames%5D=A%20B&filter%5Bnames%5D=C%26D",
+    );
+  });
+
   it("parses successful JSON responses", async () => {
     mockFetch.mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
@@ -209,6 +227,37 @@ describe("api-client", () => {
     expect(requestInit.credentials).toBe("omit");
     expect(requestInit.body).toBe(formData);
     expect(new Headers(requestInit.headers).has("Content-Type")).toBe(false);
+  });
+
+  it("strips client-only config fields from request init", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    const client = getApiClient("default");
+    await client.get<{ ok: boolean }>("/timers", {
+      params: {
+        world: "pandora",
+      },
+      withCredentials: false,
+    });
+
+    const [requestUrl, requestInit] = mockFetch.mock.calls[0] as [
+      URL,
+      RequestInit,
+    ];
+
+    expect(requestUrl.toString()).toBe(
+      "http://localhost/api/lootlog/timers?world=pandora",
+    );
+    expect("params" in requestInit).toBe(false);
+    expect("withCredentials" in requestInit).toBe(false);
+    expect(requestInit.credentials).toBe("omit");
   });
 
   it("caches clients per api type", () => {

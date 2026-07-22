@@ -1,7 +1,6 @@
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Accordion } from "@/components/ui/accordion";
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { NpcType } from "@/api/npcs.api";
 import {
   useSoundSettings,
@@ -9,12 +8,16 @@ import {
 } from "@/hooks/api/use-sound-settings";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
+import { Game } from "@/lib/game";
 import type { SoundCategory } from "@/features/settings/components/sounds/types";
-import { Bell, Clock, Crosshair, Loader2 } from "lucide-react";
+import { Bell, Clock, Crosshair, Loader2, MapPin, Play } from "lucide-react";
 import { useEffect, useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { CategoryAccordionItem } from "./category-accordion-item";
 import { MasterVolumeControl } from "./master-volume-control";
+import { CategoryVolumeControl } from "./category-volume-control";
+import { Button } from "@/components/ui/button";
+import { useSoundSettingsPatchQueue } from "./use-sound-settings-patch-queue";
 
 const DEFAULT_NPC_CONFIG = { volume: 0.5, soundUrl: "" };
 
@@ -45,12 +48,14 @@ export const SoundsSettingsTab: FC = () => {
     notifications: false,
     detector: false,
     timers: false,
+    pings: false,
   });
   const [localVolumes, setLocalVolumes] = useState({
     master: 0.5,
     notifications: 0.5,
     detector: 0.5,
     timers: 0.5,
+    pings: 0,
   });
   const [urlErrors, setUrlErrors] = useState<
     Record<string, Record<string, string>>
@@ -66,7 +71,7 @@ export const SoundsSettingsTab: FC = () => {
     (field) => field.key !== "message",
   );
   const categories: {
-    id: SoundCategory;
+    id: Exclude<SoundCategory, "pings">;
     label: string;
     icon: ReactNode;
     fields: typeof notificationNpcTypes | typeof detectorTimerNpcTypes;
@@ -94,12 +99,7 @@ export const SoundsSettingsTab: FC = () => {
       description: t("sounds.categories.timers.description"),
     },
   ];
-  const debouncedUpdate = useDebouncedCallback(
-    (payload: Parameters<typeof updateSettings>[0]) => {
-      updateSettings(payload);
-    },
-    300,
-  );
+  const queueSoundConfigPatch = useSoundSettingsPatchQueue(updateSettings);
 
   useEffect(() => {
     if (!soundSettings) {
@@ -111,13 +111,9 @@ export const SoundsSettingsTab: FC = () => {
       notifications: soundSettings.notificationsVolume ?? 0.5,
       detector: soundSettings.detectorVolume ?? 0.5,
       timers: soundSettings.timersVolume ?? 0.5,
+      pings: soundSettings.pingsVolume ?? 0,
     });
-  }, [
-    soundSettings?.masterVolume,
-    soundSettings?.notificationsVolume,
-    soundSettings?.detectorVolume,
-    soundSettings?.timersVolume,
-  ]);
+  }, [soundSettings]);
 
   if (isLoading) {
     return (
@@ -154,6 +150,76 @@ export const SoundsSettingsTab: FC = () => {
             updateSettings({ masterVolume: newVolume });
           }}
         />
+
+        {Game.interface === "ni" ? (
+          <SettingsSection
+            title={t("sounds.categories.pings.label")}
+            description={t("sounds.categories.pings.description")}
+          >
+            <div className="ll:flex ll:items-center ll:gap-2">
+              <CategoryVolumeControl
+                icon=<MapPin className="ll:size-4" />
+                label={t("sounds.categories.pings.label")}
+                volume={localVolumes.pings}
+                isMuted={mutedCategories.pings || localVolumes.pings === 0}
+                onVolumeChange={(value) => {
+                  setLocalVolumes((previous) => ({
+                    ...previous,
+                    pings: value[0],
+                  }));
+                  if (value[0] > 0) {
+                    setMutedCategories((previous) => ({
+                      ...previous,
+                      pings: false,
+                    }));
+                  }
+                }}
+                onVolumeCommit={(value) =>
+                  updateSettings({ pingsVolume: value[0] })
+                }
+                onMuteToggle={(event) => {
+                  event.stopPropagation();
+                  const nextVolume =
+                    mutedCategories.pings || localVolumes.pings === 0 ? 0.5 : 0;
+                  setLocalVolumes((previous) => ({
+                    ...previous,
+                    pings: nextVolume,
+                  }));
+                  setMutedCategories((previous) => ({
+                    ...previous,
+                    pings: nextVolume === 0,
+                  }));
+                  updateSettings({ pingsVolume: nextVolume });
+                }}
+                onMuteKeyDown={(event) => {
+                  if (event.key !== "Enter" && event.key !== " ") return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const nextVolume =
+                    mutedCategories.pings || localVolumes.pings === 0 ? 0.5 : 0;
+                  setLocalVolumes((previous) => ({
+                    ...previous,
+                    pings: nextVolume,
+                  }));
+                  setMutedCategories((previous) => ({
+                    ...previous,
+                    pings: nextVolume === 0,
+                  }));
+                  updateSettings({ pingsVolume: nextVolume });
+                }}
+              />
+              <Button
+                aria-label={t("sounds.test")}
+                className="ll:size-7 ll:p-0"
+                onClick={() => playSoundTest("pings", "mapPing")}
+                type="button"
+                variant="ghost"
+              >
+                <Play className="ll:size-4" />
+              </Button>
+            </div>
+          </SettingsSection>
+        ) : null}
 
         <SettingsSection
           title={t("sounds.categoriesTitle")}
@@ -271,7 +337,7 @@ export const SoundsSettingsTab: FC = () => {
                     const currentConfig =
                       currentCategoryConfig[key] ?? DEFAULT_NPC_CONFIG;
 
-                    debouncedUpdate({
+                    queueSoundConfigPatch({
                       [configKey]: {
                         [key]: { ...currentConfig, soundUrl },
                       },

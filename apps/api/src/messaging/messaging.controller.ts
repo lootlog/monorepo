@@ -1,14 +1,5 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Param,
-  Post,
-  Res,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Param, Post, UseGuards } from "@nestjs/common";
 import { DiscordId } from "@lootlog/nest-shared/decorators";
-import type { FastifyReply } from "fastify";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -17,12 +8,8 @@ import {
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { CreateNotificationDto } from "src/messaging/dto/create-notification.dto";
-import { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
 import { CreateVolunteerDto } from "src/messaging/dto/create-volunteer.dto";
-import {
-  CancelPartyGatheringResponseDto,
-  NotificationResponseDto,
-} from "src/messaging/dto/messaging-response.dto";
+import { NotificationResponseDto } from "src/messaging/dto/messaging-response.dto";
 import { MessagingService } from "src/messaging/messaging.service";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 
@@ -65,72 +52,5 @@ export class MessagingController {
     @Body() data: CreateVolunteerDto,
   ) {
     return this.messagingService.volunteer(discordId, notificationId, data);
-  }
-
-  @Post("party-gathering")
-  @ApiOperation({
-    summary: "Create party gathering notification",
-    description: "Send a party gathering (LFG) notification to guild members",
-  })
-  @ZodResponse({
-    status: 201,
-    description: "Party gathering notification sent successfully",
-    type: NotificationResponseDto,
-  })
-  createPartyGathering(
-    @DiscordId() discordId: string,
-    @Body() data: CreatePartyGatheringDto,
-  ) {
-    return this.messagingService.sendPartyGathering(discordId, data);
-  }
-
-  @Delete("party-gathering")
-  @ApiOperation({
-    summary: "Cancel party gathering by user",
-    description:
-      "Cancel the active party gathering for the current user without requiring a notificationId",
-  })
-  @ZodResponse({
-    status: 200,
-    description: "Party gathering notification cancelled successfully",
-    type: CancelPartyGatheringResponseDto,
-  })
-  cancelPartyGatheringByUser(@DiscordId() discordId: string) {
-    return this.messagingService.cancelPartyGatheringByUser(discordId);
-  }
-
-  @Delete("party-gathering/:notificationId")
-  @ApiOperation({
-    summary: "Cancel party gathering notification",
-    description: "Cancel an active party gathering notification",
-  })
-  @ZodResponse({
-    status: 200,
-    description: "Party gathering notification cancelled successfully",
-    type: CancelPartyGatheringResponseDto,
-  })
-  @ApiResponse({
-    status: 204,
-    description: "Notification already expired or not found (idempotent)",
-  })
-  @ApiResponse({
-    status: 403,
-    description: "Not the owner of this notification",
-  })
-  async cancelPartyGathering(
-    @DiscordId() discordId: string,
-    @Param("notificationId") notificationId: string,
-    @Res() reply: FastifyReply,
-  ) {
-    const result = await this.messagingService.cancelPartyGathering(
-      discordId,
-      notificationId,
-    );
-
-    if (result.status === "expired") {
-      return reply.status(204).send();
-    }
-
-    return reply.status(200).send({ success: true, guildIds: result.guildIds });
   }
 }

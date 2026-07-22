@@ -18,6 +18,8 @@ describe("getMeilisearchErrorCode", () => {
   it("returns null when the cause code is missing or not a string", () => {
     expect(getMeilisearchErrorCode(new Error("boom"))).toBeNull();
     expect(getMeilisearchErrorCode({ cause: { code: 404 } })).toBeNull();
+    expect(getMeilisearchErrorCode({ cause: null })).toBeNull();
+    expect(getMeilisearchErrorCode("boom")).toBeNull();
     expect(getMeilisearchErrorCode(null)).toBeNull();
   });
 });

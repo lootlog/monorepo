@@ -24,7 +24,28 @@
     "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
     "allowWorldSelectionDescription": "Nie działa na zgrupowanych timerach.",
     "animationEffectsLabel": "Efekty animacji",
-    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi."
+    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi.",
+    "mapPingsLabel": "Pingi na mapie",
+    "mapPingsDescription": "Pokazuj i wysyłaj pingi na mapie oraz Podręcznej mapie.",
+    "airTagsLabel": "AirTagi — współdzielona widoczność",
+    "airTagsDescription": "Udostępniaj gildii pozycje widocznych graczy i pokazuj świeże obserwacje z bieżącej mapy."
+  },
+  "airTags": {
+    "seenSeconds": "widziany {{seconds}} s temu"
+  },
+  "mapPings": {
+    "rateLimited": "Poczekaj {{seconds}} s przed kolejnym pingiem.",
+    "temporarilyUnavailable": "Pingi są chwilowo niedostępne.",
+    "types": {
+      "attention": "Uwaga",
+      "enemy": "Wróg",
+      "regroup": "Zbiórka",
+      "avoid": "Unikaj"
+    },
+    "wheel": {
+      "cancelHint": "Anuluj",
+      "ariaLabel": "Koło pingów. Wybrano: {{selection}}"
+    }
   },
   "battlePanel": {
     "title": "Ustawienia panelu walk",
@@ -35,12 +56,18 @@
   },
   "hotkeys": {
     "title": "Skróty klawiszowe",
-    "description": "Skonfiguruj skróty klawiszowe do otwierania okien.",
-    "capture": "Naciśnij klawisz...",
+    "description": "Skonfiguruj skróty klawiaturowe i przyciski myszy.",
+    "capture": "Naciśnij klawisz lub przycisk myszy...",
+    "conflict": "Ten skrót jest już przypisany do innej akcji.",
     "modifiers": {
       "ctrl": "Ctrl",
       "alt": "Alt",
       "shift": "Shift"
+    },
+    "mouseButtons": {
+      "1": "Środkowy przycisk",
+      "3": "Wstecz",
+      "4": "Dalej"
     },
     "resetTitle": "Reset",
     "restoreDefaultsLabel": "Przywróć domyślne",
@@ -79,6 +106,10 @@
       "invite-all": {
         "label": "Zaproś wszystkich",
         "description": "Zaproś wszystkich z party findera"
+      },
+      "map-ping": {
+        "label": "Ping na mapie",
+        "description": "Oznacz kafelek pod kursorem na mapie lub Podręcznej mapie"
       }
     }
   },
@@ -237,6 +268,7 @@
     "temporarilyUnavailable": "Tymczasowo niedostępne",
     "supportedFormats": "Obsługiwane formaty: mp3, wav, ogg. Zostaw puste, aby użyć domyślnego dźwięku.",
     "masterVolume": "Głośność główna",
+    "test": "Odtwórz dźwięk testowy",
     "categories": {
       "notifications": {
         "label": "Powiadomienia",
@@ -249,12 +281,19 @@
       "timers": {
         "label": "Timery",
         "description": "Dźwięki odgrywane są, gdy timer wejdzie na minimalny czas respawnu."
+      },
+      "pings": {
+        "label": "Pingi na mapie",
+        "description": "Dźwięk odgrywany przy pingach odebranych od innych graczy."
       }
     }
   },
   "logs": {
     "title": "Logi",
     "description": "Zapisane akcje użytkownika z rozwijanymi wywołaniami API, payloadem, odpowiedzią i statusem.",
+    "consoleDebugTitle": "Diagnostyka konsoli",
+    "lootDebugLoggingLabel": "Loguj tworzenie łupów",
+    "lootDebugLoggingDescription": "Zapisuje w konsoli przeglądarki pełny przebieg tworzenia łupów z walk i dialogów. Logi zawierają pełne payloady, w tym nazwy oraz identyfikatory kont, postaci i NPC.",
     "filtersTitle": "Filtry",
     "filtersDescription": "Zawęź wpisy po typie, statusie lub fragmencie treści.",
     "searchPlaceholder": "Szukaj w logach",

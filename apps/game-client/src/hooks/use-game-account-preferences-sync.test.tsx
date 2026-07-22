@@ -7,8 +7,7 @@ import {
   createNotificationsSettings,
 } from "@/lib/game-account-preferences";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
-import type * as UsersApi from "@/lib/api/generated/main/users/users";
+import * as UsersApi from "@/lib/api/generated/main/users/users";
 
 const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserGameAccountPreferences = vi.fn();
@@ -130,7 +129,7 @@ describe("useGameAccountPreferencesSync", () => {
 
     expect(
       queryClient.getQueryData(
-        getUsersControllerGetUserGameAccountPreferencesQueryKey({
+        UsersApi.getUsersControllerGetUserGameAccountPreferencesQueryKey({
           accountId: "202",
         }),
       ),
@@ -172,7 +171,7 @@ describe("useGameAccountPreferencesSync", () => {
     expect(mockMutate).not.toHaveBeenCalled();
     expect(
       queryClient.getQueryData(
-        getUsersControllerGetUserGameAccountPreferencesQueryKey({
+        UsersApi.getUsersControllerGetUserGameAccountPreferencesQueryKey({
           accountId: "202",
         }),
       ),
@@ -196,7 +195,7 @@ describe("useGameAccountPreferencesSync", () => {
     });
   });
 
-  it("resolves account id after game initialization before flushing queued detector events", async () => {
+  it("resolves account id after game initialization before flushing queued detector events", () => {
     vi.useFakeTimers();
 
     try {

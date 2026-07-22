@@ -171,6 +171,17 @@ export const rabbitmqConfig: RabbitMQConfig = {
         deadLetterRoutingKey: RoutingKey.GUILDS_NOTIFICATIONS_SEND,
       },
     },
+    {
+      name: Queue.USERS_PARTY_READY_ROOM_UPDATED_RETRY,
+      exchange: RETRY_EXCHANGE_NAME,
+      routingKey: RoutingKey.USERS_PARTY_READY_ROOM_UPDATED_RETRY,
+      options: {
+        durable: true,
+        messageTtl: DEFAULT_TTL,
+        deadLetterExchange: DEFAULT_EXCHANGE_NAME,
+        deadLetterRoutingKey: RoutingKey.USERS_PARTY_READY_ROOM_UPDATED,
+      },
+    },
   ],
   channels: {
     default: {

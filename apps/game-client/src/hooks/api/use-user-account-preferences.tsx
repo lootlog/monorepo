@@ -46,7 +46,7 @@ export const useUpdateUserGameAccountPreferences = (
     mutationKey: accountId
       ? ["usersControllerUpdateUserGameAccountPreferences", accountId]
       : ["usersControllerUpdateUserGameAccountPreferences", "disabled"],
-    mutationFn: async (payload: UpdateUserGameAccountPreferencesDto) => {
+    mutationFn: (payload: UpdateUserGameAccountPreferencesDto) => {
       if (!accountId) {
         throw new Error("Account ID is required");
       }
@@ -119,6 +119,12 @@ export const useUpdateUserGameAccountPreferences = (
             return nextSettings;
           })()
         : previousData.detector;
+      const nextPings = payload.pings
+        ? { ...previousData.pings, ...payload.pings }
+        : previousData.pings;
+      const nextAirTags = payload.airTags
+        ? { ...previousData.airTags, ...payload.airTags }
+        : previousData.airTags;
 
       queryClient.setQueryData<UserGameAccountPreferencesResponseDtoOutput>(
         queryKey,
@@ -126,11 +132,17 @@ export const useUpdateUserGameAccountPreferences = (
           ...previousData,
           notifications: nextNotifications,
           detector: nextDetector,
+          pings: nextPings,
+          airTags: nextAirTags,
           hasStoredNotifications:
             previousData.hasStoredNotifications ||
             payload.notifications !== undefined,
           hasStoredDetector:
             previousData.hasStoredDetector || payload.detector !== undefined,
+          hasStoredPings:
+            previousData.hasStoredPings || payload.pings !== undefined,
+          hasStoredAirTags:
+            previousData.hasStoredAirTags || payload.airTags !== undefined,
           hasStoredPreferences: true,
         },
       );

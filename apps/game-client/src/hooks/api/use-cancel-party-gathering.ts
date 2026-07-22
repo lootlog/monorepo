@@ -1,53 +1,43 @@
-import { useMutation } from "@tanstack/react-query";
-import { cancelPartyGathering } from "@/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { PartyReadyRoomClientUpdate } from "@lootlog/types";
+import { getChatControllerGetChatMessagesQueryKey } from "@/lib/api/generated/main/chat/chat";
+import { partyReadyRoomControllerCancel } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
 import {
-  getAggregateActionStatus,
-  startLoggedAction,
-} from "@/lib/logs/log-actions";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+  selectOwnedReadyRoom,
+  usePartyFinderStore,
+} from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
 
 export const useCancelPartyGathering = () => {
   const t = getFixedT("partyFinder");
+  const queryClient = useQueryClient();
   const setOpen = useWindowsStore((s) => s.setOpen);
 
   return useMutation({
     mutationKey: ["cancel-party-gathering"],
     mutationFn: async () => {
-      const { partyGathering, clearPartyFinder } =
-        usePartyFinderStore.getState();
+      const state = usePartyFinderStore.getState();
+      const ownedReadyRoom = selectOwnedReadyRoom(state);
 
-      if (!partyGathering) {
+      if (!ownedReadyRoom) {
         throw new Error("No active party gathering");
       }
 
-      const action = startLoggedAction({
-        actionType: "cancel_party_gathering",
-        payload: {
-          partyGathering,
-        },
-      });
-      const response = await cancelPartyGathering({
-        partyGathering,
-        action,
-      });
-
-      action.complete({
-        status: getAggregateActionStatus(
-          response.requestSummary.successCount,
-          response.requestSummary.failureCount,
+      const response = await partyReadyRoomControllerCancel(
+        { notificationId: ownedReadyRoom.notificationId },
+        { expectedRevision: ownedReadyRoom.revision },
+      );
+      state.applyUpdate(response as unknown as PartyReadyRoomClientUpdate);
+      await Promise.all(
+        ownedReadyRoom.guildIds.map((guildId) =>
+          queryClient.invalidateQueries({
+            queryKey: getChatControllerGetChatMessagesQueryKey({ guildId }),
+            exact: true,
+            refetchType: "active",
+          }),
         ),
-        details: {
-          endpoint: "/messaging/party-gathering/:notificationId",
-          totalRequests: response.requestSummary.totalRequests,
-          successCount: response.requestSummary.successCount,
-          failureCount: response.requestSummary.failureCount,
-          guildIds: response.guildIds,
-        },
-      });
-
-      clearPartyFinder();
+      );
 
       return response;
     },
@@ -56,7 +46,7 @@ export const useCancelPartyGathering = () => {
       window.message(t("messages.cancelSuccess"));
     },
     onError: (error) => {
-      console.error("Failed to cancel party gathering:", error);
+      console.warn("Failed to cancel party gathering:", error);
       window.message(t("messages.cancelFailed"));
     },
   });

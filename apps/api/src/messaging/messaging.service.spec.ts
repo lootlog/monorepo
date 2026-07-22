@@ -1,6 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
-import { ForbiddenException } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MessagingService } from "./messaging.service";
@@ -10,7 +9,7 @@ import { RoutingKey } from "src/enum/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { NpcType } from "src/generated/prisma/client";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { ChatService } from "src/chat/chat.service";
+import { ReadyRoomService } from "src/messaging/ready-room/ready-room.service";
 
 vi.mock("uuid", () => ({
   v4: () => "mock-uuid",
@@ -35,8 +34,8 @@ describe("MessagingService", () => {
     del: mockFn(),
   };
 
-  const mockChatService = {
-    endPartyGatheringMessages: mockFn(),
+  const mockReadyRoomService = {
+    create: mockFn(),
   };
 
   beforeEach(async () => {
@@ -47,7 +46,7 @@ describe("MessagingService", () => {
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: GuildsService, useValue: mockGuildsService },
         { provide: RedisService, useValue: mockRedisService },
-        { provide: ChatService, useValue: mockChatService },
+        { provide: ReadyRoomService, useValue: mockReadyRoomService },
       ],
     }).compile();
 
@@ -145,86 +144,49 @@ describe("MessagingService", () => {
         },
       );
     });
-  });
 
-  describe("cancelPartyGathering", () => {
-    const discordId = "123456";
-    const notificationId = "notif-abc";
+    it("creates an NPC party gathering in the Ready Room with the notification id", async () => {
+      mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        { id: "guild-1" },
+      ]);
 
-    it("should cancel successfully when metadata exists and user is owner", async () => {
-      const metadata = {
-        discordId,
-        guildIds: ["guild-1", "guild-2"],
-        createdAt: new Date().toISOString(),
-      };
-      mockRedisService.get.mockResolvedValue(JSON.stringify(metadata));
-
-      const result = await service.cancelPartyGathering(
-        discordId,
-        notificationId,
-      );
-
-      expect(result).toEqual({
-        status: "success",
-        guildIds: ["guild-1", "guild-2"],
-      });
-      expect(mockRedisService.del).toHaveBeenCalledWith(
-        `notification:${notificationId}`,
-      );
-      expect(mockRedisService.del).toHaveBeenCalledWith(
-        `party-gathering:user:${discordId}`,
-      );
-      expect(mockChatService.endPartyGatheringMessages).toHaveBeenCalledWith(
-        notificationId,
-        ["guild-1", "guild-2"],
-      );
-      expect(mockAmqpConnection.publish).toHaveBeenCalledTimes(2);
-      expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
-        { guildId: "guild-1", notificationId },
-      );
-      expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
-        { guildId: "guild-2", notificationId },
-      );
-    });
-
-    it("should return expired status when metadata is missing", async () => {
-      mockRedisService.get.mockResolvedValue(null);
-
-      const result = await service.cancelPartyGathering(
-        discordId,
-        notificationId,
-      );
-
-      expect(result).toEqual({ status: "expired" });
-      expect(mockRedisService.del).toHaveBeenCalledWith(
-        `notification:${notificationId}`,
-      );
-      expect(mockRedisService.del).toHaveBeenCalledWith(
-        `party-gathering:user:${discordId}`,
-      );
-      expect(mockAmqpConnection.publish).not.toHaveBeenCalled();
-      expect(mockChatService.endPartyGatheringMessages).not.toHaveBeenCalled();
-    });
-
-    it("should throw ForbiddenException when user is not the owner", async () => {
-      const metadata = {
-        discordId: "other-user",
+      await service.sendNotification(discordId, {
+        npc: {
+          id: 911169,
+          location: "Glusza Swistu",
+          name: "Debug Tytan #228",
+          wt: 102,
+          lvl: 306,
+          icon: "tyt/maddok-tytan2.gif",
+          type: 2,
+        },
+        character: {
+          lvl: 250,
+          nick: "Organizer",
+          accountId: "account-1",
+          characterId: "character-1",
+          prof: "w",
+          icon: "organizer.gif",
+        },
+        world: "gordion",
         guildIds: ["guild-1"],
-        createdAt: new Date().toISOString(),
-      };
-      mockRedisService.get.mockResolvedValue(JSON.stringify(metadata));
+        isGatheringParty: true,
+      });
 
-      await expect(
-        service.cancelPartyGathering(discordId, notificationId),
-      ).rejects.toThrow(ForbiddenException);
-
-      expect(mockRedisService.del).not.toHaveBeenCalled();
-      expect(mockAmqpConnection.publish).not.toHaveBeenCalled();
-      expect(mockChatService.endPartyGatheringMessages).not.toHaveBeenCalled();
+      expect(mockReadyRoomService.create).toHaveBeenCalledWith({
+        notificationId: "mock-uuid",
+        organizerDiscordId: discordId,
+        organizerCharacter: {
+          lvl: 250,
+          nick: "Organizer",
+          accountId: "account-1",
+          characterId: "character-1",
+          prof: "w",
+          icon: "organizer.gif",
+        },
+        guildIds: ["guild-1"],
+        world: "gordion",
+      });
     });
   });
 });

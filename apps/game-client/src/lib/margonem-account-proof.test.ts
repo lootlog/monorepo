@@ -51,20 +51,20 @@ describe("margonem-account-proof", () => {
   });
 
   it("requests Margonem proof with POST form data and credentials", async () => {
-    const fetchFn = vi.fn(
-      async (_input: RequestInfo | URL, init?: RequestInit) => {
-        const body = init?.body as URLSearchParams;
-        const token = body.get("token") ?? "";
+    const fetchFn = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = init?.body as URLSearchParams;
+      const token = body.get("token") ?? "";
 
-        return createJsonResponse({
+      return Promise.resolve(
+        createJsonResponse({
           user_id: "20",
           token,
           ts: 1_700_000_000,
           validatedString: `20+${token}+1700000000`,
           signatureBase64: "signature",
-        });
-      },
-    );
+        }),
+      );
+    });
 
     await expect(
       requestMargonemAccountProof({
@@ -99,20 +99,20 @@ describe("margonem-account-proof", () => {
   });
 
   it("rejects proof for a different Margonem account", async () => {
-    const fetchFn = vi.fn(
-      async (_input: RequestInfo | URL, init?: RequestInit) => {
-        const body = init?.body as URLSearchParams;
-        const token = body.get("token") ?? "";
+    const fetchFn = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = init?.body as URLSearchParams;
+      const token = body.get("token") ?? "";
 
-        return createJsonResponse({
+      return Promise.resolve(
+        createJsonResponse({
           user_id: "21",
           token,
           ts: 1_700_000_000,
           validatedString: `21+${token}+1700000000`,
           signatureBase64: "signature",
-        });
-      },
-    );
+        }),
+      );
+    });
 
     await expect(
       requestMargonemAccountProof({
@@ -126,16 +126,18 @@ describe("margonem-account-proof", () => {
   });
 
   it("rejects proof for a different request token", async () => {
-    const fetchFn = vi.fn(async () =>
-      createJsonResponse({
-        user_id: "20",
-        token:
-          "lootlog:socket-1:20:02000000000000000a0000000000003b57ffffffffffffffffffffffffffffffff",
-        ts: 1_700_000_000,
-        validatedString:
-          "20+lootlog:socket-1:20:02000000000000000a0000000000003b57ffffffffffffffffffffffffffffffff+1700000000",
-        signatureBase64: "signature",
-      }),
+    const fetchFn = vi.fn(() =>
+      Promise.resolve(
+        createJsonResponse({
+          user_id: "20",
+          token:
+            "lootlog:socket-1:20:02000000000000000a0000000000003b57ffffffffffffffffffffffffffffffff",
+          ts: 1_700_000_000,
+          validatedString:
+            "20+lootlog:socket-1:20:02000000000000000a0000000000003b57ffffffffffffffffffffffffffffffff+1700000000",
+          signatureBase64: "signature",
+        }),
+      ),
     );
 
     await expect(

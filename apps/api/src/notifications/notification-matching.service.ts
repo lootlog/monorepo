@@ -24,6 +24,53 @@ type MemberRoleInfo = {
   }[];
 };
 
+type MemberRolePermissions = MemberRoleInfo["roles"][number];
+
+const UNKNOWN_NPC_LEVEL = 0;
+const DEFAULT_NPC_LVL_RANGE_FROM = 0;
+const DEFAULT_NPC_LVL_RANGE_TO = 500;
+
+const roleCanViewNpcLevel = (
+  role: MemberRolePermissions,
+  npcLvl: number | null | undefined,
+) => {
+  const lvlFrom = role.lvlRangeFrom ?? DEFAULT_NPC_LVL_RANGE_FROM;
+  const lvlTo = role.lvlRangeTo ?? DEFAULT_NPC_LVL_RANGE_TO;
+
+  if (npcLvl === null || npcLvl === undefined) {
+    return lvlFrom <= UNKNOWN_NPC_LEVEL || lvlTo >= UNKNOWN_NPC_LEVEL;
+  }
+
+  return npcLvl >= lvlFrom && npcLvl <= lvlTo;
+};
+
+const roleCanViewNpcType = (
+  role: MemberRolePermissions,
+  npcType: NpcType | null | undefined,
+) => {
+  if (npcType === NpcType.TITAN) {
+    return role.permissions.includes(Permission.LOOTLOG_LOOTS_TITANS_READ);
+  }
+
+  if (npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO) {
+    return role.permissions.includes(Permission.LOOTLOG_LOOTS_HEROES_READ);
+  }
+
+  return true;
+};
+
+const roleCanViewNpc = (
+  role: MemberRolePermissions,
+  npcType: NpcType | null | undefined,
+  npcLvl: number | null | undefined,
+) => {
+  return (
+    role.permissions.includes(Permission.LOOTLOG_LOOTS_READ) &&
+    roleCanViewNpcLevel(role, npcLvl) &&
+    roleCanViewNpcType(role, npcType)
+  );
+};
+
 @Injectable()
 export class NotificationMatchingService {
   constructor(private readonly prisma: PrismaService) {}
@@ -200,42 +247,6 @@ export class NotificationMatchingService {
       return true;
     }
 
-    const readableRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
-    );
-
-    if (readableRoles.length === 0) {
-      return false;
-    }
-
-    return readableRoles.some((role) => {
-      const lvlFrom = role.lvlRangeFrom ?? 0;
-      const lvlTo = role.lvlRangeTo ?? 500;
-
-      const lvlOk =
-        npcLvl === null || npcLvl === undefined
-          ? lvlFrom <= 0 || lvlTo >= 0
-          : npcLvl >= lvlFrom && npcLvl <= lvlTo;
-
-      if (!lvlOk) {
-        return false;
-      }
-
-      if (
-        !role.permissions.includes(Permission.LOOTLOG_LOOTS_TITANS_READ) &&
-        npcType === NpcType.TITAN
-      ) {
-        return false;
-      }
-
-      if (
-        !role.permissions.includes(Permission.LOOTLOG_LOOTS_HEROES_READ) &&
-        (npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO)
-      ) {
-        return false;
-      }
-
-      return true;
-    });
+    return roles.some((role) => roleCanViewNpc(role, npcType, npcLvl));
   }
 }

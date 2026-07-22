@@ -3,6 +3,7 @@ import { ActivityType } from "src/gateway/enums/activity-type.enum";
 import { Platform } from "src/gateway/enums/platform.enum";
 import { RoutingKey } from "src/gateway/enums/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { Logger } from "@nestjs/common";
 import type { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import type { Socket } from "src/gateway/types/socket-user.type";
 import type { UserGuildData } from "src/guilds/types/guild.types";
@@ -167,6 +168,27 @@ describe("ActivityService", () => {
     ]);
 
     expect(publish).not.toHaveBeenCalled();
+  });
+
+  it("handles non-error publish rejections without failing the activity publish", async () => {
+    const loggerError = vi
+      .spyOn(Logger.prototype, "error")
+      .mockImplementation(() => undefined);
+    const client = createClient({ platform: Platform.WEB_APP });
+    publish.mockRejectedValueOnce(null);
+
+    await expect(
+      service.publishActivityEvent(ActivityType.CONNECT_EVENT, client, [
+        createGuild("guild-1"),
+      ]),
+    ).resolves.toBeUndefined();
+
+    expect(loggerError).toHaveBeenCalledWith(
+      "Failed to publish CONNECT_EVENT for discord-1 in guild guild-1: null",
+      undefined,
+    );
+
+    loggerError.mockRestore();
   });
 });
 

@@ -48,8 +48,12 @@ const UserGameAccountPreferencesResponseSchema = z.object({
   accountId: z.string().min(1),
   notifications: NotificationsSettingsSchema,
   detector: DetectorSettingsSchema,
+  pings: z.object({ enabled: z.boolean() }),
+  airTags: z.object({ enabled: z.boolean() }),
   hasStoredNotifications: z.boolean(),
   hasStoredDetector: z.boolean(),
+  hasStoredPings: z.boolean(),
+  hasStoredAirTags: z.boolean(),
   hasStoredPreferences: z.boolean(),
 });
 

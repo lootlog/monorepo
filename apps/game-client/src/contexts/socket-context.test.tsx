@@ -20,6 +20,7 @@ const { mockRequestMargonemAccountProof, mockSocket, mockSocketHandlers } =
         off: vi.fn((event: string) => {
           delete socketHandlers[event];
         }),
+        offAny: vi.fn(),
         on: vi.fn((event: string, handler: (data: unknown) => void) => {
           socketHandlers[event] = handler;
         }),
@@ -138,9 +139,30 @@ describe("SocketProvider", () => {
     });
   });
 
+  it("synchronizes joined guilds when permissions are updated", async () => {
+    render(
+      <SocketProvider>
+        <div />
+      </SocketProvider>,
+    );
+
+    act(() => {
+      mockSocketHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({
+        guilds: [{ guild: { id: "guild-1" } }, { guild: { id: "guild-2" } }],
+        featureRooms: ["timers:base"],
+      });
+    });
+
+    await waitFor(() => {
+      expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([
+        "guild-1",
+        "guild-2",
+      ]);
+    });
+  });
+
   it("clears joined guilds when permissions update payload has no guilds", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     render(
       <SocketProvider>
@@ -163,7 +185,9 @@ describe("SocketProvider", () => {
     });
 
     act(() => {
-      mockSocketHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({});
+      mockSocketHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({
+        featureRooms: ["timers:base"],
+      });
     });
 
     await waitFor(() => {
@@ -172,5 +196,19 @@ describe("SocketProvider", () => {
         joinedGuilds: [],
       });
     });
+  });
+
+  it("removes the development catch-all listener on unmount", () => {
+    const { unmount } = render(
+      <SocketProvider>
+        <div />
+      </SocketProvider>,
+    );
+    const developmentListener = mockSocket.onAny.mock.calls[0]?.[0];
+
+    unmount();
+
+    expect(developmentListener).toBeTypeOf("function");
+    expect(mockSocket.offAny).toHaveBeenCalledWith(developmentListener);
   });
 });

@@ -1,5 +1,4 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { AnimatedWindow } from "@/components/animated-window";
 import { WindowMaxHeightAction } from "@/components/window-max-height-action";
 import { NotificationsList } from "@/features/notifications/components/notifications-list";
 import { useNotifications } from "@/features/notifications/hooks/use-notifications";
@@ -23,15 +22,18 @@ export const Notifications = () => {
   const setMaxContentHeight = useWindowsStore(
     (state) => state.setMaxContentHeight,
   );
-  const { clearNotifications } = useNotificationsStore();
+  const clearNotifications = useNotificationsStore(
+    (state) => state.clearNotifications,
+  );
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
   const [resolvedMaxContentHeight, setResolvedMaxContentHeight] = useState(
     storedMaxContentHeight ?? defaultWindowHeight,
   );
-  const { notifications: filteredNotifications } = useVisibleNotifications({
-    autoCleanup: true,
-  });
+  const { notifications: filteredNotifications, settings } =
+    useVisibleNotifications({
+      autoCleanup: true,
+    });
 
   useEffect(() => {
     if (storedMaxContentHeight === undefined) {
@@ -47,38 +49,34 @@ export const Notifications = () => {
   };
 
   return (
-    <AnimatedWindow
+    <DraggableWindow
       isOpen={open && filteredNotifications.length > 0}
-      windowKey="notifications"
-    >
-      <DraggableWindow
-        id="notifications"
-        title={t("window.title")}
-        actions=<WindowMaxHeightAction
-          currentMaxHeight={resolvedMaxContentHeight}
-          isArmed={isMaxHeightAdjustmentArmed}
-          onClick={() =>
-            setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
-          }
-        />
-        onClose={handleClose}
-        heightMode="auto-up-to-max"
-        maxContentHeight={storedMaxContentHeight}
-        isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
-        onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}
-        onMaxContentHeightChange={(nextMaxContentHeight) =>
-          setMaxContentHeight("notifications", nextMaxContentHeight)
+      id="notifications"
+      title={t("window.title")}
+      actions=<WindowMaxHeightAction
+        currentMaxHeight={resolvedMaxContentHeight}
+        isArmed={isMaxHeightAdjustmentArmed}
+        onClick={() =>
+          setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
         }
-        onResolvedMaxContentHeightChange={setResolvedMaxContentHeight}
-        resizable
-        minHeight={64}
-        maxHeight={600}
-        minWidth={242}
-      >
-        <div className="ll:flex ll:h-full ll:w-full ll:flex-col ll:overflow-hidden">
-          <NotificationsList notifications={filteredNotifications} />
-        </div>
-      </DraggableWindow>
-    </AnimatedWindow>
+      />
+      onClose={handleClose}
+      heightMode="css-auto-up-to-max"
+      maxContentHeight={resolvedMaxContentHeight}
+      isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
+      onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}
+      onMaxContentHeightChange={(nextMaxContentHeight) =>
+        setMaxContentHeight("notifications", nextMaxContentHeight)
+      }
+      resizable
+      minHeight={64}
+      maxHeight={600}
+      minWidth={242}
+    >
+      <NotificationsList
+        notifications={filteredNotifications}
+        settings={settings}
+      />
+    </DraggableWindow>
   );
 };

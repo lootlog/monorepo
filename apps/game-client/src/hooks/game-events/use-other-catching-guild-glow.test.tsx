@@ -4,15 +4,20 @@ import type { Other } from "@lootlog/margonem/others";
 import {
   LOOTLOG_OTHER_GLOW_BLUE,
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
+  LOOTLOG_OTHER_GLOW_UNKNOWN,
   lootlogOtherGlowManager,
 } from "@/lib/lootlog-other-glow-manager";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGlobalStore } from "@/store/global.store";
 
 const mocks = vi.hoisted(() => ({
+  afterGameEventHandler: undefined as (() => void) | undefined,
+  getAccessibleGuilds: vi.fn(),
   getPlayersCatchingGuilds: vi.fn(),
+  getUserPreferences: vi.fn(),
 }));
 
 vi.mock(
@@ -23,7 +28,33 @@ vi.mock(
   }),
 );
 
+vi.mock("@/lib/api/generated/main/users/users", () => ({
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
+    "accessible-guilds",
+  ],
+  useUsersControllerGetCurrentUserAccessibleGuilds: () =>
+    mocks.getAccessibleGuilds(),
+}));
+
+vi.mock("@/hooks/api/use-user-preferences", () => ({
+  useUserPreferences: () => mocks.getUserPreferences(),
+}));
+
+vi.mock("@/lib/game-events-manager", () => ({
+  gameEventsManager: {
+    subscribeAfterGameEvent: (handler: () => void) => {
+      mocks.afterGameEventHandler = handler;
+      return () => {
+        if (mocks.afterGameEventHandler === handler) {
+          mocks.afterGameEventHandler = undefined;
+        }
+      };
+    },
+  },
+}));
+
 import { useOtherCatchingGuildGlow } from "./use-other-catching-guild-glow";
+import { useSelectedLootlogGuildInitialization } from "../use-selected-lootlog-guild";
 
 const originalWindowEngine = window.Engine;
 
@@ -64,13 +95,13 @@ function setOnlineOwners(others: Record<string, Other>): void {
   });
 }
 
-function setRuntime(): void {
+function setRuntime(heroId: number | null | undefined = 101): void {
   Object.defineProperty(window, "Engine", {
     configurable: true,
     value: {
       hero: {
         d: {
-          id: "hero-1",
+          id: heroId,
         },
       },
       imgLoader: {
@@ -96,11 +127,25 @@ function setRuntime(): void {
 
 describe("useOtherCatchingGuildGlow", () => {
   beforeEach(() => {
+    mocks.afterGameEventHandler = undefined;
+    mocks.getAccessibleGuilds.mockReset();
     mocks.getPlayersCatchingGuilds.mockReset();
+    mocks.getUserPreferences.mockReset();
+    mocks.getAccessibleGuilds.mockReturnValue({
+      data: [{ id: "guild-blue", name: "Blue Guild", icon: null }],
+      isFetched: true,
+    });
+    mocks.getUserPreferences.mockReturnValue({
+      data: { guildsOrder: ["guild-blue"] },
+      isFetched: true,
+    });
     lootlogOtherGlowManager.cleanup();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
+    useGlobalStore.setState({
+      gameState: { gameInitialized: true },
+    });
     useSettingsStore.setState({
       guildIdByCharId: {},
     });
@@ -115,6 +160,113 @@ describe("useOtherCatchingGuildGlow", () => {
     });
   });
 
+  it("uses the default guild on the first shift without a manual guild change", async () => {
+    const other = createOther("1");
+    setRuntime(undefined);
+    mocks.getAccessibleGuilds.mockReturnValue({
+      data: [
+        { id: "guild-red", name: "Red Guild", icon: null },
+        { id: "guild-blue", name: "Blue Guild", icon: null },
+      ],
+      isFetched: true,
+    });
+    useOthersStore.getState().setMany({ "1": other });
+    setOnlineOwners({ "1": other });
+    mocks.getPlayersCatchingGuilds.mockResolvedValue({
+      players: [
+        {
+          userId: "player-discord",
+          accountId: String(other.d.account),
+          characterId: String(other.d.id),
+          guilds: [{ id: "guild-blue", name: "Blue Guild" }],
+        },
+      ],
+    });
+
+    renderHook(() => {
+      useSelectedLootlogGuildInitialization();
+      useOtherCatchingGuildGlow();
+    });
+
+    expect(useSettingsStore.getState().guildIdByCharId).not.toHaveProperty(
+      "undefined",
+    );
+
+    window.Engine.hero.d.id = 101;
+    act(() => {
+      mocks.afterGameEventHandler?.();
+    });
+
+    await waitFor(() => {
+      expect(useSettingsStore.getState().guildIdByCharId["101"]).toBe(
+        "guild-blue",
+      );
+    });
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    await waitFor(() => {
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
+      expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
+        LOOTLOG_OTHER_GLOW_BLUE,
+      );
+    });
+  });
+
+  it("does not create a selection from a null character ID", () => {
+    setRuntime(null);
+
+    renderHook(() => useSelectedLootlogGuildInitialization());
+
+    expect(useSettingsStore.getState().guildIdByCharId).toEqual({});
+  });
+
+  it("uses API guild order when preferences finish without data", async () => {
+    mocks.getAccessibleGuilds.mockReturnValue({
+      data: [
+        { id: "guild-red", name: "Red Guild", icon: null },
+        { id: "guild-blue", name: "Blue Guild", icon: null },
+      ],
+      isFetched: true,
+    });
+    mocks.getUserPreferences.mockReturnValue({
+      data: undefined,
+      isFetched: true,
+    });
+
+    renderHook(() => useSelectedLootlogGuildInitialization());
+
+    await waitFor(() => {
+      expect(useSettingsStore.getState().guildIdByCharId["101"]).toBe(
+        "guild-red",
+      );
+    });
+  });
+
+  it("initializes a separate default after the current character changes", async () => {
+    renderHook(() => useSelectedLootlogGuildInitialization());
+
+    await waitFor(() => {
+      expect(useSettingsStore.getState().guildIdByCharId["101"]).toBe(
+        "guild-blue",
+      );
+    });
+
+    window.Engine.hero.d.id = 202;
+    act(() => {
+      mocks.afterGameEventHandler?.();
+    });
+
+    await waitFor(() => {
+      expect(useSettingsStore.getState().guildIdByCharId).toEqual({
+        "101": "guild-blue",
+        "202": "guild-blue",
+      });
+    });
+  });
+
   it("does one batch request for many others and colors successful entries by selected guild", async () => {
     const others = Object.fromEntries(
       Array.from({ length: 50 }, (_, index) => {
@@ -126,7 +278,7 @@ describe("useOtherCatchingGuildGlow", () => {
     setOnlineOwners(others);
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockResolvedValue({
@@ -147,13 +299,16 @@ describe("useOtherCatchingGuildGlow", () => {
     await waitFor(() => {
       expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
     });
-    expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith({
-      players: Object.values(others).map((other) => ({
-        userId: "player-discord",
-        accountId: String(other.d.account),
-        characterId: String(other.d.id),
-      })),
-    });
+    expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith(
+      {
+        players: Object.values(others).map((other) => ({
+          userId: "player-discord",
+          accountId: String(other.d.account),
+          characterId: String(other.d.id),
+        })),
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
 
     await waitFor(() => {
       expect(lootlogOtherGlowManager.getGlowCount()).toBe(50);
@@ -177,7 +332,7 @@ describe("useOtherCatchingGuildGlow", () => {
     setOnlineOwners(others);
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockImplementation(
@@ -208,7 +363,7 @@ describe("useOtherCatchingGuildGlow", () => {
     ).toHaveLength(25);
   });
 
-  it("stops fetching further batches after a batch error", async () => {
+  it("finishes every queued batch after an earlier batch error", async () => {
     const others = Object.fromEntries(
       Array.from({ length: 125 }, (_, index) => {
         const characterId = String(index + 1);
@@ -219,7 +374,7 @@ describe("useOtherCatchingGuildGlow", () => {
     setOnlineOwners(others);
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockRejectedValue(new Error("broken"));
@@ -231,7 +386,12 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
+      expect(
+        useCharacterTooltipCatchingGuildsStore.getState().entriesByKey[
+          "9822301:125"
+        ]?.status,
+      ).toBe("error");
     });
   });
 
@@ -252,13 +412,31 @@ describe("useOtherCatchingGuildGlow", () => {
     expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
   });
 
+  it("does not run or suppress native glow when all Discords are selected", () => {
+    const other = createOther("1");
+    useOthersStore.getState().setMany({ "1": other });
+    setOnlineOwners({ "1": other });
+    useSettingsStore.setState({
+      guildIdByCharId: { "101": "all" },
+    });
+
+    renderHook(() => useOtherCatchingGuildGlow());
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
+    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
+    expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
+  });
+
   it("does not request when visible characters have no online owner", () => {
     useOthersStore.getState().setMany({
       "1": createOther("1"),
     });
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
 
@@ -269,7 +447,9 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
-    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
+    expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
+      LOOTLOG_OTHER_GLOW_UNKNOWN,
+    );
   });
 
   it("requests visible characters when online owners become known after shift", async () => {
@@ -279,7 +459,7 @@ describe("useOtherCatchingGuildGlow", () => {
     });
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockResolvedValue({
@@ -306,16 +486,101 @@ describe("useOtherCatchingGuildGlow", () => {
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith({
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith(
+        {
+          players: [
+            {
+              userId: "player-discord",
+              accountId: String(other.d.account),
+              characterId: String(other.d.id),
+            },
+          ],
+        },
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+    });
+  });
+
+  it("finishes an in-flight batch when another player appears", async () => {
+    const firstOther = createOther("1");
+    const secondOther = createOther("2");
+    let resolveFirstBatch:
+      | ((value: {
+          players: Array<{
+            accountId: string;
+            characterId: string;
+            guilds: Array<{ id: string; name: string }>;
+            userId: string;
+          }>;
+        }) => void)
+      | undefined;
+
+    useOthersStore.getState().setMany({ "1": firstOther });
+    setOnlineOwners({ "1": firstOther, "2": secondOther });
+    useSettingsStore.setState({
+      guildIdByCharId: {
+        "101": "guild-blue",
+      },
+    });
+    mocks.getPlayersCatchingGuilds
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirstBatch = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        ({ players }: { players: Array<{ characterId: string }> }) =>
+          Promise.resolve({
+            players: players.map((player) => ({
+              userId: "player-discord",
+              accountId: "9822301",
+              characterId: player.characterId,
+              guilds: [],
+            })),
+          }),
+      );
+
+    renderHook(() => useOtherCatchingGuildGlow());
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+
+    await waitFor(() => {
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledOnce();
+    });
+
+    act(() => {
+      useOthersStore.getState().setMany({ "1": firstOther, "2": secondOther });
+    });
+
+    act(() => {
+      resolveFirstBatch?.({
         players: [
           {
             userId: "player-discord",
-            accountId: String(other.d.account),
-            characterId: String(other.d.id),
+            accountId: "9822301",
+            characterId: "1",
+            guilds: [{ id: "guild-blue", name: "Blue Guild" }],
           },
         ],
       });
     });
+
+    await waitFor(() => {
+      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
+    });
+
+    await waitFor(() => {
+      expect(lootlogOtherGlowManager.getGlowCount()).toBe(2);
+    });
+    expect(lootlogOtherGlowManager.getGlowColor("1")).toBe(
+      LOOTLOG_OTHER_GLOW_BLUE,
+    );
+    expect(lootlogOtherGlowManager.getGlowColor("2")).toBe(
+      LOOTLOG_OTHER_GLOW_RED_ORANGE,
+    );
   });
 
   it("clears glows when shift is released", async () => {
@@ -324,7 +589,7 @@ describe("useOtherCatchingGuildGlow", () => {
     setOnlineOwners({ "1": other });
     useSettingsStore.setState({
       guildIdByCharId: {
-        "hero-1": "guild-blue",
+        "101": "guild-blue",
       },
     });
     mocks.getPlayersCatchingGuilds.mockResolvedValue({

@@ -1,7 +1,176 @@
-import { describe, expect, it } from "vitest";
-import { migrateWindowsState } from "./windows.store";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { storageKey } from "@/lib/storage-key";
+import {
+  createDeduplicatingStateStorage,
+  migrateWindowsState,
+  useWindowsStore,
+} from "./windows.store";
+
+describe("windows store", () => {
+  beforeEach(() => {
+    useWindowsStore.setState(useWindowsStore.getInitialState(), true);
+    localStorage.clear();
+  });
+
+  it("does not publish when an open focused window is opened again", () => {
+    useWindowsStore.setState((state) => ({
+      notifications: {
+        ...state.notifications,
+        open: true,
+      },
+      currentWindowFocus: "notifications",
+      windowFocusHistory: ["notifications", "chat"],
+    }));
+    const listener = vi.fn();
+    const unsubscribe = useWindowsStore.subscribe(listener);
+    const stateBefore = useWindowsStore.getState();
+
+    useWindowsStore.getState().setOpen("notifications", true);
+
+    expect(useWindowsStore.getState()).toBe(stateBefore);
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("does not persist when an open focused window is opened again", () => {
+    useWindowsStore.setState((state) => ({
+      notifications: {
+        ...state.notifications,
+        open: true,
+      },
+      currentWindowFocus: "notifications",
+      windowFocusHistory: ["notifications", "chat"],
+    }));
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+    useWindowsStore.getState().setOpen("notifications", true);
+
+    expect(setItemSpy).not.toHaveBeenCalled();
+    setItemSpy.mockRestore();
+  });
+
+  it("does not publish when a window size is unchanged", () => {
+    const currentSize = useWindowsStore.getState().notifications.size;
+    const listener = vi.fn();
+    const unsubscribe = useWindowsStore.subscribe(listener);
+    const stateBefore = useWindowsStore.getState();
+
+    useWindowsStore.getState().setSize("notifications", { ...currentSize });
+
+    expect(useWindowsStore.getState()).toBe(stateBefore);
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("does not publish unchanged focus, position, opacity, lock, or autofocus", () => {
+    useWindowsStore.getState().setCurrentWindowFocus("chat");
+    useWindowsStore
+      .getState()
+      .setPosition("chat", useWindowsStore.getState().chat.position);
+    const currentWindow = useWindowsStore.getState().chat;
+    const listener = vi.fn();
+    const unsubscribe = useWindowsStore.subscribe(listener);
+    const stateBefore = useWindowsStore.getState();
+
+    useWindowsStore.getState().setCurrentWindowFocus("chat");
+    useWindowsStore
+      .getState()
+      .setPosition("chat", { ...currentWindow.position });
+    useWindowsStore.getState().setOpacity("chat", currentWindow.opacity);
+    useWindowsStore.getState().setLocked("chat", currentWindow.locked);
+    useWindowsStore
+      .getState()
+      .setAutofocus("chat", currentWindow.autofocus ?? false);
+
+    expect(useWindowsStore.getState()).toBe(stateBefore);
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("does not persist current focus or focus history", () => {
+    useWindowsStore.getState().setOpen("notifications", true);
+
+    const serializedState = localStorage.getItem(
+      storageKey("ll-windows-state"),
+    );
+    const persisted = JSON.parse(serializedState ?? "{}") as {
+      state?: Record<string, unknown>;
+    };
+
+    expect(persisted.state).toBeDefined();
+    expect(persisted.state).not.toHaveProperty("currentWindowFocus");
+    expect(persisted.state).not.toHaveProperty("windowFocusHistory");
+  });
+});
+
+describe("createDeduplicatingStateStorage", () => {
+  it("does not write a serialized state that is already persisted", () => {
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: vi.fn((key: string) => values.get(key) ?? null),
+      removeItem: vi.fn((key: string) => values.delete(key)),
+      setItem: vi.fn((key: string, value: string) => {
+        values.set(key, value);
+      }),
+    };
+    const deduplicatedStorage = createDeduplicatingStateStorage(storage);
+
+    deduplicatedStorage.setItem("windows", "same-state");
+    deduplicatedStorage.setItem("windows", "same-state");
+
+    expect(storage.setItem).toHaveBeenCalledOnce();
+  });
+});
 
 describe("migrateWindowsState", () => {
+  it("resets only the legacy automatic quick access width", () => {
+    const migrated = migrateWindowsState(
+      {
+        "quick-access": {
+          open: true,
+          position: { x: 30, y: 40 },
+          hasDefinedPosition: true,
+          size: { width: 412, height: 88 },
+          opacity: 2,
+          locked: true,
+        },
+        windowFocusHistory: [],
+      },
+      10,
+    );
+
+    expect(migrated["quick-access"]).toEqual({
+      open: true,
+      position: { x: 30, y: 40 },
+      hasDefinedPosition: true,
+      size: { width: 250, height: 88 },
+      opacity: 2,
+      locked: true,
+    });
+  });
+
+  it("drops legacy focus state while preserving persisted window geometry", () => {
+    const migrated = migrateWindowsState(
+      {
+        notifications: {
+          open: true,
+          position: { x: 30, y: 40 },
+          hasDefinedPosition: true,
+          size: { width: 360, height: 300 },
+          opacity: 4,
+          locked: false,
+        },
+        currentWindowFocus: "notifications",
+        windowFocusHistory: ["notifications", "chat"],
+      },
+      9,
+    );
+
+    expect(migrated.notifications.position).toEqual({ x: 30, y: 40 });
+    expect(migrated.currentWindowFocus).toBeUndefined();
+    expect(migrated.windowFocusHistory).toEqual([]);
+  });
+
   it("treats legacy settings position 0,0 as undefined", () => {
     const migrated = migrateWindowsState(
       {
@@ -185,7 +354,34 @@ describe("migrateWindowsState", () => {
       opacity: 2,
       locked: false,
     });
-    expect(migrated.currentWindowFocus).toBe("online-players");
-    expect(migrated.windowFocusHistory).toEqual(["online-players", "chat"]);
+    expect(migrated.currentWindowFocus).toBeUndefined();
+    expect(migrated.windowFocusHistory).toEqual([]);
+  });
+
+  it("adds the Event Mode window to older persisted state", () => {
+    const migrated = migrateWindowsState(
+      {
+        chat: {
+          open: true,
+          position: { x: 10, y: 20 },
+          hasDefinedPosition: true,
+          size: { width: 320, height: 260 },
+          opacity: 3,
+          locked: true,
+        },
+        windowFocusHistory: ["chat"],
+      },
+      8,
+    );
+
+    expect(migrated["event-mode"]).toEqual({
+      open: true,
+      position: { x: 0, y: 0 },
+      hasDefinedPosition: false,
+      size: { width: 290, height: 132 },
+      opacity: 4,
+      locked: false,
+    });
+    expect(migrated.chat.position).toEqual({ x: 10, y: 20 });
   });
 });

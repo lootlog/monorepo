@@ -6,38 +6,53 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AnimatePresence, motion } from "framer-motion";
-import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { cn } from "@/lib/utils";
-import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
 import {
-  type GameNpcWithLocation,
-  useNpcDetectorStore,
+  getNpcTypeByWt,
+  type DetectorNpcType,
+  type DetectorSettings,
+} from "@lootlog/types";
+import type {
+  GameNpcWithLocation,
+  NpcDetectorState,
 } from "@/store/npc-detector.store";
-import { useSettingsStore } from "@/store/settings.store";
 import { AlertTriangle, Loader2, Megaphone, Users, XIcon } from "lucide-react";
 import {
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
 import { resolveNpcNotificationRouting } from "@/utils/notifications-and-detector/npc-notification";
-import { useEffect, useState } from "react";
-import { usePartyFinderStore } from "@/store/party-finder.store";
-import { useWindowsStore } from "@/store/windows.store";
+import type { useWindowsStore } from "@/store/windows.store";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
 import { useTranslation } from "react-i18next";
-import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
+import type { PartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
+import { NPC_DETECTOR_CLOCK_INTERVAL_MS } from "@/features/npc-detector/hooks/use-npc-detector-clock";
+import { NPC_NOTIFICATION_COOLDOWN_MS } from "@/features/npc-detector/hooks/use-npc-list-lifecycle";
 
-const BUTTON_UNLOCK_DELAY_MS = 5000;
-const REPEAT_DETECTION_FLASH_DURATION_MS = 1050;
 const MESSAGE_BUTTON_COOLDOWN_RING_RADIUS = 11;
 const MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE =
   2 * Math.PI * MESSAGE_BUTTON_COOLDOWN_RING_RADIUS;
 const ACTION_BUTTON_CLASS_NAME = "ll:size-7 ll:px-0";
 
 type NpcListItemProps = {
+  animationEffectsEnabled: boolean;
   npc: GameNpcWithLocation;
   detectionAnimationCycle: number | null;
+  detectorSettings: DetectorSettings;
+  hasActivePartyGathering: boolean;
+  hasMultipleNpcs: boolean;
+  notificationCooldownCurrentTimeMs: number;
+  notificationCooldownEndsAt: number | null;
+  orchestration: Pick<
+    PartyGatheringOrchestration,
+    | "isCreatingNpcPartyGathering"
+    | "isSendingNpcNotification"
+    | "startNpcNotification"
+    | "startNpcPartyGathering"
+  >;
+  removeNpc: NpcDetectorState["removeNpc"];
+  setNpcState: NpcDetectorState["setNpcState"];
+  setOpen: ReturnType<typeof useWindowsStore.getState>["setOpen"];
 };
 
 export const NPCS_WITH_LOCATION = [NpcType.HERO];
@@ -88,120 +103,51 @@ const getRepeatDetectionFlashFrames = (npcType: string) => {
 };
 
 export const NpcListItem = ({
+  animationEffectsEnabled,
   npc,
   detectionAnimationCycle,
+  detectorSettings,
+  hasActivePartyGathering,
+  hasMultipleNpcs,
+  notificationCooldownCurrentTimeMs,
+  notificationCooldownEndsAt,
+  orchestration,
+  removeNpc,
+  setNpcState,
+  setOpen,
 }: NpcListItemProps) => {
   const { t } = useTranslation("npcDetector");
-  const { npcs, removeNpc, setNpcState, clearDetectionAnimation } =
-    useNpcDetectorStore();
-  const { settings } = useCurrentGameAccountDetectorSettings();
-  const animationEffectsEnabled = useSettingsStore(
-    (state) => state.animationEffectsEnabled,
-  );
-  const partyGathering = usePartyFinderStore((state) => state.partyGathering);
-  const setOpen = useWindowsStore((state) => state.setOpen);
   const {
     isCreatingNpcPartyGathering,
     isSendingNpcNotification,
     startNpcNotification,
     startNpcPartyGathering,
-  } = usePartyGatheringOrchestration();
-  const [messageButtonCooldownEndsAt, setMessageButtonCooldownEndsAt] =
-    useState<number | null>(null);
-  const [
-    messageButtonCooldownSecondsLeft,
-    setMessageButtonCooldownSecondsLeft,
-  ] = useState(0);
-  const [messageButtonCooldownRingOffset, setMessageButtonCooldownRingOffset] =
-    useState(0);
+  } = orchestration;
+  const messageButtonCooldownTimeLeftMs = Math.max(
+    0,
+    (notificationCooldownEndsAt ??
+      notificationCooldownCurrentTimeMs + NPC_NOTIFICATION_COOLDOWN_MS) -
+      notificationCooldownCurrentTimeMs,
+  );
+  const messageButtonCooldownSecondsLeft = Math.max(
+    1,
+    Math.ceil(messageButtonCooldownTimeLeftMs / 1000),
+  );
+  const messageButtonCooldownRingOffset = animationEffectsEnabled
+    ? MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE *
+      (1 - messageButtonCooldownTimeLeftMs / NPC_NOTIFICATION_COOLDOWN_MS)
+    : MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE;
 
   const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
-  const settingsByNpcType = settings[npcType as DetectorNpcType];
+  const settingsByNpcType = detectorSettings[npcType as DetectorNpcType];
   const { guildIds: resolvedGuildIds, world } = resolveNpcNotificationRouting({
-    routingRules: settings.routingRules,
+    routingRules: detectorSettings.routingRules,
     npcLevel: npc.lvl,
   });
   const key = npcType;
   const repeatDetectionFlashFrames = getRepeatDetectionFlashFrames(key);
 
-  const hasActivePartyGathering = partyGathering !== null;
   const isMessageButtonInCooldown = npc.notificationSent;
-
-  useEffect(() => {
-    if (!npc.notificationSent) return;
-
-    const timer = setTimeout(() => {
-      setNpcState(npc.id, { ...npc, notificationSent: false });
-    }, BUTTON_UNLOCK_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [npc, npc.id, npc.notificationSent, setNpcState]);
-
-  useEffect(() => {
-    if (!npc.notificationSent) {
-      setMessageButtonCooldownEndsAt(null);
-      setMessageButtonCooldownSecondsLeft(0);
-      setMessageButtonCooldownRingOffset(0);
-      return;
-    }
-
-    const cooldownEndsAt = Date.now() + BUTTON_UNLOCK_DELAY_MS;
-
-    setMessageButtonCooldownEndsAt(cooldownEndsAt);
-    setMessageButtonCooldownSecondsLeft(
-      Math.ceil(BUTTON_UNLOCK_DELAY_MS / 1000),
-    );
-    setMessageButtonCooldownRingOffset(
-      animationEffectsEnabled ? 0 : MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE,
-    );
-
-    if (!animationEffectsEnabled) return;
-
-    const animationFrameId = window.requestAnimationFrame(() => {
-      setMessageButtonCooldownRingOffset(
-        MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE,
-      );
-    });
-
-    return () => {
-      window.cancelAnimationFrame(animationFrameId);
-    };
-  }, [animationEffectsEnabled, npc.notificationSent]);
-
-  useEffect(() => {
-    if (messageButtonCooldownEndsAt === null) return;
-
-    const updateCooldownSecondsLeft = () => {
-      const cooldownMsLeft = messageButtonCooldownEndsAt - Date.now();
-
-      if (cooldownMsLeft <= 0) {
-        setMessageButtonCooldownSecondsLeft(0);
-        return;
-      }
-
-      setMessageButtonCooldownSecondsLeft(Math.ceil(cooldownMsLeft / 1000));
-    };
-
-    updateCooldownSecondsLeft();
-
-    const interval = window.setInterval(updateCooldownSecondsLeft, 250);
-
-    return () => {
-      window.clearInterval(interval);
-    };
-  }, [messageButtonCooldownEndsAt]);
-
-  useEffect(() => {
-    if (detectionAnimationCycle === null) return;
-
-    const timer = window.setTimeout(() => {
-      clearDetectionAnimation(npc.id, detectionAnimationCycle);
-    }, REPEAT_DETECTION_FLASH_DURATION_MS);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [clearDetectionAnimation, detectionAnimationCycle, npc.id]);
 
   const handleRemoveNpc = (npcId: number) => {
     removeNpc(npcId);
@@ -235,7 +181,7 @@ export const NpcListItem = ({
 
       setOpen("party-finder", true);
     } catch (error) {
-      console.error("Failed to send notification:", error);
+      console.warn("Failed to send notification:", error);
       window.message(t("actions.messageFailed"));
     }
   };
@@ -260,7 +206,7 @@ export const NpcListItem = ({
         notificationSent: true,
       });
     } catch (error) {
-      console.error("Failed to gather party:", error);
+      console.warn("Failed to gather party:", error);
       window.message(t("actions.gatherPartyFailed"));
     }
   };
@@ -272,39 +218,16 @@ export const NpcListItem = ({
   const content = (
     <>
       {animationEffectsEnabled ? (
-        <AnimatePresence mode="wait">
-          {shouldPlayDetectionAnimation ? (
-            <motion.div
-              key={detectionAnimationCycle}
-              className="ll:pointer-events-none ll:absolute ll:inset-0 ll:rounded-[inherit]"
-              style={{
-                background: repeatDetectionFlashFrames.overlayBackground,
-                boxShadow: repeatDetectionFlashFrames.glowShadow,
-              }}
-              initial={{
-                opacity: 0,
-                scale: 0.96,
-                filter: "brightness(1)",
-              }}
-              animate={{
-                opacity: [0, 0.72, 0.5, 0],
-                scale: [0.96, 1.01, 1.003, 1],
-                filter: [
-                  "brightness(1)",
-                  "brightness(1.28)",
-                  "brightness(1.12)",
-                  "brightness(1)",
-                ],
-              }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.82,
-                times: [0, 0.18, 0.58, 1],
-                ease: "easeOut",
-              }}
-            />
-          ) : null}
-        </AnimatePresence>
+        shouldPlayDetectionAnimation ? (
+          <div
+            key={detectionAnimationCycle}
+            className="ll-npc-detection-flash ll:pointer-events-none ll:absolute ll:inset-0 ll:rounded-[inherit]"
+            style={{
+              background: repeatDetectionFlashFrames.overlayBackground,
+              boxShadow: repeatDetectionFlashFrames.glowShadow,
+            }}
+          />
+        ) : null
       ) : null}
       <NpcTile
         npc={npc}
@@ -388,14 +311,13 @@ export const NpcListItem = ({
                             }
                             strokeDashoffset={messageButtonCooldownRingOffset}
                             style={{
-                              transitionDuration: `${BUTTON_UNLOCK_DELAY_MS}ms`,
+                              transitionDuration: `${NPC_DETECTOR_CLOCK_INTERVAL_MS}ms`,
                             }}
                           />
                         </svg>
                       ) : null}
                       <span className="ll:relative ll:text-[10px] ll:font-semibold ll:tabular-nums">
-                        {messageButtonCooldownSecondsLeft ||
-                          Math.ceil(BUTTON_UNLOCK_DELAY_MS / 1000)}
+                        {messageButtonCooldownSecondsLeft}
                       </span>
                     </>
                   ) : (
@@ -436,7 +358,7 @@ export const NpcListItem = ({
             </Tooltip>
           </>
         )}
-        {npcs.length > 1 && (
+        {hasMultipleNpcs && (
           <Button
             variant="destructive"
             aria-label={t("actions.removeNpcAria")}
@@ -456,33 +378,15 @@ export const NpcListItem = ({
   );
   const style = { background, borderColor };
 
-  if (!animationEffectsEnabled) {
-    return (
-      <div className={className} style={style}>
-        {content}
-      </div>
-    );
-  }
-
   return (
-    <motion.div
-      className={className}
+    <div
+      className={cn(
+        className,
+        shouldPlayDetectionAnimation && "ll-npc-detection-bounce",
+      )}
       style={style}
-      animate={
-        shouldPlayDetectionAnimation
-          ? {
-              y: [-6, 0, 0],
-              scale: [0.988, 1.006, 1],
-            }
-          : undefined
-      }
-      transition={{
-        duration: 0.34,
-        times: [0, 0.45, 1],
-        ease: "easeOut",
-      }}
     >
       {content}
-    </motion.div>
+    </div>
   );
 };

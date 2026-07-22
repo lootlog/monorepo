@@ -10,29 +10,7 @@ import { MapChangeProcessor } from "@/processors/map-change-processor";
 import { AfkProcessor } from "@/processors/afk-processor";
 import { FriendsProcessor } from "@/processors/friends-processor";
 import { PartyProcessor } from "@/processors/party-processor";
-
-const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
-  "chat",
-  "d",
-  "npcs",
-  "npcs_del",
-  "item",
-  "loot",
-  "f",
-  "h",
-  "town",
-  "friends",
-  "friends_max",
-  "party",
-];
-
-function hasRelevantKey(event: GameEvent): boolean {
-  for (const key of RELEVANT_EVENT_KEYS) {
-    if (event[key] !== undefined) return true;
-  }
-
-  return false;
-}
+import { OtherEventProcessor } from "@/processors/other-event-processor";
 
 function runSafe(name: string, handler: () => unknown): void {
   try {
@@ -62,10 +40,9 @@ export class EventDispatcher {
   private afk = new AfkProcessor();
   private friends = new FriendsProcessor();
   private party = new PartyProcessor();
+  private other = new OtherEventProcessor();
 
   handleEvent = (event: GameEvent): void => {
-    if (!hasRelevantKey(event)) return;
-
     if (event.chat !== undefined) {
       runSafe("chat", () => this.chat.handle(event));
     }
@@ -76,6 +53,10 @@ export class EventDispatcher {
 
     if (event.f !== undefined) {
       runSafe("battle", () => this.battle.handle(event));
+    }
+
+    if (event.town !== undefined) {
+      runSafe("map-change", () => this.mapChange.handle(event));
     }
 
     if (event.npcs !== undefined) {
@@ -94,8 +75,8 @@ export class EventDispatcher {
       runSafe("npcs-delete", () => this.npcsDelete.handle(event));
     }
 
-    if (event.town !== undefined) {
-      runSafe("map-change", () => this.mapChange.handle(event));
+    if (event.other !== undefined) {
+      runSafe("other", () => this.other.handle(event));
     }
 
     if (event.h !== undefined) {
@@ -123,5 +104,6 @@ export class EventDispatcher {
 
   cleanup(): void {
     gameEventsManager.removeProcessor();
+    this.npcsDetection.cleanup();
   }
 }

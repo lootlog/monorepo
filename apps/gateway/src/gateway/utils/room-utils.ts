@@ -5,9 +5,18 @@ import {
   type NpcRoutingTier,
 } from "@lootlog/types";
 import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
-import { isOwnerOrAdminFromRoles } from "src/guilds/utils/is-administrative-user";
+import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
 import { Platform } from "src/gateway/enums/platform.enum";
 
+const FEATURE_NAMES = ["chat", "timers", "notifications", "loots"] as const;
+const TIER_NAMES = [
+  "base",
+  "titans",
+  "heroes",
+] as const satisfies readonly NpcRoutingTier[];
+
+export type FeatureName = (typeof FEATURE_NAMES)[number];
+export type TierName = (typeof TIER_NAMES)[number];
 const FEATURE_ROOMS = {
   chat: {
     base: Permission.LOOTLOG_CHAT_READ,
@@ -29,26 +38,22 @@ const FEATURE_ROOMS = {
     titans: Permission.LOOTLOG_LOOTS_TITANS_READ,
     heroes: Permission.LOOTLOG_LOOTS_HEROES_READ,
   },
-} as const satisfies Record<string, Record<NpcRoutingTier, Permission>>;
-
-export type FeatureName = keyof typeof FEATURE_ROOMS;
-export type TierName = keyof (typeof FEATURE_ROOMS)[FeatureName];
+} as const satisfies Record<FeatureName, Record<TierName, Permission>>;
 
 type FeatureRoom = { feature: FeatureName; tier: TierName };
 
-const FEATURE_NAMES = Object.keys(FEATURE_ROOMS) as FeatureName[];
-const TIER_NAMES = Object.keys(FEATURE_ROOMS.chat) as TierName[];
 const ALL_FEATURE_ROOMS: FeatureRoom[] = FEATURE_NAMES.flatMap((feature) =>
   TIER_NAMES.map((tier) => ({ feature, tier })),
 );
-const PLATFORM_EXCLUDED_FEATURES: Record<Platform, readonly FeatureName[]> = {
+const PLATFORM_EXCLUDED_FEATURES = {
   [Platform.GAME]: ["loots"],
   [Platform.WEB_APP]: ["chat", "notifications"],
   [Platform.UNKNOWN]: ["loots"],
-};
+} as const satisfies Record<Platform, readonly FeatureName[]>;
 
 function getApplicableFeatureRooms(platform: Platform): FeatureRoom[] {
-  const excludedFeatures = PLATFORM_EXCLUDED_FEATURES[platform];
+  const excludedFeatures: readonly FeatureName[] =
+    PLATFORM_EXCLUDED_FEATURES[platform];
 
   return ALL_FEATURE_ROOMS.filter(
     ({ feature }) => !excludedFeatures.includes(feature),
@@ -61,6 +66,21 @@ export function buildRoomName(
   tier?: TierName,
 ): string {
   return tier ? `${guildId}:${feature}:${tier}` : `${guildId}:${feature}`;
+}
+
+export function buildUserGuildRoomName(
+  discordId: string,
+  guildId: string,
+): string {
+  return `user:${discordId}:guild:${guildId}`;
+}
+
+export function buildAirTagRoomName(
+  guildId: string,
+  world: string,
+  mapId: number,
+): string {
+  return `air-tags:${guildId}:${world}:${mapId}`;
 }
 
 export function parseRoomName(
@@ -95,9 +115,10 @@ export function calculateUserRooms(
   for (const { guild, roles } of guilds) {
     const guildRooms: string[] = [];
     const hasFullGuildAccess =
-      guild.ownerId === discordId || isOwnerOrAdminFromRoles(roles);
+      guild.ownerId === discordId || isAdministrativeUserFromRoles(roles);
 
     // Everyone gets presence and events rooms
+    guildRooms.push(buildUserGuildRoomName(discordId, guild.id));
     guildRooms.push(buildRoomName(guild.id, "presence"));
     guildRooms.push(buildRoomName(guild.id, "events"));
 
@@ -165,4 +186,15 @@ export function hasFeatureRoomAccess(
 
 export function hasOnlinePlayersAccess(roles: GuildRole[]): boolean {
   return hasPermission(roles, Permission.LOOTLOG_ONLINE_PLAYERS_READ);
+}
+
+export function canViewOnlinePlayers(
+  guildData: UserGuildData,
+  discordId: string,
+): boolean {
+  return (
+    guildData.guild.ownerId === discordId ||
+    isAdministrativeUserFromRoles(guildData.roles) ||
+    hasOnlinePlayersAccess(guildData.roles)
+  );
 }

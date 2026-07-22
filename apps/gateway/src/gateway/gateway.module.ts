@@ -14,6 +14,8 @@ import { PresenceService } from "./services/presence.service";
 import { SubscriptionService } from "./services/subscription.service";
 import { GatewayAuthService } from "./services/gateway-auth.service";
 import { MargonemAccountProofService } from "./services/margonem-account-proof.service";
+import { MapPingService } from "./services/map-ping.service";
+import { AirTagService } from "./services/air-tag.service";
 import { rabbitmqConfig } from "src/config/rabbitmq.config";
 
 @Module({
@@ -35,6 +37,8 @@ import { rabbitmqConfig } from "src/config/rabbitmq.config";
     ActivityService,
     GatewayAuthService,
     MargonemAccountProofService,
+    MapPingService,
+    AirTagService,
   ],
 })
 export class GatewayModule {}

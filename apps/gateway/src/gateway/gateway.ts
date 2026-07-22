@@ -13,6 +13,15 @@ import type { RequestOnlinePlayersPresenceDto } from "src/gateway/dto/request-on
 import type { RequestMemberWebPresenceDto } from "src/gateway/dto/request-member-web-presence.dto";
 import type { PlayerPresenceUpdateDto } from "src/gateway/dto/player-presence-update.dto";
 import type { RequestEventPresenceDto } from "src/gateway/dto/request-event-presence.dto";
+import type {
+  AirTagObservationAck,
+  AirTagObservationBatch,
+  AirTagSubscriptionAck,
+  MapPingAck,
+} from "@lootlog/types";
+import type { MapPingSendDto } from "src/gateway/dto/map-ping-send.dto";
+import type { AirTagObservationBatchDto } from "src/gateway/dto/air-tag-observation.dto";
+import type { AirTagSubscriptionDto } from "src/gateway/dto/air-tag-subscription.dto";
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { GatewayConfig } from "src/gateway/constants/gateway-config.constant";
 import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
@@ -29,6 +38,8 @@ import {
 } from "./services/presence.service";
 import { SubscriptionService } from "./services/subscription.service";
 import { GatewayAuthService } from "./services/gateway-auth.service";
+import { MapPingService } from "./services/map-ping.service";
+import { AirTagService } from "./services/air-tag.service";
 
 @WebSocketGateway({
   pingInterval: GatewayConfig.SOCKET_PING_INTERVAL_MS,
@@ -42,6 +53,8 @@ export class Gateway {
     private presenceService: PresenceService,
     private subscriptionService: SubscriptionService,
     private gatewayAuthService: GatewayAuthService,
+    private mapPingService: MapPingService,
+    private airTagService: AirTagService,
   ) {}
 
   @WebSocketServer()
@@ -155,6 +168,37 @@ export class Gateway {
       discordId,
       data,
       this.server,
+    );
+  }
+
+  @UseFilters(new BaseWsExceptionFilter())
+  @SubscribeMessage(GatewayEvent.MAP_PING_SEND)
+  handleMapPing(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: MapPingSendDto,
+  ): Promise<MapPingAck> {
+    return this.mapPingService.send(this.server, client, data);
+  }
+
+  @UseFilters(new BaseWsExceptionFilter())
+  @SubscribeMessage(GatewayEvent.AIR_TAG_SUBSCRIPTION)
+  handleAirTagSubscription(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: AirTagSubscriptionDto,
+  ): Promise<AirTagSubscriptionAck> {
+    return this.airTagService.updateSubscription(this.server, client, data);
+  }
+
+  @UseFilters(new BaseWsExceptionFilter())
+  @SubscribeMessage(GatewayEvent.AIR_TAG_OBSERVATION)
+  handleAirTagObservation(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: AirTagObservationBatchDto,
+  ): Promise<AirTagObservationAck> {
+    return this.airTagService.publishObservations(
+      this.server,
+      client,
+      data as AirTagObservationBatch,
     );
   }
 

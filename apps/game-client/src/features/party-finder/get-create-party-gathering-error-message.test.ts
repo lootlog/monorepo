@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api-client";
+import { ActivePartyGatheringError } from "./active-party-gathering-error";
 import { getCreatePartyGatheringErrorMessage } from "./get-create-party-gathering-error-message";
 
 const createApiError = (status?: number, data?: unknown) =>
@@ -34,6 +35,30 @@ describe("getCreatePartyGatheringErrorMessage", () => {
         createApiError(400, { message: "Opis jest za długi" }),
       ),
     ).toBe("Opis jest za długi");
+  });
+
+  it("explains an existing organizer room", () => {
+    expect(
+      getCreatePartyGatheringErrorMessage(
+        createApiError(409, { code: "ACTIVE_GATHERING_EXISTS" }),
+      ),
+    ).toBe("Masz już aktywną zbiórkę grupy");
+  });
+
+  it("explains an active gathering detected locally", () => {
+    expect(
+      getCreatePartyGatheringErrorMessage(
+        new ActivePartyGatheringError("room-1"),
+      ),
+    ).toBe("Masz już aktywną zbiórkę grupy");
+  });
+
+  it("explains a character occupied by another room", () => {
+    expect(
+      getCreatePartyGatheringErrorMessage(
+        createApiError(409, { code: "ALREADY_JOINED_ELSEWHERE" }),
+      ),
+    ).toBe("Ta postać jest już w innym Ready Roomie");
   });
 
   it("falls back to the default message for non-API errors", () => {

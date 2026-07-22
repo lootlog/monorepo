@@ -15,9 +15,45 @@ const SYNC_DEBOUNCE_MS = 500;
 type MutateGlobalFn = (payload: UpdateTimerSettingsPayload) => void;
 
 let globalMutateFn: MutateGlobalFn | null = null;
+const globalMutationRegistrations = new Map<symbol, MutateGlobalFn>();
 
-export const registerGlobalSettingsMutation = (mutateFn: MutateGlobalFn) => {
+const selectLatestGlobalMutation = (): void => {
+  const registeredMutations = [...globalMutationRegistrations.values()];
+  globalMutateFn = registeredMutations[registeredMutations.length - 1] ?? null;
+};
+
+export const disposeTimerSettingsSync = (): void => {
+  if (syncTimeoutId) {
+    clearTimeout(syncTimeoutId);
+    syncTimeoutId = null;
+  }
+
+  guildSyncTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+  guildSyncTimeouts.clear();
+  pendingGlobalPayload = {};
+  pendingGuildPayloads.clear();
+  globalMutationRegistrations.clear();
+  globalMutateFn = null;
+};
+
+export const registerGlobalSettingsMutation = (
+  mutateFn: MutateGlobalFn,
+): (() => void) => {
+  const registrationId = Symbol("timer-settings-global-mutation");
+  globalMutationRegistrations.set(registrationId, mutateFn);
   globalMutateFn = mutateFn;
+
+  let registered = true;
+  return () => {
+    if (!registered) return;
+
+    registered = false;
+    globalMutationRegistrations.delete(registrationId);
+    selectLatestGlobalMutation();
+    if (globalMutationRegistrations.size === 0) {
+      disposeTimerSettingsSync();
+    }
+  };
 };
 
 export const debouncedSyncGlobalSettings = (
@@ -30,15 +66,13 @@ export const debouncedSyncGlobalSettings = (
   }
 
   syncTimeoutId = setTimeout(() => {
+    syncTimeoutId = null;
     const payloadToSend = { ...pendingGlobalPayload };
     pendingGlobalPayload = {};
 
-    if (payloadToSend.syncEnabled === false) {
-      console.log("[TimerSync] Sending syncEnabled=false to backend");
-    } else if (payloadToSend.syncEnabled === undefined) {
+    if (payloadToSend.syncEnabled === undefined) {
       const { syncEnabled } = useTimersStore.getState();
       if (!syncEnabled) {
-        console.log("[TimerSync] Sync disabled, skipping global settings sync");
         return;
       }
     }
@@ -69,7 +103,6 @@ export const debouncedSyncGuildSettings = (
 
     const { syncEnabled } = useTimersStore.getState();
     if (!syncEnabled) {
-      console.log("[TimerSync] Sync disabled, skipping guild settings sync");
       guildSyncTimeouts.delete(guildId);
       return;
     }

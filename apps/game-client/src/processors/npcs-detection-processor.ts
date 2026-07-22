@@ -43,6 +43,10 @@ type PendingDetection =
   | {
       accountId: string;
       type: "initial";
+    }
+  | {
+      accountId: string;
+      type: "rescan";
     };
 
 type DetectionProcessingContext = {
@@ -50,11 +54,22 @@ type DetectionProcessingContext = {
   routedGuildIdsByLevel: Map<number, string[]>;
 };
 
+type NpcNotificationIntent = {
+  composedNpc: GameNpcWithLocation;
+  guildIds: string[];
+};
+
+type DetectionIntents = {
+  notificationsByNpcId: Map<number, NpcNotificationIntent>;
+  soundNpcTypes: Set<DetectorNpcType>;
+};
+
 // TODO: Temporary startup workaround. Replace this polling with an explicit
 // NPC-ready signal from the game runtime; retry-based readiness checks are
 // brittle and should not become our long-term pattern.
 const INITIAL_DETECTION_RETRY_DELAY_MS = 100;
 const INITIAL_DETECTION_MAX_RETRIES = 20;
+const MAX_PENDING_DETECTIONS_PER_ACCOUNT = 200;
 
 type InitialDetectionSnapshot = {
   npcs: GameNpc[];
@@ -66,15 +81,16 @@ export class NpcsDetectionProcessor {
     null;
   private initialDetectionRetryAttempts = 0;
 
+  cleanup(): void {
+    this.clearInitialDetectionRetry();
+    NpcsDetectionProcessor.pendingDetections = [];
+  }
+
   handle(event: GameEvent): void {
     const accountId = this.getCurrentAccountId();
     if (!accountId) return;
     if (!this.isDetectorReady(accountId)) {
-      NpcsDetectionProcessor.pendingDetections.push({
-        accountId,
-        type: "event",
-        event,
-      });
+      this.queuePendingEvent(accountId, event);
       return;
     }
 
@@ -88,11 +104,12 @@ export class NpcsDetectionProcessor {
     const detectorReady = this.isDetectorReady(accountId);
 
     if (!detectorReady) {
+      this.keepPendingDetectionsForAccount(accountId);
       const hasQueuedInitialDetection =
         NpcsDetectionProcessor.pendingDetections.some(
           (pendingDetection) =>
             pendingDetection.accountId === accountId &&
-            pendingDetection.type === "initial",
+            pendingDetection.type !== "event",
         );
 
       if (!hasQueuedInitialDetection) {
@@ -133,13 +150,48 @@ export class NpcsDetectionProcessor {
     NpcsDetectionProcessor.pendingDetections = remainingDetections;
 
     pendingDetections.forEach((pendingDetection) => {
-      if (pendingDetection.type === "initial") {
+      if (pendingDetection.type !== "event") {
         this.processInitialDetectionWithRetry();
         return;
       }
 
       this.processEvent(pendingDetection.event);
     });
+  }
+
+  private queuePendingEvent(accountId: string, event: GameEvent): void {
+    this.keepPendingDetectionsForAccount(accountId);
+
+    if (
+      NpcsDetectionProcessor.pendingDetections.some(
+        (pendingDetection) => pendingDetection.type === "rescan",
+      )
+    ) {
+      return;
+    }
+
+    if (
+      NpcsDetectionProcessor.pendingDetections.length >=
+      MAX_PENDING_DETECTIONS_PER_ACCOUNT
+    ) {
+      NpcsDetectionProcessor.pendingDetections = [
+        { accountId, type: "rescan" },
+      ];
+      return;
+    }
+
+    NpcsDetectionProcessor.pendingDetections.push({
+      accountId,
+      type: "event",
+      event,
+    });
+  }
+
+  private keepPendingDetectionsForAccount(accountId: string): void {
+    NpcsDetectionProcessor.pendingDetections =
+      NpcsDetectionProcessor.pendingDetections.filter(
+        (pendingDetection) => pendingDetection.accountId === accountId,
+      );
   }
 
   private processEvent(event: GameEvent): void {
@@ -152,6 +204,7 @@ export class NpcsDetectionProcessor {
     }
 
     const context = this.createDetectionContext();
+    const intents = this.createDetectionIntents();
     const npcs =
       event.npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
         const tpl =
@@ -176,7 +229,7 @@ export class NpcsDetectionProcessor {
 
         const composedNpc = composeNpcFromEvent(npc, tpl, processedSettings);
 
-        this.sendNotification({
+        this.collectDetectionIntents(intents, {
           composedNpc,
           guildIds: processedSettings.guildIds,
           autoSendNotification: processedSettings.autoSendNotification,
@@ -189,10 +242,11 @@ export class NpcsDetectionProcessor {
       }, []) ?? [];
 
     if (npcs.length > 0) {
-      useWindowsStore.getState().setOpen("npc-detector", true);
       useNpcDetectorStore.getState().addNpc(npcs, {
         highlightOnExisting: true,
       });
+      useWindowsStore.getState().setOpen("npc-detector", true);
+      this.dispatchDetectionIntents(intents);
     }
   }
 
@@ -274,6 +328,7 @@ export class NpcsDetectionProcessor {
 
   private processInitialDetection(npcs: GameNpc[]): void {
     const context = this.createDetectionContext();
+    const intents = this.createDetectionIntents();
 
     const calculatedNpcs =
       npcs.reduce<GameNpcWithLocation[]>((acc, npc) => {
@@ -295,7 +350,7 @@ export class NpcsDetectionProcessor {
 
         const composedNpc = composeNpcFromGame(npc, processedSettings);
 
-        this.sendNotification({
+        this.collectDetectionIntents(intents, {
           composedNpc,
           guildIds: processedSettings.guildIds,
           autoSendNotification: processedSettings.autoSendNotification,
@@ -308,8 +363,9 @@ export class NpcsDetectionProcessor {
       }, []) ?? [];
 
     if (calculatedNpcs.length > 0) {
-      useWindowsStore.getState().setOpen("npc-detector", true);
       useNpcDetectorStore.getState().addNpc(calculatedNpcs);
+      useWindowsStore.getState().setOpen("npc-detector", true);
+      this.dispatchDetectionIntents(intents);
     }
   }
 
@@ -363,67 +419,116 @@ export class NpcsDetectionProcessor {
     };
   }
 
-  private sendNotification({
-    composedNpc,
-    guildIds,
-    autoSendNotification,
-    npcType,
-    detectorSettings,
-  }: {
-    composedNpc: GameNpcWithLocation;
-    guildIds: string[];
-    autoSendNotification: boolean;
-    npcType: DetectorNpcType;
-    detectorSettings: DetectorTypeSettings;
-  }): void {
+  private createDetectionIntents(): DetectionIntents {
+    return {
+      notificationsByNpcId: new Map(),
+      soundNpcTypes: new Set(),
+    };
+  }
+
+  private collectDetectionIntents(
+    intents: DetectionIntents,
+    {
+      composedNpc,
+      guildIds,
+      autoSendNotification,
+      npcType,
+      detectorSettings,
+    }: {
+      composedNpc: GameNpcWithLocation;
+      guildIds: string[];
+      autoSendNotification: boolean;
+      npcType: DetectorNpcType;
+      detectorSettings: DetectorTypeSettings;
+    },
+  ): void {
     if (autoSendNotification) {
-      void this.autoSendNpcNotification(composedNpc, guildIds);
+      const existingIntent = intents.notificationsByNpcId.get(composedNpc.id);
+      intents.notificationsByNpcId.set(composedNpc.id, {
+        composedNpc,
+        guildIds: [
+          ...new Set([...(existingIntent?.guildIds ?? []), ...guildIds]),
+        ],
+      });
     }
 
     if (detectorSettings.notifySound) {
-      playSound("detector", npcType);
+      intents.soundNpcTypes.add(npcType);
     }
   }
 
-  private async autoSendNpcNotification(
-    npc: GameNpcWithLocation,
-    guildIds: string[],
-  ): Promise<void> {
-    try {
-      const notificationResponse = await createNotification(
-        buildNpcNotificationPayload({
-          npc,
-          guildIds,
-        }),
-      );
-      const resolvedGuildIds = notificationResponse?.guildIds ?? guildIds;
-
-      useNpcDetectorStore.getState().setNpcState(npc.id, {
-        ...npc,
-        notificationSent: true,
-      });
-
-      try {
-        await sendChatMessage(
-          buildNpcChatMessagePayload({
-            npc,
-            guildIds: resolvedGuildIds,
-            messageType: MessageType.NPC,
-          }),
-        );
-        useWindowsStore.getState().setOpen("npc-detector", true);
-      } catch (error) {
-        console.warn(
-          "[NpcsDetectionProcessor] Failed to send chat message:",
-          error,
-        );
-      }
-    } catch (error) {
-      console.warn(
-        "[NpcsDetectionProcessor] Failed to send notification:",
-        error,
-      );
+  private dispatchDetectionIntents(intents: DetectionIntents): void {
+    for (const npcType of intents.soundNpcTypes) {
+      playSound("detector", npcType);
     }
+
+    if (intents.notificationsByNpcId.size > 0) {
+      void this.autoSendNpcNotifications([
+        ...intents.notificationsByNpcId.values(),
+      ]);
+    }
+  }
+
+  private async autoSendNpcNotifications(
+    intents: readonly NpcNotificationIntent[],
+  ): Promise<void> {
+    const successfulNotifications = (
+      await Promise.all(
+        intents.map(async ({ composedNpc, guildIds }) => {
+          try {
+            const notificationResponse = await createNotification(
+              buildNpcNotificationPayload({
+                npc: composedNpc,
+                guildIds,
+              }),
+            );
+            return {
+              guildIds: notificationResponse?.guildIds ?? guildIds,
+              npc: composedNpc,
+            };
+          } catch (error) {
+            console.warn(
+              "[NpcsDetectionProcessor] Failed to send notification:",
+              error,
+            );
+            return null;
+          }
+        }),
+      )
+    ).filter(
+      (result): result is { guildIds: string[]; npc: GameNpcWithLocation } =>
+        result !== null,
+    );
+
+    if (successfulNotifications.length === 0) {
+      return;
+    }
+
+    useNpcDetectorStore.getState().setNpcStates(
+      successfulNotifications.map(({ npc }) => ({
+        npcId: npc.id,
+        npc: { notificationSent: true },
+      })),
+    );
+
+    await Promise.all(
+      successfulNotifications.map(async ({ npc, guildIds }) => {
+        try {
+          await sendChatMessage(
+            buildNpcChatMessagePayload({
+              npc,
+              guildIds,
+              messageType: MessageType.NPC,
+            }),
+          );
+        } catch (error) {
+          console.warn(
+            "[NpcsDetectionProcessor] Failed to send chat message:",
+            error,
+          );
+        }
+      }),
+    );
   }
 
   private getDetectorSettings(): DetectorSettings {

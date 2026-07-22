@@ -1,15 +1,27 @@
 import { queryClient } from "@/lib/query-client";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
+import { getSoundSettingsControllerGetSettingsQueryKey } from "@/lib/api/generated/main/sound-settings/sound-settings";
+import {
+  disposeSoundPlayback,
+  playSoundRequest,
+} from "@/lib/shared-audio-playback";
 import type { UserSoundSettings } from "@lootlog/types";
 
-type SoundCategory = "notifications" | "detector" | "timers";
+type SoundCategory = "notifications" | "detector" | "timers" | "pings";
+type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
 
-let currentAudio: HTMLAudioElement | null = null;
+export type SoundPlaybackProfile = {
+  playbackRate?: number;
+  preservesPitch?: boolean;
+};
+
+const SOUND_SETTINGS_QUERY_KEY =
+  getSoundSettingsControllerGetSettingsQueryKey();
 
 function getSettings(): UserSoundSettings | undefined {
   const cached = queryClient.getQueryData<
     UserSoundSettings | { data: UserSoundSettings }
-  >(["sound-settings"]);
+  >(SOUND_SETTINGS_QUERY_KEY);
 
   if (cached && "masterVolume" in cached) {
     return cached;
@@ -22,7 +34,11 @@ function getSettings(): UserSoundSettings | undefined {
   return undefined;
 }
 
-export function playSound(category: SoundCategory, key: string): void {
+export function playSound(
+  category: SoundCategory,
+  key: string,
+  profile: SoundPlaybackProfile = {},
+): void {
   const settings = getSettings();
   if (!settings) return;
 
@@ -31,7 +47,10 @@ export function playSound(category: SoundCategory, key: string): void {
 
   if (masterVolume === 0 || categoryVolume === 0) return;
 
-  const soundConfig = settings[`${category}Config`]?.[key];
+  const soundConfig =
+    category === "pings"
+      ? undefined
+      : settings[`${category as ConfigurableSoundCategory}Config`]?.[key];
   const soundUrl =
     soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
       ? DEFAULT_SOUND_URLS[key]
@@ -39,20 +58,11 @@ export function playSound(category: SoundCategory, key: string): void {
 
   if (!soundUrl) return;
 
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-
-  const audio = new Audio(soundUrl);
-  audio.volume = categoryVolume * masterVolume;
-  currentAudio = audio;
-
-  audio.play().catch(() => {});
-
-  audio.onended = () => {
-    if (currentAudio === audio) {
-      currentAudio = null;
-    }
-  };
+  playSoundRequest({
+    url: soundUrl,
+    volume: categoryVolume * masterVolume,
+    ...profile,
+  });
 }
+
+export { disposeSoundPlayback };

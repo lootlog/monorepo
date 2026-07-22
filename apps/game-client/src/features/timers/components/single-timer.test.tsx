@@ -57,7 +57,8 @@ vi.mock("@/components/ui/tile", () => ({
 }));
 
 vi.mock("@/store/timers.store", () => ({
-  useTimersStore: () => timersStoreState,
+  useTimersStore: (selector: (state: typeof timersStoreState) => unknown) =>
+    selector(timersStoreState),
 }));
 
 vi.mock("../hooks/use-timer-actions", () => ({
@@ -196,6 +197,7 @@ describe("SingleTimer", () => {
       <SingleTimer
         guildIds={["guild-1", "guild-2"]}
         guildNamesById={{ "guild-1": "Alpha" }}
+        guildPermissions={guildPermissions}
         timer={createTimer()}
         settingsKey="guild-1"
       />,
@@ -273,6 +275,7 @@ describe("SingleTimer", () => {
       <SingleTimer
         guildIds={["guild-1"]}
         guildNamesById={{}}
+        guildPermissions={guildPermissions}
         timer={createTimer()}
         settingsKey="guild-1"
         isHidden

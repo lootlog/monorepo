@@ -6,14 +6,14 @@ import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-accoun
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { DetectorRoutingSettingsTabForm } from "./detector-routing-settings-tab-form";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import * as UsersModule from "@/lib/api/generated/main/users/users";
 
 const mockMutate = vi.fn();
 
 vi.mock("@/lib/api/generated/main/users/users", async () => {
-  const actual = await vi.importActual<
-    typeof import("@/lib/api/generated/main/users/users")
-  >("@/lib/api/generated/main/users/users");
+  const actual = await vi.importActual<typeof UsersModule>(
+    "@/lib/api/generated/main/users/users",
+  );
 
   return {
     ...actual,
@@ -96,11 +96,13 @@ describe("DetectorRoutingSettingsTabForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(useUsersControllerGetCurrentUserAccessibleGuilds).mockReturnValue(
-      {
-        data: guilds,
-      } as ReturnType<typeof useUsersControllerGetCurrentUserAccessibleGuilds>,
-    );
+    vi.mocked(
+      UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds,
+    ).mockReturnValue({
+      data: guilds,
+    } as ReturnType<
+      typeof UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds
+    >);
     vi.mocked(useUpdateUserGameAccountPreferences).mockReturnValue({
       mutate: mockMutate,
     } as unknown as ReturnType<typeof useUpdateUserGameAccountPreferences>);

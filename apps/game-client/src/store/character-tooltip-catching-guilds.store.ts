@@ -1,18 +1,27 @@
 import type { Other } from "@lootlog/margonem/others";
 import { create } from "zustand";
-import type { UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem } from "@/lib/api/generated/main/model";
+import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem } from "@/lib/api/generated/main/model";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 
 export type CharacterTooltipCatchingGuildsStatus =
   | "idle"
   | "loading"
   | "success"
-  | "error";
+  | "error"
+  | "unavailable";
 
 export type CharacterTooltipCatchingGuildsEntry = {
-  guilds: UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem[];
+  fetchedAt?: number;
+  guilds: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem[];
+  lastAccessedAt: number;
+  requestKey?: string;
   status: CharacterTooltipCatchingGuildsStatus;
 };
+
+export const CHARACTER_TOOLTIP_ENTRY_CAP = 500;
+export const CHARACTER_TOOLTIP_ENTRY_TTL_MS = 5 * 60 * 1000;
+
+const visibleEntryKeys = new Set<string>();
 
 export type CharacterTooltipCatchingGuildsTarget = {
   accountId: string;
@@ -20,6 +29,7 @@ export type CharacterTooltipCatchingGuildsTarget = {
   key: string;
   ownerName?: string;
   playerName: string;
+  requestKey: string;
   userId: string;
 };
 
@@ -31,15 +41,26 @@ type CharacterTooltipCatchingGuildsState = {
   clear: () => void;
   clearActiveOther: () => void;
   getEntry: (key: string) => CharacterTooltipCatchingGuildsEntry | undefined;
+  pruneEntries: (visibleKeys: string[], now: number) => void;
   setActiveOther: (other: Other) => void;
-  setError: (key: string) => void;
-  setLoading: (key: string) => void;
+  setError: (target: CharacterTooltipCatchingGuildsTarget) => void;
+  setIdle: (target: CharacterTooltipCatchingGuildsTarget) => void;
+  setLoading: (target: CharacterTooltipCatchingGuildsTarget) => void;
   setShiftPressed: (isShiftPressed: boolean) => void;
   setSuccess: (
-    key: string,
-    guilds: UserLootlogPlayerCatchingGuildsResponseDtoOutputGuildsItem[],
+    target: CharacterTooltipCatchingGuildsTarget,
+    guilds: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem[],
+    fetchedAt: number,
   ) => void;
+  setUnavailable: (key: string) => void;
 };
+
+export function getCharacterTooltipCatchingGuildsCharacterKey(
+  accountId: string,
+  characterId: string,
+): string {
+  return `${accountId}:${characterId}`;
+}
 
 export function getOtherCatchingGuildsTarget(
   other: Other,
@@ -61,11 +82,60 @@ export function getOtherCatchingGuildsTarget(
   return {
     accountId,
     characterId,
-    key: `${owner.userId}:${accountId}:${characterId}`,
+    key: getCharacterTooltipCatchingGuildsCharacterKey(accountId, characterId),
     ownerName: owner.guildMemberName ?? owner.userId,
     playerName: owner.playerName,
+    requestKey: `${owner.userId}:${accountId}:${characterId}`,
     userId: owner.userId,
   };
+}
+
+function canApplyTargetEntry(
+  entry: CharacterTooltipCatchingGuildsEntry | undefined,
+  target: CharacterTooltipCatchingGuildsTarget,
+): boolean {
+  return !entry || entry.requestKey === target.requestKey;
+}
+
+function withEntryRetention(
+  entriesByKey: Record<string, CharacterTooltipCatchingGuildsEntry | undefined>,
+  now: number,
+  activeKey?: string,
+): Record<string, CharacterTooltipCatchingGuildsEntry | undefined> {
+  const protectedKeys = new Set(visibleEntryKeys);
+  if (activeKey) protectedKeys.add(activeKey);
+
+  const protectedEntries: [string, CharacterTooltipCatchingGuildsEntry][] = [];
+  const inactiveEntries: [string, CharacterTooltipCatchingGuildsEntry][] = [];
+  let definedEntryCount = 0;
+
+  for (const [key, entry] of Object.entries(entriesByKey)) {
+    if (!entry) continue;
+    definedEntryCount += 1;
+
+    if (protectedKeys.has(key)) {
+      protectedEntries.push([key, entry]);
+    } else if (now - entry.lastAccessedAt <= CHARACTER_TOOLTIP_ENTRY_TTL_MS) {
+      inactiveEntries.push([key, entry]);
+    }
+  }
+
+  if (
+    definedEntryCount === Object.keys(entriesByKey).length &&
+    protectedEntries.length + inactiveEntries.length === definedEntryCount &&
+    inactiveEntries.length <= CHARACTER_TOOLTIP_ENTRY_CAP
+  ) {
+    return entriesByKey;
+  }
+
+  inactiveEntries.sort(([, firstEntry], [, secondEntry]) => {
+    return secondEntry.lastAccessedAt - firstEntry.lastAccessedAt;
+  });
+
+  return Object.fromEntries([
+    ...protectedEntries,
+    ...inactiveEntries.slice(0, CHARACTER_TOOLTIP_ENTRY_CAP),
+  ]);
 }
 
 export const useCharacterTooltipCatchingGuildsStore =
@@ -74,13 +144,15 @@ export const useCharacterTooltipCatchingGuildsStore =
     activeTarget: null,
     entriesByKey: {},
     isShiftPressed: false,
-    clear: () =>
+    clear: () => {
+      visibleEntryKeys.clear();
       set({
         activeOther: null,
         activeTarget: null,
         entriesByKey: {},
         isShiftPressed: false,
-      }),
+      });
+    },
     clearActiveOther: () =>
       set((state) => {
         if (!state.activeOther && !state.activeTarget) return state;
@@ -88,6 +160,30 @@ export const useCharacterTooltipCatchingGuildsStore =
         return { activeOther: null, activeTarget: null };
       }),
     getEntry: (key) => get().entriesByKey[key],
+    pruneEntries: (visibleKeys, now) => {
+      visibleEntryKeys.clear();
+      for (const key of visibleKeys) {
+        visibleEntryKeys.add(key);
+      }
+
+      set((state) => {
+        const touchedEntriesByKey = { ...state.entriesByKey };
+        for (const key of visibleEntryKeys) {
+          const entry = touchedEntriesByKey[key];
+          if (entry) {
+            touchedEntriesByKey[key] = { ...entry, lastAccessedAt: now };
+          }
+        }
+
+        return {
+          entriesByKey: withEntryRetention(
+            touchedEntriesByKey,
+            now,
+            state.activeTarget?.key,
+          ),
+        };
+      });
+    },
     setActiveOther: (other) =>
       set((state) => {
         const activeTarget = getOtherCatchingGuildsTarget(other);
@@ -100,40 +196,114 @@ export const useCharacterTooltipCatchingGuildsStore =
 
         return { activeOther: other, activeTarget };
       }),
-    setError: (key) =>
+    setError: (target) =>
+      set((state) => {
+        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
+          return state;
+        }
+
+        return {
+          entriesByKey: withEntryRetention(
+            {
+              ...state.entriesByKey,
+              [target.key]: {
+                guilds: [],
+                lastAccessedAt: Date.now(),
+                requestKey: target.requestKey,
+                status: "error",
+              },
+            },
+            Date.now(),
+            state.activeTarget?.key,
+          ),
+        };
+      }),
+    setIdle: (target) =>
       set((state) => ({
-        entriesByKey: {
-          ...state.entriesByKey,
-          [key]: {
-            guilds: [],
-            status: "error",
+        entriesByKey: withEntryRetention(
+          {
+            ...state.entriesByKey,
+            [target.key]: {
+              guilds: [],
+              lastAccessedAt: Date.now(),
+              requestKey: target.requestKey,
+              status: "idle",
+            },
           },
-        },
+          Date.now(),
+          state.activeTarget?.key,
+        ),
       })),
-    setLoading: (key) =>
-      set((state) => ({
-        entriesByKey: {
-          ...state.entriesByKey,
-          [key]: {
-            guilds: state.entriesByKey[key]?.guilds ?? [],
-            status: "loading",
-          },
-        },
-      })),
+    setLoading: (target) =>
+      set((state) => {
+        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
+          return state;
+        }
+
+        return {
+          entriesByKey: withEntryRetention(
+            {
+              ...state.entriesByKey,
+              [target.key]: {
+                guilds: state.entriesByKey[target.key]?.guilds ?? [],
+                lastAccessedAt: Date.now(),
+                requestKey: target.requestKey,
+                status: "loading",
+              },
+            },
+            Date.now(),
+            state.activeTarget?.key,
+          ),
+        };
+      }),
     setShiftPressed: (isShiftPressed) =>
       set((state) => {
         if (state.isShiftPressed === isShiftPressed) return state;
 
         return { isShiftPressed };
       }),
-    setSuccess: (key, guilds) =>
-      set((state) => ({
-        entriesByKey: {
-          ...state.entriesByKey,
-          [key]: {
-            guilds,
-            status: "success",
-          },
-        },
-      })),
+    setSuccess: (target, guilds, fetchedAt) =>
+      set((state) => {
+        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
+          return state;
+        }
+
+        return {
+          entriesByKey: withEntryRetention(
+            {
+              ...state.entriesByKey,
+              [target.key]: {
+                fetchedAt,
+                guilds,
+                lastAccessedAt: Date.now(),
+                requestKey: target.requestKey,
+                status: "success",
+              },
+            },
+            Date.now(),
+            state.activeTarget?.key,
+          ),
+        };
+      }),
+    setUnavailable: (key) =>
+      set((state) => {
+        if (state.entriesByKey[key]?.status === "unavailable") {
+          return state;
+        }
+
+        return {
+          entriesByKey: withEntryRetention(
+            {
+              ...state.entriesByKey,
+              [key]: {
+                guilds: [],
+                lastAccessedAt: Date.now(),
+                status: "unavailable",
+              },
+            },
+            Date.now(),
+            state.activeTarget?.key,
+          ),
+        };
+      }),
   }));

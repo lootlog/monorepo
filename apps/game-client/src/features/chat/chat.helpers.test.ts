@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
+import { CHAT_MESSAGE_LIMIT } from "@lootlog/types";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
 import {
   deduplicateChatMessages,
@@ -9,6 +10,7 @@ import {
   getMessagesForSelectedGuild,
   getNextSelectedGuildId,
   hasVisibleChatMessages,
+  mergeChatMessageHistories,
   removeChatMessage,
   updateChatMessage,
   upsertChatMessage,
@@ -37,6 +39,74 @@ const makeChatMessage = (
 });
 
 describe("chat helpers", () => {
+  it("merges a reconnect snapshot without duplicating IDs or reordering updates", () => {
+    const cachedMessages = [
+      makeChatMessage({ id: "message-1" }),
+      makeChatMessage({
+        id: "message-3",
+        timestamp: "2026-01-01T10:03:00.000Z",
+      }),
+    ];
+    const serverMessages = [
+      makeChatMessage({ id: "message-1", message: "edited on server" }),
+      makeChatMessage({
+        id: "message-2",
+        timestamp: "2026-01-01T10:02:00.000Z",
+      }),
+    ];
+
+    const mergedMessages = mergeChatMessageHistories(
+      cachedMessages,
+      serverMessages,
+    );
+
+    expect(mergedMessages.map((message) => message.id)).toEqual([
+      "message-1",
+      "message-2",
+      "message-3",
+    ]);
+    expect(mergedMessages[0]?.message).toBe("edited on server");
+  });
+
+  it("retains only the newest 300 messages after a reconnect merge", () => {
+    const serverMessages = Array.from(
+      { length: CHAT_MESSAGE_LIMIT },
+      (_, index) =>
+        makeChatMessage({
+          id: `message-${index}`,
+          timestamp: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
+        }),
+    );
+    const socketMessage = makeChatMessage({
+      id: `message-${CHAT_MESSAGE_LIMIT}`,
+      timestamp: new Date(
+        Date.UTC(2026, 0, 1, 0, CHAT_MESSAGE_LIMIT),
+      ).toISOString(),
+    });
+
+    const mergedMessages = mergeChatMessageHistories(
+      [socketMessage],
+      serverMessages,
+    );
+
+    expect(mergedMessages).toHaveLength(CHAT_MESSAGE_LIMIT);
+    expect(mergedMessages[0]?.id).toBe("message-1");
+    expect(mergedMessages.at(-1)).toBe(socketMessage);
+  });
+
+  it("keeps only the newest server-sized chat history", () => {
+    const messages = Array.from({ length: CHAT_MESSAGE_LIMIT }, (_, index) =>
+      makeChatMessage({ id: `message-${index}` }),
+    );
+    const nextMessage = makeChatMessage({ id: "message-new" });
+
+    const updatedMessages = upsertChatMessage(messages, nextMessage);
+
+    expect(updatedMessages).toHaveLength(CHAT_MESSAGE_LIMIT);
+    expect(updatedMessages[0]?.id).toBe("message-1");
+    expect(updatedMessages.at(-1)).toBe(nextMessage);
+  });
+
   it("returns the first guild id only when selection is missing", () => {
     expect(
       getNextSelectedGuildId("", [{ id: "guild-1" }, { id: "guild-2" }]),

@@ -2,17 +2,24 @@ import type {
   ChatMessageResponseDtoOutput,
   MemberSummaryResponseDtoOutput,
 } from "@/lib/api/generated/main/model";
+import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { useMessagingControllerVolunteer } from "@/lib/api/generated/main/messaging/messaging";
+import { usePartyReadyRoomControllerApply } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
 import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Game } from "@/lib/game";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
-import { format } from "date-fns";
+import { format } from "@/utils/local-date";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  selectReadyRoomForCharacter,
+  usePartyFinderStore,
+} from "@/store/party-finder.store";
+import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
+import { ChatCharacterTooltip } from "./chat-character-tooltip";
 
 type PartyGatheringCardProps = {
   message: ChatMessageResponseDtoOutput;
@@ -31,15 +38,22 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
 }) => {
   const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
-  const { mutate: volunteer, isPending } = useMessagingControllerVolunteer();
+  const applyToReadyRoom = usePartyReadyRoomControllerApply();
+  const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
+  const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
+  const currentReadyRoom = usePartyFinderStore((state) =>
+    selectReadyRoomForCharacter(state, currentCharacterIdentity),
+  );
   const senderName =
     member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
 
   const heroLvl = Game.hero.lvl;
-  const isOwnMessage = message.characterData.nick === Game.hero.nick;
-  const isEnded = !message.partyGathering;
+  const isOrganizingCharacter =
+    String(message.characterData.acc) === String(Game.hero.account) &&
+    String(message.characterData.id) === String(Game.hero.id);
+  const partyGathering = message.partyGathering;
 
-  if (isEnded) {
+  if (!partyGathering) {
     return (
       <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-center ll:gap-1 ll:text-white ll:text-xs ll:select-text ll:cursor-text">
         <span
@@ -62,12 +76,14 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
               [{guildName}]{" "}
             </span>
           )}
-          <span
-            className="ll:font-bold ll:select-text"
-            style={{ color: `#${memberColor}` }}
-          >
-            {senderName}:
-          </span>{" "}
+          <ChatCharacterTooltip character={message.characterData}>
+            <span
+              className="ll:font-bold ll:select-text"
+              style={{ color: `#${memberColor}` }}
+            >
+              {senderName}:
+            </span>
+          </ChatCharacterTooltip>{" "}
           <span
             className="ll:font-bold ll:select-text"
             style={{ color: "#9CA3AF" }}
@@ -79,19 +95,23 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
     );
   }
 
-  const { partyGathering } = message;
-
   const handleVolunteer = () => {
-    volunteer({
-      pathParams: {
-        notificationId: partyGathering!.notificationId,
+    applyToReadyRoom.mutate(
+      {
+        pathParams: {
+          notificationId: partyGathering.notificationId,
+        },
+        data: {
+          world: partyGathering.world,
+          character: buildCurrentCharacterPayload(),
+        },
       },
-      data: {
-        targetDiscordId: partyGathering!.discordId,
-        world: partyGathering!.world,
-        character: buildCurrentCharacterPayload(),
+      {
+        onSuccess: (projection) => {
+          mergeProjection(projection as unknown as PartyReadyRoomProjection);
+        },
       },
-    });
+    );
   };
 
   return (
@@ -116,12 +136,14 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             [{guildName}]{" "}
           </span>
         )}
-        <span
-          className="ll:font-bold ll:select-text"
-          style={{ color: `#${memberColor}` }}
-        >
-          {senderName}:
-        </span>{" "}
+        <ChatCharacterTooltip character={message.characterData}>
+          <span
+            className="ll:font-bold ll:select-text"
+            style={{ color: `#${memberColor}` }}
+          >
+            {senderName}:
+          </span>
+        </ChatCharacterTooltip>{" "}
         <span
           className="ll:font-bold ll:select-text"
           style={{ color: "#FF8C00" }}
@@ -153,7 +175,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
         )}
         {partyGathering?.description && (
           <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[11px] ll:text-gray-300 ll:italic">
-            "{partyGathering.description}"
+            &quot;{partyGathering.description}&quot;
           </p>
         )}
         {(partyGathering?.minLvl ?? partyGathering?.maxLvl) && (
@@ -164,19 +186,28 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             })}
           </p>
         )}
-        {!isOwnMessage &&
+        {!isOrganizingCharacter &&
           (() => {
             const minLvl = partyGathering?.minLvl ?? 1;
             const maxLvl = partyGathering?.maxLvl ?? 500;
             const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
+            const isJoinedToThisGathering =
+              currentReadyRoom?.viewer === "PARTICIPANT" &&
+              currentReadyRoom.notificationId === partyGathering.notificationId;
+            const isRegisteredElsewhere =
+              currentReadyRoom !== null && !isJoinedToThisGathering;
 
             return (
               <Button
                 onClick={handleVolunteer}
-                disabled={isPending || !meetsLevelReq}
+                disabled={
+                  applyToReadyRoom.isPending ||
+                  !meetsLevelReq ||
+                  currentReadyRoom !== null
+                }
                 className="ll:box-border ll:w-full ll:min-w-0 ll:max-w-full ll:mt-0.5 ll:text-[11px] ll:h-6 ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
               >
-                {isPending ? (
+                {applyToReadyRoom.isPending ? (
                   <>
                     <Loader2 className="ll:w-3 ll:h-3 ll:animate-spin ll:mr-1" />
                     {t("partyGathering.volunteering")}
@@ -186,6 +217,10 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
                     min: minLvl,
                     max: maxLvl,
                   })
+                ) : isJoinedToThisGathering ? (
+                  t("partyGathering.joined")
+                ) : isRegisteredElsewhere ? (
+                  t("partyGathering.joinedElsewhere")
                 ) : (
                   t("partyGathering.joinParty")
                 )}

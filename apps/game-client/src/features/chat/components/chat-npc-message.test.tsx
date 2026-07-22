@@ -11,6 +11,24 @@ vi.mock("@/components/npc-tile", () => ({
   NpcTile: ({ npc }: { npc: { nick: string } }) => <div>{npc.nick} tile</div>,
 }));
 
+vi.mock("@/components/character-tile", () => ({
+  CharacterTile: ({ character }: { character: { nick: string } }) => (
+    <div>{character.nick} character tile</div>
+  ),
+}));
+
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="character-tooltip-content">{children}</div>
+  ),
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
 vi.mock("@/hooks/discord/use-member-color", () => ({
   useMemberColor: () => "abcdef",
 }));
@@ -133,14 +151,32 @@ describe("ChatNpcMessage", () => {
     expect(screen.getByText("Hero:")).toBeInTheDocument();
   });
 
+  it("shows the sender character tooltip", () => {
+    render(
+      <ChatNpcMessage
+        all={false}
+        guildName="Guild"
+        message={makeChatMessage()}
+        member={member}
+      />,
+    );
+
+    expect(screen.getByTestId("character-tooltip-content")).toHaveTextContent(
+      "Hero (100w)",
+    );
+  });
+
   it("omits the location row when npc location is empty", () => {
+    const npc = makeChatMessage().npc;
+    if (!npc) throw new Error("Expected NPC fixture data");
+
     render(
       <ChatNpcMessage
         all={false}
         guildName="Guild"
         message={makeChatMessage({
           npc: {
-            ...makeChatMessage().npc!,
+            ...npc,
             location: "   ",
             x: undefined,
             y: undefined,

@@ -1,7 +1,22 @@
 import type { Other } from "@lootlog/margonem/others";
+import type { CharacterTooltipCatchingGuildsEntry } from "@/store/character-tooltip-catching-guilds.store";
 
 export const LOOTLOG_OTHER_GLOW_BLUE = "#3ed1de";
 export const LOOTLOG_OTHER_GLOW_RED_ORANGE = "#ff5a2f";
+export const LOOTLOG_OTHER_GLOW_UNKNOWN = "#e879f9";
+
+export function getLootlogOtherGlowColor(
+  entry: CharacterTooltipCatchingGuildsEntry | undefined,
+  selectedGuildId: string,
+): string {
+  if (entry?.status !== "success") {
+    return LOOTLOG_OTHER_GLOW_UNKNOWN;
+  }
+
+  return entry.guilds.some((guild) => guild.id === selectedGuildId)
+    ? LOOTLOG_OTHER_GLOW_BLUE
+    : LOOTLOG_OTHER_GLOW_RED_ORANGE;
+}
 
 type RuntimeOther = Other & {
   d: Other["d"] & {
@@ -366,11 +381,13 @@ class LootlogOtherGlowManager {
     if (this.originalOtherUpdates.has(other) || !other.update) return;
 
     const originalUpdate = other.update;
-    const manager = this;
+    const updateGlowForOther = (updatedOther: RuntimeOther) => {
+      this.updateGlowForOther(updatedOther);
+    };
     this.originalOtherUpdates.set(other, originalUpdate);
     other.update = function lootlogOtherUpdatePatch(...args) {
       const result = originalUpdate.apply(this, args);
-      manager.updateGlowForOther(this);
+      updateGlowForOther(this);
 
       return result;
     };

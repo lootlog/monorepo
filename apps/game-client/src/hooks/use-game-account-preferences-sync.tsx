@@ -119,8 +119,12 @@ export const useGameAccountPreferencesSync = () => {
           accountId,
           notifications: seededNotifications,
           detector: seededDetector,
+          pings: data.pings,
+          airTags: data.airTags,
           hasStoredNotifications: true,
           hasStoredDetector: true,
+          hasStoredPings: data.hasStoredPings,
+          hasStoredAirTags: data.hasStoredAirTags,
           hasStoredPreferences: true,
         },
       );

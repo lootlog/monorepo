@@ -5,7 +5,7 @@ import {
   getShowEventOverviewQueryOptions,
 } from "@/lib/api/generated/main/events/events";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
@@ -36,7 +36,7 @@ export const Route = createFileRoute(
           rankings,
         };
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
 });

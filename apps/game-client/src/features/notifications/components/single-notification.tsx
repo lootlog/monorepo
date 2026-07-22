@@ -7,42 +7,35 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
-import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
-import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { useMessagingControllerVolunteer } from "@/lib/api/generated/main/messaging/messaging";
-import {
-  buildCurrentCharacterPayload,
-  mapGuildMembersByUserId,
-} from "@/lib/api/generated-helpers";
 import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
-import {
-  type MentionNotification,
-  type PartyGatheringNotification,
-  type NotificationWithServers,
-  type StoredNotification,
-  useNotificationsStore,
+import type {
+  MentionNotification,
+  NotificationAutoHideState,
+  PartyGatheringNotification,
+  NotificationWithServers,
+  StoredNotification,
 } from "@/store/notifications.store";
-import { useSettingsStore } from "@/store/settings.store";
-import { useWindowsStore } from "@/store/windows.store";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import {
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
-import { format } from "date-fns";
+import { format } from "@/utils/local-date";
 import { LoaderCircle, Swords, XIcon } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
 import { useTranslation } from "react-i18next";
-import {
-  getNotificationSettingsKey,
-  isNotificationSettingsKey,
-} from "@/features/notifications/utils/get-notification-settings-key";
+import { getNotificationSettingsKey } from "@/features/notifications/utils/get-notification-settings-key";
+import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type {
+  NotificationMutes,
+  NotificationMutesPatch,
+  NotificationSettings,
+} from "@lootlog/types";
 
 const AUTO_HIDE_RING_PATH =
   "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";
@@ -54,7 +47,20 @@ const AUTO_HIDE_PROGRESS_STROKE_OPACITY = 0.95;
 
 type SingleNotificationProps = {
   guildNamesById: Record<string, string>;
+  guildMember?: MemberSummaryResponseDtoOutput;
   notification: StoredNotification;
+  autoHideState?: NotificationAutoHideState;
+  categorySettings?: NotificationSettings;
+  animationEffectsEnabled: boolean;
+  isJoiningReadyRoom: boolean;
+  isMutesReady: boolean;
+  isMutePending: boolean;
+  mutes: NotificationMutes;
+  onJoinReadyRoom: (notification: StoredNotification) => void;
+  onPauseAutoHide: (listKey: string) => void;
+  onRemoveNotification: (notificationId: string) => void;
+  onResumeAutoHide: (listKey: string) => void;
+  onUpdateMutes: (mutes: NotificationMutesPatch) => void;
   showCloseButton?: boolean;
 };
 
@@ -142,49 +148,25 @@ const renderNotificationContent = ({
 };
 
 export const SingleNotification: FC<SingleNotificationProps> = ({
+  animationEffectsEnabled,
+  autoHideState,
+  categorySettings,
+  guildMember,
   guildNamesById,
+  isJoiningReadyRoom,
+  isMutesReady,
+  isMutePending,
+  mutes,
   notification,
+  onJoinReadyRoom,
+  onPauseAutoHide,
+  onRemoveNotification,
+  onResumeAutoHide,
+  onUpdateMutes,
   showCloseButton = false,
 }) => {
   const { t } = useTranslation("notifications");
-  const removeNotification = useNotificationsStore(
-    (state) => state.removeNotification,
-  );
-  const autoHideState = useNotificationsStore(
-    (state) => state.notificationAutoHideByListKey[notification.listKey],
-  );
-  const setNotificationAutoHide = useNotificationsStore(
-    (state) => state.setNotificationAutoHide,
-  );
-  const pauseNotificationAutoHide = useNotificationsStore(
-    (state) => state.pauseNotificationAutoHide,
-  );
-  const resumeNotificationAutoHide = useNotificationsStore(
-    (state) => state.resumeNotificationAutoHide,
-  );
-  const clearNotificationAutoHide = useNotificationsStore(
-    (state) => state.clearNotificationAutoHide,
-  );
-  const clearNotifications = useNotificationsStore(
-    (state) => state.clearNotifications,
-  );
-  const animationEffectsEnabled = useSettingsStore(
-    (state) => state.animationEffectsEnabled,
-  );
-  const setOpen = useWindowsStore((state) => state.setOpen);
-  const { settings } = useCurrentGameAccountNotificationSettings();
-  const { data: membersData } = useGuildMembersSummary({
-    guildId: notification.guildId,
-  });
-  const members = mapGuildMembersByUserId(membersData);
-  const guildMember = members[notification.discordId];
-  const volunteer = useMessagingControllerVolunteer();
   const autoHidePathRef = useRef<SVGPathElement>(null);
-
-  useMemberInvalidation(
-    notification.guildId,
-    !guildMember ? notification.discordId : undefined,
-  );
 
   const avatarUrl = getDiscordAvatarUrl(
     guildMember?.userId,
@@ -198,9 +180,6 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       : null;
 
   const key = getNotificationSettingsKey(notification);
-  const categorySettings = isNotificationSettingsKey(key)
-    ? settings[key]
-    : undefined;
   const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
   const autoHideDurationMs = autoHideTimeout > 0 ? autoHideTimeout * 1000 : 0;
 
@@ -221,21 +200,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
 
   const handleRemoveNotification = () =>
-    removeNotification(notification.notificationId);
+    onRemoveNotification(notification.notificationId);
 
-  const handleVolunteer = () => {
-    volunteer.mutate({
-      pathParams: {
-        notificationId: notification.notificationId,
-      },
-      data: {
-        targetDiscordId: notification.discordId,
-        world: notification.world,
-        character: buildCurrentCharacterPayload(),
-      },
-    });
-    setOpen("notifications", false);
-    clearNotifications();
+  const handleJoinReadyRoom = () => {
+    onJoinReadyRoom(notification);
   };
 
   const showPartyGatheringAction = isPartyGathering;
@@ -248,21 +216,6 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   if (showPartyGatheringAction) {
     actionLabel = t("actions.join");
   }
-
-  useEffect(() => {
-    if (autoHideDurationMs <= 0) {
-      clearNotificationAutoHide(notification.listKey);
-      return;
-    }
-
-    setNotificationAutoHide(notification.listKey, autoHideDurationMs);
-  }, [
-    autoHideDurationMs,
-    clearNotificationAutoHide,
-    notification.listKey,
-    notification.receivedAtMs,
-    setNotificationAutoHide,
-  ]);
 
   useEffect(() => {
     const path = autoHidePathRef.current;
@@ -332,11 +285,11 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const handleMuteMenuOpenChange = (open: boolean) => {
     if (open) {
-      pauseNotificationAutoHide(notification.listKey);
+      onPauseAutoHide(notification.listKey);
       return;
     }
 
-    resumeNotificationAutoHide(notification.listKey);
+    onResumeAutoHide(notification.listKey);
   };
 
   return (
@@ -411,12 +364,12 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
                   variant="ghost"
                   aria-label={t("actions.joinAria")}
                   className="ll:size-7 ll:px-0"
-                  onClick={handleVolunteer}
+                  onClick={handleJoinReadyRoom}
                   disabled={
-                    volunteer.isPending || (isPartyGathering && !meetsLevelReq)
+                    isJoiningReadyRoom || (isPartyGathering && !meetsLevelReq)
                   }
                 >
-                  {volunteer.isPending ? (
+                  {isJoiningReadyRoom ? (
                     <LoaderCircle size={12} className="ll:animate-spin" />
                   ) : (
                     <Swords size={12} />
@@ -433,10 +386,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
                   variant="ghost"
                   aria-label={t("actions.joinAria")}
                   className="ll:size-7 ll:px-0"
-                  onClick={handleVolunteer}
-                  disabled={volunteer.isPending}
+                  onClick={handleJoinReadyRoom}
+                  disabled={isJoiningReadyRoom}
                 >
-                  {volunteer.isPending ? (
+                  {isJoiningReadyRoom ? (
                     <LoaderCircle size={12} className="ll:animate-spin" />
                   ) : (
                     <Swords size={12} />
@@ -451,6 +404,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           <NotificationMuteMenu
             notification={notification}
             senderName={senderName}
+            isReady={isMutesReady}
+            isPending={isMutePending}
+            mutes={mutes}
+            onUpdateMutes={onUpdateMutes}
             onOpenChange={handleMuteMenuOpenChange}
             onMuted={handleRemoveNotification}
           />

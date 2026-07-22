@@ -1,5 +1,5 @@
 import { GuildSwitcher } from "@/components/guild-switcher";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { NativeScrollArea } from "@/components/ui/native-scroll-area";
 import { WorldSelector } from "@/components/world-selector";
 import { OnlinePlayersAccountListEntry } from "@/features/online-players/components/online-players-account-list-entry";
 import { OnlinePlayersFilters } from "@/features/online-players/components/online-players-filters";
@@ -189,9 +189,9 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
             />
           </>
         )}
-        <ScrollArea className="ll:flex-1 ll:box-border ll:mt-1" type="hover">
+        <NativeScrollArea className="ll:flex-1 ll:box-border ll:mt-1">
           {listContent}
-        </ScrollArea>
+        </NativeScrollArea>
       </div>
     </div>
   );
