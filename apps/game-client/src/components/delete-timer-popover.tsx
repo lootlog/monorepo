@@ -85,7 +85,22 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen, eventDetails) => {
+        if (
+          !nextOpen &&
+          eventDetails.reason === "outside-press" &&
+          eventDetails.event.target instanceof Element &&
+          eventDetails.event.target.closest('[role="menu"]')
+        ) {
+          eventDetails.cancel();
+          return;
+        }
+
+        setOpen(nextOpen);
+      }}
+    >
       <PopoverTrigger asChild>
         <ContextMenuItem
           onSelect={(e) => {
@@ -101,16 +116,8 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
         className="ll:w-64 ll:p-2"
         side="right"
         align="start"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onCloseAutoFocus={(e) => e.preventDefault()}
-        onInteractOutside={(e) => {
-          if (
-            e.target instanceof Element &&
-            e.target.closest('[role="menu"]')
-          ) {
-            e.preventDefault();
-          }
-        }}
+        initialFocus={false}
+        finalFocus={false}
       >
         <div className="ll:flex ll:flex-col ll:gap-1">
           <p className="ll:text-xs ll:font-semibold ll:mb-1 ll:text-gray-400">

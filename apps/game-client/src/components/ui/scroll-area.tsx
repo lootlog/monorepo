@@ -4,7 +4,8 @@ import {
   forwardRef,
   type ComponentPropsWithoutRef,
   type CSSProperties,
-  type WheelEvent,
+  useEffect,
+  useRef,
 } from "react";
 
 type ScrollAreaOrientation = "vertical" | "horizontal" | "both";
@@ -29,29 +30,37 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
     { children, className, orientation = "vertical", viewportStyle, ...props },
     ref,
   ) => {
-    const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
-      if (
-        orientation !== "horizontal" ||
-        event.deltaY === 0 ||
-        Math.abs(event.deltaX) >= Math.abs(event.deltaY)
-      ) {
-        return;
-      }
+    const viewportRef = useRef<HTMLDivElement | null>(null);
 
-      const viewport = event.currentTarget;
-      const maximumScrollLeft = Math.max(
-        0,
-        viewport.scrollWidth - viewport.clientWidth,
-      );
-      const nextScrollLeft = Math.min(
-        maximumScrollLeft,
-        Math.max(0, viewport.scrollLeft + event.deltaY),
-      );
-      if (nextScrollLeft === viewport.scrollLeft) return;
+    useEffect(() => {
+      const viewport = viewportRef.current;
+      if (!viewport || orientation !== "horizontal") return;
 
-      event.preventDefault();
-      viewport.scrollLeft = nextScrollLeft;
-    };
+      const handleWheel = (event: WheelEvent) => {
+        if (
+          event.deltaY === 0 ||
+          Math.abs(event.deltaX) >= Math.abs(event.deltaY)
+        ) {
+          return;
+        }
+
+        const maximumScrollLeft = Math.max(
+          0,
+          viewport.scrollWidth - viewport.clientWidth,
+        );
+        const nextScrollLeft = Math.min(
+          maximumScrollLeft,
+          Math.max(0, viewport.scrollLeft + event.deltaY),
+        );
+        if (nextScrollLeft === viewport.scrollLeft) return;
+
+        event.preventDefault();
+        viewport.scrollLeft = nextScrollLeft;
+      };
+
+      viewport.addEventListener("wheel", handleWheel, { passive: false });
+      return () => viewport.removeEventListener("wheel", handleWheel);
+    }, [orientation]);
 
     const overflowStyle: CSSProperties = {
       overflowX: orientation === "vertical" ? "hidden" : "scroll",
@@ -69,11 +78,17 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
         )}
       >
         <BaseScrollArea.Viewport
-          ref={ref}
+          ref={(element) => {
+            viewportRef.current = element;
+            if (typeof ref === "function") {
+              ref(element);
+            } else if (ref) {
+              ref.current = element;
+            }
+          }}
           data-ll-scroll-area-viewport=""
           className="ll:h-full ll:w-full ll:max-h-[inherit] ll:rounded-[inherit] ll:select-text"
           style={{ ...overflowStyle, ...viewportStyle }}
-          onWheel={handleWheel}
         >
           <BaseScrollArea.Content
             className="ll:min-h-full"

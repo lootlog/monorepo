@@ -1,6 +1,5 @@
 import * as React from "react";
-import { ChevronsUpDown } from "lucide-react";
-import { CheckIcon } from "@radix-ui/react-icons";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,7 +80,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
           className="ll:relative ll:data-[selected=true]:bg-gray-400/30 ll:h-6 ll:transition-all ll:cursor-pointer ll:select-none ll:box-border ll:border-gray-400 ll:border-solid ll:border ll:items-center ll:text-white ll:text-[11px] ll:bg-transparent ll:rounded-sm ll:py-1.5 ll:pl-2 ll:pr-8"
         >
           <span className="ll:absolute ll:right-2 ll:flex ll:h-3.5 ll:w-3.5 ll:items-center ll:justify-center">
-            {value === option.value && <CheckIcon className="ll:h-4 ll:w-4" />}
+            {value === option.value && <Check className="ll:h-4 ll:w-4" />}
           </span>
           {option.label}
         </CommandItem>
