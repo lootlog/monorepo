@@ -6,8 +6,12 @@ import monkey from "vite-plugin-monkey";
 import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { readFileSync } from "node:fs";
 
 const SENTRY_APPLICATION_KEY = "lootlog-game-client";
+const gameClientPackage = JSON.parse(
+  readFileSync(new URL("./package.json", import.meta.url), "utf8"),
+) as { version: string };
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -26,9 +30,14 @@ export default defineConfig(({ mode }) => {
     commitSha ||
     process.env.npm_package_version ||
     "development";
+  const buildTimestamp = new Date().toISOString();
   return {
     define: {
+      "import.meta.env.VITE_BUILD_TIMESTAMP": JSON.stringify(buildTimestamp),
       "import.meta.env.VITE_COMMIT_SHA": JSON.stringify(commitSha),
+      "import.meta.env.VITE_GAME_CLIENT_PACKAGE_VERSION": JSON.stringify(
+        gameClientPackage.version,
+      ),
       "import.meta.env.VITE_GAME_CLIENT_VERSION":
         JSON.stringify(runtimeVersion),
     },

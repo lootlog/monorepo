@@ -1,11 +1,7 @@
 import { Permission } from "@lootlog/types";
 import { Label } from "@/components/ui/label";
 import type { MessageType } from "@/api/chat.api";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 import {
   applyChatMentionSuggestion,
   getActiveChatMention,
@@ -107,6 +103,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const replyDraft = useChatStore((state) => state.replyDraft);
   const clearReplyDraft = useChatStore((state) => state.clearReplyDraft);
   const editorRef = useRef<HTMLDivElement>(null);
+  const clearConfirmAnchorRef = useRef<HTMLDivElement>(null);
   const world = Game.getWorldName();
   const { mutateAsync: sendChatMessage, isPending: isSendingMessage } =
     useChatControllerSendChatMessage();
@@ -633,38 +630,38 @@ export const ChatInput: FC<ChatInputProps> = ({
           onSelect={handleSuggestionSelect}
         />
         <Popover open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
-          <PopoverAnchor asChild>
-            <div
-              className={cn(
-                CHAT_INPUT_SHELL_CLASS,
-                !isPending && CHAT_INPUT_FOCUS_CLASS,
-              )}
-            >
-              <ChatInputEditor
-                autoFocus={autofocus}
-                caretIndex={caretIndex}
-                disabled={isPending}
-                editorRef={editorRef}
-                message={messageValue}
-                mentionContext={mentionContext}
-                placeholder={t("input.placeholder")}
-                onChange={(nextMessage, nextCaretIndex) => {
-                  setMessageValue(nextMessage);
-                  setCaretIndex(nextCaretIndex);
-                  setDismissedMentionKey(null);
-                  setTabCompletionSession(null);
-                }}
-                onCaretChange={setCaretIndex}
-                onKeyDown={handleInputKeyDown}
-              />
-            </div>
-          </PopoverAnchor>
+          <div
+            ref={clearConfirmAnchorRef}
+            className={cn(
+              CHAT_INPUT_SHELL_CLASS,
+              !isPending && CHAT_INPUT_FOCUS_CLASS,
+            )}
+          >
+            <ChatInputEditor
+              autoFocus={autofocus}
+              caretIndex={caretIndex}
+              disabled={isPending}
+              editorRef={editorRef}
+              message={messageValue}
+              mentionContext={mentionContext}
+              placeholder={t("input.placeholder")}
+              onChange={(nextMessage, nextCaretIndex) => {
+                setMessageValue(nextMessage);
+                setCaretIndex(nextCaretIndex);
+                setDismissedMentionKey(null);
+                setTabCompletionSession(null);
+              }}
+              onCaretChange={setCaretIndex}
+              onKeyDown={handleInputKeyDown}
+            />
+          </div>
           <PopoverContent
+            anchor={clearConfirmAnchorRef}
             side="top"
             align="start"
             className="ll:w-64"
-            onOpenAutoFocus={(event) => event.preventDefault()}
-            onCloseAutoFocus={(event) => event.preventDefault()}
+            initialFocus={false}
+            finalFocus={false}
           >
             <div className="ll:flex ll:flex-col ll:gap-2">
               <div className="ll:flex ll:flex-col ll:gap-1">

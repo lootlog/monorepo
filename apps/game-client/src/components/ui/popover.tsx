@@ -1,48 +1,86 @@
+import { Popover as BasePopover } from "@base-ui/react/popover";
 import * as React from "react";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
-
 import { cn } from "@/lib/utils";
 import { getLootlogPortalContainer } from "./theme-boundary";
 
-function Popover({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />;
+function Popover(props: BasePopover.Root.Props) {
+  return <BasePopover.Root {...props} />;
 }
 
-function PopoverTrigger({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
-  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
-}
+type PopoverTriggerProps = Omit<BasePopover.Trigger.Props, "render"> & {
+  asChild?: boolean;
+};
 
-function PopoverContent({
-  className,
-  align = "center",
-  sideOffset = 8,
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
-  return (
-    <PopoverPrimitive.Portal container={getLootlogPortalContainer()}>
-      <PopoverPrimitive.Content
-        data-slot="popover-content"
-        align={align}
-        sideOffset={sideOffset}
-        collisionPadding={8}
-        className={cn(
-          "ll:bg-black/80 ll:border ll:border-gray-400 ll:text-white ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[state=closed]:ll:animate-out data-[state=closed]:ll:fade-out-0 data-[state=closed]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2 ll:z-[500] ll:origin-(--radix-popover-content-transform-origin) ll:rounded-sm ll:p-2 ll:shadow-md ll:outline-hidden",
-          className,
-        )}
+function PopoverTrigger({ asChild, children, ...props }: PopoverTriggerProps) {
+  if (asChild && React.isValidElement(children)) {
+    return (
+      <BasePopover.Trigger
+        data-slot="popover-trigger"
+        render={children}
         {...props}
       />
-    </PopoverPrimitive.Portal>
+    );
+  }
+
+  return (
+    <BasePopover.Trigger data-slot="popover-trigger" {...props}>
+      {children}
+    </BasePopover.Trigger>
   );
 }
 
-function PopoverAnchor({
+type PopoverPositioningProps = Pick<
+  BasePopover.Positioner.Props,
+  | "align"
+  | "alignOffset"
+  | "anchor"
+  | "collisionAvoidance"
+  | "collisionBoundary"
+  | "collisionPadding"
+  | "side"
+  | "sideOffset"
+>;
+
+type PopoverContentProps = BasePopover.Popup.Props & PopoverPositioningProps;
+
+function PopoverContent({
+  align = "center",
+  alignOffset,
+  anchor,
+  children,
+  className,
+  collisionAvoidance,
+  collisionBoundary,
+  collisionPadding = 8,
+  side,
+  sideOffset = 8,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
-  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />;
+}: PopoverContentProps) {
+  return (
+    <BasePopover.Portal container={getLootlogPortalContainer()}>
+      <BasePopover.Positioner
+        align={align}
+        alignOffset={alignOffset}
+        anchor={anchor}
+        collisionAvoidance={collisionAvoidance}
+        collisionBoundary={collisionBoundary}
+        collisionPadding={collisionPadding}
+        side={side}
+        sideOffset={sideOffset}
+      >
+        <BasePopover.Popup
+          data-slot="popover-content"
+          className={cn(
+            "ll:bg-black/80 ll:border ll:border-gray-400 ll:text-white ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2 ll:z-[500] ll:origin-(--transform-origin) ll:rounded-sm ll:p-2 ll:shadow-md ll:outline-hidden",
+            className,
+          )}
+          {...props}
+        >
+          {children}
+        </BasePopover.Popup>
+      </BasePopover.Positioner>
+    </BasePopover.Portal>
+  );
 }
 
-export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor };
+export { Popover, PopoverTrigger, PopoverContent };

@@ -2,22 +2,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
-import type * as AppConfigModule from "@/config/app";
-
-const { mockCommitSha } = vi.hoisted(() => ({
-  mockCommitSha: { value: "" },
-}));
-
-vi.mock("@/config/app", async (importOriginal) => {
-  const actual = await importOriginal<typeof AppConfigModule>();
-
-  return {
-    ...actual,
-    get COMMIT_SHA() {
-      return mockCommitSha.value;
-    },
-  };
-});
 
 vi.mock(
   "@/features/settings/components/battle-panel/battle-panel-settings-tab",
@@ -86,8 +70,6 @@ import { SettingsTabs } from "./settings-tabs";
 
 describe("SettingsTabs", () => {
   beforeEach(() => {
-    mockCommitSha.value = "";
-
     useWindowsStore.setState((state) => ({
       ...state,
       settings: {
@@ -98,26 +80,63 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders a short commit sha and exposes the full value in a tooltip", async () => {
+  it("places the information tab after logs and before debug and opens it", async () => {
     const user = userEvent.setup();
-    const fullCommitSha = "1234567890abcdef1234567890abcdef12345678";
-    mockCommitSha.value = fullCommitSha;
-
     render(<SettingsTabs />);
 
-    const commitShaLabel = screen.getByText("Commit SHA: 1234567");
-    expect(commitShaLabel).toBeInTheDocument();
+    const tabs = screen.getAllByRole("tab");
+    const tabNames = tabs.map((tab) => tab.getAttribute("aria-label"));
+    const informationTab = screen.getByRole("tab", { name: "Informacje" });
 
-    await user.hover(commitShaLabel);
+    expect(tabNames.slice(-3)).toEqual(["Logi", "Informacje", "Debug"]);
 
-    await waitFor(() => {
-      expect(screen.getByRole("tooltip")).toHaveTextContent(fullCommitSha);
-    });
+    await user.click(informationTab);
+
+    expect(informationTab).toHaveAttribute("aria-selected", "true");
+    expect(
+      screen.getByRole("heading", { name: "Informacje o kliencie" }),
+    ).toBeInTheDocument();
   });
 
-  it("hides the commit sha footer when commit sha is missing", () => {
+  it("keeps both settings columns inside the settings height", () => {
+    const { container } = render(<SettingsTabs />);
+
+    const settingsLayout = container.firstElementChild;
+    const generalTab = screen.getByRole("tab", { name: "Ogólne" });
+    const tabsList = generalTab.closest('[role="tablist"]');
+    const navigationViewport = tabsList?.closest(
+      "[data-ll-scroll-area-viewport]",
+    );
+    const navigationScrollArea = navigationViewport?.parentElement;
+    const sidebar = navigationScrollArea?.parentElement;
+    const contentColumn = sidebar?.nextElementSibling;
+
+    expect(settingsLayout).toHaveClass("ll:box-border");
+    expect(sidebar).not.toHaveClass("ll:pb-2");
+    expect(contentColumn).not.toHaveClass("ll:pb-2");
+    expect(sidebar).not.toHaveTextContent("Commit SHA");
+  });
+
+  it("shows the information label in a tooltip for the compact sidebar", async () => {
+    const user = userEvent.setup();
+    useWindowsStore.setState((state) => ({
+      ...state,
+      settings: {
+        ...state.settings,
+        size: { ...state.settings.size, width: 500 },
+      },
+    }));
+
     render(<SettingsTabs />);
 
-    expect(screen.queryByText(/^Commit SHA:/)).not.toBeInTheDocument();
+    const informationTab = screen.getByRole("tab", { name: "Informacje" });
+
+    expect(informationTab.querySelector(".lucide-info")).toBeInTheDocument();
+
+    await user.hover(informationTab);
+
+    await waitFor(() => {
+      expect(screen.getByRole("tooltip")).toHaveTextContent("Informacje");
+    });
   });
 });

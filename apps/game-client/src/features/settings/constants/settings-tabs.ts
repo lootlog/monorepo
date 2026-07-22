@@ -10,6 +10,7 @@ export const SETTINGS_TAB_VALUES = [
   "battle-panel",
   "hotkeys",
   "logs",
+  "information",
   "debug",
 ] as const;
 

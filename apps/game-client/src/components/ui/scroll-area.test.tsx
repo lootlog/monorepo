@@ -130,6 +130,21 @@ describe("ScrollArea", () => {
     expect(wasNotCanceled).toBe(false);
   });
 
+  it("registers horizontal wheel handling as non-passive", () => {
+    const addEventListenerSpy = vi.spyOn(
+      HTMLDivElement.prototype,
+      "addEventListener",
+    );
+
+    render(<ScrollArea orientation="horizontal">Content</ScrollArea>);
+
+    expect(addEventListenerSpy).toHaveBeenCalledWith(
+      "wheel",
+      expect.any(Function),
+      { passive: false },
+    );
+  });
+
   it("lets wheel events escape when horizontal content is at an edge", () => {
     const { container } = render(
       <ScrollArea orientation="horizontal">Content</ScrollArea>,
