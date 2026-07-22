@@ -78,7 +78,22 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen, eventDetails) => {
+        if (
+          !nextOpen &&
+          eventDetails.reason === "outside-press" &&
+          eventDetails.event.target instanceof Element &&
+          eventDetails.event.target.closest('[role="menu"]')
+        ) {
+          eventDetails.cancel();
+          return;
+        }
+
+        setOpen(nextOpen);
+      }}
+    >
       <PopoverTrigger asChild>
         <ContextMenuItem
           onSelect={(event) => {
@@ -90,19 +105,7 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
           {t("contextMenu.history")}
         </ContextMenuItem>
       </PopoverTrigger>
-      <PopoverContent
-        className="ll:w-80 ll:p-1"
-        align="start"
-        side="right"
-        onInteractOutside={(event) => {
-          if (
-            event.target instanceof Element &&
-            event.target.closest('[role="menu"]')
-          ) {
-            event.preventDefault();
-          }
-        }}
-      >
+      <PopoverContent className="ll:w-80 ll:p-1" align="start" side="right">
         <TimerHistoryList
           history={history}
           isLoading={isLoading}

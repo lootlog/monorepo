@@ -1,3 +1,4 @@
+import "@/index.css";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -76,6 +77,16 @@ const getAccountTile = (container: HTMLElement) => {
   return tile as Element;
 };
 
+const expectTooltipAboveWindows = (tooltip: HTMLElement) => {
+  const tooltipPositioner = tooltip.parentElement;
+
+  expect(tooltipPositioner).not.toBeNull();
+  if (!tooltipPositioner) {
+    throw new Error("Tooltip positioner was not rendered");
+  }
+  expect(getComputedStyle(tooltipPositioner).zIndex).toBe("500");
+};
+
 describe("OnlinePlayersAccountListEntry", () => {
   const showEquipmentSpy = vi.fn();
   const showProfileSpy = vi.fn();
@@ -147,9 +158,47 @@ describe("OnlinePlayersAccountListEntry", () => {
 
     await user.hover(tile);
 
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Discord User",
+    const tooltip = await screen.findByRole("tooltip");
+
+    expect(tooltip).toHaveTextContent("Discord User");
+    expectTooltipAboveWindows(tooltip);
+  });
+
+  it("keeps the character tooltip above draggable windows", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
+    const characterTrigger = container.querySelector<HTMLElement>(
+      '[style*="hero.gif"]',
+    );
+
+    expect(characterTrigger).not.toBeNull();
+    if (!characterTrigger) {
+      throw new Error("Character tooltip trigger was not rendered");
+    }
+    await user.hover(characterTrigger);
+
+    const tooltip = await screen.findByRole("tooltip");
+
+    expect(tooltip).toHaveTextContent("Hero (123w)");
+    expectTooltipAboveWindows(tooltip);
+  });
+
+  it("keeps the verified account tooltip above draggable windows", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <OnlinePlayersAccountListEntry
+        presence={createPresence({ margonemAccountVerified: true })}
+      />,
+    );
+    await user.hover(screen.getByLabelText("Zweryfikowane konto Margonem"));
+
+    const tooltip = await screen.findByRole("tooltip");
+
+    expect(tooltip).toHaveTextContent("Zweryfikowane konto Margonem");
+    expectTooltipAboveWindows(tooltip);
   });
 
   it("shows double click invite hint in the tile tooltip when player can be invited", async () => {
