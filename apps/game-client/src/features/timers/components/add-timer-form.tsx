@@ -11,7 +11,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -455,7 +455,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
       </div>
 
       <div className="ll:min-h-0 ll:flex-1 ll:overflow-hidden">
-        <NativeScrollArea
+        <ScrollArea
           data-testid="add-timer-scroll-container"
           className="ll:h-full ll:w-full"
         >
@@ -688,7 +688,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
               </div>
             )}
           </div>
-        </NativeScrollArea>
+        </ScrollArea>
       </div>
 
       <div className="ll:flex ll:justify-center ll:border-gray-600 ll:pt-1 ll:pb-0.5 ll:px-1 ll:shrink-0">

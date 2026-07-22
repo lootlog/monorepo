@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface ComboboxOption {
   value: string;
@@ -116,7 +116,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
           <Command className="ll:bg-transparent ll:w-full">
             <CommandInput placeholder={searchPlaceholder} />
             <CommandList className="ll:max-h-none ll:overflow-visible">
-              <NativeScrollArea className="ll:max-h-60">
+              <ScrollArea className="ll:max-h-60">
                 <CommandEmpty className="ll:text-white ll:text-xs ll:py-2 ll:px-2">
                   {emptyText}
                 </CommandEmpty>
@@ -143,7 +143,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
                     </div>
                   </CommandGroup>
                 )}
-              </NativeScrollArea>
+              </ScrollArea>
             </CommandList>
           </Command>
         </PopoverContent>

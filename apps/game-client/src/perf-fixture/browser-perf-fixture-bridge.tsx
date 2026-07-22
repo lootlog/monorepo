@@ -87,6 +87,20 @@ export type BrowserPerfVisualResult = {
   windowId: WindowId;
 };
 
+export type BrowserPerfWindowAnimationResult = {
+  enterAnimationName: string;
+  enterCurrentTimeAfterMs: number;
+  enterCurrentTimeBeforeMs: number;
+  enterOpacityAfter: number;
+  enterOpacityBefore: number;
+  enterTransformAfter: string;
+  enterTransformBefore: string;
+  enteringClassName: string;
+  exitAnimationName: string;
+  preparedClassName: string;
+  renderedAfterExit: boolean;
+};
+
 export type BrowserPerfSnapshot = BrowserPerfInstrumentation & {
   autoHideDeadlineCount: number;
   domNodeCount: number;
@@ -130,6 +144,7 @@ export type BrowserPerfFixtureApi = {
     },
   ) => Promise<void>;
   configure: (configuration: BrowserPerfConfiguration) => Promise<void>;
+  checkWindowAnimation: () => Promise<BrowserPerfWindowAnimationResult>;
   prepareVisualWindow: (
     configuration: BrowserPerfVisualConfiguration,
   ) => Promise<BrowserPerfVisualResult>;
@@ -315,7 +330,7 @@ const getNotificationElements = () =>
 const getNotificationViewport = (): HTMLElement | null => {
   const notification = getNotificationElements()[0];
   return (
-    notification?.closest<HTMLElement>("[data-ll-native-scroll-area]") ?? null
+    notification?.closest<HTMLElement>("[data-ll-scroll-area-viewport]") ?? null
   );
 };
 
@@ -906,6 +921,111 @@ export const BrowserPerfFixtureBridge = () => {
       configure: async (configuration) => {
         configureQueryData(configuration);
         await waitForAnimationFrames();
+      },
+      checkWindowAnimation: async () => {
+        configureQueryData({
+          animationEffectsEnabled: false,
+          autoHideSeconds: 0,
+          soundEnabled: false,
+        });
+        for (const windowId of VISUAL_WINDOW_IDS) {
+          useWindowsStore.getState().setOpen(windowId, false);
+        }
+        useNotificationsStore.getState().clearNotifications();
+        await waitForAnimationFrames(2);
+
+        configureQueryData({
+          animationEffectsEnabled: true,
+          autoHideSeconds: 0,
+          soundEnabled: false,
+        });
+        await waitForAnimationFrames(2);
+
+        const windowsStore = useWindowsStore.getState();
+        windowsStore.setPosition("notifications", { x: 64, y: 64 });
+        useNotificationsStore
+          .getState()
+          .presentNotifications(createVisualNotificationPresentations(1));
+
+        let preparedClassName = "";
+        let enterOpacityBefore = Number.NaN;
+        let enterTransformBefore = "";
+        const root = document.getElementById("lootlog-root");
+        const observer = new MutationObserver(() => {
+          const preparedWindowBody = document.querySelector<HTMLElement>(
+            '[data-ll-draggable-window="notifications"] > .ll-window-preparing',
+          );
+          if (!preparedWindowBody || preparedClassName) return;
+
+          const preparedStyle = window.getComputedStyle(preparedWindowBody);
+          preparedClassName = preparedWindowBody.className;
+          enterOpacityBefore = Number.parseFloat(preparedStyle.opacity);
+          enterTransformBefore = preparedStyle.transform;
+        });
+        if (root) {
+          observer.observe(root, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+          });
+        }
+
+        windowsStore.setOpen("notifications", true);
+        await waitForAnimationFrames(2);
+        observer.disconnect();
+
+        const windowElement = document.querySelector<HTMLElement>(
+          '[data-ll-draggable-window="notifications"]',
+        );
+        const windowBody = windowElement?.firstElementChild;
+        if (!(windowBody instanceof HTMLElement)) {
+          throw new Error("Animated notifications window did not render");
+        }
+
+        const enteringClassName = windowBody.className;
+        const enterStyleBefore = window.getComputedStyle(windowBody);
+        const enterAnimationName = enterStyleBefore.animationName;
+        const enterAnimationBefore = windowBody.getAnimations()[0];
+        const enterCurrentTimeBeforeMs = Number(
+          enterAnimationBefore?.currentTime ?? Number.NaN,
+        );
+
+        await waitForAnimationFrames(2);
+
+        const enterStyleAfter = window.getComputedStyle(windowBody);
+        const enterAnimationAfter = windowBody.getAnimations()[0];
+        const enterCurrentTimeAfterMs = Number(
+          enterAnimationAfter?.currentTime ?? Number.NaN,
+        );
+        const enterOpacityAfter = Number.parseFloat(enterStyleAfter.opacity);
+        const enterTransformAfter = enterStyleAfter.transform;
+
+        await waitForAnimationFrames(16);
+        useWindowsStore.getState().setOpen("notifications", false);
+        await waitForAnimationFrames(2);
+
+        const exitAnimationName =
+          window.getComputedStyle(windowBody).animationName;
+        const exitAnimation = windowBody.getAnimations()[0];
+        await exitAnimation?.finished.catch(() => undefined);
+        await waitForAnimationFrames(2);
+
+        return {
+          enterAnimationName,
+          enterCurrentTimeAfterMs,
+          enterCurrentTimeBeforeMs,
+          enterOpacityAfter,
+          enterOpacityBefore,
+          enterTransformAfter,
+          enterTransformBefore,
+          enteringClassName,
+          exitAnimationName,
+          preparedClassName,
+          renderedAfterExit:
+            document.querySelector(
+              '[data-ll-draggable-window="notifications"]',
+            ) !== null,
+        };
       },
       prepareVisualWindow: async (configuration) => {
         setVisualFixtureWindowId(null);

@@ -52,8 +52,8 @@ const triggerResizeObserver = (target: Element) => {
   }
 };
 
-vi.mock("@/components/ui/native-scroll-area", () => ({
-  NativeScrollArea: ({
+vi.mock("@/components/ui/scroll-area", () => ({
+  ScrollArea: ({
     children,
     ref,
   }: {

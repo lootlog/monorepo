@@ -114,27 +114,19 @@ describe("GuildSwitcher", () => {
 
   it("scrolls horizontally when the user uses the mouse wheel", () => {
     const { container } = render(<GuildSwitcher />);
-    const viewport = container.querySelector("[data-ll-native-scroll-area]");
+    const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
 
     if (!(viewport instanceof HTMLDivElement)) {
       throw new Error("Expected scroll area viewport");
     }
 
-    Object.defineProperty(viewport, "scrollLeft", {
-      configurable: true,
-      value: 0,
-      writable: true,
+    Object.defineProperties(viewport, {
+      clientWidth: { configurable: true, value: 100 },
+      scrollLeft: { configurable: true, value: 0, writable: true },
+      scrollWidth: { configurable: true, value: 300 },
     });
 
-    const wheelEvent = new WheelEvent("wheel", {
-      bubbles: true,
-      cancelable: true,
-      deltaY: 48,
-    });
-
-    viewport.dispatchEvent(wheelEvent);
-
-    expect(wheelEvent.defaultPrevented).toBe(true);
+    expect(fireEvent.wheel(viewport, { deltaY: 48 })).toBe(false);
     expect(viewport.scrollLeft).toBe(48);
   });
 

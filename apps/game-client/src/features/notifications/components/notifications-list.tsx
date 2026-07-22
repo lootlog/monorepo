@@ -1,4 +1,4 @@
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleNotification } from "@/features/notifications/components/single-notification";
 import { useNotificationGuildMembers } from "@/features/notifications/hooks/use-notification-guild-members";
 import {
@@ -225,7 +225,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   };
 
   return (
-    <NativeScrollArea
+    <ScrollArea
       ref={scrollViewportRef}
       className="ll:h-full ll:max-h-[inherit] ll:w-full ll:box-border"
     >
@@ -251,6 +251,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
           );
         })}
       </div>
-    </NativeScrollArea>
+    </ScrollArea>
   );
 };

@@ -9,12 +9,26 @@ import { useGlobalStore } from "@/store/global.store";
 import { usePartyStore } from "@/store/party.store";
 import { EventDispatcher } from "./event-dispatcher";
 import { gameEventsManager } from "./game-events-manager";
+import type * as ApiModule from "@/api";
 
 const effects = vi.hoisted(() => ({
   cancelMapPingInteraction: vi.fn(),
   clearMapPings: vi.fn(),
   handleAirTagMapChange: vi.fn(),
   observeOtherPlayers: vi.fn(),
+}));
+
+const api = vi.hoisted(() => ({
+  createBattle: vi.fn().mockResolvedValue({ battleId: "battle-1" }),
+  createKill: vi.fn().mockResolvedValue({ updated: 1 }),
+  createLoot: vi.fn().mockResolvedValue({ id: 1 }),
+}));
+
+vi.mock("@/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof ApiModule>()),
+  createBattle: api.createBattle,
+  createKill: api.createKill,
+  createLoot: api.createLoot,
 }));
 
 vi.mock("@/features/air-tags/air-tag-observation-controller", () => ({
@@ -106,8 +120,53 @@ const combinedEvent = {
   town: { id: 13, name: "Nithal" },
 } as unknown as GameEvent;
 
+const finalFightEvent = {
+  f: {
+    endBattle: 1,
+    m: ["final"],
+    w: {
+      "-100": {
+        hpp: 0,
+        icon: "boss.gif",
+        id: -100,
+        lvl: 300,
+        name: "Boss",
+        originalId: 100,
+        prof: "w",
+        team: 2,
+        type: 2,
+        wt: 85,
+      },
+    },
+  },
+} as unknown as GameEvent;
+
+const fightLootEvent = {
+  f: {},
+  item: {
+    "loot-1": {
+      cl: 16,
+      hid: "loot-hid",
+      icon: "loot.gif",
+      loc: "l",
+      name: "Unique loot",
+      pr: 1,
+      prc: "1",
+      stat: "rarity=unique",
+      tpl: 9001,
+    },
+  },
+  loot: {
+    source: "fight",
+    states: { "loot-1": 1 },
+  },
+} as unknown as GameEvent;
+
 function resetPipelineState(): void {
   gameEventsManager.cleanup();
+  api.createBattle.mockClear();
+  api.createKill.mockClear();
+  api.createLoot.mockClear();
   effects.cancelMapPingInteraction.mockClear();
   effects.clearMapPings.mockClear();
   effects.handleAirTagMapChange.mockClear();
@@ -226,5 +285,59 @@ describe("game event pipeline golden replay", () => {
       ],
       result: "game-result",
     });
+  });
+
+  it("submits fight loot from the final packet with its warriors", async () => {
+    resetPipelineState();
+    useBattleStore.setState({ battleState: "in-battle" });
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn(() => "game-result");
+    gameEventsManager.setupProxies();
+    dispatcher.register();
+    gameEventsManager.setReady(true);
+    const finalFightLootEvent = {
+      ...finalFightEvent,
+      ...fightLootEvent,
+      f: finalFightEvent.f,
+    } as GameEvent;
+
+    pipelineWindow.successData?.(finalFightLootEvent);
+
+    expect(api.createLoot).toHaveBeenCalledOnce();
+    expect(api.createLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        loots: [expect.objectContaining({ id: 9001, name: "Unique loot" })],
+        npcs: [expect.objectContaining({ id: 100, name: "Boss" })],
+        source: "FIGHT",
+      }),
+      expect.objectContaining({ source: "fight" }),
+    );
+    await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
+
+    dispatcher.cleanup();
+  });
+
+  it("submits fight loot arriving immediately after the final packet", async () => {
+    resetPipelineState();
+    useBattleStore.setState({ battleState: "in-battle" });
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn(() => "game-result");
+    gameEventsManager.setupProxies();
+    dispatcher.register();
+    gameEventsManager.setReady(true);
+
+    pipelineWindow.successData?.(finalFightEvent);
+    pipelineWindow.successData?.(fightLootEvent);
+
+    expect(api.createLoot).toHaveBeenCalledOnce();
+    expect(api.createLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npcs: [expect.objectContaining({ id: 100, name: "Boss" })],
+      }),
+      expect.objectContaining({ source: "fight" }),
+    );
+    await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
+
+    dispatcher.cleanup();
   });
 });

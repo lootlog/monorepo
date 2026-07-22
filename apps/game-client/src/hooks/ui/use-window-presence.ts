@@ -4,25 +4,32 @@ import { useSettingsStore } from "@/store/settings.store";
 const WINDOW_EXIT_RETENTION_MS = 180;
 const WINDOW_ENTRY_RETENTION_MS = 240;
 
-export type WindowAnimationPhase = "enter" | "exit" | "open";
+export type WindowAnimationPhase = "enter" | "exit" | "open" | "preparing";
 
 export const useWindowPresence = (isOpen: boolean) => {
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
   const [retainedForExit, setRetainedForExit] = useState(isOpen);
-  const [entryAnimationCompleted, setEntryAnimationCompleted] = useState(false);
+  const [entryAnimationStarted, setEntryAnimationStarted] = useState(
+    !animationEffectsEnabled,
+  );
+  const [entryAnimationCompleted, setEntryAnimationCompleted] = useState(
+    !animationEffectsEnabled,
+  );
 
   useEffect(() => {
     if (isOpen) {
-      setRetainedForExit(true);
+      if (!retainedForExit) {
+        setRetainedForExit(true);
+      }
       return;
     }
 
-    if (!animationEffectsEnabled) {
+    if (!animationEffectsEnabled && retainedForExit) {
       setRetainedForExit(false);
     }
-  }, [animationEffectsEnabled, isOpen]);
+  }, [animationEffectsEnabled, isOpen, retainedForExit]);
 
   useEffect(() => {
     if (isOpen || !animationEffectsEnabled || !retainedForExit) return;
@@ -35,22 +42,57 @@ export const useWindowPresence = (isOpen: boolean) => {
   }, [animationEffectsEnabled, isOpen, retainedForExit]);
 
   useEffect(() => {
-    if (!isOpen) {
-      setEntryAnimationCompleted(false);
+    if (!animationEffectsEnabled) {
+      if (isOpen) {
+        if (!entryAnimationStarted) {
+          setEntryAnimationStarted(true);
+        }
+        if (!entryAnimationCompleted) {
+          setEntryAnimationCompleted(true);
+        }
+      }
       return;
     }
 
-    if (!animationEffectsEnabled) {
-      setEntryAnimationCompleted(true);
+    if (!isOpen) {
+      setEntryAnimationStarted(false);
+      setEntryAnimationCompleted(false);
     }
-  }, [animationEffectsEnabled, isOpen]);
+  }, [
+    animationEffectsEnabled,
+    entryAnimationCompleted,
+    entryAnimationStarted,
+    isOpen,
+  ]);
+
+  useEffect(() => {
+    if (
+      !isOpen ||
+      !animationEffectsEnabled ||
+      entryAnimationStarted ||
+      entryAnimationCompleted
+    ) {
+      return;
+    }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      setEntryAnimationStarted(true);
+    });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [
+    animationEffectsEnabled,
+    entryAnimationCompleted,
+    entryAnimationStarted,
+    isOpen,
+  ]);
 
   const shouldRender = isOpen || (animationEffectsEnabled && retainedForExit);
   let phase: WindowAnimationPhase = "open";
   if (animationEffectsEnabled && !isOpen) {
     phase = "exit";
   } else if (animationEffectsEnabled && !entryAnimationCompleted) {
-    phase = "enter";
+    phase = entryAnimationStarted ? "enter" : "preparing";
   }
 
   useEffect(() => {
