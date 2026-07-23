@@ -10,8 +10,8 @@ import {
 import {
   useReservationsControllerGetReservations,
   useReservationsControllerGetReservationsCards,
-} from "@/lib/api/generated/main/reservations/reservations";
-import type { ReservationsCardsResponseDtoOutputItem } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/reservations";
+import type { ReservationsCardsResponseDtoOutputItem } from "@lootlog/api-client/models/main/reservations-cards-response-dto-output-item";
 import { Input } from "@lootlog/ui/components/input";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
@@ -28,11 +28,11 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   useGuildsControllerGetGuildById,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import {
   getMembersControllerGetGuildMemberReferencesQueryKey,
   useMembersControllerGetGuildMemberReferences,
-} from "@/lib/api/generated/main/members/members";
+} from "@lootlog/api-client/react-query/main/members";
 
 type ReservationCardEntries = Array<
   [string, ReservationsCardsResponseDtoOutputItem[]]

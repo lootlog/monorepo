@@ -12,7 +12,7 @@ const projection = {
   status: "ACTIVE",
 } as PartyReadyRoomProjection;
 
-vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
   partyReadyRoomControllerGet: () => getReadyRoom(),
 }));
 

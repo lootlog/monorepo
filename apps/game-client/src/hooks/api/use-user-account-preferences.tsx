@@ -5,11 +5,9 @@ import {
   getUsersControllerGetUserGameAccountPreferencesQueryKey,
   useUsersControllerGetUserGameAccountPreferences,
   usersControllerUpdateUserGameAccountPreferences,
-} from "@/lib/api/generated/main/users/users";
-import type {
-  UpdateUserGameAccountPreferencesDto,
-  UserGameAccountPreferencesResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/users";
+import type { UpdateUserGameAccountPreferencesDto } from "@lootlog/api-client/models/main/update-user-game-account-preferences-dto";
+import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-game-account-preferences-response-dto-output";
 
 export const useUserGameAccountPreferences = (
   accountId: string | null,

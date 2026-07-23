@@ -35,7 +35,7 @@ vi.mock("@/hooks/auth/use-session", () => ({
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/event-mode/event-mode", () => ({
+vi.mock("@lootlog/api-client/react-query/main/event-mode", () => ({
   eventModeControllerGetEventMode: mocks.getEventMode,
 }));
 

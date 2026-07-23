@@ -9,7 +9,7 @@ const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserPreferences = vi.fn();
 const runtime = vi.hoisted(() => ({ heroId: 123 as number | undefined }));
 
-vi.mock("@/lib/api/generated/main/users/users", () => ({
+vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
     "accessible-guilds",
   ],

@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { orvalFetchActivity } from "@/lib/api/orval-fetch";
+import { createApiClient } from "@lootlog/api-client/transport";
 
 export type MemberActivityStats = {
   guildId: string;
@@ -19,8 +19,10 @@ export const getMemberActivityStatsQueryKey = (guildId: string) => [
   "member-activity-stats",
 ];
 
+const activityApiClient = createApiClient("activity");
+
 export const fetchMemberActivityStats = (guildId: string) =>
-  orvalFetchActivity<MemberActivityStats[]>(
+  activityApiClient.get<MemberActivityStats[]>(
     `/guilds/${guildId}/member-activity-stats`,
   );
 

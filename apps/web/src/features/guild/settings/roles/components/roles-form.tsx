@@ -45,8 +45,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   invalidateRolesControllerGetGuildRoles,
   useRolesControllerUpdateGuildRole,
-} from "@/lib/api/generated/main/roles/roles";
-import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/roles";
+import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/api-client/models/main/role-response-dto-output";
 
 const PERMISSION_GROUPS = [
   {

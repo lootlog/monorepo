@@ -1,5 +1,5 @@
 import { Permission } from "@lootlog/types";
-import type { GuildsControllerGetGuildPermissions200Item } from "@/lib/api/generated/main/model";
+import type { GuildsControllerGetGuildPermissions200Item } from "@lootlog/api-client/models/main/guilds-controller-get-guild-permissions200-item";
 
 export const canManageGuild = (
   permissions:

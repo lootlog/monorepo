@@ -15,13 +15,13 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
   lootsControllerFetchLootsByGuildId,
-} from "@/lib/api/generated/main/loots/loots";
-import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/loots";
+import type { LootsControllerFetchLootsByGuildIdParams } from "@lootlog/api-client/models/main/loots-controller-fetch-loots-by-guild-id-params";
 import {
   getAllControllerSearchAllQueryKey,
   useAllControllerSearchAll,
-} from "@/lib/api/generated/search/all/all";
-import type { NpcHitDtoOutput } from "@/lib/api/generated/search/model";
+} from "@lootlog/api-client/react-query/search/all";
+import type { NpcHitDtoOutput } from "@lootlog/api-client/models/search/npc-hit-dto-output";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";

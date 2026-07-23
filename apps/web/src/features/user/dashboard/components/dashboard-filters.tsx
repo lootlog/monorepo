@@ -11,7 +11,7 @@ import type { DashboardFilters } from "../hooks/use-dashboard-filters";
 import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
-} from "@/lib/api/generated/main/kills/kills";
+} from "@lootlog/api-client/react-query/main/kills";
 import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,

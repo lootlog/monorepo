@@ -22,8 +22,8 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getListEventsQueryKey,
   useCreateEvent,
-} from "@/lib/api/generated/main/events/events";
-import type { EventListItemResponseDto } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/events";
+import type { EventListItemResponseDto } from "@lootlog/api-client/models/main/event-list-item-response-dto";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,

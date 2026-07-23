@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import type { UpdateSoundSettingsDto } from "@/lib/api/generated/main/model";
+import type { UpdateSoundSettingsDto } from "@lootlog/api-client/models/main/update-sound-settings-dto";
 import { useSoundSettingsPatchQueue } from "../use-sound-settings-patch-queue";
 
 describe("useSoundSettingsPatchQueue", () => {

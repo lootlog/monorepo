@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@/lib/api-client";
+import { ApiError } from "@lootlog/api-client/transport";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { usePartyGatheringOrchestration } from "./use-party-gathering-orchestration";
 
@@ -17,13 +17,13 @@ vi.mock("@/hooks/api/use-send-chat-message", () => ({
   useSendChatMessage: () => ({ mutateAsync: mocks.sendChatMessage }),
 }));
 
-vi.mock("@/lib/api/generated/main/messaging/messaging", () => ({
+vi.mock("@lootlog/api-client/react-query/main/messaging", () => ({
   useMessagingControllerSendNotification: () => ({
     mutateAsync: mocks.createNotification,
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
   partyReadyRoomControllerGet: (...args: unknown[]) =>
     mocks.getPartyGathering(...args),
   usePartyReadyRoomControllerCreate: () => ({

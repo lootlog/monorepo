@@ -1,9 +1,7 @@
 import { NpcTile } from "@/components/npc-tile";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import type {
-  ChatMessageResponseDtoOutput as ChatMessageType,
-  MemberSummaryResponseDtoOutput as GuildMember,
-} from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { MemberSummaryResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
 import { cn } from "@/lib/utils";
 import { format } from "@/utils/local-date";
 import type { FC } from "react";

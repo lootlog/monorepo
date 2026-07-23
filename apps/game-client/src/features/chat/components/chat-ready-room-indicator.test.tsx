@@ -20,7 +20,7 @@ vi.mock("@/lib/game", () => ({
   },
 }));
 
-vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
   partyReadyRoomControllerWithdraw: (...args: unknown[]) => withdraw(...args),
 }));
 

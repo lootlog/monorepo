@@ -16,19 +16,19 @@ import { getNavigationInfo } from "./get-navigation-info";
 import {
   getMembersControllerGetGuildMembersQueryKey,
   useMembersControllerGetGuildMembers,
-} from "@/lib/api/generated/main/members/members";
+} from "@lootlog/api-client/react-query/main/members";
 import {
   getRolesControllerGetGuildRolesQueryKey,
   useRolesControllerGetGuildRoles,
-} from "@/lib/api/generated/main/roles/roles";
+} from "@lootlog/api-client/react-query/main/roles";
 import {
   getLootlogConfigControllerGetLootlogConfigQueryKey,
   useLootlogConfigControllerGetLootlogConfig,
-} from "@/lib/api/generated/main/lootlog-config/lootlog-config";
+} from "@lootlog/api-client/react-query/main/lootlog-config";
 import {
   getDocsControllerGetDocumentQueryKey,
   useDocsControllerGetDocument,
-} from "@/lib/api/generated/main/docs/docs";
+} from "@lootlog/api-client/react-query/main/docs";
 
 const guildRouteApi = getRouteApi("/_authenticated/$guildId");
 

@@ -5,11 +5,9 @@ import {
   timerSettingsControllerMigrateSettings,
   timerSettingsControllerUpdateGlobalSettings,
   useTimerSettingsControllerGetGlobalSettings,
-} from "@/lib/api/generated/main/timer-settings/timer-settings";
-import type {
-  MigrateTimerSettingsDto,
-  UpdateTimerSettingsDto,
-} from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/timer-settings";
+import type { MigrateTimerSettingsDto } from "@lootlog/api-client/models/main/migrate-timer-settings-dto";
+import type { UpdateTimerSettingsDto } from "@lootlog/api-client/models/main/update-timer-settings-dto";
 
 const TIMER_SETTINGS_QUERY_KEY =
   getTimerSettingsControllerGetGlobalSettingsQueryKey();

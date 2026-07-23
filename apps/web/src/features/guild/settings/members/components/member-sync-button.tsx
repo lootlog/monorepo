@@ -6,17 +6,17 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { RefreshCcw } from "lucide-react";
 import { useContext, type FC } from "react";
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import type { MemberResponseDto as GuildMember } from "@lootlog/api-client/models/main/member-response-dto";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshStatusContext } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { toast } from "sonner";
-import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@/lib/api/generated/main/loots/loots";
+import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@lootlog/api-client/react-query/main/loots";
 import {
   getMembersControllerGetGuildMembersQueryKey,
   useMembersControllerRefreshMember,
-} from "@/lib/api/generated/main/members/members";
+} from "@lootlog/api-client/react-query/main/members";
 import { useTranslation } from "react-i18next";
 import { cn } from "@lootlog/ui/lib/utils";
 

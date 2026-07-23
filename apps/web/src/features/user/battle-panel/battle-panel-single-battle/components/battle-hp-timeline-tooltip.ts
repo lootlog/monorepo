@@ -1,4 +1,4 @@
-import type { BattleTimelineResponseDtoOutputTimelineItem } from "@/lib/api/generated/battlelog/model";
+import type { BattleTimelineResponseDtoOutputTimelineItem } from "@lootlog/api-client/models/battlelog/battle-timeline-response-dto-output-timeline-item";
 
 export type BattleHpTimelineTooltipDeltaKey =
   | "damage"

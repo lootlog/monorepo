@@ -10,7 +10,7 @@ import { Globe, Swords, Target } from "lucide-react";
 import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
-} from "@/lib/api/generated/main/kills/kills";
+} from "@lootlog/api-client/react-query/main/kills";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 const NPC_TYPE_ORDER = [

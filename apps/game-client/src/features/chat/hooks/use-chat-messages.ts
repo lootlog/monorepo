@@ -10,7 +10,7 @@ import {
 import {
   getMembersControllerGetMeQueryKey,
   membersControllerGetMe,
-} from "@/lib/api/generated/main/members/members";
+} from "@lootlog/api-client/react-query/main/members";
 import {
   removeChatMessage,
   updateChatMessage,

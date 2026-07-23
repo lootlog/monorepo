@@ -10,7 +10,7 @@ import { GuildButton } from "@/components/guild-button";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import { useTranslation } from "react-i18next";
 import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";

@@ -3,10 +3,8 @@ import { cn } from "@/lib/utils";
 import { format } from "@/utils/local-date";
 import { useState, type FC } from "react";
 import { MessageType } from "@/api/chat.api";
-import type {
-  ChatMessageResponseDtoOutput as ChatMessageType,
-  MemberSummaryResponseDtoOutput as GuildMember,
-} from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { MemberSummaryResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -32,7 +30,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useChatControllerDeleteChatMessage,
   useChatControllerUpdateChatMessage,
-} from "@/lib/api/generated/main/chat/chat";
+} from "@lootlog/api-client/react-query/main/chat";
 import {
   removeChatMessage,
   updateChatMessage,

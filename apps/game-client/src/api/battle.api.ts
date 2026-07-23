@@ -1,4 +1,4 @@
-import { getApiClient } from "@/lib/api-client";
+import { createApiClient } from "@lootlog/api-client/transport";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 import type {
@@ -31,7 +31,7 @@ type CreateKillResponse = {
 export async function createKill(
   params: CreateKillParams,
 ): Promise<CreateKillResponse> {
-  const client = getApiClient("default");
+  const client = createApiClient("main");
   const response = await runSingleLoggedAction({
     actionType: "create_kill",
     actionPayload: params,
@@ -44,7 +44,7 @@ export async function createKill(
     retry: GAME_EVENT_RETRY_OPTIONS,
   });
 
-  return response.data;
+  return response;
 }
 
 export type BattleEventWarriorPayload = Pick<
@@ -79,7 +79,7 @@ type CreateBattleResponse = {
 export async function createBattle(
   options: CreateBattleOptions,
 ): Promise<CreateBattleResponse> {
-  const client = getApiClient("battlelog");
+  const client = createApiClient("battlelog");
   const { events, ...battleContext } = options;
   const response = await runSingleLoggedAction({
     actionType: "create_battle",
@@ -96,5 +96,5 @@ export async function createBattle(
     retry: GAME_EVENT_RETRY_OPTIONS,
   });
 
-  return response.data;
+  return response;
 }

@@ -1,4 +1,4 @@
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import type { MemberResponseDto as GuildMember } from "@lootlog/api-client/models/main/member-response-dto";
 import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
 import type { ReactNode } from "react";
 import { Permission } from "@lootlog/types";

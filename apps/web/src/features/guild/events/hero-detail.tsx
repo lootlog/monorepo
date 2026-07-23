@@ -43,12 +43,12 @@ import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   useGuildsControllerGetGuildById,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
-} from "@/lib/api/generated/main/members/members";
+} from "@lootlog/api-client/react-query/main/members";
 import {
   getEventsMonitoringControllerGetActiveGapsForHeroQueryKey,
   getListEventHeroTimersQueryKey,
@@ -66,7 +66,7 @@ import {
   useListEventMaps,
   useListEventRanking,
   useShowEventOverview,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";

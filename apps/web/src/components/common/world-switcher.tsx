@@ -8,7 +8,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import { ThemeSurfaceOverlay } from "@/themes";
 
 const ALL_WORLDS_SENTINEL = "__ALL__";

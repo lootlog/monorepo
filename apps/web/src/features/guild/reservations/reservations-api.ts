@@ -4,11 +4,9 @@ import {
   getReservationsControllerGetReservationsCardsQueryOptions,
   getReservationsControllerGetReservationsQueryKey,
   getReservationsControllerGetReservationsQueryOptions,
-} from "@/lib/api/generated/main/reservations/reservations";
-import type {
-  ReservationResponseDto,
-  ReservationsResponseDto,
-} from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/reservations";
+import type { ReservationResponseDto } from "@lootlog/api-client/models/main/reservation-response-dto";
+import type { ReservationsResponseDto } from "@lootlog/api-client/models/main/reservations-response-dto";
 import type { QueryClient } from "@tanstack/react-query";
 
 export const mapReservationsByAlias = (

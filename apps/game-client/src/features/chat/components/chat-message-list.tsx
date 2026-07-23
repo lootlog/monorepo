@@ -1,7 +1,7 @@
 import { MessageType } from "@/api/chat.api";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import {
   createChatScrollController,
   type ChatScrollController,

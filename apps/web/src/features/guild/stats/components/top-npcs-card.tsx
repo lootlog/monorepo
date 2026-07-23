@@ -18,8 +18,8 @@ import { cn } from "@lootlog/ui/lib/utils";
 import {
   getKillsControllerGetGuildTopNpcsQueryKey,
   useKillsControllerGetGuildTopNpcs,
-} from "@/lib/api/generated/main/kills/kills";
-import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
+} from "@lootlog/api-client/react-query/main/kills";
+import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 import { buildGuildTopNpcsParams } from "../utils/build-stats-query-params";

@@ -5,8 +5,8 @@ import { useGameStore } from "@/store/game.store";
 import { queryClient } from "@/lib/query-client";
 import { playSound } from "@/lib/sound-playback";
 import { useGlobalStore } from "@/store/global.store";
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
-import type { UserGameAccountPreferencesResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/api-client/react-query/main/users";
+import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-game-account-preferences-response-dto-output";
 import {
   isMapPingType,
   type MapPingAck,

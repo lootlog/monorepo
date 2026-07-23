@@ -20,7 +20,7 @@ import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import {
   getBattlesControllerSearchWarriorsQueryKey,
   useBattlesControllerSearchWarriors,
-} from "@/lib/api/generated/battlelog/battles/battles";
+} from "@lootlog/api-client/react-query/battlelog/battles";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 

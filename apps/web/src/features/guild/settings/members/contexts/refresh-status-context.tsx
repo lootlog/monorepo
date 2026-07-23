@@ -11,7 +11,7 @@ import { useGateway } from "@/hooks/utils/use-gateway";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { GatewayEvent } from "@/config/gateway";
 import type { RefreshJobUpdate } from "@/types/refresh-job";
-import { getMembersControllerGetGuildMembersQueryKey } from "@/lib/api/generated/main/members/members";
+import { getMembersControllerGetGuildMembersQueryKey } from "@lootlog/api-client/react-query/main/members";
 
 interface RefreshStatusContextValue {
   refreshedIds: Set<string>;

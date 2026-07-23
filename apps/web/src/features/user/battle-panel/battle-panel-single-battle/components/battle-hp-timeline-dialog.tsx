@@ -1,4 +1,4 @@
-import type { BattleTimelineResponseDtoOutput } from "@/lib/api/generated/battlelog/model";
+import type { BattleTimelineResponseDtoOutput } from "@lootlog/api-client/models/battlelog/battle-timeline-response-dto-output";
 import { getBattleHpTimelineEventLayerCounts } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-markers";
 import { BattleHpTimelineLayerControls } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-layer-controls";
 import { buildLegendaryBonusMarkerGroups } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-legendary-markers";

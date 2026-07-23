@@ -1,6 +1,6 @@
 import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { useEffect } from "react";
-import { partyReadyRoomControllerList } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import { partyReadyRoomControllerList } from "@lootlog/api-client/react-query/main/party-ready-room";
 import { useGlobalStore } from "@/store/global.store";
 import {
   captureReadyRoomSyncBaseline,

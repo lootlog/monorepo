@@ -15,13 +15,10 @@ const mocks = vi.hoisted(() => ({
   refreshActiveOtherCanvasTooltip: vi.fn(),
 }));
 
-vi.mock(
-  "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config",
-  () => ({
-    userLootlogConfigControllerGetPlayersCatchingGuilds:
-      mocks.getPlayersCatchingGuilds,
-  }),
-);
+vi.mock("@lootlog/api-client/react-query/main/user-lootlog-config", () => ({
+  userLootlogConfigControllerGetPlayersCatchingGuilds:
+    mocks.getPlayersCatchingGuilds,
+}));
 
 vi.mock("@/lib/margonem-tooltips/patcher", () => ({
   refreshActiveOtherCanvasTooltip: mocks.refreshActiveOtherCanvasTooltip,

@@ -5,14 +5,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import { useChatGuildData } from "./use-chat-guild-data";
 
 const mocks = vi.hoisted(() => ({
   getChatMessages: vi.fn(),
 }));
 
-vi.mock("@/lib/api/generated/main/chat/chat", () => ({
+vi.mock("@lootlog/api-client/react-query/main/chat", () => ({
   chatControllerGetChatMessages: (...arguments_: unknown[]) =>
     mocks.getChatMessages(...arguments_),
   getChatControllerGetChatMessagesQueryKey: ({
@@ -29,7 +29,7 @@ vi.mock("@/hooks/api/guild-members-summary-query", () => ({
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/members/members", () => ({
+vi.mock("@lootlog/api-client/react-query/main/members", () => ({
   getMembersControllerGetMeQueryKey: ({ guildId }: { guildId: string }) => [
     "current-member",
     guildId,
@@ -37,7 +37,7 @@ vi.mock("@/lib/api/generated/main/members/members", () => ({
   membersControllerGetMe: vi.fn(),
 }));
 
-vi.mock("@/lib/api/generated/main/roles/roles", () => ({
+vi.mock("@lootlog/api-client/react-query/main/roles", () => ({
   getRolesControllerGetGuildRolesQueryKey: ({
     guildId,
   }: {

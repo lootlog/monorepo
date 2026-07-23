@@ -8,7 +8,7 @@ import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialo
 import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useQueryClient } from "@tanstack/react-query";
-import { useUsersControllerDeleteAccount } from "@/lib/api/generated/main/users/users";
+import { useUsersControllerDeleteAccount } from "@lootlog/api-client/react-query/main/users";
 
 export const AccountSettings: FC = () => {
   const { t } = useTranslation();

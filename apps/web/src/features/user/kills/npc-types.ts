@@ -1,7 +1,5 @@
-import {
-  KillsControllerGetUserKillStatsNpcTypesItem,
-  type KillsControllerGetUserKillStatsNpcTypesItem as NpcType,
-} from "@/lib/api/generated/main/model";
+import { KillsControllerGetUserKillStatsNpcTypesItem } from "@lootlog/api-client/models/main/kills-controller-get-user-kill-stats-npc-types-item";
+import type { KillsControllerGetUserKillStatsNpcTypesItem as NpcType } from "@lootlog/api-client/models/main/kills-controller-get-user-kill-stats-npc-types-item";
 
 export type { NpcType };
 

@@ -21,8 +21,8 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   useDocsControllerDeleteDocument,
   useDocsControllerGetDocuments,
-} from "@/lib/api/generated/main/docs/docs";
-import type { GuildDocumentListResponseDtoItemsItem } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/docs";
+import type { GuildDocumentListResponseDtoItemsItem } from "@lootlog/api-client/models/main/guild-document-list-response-dto-items-item";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
