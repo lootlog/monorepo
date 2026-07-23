@@ -434,6 +434,7 @@ jobs:
           ADMIN_ACCOUNT_IDS: ci-admin
           AUTH_SECRET: ci-openapi-generation-secret
           APP_URL: http://localhost:4001
+          POSTGRESQL_CONNECTION_URI: postgresql://postgres:postgres@localhost:5432/lootlog
           POSTGRESQL_PORT: "5432"
           POSTGRESQL_HOST: localhost
           POSTGRESQL_USER: postgres
