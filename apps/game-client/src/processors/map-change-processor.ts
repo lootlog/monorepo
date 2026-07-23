@@ -6,6 +6,7 @@ import { mapPingController } from "@/features/map-pings/map-ping-controller";
 import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
+import { useDialogStore } from "@/store/game-store/dialog.store";
 
 export class MapChangeProcessor {
   private previousMapId: number | null = null;
@@ -23,6 +24,7 @@ export class MapChangeProcessor {
     if (previousMapId !== null) {
       useNpcDetectorStore.getState().clearNpcs();
     }
+    useDialogStore.getState().clearNpcContext();
     mapPingInteractionController.cancel();
     mapPingController.clear();
 

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef } from "react";
+import { lazy, Suspense } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { GuildShell } from "@/components/layout/guild-shell";
 import { GuildSidebarNavPlaceholder } from "@/components/layout/guild-sidebar-nav-placeholder";
@@ -41,15 +41,8 @@ export const AppLayout = () => {
     guildRouteMatch?.status === "success" &&
     guildRouteMatch.loaderData !== undefined;
 
-  const hasEverResolvedGuild = useRef(false);
-  if (hasResolvedGuildRoute) {
-    hasEverResolvedGuild.current = true;
-  }
-  if (isUserRoute) {
-    hasEverResolvedGuild.current = false;
-  }
-
-  const showGuildNav = hasResolvedGuildRoute || hasEverResolvedGuild.current;
+  const showGuildNav =
+    !isUserRoute && guildRouteMatch?.loaderData !== undefined;
 
   const sidebarNavigation = isUserRoute ? (
     <UserSidebarNav />

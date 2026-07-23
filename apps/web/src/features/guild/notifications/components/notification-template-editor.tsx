@@ -19,11 +19,9 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTranslation } from "react-i18next";
-import {
-  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
-  type CreateNotificationRuleDtoTriggerType,
-  type RoleResponseDtoOutput as GuildRole,
-} from "@/lib/api/generated/main/model";
+import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
+import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
+import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/api-client/models/main/role-response-dto-output";
 import {
   TIMER_PRESET_SIMPLE,
   TIMER_PRESET_DETAILED,
@@ -152,8 +150,10 @@ export const NotificationTemplateEditor = ({
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const [activeSuggestion, setActiveSuggestion] =
     useState<ActiveSuggestion>(null);
-  const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] =
-    useState(0);
+  const [highlightedSuggestion, setHighlightedSuggestion] = useState({
+    identity: "",
+    index: 0,
+  });
   const editorRef = useRef<LexicalEditor | null>(null);
   const editorSurfaceRef = useRef<HTMLDivElement | null>(null);
 
@@ -276,18 +276,17 @@ export const NotificationTemplateEditor = ({
     mentionSuggestions,
     variableSuggestions,
   );
-  const filteredSuggestionsRef = useRef<TemplateSuggestion[]>([]);
-  filteredSuggestionsRef.current = filteredSuggestions;
-  const highlightedSuggestionIndexRef = useRef(0);
-  highlightedSuggestionIndexRef.current = highlightedSuggestionIndex;
-
-  useEffect(() => {
-    setHighlightedSuggestionIndex(0);
-  }, [activeSuggestion?.type, activeSuggestion?.query]);
+  const activeSuggestionIdentity = activeSuggestion
+    ? `${activeSuggestion.type}:${activeSuggestion.query}`
+    : "";
+  const highlightedSuggestionIndex =
+    highlightedSuggestion.identity === activeSuggestionIdentity
+      ? highlightedSuggestion.index
+      : 0;
 
   useEffect(() => {
     const highlightedSuggestion =
-      filteredSuggestionsRef.current[highlightedSuggestionIndexRef.current];
+      filteredSuggestions[highlightedSuggestionIndex];
 
     if (!highlightedSuggestion) {
       return;
@@ -297,9 +296,9 @@ export const NotificationTemplateEditor = ({
       block: "nearest",
     });
   }, [
-    activeSuggestion?.type,
-    activeSuggestion?.query,
+    activeSuggestionIdentity,
     highlightedSuggestionIndex,
+    filteredSuggestions,
   ]);
 
   const insertSuggestion = (
@@ -418,20 +417,34 @@ export const NotificationTemplateEditor = ({
     if (event.key === "ArrowDown") {
       event.preventDefault();
       event.stopPropagation();
-      setHighlightedSuggestionIndex(
-        (currentIndex) => (currentIndex + 1) % filteredSuggestions.length,
-      );
+      setHighlightedSuggestion((currentSuggestion) => {
+        const currentIndex =
+          currentSuggestion.identity === activeSuggestionIdentity
+            ? currentSuggestion.index
+            : 0;
+        return {
+          identity: activeSuggestionIdentity,
+          index: (currentIndex + 1) % filteredSuggestions.length,
+        };
+      });
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
       event.stopPropagation();
-      setHighlightedSuggestionIndex(
-        (currentIndex) =>
-          (currentIndex - 1 + filteredSuggestions.length) %
-          filteredSuggestions.length,
-      );
+      setHighlightedSuggestion((currentSuggestion) => {
+        const currentIndex =
+          currentSuggestion.identity === activeSuggestionIdentity
+            ? currentSuggestion.index
+            : 0;
+        return {
+          identity: activeSuggestionIdentity,
+          index:
+            (currentIndex - 1 + filteredSuggestions.length) %
+            filteredSuggestions.length,
+        };
+      });
       return;
     }
 
@@ -648,7 +661,10 @@ export const NotificationTemplateEditor = ({
                                   "bg-primary/50 text-accent-foreground",
                               )}
                               onMouseEnter={() => {
-                                setHighlightedSuggestionIndex(index);
+                                setHighlightedSuggestion({
+                                  identity: activeSuggestionIdentity,
+                                  index,
+                                });
                               }}
                               onSelect={() =>
                                 insertSuggestion(

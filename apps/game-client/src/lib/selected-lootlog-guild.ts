@@ -1,9 +1,9 @@
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
 
 export function getCurrentCharacterId(): string | null {
   try {
-    const characterId = Game.hero?.id;
+    const characterId = useGameStore.getState().game?.hero.characterId;
     if (characterId === undefined || characterId === null) {
       return null;
     }

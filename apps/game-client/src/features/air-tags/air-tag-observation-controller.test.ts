@@ -4,6 +4,12 @@ import {
   AIR_TAG_HEARTBEAT_INTERVAL_MS,
   AirTagObservationController,
 } from "./air-tag-observation-controller";
+import {
+  setTestRuntimeGame,
+  testRuntimeWindow,
+} from "@/test/test-runtime-window";
+
+beforeEach(() => setTestRuntimeGame());
 
 const createOther = (overrides: Partial<OtherCreate> = {}): OtherCreate => ({
   action: "CREATE",
@@ -28,7 +34,7 @@ const createOther = (overrides: Partial<OtherCreate> = {}): OtherCreate => ({
 describe("AirTagObservationController", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    window.Engine = {
+    testRuntimeWindow.Engine = {
       hero: { d: { id: 999 } },
       others: { check: vi.fn(() => ({})) },
     } as never;

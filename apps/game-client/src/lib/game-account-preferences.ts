@@ -7,7 +7,7 @@ import {
   type NotificationsSettings,
   type UserGameAccountPreferences,
 } from "@lootlog/types";
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
+import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/api-client/react-query/main/users";
 
 const UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX =
   "update-user-game-account-preferences";
@@ -15,6 +15,15 @@ const UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX =
 const notificationSettingTypes = Object.keys(
   defaultNotificationsSettings,
 ) as Array<keyof NotificationsSettings>;
+
+type GameAccountNotificationPreferences = Pick<
+  UserGameAccountPreferences,
+  "hasStoredNotifications" | "notifications"
+>;
+type GameAccountDetectorPreferences = Pick<
+  UserGameAccountPreferences,
+  "detector" | "hasStoredDetector"
+>;
 
 export const getUserGameAccountPreferencesQueryKey = (accountId: string) =>
   getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId });
@@ -78,7 +87,7 @@ export const createDetectorSettings = (): DetectorSettings => {
 };
 
 export const getEffectiveNotificationSettings = (
-  preferences?: UserGameAccountPreferences | null,
+  preferences?: GameAccountNotificationPreferences | null,
 ) => {
   if (!preferences) {
     return cloneNotificationsSettings(defaultNotificationsSettings);
@@ -88,7 +97,7 @@ export const getEffectiveNotificationSettings = (
 };
 
 export const getEffectiveDetectorSettings = (
-  preferences?: UserGameAccountPreferences | null,
+  preferences?: GameAccountDetectorPreferences | null,
 ) => {
   if (!preferences) {
     return cloneDetectorSettings(defaultDetectorSettings);
@@ -98,13 +107,13 @@ export const getEffectiveDetectorSettings = (
 };
 
 export const isNotificationPreferencesReady = (
-  preferences?: UserGameAccountPreferences | null,
+  preferences?: GameAccountNotificationPreferences | null,
 ) => {
   return Boolean(preferences?.hasStoredNotifications);
 };
 
 export const isDetectorPreferencesReady = (
-  preferences?: UserGameAccountPreferences | null,
+  preferences?: GameAccountDetectorPreferences | null,
 ) => {
   return Boolean(preferences?.hasStoredDetector);
 };

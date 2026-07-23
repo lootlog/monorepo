@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { reservationSlug } from "@/features/guild/reservations/reservation-slug";
-import type { ReservationResponseDto } from "@/lib/api/generated/main/model";
+import type { ReservationResponseDto } from "@lootlog/api-client/models/main/reservation-response-dto";
 import { mapReservationsByAlias } from "./reservations-api";
 
 const createApiReservation = (

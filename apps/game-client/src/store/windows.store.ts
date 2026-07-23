@@ -452,15 +452,6 @@ export const useWindowsStore = create<WindowsState>()(
 
           if (windowState !== undefined) {
             nextState = windowState;
-          } else if (key === "settings" && !open) {
-            const currentSettingsState = hasWindowState
-              ? currentWindow.state
-              : undefined;
-            const isAlreadyEmpty =
-              typeof currentSettingsState === "object" &&
-              currentSettingsState !== null &&
-              Object.keys(currentSettingsState).length === 0;
-            nextState = isAlreadyEmpty ? currentSettingsState : {};
           }
 
           let nextHistory = state.windowFocusHistory;

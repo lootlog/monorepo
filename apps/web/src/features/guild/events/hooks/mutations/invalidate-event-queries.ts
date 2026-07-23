@@ -4,7 +4,7 @@ import {
   getListEventsQueryKey,
   getShowEventOverviewQueryKey,
   getShowEventWrappedQueryKey,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 
 export function invalidateEventDetailQueries(
   queryClient: QueryClient,

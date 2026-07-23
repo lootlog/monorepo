@@ -1,4 +1,4 @@
-import { NpcType } from "@/lib/api/generated/main/model";
+import { NpcType } from "@lootlog/api-client/models/main/npc-type";
 
 export const NPC_TYPE_NAMES: Record<NpcType, string> = {
   [NpcType.TITAN]: "Tytan",

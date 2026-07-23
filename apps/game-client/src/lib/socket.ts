@@ -37,9 +37,7 @@ type ServerToClientEvents = {
     guildIds?: string[];
   }) => void;
 
-  [GatewayEvent.PERMISSIONS_UPDATED]: (data: {
-    guilds: { guild: { id: string } }[];
-  }) => void;
+  [GatewayEvent.PERMISSIONS_UPDATED]: (data: PermissionsUpdatedPayload) => void;
 
   [GatewayEvent.TIMERS_CREATE]: (data: Timer) => void;
   [GatewayEvent.TIMERS_DELETE]: (data: Timer) => void;
@@ -104,6 +102,11 @@ type ServerToClientEvents = {
   [GatewayEvent.AIR_TAG_UPDATE]: (data: AirTagUpdateEvent) => void;
 };
 
+export type PermissionsUpdatedPayload = {
+  guilds?: { guild: { id: string } }[];
+  featureRooms?: string[];
+};
+
 type ClientToServerEvents = {
   [GatewayEvent.JOIN]: (data: {
     data: {
@@ -154,15 +157,6 @@ let socket: AppSocket | null = null;
 
 export const getSocket = (): AppSocket => {
   if (!socket) {
-    const fixtureSocket = (
-      window as Window & { __lootlogPerfSocket?: AppSocket }
-    ).__lootlogPerfSocket;
-
-    if (import.meta.env.VITE_PERF_FIXTURE === "1" && fixtureSocket) {
-      socket = fixtureSocket;
-      return socket;
-    }
-
     socket = io(GATEWAY_URL, {
       transports: ["websocket"],
       path: `${GATEWAY_SOCKET_PATH ?? ""}/socket.io`,

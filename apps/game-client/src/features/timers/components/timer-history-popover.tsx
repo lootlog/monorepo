@@ -8,8 +8,8 @@ import {
   getTimersControllerGetTimerHistoryQueryKey,
   useTimersControllerGetTimerHistory,
   useTimersControllerRestoreTimerFromHistory,
-} from "@/lib/api/generated/main/timers/timers";
-import type { TimerHistoryResponseDto } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/timers";
+import type { TimerHistoryResponseDto } from "@lootlog/api-client/models/main/timer-history-response-dto";
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { History } from "lucide-react";
 import { useState, type FC } from "react";
@@ -67,18 +67,33 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
       {
         onSuccess: (restoredTimer) => {
           upsertTimer(normalizeTimerResponse(restoredTimer));
-          window.message?.(t("history.restoreSuccess"));
+          showRuntimeMessage(t("history.restoreSuccess"));
           setOpen(false);
         },
         onError: () => {
-          window.message?.(t("history.restoreFailed"));
+          showRuntimeMessage(t("history.restoreFailed"));
         },
       },
     );
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen, eventDetails) => {
+        if (
+          !nextOpen &&
+          eventDetails.reason === "outside-press" &&
+          eventDetails.event.target instanceof Element &&
+          eventDetails.event.target.closest('[role="menu"]')
+        ) {
+          eventDetails.cancel();
+          return;
+        }
+
+        setOpen(nextOpen);
+      }}
+    >
       <PopoverTrigger asChild>
         <ContextMenuItem
           onSelect={(event) => {
@@ -90,19 +105,7 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
           {t("contextMenu.history")}
         </ContextMenuItem>
       </PopoverTrigger>
-      <PopoverContent
-        className="ll:w-80 ll:p-1"
-        align="start"
-        side="right"
-        onInteractOutside={(event) => {
-          if (
-            event.target instanceof Element &&
-            event.target.closest('[role="menu"]')
-          ) {
-            event.preventDefault();
-          }
-        }}
-      >
+      <PopoverContent className="ll:w-80 ll:p-1" align="start" side="right">
         <TimerHistoryList
           history={history}
           isLoading={isLoading}
@@ -114,3 +117,4 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
     </Popover>
   );
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

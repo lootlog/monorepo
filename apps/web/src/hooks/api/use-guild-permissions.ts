@@ -2,7 +2,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 
 export const useGuildPermissions = () => {
   const guildId = useGuildId();

@@ -6,12 +6,12 @@ import {
   invalidateBattlesControllerGetDashboardBattles,
   useBattlesControllerDeleteBattle,
   useBattlesControllerUpdateBattle,
-} from "@/lib/api/generated/battlelog/battles/battles";
+} from "@lootlog/api-client/react-query/battlelog/battles";
 import {
   invalidatePublicBattlesControllerGetPublicBattle,
   invalidatePublicBattlesControllerGetPublicBattleRaw,
   invalidatePublicBattlesControllerGetPublicBattleTimeline,
-} from "@/lib/api/generated/battlelog/public-battles/public-battles";
+} from "@lootlog/api-client/react-query/battlelog/public-battles";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -111,7 +111,10 @@ export const useBattleTableActions = ({
       const copied = await copy(links);
 
       if (!copied) {
-        throw new Error("Bulk links were not copied");
+        toast.error(t("battlePanel.toasts.linkCopyError"), {
+          duration: 3000,
+        });
+        return;
       }
 
       toast.success(

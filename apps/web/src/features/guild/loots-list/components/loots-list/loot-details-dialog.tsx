@@ -27,7 +27,7 @@ import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getLootsControllerFetchLootByIdQueryKey,
   useLootsControllerFetchLootById,
-} from "@/lib/api/generated/main/loots/loots";
+} from "@lootlog/api-client/react-query/main/loots";
 import { buildLootShareMaps } from "@/features/guild/loots-list/utils/build-loot-share-maps";
 
 const MANAGE_LOOTS_PERMISSIONS = ["LOOTLOG_MANAGE", "ADMIN"] as const;

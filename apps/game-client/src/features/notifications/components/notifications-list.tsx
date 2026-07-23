@@ -1,4 +1,4 @@
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleNotification } from "@/features/notifications/components/single-notification";
 import { useNotificationGuildMembers } from "@/features/notifications/hooks/use-notification-guild-members";
 import {
@@ -14,8 +14,8 @@ import {
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
-import { usePartyReadyRoomControllerApply } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+} from "@lootlog/api-client/react-query/main/users";
+import { usePartyReadyRoomControllerApply } from "@lootlog/api-client/react-query/main/party-ready-room";
 import {
   type StoredNotification,
   useNotificationsStore,
@@ -146,6 +146,9 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   };
 
   const handleJoinReadyRoom = (notification: StoredNotification) => {
+    const character = buildCurrentCharacterPayload();
+    if (!character) return;
+
     applyToReadyRoom.mutate(
       {
         pathParams: {
@@ -153,7 +156,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         },
         data: {
           world: notification.world,
-          character: buildCurrentCharacterPayload(),
+          character,
         },
       },
       {
@@ -225,7 +228,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   };
 
   return (
-    <NativeScrollArea
+    <ScrollArea
       ref={scrollViewportRef}
       className="ll:h-full ll:max-h-[inherit] ll:w-full ll:box-border"
     >
@@ -251,6 +254,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
           );
         })}
       </div>
-    </NativeScrollArea>
+    </ScrollArea>
   );
 };

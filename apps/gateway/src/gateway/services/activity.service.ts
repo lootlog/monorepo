@@ -16,6 +16,10 @@ import {
 type ActivityPlayer = NonNullable<Socket["data"]["player"]>;
 type ActivityClient = Pick<Socket, "data"> &
   Partial<Pick<Socket, "request" | "handshake">>;
+interface PublishErrorDetails {
+  message: string;
+  stack?: string;
+}
 
 @Injectable()
 export class ActivityService {
@@ -80,13 +84,28 @@ export class ActivityService {
             },
           );
         } catch (error) {
+          const publishError = this.getPublishErrorDetails(error);
+
           this.logger.error(
-            `Failed to publish ${type} for ${discordId} in guild ${guildId}: ${error.message}`,
-            error.stack,
+            `Failed to publish ${type} for ${discordId} in guild ${guildId}: ${publishError.message}`,
+            publishError.stack,
           );
         }
       }),
     );
+  }
+
+  private getPublishErrorDetails(error: unknown): PublishErrorDetails {
+    if (error instanceof Error) {
+      return {
+        message: error.message,
+        stack: error.stack,
+      };
+    }
+
+    return {
+      message: String(error),
+    };
   }
 
   private buildActivityPayload({

@@ -20,8 +20,8 @@ export default defineConfig({
         "../../packages/nest-shared/src/decorators/index.ts",
       "@lootlog/nest-shared/redis":
         "../../packages/nest-shared/src/redis/index.ts",
-      "@lootlog/nest-shared/validators":
-        "../../packages/nest-shared/src/validators/index.ts",
+      "@lootlog/nest-shared/validators/query-helpers":
+        "../../packages/nest-shared/src/validators/query-helpers.ts",
     },
     setupFiles: ["./vitest.setup.ts"],
   }),

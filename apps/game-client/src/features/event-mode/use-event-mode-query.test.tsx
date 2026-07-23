@@ -6,8 +6,8 @@ import {
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
+import { useGameStore } from "@/store/game.store";
 import {
   createEventModeQueryKey,
   useEventModeQuery,
@@ -35,14 +35,12 @@ vi.mock("@/hooks/auth/use-session", () => ({
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/event-mode/event-mode", () => ({
+vi.mock("@lootlog/api-client/react-query/main/event-mode", () => ({
   eventModeControllerGetEventMode: mocks.getEventMode,
 }));
 
 describe("useEventModeQuery", () => {
   let queryClient: QueryClient;
-  let getAccountIdSpy: ReturnType<typeof vi.spyOn>;
-  let getWorldNameSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     mocks.connected = false;
@@ -52,10 +50,23 @@ describe("useEventModeQuery", () => {
       events: [],
     });
     useGlobalStore.getState().setGameState({ gameInitialized: true });
-    getAccountIdSpy = vi
-      .spyOn(Game, "getAccountId")
-      .mockReturnValue("account-1");
-    getWorldNameSpy = vi.spyOn(Game, "getWorldName").mockReturnValue("Tempest");
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "account-1",
+        characterId: "1",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "Tempest",
+    });
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -67,8 +78,6 @@ describe("useEventModeQuery", () => {
   });
 
   afterEach(() => {
-    getAccountIdSpy.mockRestore();
-    getWorldNameSpy.mockRestore();
     queryClient.clear();
     focusManager.setFocused(undefined);
   });
@@ -84,7 +93,9 @@ describe("useEventModeQuery", () => {
   });
 
   it("does not query while the game exposes the fallback world", () => {
-    getWorldNameSpy.mockReturnValue("unknown");
+    const game = useGameStore.getState().game;
+    if (!game) throw new Error("Expected game fixture");
+    useGameStore.getState().replaceGame({ ...game, world: "unknown" });
 
     const { result } = renderHook(() => useEventModeQuery({ active: true }), {
       wrapper: createWrapper(queryClient),

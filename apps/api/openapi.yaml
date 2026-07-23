@@ -1431,7 +1431,7 @@ paths:
       operationId: LootsController_fetchLootsByGuildId
       parameters:
         - name: limit
-          required: true
+          required: false
           in: query
           schema:
             minimum: 1
@@ -1640,7 +1640,7 @@ paths:
       operationId: LootsController_countLootsByGuildId
       parameters:
         - name: limit
-          required: true
+          required: false
           in: query
           schema:
             minimum: 1
@@ -2007,7 +2007,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LootShareResponseDto"
+                $ref: "#/components/schemas/LootShareResponseDto_Output"
         "404":
           description: Loot not found
       security:
@@ -5694,14 +5694,14 @@ paths:
             example: "123"
             type: string
         - name: minLvl
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: maxLvl
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
@@ -5742,7 +5742,7 @@ paths:
             maximum: 100
             type: integer
         - name: cursor
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
@@ -9579,6 +9579,12 @@ components:
           type: string
       required:
         - msg
+    LootShareResponseDto_Output:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
     NullableLootlogConfigResponseDto_Output:
       type: object
       properties:
@@ -10829,6 +10835,18 @@ components:
           maximum: 9007199254740991
       required:
         - expectedRevision
+    NotificationTargetResponseDto__schema0:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/NotificationTargetResponseDto__schema0"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/NotificationTargetResponseDto__schema0"
+      nullable: true
     NotificationTargetResponseDto:
       type: object
       properties:
@@ -10862,7 +10880,7 @@ components:
           nullable: true
         metadata:
           allOf:
-            - $ref: "#/components/schemas/JsonValue"
+            - $ref: "#/components/schemas/NotificationTargetResponseDto__schema0"
           nullable: true
         active:
           type: boolean
@@ -17397,15 +17415,3 @@ components:
           type: boolean
       required:
         - success
-    JsonValue:
-      anyOf:
-        - type: string
-        - type: number
-        - type: boolean
-        - type: array
-          items:
-            $ref: "#/components/schemas/JsonValue"
-        - type: object
-          additionalProperties:
-            $ref: "#/components/schemas/JsonValue"
-      nullable: true

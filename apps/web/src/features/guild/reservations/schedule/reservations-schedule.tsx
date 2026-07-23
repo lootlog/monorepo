@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import {
@@ -25,18 +25,18 @@ import { ScheduleHeader } from "./schedule-header";
 import { ScheduleGrid } from "./schedule-grid";
 import { CreateReservationDialog } from "./create-reservation-dialog";
 import { useScheduleNavigation } from "./use-schedule-navigation";
-import { useReservationSegments } from "./use-reservation-segments";
+import { getReservationSegments } from "./get-reservation-segments";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { normalizeReservation } from "./normalize-reservation";
 import {
   invalidateReservationsControllerGetReservations,
   useReservationsControllerDeleteReservation,
   useReservationsControllerGetReservations,
-} from "@/lib/api/generated/main/reservations/reservations";
+} from "@lootlog/api-client/react-query/main/reservations";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
-import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useMembersControllerGetGuildMemberReferences } from "@lootlog/api-client/react-query/main/members";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-reference-response-dto-output";
+import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
 import { getReservationSettings } from "./reservation-settings";
 
 export const ReservationsSchedule: React.FC = () => {
@@ -144,20 +144,12 @@ export const ReservationsSchedule: React.FC = () => {
     handleNextWeek,
   } = useScheduleNavigation();
 
-  const canModerateReservations = useMemo(() => {
-    if (isOwner) {
-      return true;
-    }
-
-    if (!permissions) {
-      return false;
-    }
-
-    return (
-      permissions.includes(Permission.LOOTLOG_MANAGE) ||
-      permissions.includes(Permission.ADMIN)
+  const canModerateReservations =
+    isOwner ||
+    Boolean(
+      permissions?.includes(Permission.LOOTLOG_MANAGE) ||
+      permissions?.includes(Permission.ADMIN),
     );
-  }, [permissions, isOwner]);
 
   const canManageReservationSettings =
     isOwner ||
@@ -198,12 +190,9 @@ export const ReservationsSchedule: React.FC = () => {
     ? (reservations?.[reservationKey] ?? [])
     : [];
 
-  const normalizedReservations = useMemo(
-    () => selectedReservations.map(normalizeReservation),
-    [selectedReservations],
-  );
+  const normalizedReservations = selectedReservations.map(normalizeReservation);
 
-  const segments = useReservationSegments(normalizedReservations, weekStart);
+  const segments = getReservationSegments(normalizedReservations, weekStart);
 
   type ReservationGatewayPayload = {
     guildId: string;
@@ -236,44 +225,39 @@ export const ReservationsSchedule: React.FC = () => {
     };
   }, [connected, guildId, queryClient, socket]);
 
-  const handleDeleteReservation = useCallback(
-    async (reservationRecordId: number, action: "cancel" | "remove") => {
-      const successMessage =
-        action === "cancel"
-          ? "Rezerwacja została anulowana."
-          : "Rezerwacja została usunięta.";
-      const fallbackMessage =
-        action === "cancel"
-          ? "Nie udało się anulować rezerwacji."
-          : "Nie udało się usunąć rezerwacji.";
+  const handleDeleteReservation = async (
+    reservationRecordId: number,
+    action: "cancel" | "remove",
+  ) => {
+    const successMessage =
+      action === "cancel"
+        ? "Rezerwacja została anulowana."
+        : "Rezerwacja została usunięta.";
+    const fallbackMessage =
+      action === "cancel"
+        ? "Nie udało się anulować rezerwacji."
+        : "Nie udało się usunąć rezerwacji.";
 
-      try {
-        if (!guildId) {
-          throw new Error("Missing guild id when deleting reservation.");
-        }
-
-        await deleteReservation({
-          pathParams: { guildId, reservationRecordId },
-        });
-        toast.success(successMessage, { position: "bottom-right" });
-      } catch (error) {
-        toast.error(getApiErrorMessage(error) ?? fallbackMessage, {
-          position: "bottom-right",
-        });
-      }
-    },
-    [deleteReservation, guildId],
-  );
-
-  const membersByUserId = useMemo(() => {
-    if (!members) {
-      return new Map<string, GuildMember>();
+    if (!guildId) {
+      toast.error(fallbackMessage, { position: "bottom-right" });
+      return;
     }
 
-    return new Map<string, GuildMember>(
-      members.map((member) => [member.userId, member]),
-    );
-  }, [members]);
+    try {
+      await deleteReservation({
+        pathParams: { guildId, reservationRecordId },
+      });
+      toast.success(successMessage, { position: "bottom-right" });
+    } catch (error) {
+      toast.error(getApiErrorMessage(error) ?? fallbackMessage, {
+        position: "bottom-right",
+      });
+    }
+  };
+
+  const membersByUserId = new Map<string, GuildMember>(
+    members?.map((member) => [member.userId, member]) ?? [],
+  );
 
   return (
     <TooltipProvider>

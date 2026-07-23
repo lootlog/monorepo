@@ -1,5 +1,5 @@
 import { GatewayEvent } from "@/config/gateway";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { getSocket } from "@/lib/socket";
 import type {
   AirTagObservationBatch,
@@ -29,7 +29,8 @@ export class AirTagRuntime {
   configure(nextState: AirTagRuntimeState): void {
     const previousState = this.state;
     const wasPublishing = this.isPublishing(previousState);
-    const nextEnabled = nextState.enabled && Game.interface === "ni";
+    const nextEnabled =
+      nextState.enabled && useGameStore.getState().game?.interface === "ni";
     this.state = { ...nextState, enabled: nextEnabled };
     const isPublishing = this.isPublishing(this.state);
 
@@ -125,7 +126,7 @@ export class AirTagRuntime {
     const requestId = crypto.randomUUID();
     airTagReceiveController.beginSubscription(
       requestId,
-      Game.getWorldName(),
+      useGameStore.getState().game?.world ?? "unknown",
       map.id,
     );
     this.emitSubscription(
@@ -160,7 +161,7 @@ export class AirTagRuntime {
   };
 
   private getCurrentMap(): { id: number; name: string } | null {
-    const map = Game.map;
+    const map = useGameStore.getState().game?.map;
     if (!Number.isInteger(map?.id) || typeof map?.name !== "string")
       return null;
 

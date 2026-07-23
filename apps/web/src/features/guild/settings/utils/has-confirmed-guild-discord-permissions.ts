@@ -1,4 +1,4 @@
-import type { DiscordGuildSyncStateResponseDto } from "@/lib/api/generated/main/model";
+import type { DiscordGuildSyncStateResponseDto } from "@lootlog/api-client/models/main/discord-guild-sync-state-response-dto";
 
 export const hasConfirmedGuildDiscordPermissions = (
   syncState: DiscordGuildSyncStateResponseDto | undefined,

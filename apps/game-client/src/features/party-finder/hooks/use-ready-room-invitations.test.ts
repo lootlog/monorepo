@@ -12,27 +12,24 @@ import {
 } from "@/features/party-finder/ready-room-invitation-coordinator";
 import { useGlobalStore } from "@/store/global.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 const resolveInvitationTargets =
   vi.fn<(...args: unknown[]) => Promise<unknown>>();
 const inviteCharacterToParty = vi.fn();
 
-vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
   partyReadyRoomControllerResolveInvitationTargets: (...args: unknown[]) =>
     resolveInvitationTargets(...args),
 }));
 
-vi.mock("@/utils/game/character-actions", () => ({
-  inviteCharacterToParty: (characterId: string) =>
-    inviteCharacterToParty(characterId),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getAccountId: () => "organizer-account",
-    hero: { id: "organizer-character" },
-  },
-}));
+vi.mock(
+  "@/lib/margonem-runtime/adapters/character-action-runtime-adapter",
+  () => ({
+    inviteCharacterToParty: (characterId: string) =>
+      inviteCharacterToParty(characterId),
+  }),
+);
 
 function createParticipant(
   participantId: string,
@@ -91,6 +88,12 @@ function createDeferred<T>() {
 
 describe("useReadyRoomInvitations", () => {
   beforeEach(() => {
+    setTestRuntimeGame({
+      hero: {
+        accountId: "organizer-account",
+        characterId: "organizer-character",
+      },
+    });
     vi.clearAllMocks();
     resetReadyRoomInvitationCoordinatorForTests();
     usePartyFinderStore.getState().clearReadyRooms();

@@ -10,11 +10,11 @@ import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
-import { partyReadyRoomControllerRemove } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import { partyReadyRoomControllerRemove } from "@lootlog/api-client/react-query/main/party-ready-room";
 import { cn } from "@/lib/utils";
 import { useFriendsStore } from "@/store/friends.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
-import { inviteCharacterToFriends } from "@/utils/game/character-actions";
+import { inviteCharacterToFriends } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 
 type ReadyRoomParticipantItemProps = {
   room: PartyReadyRoomOrganizerProjection;
@@ -38,20 +38,19 @@ export function ReadyRoomParticipantItem({
     room.organizerCharacter.clan?.id !== undefined &&
     participant.character.clan.id === room.organizerCharacter.clan.id;
 
-  const removeParticipant = async () => {
+  const removeParticipant = () => {
     setIsRemoving(true);
-    try {
-      const update = await partyReadyRoomControllerRemove(
-        { notificationId: room.notificationId },
-        {
-          participantId: participant.participantId,
-          expectedRevision: room.revision,
-        },
-      );
-      applyUpdate(update as unknown as PartyReadyRoomClientUpdate);
-    } finally {
-      setIsRemoving(false);
-    }
+    return partyReadyRoomControllerRemove(
+      { notificationId: room.notificationId },
+      {
+        participantId: participant.participantId,
+        expectedRevision: room.revision,
+      },
+    )
+      .then((update) => {
+        applyUpdate(update as unknown as PartyReadyRoomClientUpdate);
+      })
+      .finally(() => setIsRemoving(false));
   };
 
   return (

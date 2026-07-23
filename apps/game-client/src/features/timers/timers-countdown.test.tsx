@@ -2,7 +2,15 @@ import { act, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import type { TimerWithTimeLeft } from "./utils/timers-utils";
+
+beforeEach(() =>
+  setTestRuntimeGame({
+    hero: { characterId: "101" },
+    world: "gefion",
+  }),
+);
 
 const testState = vi.hoisted(() => ({
   timers: [] as Timer[],

@@ -1,4 +1,4 @@
-import type { LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem as LootlogConfigNpcAllowedRarity } from "@/lib/api/generated/main/model";
+import type { LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem as LootlogConfigNpcAllowedRarity } from "@lootlog/api-client/models/main/lootlog-config-npc-response-dto-output-allowed-rarities-item";
 import { Crown, Sparkles, Swords, type LucideIcon } from "lucide-react";
 
 export const NPC_RARITY_CONFIG: {

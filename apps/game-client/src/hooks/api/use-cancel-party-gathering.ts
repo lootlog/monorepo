@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PartyReadyRoomClientUpdate } from "@lootlog/types";
-import { getChatControllerGetChatMessagesQueryKey } from "@/lib/api/generated/main/chat/chat";
-import { partyReadyRoomControllerCancel } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/api-client/react-query/main/chat";
+import { partyReadyRoomControllerCancel } from "@lootlog/api-client/react-query/main/party-ready-room";
 import {
   selectOwnedReadyRoom,
   usePartyFinderStore,
@@ -43,11 +43,12 @@ export const useCancelPartyGathering = () => {
     },
     onSuccess: () => {
       setOpen("party-finder", false);
-      window.message(t("messages.cancelSuccess"));
+      showRuntimeMessage(t("messages.cancelSuccess"));
     },
     onError: (error) => {
       console.warn("Failed to cancel party gathering:", error);
-      window.message(t("messages.cancelFailed"));
+      showRuntimeMessage(t("messages.cancelFailed"));
     },
   });
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

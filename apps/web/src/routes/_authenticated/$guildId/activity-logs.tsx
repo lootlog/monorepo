@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ActivityLogs } from "@/features/guild/activity-logs/activity-logs";
 import { ActivityLogsPageSkeleton } from "@/features/guild/activity-logs/activity-logs-page-skeleton";
-import { getActivitiesControllerSuggestWorldsQueryOptions } from "@/lib/api/generated/activity/guilds/guilds";
+import { getActivitiesControllerSuggestWorldsQueryOptions } from "@lootlog/api-client/react-query/activity/guilds";
 import {
   activityLogsInfiniteQueryOptions,
   getActivityLogSources,

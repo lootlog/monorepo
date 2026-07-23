@@ -40,10 +40,10 @@ import {
   useNotificationsGuildControllerCreateGuildTarget,
   useNotificationsGuildControllerGetAvailableGuildTargets,
   useNotificationsGuildControllerUpdateGuildTarget,
-} from "@/lib/api/generated/main/notifications/notifications";
+} from "@lootlog/api-client/react-query/main/notifications";
 import { invalidateGuildNotificationQueries } from "../notifications-api";
 import { NotificationTargetType } from "@lootlog/types";
-import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
+import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
 
 const targetFormSchema = (t: (key: string) => string, isCreateMode: boolean) =>
   z
@@ -168,13 +168,19 @@ export const NotificationTargetDialog = ({
 
   const handleSubmit = async (values: TargetFormValues) => {
     const trimmedDisplayName = values.displayName.trim();
+    if (!guildId) {
+      toast.error(
+        t(
+          isCreateMode
+            ? "settings.notifications.toasts.targetCreateError"
+            : "settings.notifications.toasts.targetUpdateError",
+        ),
+      );
+      return;
+    }
 
     try {
       if (isCreateMode) {
-        if (!guildId) {
-          throw new Error("Missing guild id.");
-        }
-
         const createdTarget = await createTarget.mutateAsync({
           pathParams: { guildId },
           data: {
@@ -187,10 +193,6 @@ export const NotificationTargetDialog = ({
         toast.success(t("settings.notifications.toasts.targetCreated"));
         onCreated?.(createdTarget);
       } else if (target) {
-        if (!guildId) {
-          throw new Error("Missing guild id.");
-        }
-
         await updateTarget.mutateAsync({
           pathParams: { guildId, targetId: target.id },
           data: {

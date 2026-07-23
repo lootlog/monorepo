@@ -4,13 +4,14 @@ import {
   LOOTLOG_OTHER_GLOW_BLUE,
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
   lootlogOtherGlowManager,
-} from "./lootlog-other-glow-manager";
+} from "./margonem-runtime/adapters/glow-runtime-adapter";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
-const originalWindowEngine = window.Engine;
+const originalWindowEngine = testRuntimeWindow.Engine;
 
 function getRuntimeDrawableList(): unknown[] {
   return (
-    window.Engine as unknown as {
+    testRuntimeWindow.Engine as unknown as {
       others: {
         getDrawableList: () => unknown[];
       };

@@ -29,7 +29,7 @@ import {
   getGuildsControllerGetGuildByIdQueryKey,
   invalidateGuildsControllerGetGuildById,
   useGuildsControllerUpdateGuildConfig,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import {
   reservationsSettingsFormSchema,
   type ReservationsSettingsFormValues,
@@ -38,7 +38,7 @@ import {
   getReservationSettings,
   RESERVATION_GRANULARITY_OPTIONS,
 } from "@/features/guild/reservations/schedule/reservation-settings";
-import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
 
 type ReservationsSettingsFormProps = {
   guild: GuildResponseDtoOutput;

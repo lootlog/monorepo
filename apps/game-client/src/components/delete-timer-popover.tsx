@@ -9,11 +9,11 @@ import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   guildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
 import { cn } from "@/lib/utils";
@@ -85,7 +85,22 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen, eventDetails) => {
+        if (
+          !nextOpen &&
+          eventDetails.reason === "outside-press" &&
+          eventDetails.event.target instanceof Element &&
+          eventDetails.event.target.closest('[role="menu"]')
+        ) {
+          eventDetails.cancel();
+          return;
+        }
+
+        setOpen(nextOpen);
+      }}
+    >
       <PopoverTrigger asChild>
         <ContextMenuItem
           onSelect={(e) => {
@@ -101,16 +116,8 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
         className="ll:w-64 ll:p-2"
         side="right"
         align="start"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onCloseAutoFocus={(e) => e.preventDefault()}
-        onInteractOutside={(e) => {
-          if (
-            e.target instanceof Element &&
-            e.target.closest('[role="menu"]')
-          ) {
-            e.preventDefault();
-          }
-        }}
+        initialFocus={false}
+        finalFocus={false}
       >
         <div className="ll:flex ll:flex-col ll:gap-1">
           <p className="ll:text-xs ll:font-semibold ll:mb-1 ll:text-gray-400">

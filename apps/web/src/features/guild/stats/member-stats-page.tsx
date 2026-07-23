@@ -33,14 +33,14 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useKillsControllerGetMemberKills } from "@/lib/api/generated/main/kills/kills";
-import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
+import { useKillsControllerGetMemberKills } from "@lootlog/api-client/react-query/main/kills";
+import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
-import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
+import { useMembersControllerGetGuildMemberReferences } from "@lootlog/api-client/react-query/main/members";
 import {
   buildMemberKillsParams,
   DEFAULT_MEMBER_KILLS_LIMIT,

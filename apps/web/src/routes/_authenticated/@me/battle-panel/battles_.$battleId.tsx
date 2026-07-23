@@ -5,9 +5,9 @@ import { battlePanelSingleBattleSearchSchema } from "@/features/user/battle-pane
 import {
   getBattlesControllerGetBattleQueryOptions,
   getBattlesControllerGetBattleRawDataQueryOptions,
-} from "@/lib/api/generated/battlelog/battles/battles";
+} from "@lootlog/api-client/react-query/battlelog/battles";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
@@ -37,7 +37,7 @@ export const Route = createFileRoute(
 
         return { battle };
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
   component: BattlePanelSingleBattle,

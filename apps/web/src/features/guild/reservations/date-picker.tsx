@@ -53,7 +53,7 @@ export const DatePicker: FC<DatePickerProps> = ({
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => {
+      const scrollTimeoutId = setTimeout(() => {
         if (hourScrollRef.current) {
           const hourButton = hourScrollRef.current.querySelector(
             `button:nth-child(${hour + 1})`,
@@ -69,7 +69,11 @@ export const DatePicker: FC<DatePickerProps> = ({
           minuteButton?.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 0);
+
+      return () => clearTimeout(scrollTimeoutId);
     }
+
+    return () => undefined;
   }, [open, hour, minute, minuteStep]);
 
   const startOfMonth = (y: number, m: number) => new Date(y, m, 1);
@@ -242,27 +246,28 @@ export const DatePicker: FC<DatePickerProps> = ({
                 const leading = (firstDay + 6) % 7;
                 const total = daysInMonth(viewYear, viewMonth);
                 const cells: React.ReactElement[] = [];
-                for (let emptyIndex = 0; emptyIndex < leading; emptyIndex++)
+                for (let emptyIndex = 0; emptyIndex < leading; emptyIndex += 1)
                   cells.push(<div key={`e-${emptyIndex}`} className="py-2" />);
-                for (let dayNumber = 1; dayNumber <= total; dayNumber++) {
+                for (let dayNumber = 1; dayNumber <= total; dayNumber += 1) {
+                  const currentDayNumber = dayNumber;
                   const isSelected =
                     date &&
                     date.getFullYear() === viewYear &&
                     date.getMonth() === viewMonth &&
-                    date.getDate() === dayNumber;
-                  const isDisabled = isDayDisabled(dayNumber);
+                    date.getDate() === currentDayNumber;
+                  const isDisabled = isDayDisabled(currentDayNumber);
                   cells.push(
                     <button
-                      key={`d-${dayNumber}`}
+                      key={`d-${currentDayNumber}`}
                       type="button"
                       disabled={isDisabled}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDayClick(dayNumber);
+                        handleDayClick(currentDayNumber);
                       }}
                       className={`py-1 rounded disabled:pointer-events-none disabled:opacity-30 ${isSelected ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
                     >
-                      {dayNumber}
+                      {currentDayNumber}
                     </button>,
                   );
                 }

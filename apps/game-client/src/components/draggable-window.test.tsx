@@ -83,7 +83,7 @@ const mockElementRenderedHeight = (element: HTMLElement, height: number) => {
 
 const createScrollAreaChildren = () => (
   <div className="ll:flex ll:h-full ll:w-full ll:flex-col ll:overflow-hidden">
-    <div data-ll-native-scroll-area="">
+    <div data-ll-scroll-area-viewport="">
       <div>
         <div>Treść</div>
       </div>
@@ -137,7 +137,7 @@ const getNestedScrollAreaElements = (container: HTMLElement) => {
   const { windowElement, windowBody, titleBarElement, contentElement } =
     getWindowElements(container, { requireResizeHandle: false });
   const viewportElement = container.querySelector(
-    "[data-ll-native-scroll-area]",
+    "[data-ll-scroll-area-viewport]",
   );
   const viewportContent = viewportElement?.firstElementChild;
   const measuredContentElement = viewportContent?.firstElementChild;
@@ -208,7 +208,7 @@ describe("DraggableWindow", () => {
     expect(windowElement.style.contain).toBe("layout style");
   });
 
-  it("animates the visual surface and disables interaction during exit", () => {
+  it("animates the visual surface and disables interaction during exit", async () => {
     const { container, rerender } = render(
       <DraggableWindow isOpen id="notifications" title="Powiadomienia">
         <div>Treść</div>
@@ -216,11 +216,16 @@ describe("DraggableWindow", () => {
     );
     const { windowBody, windowElement } = getWindowElements(container);
 
-    expect(windowBody).toHaveClass("ll-window-enter");
+    expect(windowBody).toHaveClass("ll-window-preparing");
     expect(windowElement).not.toHaveClass("ll-window-enter");
     expect(windowElement.style.transform).toBe("");
 
-    fireEvent.animationEnd(windowBody);
+    await flushAnimationFrame();
+
+    expect(windowBody).toHaveClass("ll-window-enter");
+    expect(windowBody).not.toHaveClass("ll-window-preparing");
+
+    fireEvent.animationEnd(windowBody, { animationName: "ll-window-enter" });
 
     expect(windowBody).not.toHaveClass("ll-window-enter");
 
@@ -234,17 +239,43 @@ describe("DraggableWindow", () => {
     expect(windowElement).toHaveAttribute("aria-hidden", "true");
     expect(windowElement.style.pointerEvents).toBe("none");
 
+    fireEvent.animationEnd(windowBody, { animationName: "unrelated" });
+
+    expect(
+      container.querySelector('[data-ll-draggable-window="notifications"]'),
+    ).toBeInTheDocument();
+
     fireEvent.animationEnd(screen.getByText("Treść"));
 
     expect(
       container.querySelector('[data-ll-draggable-window="notifications"]'),
     ).toBeInTheDocument();
 
-    fireEvent.animationEnd(windowBody);
+    fireEvent.animationEnd(windowBody, { animationName: "ll-window-exit" });
 
     expect(
       container.querySelector('[data-ll-draggable-window="notifications"]'),
     ).toBeNull();
+  });
+
+  it("finishes an entry animation when Chromium cancels its CSS timeline", async () => {
+    const { container } = render(
+      <DraggableWindow isOpen id="notifications" title="Powiadomienia">
+        <div>TreĹ›Ä‡</div>
+      </DraggableWindow>,
+    );
+    const { windowBody } = getWindowElements(container);
+    await flushAnimationFrame();
+
+    const animationCancelEvent = new Event("animationcancel", {
+      bubbles: true,
+    });
+    Object.defineProperty(animationCancelEvent, "animationName", {
+      value: "ll-window-enter",
+    });
+    act(() => windowBody.dispatchEvent(animationCancelEvent));
+
+    expect(windowBody).not.toHaveClass("ll-window-enter");
   });
 
   it("fits width to changing content and caps it at the viewport", async () => {

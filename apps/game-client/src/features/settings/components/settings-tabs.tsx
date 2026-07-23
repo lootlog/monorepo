@@ -1,4 +1,4 @@
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
@@ -12,13 +12,13 @@ import { DetectorSettingsTab } from "@/features/settings/components/detector/det
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
 import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
+import { InformationSettingsTab } from "@/features/settings/components/information/information-settings-tab";
 import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settings-tab";
 import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
 import { TimersSettingsTab } from "@/features/settings/components/timers/timers-settings-tab";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
-import { COMMIT_SHA } from "@/config/app";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   Bell,
@@ -28,6 +28,7 @@ import {
   Crosshair,
   EyeOff,
   FileText,
+  Info,
   Keyboard,
   Settings,
   Swords,
@@ -47,13 +48,12 @@ type SettingsTabDefinition = {
 
 const ICON_CLASSES = "ll:size-4 ll:stroke-2";
 const SETTINGS_TABS_COMPACT_WIDTH = 520;
-const SHORT_COMMIT_SHA_LENGTH = 7;
 const SETTINGS_TAB_TRIGGER_BASE_CLASSES =
   "ll:mt-0 ll:flex ll:min-h-8 ll:w-full ll:items-center ll:rounded-md ll:py-1.5 ll:text-gray-200 ll:font-semibold ll:transition-[background-color,border-color,color]";
 const SETTINGS_TAB_TRIGGER_REGULAR_CLASSES =
-  "ll:justify-start ll:gap-1.5 ll:border-transparent ll:px-2 ll:text-left ll:hover:border-gray-300/70 ll:hover:bg-gray-500/20 ll:data-[state=active]:border-purple-400/80 ll:data-[state=active]:bg-purple-500/20 ll:data-[state=active]:text-white";
+  "ll:justify-start ll:gap-1.5 ll:border-transparent ll:px-2 ll:text-left ll:hover:border-gray-300/70 ll:hover:bg-gray-500/20 ll:data-[active]:border-purple-400/80 ll:data-[active]:bg-purple-500/20 ll:data-[active]:text-white";
 const SETTINGS_TAB_TRIGGER_COMPACT_CLASSES =
-  "ll:relative ll:justify-center ll:border-gray-500/40 ll:bg-black/5 ll:px-1.5 ll:text-gray-300 ll:hover:border-gray-300/70 ll:hover:bg-gray-500/18 ll:data-[state=active]:border-purple-300/80 ll:data-[state=active]:bg-purple-500/24 ll:data-[state=active]:text-white";
+  "ll:relative ll:justify-center ll:border-gray-500/40 ll:bg-black/5 ll:px-1.5 ll:text-gray-300 ll:hover:border-gray-300/70 ll:hover:bg-gray-500/18 ll:data-[active]:border-purple-300/80 ll:data-[active]:bg-purple-500/24 ll:data-[active]:text-white";
 
 export const SettingsTabs = () => {
   const activeTab = useWindowsStore((state) => state.settings.state?.activeTab);
@@ -130,6 +130,12 @@ export const SettingsTabs = () => {
     icon: FileText,
     content: <LogsSettingsTab />,
   };
+  const informationTab: SettingsTabDefinition = {
+    value: "information",
+    label: t("settings.tabs.information"),
+    icon: Info,
+    content: <InformationSettingsTab />,
+  };
   const debugTab: SettingsTabDefinition = {
     value: "debug",
     label: t("settings.tabs.debug"),
@@ -137,17 +143,15 @@ export const SettingsTabs = () => {
     content: <DebugTab />,
   };
   const tabsList: SettingsTabDefinition[] = import.meta.env.DEV
-    ? [...baseTabsList, logsTab, debugTab]
-    : [...baseTabsList, logsTab];
+    ? [...baseTabsList, logsTab, informationTab, debugTab]
+    : [...baseTabsList, logsTab, informationTab];
   const selectedTab = tabsList.some((tab) => tab.value === activeTab)
     ? activeTab
     : "general";
   const isCompactSidebar = settingsWidth < SETTINGS_TABS_COMPACT_WIDTH;
-  const shortCommitSha = COMMIT_SHA.slice(0, SHORT_COMMIT_SHA_LENGTH);
-  const hasCommitSha = shortCommitSha.length > 0;
 
   return (
-    <div className="ll:h-full ll:flex ll:flex-col ll:pt-2 ll:min-h-0">
+    <div className="ll:h-full ll:box-border ll:flex ll:flex-col ll:pt-2 ll:min-h-0">
       <Tabs
         value={selectedTab}
         onValueChange={(value) =>
@@ -156,14 +160,14 @@ export const SettingsTabs = () => {
         className="ll:flex ll:h-full ll:w-full ll:min-h-0 ll:flex-row ll:gap-0"
       >
         <div
-          className={`ll:relative ll:flex ll:h-full ll:min-h-0 ll:flex-col ll:bg-black/10 ll:pb-2 ${
+          className={`ll:relative ll:flex ll:h-full ll:min-h-0 ll:flex-col ll:bg-black/10 ${
             isCompactSidebar
               ? "ll:w-12 ll:min-w-12 ll:px-1"
               : "ll:w-40 ll:min-w-40 ll:px-1 ll:pr-1.5"
           }`}
         >
           <div className="ll:pointer-events-none ll:absolute ll:inset-y-0 ll:right-0 ll:w-px ll:bg-gray-400/30" />
-          <NativeScrollArea className="ll:h-full ll:w-full ll:min-h-0 ll:flex-1 ll:box-border">
+          <ScrollArea className="ll:h-full ll:w-full ll:min-h-0 ll:flex-1 ll:box-border">
             <TabsList className="ll:flex ll:w-full ll:flex-col ll:items-stretch ll:justify-start ll:gap-1 ll:rounded-none ll:pt-0.5">
               {tabsList.map((tab) => {
                 const Icon = tab.icon;
@@ -209,22 +213,10 @@ export const SettingsTabs = () => {
                 );
               })}
             </TabsList>
-          </NativeScrollArea>
-          {!isCompactSidebar && hasCommitSha ? (
-            <div className="ll:mt-2 ll:shrink-0 ll:px-2 ll:pb-1.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <p className="ll:m-0 ll:text-[10px] ll:font-medium ll:text-gray-400">
-                    {t("settings.tabs.commitSha", { sha: shortCommitSha })}
-                  </p>
-                </TooltipTrigger>
-                <TooltipContent side="top">{COMMIT_SHA}</TooltipContent>
-              </Tooltip>
-            </div>
-          ) : null}
+          </ScrollArea>
         </div>
-        <div className="ll:flex ll:min-w-0 ll:flex-1 ll:min-h-0 ll:flex-col ll:pl-2 ll:pb-2">
-          <NativeScrollArea className="ll:h-full ll:w-full ll:box-border ll:pr-2">
+        <div className="ll:flex ll:min-w-0 ll:flex-1 ll:min-h-0 ll:flex-col ll:pl-2">
+          <ScrollArea className="ll:h-full ll:w-full ll:box-border ll:pr-2">
             {tabsList.map((tab) => (
               <TabsContent
                 key={tab.value}
@@ -234,7 +226,7 @@ export const SettingsTabs = () => {
                 {tab.content}
               </TabsContent>
             ))}
-          </NativeScrollArea>
+          </ScrollArea>
         </div>
       </Tabs>
     </div>

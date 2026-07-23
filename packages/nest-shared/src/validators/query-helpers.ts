@@ -36,7 +36,7 @@ export const booleanFromString = z.preprocess(
 );
 
 export const optionalFromQuery = <T extends z.ZodTypeAny>(schema: T) =>
-  z.preprocess(emptyStringToUndefined, schema.optional());
+  z.preprocess(emptyStringToUndefined, schema.optional()).optional();
 
 export const intFromString = (opts?: IntFromStringOptions) => {
   let schema = z.coerce.number().int();

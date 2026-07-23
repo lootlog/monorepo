@@ -3,7 +3,7 @@ import { createZodDto } from "nestjs-zod";
 import {
   booleanFromString,
   commaSeparatedArray,
-} from "@lootlog/nest-shared/validators";
+} from "@lootlog/nest-shared/validators/query-helpers";
 
 export type SortOrder = "asc" | "desc";
 

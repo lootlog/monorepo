@@ -1,6 +1,6 @@
 import type { Guild, Npc, Timer, User } from "@/api";
 import type { GuildMember } from "@/types/guild-member";
-import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
 import type {
   PublicGuild,
   PublicMember,

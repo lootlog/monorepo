@@ -1,4 +1,4 @@
-import type { ReservationResponseDto } from "@/lib/api/generated/main/model";
+import type { ReservationResponseDto } from "@lootlog/api-client/models/main/reservation-response-dto";
 
 export type NormalizedReservation = Omit<
   ReservationResponseDto,

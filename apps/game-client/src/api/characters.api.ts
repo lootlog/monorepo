@@ -1,5 +1,6 @@
 import { LanguageVersion } from "@/store/global.store";
-import { getApiClient } from "@/lib/api-client";
+import { createApiClient } from "@lootlog/api-client/transport";
+import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 const MARGONEM_CHARACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
@@ -428,7 +429,7 @@ export async function fetchCharacterList({
     return freshPersistentCache;
   }
 
-  const hs3 = window.getCookie?.("hs3");
+  const hs3 = getRuntimeCookie("hs3");
   const url =
     languageVersion === LanguageVersion.PL
       ? MARGONEM_CHARACTER_LIST_URL
@@ -439,20 +440,17 @@ export async function fetchCharacterList({
       throw new Error("Missing required authentication cookie");
     }
 
-    const client = getApiClient("public");
-    const response = await client.get<MargonemCharacter[]>(
+    const client = createApiClient("main", { credentials: "include" });
+    const characters = await client.get<MargonemCharacter[]>(
       `${url}?hs3=${hs3}`,
-      {
-        withCredentials: true,
-      },
     );
-    const normalizedCharacters = normalizeCharacterList(response.data);
+    const normalizedCharacters = normalizeCharacterList(characters);
     const filteredCharacters = filterCharactersByWorld(
       normalizedCharacters,
       world,
     );
 
-    if (!response.data || response.data.length === 0) {
+    if (characters.length === 0) {
       throw new Error("Empty character list received from API");
     }
 

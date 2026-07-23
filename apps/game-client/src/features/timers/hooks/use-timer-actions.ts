@@ -1,8 +1,8 @@
 import {
   timersControllerDeleteTimer,
   timersControllerResetTimer,
-} from "@/lib/api/generated/main/timers/timers";
-import { isApiError } from "@/lib/api-client";
+} from "@lootlog/api-client/react-query/main/timers";
+import { isApiError } from "@lootlog/api-client/transport";
 import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-helpers";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimersStore } from "@/store/timers.store";
@@ -186,9 +186,9 @@ export const useTimerActions = (
         );
       }
 
-      window.message?.(t("messages.resetSuccess", { name: timer.npc.name }));
+      showRuntimeMessage(t("messages.resetSuccess", { name: timer.npc.name }));
     } catch (error) {
-      window.message?.(getResetTimerErrorMessage(error));
+      showRuntimeMessage(getResetTimerErrorMessage(error));
     }
   };
 
@@ -203,10 +203,12 @@ export const useTimerActions = (
       world ? { world } : undefined,
     ).then(
       () => {
-        window.message?.(t("messages.deleteSuccess", { name: timer.npc.name }));
+        showRuntimeMessage(
+          t("messages.deleteSuccess", { name: timer.npc.name }),
+        );
       },
       (error) => {
-        window.message?.(getDeleteTimerErrorMessage(error));
+        showRuntimeMessage(getDeleteTimerErrorMessage(error));
       },
     );
   };
@@ -227,3 +229,4 @@ export const useTimerActions = (
     handleDeleteTimer,
   };
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

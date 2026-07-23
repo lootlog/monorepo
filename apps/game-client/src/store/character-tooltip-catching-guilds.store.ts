@@ -1,6 +1,7 @@
 import type { Other } from "@lootlog/margonem/others";
+import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { create } from "zustand";
-import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem } from "@/lib/api/generated/main/model";
+import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem } from "@lootlog/api-client/models/main/user-lootlog-players-catching-guilds-response-dto-output-players-item-guilds-item";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 
 export type CharacterTooltipCatchingGuildsStatus =
@@ -63,10 +64,12 @@ export function getCharacterTooltipCatchingGuildsCharacterKey(
 }
 
 export function getOtherCatchingGuildsTarget(
-  other: Other,
+  other: Other | RuntimeOther,
 ): CharacterTooltipCatchingGuildsTarget | null {
-  const accountId = String(other.d?.account ?? "");
-  const characterId = String(other.d?.id ?? "");
+  const accountId =
+    "d" in other ? String(other.d?.account ?? "") : other.accountId;
+  const characterId =
+    "d" in other ? String(other.d?.id ?? "") : other.characterId;
 
   if (!accountId || !characterId) {
     return null;

@@ -6,13 +6,13 @@ import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-accoun
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { DetectorRoutingSettingsTabForm } from "./detector-routing-settings-tab-form";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
-import * as UsersModule from "@/lib/api/generated/main/users/users";
+import * as UsersModule from "@lootlog/api-client/react-query/main/users";
 
 const mockMutate = vi.fn();
 
-vi.mock("@/lib/api/generated/main/users/users", async () => {
+vi.mock("@lootlog/api-client/react-query/main/users", async () => {
   const actual = await vi.importActual<typeof UsersModule>(
-    "@/lib/api/generated/main/users/users",
+    "@lootlog/api-client/react-query/main/users",
   );
 
   return {

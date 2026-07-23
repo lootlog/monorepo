@@ -25,7 +25,7 @@ import {
   resetBattlePanelCursorPagination,
   type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
-import { useBattlesControllerGetPlayerVsPlayerBattles } from "@/lib/api/generated/battlelog/battles/battles";
+import { useBattlesControllerGetPlayerVsPlayerBattles } from "@lootlog/api-client/react-query/battlelog/battles";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";

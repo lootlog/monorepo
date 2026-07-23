@@ -2,12 +2,12 @@ import {
   invalidateBattlesControllerGetBattle,
   invalidateBattlesControllerGetDashboardBattles,
   useBattlesControllerUpdateBattle,
-} from "@/lib/api/generated/battlelog/battles/battles";
+} from "@lootlog/api-client/react-query/battlelog/battles";
 import {
   invalidatePublicBattlesControllerGetPublicBattle,
   invalidatePublicBattlesControllerGetPublicBattleRaw,
   invalidatePublicBattlesControllerGetPublicBattleTimeline,
-} from "@/lib/api/generated/battlelog/public-battles/public-battles";
+} from "@lootlog/api-client/react-query/battlelog/public-battles";
 import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCopyToClipboard } from "usehooks-ts";

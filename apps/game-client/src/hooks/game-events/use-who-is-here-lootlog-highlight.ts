@@ -1,6 +1,6 @@
 import type { Other } from "@lootlog/margonem/others";
 import { useEffect, useEffectEvent, useRef } from "react";
-import { getLootlogOtherGlowColor } from "@/lib/lootlog-other-glow-manager";
+import { getLootlogOtherGlowColor } from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
 import { patchOtherCharacterTooltip } from "@/lib/margonem-tooltips/patcher";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
@@ -10,6 +10,9 @@ import {
 } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
+import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
+import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
+import { refreshWhoIsHereRuntimeTooltip } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 
 const HIGHLIGHT_CLASS = "ll-who-is-here-lootlog-highlight";
 const STYLE_ELEMENT_ID = "ll-who-is-here-lootlog-style";
@@ -18,28 +21,15 @@ const WHO_IS_HERE_ROW_SELECTOR = ".whoishere-window .one-other[data-id]";
 const WHO_IS_HERE_COLOR_PROPERTY = "--ll-who-is-here-lootlog-color";
 const WHO_IS_HERE_DISCOVERY_INTERVAL_MS = 250;
 
-type JQueryLike = {
-  find?: (selector: string) => unknown;
+const observeWhoIsHereMutations = (
+  observer: MutationObserver,
+  element: Node,
+) => {
+  observer.observe(element, {
+    childList: true,
+    subtree: true,
+  });
 };
-
-type RuntimeWhoIsHere = {
-  createTipWrapper?: (tipContainer: unknown, other: Other) => void;
-  getWhoIsHereOther?: (id: string) => { $?: JQueryLike } | undefined;
-};
-
-type RuntimeEngine = Window["Engine"] & {
-  whoIsHere?: RuntimeWhoIsHere;
-};
-
-type RuntimeWindow = Window &
-  typeof globalThis & {
-    $?: (element: Element) => JQueryLike;
-    Engine?: RuntimeEngine;
-  };
-
-function getRuntimeWindow(): RuntimeWindow {
-  return window as RuntimeWindow;
-}
 
 function getWhoIsHereRows(): HTMLElement[] {
   return Array.from(
@@ -86,36 +76,13 @@ function getRowCharacterId(row: HTMLElement): string | null {
 
 function getRowOther(
   row: HTMLElement,
-  othersById: Record<string, Other | undefined>,
-  runtimeOthersById?: Record<string, Other | undefined>,
+  othersById: Readonly<Record<string, RuntimeOther | undefined>>,
 ): Other | null {
   const characterId = getRowCharacterId(row);
   if (!characterId) return null;
 
-  const fallbackOthersById =
-    runtimeOthersById ?? getRuntimeWindow().Engine?.others?.check?.();
-
-  return othersById[characterId] ?? fallbackOthersById?.[characterId] ?? null;
-}
-
-function getWhoIsHereTipContainer(
-  characterId: string,
-  row: HTMLElement,
-): unknown {
-  const runtimeWindow = getRuntimeWindow();
-  const whoIsHere = runtimeWindow.Engine?.whoIsHere;
-  const listEntry = whoIsHere?.getWhoIsHereOther?.(characterId);
-  const tipContainerFromEntry = listEntry?.$?.find?.(".tip-container");
-  if (tipContainerFromEntry) {
-    return tipContainerFromEntry;
-  }
-
-  const tipContainer = row.querySelector(".tip-container");
-  if (tipContainer && runtimeWindow.$) {
-    return runtimeWindow.$(tipContainer);
-  }
-
-  return tipContainer;
+  if (!othersById[characterId]) return null;
+  return runtimeOtherHandles.get(characterId) ?? null;
 }
 
 function refreshWhoIsHereTooltip(row: HTMLElement, other: Other): void {
@@ -123,10 +90,7 @@ function refreshWhoIsHereTooltip(row: HTMLElement, other: Other): void {
   if (!characterId) return;
 
   patchOtherCharacterTooltip(other);
-  getRuntimeWindow().Engine?.whoIsHere?.createTipWrapper?.(
-    getWhoIsHereTipContainer(characterId, row),
-    other,
-  );
+  refreshWhoIsHereRuntimeTooltip(characterId, row, other);
 }
 
 function getHoverRow(target: EventTarget | null): HTMLElement | null {
@@ -167,7 +131,6 @@ export function useWhoIsHereLootlogHighlight(): void {
   const selectedGuildId = useSelectedLootlogGuildId();
   const refreshRows = useEffectEvent(() => {
     const rows = getWhoIsHereRows();
-    const runtimeOthersById = getRuntimeWindow().Engine?.others?.check?.();
 
     if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
       for (const row of rows) {
@@ -177,7 +140,7 @@ export function useWhoIsHereLootlogHighlight(): void {
     }
 
     for (const row of rows) {
-      const other = getRowOther(row, othersById, runtimeOthersById);
+      const other = getRowOther(row, othersById);
       const target = other ? getOtherCatchingGuildsTarget(other) : null;
       const entry = target ? entriesByKey[target.key] : undefined;
 
@@ -204,7 +167,7 @@ export function useWhoIsHereLootlogHighlight(): void {
 
   useEffect(() => {
     if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
-      return;
+      return () => undefined;
     }
 
     let animationFrameId: number | null = null;
@@ -226,10 +189,7 @@ export function useWhoIsHereLootlogHighlight(): void {
         return false;
       }
 
-      observer.observe(whoIsHereRoot, {
-        childList: true,
-        subtree: true,
-      });
+      observeWhoIsHereMutations(observer, whoIsHereRoot);
       return true;
     };
 

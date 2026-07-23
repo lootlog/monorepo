@@ -1,5 +1,5 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import {
   createEventModeSelectionScope,
   useEventModeSelectionStore,
@@ -36,6 +36,7 @@ export const EventMode = ({ query }: EventModeProps) => {
   );
   const selectedEvent = resolveSelectedEvent(events, storedEventId);
   const nowMs = useEventModeClock(open && events.length > 0);
+  const currentMapId = useGameStore((state) => state.game?.map.id ?? 0);
 
   useEffect(() => {
     if (
@@ -53,7 +54,6 @@ export const EventMode = ({ query }: EventModeProps) => {
     return null;
   }
 
-  const currentMapId = Number(Game.map.id);
   const isStale = query.isError && query.data !== undefined;
 
   return (

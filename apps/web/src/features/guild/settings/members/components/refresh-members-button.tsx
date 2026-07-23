@@ -13,7 +13,7 @@ import {
   getMembersControllerGetLatestRefreshJobQueryKey,
   useMembersControllerGetLatestRefreshJob,
   useMembersControllerRefreshAllMembers,
-} from "@/lib/api/generated/main/members/members";
+} from "@lootlog/api-client/react-query/main/members";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const RefreshMembersButton = () => {

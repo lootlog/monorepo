@@ -3,7 +3,7 @@ import type {
   PlayerPresence,
   PlayerPresenceResponse,
 } from "@/lib/online-players-presence";
-import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
 
 export type GuildMembersByUserId =
   | Record<string, MemberSummaryResponseDtoOutput>

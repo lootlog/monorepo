@@ -8,7 +8,7 @@ import { WorldSwitcher } from "@/components/common/world-switcher";
 import {
   getKillsControllerGetGuildKillStatsQueryKey,
   useKillsControllerGetGuildKillStats,
-} from "@/lib/api/generated/main/kills/kills";
+} from "@lootlog/api-client/react-query/main/kills";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { NpcTypeStatsCards } from "./components/kill-stats-overview";
 import { MemberRankingPodiumCard } from "./components/member-ranking-podium-card";

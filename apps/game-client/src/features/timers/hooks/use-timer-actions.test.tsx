@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@/lib/api-client";
+import { ApiError } from "@lootlog/api-client/transport";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { renderHook, waitFor } from "@testing-library/react";
 
@@ -42,7 +42,7 @@ vi.mock("@/store/timers.store", () => ({
     }),
 }));
 
-vi.mock("@/lib/api/generated/main/timers/timers", () => ({
+vi.mock("@lootlog/api-client/react-query/main/timers", () => ({
   timersControllerResetTimer: (pathParameters: unknown, data: unknown) =>
     mockResetTimer(pathParameters, data),
   timersControllerDeleteTimer: (pathParameters: unknown, params: unknown) =>
@@ -102,7 +102,7 @@ describe("useTimerActions", () => {
     mockResetTimer.mockReset();
     mockDeleteTimer.mockReset();
     mockT.mockClear();
-    window.message = vi.fn();
+    testRuntimeWindow.message = vi.fn();
   });
 
   it("hides, reveals, colors, and unpins timers in local and global scopes", () => {
@@ -195,7 +195,7 @@ describe("useTimerActions", () => {
         actorCharacter: mockActorCharacter,
       },
     );
-    expect(window.message).toHaveBeenCalledWith(
+    expect(testRuntimeWindow.message).toHaveBeenCalledWith(
       "messages.resetSuccess:Tanroth",
     );
   });
@@ -239,7 +239,7 @@ describe("useTimerActions", () => {
 
     await actions.handleRestartTimer();
 
-    expect(window.message).toHaveBeenCalledWith(
+    expect(testRuntimeWindow.message).toHaveBeenCalledWith(
       "messages.resetEventWindowForbidden",
     );
   });
@@ -261,7 +261,7 @@ describe("useTimerActions", () => {
       { world: "pandora" },
     );
     await waitFor(() =>
-      expect(window.message).toHaveBeenCalledWith(
+      expect(testRuntimeWindow.message).toHaveBeenCalledWith(
         "messages.deleteSuccess:Tanroth",
       ),
     );
@@ -280,9 +280,10 @@ describe("useTimerActions", () => {
     actions.handleDeleteTimer("guild-1", "timer-1");
 
     await waitFor(() =>
-      expect(window.message).toHaveBeenCalledWith(
+      expect(testRuntimeWindow.message).toHaveBeenCalledWith(
         "messages.deleteEventWindowForbidden",
       ),
     );
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

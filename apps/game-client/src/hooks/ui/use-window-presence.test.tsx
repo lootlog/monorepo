@@ -6,7 +6,10 @@ import { useWindowPresence } from "./use-window-presence";
 describe("useWindowPresence", () => {
   afterEach(() => {
     vi.useRealTimers();
-    useSettingsStore.setState(useSettingsStore.getInitialState(), true);
+    vi.unstubAllGlobals();
+    act(() => {
+      useSettingsStore.setState(useSettingsStore.getInitialState(), true);
+    });
   });
 
   it("retains a closing window until its exit animation ends", () => {
@@ -26,9 +29,22 @@ describe("useWindowPresence", () => {
     expect(result.current.shouldRender).toBe(false);
   });
 
-  it("releases the entry animation after it ends", () => {
+  it("waits for a painted frame before starting the entry animation", () => {
+    let entryFrameCallback: FrameRequestCallback | undefined;
+    vi.stubGlobal(
+      "requestAnimationFrame",
+      vi.fn((callback: FrameRequestCallback) => {
+        entryFrameCallback = callback;
+        return 1;
+      }),
+    );
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
     useSettingsStore.setState({ animationEffectsEnabled: true });
     const { result } = renderHook(() => useWindowPresence(true));
+
+    expect(result.current.phase).toBe("preparing");
+
+    act(() => entryFrameCallback?.(16));
 
     expect(result.current.phase).toBe("enter");
 
@@ -40,9 +56,19 @@ describe("useWindowPresence", () => {
 
   it("releases the entry animation through a fallback timeout", () => {
     vi.useFakeTimers();
+    let entryFrameCallback: FrameRequestCallback | undefined;
+    vi.stubGlobal(
+      "requestAnimationFrame",
+      vi.fn((callback: FrameRequestCallback) => {
+        entryFrameCallback = callback;
+        return 1;
+      }),
+    );
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
     useSettingsStore.setState({ animationEffectsEnabled: true });
     const { result } = renderHook(() => useWindowPresence(true));
 
+    act(() => entryFrameCallback?.(16));
     act(() => vi.advanceTimersByTime(240));
 
     expect(result.current.phase).toBe("open");
@@ -55,9 +81,15 @@ describe("useWindowPresence", () => {
       { initialProps: { isOpen: true } },
     );
 
-    rerender({ isOpen: false });
+    act(() => rerender({ isOpen: false }));
 
     expect(result.current.phase).toBe("open");
+    expect(result.current.shouldRender).toBe(false);
+
+    act(() => {
+      useSettingsStore.setState({ animationEffectsEnabled: true });
+    });
+
     expect(result.current.shouldRender).toBe(false);
   });
 
@@ -89,5 +121,26 @@ describe("useWindowPresence", () => {
 
     expect(result.current.phase).toBe("enter");
     expect(result.current.shouldRender).toBe(true);
+  });
+
+  it("cancels a prepared entry when the window closes before the next frame", () => {
+    const cancelAnimationFrame = vi.fn();
+    vi.stubGlobal(
+      "requestAnimationFrame",
+      vi.fn((_callback: FrameRequestCallback) => 7),
+    );
+    vi.stubGlobal("cancelAnimationFrame", cancelAnimationFrame);
+    useSettingsStore.setState({ animationEffectsEnabled: true });
+    const { result, rerender } = renderHook(
+      ({ isOpen }) => useWindowPresence(isOpen),
+      { initialProps: { isOpen: true } },
+    );
+
+    expect(result.current.phase).toBe("preparing");
+
+    act(() => rerender({ isOpen: false }));
+
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(7);
+    expect(result.current.phase).toBe("exit");
   });
 });

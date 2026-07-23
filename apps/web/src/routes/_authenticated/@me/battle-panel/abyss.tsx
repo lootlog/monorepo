@@ -16,7 +16,7 @@ import {
   getBattlesControllerGetProfessionWinRateQueryOptions,
   getBattlesControllerGetRatingDeltaByOpponentQueryOptions,
   getBattlesControllerGetRatingGrowthQueryOptions,
-} from "@/lib/api/generated/battlelog/battles/battles";
+} from "@lootlog/api-client/react-query/battlelog/battles";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import {
   ensureRouteQueryData,

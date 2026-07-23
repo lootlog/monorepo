@@ -1,4 +1,4 @@
-import type { EventModeResponseDtoEventsItemAssignmentsItem } from "@/lib/api/generated/main/model/event-mode-response-dto-events-item-assignments-item";
+import type { EventModeResponseDtoEventsItemAssignmentsItem } from "@lootlog/api-client/models/main/event-mode-response-dto-events-item-assignments-item";
 import { MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {

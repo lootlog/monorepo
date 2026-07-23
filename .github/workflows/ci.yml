@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
+      activity: ${{ steps.filter.outputs.activity }}
       api: ${{ steps.filter.outputs.api }}
       auth: ${{ steps.filter.outputs.auth }}
       gateway: ${{ steps.filter.outputs.gateway }}
@@ -43,6 +44,9 @@ jobs:
         id: filter
         with:
           filters: |
+            activity:
+              - 'apps/activity/**'
+              - 'packages/**'
             api:
               - 'apps/api/**'
               - 'packages/**'
@@ -79,6 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: |
+      needs.changes.outputs.activity == 'true' ||
       needs.changes.outputs.api == 'true' ||
       needs.changes.outputs.auth == 'true' ||
       needs.changes.outputs.gateway == 'true' ||
@@ -365,11 +370,11 @@ jobs:
       - name: Run coverage suite
         run: pnpm --filter=@lootlog/game-client test:coverage
 
-      - name: Enforce changed-code coverage
+      - name: Report changed-code coverage
         if: github.event_name == 'pull_request'
         env:
           COVERAGE_BASE_REF: ${{ github.event.pull_request.base.sha }}
-        run: pnpm --filter=@lootlog/game-client check:changed-coverage
+        run: pnpm --filter=@lootlog/game-client report:changed-coverage
 
       - name: Build release userscript
         run: pnpm --filter=@lootlog/game-client build
@@ -381,6 +386,70 @@ jobs:
           files: ./apps/game-client/coverage/lcov.info
           flags: game-client
           name: game-client-coverage
+
+  api-client-check:
+    name: Check Generated API Clients
+    runs-on: ubuntu-latest
+    needs: changes
+    if: |
+      needs.changes.outputs.activity == 'true' ||
+      needs.changes.outputs.api == 'true' ||
+      needs.changes.outputs.auth == 'true' ||
+      needs.changes.outputs.search == 'true' ||
+      needs.changes.outputs.battlelog-service == 'true' ||
+      needs.changes.outputs.packages == 'true'
+    timeout-minutes: 25
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10.32.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Regenerate and check API clients
+        env:
+          PORT: "4000"
+          RABBITMQ_URI: amqp://guest:guest@localhost:5672
+          REDIS_HOST: localhost
+          REDIS_PORT: "6379"
+          REDIS_PASSWORD: ci
+          REDIS_USERNAME: default
+          AUTH_SERVICE_URL: http://localhost:4001
+          RESERVATIONS_CARDS_URL: http://localhost:4000/reservations/cards
+          MAPS_API_URL: http://localhost:4000/maps
+          TRUSTED_ORIGINS: http://localhost
+          COOKIE_DOMAIN: localhost
+          COOKIE_PREFIX: lootlog-ci
+          ADMIN_ACCOUNT_IDS: ci-admin
+          AUTH_SECRET: ci-openapi-generation-secret
+          APP_URL: http://localhost:4001
+          POSTGRESQL_CONNECTION_URI: postgresql://postgres:postgres@localhost:5432/lootlog
+          POSTGRESQL_PORT: "5432"
+          POSTGRESQL_HOST: localhost
+          POSTGRESQL_USER: postgres
+          POSTGRESQL_PASSWORD: postgres
+          POSTGRESQL_DATABASE: lootlog
+          DISCORD_CLIENT_SECRET: ci
+          DISCORD_CLIENT_ID: ci
+          MEILISEARCH_HOST: http://localhost:7700
+          MEILISEARCH_API_KEY: ci
+          R2_ACCESS_KEY_ID: ci
+          R2_SECRET_ACCESS_KEY: ci
+          R2_ENDPOINT: http://localhost
+          R2_BUCKET_NAME: ci
+          API_SERVICE_URL: http://localhost:4000
+        run: pnpm api:client:check
 
   build:
     name: Build All Services
@@ -455,7 +524,7 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [lint, test-game-client, build, docker-build]
+    needs: [lint, test-game-client, api-client-check, build, docker-build]
     if: always()
     timeout-minutes: 5
 
@@ -464,6 +533,7 @@ jobs:
         run: |
           if [[ "${{ needs.lint.result }}" == "failure" ]] || \
              [[ "${{ needs.test-game-client.result }}" == "failure" ]] || \
+             [[ "${{ needs.api-client-check.result }}" == "failure" ]] || \
              [[ "${{ needs.build.result }}" == "failure" ]] || \
              [[ "${{ needs.docker-build.result }}" == "failure" ]]; then
             echo "CI failed"

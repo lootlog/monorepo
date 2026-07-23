@@ -2,7 +2,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   eventsRankingControllerGetEventKillHistory,
   getEventsRankingControllerGetEventKillHistoryQueryKey,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import type { HeroKill, KillHistoryResponse } from "./use-hero-kill-history";
 
 interface UseEventKillHistoryOptions {

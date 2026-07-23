@@ -268,6 +268,26 @@ describe("AuthService", () => {
       );
     });
 
+    it("returns TOKEN_NOT_FOUND for empty tokens", async () => {
+      vi.mocked(auth.api.getAccessToken).mockResolvedValue({
+        accessToken: "",
+        accessTokenExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+        scopes: ["guilds"],
+      } as never);
+
+      await expect(
+        service.getIdpTokenResponse({
+          userId: "user-1",
+          discordId: "discord-1",
+        }),
+      ).rejects.toSatisfy(
+        (error: unknown) =>
+          error instanceof BadRequestException &&
+          JSON.stringify(error.getResponse()) ===
+            JSON.stringify({ error: "TOKEN_NOT_FOUND" }),
+      );
+    });
+
     it("maps Better Auth API errors to account-not-found responses", async () => {
       vi.mocked(auth.api.getAccessToken).mockRejectedValue(
         new APIError("BAD_REQUEST", {

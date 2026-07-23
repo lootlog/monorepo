@@ -21,7 +21,7 @@ import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
-import { getApiErrorStatus } from "@/lib/api-client/api-client";
+import { getApiErrorStatus } from "@lootlog/api-client/transport";
 import { useToggleEventPin } from "@/features/guild/events/hooks/mutations/use-toggle-event-pin";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
@@ -32,8 +32,8 @@ import {
   getListEventsQueryKey,
   useDeleteEvent,
   useListEvents,
-} from "@/lib/api/generated/main/events/events";
-import type { EventListItemResponseDto } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/events";
+import type { EventListItemResponseDto } from "@lootlog/api-client/models/main/event-list-item-response-dto";
 import type { Event } from "./types/api";
 
 export const Events = () => {

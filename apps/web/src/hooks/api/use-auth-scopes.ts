@@ -2,7 +2,7 @@ import {
   getAuthControllerGetScopesQueryKey,
   getAuthControllerGetScopesQueryOptions,
   useAuthControllerGetScopes,
-} from "@/lib/api/generated/auth/auth/auth";
+} from "@lootlog/api-client/react-query/auth/auth";
 
 const normalizeAuthScopes = (data: unknown): string[] => {
   if (Array.isArray(data)) {

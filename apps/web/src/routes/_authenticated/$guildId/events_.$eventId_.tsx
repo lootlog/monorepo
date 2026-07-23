@@ -3,9 +3,9 @@ import { EventRouteLayout } from "@/features/guild/events/event-route-layout";
 import {
   getListEventRankingQueryOptions,
   getShowEventOverviewQueryOptions,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import {
-  throwNotFoundIfResponseMatches,
+  rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
 
@@ -36,7 +36,7 @@ export const Route = createFileRoute(
           rankings,
         };
       } catch (error) {
-        throwNotFoundIfResponseMatches(error);
+        rethrowNotFoundOrError(error);
       }
     }),
 });

@@ -28,6 +28,7 @@ FROM build-base AS build-api
 COPY --from=pruner-api /pruned/json/ .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-api /pruned/full/ .
+COPY --from=pruner-api /usr/src/app/tools/clean-swagger-metadata.mjs ./tools/clean-swagger-metadata.mjs
 RUN pnpm exec turbo run build --filter=@lootlog/api
 RUN pnpm deploy --filter=@lootlog/api --prod /prod/api
 
@@ -50,6 +51,7 @@ FROM build-base AS build-search
 COPY --from=pruner-search /pruned/json/ .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-search /pruned/full/ .
+COPY --from=pruner-search /usr/src/app/tools/clean-swagger-metadata.mjs ./tools/clean-swagger-metadata.mjs
 RUN pnpm exec turbo run build --filter=@lootlog/search
 RUN pnpm deploy --filter=@lootlog/search --prod /prod/search
 

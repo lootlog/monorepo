@@ -8,7 +8,7 @@ import {
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import { useSocket } from "@/contexts/socket-context";
 import { useTranslation } from "react-i18next";
 

@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useEventsMonitoringControllerGetHeroRespawnConfig } from "@/lib/api/generated/main/events/events";
+import { useEventsMonitoringControllerGetHeroRespawnConfig } from "@lootlog/api-client/react-query/main/events";
 import type { WindowStatus } from "../../types/api";
 
 const getWindowStatusConfig = (

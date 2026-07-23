@@ -11,7 +11,7 @@ import {
   invalidateLootsControllerGetComments,
   useLootsControllerCreateComment,
   useLootsControllerGetComments,
-} from "@/lib/api/generated/main/loots/loots";
+} from "@lootlog/api-client/react-query/main/loots";
 
 const MAX_LENGTH = 256;
 

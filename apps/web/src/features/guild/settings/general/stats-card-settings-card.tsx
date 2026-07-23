@@ -13,8 +13,8 @@ import {
 } from "@lootlog/ui/components/form";
 import { Switch } from "@lootlog/ui/components/switch";
 import { API_URL } from "@/config/api";
-import { useAuthenticatedGuildStatsCardControllerRefreshStatsCard } from "@/lib/api/generated/main/guild-stats-card/guild-stats-card";
-import type { GuildResponseDto } from "@/lib/api/generated/main/model";
+import { useAuthenticatedGuildStatsCardControllerRefreshStatsCard } from "@lootlog/api-client/react-query/main/guild-stats-card";
+import type { GuildResponseDto } from "@lootlog/api-client/models/main/guild-response-dto";
 import type { GeneralFormValues } from "./general-form.schema";
 import type { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";

@@ -1,34 +1,38 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
-} from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
-import type {
-  CreateOrUpdateLootlogCharacterConfigDto,
-  UserLootlogConfigAccountResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/user-lootlog-config";
+import type { CreateOrUpdateLootlogCharacterConfigDto } from "@lootlog/api-client/models/main/create-or-update-lootlog-character-config-dto";
+import type { UserLootlogConfigAccountResponseDtoOutput } from "@lootlog/api-client/models/main/user-lootlog-config-account-response-dto-output";
 
 export type UseUpdateLootlogCharacterSettings =
   CreateOrUpdateLootlogCharacterConfigDto;
 
 export const useUpdateLootlogCharactersConfig = () => {
-  const accountId = String(Game.hero.account);
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? null);
   const queryClient = useQueryClient();
-  const queryKey =
-    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-      accountId,
-    });
+  const queryKey = accountId
+    ? getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+        accountId,
+      })
+    : ["user-lootlog-config", "unavailable"];
 
   return useMutation({
     mutationKey: [
       "userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
     ],
-    mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) =>
-      userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig(
+    mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) => {
+      if (!accountId) {
+        throw new Error("Canonical game identity is unavailable");
+      }
+
+      return userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig(
         { accountId },
         options,
-      ),
+      );
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
     },

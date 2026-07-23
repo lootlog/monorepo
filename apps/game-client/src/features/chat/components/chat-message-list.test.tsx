@@ -3,7 +3,8 @@ import type { ReactNode, Ref } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dispatchChatScrollToMessage } from "../chat-scroll-to-message";
 import type { ChatRenderableMessage } from "../chat.helpers";
-import { ChatMessageList, pruneChatRowMeasurements } from "./chat-message-list";
+import { ChatMessageList } from "./chat-message-list";
+import { pruneChatRowMeasurements } from "../chat-row-measurements";
 
 const resizeObserverHarnesses = new Set<ResizeObserverHarness>();
 const scrollRequests: ScrollToOptions[] = [];
@@ -52,8 +53,8 @@ const triggerResizeObserver = (target: Element) => {
   }
 };
 
-vi.mock("@/components/ui/native-scroll-area", () => ({
-  NativeScrollArea: ({
+vi.mock("@/components/ui/scroll-area", () => ({
+  ScrollArea: ({
     children,
     ref,
   }: {

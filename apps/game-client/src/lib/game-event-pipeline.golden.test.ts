@@ -8,13 +8,30 @@ import { useLootStore } from "@/store/game-store/loot.store";
 import { useGlobalStore } from "@/store/global.store";
 import { usePartyStore } from "@/store/party.store";
 import { EventDispatcher } from "./event-dispatcher";
-import { gameEventsManager } from "./game-events-manager";
+import { margonemRuntimeBridge } from "./margonem-runtime/margonem-runtime-bridge";
+import type * as ApiModule from "@/api";
+import { useGameStore } from "@/store/game.store";
+import type { MargonemRuntimeAdapter } from "./margonem-runtime/runtime-adapter";
+import { RuntimeStateSynchronizer } from "./margonem-runtime/runtime-state-synchronizer";
 
 const effects = vi.hoisted(() => ({
   cancelMapPingInteraction: vi.fn(),
   clearMapPings: vi.fn(),
   handleAirTagMapChange: vi.fn(),
   observeOtherPlayers: vi.fn(),
+}));
+
+const api = vi.hoisted(() => ({
+  createBattle: vi.fn().mockResolvedValue({ battleId: "battle-1" }),
+  createKill: vi.fn().mockResolvedValue({ updated: 1 }),
+  createLoot: vi.fn().mockResolvedValue({ id: 1 }),
+}));
+
+vi.mock("@/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof ApiModule>()),
+  createBattle: api.createBattle,
+  createKill: api.createKill,
+  createLoot: api.createLoot,
 }));
 
 vi.mock("@/features/air-tags/air-tag-observation-controller", () => ({
@@ -53,7 +70,7 @@ const originalSuccessData = pipelineWindow.successData;
 
 const combinedEvent = {
   chat: { channels: [] },
-  d: ["dialog", "npc", "npc-7"],
+  d: ["dialog", "npc", "7"],
   f: {
     init: "1",
     m: ["turn-1"],
@@ -106,8 +123,53 @@ const combinedEvent = {
   town: { id: 13, name: "Nithal" },
 } as unknown as GameEvent;
 
+const finalFightEvent = {
+  f: {
+    endBattle: 1,
+    m: ["final"],
+    w: {
+      "-100": {
+        hpp: 0,
+        icon: "boss.gif",
+        id: -100,
+        lvl: 300,
+        name: "Boss",
+        originalId: 100,
+        prof: "w",
+        team: 2,
+        type: 2,
+        wt: 85,
+      },
+    },
+  },
+} as unknown as GameEvent;
+
+const fightLootEvent = {
+  f: {},
+  item: {
+    "loot-1": {
+      cl: 16,
+      hid: "loot-hid",
+      icon: "loot.gif",
+      loc: "l",
+      name: "Unique loot",
+      pr: 1,
+      prc: "1",
+      stat: "rarity=unique",
+      tpl: 9001,
+    },
+  },
+  loot: {
+    source: "fight",
+    states: { "loot-1": 1 },
+  },
+} as unknown as GameEvent;
+
 function resetPipelineState(): void {
-  gameEventsManager.cleanup();
+  margonemRuntimeBridge.cleanup();
+  api.createBattle.mockClear();
+  api.createKill.mockClear();
+  api.createLoot.mockClear();
   effects.cancelMapPingInteraction.mockClear();
   effects.clearMapPings.mockClear();
   effects.handleAirTagMapChange.mockClear();
@@ -121,12 +183,29 @@ function resetPipelineState(): void {
     lastKillHash: "",
   });
   useBattlePanelStore.setState({ isBattleCollectionEnabled: true });
-  useDialogStore.setState({ talkingNpcId: null });
+  useDialogStore.getState().clearNpcContext();
   useFriendsStore.setState({ friends: [], friendsMax: 0 });
   useGlobalStore.setState({
     socketState: { connected: false, joined: false, joinedGuilds: [] },
   });
   useLootStore.setState({ lastLootId: null });
+  useGameStore.getState().replaceGame({
+    hero: {
+      accountId: "67890",
+      characterId: "12345",
+      currentHp: 1,
+      icon: "hero.gif",
+      level: 300,
+      maxHp: 1,
+      name: "Hero",
+      profession: "w",
+      x: 1,
+      y: 2,
+    },
+    interface: "ni",
+    map: { id: 13, name: "Nithal", visibility: 30 },
+    world: "pandora",
+  });
   usePartyStore.setState({ members: [] });
 }
 
@@ -134,9 +213,43 @@ function replayAndSnapshot(payload: GameEvent | string) {
   resetPipelineState();
   const dispatcher = new EventDispatcher();
   pipelineWindow.successData = vi.fn(() => "game-result");
-  gameEventsManager.setupProxies();
+  margonemRuntimeBridge.setupProxies();
+  const other = Object.freeze({
+    accountId: "222",
+    characterId: "111",
+    icon: "warrior.gif",
+    level: 300,
+    name: "Warrior",
+    profession: "w",
+  });
+  const runtimeGame = useGameStore.getState().game;
+  if (!runtimeGame) throw new Error("Expected golden runtime game snapshot");
+  const adapter = {
+    getAllNpcs: () => [],
+    getAllOtherHandles: () => ({}),
+    getAllOthers: () => ({ 111: other }),
+    getGameSnapshot: () => runtimeGame,
+    getNpc: () => undefined,
+    getOther: (id: string) => (id === "111" ? other : undefined),
+    getOtherHandle: () => undefined,
+    getParty: () => [],
+    getStateSnapshot: () => ({
+      friends: [],
+      game: runtimeGame,
+      npcs: [],
+      others: { 111: other },
+      party: [],
+    }),
+    interface: "si",
+    isReady: () => true,
+  } as MargonemRuntimeAdapter;
+  const synchronizer = new RuntimeStateSynchronizer({
+    adapter,
+    bridge: margonemRuntimeBridge,
+  });
+  synchronizer.install();
   dispatcher.register();
-  gameEventsManager.setReady(true);
+  margonemRuntimeBridge.setReady(true);
 
   const result = pipelineWindow.successData?.(payload);
   const battleState = useBattleStore.getState();
@@ -146,7 +259,7 @@ function replayAndSnapshot(payload: GameEvent | string) {
       battleWarriors: battleState.battleWarriors,
       capture: battleState.getCaptureSnapshot(),
     },
-    dialogNpcId: useDialogStore.getState().talkingNpcId,
+    dialogNpcContext: useDialogStore.getState().npcContext,
     effects: {
       airTagMapChanges: effects.handleAirTagMapChange.mock.calls,
       mapPingCancels: effects.cancelMapPingInteraction.mock.calls.length,
@@ -161,12 +274,13 @@ function replayAndSnapshot(payload: GameEvent | string) {
   };
 
   dispatcher.cleanup();
+  synchronizer.cleanup();
   return snapshot;
 }
 
 describe("game event pipeline golden replay", () => {
   afterEach(() => {
-    gameEventsManager.cleanup();
+    margonemRuntimeBridge.cleanup();
     pipelineWindow.successData = originalSuccessData;
     useBattlePanelStore.setState({ isBattleCollectionEnabled: false });
   });
@@ -189,7 +303,7 @@ describe("game event pipeline golden replay", () => {
           turns: ["turn-1"],
         },
       },
-      dialogNpcId: "npc-7",
+      dialogNpcContext: null,
       effects: {
         airTagMapChanges: [[13, "Nithal"]],
         mapPingCancels: 1,
@@ -200,31 +314,82 @@ describe("game event pipeline golden replay", () => {
         {
           characterId: "55",
           icon: "friend.gif",
+          level: 300,
           location: "Nithal",
-          lvl: "300",
-          nick: "Friend",
-          opLvl: "0",
-          prof: "m",
+          name: "Friend",
+          profession: "m",
           status: "online",
-          unknown1: "unused",
-          x: "1",
-          y: "2",
         },
       ],
       friendsMax: 25,
       lastLootId: null,
       party: [
         {
-          accountId: 67_890,
-          hp: [0, 0],
+          accountId: "67890",
+          characterId: "12345",
+          currentHp: 0,
           icon: "hero.gif",
-          id: 12_345,
-          leader: true,
-          nick: "Hero",
+          isLeader: true,
+          maxHp: 0,
+          name: "Hero",
           profession: null,
         },
       ],
       result: "game-result",
     });
+  });
+
+  it("submits fight loot from the final packet with its warriors", async () => {
+    resetPipelineState();
+    useBattleStore.setState({ battleState: "in-battle" });
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn(() => "game-result");
+    margonemRuntimeBridge.setupProxies();
+    dispatcher.register();
+    margonemRuntimeBridge.setReady(true);
+    const finalFightLootEvent = {
+      ...finalFightEvent,
+      ...fightLootEvent,
+      f: finalFightEvent.f,
+    } as GameEvent;
+
+    pipelineWindow.successData?.(finalFightLootEvent);
+
+    expect(api.createLoot).toHaveBeenCalledOnce();
+    expect(api.createLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        loots: [expect.objectContaining({ id: 9001, name: "Unique loot" })],
+        npcs: [expect.objectContaining({ id: 100, name: "Boss" })],
+        source: "FIGHT",
+      }),
+      expect.objectContaining({ source: "fight" }),
+    );
+    await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
+
+    dispatcher.cleanup();
+  });
+
+  it("submits fight loot arriving immediately after the final packet", async () => {
+    resetPipelineState();
+    useBattleStore.setState({ battleState: "in-battle" });
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn(() => "game-result");
+    margonemRuntimeBridge.setupProxies();
+    dispatcher.register();
+    margonemRuntimeBridge.setReady(true);
+
+    pipelineWindow.successData?.(finalFightEvent);
+    pipelineWindow.successData?.(fightLootEvent);
+
+    expect(api.createLoot).toHaveBeenCalledOnce();
+    expect(api.createLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npcs: [expect.objectContaining({ id: 100, name: "Boss" })],
+      }),
+      expect.objectContaining({ source: "fight" }),
+    );
+    await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
+
+    dispatcher.cleanup();
   });
 });

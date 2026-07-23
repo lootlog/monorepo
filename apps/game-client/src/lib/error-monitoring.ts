@@ -2,20 +2,22 @@ import * as Sentry from "@sentry/react";
 import type { ErrorEvent } from "@sentry/react";
 import type { ErrorInfo } from "react";
 import type { RootOptions } from "react-dom/client";
+import type { RuntimeObserverFailure } from "@/lib/margonem-runtime/runtime.types";
 
 const SENTRY_APPLICATION_KEY = "lootlog-game-client";
 
 export type LootSkipReason =
   | "empty-parsed-loots"
   | "missing-battle-warriors"
-  | "missing-fallback-npc"
+  | "missing-dialog-npc-context"
+  | "missing-dialog-npc-snapshot"
   | "missing-fight-data"
-  | "missing-talking-npc-id"
-  | "unresolved-dialog-npcs";
+  | "missing-runtime-game-snapshot";
 
 export type LootSkipDiagnostic = {
   attemptId: string;
   battleWarriorCount?: number;
+  eventNpcDelIds?: number[];
   hasFightData?: boolean;
   mapId?: number;
   mapName?: string;
@@ -283,6 +285,31 @@ export const captureBootstrapError = (error: unknown): void => {
         tags: {
           feature: "application",
           mechanism: "bootstrap",
+        },
+      },
+    });
+  });
+};
+
+export const captureRuntimeObserverFailure = ({
+  error,
+  phase,
+  sequence,
+}: RuntimeObserverFailure): void => {
+  if (import.meta.env.DEV) {
+    console.warn(`[MargonemRuntimeBridge] ${phase} observer failed:`, error);
+  }
+  if (!initialized) return;
+
+  runMonitoringOperation(() => {
+    Sentry.captureException(createSanitizedError(error), {
+      captureContext: {
+        extra: { sequence },
+        fingerprint: ["{{ default }}", "margonem-runtime-observer", phase],
+        tags: {
+          feature: "margonem-runtime",
+          mechanism: "observer",
+          phase,
         },
       },
     });

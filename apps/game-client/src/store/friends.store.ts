@@ -1,38 +1,43 @@
+import type {
+  RuntimeFriend,
+  RuntimeStatus,
+} from "@/lib/margonem-runtime/runtime.types";
 import { create } from "zustand";
 
-type Friend = {
-  characterId: string;
-  nick: string;
-  icon: string;
-  lvl: string;
-  prof: string;
-  location: string;
-  status: string;
+type FriendsState = {
+  friends: readonly RuntimeFriend[];
+  friendsMax: number;
+  revision: number;
+  status: RuntimeStatus;
+  clearFriends: () => void;
+  isFriend: (characterId: string) => boolean;
+  replaceFriends: (
+    friends: readonly RuntimeFriend[],
+    friendsMax: number,
+  ) => void;
 };
 
-interface FriendsState {
-  friends: Friend[];
-  friendsMax: number;
-  setFriends: (friends: Friend[]) => void;
-  setFriendsMax: (max: number) => void;
-  applyBatch: (batch: { friends?: Friend[]; friendsMax?: number }) => void;
-  isFriend: (characterId: string) => boolean;
-}
-
-export const useFriendsStore = create<FriendsState>((set, get) => ({
+export const useFriendsStore = create<FriendsState>()((set, get) => ({
   friends: [],
   friendsMax: 0,
-  setFriends: (friends) => set({ friends }),
-  setFriendsMax: (friendsMax) => set({ friendsMax }),
-  applyBatch: (batch) =>
-    set((state) => {
-      const friends = batch.friends ?? state.friends;
-      const friendsMax = batch.friendsMax ?? state.friendsMax;
-      if (friends === state.friends && friendsMax === state.friendsMax) {
-        return state;
-      }
-      return { friends, friendsMax };
-    }),
+  revision: 0,
+  status: "uninitialized",
+  clearFriends: () =>
+    set((state) => ({
+      friends: [],
+      friendsMax: 0,
+      revision: state.revision + 1,
+      status: "uninitialized",
+    })),
   isFriend: (characterId) =>
-    get().friends.some((f) => f.characterId === characterId),
+    get().friends.some((friend) => friend.characterId === characterId),
+  replaceFriends: (friends, friendsMax) =>
+    set((state) => ({
+      friends: Object.freeze(
+        friends.map((friend) => Object.freeze({ ...friend })),
+      ),
+      friendsMax,
+      revision: state.revision + 1,
+      status: "ready",
+    })),
 }));

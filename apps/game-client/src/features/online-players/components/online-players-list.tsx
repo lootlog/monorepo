@@ -1,5 +1,5 @@
 import { GuildSwitcher } from "@/components/guild-switcher";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { WorldSelector } from "@/components/world-selector";
 import { OnlinePlayersAccountListEntry } from "@/features/online-players/components/online-players-account-list-entry";
 import { OnlinePlayersFilters } from "@/features/online-players/components/online-players-filters";
@@ -12,7 +12,7 @@ import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query"
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
 import { useState, type ChangeEvent, type FC, type ReactNode } from "react";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { useTranslation } from "react-i18next";
 import {
   DEFAULT_ONLINE_PLAYERS_FILTERS,
@@ -33,8 +33,10 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   filtersVisible,
 }) => {
   const { t } = useTranslation("onlinePlayers");
-  const characterId = String(Game.hero.id);
-  const defaultWorld = Game.getWorldName();
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
+  const defaultWorld = useGameStore((state) => state.game?.world ?? "unknown");
 
   const { allowWorldSelection, guildIdByCharId, worldByGuildId } =
     useSettingsStore(
@@ -189,9 +191,9 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
             />
           </>
         )}
-        <NativeScrollArea className="ll:flex-1 ll:box-border ll:mt-1">
+        <ScrollArea className="ll:flex-1 ll:box-border ll:mt-1">
           {listContent}
-        </NativeScrollArea>
+        </ScrollArea>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { GatewayEvent } from "@/config/gateway";
 import { AirTagRuntime } from "./air-tag-runtime";
 import { afterEach } from "vitest";
+import { useGameStore } from "@/store/game.store";
 
 const mocks = vi.hoisted(() => ({
   applySubscriptionAck: vi.fn(),
@@ -17,16 +18,8 @@ const mocks = vi.hoisted(() => ({
   unregisterRenderer: vi.fn(),
 }));
 
-vi.mock("@/lib/game", () => ({
-  Game: {
-    get interface() {
-      return "ni";
-    },
-    get map() {
-      return mocks.map;
-    },
-    getWorldName: mocks.getWorldName,
-  },
+vi.mock("@/lib/margonem-runtime/runtime-adapter", () => ({
+  getMargonemInterface: () => "ni",
 }));
 
 vi.mock("@/lib/socket", () => ({
@@ -65,6 +58,23 @@ describe("AirTagRuntime", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.map = { id: 12, name: "Torneg" };
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "1",
+        characterId: "1",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 12, name: "Torneg", visibility: 30 },
+      world: "fobos",
+    });
     vi.spyOn(crypto, "randomUUID")
       .mockReturnValueOnce("00000000-0000-4000-8000-000000000001")
       .mockReturnValueOnce("00000000-0000-4000-8000-000000000002");

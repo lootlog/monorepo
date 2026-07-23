@@ -203,14 +203,14 @@ export class BattlesService implements IBattlesService {
     requestingUserId?: string,
   ): Promise<BattleTimelineResponseInput> {
     const battle = await this.getBattleFromDatabase(battleId, requestingUserId);
-    return await this.buildTimelineResponse(battle);
+    return this.buildTimelineResponse(battle);
   }
 
   async getPublicBattleTimeline(
     battleId: string,
   ): Promise<BattleTimelineResponseInput> {
     const battle = await this.getPublicBattle(battleId);
-    return await this.buildTimelineResponse(battle);
+    return this.buildTimelineResponse(battle);
   }
 
   async getBattleFromDatabase(

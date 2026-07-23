@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateManualTimerOptions } from "@/api/timers.api";
@@ -8,10 +8,11 @@ import { useWindowsStore } from "@/store/windows.store";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
 import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -21,22 +22,19 @@ import {
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/use-debounce";
 import { GuildSwitcher } from "@/components/guild-switcher";
-import {
-  CreateManualTimerDtoType,
-  type CreateManualTimerDto,
-  type SearchTimersNpcResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+import { CreateManualTimerDtoType } from "@lootlog/api-client/models/main/create-manual-timer-dto-type";
+import type { CreateManualTimerDto } from "@lootlog/api-client/models/main/create-manual-timer-dto";
+import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/api-client/models/main/search-timers-npc-response-dto-output";
 import {
   getTimersControllerSearchNpcsWithTimerDataQueryKey,
   useTimersControllerSearchNpcsWithTimerData,
-} from "@/lib/api/generated/main/timers/timers";
+} from "@lootlog/api-client/react-query/main/timers";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
-import { Game } from "@/lib/game";
 import { useTranslation } from "react-i18next";
 
 const SECONDS_IN_HOUR = 3600;
@@ -220,8 +218,10 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
 }) => {
   const { t } = useTranslation("timers");
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
-  const world = Game.getWorldName();
-  const characterId = String(Game.hero.id);
+  const world = useGameStore((state) => state.game?.world ?? "unknown");
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
   const { selectedGuildIdsForTimersByCharId, guildIdByCharId } =
     useSettingsStore();
   const setOpen = useWindowsStore((state) => state.setOpen);
@@ -237,13 +237,38 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [customDatesEnabled, setCustomDatesEnabled] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [selectedGuildId, setSelectedGuildId] = useState<string>("");
+  const [selectedGuildSelection, setSelectedGuildSelection] = useState<{
+    contextKey: string;
+    guildId: string;
+  } | null>(null);
   const [selectedNpc, setSelectedNpc] =
     useState<SearchTimersNpcResponseDtoOutput | null>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const currentGuildId = characterId ? guildIdByCharId[characterId] : undefined;
+  const savedGuildId = characterId
+    ? selectedGuildIdsForTimersByCharId[characterId]?.[0]
+    : undefined;
+  const guildSelectionContextKey = `${characterId}:${initialGuildId ?? ""}:${savedGuildId ?? ""}`;
+  const availableGuildIds = new Set(guilds?.map((guild) => guild.id) ?? []);
+  let preferredGuildId = "";
+
+  if (initialGuildId && availableGuildIds.has(initialGuildId)) {
+    preferredGuildId = initialGuildId;
+  } else if (savedGuildId && availableGuildIds.has(savedGuildId)) {
+    preferredGuildId = savedGuildId;
+  } else if (currentGuildId && availableGuildIds.has(currentGuildId)) {
+    preferredGuildId = currentGuildId;
+  } else {
+    preferredGuildId = guilds?.[0]?.id ?? "";
+  }
+
+  const selectedGuildId =
+    selectedGuildSelection?.contextKey === guildSelectionContextKey &&
+    availableGuildIds.has(selectedGuildSelection.guildId)
+      ? selectedGuildSelection.guildId
+      : preferredGuildId;
 
   const searchGuildId = selectedGuildId || currentGuildId || "";
 
@@ -270,42 +295,18 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
     },
   );
 
-  useEffect(() => {
-    if (!characterId || !guilds || guilds.length === 0) return;
-
-    const savedGuildIds = selectedGuildIdsForTimersByCharId[characterId] || [];
-    const savedGuildId = savedGuildIds[0];
-
-    const isValidInitialGuild =
-      initialGuildId && guilds.some((guild) => guild.id === initialGuildId);
-
-    const isValidSavedGuild =
-      savedGuildId && guilds.some((guild) => guild.id === savedGuildId);
-
-    if (isValidInitialGuild) {
-      setSelectedGuildId(initialGuildId);
-    } else if (isValidSavedGuild) {
-      setSelectedGuildId(savedGuildId);
-    } else if (
-      currentGuildId &&
-      guilds.some((guild) => guild.id === currentGuildId)
-    ) {
-      setSelectedGuildId(currentGuildId);
-    } else {
-      setSelectedGuildId(guilds[0].id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterId, initialGuildId, selectedGuildIdsForTimersByCharId, guilds]);
-
   const handleGuildSelectionChange = (guildId: string) => {
-    setSelectedGuildId(guildId);
+    setSelectedGuildSelection({
+      contextKey: guildSelectionContextKey,
+      guildId,
+    });
   };
 
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(createFormSchema(t)),
@@ -356,6 +357,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.isComposing) return;
     if (!npcResults || npcResults.length === 0) return;
 
     if (e.key === "ArrowDown") {
@@ -376,10 +378,6 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
       setSelectedIndex(-1);
     }
   };
-
-  useEffect(() => {
-    setSelectedIndex(-1);
-  }, [debouncedSearch]);
 
   useEffect(() => {
     return () => {
@@ -425,9 +423,11 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
     });
   };
 
-  const startDate = watch("startDate");
-  const endDate = watch("endDate");
-  const selectedNpcType = watch("type") || EMPTY_NPC_TYPE_VALUE;
+  const [startDate, endDate, watchedNpcType] = useWatch({
+    control,
+    name: ["startDate", "endDate", "type"],
+  });
+  const selectedNpcType = watchedNpcType || EMPTY_NPC_TYPE_VALUE;
   const nameField = register("name");
 
   const hasSearchResults = npcResults && npcResults.length > 0;
@@ -455,7 +455,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
       </div>
 
       <div className="ll:min-h-0 ll:flex-1 ll:overflow-hidden">
-        <NativeScrollArea
+        <ScrollArea
           data-testid="add-timer-scroll-container"
           className="ll:h-full ll:w-full"
         >
@@ -471,6 +471,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                   setSearchQuery(e.target.value);
                   setSelectedNpc(null);
                   setShowSuggestions(true);
+                  setSelectedIndex(-1);
                 }}
                 onKeyDown={handleSearchKeyDown}
                 onBlur={() => {
@@ -688,7 +689,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
               </div>
             )}
           </div>
-        </NativeScrollArea>
+        </ScrollArea>
       </div>
 
       <div className="ll:flex ll:justify-center ll:border-gray-600 ll:pt-1 ll:pb-0.5 ll:px-1 ll:shrink-0">

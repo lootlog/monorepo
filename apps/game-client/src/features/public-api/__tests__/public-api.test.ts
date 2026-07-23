@@ -4,8 +4,8 @@ import { bootstrapPublicApi } from "../index";
 import { useGlobalStore } from "@/store/global.store";
 import { queryKeys } from "../query-keys";
 import type { NpcTypeEnum } from "@lootlog/types";
-import { getMembersControllerGetGuildMembersSummaryQueryKey } from "@/lib/api/generated/main/members/members";
-import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { getMembersControllerGetGuildMembersSummaryQueryKey } from "@lootlog/api-client/react-query/main/members";
+import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
 import type { Timer } from "@/api";
 
 const makeGuild = (

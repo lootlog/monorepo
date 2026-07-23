@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useGlobalStore } from "@/store/global.store";
+import { useGameStore } from "@/store/game.store";
 import { AfkProcessor } from "./afk-processor";
 
 const mockEmit = vi.fn();
@@ -9,15 +10,6 @@ vi.mock("@/lib/socket", () => ({
   getSocket: () => ({
     emit: mockEmit,
   }),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    map: {
-      id: 77,
-      name: "Ithan",
-    },
-  },
 }));
 
 describe("AfkProcessor", () => {
@@ -32,6 +24,23 @@ describe("AfkProcessor", () => {
         joined: false,
         joinedGuilds: [],
       },
+    });
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "2",
+        characterId: "1",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 77, name: "Ithan", visibility: 30 },
+      world: "pandora",
     });
   });
 

@@ -1,4 +1,4 @@
-import { getApiClient } from "@/lib/api-client";
+import { createApiClient } from "@lootlog/api-client/transport";
 import { NpcTypeEnum as NpcType } from "@lootlog/types";
 
 export { NpcType };
@@ -28,14 +28,14 @@ export type NpcSearchResult = {
   latestRespawnRandomness: number;
 };
 
-export async function searchNpcs(
+export function searchNpcs(
   guildId: string,
   world: string,
   search: string,
   limit = 10,
 ): Promise<NpcSearchResult[]> {
-  const client = getApiClient("default");
-  const response = await client.get<NpcSearchResult[]>(
+  const client = createApiClient("main");
+  return client.get<NpcSearchResult[]>(
     `/guilds/${guildId}/timers/npcs/search`,
     {
       params: {
@@ -45,6 +45,4 @@ export async function searchNpcs(
       },
     },
   );
-
-  return response.data;
 }

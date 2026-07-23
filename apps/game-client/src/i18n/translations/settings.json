@@ -14,8 +14,8 @@
     "battlePanel": "Panel walk (beta)",
     "hotkeys": "Skróty klawiszowe",
     "logs": "Logi",
-    "debug": "Debug",
-    "commitSha": "Commit SHA: {{sha}}"
+    "information": "Informacje",
+    "debug": "Debug"
   },
   "general": {
     "title": "Ustawienia ogólne",
@@ -29,6 +29,16 @@
     "mapPingsDescription": "Pokazuj i wysyłaj pingi na mapie oraz Podręcznej mapie.",
     "airTagsLabel": "AirTagi — współdzielona widoczność",
     "airTagsDescription": "Udostępniaj gildii pozycje widocznych graczy i pokazuj świeże obserwacje z bieżącej mapy."
+  },
+  "information": {
+    "title": "Informacje o kliencie",
+    "description": "Informacje o aktualnie uruchomionej wersji dodatku.",
+    "buildDetailsTitle": "Szczegóły builda",
+    "versionLabel": "Wersja klienta",
+    "commitShaLabel": "Commit SHA",
+    "environmentLabel": "Środowisko",
+    "buildTimestampLabel": "Data builda (UTC)",
+    "notAvailable": "Brak danych"
   },
   "airTags": {
     "seenSeconds": "widziany {{seconds}} s temu"
@@ -368,6 +378,7 @@
     "triggerCustomEvent": "Wywołaj własny event",
     "noEvents": "Nie wywołano żadnych eventów",
     "noPartyMembers": "Brak członków grupy",
+    "partyMemberId": "(ID: {{id}})",
     "zoomFactor": "Skala powiększenia: {{value}}",
     "mode": "Tryb: {{mode}}",
     "notAvailable": "Brak",

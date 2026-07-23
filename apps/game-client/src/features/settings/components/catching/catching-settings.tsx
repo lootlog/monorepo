@@ -11,22 +11,22 @@ import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
-} from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
+} from "@lootlog/api-client/react-query/main/user-lootlog-config";
 import { CharacterTile } from "@/components/character-tile";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { UserLootlogConfigAccountResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { UserLootlogConfigAccountResponseDtoOutput } from "@lootlog/api-client/models/main/user-lootlog-config-account-response-dto-output";
 
 export const CatchingSettings = () => {
   const queryClient = useQueryClient();
-  const accountId = String(Game.hero.account);
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const queryKey =
     getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
       accountId,
@@ -44,7 +44,9 @@ export const CatchingSettings = () => {
         },
       },
     );
-  const initialCharacterId = String(Game.hero.id);
+  const initialCharacterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
   const [selectedCharacterId, setSelectedCharacterId] =
     useState(initialCharacterId);
   const [selectionByCharacterId, setSelectionByCharacterId] = useState<
@@ -137,16 +139,12 @@ export const CatchingSettings = () => {
         },
       );
 
-      setSelectionByCharacterId((currentSelections) => {
-        const nextSelections = { ...currentSelections };
-
-        targetCharacterIds.forEach((characterId) => {
-          nextSelections[characterId] = catchingGuildIds;
-        });
-
-        selectionByCharacterIdRef.current = nextSelections;
-        return nextSelections;
+      const nextSelections = { ...selectionByCharacterIdRef.current };
+      targetCharacterIds.forEach((characterId) => {
+        nextSelections[characterId] = catchingGuildIds;
       });
+      selectionByCharacterIdRef.current = nextSelections;
+      setSelectionByCharacterId(nextSelections);
 
       return {
         previousData,

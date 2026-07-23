@@ -1,9 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
@@ -18,7 +14,7 @@ import {
 import type { StoredNotification } from "@/store/notifications.store";
 import type { NotificationMutes, NotificationMutesPatch } from "@lootlog/types";
 import { BellOff } from "lucide-react";
-import { type FC, useState } from "react";
+import { type FC, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 type NotificationMuteMenuProps = {
@@ -44,6 +40,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
 }) => {
   const { t } = useTranslation("notifications");
   const [open, setOpen] = useState(false);
+  const muteButtonRef = useRef<HTMLButtonElement>(null);
   const mutedNpc = createMutedNpcPreference(notification);
   const mutedPlayer = createMutedPlayerPreference(notification, senderName);
   const isDisabled = !isReady || isPending;
@@ -84,6 +81,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
 
   const muteButton = (
     <Button
+      ref={muteButtonRef}
       variant="ghost"
       aria-expanded={open}
       aria-haspopup="menu"
@@ -110,14 +108,13 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverAnchor asChild>{muteButton}</PopoverAnchor>
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{muteButton}</TooltipTrigger>
         <TooltipContent side="top">
           {t("actions.muteOptionsAria")}
         </TooltipContent>
       </Tooltip>
       <PopoverContent
+        anchor={muteButtonRef}
         align="end"
         className="ll:w-52 ll:p-1 ll:flex ll:flex-col ll:gap-1"
       >

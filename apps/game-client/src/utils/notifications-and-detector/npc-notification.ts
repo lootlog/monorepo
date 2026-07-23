@@ -9,8 +9,8 @@ import {
   buildCurrentCharacterPayload,
 } from "@/lib/api/generated-helpers";
 import { resolveDetectorGuildIds } from "@/lib/game-account-preferences";
-import { Game } from "@/lib/game";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
+import { useGameStore } from "@/store/game.store";
 import type { DetectorRoutingRule } from "@lootlog/types";
 
 type ResolveNpcNotificationRoutingOptions = {
@@ -65,7 +65,7 @@ export const resolveNpcNotificationRouting = ({
   routingRules,
   npcLevel,
 }: ResolveNpcNotificationRoutingOptions) => {
-  const world = Game.getWorldName();
+  const world = useGameStore.getState().game?.world ?? "unknown";
   const guildIds = resolveDetectorGuildIds(routingRules, npcLevel, world);
 
   return {
@@ -74,19 +74,30 @@ export const resolveNpcNotificationRouting = ({
   };
 };
 
-export const buildNpcNotificationPayload = ({
+export function buildNpcNotificationPayload(
+  options: BuildNpcNotificationPayloadOptions & { isGatheringParty: true },
+): CreateNotificationOptions | null;
+export function buildNpcNotificationPayload(
+  options: BuildNpcNotificationPayloadOptions,
+): CreateNotificationOptions;
+export function buildNpcNotificationPayload({
   npc,
   guildIds,
-  world = Game.getWorldName(),
+  world = useGameStore.getState().game?.world ?? "unknown",
   isGatheringParty = false,
-}: BuildNpcNotificationPayloadOptions): CreateNotificationOptions => ({
-  npc: buildNotificationNpcPayload(npc),
-  world,
-  guildIds,
-  ...(isGatheringParty
-    ? { isGatheringParty, character: buildCurrentCharacterPayload() }
-    : {}),
-});
+}: BuildNpcNotificationPayloadOptions): CreateNotificationOptions | null {
+  const character = isGatheringParty
+    ? buildCurrentCharacterPayload()
+    : undefined;
+  if (isGatheringParty && !character) return null;
+
+  return {
+    npc: buildNotificationNpcPayload(npc),
+    world,
+    guildIds,
+    ...(isGatheringParty ? { isGatheringParty, character } : {}),
+  };
+}
 
 export const buildNpcChatMessagePayload = ({
   npc,
@@ -94,11 +105,16 @@ export const buildNpcChatMessagePayload = ({
   messageType,
   message = "",
   partyGathering,
-}: BuildNpcChatMessagePayloadOptions): SendChatMessageOptions => ({
-  message,
-  guildIds,
-  type: messageType,
-  characterData: buildChatCharacterData(),
-  npc: buildChatNpcPayload(npc),
-  ...(partyGathering ? { partyGathering } : {}),
-});
+}: BuildNpcChatMessagePayloadOptions): SendChatMessageOptions | null => {
+  const characterData = buildChatCharacterData();
+  if (!characterData) return null;
+
+  return {
+    message,
+    guildIds,
+    type: messageType,
+    characterData,
+    npc: buildChatNpcPayload(npc),
+    ...(partyGathering ? { partyGathering } : {}),
+  };
+};

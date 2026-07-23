@@ -5,24 +5,22 @@ import { getGuildMembersSummaryQueryOptions } from "@/hooks/api/guild-members-su
 import {
   chatControllerGetChatMessages,
   getChatControllerGetChatMessagesQueryKey,
-} from "@/lib/api/generated/main/chat/chat";
+} from "@lootlog/api-client/react-query/main/chat";
 import {
   getMembersControllerGetMeQueryKey,
   membersControllerGetMe,
-} from "@/lib/api/generated/main/members/members";
+} from "@lootlog/api-client/react-query/main/members";
 import {
   getRolesControllerGetGuildRolesQueryKey,
   rolesControllerGetGuildRoles,
-} from "@/lib/api/generated/main/roles/roles";
+} from "@lootlog/api-client/react-query/main/roles";
 import {
   getGuildIds,
   mapGuildMembersByUserId,
   type GuildIdentity,
 } from "@/lib/api/generated-helpers";
-import type {
-  ChatMessageResponseDtoOutput as ChatMessageType,
-  MemberSummaryResponseDtoOutput as GuildMember,
-} from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { MemberSummaryResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
 import {
   buildChatMentionContext,
   hasChatMentionToken,

@@ -1,8 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { OnlinePlayersList } from "./online-players-list";
 import { useOnlinePlayersStore } from "@/store/online-players.store";
+
+beforeEach(() =>
+  setTestRuntimeGame({
+    hero: { characterId: "10" },
+    world: "pandora",
+  }),
+);
 
 const mockUsePlayersPresence = vi.fn();
 const mockUseGuildMembersSummary = vi.fn();
@@ -127,6 +135,53 @@ describe("OnlinePlayersList", () => {
     expect(screen.getByText("Karka-han • pandora")).toBeVisible();
     expect(screen.getByText("Scout (80h)")).toBeVisible();
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
+  });
+
+  it("keeps long account names and locations constrained for truncation", () => {
+    const longPlayerName =
+      "Very long player name that must stay inside the list";
+    const longLocationName =
+      "Very long location name that must stay inside the list";
+    mockUsePlayersPresence.mockReturnValue([
+      {
+        "discord-1": [
+          {
+            discordId: "discord-1",
+            guildId: "guild-1",
+            platform: "game",
+            player: {
+              world: "pandora",
+              name: longPlayerName,
+              lvl: 123,
+              icon: "hero.gif",
+              characterId: "10",
+              accountId: "20",
+              prof: "w",
+              location: {
+                map: longLocationName,
+              },
+            },
+          },
+        ],
+      },
+      false,
+      vi.fn(),
+      "allowed",
+    ]);
+
+    const { container } = render(
+      <OnlinePlayersList viewMode="accounts" filtersVisible />,
+    );
+    const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+    const content = viewport?.firstElementChild;
+    const playerName = screen.getByText(`${longPlayerName} (123w)`);
+    const location = screen.getByText(`${longLocationName} • pandora`);
+
+    expect(content).toHaveStyle({ width: "100%", minWidth: 0 });
+    expect(playerName).toHaveClass("ll:truncate");
+    expect(playerName.parentElement).toHaveClass("ll:min-w-0");
+    expect(playerName.parentElement?.parentElement).toHaveClass("ll:min-w-0");
+    expect(location).toHaveClass("ll:truncate");
   });
 
   it("renders account entries sorted by level descending", () => {

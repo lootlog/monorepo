@@ -10,6 +10,9 @@ React userscript client for the in-game Margonem experience.
 
 ## Development
 
+Runtime events, adapters, domain stores, and processor invariants are documented
+in [docs/runtime-integration.md](docs/runtime-integration.md).
+
 Run commands from the monorepo root:
 
 ```bash

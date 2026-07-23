@@ -21,8 +21,8 @@ import {
 } from "../notifications-api";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { getGuildNotificationTargetLabel } from "../utils/notification-settings.utils";
-import { useNotificationsGuildControllerDeleteGuildTarget } from "@/lib/api/generated/main/notifications/notifications";
-import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
+import { useNotificationsGuildControllerDeleteGuildTarget } from "@lootlog/api-client/react-query/main/notifications";
+import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
 
 type NotificationTargetCardProps = {
   target: NotificationTargetResponseDto;
@@ -89,11 +89,15 @@ export const NotificationTargetCard = ({
   const isActionDisabled = actionsDisabled || deleteTarget.isPending;
 
   const handleDelete = async () => {
+    if (!guildId) {
+      const error = new Error("Missing guild id.");
+      toast.error(
+        getApiErrorMessage(error) ??
+          t("settings.notifications.toasts.targetDeleteError"),
+      );
+      throw error;
+    }
     try {
-      if (!guildId) {
-        throw new Error("Missing guild id.");
-      }
-
       await deleteTarget.mutateAsync({
         pathParams: { guildId, targetId: target.id },
       });

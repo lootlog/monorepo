@@ -5,7 +5,7 @@ import {
   getBattlesControllerGetDashboardBattlesQueryOptions,
   getBattlesControllerGetUserCharactersQueryOptions,
   getBattlesControllerGetUserWorldsQueryOptions,
-} from "@/lib/api/generated/battlelog/battles/battles";
+} from "@lootlog/api-client/react-query/battlelog/battles";
 import {
   battlePanelBattlesSearchSchema,
   loadBattlePanelBattlesSearch,

@@ -11,9 +11,7 @@
     "**/*.tsbuildinfo",
     "**/next-env.d.ts",
     "**/pnpm-lock.yaml",
-    "apps/game-client/src/lib/api/generated/**",
-    "apps/web/src/lib/api/generated/**",
-    "apps/wiki/src/lib/api/generated/**",
+    "packages/api-client/src/generated/**",
     "apps/landing/.source/source.config.mjs",
     "apps/landing/source.config.ts"
   ],

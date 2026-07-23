@@ -32,6 +32,13 @@ type IdpTokenResponse = {
 };
 
 type AccessTokenPayload = Awaited<ReturnType<typeof auth.api.getAccessToken>>;
+type DiscordAccessTokenPayload = AccessTokenPayload & { accessToken: string };
+
+const hasDiscordAccessToken = (
+  token: AccessTokenPayload,
+): token is DiscordAccessTokenPayload => {
+  return typeof token?.accessToken === "string" && token.accessToken.length > 0;
+};
 
 @Injectable()
 export class AuthService {
@@ -247,10 +254,10 @@ export class AuthService {
       missingException: HttpException;
       expiredException: HttpException;
     },
-  ): Promise<AccessTokenPayload & { accessToken: string }> {
+  ): Promise<DiscordAccessTokenPayload> {
     const token = await this.getDiscordAccessToken(request);
 
-    if (!token?.accessToken) {
+    if (!hasDiscordAccessToken(token)) {
       throw missingException;
     }
 
@@ -258,7 +265,7 @@ export class AuthService {
       throw expiredException;
     }
 
-    return token as AccessTokenPayload & { accessToken: string };
+    return token;
   }
 
   private getHttpStatus(status: string | number | undefined, fallback: number) {
