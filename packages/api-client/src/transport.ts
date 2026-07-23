@@ -298,17 +298,16 @@ const resolveRequestConfiguration = (
     throw new Error(`Missing base URL for ${service} API request`);
   }
 
-  const fetchImplementation =
-    override?.fetch ?? serviceConfiguration?.fetch ?? globalThis.fetch;
+  const fetchImplementation = override?.fetch ?? serviceConfiguration?.fetch;
 
-  if (!fetchImplementation) {
+  if (!fetchImplementation && typeof fetch === "undefined") {
     throw new Error(`Fetch is unavailable for ${service} API request`);
   }
 
   return {
     baseUrl,
     credentials: override?.credentials ?? serviceConfiguration?.credentials,
-    fetch: fetchImplementation.bind(globalThis),
+    fetch: fetchImplementation,
     getHeaders: override?.getHeaders ?? serviceConfiguration?.getHeaders,
     onError: override?.onError ?? serviceConfiguration?.onError,
   };
@@ -346,11 +345,18 @@ const executeFetch = async ({
   url: URL;
 }) => {
   try {
-    return await configuration.fetch(url, {
+    const requestOptions = {
       ...requestInit,
       credentials: requestInit.credentials ?? configuration.credentials,
       headers,
-    });
+    };
+
+    const fetchImplementation = configuration.fetch;
+    if (fetchImplementation) {
+      return await fetchImplementation(url, requestOptions);
+    }
+
+    return await fetch(url, requestOptions);
   } catch (caughtError) {
     const error = new ApiError({
       cause: caughtError,
