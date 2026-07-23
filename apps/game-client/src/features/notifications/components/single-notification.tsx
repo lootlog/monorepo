@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { cn } from "@/lib/utils";
 import type {
   MentionNotification,
@@ -194,7 +194,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const metaText = `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`;
   const senderName = guildMember?.name ?? t("states.unknownSender");
 
-  const heroLvl = Game.hero.lvl;
+  const heroLvl = useGameStore((state) => state.game?.hero.level ?? 0);
   const minLvl = isPartyGathering ? (notification.minLvl ?? 1) : 1;
   const maxLvl = isPartyGathering ? (notification.maxLvl ?? 500) : 500;
   const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;

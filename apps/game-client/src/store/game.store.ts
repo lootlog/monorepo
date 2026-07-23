@@ -28,7 +28,13 @@ export const useGameStore = create<GameState>()((set) => ({
   replaceGame: (game, mapChanged = false) =>
     set((state) => ({
       game: Object.freeze({
-        hero: Object.freeze({ ...game.hero }),
+        hero: Object.freeze({
+          ...game.hero,
+          clan: game.hero.clan
+            ? Object.freeze({ ...game.hero.clan })
+            : undefined,
+        }),
+        interface: game.interface,
         map: Object.freeze({ ...game.map }),
         world: game.world,
       }),

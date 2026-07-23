@@ -2,7 +2,7 @@ import { SettingsControlRow } from "@/components/settings/settings-control-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import {
   HOTKEY_ACTIONS,
   HOTKEY_CATEGORY_KEYS,
@@ -34,6 +34,7 @@ const categories = Object.entries(groupedActions) as [
 const HOTKEY_CONTROL_CLASS_NAME = "ll:w-44";
 
 export const HotkeysSettingsTab = () => {
+  const gameInterface = useGameStore((state) => state.game?.interface);
   const { bindings, setBinding, resetBinding, resetAll } = useHotkeysStore();
   const [capturingAction, setCapturingAction] = useState<HotkeyAction | null>(
     null,
@@ -113,7 +114,7 @@ export const HotkeysSettingsTab = () => {
             title={t(HOTKEY_CATEGORY_KEYS[category])}
           >
             {actions.map((config) => {
-              if (config.action === "map-ping" && Game.interface !== "ni") {
+              if (config.action === "map-ping" && gameInterface !== "ni") {
                 return null;
               }
 

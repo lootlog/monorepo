@@ -35,7 +35,10 @@ describe("AfkProcessor", () => {
         maxHp: 1,
         name: "Hero",
         profession: "w",
+        x: 1,
+        y: 2,
       },
+      interface: "ni",
       map: { id: 77, name: "Ithan", visibility: 30 },
       world: "pandora",
     });

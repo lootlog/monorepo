@@ -120,6 +120,12 @@ const triggerMapPingTap = (handlers: ReturnType<typeof useMapPings>) => {
   return started;
 };
 
+const setGameInterface = (gameInterface: "ni" | "si") => {
+  const game = useGameStore.getState().game;
+  if (!game) throw new Error("Expected initialized game state");
+  useGameStore.getState().replaceGame({ ...game, interface: gameInterface });
+};
+
 describe("useMapPings", () => {
   beforeEach(() => {
     testState.connected = true;
@@ -151,7 +157,10 @@ describe("useMapPings", () => {
         maxHp: 1,
         name: "Sender",
         profession: "w",
+        x: 1,
+        y: 2,
       },
+      interface: "ni",
       map: { id: 42, name: "Map", visibility: 30 },
       world: "aether",
     });
@@ -237,6 +246,7 @@ describe("useMapPings", () => {
 
   it("does not trigger a local ping on the old interface", () => {
     testState.gameInterface = "si";
+    setGameInterface("si");
     const { result } = renderHook(() => useMapPings());
 
     act(() => {
@@ -381,6 +391,7 @@ describe("useMapPings", () => {
 
   it("ignores a received ping on the old interface", () => {
     testState.gameInterface = "si";
+    setGameInterface("si");
     renderHook(() => useMapPings());
     const event: MapPingEvent = {
       pingId: "remote-ping-on-si",

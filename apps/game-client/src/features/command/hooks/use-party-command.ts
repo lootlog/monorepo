@@ -19,9 +19,10 @@ export const usePartyCommand = () => {
         description,
       });
     } catch (error) {
-      window.message(getCreatePartyGatheringErrorMessage(error));
+      showRuntimeMessage(getCreatePartyGatheringErrorMessage(error));
     }
   };
 
   return { handlePartyCommand };
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

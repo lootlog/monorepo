@@ -24,12 +24,19 @@ const gameNpc = {
 
 const hero = {
   account: 101,
+  clan: {
+    id: 303,
+    name: "Lootlog",
+    rank: 4,
+  },
   id: 202,
   img: "hero.gif",
   lvl: 300,
   nick: "Hero",
   prof: "w",
   warrior_stats: { hp: 40, maxhp: 50 },
+  x: 12,
+  y: 8,
 };
 
 const map = { id: 7, name: "Test map", visibility: 21 };
@@ -117,13 +124,21 @@ describe("NI runtime adapter", () => {
       hero: {
         accountId: "101",
         characterId: "202",
+        clan: {
+          id: 303,
+          name: "Lootlog",
+          rank: 4,
+        },
         currentHp: 40,
         icon: "hero.gif",
         level: 300,
         maxHp: 50,
         name: "Hero",
         profession: "w",
+        x: 12,
+        y: 8,
       },
+      interface: "ni",
       map,
       world: "world",
     });

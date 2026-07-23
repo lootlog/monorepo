@@ -42,7 +42,7 @@ vi.mock("@/lib/margonem-tooltips/patcher", () => ({
 
 import { useCharacterTooltipGameEvents } from "./use-character-tooltip-game-events";
 
-const originalWindowEngine = window.Engine;
+const originalWindowEngine = testRuntimeWindow.Engine;
 
 function createRuntimeOther(nick: string): Other {
   return {
@@ -321,3 +321,4 @@ describe("useCharacterTooltipGameEvents", () => {
     expect(mocks.unsubscribe).toHaveBeenCalledOnce();
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

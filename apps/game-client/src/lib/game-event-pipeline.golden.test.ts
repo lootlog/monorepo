@@ -199,7 +199,10 @@ function resetPipelineState(): void {
       maxHp: 1,
       name: "Hero",
       profession: "w",
+      x: 1,
+      y: 2,
     },
+    interface: "ni",
     map: { id: 13, name: "Nithal", visibility: 30 },
     world: "pandora",
   });

@@ -1,11 +1,10 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
-import { getMargonemInterface } from "@/lib/margonem-runtime/runtime-adapter";
+import { useGameStore } from "@/store/game.store";
 import { queryClient } from "@/lib/query-client";
 import { playSound } from "@/lib/sound-playback";
 import { useGlobalStore } from "@/store/global.store";
-import { useGameStore } from "@/store/game.store";
 import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
 import type { UserGameAccountPreferencesResponseDtoOutput } from "@/lib/api/generated/main/model";
 import {
@@ -59,7 +58,9 @@ const areMapPingsEnabled = () => {
 
 export const useMapPings = () => {
   const { socket, connected, joined } = useSocket();
-  const isNewInterface = getMargonemInterface() === "ni";
+  const isNewInterface = useGameStore(
+    (state) => state.game?.interface === "ni",
+  );
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
@@ -193,7 +194,7 @@ export const useMapPings = () => {
             ),
           })
         : t("mapPings.temporarilyUnavailable");
-    window.message?.(message);
+    showRuntimeMessage(message);
   };
 
   const resolveTrigger = (
@@ -321,3 +322,4 @@ export const useMapPings = () => {
     onMapPingStart,
   };
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

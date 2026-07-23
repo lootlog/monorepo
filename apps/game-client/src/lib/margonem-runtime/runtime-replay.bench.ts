@@ -53,7 +53,10 @@ const game = Object.freeze({
     maxHp: 1,
     name: "Hero",
     profession: "w",
+    x: 1,
+    y: 1,
   }),
+  interface: "si" as const,
   map: Object.freeze({ id: 1, name: "Benchmark", visibility: 30 }),
   world: "benchmark",
 });

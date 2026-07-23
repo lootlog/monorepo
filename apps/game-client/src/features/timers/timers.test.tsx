@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 const mockUseTimers = vi.fn();
 const mockUseTimersSocket = vi.fn();
@@ -16,7 +17,6 @@ const timersContentSpy = vi.fn();
 const timersActionsSpy = vi.fn();
 const timersUnderBagActionsSpy = vi.fn();
 
-let gameInterface = "si";
 let timersOpen = true;
 let worldByGuildId: Record<string, string> = {
   "guild-1": "gefion",
@@ -115,18 +115,6 @@ vi.mock("@/features/timers/utils/filters-utils", () => ({
   checkFiltersActive: (...args: unknown[]) => mockCheckFiltersActive(...args),
 }));
 
-vi.mock("@/lib/game", () => ({
-  Game: {
-    hero: {
-      id: 101,
-    },
-    getWorldName: () => "pandora",
-    get interface() {
-      return gameInterface;
-    },
-  },
-}));
-
 vi.mock("@/components/draggable-window", () => ({
   DraggableWindow: ({
     children,
@@ -201,6 +189,11 @@ const createTimer = (overrides?: Partial<Timer>): Timer => ({
 
 describe("Timers", () => {
   beforeEach(() => {
+    setTestRuntimeGame({
+      hero: { characterId: "101" },
+      interface: "si",
+      world: "pandora",
+    });
     mockUseTimers.mockReset();
     mockUseTimersSocket.mockReset();
     mockUseTimersUpdate.mockReset();
@@ -214,7 +207,6 @@ describe("Timers", () => {
     timersActionsSpy.mockReset();
     timersUnderBagActionsSpy.mockReset();
 
-    gameInterface = "si";
     timersOpen = true;
     worldByGuildId = {
       "guild-1": "gefion",
@@ -327,7 +319,11 @@ describe("Timers", () => {
   });
 
   it("renders the under-bag path when enabled for the ni interface", () => {
-    gameInterface = "ni";
+    setTestRuntimeGame({
+      hero: { characterId: "101" },
+      interface: "ni",
+      world: "pandora",
+    });
     allowWorldSelection = false;
     worldByGuildId = {};
     guildIdByCharId = {};
@@ -359,7 +355,11 @@ describe("Timers", () => {
   });
 
   it("keeps the under-bag clock idle when every timer is filtered out", () => {
-    gameInterface = "ni";
+    setTestRuntimeGame({
+      hero: { characterId: "101" },
+      interface: "ni",
+      world: "pandora",
+    });
     timersStoreState = {
       ...timersStoreState,
       generalConfig: {

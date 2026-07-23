@@ -1,6 +1,5 @@
-import { getMargonemInterface } from "@/lib/margonem-runtime/runtime-adapter";
-import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { useGameStore } from "@/store/game.store";
+import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import {
   AIR_TAG_MAX_BATCH_SIZE,
   isAirTagObservation,
@@ -131,7 +130,8 @@ export class AirTagObservationController {
   }
 
   detectCurrentOthers(): void {
-    if (!this.isActive() || getMargonemInterface() !== "ni") return;
+    if (!this.isActive() || useGameStore.getState().game?.interface !== "ni")
+      return;
 
     const runtimeOthers = runtimeOtherHandles.getAll();
 
@@ -312,7 +312,11 @@ export class AirTagObservationController {
   }
 
   private isActive(): boolean {
-    return this.enabled && this.canPublish && getMargonemInterface() === "ni";
+    return (
+      this.enabled &&
+      this.canPublish &&
+      useGameStore.getState().game?.interface === "ni"
+    );
   }
 }
 

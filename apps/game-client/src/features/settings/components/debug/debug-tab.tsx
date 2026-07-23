@@ -4,6 +4,7 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
+import { getRuntimeZoomFactor } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOthersStore } from "@/store/others.store";
 import { usePartyStore } from "@/store/party.store";
@@ -322,7 +323,7 @@ export const DebugTab: FC = () => {
   const tooltipIsShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (s) => s.isShiftPressed,
   );
-  const zoomFactor = window.getZoomFactor ? window.getZoomFactor() : null;
+  const zoomFactor = getRuntimeZoomFactor();
   const tooltipActiveOtherData = tooltipActiveOther?.d;
   const debugOthers = Object.entries(othersById).map(([storeId, other]) => {
     const debugOther = other as DebugOther;

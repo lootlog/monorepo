@@ -1,6 +1,7 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
 export type RuntimeStatus = "uninitialized" | "ready";
+export type RuntimeInterface = "ni" | "si";
 
 export type RuntimeNpc = Readonly<{
   actions?: number;
@@ -27,16 +28,24 @@ export type RuntimeMap = Readonly<{
 export type RuntimeHero = Readonly<{
   accountId: string;
   characterId: string;
+  clan?: Readonly<{
+    id: number;
+    name: string;
+    rank: number;
+  }>;
   currentHp: number;
   icon: string;
   level: number;
   maxHp: number;
   name: string;
   profession: string;
+  x: number;
+  y: number;
 }>;
 
 export type RuntimeGameSnapshot = Readonly<{
   hero: RuntimeHero;
+  interface: RuntimeInterface;
   map: RuntimeMap;
   world: string;
 }>;

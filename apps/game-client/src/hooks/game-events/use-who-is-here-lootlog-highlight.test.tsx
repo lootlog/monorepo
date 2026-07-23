@@ -5,7 +5,7 @@ import {
   LOOTLOG_OTHER_GLOW_BLUE,
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
   LOOTLOG_OTHER_GLOW_UNKNOWN,
-} from "@/lib/lootlog-other-glow-manager";
+} from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
 import { appendCatchingGuildsTooltipSection } from "@/lib/margonem-tooltips/catching-guilds";
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 import {
@@ -32,7 +32,7 @@ vi.mock(
 import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
 import { useWhoIsHereLootlogHighlight } from "./use-who-is-here-lootlog-highlight";
 
-const originalWindowEngine = window.Engine;
+const originalWindowEngine = testRuntimeWindow.Engine;
 const originalWindowDollar = (window as Window & { $?: unknown }).$;
 
 type WhoIsHereEntry = {
@@ -161,7 +161,10 @@ function setSelectedGuild(): void {
       maxHp: 1,
       name: "Hero",
       profession: "w",
+      x: 1,
+      y: 2,
     },
+    interface: "ni",
     map: { id: 1, name: "Map", visibility: 30 },
     world: "tempest",
   });
@@ -660,3 +663,4 @@ describe("useWhoIsHereLootlogHighlight", () => {
     expect(document.getElementById("ll-who-is-here-lootlog-style")).toBeNull();
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

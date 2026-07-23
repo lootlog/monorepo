@@ -5,9 +5,12 @@ import type {
   ChatMessageResponseDtoOutput,
   MemberSummaryResponseDtoOutput,
 } from "@/lib/api/generated/main/model";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { PartyGatheringCard } from "./party-gathering-card";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
+
+beforeEach(() => setTestRuntimeGame());
 
 vi.mock("@/hooks/discord/use-member-color", () => ({
   useMemberColor: () => "abcdef",
@@ -232,6 +235,9 @@ describe("PartyGatheringCard", () => {
   });
 
   it("shows that the current character is already registered", () => {
+    setTestRuntimeGame({
+      hero: { accountId: "999", characterId: "999" },
+    });
     usePartyFinderStore.getState().mergeProjection({
       schemaVersion: 3,
       notificationId: "notification-1",

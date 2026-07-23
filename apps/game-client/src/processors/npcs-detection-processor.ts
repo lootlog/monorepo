@@ -466,13 +466,14 @@ export class NpcsDetectionProcessor {
     await Promise.all(
       successfulNotifications.map(async ({ npc, guildIds }) => {
         try {
-          await sendChatMessage(
-            buildNpcChatMessagePayload({
-              npc,
-              guildIds,
-              messageType: MessageType.NPC,
-            }),
-          );
+          const chatMessage = buildNpcChatMessagePayload({
+            npc,
+            guildIds,
+            messageType: MessageType.NPC,
+          });
+          if (!chatMessage) return;
+
+          await sendChatMessage(chatMessage);
         } catch (error) {
           console.warn(
             "[NpcsDetectionProcessor] Failed to send chat message:",

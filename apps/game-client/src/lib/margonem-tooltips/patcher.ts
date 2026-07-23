@@ -1,20 +1,14 @@
-import type { Engine } from "@lootlog/margonem/engine";
 import type { Other } from "@lootlog/margonem/others";
 import { useOthersStore } from "@/store/others.store";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { characterTooltipTransforms } from "./registry";
 import type { CharacterTooltipKind, MargonemTooltipCharacter } from "./types";
-
-type RuntimeWindow = Window &
-  typeof globalThis & {
-    Engine?: Partial<Engine> & {
-      canvasTip?: {
-        hide?: (event: unknown) => unknown;
-        show?: (event: unknown, object: unknown) => unknown;
-      };
-    };
-  };
+import {
+  getRuntimeCanvasTip,
+  getRuntimeHeroTooltipOwner,
+  type RuntimeCanvasTip,
+} from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 
 type OriginalCreateStrTip = (...args: unknown[]) => string;
 type OriginalCanvasTipHide = (event: unknown) => unknown;
@@ -31,10 +25,6 @@ let originalCanvasTipShow: OriginalCanvasTipShow | null = null;
 let lastOtherCanvasTipEvent: unknown = null;
 const patchedCharacters = new Set<MargonemTooltipCharacter>();
 const patchedOtherPrototypes = new Set<MargonemTooltipCharacter>();
-
-function getRuntimeWindow(): RuntimeWindow {
-  return window as RuntimeWindow;
-}
 
 function patchCreateStrTip(
   character: MargonemTooltipCharacter | undefined,
@@ -118,13 +108,13 @@ function patchOtherPrototype(other: MargonemTooltipCharacter): boolean {
 }
 
 function prunePatchedCharacters(): void {
-  const engine = getRuntimeWindow().Engine;
+  const hero = getRuntimeHeroTooltipOwner();
   const currentOthers = Object.values(
     useOthersStore.getState().othersById,
   ) as MargonemTooltipCharacter[];
   const retainedCharacters = new Set<MargonemTooltipCharacter>(currentOthers);
-  if (engine?.hero) {
-    retainedCharacters.add(engine.hero);
+  if (hero) {
+    retainedCharacters.add(hero);
   }
   const retainedPrototypes = new Set(
     currentOthers.map(
@@ -167,8 +157,7 @@ function isOtherCanvasObject(object: unknown): object is Other {
   );
 }
 
-function patchCanvasTip(runtimeWindow: RuntimeWindow): (() => void) | null {
-  const canvasTip = runtimeWindow.Engine?.canvasTip;
+function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
   if (!canvasTip?.show || !canvasTip.hide || originalCanvasTipShow) {
     return null;
   }
@@ -216,16 +205,15 @@ function patchCanvasTip(runtimeWindow: RuntimeWindow): (() => void) | null {
 
 export function refreshCharacterTooltips(): void {
   prunePatchedCharacters();
-  const engine = getRuntimeWindow().Engine;
-  if (!engine) return;
+  const hero = getRuntimeHeroTooltipOwner();
 
-  if (engine.hero) {
-    if (patchCreateStrTip(engine.hero, "hero")) {
-      patchedCharacters.add(engine.hero);
+  if (hero) {
+    if (patchCreateStrTip(hero, "hero")) {
+      patchedCharacters.add(hero);
     }
 
-    if (patchedCreateStrTip.has(engine.hero)) {
-      refreshCharacterTooltip(engine.hero);
+    if (patchedCreateStrTip.has(hero)) {
+      refreshCharacterTooltip(hero);
     }
   }
 
@@ -253,7 +241,7 @@ export function refreshActiveOtherCanvasTooltip(): void {
 
   patchOtherCharacterTooltip(activeOther);
 
-  const canvasTip = getRuntimeWindow().Engine?.canvasTip;
+  const canvasTip = getRuntimeCanvasTip();
   if (!canvasTip?.show || !lastOtherCanvasTipEvent) return;
 
   canvasTip.show(lastOtherCanvasTipEvent, activeOther);
@@ -271,19 +259,19 @@ export function installCharacterTooltipTransforms(): () => void {
     return cleanupCurrentInstallation;
   }
 
-  const runtimeWindow = getRuntimeWindow();
-  const engine = runtimeWindow.Engine;
-  if (!engine) {
+  const hero = getRuntimeHeroTooltipOwner();
+  const canvasTip = getRuntimeCanvasTip();
+  if (!hero && !canvasTip) {
     return () => undefined;
   }
-  const cleanupCanvasTip = patchCanvasTip(runtimeWindow);
+  const cleanupCanvasTip = canvasTip ? patchCanvasTip(canvasTip) : null;
   const unsubscribeOthersStore = useOthersStore.subscribe(
     prunePatchedCharacters,
   );
 
-  if (patchCreateStrTip(engine.hero, "hero") && engine.hero) {
-    patchedCharacters.add(engine.hero);
-    refreshCharacterTooltip(engine.hero);
+  if (hero && patchCreateStrTip(hero, "hero")) {
+    patchedCharacters.add(hero);
+    refreshCharacterTooltip(hero);
   }
 
   patchOtherCharacterTooltips(Object.values(runtimeOtherHandles.getAll()));

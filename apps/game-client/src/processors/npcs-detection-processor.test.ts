@@ -151,7 +151,10 @@ const setInitialNpcs = (npcs: GameNpc[]) => {
       maxHp: 1,
       name: "Tester",
       profession: "w",
+      x: 1,
+      y: 2,
     },
+    interface: "ni",
     map: { id: 1, name: "Ithan", visibility: 30 },
     world: "pandora",
   });

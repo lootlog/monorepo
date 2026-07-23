@@ -10,6 +10,7 @@ import { queryClient } from "@/lib/query-client";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { disposeSocket } from "@/lib/socket";
 import { resetTransientRuntimeState } from "@/lib/runtime-state";
+import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import {
   captureBootstrapError,
   getReactRootErrorHandlers,
@@ -53,7 +54,7 @@ function getDocumentCookie(name: string): string | null {
 
 export function getLootlogRootZIndex(): number {
   const gameInterface =
-    window.getCookie?.("interface") ?? getDocumentCookie("interface");
+    getRuntimeCookie("interface") ?? getDocumentCookie("interface");
 
   if (gameInterface === "si" || gameInterface === "ni") {
     return ROOT_Z_INDEX_BY_INTERFACE[gameInterface satisfies GameInterface];

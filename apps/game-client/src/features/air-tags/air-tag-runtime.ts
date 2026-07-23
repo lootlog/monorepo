@@ -1,5 +1,4 @@
 import { GatewayEvent } from "@/config/gateway";
-import { getMargonemInterface } from "@/lib/margonem-runtime/runtime-adapter";
 import { useGameStore } from "@/store/game.store";
 import { getSocket } from "@/lib/socket";
 import type {
@@ -30,7 +29,8 @@ export class AirTagRuntime {
   configure(nextState: AirTagRuntimeState): void {
     const previousState = this.state;
     const wasPublishing = this.isPublishing(previousState);
-    const nextEnabled = nextState.enabled && getMargonemInterface() === "ni";
+    const nextEnabled =
+      nextState.enabled && useGameStore.getState().game?.interface === "ni";
     this.state = { ...nextState, enabled: nextEnabled };
     const isPublishing = this.isPublishing(this.state);
 

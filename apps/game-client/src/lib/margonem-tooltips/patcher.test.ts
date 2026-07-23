@@ -21,7 +21,7 @@ type TestCharacter = {
   updateTip?: () => void;
 };
 
-const originalWindowEngine = window.Engine;
+const originalWindowEngine = testRuntimeWindow.Engine;
 
 function createCharacter(nick: string): TestCharacter {
   const character: TestCharacter = {
@@ -312,7 +312,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
-      window.Engine as unknown as {
+      testRuntimeWindow.Engine as unknown as {
         canvasTip: {
           hide: (event: unknown) => unknown;
           show: (event: unknown, object: unknown) => unknown;
@@ -358,7 +358,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
-      window.Engine as unknown as {
+      testRuntimeWindow.Engine as unknown as {
         canvasTip: {
           show: (event: unknown, object: unknown) => unknown;
         };
@@ -392,7 +392,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
-      window.Engine as unknown as {
+      testRuntimeWindow.Engine as unknown as {
         canvasTip: {
           hide: (event: unknown) => unknown;
           show: (event: unknown, object: unknown) => unknown;
@@ -435,7 +435,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
-      window.Engine as unknown as {
+      testRuntimeWindow.Engine as unknown as {
         canvasTip: {
           hide: (event: unknown) => unknown;
           show: (event: unknown, object: unknown) => unknown;
@@ -455,3 +455,4 @@ describe("installCharacterTooltipTransforms", () => {
     cleanup();
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

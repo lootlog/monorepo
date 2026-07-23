@@ -6,7 +6,7 @@ import {
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
   LOOTLOG_OTHER_GLOW_UNKNOWN,
   lootlogOtherGlowManager,
-} from "@/lib/lootlog-other-glow-manager";
+} from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
@@ -57,7 +57,7 @@ vi.mock("@/lib/game-events-manager", () => ({
 import { useOtherCatchingGuildGlow } from "./use-other-catching-guild-glow";
 import { useSelectedLootlogGuildInitialization } from "../use-selected-lootlog-guild";
 
-const originalWindowEngine = window.Engine;
+const originalWindowEngine = testRuntimeWindow.Engine;
 
 function createOther(id: string): Other {
   return {
@@ -138,7 +138,10 @@ function setRuntime(heroId: number | null | undefined = 101): void {
       maxHp: 1,
       name: "Hero",
       profession: "w",
+      x: 1,
+      y: 2,
     },
+    interface: "ni",
     map: { id: 1, name: "Map", visibility: 30 },
     world: "tempest",
   });
@@ -211,7 +214,9 @@ describe("useOtherCatchingGuildGlow", () => {
       "undefined",
     );
 
-    window.Engine.hero.d.id = 101;
+    const runtimeHero = testRuntimeWindow.Engine?.hero;
+    if (!runtimeHero) throw new Error("Expected test runtime hero");
+    runtimeHero.d.id = 101;
     act(() => {
       mocks.afterGameEventHandler?.();
     });
@@ -642,3 +647,4 @@ describe("useOtherCatchingGuildGlow", () => {
     expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

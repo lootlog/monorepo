@@ -1,14 +1,28 @@
+import type { Engine } from "@lootlog/margonem/engine";
+import type { Game } from "@lootlog/margonem/game";
+import type { GameHero } from "@lootlog/margonem/hero";
+import type { GameMap } from "@lootlog/margonem/map";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { Other } from "@lootlog/margonem/others";
 import type {
   RuntimeGameSnapshot,
+  RuntimeInterface,
   RuntimeNpc,
   RuntimeOther,
   RuntimePartyMember,
   RuntimeStateSnapshot,
 } from "./runtime.types";
 
-export type MargonemInterface = "ni" | "si";
+export type MargonemInterface = RuntimeInterface;
+
+type RuntimeAdapterWindow = Window & {
+  Engine?: Engine;
+  g: Game;
+  hero: GameHero;
+  map: GameMap;
+};
+
+const getRuntimeWindow = () => window as unknown as RuntimeAdapterWindow;
 
 export interface MargonemRuntimeAdapter {
   readonly interface: MargonemInterface;
@@ -71,8 +85,8 @@ function normalizeOther(other: RuntimeOtherWrapper): RuntimeOther | null {
 abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
   abstract readonly interface: MargonemInterface;
   protected abstract getRawGame(): {
-    hero: typeof window.hero;
-    map: typeof window.map;
+    hero: GameHero;
+    map: GameMap;
     world: string;
   };
   protected abstract getRawNpcs(): readonly GameNpc[];
@@ -83,17 +97,28 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
 
   getGameSnapshot(): RuntimeGameSnapshot {
     const { hero, map, world } = this.getRawGame();
+    const clan = hero.clan
+      ? Object.freeze({
+          id: hero.clan.id,
+          name: hero.clan.name,
+          rank: hero.clan.rank,
+        })
+      : undefined;
     return Object.freeze({
       hero: Object.freeze({
         accountId: String(hero.account),
         characterId: String(hero.id),
+        clan,
         currentHp: hero.warrior_stats?.hp ?? 0,
         icon: hero.img,
         level: hero.lvl,
         maxHp: hero.warrior_stats?.maxhp ?? 0,
         name: hero.nick,
         profession: hero.prof,
+        x: hero.x,
+        y: hero.y,
       }),
+      interface: this.interface,
       map: Object.freeze({
         id: map.id,
         name: map.name,
@@ -153,7 +178,7 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
   abstract isReady(): boolean;
 }
 
-type NiEngine = typeof window.Engine & {
+type NiEngine = Engine & {
   communication?: { parseJSON?: (...args: unknown[]) => unknown };
   party?: {
     getMembers?: () => Map<
@@ -175,7 +200,7 @@ export class NiRuntimeAdapter extends BaseRuntimeAdapter {
   readonly interface = "ni" as const;
 
   protected getRawGame() {
-    const engine = window.Engine as NiEngine;
+    const engine = getRuntimeWindow().Engine as NiEngine;
     return {
       hero: engine.hero.d,
       map: engine.map.d,
@@ -184,26 +209,33 @@ export class NiRuntimeAdapter extends BaseRuntimeAdapter {
   }
 
   protected getRawNpcs(): readonly GameNpc[] {
-    return Object.values(window.Engine.npcs.check()).map((npc) => npc.d);
+    const engine = getRuntimeWindow().Engine as NiEngine;
+    return Object.values(engine.npcs.check()).map((npc) => npc.d);
   }
 
   protected getRawNpc(id: number): GameNpc | undefined {
-    return window.Engine.npcs.getById(id)?.d;
+    return (getRuntimeWindow().Engine as NiEngine).npcs.getById(id)?.d;
   }
 
   protected getRawOthers(): Record<string, RuntimeOtherWrapper> {
-    return window.Engine.others.check() as Record<string, RuntimeOtherWrapper>;
+    return (getRuntimeWindow().Engine as NiEngine).others.check() as Record<
+      string,
+      RuntimeOtherWrapper
+    >;
   }
 
   protected getRawOther(id: string): RuntimeOtherWrapper | undefined {
-    const others = window.Engine.others as typeof window.Engine.others & {
+    const others = (getRuntimeWindow().Engine as NiEngine)
+      .others as Engine["others"] & {
       getById: (otherId: number) => unknown;
     };
     return others.getById(Number(id)) as RuntimeOtherWrapper | undefined;
   }
 
   protected getRawParty(): readonly RuntimePartyMember[] {
-    const members = (window.Engine as NiEngine).party?.getMembers?.();
+    const members = (
+      getRuntimeWindow().Engine as NiEngine
+    ).party?.getMembers?.();
     if (!members) return [];
     return [...members.values()].map((member) =>
       Object.freeze({
@@ -221,8 +253,8 @@ export class NiRuntimeAdapter extends BaseRuntimeAdapter {
 
   isReady(): boolean {
     return Boolean(
-      window.Engine?.interface?.alreadyInitialised ||
-      window.Engine?.interface?.getAlreadyInitialised?.(),
+      getRuntimeWindow().Engine?.interface?.alreadyInitialised ||
+      getRuntimeWindow().Engine?.interface?.getAlreadyInitialised?.(),
     );
   }
 }
@@ -231,27 +263,31 @@ export class SiRuntimeAdapter extends BaseRuntimeAdapter {
   readonly interface = "si" as const;
 
   protected getRawGame() {
+    const runtimeWindow = getRuntimeWindow();
     return {
-      hero: window.hero,
-      map: window.map,
-      world: window.g.worldConfig.getWorldName(),
+      hero: runtimeWindow.hero,
+      map: runtimeWindow.map,
+      world: runtimeWindow.g.worldConfig.getWorldName(),
     };
   }
 
   protected getRawNpcs(): readonly GameNpc[] {
-    return Object.values(window.g.npc ?? {});
+    return Object.values(getRuntimeWindow().g.npc ?? {});
   }
 
   protected getRawNpc(id: number): GameNpc | undefined {
-    return window.g.npc?.[id];
+    return getRuntimeWindow().g.npc?.[id];
   }
 
   protected getRawOthers(): Record<string, RuntimeOtherWrapper> {
-    return (window.g.other ?? {}) as Record<string, RuntimeOtherWrapper>;
+    return (getRuntimeWindow().g.other ?? {}) as Record<
+      string,
+      RuntimeOtherWrapper
+    >;
   }
 
   protected getRawOther(id: string): RuntimeOtherWrapper | undefined {
-    return (window.g.other?.[id] ?? undefined) as
+    return (getRuntimeWindow().g.other?.[id] ?? undefined) as
       | RuntimeOtherWrapper
       | undefined;
   }
@@ -261,18 +297,18 @@ export class SiRuntimeAdapter extends BaseRuntimeAdapter {
   }
 
   isReady(): boolean {
-    return window.g?.init === 5;
+    return getRuntimeWindow().g?.init === 5;
   }
 }
 
 export function createRuntimeAdapter(): MargonemRuntimeAdapter {
-  return typeof window.Engine === "object"
+  return typeof getRuntimeWindow().Engine === "object"
     ? new NiRuntimeAdapter()
     : new SiRuntimeAdapter();
 }
 
 export function getMargonemInterface(): MargonemInterface {
-  return typeof window.Engine === "object" ? "ni" : "si";
+  return typeof getRuntimeWindow().Engine === "object" ? "ni" : "si";
 }
 
 export function isMargonemRuntimeReady(): boolean {

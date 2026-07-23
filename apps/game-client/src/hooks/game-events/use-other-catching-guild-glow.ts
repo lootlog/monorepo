@@ -6,7 +6,7 @@ import {
   getLootlogOtherGlowColor,
   LOOTLOG_OTHER_GLOW_UNKNOWN,
   lootlogOtherGlowManager,
-} from "@/lib/lootlog-other-glow-manager";
+} from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {

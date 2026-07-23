@@ -52,7 +52,7 @@ import {
   useRolesControllerGetGuildRoles,
 } from "@/lib/api/generated/main/roles/roles";
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/store/chat.store";
 import { useQueryClient } from "@tanstack/react-query";
@@ -104,7 +104,10 @@ export const ChatInput: FC<ChatInputProps> = ({
   const clearReplyDraft = useChatStore((state) => state.clearReplyDraft);
   const editorRef = useRef<HTMLDivElement>(null);
   const clearConfirmAnchorRef = useRef<HTMLDivElement>(null);
-  const world = Game.getWorldName();
+  const world = useGameStore((state) => state.game?.world ?? "unknown");
+  const currentCharacterNick = useGameStore(
+    (state) => state.game?.hero.name ?? "",
+  );
   const { mutateAsync: sendChatMessage, isPending: isSendingMessage } =
     useChatControllerSendChatMessage();
   const { mutateAsync: clearChatMessages, isPending: isClearingChat } =
@@ -225,7 +228,7 @@ export const ChatInput: FC<ChatInputProps> = ({
     query: activeMentionForSuggestions?.query ?? "",
   });
   const mentionContext = buildChatMentionContext({
-    currentCharacterNick: Game.hero.nick,
+    currentCharacterNick,
     currentMember,
     members: guildMembers,
     roles: guildRoles,
@@ -388,14 +391,16 @@ export const ChatInput: FC<ChatInputProps> = ({
   const buildChatMessagePayload = ({
     message,
     type,
+    characterData,
   }: {
     message: string;
     type: typeof MessageType.NORMAL | typeof MessageType.NOTIFICATION;
+    characterData: NonNullable<ReturnType<typeof buildChatCharacterData>>;
   }) => {
     return {
       message,
       type,
-      characterData: buildChatCharacterData(),
+      characterData,
       replyTo: getChatReplyPayload(replyDraft),
     };
   };
@@ -450,6 +455,11 @@ export const ChatInput: FC<ChatInputProps> = ({
       return;
     }
 
+    const characterData = buildChatCharacterData();
+    if (!characterData) {
+      return;
+    }
+
     const currentCaretIndex = caretIndex;
     const submitAction = getChatSubmitAction({
       canClearChat,
@@ -484,6 +494,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                     data: buildChatMessagePayload({
                       message: submitAction.message,
                       type: getChatMessageTypeForSubmitAction(submitAction),
+                      characterData,
                     }),
                   }),
               })
@@ -493,6 +504,7 @@ export const ChatInput: FC<ChatInputProps> = ({
               data: buildChatMessagePayload({
                 message: submitAction.message,
                 type: getChatMessageTypeForSubmitAction(submitAction),
+                characterData,
               }),
             });
 

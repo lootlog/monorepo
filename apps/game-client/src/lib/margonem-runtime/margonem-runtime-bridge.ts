@@ -15,8 +15,16 @@ import type {
 
 type RuntimeInterface = "ni" | "si";
 type RuntimeFunction = (this: unknown, ...args: unknown[]) => unknown;
-type RuntimeWindow = Window & { successData?: RuntimeFunction };
+type RuntimeWindow = Window & {
+  Engine?: {
+    communication?: Record<string, unknown>;
+  };
+  _g?: RuntimeFunction;
+  successData?: RuntimeFunction;
+};
 type RuntimeFunctionContainer = Record<string, unknown>;
+
+const getRuntimeWindow = () => window as RuntimeWindow;
 
 type BridgeOptions = {
   adapter?: MargonemRuntimeAdapter;
@@ -99,7 +107,7 @@ export class MargonemRuntimeBridge {
     this.installOutgoing();
     const runtimeInterface =
       this.runtimeInterface ??
-      (typeof window.Engine === "object" ? "ni" : "si");
+      (typeof getRuntimeWindow().Engine === "object" ? "ni" : "si");
     const inbound = this.resolveInbound(runtimeInterface);
     if (!inbound) {
       this.failureReason = "missing-inbound-seam";
@@ -248,8 +256,9 @@ export class MargonemRuntimeBridge {
 
   private installOutgoing(): boolean {
     let installed = false;
-    if (typeof window._g === "function") {
-      const originalOutgoing = window._g as RuntimeFunction;
+    const runtimeWindow = getRuntimeWindow();
+    if (typeof runtimeWindow._g === "function") {
+      const originalOutgoing = runtimeWindow._g;
       const observeIntent = this.observeIntent.bind(this);
       const wrappedOutgoing: RuntimeFunction = function (...args) {
         observeIntent(args[0]);
@@ -260,11 +269,11 @@ export class MargonemRuntimeBridge {
 
       this.originalOutgoing = originalOutgoing;
       this.wrappedOutgoing = wrappedOutgoing;
-      window._g = wrappedOutgoing;
-      installed = window._g === wrappedOutgoing;
+      runtimeWindow._g = wrappedOutgoing;
+      installed = runtimeWindow._g === wrappedOutgoing;
     }
 
-    const communication = window.Engine?.communication as unknown as
+    const communication = runtimeWindow.Engine?.communication as unknown as
       | RuntimeFunctionContainer
       | undefined;
     if (communication) {
@@ -491,9 +500,8 @@ export class MargonemRuntimeBridge {
   } | null {
     const runtimeWindow = window as RuntimeWindow;
     if (runtimeInterface === "ni") {
-      const communication = window.Engine?.communication as unknown as
-        | RuntimeFunctionContainer
-        | undefined;
+      const communication = getRuntimeWindow().Engine
+        ?.communication as unknown as RuntimeFunctionContainer | undefined;
       if (communication && typeof communication.parseJSON === "function") {
         return {
           container: communication,
@@ -561,8 +569,9 @@ export class MargonemRuntimeBridge {
   }
 
   private detachOutgoing(): void {
-    if (this.wrappedOutgoing && window._g === this.wrappedOutgoing) {
-      window._g = this.originalOutgoing as typeof window._g;
+    const runtimeWindow = getRuntimeWindow();
+    if (this.wrappedOutgoing && runtimeWindow._g === this.wrappedOutgoing) {
+      runtimeWindow._g = this.originalOutgoing ?? undefined;
     }
     this.originalOutgoing = null;
     this.wrappedOutgoing = null;

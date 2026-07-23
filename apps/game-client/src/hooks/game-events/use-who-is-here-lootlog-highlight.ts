@@ -1,6 +1,6 @@
 import type { Other } from "@lootlog/margonem/others";
 import { useEffect, useEffectEvent, useRef } from "react";
-import { getLootlogOtherGlowColor } from "@/lib/lootlog-other-glow-manager";
+import { getLootlogOtherGlowColor } from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
 import { patchOtherCharacterTooltip } from "@/lib/margonem-tooltips/patcher";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
@@ -12,7 +12,7 @@ import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.s
 import { useOthersStore } from "@/store/others.store";
 import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
-import { refreshWhoIsHereRuntimeTooltip } from "@/lib/margonem-runtime/runtime-ui-adapter";
+import { refreshWhoIsHereRuntimeTooltip } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 
 const HIGHLIGHT_CLASS = "ll-who-is-here-lootlog-highlight";
 const STYLE_ELEMENT_ID = "ll-who-is-here-lootlog-style";

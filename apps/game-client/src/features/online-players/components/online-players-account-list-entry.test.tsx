@@ -3,6 +3,10 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlayerPresence } from "@/lib/online-players-presence";
+import {
+  setTestRuntimeGame,
+  testRuntimeWindow,
+} from "@/test/test-runtime-window";
 import { OnlinePlayersAccountListEntry } from "./online-players-account-list-entry";
 
 const mockGame = vi.hoisted(() => ({
@@ -95,8 +99,8 @@ describe("OnlinePlayersAccountListEntry", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    window._g = inviteToPartySpy;
-    window.Engine = {
+    testRuntimeWindow._g = inviteToPartySpy;
+    testRuntimeWindow.Engine = {
       showEqManager: {
         update: showEquipmentSpy,
       },
@@ -109,6 +113,14 @@ describe("OnlinePlayersAccountListEntry", () => {
     mockGame.hero.nick = "Own Hero";
     mockGame.hero.clan = undefined;
     mockGame.interface = "ni";
+    setTestRuntimeGame({
+      hero: {
+        characterId: "999",
+        clan: undefined,
+        name: "Own Hero",
+      },
+      interface: "ni",
+    });
     mockPartyMembers.members = [];
     mockFriends.friends = [];
   });
@@ -290,6 +302,13 @@ describe("OnlinePlayersAccountListEntry", () => {
       rank: 100,
     };
     mockPartyMembers.members = [{ characterId: "10" }];
+    setTestRuntimeGame({
+      hero: {
+        characterId: "10",
+        clan: { id: 15191, name: "Karhu", rank: 100 },
+        name: "Hero",
+      },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -304,6 +323,9 @@ describe("OnlinePlayersAccountListEntry", () => {
   it("does not invite the current player on tile double click", () => {
     mockGame.hero.id = 10;
     mockGame.hero.nick = "Hero";
+    setTestRuntimeGame({
+      hero: { characterId: "10", name: "Hero" },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -321,6 +343,11 @@ describe("OnlinePlayersAccountListEntry", () => {
       name: "Karhu",
       rank: 100,
     };
+    setTestRuntimeGame({
+      hero: {
+        clan: { id: 15191, name: "Karhu", rank: 100 },
+      },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -336,6 +363,11 @@ describe("OnlinePlayersAccountListEntry", () => {
       name: "Karhu",
       rank: 100,
     };
+    setTestRuntimeGame({
+      hero: {
+        clan: { id: 15191, name: "Karhu", rank: 100 },
+      },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry
@@ -351,6 +383,9 @@ describe("OnlinePlayersAccountListEntry", () => {
   it("keeps self highlight for afk current player and shows warning icon", () => {
     mockGame.hero.id = 10;
     mockGame.hero.nick = "Hero";
+    setTestRuntimeGame({
+      hero: { characterId: "10", name: "Hero" },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry

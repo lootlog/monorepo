@@ -102,7 +102,10 @@ describe("useGameAccountPreferencesSync", () => {
         maxHp: 1,
         name: "Hero",
         profession: "w",
+        x: 1,
+        y: 2,
       },
+      interface: "ni",
       map: { id: 1, name: "Map", visibility: 30 },
       world: "pandora",
     });
@@ -238,7 +241,10 @@ describe("useGameAccountPreferencesSync", () => {
           maxHp: 1,
           name: "Hero",
           profession: "w",
+          x: 1,
+          y: 2,
         },
+        interface: "ni",
         map: { id: 1, name: "Map", visibility: 30 },
         world: "pandora",
       });

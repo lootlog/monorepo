@@ -15,16 +15,19 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe("runtime architecture", () => {
-  it("keeps Margonem globals out of processors and feature hooks", () => {
-    const hookFiles = sourceFiles(sourceRoot).filter(
+  it("keeps Margonem globals and the removed Game facade behind runtime boundaries", () => {
+    const allowedRuntimeFiles = new Set([
+      join(sourceRoot, "lib/margonem-runtime/margonem-runtime-bridge.ts"),
+      join(sourceRoot, "lib/margonem-runtime/runtime-adapter.ts"),
+    ]);
+    const files = sourceFiles(sourceRoot).filter(
       (file) =>
-        file.includes("/hooks/") || /\/use-[^/]+\.(?:ts|tsx)$/.test(file),
+        !allowedRuntimeFiles.has(file) &&
+        !file.includes("/lib/margonem-runtime/adapters/") &&
+        !file.includes("/lib/api/generated/"),
     );
-    const files = [
-      ...sourceFiles(join(sourceRoot, "processors")),
-      ...hookFiles,
-    ];
-    const forbidden = /\bGame\.|window\.(?:Engine|g|_g|successData)\b/;
+    const forbidden =
+      /@\/lib\/game(?:["/])|\bGame\.|window\.(?:Engine|g|_g|successData|API|CFG|hero|map|message|getCookie|getZoomFactor)\b|\b(?:Engine|API|CFG)\./;
 
     for (const file of files) {
       expect(readFileSync(file, "utf8"), file).not.toMatch(forbidden);

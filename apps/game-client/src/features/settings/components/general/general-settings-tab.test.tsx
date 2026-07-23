@@ -1,16 +1,9 @@
 import { render } from "@testing-library/react";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { GeneralSettingsTab } from "./general-settings-tab";
 
 const testState = vi.hoisted(() => ({
   gameInterface: "si" as "ni" | "si",
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    get interface() {
-      return testState.gameInterface;
-    },
-  },
 }));
 
 vi.mock("@/store/settings.store", () => ({
@@ -39,6 +32,7 @@ vi.mock("@/hooks/api/use-user-account-preferences", () => ({
 describe("GeneralSettingsTab", () => {
   beforeEach(() => {
     testState.gameInterface = "si";
+    setTestRuntimeGame({ interface: "si" });
   });
 
   it("hides map ping settings on the old interface", () => {
@@ -50,6 +44,7 @@ describe("GeneralSettingsTab", () => {
 
   it("shows map ping settings on the new interface", () => {
     testState.gameInterface = "ni";
+    setTestRuntimeGame({ interface: "ni" });
     const { container } = render(<GeneralSettingsTab />);
 
     expect(container.querySelector("#map-pings")).toBeInTheDocument();

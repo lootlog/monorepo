@@ -68,7 +68,10 @@ describe("AirTagRuntime", () => {
         maxHp: 1,
         name: "Hero",
         profession: "w",
+        x: 1,
+        y: 2,
       },
+      interface: "ni",
       map: { id: 12, name: "Torneg", visibility: 30 },
       world: "fobos",
     });

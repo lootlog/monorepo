@@ -8,13 +8,13 @@ describe("MargonemRuntimeBridge", () => {
     successData?: (this: unknown, ...args: unknown[]) => unknown;
   };
   const originalSuccessData = runtimeWindow.successData;
-  const originalRequest = window._g;
-  const originalEngine = window.Engine;
+  const originalRequest = testRuntimeWindow._g;
+  const originalEngine = testRuntimeWindow.Engine;
 
   afterEach(() => {
     runtimeWindow.successData = originalSuccessData;
-    window._g = originalRequest;
-    window.Engine = originalEngine;
+    testRuntimeWindow._g = originalRequest;
+    testRuntimeWindow.Engine = originalEngine;
   });
 
   it("observes an incoming event before Margonem and an applied event afterwards without changing the call", () => {
@@ -144,13 +144,13 @@ describe("MargonemRuntimeBridge", () => {
       expect(args[2]).toBe(payload);
       return payload;
     });
-    window._g = original;
+    testRuntimeWindow._g = original;
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
     const intents = vi.fn();
     bridge.subscribeIntent(intents);
 
     bridge.install();
-    const result = window._g.call(
+    const result = testRuntimeWindow._g.call(
       receiver,
       "talk&id=501&c=2",
       callback,
@@ -177,7 +177,7 @@ describe("MargonemRuntimeBridge", () => {
       expect(args).toEqual(["talk&id=501", callback, payload]);
       return payload;
     });
-    window._g = original;
+    testRuntimeWindow._g = original;
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
     const laterObserver = vi.fn();
     bridge.subscribeIntent(() => {
@@ -186,7 +186,12 @@ describe("MargonemRuntimeBridge", () => {
     bridge.subscribeIntent(laterObserver);
 
     bridge.install();
-    const result = window._g.call(receiver, "talk&id=501", callback, payload);
+    const result = testRuntimeWindow._g.call(
+      receiver,
+      "talk&id=501",
+      callback,
+      payload,
+    );
 
     expect(result).toBe(payload);
     expect(laterObserver).toHaveBeenCalledOnce();
@@ -195,7 +200,7 @@ describe("MargonemRuntimeBridge", () => {
 
   it("consumes a talk intent after applied observers finish with failures", () => {
     runtimeWindow.successData = vi.fn();
-    window._g = vi.fn();
+    testRuntimeWindow._g = vi.fn();
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
     const incoming = vi.fn();
     bridge.subscribeIncoming(incoming);
@@ -205,7 +210,7 @@ describe("MargonemRuntimeBridge", () => {
 
     bridge.install();
     bridge.setReady(true);
-    window._g("talk&id=501");
+    testRuntimeWindow._g("talk&id=501");
     runtimeWindow.successData?.({ h: {} });
     runtimeWindow.successData?.({ h: {} });
 
@@ -224,9 +229,9 @@ describe("MargonemRuntimeBridge", () => {
       throw failure;
     });
     const successData = vi.fn();
-    window.Engine = {
+    testRuntimeWindow.Engine = {
       communication: { parseJSON, successData },
-    } as never;
+    };
     const bridge = new MargonemRuntimeBridge({ interface: "ni" });
     const incoming = vi.fn(() => {
       throw new Error("incoming observer failed");
@@ -239,13 +244,9 @@ describe("MargonemRuntimeBridge", () => {
     bridge.install();
     bridge.setReady(true);
 
-    expect(() =>
-      (
-        window.Engine.communication as unknown as {
-          parseJSON: (event: GameEvent) => unknown;
-        }
-      ).parseJSON({ h: {} }),
-    ).toThrow(failure);
+    const installedParseJson = testRuntimeWindow.Engine?.communication
+      ?.parseJSON as (event: GameEvent) => unknown;
+    expect(() => installedParseJson({ h: {} })).toThrow(failure);
     expect(incoming).toHaveBeenCalledOnce();
     expect(laterIncoming).toHaveBeenCalledOnce();
     expect(applied).not.toHaveBeenCalled();
@@ -255,28 +256,24 @@ describe("MargonemRuntimeBridge", () => {
 
   it("deduplicates the NI send fallback and preserves foreign replacements during cleanup", () => {
     const send = vi.fn((value) => value);
-    window.Engine = {
+    testRuntimeWindow.Engine = {
       communication: { parseJSON: vi.fn(), send },
-    } as never;
-    window._g = vi.fn((value) => value);
+    };
+    testRuntimeWindow._g = vi.fn((value) => value);
     const bridge = new MargonemRuntimeBridge({ interface: "ni" });
     const intents = vi.fn();
     bridge.subscribeIntent(intents);
     bridge.install();
 
-    window._g("talk&id=501");
-    (
-      window.Engine.communication as unknown as {
-        send: (command: string) => unknown;
-      }
-    ).send("talk&id=501");
+    testRuntimeWindow._g("talk&id=501");
+    send("talk&id=501");
     expect(intents).toHaveBeenCalledOnce();
     expect(send).toHaveBeenCalledWith("talk&id=501");
 
     const foreignOutgoing = vi.fn();
-    window._g = foreignOutgoing;
+    testRuntimeWindow._g = foreignOutgoing;
     bridge.cleanup();
-    expect(window._g).toBe(foreignOutgoing);
+    expect(testRuntimeWindow._g).toBe(foreignOutgoing);
   });
 
   it("captures only referenced ingress entities and keeps queued snapshots historical", () => {
@@ -313,3 +310,4 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

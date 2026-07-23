@@ -20,7 +20,7 @@ import { useTimerDisplay } from "../hooks/use-timer-display";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
 import type { GuildsControllerGetGuildPermissions200Item } from "@/lib/api/generated/main/model";
 import { useShallow } from "zustand/react/shallow";
@@ -46,7 +46,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   settingsKey,
   isHidden = false,
 }) => {
-  const world = Game.getWorldName();
+  const world = useGameStore((state) => state.game?.world ?? "unknown");
   const {
     customColors,
     defaultColorNames,
