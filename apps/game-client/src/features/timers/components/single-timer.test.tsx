@@ -86,7 +86,7 @@ vi.mock("./timer-tooltip", () => ({
   },
 }));
 
-vi.mock("@/lib/api/generated/main/guilds/guilds", () => ({
+vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
   getGuildsControllerGetGuildPermissionsQueryKey: ({
     guildId,
   }: {

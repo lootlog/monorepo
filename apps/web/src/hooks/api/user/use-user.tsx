@@ -2,7 +2,7 @@ import {
   getUsersControllerGetUserPreferencesQueryKey,
   useUsersControllerGetUserPreferences,
   type UsersControllerGetUserPreferencesQueryResult,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import { useSession, type SessionData } from "@/hooks/auth/use-session";
 
 export type SessionUser = NonNullable<SessionData>["user"];

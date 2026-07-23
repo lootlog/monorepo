@@ -21,7 +21,7 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
-import { useBattlesControllerGetUserWorlds } from "@/lib/api/generated/battlelog/battles/battles";
+import { useBattlesControllerGetUserWorlds } from "@lootlog/api-client/react-query/battlelog/battles";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import {
   Popover,

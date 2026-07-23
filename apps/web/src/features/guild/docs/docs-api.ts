@@ -8,7 +8,7 @@ import {
   invalidateDocsControllerGetDocument,
   invalidateDocsControllerGetDocuments,
   invalidateDocsControllerGetTrash,
-} from "@/lib/api/generated/main/docs/docs";
+} from "@lootlog/api-client/react-query/main/docs";
 import type { QueryClient } from "@tanstack/react-query";
 
 export const guildDocsListQueryOptions = (guildId: string) =>

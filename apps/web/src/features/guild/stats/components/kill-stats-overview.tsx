@@ -3,8 +3,8 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { Flame, Mountain, Shield, Sword } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { GuildKillStatsResponseDtoOutputOverview } from "@/lib/api/generated/main/model/guild-kill-stats-response-dto-output-overview";
-import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
+import type { GuildKillStatsResponseDtoOutputOverview } from "@lootlog/api-client/models/main/guild-kill-stats-response-dto-output-overview";
+import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
 
 const NPC_TYPE_CONFIG: Record<
   string,

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ChangeEventHandler, InputHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SearchTimersNpcResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/api-client/models/main/search-timers-npc-response-dto-output";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 beforeEach(() => setTestRuntimeGame());
@@ -48,7 +48,7 @@ vi.mock("@/store/settings.store", () => ({
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/users/users", () => ({
+vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
     "guilds",
     "accessible",
@@ -58,7 +58,7 @@ vi.mock("@/lib/api/generated/main/users/users", () => ({
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/timers/timers", () => ({
+vi.mock("@lootlog/api-client/react-query/main/timers", () => ({
   getTimersControllerSearchNpcsWithTimerDataQueryKey: () => [
     "timers",
     "search",

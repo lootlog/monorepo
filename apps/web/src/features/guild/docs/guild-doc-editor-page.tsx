@@ -29,7 +29,7 @@ import {
   useDocsControllerDeleteDocument,
   useDocsControllerGetDocument,
   useDocsControllerUpdateDocument,
-} from "@/lib/api/generated/main/docs/docs";
+} from "@lootlog/api-client/react-query/main/docs";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {

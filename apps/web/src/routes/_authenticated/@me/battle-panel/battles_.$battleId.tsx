@@ -5,7 +5,7 @@ import { battlePanelSingleBattleSearchSchema } from "@/features/user/battle-pane
 import {
   getBattlesControllerGetBattleQueryOptions,
   getBattlesControllerGetBattleRawDataQueryOptions,
-} from "@/lib/api/generated/battlelog/battles/battles";
+} from "@lootlog/api-client/react-query/battlelog/battles";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,

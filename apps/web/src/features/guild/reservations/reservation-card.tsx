@@ -3,10 +3,8 @@ import { format } from "date-fns";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
 import { NpcSearchTile } from "@/components/tiles";
-import type {
-  MemberReferenceResponseDtoOutput as GuildMember,
-  ReservationResponseDto,
-} from "@/lib/api/generated/main/model";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-reference-response-dto-output";
+import type { ReservationResponseDto } from "@lootlog/api-client/models/main/reservation-response-dto";
 
 export interface ReservationCardProps {
   name: string;

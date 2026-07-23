@@ -14,7 +14,7 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import {
   getShowEventOverviewQueryKey,
   useShowEventOverview,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 
 export const EventKillsHistory = () => {
   const { guildId, eventId, heroId: urlHeroId } = useParams({ strict: false });

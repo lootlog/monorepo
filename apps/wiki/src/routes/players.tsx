@@ -10,7 +10,7 @@ import { t } from "@/i18n/messages";
 import {
   getPlayersControllerGetPlayersQueryKey,
   usePlayersControllerGetPlayers,
-} from "@/lib/api/generated/search/players/players";
+} from "@lootlog/api-client/react-query/search/players";
 import {
   areBasicRouteSearchStatesEqual,
   emptyBasicRouteSearch,
@@ -52,7 +52,9 @@ function PlayersRoute() {
       queryKey: getPlayersControllerGetPlayersQueryKey(queryParams),
     },
     request: {
-      baseUrl: searchApiUrl,
+      apiClient: {
+        baseUrl: searchApiUrl,
+      },
     },
   });
   const data = hasActiveSearch ? (playersQuery.data ?? []) : [];

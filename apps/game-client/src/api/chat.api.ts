@@ -1,11 +1,9 @@
-import { chatControllerSendChatMessage } from "@/lib/api/generated/main/chat/chat";
-import {
-  type ChatMessageResponseDtoOutput,
-  SendMessageDtoType,
-  type SendMessageDtoCharacterData,
-  type SendMessageDtoNpc,
-  type SendMessageDtoPartyGathering,
-} from "@/lib/api/generated/main/model";
+import { chatControllerSendChatMessage } from "@lootlog/api-client/react-query/main/chat";
+import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import { SendMessageDtoType } from "@lootlog/api-client/models/main/send-message-dto-type";
+import type { SendMessageDtoCharacterData } from "@lootlog/api-client/models/main/send-message-dto-character-data";
+import type { SendMessageDtoNpc } from "@lootlog/api-client/models/main/send-message-dto-npc";
+import type { SendMessageDtoPartyGathering } from "@lootlog/api-client/models/main/send-message-dto-party-gathering";
 import {
   getAggregateActionStatus,
   runLoggedRequest,

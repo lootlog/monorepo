@@ -1,7 +1,7 @@
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useDebounce } from "@/hooks/use-debounce";
-import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
+import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 type StatsSettingsPage =

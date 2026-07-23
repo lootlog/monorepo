@@ -28,18 +28,18 @@ vi.mock("@/lib/error-monitoring", () => ({
   reportApiActionFailure: mockReportApiActionFailure,
 }));
 
-vi.mock("@/lib/api-client", () => ({
-  getApiClient: () => ({
+vi.mock("@lootlog/api-client/transport", () => ({
+  createApiClient: () => ({
     post: mockPost,
     patch: mockPatch,
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/messaging/messaging", () => ({
+vi.mock("@lootlog/api-client/react-query/main/messaging", () => ({
   messagingControllerSendNotification: mockSendNotification,
 }));
 
-vi.mock("@/lib/api/generated/main/chat/chat", () => ({
+vi.mock("@lootlog/api-client/react-query/main/chat", () => ({
   chatControllerSendChatMessage: mockSendChatMessage,
 }));
 
@@ -86,10 +86,7 @@ describe("api.service logging", () => {
         },
       ],
     };
-    mockPost.mockResolvedValueOnce({
-      status: 201,
-      data: responseData,
-    });
+    mockPost.mockResolvedValueOnce(responseData);
 
     const response = await createLoot(payload, debugContext);
 
@@ -136,7 +133,7 @@ describe("api.service logging", () => {
             },
           ],
         },
-        statusCode: 201,
+        statusCode: null,
         status: "success",
       }),
     ]);
@@ -272,7 +269,7 @@ describe("api.service logging", () => {
     };
     mockPost
       .mockRejectedValueOnce(retryableError)
-      .mockResolvedValueOnce({ data: responseData, status: 201 });
+      .mockResolvedValueOnce(responseData);
 
     try {
       const responsePromise = createLoot(payload, debugContext);

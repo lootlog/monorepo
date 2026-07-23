@@ -22,15 +22,12 @@ const mocks = vi.hoisted(() => ({
   getUserPreferences: vi.fn(),
 }));
 
-vi.mock(
-  "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config",
-  () => ({
-    userLootlogConfigControllerGetPlayersCatchingGuilds:
-      mocks.getPlayersCatchingGuilds,
-  }),
-);
+vi.mock("@lootlog/api-client/react-query/main/user-lootlog-config", () => ({
+  userLootlogConfigControllerGetPlayersCatchingGuilds:
+    mocks.getPlayersCatchingGuilds,
+}));
 
-vi.mock("@/lib/api/generated/main/users/users", () => ({
+vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
     "accessible-guilds",
   ],

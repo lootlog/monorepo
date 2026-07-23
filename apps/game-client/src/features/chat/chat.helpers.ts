@@ -1,4 +1,4 @@
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/types";
 import type { ChatFilter } from "@/store/chat.store";
 import { MessageType } from "@/api/chat.api";

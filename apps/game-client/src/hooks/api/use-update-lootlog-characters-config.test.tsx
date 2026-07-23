@@ -10,18 +10,15 @@ const { createOrUpdateConfig } = vi.hoisted(() => ({
   createOrUpdateConfig: vi.fn(),
 }));
 
-vi.mock(
-  "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config",
-  () => ({
-    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey: ({
-      accountId,
-    }: {
-      accountId: string;
-    }) => ["lootlog-config", accountId],
-    userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig:
-      createOrUpdateConfig,
-  }),
-);
+vi.mock("@lootlog/api-client/react-query/main/user-lootlog-config", () => ({
+  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey: ({
+    accountId,
+  }: {
+    accountId: string;
+  }) => ["lootlog-config", accountId],
+  userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig:
+    createOrUpdateConfig,
+}));
 
 describe("useUpdateLootlogCharactersConfig", () => {
   beforeEach(() => {

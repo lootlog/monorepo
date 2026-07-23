@@ -4,7 +4,7 @@ import { ArrowUpDown, Crown, Medal, Trophy } from "lucide-react";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { NPC_TYPE_NAMES } from "@/constants/npc";
 import i18n from "@/i18n/config";
-import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@/lib/api/generated/main/model";
+import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/api-client/models/main/user-npc-kills-response-dto-output-npcs-item";
 
 type NpcKill = UserNpcKillsResponseDtoOutputNpcsItem;
 

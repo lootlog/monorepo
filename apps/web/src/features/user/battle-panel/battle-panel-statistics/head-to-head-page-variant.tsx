@@ -24,7 +24,7 @@ import {
   type HeadToHeadSortBy,
   type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
-import { useBattlesControllerGetHeadToHead } from "@/lib/api/generated/battlelog/battles/battles";
+import { useBattlesControllerGetHeadToHead } from "@lootlog/api-client/react-query/battlelog/battles";
 import type {
   HeadToHeadRecord,
   SearchWarrior,

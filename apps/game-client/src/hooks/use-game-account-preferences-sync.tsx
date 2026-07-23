@@ -11,11 +11,11 @@ import {
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
-import type { UserGameAccountPreferencesResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-game-account-preferences-response-dto-output";
 import {
   getUsersControllerGetUserGameAccountPreferencesQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 
 export const useGameAccountPreferencesSync = () => {
   const gameInitialized = useGlobalStore(

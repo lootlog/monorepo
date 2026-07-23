@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
   lootsControllerFetchLootsByGuildId,
-} from "@/lib/api/generated/main/loots/loots";
-import type { LootsControllerFetchLootsByGuildIdParams } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/loots";
+import type { LootsControllerFetchLootsByGuildIdParams } from "@lootlog/api-client/models/main/loots-controller-fetch-loots-by-guild-id-params";
 import type { Loot } from "@/lib/loots/loot-types";
 
 const MATCHING_LOOTS_TIME_WINDOW_MS = 5 * 60 * 1000;

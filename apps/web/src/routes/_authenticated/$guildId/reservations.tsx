@@ -4,7 +4,7 @@ import {
   reservationsCardsQueryOptions,
   reservationsQueryOptions,
 } from "@/features/guild/reservations/reservations-api";
-import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@/lib/api/generated/main/members/members";
+import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@lootlog/api-client/react-query/main/members";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 

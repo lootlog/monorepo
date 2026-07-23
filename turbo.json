@@ -27,7 +27,11 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/clean-swagger-metadata.mjs",
+        ".env*"
+      ],
       "env": ["GAME_CLIENT_URL"],
       "outputs": [
         ".next/**",
@@ -83,6 +87,29 @@
       "dependsOn": ["^build"],
       "cache": false,
       "outputs": ["openapi.yaml"]
+    },
+    "api-client:generate": {
+      "dependsOn": [
+        "@lootlog/activity#openapi:generate",
+        "@lootlog/api#openapi:generate",
+        "@lootlog/auth#openapi:generate",
+        "@lootlog/battlelog-service#openapi:generate",
+        "@lootlog/search#openapi:generate"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/activity/openapi.yaml",
+        "$TURBO_ROOT$/apps/api/openapi.yaml",
+        "$TURBO_ROOT$/apps/auth/openapi.yaml",
+        "$TURBO_ROOT$/apps/battlelog-service/openapi.yaml",
+        "$TURBO_ROOT$/apps/search/openapi.yaml"
+      ],
+      "outputs": ["src/generated/**"]
+    },
+    "api-client:check": {
+      "cache": false,
+      "dependsOn": ["api-client:generate"],
+      "outputs": []
     },
     "api:migrate:dev": {
       "cache": false,

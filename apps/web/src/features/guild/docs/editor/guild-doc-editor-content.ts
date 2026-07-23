@@ -1,4 +1,4 @@
-import type { GuildDocumentResponseDto } from "@/lib/api/generated/main/model";
+import type { GuildDocumentResponseDto } from "@lootlog/api-client/models/main/guild-document-response-dto";
 
 export type GuildDocEditorContent = Exclude<
   GuildDocumentResponseDto["content"],

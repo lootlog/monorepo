@@ -15,7 +15,7 @@ import {
 } from "@lootlog/ui/components/command";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useBattlesControllerGetUserCharacters } from "@/lib/api/generated/battlelog/battles/battles";
+import { useBattlesControllerGetUserCharacters } from "@lootlog/api-client/react-query/battlelog/battles";
 import { PlayerTile } from "@/components/battle";
 import { useTranslation } from "react-i18next";
 

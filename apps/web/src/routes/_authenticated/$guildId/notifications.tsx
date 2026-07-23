@@ -3,8 +3,8 @@ import {
   getNotificationsGuildControllerGetGuildJobsQueryOptions,
   getNotificationsGuildControllerGetGuildRulesQueryOptions,
   getNotificationsGuildControllerGetGuildTargetsQueryOptions,
-} from "@/lib/api/generated/main/notifications/notifications";
-import { getGuildsControllerGetGuildDiscordSyncStatusQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/notifications";
+import { getGuildsControllerGetGuildDiscordSyncStatusQueryOptions } from "@lootlog/api-client/react-query/main/guilds";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 

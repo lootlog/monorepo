@@ -3,8 +3,8 @@ import {
   getEventsSettingsControllerGetSettingsQueryKey,
   useEventsSettingsControllerGetSettings,
   useEventsSettingsControllerUpdateSettings,
-} from "@/lib/api/generated/main/event-settings/event-settings";
-import type { EventSettingsResponseDto } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/event-settings";
+import type { EventSettingsResponseDto } from "@lootlog/api-client/models/main/event-settings-response-dto";
 
 export const useToggleEventPin = (guildId: string) => {
   const queryClient = useQueryClient();

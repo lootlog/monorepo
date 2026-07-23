@@ -35,8 +35,7 @@ describe("runtime architecture", () => {
     const files = sourceFiles(sourceRoot).filter(
       (file) =>
         !allowedRuntimeFiles.has(file) &&
-        !file.includes("/lib/margonem-runtime/adapters/") &&
-        !file.includes("/lib/api/generated/"),
+        !file.includes("/lib/margonem-runtime/adapters/"),
     );
     for (const file of files) {
       expect(readFileSync(file, "utf8"), file).not.toMatch(

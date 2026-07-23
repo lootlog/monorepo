@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { NotificationSettings, NotificationType } from "@lootlog/types";

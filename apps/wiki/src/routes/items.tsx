@@ -21,7 +21,7 @@ import { t } from "@/i18n/messages";
 import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
-} from "@/lib/api/generated/search/items/items";
+} from "@lootlog/api-client/react-query/search/items";
 import { renderItemStat } from "@/components/render-item-stat";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -259,7 +259,9 @@ function ItemsRoute() {
       queryKey: getItemsControllerGetItemsQueryKey(queryParams),
     },
     request: {
-      baseUrl: searchApiUrl,
+      apiClient: {
+        baseUrl: searchApiUrl,
+      },
     },
   });
   const data = hasActiveSearch ? itemsQuery.data : undefined;

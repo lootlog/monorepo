@@ -22,13 +22,10 @@ const mocks = vi.hoisted(() => ({
   getPlayersCatchingGuilds: vi.fn(),
 }));
 
-vi.mock(
-  "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config",
-  () => ({
-    userLootlogConfigControllerGetPlayersCatchingGuilds:
-      mocks.getPlayersCatchingGuilds,
-  }),
-);
+vi.mock("@lootlog/api-client/react-query/main/user-lootlog-config", () => ({
+  userLootlogConfigControllerGetPlayersCatchingGuilds:
+    mocks.getPlayersCatchingGuilds,
+}));
 
 import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
 import { useWhoIsHereLootlogHighlight } from "./use-who-is-here-lootlog-highlight";

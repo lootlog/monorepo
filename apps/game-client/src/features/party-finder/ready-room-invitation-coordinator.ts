@@ -2,7 +2,7 @@ import type {
   PartyReadyRoomInvitationTarget,
   PartyReadyRoomOrganizerProjection,
 } from "@lootlog/types";
-import { partyReadyRoomControllerResolveInvitationTargets } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import { partyReadyRoomControllerResolveInvitationTargets } from "@lootlog/api-client/react-query/main/party-ready-room";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 import { useGlobalStore } from "@/store/global.store";
 import {

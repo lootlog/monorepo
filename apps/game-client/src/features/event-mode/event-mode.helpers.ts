@@ -1,6 +1,6 @@
-import type { EventModeResponseDtoEventsItem } from "@/lib/api/generated/main/model/event-mode-response-dto-events-item";
-import type { EventModeResponseDtoEventsItemAssignmentsItem } from "@/lib/api/generated/main/model/event-mode-response-dto-events-item-assignments-item";
-import type { EventModeResponseDtoEventsItemNextRespawn } from "@/lib/api/generated/main/model/event-mode-response-dto-events-item-next-respawn";
+import type { EventModeResponseDtoEventsItem } from "@lootlog/api-client/models/main/event-mode-response-dto-events-item";
+import type { EventModeResponseDtoEventsItemAssignmentsItem } from "@lootlog/api-client/models/main/event-mode-response-dto-events-item-assignments-item";
+import type { EventModeResponseDtoEventsItemNextRespawn } from "@lootlog/api-client/models/main/event-mode-response-dto-events-item-next-respawn";
 
 export type EventModeAssignmentPresence = "unassigned" | "on-map" | "off-map";
 

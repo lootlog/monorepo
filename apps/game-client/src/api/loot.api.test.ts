@@ -6,8 +6,8 @@ const { post } = vi.hoisted(() => ({
   post: vi.fn(),
 }));
 
-vi.mock("@/lib/api-client", () => ({
-  getApiClient: () => ({ post }),
+vi.mock("@lootlog/api-client/transport", () => ({
+  createApiClient: () => ({ post }),
 }));
 
 describe("createLoot", () => {
@@ -64,7 +64,7 @@ describe("createLoot", () => {
       rejectedGuilds: [],
       submittedGuilds: [{ guildId: "guild-1", guildName: "Guild" }],
     };
-    post.mockResolvedValue({ data: response, status: 201 });
+    post.mockResolvedValue(response);
 
     await expect(
       createLoot(options, { attemptId: "attempt-1", source: "fight" }),

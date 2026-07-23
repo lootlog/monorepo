@@ -4,13 +4,11 @@ import {
   timersControllerDeleteTimer,
   timersControllerGetAllTimers,
   timersControllerResetTimer,
-} from "@/lib/api/generated/main/timers/timers";
-import type {
-  CreateAutoTimerResponseDtoOutput,
-  CreateManualTimerDto,
-  CreateTimerFromGameClientDto,
-  TimerResponseDto,
-} from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/timers";
+import type { CreateAutoTimerResponseDtoOutput } from "@lootlog/api-client/models/main/create-auto-timer-response-dto-output";
+import type { CreateManualTimerDto } from "@lootlog/api-client/models/main/create-manual-timer-dto";
+import type { CreateTimerFromGameClientDto } from "@lootlog/api-client/models/main/create-timer-from-game-client-dto";
+import type { TimerResponseDto } from "@lootlog/api-client/models/main/timer-response-dto";
 import {
   buildCurrentTimerActorCharacterPayload,
   normalizeTimerMember,

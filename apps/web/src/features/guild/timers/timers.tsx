@@ -22,7 +22,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getTimersControllerGetTimersQueryKey,
   useTimersControllerGetTimers,
-} from "@/lib/api/generated/main/timers/timers";
+} from "@lootlog/api-client/react-query/main/timers";
 
 export const Timers = () => {
   const guildId = useGuildId();

@@ -6,13 +6,11 @@ import {
   invalidateNotificationsGuildControllerGetGuildJobs,
   invalidateNotificationsGuildControllerGetGuildRules,
   invalidateNotificationsGuildControllerGetGuildTargets,
-} from "@/lib/api/generated/main/notifications/notifications";
+} from "@lootlog/api-client/react-query/main/notifications";
 import type { QueryClient } from "@tanstack/react-query";
-import type {
-  GuildNotificationRulesResponseDto,
-  NotificationJobsResponseDto,
-  NotificationTargetResponseDto,
-} from "@/lib/api/generated/main/model";
+import type { GuildNotificationRulesResponseDto } from "@lootlog/api-client/models/main/guild-notification-rules-response-dto";
+import type { NotificationJobsResponseDto } from "@lootlog/api-client/models/main/notification-jobs-response-dto";
+import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
 
 export type GuildNotificationCacheSnapshot = {
   rules: GuildNotificationRulesResponseDto | undefined;

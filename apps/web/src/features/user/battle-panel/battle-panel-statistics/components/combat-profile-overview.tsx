@@ -1,4 +1,4 @@
-import type { CombatProfileResponseDtoOutput } from "@/lib/api/generated/battlelog/model";
+import type { CombatProfileResponseDtoOutput } from "@lootlog/api-client/models/battlelog/combat-profile-response-dto-output";
 import { Card } from "@lootlog/ui/components/card";
 import {
   Clock,

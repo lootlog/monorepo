@@ -22,7 +22,7 @@ import { TimerTooltip } from "./timer-tooltip";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { useGameStore } from "@/store/game.store";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
-import type { GuildsControllerGetGuildPermissions200Item } from "@/lib/api/generated/main/model";
+import type { GuildsControllerGetGuildPermissions200Item } from "@lootlog/api-client/models/main/guilds-controller-get-guild-permissions200-item";
 import { useShallow } from "zustand/react/shallow";
 
 type SingleTimerProps = {

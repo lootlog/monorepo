@@ -14,8 +14,8 @@ import {
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
-import { usePartyReadyRoomControllerApply } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+} from "@lootlog/api-client/react-query/main/users";
+import { usePartyReadyRoomControllerApply } from "@lootlog/api-client/react-query/main/party-ready-room";
 import {
   type StoredNotification,
   useNotificationsStore,

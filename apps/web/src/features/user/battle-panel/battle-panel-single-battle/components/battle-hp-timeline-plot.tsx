@@ -1,4 +1,4 @@
-import type { BattleTimelineResponseDtoOutput } from "@/lib/api/generated/battlelog/model";
+import type { BattleTimelineResponseDtoOutput } from "@lootlog/api-client/models/battlelog/battle-timeline-response-dto-output";
 import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { BattleHpTimelineEventMarker } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-marker";
 import {

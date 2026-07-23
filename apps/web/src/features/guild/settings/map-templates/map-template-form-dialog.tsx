@@ -25,20 +25,18 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { FileText, Pencil, X, MapPin, Search } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { toast } from "sonner";
-import { getApiErrorStatus } from "@/lib/api-client/api-client";
+import { getApiErrorStatus } from "@lootlog/api-client/transport";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   invalidateMapTemplatesControllerGetTemplates,
   useMapTemplatesControllerCreateTemplate,
   useMapTemplatesControllerUpdateTemplate,
-} from "@/lib/api/generated/main/map-templates/map-templates";
-import { useMapsControllerGetMaps } from "@/lib/api/generated/main/maps/maps";
-import type {
-  GameMapResponseDtoOutput,
-  MapTemplateResponseDto,
-  MapTemplateResponseDtoMapsItem,
-} from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/map-templates";
+import { useMapsControllerGetMaps } from "@lootlog/api-client/react-query/main/maps";
+import type { GameMapResponseDtoOutput } from "@lootlog/api-client/models/main/game-map-response-dto-output";
+import type { MapTemplateResponseDto } from "@lootlog/api-client/models/main/map-template-response-dto";
+import type { MapTemplateResponseDtoMapsItem } from "@lootlog/api-client/models/main/map-template-response-dto-maps-item";
 
 type MapTemplateFormDialogProps =
   | {

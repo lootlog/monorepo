@@ -15,19 +15,19 @@ import { RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThemeMeta } from "@/themes";
-import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@/lib/api/generated/main/loots/loots";
+import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@lootlog/api-client/react-query/main/loots";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   invalidateGuildsControllerGetGuildPermissions,
   useGuildsControllerGetGuildById,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import {
   getMembersControllerGetMeQueryKey,
   invalidateMembersControllerGetMe,
   useMembersControllerGetMe,
   useMembersControllerRefreshMe,
-} from "@/lib/api/generated/main/members/members";
+} from "@lootlog/api-client/react-query/main/members";
 
 export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
   const queryClient = useQueryClient();

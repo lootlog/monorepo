@@ -3,7 +3,7 @@ import { SettingsLayout } from "@/components/layout/settings-layout";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryOptions,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import { canManageGuild } from "@/lib/guild-permissions";
 import {
   throwForbiddenRouteError,

@@ -4,11 +4,11 @@ import { getGuildIds, getGuildNamesById } from "@/lib/api/generated-helpers";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryOptions,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import { useQueries } from "@tanstack/react-query";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 

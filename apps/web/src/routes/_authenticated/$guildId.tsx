@@ -8,11 +8,11 @@ import {
   getGuildsControllerGetGuildByIdQueryKey,
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryOptions,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import {
   getMembersControllerGetMeQueryKey,
   getMembersControllerGetMeQueryOptions,
-} from "@/lib/api/generated/main/members/members";
+} from "@lootlog/api-client/react-query/main/members";
 import {
   rethrowNotFoundOrError,
   throwForbiddenRouteError,
