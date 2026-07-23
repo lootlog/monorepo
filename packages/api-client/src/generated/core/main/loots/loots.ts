@@ -104,7 +104,7 @@ import type {
 import { mainFetch } from '../../../../mutators';
 
 export const getLootsControllerFetchLootsByGuildIdUrl = ({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams,) => {
+    params?: LootsControllerFetchLootsByGuildIdParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -124,7 +124,7 @@ export const getLootsControllerFetchLootsByGuildIdUrl = ({ guildId }: LootsContr
  * @summary Get guild loots
  */
 export const lootsControllerFetchLootsByGuildId = async ({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<LootResponseDto[]> => {
+    params?: LootsControllerFetchLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<LootResponseDto[]> => {
 
   return mainFetch<LootResponseDto[]>(getLootsControllerFetchLootsByGuildIdUrl({ guildId },params),
   {
@@ -170,7 +170,7 @@ export const lootsControllerGetLootStats = async ({ guildId }: LootsControllerGe
 
 
 export const getLootsControllerCountLootsByGuildIdUrl = ({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams,) => {
+    params?: LootsControllerCountLootsByGuildIdParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -190,7 +190,7 @@ export const getLootsControllerCountLootsByGuildIdUrl = ({ guildId }: LootsContr
  * @summary Get guild loots count
  */
 export const lootsControllerCountLootsByGuildId = async ({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<CountResponseDtoOutput> => {
+    params?: LootsControllerCountLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<CountResponseDtoOutput> => {
 
   return mainFetch<CountResponseDtoOutput>(getLootsControllerCountLootsByGuildIdUrl({ guildId },params),
   {
