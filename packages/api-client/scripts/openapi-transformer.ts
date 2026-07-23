@@ -1,24 +1,10 @@
 import { sanitizeOpenApiDocument } from "@lootlog/nest-shared/openapi";
 
 type OpenApiSchema = Record<string, unknown>;
-type OpenApiParameter = {
-  in?: string;
-  name?: string;
-  required?: boolean;
-};
 type OpenApiDocument = {
   components?: {
     schemas?: Record<string, OpenApiSchema>;
   };
-  paths?: Record<
-    string,
-    Record<
-      string,
-      {
-        parameters?: OpenApiParameter[];
-      }
-    >
-  >;
 };
 
 const replaceSchemaRef = (value: unknown, fromRef: string, toRef: string) => {
@@ -79,26 +65,6 @@ const aliasJsonValueSchema = (document: OpenApiDocument) => {
   delete schemas[generatedSchemaName];
 };
 
-const setOperationParameterRequired = (
-  document: OpenApiDocument,
-  path: string,
-  method: string,
-  parameterName: string,
-  required: boolean,
-) => {
-  const parameters = document.paths?.[path]?.[method]?.parameters;
-
-  if (!parameters) {
-    return;
-  }
-
-  for (const parameter of parameters) {
-    if (parameter.in === "query" && parameter.name === parameterName) {
-      parameter.required = required;
-    }
-  }
-};
-
 export default function transformOpenApiDocument<TDocument>(
   inputDocument: TDocument,
 ) {
@@ -111,29 +77,6 @@ export default function transformOpenApiDocument<TDocument>(
     "LootShareResponseDto_Output",
     "LootShareResponseDto",
   );
-
-  for (const path of [
-    "/guilds/{guildId}/loots",
-    "/guilds/{guildId}/loots/count",
-  ]) {
-    for (const parameterName of [
-      "cursor",
-      "npcLevelMin",
-      "npcLevelMax",
-      "itemLevelMin",
-      "itemLevelMax",
-      "playerLevelMin",
-      "playerLevelMax",
-    ]) {
-      setOperationParameterRequired(
-        document,
-        path,
-        "get",
-        parameterName,
-        false,
-      );
-    }
-  }
 
   return document;
 }

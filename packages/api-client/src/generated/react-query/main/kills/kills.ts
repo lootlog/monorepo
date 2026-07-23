@@ -1137,7 +1137,7 @@ export const useGetKillsControllerGetNpcKillersQueryData = () => {
 
 
 export const getKillsControllerGetMemberKillsUrl = ({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams,) => {
+    params?: KillsControllerGetMemberKillsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1157,7 +1157,7 @@ export const getKillsControllerGetMemberKillsUrl = ({ guildId, memberId }: Kills
  * @summary Get kill statistics for a specific guild member
  */
 export const killsControllerGetMemberKills = async ({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams, options?: Parameters<typeof mainFetch>[1]): Promise<MemberKillsResponseDtoOutput> => {
+    params?: KillsControllerGetMemberKillsParams, options?: Parameters<typeof mainFetch>[1]): Promise<MemberKillsResponseDtoOutput> => {
 
   return mainFetch<MemberKillsResponseDtoOutput>(getKillsControllerGetMemberKillsUrl({ guildId, memberId },params),
   {
@@ -1181,7 +1181,7 @@ export const getKillsControllerGetMemberKillsQueryKey = ({ guildId, memberId }: 
 
 
 export const getKillsControllerGetMemberKillsQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1205,7 +1205,7 @@ export type KillsControllerGetMemberKillsQueryError = ErrorType<void>
 
 export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
  pathParams: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>> & Pick<
+    params: undefined |  KillsControllerGetMemberKillsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof killsControllerGetMemberKills>>,
           TError,
@@ -1216,7 +1216,7 @@ export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<type
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
  pathParams: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>> & Pick<
+    params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof killsControllerGetMemberKills>>,
           TError,
@@ -1227,7 +1227,7 @@ export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<type
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
  pathParams: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1236,7 +1236,7 @@ export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<type
 
 export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
  { guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1252,7 +1252,7 @@ export function useKillsControllerGetMemberKills<TData = Awaited<ReturnType<type
  */
 export const prefetchKillsControllerGetMemberKillsQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError = ErrorType<void>>(
  queryClient: QueryClient, { guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: KillsControllerGetMemberKillsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetMemberKills>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
@@ -1268,7 +1268,7 @@ export const prefetchKillsControllerGetMemberKillsQuery = async <TData = Awaited
  */
 export const invalidateKillsControllerGetMemberKills = async (
  queryClient: QueryClient, { guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams, options?: InvalidateOptions
+    params?: KillsControllerGetMemberKillsParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
   await queryClient.invalidateQueries({ queryKey: getKillsControllerGetMemberKillsQueryKey({ guildId, memberId },params) }, options);
@@ -1293,6 +1293,6 @@ export const useSetKillsControllerGetMemberKillsQueryData = () => {
 export const useGetKillsControllerGetMemberKillsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams,) =>
+    params?: KillsControllerGetMemberKillsParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof killsControllerGetMemberKills>>>(getKillsControllerGetMemberKillsQueryKey({ guildId, memberId },params));
 }

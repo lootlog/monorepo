@@ -13,12 +13,12 @@ export type KillsControllerGetMemberKillsParams = {
  * @minimum 0
  * @maximum 500
  */
-minLvl: number;
+minLvl?: number;
 /**
  * @minimum 0
  * @maximum 500
  */
-maxLvl: number;
+maxLvl?: number;
 world?: string;
 npcTypes?: KillsControllerGetMemberKillsNpcTypesItem[];
 search?: string;
@@ -31,6 +31,6 @@ limit?: number;
  * @minimum 0
  * @maximum 9007199254740991
  */
-cursor: number;
+cursor?: number;
 period?: KillsControllerGetMemberKillsPeriod;
 };

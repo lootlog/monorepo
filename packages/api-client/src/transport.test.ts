@@ -68,6 +68,30 @@ describe("API client transport", () => {
     expect(headers.get("x-request")).toBe("request");
   });
 
+  it("preserves the receiver for a service-configured fetch", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(function (
+      this: typeof globalThis | undefined,
+      _input: RequestInfo | URL,
+      _init?: RequestInit,
+    ) {
+      if (this !== globalThis) {
+        throw new TypeError("Illegal invocation");
+      }
+      return Promise.resolve(Response.json({ ok: true }));
+    });
+    restoreConfiguration = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: fetchImplementation,
+      },
+    });
+
+    await expect(createApiClient("main").get("/status")).resolves.toEqual({
+      ok: true,
+    });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
+  });
+
   it("supports isolated per-request configuration without global state", async () => {
     const firstFetch = vi
       .fn<typeof fetch>()
@@ -99,6 +123,29 @@ describe("API client transport", () => {
     expect(String(secondFetch.mock.calls[0]?.[0])).toBe(
       "https://second.example.test/items",
     );
+  });
+
+  it("preserves the receiver for a per-request fetch override", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(function (
+      this: typeof globalThis | undefined,
+      _input: RequestInfo | URL,
+      _init?: RequestInit,
+    ) {
+      if (this !== globalThis) {
+        throw new TypeError("Illegal invocation");
+      }
+      return Promise.resolve(Response.json({ ok: true }));
+    });
+
+    await expect(
+      createApiClient("search").get("/items", {
+        apiClient: {
+          baseUrl: "https://search.example.test",
+          fetch: fetchImplementation,
+        },
+      }),
+    ).resolves.toEqual({ ok: true });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
   });
 
   it("restores nested configurations safely when disposed out of order", async () => {

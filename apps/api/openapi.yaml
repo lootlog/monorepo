@@ -1431,14 +1431,14 @@ paths:
       operationId: LootsController_fetchLootsByGuildId
       parameters:
         - name: limit
-          required: true
+          required: false
           in: query
           schema:
             minimum: 1
             maximum: 100
             type: integer
         - name: cursor
-          required: true
+          required: false
           in: query
           schema:
             minimum: -9007199254740991
@@ -1485,42 +1485,42 @@ paths:
           schema:
             type: string
         - name: npcLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: npcLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
@@ -1640,14 +1640,14 @@ paths:
       operationId: LootsController_countLootsByGuildId
       parameters:
         - name: limit
-          required: true
+          required: false
           in: query
           schema:
             minimum: 1
             maximum: 100
             type: integer
         - name: cursor
-          required: true
+          required: false
           in: query
           schema:
             minimum: -9007199254740991
@@ -1694,42 +1694,42 @@ paths:
           schema:
             type: string
         - name: npcLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: npcLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: itemLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMin
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: playerLevelMax
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
@@ -5694,14 +5694,14 @@ paths:
             example: "123"
             type: string
         - name: minLvl
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
             maximum: 500
             type: integer
         - name: maxLvl
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0
@@ -5742,7 +5742,7 @@ paths:
             maximum: 100
             type: integer
         - name: cursor
-          required: true
+          required: false
           in: query
           schema:
             minimum: 0

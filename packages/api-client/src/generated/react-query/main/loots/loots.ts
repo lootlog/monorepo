@@ -131,7 +131,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 export const getLootsControllerFetchLootsByGuildIdUrl = ({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams,) => {
+    params?: LootsControllerFetchLootsByGuildIdParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -151,7 +151,7 @@ export const getLootsControllerFetchLootsByGuildIdUrl = ({ guildId }: LootsContr
  * @summary Get guild loots
  */
 export const lootsControllerFetchLootsByGuildId = async ({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<LootResponseDto[]> => {
+    params?: LootsControllerFetchLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<LootResponseDto[]> => {
 
   return mainFetch<LootResponseDto[]>(getLootsControllerFetchLootsByGuildIdUrl({ guildId },params),
   {
@@ -175,7 +175,7 @@ export const getLootsControllerFetchLootsByGuildIdQueryKey = ({ guildId }: Loots
 
 
 export const getLootsControllerFetchLootsByGuildIdQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -199,7 +199,7 @@ export type LootsControllerFetchLootsByGuildIdQueryError = ErrorType<void>
 
 export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
  pathParams: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>> & Pick<
+    params: undefined |  LootsControllerFetchLootsByGuildIdParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>,
           TError,
@@ -210,7 +210,7 @@ export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
  pathParams: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>> & Pick<
+    params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>,
           TError,
@@ -221,7 +221,7 @@ export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
  pathParams: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -230,7 +230,7 @@ export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType
 
 export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
  { guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -246,7 +246,7 @@ export function useLootsControllerFetchLootsByGuildId<TData = Awaited<ReturnType
  */
 export const prefetchLootsControllerFetchLootsByGuildIdQuery = async <TData = Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError = ErrorType<void>>(
  queryClient: QueryClient, { guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: LootsControllerFetchLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
@@ -262,7 +262,7 @@ export const prefetchLootsControllerFetchLootsByGuildIdQuery = async <TData = Aw
  */
 export const invalidateLootsControllerFetchLootsByGuildId = async (
  queryClient: QueryClient, { guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams, options?: InvalidateOptions
+    params?: LootsControllerFetchLootsByGuildIdParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
   await queryClient.invalidateQueries({ queryKey: getLootsControllerFetchLootsByGuildIdQueryKey({ guildId },params) }, options);
@@ -287,7 +287,7 @@ export const useSetLootsControllerFetchLootsByGuildIdQueryData = () => {
 export const useGetLootsControllerFetchLootsByGuildIdQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams,) =>
+    params?: LootsControllerFetchLootsByGuildIdParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>>(getLootsControllerFetchLootsByGuildIdQueryKey({ guildId },params));
 }
 
@@ -455,7 +455,7 @@ export const useGetLootsControllerGetLootStatsQueryData = () => {
 
 
 export const getLootsControllerCountLootsByGuildIdUrl = ({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams,) => {
+    params?: LootsControllerCountLootsByGuildIdParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -475,7 +475,7 @@ export const getLootsControllerCountLootsByGuildIdUrl = ({ guildId }: LootsContr
  * @summary Get guild loots count
  */
 export const lootsControllerCountLootsByGuildId = async ({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<CountResponseDtoOutput> => {
+    params?: LootsControllerCountLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<CountResponseDtoOutput> => {
 
   return mainFetch<CountResponseDtoOutput>(getLootsControllerCountLootsByGuildIdUrl({ guildId },params),
   {
@@ -499,7 +499,7 @@ export const getLootsControllerCountLootsByGuildIdQueryKey = ({ guildId }: Loots
 
 
 export const getLootsControllerCountLootsByGuildIdQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -523,7 +523,7 @@ export type LootsControllerCountLootsByGuildIdQueryError = ErrorType<void>
 
 export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
  pathParams: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>> & Pick<
+    params: undefined |  LootsControllerCountLootsByGuildIdParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>,
           TError,
@@ -534,7 +534,7 @@ export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
  pathParams: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>> & Pick<
+    params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>,
           TError,
@@ -545,7 +545,7 @@ export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
  pathParams: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -554,7 +554,7 @@ export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType
 
 export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
  { guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -570,7 +570,7 @@ export function useLootsControllerCountLootsByGuildId<TData = Awaited<ReturnType
  */
 export const prefetchLootsControllerCountLootsByGuildIdQuery = async <TData = Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError = ErrorType<void>>(
  queryClient: QueryClient, { guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: LootsControllerCountLootsByGuildIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
@@ -586,7 +586,7 @@ export const prefetchLootsControllerCountLootsByGuildIdQuery = async <TData = Aw
  */
 export const invalidateLootsControllerCountLootsByGuildId = async (
  queryClient: QueryClient, { guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams, options?: InvalidateOptions
+    params?: LootsControllerCountLootsByGuildIdParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
   await queryClient.invalidateQueries({ queryKey: getLootsControllerCountLootsByGuildIdQueryKey({ guildId },params) }, options);
@@ -611,7 +611,7 @@ export const useSetLootsControllerCountLootsByGuildIdQueryData = () => {
 export const useGetLootsControllerCountLootsByGuildIdQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params: LootsControllerCountLootsByGuildIdParams,) =>
+    params?: LootsControllerCountLootsByGuildIdParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof lootsControllerCountLootsByGuildId>>>(getLootsControllerCountLootsByGuildIdQueryKey({ guildId },params));
 }
 
