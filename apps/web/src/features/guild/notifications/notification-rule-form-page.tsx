@@ -1,10 +1,8 @@
 import { MultiSelect } from "@/components/ui/multi-select";
-import {
-  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
-  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
-  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
-  type CreateNotificationRuleDtoTriggerType,
-} from "@/lib/api/generated/main/model";
+import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-anchor";
+import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-interval-type";
+import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
+import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import {

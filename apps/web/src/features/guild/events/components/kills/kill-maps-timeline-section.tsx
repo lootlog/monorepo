@@ -2,7 +2,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { Accordion } from "@lootlog/ui/components/accordion";
 import { useParams } from "@tanstack/react-router";
 import { Map } from "lucide-react";
-import { useEventsMonitoringControllerGetKillTimelineData } from "@/lib/api/generated/main/events/events";
+import { useEventsMonitoringControllerGetKillTimelineData } from "@lootlog/api-client/react-query/main/events";
 import { KillMapTimelineCard } from "./kill-map-timeline-card";
 import type { TFunction } from "i18next";
 import { Skeleton } from "@lootlog/ui/components/skeleton";

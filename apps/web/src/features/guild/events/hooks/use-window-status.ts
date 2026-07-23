@@ -6,6 +6,16 @@ export function isWindowActive(status: WindowStatus): boolean {
   return status === "OPEN" || status === "OVERDUE";
 }
 
+const scheduleStatusRecalculation = (
+  recalculate: () => void,
+  delay: number,
+) => {
+  if (delay <= 0) return () => undefined;
+
+  const timeoutId = setTimeout(recalculate, delay);
+  return () => clearTimeout(timeoutId);
+};
+
 export function useWindowStatus(
   minSpawnTime: string | null,
   maxSpawnTime: string | null,
@@ -15,7 +25,7 @@ export function useWindowStatus(
   useEffect(() => {
     if (!minSpawnTime || !maxSpawnTime) {
       setStatus("NONE");
-      return;
+      return () => undefined;
     }
 
     const min = new Date(minSpawnTime).getTime();
@@ -30,17 +40,20 @@ export function useWindowStatus(
 
     recalc();
 
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
     const now = Date.now();
+    const cancelMinRecalculation = scheduleStatusRecalculation(
+      recalc,
+      now < min ? min - now + 100 : 0,
+    );
+    const cancelMaxRecalculation = scheduleStatusRecalculation(
+      recalc,
+      now < max ? max - now + 100 : 0,
+    );
 
-    if (now < min) {
-      timeouts.push(setTimeout(recalc, min - now + 100));
-    }
-    if (now < max) {
-      timeouts.push(setTimeout(recalc, max - now + 100));
-    }
-
-    return () => timeouts.forEach(clearTimeout);
+    return () => {
+      cancelMinRecalculation();
+      cancelMaxRecalculation();
+    };
   }, [minSpawnTime, maxSpawnTime]);
 
   return status;

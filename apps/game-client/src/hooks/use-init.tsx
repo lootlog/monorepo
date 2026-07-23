@@ -1,9 +1,11 @@
 import { useGlobalStore } from "@/store/global.store";
 
-import { gameEventsManager } from "@/lib/game-events-manager";
+import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { useEffect, useRef } from "react";
-import { Game } from "@/lib/game";
 import { installCharacterTooltipTransforms } from "@/lib/margonem-tooltips/patcher";
+import { runtimeStateSynchronizer } from "@/lib/margonem-runtime/runtime-state-synchronizer";
+import { runtimeInteractionCoordinator } from "@/lib/margonem-runtime/runtime-interaction-coordinator";
+import { isMargonemRuntimeReady } from "@/lib/margonem-runtime/runtime-adapter";
 
 export const useInit = () => {
   const setGameState = useGlobalStore((state) => state.setGameState);
@@ -16,7 +18,7 @@ export const useInit = () => {
         return false;
       }
 
-      const isGameLoaded = Game.getInitializeState();
+      const isGameLoaded = isMargonemRuntimeReady();
       if (!isGameLoaded) {
         return false;
       }
@@ -27,15 +29,19 @@ export const useInit = () => {
         gameInitialized: true,
       });
 
-      gameEventsManager.setReady(true);
+      runtimeStateSynchronizer.bootstrap();
+      margonemRuntimeBridge.bootstrap();
+      margonemRuntimeBridge.setReady(true);
       cleanupTooltipTransforms.current = installCharacterTooltipTransforms();
 
       return true;
     };
 
-    gameEventsManager.setupProxies();
+    runtimeStateSynchronizer.install();
+    runtimeInteractionCoordinator.install();
+    margonemRuntimeBridge.setupProxies();
 
-    gameEventsManager.setGameInitCallback(() => {
+    margonemRuntimeBridge.setGameInitCallback(() => {
       if (!initialized.current) {
         return checkAndInitialize();
       }
@@ -46,7 +52,9 @@ export const useInit = () => {
     return () => {
       cleanupTooltipTransforms.current?.();
       cleanupTooltipTransforms.current = null;
-      gameEventsManager.cleanup();
+      runtimeInteractionCoordinator.cleanup();
+      runtimeStateSynchronizer.cleanup();
+      margonemRuntimeBridge.cleanup();
     };
   }, [setGameState]);
 };

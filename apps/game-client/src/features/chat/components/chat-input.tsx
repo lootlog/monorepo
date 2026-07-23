@@ -1,11 +1,7 @@
 import { Permission } from "@lootlog/types";
 import { Label } from "@/components/ui/label";
 import type { MessageType } from "@/api/chat.api";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 import {
   applyChatMentionSuggestion,
   getActiveChatMention,
@@ -41,22 +37,22 @@ import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query"
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import {
   useChatControllerClearChatMessages,
   useChatControllerSendChatMessage,
-} from "@/lib/api/generated/main/chat/chat";
+} from "@lootlog/api-client/react-query/main/chat";
 import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
-} from "@/lib/api/generated/main/members/members";
-import type { ChatMessageResponseDtoOutput } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/members";
+import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import {
   getRolesControllerGetGuildRolesQueryKey,
   useRolesControllerGetGuildRoles,
-} from "@/lib/api/generated/main/roles/roles";
+} from "@lootlog/api-client/react-query/main/roles";
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/store/chat.store";
 import { useQueryClient } from "@tanstack/react-query";
@@ -107,7 +103,11 @@ export const ChatInput: FC<ChatInputProps> = ({
   const replyDraft = useChatStore((state) => state.replyDraft);
   const clearReplyDraft = useChatStore((state) => state.clearReplyDraft);
   const editorRef = useRef<HTMLDivElement>(null);
-  const world = Game.getWorldName();
+  const clearConfirmAnchorRef = useRef<HTMLDivElement>(null);
+  const world = useGameStore((state) => state.game?.world ?? "unknown");
+  const currentCharacterNick = useGameStore(
+    (state) => state.game?.hero.name ?? "",
+  );
   const { mutateAsync: sendChatMessage, isPending: isSendingMessage } =
     useChatControllerSendChatMessage();
   const { mutateAsync: clearChatMessages, isPending: isClearingChat } =
@@ -228,7 +228,7 @@ export const ChatInput: FC<ChatInputProps> = ({
     query: activeMentionForSuggestions?.query ?? "",
   });
   const mentionContext = buildChatMentionContext({
-    currentCharacterNick: Game.hero.nick,
+    currentCharacterNick,
     currentMember,
     members: guildMembers,
     roles: guildRoles,
@@ -391,14 +391,16 @@ export const ChatInput: FC<ChatInputProps> = ({
   const buildChatMessagePayload = ({
     message,
     type,
+    characterData,
   }: {
     message: string;
     type: typeof MessageType.NORMAL | typeof MessageType.NOTIFICATION;
+    characterData: NonNullable<ReturnType<typeof buildChatCharacterData>>;
   }) => {
     return {
       message,
       type,
-      characterData: buildChatCharacterData(),
+      characterData,
       replyTo: getChatReplyPayload(replyDraft),
     };
   };
@@ -453,6 +455,11 @@ export const ChatInput: FC<ChatInputProps> = ({
       return;
     }
 
+    const characterData = buildChatCharacterData();
+    if (!characterData) {
+      return;
+    }
+
     const currentCaretIndex = caretIndex;
     const submitAction = getChatSubmitAction({
       canClearChat,
@@ -487,6 +494,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                     data: buildChatMessagePayload({
                       message: submitAction.message,
                       type: getChatMessageTypeForSubmitAction(submitAction),
+                      characterData,
                     }),
                   }),
               })
@@ -496,6 +504,7 @@ export const ChatInput: FC<ChatInputProps> = ({
               data: buildChatMessagePayload({
                 message: submitAction.message,
                 type: getChatMessageTypeForSubmitAction(submitAction),
+                characterData,
               }),
             });
 
@@ -633,38 +642,38 @@ export const ChatInput: FC<ChatInputProps> = ({
           onSelect={handleSuggestionSelect}
         />
         <Popover open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
-          <PopoverAnchor asChild>
-            <div
-              className={cn(
-                CHAT_INPUT_SHELL_CLASS,
-                !isPending && CHAT_INPUT_FOCUS_CLASS,
-              )}
-            >
-              <ChatInputEditor
-                autoFocus={autofocus}
-                caretIndex={caretIndex}
-                disabled={isPending}
-                editorRef={editorRef}
-                message={messageValue}
-                mentionContext={mentionContext}
-                placeholder={t("input.placeholder")}
-                onChange={(nextMessage, nextCaretIndex) => {
-                  setMessageValue(nextMessage);
-                  setCaretIndex(nextCaretIndex);
-                  setDismissedMentionKey(null);
-                  setTabCompletionSession(null);
-                }}
-                onCaretChange={setCaretIndex}
-                onKeyDown={handleInputKeyDown}
-              />
-            </div>
-          </PopoverAnchor>
+          <div
+            ref={clearConfirmAnchorRef}
+            className={cn(
+              CHAT_INPUT_SHELL_CLASS,
+              !isPending && CHAT_INPUT_FOCUS_CLASS,
+            )}
+          >
+            <ChatInputEditor
+              autoFocus={autofocus}
+              caretIndex={caretIndex}
+              disabled={isPending}
+              editorRef={editorRef}
+              message={messageValue}
+              mentionContext={mentionContext}
+              placeholder={t("input.placeholder")}
+              onChange={(nextMessage, nextCaretIndex) => {
+                setMessageValue(nextMessage);
+                setCaretIndex(nextCaretIndex);
+                setDismissedMentionKey(null);
+                setTabCompletionSession(null);
+              }}
+              onCaretChange={setCaretIndex}
+              onKeyDown={handleInputKeyDown}
+            />
+          </div>
           <PopoverContent
+            anchor={clearConfirmAnchorRef}
             side="top"
             align="start"
             className="ll:w-64"
-            onOpenAutoFocus={(event) => event.preventDefault()}
-            onCloseAutoFocus={(event) => event.preventDefault()}
+            initialFocus={false}
+            finalFocus={false}
           >
             <div className="ll:flex ll:flex-col ll:gap-2">
               <div className="ll:flex ll:flex-col ll:gap-1">

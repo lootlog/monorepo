@@ -2,13 +2,14 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
 import { GuildSwitcher } from "./guild-switcher";
 
 const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserPreferences = vi.fn();
 const runtime = vi.hoisted(() => ({ heroId: 123 as number | undefined }));
 
-vi.mock("@/lib/api/generated/main/users/users", () => ({
+vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
     "accessible-guilds",
   ],
@@ -40,6 +41,23 @@ describe("GuildSwitcher", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     runtime.heroId = 123;
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "1",
+        characterId: "123",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "tempest",
+    });
     useSettingsStore.setState({ guildIdByCharId: {} });
 
     mockUseAccessibleGuilds.mockReturnValue({
@@ -65,6 +83,7 @@ describe("GuildSwitcher", () => {
 
   it("does not write a selection before the character identity is available", () => {
     runtime.heroId = undefined;
+    useGameStore.getState().clearGame();
     render(<GuildSwitcher />);
 
     fireEvent.click(screen.getAllByRole("button")[0]);
@@ -114,27 +133,19 @@ describe("GuildSwitcher", () => {
 
   it("scrolls horizontally when the user uses the mouse wheel", () => {
     const { container } = render(<GuildSwitcher />);
-    const viewport = container.querySelector("[data-ll-native-scroll-area]");
+    const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
 
     if (!(viewport instanceof HTMLDivElement)) {
       throw new Error("Expected scroll area viewport");
     }
 
-    Object.defineProperty(viewport, "scrollLeft", {
-      configurable: true,
-      value: 0,
-      writable: true,
+    Object.defineProperties(viewport, {
+      clientWidth: { configurable: true, value: 100 },
+      scrollLeft: { configurable: true, value: 0, writable: true },
+      scrollWidth: { configurable: true, value: 300 },
     });
 
-    const wheelEvent = new WheelEvent("wheel", {
-      bubbles: true,
-      cancelable: true,
-      deltaY: 48,
-    });
-
-    viewport.dispatchEvent(wheelEvent);
-
-    expect(wheelEvent.defaultPrevented).toBe(true);
+    expect(fireEvent.wheel(viewport, { deltaY: 48 })).toBe(false);
     expect(viewport.scrollLeft).toBe(48);
   });
 

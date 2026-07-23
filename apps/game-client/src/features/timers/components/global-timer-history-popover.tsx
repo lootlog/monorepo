@@ -5,12 +5,12 @@ import {
 } from "@/components/ui/popover";
 import { normalizeTimerResponse } from "@/api/timers.api";
 import { useTimersCache } from "@/hooks/api/use-timers-cache";
-import type { TimerHistoryResponseDto } from "@/lib/api/generated/main/model";
+import type { TimerHistoryResponseDto } from "@lootlog/api-client/models/main/timer-history-response-dto";
 import {
   getTimersControllerGetRecentTimerHistoryQueryKey,
   useTimersControllerGetRecentTimerHistory,
   useTimersControllerRestoreTimerFromHistory,
-} from "@/lib/api/generated/main/timers/timers";
+} from "@lootlog/api-client/react-query/main/timers";
 import { History } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -62,11 +62,11 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
       {
         onSuccess: (timer) => {
           upsertTimer(normalizeTimerResponse(timer));
-          window.message?.(t("history.restoreSuccess"));
+          showRuntimeMessage(t("history.restoreSuccess"));
           setOpen(false);
         },
         onError: () => {
-          window.message?.(t("history.restoreFailed"));
+          showRuntimeMessage(t("history.restoreFailed"));
         },
       },
     );
@@ -99,3 +99,4 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
     </Popover>
   );
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

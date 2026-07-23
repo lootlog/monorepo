@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useUpdateUserGameAccountPreferences,
@@ -8,20 +8,14 @@ import {
   createDetectorSettings,
   createNotificationsSettings,
 } from "@/lib/game-account-preferences";
-import { Game } from "@/lib/game";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { useGlobalStore } from "@/store/global.store";
-import type { UserGameAccountPreferencesResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { useGameStore } from "@/store/game.store";
+import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-game-account-preferences-response-dto-output";
 import {
   getUsersControllerGetUserGameAccountPreferencesQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
-
-// TODO: Temporary startup workaround. Replace this polling with an explicit
-// game account-ready signal; retry-based readiness checks are brittle and
-// should not become our long-term pattern.
-const ACCOUNT_ID_RETRY_DELAY_MS = 100;
-const ACCOUNT_ID_MAX_RETRIES = 20;
+} from "@lootlog/api-client/react-query/main/users";
 
 export const useGameAccountPreferencesSync = () => {
   const gameInitialized = useGlobalStore(
@@ -34,54 +28,13 @@ export const useGameAccountPreferencesSync = () => {
     isLoading: areGuildsLoading,
   } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const queryClient = useQueryClient();
-  const [accountId, setAccountId] = useState<string | null>(() =>
-    Game.getAccountId(),
-  );
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? null);
   const seededAccountsRef = useRef<Set<string>>(new Set());
-  const accountIdRetryAttemptsRef = useRef(0);
 
   const { data, isLoading, isFetching, isFetched } =
     useUserGameAccountPreferences(accountId, gameInitialized);
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
-
-  useEffect(() => {
-    if (!gameInitialized || accountId) {
-      accountIdRetryAttemptsRef.current = 0;
-      return;
-    }
-
-    const resolveAccountId = () => {
-      const nextAccountId = Game.getAccountId();
-
-      if (nextAccountId) {
-        accountIdRetryAttemptsRef.current = 0;
-        setAccountId(nextAccountId);
-        return true;
-      }
-
-      if (accountIdRetryAttemptsRef.current >= ACCOUNT_ID_MAX_RETRIES) {
-        return true;
-      }
-
-      accountIdRetryAttemptsRef.current += 1;
-      return false;
-    };
-
-    if (resolveAccountId()) {
-      return;
-    }
-
-    const retryInterval = setInterval(() => {
-      if (resolveAccountId()) {
-        clearInterval(retryInterval);
-      }
-    }, ACCOUNT_ID_RETRY_DELAY_MS);
-
-    return () => {
-      clearInterval(retryInterval);
-    };
-  }, [accountId, gameInitialized]);
 
   useEffect(() => {
     if (

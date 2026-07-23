@@ -7,7 +7,7 @@ import { usePartyFinderStore } from "@/store/party-finder.store";
 
 const listReadyRooms = vi.fn<() => Promise<unknown[]>>();
 
-vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
   partyReadyRoomControllerList: () => listReadyRooms(),
 }));
 

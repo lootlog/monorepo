@@ -7,24 +7,27 @@ export const PAW_SVG =
 
 const CAT_CLASSES = ["cat-pink", "cat-purple", "cat-blue"];
 
-export function useCatTheme() {
-  const [isCat, setIsCat] = React.useState(() => {
-    if (typeof document === "undefined") return false;
-    return CAT_CLASSES.some((c) =>
-      document.documentElement.classList.contains(c),
-    );
+const getCatThemeSnapshot = () =>
+  CAT_CLASSES.some((className) =>
+    document.documentElement.classList.contains(className),
+  );
+
+const subscribeToCatTheme = (onStoreChange: () => void) => {
+  const observer = new MutationObserver(onStoreChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
   });
 
-  React.useEffect(() => {
-    const root = document.documentElement;
-    const check = () =>
-      setIsCat(CAT_CLASSES.some((c) => root.classList.contains(c)));
-    const observer = new MutationObserver(check);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
+  return () => observer.disconnect();
+};
 
-  return isCat;
+export function useCatTheme() {
+  return React.useSyncExternalStore(
+    subscribeToCatTheme,
+    getCatThemeSnapshot,
+    () => false,
+  );
 }
 
 function createCatPaws(id: string) {

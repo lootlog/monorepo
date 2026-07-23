@@ -1,6 +1,6 @@
 import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { useEffect, useRef } from "react";
-import { partyReadyRoomControllerObserveParty } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import { partyReadyRoomControllerObserveParty } from "@lootlog/api-client/react-query/main/party-ready-room";
 import {
   selectOwnedReadyRoom,
   usePartyFinderStore,
@@ -39,7 +39,7 @@ export function usePartyReadyRoomObserver(): void {
     }
 
     const memberCharacterIds = [
-      ...new Set(partyMembers.map(({ id }) => String(id))),
+      ...new Set(partyMembers.map(({ characterId }) => characterId)),
     ].sort();
     const snapshot = `${ownedReadyRoom.notificationId}:${memberCharacterIds.join(",")}`;
     if (lastReportedSnapshot.current === snapshot) return;

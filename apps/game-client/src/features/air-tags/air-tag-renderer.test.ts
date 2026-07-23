@@ -49,10 +49,10 @@ describe("AirTagRenderer", () => {
   it("keeps the draw listener detached until a renderable target exists", () => {
     const addCallbackToEvent = vi.fn();
     const removeCallbackFromEvent = vi.fn();
-    window.Engine = {
+    testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
     } as never;
-    window.API = {
+    testRuntimeWindow.API = {
       addCallbackToEvent,
       removeCallbackFromEvent,
     } as never;
@@ -87,10 +87,10 @@ describe("AirTagRenderer", () => {
     vi.useFakeTimers();
     let now = 2_000;
     const removeCallbackFromEvent = vi.fn();
-    window.Engine = {
+    testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
     } as never;
-    window.API = {
+    testRuntimeWindow.API = {
       addCallbackToEvent: vi.fn(),
       removeCallbackFromEvent,
     } as never;
@@ -129,7 +129,8 @@ describe("AirTagRenderer", () => {
     const addCallbackToEvent = vi.fn((_event: string, callback: () => void) => {
       drawFrame = callback;
     });
-    window.Engine = {
+    const removeCallbackFromEvent = vi.fn();
+    testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
       renderer: {
         add: addDrawable,
@@ -150,10 +151,10 @@ describe("AirTagRenderer", () => {
         },
       },
     } as never;
-    window.API = {
+    testRuntimeWindow.API = {
       addCallbackToEvent,
-      removeCallbackFromEvent: vi.fn(),
-    } as never;
+      removeCallbackFromEvent,
+    };
 
     airTagReceiveController.beginSubscription("request", "aether", 42);
     airTagReceiveController.applySubscriptionAck({
@@ -201,6 +202,7 @@ describe("AirTagRenderer", () => {
     );
 
     renderer.unregister();
-    expect(window.API.removeCallbackFromEvent).toHaveBeenCalledOnce();
+    expect(removeCallbackFromEvent).toHaveBeenCalledOnce();
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

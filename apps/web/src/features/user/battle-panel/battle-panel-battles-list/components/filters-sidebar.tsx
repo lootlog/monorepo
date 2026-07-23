@@ -21,7 +21,7 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
-import { useBattlesControllerGetUserWorlds } from "@/lib/api/generated/battlelog/battles/battles";
+import { useBattlesControllerGetUserWorlds } from "@lootlog/api-client/react-query/battlelog/battles";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import {
   Popover,
@@ -365,9 +365,11 @@ export const FiltersSidebar = ({
         <AnimatePresence>
           {hasActiveFilters && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 56, opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+              layout
+              initial={{ opacity: 0, scaleY: 0.96 }}
+              animate={{ opacity: 1, scaleY: 1 }}
+              exit={{ opacity: 0, scaleY: 0.96 }}
+              style={{ transformOrigin: "bottom" }}
               className="border-t border-border px-4 overflow-hidden"
             >
               <div className="h-14 flex items-center w-full">

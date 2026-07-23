@@ -1,4 +1,4 @@
-import type { EventModeResponseDtoEventsItem } from "@/lib/api/generated/main/model/event-mode-response-dto-events-item";
+import type { EventModeResponseDtoEventsItem } from "@lootlog/api-client/models/main/event-mode-response-dto-events-item";
 import { EventModeAssignment } from "./event-mode-assignment";
 import { EventModeRespawn } from "./event-mode-respawn";
 

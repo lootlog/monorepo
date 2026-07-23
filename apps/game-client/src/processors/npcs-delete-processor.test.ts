@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NpcType } from "@/api/npcs.api";
 import { queryClient } from "@/lib/query-client";
-import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
+import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/api-client/react-query/main/user-lootlog-config";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { NpcsDeleteProcessor } from "./npcs-delete-processor";
 import type * as ApiModule from "@/api";
 import type * as LootlogTypesModule from "@lootlog/types";
+import { normalizeNpc } from "@/lib/margonem-runtime/runtime-adapter";
+import type { RuntimeNpc } from "@/lib/margonem-runtime/runtime.types";
 
 const { mockCreateAutoTimer, mockGetNpcTypeByWt, mockGame } = vi.hoisted(
   () => ({
@@ -88,6 +90,36 @@ describe("NpcsDeleteProcessor", () => {
       accountId: "202",
     });
 
+  const handle = (event: Parameters<NpcsDeleteProcessor["handle"]>[0]) => {
+    const npcsById: Record<number, RuntimeNpc> = {};
+    for (const deletion of event.npcs_del ?? []) {
+      const gameNpc = mockGame.getNpc(deletion.id);
+      if (gameNpc) npcsById[deletion.id] = normalizeNpc(gameNpc);
+    }
+    processor.handle(event, {
+      game: {
+        hero: {
+          accountId: String(mockGame.hero.account),
+          characterId: String(mockGame.hero.id),
+          currentHp: 0,
+          icon: "hero.gif",
+          level: 0,
+          maxHp: 0,
+          name: "Hero",
+          profession: "w",
+          x: 1,
+          y: 2,
+        },
+        interface: "ni",
+        map: { ...mockGame.map, visibility: 30 },
+        world: mockGame.getWorldName(),
+      },
+      intent: null,
+      npcsById,
+      othersById: {},
+    });
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient.clear();
@@ -124,7 +156,7 @@ describe("NpcsDeleteProcessor", () => {
   });
 
   it("ignores events without deleted npcs", () => {
-    processor.handle({});
+    handle({});
 
     expect(mockCreateAutoTimer).not.toHaveBeenCalled();
   });
@@ -132,7 +164,7 @@ describe("NpcsDeleteProcessor", () => {
   it("always removes npc from local stores before further validation", () => {
     mockGame.getNpc.mockReturnValue(undefined);
 
-    processor.handle({
+    handle({
       npcs_del: [{ id: 500, respBaseSeconds: 30 }],
     });
 
@@ -175,7 +207,7 @@ describe("NpcsDeleteProcessor", () => {
       notificationPublications += 1;
     });
 
-    processor.handle({
+    handle({
       npcs_del: [
         { id: 500, respBaseSeconds: 30 },
         { id: 501, respBaseSeconds: 30 },
@@ -195,10 +227,10 @@ describe("NpcsDeleteProcessor", () => {
       resp_rand: 15,
     });
 
-    processor.handle({
+    handle({
       npcs_del: [{ id: 500 }],
     });
-    processor.handle({
+    handle({
       npcs_del: [{ id: 500, respBaseSeconds: 30 }],
     });
 
@@ -211,7 +243,7 @@ describe("NpcsDeleteProcessor", () => {
       resp_rand: 15,
     });
 
-    processor.handle({
+    handle({
       npcs_del: [{ id: 500, respBaseSeconds: 1 }],
     });
 
@@ -230,7 +262,7 @@ describe("NpcsDeleteProcessor", () => {
       },
     });
 
-    processor.handle({
+    handle({
       npcs_del: [{ id: 500, respBaseSeconds: 30 }],
     });
 
@@ -249,7 +281,7 @@ describe("NpcsDeleteProcessor", () => {
       },
     });
 
-    processor.handle({
+    handle({
       npcs_del: [{ id: 500, respBaseSeconds: 30 }],
     });
 
@@ -287,7 +319,7 @@ describe("NpcsDeleteProcessor", () => {
       },
     });
 
-    processor.handle({
+    handle({
       npcs_del: [{ id: 500, respBaseSeconds: 30 }],
     });
 
@@ -315,7 +347,7 @@ describe("NpcsDeleteProcessor", () => {
       },
     });
 
-    processor.handle({
+    handle({
       npcs_del: [{ id: 500, respBaseSeconds: 30 }],
     });
 
@@ -345,7 +377,7 @@ describe("NpcsDeleteProcessor", () => {
     });
     mockCreateAutoTimer.mockRejectedValue(new Error("timer failed"));
 
-    processor.handle({
+    handle({
       npcs_del: [{ id: 500, respBaseSeconds: 30 }],
     });
 

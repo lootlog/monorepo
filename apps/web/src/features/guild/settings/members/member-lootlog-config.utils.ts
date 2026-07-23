@@ -1,5 +1,5 @@
 import { MARGONEM_PROFILE_URL } from "@/constants/margonem";
-import type { MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus } from "@/lib/api/generated/main/model";
+import type { MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus } from "@lootlog/api-client/models/main/member-lootlog-config-summary-response-dto-output-characters-item-metadata-status";
 
 type MemberLootlogProfileTargetInput = {
   accountId: string;

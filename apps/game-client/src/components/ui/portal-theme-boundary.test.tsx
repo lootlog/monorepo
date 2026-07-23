@@ -1,7 +1,8 @@
 import "@/index.css";
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -55,6 +56,31 @@ describe("overlay theme boundary", () => {
 
     expectContentInsideThemeBoundary("tooltip-content");
     expectSmallRadius("tooltip-content");
+    const tooltipPositioner =
+      screen.getByTestId("tooltip-content").parentElement;
+
+    expect(tooltipPositioner).not.toBeNull();
+    if (!tooltipPositioner) {
+      throw new Error("Tooltip positioner was not rendered");
+    }
+    expect(getComputedStyle(tooltipPositioner).zIndex).toBe("500");
+  });
+
+  it("composes an existing tooltip trigger without adding another button", () => {
+    renderInsideLootlogRoot(
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button type="button" data-testid="composed-tooltip-trigger">
+            Tooltip trigger
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>Tooltip</TooltipContent>
+      </Tooltip>,
+    );
+
+    const trigger = screen.getByTestId("composed-tooltip-trigger");
+    expect(trigger.tagName).toBe("BUTTON");
+    expect(trigger.querySelector("button")).toBeNull();
   });
 
   it("keeps context-menu content inside the Lootlog theme boundary", () => {
@@ -75,6 +101,43 @@ describe("overlay theme boundary", () => {
     expect(["6px", "calc(8px - 2px)"]).toContain(
       getComputedStyle(screen.getByTestId("context-menu-content")).borderRadius,
     );
+    const contextMenuPositioner = screen.getByTestId(
+      "context-menu-content",
+    ).parentElement;
+
+    expect(contextMenuPositioner).not.toBeNull();
+    if (!contextMenuPositioner) {
+      throw new Error("Context menu positioner was not rendered");
+    }
+    expect(getComputedStyle(contextMenuPositioner).zIndex).toBe("500");
+  });
+
+  it("keeps a context menu open when item selection is prevented", () => {
+    const onSelect = vi.fn();
+
+    renderInsideLootlogRoot(
+      <ContextMenu>
+        <ContextMenuTrigger>Context menu trigger</ContextMenuTrigger>
+        <ContextMenuContent data-testid="persistent-context-menu">
+          <ContextMenuItem
+            onSelect={(event) => {
+              event.preventDefault();
+              onSelect();
+            }}
+          >
+            Nested action
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>,
+    );
+    fireEvent.contextMenu(screen.getByText("Context menu trigger"), {
+      clientX: 10,
+      clientY: 10,
+    });
+    fireEvent.click(screen.getByText("Nested action"));
+
+    expect(onSelect).toHaveBeenCalledOnce();
+    expect(screen.getByTestId("persistent-context-menu")).toBeInTheDocument();
   });
 
   it("keeps popover content inside the Lootlog theme boundary", () => {
@@ -97,6 +160,25 @@ describe("overlay theme boundary", () => {
     );
   });
 
+  it("reports an outside press through the popover root", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+
+    renderInsideLootlogRoot(
+      <Popover open onOpenChange={onOpenChange}>
+        <PopoverTrigger>Popover trigger</PopoverTrigger>
+        <PopoverContent>Popover content</PopoverContent>
+      </Popover>,
+    );
+
+    await user.click(document.body);
+
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "outside-press" }),
+    );
+  });
+
   it("keeps select content inside the Lootlog theme boundary", () => {
     renderInsideLootlogRoot(
       <Select open value="one">
@@ -111,5 +193,6 @@ describe("overlay theme boundary", () => {
 
     expectContentInsideThemeBoundary("select-content");
     expectSmallRadius("select-content");
+    expect(screen.getByRole("combobox")).toHaveTextContent("One");
   });
 });

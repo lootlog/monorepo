@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -15,7 +15,7 @@ import { LOOTLOG_APP_URL } from "@/config/app";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import { ExternalLink, Loader2, SquareArrowOutUpRight } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -81,7 +81,7 @@ export const GuildListPopover = () => {
             )}
 
             {guilds && guilds.length > 0 ? (
-              <NativeScrollArea
+              <ScrollArea
                 className={`ll:max-h-[240px] ${guilds.length <= 6 ? "ll:h-auto" : ""}`}
               >
                 <div className="ll:space-y-0.5">
@@ -110,7 +110,7 @@ export const GuildListPopover = () => {
                     </Button>
                   ))}
                 </div>
-              </NativeScrollArea>
+              </ScrollArea>
             ) : (
               <div className="ll:px-2 ll:py-2 ll:text-center ll:text-xs ll:text-gray-400">
                 {t("guildPopover.emptyGuilds")}

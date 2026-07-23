@@ -1,7 +1,12 @@
+import "@/index.css";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlayerPresence } from "@/lib/online-players-presence";
+import {
+  setTestRuntimeGame,
+  testRuntimeWindow,
+} from "@/test/test-runtime-window";
 import { OnlinePlayersAccountListEntry } from "./online-players-account-list-entry";
 
 const mockGame = vi.hoisted(() => ({
@@ -13,7 +18,7 @@ const mockGame = vi.hoisted(() => ({
   interface: "ni",
 }));
 const mockPartyMembers = vi.hoisted(() => ({
-  members: [] as { id: number }[],
+  members: [] as { characterId: string }[],
 }));
 const mockFriends = vi.hoisted(() => ({
   friends: [] as string[],
@@ -25,7 +30,7 @@ vi.mock("@/lib/game", () => ({
 
 vi.mock("@/store/party.store", () => ({
   usePartyStore: (
-    selector: (state: { members: { id: number }[] }) => unknown,
+    selector: (state: { members: { characterId: string }[] }) => unknown,
   ) => selector({ members: mockPartyMembers.members }),
 }));
 
@@ -76,6 +81,16 @@ const getAccountTile = (container: HTMLElement) => {
   return tile as Element;
 };
 
+const expectTooltipAboveWindows = (tooltip: HTMLElement) => {
+  const tooltipPositioner = tooltip.parentElement;
+
+  expect(tooltipPositioner).not.toBeNull();
+  if (!tooltipPositioner) {
+    throw new Error("Tooltip positioner was not rendered");
+  }
+  expect(getComputedStyle(tooltipPositioner).zIndex).toBe("500");
+};
+
 describe("OnlinePlayersAccountListEntry", () => {
   const showEquipmentSpy = vi.fn();
   const showProfileSpy = vi.fn();
@@ -84,8 +99,8 @@ describe("OnlinePlayersAccountListEntry", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    window._g = inviteToPartySpy;
-    window.Engine = {
+    testRuntimeWindow._g = inviteToPartySpy;
+    testRuntimeWindow.Engine = {
       showEqManager: {
         update: showEquipmentSpy,
       },
@@ -98,6 +113,14 @@ describe("OnlinePlayersAccountListEntry", () => {
     mockGame.hero.nick = "Own Hero";
     mockGame.hero.clan = undefined;
     mockGame.interface = "ni";
+    setTestRuntimeGame({
+      hero: {
+        characterId: "999",
+        clan: undefined,
+        name: "Own Hero",
+      },
+      interface: "ni",
+    });
     mockPartyMembers.members = [];
     mockFriends.friends = [];
   });
@@ -147,9 +170,47 @@ describe("OnlinePlayersAccountListEntry", () => {
 
     await user.hover(tile);
 
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Discord User",
+    const tooltip = await screen.findByRole("tooltip");
+
+    expect(tooltip).toHaveTextContent("Discord User");
+    expectTooltipAboveWindows(tooltip);
+  });
+
+  it("keeps the character tooltip above draggable windows", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
+    const characterTrigger = container.querySelector<HTMLElement>(
+      '[style*="hero.gif"]',
+    );
+
+    expect(characterTrigger).not.toBeNull();
+    if (!characterTrigger) {
+      throw new Error("Character tooltip trigger was not rendered");
+    }
+    await user.hover(characterTrigger);
+
+    const tooltip = await screen.findByRole("tooltip");
+
+    expect(tooltip).toHaveTextContent("Hero (123w)");
+    expectTooltipAboveWindows(tooltip);
+  });
+
+  it("keeps the verified account tooltip above draggable windows", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <OnlinePlayersAccountListEntry
+        presence={createPresence({ margonemAccountVerified: true })}
+      />,
+    );
+    await user.hover(screen.getByLabelText("Zweryfikowane konto Margonem"));
+
+    const tooltip = await screen.findByRole("tooltip");
+
+    expect(tooltip).toHaveTextContent("Zweryfikowane konto Margonem");
+    expectTooltipAboveWindows(tooltip);
   });
 
   it("shows double click invite hint in the tile tooltip when player can be invited", async () => {
@@ -209,7 +270,7 @@ describe("OnlinePlayersAccountListEntry", () => {
   });
 
   it("highlights party members and hides invite action", () => {
-    mockPartyMembers.members = [{ id: 10 }];
+    mockPartyMembers.members = [{ characterId: "10" }];
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -220,7 +281,7 @@ describe("OnlinePlayersAccountListEntry", () => {
   });
 
   it("does not invite party members on tile double click", () => {
-    mockPartyMembers.members = [{ id: 10 }];
+    mockPartyMembers.members = [{ characterId: "10" }];
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -240,7 +301,14 @@ describe("OnlinePlayersAccountListEntry", () => {
       name: "Karhu",
       rank: 100,
     };
-    mockPartyMembers.members = [{ id: 10 }];
+    mockPartyMembers.members = [{ characterId: "10" }];
+    setTestRuntimeGame({
+      hero: {
+        characterId: "10",
+        clan: { id: 15191, name: "Karhu", rank: 100 },
+        name: "Hero",
+      },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -255,6 +323,9 @@ describe("OnlinePlayersAccountListEntry", () => {
   it("does not invite the current player on tile double click", () => {
     mockGame.hero.id = 10;
     mockGame.hero.nick = "Hero";
+    setTestRuntimeGame({
+      hero: { characterId: "10", name: "Hero" },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -272,6 +343,11 @@ describe("OnlinePlayersAccountListEntry", () => {
       name: "Karhu",
       rank: 100,
     };
+    setTestRuntimeGame({
+      hero: {
+        clan: { id: 15191, name: "Karhu", rank: 100 },
+      },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -287,6 +363,11 @@ describe("OnlinePlayersAccountListEntry", () => {
       name: "Karhu",
       rank: 100,
     };
+    setTestRuntimeGame({
+      hero: {
+        clan: { id: 15191, name: "Karhu", rank: 100 },
+      },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry
@@ -302,6 +383,9 @@ describe("OnlinePlayersAccountListEntry", () => {
   it("keeps self highlight for afk current player and shows warning icon", () => {
     mockGame.hero.id = 10;
     mockGame.hero.nick = "Hero";
+    setTestRuntimeGame({
+      hero: { characterId: "10", name: "Hero" },
+    });
 
     const { container } = render(
       <OnlinePlayersAccountListEntry

@@ -1,5 +1,5 @@
 import { MessageType } from "@/api/chat.api";
-import type { ChatMessageResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import type { ChatReplyDraft } from "@/store/chat.store";
 
 const MAX_REPLY_SNIPPET_LENGTH = 72;

@@ -6,7 +6,7 @@
   "license": "MIT",
   "author": "",
   "scripts": {
-    "prebuild": "pnpm api:generate",
+    "prebuild": "node ../../tools/clean-swagger-metadata.mjs && pnpm api:generate",
     "build": "nest build",
     "format": "oxfmt src test",
     "dev": "nest start --watch",

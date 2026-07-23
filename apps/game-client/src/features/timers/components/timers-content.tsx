@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { NativeScrollArea } from "@/components/ui/native-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { WorldSelector } from "@/components/world-selector";
 import { TimersFilters } from "./timers-filters";
@@ -66,7 +66,7 @@ export const TimersContent: FC<TimersContentProps> = ({
         <TimersFilters filtersKey={settingsKey} />
       )}
 
-      <NativeScrollArea
+      <ScrollArea
         data-testid="timers-scroll-container"
         className="ll:flex-1 ll:w-full! ll:py-1"
       >
@@ -80,7 +80,7 @@ export const TimersContent: FC<TimersContentProps> = ({
             minColumnWidth={minColumnWidth}
           />
         )}
-      </NativeScrollArea>
+      </ScrollArea>
 
       {!compactView && (
         <TimersFooter

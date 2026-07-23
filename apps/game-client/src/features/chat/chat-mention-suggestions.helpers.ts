@@ -3,10 +3,8 @@ import {
   isChatMentionBoundary,
   normalizeChatMentionName,
 } from "./chat-mentions.helpers";
-import type {
-  MemberSummaryResponseDtoOutput,
-  RoleResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
+import type { RoleResponseDtoOutput } from "@lootlog/api-client/models/main/role-response-dto-output";
 
 export type ActiveChatMention = {
   start: number;

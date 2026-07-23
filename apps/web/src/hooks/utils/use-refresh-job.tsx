@@ -3,7 +3,7 @@ import type { RefreshJobUpdate } from "@/types/refresh-job";
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
 
 export const useRefreshJob = (
   guildId: string | undefined,

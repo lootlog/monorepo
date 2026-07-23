@@ -8,13 +8,12 @@ import { getDetectorRoutingSettingsTranslations } from "@/features/settings/comp
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorRoutingRule } from "@lootlog/types";
 import { Plus } from "lucide-react";
-import { type FC, useEffect, useRef, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
-import { useDeepCompareEffect } from "@/hooks/use-deep-compare-effect";
+import { type FC, useEffect, useState } from "react";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 const LEVEL_MIN = 0;
@@ -177,7 +176,9 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
   const translations = getDetectorRoutingSettingsTranslations();
 
   const currentRoutingRules = accountSettings.routingRules;
-  const deferredSyncFieldRef = useRef<string | null>(null);
+  const [deferredSyncField, setDeferredSyncField] = useState<string | null>(
+    null,
+  );
   const [openRuleIds, setOpenRuleIds] = useState<string[]>([]);
   const debouncedUpdate = useDebouncedCallback(
     (
@@ -188,7 +189,7 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
     300,
   );
 
-  const { control, watch, reset, setValue, formState, register, getValues } =
+  const { control, reset, setValue, formState, register, getValues } =
     useForm<FormData>({
       resolver: zodResolver(FormSchema),
       defaultValues: {
@@ -201,7 +202,7 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
     keyName: "fieldKey",
   });
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     const nextFormValues = {
       routingRules: cloneRoutingRules(currentRoutingRules),
     };
@@ -218,22 +219,14 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
     reset(nextFormValues);
   }, [currentRoutingRules, getValues, reset]);
 
-  const watchedData = watch();
+  const watchedData = useWatch({ control }) as FormData;
   const routingRules = watchedData.routingRules ?? [];
-  const routingRuleIdsJson = JSON.stringify(
-    routingRules.map((rule) => rule.id),
+  const availableRuleIds = new Set(routingRules.map((rule) => rule.id));
+  const visibleOpenRuleIds = new Set(
+    openRuleIds.filter((ruleId) => availableRuleIds.has(ruleId)),
   );
   const availableGuildIds = guilds?.map((guild) => guild.id) ?? [];
-
-  useEffect(() => {
-    const availableRuleIds = new Set<string>(JSON.parse(routingRuleIdsJson));
-
-    setOpenRuleIds((currentOpenRuleIds) => {
-      return currentOpenRuleIds.filter((ruleId) =>
-        availableRuleIds.has(ruleId),
-      );
-    });
-  }, [routingRuleIdsJson]);
+  const availableGuildIdsJson = JSON.stringify(availableGuildIds);
 
   const syncCurrentValues = () => {
     if (!accountId || !guilds || !isFetched) {
@@ -242,7 +235,7 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
 
     const nextRoutingRules = normalizeRoutingRules(
       getValues().routingRules ?? [],
-      availableGuildIds,
+      JSON.parse(availableGuildIdsJson) as string[],
     );
 
     if (areRoutingRulesEqual(nextRoutingRules, currentRoutingRules)) {
@@ -256,23 +249,32 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
     });
   };
 
-  useDeepCompareEffect(() => {
-    if (
-      !formState.isDirty ||
-      isDeferredRoutingSyncField(deferredSyncFieldRef.current)
-    ) {
+  useEffect(() => {
+    if (!formState.isDirty || isDeferredRoutingSyncField(deferredSyncField)) {
       return;
     }
 
-    syncCurrentValues();
+    if (!accountId || !guilds || !isFetched) return;
+    const nextRoutingRules = normalizeRoutingRules(
+      getValues().routingRules ?? [],
+      JSON.parse(availableGuildIdsJson) as string[],
+    );
+    if (areRoutingRulesEqual(nextRoutingRules, currentRoutingRules)) return;
+    debouncedUpdate({
+      detector: {
+        routingRules: nextRoutingRules,
+      },
+    });
   }, [
     accountId,
-    availableGuildIds,
+    availableGuildIdsJson,
     currentRoutingRules,
     debouncedUpdate,
+    deferredSyncField,
     formState.isDirty,
     guilds,
     isFetched,
+    getValues,
     watchedData,
   ]);
 
@@ -345,7 +347,7 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                 />
                 guilds={guilds}
                 index={index}
-                isOpen={openRuleIds.includes(ruleId)}
+                isOpen={visibleOpenRuleIds.has(ruleId)}
                 label={label}
                 minLevel={rule?.minLevel ?? LEVEL_MIN}
                 maxLevel={rule?.maxLevel ?? LEVEL_MAX}
@@ -379,11 +381,11 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                       type="text"
                       className="ll:h-7 ll:px-2 ll:text-[11px]"
                       onFocus={() => {
-                        deferredSyncFieldRef.current = `routingRules.${index}.name`;
+                        setDeferredSyncField(`routingRules.${index}.name`);
                       }}
                       {...register(`routingRules.${index}.name`, {
                         onBlur: () => {
-                          deferredSyncFieldRef.current = null;
+                          setDeferredSyncField(null);
                           syncCurrentValues();
                         },
                       })}
@@ -405,11 +407,11 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                       max={LEVEL_MAX}
                       className="ll:h-7 ll:px-2 ll:text-[11px]"
                       onFocus={() => {
-                        deferredSyncFieldRef.current = `routingRules.${index}.minLevel`;
+                        setDeferredSyncField(`routingRules.${index}.minLevel`);
                       }}
                       {...register(`routingRules.${index}.minLevel`, {
                         onBlur: () => {
-                          deferredSyncFieldRef.current = null;
+                          setDeferredSyncField(null);
                           syncCurrentValues();
                         },
                         setValueAs: (value) => {
@@ -448,11 +450,11 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                       max={LEVEL_MAX}
                       className="ll:h-7 ll:px-2 ll:text-[11px]"
                       onFocus={() => {
-                        deferredSyncFieldRef.current = `routingRules.${index}.maxLevel`;
+                        setDeferredSyncField(`routingRules.${index}.maxLevel`);
                       }}
                       {...register(`routingRules.${index}.maxLevel`, {
                         onBlur: () => {
-                          deferredSyncFieldRef.current = null;
+                          setDeferredSyncField(null);
                           syncCurrentValues();
                         },
                         setValueAs: (value) => {
@@ -489,11 +491,11 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
                       type="text"
                       className="ll:h-7 ll:px-2 ll:text-[11px]"
                       onFocus={() => {
-                        deferredSyncFieldRef.current = `routingRules.${index}.world`;
+                        setDeferredSyncField(`routingRules.${index}.world`);
                       }}
                       {...register(`routingRules.${index}.world`, {
                         onBlur: () => {
-                          deferredSyncFieldRef.current = null;
+                          setDeferredSyncField(null);
                           syncCurrentValues();
                         },
                       })}

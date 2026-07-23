@@ -5,6 +5,7 @@ import type { JSX, ReactNode } from "react";
 
 import { CookieConsent } from "@/src/components/cookie-consent";
 import { I18nProvider } from "@/src/components/i18n-provider";
+import { MotionProvider } from "@/src/components/motion-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -78,8 +79,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-white`}
       >
         <I18nProvider>
-          {children}
-          <CookieConsent />
+          <MotionProvider>
+            {children}
+            <CookieConsent />
+          </MotionProvider>
         </I18nProvider>
       </body>
     </html>

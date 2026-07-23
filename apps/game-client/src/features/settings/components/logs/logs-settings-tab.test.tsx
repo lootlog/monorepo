@@ -133,12 +133,15 @@ describe("LogsSettingsTab", () => {
 
     await user.clear(screen.getByPlaceholderText("Szukaj w logach"));
     await user.click(screen.getByLabelText("Typ akcji"));
-    await user.click(
-      within(screen.getByRole("listbox")).getByText("Dodanie timera"),
-    );
+    const actionTypeListbox = screen.getByRole("listbox");
+    await user.click(within(actionTypeListbox).getByText("Dodanie timera"));
 
-    expect(screen.getAllByText("Dodanie timera").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Dodanie łupu")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Dodanie timera" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Dodanie łupu" }),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Status akcji"));
     await user.click(screen.getByText("Błąd"));
@@ -185,11 +188,12 @@ describe("LogsSettingsTab", () => {
     await user.click(actionTypeSelect);
     expect(screen.getByRole("listbox")).toBeInTheDocument();
 
-    fireEvent.pointerDown(actionTypeSelect, { button: 0 });
+    await user.click(actionTypeSelect);
 
     await waitFor(() => {
       expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     });
+    expect(actionTypeSelect).toHaveAttribute("aria-expanded", "false");
   });
 
   it("switches between filter dropdowns without keeping the previous one open", async () => {

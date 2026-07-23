@@ -1,9 +1,7 @@
-import { isApiError } from "@/lib/api-client";
-import { userLootlogConfigControllerGetPlayersCatchingGuilds } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
-import type {
-  UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem,
-  UserLootlogPlayersCatchingGuildsResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+import { isApiError } from "@lootlog/api-client/transport";
+import { userLootlogConfigControllerGetPlayersCatchingGuilds } from "@lootlog/api-client/react-query/main/user-lootlog-config";
+import type { UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem } from "@lootlog/api-client/models/main/user-lootlog-players-catching-guilds-request-dto-players-item";
+import type { UserLootlogPlayersCatchingGuildsResponseDtoOutput } from "@lootlog/api-client/models/main/user-lootlog-players-catching-guilds-response-dto-output";
 import {
   type CharacterTooltipCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,

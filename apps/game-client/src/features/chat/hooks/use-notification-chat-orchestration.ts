@@ -1,4 +1,4 @@
-import { useMessagingControllerSendNotification } from "@/lib/api/generated/main/messaging/messaging";
+import { useMessagingControllerSendNotification } from "@lootlog/api-client/react-query/main/messaging";
 
 type StartNotificationMessageOptions<TResult> = {
   guildIds: string[];

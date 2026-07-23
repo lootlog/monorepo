@@ -2,10 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import type {
-  TimerHistoryResponseDto,
-  TimerResponseDto,
-} from "@/lib/api/generated/main/model";
+import type { TimerHistoryResponseDto } from "@lootlog/api-client/models/main/timer-history-response-dto";
+import type { TimerResponseDto } from "@lootlog/api-client/models/main/timer-response-dto";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 const mockGetTimerHistory = vi.fn();
@@ -61,7 +59,7 @@ vi.mock("@/api/timers.api", () => ({
   normalizeTimerResponse: (timer: TimerResponseDto) => timer,
 }));
 
-vi.mock("@/lib/api/generated/main/timers/timers", () => ({
+vi.mock("@lootlog/api-client/react-query/main/timers", () => ({
   getTimersControllerGetTimerHistoryQueryKey: () => ["timer-history"],
   useTimersControllerGetTimerHistory: (...args: unknown[]) =>
     mockGetTimerHistory(...args),

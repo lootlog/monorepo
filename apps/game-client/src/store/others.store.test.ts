@@ -1,18 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Other } from "@lootlog/margonem/others";
+import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { useOthersStore } from "./others.store";
 
-const createOther = (nick: string): Other =>
-  ({
-    d: {
-      account: 1,
-      icon: `${nick}.gif`,
-      id: nick,
-      lvl: 300,
-      nick,
-      prof: "w",
-    },
-  }) as Other;
+const createOther = (name: string): RuntimeOther =>
+  Object.freeze({
+    accountId: "1",
+    characterId: name,
+    icon: `${name}.gif`,
+    level: 300,
+    name,
+    profession: "w",
+  });
 
 describe("useOthersStore", () => {
   beforeEach(() => {

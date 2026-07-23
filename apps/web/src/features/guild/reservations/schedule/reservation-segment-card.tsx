@@ -17,7 +17,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { Ban, MessageSquareText, Trash2 } from "lucide-react";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-reference-response-dto-output";
 import type { ReservationSegment } from "./types";
 import {
   formatSegmentTime,

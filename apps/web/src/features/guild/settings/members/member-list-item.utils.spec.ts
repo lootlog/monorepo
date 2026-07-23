@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import type { MemberResponseDto as GuildMember } from "@lootlog/api-client/models/main/member-response-dto";
 import {
   compareMemberListSortValues,
   getMemberAccessState,

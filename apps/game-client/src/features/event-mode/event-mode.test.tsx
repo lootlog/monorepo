@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Game } from "@/lib/game";
 import { useEventModeSelectionStore } from "@/store/event-mode-selection.store";
+import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { EventMode } from "./event-mode";
 
@@ -64,7 +64,23 @@ describe("EventMode", () => {
       ...state,
       "event-mode": { ...state["event-mode"], open: true },
     }));
-    vi.spyOn(Game, "map", "get").mockReturnValue({ id: 200 } as never);
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "account-1",
+        characterId: "character-1",
+        currentHp: 100,
+        icon: "hero.gif",
+        level: 100,
+        maxHp: 100,
+        name: "Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 200, name: "Mapa 200", visibility: 0 },
+      world: "tempest",
+    });
   });
 
   it("renders nothing during initial loading or an initial error", () => {

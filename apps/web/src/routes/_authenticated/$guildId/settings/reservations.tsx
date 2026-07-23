@@ -4,7 +4,7 @@ import { ReservationsSettingsSkeleton } from "@/features/guild/settings/reservat
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryOptions,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import { canManageGuild } from "@/lib/guild-permissions";
 import {
   throwForbiddenRouteError,

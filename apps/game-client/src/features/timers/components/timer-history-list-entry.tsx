@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { TimerHistoryResponseDto } from "@/lib/api/generated/main/model";
+import type { TimerHistoryResponseDto } from "@lootlog/api-client/models/main/timer-history-response-dto";
 import { cn } from "@/lib/utils";
 import { format } from "@/utils/local-date";
 import { Plus, RotateCcw, Trash2, Undo2 } from "lucide-react";
@@ -80,7 +80,14 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
   const ActionIcon = actionConfig.Icon;
 
   return (
-    <Tooltip open={tooltipOpen}>
+    <Tooltip
+      open={tooltipOpen}
+      onOpenChange={(nextOpen, eventDetails) => {
+        if (eventDetails.reason === "outside-press") {
+          setTooltipOpen(nextOpen);
+        }
+      }}
+    >
       <TooltipTrigger asChild>
         <span
           className="ll:block"
@@ -155,9 +162,6 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
         <TooltipContent
           side="right"
           className="ll:w-72 ll:max-w-72 ll:overflow-hidden ll:p-0 ll:text-left ll:shadow-lg"
-          onPointerDownOutside={() => {
-            setTooltipOpen(false);
-          }}
         >
           <div className="ll:bg-black/35 ll:p-2">
             <div className="ll:flex ll:items-center ll:gap-2">

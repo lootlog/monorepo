@@ -2,21 +2,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as UsersModule from "@/lib/api/generated/main/users/users";
-import type {
-  UpdateUserPreferencesDtoTheme,
-  UpdateUserPreferencesDto,
-  UserPreferencesResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+import * as UsersModule from "@lootlog/api-client/react-query/main/users";
+import type { UpdateUserPreferencesDtoTheme } from "@lootlog/api-client/models/main/update-user-preferences-dto-theme";
+import type { UpdateUserPreferencesDto } from "@lootlog/api-client/models/main/update-user-preferences-dto";
+import type { UserPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-preferences-response-dto-output";
 import { useUpdateUserPreferences } from "./use-user-preferences";
 
 const { mockUpdateUserPreferences } = vi.hoisted(() => ({
   mockUpdateUserPreferences: vi.fn(),
 }));
 
-vi.mock("@/lib/api/generated/main/users/users", async () => {
+vi.mock("@lootlog/api-client/react-query/main/users", async () => {
   const actual = await vi.importActual<typeof UsersModule>(
-    "@/lib/api/generated/main/users/users",
+    "@lootlog/api-client/react-query/main/users",
   );
 
   return {

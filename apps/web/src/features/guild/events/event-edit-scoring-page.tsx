@@ -23,13 +23,13 @@ import {
 import { getApiErrorMessage } from "./utils/get-api-error-message";
 import { ScoringRulesEditor } from "./components/scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "./components/scoring/scoring-mode-selector";
-import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";
+import type { EventOverviewResponseDto } from "@lootlog/api-client/models/main/event-overview-response-dto";
 import {
   getShowEventOverviewQueryKey,
   useRecalculateEventPoints,
   useShowEventOverview,
   useUpdateEvent,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 

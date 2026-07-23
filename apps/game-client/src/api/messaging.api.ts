@@ -1,12 +1,10 @@
 import {
   messagingControllerSendNotification,
   messagingControllerVolunteer,
-} from "@/lib/api/generated/main/messaging/messaging";
-import type {
-  CreateNotificationDto,
-  CreateVolunteerDto,
-  NotificationResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/messaging";
+import type { CreateNotificationDto } from "@lootlog/api-client/models/main/create-notification-dto";
+import type { CreateVolunteerDto } from "@lootlog/api-client/models/main/create-volunteer-dto";
+import type { NotificationResponseDtoOutput } from "@lootlog/api-client/models/main/notification-response-dto-output";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 
@@ -33,10 +31,13 @@ export type VolunteerOptions = Omit<CreateVolunteerDto, "character"> & {
 };
 
 export async function volunteer(options: VolunteerOptions): Promise<void> {
+  const character = buildCurrentCharacterPayload();
+  if (!character) return;
+
   const payload: CreateVolunteerDto = {
     world: options.world,
     targetDiscordId: options.targetDiscordId,
-    character: buildCurrentCharacterPayload(),
+    character,
   };
 
   await runSingleLoggedAction({

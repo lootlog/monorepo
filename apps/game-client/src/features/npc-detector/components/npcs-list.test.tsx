@@ -18,8 +18,8 @@ const mocks = vi.hoisted(() => ({
   animationEffectsEnabled: false,
 }));
 
-vi.mock("@/components/ui/native-scroll-area", () => ({
-  NativeScrollArea: ({
+vi.mock("@/components/ui/scroll-area", () => ({
+  ScrollArea: ({
     children,
     ref,
   }: {

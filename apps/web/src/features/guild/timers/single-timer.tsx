@@ -12,8 +12,8 @@ import { cn } from "@/utils/cn";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import type { TimerResponseDto } from "@/lib/api/generated/main/model";
-import { invalidateTimersControllerGetTimers } from "@/lib/api/generated/main/timers/timers";
+import type { TimerResponseDto } from "@lootlog/api-client/models/main/timer-response-dto";
+import { invalidateTimersControllerGetTimers } from "@lootlog/api-client/react-query/main/timers";
 import { useQueryClient } from "@tanstack/react-query";
 
 type SingleTimerProps = {

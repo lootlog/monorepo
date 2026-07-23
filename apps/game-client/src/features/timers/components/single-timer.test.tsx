@@ -2,7 +2,10 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Permission } from "@lootlog/types";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
+
+beforeEach(() => setTestRuntimeGame());
 
 const timerContextMenuSpy = vi.fn();
 const timerTooltipSpy = vi.fn();
@@ -83,7 +86,7 @@ vi.mock("./timer-tooltip", () => ({
   },
 }));
 
-vi.mock("@/lib/api/generated/main/guilds/guilds", () => ({
+vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
   getGuildsControllerGetGuildPermissionsQueryKey: ({
     guildId,
   }: {

@@ -1,4 +1,3 @@
-import { Game } from "@/lib/game";
 import {
   createLootDebugContext,
   logLootCreateDebug,
@@ -15,16 +14,30 @@ import { createLoot } from "@/api";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { isEmpty } from "@/utils/object-utils";
 import { useLootStore } from "@/store/game-store/loot.store";
-import { useDialogStore } from "@/store/game-store/dialog.store";
+import {
+  useDialogStore,
+  type DialogNpcContextSource,
+} from "@/store/game-store/dialog.store";
 import { reportLootSkipped } from "@/lib/error-monitoring";
+import { useNpcsStore } from "@/store/npcs.store";
+import type {
+  RuntimeGameSnapshot,
+  RuntimeIngressSnapshot,
+  RuntimeNpc,
+} from "@/lib/margonem-runtime/runtime.types";
+import { useGameStore } from "@/store/game.store";
 
 export class LootEventProcessor {
-  handleLootFromBattle(event: GameEvent): void {
+  handleLootFromBattle(
+    event: GameEvent,
+    ingress?: RuntimeIngressSnapshot,
+  ): void {
     if (!event.item || event.loot?.source !== "fight") return;
 
     const debugContext = createLootDebugContext("fight");
     const battleStore = useBattleStore.getState();
     const lootStore = useLootStore.getState();
+    const game = ingress?.game ?? useGameStore.getState().game;
 
     logLootCreateDebug("event-detected", {
       ...debugContext,
@@ -41,37 +54,52 @@ export class LootEventProcessor {
         ...debugContext,
         battleWarriorCount: Object.keys(battleStore.battleWarriors).length,
         hasFightData: Boolean(event.f),
-        mapName: Game.map.name,
+        mapName: game?.map.name ?? "unknown",
         reason: "missing-battle-warriors",
-        world: Game.getWorldName(),
+        world: game?.world ?? "unknown",
       });
       return;
     }
 
     lootStore.setLastLootId(null);
-    this.createLootFromBattle(event, debugContext);
+    if (!game) {
+      reportLootSkipped({
+        ...debugContext,
+        mapName: "unknown",
+        reason: "missing-runtime-game-snapshot",
+        world: "unknown",
+      });
+      return;
+    }
+    this.createLootFromBattle(event, debugContext, game);
   }
 
-  handleDialogLoot(event: GameEvent): void {
+  handleDialogLoot(event: GameEvent, ingress?: RuntimeIngressSnapshot): void {
     if (!event.item || event.loot?.source !== "dialog") return;
 
     const debugContext = createLootDebugContext("dialog");
     const dialogStore = useDialogStore.getState();
+    const game = ingress?.game ?? useGameStore.getState().game;
+    const eventNpcDelIds = (event.npcs_del ?? []).map((npc) => npc.id);
     logLootCreateDebug("event-detected", {
       ...debugContext,
+      dialogNpcContext: dialogStore.npcContext,
       event,
-      talkingNpcId: dialogStore.talkingNpcId,
+      eventNpcDelIds,
     });
-    if (!dialogStore.talkingNpcId) {
+    if (!dialogStore.npcContext) {
       logLootCreateDebug("skipped", {
         ...debugContext,
-        reason: "missing-talking-npc-id",
+        eventNpcDelIds,
+        reason: "missing-dialog-npc-context",
       });
       reportLootSkipped({
         ...debugContext,
-        mapName: Game.map.name,
-        reason: "missing-talking-npc-id",
-        world: Game.getWorldName(),
+        eventNpcDelIds,
+        mapName: game?.map.name ?? "unknown",
+        reason: "missing-dialog-npc-context",
+        requestedNpcIds: eventNpcDelIds,
+        world: game?.world ?? "unknown",
       });
       return;
     }
@@ -79,36 +107,49 @@ export class LootEventProcessor {
     const lootStore = useLootStore.getState();
     lootStore.setLastLootId(null);
 
-    if (event.npcs_del?.length) {
-      this.createLootFromDialog(event, debugContext);
-    } else if (dialogStore.talkingNpcId) {
-      const npc = Game.getNpc(+dialogStore.talkingNpcId);
-      if (npc) {
-        this.createLootFromDialog(
-          { ...event, npcs_del: [{ id: npc.id }] },
-          debugContext,
-        );
-      } else {
-        logLootCreateDebug("skipped", {
-          ...debugContext,
-          npcId: dialogStore.talkingNpcId,
-          reason: "missing-fallback-npc",
-        });
-        reportLootSkipped({
-          ...debugContext,
-          mapName: Game.map.name,
-          reason: "missing-fallback-npc",
-          requestedNpcIds: [+dialogStore.talkingNpcId],
-          resolvedNpcCount: 0,
-          world: Game.getWorldName(),
-        });
-      }
+    const { npcContext } = dialogStore;
+    const npc =
+      npcContext.npc ?? useNpcsStore.getState().getNpc(npcContext.npcId);
+    const resolutionSource: DialogNpcContextSource = npcContext.npc
+      ? npcContext.source
+      : "fallback-lookup";
+
+    if (!npc || isEmpty(npc)) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        eventNpcDelIds,
+        npcId: npcContext.npcId,
+        reason: "missing-dialog-npc-snapshot",
+        resolutionSource,
+      });
+      reportLootSkipped({
+        ...debugContext,
+        eventNpcDelIds,
+        mapName: game?.map.name ?? "unknown",
+        reason: "missing-dialog-npc-snapshot",
+        requestedNpcIds: [npcContext.npcId],
+        resolvedNpcCount: 0,
+        world: game?.world ?? "unknown",
+      });
+      return;
     }
+
+    if (!game) {
+      reportLootSkipped({
+        ...debugContext,
+        mapName: "unknown",
+        reason: "missing-runtime-game-snapshot",
+        world: "unknown",
+      });
+      return;
+    }
+    this.createLootFromDialog(event, debugContext, npc, resolutionSource, game);
   }
 
   private createLootFromBattle(
     event: GameEvent,
     debugContext: LootCreateDebugContext,
+    game: RuntimeGameSnapshot,
   ): void {
     const loot = event.loot;
     if (!loot) return;
@@ -123,9 +164,9 @@ export class LootEventProcessor {
           useBattleStore.getState().battleWarriors,
         ).length,
         hasFightData: false,
-        mapName: Game.map.name,
+        mapName: game.map.name,
         reason: "missing-fight-data",
-        world: Game.getWorldName(),
+        world: game.world,
       });
       return;
     }
@@ -142,28 +183,30 @@ export class LootEventProcessor {
           useBattleStore.getState().battleWarriors,
         ).length,
         hasFightData: true,
-        mapName: Game.map.name,
+        mapName: game.map.name,
         parsedLootCount: 0,
         reason: "empty-parsed-loots",
-        world: Game.getWorldName(),
+        world: game.world,
       });
       return;
     }
 
     const battleStore = useBattleStore.getState();
-    const { npcs, party } = getBattleParticipants(battleStore.battleWarriors);
-    const hero = Game.hero;
-    const map = Game.map;
+    const { npcs, party } = getBattleParticipants(
+      battleStore.battleWarriors,
+      game,
+    );
+    const { hero, map } = game;
 
     const payload = {
-      world: Game.getWorldName(),
+      world: game.world,
       source: loot.source.toUpperCase(),
       location: map.name,
       npcs,
       loots,
       players: party,
-      accountId: String(hero.account),
-      characterId: String(hero.id),
+      accountId: hero.accountId,
+      characterId: hero.characterId,
     };
 
     logLootCreateDebug("request-prepared", {
@@ -192,6 +235,9 @@ export class LootEventProcessor {
   private createLootFromDialog(
     event: GameEvent,
     debugContext: LootCreateDebugContext,
+    npcData: RuntimeNpc,
+    resolutionSource: DialogNpcContextSource,
+    game: RuntimeGameSnapshot,
   ): void {
     const loot = event.loot;
     if (!loot) return;
@@ -201,91 +247,70 @@ export class LootEventProcessor {
       const requestedNpcIds = (event.npcs_del ?? []).map((npc) => npc.id);
       logLootCreateDebug("skipped", {
         ...debugContext,
+        eventNpcDelIds: requestedNpcIds,
+        npcId: npcData.id,
         reason: "empty-parsed-loots",
+        resolutionSource,
       });
       reportLootSkipped({
         ...debugContext,
-        mapName: Game.map.name,
+        eventNpcDelIds: requestedNpcIds,
+        mapName: game.map.name,
         parsedLootCount: 0,
         reason: "empty-parsed-loots",
         requestedNpcIds,
-        world: Game.getWorldName(),
+        world: game.world,
       });
       return;
     }
 
-    const mapName = Game.map.name;
-    const npcs: Npc[] = [];
-
-    for (const npc of event.npcs_del ?? []) {
-      const npcData = Game.getNpc(npc.id);
-
-      if (!npcData || isEmpty(npcData)) {
-        continue;
-      }
-
-      npcs.push({
+    const mapName = game.map.name;
+    const npcs: Npc[] = [
+      {
         icon: npcData.icon,
         id: npcData.id,
-        name: npcData.nick,
-        prof: npcData.prof,
+        name: npcData.name,
+        prof: npcData.profession,
         hpp: 0,
         type: npcData.type,
-        wt: npcData.wt,
-        lvl: npcData.lvl,
+        wt: npcData.weight,
+        lvl: npcData.level,
         location: mapName,
-      });
-    }
+      },
+    ];
 
-    if (npcs.length === 0) {
-      const requestedNpcIds = (event.npcs_del ?? []).map((npc) => npc.id);
-      logLootCreateDebug("skipped", {
-        ...debugContext,
-        npcIds: requestedNpcIds,
-        reason: "unresolved-dialog-npcs",
-      });
-      reportLootSkipped({
-        ...debugContext,
-        mapName,
-        reason: "unresolved-dialog-npcs",
-        requestedNpcIds,
-        resolvedNpcCount: 0,
-        world: Game.getWorldName(),
-      });
-      return;
-    }
-
-    const hero = Game.hero;
+    const { hero } = game;
     const players: PartyMember[] = [
       {
-        id: hero.id,
-        name: hero.nick,
-        icon: hero.img,
-        prof: hero.prof,
-        hpp: Math.floor(
-          (hero.warrior_stats.hp / hero.warrior_stats.maxhp) * 100,
-        ),
-        lvl: hero.lvl,
-        accountId: hero.account,
+        id: Number(hero.characterId),
+        name: hero.name,
+        icon: hero.icon,
+        prof: hero.profession,
+        hpp: Math.floor((hero.currentHp / hero.maxHp) * 100),
+        lvl: hero.level,
+        accountId: Number(hero.accountId),
       },
     ];
 
     const payload = {
-      world: Game.getWorldName(),
+      world: game.world,
       source: loot.source.toUpperCase(),
       location: mapName,
       loots,
       npcs,
       players,
-      accountId: String(hero.account),
-      characterId: String(hero.id),
+      accountId: hero.accountId,
+      characterId: hero.characterId,
     };
 
     logLootCreateDebug("request-prepared", {
       ...debugContext,
+      eventNpcDelIds: (event.npcs_del ?? []).map((npc) => npc.id),
       payload,
+      resolutionSource,
     });
 
+    useDialogStore.getState().clearNpcContext();
     createLoot(payload, debugContext)
       .then((response) => {
         useLootStore.getState().setLastLootId(response.id);

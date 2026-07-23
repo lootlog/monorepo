@@ -1,10 +1,10 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { MessageType } from "@/api/chat.api";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { CommandActions } from "./components/command-actions";
 import {
@@ -32,8 +32,17 @@ export const CommandWindow = () => {
     })),
   );
 
-  const characterId = String(Game.hero.id);
-  const world = Game.getWorldName();
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
+  const heroName = useGameStore((state) => state.game?.hero.name ?? "");
+  const heroLevel = useGameStore((state) => state.game?.hero.level ?? 0);
+  const heroProfession = useGameStore(
+    (state) => state.game?.hero.profession ?? "",
+  );
+  const heroIcon = useGameStore((state) => state.game?.hero.icon ?? "");
+  const world = useGameStore((state) => state.game?.world ?? "unknown");
 
   const open = useWindowsStore((state) => state.command.open);
   const autofocus = useWindowsStore((state) => state.command.autofocus);
@@ -42,14 +51,14 @@ export const CommandWindow = () => {
   const { startNotificationMessage } = useNotificationChatOrchestration();
   const { handlePartyCommand } = usePartyCommand();
 
-  const { watch, setValue, handleSubmit } = useForm<FormData>({
+  const { control, setValue, handleSubmit } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       message: "",
     },
   });
 
-  const messageValue = watch("message");
+  const messageValue = useWatch({ control, name: "message" });
 
   const suggestions = useCommandSuggestions({
     inputValue: messageValue,
@@ -82,12 +91,12 @@ export const CommandWindow = () => {
               message,
               type: MessageType.NOTIFICATION,
               characterData: {
-                nick: Game.hero.nick,
-                id: Game.hero.id,
-                acc: Game.hero.account,
-                lvl: Game.hero.lvl,
-                prof: Game.hero.prof,
-                icon: Game.hero.img,
+                nick: heroName,
+                id: Number(characterId),
+                acc: Number(accountId),
+                lvl: heroLevel,
+                prof: heroProfession,
+                icon: heroIcon,
               },
             }),
         });
@@ -101,12 +110,12 @@ export const CommandWindow = () => {
           message: data.message,
           type: MessageType.NORMAL,
           characterData: {
-            nick: Game.hero.nick,
-            id: Game.hero.id,
-            acc: Game.hero.account,
-            lvl: Game.hero.lvl,
-            prof: Game.hero.prof,
-            icon: Game.hero.img,
+            nick: heroName,
+            id: Number(characterId),
+            acc: Number(accountId),
+            lvl: heroLevel,
+            prof: heroProfession,
+            icon: heroIcon,
           },
         });
       } catch {

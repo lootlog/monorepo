@@ -47,7 +47,7 @@ describe("use-character-list helpers", () => {
     vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
     vi.stubGlobal("fetch", vi.fn());
     window.localStorage.clear();
-    window.getCookie = vi.fn(() => "hs3-token");
+    testRuntimeWindow.getCookie = vi.fn(() => "hs3-token");
   });
 
   afterEach(() => {
@@ -254,7 +254,7 @@ describe("use-character-list helpers", () => {
     });
 
     vi.setSystemTime(new Date("2026-01-01T00:16:00.000Z"));
-    window.getCookie = vi.fn(() => null);
+    testRuntimeWindow.getCookie = vi.fn(() => null);
 
     const result = await fetchCharacterList({
       accountId: 123,
@@ -303,7 +303,7 @@ describe("use-character-list helpers", () => {
     await fetchCharacterList(options);
     const cacheKey = getCharacterListCacheKey();
     vi.advanceTimersByTime(CHARACTER_LIST_CACHE_STALE_TTL_MS + 1);
-    window.getCookie = vi.fn(() => null);
+    testRuntimeWindow.getCookie = vi.fn(() => null);
 
     await expect(fetchCharacterList(options)).rejects.toThrow(
       "Missing required authentication cookie",
@@ -321,7 +321,7 @@ describe("use-character-list helpers", () => {
         JSON.stringify({ cachedAt: now, characters: [] }),
       );
     }
-    window.getCookie = vi.fn(() => null);
+    testRuntimeWindow.getCookie = vi.fn(() => null);
 
     await expect(
       fetchCharacterList({
@@ -344,3 +344,4 @@ describe("use-character-list helpers", () => {
     ).not.toBeNull();
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

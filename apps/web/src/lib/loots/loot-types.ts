@@ -1,13 +1,11 @@
-import {
-  LootItemResponseDtoRarity,
-  type LootItemResponseDto,
-  type LootNpcResponseDto,
-  type LootPlayerResponseDto,
-  LootResponseDtoSource,
-  type LootCommentResponseDto,
-  type LootResponseDto,
-  type LootShareResponseDto,
-} from "@/lib/api/generated/main/model";
+import { LootItemResponseDtoRarity } from "@lootlog/api-client/models/main/loot-item-response-dto-rarity";
+import type { LootItemResponseDto } from "@lootlog/api-client/models/main/loot-item-response-dto";
+import type { LootNpcResponseDto } from "@lootlog/api-client/models/main/loot-npc-response-dto";
+import type { LootPlayerResponseDto } from "@lootlog/api-client/models/main/loot-player-response-dto";
+import { LootResponseDtoSource } from "@lootlog/api-client/models/main/loot-response-dto-source";
+import type { LootCommentResponseDto } from "@lootlog/api-client/models/main/loot-comment-response-dto";
+import type { LootResponseDto } from "@lootlog/api-client/models/main/loot-response-dto";
+import type { LootShareResponseDto } from "@lootlog/api-client/models/main/loot-share-response-dto";
 
 export type Loot = LootResponseDto;
 export type Item = LootItemResponseDto;

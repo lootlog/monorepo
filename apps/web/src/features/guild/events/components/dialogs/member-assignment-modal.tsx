@@ -16,7 +16,7 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
+import { useMembersControllerGetGuildMembers } from "@lootlog/api-client/react-query/main/members";
 interface MemberAssignmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

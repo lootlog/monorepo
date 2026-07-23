@@ -1,40 +1,37 @@
+import { Avatar as BaseAvatar } from "@base-ui/react/avatar";
 import * as React from "react";
-import * as AvatarPrimitive from "@radix-ui/react-avatar";
-
 import { cn } from "@/lib/utils";
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn(
-      "ll::relative ll::flex ll::h-10 ll::w-10 ll::shrink-0 ll::overflow-hidden ll::rounded-full",
-      className,
-    )}
-    {...props}
-  />
-));
-Avatar.displayName = AvatarPrimitive.Root.displayName;
+const Avatar = React.forwardRef<HTMLSpanElement, BaseAvatar.Root.Props>(
+  ({ className, ...props }, ref) => (
+    <BaseAvatar.Root
+      ref={ref}
+      className={cn(
+        "ll::relative ll::flex ll::h-10 ll::w-10 ll::shrink-0 ll::overflow-hidden ll::rounded-full",
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
+Avatar.displayName = "Avatar";
 
-const AvatarImage = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("ll::aspect-square ll::h-full ll::w-full", className)}
-    {...props}
-  />
-));
-AvatarImage.displayName = AvatarPrimitive.Image.displayName;
+const AvatarImage = React.forwardRef<HTMLImageElement, BaseAvatar.Image.Props>(
+  ({ className, ...props }, ref) => (
+    <BaseAvatar.Image
+      ref={ref}
+      className={cn("ll::aspect-square ll::h-full ll::w-full", className)}
+      {...props}
+    />
+  ),
+);
+AvatarImage.displayName = "AvatarImage";
 
 const AvatarFallback = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Fallback>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
+  HTMLSpanElement,
+  BaseAvatar.Fallback.Props
 >(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Fallback
+  <BaseAvatar.Fallback
     ref={ref}
     className={cn(
       "ll::flex ll::h-full ll::w-full ll::items-center ll::justify-center ll::rounded-full ll::bg-muted",
@@ -43,6 +40,6 @@ const AvatarFallback = React.forwardRef<
     {...props}
   />
 ));
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
+AvatarFallback.displayName = "AvatarFallback";
 
 export { Avatar, AvatarImage, AvatarFallback };

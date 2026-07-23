@@ -7,7 +7,7 @@ import {
   useBattlesControllerGetPhGrowth,
   useBattlesControllerGetProfessionWinRate,
   useBattlesControllerGetUserCharacters,
-} from "@/lib/api/generated/battlelog/battles/battles";
+} from "@lootlog/api-client/react-query/battlelog/battles";
 import { StatisticsFilters } from "./components/statistics-filters";
 import { ProfessionWinRateChart } from "./components/profession-win-rate";
 import { HeadToHeadTable } from "./components/head-to-head-table";

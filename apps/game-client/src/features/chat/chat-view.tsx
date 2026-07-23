@@ -11,11 +11,11 @@ import { getGuildNamesById } from "@/lib/api/generated-helpers";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
-import { Game } from "@/lib/game";
+} from "@lootlog/api-client/react-query/main/users";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import { cn } from "@/lib/utils";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
+import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   getChatRenderableMessages,
@@ -71,9 +71,12 @@ export const ChatView = ({
       staleTime: 1000 * 60 * 5,
     },
   });
+  const currentCharacterNick = useGameStore(
+    (state) => state.game?.hero.name ?? "",
+  );
   const { membersByGuildId, mentionContextsByGuildId, messagesByGuildId } =
     useChatGuildData({
-      currentCharacterNick: Game.hero.nick,
+      currentCharacterNick,
       guilds,
       selectedGuildId,
     });

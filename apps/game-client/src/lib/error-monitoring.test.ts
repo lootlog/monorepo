@@ -174,8 +174,9 @@ describe("error monitoring", () => {
 
     reportLootSkipped({
       attemptId: "attempt-1",
+      eventNpcDelIds: [601, 602],
       mapName: "Ithan",
-      reason: "unresolved-dialog-npcs",
+      reason: "missing-dialog-npc-snapshot",
       requestedNpcIds: [501, 502],
       resolvedNpcCount: 0,
       source: "dialog",
@@ -183,10 +184,11 @@ describe("error monitoring", () => {
     });
 
     expect(sentryMocks.captureMessage).toHaveBeenCalledWith(
-      "Loot creation skipped: unresolved-dialog-npcs",
+      "Loot creation skipped: missing-dialog-npc-snapshot",
       {
         extra: {
           attemptId: "attempt-1",
+          eventNpcDelIds: [601, 602],
           mapName: "Ithan",
           requestedNpcIds: [501, 502],
           resolvedNpcCount: 0,
@@ -195,12 +197,12 @@ describe("error monitoring", () => {
         fingerprint: [
           "loot-creation-skipped",
           "dialog",
-          "unresolved-dialog-npcs",
+          "missing-dialog-npc-snapshot",
         ],
         level: "warning",
         tags: {
           feature: "loot",
-          lootReason: "unresolved-dialog-npcs",
+          lootReason: "missing-dialog-npc-snapshot",
           lootSource: "dialog",
         },
       },

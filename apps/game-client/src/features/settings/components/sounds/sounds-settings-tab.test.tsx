@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SoundSettingsResponseDto } from "@/lib/api/generated/main/model";
+import type { SoundSettingsResponseDto } from "@lootlog/api-client/models/main/sound-settings-response-dto";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 const { mockUpdateSettings, mockPlaySoundTest, mockSoundSettings, testState } =
   vi.hoisted(() => ({
@@ -23,14 +24,6 @@ const { mockUpdateSettings, mockPlaySoundTest, mockSoundSettings, testState } =
       gameInterface: "ni" as "ni" | "si",
     },
   }));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    get interface() {
-      return testState.gameInterface;
-    },
-  },
-}));
 
 vi.mock("@/components/settings/settings-section", () => ({
   SettingsSection: ({
@@ -111,6 +104,7 @@ describe("SoundsSettingsTab", () => {
     mockUpdateSettings.mockReset();
     mockPlaySoundTest.mockReset();
     testState.gameInterface = "ni";
+    setTestRuntimeGame({ interface: "ni" });
   });
 
   it("renders translated settings copy instead of raw settings keys", () => {
@@ -136,6 +130,7 @@ describe("SoundsSettingsTab", () => {
 
   it("hides map ping sound settings on the old interface", () => {
     testState.gameInterface = "si";
+    setTestRuntimeGame({ interface: "si" });
     render(<SoundsSettingsTab />);
 
     expect(

@@ -4,6 +4,7 @@ import { useBattleStore } from "@/store/game-store/battle.store";
 import { NpcType } from "@/api/npcs.api";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type * as ApiModule from "@/api";
+import { useGameStore } from "@/store/game.store";
 
 const mockCreateKill = vi.fn().mockResolvedValue({ updated: 1 });
 const mockCreateBattle = vi.fn().mockResolvedValue({ battleId: 1 });
@@ -65,8 +66,10 @@ vi.mock("@/store/battle-panel.store", () => ({
 describe("BattleEventProcessor", () => {
   let processor: BattleEventProcessor;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const { createSHA256Hash } = await import("@/helpers/create-sha-256-hash");
+    vi.mocked(createSHA256Hash).mockReset().mockResolvedValue("mock-hash-123");
     processor = new BattleEventProcessor();
     useBattleStore.getState().clearEvents();
     useBattleStore.setState({
@@ -75,6 +78,23 @@ describe("BattleEventProcessor", () => {
       lastBattleHash: "",
       lastKillHash: "",
       battleWarriors: {},
+    });
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "67890",
+        characterId: "12345",
+        currentHp: 1,
+        icon: "player.gif",
+        level: 500,
+        maxHp: 1,
+        name: "TestPlayer",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "pandora",
     });
     mockBattlePanelStore.isBattleCollectionEnabled = true;
   });
@@ -161,6 +181,47 @@ describe("BattleEventProcessor", () => {
 
       const state = useBattleStore.getState();
       expect(state.battleWarriors["12345"]).toBeDefined();
+    });
+
+    it("publishes final warriors before asynchronous battle finalization", async () => {
+      const { createSHA256Hash } =
+        await import("@/helpers/create-sha-256-hash");
+      let resolveKillHash: ((hash: string) => void) | undefined;
+      const pendingKillHash = new Promise<string>((resolve) => {
+        resolveKillHash = resolve;
+      });
+      vi.mocked(createSHA256Hash)
+        .mockImplementationOnce(() => pendingKillHash)
+        .mockResolvedValue("battle-hash");
+      useBattleStore.setState({ battleState: "in-battle" });
+
+      const pendingFinalization = processor.handle({
+        f: {
+          endBattle: 1,
+          m: ["final"],
+          w: {
+            "-100": {
+              id: -100,
+              originalId: -100,
+              name: "Boss",
+              team: 2,
+              hpp: 0,
+              lvl: 300,
+              icon: "boss.gif",
+              prof: "w",
+              wt: 85,
+              type: 2,
+            },
+          },
+        },
+      });
+
+      expect(useBattleStore.getState().battleWarriors["-100"]).toEqual(
+        expect.objectContaining({ name: "Boss", hpp: 0 }),
+      );
+
+      resolveKillHash?.("kill-hash");
+      await pendingFinalization;
     });
   });
 
@@ -1189,6 +1250,69 @@ describe("BattleEventProcessor", () => {
       expect(mockCreateBattle).toHaveBeenCalledTimes(1);
       expect(useBattleStore.getState().events).toEqual([]);
       expect(useBattleStore.getState().lastBattleHash).toBe("battle-hash");
+    });
+
+    it("does not overwrite a new battle when the previous finalization completes", async () => {
+      const { createSHA256Hash } =
+        await import("@/helpers/create-sha-256-hash");
+      let resolveKillHash: ((hash: string) => void) | undefined;
+      const pendingKillHash = new Promise<string>((resolve) => {
+        resolveKillHash = resolve;
+      });
+      vi.mocked(createSHA256Hash).mockImplementationOnce(() => pendingKillHash);
+      useBattleStore.setState({ battleState: "in-battle" });
+      const pendingPreviousFinalization = processor.handle({
+        f: {
+          endBattle: 1,
+          w: {
+            "-100": {
+              id: -100,
+              originalId: -100,
+              name: "Previous boss",
+              team: 2,
+              hpp: 0,
+              lvl: 300,
+              icon: "boss.gif",
+              prof: "w",
+              wt: 85,
+              type: 2,
+            },
+          },
+        },
+      });
+
+      await processor.handle({
+        f: {
+          init: "1",
+          w: {
+            "12345": {
+              id: 12345,
+              originalId: 12345,
+              name: "New player",
+              team: 1,
+              hpp: 100,
+              lvl: 300,
+              icon: "player.gif",
+              prof: "w",
+              wt: 0,
+              type: 0,
+            },
+          },
+        },
+      });
+      resolveKillHash?.("previous-kill-hash");
+      await pendingPreviousFinalization;
+
+      expect(useBattleStore.getState()).toEqual(
+        expect.objectContaining({
+          battleState: "in-battle",
+          battleWarriors: {
+            "12345": expect.objectContaining({ name: "New player" }),
+          },
+          lastKillHash: "",
+        }),
+      );
+      expect(mockCreateKill).not.toHaveBeenCalled();
     });
 
     it("should reset battle state after end battle", async () => {

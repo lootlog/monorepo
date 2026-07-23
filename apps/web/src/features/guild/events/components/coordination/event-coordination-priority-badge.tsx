@@ -1,17 +1,12 @@
 import { useTranslation } from "react-i18next";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock3,
-  CircleDashed,
-} from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
   getCoordinationPriorityLabelKey,
   getCoordinationPriorityTone,
 } from "../../utils/coordination-utils";
-import type { EventCoordinationResponseDtoHeroesItemPriority } from "@/lib/api/generated/main/model";
+import type { EventCoordinationResponseDtoHeroesItemPriority } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item-priority";
+import { EventCoordinationPriorityIcon } from "./event-coordination-priority-icon";
 
 interface EventCoordinationPriorityBadgeProps {
   priority: EventCoordinationResponseDtoHeroesItemPriority;
@@ -22,7 +17,6 @@ export const EventCoordinationPriorityBadge = ({
 }: EventCoordinationPriorityBadgeProps) => {
   const { t } = useTranslation();
   const tone = getCoordinationPriorityTone(priority);
-  const Icon = getPriorityIcon(priority);
 
   return (
     <Badge
@@ -38,26 +32,8 @@ export const EventCoordinationPriorityBadge = ({
         tone === "muted" && "border-border bg-muted text-muted-foreground",
       )}
     >
-      <Icon className="size-3" />
+      <EventCoordinationPriorityIcon priority={priority} />
       {t(getCoordinationPriorityLabelKey(priority))}
     </Badge>
   );
 };
-
-function getPriorityIcon(
-  priority: EventCoordinationResponseDtoHeroesItemPriority,
-) {
-  if (priority === "CRITICAL") {
-    return AlertTriangle;
-  }
-
-  if (priority === "WARNING") {
-    return Clock3;
-  }
-
-  if (priority === "OK") {
-    return CheckCircle2;
-  }
-
-  return CircleDashed;
-}

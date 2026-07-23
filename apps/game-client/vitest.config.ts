@@ -19,6 +19,8 @@ export default defineConfig({
     "import.meta.env.VITE_LOOTLOG_APP_URL": '"http://localhost"',
     "import.meta.env.VITE_COMMIT_SHA":
       '"0123456789abcdef0123456789abcdef01234567"',
+    "import.meta.env.VITE_BUILD_TIMESTAMP": '"2026-07-23T10:20:30.000Z"',
+    "import.meta.env.VITE_GAME_CLIENT_PACKAGE_VERSION": '"1.0.1-test"',
     "import.meta.env.VITE_GAME_CLIENT_VERSION": '"game-client-test"',
     "import.meta.env.VITE_GATEWAY_SOCKET_PATH": '"/gateway"',
   },
@@ -34,12 +36,10 @@ export default defineConfig({
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "node_modules/",
-        "src/benchmarks/",
-        "src/perf-fixture/",
         "src/test/",
-        "src/lib/api/generated/",
         "src/**/*.test.{ts,tsx}",
         "src/**/*.spec.{ts,tsx}",
+        "src/**/*.bench.{ts,tsx}",
         "**/*.d.ts",
         "**/*.config.*",
         "**/mockData",

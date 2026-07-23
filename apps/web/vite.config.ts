@@ -94,18 +94,6 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      // Shim aliases for use-sync-external-store (React 19 has these built-in)
-      {
-        find: /^use-sync-external-store\/shim\/with-selector(\.js)?$/,
-        replacement: path.resolve(
-          __dirname,
-          "./src/shims/use-sync-external-store-with-selector.ts",
-        ),
-      },
-      {
-        find: /^use-sync-external-store\/shim(\/index)?(\.js)?$/,
-        replacement: "react",
-      },
       // Path aliases
       {
         find: "@/components",

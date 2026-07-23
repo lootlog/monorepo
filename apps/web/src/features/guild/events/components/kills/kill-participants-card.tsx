@@ -24,12 +24,13 @@ import { toast } from "sonner";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
-import { useEventsRankingControllerUpdateKillPoint } from "@/lib/api/generated/main/events/events";
+import { useEventsRankingControllerUpdateKillPoint } from "@lootlog/api-client/react-query/main/events";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 import { aggregateMapData } from "../../utils/aggregate-map-data";
 import { formatDurationHuman } from "../../utils/format-duration";
+import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 import { normalizeBonusBreakdown } from "../../utils/normalize-bonus-breakdown";
 
 interface KillParticipantsCardProps {
@@ -55,18 +56,6 @@ interface ParticipantRowProps {
   ) => Promise<void>;
   isEditPending?: boolean;
 }
-
-const formatPoints = (points: number): string => {
-  return Number.isInteger(points) ? String(points) : points.toFixed(2);
-};
-
-const formatSignedPoints = (points: number): string => {
-  if (points > 0) {
-    return `+${formatPoints(points)}`;
-  }
-
-  return formatPoints(points);
-};
 
 const ParticipantRow = ({
   participant,

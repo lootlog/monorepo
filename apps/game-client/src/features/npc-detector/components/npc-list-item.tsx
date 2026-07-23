@@ -161,7 +161,7 @@ export const NpcListItem = ({
 
   const handleSendNotification = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      window.message(t("actions.noMatchingGuilds"));
+      showRuntimeMessage(t("actions.noMatchingGuilds"));
       return;
     }
 
@@ -182,13 +182,13 @@ export const NpcListItem = ({
       setOpen("party-finder", true);
     } catch (error) {
       console.warn("Failed to send notification:", error);
-      window.message(t("actions.messageFailed"));
+      showRuntimeMessage(t("actions.messageFailed"));
     }
   };
 
   const handleGatherParty = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      window.message(t("actions.noMatchingGuilds"));
+      showRuntimeMessage(t("actions.noMatchingGuilds"));
       return;
     }
 
@@ -207,7 +207,7 @@ export const NpcListItem = ({
       });
     } catch (error) {
       console.warn("Failed to gather party:", error);
-      window.message(t("actions.gatherPartyFailed"));
+      showRuntimeMessage(t("actions.gatherPartyFailed"));
     }
   };
 
@@ -390,3 +390,4 @@ export const NpcListItem = ({
     </div>
   );
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

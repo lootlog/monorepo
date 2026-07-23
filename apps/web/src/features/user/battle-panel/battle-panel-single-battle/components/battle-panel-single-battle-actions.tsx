@@ -6,12 +6,12 @@ import {
   invalidateBattlesControllerGetBattleRawData,
   invalidateBattlesControllerGetDashboardBattles,
   useBattlesControllerDeleteBattle,
-} from "@/lib/api/generated/battlelog/battles/battles";
+} from "@lootlog/api-client/react-query/battlelog/battles";
 import {
   invalidatePublicBattlesControllerGetPublicBattle,
   invalidatePublicBattlesControllerGetPublicBattleRaw,
   invalidatePublicBattlesControllerGetPublicBattleTimeline,
-} from "@/lib/api/generated/battlelog/public-battles/public-battles";
+} from "@lootlog/api-client/react-query/battlelog/public-battles";
 import { Button } from "@lootlog/ui/components/button";
 import {
   AlertDialog,

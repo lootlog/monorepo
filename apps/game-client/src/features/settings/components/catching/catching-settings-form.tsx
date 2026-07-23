@@ -2,17 +2,17 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
 import { type FC, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useTranslation } from "react-i18next";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
-} from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
-import { Game } from "@/lib/game";
+} from "@lootlog/api-client/react-query/main/user-lootlog-config";
+import { useGameStore } from "@/store/game.store";
 
 type CatchingSettingsFormProps = {
   characterId: string;
@@ -32,7 +32,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   onSelectionChange,
 }) => {
   const { t } = useTranslation();
-  const accountId = String(Game.hero.account);
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const queryKey =
     getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
       accountId,
@@ -54,22 +54,17 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     mutate: updateLootlogCharacterConfig,
     isPending: isUpdatingLootlogConfig,
   } = useUpdateLootlogCharactersConfig();
-  const { reset, setValue, watch } = useForm<FormData>({
+  const { control, reset, setValue, subscribe } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       catchingGuildIds: [],
     },
   });
   const configByCharacterId = lootlogCharactersConfig?.[characterId];
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitializedRef = useRef(false);
   const isResettingRef = useRef(false);
-  const mutateRef = useRef(updateLootlogCharacterConfig);
-  const onSelectionChangeRef = useRef(onSelectionChange);
-
-  mutateRef.current = updateLootlogCharacterConfig;
-  onSelectionChangeRef.current = onSelectionChange;
-  const selectedGuildIds = watch("catchingGuildIds") ?? [];
+  const selectedGuildIds =
+    useWatch({ control, name: "catchingGuildIds" }) ?? [];
 
   useEffect(() => {
     const nextCatchingGuildIds = configByCharacterId?.catchingGuildIds ?? [];
@@ -78,11 +73,12 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     reset({
       catchingGuildIds: nextCatchingGuildIds,
     });
-    onSelectionChangeRef.current?.(nextCatchingGuildIds);
-    setTimeout(() => {
+    const initializationTimeoutId = setTimeout(() => {
       isResettingRef.current = false;
       isInitializedRef.current = true;
     }, 0);
+
+    return () => clearTimeout(initializationTimeoutId);
   }, [
     guilds,
     lootlogCharactersConfig,
@@ -92,32 +88,36 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   ]);
 
   useEffect(() => {
-    const subscription = watch((value) => {
-      if (!isInitializedRef.current || isResettingRef.current) return;
+    let debounceTimerId: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = subscribe({
+      formState: { values: true },
+      callback: ({ values }) => {
+        if (!isInitializedRef.current || isResettingRef.current) return;
 
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
+        if (debounceTimerId) {
+          clearTimeout(debounceTimerId);
+        }
 
-      debounceTimerRef.current = setTimeout(() => {
-        const catchingGuildIds = (value.catchingGuildIds ?? []).filter(
-          (id): id is string => typeof id === "string",
-        );
+        debounceTimerId = setTimeout(() => {
+          const catchingGuildIds = (values.catchingGuildIds ?? []).filter(
+            (id): id is string => typeof id === "string",
+          );
 
-        mutateRef.current({
-          characterId,
-          catchingGuildIds,
-        });
-      }, 500);
+          updateLootlogCharacterConfig({
+            characterId,
+            catchingGuildIds,
+          });
+        }, 500);
+      },
     });
 
     return () => {
-      subscription.unsubscribe();
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
+      unsubscribe();
+      if (debounceTimerId) {
+        clearTimeout(debounceTimerId);
       }
     };
-  }, [characterId, watch]);
+  }, [characterId, subscribe, updateLootlogCharacterConfig]);
 
   const isPending = isLootlogConfigLoading || isUpdatingLootlogConfig;
   const isInteractionDisabled = isPending || disabled;
@@ -130,7 +130,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
       ? selectedGuildIds.filter((id) => id !== guildId)
       : [...selectedGuildIds, guildId];
 
-    onSelectionChangeRef.current?.(nextSelectedGuildIds);
+    onSelectionChange?.(nextSelectedGuildIds);
     setValue("catchingGuildIds", nextSelectedGuildIds, {
       shouldDirty: true,
       shouldTouch: true,
