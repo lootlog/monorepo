@@ -52,7 +52,7 @@ function isProductionSource(filePath) {
   return (
     filePath.startsWith("apps/game-client/src/") &&
     /\.(?:ts|tsx)$/.test(filePath) &&
-    !/\.(?:test|spec)\.(?:ts|tsx)$/.test(filePath) &&
+    !/\.(?:bench|test|spec)\.(?:ts|tsx)$/.test(filePath) &&
     !filePath.endsWith(".d.ts") &&
     !filePath.includes("/lib/api/generated/") &&
     !filePath.includes("/test/")
