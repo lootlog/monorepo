@@ -418,6 +418,36 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Regenerate and check API clients
+        env:
+          PORT: "4000"
+          RABBITMQ_URI: amqp://guest:guest@localhost:5672
+          REDIS_HOST: localhost
+          REDIS_PORT: "6379"
+          REDIS_PASSWORD: ci
+          REDIS_USERNAME: default
+          AUTH_SERVICE_URL: http://localhost:4001
+          RESERVATIONS_CARDS_URL: http://localhost:4000/reservations/cards
+          MAPS_API_URL: http://localhost:4000/maps
+          TRUSTED_ORIGINS: http://localhost
+          COOKIE_DOMAIN: localhost
+          COOKIE_PREFIX: lootlog-ci
+          ADMIN_ACCOUNT_IDS: ci-admin
+          AUTH_SECRET: ci-openapi-generation-secret
+          APP_URL: http://localhost:4001
+          POSTGRESQL_PORT: "5432"
+          POSTGRESQL_HOST: localhost
+          POSTGRESQL_USER: postgres
+          POSTGRESQL_PASSWORD: postgres
+          POSTGRESQL_DATABASE: lootlog
+          DISCORD_CLIENT_SECRET: ci
+          DISCORD_CLIENT_ID: ci
+          MEILISEARCH_HOST: http://localhost:7700
+          MEILISEARCH_API_KEY: ci
+          R2_ACCESS_KEY_ID: ci
+          R2_SECRET_ACCESS_KEY: ci
+          R2_ENDPOINT: http://localhost
+          R2_BUCKET_NAME: ci
+          API_SERVICE_URL: http://localhost:4000
         run: pnpm api:client:check
 
   build:
