@@ -142,7 +142,7 @@ function canIssueInvitationTarget(
   }
   return !usePartyStore
     .getState()
-    .members.some(({ id }) => String(id) === target.characterId);
+    .members.some(({ characterId }) => characterId === target.characterId);
 }
 
 async function executeInvitationIntent(

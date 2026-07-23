@@ -9,6 +9,7 @@
     "build": "tsc && vite build && node ./src/scripts/copy-entrypoint.mjs",
     "build:fast": "tsc && FAST_BUILD=1 vite build && node ./src/scripts/copy-entrypoint.mjs",
     "build:local-prod": "tsc && vite build --mode production-local && node ./src/scripts/generate-local-entrypoint.mjs --output ./dist/@lootlog/game-client-local.user.js --bundle-url http://127.0.0.1:4173/@lootlog/game-client.user.js",
+    "bench:runtime": "vitest bench src/lib/margonem-runtime/runtime-replay.bench.ts",
     "check-types": "tsc --noEmit",
     "check:changed-coverage": "node ./scripts/check-changed-coverage.mjs",
     "doctor": "npx -y react-doctor@latest .",

@@ -1,10 +1,11 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
-import { Game } from "@/lib/game";
+import { getMargonemInterface } from "@/lib/margonem-runtime/runtime-adapter";
 import { queryClient } from "@/lib/query-client";
 import { playSound } from "@/lib/sound-playback";
 import { useGlobalStore } from "@/store/global.store";
+import { useGameStore } from "@/store/game.store";
 import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@/lib/api/generated/main/users/users";
 import type { UserGameAccountPreferencesResponseDtoOutput } from "@/lib/api/generated/main/model";
 import {
@@ -43,7 +44,7 @@ type ResolvedTrigger = {
 };
 
 const areMapPingsEnabled = () => {
-  const accountId = Game.getAccountId();
+  const accountId = useGameStore.getState().game?.hero.accountId;
   if (!accountId) {
     return false;
   }
@@ -58,7 +59,7 @@ const areMapPingsEnabled = () => {
 
 export const useMapPings = () => {
   const { socket, connected, joined } = useSocket();
-  const isNewInterface = Game.interface === "ni";
+  const isNewInterface = getMargonemInterface() === "ni";
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
@@ -141,11 +142,13 @@ export const useMapPings = () => {
 
     const handleMapPing = (event: MapPingEvent) => {
       const tile = { x: event.x, y: event.y };
+      const game = useGameStore.getState().game;
       if (
+        !game ||
         !isMapPingType(event.type) ||
         !areMapPingsEnabled() ||
-        event.world !== Game.getWorldName() ||
-        event.mapId !== Game.map.id ||
+        event.world !== game.world ||
+        event.mapId !== game.map.id ||
         !mapPingController.isTileValid(tile)
       ) {
         return;
@@ -230,12 +233,13 @@ export const useMapPings = () => {
   };
 
   const sendMapPing = (submission: MapPingSubmission) => {
+    const game = useGameStore.getState().game;
     if (
       !socket ||
       !connected ||
       !joined ||
       !areMapPingsEnabled() ||
-      Game.map.id !== submission.mapId ||
+      game?.map.id !== submission.mapId ||
       !mapPingController.isTileValid(submission.tile)
     ) {
       return;
@@ -246,7 +250,7 @@ export const useMapPings = () => {
     const localPingId = mapPingController.addOptimistic(
       submission.tile,
       submission.mapId,
-      Game.hero.nick,
+      game.hero.name,
       submission.type,
       typeLabel,
     );
@@ -285,8 +289,8 @@ export const useMapPings = () => {
     }
 
     const trigger = resolveTrigger(event);
-    const mapId = Game.map.id;
-    if (!trigger || !Number.isInteger(mapId)) {
+    const mapId = useGameStore.getState().game?.map.id;
+    if (!trigger || typeof mapId !== "number" || !Number.isInteger(mapId)) {
       return false;
     }
 

@@ -7,6 +7,8 @@ import { useSettingsStore } from "@/store/settings.store";
 import { LootEventProcessor } from "./loot-event-processor";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type * as ApiModule from "@/api";
+import { useGameStore } from "@/store/game.store";
+import { useNpcsStore } from "@/store/npcs.store";
 
 const {
   mockCreateLoot,
@@ -120,6 +122,32 @@ const createGameNpc = (id: number, nick: string) => ({
   lvl: 240,
 });
 
+const createRuntimeNpc = (id: number, name: string) => ({
+  id,
+  templateId: id,
+  x: 1,
+  y: 1,
+  icon: "npc.gif",
+  name,
+  profession: "m",
+  type: 3,
+  weight: 90,
+  level: 240,
+});
+
+const setDialogNpcContext = (
+  npcId: number,
+  npc: ReturnType<typeof createRuntimeNpc> | null = null,
+) => {
+  const npcContext = {
+    npcId,
+    npc,
+    source: "talk-request" as const,
+  };
+  useDialogStore.getState().setNpcContext(npcContext);
+  return npcContext;
+};
+
 describe("LootEventProcessor", () => {
   let processor: LootEventProcessor;
 
@@ -136,8 +164,21 @@ describe("LootEventProcessor", () => {
     useLootStore.setState({
       lastLootId: 44,
     });
-    useDialogStore.setState({
-      talkingNpcId: null,
+    useDialogStore.getState().clearNpcContext();
+    useNpcsStore.getState().clearNpcs();
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "202",
+        characterId: "101",
+        currentHp: 500,
+        icon: "hero.gif",
+        level: 230,
+        maxHp: 1000,
+        name: "Tester",
+        profession: "w",
+      },
+      map: { id: 1, name: "Ithan", visibility: 30 },
+      world: "pandora",
     });
     useSettingsStore.getState().setLootDebugLoggingEnabled(false);
   });
@@ -228,6 +269,7 @@ describe("LootEventProcessor", () => {
 
     expect(mockGetBattleParticipants).toHaveBeenCalledWith(
       useBattleStore.getState().battleWarriors,
+      useGameStore.getState().game,
     );
     expect(mockCreateLoot).toHaveBeenCalledWith(expectedPayload, {
       attemptId: "00000000-0000-4000-8000-000000000001",
@@ -385,20 +427,23 @@ describe("LootEventProcessor", () => {
     expect(useLootStore.getState().lastLootId).toBe(44);
     expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
       attemptId: "00000000-0000-4000-8000-000000000007",
-      reason: "missing-talking-npc-id",
+      eventNpcDelIds: [],
+      reason: "missing-dialog-npc-context",
       source: "dialog",
       stage: "skipped",
     });
     expect(mockReportLootSkipped).toHaveBeenCalledWith({
       attemptId: "00000000-0000-4000-8000-000000000007",
+      eventNpcDelIds: [],
       mapName: "Ithan",
-      reason: "missing-talking-npc-id",
+      reason: "missing-dialog-npc-context",
+      requestedNpcIds: [],
       source: "dialog",
       world: "pandora",
     });
   });
 
-  it("creates dialog loot using npcs_del payload", async () => {
+  it("creates dialog loot using the tracked npc context", async () => {
     const consoleLogSpy = vi
       .spyOn(console, "log")
       .mockImplementation(() => undefined);
@@ -406,11 +451,12 @@ describe("LootEventProcessor", () => {
       "00000000-0000-4000-8000-000000000006",
     );
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    useDialogStore.setState({
-      talkingNpcId: "501",
-    });
+    const npcContext = setDialogNpcContext(501);
     mockGetLoot.mockReturnValue([{ id: 7, name: "Łup" }]);
     mockGame.getNpc.mockReturnValue(createGameNpc(501, "Mokra bestia"));
+    useNpcsStore
+      .getState()
+      .replaceNpcs([createRuntimeNpc(501, "Mokra bestia")]);
     mockCreateLoot.mockResolvedValue({
       id: 321,
     });
@@ -462,14 +508,17 @@ describe("LootEventProcessor", () => {
     });
     expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
       attemptId: "00000000-0000-4000-8000-000000000006",
+      dialogNpcContext: npcContext,
       event,
+      eventNpcDelIds: [501],
       source: "dialog",
       stage: "event-detected",
-      talkingNpcId: "501",
     });
     expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
       attemptId: "00000000-0000-4000-8000-000000000006",
+      eventNpcDelIds: [501],
       payload: expectedPayload,
+      resolutionSource: "fallback-lookup",
       source: "dialog",
       stage: "request-prepared",
     });
@@ -483,10 +532,60 @@ describe("LootEventProcessor", () => {
     expect(useLootStore.getState().lastLootId).toBe(321);
   });
 
-  it("falls back to talking npc id when dialog event has no npcs_del", async () => {
-    useDialogStore.setState({
-      talkingNpcId: "777",
+  it("attributes dialog loot to the talked npc instead of unrelated npcs_del entries", async () => {
+    setDialogNpcContext(501);
+    mockGetLoot.mockReturnValue([{ id: 7, name: "Łup" }]);
+    mockGame.getNpc.mockImplementation((npcId: number) =>
+      createGameNpc(npcId, npcId === 501 ? "Kliknięty NPC" : "Obcy NPC"),
+    );
+    useNpcsStore
+      .getState()
+      .replaceNpcs([createRuntimeNpc(501, "Kliknięty NPC")]);
+    mockCreateLoot.mockResolvedValue({ id: 321 });
+
+    processor.handleDialogLoot(createDialogLootEvent([502, 503]));
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockCreateLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npcs: [
+          expect.objectContaining({
+            id: 501,
+            name: "Kliknięty NPC",
+          }),
+        ],
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("creates dialog loot from the snapshot captured before the npc disappears", async () => {
+    useDialogStore.getState().setNpcContext({
+      npcId: 501,
+      npc: createRuntimeNpc(501, "Kliknięty NPC"),
+      source: "talk-request",
     });
+    mockGetLoot.mockReturnValue([{ id: 7, name: "Łup" }]);
+    mockGame.getNpc.mockReturnValue(undefined);
+    mockCreateLoot.mockResolvedValue({ id: 321 });
+
+    processor.handleDialogLoot(createDialogLootEvent([502, 503]));
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockCreateLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npcs: [expect.objectContaining({ id: 501, name: "Kliknięty NPC" })],
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("falls back to the canonical npc store when the context has no snapshot", async () => {
+    setDialogNpcContext(777);
     mockGetLoot.mockReturnValue([{ id: 7 }]);
     mockGame.getNpc.mockImplementation((npcId: number) => {
       if (npcId === 777) {
@@ -504,13 +603,22 @@ describe("LootEventProcessor", () => {
     mockCreateLoot.mockResolvedValue({
       id: 123,
     });
+    useNpcsStore.getState().replaceNpcs([
+      {
+        ...createRuntimeNpc(777, "Strażnik"),
+        profession: "h",
+        type: 2,
+        weight: 30,
+        level: 120,
+      },
+    ]);
 
     processor.handleDialogLoot(createDialogLootEvent());
 
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(mockGame.getNpc).toHaveBeenCalledWith(777);
+    expect(mockGame.getNpc).not.toHaveBeenCalled();
     expect(mockCreateLoot).toHaveBeenCalledTimes(1);
   });
 
@@ -522,9 +630,7 @@ describe("LootEventProcessor", () => {
       "00000000-0000-4000-8000-000000000008",
     );
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    useDialogStore.setState({
-      talkingNpcId: "777",
-    });
+    setDialogNpcContext(777);
     mockGetLoot.mockReturnValue([{ id: 7 }]);
     mockGame.getNpc.mockReturnValue(undefined);
 
@@ -534,15 +640,18 @@ describe("LootEventProcessor", () => {
     expect(useLootStore.getState().lastLootId).toBeNull();
     expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
       attemptId: "00000000-0000-4000-8000-000000000008",
-      npcId: "777",
-      reason: "missing-fallback-npc",
+      eventNpcDelIds: [],
+      npcId: 777,
+      reason: "missing-dialog-npc-snapshot",
+      resolutionSource: "fallback-lookup",
       source: "dialog",
       stage: "skipped",
     });
     expect(mockReportLootSkipped).toHaveBeenCalledWith({
       attemptId: "00000000-0000-4000-8000-000000000008",
+      eventNpcDelIds: [],
       mapName: "Ithan",
-      reason: "missing-fallback-npc",
+      reason: "missing-dialog-npc-snapshot",
       requestedNpcIds: [777],
       resolvedNpcCount: 0,
       source: "dialog",
@@ -550,7 +659,7 @@ describe("LootEventProcessor", () => {
     });
   });
 
-  it("logs when npcs deleted by a dialog can no longer be resolved", () => {
+  it("logs event npc ids when the tracked npc snapshot cannot be resolved", () => {
     const consoleLogSpy = vi
       .spyOn(console, "log")
       .mockImplementation(() => undefined);
@@ -558,9 +667,7 @@ describe("LootEventProcessor", () => {
       "00000000-0000-4000-8000-000000000009",
     );
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    useDialogStore.setState({
-      talkingNpcId: "501",
-    });
+    setDialogNpcContext(501);
     mockGetLoot.mockReturnValue([{ id: 7 }]);
     mockGame.getNpc.mockReturnValue(undefined);
 
@@ -569,15 +676,18 @@ describe("LootEventProcessor", () => {
     expect(mockCreateLoot).not.toHaveBeenCalled();
     expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
       attemptId: "00000000-0000-4000-8000-000000000009",
-      npcIds: [501],
-      reason: "unresolved-dialog-npcs",
+      eventNpcDelIds: [501],
+      npcId: 501,
+      reason: "missing-dialog-npc-snapshot",
+      resolutionSource: "fallback-lookup",
       source: "dialog",
       stage: "skipped",
     });
     expect(mockReportLootSkipped).toHaveBeenCalledWith({
       attemptId: "00000000-0000-4000-8000-000000000009",
+      eventNpcDelIds: [501],
       mapName: "Ithan",
-      reason: "unresolved-dialog-npcs",
+      reason: "missing-dialog-npc-snapshot",
       requestedNpcIds: [501],
       resolvedNpcCount: 0,
       source: "dialog",
@@ -593,9 +703,7 @@ describe("LootEventProcessor", () => {
       "00000000-0000-4000-8000-000000000010",
     );
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    useDialogStore.setState({
-      talkingNpcId: "501",
-    });
+    setDialogNpcContext(501, createRuntimeNpc(501, "Mokra bestia"));
     mockGetLoot.mockReturnValue([]);
 
     processor.handleDialogLoot(createDialogLootEvent([501]));
@@ -603,12 +711,16 @@ describe("LootEventProcessor", () => {
     expect(mockCreateLoot).not.toHaveBeenCalled();
     expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
       attemptId: "00000000-0000-4000-8000-000000000010",
+      eventNpcDelIds: [501],
+      npcId: 501,
       reason: "empty-parsed-loots",
+      resolutionSource: "talk-request",
       source: "dialog",
       stage: "skipped",
     });
     expect(mockReportLootSkipped).toHaveBeenCalledWith({
       attemptId: "00000000-0000-4000-8000-000000000010",
+      eventNpcDelIds: [501],
       mapName: "Ithan",
       parsedLootCount: 0,
       reason: "empty-parsed-loots",
@@ -616,6 +728,24 @@ describe("LootEventProcessor", () => {
       source: "dialog",
       world: "pandora",
     });
+  });
+
+  it("keeps the npc context through empty loot and consumes it after one valid loot", async () => {
+    setDialogNpcContext(501, createRuntimeNpc(501, "Mokra bestia"));
+    mockGetLoot.mockReturnValueOnce([]).mockReturnValue([{ id: 7 }]);
+    mockCreateLoot.mockResolvedValue({ id: 321 });
+
+    processor.handleDialogLoot(createDialogLootEvent([502]));
+    expect(useDialogStore.getState().npcContext?.npcId).toBe(501);
+
+    processor.handleDialogLoot(createDialogLootEvent([503]));
+    processor.handleDialogLoot(createDialogLootEvent([504]));
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
+    expect(useDialogStore.getState().npcContext).toBeNull();
   });
 
   it("logs warning when dialog loot request fails", async () => {
@@ -630,11 +760,12 @@ describe("LootEventProcessor", () => {
     );
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
 
-    useDialogStore.setState({
-      talkingNpcId: "501",
-    });
+    setDialogNpcContext(501);
     mockGetLoot.mockReturnValue([{ id: 7 }]);
     mockGame.getNpc.mockReturnValue(createGameNpc(501, "Mokra bestia"));
+    useNpcsStore
+      .getState()
+      .replaceNpcs([createRuntimeNpc(501, "Mokra bestia")]);
     mockCreateLoot.mockRejectedValue(new Error("dialog failed"));
 
     processor.handleDialogLoot(createDialogLootEvent([501]));

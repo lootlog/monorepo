@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import type { Other } from "@lootlog/margonem/others";
+import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
+import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { characterTooltipCatchingGuildsCoordinator } from "@/lib/character-tooltip-catching-guilds-coordinator";
 import {
   getLootlogOtherGlowColor,
@@ -25,7 +26,7 @@ function getEntryCharacterId(targetKey: string): string {
 }
 
 function getVisibleCatchingGuildTargets(
-  othersById: Record<string, Other>,
+  othersById: Readonly<Record<string, RuntimeOther>>,
 ): CharacterTooltipCatchingGuildsTarget[] {
   const targetsByKey = new Map<string, CharacterTooltipCatchingGuildsTarget>();
 
@@ -76,16 +77,21 @@ export function useOtherCatchingGuildGlow(): void {
 
     for (const characterId in othersById) {
       const other = othersById[characterId];
-      visibleCharacterIds.add(String(other.d.id));
+      const runtimeHandle = runtimeOtherHandles.get(characterId);
+      visibleCharacterIds.add(other.characterId);
+      if (!runtimeHandle) continue;
 
       const target = getOtherCatchingGuildsTarget(other);
       if (!target) {
-        lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_UNKNOWN);
+        lootlogOtherGlowManager.setGlow(
+          runtimeHandle,
+          LOOTLOG_OTHER_GLOW_UNKNOWN,
+        );
         continue;
       }
 
       lootlogOtherGlowManager.setGlow(
-        other,
+        runtimeHandle,
         getLootlogOtherGlowColor(entriesByKey[target.key], selectedGuildId),
       );
     }
@@ -111,8 +117,8 @@ export function useOtherCatchingGuildGlow(): void {
       for (const other of Object.values(othersById)) {
         if (getOtherCatchingGuildsTarget(other)) continue;
 
-        const accountId = String(other.d.account ?? "");
-        const characterId = String(other.d.id ?? "");
+        const accountId = other.accountId;
+        const characterId = other.characterId;
         if (!accountId || !characterId) continue;
 
         useCharacterTooltipCatchingGuildsStore

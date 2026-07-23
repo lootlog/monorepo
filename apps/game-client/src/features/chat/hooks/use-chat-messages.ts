@@ -25,7 +25,7 @@ import {
   hasCurrentUserMention,
 } from "@/features/chat/chat-mentions.helpers";
 import { useSession } from "@/hooks/auth/use-session";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import {
   invalidateChatMessagesQueries,
   removeAllChatMessagesQueries,
@@ -45,12 +45,15 @@ export const useChatMessagesListener = (
   const { connected, joined, joinedGuilds, socket } = useSocket();
   const { data: sessionData } = useSession();
   const { presentNotifications } = useNotificationPresenter();
+  const runtimeGame = useGameStore((state) => state.game);
+  const runtimeGameRef = useRef(runtimeGame);
   const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
   const onRemoteMessageRef = useRef(options?.onRemoteMessage);
   const wasConnectedRef = useRef(connected);
-  const accountCacheIdentity = `${sessionData?.user?.discordId ?? ""}\u0000${String(Game.hero.account ?? "")}`;
+  const accountCacheIdentity = `${sessionData?.user?.discordId ?? ""}\u0000${runtimeGame?.hero.accountId ?? ""}`;
   const previousAccountCacheIdentityRef = useRef(accountCacheIdentity);
   sessionDiscordIdRef.current = sessionData?.user?.discordId;
+  runtimeGameRef.current = runtimeGame;
   onRemoteMessageRef.current = options?.onRemoteMessage;
 
   useEffect(() => {
@@ -112,7 +115,7 @@ export const useChatMessagesListener = (
 
       if (
         data.senderId === sessionDiscordIdRef.current ||
-        data.characterData.nick === Game.hero.nick
+        data.characterData.nick === runtimeGameRef.current?.hero.name
       ) {
         return;
       }
@@ -123,7 +126,7 @@ export const useChatMessagesListener = (
         staleTime: 5 * 60 * 1000,
       });
       const currentUserNames = getCurrentUserMentionNames({
-        currentCharacterNick: Game.hero.nick,
+        currentCharacterNick: runtimeGameRef.current?.hero.name ?? "",
         currentMember,
       });
       const currentUserRoleNames =
@@ -148,7 +151,7 @@ export const useChatMessagesListener = (
             }),
             discordId: data.senderId,
             guildId: data.guildId,
-            world: Game.getWorldName() ?? "",
+            world: runtimeGameRef.current?.world ?? "",
             createdAt: data.timestamp,
             message: data.message,
             servers: [data.guildId],
@@ -203,7 +206,7 @@ export const useChatMessagesListener = (
 
       if (
         data.senderId !== sessionDiscordIdRef.current &&
-        data.characterData.nick !== Game.hero.nick
+        data.characterData.nick !== runtimeGameRef.current?.hero.name
       ) {
         onRemoteMessageRef.current?.(data);
       }

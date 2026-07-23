@@ -3,7 +3,7 @@ import { SettingsPanel } from "@/components/settings/settings-panel";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
-import { gameEventsManager } from "@/lib/game-events-manager";
+import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOthersStore } from "@/store/others.store";
 import { usePartyStore } from "@/store/party.store";
@@ -351,7 +351,7 @@ export const DebugTab: FC = () => {
   };
 
   const triggerEvent = (event: GameEvent, label: string) => {
-    const success = gameEventsManager.triggerManualEvent(event);
+    const success = margonemRuntimeBridge.triggerManualEvent(event);
     addLogEntry(label, success);
   };
 
@@ -359,7 +359,7 @@ export const DebugTab: FC = () => {
     try {
       const event = JSON.parse(rawJson) as GameEvent;
       setJsonError(null);
-      const success = gameEventsManager.triggerManualEvent(event);
+      const success = margonemRuntimeBridge.triggerManualEvent(event);
       addLogEntry(t("settings.debug.events.customJson"), success);
     } catch (error) {
       setJsonError(
@@ -582,12 +582,14 @@ export const DebugTab: FC = () => {
           ) : (
             partyMembers.map((member) => (
               <div
-                key={member.id}
+                key={member.characterId}
                 className="ll:text-xs ll:flex ll:gap-2 ll:items-center"
               >
-                <span className="ll:text-white">{member.nick}</span>
-                <span className="ll:text-gray-400">(ID: {member.id})</span>
-                {member.leader && (
+                <span className="ll:text-white">{member.name}</span>
+                <span className="ll:text-gray-400">
+                  (ID: {member.characterId})
+                </span>
+                {member.isLeader && (
                   <span className="ll:text-yellow-400">
                     {t("settings.debug.leader")}
                   </span>

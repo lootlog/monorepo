@@ -4,6 +4,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { MapChangeProcessor } from "./map-change-processor";
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import { useDialogStore } from "@/store/game-store/dialog.store";
 
 const mockEmit = vi.fn();
 const cancelMapPingInteraction = vi.hoisted(() => vi.fn());
@@ -50,6 +51,7 @@ describe("MapChangeProcessor", () => {
       },
     });
     useNpcDetectorStore.getState().clearNpcs();
+    useDialogStore.getState().clearNpcContext();
   });
 
   it("ignores events without town data", () => {
@@ -131,6 +133,18 @@ describe("MapChangeProcessor", () => {
     processor.handle(createMapChangeEvent(13, "Nithal"));
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+  });
+
+  it("clears the tracked dialog npc when the map changes", () => {
+    useDialogStore.getState().setNpcContext({
+      npcId: 501,
+      npc: null,
+      source: "talk-request",
+    });
+
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+
+    expect(useDialogStore.getState().npcContext).toBeNull();
   });
 
   it("does not emit for repeated map ids", () => {

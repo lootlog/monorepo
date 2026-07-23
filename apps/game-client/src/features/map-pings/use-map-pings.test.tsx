@@ -2,6 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import type { MapPingAck, MapPingEvent, MapPingType } from "@lootlog/types";
 import { GatewayEvent } from "@/config/gateway";
 import { useMapPings } from "./use-map-pings";
+import { useGameStore } from "@/store/game.store";
 
 const testState = vi.hoisted(() => ({
   connected: true,
@@ -64,6 +65,10 @@ vi.mock("@/lib/game", () => ({
     },
     map: { id: 42 },
   },
+}));
+
+vi.mock("@/lib/margonem-runtime/runtime-adapter", () => ({
+  getMargonemInterface: () => testState.gameInterface,
 }));
 
 vi.mock("@/lib/sound-playback", () => ({ playSound }));
@@ -135,6 +140,20 @@ describe("useMapPings", () => {
       mapId: 42,
       tile: { x: 12, y: 8 },
       type: "attention",
+    });
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "account-1",
+        characterId: "1",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Sender",
+        profession: "w",
+      },
+      map: { id: 42, name: "Map", visibility: 30 },
+      world: "aether",
     });
   });
 

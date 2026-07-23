@@ -85,7 +85,9 @@ export const OnlinePlayersAccountListEntry: FC<
   const isPartyMember = usePartyStore(
     (state) =>
       characterId > 0 &&
-      state.members.some((member) => member.id === characterId),
+      state.members.some(
+        (member) => member.characterId === String(characterId),
+      ),
   );
   const isFriend = useFriendsStore((state) =>
     state.isFriend(characterId.toString()),

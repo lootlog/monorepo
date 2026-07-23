@@ -4,6 +4,7 @@ import { useBattleStore } from "@/store/game-store/battle.store";
 import { NpcType } from "@/api/npcs.api";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type * as ApiModule from "@/api";
+import { useGameStore } from "@/store/game.store";
 
 const mockCreateKill = vi.fn().mockResolvedValue({ updated: 1 });
 const mockCreateBattle = vi.fn().mockResolvedValue({ battleId: 1 });
@@ -77,6 +78,20 @@ describe("BattleEventProcessor", () => {
       lastBattleHash: "",
       lastKillHash: "",
       battleWarriors: {},
+    });
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "67890",
+        characterId: "12345",
+        currentHp: 1,
+        icon: "player.gif",
+        level: 500,
+        maxHp: 1,
+        name: "TestPlayer",
+        profession: "w",
+      },
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "pandora",
     });
     mockBattlePanelStore.isBattleCollectionEnabled = true;
   });

@@ -12,6 +12,9 @@ import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type * as Api from "@/api";
 import type * as LootlogTypes from "@lootlog/types";
+import { normalizeNpc } from "@/lib/margonem-runtime/runtime-adapter";
+import { useNpcsStore } from "@/store/npcs.store";
+import { useGameStore } from "@/store/game.store";
 
 const {
   mockCreateNotification,
@@ -136,6 +139,24 @@ const createGameNpc = (overrides?: Partial<GameNpc>): GameNpc => ({
   ...overrides,
 });
 
+const setInitialNpcs = (npcs: GameNpc[]) => {
+  useNpcsStore.getState().replaceNpcs(npcs.map(normalizeNpc));
+  useGameStore.getState().replaceGame({
+    hero: {
+      accountId: "202",
+      characterId: "101",
+      currentHp: 1,
+      icon: "hero.gif",
+      level: 230,
+      maxHp: 1,
+      name: "Tester",
+      profession: "w",
+    },
+    map: { id: 1, name: "Ithan", visibility: 30 },
+    world: "pandora",
+  });
+};
+
 const createNpcTpl = (overrides?: Partial<NpcTpl>): NpcTpl =>
   ({
     id: 900,
@@ -168,6 +189,9 @@ describe("NpcsDetectionProcessor", () => {
       NpcsDetectionProcessor as unknown as { pendingDetections: unknown[] }
     ).pendingDetections = [];
     mockGame.npcs = [];
+    useNpcsStore.getState().clearNpcs();
+    useGameStore.getState().clearGame();
+    setInitialNpcs([]);
     mockGame.getNpcTpl.mockReset();
     mockGame.getNpcIcon.mockReset();
     mockGetNpcTypeByWt.mockReset();
@@ -183,7 +207,7 @@ describe("NpcsDetectionProcessor", () => {
   });
 
   it("ignores detections when current account id is missing", () => {
-    mockGame.hero.account = 0;
+    useGameStore.getState().clearGame();
 
     processor.handle(createNpcEvent());
     processor.handleInitialDetection();
@@ -257,7 +281,7 @@ describe("NpcsDetectionProcessor", () => {
       } as GameEvent);
     }
 
-    mockGame.npcs = [createGameNpc({ id: 999 })];
+    setInitialNpcs([createGameNpc({ id: 999 })]);
     mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
     readyPreferences();
     processor.flushPending("202");
@@ -276,7 +300,7 @@ describe("NpcsDetectionProcessor", () => {
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   });
 
-  it("clears pending detections and retry timers during teardown", () => {
+  it("clears pending detections during teardown without scheduling polling", () => {
     vi.useFakeTimers();
     try {
       processor.handle(createNpcEvent());
@@ -288,13 +312,6 @@ describe("NpcsDetectionProcessor", () => {
       processor.flushPending("202");
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
-      expect(
-        (
-          processor as unknown as {
-            initialDetectionRetryTimeout: ReturnType<typeof setTimeout> | null;
-          }
-        ).initialDetectionRetryTimeout,
-      ).toBeNull();
       expect(
         (
           NpcsDetectionProcessor as unknown as {
@@ -316,7 +333,7 @@ describe("NpcsDetectionProcessor", () => {
   });
 
   it("queues only one initial detection before preferences are ready", () => {
-    mockGame.npcs = [createGameNpc()];
+    setInitialNpcs([createGameNpc()]);
     mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
     mockGetNpcTypeByWt.mockReturnValue("HERO");
 
@@ -336,7 +353,7 @@ describe("NpcsDetectionProcessor", () => {
     readyPreferences({
       notifySound: true,
     });
-    mockGame.npcs = [createGameNpc()];
+    setInitialNpcs([createGameNpc()]);
     mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
     mockGetNpcTypeByWt.mockReturnValue("HERO");
 
@@ -352,7 +369,7 @@ describe("NpcsDetectionProcessor", () => {
     expect(mockPlaySound).toHaveBeenCalledWith("detector", "HERO");
   });
 
-  it("retries initial detection when game npcs are not ready yet", () => {
+  it("rebuilds the projection when bootstrap is called after NPC state becomes ready", () => {
     vi.useFakeTimers();
 
     try {
@@ -369,8 +386,8 @@ describe("NpcsDetectionProcessor", () => {
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
 
-      mockGame.npcs = [createGameNpc()];
-      vi.advanceTimersByTime(100);
+      setInitialNpcs([createGameNpc()]);
+      processor.handleInitialDetection();
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([
         expect.objectContaining({
@@ -385,14 +402,14 @@ describe("NpcsDetectionProcessor", () => {
     }
   });
 
-  it("keeps retrying initial detection while game npcs contain invalid entries", () => {
+  it("does not poll while NPC state is uninitialized", () => {
     vi.useFakeTimers();
 
     try {
       readyPreferences({
         notifySound: true,
       });
-      mockGame.npcs = [undefined as unknown as GameNpc];
+      useNpcsStore.getState().clearNpcs();
       mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
       mockGetNpcTypeByWt.mockReturnValue("HERO");
       vi.clearAllTimers();
@@ -401,23 +418,14 @@ describe("NpcsDetectionProcessor", () => {
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
 
-      mockGame.npcs = [createGameNpc()];
-      vi.advanceTimersByTime(100);
-
-      expect(useNpcDetectorStore.getState().npcs).toEqual([
-        expect.objectContaining({
-          id: 501,
-          nick: "Initial npc",
-          icon: "fallback-icon.gif",
-        }),
-      ]);
-      expect(mockPlaySound).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+      expect(mockPlaySound).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it("stops retrying initial detection after the retry limit", () => {
+  it("does not schedule retry timers for an uninitialized NPC domain", () => {
     vi.useFakeTimers();
 
     try {
@@ -428,8 +436,6 @@ describe("NpcsDetectionProcessor", () => {
       vi.clearAllTimers();
 
       processor.handleInitialDetection();
-
-      vi.advanceTimersByTime(2_000);
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
       expect(mockGetNpcTypeByWt).not.toHaveBeenCalled();
@@ -472,17 +478,19 @@ describe("NpcsDetectionProcessor", () => {
     expect(mockPlaySound).not.toHaveBeenCalled();
   });
 
-  it("uses Game fallbacks for template and icon and plays sound when configured", () => {
+  it("uses the normalized NPC store as template and icon fallback", () => {
     readyPreferences({
       notifySound: true,
     });
     mockGetNpcTypeByWt.mockReturnValue("HERO");
-    mockGame.getNpcTpl.mockReturnValue(
-      createNpcTpl({
+    setInitialNpcs([
+      createGameNpc({
+        id: 500,
         nick: "Fallback npc",
+        icon: "fallback-icon.gif",
+        tpl: 900,
       }),
-    );
-    mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
+    ]);
 
     processor.handle(
       createNpcEvent({
@@ -508,7 +516,7 @@ describe("NpcsDetectionProcessor", () => {
     readyPreferences({
       detect: false,
     });
-    mockGame.npcs = [createGameNpc()];
+    setInitialNpcs([createGameNpc()]);
     mockGetNpcTypeByWt.mockReturnValue("HERO");
 
     processor.handleInitialDetection();

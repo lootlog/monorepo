@@ -8,14 +8,15 @@ const SENTRY_APPLICATION_KEY = "lootlog-game-client";
 export type LootSkipReason =
   | "empty-parsed-loots"
   | "missing-battle-warriors"
-  | "missing-fallback-npc"
+  | "missing-dialog-npc-context"
+  | "missing-dialog-npc-snapshot"
   | "missing-fight-data"
-  | "missing-talking-npc-id"
-  | "unresolved-dialog-npcs";
+  | "missing-runtime-game-snapshot";
 
 export type LootSkipDiagnostic = {
   attemptId: string;
   battleWarriorCount?: number;
+  eventNpcDelIds?: number[];
   hasFightData?: boolean;
   mapId?: number;
   mapName?: string;

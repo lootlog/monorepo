@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
 import { GuildSwitcher } from "./guild-switcher";
 
 const mockUseAccessibleGuilds = vi.fn();
@@ -40,6 +41,20 @@ describe("GuildSwitcher", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     runtime.heroId = 123;
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "1",
+        characterId: "123",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+      },
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "tempest",
+    });
     useSettingsStore.setState({ guildIdByCharId: {} });
 
     mockUseAccessibleGuilds.mockReturnValue({
@@ -65,6 +80,7 @@ describe("GuildSwitcher", () => {
 
   it("does not write a selection before the character identity is available", () => {
     runtime.heroId = undefined;
+    useGameStore.getState().clearGame();
     render(<GuildSwitcher />);
 
     fireEvent.click(screen.getAllByRole("button")[0]);

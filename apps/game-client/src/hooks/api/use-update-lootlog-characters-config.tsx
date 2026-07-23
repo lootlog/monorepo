@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
@@ -13,7 +13,7 @@ export type UseUpdateLootlogCharacterSettings =
   CreateOrUpdateLootlogCharacterConfigDto;
 
 export const useUpdateLootlogCharactersConfig = () => {
-  const accountId = String(Game.hero.account);
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const queryClient = useQueryClient();
   const queryKey =
     getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({

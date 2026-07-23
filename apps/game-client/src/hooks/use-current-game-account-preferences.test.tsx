@@ -11,6 +11,7 @@ import {
 import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
+import { useGameStore } from "@/store/game.store";
 
 const mockUseUserGameAccountPreferences = vi.fn();
 
@@ -42,6 +43,20 @@ vi.mock("@/store/global.store", () => ({
 describe("current game account preference hooks", () => {
   beforeEach(() => {
     mockUseUserGameAccountPreferences.mockReset();
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "202",
+        characterId: "101",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+      },
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "pandora",
+    });
   });
 
   it("keeps notification settings unready until stored values exist", () => {

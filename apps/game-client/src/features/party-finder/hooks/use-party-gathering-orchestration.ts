@@ -12,7 +12,7 @@ import {
   buildCurrentCharacterPayload,
 } from "@/lib/api/generated-helpers";
 import { isApiError } from "@/lib/api-client";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import {
   selectOwnedReadyRoom,
   usePartyFinderStore,
@@ -71,6 +71,7 @@ const getActivePartyGatheringNotificationId = (error: unknown) => {
 };
 
 export const usePartyGatheringOrchestration = () => {
+  const heroName = useGameStore((state) => state.game?.hero.name ?? "");
   const [isCreatingPartyGathering, setIsCreatingPartyGathering] =
     useState(false);
   const [isCreatingNpcPartyGathering, setIsCreatingNpcPartyGathering] =
@@ -161,7 +162,7 @@ export const usePartyGatheringOrchestration = () => {
         guildIds: resolvedGuildIds,
         closeCreateWindow,
         chatMessageOptions: {
-          message: Game.hero.nick,
+          message: heroName,
           guildIds: resolvedGuildIds,
           type: MessageType.PARTY_GATHERING,
           characterData: buildChatCharacterData(),

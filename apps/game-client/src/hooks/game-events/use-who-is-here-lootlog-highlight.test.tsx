@@ -12,6 +12,7 @@ import {
   getOtherCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
+import { useGameStore } from "@/store/game.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
@@ -150,6 +151,20 @@ function setRuntime(other: Other, createTipWrapper = vi.fn()): void {
 }
 
 function setSelectedGuild(): void {
+  useGameStore.getState().replaceGame({
+    hero: {
+      accountId: "1",
+      characterId: "hero-1",
+      currentHp: 1,
+      icon: "hero.gif",
+      level: 300,
+      maxHp: 1,
+      name: "Hero",
+      profession: "w",
+    },
+    map: { id: 1, name: "Map", visibility: 30 },
+    world: "tempest",
+  });
   useSettingsStore.setState({
     guildIdByCharId: {
       "hero-1": "guild-blue",
@@ -201,6 +216,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     characterTooltipTransforms.clear();
     mocks.getPlayersCatchingGuilds.mockReset();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
+    useGameStore.getState().clearGame();
     useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
     useSettingsStore.setState({

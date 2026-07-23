@@ -2,6 +2,7 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { BattleEventProcessor } from "./battle-event-processor";
+import { useGameStore } from "@/store/game.store";
 
 const mocks = vi.hoisted(() => ({
   createBattle: vi.fn().mockResolvedValue({ battleId: "battle-1" }),
@@ -84,6 +85,20 @@ describe("BattleEventProcessor golden payload", () => {
       events: [],
       lastBattleHash: "",
       lastKillHash: "",
+    });
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "67890",
+        characterId: "12345",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+      },
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "pandora",
     });
   });
 

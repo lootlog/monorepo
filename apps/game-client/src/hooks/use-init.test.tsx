@@ -6,7 +6,13 @@ const mockSetupProxies = vi.fn();
 const mockSetGameInitCallback = vi.fn();
 const mockCleanup = vi.fn();
 const mockSetReady = vi.fn();
+const mockBridgeBootstrap = vi.fn();
 const mockGetInitializeState = vi.fn();
+const mockNpcSynchronizerInstall = vi.fn();
+const mockNpcSynchronizerHydrate = vi.fn();
+const mockNpcSynchronizerCleanup = vi.fn();
+const mockInteractionInstall = vi.fn();
+const mockInteractionCleanup = vi.fn();
 
 let capturedGameInitCallback: (() => boolean) | null = null;
 
@@ -19,8 +25,8 @@ vi.mock("@/store/global.store", () => ({
     }),
 }));
 
-vi.mock("@/lib/game-events-manager", () => ({
-  gameEventsManager: {
+vi.mock("@/lib/margonem-runtime/margonem-runtime-bridge", () => ({
+  margonemRuntimeBridge: {
     setupProxies: (...args: unknown[]) => mockSetupProxies(...args),
     setGameInitCallback: (callback: () => boolean) => {
       capturedGameInitCallback = callback;
@@ -28,12 +34,27 @@ vi.mock("@/lib/game-events-manager", () => ({
     },
     cleanup: (...args: unknown[]) => mockCleanup(...args),
     setReady: (...args: unknown[]) => mockSetReady(...args),
+    bootstrap: (...args: unknown[]) => mockBridgeBootstrap(...args),
   },
 }));
 
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getInitializeState: (...args: unknown[]) => mockGetInitializeState(...args),
+vi.mock("@/lib/margonem-runtime/runtime-adapter", () => ({
+  isMargonemRuntimeReady: (...args: unknown[]) =>
+    mockGetInitializeState(...args),
+}));
+
+vi.mock("@/lib/margonem-runtime/runtime-state-synchronizer", () => ({
+  runtimeStateSynchronizer: {
+    install: (...args: unknown[]) => mockNpcSynchronizerInstall(...args),
+    bootstrap: (...args: unknown[]) => mockNpcSynchronizerHydrate(...args),
+    cleanup: (...args: unknown[]) => mockNpcSynchronizerCleanup(...args),
+  },
+}));
+
+vi.mock("@/lib/margonem-runtime/runtime-interaction-coordinator", () => ({
+  runtimeInteractionCoordinator: {
+    install: (...args: unknown[]) => mockInteractionInstall(...args),
+    cleanup: (...args: unknown[]) => mockInteractionCleanup(...args),
   },
 }));
 
@@ -47,7 +68,13 @@ describe("useInit", () => {
     mockSetGameInitCallback.mockReset();
     mockCleanup.mockReset();
     mockSetReady.mockReset();
+    mockBridgeBootstrap.mockReset();
     mockGetInitializeState.mockReset();
+    mockNpcSynchronizerInstall.mockReset();
+    mockNpcSynchronizerHydrate.mockReset();
+    mockNpcSynchronizerCleanup.mockReset();
+    mockInteractionInstall.mockReset();
+    mockInteractionCleanup.mockReset();
   });
 
   it("registers proxies and cleans them up on unmount", () => {
@@ -55,10 +82,14 @@ describe("useInit", () => {
 
     expect(mockSetupProxies).toHaveBeenCalledTimes(1);
     expect(mockSetGameInitCallback).toHaveBeenCalledTimes(1);
+    expect(mockNpcSynchronizerInstall).toHaveBeenCalledTimes(1);
+    expect(mockInteractionInstall).toHaveBeenCalledTimes(1);
 
     unmount();
 
     expect(mockCleanup).toHaveBeenCalledTimes(1);
+    expect(mockNpcSynchronizerCleanup).toHaveBeenCalledTimes(1);
+    expect(mockInteractionCleanup).toHaveBeenCalledTimes(1);
   });
 
   it("does not initialize the game before the client is ready", () => {
@@ -84,5 +115,6 @@ describe("useInit", () => {
     });
     expect(mockSetReady).toHaveBeenCalledTimes(1);
     expect(mockSetReady).toHaveBeenCalledWith(true);
+    expect(mockNpcSynchronizerHydrate).toHaveBeenCalledTimes(1);
   });
 });

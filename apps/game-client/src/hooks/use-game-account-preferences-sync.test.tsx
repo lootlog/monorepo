@@ -8,6 +8,7 @@ import {
 } from "@/lib/game-account-preferences";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
 import * as UsersApi from "@/lib/api/generated/main/users/users";
+import { useGameStore } from "@/store/game.store";
 
 const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserGameAccountPreferences = vi.fn();
@@ -91,6 +92,20 @@ describe("useGameAccountPreferencesSync", () => {
     mockFlushPending.mockReset();
     mockGetAccountId.mockReset();
     mockGetAccountId.mockReturnValue("202");
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "202",
+        characterId: "101",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+      },
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "pandora",
+    });
   });
 
   const wrapper = ({ children }: { children: ReactNode }) =>
@@ -195,34 +210,41 @@ describe("useGameAccountPreferencesSync", () => {
     });
   });
 
-  it("resolves account id after game initialization before flushing queued detector events", () => {
-    vi.useFakeTimers();
+  it("reacts when the runtime domain publishes the account identity", () => {
+    useGameStore.getState().clearGame();
+    mockUseUserGameAccountPreferences.mockImplementation(
+      (accountId: string | null) => ({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        isFetched: accountId === "202",
+      }),
+    );
 
-    try {
-      mockGetAccountId.mockReturnValue(null);
-      mockUseUserGameAccountPreferences.mockImplementation(
-        (accountId: string | null) => ({
-          data: undefined,
-          isLoading: false,
-          isFetching: false,
-          isFetched: accountId === "202",
-        }),
-      );
+    const { rerender } = renderHook(() => useGameAccountPreferencesSync(), {
+      wrapper,
+    });
 
-      renderHook(() => useGameAccountPreferencesSync(), {
-        wrapper,
+    expect(mockFlushPending).not.toHaveBeenCalled();
+
+    act(() => {
+      useGameStore.getState().replaceGame({
+        hero: {
+          accountId: "202",
+          characterId: "101",
+          currentHp: 1,
+          icon: "hero.gif",
+          level: 300,
+          maxHp: 1,
+          name: "Hero",
+          profession: "w",
+        },
+        map: { id: 1, name: "Map", visibility: 30 },
+        world: "pandora",
       });
+    });
+    rerender();
 
-      expect(mockFlushPending).not.toHaveBeenCalled();
-
-      mockGetAccountId.mockReturnValue("202");
-      act(() => {
-        vi.advanceTimersByTime(100);
-      });
-
-      expect(mockFlushPending).toHaveBeenCalledWith("202");
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(mockFlushPending).toHaveBeenCalledWith("202");
   });
 });

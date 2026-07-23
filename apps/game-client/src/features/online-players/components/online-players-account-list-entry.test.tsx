@@ -14,7 +14,7 @@ const mockGame = vi.hoisted(() => ({
   interface: "ni",
 }));
 const mockPartyMembers = vi.hoisted(() => ({
-  members: [] as { id: number }[],
+  members: [] as { characterId: string }[],
 }));
 const mockFriends = vi.hoisted(() => ({
   friends: [] as string[],
@@ -26,7 +26,7 @@ vi.mock("@/lib/game", () => ({
 
 vi.mock("@/store/party.store", () => ({
   usePartyStore: (
-    selector: (state: { members: { id: number }[] }) => unknown,
+    selector: (state: { members: { characterId: string }[] }) => unknown,
   ) => selector({ members: mockPartyMembers.members }),
 }));
 
@@ -258,7 +258,7 @@ describe("OnlinePlayersAccountListEntry", () => {
   });
 
   it("highlights party members and hides invite action", () => {
-    mockPartyMembers.members = [{ id: 10 }];
+    mockPartyMembers.members = [{ characterId: "10" }];
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -269,7 +269,7 @@ describe("OnlinePlayersAccountListEntry", () => {
   });
 
   it("does not invite party members on tile double click", () => {
-    mockPartyMembers.members = [{ id: 10 }];
+    mockPartyMembers.members = [{ characterId: "10" }];
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
@@ -289,7 +289,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       name: "Karhu",
       rank: 100,
     };
-    mockPartyMembers.members = [{ id: 10 }];
+    mockPartyMembers.members = [{ characterId: "10" }];
 
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,

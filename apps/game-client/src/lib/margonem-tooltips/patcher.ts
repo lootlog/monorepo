@@ -1,6 +1,7 @@
 import type { Engine } from "@lootlog/margonem/engine";
 import type { Other } from "@lootlog/margonem/others";
 import { useOthersStore } from "@/store/others.store";
+import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { characterTooltipTransforms } from "./registry";
 import type { CharacterTooltipKind, MargonemTooltipCharacter } from "./types";
@@ -228,7 +229,7 @@ export function refreshCharacterTooltips(): void {
     }
   }
 
-  for (const other of Object.values(useOthersStore.getState().othersById)) {
+  for (const other of Object.values(runtimeOtherHandles.getAll())) {
     refreshCharacterTooltip(other);
   }
 }
@@ -285,9 +286,7 @@ export function installCharacterTooltipTransforms(): () => void {
     refreshCharacterTooltip(engine.hero);
   }
 
-  patchOtherCharacterTooltips(
-    Object.values(useOthersStore.getState().othersById),
-  );
+  patchOtherCharacterTooltips(Object.values(runtimeOtherHandles.getAll()));
 
   cleanupCurrentInstallation = () => {
     unsubscribeOthersStore();

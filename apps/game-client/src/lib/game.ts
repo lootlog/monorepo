@@ -1,84 +1,43 @@
 import type { GameHero } from "@lootlog/margonem/hero";
 import type { GameMap } from "@lootlog/margonem/map";
-import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
-import type { GameNpc } from "@lootlog/margonem/npcs";
-import type { GameOther } from "@lootlog/margonem/others";
+import { getMargonemInterface } from "@/lib/margonem-runtime/runtime-adapter";
+import { useGameStore } from "@/store/game.store";
 
+/**
+ * Compatibility view for UI code that has not yet migrated to `game.store`.
+ * Runtime integration code must use adapters, envelopes and domain stores.
+ */
 export class Game {
   static get interface() {
-    return typeof window.Engine === "object" ? "ni" : "si";
-  }
-
-  static getInitializeState(): boolean {
-    return (
-      window.Engine?.interface?.alreadyInitialised ||
-      window.Engine?.interface?.getAlreadyInitialised?.() ||
-      window.g?.init === 5
-    );
+    return getMargonemInterface();
   }
 
   static get hero(): GameHero {
-    return this.interface === "ni" ? window.Engine.hero.d : window.hero;
+    const hero = useGameStore.getState().game?.hero;
+    if (!hero) return undefined as unknown as GameHero;
+    return {
+      account: Number(hero.accountId),
+      id: Number(hero.characterId),
+      img: hero.icon,
+      lvl: hero.level,
+      nick: hero.name,
+      prof: hero.profession,
+      warrior_stats: {
+        hp: hero.currentHp,
+        maxhp: hero.maxHp,
+      },
+    } as GameHero;
   }
 
   static getAccountId(): string | null {
-    return this.hero?.account ? String(this.hero.account) : null;
+    return useGameStore.getState().game?.hero.accountId ?? null;
   }
 
   static get map(): GameMap {
-    return this.interface === "ni" ? window.Engine.map.d : window.map;
-  }
-
-  static get npcs(): GameNpc[] {
-    if (this.interface === "ni") {
-      return window.Engine.npcs.getDrawableList().map((npc) => npc.d);
-    } else {
-      return Object.values(window.g.npc);
-    }
-  }
-
-  static getOther(key: string): GameOther {
-    if (this.interface === "ni") {
-      const othersData = window.Engine.others.check();
-      return othersData[key]?.d;
-    } else {
-      return window.g.other?.[key];
-    }
-  }
-
-  static getNpc(key: number): GameNpc | undefined {
-    return this.interface === "ni"
-      ? window.Engine.npcs.getById(key)?.d
-      : window.g.npc?.[key];
-  }
-
-  static getNpcTpl(key: number): NpcTpl | undefined {
-    return this.interface === "ni"
-      ? window.Engine.npcTplManager.getNpcTpl(key)
-      : window.g.npcTplManager.getNpcTpl(key);
-  }
-
-  static getNpcIcon(key: number): string | undefined {
-    return this.interface === "ni"
-      ? window.Engine.npcIconManager.getNpcIcon(key)
-      : window.g.npcIconManager.getNpcIcon(key);
+    return useGameStore.getState().game?.map as GameMap;
   }
 
   static getWorldName(): string {
-    try {
-      return this.interface === "ni"
-        ? window.Engine.worldConfig.getWorldName()
-        : window.g.worldConfig.getWorldName();
-    } catch {
-      // subdomain from url as fallback
-      // https://<world>.margonem.pl || https://<world>.margonem.com
-      const host = window.location.hostname;
-      const match = host.match(/^(.*?)\.margonem\.(pl|com)$/);
-      if (match && match[1]) {
-        return match[1];
-      }
-
-      return "unknown";
-    }
+    return useGameStore.getState().game?.world ?? "unknown";
   }
 }

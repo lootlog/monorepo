@@ -1,5 +1,4 @@
 import type { EventNpc, ProcessedNpcSettings } from "@/hooks/game-events/types";
-import { Game } from "@/lib/game";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
 import type { GameNpc } from "@lootlog/margonem/npcs";
@@ -8,6 +7,7 @@ export const composeNpcFromEvent = (
   npc: EventNpc,
   tpl: NpcTpl,
   processedSettings: ProcessedNpcSettings,
+  location: string,
 ): GameNpcWithLocation => ({
   ...npc,
   icon: processedSettings.icon,
@@ -16,16 +16,17 @@ export const composeNpcFromEvent = (
   wt: tpl.wt,
   lvl: tpl.lvl,
   type: tpl.type,
-  location: Game.map.name,
+  location,
   notificationSent: false,
 });
 
 export const composeNpcFromGame = (
   npc: GameNpc,
   processedSettings: ProcessedNpcSettings,
+  location: string,
 ): GameNpcWithLocation => ({
   ...npc,
   icon: processedSettings.icon,
-  location: Game.map.name,
+  location,
   notificationSent: false,
 });

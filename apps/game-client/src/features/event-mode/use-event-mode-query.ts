@@ -1,8 +1,8 @@
 import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
 import { eventModeControllerGetEventMode } from "@/lib/api/generated/main/event-mode/event-mode";
-import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
+import { useGameStore } from "@/store/game.store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
@@ -34,9 +34,12 @@ export const useEventModeQuery = ({ active }: UseEventModeQueryOptions) => {
     (state) => state.gameState.gameInitialized,
   );
   const authenticatedLootlogUserId = sessionData?.user?.id ?? "";
-  const margonemAccountId = gameInitialized ? (Game.getAccountId() ?? "") : "";
+  const runtimeGame = useGameStore((state) => state.game);
+  const margonemAccountId = gameInitialized
+    ? (runtimeGame?.hero.accountId ?? "")
+    : "";
   const normalizedWorld = gameInitialized
-    ? Game.getWorldName().trim().toLowerCase()
+    ? (runtimeGame?.world.trim().toLowerCase() ?? "")
     : "";
   const enabled = Boolean(
     active &&

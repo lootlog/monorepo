@@ -6,6 +6,7 @@ import {
 } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
 import { appendCatchingGuildsTooltipSection } from "./catching-guilds";
 
 const createOther = (): Other =>
@@ -68,6 +69,20 @@ describe("appendCatchingGuildsTooltipSection", () => {
     useOnlineCharacterOwnersStore.getState().clearOwners();
     useSettingsStore.setState({
       guildIdByCharId: { "hero-1": "guild-1" },
+    });
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "1",
+        characterId: "hero-1",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+      },
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "tempest",
     });
     Object.defineProperty(window, "Engine", {
       configurable: true,

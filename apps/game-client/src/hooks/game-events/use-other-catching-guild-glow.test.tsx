@@ -12,6 +12,7 @@ import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.s
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGlobalStore } from "@/store/global.store";
+import { useGameStore } from "@/store/game.store";
 
 const mocks = vi.hoisted(() => ({
   afterGameEventHandler: undefined as (() => void) | undefined,
@@ -122,6 +123,24 @@ function setRuntime(heroId: number | null | undefined = 101): void {
         getDrawableList: vi.fn(() => []),
       },
     },
+  });
+  if (heroId === null || heroId === undefined) {
+    useGameStore.getState().clearGame();
+    return;
+  }
+  useGameStore.getState().replaceGame({
+    hero: {
+      accountId: "1",
+      characterId: String(heroId),
+      currentHp: 1,
+      icon: "hero.gif",
+      level: 300,
+      maxHp: 1,
+      name: "Hero",
+      profession: "w",
+    },
+    map: { id: 1, name: "Map", visibility: 30 },
+    world: "tempest",
   });
 }
 
@@ -254,7 +273,7 @@ describe("useOtherCatchingGuildGlow", () => {
       );
     });
 
-    window.Engine.hero.d.id = 202;
+    setRuntime(202);
     act(() => {
       mocks.afterGameEventHandler?.();
     });
