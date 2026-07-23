@@ -310,7 +310,7 @@ export const killsControllerGetNpcKillers = async ({ guildId, npcId }: KillsCont
 
 
 export const getKillsControllerGetMemberKillsUrl = ({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams,) => {
+    params?: KillsControllerGetMemberKillsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -330,7 +330,7 @@ export const getKillsControllerGetMemberKillsUrl = ({ guildId, memberId }: Kills
  * @summary Get kill statistics for a specific guild member
  */
 export const killsControllerGetMemberKills = async ({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams, options?: Parameters<typeof mainFetch>[1]): Promise<MemberKillsResponseDtoOutput> => {
+    params?: KillsControllerGetMemberKillsParams, options?: Parameters<typeof mainFetch>[1]): Promise<MemberKillsResponseDtoOutput> => {
 
   return mainFetch<MemberKillsResponseDtoOutput>(getKillsControllerGetMemberKillsUrl({ guildId, memberId },params),
   {

@@ -353,7 +353,7 @@ const executeFetch = async ({
 
     const fetchImplementation = configuration.fetch;
     if (fetchImplementation) {
-      return await fetchImplementation(url, requestOptions);
+      return await fetchImplementation.call(globalThis, url, requestOptions);
     }
 
     return await fetch(url, requestOptions);

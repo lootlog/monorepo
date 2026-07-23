@@ -7,6 +7,11 @@ type YamlModule = {
 };
 
 type OpenApiSchema = Record<string, unknown>;
+type OpenApiParameter = {
+  in?: string;
+  name?: string;
+  required?: boolean;
+};
 type OpenApiDocument = {
   components?: {
     schemas?: Record<string, OpenApiSchema>;
@@ -16,6 +21,7 @@ type OpenApiDocument = {
     Record<
       string,
       {
+        parameters?: OpenApiParameter[];
         responses?: Record<
           string,
           {
@@ -68,6 +74,21 @@ const requiredSchemas = [
   "NotificationJobPayloadSnapshotResponseDto",
 ] as const;
 
+const optionalLootQueryParameters = [
+  "cursor",
+  "npcLevelMin",
+  "npcLevelMax",
+  "itemLevelMin",
+  "itemLevelMax",
+  "playerLevelMin",
+  "playerLevelMax",
+] as const;
+
+const lootQueryPaths = [
+  "/guilds/{guildId}/loots",
+  "/guilds/{guildId}/loots/count",
+] as const;
+
 const assert = (condition: unknown, message: string): void => {
   if (!condition) {
     throw new Error(message);
@@ -101,5 +122,21 @@ export const checkOpenApi = (): void => {
       document.components?.schemas?.[schemaName],
       `Missing raw OpenAPI component schema ${schemaName}`,
     );
+  }
+
+  for (const pathKey of lootQueryPaths) {
+    const parameters = document.paths?.[pathKey]?.get?.parameters ?? [];
+
+    for (const parameterName of optionalLootQueryParameters) {
+      const parameter = parameters.find(
+        (candidate) =>
+          candidate.in === "query" && candidate.name === parameterName,
+      );
+
+      assert(
+        parameter?.required === false,
+        `Expected raw OpenAPI query parameter ${parameterName} for GET ${pathKey} to be optional`,
+      );
+    }
   }
 };
