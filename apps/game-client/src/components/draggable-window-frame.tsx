@@ -16,10 +16,8 @@ import {
 } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { WindowTitleBar } from "./window-title-bar";
-import {
-  cancelWindowResizeSession,
-  WindowResizeHandle,
-} from "./window-resize-handle";
+import { WindowResizeHandle } from "./window-resize-handle";
+import { cancelWindowResizeSession } from "./window-resize-session";
 
 export type DraggableWindowFrameProps = {
   children: React.ReactNode;
@@ -52,6 +50,18 @@ export type DraggableWindowFrameProps = {
 const SCROLL_AREA_VIEWPORT_SELECTOR = "[data-ll-scroll-area-viewport]";
 const MAX_HEIGHT_PREVIEW_LINE_HEIGHT = 1;
 const TRANSFORMED_MEASUREMENT_TOLERANCE = 4;
+
+const observeElementResize = (observer: ResizeObserver, element: Element) => {
+  observer.observe(element);
+};
+
+const observeElementMutations = (observer: MutationObserver, element: Node) => {
+  observer.observe(element, {
+    characterData: true,
+    childList: true,
+    subtree: true,
+  });
+};
 
 const getDeepestSingleChildElement = (element: HTMLElement) => {
   let currentElement = element;
@@ -325,6 +335,11 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
   const measuredContentHeightRef = useRef(0);
   const renderedContentHeightRef = useRef(0);
   const windowChromeHeightRef = useRef(0);
+  const [contentMeasurements, setContentMeasurements] = useState({
+    measuredContentHeight: 0,
+    renderedContentHeight: 0,
+    windowChromeHeight: 0,
+  });
   const resolvedMaxContentHeightRef = useRef<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const windowBodyRef = useRef<HTMLDivElement>(null);
@@ -347,7 +362,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
       ? null
       : Math.max(
           minHeight,
-          windowChromeHeightRef.current + previewMaxContentHeight,
+          contentMeasurements.windowChromeHeight + previewMaxContentHeight,
         );
   const getEffectiveHeight = () => {
     if (!isAutoHeightMode) {
@@ -475,6 +490,11 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
           windowChromeHeightRef.current = chromeHeight;
           measuredContentHeightRef.current = measuredContentHeight;
           renderedContentHeightRef.current = renderedContentHeight;
+          setContentMeasurements({
+            measuredContentHeight,
+            renderedContentHeight,
+            windowChromeHeight: chromeHeight,
+          });
           const nextMaxContentHeight = sanitizeMaxContentHeight(
             newSize.height - chromeHeight,
           );
@@ -515,6 +535,11 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
         windowChromeHeightRef.current = chromeHeight;
         measuredContentHeightRef.current = measuredContentHeight;
         renderedContentHeightRef.current = renderedContentHeight;
+        setContentMeasurements({
+          measuredContentHeight,
+          renderedContentHeight,
+          windowChromeHeight: chromeHeight,
+        });
       }
 
       const nextResolvedMaxContentHeight = getResolvedMaxContentHeight();
@@ -594,7 +619,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
     if (!isAutoWidthMode) {
       autoWidthRef.current = minWidth;
       setAutoWidth(minWidth);
-      return;
+      return () => undefined;
     }
 
     let animationFrameId: number | null = null;
@@ -673,7 +698,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
 
       nextObservedContentElements.forEach((element) => {
         if (!observedContentElements.has(element)) {
-          resizeObserver.observe(element);
+          observeElementResize(resizeObserver, element);
         }
       });
 
@@ -686,11 +711,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
     const visualViewport = window.visualViewport;
 
     if (contentRef.current) {
-      mutationObserver.observe(contentRef.current, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-      });
+      observeElementMutations(mutationObserver, contentRef.current);
     }
 
     window.addEventListener("resize", scheduleAutoWidthUpdate);
@@ -714,7 +735,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
     if (!isMeasuredAutoHeightMode) {
       resolvedMaxContentHeightRef.current = null;
       setAutoHeight(minHeight);
-      return;
+      return () => undefined;
     }
 
     let animationFrameId: number | null = null;
@@ -747,6 +768,11 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
       windowChromeHeightRef.current = chromeHeight;
       measuredContentHeightRef.current = measuredContentHeight;
       renderedContentHeightRef.current = renderedContentHeight;
+      setContentMeasurements({
+        measuredContentHeight,
+        renderedContentHeight,
+        windowChromeHeight: chromeHeight,
+      });
       const nextResolvedMaxContentHeight =
         resolvedMaxContentHeight ??
         sanitizeMaxContentHeight(localSize.height - chromeHeight) ??
@@ -815,7 +841,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
 
       nextObservedContentElements.forEach((element) => {
         if (!observedContentElements.has(element)) {
-          resizeObserver.observe(element);
+          observeElementResize(resizeObserver, element);
         }
       });
 
@@ -823,15 +849,11 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
     };
 
     if (titleBarRef.current) {
-      resizeObserver.observe(titleBarRef.current);
+      observeElementResize(resizeObserver, titleBarRef.current);
     }
 
     if (contentRef.current) {
-      mutationObserver.observe(contentRef.current, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-      });
+      observeElementMutations(mutationObserver, contentRef.current);
     }
 
     updateObservedContentElements();
@@ -872,8 +894,8 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
     : undefined;
   const contentHeight = isAdjustingMaxHeight
     ? (previewMaxContentHeight ?? 0)
-    : renderedContentHeightRef.current;
-  const measuredContentHeight = measuredContentHeightRef.current;
+    : contentMeasurements.renderedContentHeight;
+  const measuredContentHeight = contentMeasurements.measuredContentHeight;
   const previewShadeOffset =
     previewMaxContentHeight === null
       ? 0

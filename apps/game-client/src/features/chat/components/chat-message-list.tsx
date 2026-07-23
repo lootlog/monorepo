@@ -2,10 +2,7 @@ import { MessageType } from "@/api/chat.api";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
-import {
-  createChatScrollController,
-  type ChatScrollController,
-} from "../chat-scroll-controller";
+import { createChatScrollController } from "../chat-scroll-controller";
 import { subscribeToChatScrollToMessage } from "../chat-scroll-to-message";
 import {
   getChatRenderableMessagesSignature,
@@ -14,12 +11,17 @@ import {
 import { ChatDateDivider } from "./chat-date-divider";
 import { ChatMessage } from "./chat-message";
 import { ChatNpcMessage } from "./chat-npc-message";
+import { pruneChatRowMeasurements } from "../chat-row-measurements";
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
 
 const CHAT_AUTOSCROLL_THRESHOLD_PX = 100;
 const CHAT_LIST_FALLBACK_HEIGHT_PX = 320;
 const CHAT_LIST_GAP_PX = 4;
 const CHAT_LIST_OVERSCAN_PX = 160;
+
+const observeElementResize = (observer: ResizeObserver, element: Element) => {
+  observer.observe(element);
+};
 
 type ChatGuildData = ReturnType<typeof useChatGuildData>;
 
@@ -46,20 +48,6 @@ type MeasuredChatRow = {
   height: number;
   source: unknown;
 };
-
-export function pruneChatRowMeasurements<T>(
-  measuredRows: Map<string, T>,
-  renderables: readonly Pick<ChatRenderableMessage, "key">[],
-): void {
-  if (measuredRows.size === 0) return;
-
-  const retainedKeys = new Set(renderables.map((renderable) => renderable.key));
-  for (const measuredKey of measuredRows.keys()) {
-    if (!retainedKeys.has(measuredKey)) {
-      measuredRows.delete(measuredKey);
-    }
-  }
-}
 
 type ChatVirtualLayout = {
   endIndex: number;
@@ -108,6 +96,15 @@ const getEstimatedChatRowHeight = (
 
 const getMessageId = (renderable: ChatRenderableMessage) =>
   renderable.kind === "date-divider" ? null : renderable.message.id;
+
+const updateChatScrollControllerSnapshot = (
+  controller: ReturnType<typeof createChatScrollController>,
+  snapshot: {
+    clientHeight: number;
+    scrollHeight: number;
+    scrollTop: number;
+  },
+) => controller.observe(snapshot);
 
 const getChatVirtualLayout = ({
   measuredRows,
@@ -193,15 +190,23 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
 }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
-  const measuredRowsRef = useRef(new Map<string, MeasuredChatRow>());
+  const [measuredRows, setMeasuredRows] = useState(
+    () => new Map<string, MeasuredChatRow>(),
+  );
   const [measurementCycle, setMeasurementCycle] = useState(0);
   const [viewport, setViewport] = useState<ChatViewport>({
     height: CHAT_LIST_FALLBACK_HEIGHT_PX,
     scrollTop: 0,
   });
-  const scrollControllerRef = useRef<ChatScrollController | null>(null);
-  scrollControllerRef.current ??= createChatScrollController({
-    applyScroll: ({ behavior, top }) => {
+  const [scrollController] = useState(() =>
+    createChatScrollController({
+      applyScroll: () => undefined,
+      nearBottomThreshold: CHAT_AUTOSCROLL_THRESHOLD_PX,
+    }),
+  );
+
+  useLayoutEffect(() => {
+    scrollController.setApplyScroll(({ behavior, top }) => {
       const scrollViewport = scrollAreaRef.current;
       if (!scrollViewport) return;
 
@@ -223,9 +228,8 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
             : nextViewport;
         });
       }
-    },
-    nearBottomThreshold: CHAT_AUTOSCROLL_THRESHOLD_PX,
-  });
+    });
+  }, [scrollController]);
   const scrollPendingRef = useRef(true);
   const previousRenderSignatureRef = useRef("");
   const previousMeasurementCycleRef = useRef(0);
@@ -235,47 +239,61 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
   const initializationAnimationFrameRef = useRef<number | null>(null);
   const measurementAnimationFrameRef = useRef<number | null>(null);
   const virtualLayoutRef = useRef<ChatVirtualLayout | null>(null);
-  const displayedMessagesRef = useRef({
+  const [displayedMessages, setDisplayedMessages] = useState({
     hasRenderableMessages: latestHasRenderableMessages,
     renderSignature: latestRenderSignature,
     renderables: latestRenderables,
   });
-  const ownMessageScrollRequestedDuringRender =
-    scrollToBottomRequest !== previousScrollToBottomRequestRef.current;
-  if (
-    scrollControllerRef.current.getMode() !== "reading-history" ||
-    ownMessageScrollRequestedDuringRender
-  ) {
-    displayedMessagesRef.current = {
-      hasRenderableMessages: latestHasRenderableMessages,
-      renderSignature: latestRenderSignature,
-      renderables: latestRenderables,
-    };
-  } else {
-    const refreshedRenderables = refreshDisplayedChatRenderables(
-      displayedMessagesRef.current.renderables,
-      latestRenderables,
-    );
-    displayedMessagesRef.current = {
-      ...displayedMessagesRef.current,
-      renderSignature: getChatRenderableMessagesSignature(refreshedRenderables),
-      renderables: refreshedRenderables,
-    };
-  }
   const { hasRenderableMessages, renderSignature, renderables } =
-    displayedMessagesRef.current;
+    displayedMessages;
 
   useEffect(() => {
-    pruneChatRowMeasurements(measuredRowsRef.current, renderables);
-  }, [renderables]);
+    const ownMessageScrollRequested =
+      scrollToBottomRequest !== previousScrollToBottomRequestRef.current;
+    const shouldUseLatestMessages =
+      scrollController.getMode() !== "reading-history" ||
+      ownMessageScrollRequested;
 
+    setDisplayedMessages((currentMessages) => {
+      if (shouldUseLatestMessages) {
+        return {
+          hasRenderableMessages: latestHasRenderableMessages,
+          renderSignature: latestRenderSignature,
+          renderables: latestRenderables,
+        };
+      }
+
+      const refreshedRenderables = refreshDisplayedChatRenderables(
+        currentMessages.renderables,
+        latestRenderables,
+      );
+      return {
+        ...currentMessages,
+        renderSignature:
+          getChatRenderableMessagesSignature(refreshedRenderables),
+        renderables: refreshedRenderables,
+      };
+    });
+  }, [
+    latestHasRenderableMessages,
+    latestRenderSignature,
+    latestRenderables,
+    scrollController,
+    scrollToBottomRequest,
+  ]);
+
+  const activeMeasuredRows = new Map(measuredRows);
+  pruneChatRowMeasurements(activeMeasuredRows, renderables);
   const virtualLayout = getChatVirtualLayout({
-    measuredRows: measuredRowsRef.current,
+    measuredRows: activeMeasuredRows,
     renderables,
     viewport,
   });
   const { endIndex, rowOffsets, startIndex, totalHeight } = virtualLayout;
-  virtualLayoutRef.current = virtualLayout;
+
+  useEffect(() => {
+    virtualLayoutRef.current = virtualLayout;
+  }, [virtualLayout]);
 
   const getScrollSnapshot = () => {
     const scrollViewport = scrollAreaRef.current;
@@ -297,7 +315,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       const nextScrollTop = scrollViewport.scrollTop;
       const effectiveHeight = nextHeight || CHAT_LIST_FALLBACK_HEIGHT_PX;
       if (!scrollPendingRef.current) {
-        scrollControllerRef.current?.observe({
+        updateChatScrollControllerSnapshot(scrollController, {
           clientHeight: effectiveHeight,
           scrollHeight: scrollViewport.scrollHeight,
           scrollTop: nextScrollTop,
@@ -325,7 +343,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
             cancelAnimationFrame(bottomAnimationFrameRef.current);
             bottomAnimationFrameRef.current = null;
           }
-          scrollControllerRef.current?.registerUserScrollIntent(snapshot);
+          scrollController.registerUserScrollIntent(snapshot);
         }
       }
     };
@@ -340,7 +358,9 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       typeof ResizeObserver === "undefined"
         ? null
         : new ResizeObserver(updateViewport);
-    resizeObserver?.observe(scrollViewport);
+    if (resizeObserver) {
+      observeElementResize(resizeObserver, scrollViewport);
+    }
 
     if (!resizeObserver) {
       window.addEventListener("resize", updateViewport);
@@ -352,23 +372,24 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       resizeObserver?.disconnect();
       window.removeEventListener("resize", updateViewport);
     };
-  }, []);
+  }, [scrollController]);
 
   useLayoutEffect(() => {
     const messageList = messageListRef.current;
-    if (!messageList) return;
+    if (!messageList) return () => undefined;
 
     const measureRows = (elements: Element[]) => {
-      const currentLayout = virtualLayoutRef.current;
-      if (!currentLayout) return;
-
-      let changed = false;
+      const measurements: Array<{
+        height: number;
+        key: string;
+        source: unknown;
+      }> = [];
 
       for (const element of elements) {
         if (!(element instanceof HTMLElement)) continue;
 
         const rowIndex = Number(element.dataset.chatVirtualIndex);
-        const renderable = currentLayout.renderables[rowIndex];
+        const renderable = virtualLayout.renderables[rowIndex];
         if (!renderable) continue;
 
         const devicePixelRatio = window.devicePixelRatio || 1;
@@ -379,25 +400,37 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
         if (measuredHeight <= 0 && element.childElementCount > 0) continue;
 
         const measurementSource = getChatRowMeasurementSource(renderable);
-        const currentMeasurement = measuredRowsRef.current.get(renderable.key);
+        measurements.push({
+          height: measuredHeight,
+          key: renderable.key,
+          source: measurementSource,
+        });
+      }
+
+      const nextRows = new Map(measuredRows);
+      const previousRowCount = nextRows.size;
+      pruneChatRowMeasurements(nextRows, virtualLayout.renderables);
+      let changed = nextRows.size !== previousRowCount;
+      for (const measurement of measurements) {
+        const currentMeasurement = measuredRows.get(measurement.key);
         if (
-          currentMeasurement?.source === measurementSource &&
-          Math.abs(currentMeasurement.height - measuredHeight) <
-            1 / devicePixelRatio
+          currentMeasurement &&
+          currentMeasurement.source === measurement.source &&
+          Math.abs(currentMeasurement.height - measurement.height) <
+            1 / (window.devicePixelRatio || 1)
         ) {
           continue;
         }
-
-        measuredRowsRef.current.set(renderable.key, {
-          height: measuredHeight,
-          source: measurementSource,
+        nextRows.set(measurement.key, {
+          height: measurement.height,
+          source: measurement.source,
         });
         changed = true;
       }
-
       if (!changed) return;
+      setMeasuredRows(nextRows);
 
-      const scrollMode = scrollControllerRef.current?.getMode();
+      const scrollMode = scrollController.getMode();
       if (
         scrollMode === "animating-to-bottom" ||
         scrollMode === "following-bottom"
@@ -417,18 +450,18 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
     );
     measureRows(visibleRows);
 
-    if (typeof ResizeObserver === "undefined") return;
+    if (typeof ResizeObserver === "undefined") return () => undefined;
 
     const resizeObserver = new ResizeObserver((entries) => {
       measureRows(entries.map((entry) => entry.target));
     });
-    visibleRows.forEach((row) => resizeObserver.observe(row));
+    visibleRows.forEach((row) => observeElementResize(resizeObserver, row));
 
     return () => resizeObserver.disconnect();
   });
 
   useLayoutEffect(() => {
-    const controller = scrollControllerRef.current;
+    const controller = scrollController;
     const snapshot = getScrollSnapshot();
     if (!controller || !snapshot) return;
 
@@ -478,6 +511,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
     hasRenderableMessages,
     measurementCycle,
     renderSignature,
+    scrollController,
     scrollToBottomRequest,
     totalHeight,
   ]);
@@ -490,7 +524,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       return;
     }
 
-    const controller = scrollControllerRef.current;
+    const controller = scrollController;
     if (!controller) return;
 
     let previousScrollHeight: number | null = null;
@@ -526,10 +560,15 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
     bottomAnimationFrameRef.current = requestAnimationFrame(
       animateAfterStableLayout,
     );
-  }, [measurementCycle, renderSignature, scrollToBottomRequest]);
+  }, [
+    measurementCycle,
+    renderSignature,
+    scrollController,
+    scrollToBottomRequest,
+  ]);
 
   useEffect(() => {
-    const controller = scrollControllerRef.current;
+    const controller = scrollController;
     if (
       !hasRenderableMessages ||
       !controller ||
@@ -577,7 +616,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
         initializationAnimationFrameRef.current = null;
       }
     };
-  }, [hasRenderableMessages]);
+  }, [hasRenderableMessages, scrollController]);
 
   useEffect(() => {
     return () => {
@@ -588,7 +627,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
         cancelAnimationFrame(measurementAnimationFrameRef.current);
       }
     };
-  }, []);
+  }, [scrollController]);
 
   useEffect(() => {
     return subscribeToChatScrollToMessage((event) => {
@@ -607,12 +646,12 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       const rowHeight = currentLayout.rowHeights[rowIndex] ?? 0;
       const snapshot = getScrollSnapshot();
       if (!snapshot) return;
-      scrollControllerRef.current?.jumpToMessage(
+      scrollController.jumpToMessage(
         snapshot,
         rowOffset - (currentLayout.viewportHeight - rowHeight) / 2,
       );
     });
-  }, []);
+  }, [scrollController]);
 
   if (renderables.length === 0) {
     return (

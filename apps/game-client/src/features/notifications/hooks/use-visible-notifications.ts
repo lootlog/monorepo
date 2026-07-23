@@ -140,7 +140,10 @@ export const useVisibleNotifications = ({
   const { settings } = useCurrentGameAccountNotificationSettings();
   const world = useGameStore((state) => state.game?.world ?? "unknown");
   const removeRef = useRef(removeNotifications);
-  removeRef.current = removeNotifications;
+
+  useEffect(() => {
+    removeRef.current = removeNotifications;
+  }, [removeNotifications]);
 
   useEffect(() => {
     if (!autoCleanup) {

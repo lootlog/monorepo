@@ -261,32 +261,16 @@ const updateLootShareInInfiniteData = (
 };
 
 const useStableLootCollections = (pages: Loot[][] | undefined) => {
-  const collectionsRef = useRef<{
-    pages: Loot[][] | undefined;
-    allLoots: Loot[];
-    gridRows: Loot[][];
-  }>({
-    pages: undefined,
-    allLoots: EMPTY_LOOTS,
-    gridRows: EMPTY_GRID_ROWS,
-  });
-
-  if (collectionsRef.current.pages !== pages) {
-    const allLoots = pages?.flatMap((page) => page) ?? EMPTY_LOOTS;
-    const gridRows: Loot[][] = [];
-
-    for (let index = 0; index < allLoots.length; index += GRID_COLUMNS) {
-      gridRows.push(allLoots.slice(index, index + GRID_COLUMNS));
-    }
-
-    collectionsRef.current = {
-      pages,
-      allLoots,
-      gridRows,
-    };
+  const allLoots = pages?.flatMap((page) => page) ?? EMPTY_LOOTS;
+  if (allLoots.length === 0) {
+    return { allLoots, gridRows: EMPTY_GRID_ROWS };
   }
 
-  return collectionsRef.current;
+  const gridRows: Loot[][] = [];
+  for (let index = 0; index < allLoots.length; index += GRID_COLUMNS) {
+    gridRows.push(allLoots.slice(index, index + GRID_COLUMNS));
+  }
+  return { allLoots, gridRows };
 };
 
 export const LootsList: FC = () => {
@@ -517,14 +501,21 @@ export const LootsList: FC = () => {
       return;
     }
 
-    socket.on(GatewayEvent.LOOTS_CREATE, handleLootCreate);
-    socket.on(GatewayEvent.LOOTS_SHARE_UPDATE, handleLootShareUpdate);
+    const onLootCreate = (payload: LootCreateGatewayPayload) => {
+      void handleLootCreate(payload);
+    };
+    const onLootShareUpdate = (payload: LootShareUpdateGatewayPayload) => {
+      handleLootShareUpdate(payload);
+    };
+
+    socket.on(GatewayEvent.LOOTS_CREATE, onLootCreate);
+    socket.on(GatewayEvent.LOOTS_SHARE_UPDATE, onLootShareUpdate);
 
     return () => {
-      socket.off(GatewayEvent.LOOTS_CREATE, handleLootCreate);
-      socket.off(GatewayEvent.LOOTS_SHARE_UPDATE, handleLootShareUpdate);
+      socket.off(GatewayEvent.LOOTS_CREATE, onLootCreate);
+      socket.off(GatewayEvent.LOOTS_SHARE_UPDATE, onLootShareUpdate);
     };
-  }, [connected, guildId, handleLootCreate, handleLootShareUpdate, socket]);
+  }, [connected, guildId, socket]);
 
   useEffect(
     () => () => {

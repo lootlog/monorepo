@@ -1255,20 +1255,14 @@ export default function LiquidEther({
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (resizeObserverRef.current) {
-        try {
-          resizeObserverRef.current.disconnect();
-        } catch {
-          /* noop */
-        }
+      if (resizeRafRef.current) {
+        cancelAnimationFrame(resizeRafRef.current);
       }
-      if (intersectionObserverRef.current) {
-        try {
-          intersectionObserverRef.current.disconnect();
-        } catch {
-          /* noop */
-        }
-      }
+      ro.disconnect();
+      io.disconnect();
+      resizeObserverRef.current = null;
+      intersectionObserverRef.current = null;
+      resizeRafRef.current = null;
       if (webglRef.current) {
         webglRef.current.dispose();
       }

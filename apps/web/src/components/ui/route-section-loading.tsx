@@ -1,11 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { AppStartupLoading } from "@/components/ui/app-startup-loading";
 
 let isInitialLoad = true;
 
 export const RouteSectionLoading = () => {
-  const isStartup = useRef(isInitialLoad).current;
+  const [isStartup] = useState(() => isInitialLoad);
 
   useEffect(() => {
     isInitialLoad = false;

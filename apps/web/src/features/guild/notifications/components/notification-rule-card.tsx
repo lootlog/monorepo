@@ -141,11 +141,15 @@ export const NotificationRuleCard = ({
     triggerRuleTest.isPending;
 
   const handleRebuildJobs = async () => {
+    if (!guildId) {
+      const error = new Error("Missing guild id.");
+      toast.error(
+        getApiErrorMessage(error) ??
+          t("settings.notifications.toasts.ruleJobsRebuildError"),
+      );
+      return;
+    }
     try {
-      if (!guildId) {
-        throw new Error("Missing guild id.");
-      }
-
       await rebuildRuleJobs.mutateAsync({
         pathParams: { guildId, ruleId: rule.id },
       });
@@ -159,11 +163,15 @@ export const NotificationRuleCard = ({
   };
 
   const handleTriggerTest = async () => {
+    if (!guildId) {
+      const error = new Error("Missing guild id.");
+      toast.error(
+        getApiErrorMessage(error) ??
+          t("settings.notifications.toasts.ruleTestTriggerError"),
+      );
+      return;
+    }
     try {
-      if (!guildId) {
-        throw new Error("Missing guild id.");
-      }
-
       await triggerRuleTest.mutateAsync({
         pathParams: { guildId, ruleId: rule.id },
       });
@@ -177,11 +185,15 @@ export const NotificationRuleCard = ({
   };
 
   const handleDelete = async () => {
+    if (!guildId) {
+      const error = new Error("Missing guild id.");
+      toast.error(
+        getApiErrorMessage(error) ??
+          t("settings.notifications.toasts.ruleDeleteError"),
+      );
+      throw error;
+    }
     try {
-      if (!guildId) {
-        throw new Error("Missing guild id.");
-      }
-
       await deleteRule.mutateAsync({
         pathParams: { guildId, ruleId: rule.id },
       });

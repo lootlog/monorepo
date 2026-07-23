@@ -7,7 +7,6 @@ export const useDebouncedCallback = <TArgs extends unknown[]>(
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbackRef = useRef(callback);
   const delayRef = useRef(delay);
-  const debouncedCallbackRef = useRef<((...args: TArgs) => void) | null>(null);
 
   useEffect(() => {
     callbackRef.current = callback;
@@ -26,17 +25,13 @@ export const useDebouncedCallback = <TArgs extends unknown[]>(
     };
   }, []);
 
-  if (!debouncedCallbackRef.current) {
-    debouncedCallbackRef.current = (...args: TArgs) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+  return (...args: TArgs) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-      timeoutRef.current = setTimeout(() => {
-        callbackRef.current(...args);
-      }, delayRef.current);
-    };
-  }
-
-  return debouncedCallbackRef.current;
+    timeoutRef.current = setTimeout(() => {
+      callbackRef.current(...args);
+    }, delayRef.current);
+  };
 };
