@@ -298,9 +298,8 @@ const resolveRequestConfiguration = (
     throw new Error(`Missing base URL for ${service} API request`);
   }
 
-  const configuredFetch = override?.fetch ?? serviceConfiguration?.fetch;
   const fetchImplementation =
-    configuredFetch ?? globalThis.fetch?.bind(globalThis);
+    override?.fetch ?? serviceConfiguration?.fetch ?? globalThis.fetch;
 
   if (!fetchImplementation) {
     throw new Error(`Fetch is unavailable for ${service} API request`);
@@ -309,7 +308,7 @@ const resolveRequestConfiguration = (
   return {
     baseUrl,
     credentials: override?.credentials ?? serviceConfiguration?.credentials,
-    fetch: fetchImplementation,
+    fetch: fetchImplementation.bind(globalThis),
     getHeaders: override?.getHeaders ?? serviceConfiguration?.getHeaders,
     onError: override?.onError ?? serviceConfiguration?.onError,
   };

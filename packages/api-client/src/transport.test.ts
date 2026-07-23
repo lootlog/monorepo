@@ -284,6 +284,31 @@ describe("API client transport", () => {
     expect(fetchImplementation).toHaveBeenCalledOnce();
   });
 
+  it("preserves the fetch receiver when configured by an application", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(function (
+      this: typeof globalThis,
+      _input: RequestInfo | URL,
+      _init?: RequestInit,
+    ) {
+      if (this !== globalThis) {
+        throw new TypeError("Illegal invocation");
+      }
+
+      return Promise.resolve(Response.json({ ok: true }));
+    });
+    restoreConfiguration = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: fetchImplementation,
+      },
+    });
+
+    await expect(createApiClient("main").get("/status")).resolves.toEqual({
+      ok: true,
+    });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
+  });
+
   it("reports when fetch is unavailable in the current runtime", async () => {
     vi.stubGlobal("fetch", undefined);
 
