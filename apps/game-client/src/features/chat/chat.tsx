@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
-import { Game } from "@/lib/game";
 import { storageKey } from "@/lib/storage-key";
 import { useChatStore } from "@/store/chat.store";
+import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { ChatView } from "./chat-view";
 import {
@@ -20,8 +20,11 @@ const chatSelectedGuildKey = (accountId: string, characterId: string) =>
 export const Chat = () => {
   const isIntegratedMode = useChatStore((state) => state.isIntegratedMode);
   const open = useWindowsStore((state) => state.chat.open);
-  const characterId = String(Game.hero.id);
-  const accountId = String(Game.hero.account);
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
+  const gameInterface = useGameStore((state) => state.game?.interface);
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
     chatSelectedGuildKey(accountId, characterId),
     "",
@@ -29,7 +32,7 @@ export const Chat = () => {
   const [unreadCountByGuildId, setUnreadCountByGuildId] =
     useState<ChatUnreadCountByGuildId>({});
   const isChatViewVisible =
-    open && !(isIntegratedMode && Game.interface === "ni");
+    open && !(isIntegratedMode && gameInterface === "ni");
   const { shouldRender: shouldRenderChatView } =
     useWindowPresence(isChatViewVisible);
 

@@ -3,6 +3,9 @@ import userEvent from "@testing-library/user-event";
 import type { ChangeEventHandler, InputHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SearchTimersNpcResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+
+beforeEach(() => setTestRuntimeGame());
 
 const mockMutate = vi.fn();
 const mockSetOpen = vi.fn();

@@ -33,10 +33,13 @@ export type VolunteerOptions = Omit<CreateVolunteerDto, "character"> & {
 };
 
 export async function volunteer(options: VolunteerOptions): Promise<void> {
+  const character = buildCurrentCharacterPayload();
+  if (!character) return;
+
   const payload: CreateVolunteerDto = {
     world: options.world,
     targetDiscordId: options.targetDiscordId,
-    character: buildCurrentCharacterPayload(),
+    character,
   };
 
   await runSingleLoggedAction({

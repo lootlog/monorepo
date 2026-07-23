@@ -7,7 +7,7 @@ import {
   useNotificationsStore,
 } from "@/store/notifications.store";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import {
   getNotificationSettingsKey,
   isNotificationSettingsKey,
@@ -138,7 +138,7 @@ export const useVisibleNotifications = ({
       })),
     );
   const { settings } = useCurrentGameAccountNotificationSettings();
-  const world = Game.getWorldName();
+  const world = useGameStore((state) => state.game?.world ?? "unknown");
   const removeRef = useRef(removeNotifications);
   removeRef.current = removeNotifications;
 

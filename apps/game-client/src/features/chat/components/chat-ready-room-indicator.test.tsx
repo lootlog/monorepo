@@ -2,7 +2,14 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyFinderStore } from "@/store/party-finder.store";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { ChatReadyRoomIndicator } from "./chat-ready-room-indicator";
+
+beforeEach(() =>
+  setTestRuntimeGame({
+    hero: { accountId: "account-1", characterId: "101" },
+  }),
+);
 
 const withdraw = vi.fn();
 

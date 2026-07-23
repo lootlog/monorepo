@@ -1,5 +1,6 @@
 import { LanguageVersion } from "@/store/global.store";
 import { getApiClient } from "@/lib/api-client";
+import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 const MARGONEM_CHARACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
@@ -428,7 +429,7 @@ export async function fetchCharacterList({
     return freshPersistentCache;
   }
 
-  const hs3 = window.getCookie?.("hs3");
+  const hs3 = getRuntimeCookie("hs3");
   const url =
     languageVersion === LanguageVersion.PL
       ? MARGONEM_CHARACTER_LIST_URL

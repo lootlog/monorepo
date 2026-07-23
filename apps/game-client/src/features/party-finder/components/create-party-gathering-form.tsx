@@ -8,7 +8,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 const createFormSchema = (
   t: (key: string, options?: Record<string, unknown>) => string,
@@ -56,11 +57,11 @@ export const CreatePartyGatheringForm = () => {
 
   const onSubmit = async (data: FormData) => {
     if (selectedGuildIds.length === 0) {
-      window.message(t("form.selectGuild"));
+      showRuntimeMessage(t("form.selectGuild"));
       return;
     }
 
-    const world = Game.getWorldName();
+    const world = useGameStore.getState().game?.world ?? "unknown";
 
     try {
       await startPartyGathering({
@@ -73,7 +74,7 @@ export const CreatePartyGatheringForm = () => {
       });
       reset();
     } catch (error) {
-      window.message(getCreatePartyGatheringErrorMessage(error));
+      showRuntimeMessage(getCreatePartyGatheringErrorMessage(error));
     }
   };
 

@@ -10,14 +10,14 @@ describe("map ping coordinates", () => {
   });
 
   it("keeps the per-frame draw listener detached while there are no pings", () => {
-    const originalEngine = window.Engine;
-    const originalApi = window.API;
+    const originalEngine = testRuntimeWindow.Engine;
+    const originalApi = testRuntimeWindow.API;
     const addCallbackToEvent = vi.fn();
     const removeCallbackFromEvent = vi.fn();
-    window.Engine = {
+    testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
     } as never;
-    window.API = {
+    testRuntimeWindow.API = {
       addCallbackToEvent,
       removeCallbackFromEvent,
     } as never;
@@ -45,8 +45,8 @@ describe("map ping coordinates", () => {
     expect(removeCallbackFromEvent).toHaveBeenCalledTimes(1);
 
     controller.unregister();
-    window.Engine = originalEngine;
-    window.API = originalApi;
+    testRuntimeWindow.Engine = originalEngine;
+    testRuntimeWindow.API = originalApi;
   });
 
   it("retains at most the newest 256 active pings", () => {
@@ -73,13 +73,13 @@ describe("map ping coordinates", () => {
   it("expires pings and detaches drawing even when no draw frame arrives", () => {
     vi.useFakeTimers();
     let now = 1_000;
-    const originalEngine = window.Engine;
-    const originalApi = window.API;
+    const originalEngine = testRuntimeWindow.Engine;
+    const originalApi = testRuntimeWindow.API;
     const removeCallbackFromEvent = vi.fn();
-    window.Engine = {
+    testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
     } as never;
-    window.API = {
+    testRuntimeWindow.API = {
       addCallbackToEvent: vi.fn(),
       removeCallbackFromEvent,
     } as never;
@@ -105,8 +105,8 @@ describe("map ping coordinates", () => {
 
     const removalCountBeforeCleanup = removeCallbackFromEvent.mock.calls.length;
     controller.unregister();
-    window.Engine = originalEngine;
-    window.API = originalApi;
+    testRuntimeWindow.Engine = originalEngine;
+    testRuntimeWindow.API = originalApi;
     expect(removalCountBeforeCleanup).toBe(1);
   });
 
@@ -199,9 +199,9 @@ describe("map ping coordinates", () => {
     let now = 1_000;
     let drawFrame!: () => void;
     const renderer = { add: vi.fn(), getHighestOrderWithoutSort: () => 10 };
-    const originalEngine = window.Engine;
-    const originalApi = window.API;
-    window.Engine = {
+    const originalEngine = testRuntimeWindow.Engine;
+    const originalApi = testRuntimeWindow.API;
+    testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
       renderer,
       map: {
@@ -210,7 +210,7 @@ describe("map ping coordinates", () => {
         offset: [0, 0],
       },
     } as never;
-    window.API = {
+    testRuntimeWindow.API = {
       addCallbackToEvent: vi.fn((_event, callback) => {
         drawFrame = callback as () => void;
       }),
@@ -239,7 +239,8 @@ describe("map ping coordinates", () => {
     expect(renderer.add).toHaveBeenCalledTimes(1);
 
     controller.unregister();
-    window.Engine = originalEngine;
-    window.API = originalApi;
+    testRuntimeWindow.Engine = originalEngine;
+    testRuntimeWindow.API = originalApi;
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

@@ -8,24 +8,20 @@ const mocks = vi.hoisted(() => ({
   chatHandle: vi.fn(),
   dialogHandle: vi.fn(),
   dialogLootHandle: vi.fn(),
-  friendsHandle: vi.fn(),
   lootFromBattleHandle: vi.fn(),
   mapChangeHandle: vi.fn(),
   npcsDeleteHandle: vi.fn(),
   npcsDetectionHandle: vi.fn(),
   npcsInitialDetectionHandle: vi.fn(),
   otherHandle: vi.fn(),
-  partyHandle: vi.fn(),
-  partyInitialDetectionHandle: vi.fn(),
-  gameEventsManager: {
-    markStripFriendsFromNextEvent: vi.fn(),
+  runtimeBridge: {
     removeProcessor: vi.fn(),
     setProcessor: vi.fn(),
   },
 }));
 
-vi.mock("@/lib/game-events-manager", () => ({
-  gameEventsManager: mocks.gameEventsManager,
+vi.mock("@/lib/margonem-runtime/margonem-runtime-bridge", () => ({
+  margonemRuntimeBridge: mocks.runtimeBridge,
 }));
 
 vi.mock("@/processors/afk-processor", () => ({
@@ -60,14 +56,6 @@ vi.mock("@/processors/dialog-processor", () => ({
   }),
 }));
 
-vi.mock("@/processors/friends-processor", () => ({
-  FriendsProcessor: vi.fn(function FriendsProcessor() {
-    return {
-      handle: mocks.friendsHandle,
-    };
-  }),
-}));
-
 vi.mock("@/processors/loot-event-processor", () => ({
   LootEventProcessor: vi.fn(function LootEventProcessor() {
     return {
@@ -96,6 +84,7 @@ vi.mock("@/processors/npcs-delete-processor", () => ({
 vi.mock("@/processors/npcs-detection-processor", () => ({
   npcsDetectionProcessor: {
     handle: mocks.npcsDetectionHandle,
+    bootstrapProjection: mocks.npcsInitialDetectionHandle,
     handleInitialDetection: mocks.npcsInitialDetectionHandle,
   },
 }));
@@ -108,28 +97,17 @@ vi.mock("@/processors/other-event-processor", () => ({
   }),
 }));
 
-vi.mock("@/processors/party-processor", () => ({
-  PartyProcessor: vi.fn(function PartyProcessor() {
-    return {
-      handle: mocks.partyHandle,
-      handleInitialDetection: mocks.partyInitialDetectionHandle,
-    };
-  }),
-}));
-
 const expectNoProcessorCalls = () => {
   expect(mocks.afkHandle).not.toHaveBeenCalled();
   expect(mocks.battleHandle).not.toHaveBeenCalled();
   expect(mocks.chatHandle).not.toHaveBeenCalled();
   expect(mocks.dialogHandle).not.toHaveBeenCalled();
   expect(mocks.dialogLootHandle).not.toHaveBeenCalled();
-  expect(mocks.friendsHandle).not.toHaveBeenCalled();
   expect(mocks.lootFromBattleHandle).not.toHaveBeenCalled();
   expect(mocks.mapChangeHandle).not.toHaveBeenCalled();
   expect(mocks.npcsDeleteHandle).not.toHaveBeenCalled();
   expect(mocks.npcsDetectionHandle).not.toHaveBeenCalled();
   expect(mocks.otherHandle).not.toHaveBeenCalled();
-  expect(mocks.partyHandle).not.toHaveBeenCalled();
 };
 
 const processorHandlers = {
@@ -138,13 +116,11 @@ const processorHandlers = {
   chat: mocks.chatHandle,
   dialog: mocks.dialogHandle,
   dialogLoot: mocks.dialogLootHandle,
-  friends: mocks.friendsHandle,
   lootFromBattle: mocks.lootFromBattleHandle,
   mapChange: mocks.mapChangeHandle,
   npcsDelete: mocks.npcsDeleteHandle,
   npcsDetection: mocks.npcsDetectionHandle,
   other: mocks.otherHandle,
-  party: mocks.partyHandle,
 };
 
 const getProcessorCallOrder = () =>
@@ -205,8 +181,8 @@ describe("EventDispatcher", () => {
 
     dispatcher.handleEvent(event);
 
-    expect(mocks.battleHandle).toHaveBeenCalledWith(event);
-    expect(mocks.lootFromBattleHandle).toHaveBeenCalledWith(event);
+    expect(mocks.battleHandle).toHaveBeenCalledWith(event, undefined);
+    expect(mocks.lootFromBattleHandle).toHaveBeenCalledWith(event, undefined);
     expect(mocks.dialogLootHandle).not.toHaveBeenCalled();
     expect(mocks.npcsDeleteHandle).not.toHaveBeenCalled();
   });
@@ -221,13 +197,13 @@ describe("EventDispatcher", () => {
 
     dispatcher.handleEvent(event);
 
-    expect(mocks.dialogLootHandle).toHaveBeenCalledWith(event);
-    expect(mocks.npcsDeleteHandle).toHaveBeenCalledWith(event);
+    expect(mocks.dialogLootHandle).toHaveBeenCalledWith(event, undefined);
+    expect(mocks.npcsDeleteHandle).toHaveBeenCalledWith(event, undefined);
     expect(mocks.lootFromBattleHandle).not.toHaveBeenCalled();
     expect(mocks.battleHandle).not.toHaveBeenCalled();
   });
 
-  it("routes status, map, other, friends and party packets independently", () => {
+  it("routes status, map and other packets while state facts bypass processors", () => {
     const dispatcher = new EventDispatcher();
     const event = {
       friends: [],
@@ -240,11 +216,9 @@ describe("EventDispatcher", () => {
 
     dispatcher.handleEvent(event);
 
-    expect(mocks.afkHandle).toHaveBeenCalledWith(event);
-    expect(mocks.friendsHandle).toHaveBeenCalledWith(event);
+    expect(mocks.afkHandle).toHaveBeenCalledWith(event, undefined);
     expect(mocks.mapChangeHandle).toHaveBeenCalledWith(event);
     expect(mocks.otherHandle).toHaveBeenCalledWith(event);
-    expect(mocks.partyHandle).toHaveBeenCalledWith(event);
     expect(mocks.chatHandle).not.toHaveBeenCalled();
     expect(mocks.npcsDetectionHandle).not.toHaveBeenCalled();
     expect(mocks.mapChangeHandle.mock.invocationCallOrder[0]).toBeLessThan(
@@ -263,9 +237,9 @@ describe("EventDispatcher", () => {
     ["map change", { town: { id: 1 } }, ["mapChange"]],
     ["other players", { other: {} }, ["other"]],
     ["hero status", { h: {} }, ["afk"]],
-    ["friends", { friends: [] }, ["friends"]],
-    ["friends capacity", { friends_max: 50 }, ["friends"]],
-    ["party", { party: {} }, ["party"]],
+    ["friends", { friends: [] }, []],
+    ["friends capacity", { friends_max: 50 }, []],
+    ["party", { party: {} }, []],
     [
       "combined packet",
       {
@@ -292,8 +266,6 @@ describe("EventDispatcher", () => {
         "npcsDelete",
         "other",
         "afk",
-        "friends",
-        "party",
       ],
     ],
   ])("golden-routes the %s event in stable order", (_name, event, expected) => {
@@ -305,8 +277,9 @@ describe("EventDispatcher", () => {
     expect(getProcessorCallOrder()).toEqual(expected);
     for (const processorName of expected) {
       expect(
-        processorHandlers[processorName as keyof typeof processorHandlers],
-      ).toHaveBeenCalledWith(gameEvent);
+        processorHandlers[processorName as keyof typeof processorHandlers].mock
+          .calls[0]?.[0],
+      ).toBe(gameEvent);
     }
   });
 
@@ -326,15 +299,11 @@ describe("EventDispatcher", () => {
     );
   });
 
-  it("runs initial detections and marks the friends payload strip", () => {
+  it("runs feature projections without bootstrapping domain state", () => {
     const dispatcher = new EventDispatcher();
 
     dispatcher.handleInitialEvents();
 
     expect(mocks.npcsInitialDetectionHandle).toHaveBeenCalledOnce();
-    expect(mocks.partyInitialDetectionHandle).toHaveBeenCalledOnce();
-    expect(
-      mocks.gameEventsManager.markStripFriendsFromNextEvent,
-    ).toHaveBeenCalledOnce();
   });
 });

@@ -5,16 +5,18 @@ import {
   LOOTLOG_OTHER_GLOW_BLUE,
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
   LOOTLOG_OTHER_GLOW_UNKNOWN,
-} from "@/lib/lootlog-other-glow-manager";
+} from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
 import { appendCatchingGuildsTooltipSection } from "@/lib/margonem-tooltips/catching-guilds";
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 import {
   getOtherCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
+import { useGameStore } from "@/store/game.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 const mocks = vi.hoisted(() => ({
   getPlayersCatchingGuilds: vi.fn(),
@@ -31,7 +33,7 @@ vi.mock(
 import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
 import { useWhoIsHereLootlogHighlight } from "./use-who-is-here-lootlog-highlight";
 
-const originalWindowEngine = window.Engine;
+const originalWindowEngine = testRuntimeWindow.Engine;
 const originalWindowDollar = (window as Window & { $?: unknown }).$;
 
 type WhoIsHereEntry = {
@@ -150,6 +152,23 @@ function setRuntime(other: Other, createTipWrapper = vi.fn()): void {
 }
 
 function setSelectedGuild(): void {
+  useGameStore.getState().replaceGame({
+    hero: {
+      accountId: "1",
+      characterId: "hero-1",
+      currentHp: 1,
+      icon: "hero.gif",
+      level: 300,
+      maxHp: 1,
+      name: "Hero",
+      profession: "w",
+      x: 1,
+      y: 2,
+    },
+    interface: "ni",
+    map: { id: 1, name: "Map", visibility: 30 },
+    world: "tempest",
+  });
   useSettingsStore.setState({
     guildIdByCharId: {
       "hero-1": "guild-blue",
@@ -201,6 +220,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     characterTooltipTransforms.clear();
     mocks.getPlayersCatchingGuilds.mockReset();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
+    useGameStore.getState().clearGame();
     useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
     useSettingsStore.setState({

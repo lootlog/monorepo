@@ -4,7 +4,8 @@ import { LOOTLOG_APP_URL } from "@/config/app";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/api/npcs.api";
 import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
+import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
 import {
   useBattleStore,
@@ -128,7 +129,10 @@ export class BattleEventProcessor {
   private battleGeneration = 0;
   private finalizingGeneration: number | null = null;
 
-  async handle(event: GameEvent): Promise<void> {
+  async handle(
+    event: GameEvent,
+    ingress?: RuntimeIngressSnapshot,
+  ): Promise<void> {
     if (!event.f) return;
 
     const battlePanelStore = useBattlePanelStore.getState();
@@ -146,7 +150,11 @@ export class BattleEventProcessor {
 
     let battleWarriors = startsBattle ? {} : stateAtIngress.battleWarriors;
     if (event.f.w) {
-      battleWarriors = addAccountIdsToWarriors(event.f.w, battleWarriors);
+      battleWarriors = addAccountIdsToWarriors(
+        event.f.w,
+        battleWarriors,
+        ingress,
+      );
 
       // Incremental team detection — O(1) amortized instead of O(N*M)
       if (!this.hasMultipleTeams) {
@@ -218,14 +226,16 @@ export class BattleEventProcessor {
           );
 
           if (killHash !== nextLastKillHash) {
-            const hero = Game.hero;
-            const { type: _, ...npcWithoutType } = topNpc;
-            killIntent = {
-              world: Game.getWorldName(),
-              npc: npcWithoutType,
-              characterId: String(hero.id),
-              accountId: String(hero.account),
-            };
+            const game = ingress?.game ?? useGameStore.getState().game;
+            if (game) {
+              const { type: _, ...npcWithoutType } = topNpc;
+              killIntent = {
+                world: game.world,
+                npc: npcWithoutType,
+                characterId: game.hero.characterId,
+                accountId: game.hero.accountId,
+              };
+            }
             nextLastKillHash = killHash;
           }
         }
@@ -250,26 +260,28 @@ export class BattleEventProcessor {
 
             // Use incremental hasMultipleTeams flag instead of O(N*M) loop
             if (events && !hasNpcInBattle && this.hasMultipleTeams) {
-              const hero = Game.hero;
-              const accountId = String(hero.account);
-              const characterId = String(hero.id);
-              const world = Game.getWorldName();
-              const submissionId = await createSHA256Hash(
-                JSON.stringify({
+              const game = ingress?.game ?? useGameStore.getState().game;
+              if (game) {
+                const accountId = game.hero.accountId;
+                const characterId = game.hero.characterId;
+                const world = game.world;
+                const submissionId = await createSHA256Hash(
+                  JSON.stringify({
+                    accountId,
+                    characterId,
+                    events,
+                    world,
+                  }),
+                );
+
+                battleIntent = {
                   accountId,
                   characterId,
+                  submissionId,
                   events,
                   world,
-                }),
-              );
-
-              battleIntent = {
-                accountId,
-                characterId,
-                submissionId,
-                events,
-                world,
-              };
+                };
+              }
             }
           }
           nextLastBattleHash = battleHash;

@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import {
   buildNpcChatMessagePayload,
   buildNpcNotificationPayload,
   resolveNpcNotificationRouting,
 } from "./npc-notification";
+
+beforeEach(() => setTestRuntimeGame());
 
 const { mockGame } = vi.hoisted(() => ({
   mockGame: {

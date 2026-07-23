@@ -15,17 +15,17 @@ import {
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
-import { Game } from "@/lib/game";
 import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
 import { cn } from "@/lib/utils";
 import { useFriendsStore } from "@/store/friends.store";
 import { usePartyStore } from "@/store/party.store";
+import { useGameStore } from "@/store/game.store";
 import {
   inviteCharacterToFriends,
   inviteCharacterToParty,
   showCharacterEquipment,
   showCharacterProfile,
-} from "@/utils/game/character-actions";
+} from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 import { Plus } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -80,20 +80,26 @@ export const OnlinePlayersAccountListEntry: FC<
   const locationName =
     player?.location?.map ?? presence.mapName ?? t("location.unknown");
   const world = player?.world ?? t("world.unknown");
+  const heroCharacterId = useGameStore((state) => state.game?.hero.characterId);
+  const heroName = useGameStore((state) => state.game?.hero.name);
+  const heroClanId = useGameStore((state) => state.game?.hero.clan?.id);
+  const gameInterface = useGameStore((state) => state.game?.interface);
   const isSelf =
-    characterId === Game.hero.id || character.nick === Game.hero.nick;
+    String(characterId) === heroCharacterId || character.nick === heroName;
   const isPartyMember = usePartyStore(
     (state) =>
       characterId > 0 &&
-      state.members.some((member) => member.id === characterId),
+      state.members.some(
+        (member) => member.characterId === String(characterId),
+      ),
   );
   const isFriend = useFriendsStore((state) =>
     state.isFriend(characterId.toString()),
   );
   const isSameClan =
     player?.clan?.id !== undefined &&
-    Game.hero.clan?.id !== undefined &&
-    player.clan.id === Game.hero.clan.id;
+    heroClanId !== undefined &&
+    player.clan.id === heroClanId;
   const highlightClassName = getHighlightClassName({
     isSelf,
     isAfk: presence.isAfk,
@@ -103,7 +109,7 @@ export const OnlinePlayersAccountListEntry: FC<
   const canUseCharacterActions = characterId > 0 && accountId > 0;
   const canInviteToParty = characterId > 0 && !isSelf && !isPartyMember;
   const canShowGameContextActions =
-    Game.interface === "ni" && canUseCharacterActions;
+    gameInterface === "ni" && canUseCharacterActions;
   const canAddFriend = characterId > 0 && !isSelf && !isFriend;
   const memberName = guildMember?.name ?? t("member.unknown");
 

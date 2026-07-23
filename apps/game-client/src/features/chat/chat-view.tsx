@@ -13,9 +13,9 @@ import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@/lib/api/generated/main/users/users";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
-import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
+import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   getChatRenderableMessages,
@@ -71,9 +71,12 @@ export const ChatView = ({
       staleTime: 1000 * 60 * 5,
     },
   });
+  const currentCharacterNick = useGameStore(
+    (state) => state.game?.hero.name ?? "",
+  );
   const { membersByGuildId, mentionContextsByGuildId, messagesByGuildId } =
     useChatGuildData({
-      currentCharacterNick: Game.hero.nick,
+      currentCharacterNick,
       guilds,
       selectedGuildId,
     });

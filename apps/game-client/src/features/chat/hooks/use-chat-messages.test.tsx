@@ -2,6 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useChatMessagesListener } from "./use-chat-messages";
+import { useGameStore } from "@/store/game.store";
 
 const mocks = vi.hoisted(() => ({
   handlers: new Map<string, (payload: never) => void>(),
@@ -79,6 +80,23 @@ describe("useChatMessagesListener", () => {
     mocks.queryClient.prefetchQuery.mockClear();
     mocks.queryClient.removeQueries.mockClear();
     mocks.queryClient.setQueryData.mockClear();
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "1",
+        characterId: "1",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Current Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "pandora",
+    });
   });
 
   it("refetches active chat histories after the socket reconnects", () => {

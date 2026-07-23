@@ -13,7 +13,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { PartyGatheringCard } from "./party-gathering-card";
 import {
   getChatMessageBody,
@@ -47,7 +47,8 @@ import {
   inviteCharacterToParty,
   showCharacterEquipment,
   showCharacterProfile,
-} from "@/utils/game/character-actions";
+  startPrivateMessage,
+} from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 
 type ChatMessageProps = {
   all: boolean;
@@ -67,6 +68,8 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   onReply,
 }) => {
   const { t } = useTranslation("chat");
+  const heroName = useGameStore((state) => state.game?.hero.name);
+  const gameInterface = useGameStore((state) => state.game?.interface);
   const queryClient = useQueryClient();
   const memberColor = useMemberColor(member);
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
@@ -270,12 +273,10 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         </ContextMenuTrigger>
 
         <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
-          {message.characterData.nick !== Game.hero.nick && (
+          {message.characterData.nick !== heroName && (
             <ContextMenuItem
               onClick={() => {
-                window.Engine.chatController
-                  .getChatInputWrapper()
-                  .setPrivateMessageProcedure(message.characterData.nick);
+                startPrivateMessage(message.characterData.nick);
               }}
             >
               {t("contextMenu.sendMessage")}
@@ -312,7 +313,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
               {t("contextMenu.delete")}
             </ContextMenuItem>
           )}
-          {Game.interface === "ni" && (
+          {gameInterface === "ni" && (
             <ContextMenuItem
               onClick={() => {
                 showCharacterEquipment({
@@ -328,7 +329,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
               {t("contextMenu.showEquipment")}
             </ContextMenuItem>
           )}
-          {message.characterData.nick !== Game.hero.nick && (
+          {message.characterData.nick !== heroName && (
             <ContextMenuItem
               onClick={() => {
                 inviteCharacterToFriends(message.characterData.nick);
@@ -337,7 +338,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
               {t("contextMenu.inviteFriends")}
             </ContextMenuItem>
           )}
-          {message.characterData.nick !== Game.hero.nick && (
+          {message.characterData.nick !== heroName && (
             <ContextMenuItem
               onClick={() => {
                 inviteCharacterToParty(message.characterData.id);
@@ -346,7 +347,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
               {t("contextMenu.inviteParty")}
             </ContextMenuItem>
           )}
-          {Game.interface === "ni" && (
+          {gameInterface === "ni" && (
             <ContextMenuItem
               onClick={() => {
                 showCharacterProfile({

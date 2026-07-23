@@ -1,5 +1,4 @@
 import { GatewayEvent } from "@/config/gateway";
-import { Game } from "@/lib/game";
 import {
   DEV_PERMISSION_OVERRIDE_EVENT,
   getSerializedDevPermissionOverride,
@@ -11,6 +10,7 @@ import {
   type PermissionsUpdatedPayload,
 } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
+import { useGameStore } from "@/store/game.store";
 import {
   createContext,
   useContext,
@@ -54,9 +54,13 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     const emitJoin = async () => {
       if (gameInitialized && connected) {
-        const world = Game.getWorldName();
-        const characterId = String(Game.hero.id);
-        const accountId = String(Game.hero.account);
+        const game = useGameStore.getState().game;
+        if (!game) {
+          return;
+        }
+
+        const { hero, map, world } = game;
+        const { accountId, characterId } = hero;
         const socketId = socket.id;
 
         if (!socketId) {
@@ -67,7 +71,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
           socketId,
           accountId,
           characterId,
-          clanId: Game.hero.clan?.id,
+          clanId: hero.clan?.id,
         }).catch((error) => {
           if (import.meta.env.DEV) {
             console.warn("[Gateway] Failed to verify Margonem account", error);
@@ -83,23 +87,23 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         socket.emit(GatewayEvent.JOIN, {
           data: {
             world,
-            name: Game.hero.nick,
-            lvl: Game.hero.lvl,
-            icon: Game.hero.img,
-            prof: Game.hero.prof,
+            name: hero.name,
+            lvl: hero.level,
+            icon: hero.icon,
+            prof: hero.profession,
             characterId,
             accountId,
-            clan: Game.hero.clan
+            clan: hero.clan
               ? {
-                  id: Game.hero.clan.id,
-                  name: Game.hero.clan.name,
-                  rank: Game.hero.clan.rank,
+                  id: hero.clan.id,
+                  name: hero.clan.name,
+                  rank: hero.clan.rank,
                 }
               : undefined,
             location: {
-              x: Game.hero.x,
-              y: Game.hero.y,
-              map: Game.map.name,
+              x: hero.x,
+              y: hero.y,
+              map: map.name,
             },
           },
           ...(margonemAccountProof ? { margonemAccountProof } : {}),
@@ -138,9 +142,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       // Emit initial presence after successful join
       // This ensures presence is sent even after browser refresh
       // (when town change event is not fired)
+      const map = useGameStore.getState().game?.map;
+      if (!map) {
+        return;
+      }
+
       socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
-        mapId: Game.map.id,
-        mapName: Game.map.name,
+        mapId: map.id,
+        mapName: map.name,
         isAfk: false,
       });
     };

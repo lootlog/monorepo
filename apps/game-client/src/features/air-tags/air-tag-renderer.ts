@@ -1,5 +1,10 @@
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
+  rendererRuntimeAdapter,
+  type RendererRuntimeAdapter,
+  type RuntimeDrawable,
+} from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
+import {
   AIR_TAG_CLAN_ENEMY_RELATION,
   AIR_TAG_ENEMY_RELATION,
   getAirTagEffectiveRelation,
@@ -10,52 +15,11 @@ import { airTagReceiveController } from "./air-tag-receive-controller";
 export const AIR_TAG_TARGET_TTL_MS = 10_000;
 export const AIR_TAG_FADE_START_MS = 3_000;
 
-const DEFAULT_TILE_SIZE = 32;
 const THREAT_COLOR = "#ff4d5e";
 const NEUTRAL_COLOR = "#38bdf8";
 const translateSettings = getFixedT("settings");
 
 type MapSize = { x: number; y: number };
-
-type AirTagDrawable = {
-  draw: (context: CanvasRenderingContext2D) => void;
-  getOrder: () => number;
-  getAlwaysDraw: () => boolean;
-};
-
-type AirTagEngine = {
-  apiData?: { CALL_DRAW_ADD_TO_RENDERER: string };
-  renderer?: {
-    add: (drawable: AirTagDrawable) => void;
-    getHighestOrderWithoutSort?: () => number;
-  };
-  map?: {
-    d?: { id?: number };
-    offset?: [number, number];
-    size?: MapSize;
-    getOffset?: () => [number, number];
-  };
-  miniMapController?: {
-    handHeldMiniMapController?: {
-      getHandHeldMiniMapWindow?: () => {
-        getCtx?: () => CanvasRenderingContext2D;
-        getMargin?: () => { left: number; top: number };
-        getSquareData?: () => { normalSize: number };
-      };
-    };
-  };
-};
-
-type AirTagApi = {
-  addCallbackToEvent: (event: string, callback: () => void) => void;
-  removeCallbackFromEvent: (event: string, callback: () => void) => void;
-};
-
-type AirTagWindow = Window & {
-  Engine?: AirTagEngine;
-  API?: AirTagApi;
-  CFG?: { tileSize?: number };
-};
 
 export const getAirTagMarkerAlpha = (ageMs: number): number => {
   if (ageMs <= AIR_TAG_FADE_START_MS) return 1;
@@ -69,29 +33,29 @@ export const getAirTagMarkerAlpha = (ageMs: number): number => {
 };
 
 export class AirTagRenderer {
-  private readonly drawable: AirTagDrawable;
+  private readonly drawable: RuntimeDrawable;
   private readonly now: () => number;
-  private registeredEvent: string | null = null;
+  private unsubscribeDraw: (() => void) | null = null;
   private expiryTimeoutId: number | null = null;
   private enabled = false;
   private unsubscribeTargets: (() => void) | null = null;
   private frameTargets: AirTagTarget[] = [];
   private frameTime = 0;
 
-  constructor(now: () => number = () => Date.now()) {
+  constructor(
+    now: () => number = () => Date.now(),
+    private readonly renderer: RendererRuntimeAdapter = rendererRuntimeAdapter,
+  ) {
     this.now = now;
     this.drawable = {
       draw: (context) => this.drawMainMap(context),
-      getOrder: () =>
-        this.getEngine()?.renderer?.getHighestOrderWithoutSort?.() ?? 10,
+      getOrder: () => this.renderer.getHighestOrder(),
       getAlwaysDraw: () => true,
     };
   }
 
   register(): boolean {
-    const gameWindow = window as AirTagWindow;
-    const event = gameWindow.Engine?.apiData?.CALL_DRAW_ADD_TO_RENDERER;
-    if (!event || !gameWindow.API || this.enabled) return false;
+    if (!this.renderer.isAvailable() || this.enabled) return false;
 
     this.enabled = true;
     this.unsubscribeTargets = airTagReceiveController.subscribe(
@@ -131,19 +95,18 @@ export class AirTagRenderer {
         ) === AIR_TAG_CLAN_ENEMY_RELATION,
     );
     if (hasClanEnemy) {
-      this.getEngine()?.renderer?.add(this.drawable);
+      this.renderer.addDrawable(this.drawable);
     }
     this.drawHandheldMiniMap();
   };
 
   private drawMainMap(context: CanvasRenderingContext2D): void {
-    const engine = this.getEngine();
-    const offset = engine?.map?.getOffset?.() ?? engine?.map?.offset;
-    const size = engine?.map?.size;
+    const geometry = this.renderer.getMapGeometry();
+    const offset = geometry?.offset;
+    const size = geometry?.size;
     if (!offset || !size) return;
 
-    const tileSize =
-      (window as AirTagWindow).CFG?.tileSize ?? DEFAULT_TILE_SIZE;
+    const tileSize = geometry.tileSize;
     const halfTileSize = tileSize / 2;
     for (const target of this.frameTargets) {
       if (
@@ -164,24 +127,16 @@ export class AirTagRenderer {
   }
 
   private drawHandheldMiniMap(): void {
-    const engine = this.getEngine();
-    const size = engine?.map?.size;
-    const miniMapWindow =
-      engine?.miniMapController?.handHeldMiniMapController?.getHandHeldMiniMapWindow?.();
-    const context = miniMapWindow?.getCtx?.();
-    const margin = miniMapWindow?.getMargin?.();
-    const squareData = miniMapWindow?.getSquareData?.();
-    if (
-      !size ||
-      !context ||
-      !margin ||
-      !squareData ||
-      squareData.normalSize <= 0
-    ) {
+    const size = this.renderer.getMapGeometry()?.size;
+    const miniMap = this.renderer.getHandheldMiniMap();
+    const context = miniMap?.context;
+    const margin = miniMap?.margin;
+    const normalSize = miniMap?.normalSize;
+    if (!size || !context || !margin || !normalSize || normalSize <= 0) {
       return;
     }
 
-    const radius = Math.min(5, Math.max(2.5, squareData.normalSize * 0.9));
+    const radius = Math.min(5, Math.max(2.5, normalSize * 0.9));
     for (const target of this.frameTargets) {
       if (!this.isWithinMap(target, size)) continue;
 
@@ -195,8 +150,8 @@ export class AirTagRenderer {
         relation === AIR_TAG_CLAN_ENEMY_RELATION
           ? THREAT_COLOR
           : NEUTRAL_COLOR;
-      const x = margin.left + (target.x + 0.5) * squareData.normalSize;
-      const y = margin.top + (target.y + 0.5) * squareData.normalSize;
+      const x = margin.left + (target.x + 0.5) * normalSize;
+      const y = margin.top + (target.y + 0.5) * normalSize;
       const alpha = getAirTagMarkerAlpha(this.frameTime - target.observedAt);
 
       context.save();
@@ -259,10 +214,6 @@ export class AirTagRenderer {
     );
   }
 
-  private getEngine(): AirTagEngine | undefined {
-    return (window as AirTagWindow).Engine;
-  }
-
   private readonly refreshDrawRegistration = () => {
     if (!this.enabled) return;
 
@@ -277,13 +228,8 @@ export class AirTagRenderer {
     }
 
     this.scheduleExpiry(targets);
-    if (this.registeredEvent) return;
-    const gameWindow = window as AirTagWindow;
-    const event = gameWindow.Engine?.apiData?.CALL_DRAW_ADD_TO_RENDERER;
-    if (!event || !gameWindow.API) return;
-
-    gameWindow.API.addCallbackToEvent(event, this.handleDrawFrame);
-    this.registeredEvent = event;
+    if (this.unsubscribeDraw) return;
+    this.unsubscribeDraw = this.renderer.subscribeDraw(this.handleDrawFrame);
   };
 
   private scheduleExpiry(targets: readonly AirTagTarget[]): void {
@@ -312,14 +258,8 @@ export class AirTagRenderer {
   }
 
   private detachDrawRegistration(): void {
-    const gameWindow = window as AirTagWindow;
-    if (this.registeredEvent && gameWindow.API) {
-      gameWindow.API.removeCallbackFromEvent(
-        this.registeredEvent,
-        this.handleDrawFrame,
-      );
-    }
-    this.registeredEvent = null;
+    this.unsubscribeDraw?.();
+    this.unsubscribeDraw = null;
   }
 }
 

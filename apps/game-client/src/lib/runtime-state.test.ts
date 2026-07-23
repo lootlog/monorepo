@@ -6,6 +6,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useOthersStore } from "@/store/others.store";
+import { useNpcsStore } from "@/store/npcs.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import {
   debouncedSyncGlobalSettings,
@@ -31,6 +32,7 @@ describe("resetTransientRuntimeState", () => {
       npcs: [{ id: 1 }] as never,
     });
     useOthersStore.setState({ othersById: { 1: {} as never } });
+    useNpcsStore.setState({ npcsById: { 1: { id: 1 } as never } });
     useFriendsStore.setState({ friendsMax: 50 });
     useNotificationsStore.setState({
       notifications: [{ notificationId: "notification" }] as never,
@@ -73,6 +75,7 @@ describe("resetTransientRuntimeState", () => {
     });
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
     expect(useOthersStore.getState().othersById).toEqual({});
+    expect(useNpcsStore.getState().npcsById).toEqual({});
     expect(useFriendsStore.getState().friendsMax).toBe(0);
     expect(useNotificationsStore.getState().notifications).toEqual([]);
     expect(useChatStore.getState().replyDraft).toBeNull();

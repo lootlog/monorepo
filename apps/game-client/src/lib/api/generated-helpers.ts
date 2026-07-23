@@ -1,4 +1,4 @@
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import type {
   CreatePartyGatheringDtoCharacter,
   GuildResponseDtoOutput,
@@ -185,43 +185,47 @@ export const normalizeSoundSettings = (
   };
 };
 
-export const buildCurrentCharacterPayload =
-  (): CreatePartyGatheringDtoCharacter => {
-    const hero = Game.hero;
-
-    return {
-      lvl: hero.lvl,
-      nick: hero.nick,
-      accountId: String(hero.account),
-      characterId: String(hero.id),
-      prof: hero.prof,
-      icon: hero.img,
-      clan: hero.clan ? { id: hero.clan.id, name: hero.clan.name } : undefined,
-    };
-  };
-
-export const buildCurrentTimerActorCharacterPayload = () => {
-  const hero = Game.hero;
+export const buildCurrentCharacterPayload = ():
+  | CreatePartyGatheringDtoCharacter
+  | undefined => {
+  const hero = useGameStore.getState().game?.hero;
+  if (!hero) return undefined;
 
   return {
-    accountId: String(hero.account),
-    characterId: String(hero.id),
-    name: hero.nick,
-    prof: hero.prof,
-    icon: hero.img,
-    lvl: hero.lvl,
+    lvl: hero.level,
+    nick: hero.name,
+    accountId: hero.accountId,
+    characterId: hero.characterId,
+    prof: hero.profession,
+    icon: hero.icon,
+    clan: hero.clan ? { id: hero.clan.id, name: hero.clan.name } : undefined,
+  };
+};
+
+export const buildCurrentTimerActorCharacterPayload = () => {
+  const hero = useGameStore.getState().game?.hero;
+  if (!hero) return undefined;
+
+  return {
+    accountId: hero.accountId,
+    characterId: hero.characterId,
+    name: hero.name,
+    prof: hero.profession,
+    icon: hero.icon,
+    lvl: hero.level,
   };
 };
 
 export const buildChatCharacterData = () => {
-  const hero = Game.hero;
+  const hero = useGameStore.getState().game?.hero;
+  if (!hero) return undefined;
 
   return {
-    nick: hero.nick,
-    id: hero.id,
-    acc: hero.account,
-    lvl: hero.lvl,
-    prof: hero.prof,
-    icon: hero.img,
+    nick: hero.name,
+    id: Number(hero.characterId),
+    acc: Number(hero.accountId),
+    lvl: hero.level,
+    prof: hero.profession,
+    icon: hero.icon,
   };
 };

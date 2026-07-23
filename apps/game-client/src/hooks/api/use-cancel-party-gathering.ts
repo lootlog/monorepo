@@ -43,11 +43,12 @@ export const useCancelPartyGathering = () => {
     },
     onSuccess: () => {
       setOpen("party-finder", false);
-      window.message(t("messages.cancelSuccess"));
+      showRuntimeMessage(t("messages.cancelSuccess"));
     },
     onError: (error) => {
       console.warn("Failed to cancel party gathering:", error);
-      window.message(t("messages.cancelFailed"));
+      showRuntimeMessage(t("messages.cancelFailed"));
     },
   });
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

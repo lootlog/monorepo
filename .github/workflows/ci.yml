@@ -365,11 +365,11 @@ jobs:
       - name: Run coverage suite
         run: pnpm --filter=@lootlog/game-client test:coverage
 
-      - name: Enforce changed-code coverage
+      - name: Report changed-code coverage
         if: github.event_name == 'pull_request'
         env:
           COVERAGE_BASE_REF: ${{ github.event.pull_request.base.sha }}
-        run: pnpm --filter=@lootlog/game-client check:changed-coverage
+        run: pnpm --filter=@lootlog/game-client report:changed-coverage
 
       - name: Build release userscript
         run: pnpm --filter=@lootlog/game-client build

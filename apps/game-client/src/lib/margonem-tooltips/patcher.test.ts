@@ -8,8 +8,10 @@ import {
 } from "./patcher";
 import { characterTooltipTransforms } from "./registry";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 import type { Other } from "@lootlog/margonem/others";
 
 type TestCharacter = {
@@ -21,7 +23,7 @@ type TestCharacter = {
   updateTip?: () => void;
 };
 
-const originalWindowEngine = window.Engine;
+const originalWindowEngine = testRuntimeWindow.Engine;
 
 function createCharacter(nick: string): TestCharacter {
   const character: TestCharacter = {
@@ -52,9 +54,7 @@ function setRuntime(
     value: {
       canvasTip,
       hero,
-      others: {
-        check: () => others,
-      },
+      others,
     },
   });
 }
@@ -95,6 +95,7 @@ describe("installCharacterTooltipTransforms", () => {
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
+    runtimeOtherHandles.clear();
   });
 
   afterEach(() => {
@@ -102,6 +103,7 @@ describe("installCharacterTooltipTransforms", () => {
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useOnlineCharacterOwnersStore.getState().clearOwners();
     useOthersStore.getState().clearOthers();
+    runtimeOtherHandles.clear();
 
     Object.defineProperty(window, "Engine", {
       configurable: true,
@@ -186,10 +188,41 @@ describe("installCharacterTooltipTransforms", () => {
     try {
       expect(other.createStrTip?.()).toBe("<div>replacement</div>");
 
+      runtimeOtherHandles.applyBatch({ removeIds: ["1"] });
       useOthersStore.getState().applyBatch({ removeIds: ["1"] });
 
       expect(other.createStrTip).toBe(originalOtherCreateStrTip);
       expect(other.createStrTip?.()).toBe("<div>Other</div>");
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("keeps a live runtime tooltip patched when normalized other state updates", () => {
+    const hero = createCharacter("Hero");
+    const other = createCharacter("Other");
+    other.d.id = "1";
+    other.d.account = 2;
+    setRuntime(hero, { 1: other });
+    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    characterTooltipTransforms.register(() => "<div>replacement</div>");
+    const cleanup = installCharacterTooltipTransforms();
+
+    try {
+      useOthersStore.getState().applyBatch({
+        upserts: {
+          1: {
+            accountId: "2",
+            characterId: "1",
+            icon: "other.gif",
+            level: 300,
+            name: "Other",
+            profession: "w",
+          },
+        },
+      });
+
+      expect(other.createStrTip?.()).toBe("<div>replacement</div>");
     } finally {
       cleanup();
     }
@@ -312,7 +345,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
-      window.Engine as unknown as {
+      testRuntimeWindow.Engine as unknown as {
         canvasTip: {
           hide: (event: unknown) => unknown;
           show: (event: unknown, object: unknown) => unknown;
@@ -358,7 +391,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
-      window.Engine as unknown as {
+      testRuntimeWindow.Engine as unknown as {
         canvasTip: {
           show: (event: unknown, object: unknown) => unknown;
         };
@@ -392,7 +425,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
-      window.Engine as unknown as {
+      testRuntimeWindow.Engine as unknown as {
         canvasTip: {
           hide: (event: unknown) => unknown;
           show: (event: unknown, object: unknown) => unknown;
@@ -435,7 +468,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
     const runtimeCanvasTip = (
-      window.Engine as unknown as {
+      testRuntimeWindow.Engine as unknown as {
         canvasTip: {
           hide: (event: unknown) => unknown;
           show: (event: unknown, object: unknown) => unknown;

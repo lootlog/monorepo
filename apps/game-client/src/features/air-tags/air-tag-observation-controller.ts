@@ -1,4 +1,5 @@
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
+import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import {
   AIR_TAG_MAX_BATCH_SIZE,
   isAirTagObservation,
@@ -24,14 +25,6 @@ type LocalAirTagTarget = AirTagObservation & {
 
 type RuntimeOtherData = Partial<Omit<OtherCreate, "action">> & {
   id?: string | number;
-};
-
-type AirTagEngineWindow = Window & {
-  Engine?: {
-    others?: {
-      check?: () => Record<string, { d?: RuntimeOtherData }>;
-    };
-  };
 };
 
 interface AirTagObservationControllerOptions {
@@ -137,12 +130,10 @@ export class AirTagObservationController {
   }
 
   detectCurrentOthers(): void {
-    if (!this.isActive() || Game.interface !== "ni") return;
+    if (!this.isActive() || useGameStore.getState().game?.interface !== "ni")
+      return;
 
-    const runtimeOthers = (
-      window as AirTagEngineWindow
-    ).Engine?.others?.check?.();
-    if (!runtimeOthers) return;
+    const runtimeOthers = runtimeOtherHandles.getAll();
 
     for (const [fallbackTargetId, other] of Object.entries(runtimeOthers)) {
       if (!other.d) continue;
@@ -153,7 +144,7 @@ export class AirTagObservationController {
   }
 
   private handleCreate(targetId: string, create: RuntimeOtherData): void {
-    if (targetId === String(Game.hero.id)) return;
+    if (targetId === useGameStore.getState().game?.hero.characterId) return;
 
     const observation = this.toObservation(targetId, create);
     if (
@@ -321,7 +312,11 @@ export class AirTagObservationController {
   }
 
   private isActive(): boolean {
-    return this.enabled && this.canPublish && Game.interface === "ni";
+    return (
+      this.enabled &&
+      this.canPublish &&
+      useGameStore.getState().game?.interface === "ni"
+    );
   }
 }
 

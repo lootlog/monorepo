@@ -1,26 +1,16 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect } from "react";
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
-import { gameEventsManager } from "@/lib/game-events-manager";
-import {
-  getCurrentCharacterId,
-  orderLootlogGuilds,
-} from "@/lib/selected-lootlog-guild";
+import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@/lib/api/generated/main/users/users";
 
-const subscribeToCurrentCharacter = (onStoreChange: () => void) =>
-  gameEventsManager.subscribeAfterGameEvent(onStoreChange);
-
 export function useCurrentCharacterId(): string | null {
-  return useSyncExternalStore(
-    subscribeToCurrentCharacter,
-    getCurrentCharacterId,
-    getCurrentCharacterId,
-  );
+  return useGameStore((state) => state.game?.hero.characterId ?? null);
 }
 
 export function useSelectedLootlogGuildId(): string | undefined {

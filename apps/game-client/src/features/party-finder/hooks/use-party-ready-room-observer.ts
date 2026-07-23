@@ -39,7 +39,7 @@ export function usePartyReadyRoomObserver(): void {
     }
 
     const memberCharacterIds = [
-      ...new Set(partyMembers.map(({ id }) => String(id))),
+      ...new Set(partyMembers.map(({ characterId }) => characterId)),
     ].sort();
     const snapshot = `${ownedReadyRoom.notificationId}:${memberCharacterIds.join(",")}`;
     if (lastReportedSnapshot.current === snapshot) return;

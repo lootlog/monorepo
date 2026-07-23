@@ -6,7 +6,7 @@ import { useSession } from "@/hooks/auth/use-session";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import {
   useNotificationsStore,
   type PartyGatheringNotification,
@@ -24,7 +24,7 @@ export const usePartyGatheringSocket = () => {
   const { accountId, isReady, settings } =
     useCurrentGameAccountNotificationSettings();
   const { isReady: areMutesReady, mutes } = useCurrentUserNotificationMutes();
-  const world = Game.hero ? Game.getWorldName() : undefined;
+  const world = useGameStore((state) => state.game?.world);
   const settingsRef = useRef(settings);
   const mutesRef = useRef(mutes);
   const sessionDataRef = useRef(sessionData);

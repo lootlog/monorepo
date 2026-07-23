@@ -1,5 +1,6 @@
 import { act, render, waitFor } from "@testing-library/react";
 import { GatewayEvent } from "@/config/gateway";
+import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { SocketProvider } from "./socket-context";
 
@@ -37,31 +38,14 @@ vi.mock("@/lib/socket", () => ({
   getSocket: () => mockSocket,
 }));
 
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getWorldName: () => "alpha",
-    hero: {
-      account: 20,
-      clan: undefined,
-      id: 10,
-      img: "hero-icon",
-      lvl: 100,
-      nick: "Hero",
-      prof: "w",
-      x: 1,
-      y: 2,
-    },
-    map: {
-      id: 100,
-      name: "Karka-han",
-    },
-  },
-}));
-
 const expectedJoinData = {
   accountId: "20",
   characterId: "10",
-  clan: undefined,
+  clan: {
+    id: 30,
+    name: "Lootlog",
+    rank: 4,
+  },
   icon: "hero-icon",
   location: {
     map: "Karka-han",
@@ -86,6 +70,32 @@ describe("SocketProvider", () => {
     useGlobalStore.setState({
       gameState: { gameInitialized: true },
       socketState: { connected: false, joined: false, joinedGuilds: [] },
+    });
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "20",
+        characterId: "10",
+        clan: {
+          id: 30,
+          name: "Lootlog",
+          rank: 4,
+        },
+        currentHp: 100,
+        icon: "hero-icon",
+        level: 100,
+        maxHp: 100,
+        name: "Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: {
+        id: 100,
+        name: "Karka-han",
+        visibility: 0,
+      },
+      world: "alpha",
     });
   });
 
@@ -116,7 +126,7 @@ describe("SocketProvider", () => {
       socketId: "socket-1",
       accountId: "20",
       characterId: "10",
-      clanId: undefined,
+      clanId: 30,
     });
   });
 

@@ -40,6 +40,7 @@ export default defineConfig({
         "src/lib/api/generated/",
         "src/**/*.test.{ts,tsx}",
         "src/**/*.spec.{ts,tsx}",
+        "src/**/*.bench.{ts,tsx}",
         "**/*.d.ts",
         "**/*.config.*",
         "**/mockData",

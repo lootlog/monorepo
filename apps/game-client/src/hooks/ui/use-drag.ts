@@ -5,12 +5,10 @@ import {
   useRef,
   useState,
 } from "react";
+import { getRuntimeZoomFactor } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 const getScale = () => {
-  if (typeof window.getZoomFactor === "function") {
-    return window.getZoomFactor();
-  }
-  return window.visualViewport?.scale ?? 1;
+  return getRuntimeZoomFactor() ?? window.visualViewport?.scale ?? 1;
 };
 
 type Position = { x: number; y: number };

@@ -6,12 +6,14 @@ import {
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
   LOOTLOG_OTHER_GLOW_UNKNOWN,
   lootlogOtherGlowManager,
-} from "@/lib/lootlog-other-glow-manager";
+} from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGlobalStore } from "@/store/global.store";
+import { useGameStore } from "@/store/game.store";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 const mocks = vi.hoisted(() => ({
   afterGameEventHandler: undefined as (() => void) | undefined,
@@ -56,7 +58,7 @@ vi.mock("@/lib/game-events-manager", () => ({
 import { useOtherCatchingGuildGlow } from "./use-other-catching-guild-glow";
 import { useSelectedLootlogGuildInitialization } from "../use-selected-lootlog-guild";
 
-const originalWindowEngine = window.Engine;
+const originalWindowEngine = testRuntimeWindow.Engine;
 
 function createOther(id: string): Other {
   return {
@@ -122,6 +124,27 @@ function setRuntime(heroId: number | null | undefined = 101): void {
         getDrawableList: vi.fn(() => []),
       },
     },
+  });
+  if (heroId === null || heroId === undefined) {
+    useGameStore.getState().clearGame();
+    return;
+  }
+  useGameStore.getState().replaceGame({
+    hero: {
+      accountId: "1",
+      characterId: String(heroId),
+      currentHp: 1,
+      icon: "hero.gif",
+      level: 300,
+      maxHp: 1,
+      name: "Hero",
+      profession: "w",
+      x: 1,
+      y: 2,
+    },
+    interface: "ni",
+    map: { id: 1, name: "Map", visibility: 30 },
+    world: "tempest",
   });
 }
 
@@ -192,7 +215,9 @@ describe("useOtherCatchingGuildGlow", () => {
       "undefined",
     );
 
-    window.Engine.hero.d.id = 101;
+    const runtimeHero = testRuntimeWindow.Engine?.hero;
+    if (!runtimeHero) throw new Error("Expected test runtime hero");
+    runtimeHero.d.id = 101;
     act(() => {
       mocks.afterGameEventHandler?.();
     });
@@ -254,7 +279,7 @@ describe("useOtherCatchingGuildGlow", () => {
       );
     });
 
-    window.Engine.hero.d.id = 202;
+    setRuntime(202);
     act(() => {
       mocks.afterGameEventHandler?.();
     });

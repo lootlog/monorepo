@@ -8,7 +8,7 @@ import { usePartyReadyRoomControllerApply } from "@/lib/api/generated/main/party
 import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { format } from "@/utils/local-date";
 import { Loader2 } from "lucide-react";
@@ -47,10 +47,16 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   const senderName =
     member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
 
-  const heroLvl = Game.hero.lvl;
+  const heroLvl = useGameStore((state) => state.game?.hero.level ?? 0);
+  const heroAccountId = useGameStore(
+    (state) => state.game?.hero.accountId ?? "",
+  );
+  const heroCharacterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
   const isOrganizingCharacter =
-    String(message.characterData.acc) === String(Game.hero.account) &&
-    String(message.characterData.id) === String(Game.hero.id);
+    String(message.characterData.acc) === heroAccountId &&
+    String(message.characterData.id) === heroCharacterId;
   const partyGathering = message.partyGathering;
 
   if (!partyGathering) {
@@ -96,6 +102,9 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   }
 
   const handleVolunteer = () => {
+    const character = buildCurrentCharacterPayload();
+    if (!character) return;
+
     applyToReadyRoom.mutate(
       {
         pathParams: {
@@ -103,7 +112,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
         },
         data: {
           world: partyGathering.world,
-          character: buildCurrentCharacterPayload(),
+          character,
         },
       },
       {

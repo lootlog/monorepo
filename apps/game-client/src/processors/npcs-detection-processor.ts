@@ -1,16 +1,15 @@
-import {
-  composeNpcFromEvent,
-  composeNpcFromGame,
-} from "@/hooks/game-events/helpers/npc.helpers";
+import { composeNpcFromEvent } from "@/hooks/game-events/helpers/npc.helpers";
 import type { EventNpc, ProcessedNpcSettings } from "@/hooks/game-events/types";
-import { Game } from "@/lib/game";
 import {
   type GameNpcWithLocation,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import type { GameNpc } from "@lootlog/margonem/npcs";
+import type { RuntimeNpc } from "@/lib/margonem-runtime/runtime.types";
+import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
+import { useNpcsStore } from "@/store/npcs.store";
+import { useGameStore } from "@/store/game.store";
 import { NpcType } from "@/api/npcs.api";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
@@ -64,25 +63,11 @@ type DetectionIntents = {
   soundNpcTypes: Set<DetectorNpcType>;
 };
 
-// TODO: Temporary startup workaround. Replace this polling with an explicit
-// NPC-ready signal from the game runtime; retry-based readiness checks are
-// brittle and should not become our long-term pattern.
-const INITIAL_DETECTION_RETRY_DELAY_MS = 100;
-const INITIAL_DETECTION_MAX_RETRIES = 20;
 const MAX_PENDING_DETECTIONS_PER_ACCOUNT = 200;
-
-type InitialDetectionSnapshot = {
-  npcs: GameNpc[];
-};
 
 export class NpcsDetectionProcessor {
   private static pendingDetections: PendingDetection[] = [];
-  private initialDetectionRetryTimeout: ReturnType<typeof setTimeout> | null =
-    null;
-  private initialDetectionRetryAttempts = 0;
-
   cleanup(): void {
-    this.clearInitialDetectionRetry();
     NpcsDetectionProcessor.pendingDetections = [];
   }
 
@@ -97,31 +82,24 @@ export class NpcsDetectionProcessor {
     this.processEvent(event);
   }
 
-  handleInitialDetection(): void {
+  bootstrapProjection(): void {
     const accountId = this.getCurrentAccountId();
     if (!accountId) return;
 
     const detectorReady = this.isDetectorReady(accountId);
 
     if (!detectorReady) {
-      this.keepPendingDetectionsForAccount(accountId);
-      const hasQueuedInitialDetection =
-        NpcsDetectionProcessor.pendingDetections.some(
-          (pendingDetection) =>
-            pendingDetection.accountId === accountId &&
-            pendingDetection.type !== "event",
-        );
-
-      if (!hasQueuedInitialDetection) {
-        NpcsDetectionProcessor.pendingDetections.push({
-          accountId,
-          type: "initial",
-        });
-      }
+      this.queueInitialDetection(accountId);
       return;
     }
 
-    this.processInitialDetectionWithRetry();
+    if (!this.processInitialDetectionFromStore()) {
+      this.queueInitialDetection(accountId);
+    }
+  }
+
+  handleInitialDetection(): void {
+    this.bootstrapProjection();
   }
 
   flushPending(accountId: string): void {
@@ -147,16 +125,23 @@ export class NpcsDetectionProcessor {
       return;
     }
 
-    NpcsDetectionProcessor.pendingDetections = remainingDetections;
+    const deferredDetections: PendingDetection[] = [];
 
     pendingDetections.forEach((pendingDetection) => {
       if (pendingDetection.type !== "event") {
-        this.processInitialDetectionWithRetry();
+        if (!this.processInitialDetectionFromStore()) {
+          deferredDetections.push(pendingDetection);
+        }
         return;
       }
 
       this.processEvent(pendingDetection.event);
     });
+
+    NpcsDetectionProcessor.pendingDetections = [
+      ...remainingDetections,
+      ...deferredDetections,
+    ];
   }
 
   private queuePendingEvent(accountId: string, event: GameEvent): void {
@@ -187,6 +172,21 @@ export class NpcsDetectionProcessor {
     });
   }
 
+  private queueInitialDetection(accountId: string): void {
+    this.keepPendingDetectionsForAccount(accountId);
+    const hasQueuedInitialDetection =
+      NpcsDetectionProcessor.pendingDetections.some(
+        (pendingDetection) => pendingDetection.type !== "event",
+      );
+
+    if (!hasQueuedInitialDetection) {
+      NpcsDetectionProcessor.pendingDetections.push({
+        accountId,
+        type: "initial",
+      });
+    }
+  }
+
   private keepPendingDetectionsForAccount(accountId: string): void {
     NpcsDetectionProcessor.pendingDetections =
       NpcsDetectionProcessor.pendingDetections.filter(
@@ -207,8 +207,20 @@ export class NpcsDetectionProcessor {
     const intents = this.createDetectionIntents();
     const npcs =
       event.npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
+        const runtimeNpc = useNpcsStore.getState().getNpc(npc.id);
         const tpl =
-          getNpcTplFromEvent(event, npc.tpl) || Game.getNpcTpl(npc.tpl);
+          getNpcTplFromEvent(event, npc.tpl) ??
+          (runtimeNpc
+            ? ({
+                icon: runtimeNpc.icon,
+                id: runtimeNpc.templateId,
+                lvl: runtimeNpc.level,
+                nick: runtimeNpc.name,
+                prof: runtimeNpc.profession,
+                type: runtimeNpc.type,
+                wt: runtimeNpc.weight,
+              } as NpcTpl)
+            : undefined);
         if (!tpl) return acc;
 
         const npcType = getNpcTypeByWt(
@@ -227,7 +239,12 @@ export class NpcsDetectionProcessor {
         );
         if (!processedSettings) return acc;
 
-        const composedNpc = composeNpcFromEvent(npc, tpl, processedSettings);
+        const composedNpc = composeNpcFromEvent(
+          npc,
+          tpl,
+          processedSettings,
+          useGameStore.getState().game?.map.name ?? "",
+        );
 
         this.collectDetectionIntents(intents, {
           composedNpc,
@@ -250,83 +267,15 @@ export class NpcsDetectionProcessor {
     }
   }
 
-  private processInitialDetectionWithRetry(): void {
-    if (this.initialDetectionRetryTimeout !== null) {
-      return;
-    }
-
-    this.initialDetectionRetryAttempts = 0;
-    this.tryProcessInitialDetection();
+  private processInitialDetectionFromStore(): boolean {
+    const { npcsById, status } = useNpcsStore.getState();
+    if (status !== "ready") return false;
+    const npcs = Object.values(npcsById);
+    if (npcs.length > 0) this.processInitialDetection(npcs);
+    return true;
   }
 
-  private tryProcessInitialDetection(): void {
-    const snapshot = this.getInitialDetectionSnapshot();
-    const { npcs } = snapshot;
-
-    if (npcs.length > 0) {
-      this.clearInitialDetectionRetry();
-      this.processInitialDetection(npcs);
-      return;
-    }
-
-    if (this.initialDetectionRetryAttempts >= INITIAL_DETECTION_MAX_RETRIES) {
-      this.clearInitialDetectionRetry();
-      return;
-    }
-
-    this.initialDetectionRetryAttempts += 1;
-    this.initialDetectionRetryTimeout = setTimeout(() => {
-      this.initialDetectionRetryTimeout = null;
-      this.tryProcessInitialDetection();
-    }, INITIAL_DETECTION_RETRY_DELAY_MS);
-  }
-
-  private getInitialDetectionSnapshot(): InitialDetectionSnapshot {
-    try {
-      const rawNpcs = (Game.npcs ?? []) as Array<GameNpc | null | undefined>;
-      const npcs = rawNpcs.filter((npc): npc is GameNpc =>
-        this.isInitialDetectionNpcReady(npc),
-      );
-
-      return {
-        npcs,
-      };
-    } catch {
-      return {
-        npcs: [],
-      };
-    }
-  }
-
-  private isInitialDetectionNpcReady(
-    npc: GameNpc | null | undefined,
-  ): npc is GameNpc {
-    return (
-      npc !== null &&
-      npc !== undefined &&
-      typeof npc.id === "number" &&
-      typeof npc.tpl === "number" &&
-      typeof npc.x === "number" &&
-      typeof npc.y === "number" &&
-      typeof npc.nick === "string" &&
-      typeof npc.prof === "string" &&
-      typeof npc.type === "number" &&
-      typeof npc.wt === "number" &&
-      typeof npc.lvl === "number" &&
-      typeof npc.icon === "string"
-    );
-  }
-
-  private clearInitialDetectionRetry(): void {
-    if (this.initialDetectionRetryTimeout !== null) {
-      clearTimeout(this.initialDetectionRetryTimeout);
-    }
-
-    this.initialDetectionRetryTimeout = null;
-    this.initialDetectionRetryAttempts = 0;
-  }
-
-  private processInitialDetection(npcs: GameNpc[]): void {
+  private processInitialDetection(npcs: RuntimeNpc[]): void {
     const context = this.createDetectionContext();
     const intents = this.createDetectionIntents();
 
@@ -336,8 +285,8 @@ export class NpcsDetectionProcessor {
 
         const npcType = getNpcTypeByWt(
           NpcType,
-          npc.wt,
-          npc.prof,
+          npc.weight,
+          npc.profession,
           npc.type,
         ) as DetectorNpcType;
 
@@ -348,7 +297,23 @@ export class NpcsDetectionProcessor {
         );
         if (!processedSettings) return acc;
 
-        const composedNpc = composeNpcFromGame(npc, processedSettings);
+        const composedNpc: GameNpcWithLocation = {
+          actions: npc.actions,
+          grp: npc.groupId,
+          icon: processedSettings.icon,
+          id: npc.id,
+          location: useGameStore.getState().game?.map.name ?? "unknown",
+          lvl: npc.level,
+          nick: npc.name,
+          notificationSent: false,
+          prof: npc.profession,
+          resp_rand: npc.respawnRandomness,
+          tpl: npc.templateId,
+          type: npc.type,
+          wt: npc.weight,
+          x: npc.x,
+          y: npc.y,
+        };
 
         this.collectDetectionIntents(intents, {
           composedNpc,
@@ -380,11 +345,10 @@ export class NpcsDetectionProcessor {
     const settings = detectorSettings[npcType];
     if (!settings?.detect) return null;
 
-    const icon = event
-      ? getNpcIconFromEvent(event, npc.icon.id) ||
-        Game.getNpcIcon(npc.icon.id) ||
-        ""
-      : Game.getNpcIcon(npc.icon.id) || "";
+    const icon =
+      (event ? getNpcIconFromEvent(event, npc.icon.id) : undefined) ??
+      useNpcsStore.getState().getNpc(npc.id)?.icon ??
+      "";
 
     const guildIds = this.resolveRoutingGuildIds(context, npcLevel);
     const autoSendNotification = settings.autoSend && guildIds.length > 0;
@@ -398,7 +362,7 @@ export class NpcsDetectionProcessor {
   }
 
   private processGameNpcSettings(
-    npc: GameNpc,
+    npc: RuntimeNpc,
     npcType: DetectorNpcType,
     context: DetectionProcessingContext,
   ): ProcessedNpcSettings | null {
@@ -407,8 +371,8 @@ export class NpcsDetectionProcessor {
 
     if (!settings?.detect) return null;
 
-    const icon = Game.getNpcIcon(npc.tpl) || npc.icon || "";
-    const guildIds = this.resolveRoutingGuildIds(context, npc.lvl);
+    const icon = npc.icon;
+    const guildIds = this.resolveRoutingGuildIds(context, npc.level);
     const autoSendNotification = settings.autoSend && guildIds.length > 0;
 
     return {
@@ -514,13 +478,14 @@ export class NpcsDetectionProcessor {
     await Promise.all(
       successfulNotifications.map(async ({ npc, guildIds }) => {
         try {
-          await sendChatMessage(
-            buildNpcChatMessagePayload({
-              npc,
-              guildIds,
-              messageType: MessageType.NPC,
-            }),
-          );
+          const chatMessage = buildNpcChatMessagePayload({
+            npc,
+            guildIds,
+            messageType: MessageType.NPC,
+          });
+          if (!chatMessage) return;
+
+          await sendChatMessage(chatMessage);
         } catch (error) {
           console.warn(
             "[NpcsDetectionProcessor] Failed to send chat message:",
@@ -568,7 +533,7 @@ export class NpcsDetectionProcessor {
   }
 
   private getCurrentAccountId() {
-    return Game.getAccountId();
+    return useGameStore.getState().game?.hero.accountId;
   }
 
   private isDetectorReady(accountId: string) {

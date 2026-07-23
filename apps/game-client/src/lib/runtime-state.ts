@@ -13,6 +13,7 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
+import { useNpcsStore } from "@/store/npcs.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
 import { disposeTimerSettingsSync } from "@/store/timer-settings-sync";
@@ -26,6 +27,7 @@ export function resetTransientRuntimeState(): void {
   useCharacterTooltipCatchingGuildsStore.getState().clear();
   useNotificationsStore.getState().clearNotifications();
   useNpcDetectorStore.getState().clearNpcs();
+  useNpcsStore.getState().clearNpcs();
   useOnlineCharacterOwnersStore.getState().clearOwners();
   useOthersStore.getState().clearOthers();
   usePartyFinderStore.getState().clearReadyRooms();
@@ -39,7 +41,7 @@ export function resetTransientRuntimeState(): void {
     lastBattleHash: "",
     lastKillHash: "",
   });
-  useDialogStore.getState().setTalkingNpcId(null);
+  useDialogStore.getState().clearNpcContext();
   useLootStore.getState().setLastLootId(null);
   useFriendsStore.setState({ friends: [], friendsMax: 0 });
 

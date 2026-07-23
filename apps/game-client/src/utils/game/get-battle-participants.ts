@@ -1,4 +1,6 @@
-import { Game } from "@/lib/game";
+import type { RuntimeGameSnapshot } from "@/lib/margonem-runtime/runtime.types";
+import { useGameStore } from "@/store/game.store";
+import { useNpcsStore } from "@/store/npcs.store";
 import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
 
 export type PartyMember = {
@@ -25,13 +27,14 @@ export type Npc = {
 
 export const getBattleParticipants = (
   battleWarriors: BattleWarriorsWithAccountId,
+  game: RuntimeGameSnapshot | null = useGameStore.getState().game,
 ) => {
   const party: PartyMember[] = [];
   const npcs: Npc[] = [];
 
   Object.entries(battleWarriors).forEach(([key, value]) => {
     if (key.startsWith("-")) {
-      const npcData = Game.getNpc(value.originalId);
+      const npcData = useNpcsStore.getState().getNpc(value.originalId);
 
       if (!npcData) {
         npcs.push({
@@ -42,7 +45,7 @@ export const getBattleParticipants = (
           prof: value.prof,
           lvl: value.lvl,
           wt: value.wt,
-          location: Game.map.name,
+          location: game?.map.name ?? "",
           type: value.type ?? 2,
         });
 
@@ -50,14 +53,14 @@ export const getBattleParticipants = (
       }
 
       npcs.push({
-        id: npcData.tpl,
-        name: npcData.nick,
+        id: npcData.templateId,
+        name: npcData.name,
         icon: npcData.icon,
         hpp: value.hpp,
-        prof: npcData.prof,
-        lvl: npcData.lvl,
-        wt: npcData.wt,
-        location: Game.map.name,
+        prof: npcData.profession,
+        lvl: npcData.level,
+        wt: npcData.weight,
+        location: game?.map.name ?? "",
         type: npcData.type,
       });
       return;

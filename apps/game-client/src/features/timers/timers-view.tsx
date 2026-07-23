@@ -17,7 +17,7 @@ import {
   mergeTimers,
 } from "@/features/timers/utils/timers-utils";
 import { useTimers } from "@/hooks/api/use-timers";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -57,8 +57,10 @@ interface TimersViewProps {
 
 export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const { t } = useTranslation("timers");
-  const characterId = String(Game.hero.id);
-  const defaultWorld = Game.getWorldName();
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
+  const defaultWorld = useGameStore((state) => state.game?.world ?? "unknown");
   const { worldByGuildId, allowWorldSelection, guildIdByCharId } =
     useSettingsStore(
       useShallow((state) => ({

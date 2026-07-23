@@ -1,12 +1,12 @@
 import { useUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
-import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
+import { useGameStore } from "@/store/game.store";
 
 export const useCurrentGameAccountPreferences = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
-  const accountId = Game.getAccountId();
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? null);
   const query = useUserGameAccountPreferences(accountId, gameInitialized);
 
   return {
