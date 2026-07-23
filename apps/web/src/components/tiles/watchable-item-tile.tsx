@@ -17,7 +17,7 @@ import {
   invalidateNotificationsUserControllerGetUserTargets,
   invalidateNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerDeleteWatchedItem,
-} from "@/lib/api/generated/main/notifications/notifications";
+} from "@lootlog/api-client/react-query/main/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, BellOff, LoaderCircle, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";

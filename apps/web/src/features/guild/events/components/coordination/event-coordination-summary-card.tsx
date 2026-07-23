@@ -3,7 +3,7 @@ import { AlertTriangle, Clock3, Crosshair, MapPinned } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { Badge } from "@lootlog/ui/components/badge";
 import { getCoveragePercentage } from "../../utils/coordination-utils";
-import type { EventCoordinationResponseDto } from "@/lib/api/generated/main/model";
+import type { EventCoordinationResponseDto } from "@lootlog/api-client/models/main/event-coordination-response-dto";
 
 interface EventCoordinationSummaryCardProps {
   coordination: EventCoordinationResponseDto;

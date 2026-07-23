@@ -14,10 +14,8 @@ import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
-import type {
-  LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc,
-  UpdateLootlogConfigNpcDtoAllowedRaritiesItem,
-} from "@/lib/api/generated/main/model";
+import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@lootlog/api-client/models/main/lootlog-config-npc-response-dto-output";
+import type { UpdateLootlogConfigNpcDtoAllowedRaritiesItem } from "@lootlog/api-client/models/main/update-lootlog-config-npc-dto-allowed-rarities-item";
 import { cn } from "@/utils/cn";
 import { toast } from "sonner";
 import { Card } from "@lootlog/ui/components/card";
@@ -28,7 +26,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   invalidateLootlogConfigControllerGetLootlogConfig,
   useLootlogConfigControllerUpdateNpc,
-} from "@/lib/api/generated/main/lootlog-config/lootlog-config";
+} from "@lootlog/api-client/react-query/main/lootlog-config";
 
 type NpcsFormProps = {
   npc: LootlogConfigNpc;

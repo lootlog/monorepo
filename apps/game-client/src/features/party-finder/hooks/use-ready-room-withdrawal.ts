@@ -4,7 +4,7 @@ import type {
 } from "@lootlog/types";
 import { useState } from "react";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
-import { partyReadyRoomControllerWithdraw } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import { partyReadyRoomControllerWithdraw } from "@lootlog/api-client/react-query/main/party-ready-room";
 import {
   selectReadyRoomParticipantForCharacter,
   usePartyFinderStore,

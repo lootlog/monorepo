@@ -1,7 +1,5 @@
-import {
-  LootItemResponseDtoProfItem,
-  NpcType,
-} from "@/lib/api/generated/main/model";
+import { LootItemResponseDtoProfItem } from "@lootlog/api-client/models/main/loot-item-response-dto-prof-item";
+import { NpcType } from "@lootlog/api-client/models/main/npc-type";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { useTranslation } from "react-i18next";
 

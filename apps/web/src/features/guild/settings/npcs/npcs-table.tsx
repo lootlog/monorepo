@@ -1,5 +1,5 @@
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
-import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@/lib/api/generated/main/model";
+import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@lootlog/api-client/models/main/lootlog-config-npc-response-dto-output";
 import { cn } from "@/utils/cn";
 import { Button } from "@lootlog/ui/components/button";
 import {

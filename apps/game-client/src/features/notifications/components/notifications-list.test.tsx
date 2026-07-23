@@ -52,7 +52,7 @@ vi.mock("@/hooks/api/use-user-preferences", () => ({
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
   usePartyReadyRoomControllerApply: () => ({
     isPending: false,
     mutate: vi.fn(),
@@ -64,7 +64,7 @@ vi.mock("@/lib/api/generated-helpers", () => ({
   getGuildNamesById: () => ({}),
 }));
 
-vi.mock("@/lib/api/generated/main/users/users", () => ({
+vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => ["guilds"],
   useUsersControllerGetCurrentUserAccessibleGuilds: () => ({ data: [] }),
 }));

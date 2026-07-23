@@ -16,14 +16,14 @@ import {
   useEventsAssignmentControllerSelfAssignMember,
   useEventsMonitoringControllerCloseRespawnWindow,
   useEventsMonitoringControllerGetCoordination,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { EventCoordinationHeroCard } from "./components/coordination/event-coordination-hero-card";
 import { EventCoordinationSummaryCard } from "./components/coordination/event-coordination-summary-card";
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
-import type { EventCoordinationResponseDtoHeroesItem } from "@/lib/api/generated/main/model";
+import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item";
 
 export const EventCoordinationPage = () => {
   const { t } = useTranslation();

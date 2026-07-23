@@ -1,8 +1,8 @@
 import {
   timersControllerDeleteTimer,
   timersControllerResetTimer,
-} from "@/lib/api/generated/main/timers/timers";
-import { isApiError } from "@/lib/api-client";
+} from "@lootlog/api-client/react-query/main/timers";
+import { isApiError } from "@lootlog/api-client/transport";
 import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-helpers";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimersStore } from "@/store/timers.store";

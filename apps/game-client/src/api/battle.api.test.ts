@@ -6,8 +6,8 @@ const { post } = vi.hoisted(() => ({
   post: vi.fn(),
 }));
 
-vi.mock("@/lib/api-client", () => ({
-  getApiClient: () => ({ post }),
+vi.mock("@lootlog/api-client/transport", () => ({
+  createApiClient: () => ({ post }),
 }));
 
 describe("createBattle", () => {
@@ -24,7 +24,7 @@ describe("createBattle", () => {
       world: "world-1",
       events: [{ ev: 1, f: { m: ["move"] } }],
     };
-    post.mockResolvedValue({ status: 201, data: { battleId: "battle-1" } });
+    post.mockResolvedValue({ battleId: "battle-1" });
 
     await expect(createBattle(options)).resolves.toEqual({
       battleId: "battle-1",

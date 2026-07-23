@@ -19,7 +19,7 @@ import { NpcTile } from "@/components/tiles";
 import {
   useConfirmParticipationForKill,
   useListPendingParticipationConfirmations,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import { formatDateTime } from "../../utils/format-date";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
 

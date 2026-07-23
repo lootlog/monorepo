@@ -36,7 +36,7 @@ import {
   getShowEventOverviewQueryKey,
   useListEventRanking,
   useShowEventOverview,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import type { EventHeroNpc, EventRanking } from "./types/api";
 
 const formatPoints = (value: number) => {

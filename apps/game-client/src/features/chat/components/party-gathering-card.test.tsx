@@ -1,10 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
-import type {
-  ChatMessageResponseDtoOutput,
-  MemberSummaryResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { PartyGatheringCard } from "./party-gathering-card";
 import { usePartyFinderStore } from "@/store/party-finder.store";
@@ -18,7 +16,7 @@ vi.mock("@/hooks/discord/use-member-color", () => ({
 
 const applyToReadyRoom = vi.fn();
 
-vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
   usePartyReadyRoomControllerApply: () => ({
     mutate: applyToReadyRoom,
     isPending: false,

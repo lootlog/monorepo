@@ -7,7 +7,7 @@ import { useGameStore } from "@/store/game.store";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 
 export function useCurrentCharacterId(): string | null {
   return useGameStore((state) => state.game?.hero.characterId ?? null);

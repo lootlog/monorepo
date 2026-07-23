@@ -2,12 +2,10 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Permission } from "@lootlog/types";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type {
-  ChatMessageResponseDtoOutput,
-  MemberSummaryResponseDtoOutput,
-  NullableMemberResponseDto,
-  RoleResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
+import type { NullableMemberResponseDto } from "@lootlog/api-client/models/main/nullable-member-response-dto";
+import type { RoleResponseDtoOutput } from "@lootlog/api-client/models/main/role-response-dto-output";
 import { MessageType } from "@/api/chat.api";
 import { restoreChatEditorSelection } from "@/features/chat/chat-editor-selection.helpers";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -198,7 +196,7 @@ vi.mock("@tanstack/react-query", async () => {
   };
 });
 
-vi.mock("@/lib/api/generated/main/chat/chat", () => ({
+vi.mock("@lootlog/api-client/react-query/main/chat", () => ({
   getChatControllerGetChatMessagesQueryKey: ({
     guildId,
   }: {
@@ -214,7 +212,7 @@ vi.mock("@/lib/api/generated/main/chat/chat", () => ({
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/guilds/guilds", () => ({
+vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
   getGuildsControllerGetGuildPermissionsQueryKey: ({
     guildId,
   }: {
@@ -232,7 +230,7 @@ vi.mock("@/lib/api/generated/main/guilds/guilds", () => ({
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/members/members", () => ({
+vi.mock("@lootlog/api-client/react-query/main/members", () => ({
   getMembersControllerGetMeQueryKey: ({ guildId }: { guildId: string }) => [
     "members",
     guildId,
@@ -285,7 +283,7 @@ vi.mock("@/lib/api/generated/main/members/members", () => ({
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/roles/roles", () => ({
+vi.mock("@lootlog/api-client/react-query/main/roles", () => ({
   getRolesControllerGetGuildRolesQueryKey: ({
     guildId,
   }: {

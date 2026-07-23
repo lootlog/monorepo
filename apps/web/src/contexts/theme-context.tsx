@@ -13,7 +13,7 @@ import {
   useSetUsersControllerGetUserPreferencesQueryData,
   useUsersControllerGetUserPreferences,
   useUsersControllerUpdateUserPreferences,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import {
   applyThemeClassToRoot,
   COLOR_MODE_STORAGE_KEY,

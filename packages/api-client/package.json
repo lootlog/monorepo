@@ -1,0 +1,58 @@
+{
+  "name": "@lootlog/api-client",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./transport": "./src/transport.ts",
+    "./core/main/*": "./src/generated/core/main/*/*.ts",
+    "./core/auth/*": "./src/generated/core/auth/*/*.ts",
+    "./core/battlelog/*": "./src/generated/core/battlelog/*/*.ts",
+    "./core/search/*": "./src/generated/core/search/*/*.ts",
+    "./core/activity/*": "./src/generated/core/activity/*/*.ts",
+    "./react-query/main/*": "./src/generated/react-query/main/*/*.ts",
+    "./react-query/auth/*": "./src/generated/react-query/auth/*/*.ts",
+    "./react-query/battlelog/*": "./src/generated/react-query/battlelog/*/*.ts",
+    "./react-query/search/*": "./src/generated/react-query/search/*/*.ts",
+    "./react-query/activity/*": "./src/generated/react-query/activity/*/*.ts",
+    "./models/main/*": "./src/generated/models/main/*.ts",
+    "./models/auth/*": "./src/generated/models/auth/*.ts",
+    "./models/battlelog/*": "./src/generated/models/battlelog/*.ts",
+    "./models/search/*": "./src/generated/models/search/*.ts",
+    "./models/activity/*": "./src/generated/models/activity/*.ts"
+  },
+  "scripts": {
+    "api-client:check": "tsx ./scripts/check-generated.ts",
+    "api-client:generate": "tsx ./scripts/generate.ts",
+    "check-types": "tsc --noEmit",
+    "lint": "oxlint src/*.ts scripts orval.config.ts --deny-warnings",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@lootlog/nest-shared": "workspace:*",
+    "@lootlog/typescript-config": "workspace:*",
+    "@tanstack/react-query": "^5.99.2",
+    "@types/node": "25.6.0",
+    "orval": "^8.17.0",
+    "oxfmt": "^0.43.0",
+    "oxlint": "^1.61.0",
+    "react": "^19.2.5",
+    "tsx": "^4.22.4",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.8"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.99.2",
+    "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tanstack/react-query": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  }
+}

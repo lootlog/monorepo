@@ -4,9 +4,9 @@ import { PinnedEventsBanner } from "./pinned-events-banner";
 import {
   getEventsSettingsControllerGetSettingsQueryKey,
   useEventsSettingsControllerGetSettings,
-} from "@/lib/api/generated/main/event-settings/event-settings";
+} from "@lootlog/api-client/react-query/main/event-settings";
 import { AnimatePresence, motion } from "framer-motion";
-import type { ListEventsQueryResult } from "@/lib/api/generated/main/events/events";
+import type { ListEventsQueryResult } from "@lootlog/api-client/react-query/main/events";
 
 export const GuildPinnedEventsSection = ({
   activeEvents,

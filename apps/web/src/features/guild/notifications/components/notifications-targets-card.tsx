@@ -3,10 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";
 import { NotificationTargetCard } from "./notification-target-card";
-import type {
-  GuildNotificationRulesResponseDto,
-  NotificationTargetResponseDto,
-} from "@/lib/api/generated/main/model";
+import type { GuildNotificationRulesResponseDto } from "@lootlog/api-client/models/main/guild-notification-rules-response-dto";
+import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
 import {
   getGuildNotificationTargetUsageCount,
   getGuildNotificationOrphanedRuleCount,

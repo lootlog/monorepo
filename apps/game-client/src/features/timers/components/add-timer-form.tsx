@@ -22,19 +22,17 @@ import {
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/use-debounce";
 import { GuildSwitcher } from "@/components/guild-switcher";
-import {
-  CreateManualTimerDtoType,
-  type CreateManualTimerDto,
-  type SearchTimersNpcResponseDtoOutput,
-} from "@/lib/api/generated/main/model";
+import { CreateManualTimerDtoType } from "@lootlog/api-client/models/main/create-manual-timer-dto-type";
+import type { CreateManualTimerDto } from "@lootlog/api-client/models/main/create-manual-timer-dto";
+import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/api-client/models/main/search-timers-npc-response-dto-output";
 import {
   getTimersControllerSearchNpcsWithTimerDataQueryKey,
   useTimersControllerSearchNpcsWithTimerData,
-} from "@/lib/api/generated/main/timers/timers";
+} from "@lootlog/api-client/react-query/main/timers";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
 import { useTranslation } from "react-i18next";

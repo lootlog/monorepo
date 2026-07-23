@@ -22,7 +22,7 @@ import { canManageGuild } from "@/lib/guild-permissions";
 import {
   getListEventsQueryKey,
   useListEvents,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { DevPermissionOverridePanel } from "@/components/dev/dev-permission-override-panel";
 import { canReadGuildDocs } from "@/features/guild/docs/docs-permissions";

@@ -4,8 +4,8 @@ import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { useQueryClient } from "@tanstack/react-query";
 import type { UserSoundSettings } from "@lootlog/types";
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@/lib/api/generated/main/sound-settings/sound-settings";
-import type { SoundSettingsResponseDto } from "@/lib/api/generated/main/model";
+import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/api-client/react-query/main/sound-settings";
+import type { SoundSettingsResponseDto } from "@lootlog/api-client/models/main/sound-settings-response-dto";
 import {
   acquireSoundPlayback,
   playSoundRequest,

@@ -16,14 +16,12 @@ import type { FC } from "react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ActorNameSelector } from "./actor-name-selector";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
-import type {
-  ActivitiesControllerFindByGuildSourceItem,
-  ActivitiesControllerFindByGuildTypeItem,
-} from "@/lib/api/generated/activity/model";
+import type { ActivitiesControllerFindByGuildSourceItem } from "@lootlog/api-client/models/activity/activities-controller-find-by-guild-source-item";
+import type { ActivitiesControllerFindByGuildTypeItem } from "@lootlog/api-client/models/activity/activities-controller-find-by-guild-type-item";
 import { isAfter, isBefore, startOfDay, subDays } from "date-fns";
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
 import { useQuery } from "@tanstack/react-query";
 import {
   getActivityLogSources,
@@ -34,7 +32,7 @@ import {
   getActivitiesControllerSuggestActorNamesQueryOptions,
   getActivitiesControllerSuggestClanNamesQueryKey,
   getActivitiesControllerSuggestClanNamesQueryOptions,
-} from "@/lib/api/generated/activity/guilds/guilds";
+} from "@lootlog/api-client/react-query/activity/guilds";
 import { useTranslation } from "react-i18next";
 import { useDebounceValue } from "usehooks-ts";
 

@@ -1,5 +1,5 @@
 import type { Query, QueryClient } from "@tanstack/react-query";
-import { getListEventRankingQueryKey } from "@/lib/api/generated/main/events/events";
+import { getListEventRankingQueryKey } from "@lootlog/api-client/react-query/main/events";
 
 const getEventRankingHistoryPathPrefix = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/ranking/`;

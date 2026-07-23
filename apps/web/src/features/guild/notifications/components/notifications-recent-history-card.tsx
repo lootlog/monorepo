@@ -6,7 +6,7 @@ import { Link } from "@tanstack/react-router";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
-import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model";
+import type { NotificationJobsResponseDto } from "@lootlog/api-client/models/main/notification-jobs-response-dto";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { ROUTES } from "@/config/routes";
 import {

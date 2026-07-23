@@ -1,3 +1,3 @@
-import type { CoverageGapResponseDto } from "@/lib/api/generated/main/model";
+import type { CoverageGapResponseDto } from "@lootlog/api-client/models/main/coverage-gap-response-dto";
 
 export type CoverageGap = CoverageGapResponseDto;

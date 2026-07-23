@@ -1,4 +1,4 @@
-import { getApiClient } from "@/lib/api-client";
+import { createApiClient } from "@lootlog/api-client/transport";
 import {
   logLootCreateDebug,
   type LootCreateDebugContext,
@@ -54,7 +54,7 @@ export async function createLoot(
   options: CreateLootOptions,
   debugContext: LootCreateDebugContext,
 ): Promise<CreateLootResponse> {
-  const client = getApiClient("default");
+  const client = createApiClient("main");
   let attempt = 0;
   const response = await runSingleLoggedAction({
     actionType: "create_loot",
@@ -82,7 +82,7 @@ export async function createLoot(
         logLootCreateDebug("http-success", {
           ...debugContext,
           attempt,
-          response: requestResponse.data,
+          response: requestResponse,
         });
         return requestResponse;
       } catch (error) {
@@ -109,7 +109,7 @@ export async function createLoot(
     retry: GAME_EVENT_RETRY_OPTIONS,
   });
 
-  return response.data;
+  return response;
 }
 
 export type UpdateLootOptions = {
@@ -121,7 +121,7 @@ export async function updateLoot({
   id,
   ...rest
 }: UpdateLootOptions): Promise<void> {
-  const client = getApiClient("default");
+  const client = createApiClient("main");
 
   await runSingleLoggedAction({
     actionType: "update_loot",

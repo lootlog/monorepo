@@ -8,8 +8,8 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { queryClient } from "@/lib/query-client";
 import { createAutoTimer } from "@/api";
-import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
-import type { UserLootlogConfigAccountResponseDtoOutput } from "@/lib/api/generated/main/model";
+import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/api-client/react-query/main/user-lootlog-config";
+import type { UserLootlogConfigAccountResponseDtoOutput } from "@lootlog/api-client/models/main/user-lootlog-config-account-response-dto-output";
 
 export class NpcsDeleteProcessor {
   handle(event: GameEvent, ingress?: RuntimeIngressSnapshot): void {

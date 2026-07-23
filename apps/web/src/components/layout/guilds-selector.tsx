@@ -14,7 +14,7 @@ import {
   useSetUsersControllerGetUserPreferencesQueryData,
   useUsersControllerGetCurrentUserGuilds,
   useUsersControllerUpdateUserPreferences,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 
 export const GuildsSelector: FC = () => {
   const { data: guilds, isLoading } = useUsersControllerGetCurrentUserGuilds();

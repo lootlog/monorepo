@@ -1,6 +1,6 @@
 import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { useEffect } from "react";
-import { partyReadyRoomControllerGet } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import { partyReadyRoomControllerGet } from "@lootlog/api-client/react-query/main/party-ready-room";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 
 function hasHttpStatus(error: unknown, status: number): boolean {

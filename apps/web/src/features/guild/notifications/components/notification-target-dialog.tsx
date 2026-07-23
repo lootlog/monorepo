@@ -40,10 +40,10 @@ import {
   useNotificationsGuildControllerCreateGuildTarget,
   useNotificationsGuildControllerGetAvailableGuildTargets,
   useNotificationsGuildControllerUpdateGuildTarget,
-} from "@/lib/api/generated/main/notifications/notifications";
+} from "@lootlog/api-client/react-query/main/notifications";
 import { invalidateGuildNotificationQueries } from "../notifications-api";
 import { NotificationTargetType } from "@lootlog/types";
-import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
+import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
 
 const targetFormSchema = (t: (key: string) => string, isCreateMode: boolean) =>
   z

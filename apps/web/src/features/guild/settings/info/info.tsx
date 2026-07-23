@@ -14,8 +14,8 @@ import {
   invalidateGuildsControllerGetGuildDiscordSyncStatus,
   useGuildsControllerGetGuildDiscordSyncStatus,
   useGuildsControllerRefreshGuildDiscordSync,
-} from "@/lib/api/generated/main/guilds/guilds";
-import { invalidateNotificationsGuildControllerGetAvailableGuildTargets } from "@/lib/api/generated/main/notifications/notifications";
+} from "@lootlog/api-client/react-query/main/guilds";
+import { invalidateNotificationsGuildControllerGetAvailableGuildTargets } from "@lootlog/api-client/react-query/main/notifications";
 
 export const InfoSettings = () => {
   const { t } = useTranslation();

@@ -1,6 +1,6 @@
 import type { Query, QueryClient } from "@tanstack/react-query";
 import type { Timer } from "@/api";
-import type { GuildResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { GuildResponseDtoOutput } from "@lootlog/api-client/models/main/guild-response-dto-output";
 import { useGlobalStore } from "@/store/global.store";
 import type { Emitter } from "./emitter";
 import { groupTimersByGuild, mapGuilds, mapTimers } from "./mappers";

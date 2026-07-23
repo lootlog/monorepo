@@ -37,20 +37,20 @@ import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query"
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   useGuildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import {
   useChatControllerClearChatMessages,
   useChatControllerSendChatMessage,
-} from "@/lib/api/generated/main/chat/chat";
+} from "@lootlog/api-client/react-query/main/chat";
 import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
-} from "@/lib/api/generated/main/members/members";
-import type { ChatMessageResponseDtoOutput } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/members";
+import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import {
   getRolesControllerGetGuildRolesQueryKey,
   useRolesControllerGetGuildRoles,
-} from "@/lib/api/generated/main/roles/roles";
+} from "@lootlog/api-client/react-query/main/roles";
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
 import { useGameStore } from "@/store/game.store";
 import { cn } from "@/lib/utils";

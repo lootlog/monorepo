@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@/lib/api-client";
+import { ApiError } from "@lootlog/api-client/transport";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { renderHook, waitFor } from "@testing-library/react";
 
@@ -42,7 +42,7 @@ vi.mock("@/store/timers.store", () => ({
     }),
 }));
 
-vi.mock("@/lib/api/generated/main/timers/timers", () => ({
+vi.mock("@lootlog/api-client/react-query/main/timers", () => ({
   timersControllerResetTimer: (pathParameters: unknown, data: unknown) =>
     mockResetTimer(pathParameters, data),
   timersControllerDeleteTimer: (pathParameters: unknown, params: unknown) =>

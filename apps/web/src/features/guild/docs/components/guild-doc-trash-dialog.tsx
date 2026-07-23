@@ -17,7 +17,7 @@ import {
   useDocsControllerGetTrash,
   useDocsControllerPurgeDocument,
   useDocsControllerRestoreDocument,
-} from "@/lib/api/generated/main/docs/docs";
+} from "@lootlog/api-client/react-query/main/docs";
 import {
   guildDocsTrashQueryOptions,
   invalidateGuildDocsQueries,

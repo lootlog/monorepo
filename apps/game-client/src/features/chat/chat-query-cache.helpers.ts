@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { getChatControllerGetChatMessagesQueryKey } from "@/lib/api/generated/main/chat/chat";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
+import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/api-client/react-query/main/chat";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 
 type ChatMessagesCacheUpdater =
   | ChatMessageType[]

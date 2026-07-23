@@ -8,7 +8,7 @@ import type { Loot } from "@/lib/loots/loot-types";
 import {
   invalidateLootsControllerFetchLootById,
   useLootsControllerDeleteLoot,
-} from "@/lib/api/generated/main/loots/loots";
+} from "@lootlog/api-client/react-query/main/loots";
 
 export type LootDetailsActionsProps = {
   loot: Loot;

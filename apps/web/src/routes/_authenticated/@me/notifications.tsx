@@ -4,8 +4,8 @@ import { UserNotificationsPageSkeleton } from "@/features/user/notifications/not
 import {
   getNotificationsUserControllerGetUserTargetsQueryOptions,
   getNotificationsUserControllerGetWatchedItemsQueryOptions,
-} from "@/lib/api/generated/main/notifications/notifications";
-import { getGuildsControllerGetUserGuildsQueryOptions } from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/notifications";
+import { getGuildsControllerGetUserGuildsQueryOptions } from "@lootlog/api-client/react-query/main/guilds";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
