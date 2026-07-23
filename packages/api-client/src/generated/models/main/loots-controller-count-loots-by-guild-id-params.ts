@@ -11,7 +11,7 @@ export type LootsControllerCountLootsByGuildIdParams = {
  * @minimum 1
  * @maximum 100
  */
-limit: number;
+limit?: number;
 /**
  * @minimum -9007199254740991
  * @maximum 9007199254740991
