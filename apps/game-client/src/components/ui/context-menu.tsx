@@ -33,11 +33,14 @@ const ContextMenuContent = React.forwardRef<
   ContextMenuContentProps
 >(({ className, collisionPadding = 8, ...props }, ref) => (
   <BaseContextMenu.Portal container={getLootlogPortalContainer()}>
-    <BaseContextMenu.Positioner collisionPadding={collisionPadding}>
+    <BaseContextMenu.Positioner
+      className="ll:z-[500]"
+      collisionPadding={collisionPadding}
+    >
       <BaseContextMenu.Popup
         ref={ref}
         className={cn(
-          "ll:z-500 ll:max-h-[var(--available-height)] ll:min-w-32 ll:overflow-y-auto ll:overflow-x-hidden ll:rounded-md ll:border ll:p-1 ll:text-popover-foreground ll:shadow-md ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2 ll:origin-[var(--transform-origin)] ll:bg-black/80 ll:flex ll:flex-col ll:gap-0.5 ll:border-solid ll:border-gray-400 ll:text-xs",
+          "ll:z-[500] ll:max-h-[var(--available-height)] ll:min-w-32 ll:overflow-y-auto ll:overflow-x-hidden ll:rounded-md ll:border ll:p-1 ll:text-popover-foreground ll:shadow-md ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2 ll:origin-[var(--transform-origin)] ll:bg-black/80 ll:flex ll:flex-col ll:gap-0.5 ll:border-solid ll:border-gray-400 ll:text-xs",
           className,
         )}
         {...props}
