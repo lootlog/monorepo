@@ -10,9 +10,8 @@ import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-c
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { NotificationSettings, NotificationType } from "@lootlog/types";
-import { type FC, type FormEvent, useRef } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { useDeepCompareEffect } from "@/hooks/use-deep-compare-effect";
+import { type FC, type FormEvent, useEffect, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
@@ -93,7 +92,9 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     },
     { key: "sound", label: t("settings.notifications.toggles.sound") },
   ];
-  const deferredSyncFieldRef = useRef<string | null>(null);
+  const [deferredSyncField, setDeferredSyncField] = useState<string | null>(
+    null,
+  );
   const debouncedUpdate = useDebouncedCallback(
     (
       payload: Parameters<typeof updateUserGameAccountPreferences.mutate>[0],
@@ -103,13 +104,13 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     300,
   );
 
-  const { control, register, watch, reset, setValue, formState, getValues } =
+  const { control, register, reset, setValue, formState, getValues } =
     useForm<FormData>({
       resolver: zodResolver(FormSchema),
       defaultValues: cloneNotificationSettings(currentCategorySettings),
     });
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     const nextFormValues = cloneNotificationSettings(currentCategorySettings);
     const currentFormSettings = cloneNotificationSettings(getValues());
 
@@ -126,7 +127,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     reset(nextFormValues);
   }, [currentCategorySettings, getValues, reset]);
 
-  const watchedData = watch();
+  const watchedData = useWatch({ control }) as FormData;
 
   const syncCurrentValues = () => {
     if (!accountId || !isFetched) {
@@ -150,21 +151,37 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     });
   };
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     if (
       !formState.isDirty ||
-      isDeferredNotificationSyncField(deferredSyncFieldRef.current)
+      isDeferredNotificationSyncField(deferredSyncField)
     ) {
       return;
     }
-    syncCurrentValues();
+    if (!accountId || !isFetched) return;
+    const nextCategorySettings = getValues() as NotificationSettings;
+    if (
+      areNotificationSettingsEqual(
+        nextCategorySettings,
+        currentCategorySettings,
+      )
+    ) {
+      return;
+    }
+    debouncedUpdate({
+      notifications: {
+        [categoryKey]: nextCategorySettings,
+      },
+    });
   }, [
     accountId,
     categoryKey,
     currentCategorySettings,
     debouncedUpdate,
+    deferredSyncField,
     formState.isDirty,
     isFetched,
+    getValues,
     watchedData,
   ]);
 
@@ -239,11 +256,11 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
             className="ll:h-5! ll:w-full! ll:px-1! ll:py-0! ll:text-[11px]! ll:text-center"
             placeholder="0"
             onFocus={() => {
-              deferredSyncFieldRef.current = "autoHideTimeout";
+              setDeferredSyncField("autoHideTimeout");
             }}
             {...register("autoHideTimeout", {
               onBlur: () => {
-                deferredSyncFieldRef.current = null;
+                setDeferredSyncField(null);
                 syncCurrentValues();
               },
               setValueAs: (value) => {

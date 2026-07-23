@@ -31,6 +31,11 @@ const DEFAULT_DRAG_INFO: DragInfo = {
 let dragSessionCounter = 0;
 let activeDragSessionId: number | null = null;
 
+const getNextDragSessionId = () => {
+  dragSessionCounter += 1;
+  return dragSessionCounter;
+};
+
 type UseDragConfig = {
   ref: React.RefObject<HTMLDivElement | null>;
   calculateFor?: "topLeft" | "bottomRight";
@@ -61,9 +66,11 @@ export const useDrag = ({
   const isLockedRef = useRef(isLocked);
   const onDragStopRef = useRef(onDragStop);
 
-  calculateForRef.current = calculateFor;
-  isLockedRef.current = isLocked;
-  onDragStopRef.current = onDragStop;
+  useEffect(() => {
+    calculateForRef.current = calculateFor;
+    isLockedRef.current = isLocked;
+    onDragStopRef.current = onDragStop;
+  }, [calculateFor, isLocked, onDragStop]);
 
   const queuePosition = (
     width: number,
@@ -135,7 +142,10 @@ export const useDrag = ({
     });
   };
   const queuePositionRef = useRef(queuePosition);
-  queuePositionRef.current = queuePosition;
+
+  useEffect(() => {
+    queuePositionRef.current = queuePosition;
+  });
 
   const finishDrag = () => {
     activePointerIdRef.current = null;
@@ -162,14 +172,17 @@ export const useDrag = ({
     setIsDragging(false);
   };
   const finishDragRef = useRef(finishDrag);
-  finishDragRef.current = finishDrag;
+
+  useEffect(() => {
+    finishDragRef.current = finishDrag;
+  });
 
   const startDrag = (x: number, y: number) => {
     if (isLockedRef.current) return false;
     const draggableElement = ref.current;
     if (!draggableElement) return false;
     const { width, height } = draggableElement.getBoundingClientRect();
-    const sessionId = ++dragSessionCounter;
+    const sessionId = getNextDragSessionId();
 
     activeDragSessionId = sessionId;
     dragSessionRef.current = sessionId;
@@ -246,24 +259,21 @@ export const useDrag = ({
         const draggableElement = ref.current;
         if (!draggableElement) return;
         const { width, height } = draggableElement.getBoundingClientRect();
-        setFinalPosition((previousPosition) => {
-          const x = Math.min(
-            Math.max(0, previousPosition.x),
-            window.innerWidth - width,
-          );
-          const y = Math.min(
-            Math.max(0, previousPosition.y),
-            window.innerHeight - height,
-          );
-          if (x === previousPosition.x && y === previousPosition.y) {
-            return previousPosition;
-          }
+        const previousPosition = finalPositionRef.current;
+        const x = Math.min(
+          Math.max(0, previousPosition.x),
+          window.innerWidth - width,
+        );
+        const y = Math.min(
+          Math.max(0, previousPosition.y),
+          window.innerHeight - height,
+        );
+        if (x === previousPosition.x && y === previousPosition.y) return;
 
-          const nextPosition = { x, y };
-          finalPositionRef.current = nextPosition;
-          window.setTimeout(() => onDragStopRef.current(nextPosition), 0);
-          return nextPosition;
-        });
+        const nextPosition = { x, y };
+        finalPositionRef.current = nextPosition;
+        setFinalPosition(nextPosition);
+        onDragStopRef.current(nextPosition);
       }, 100);
     };
 

@@ -18,7 +18,6 @@ import { ItemStack } from "@/features/guild/loots-list/components/loots-list/ite
 import { WatchableItemTile } from "@/components/tiles";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { motion, useReducedMotion } from "framer-motion";
-import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useThemeMeta } from "@/themes";
 import { buildLootItemOwnerMap } from "@/features/guild/loots-list/utils/build-loot-share-maps";
@@ -74,19 +73,7 @@ const buildLootData = (loot: Loot) => {
 };
 
 const useLootData = (loot: Loot) => {
-  const lootDataRef = useRef<{
-    loot: Loot;
-    data: ReturnType<typeof buildLootData>;
-  } | null>(null);
-
-  if (!lootDataRef.current || lootDataRef.current.loot !== loot) {
-    lootDataRef.current = {
-      loot,
-      data: buildLootData(loot),
-    };
-  }
-
-  return lootDataRef.current.data;
+  return buildLootData(loot);
 };
 
 const LootHeader = ({

@@ -1,7 +1,6 @@
 import {
-  useCallback,
   useEffect,
-  useState,
+  useReducer,
   type Dispatch,
   type SetStateAction,
 } from "react";
@@ -44,40 +43,65 @@ export function useLocalStorage<T>(
   key: string,
   initialValue?: T,
 ): UseLocalStorageReturn<T> {
-  const [storedValue, setStoredValue] = useState<T | undefined>(() =>
-    readStoredValue(key, initialValue),
+  type StorageState = {
+    key: string;
+    shouldPersist: boolean;
+    value: T | undefined;
+  };
+  type StorageAction =
+    | { key: string; type: "hydrate"; value: T | undefined }
+    | { type: "remove" }
+    | { type: "set"; value: SetStateAction<T | undefined> };
+  const [storageState, dispatch] = useReducer(
+    (state: StorageState, action: StorageAction): StorageState => {
+      if (action.type === "hydrate") {
+        return {
+          key: action.key,
+          shouldPersist: false,
+          value: action.value,
+        };
+      }
+      if (action.type === "remove") {
+        return { ...state, shouldPersist: true, value: undefined };
+      }
+
+      const nextValue =
+        typeof action.value === "function"
+          ? (action.value as (currentValue: T | undefined) => T | undefined)(
+              state.value,
+            )
+          : action.value;
+      return { ...state, shouldPersist: true, value: nextValue };
+    },
+    {
+      key,
+      shouldPersist: false,
+      value: readStoredValue(key, initialValue),
+    },
   );
 
   useEffect(() => {
-    setStoredValue(readStoredValue(key, initialValue));
+    dispatch({
+      key,
+      type: "hydrate",
+      value: readStoredValue(key, initialValue),
+    });
   }, [initialValue, key]);
 
-  const setValue: Dispatch<SetStateAction<T | undefined>> = useCallback(
-    (value) => {
-      setStoredValue((currentValue) => {
-        const nextValue =
-          typeof value === "function"
-            ? (value as (currentValue: T | undefined) => T | undefined)(
-                currentValue,
-              )
-            : value;
+  useEffect(() => {
+    if (!storageState.shouldPersist || storageState.key !== key) return;
 
-        if (nextValue === undefined) {
-          window.localStorage.removeItem(key);
-        } else {
-          window.localStorage.setItem(key, JSON.stringify(nextValue));
-        }
+    if (storageState.value === undefined) {
+      window.localStorage.removeItem(key);
+      return;
+    }
+    window.localStorage.setItem(key, JSON.stringify(storageState.value));
+  }, [key, storageState]);
 
-        return nextValue;
-      });
-    },
-    [key],
-  );
+  const setValue: Dispatch<SetStateAction<T | undefined>> = (value) => {
+    dispatch({ type: "set", value });
+  };
+  const remove = () => dispatch({ type: "remove" });
 
-  const remove = useCallback(() => {
-    window.localStorage.removeItem(key);
-    setStoredValue(undefined);
-  }, [key]);
-
-  return [storedValue, setValue, remove];
+  return [storageState.value, setValue, remove];
 }

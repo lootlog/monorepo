@@ -61,48 +61,50 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
   const flushScheduledRef = useRef(false);
   const listenerGenerationRef = useRef(0);
 
-  isReadyRef.current = isReady;
-  onProcessBatchRef.current = onProcessBatch;
-  onCancelRef.current = cancelOptions.onCancel;
-  getPayloadIdRef.current = cancelOptions.getPayloadId;
-  getCancelIdRef.current = cancelOptions.getCancelId;
-
   const processPayloadsRef = useRef<(payloads: readonly TPayload[]) => void>(
     () => undefined,
   );
-  processPayloadsRef.current = (payloads) => {
-    const getPayloadId = getPayloadIdRef.current;
+  const flushPendingItemsRef = useRef<() => void>(() => undefined);
 
-    if (!getPayloadId) {
-      onProcessBatchRef.current(payloads);
-      return;
-    }
+  useEffect(() => {
+    isReadyRef.current = isReady;
+    onProcessBatchRef.current = onProcessBatch;
+    onCancelRef.current = cancelOptions.onCancel;
+    getPayloadIdRef.current = cancelOptions.getPayloadId;
+    getCancelIdRef.current = cancelOptions.getCancelId;
+    processPayloadsRef.current = (payloads) => {
+      const getPayloadId = getPayloadIdRef.current;
 
-    const acceptedPayloads = payloads.filter((payload) => {
-      const payloadId = getPayloadId(payload);
-
-      if (pendingCancelIdsRef.current.has(payloadId)) {
-        pendingCancelIdsRef.current.delete(payloadId);
-        return false;
+      if (!getPayloadId) {
+        onProcessBatchRef.current(payloads);
+        return;
       }
 
-      return true;
-    });
+      const acceptedPayloads = payloads.filter((payload) => {
+        const payloadId = getPayloadId(payload);
 
-    if (acceptedPayloads.length > 0) {
-      onProcessBatchRef.current(acceptedPayloads);
-    }
-  };
-  const flushPendingItemsRef = useRef<() => void>(() => undefined);
-  flushPendingItemsRef.current = () => {
-    if (!isReadyRef.current || pendingItemsRef.current.length === 0) {
-      return;
-    }
+        if (pendingCancelIdsRef.current.has(payloadId)) {
+          pendingCancelIdsRef.current.delete(payloadId);
+          return false;
+        }
 
-    const pendingItems = pendingItemsRef.current;
-    pendingItemsRef.current = [];
-    processPayloadsRef.current(pendingItems);
-  };
+        return true;
+      });
+
+      if (acceptedPayloads.length > 0) {
+        onProcessBatchRef.current(acceptedPayloads);
+      }
+    };
+    flushPendingItemsRef.current = () => {
+      if (!isReadyRef.current || pendingItemsRef.current.length === 0) {
+        return;
+      }
+
+      const pendingItems = pendingItemsRef.current;
+      pendingItemsRef.current = [];
+      processPayloadsRef.current(pendingItems);
+    };
+  });
 
   useEffect(() => {
     if (

@@ -148,13 +148,14 @@ export const ReservationQuickAddPopover: React.FC<
       return;
     }
 
+    if (!guildId) {
+      toast.error(t("reservations.schedule.toasts.createError"));
+      return;
+    }
+
     try {
       const normalizedComment = comment.trim();
       const createdDate = new Date().toISOString();
-      if (!guildId) {
-        throw new Error("Missing guild id when creating reservation.");
-      }
-
       await createReservation({
         pathParams: { guildId },
         data: {

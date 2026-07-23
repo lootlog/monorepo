@@ -8,7 +8,7 @@ import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notifi
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 import { useGameStore } from "@/store/game.store";
 import type { GameNpc } from "@lootlog/margonem/npcs";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   getNotificationSettingsKey,
   isNotificationSettingsKey,
@@ -41,42 +41,47 @@ export const useNotifications = () => {
     (notifications: readonly Notification[]) => void
   >(() => undefined);
 
-  sessionDataRef.current = sessionData;
-  mutesRef.current = mutes;
-  settingsRef.current = settings;
-  worldRef.current = world;
-  processNotificationsRef.current = (notifications) => {
-    const requests = notifications.flatMap((data) => {
-      if (data.discordId === sessionDataRef.current?.user?.discordId) {
-        return [];
-      }
-
-      if (isNotificationMuted(data, mutesRef.current)) {
-        return [];
-      }
-
-      const currentSettings = settingsRef.current;
-      const notificationSettingsKey = getNotificationSettingsKey(data);
-
-      if (isNotificationSettingsKey(notificationSettingsKey)) {
-        const typeSettings = currentSettings[notificationSettingsKey];
-
-        if (!typeSettings.show) return [];
-        if (typeSettings.ignoreOtherWorlds && data.world !== worldRef.current) {
+  useEffect(() => {
+    sessionDataRef.current = sessionData;
+    mutesRef.current = mutes;
+    settingsRef.current = settings;
+    worldRef.current = world;
+    processNotificationsRef.current = (notifications) => {
+      const requests = notifications.flatMap((data) => {
+        if (data.discordId === sessionDataRef.current?.user?.discordId) {
           return [];
         }
-        if (!typeSettings.guildIds.includes(data.guildId)) return [];
-      }
 
-      return [
-        {
-          notification: { ...data, servers: [data.guildId] },
-        },
-      ];
-    });
+        if (isNotificationMuted(data, mutesRef.current)) {
+          return [];
+        }
 
-    presentNotifications(requests);
-  };
+        const currentSettings = settingsRef.current;
+        const notificationSettingsKey = getNotificationSettingsKey(data);
+
+        if (isNotificationSettingsKey(notificationSettingsKey)) {
+          const typeSettings = currentSettings[notificationSettingsKey];
+
+          if (!typeSettings.show) return [];
+          if (
+            typeSettings.ignoreOtherWorlds &&
+            data.world !== worldRef.current
+          ) {
+            return [];
+          }
+          if (!typeSettings.guildIds.includes(data.guildId)) return [];
+        }
+
+        return [
+          {
+            notification: { ...data, servers: [data.guildId] },
+          },
+        ];
+      });
+
+      presentNotifications(requests);
+    };
+  }, [mutes, presentNotifications, sessionData, settings, world]);
 
   useBufferedSocketIngress({
     socket,

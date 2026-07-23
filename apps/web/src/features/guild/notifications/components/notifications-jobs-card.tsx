@@ -84,11 +84,15 @@ export const NotificationsPendingJobsCard = ({
   });
 
   const handleCancelJob = async (jobId: string) => {
+    if (!guildId) {
+      const error = new Error("Missing guild id.");
+      toast.error(
+        getApiErrorMessage(error) ??
+          t("settings.notifications.toasts.jobCancelError"),
+      );
+      return;
+    }
     try {
-      if (!guildId) {
-        throw new Error("Missing guild id.");
-      }
-
       await cancelGuildJob.mutateAsync({
         pathParams: { guildId, jobId },
       });

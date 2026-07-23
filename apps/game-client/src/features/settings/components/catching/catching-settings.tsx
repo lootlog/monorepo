@@ -139,16 +139,12 @@ export const CatchingSettings = () => {
         },
       );
 
-      setSelectionByCharacterId((currentSelections) => {
-        const nextSelections = { ...currentSelections };
-
-        targetCharacterIds.forEach((characterId) => {
-          nextSelections[characterId] = catchingGuildIds;
-        });
-
-        selectionByCharacterIdRef.current = nextSelections;
-        return nextSelections;
+      const nextSelections = { ...selectionByCharacterIdRef.current };
+      targetCharacterIds.forEach((characterId) => {
+        nextSelections[characterId] = catchingGuildIds;
       });
+      selectionByCharacterIdRef.current = nextSelections;
+      setSelectionByCharacterId(nextSelections);
 
       return {
         previousData,

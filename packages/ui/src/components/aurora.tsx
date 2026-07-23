@@ -120,9 +120,9 @@ export default function Aurora(props: AuroraProps) {
     colorStops = ["#5227FF", "#7cff67", "#5227FF"],
     amplitude = 1.0,
     blend = 0.5,
+    time,
+    speed = 1.0,
   } = props;
-  const propsRef = useRef<AuroraProps>(props);
-  propsRef.current = props;
 
   const ctnDom = useRef<HTMLDivElement>(null);
 
@@ -178,13 +178,11 @@ export default function Aurora(props: AuroraProps) {
     let animateId = 0;
     const update = (t: number) => {
       animateId = requestAnimationFrame(update);
-      const { time = t * 0.01, speed = 1.0 } = propsRef.current;
       if (program) {
-        program.uniforms.uTime.value = time * speed * 0.1;
-        program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
-        program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
-        const stops = propsRef.current.colorStops ?? colorStops;
-        program.uniforms.uColorStops.value = stops.map((hex: string) => {
+        program.uniforms.uTime.value = (time ?? t * 0.01) * speed * 0.1;
+        program.uniforms.uAmplitude.value = amplitude;
+        program.uniforms.uBlend.value = blend;
+        program.uniforms.uColorStops.value = colorStops.map((hex: string) => {
           const c = new Color(hex);
           return [c.r, c.g, c.b];
         });
@@ -203,7 +201,7 @@ export default function Aurora(props: AuroraProps) {
       }
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [amplitude, blend, colorStops]);
+  }, [amplitude, blend, colorStops, speed, time]);
 
   return <div ref={ctnDom} className="w-full h-full" />;
 }

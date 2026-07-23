@@ -21,6 +21,16 @@ const WHO_IS_HERE_ROW_SELECTOR = ".whoishere-window .one-other[data-id]";
 const WHO_IS_HERE_COLOR_PROPERTY = "--ll-who-is-here-lootlog-color";
 const WHO_IS_HERE_DISCOVERY_INTERVAL_MS = 250;
 
+const observeWhoIsHereMutations = (
+  observer: MutationObserver,
+  element: Node,
+) => {
+  observer.observe(element, {
+    childList: true,
+    subtree: true,
+  });
+};
+
 function getWhoIsHereRows(): HTMLElement[] {
   return Array.from(
     document.querySelectorAll<HTMLElement>(WHO_IS_HERE_ROW_SELECTOR),
@@ -157,7 +167,7 @@ export function useWhoIsHereLootlogHighlight(): void {
 
   useEffect(() => {
     if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
-      return;
+      return () => undefined;
     }
 
     let animationFrameId: number | null = null;
@@ -179,10 +189,7 @@ export function useWhoIsHereLootlogHighlight(): void {
         return false;
       }
 
-      observer.observe(whoIsHereRoot, {
-        childList: true,
-        subtree: true,
-      });
+      observeWhoIsHereMutations(observer, whoIsHereRoot);
       return true;
     };
 

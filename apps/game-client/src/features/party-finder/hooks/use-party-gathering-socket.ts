@@ -11,7 +11,7 @@ import {
   useNotificationsStore,
   type PartyGatheringNotification,
 } from "@/store/notifications.store";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { PartyGatheringSession } from "@/types/party-gathering";
 
 type PartyGatheringPayload = PartyGatheringSession & { guildId: string };
@@ -33,52 +33,57 @@ export const usePartyGatheringSocket = () => {
     (notifications: readonly PartyGatheringPayload[]) => void
   >(() => undefined);
 
-  settingsRef.current = settings;
-  mutesRef.current = mutes;
-  sessionDataRef.current = sessionData;
-  worldRef.current = world;
-  processNotificationsRef.current = (notifications) => {
-    const requests = notifications.flatMap((data) => {
-      if (data.discordId === sessionDataRef.current?.user?.discordId) {
-        return [];
-      }
-      if (isNotificationMuted(data, mutesRef.current)) return [];
-
-      const currentSettings = settingsRef.current;
-      const typeSettings = currentSettings?.["party-gathering"];
-
-      if (typeSettings) {
-        if (!typeSettings.show) return [];
-        if (typeSettings.ignoreOtherWorlds && data.world !== worldRef.current) {
+  useEffect(() => {
+    settingsRef.current = settings;
+    mutesRef.current = mutes;
+    sessionDataRef.current = sessionData;
+    worldRef.current = world;
+    processNotificationsRef.current = (notifications) => {
+      const requests = notifications.flatMap((data) => {
+        if (data.discordId === sessionDataRef.current?.user?.discordId) {
           return [];
         }
-        if (
-          Array.isArray(typeSettings.guildIds) &&
-          !typeSettings.guildIds.includes(data.guildId)
-        ) {
-          return [];
+        if (isNotificationMuted(data, mutesRef.current)) return [];
+
+        const currentSettings = settingsRef.current;
+        const typeSettings = currentSettings?.["party-gathering"];
+
+        if (typeSettings) {
+          if (!typeSettings.show) return [];
+          if (
+            typeSettings.ignoreOtherWorlds &&
+            data.world !== worldRef.current
+          ) {
+            return [];
+          }
+          if (
+            Array.isArray(typeSettings.guildIds) &&
+            !typeSettings.guildIds.includes(data.guildId)
+          ) {
+            return [];
+          }
         }
-      }
 
-      const notification: PartyGatheringNotification = {
-        notificationId: data.notificationId,
-        guildId: data.guildId,
-        discordId: data.discordId,
-        world: data.world,
-        createdAt: data.createdAt,
-        character: data.character,
-        description: data.description,
-        minLvl: data.minLvl,
-        maxLvl: data.maxLvl,
-        servers: [data.guildId],
-        type: "party-gathering",
-      };
+        const notification: PartyGatheringNotification = {
+          notificationId: data.notificationId,
+          guildId: data.guildId,
+          discordId: data.discordId,
+          world: data.world,
+          createdAt: data.createdAt,
+          character: data.character,
+          description: data.description,
+          minLvl: data.minLvl,
+          maxLvl: data.maxLvl,
+          servers: [data.guildId],
+          type: "party-gathering",
+        };
 
-      return [{ notification }];
-    });
+        return [{ notification }];
+      });
 
-    presentNotifications(requests);
-  };
+      presentNotifications(requests);
+    };
+  }, [mutes, presentNotifications, sessionData, settings, world]);
 
   useBufferedSocketIngress({
     socket,

@@ -25,6 +25,7 @@ export type ChatScrollController = {
   pinToBottom: (snapshot: ChatScrollSnapshot) => void;
   registerUserScrollIntent: (snapshot: ChatScrollSnapshot) => void;
   requestFollowBottom: () => void;
+  setApplyScroll: (applyScroll: (command: ChatScrollCommand) => void) => void;
   shouldFollowNewMessages: () => boolean;
 };
 
@@ -38,6 +39,7 @@ export const createChatScrollController = ({
   applyScroll: (command: ChatScrollCommand) => void;
   nearBottomThreshold: number;
 }): ChatScrollController => {
+  let applyScrollCommand = applyScroll;
   let mode: ChatScrollMode = "initializing";
   let programmaticTarget: number | null = null;
 
@@ -49,7 +51,7 @@ export const createChatScrollController = ({
     const maximumScrollTop = getMaximumScrollTop(snapshot);
     const target = Math.min(Math.max(top, 0), maximumScrollTop);
     programmaticTarget = target;
-    applyScroll({ behavior, top: target });
+    applyScrollCommand({ behavior, top: target });
   };
 
   return {
@@ -107,6 +109,9 @@ export const createChatScrollController = ({
     requestFollowBottom: () => {
       mode = "following-bottom";
       programmaticTarget = null;
+    },
+    setApplyScroll: (nextApplyScroll) => {
+      applyScrollCommand = nextApplyScroll;
     },
     shouldFollowNewMessages: () =>
       mode === "initializing" ||

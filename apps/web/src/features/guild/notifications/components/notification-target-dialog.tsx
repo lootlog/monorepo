@@ -168,13 +168,19 @@ export const NotificationTargetDialog = ({
 
   const handleSubmit = async (values: TargetFormValues) => {
     const trimmedDisplayName = values.displayName.trim();
+    if (!guildId) {
+      toast.error(
+        t(
+          isCreateMode
+            ? "settings.notifications.toasts.targetCreateError"
+            : "settings.notifications.toasts.targetUpdateError",
+        ),
+      );
+      return;
+    }
 
     try {
       if (isCreateMode) {
-        if (!guildId) {
-          throw new Error("Missing guild id.");
-        }
-
         const createdTarget = await createTarget.mutateAsync({
           pathParams: { guildId },
           data: {
@@ -187,10 +193,6 @@ export const NotificationTargetDialog = ({
         toast.success(t("settings.notifications.toasts.targetCreated"));
         onCreated?.(createdTarget);
       } else if (target) {
-        if (!guildId) {
-          throw new Error("Missing guild id.");
-        }
-
         await updateTarget.mutateAsync({
           pathParams: { guildId, targetId: target.id },
           data: {
