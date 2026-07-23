@@ -38,20 +38,19 @@ export function ReadyRoomParticipantItem({
     room.organizerCharacter.clan?.id !== undefined &&
     participant.character.clan.id === room.organizerCharacter.clan.id;
 
-  const removeParticipant = async () => {
+  const removeParticipant = () => {
     setIsRemoving(true);
-    try {
-      const update = await partyReadyRoomControllerRemove(
-        { notificationId: room.notificationId },
-        {
-          participantId: participant.participantId,
-          expectedRevision: room.revision,
-        },
-      );
-      applyUpdate(update as unknown as PartyReadyRoomClientUpdate);
-    } finally {
-      setIsRemoving(false);
-    }
+    return partyReadyRoomControllerRemove(
+      { notificationId: room.notificationId },
+      {
+        participantId: participant.participantId,
+        expectedRevision: room.revision,
+      },
+    )
+      .then((update) => {
+        applyUpdate(update as unknown as PartyReadyRoomClientUpdate);
+      })
+      .finally(() => setIsRemoving(false));
   };
 
   return (

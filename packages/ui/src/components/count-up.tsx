@@ -1,5 +1,10 @@
 import { useEffect, useRef } from "react";
-import { useInView, useMotionValue, useSpring } from "motion/react";
+import {
+  useInView,
+  useMotionValue,
+  useMotionValueEvent,
+  useSpring,
+} from "motion/react";
 
 interface CountUpProps {
   to: number;
@@ -95,29 +100,25 @@ export default function CountUp({
     duration,
   ]);
 
-  useEffect(() => {
-    const unsubscribe = springValue.on("change", (latest) => {
-      if (ref.current) {
-        const hasDecimals = maxDecimals > 0;
+  useMotionValueEvent(springValue, "change", (latest) => {
+    if (ref.current) {
+      const hasDecimals = maxDecimals > 0;
 
-        const options: Intl.NumberFormatOptions = {
-          useGrouping: !!separator,
-          minimumFractionDigits: hasDecimals ? maxDecimals : 0,
-          maximumFractionDigits: hasDecimals ? maxDecimals : 0,
-        };
+      const options: Intl.NumberFormatOptions = {
+        useGrouping: !!separator,
+        minimumFractionDigits: hasDecimals ? maxDecimals : 0,
+        maximumFractionDigits: hasDecimals ? maxDecimals : 0,
+      };
 
-        const formattedNumber = Intl.NumberFormat("en-US", options).format(
-          latest,
-        );
+      const formattedNumber = Intl.NumberFormat("en-US", options).format(
+        latest,
+      );
 
-        ref.current.textContent = separator
-          ? formattedNumber.replace(/,/g, separator)
-          : formattedNumber;
-      }
-    });
-
-    return () => unsubscribe();
-  }, [springValue, separator, maxDecimals]);
+      ref.current.textContent = separator
+        ? formattedNumber.replace(/,/g, separator)
+        : formattedNumber;
+    }
+  });
 
   return <span className={className} ref={ref} />;
 }

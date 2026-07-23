@@ -111,9 +111,11 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
             <AnimatePresence initial={false}>
               {isExpanded && (
                 <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  layout
+                  initial={{ opacity: 0, scaleY: 0.96 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  exit={{ opacity: 0, scaleY: 0.96 }}
+                  style={{ transformOrigin: "top" }}
                   transition={{ duration: 0.2 }}
                   className="border-t border-yellow-500/20 overflow-hidden"
                 >

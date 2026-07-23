@@ -238,11 +238,12 @@ export const ReservationsSchedule: React.FC = () => {
         ? "Nie udało się anulować rezerwacji."
         : "Nie udało się usunąć rezerwacji.";
 
-    try {
-      if (!guildId) {
-        throw new Error("Missing guild id when deleting reservation.");
-      }
+    if (!guildId) {
+      toast.error(fallbackMessage, { position: "bottom-right" });
+      return;
+    }
 
+    try {
       await deleteReservation({
         pathParams: { guildId, reservationRecordId },
       });

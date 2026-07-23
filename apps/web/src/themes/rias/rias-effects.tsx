@@ -215,19 +215,20 @@ const buttonMagicCirclePositions = [
   { x: "10%", y: "75%", size: 12, delay: 0.15 },
 ];
 
+const floatingParticles = Array.from({ length: 12 }, (_, index) => ({
+  delay: (index * 2.17) % 8,
+  drift: ((index * 37) % 60) - 30,
+  duration: 8 + ((index * 7) % 12),
+  id: index,
+  size: 2 + ((index * 11) % 4),
+  x: 5 + ((index * 29) % 90),
+}));
+
 // Floating destruction particles for global overlay
 const FloatingParticles = () => {
-  const particles = Array.from({ length: 12 }, (_, i) => ({
-    id: i,
-    x: 5 + Math.random() * 90,
-    size: 2 + Math.random() * 4,
-    duration: 8 + Math.random() * 12,
-    delay: Math.random() * 8,
-  }));
-
   return (
     <>
-      {particles.map((p) => (
+      {floatingParticles.map((p) => (
         <motion.div
           key={p.id}
           className="absolute pointer-events-none"
@@ -242,9 +243,9 @@ const FloatingParticles = () => {
             boxShadow: "0 0 4px rgba(200, 30, 60, 0.3)",
           }}
           animate={{
-            y: [0, -window.innerHeight - 20],
+            y: [0, "calc(-100vh - 20px)"],
             opacity: [0, 0.7, 0.5, 0],
-            x: [0, (Math.random() - 0.5) * 60],
+            x: [0, p.drift],
           }}
           transition={{
             duration: p.duration,
@@ -424,6 +425,8 @@ const DestructionFlow = () => (
         key={i}
         className="absolute pointer-events-none"
         style={{
+          left: 0,
+          top: 0,
           width: blob.size,
           height: blob.size,
           borderRadius: "50%",
@@ -432,18 +435,18 @@ const DestructionFlow = () => (
           filter: "blur(60px)",
         }}
         animate={{
-          left: blob.x,
-          top: blob.y,
+          x: blob.x,
+          y: blob.y,
           scale: [1, 1.3, 0.9, 1.1, 1],
         }}
         transition={{
-          left: {
+          x: {
             duration: blob.duration,
             delay: blob.delay,
             repeat: Infinity,
             ease: "linear",
           },
-          top: {
+          y: {
             duration: blob.duration,
             delay: blob.delay,
             repeat: Infinity,

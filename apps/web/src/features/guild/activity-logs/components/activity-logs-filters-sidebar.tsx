@@ -382,9 +382,11 @@ export const ActivityLogsFiltersSidebar: FC<
         <AnimatePresence>
           {hasActiveFilters && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 56, opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+              layout
+              initial={{ opacity: 0, scaleY: 0.96 }}
+              animate={{ opacity: 1, scaleY: 1 }}
+              exit={{ opacity: 0, scaleY: 0.96 }}
+              style={{ transformOrigin: "bottom" }}
               className="border-t border-border px-4 overflow-hidden"
             >
               <div className="h-14 flex items-center w-full">

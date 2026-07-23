@@ -111,7 +111,10 @@ export const useBattleTableActions = ({
       const copied = await copy(links);
 
       if (!copied) {
-        throw new Error("Bulk links were not copied");
+        toast.error(t("battlePanel.toasts.linkCopyError"), {
+          duration: 3000,
+        });
+        return;
       }
 
       toast.success(

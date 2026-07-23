@@ -113,27 +113,31 @@ export const usePartyGatheringOrchestration = () => {
     };
   };
 
-  const startPartyGathering = async ({
+  const startPartyGathering = ({
     guildIds,
     world,
     description,
     minLvl,
     maxLvl,
     closeCreateWindow = false,
-  }: StartPartyGatheringOptions) => {
+  }: StartPartyGatheringOptions): Promise<
+    Awaited<ReturnType<typeof finalizePartyGathering>> | undefined
+  > => {
     const character = buildCurrentCharacterPayload();
     const characterData = buildChatCharacterData();
-    if (!character || !characterData) return;
+    if (!character || !characterData) return Promise.resolve(undefined);
 
     const ownedReadyRoom = selectOwnedReadyRoom(usePartyFinderStore.getState());
     if (ownedReadyRoom) {
       openPartyFinder(closeCreateWindow);
-      throw new ActivePartyGatheringError(ownedReadyRoom.notificationId);
+      return Promise.reject(
+        new ActivePartyGatheringError(ownedReadyRoom.notificationId),
+      );
     }
 
     setIsCreatingPartyGathering(true);
 
-    try {
+    const createPartyGathering = async () => {
       let response: Awaited<ReturnType<typeof createPartyGatheringAsync>>;
       try {
         response = await createPartyGatheringAsync({
@@ -180,27 +184,31 @@ export const usePartyGatheringOrchestration = () => {
           },
         },
       });
-    } finally {
-      setIsCreatingPartyGathering(false);
-    }
+    };
+
+    return createPartyGathering().finally(() =>
+      setIsCreatingPartyGathering(false),
+    );
   };
 
-  const startNpcPartyGathering = async ({
+  const startNpcPartyGathering = ({
     npc,
     guildIds,
     world,
-  }: StartNpcPartyGatheringOptions) => {
+  }: StartNpcPartyGatheringOptions): Promise<
+    Awaited<ReturnType<typeof finalizePartyGathering>> | undefined
+  > => {
     const notificationPayload = buildNpcNotificationPayload({
       npc,
       guildIds,
       world,
       isGatheringParty: true,
     });
-    if (!notificationPayload) return;
+    if (!notificationPayload) return Promise.resolve(undefined);
 
     setIsCreatingNpcPartyGathering(true);
 
-    try {
+    const createNpcPartyGathering = async () => {
       const response = await createNotificationAsync({
         data: notificationPayload,
       });
@@ -228,19 +236,23 @@ export const usePartyGatheringOrchestration = () => {
         guildIds: resolvedGuildIds,
         chatMessageOptions,
       });
-    } finally {
-      setIsCreatingNpcPartyGathering(false);
-    }
+    };
+
+    return createNpcPartyGathering().finally(() =>
+      setIsCreatingNpcPartyGathering(false),
+    );
   };
 
-  const startNpcNotification = async ({
+  const startNpcNotification = ({
     npc,
     guildIds,
     world,
-  }: StartNpcNotificationOptions) => {
+  }: StartNpcNotificationOptions): Promise<
+    { notificationId: string; guildIds: string[] } | undefined
+  > => {
     setIsSendingNpcNotification(true);
 
-    try {
+    const sendNpcNotification = async () => {
       const response = await createNotificationAsync({
         data: buildNpcNotificationPayload({
           npc,
@@ -263,9 +275,11 @@ export const usePartyGatheringOrchestration = () => {
         notificationId: response.notificationId,
         guildIds: resolvedGuildIds,
       };
-    } finally {
-      setIsSendingNpcNotification(false);
-    }
+    };
+
+    return sendNpcNotification().finally(() =>
+      setIsSendingNpcNotification(false),
+    );
   };
 
   return {

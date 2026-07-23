@@ -17,7 +17,6 @@ import {
   useEffect,
   useState,
   type ReactNode,
-  useRef,
 } from "react";
 
 type SocketContextValue = {
@@ -34,20 +33,24 @@ const SocketContext = createContext<SocketContextValue>({
   joinedGuilds: [],
 });
 
+const updateSocketAuthentication = (socket: AppSocket) => {
+  socket.auth = {
+    ...(typeof socket.auth === "object" ? socket.auth : {}),
+    devPermissionOverride: getSerializedDevPermissionOverride(),
+  };
+};
+
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
-  const [socket] = useState(() => getSocket());
+  const socket = getSocket();
   const [connected, setConnected] = useState(socket.connected);
   const [joined, setJoined] = useState(false);
   const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
   const setSocketState = useGlobalStore((s) => s.setSocketState);
-  const setSocketStateRef = useRef(setSocketState);
-  setSocketStateRef.current = setSocketState;
 
-  // Sync socket state to global store for non-reactive access in callbacks
   useEffect(() => {
-    setSocketStateRef.current({ connected, joined, joinedGuilds });
-  }, [connected, joined, joinedGuilds]);
+    setSocketState({ connected, joined, joinedGuilds });
+  }, [connected, joined, joinedGuilds, setSocketState]);
 
   useEffect(() => {
     let cancelled = false;
@@ -177,10 +180,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     const handleDevPermissionOverrideChange = () => {
-      socket.auth = {
-        ...(typeof socket.auth === "object" ? socket.auth : {}),
-        devPermissionOverride: getSerializedDevPermissionOverride(),
-      };
+      updateSocketAuthentication(socket);
       setJoined(false);
       setJoinedGuilds([]);
 
@@ -191,10 +191,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.connect();
     };
 
-    socket.auth = {
-      ...(typeof socket.auth === "object" ? socket.auth : {}),
-      devPermissionOverride: getSerializedDevPermissionOverride(),
-    };
+    updateSocketAuthentication(socket);
     window.addEventListener(
       DEV_PERMISSION_OVERRIDE_EVENT,
       handleDevPermissionOverrideChange,

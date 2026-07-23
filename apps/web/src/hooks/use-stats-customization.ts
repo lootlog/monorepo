@@ -154,8 +154,8 @@ export const useStatsCustomization = (
 
   const removeCategory = (categoryId: string) => {
     setConfig((prev) => {
-      const { [categoryId]: _removed, ...remainingCategories } =
-        prev.categories;
+      const remainingCategories = { ...prev.categories };
+      delete remainingCategories[categoryId];
 
       return {
         ...prev,

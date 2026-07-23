@@ -4,6 +4,10 @@ import type { GameEvent, W } from "@lootlog/margonem/game-events";
 export const MAX_BATTLE_CAPTURE_EVENTS = 10_000;
 export const MAX_BATTLE_CAPTURE_BYTES = 5 * 1024 * 1024;
 
+const clearCapturedEvents = (events: GameEvent[]) => {
+  events.length = 0;
+};
+
 export type BattleWarriorsWithAccountId = Record<
   string,
   W[string] & { accountId?: number }
@@ -48,8 +52,8 @@ export const useBattleStore = create<BattleState & BattleActions>(
 
     const overflowCapture = () => {
       captureOverflowed = true;
+      clearCapturedEvents(get().events);
       capturedTurns = [];
-      get().events.length = 0;
     };
 
     return {
@@ -123,9 +127,9 @@ export const useBattleStore = create<BattleState & BattleActions>(
 
       clearEvents: () => {
         capturedBytes = 0;
+        clearCapturedEvents(get().events);
         capturedTurns = [];
         captureOverflowed = false;
-        get().events.length = 0;
       },
 
       getCaptureSnapshot: () => ({

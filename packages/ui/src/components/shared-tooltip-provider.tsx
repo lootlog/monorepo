@@ -79,7 +79,9 @@ function SharedTooltipRoot({
   const showTimeoutRef = useRef<number | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
 
-  tooltipStateRef.current = tooltipState;
+  useEffect(() => {
+    tooltipStateRef.current = tooltipState;
+  }, [tooltipState]);
 
   const clearShowTimeout = () => {
     if (showTimeoutRef.current !== null) {
@@ -95,45 +97,45 @@ function SharedTooltipRoot({
     }
   };
 
-  controllerRef.current = {
-    hideTooltip: () => {
-      clearShowTimeout();
-      clearHideTimeout();
-      hideTimeoutRef.current = window.setTimeout(() => {
-        setTooltipState((currentTooltipState) =>
-          currentTooltipState.open
-            ? createClosedTooltipState()
-            : currentTooltipState,
-        );
-        hideTimeoutRef.current = null;
-      }, SHARED_TOOLTIP_CLOSE_DELAY);
-    },
-    showTooltip: (content, triggerRect, options) => {
-      const nextTooltipState: SharedTooltipState = {
-        content,
-        contentClassName: options?.contentClassName,
-        open: true,
-        triggerElement: options?.triggerElement ?? null,
-        triggerRect,
-      };
-
-      clearHideTimeout();
-
-      if (tooltipStateRef.current.open) {
-        clearShowTimeout();
-        setTooltipState(nextTooltipState);
-        return;
-      }
-
-      clearShowTimeout();
-      showTimeoutRef.current = window.setTimeout(() => {
-        setTooltipState(nextTooltipState);
-        showTimeoutRef.current = null;
-      }, SHARED_TOOLTIP_OPEN_DELAY);
-    },
-  };
-
   useEffect(() => {
+    controllerRef.current = {
+      hideTooltip: () => {
+        clearShowTimeout();
+        clearHideTimeout();
+        hideTimeoutRef.current = window.setTimeout(() => {
+          setTooltipState((currentTooltipState) =>
+            currentTooltipState.open
+              ? createClosedTooltipState()
+              : currentTooltipState,
+          );
+          hideTimeoutRef.current = null;
+        }, SHARED_TOOLTIP_CLOSE_DELAY);
+      },
+      showTooltip: (content, triggerRect, options) => {
+        const nextTooltipState: SharedTooltipState = {
+          content,
+          contentClassName: options?.contentClassName,
+          open: true,
+          triggerElement: options?.triggerElement ?? null,
+          triggerRect,
+        };
+
+        clearHideTimeout();
+
+        if (tooltipStateRef.current.open) {
+          clearShowTimeout();
+          setTooltipState(nextTooltipState);
+          return;
+        }
+
+        clearShowTimeout();
+        showTimeoutRef.current = window.setTimeout(() => {
+          setTooltipState(nextTooltipState);
+          showTimeoutRef.current = null;
+        }, SHARED_TOOLTIP_OPEN_DELAY);
+      },
+    };
+
     return () => {
       clearShowTimeout();
       clearHideTimeout();
@@ -229,18 +231,14 @@ function SharedTooltipRoot({
 
 export function SharedTooltipProvider({ children }: PropsWithChildren) {
   const controllerRef = useRef<SharedTooltipController | null>(null);
-  const contextValueRef = useRef<SharedTooltipContextValue | null>(null);
-
-  if (!contextValueRef.current) {
-    contextValueRef.current = {
-      hideTooltip: () => controllerRef.current?.hideTooltip(),
-      showTooltip: (content, triggerRect, options) =>
-        controllerRef.current?.showTooltip(content, triggerRect, options),
-    };
-  }
+  const [contextValue] = useState<SharedTooltipContextValue>(() => ({
+    hideTooltip: () => controllerRef.current?.hideTooltip(),
+    showTooltip: (content, triggerRect, options) =>
+      controllerRef.current?.showTooltip(content, triggerRect, options),
+  }));
 
   return (
-    <SharedTooltipContext.Provider value={contextValueRef.current}>
+    <SharedTooltipContext.Provider value={contextValue}>
       {children}
       <SharedTooltipRoot controllerRef={controllerRef} />
     </SharedTooltipContext.Provider>
