@@ -11,7 +11,7 @@
     "build:local-prod": "tsc && vite build --mode production-local && node ./src/scripts/generate-local-entrypoint.mjs --output ./dist/@lootlog/game-client-local.user.js --bundle-url http://127.0.0.1:4173/@lootlog/game-client.user.js",
     "bench:runtime": "vitest bench src/lib/margonem-runtime/runtime-replay.bench.ts",
     "check-types": "tsc --noEmit",
-    "check:changed-coverage": "node ./scripts/check-changed-coverage.mjs",
+    "report:changed-coverage": "node ./scripts/report-changed-coverage.mjs",
     "doctor": "npx -y react-doctor@latest .",
     "lint": "oxlint src --deny-warnings",
     "local:prod": "pnpm run build:local-prod && node ./src/scripts/serve-local-build.mjs",
