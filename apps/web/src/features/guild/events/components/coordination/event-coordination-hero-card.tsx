@@ -15,7 +15,7 @@ import {
   getCoveragePercentage,
 } from "../../utils/coordination-utils";
 import { EventCoordinationPriorityBadge } from "./event-coordination-priority-badge";
-import type { EventCoordinationResponseDtoHeroesItem } from "@/lib/api/generated/main/model";
+import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item";
 
 interface EventCoordinationHeroCardProps {
   hero: EventCoordinationResponseDtoHeroesItem;

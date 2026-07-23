@@ -1,4 +1,4 @@
-import type { EventModeResponseDtoEventsItemNextRespawn } from "@/lib/api/generated/main/model/event-mode-response-dto-events-item-next-respawn";
+import type { EventModeResponseDtoEventsItemNextRespawn } from "@lootlog/api-client/models/main/event-mode-response-dto-events-item-next-respawn";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
 import { Clock3 } from "lucide-react";
 import { useTranslation } from "react-i18next";

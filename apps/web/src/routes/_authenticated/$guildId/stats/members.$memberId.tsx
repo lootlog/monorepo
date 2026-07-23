@@ -5,8 +5,8 @@ import {
   buildMemberKillsParams,
   DEFAULT_MEMBER_KILLS_LIMIT,
 } from "@/features/guild/stats/utils/build-stats-query-params";
-import { getKillsControllerGetMemberKillsQueryOptions } from "@/lib/api/generated/main/kills/kills";
-import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@/lib/api/generated/main/members/members";
+import { getKillsControllerGetMemberKillsQueryOptions } from "@lootlog/api-client/react-query/main/kills";
+import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@lootlog/api-client/react-query/main/members";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,

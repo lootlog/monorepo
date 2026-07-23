@@ -23,9 +23,9 @@ import { useMemberGamePresence } from "@/features/guild/settings/members/use-mem
 import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
-import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
-import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
+import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
+import { useMembersControllerGetGuildMembers } from "@lootlog/api-client/react-query/main/members";
+import { useRolesControllerGetGuildRoles } from "@lootlog/api-client/react-query/main/roles";
 import type {
   GuildMember,
   MembersStats,

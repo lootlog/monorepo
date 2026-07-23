@@ -13,7 +13,7 @@ import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getUsersControllerGetCurrentUserGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import { queryClient } from "@/lib/query-client";
 import {
   DEV_PERMISSION_OVERRIDE_EVENT,
@@ -22,9 +22,9 @@ import {
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetUserGuildsWithPermissionsQueryKey,
-} from "@/lib/api/generated/main/guilds/guilds";
-import { getMembersControllerGetMeQueryKey } from "@/lib/api/generated/main/members/members";
-import { getAuthControllerGetScopesQueryKey } from "@/lib/api/generated/auth/auth/auth";
+} from "@lootlog/api-client/react-query/main/guilds";
+import { getMembersControllerGetMeQueryKey } from "@lootlog/api-client/react-query/main/members";
+import { getAuthControllerGetScopesQueryKey } from "@lootlog/api-client/react-query/auth/auth";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 
 export type GatewayProviderValue = {

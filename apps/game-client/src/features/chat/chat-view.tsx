@@ -11,8 +11,8 @@ import { getGuildNamesById } from "@/lib/api/generated-helpers";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/users";
+import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import { cn } from "@/lib/utils";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";

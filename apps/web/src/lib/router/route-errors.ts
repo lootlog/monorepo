@@ -3,7 +3,7 @@ import { notFound } from "@tanstack/react-router";
 import {
   getApiErrorMessage,
   getApiErrorStatus,
-} from "@/lib/api-client/api-client";
+} from "@lootlog/api-client/transport";
 
 export const getRouteErrorStatus = (error: unknown) => {
   return getApiErrorStatus(error);

@@ -3,7 +3,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { PeriodSelector } from "@/components/filters/period-selector";
-import type { LootsControllerGetLootStatsPeriod } from "@/lib/api/generated/main/model/loots-controller-get-loot-stats-period";
+import type { LootsControllerGetLootStatsPeriod } from "@lootlog/api-client/models/main/loots-controller-get-loot-stats-period";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 
 type LootStatsFiltersMobileProps = {

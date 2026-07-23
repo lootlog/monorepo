@@ -27,7 +27,11 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/clean-swagger-metadata.mjs",
+        ".env*"
+      ],
       "env": ["GAME_CLIENT_URL"],
       "outputs": [
         ".next/**",
@@ -82,7 +86,51 @@
     "openapi:generate": {
       "dependsOn": ["^build"],
       "cache": false,
+      "passThroughEnv": [
+        "ADMIN_ACCOUNT_IDS",
+        "API_SERVICE_URL",
+        "APP_URL",
+        "AUTH_SECRET",
+        "COOKIE_DOMAIN",
+        "COOKIE_PREFIX",
+        "DISCORD_CLIENT_ID",
+        "DISCORD_CLIENT_SECRET",
+        "MAPS_API_URL",
+        "MEILISEARCH_API_KEY",
+        "MEILISEARCH_HOST",
+        "POSTGRESQL_CONNECTION_URI",
+        "POSTGRESQL_DATABASE",
+        "POSTGRESQL_HOST",
+        "POSTGRESQL_PASSWORD",
+        "POSTGRESQL_PORT",
+        "POSTGRESQL_USER",
+        "RESERVATIONS_CARDS_URL",
+        "TRUSTED_ORIGINS"
+      ],
       "outputs": ["openapi.yaml"]
+    },
+    "api-client:generate": {
+      "dependsOn": [
+        "@lootlog/activity#openapi:generate",
+        "@lootlog/api#openapi:generate",
+        "@lootlog/auth#openapi:generate",
+        "@lootlog/battlelog-service#openapi:generate",
+        "@lootlog/search#openapi:generate"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/activity/openapi.yaml",
+        "$TURBO_ROOT$/apps/api/openapi.yaml",
+        "$TURBO_ROOT$/apps/auth/openapi.yaml",
+        "$TURBO_ROOT$/apps/battlelog-service/openapi.yaml",
+        "$TURBO_ROOT$/apps/search/openapi.yaml"
+      ],
+      "outputs": ["src/generated/**"]
+    },
+    "api-client:check": {
+      "cache": false,
+      "dependsOn": ["api-client:generate"],
+      "outputs": []
     },
     "api:migrate:dev": {
       "cache": false,

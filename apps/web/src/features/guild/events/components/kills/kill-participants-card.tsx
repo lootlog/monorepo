@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
-import { useEventsRankingControllerUpdateKillPoint } from "@/lib/api/generated/main/events/events";
+import { useEventsRankingControllerUpdateKillPoint } from "@lootlog/api-client/react-query/main/events";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";

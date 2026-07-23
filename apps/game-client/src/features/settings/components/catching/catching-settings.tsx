@@ -11,7 +11,7 @@ import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
-} from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
+} from "@lootlog/api-client/react-query/main/user-lootlog-config";
 import { CharacterTile } from "@/components/character-tile";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
@@ -22,7 +22,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { UserLootlogConfigAccountResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { UserLootlogConfigAccountResponseDtoOutput } from "@lootlog/api-client/models/main/user-lootlog-config-account-response-dto-output";
 
 export const CatchingSettings = () => {
   const queryClient = useQueryClient();

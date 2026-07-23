@@ -26,16 +26,16 @@ import {
   useNotificationsGuildControllerGetGuildJobs,
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
-} from "@/lib/api/generated/main/notifications/notifications";
+} from "@lootlog/api-client/react-query/main/notifications";
 import { hasConfirmedGuildDiscordPermissions } from "@/features/guild/settings/utils/has-confirmed-guild-discord-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
 import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
-import type { NotificationTargetResponseDto } from "@/lib/api/generated/main/model";
+import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
 import {
   getGuildsControllerGetGuildDiscordSyncStatusQueryKey,
   useGuildsControllerGetGuildDiscordSyncStatus,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 
 export const NotificationsSettings = () => {
   const { t } = useTranslation();

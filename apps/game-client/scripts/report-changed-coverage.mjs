@@ -7,16 +7,17 @@ const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIRECTORY = path.resolve(SCRIPT_DIRECTORY, "..");
 const REPOSITORY_DIRECTORY = path.resolve(APP_DIRECTORY, "../..");
 const COVERAGE_PATH = path.join(APP_DIRECTORY, "coverage/coverage-final.json");
+const GIT_OUTPUT_BUFFER_SIZE = 64 * 1024 * 1024;
 
 function runGit(arguments_) {
   const result = spawnSync("git", arguments_, {
     cwd: REPOSITORY_DIRECTORY,
     encoding: "utf8",
+    maxBuffer: GIT_OUTPUT_BUFFER_SIZE,
   });
   if (result.status !== 0) {
-    throw new Error(
-      result.stderr.trim() || `git ${arguments_.join(" ")} failed`,
-    );
+    const errorMessage = result.error?.message ?? result.stderr.trim();
+    throw new Error(errorMessage || `git ${arguments_.join(" ")} failed`);
   }
   return result.stdout.trim();
 }

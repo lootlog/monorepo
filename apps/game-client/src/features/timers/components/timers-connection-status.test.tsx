@@ -17,7 +17,7 @@ vi.mock("@/contexts/socket-context", () => ({
   useSocket: () => socketState,
 }));
 
-vi.mock("@/lib/api/generated/main/users/users", () => ({
+vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => ["guilds"],
   useUsersControllerGetCurrentUserAccessibleGuilds: () => ({
     data: mockGuilds,

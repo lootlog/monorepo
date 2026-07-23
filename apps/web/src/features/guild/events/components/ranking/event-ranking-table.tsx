@@ -23,7 +23,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   useListRankingEditHistory,
   useUpdateRankingPoints,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranking-queries";
 import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";

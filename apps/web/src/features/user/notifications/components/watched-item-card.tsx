@@ -12,8 +12,8 @@ import {
   invalidateNotificationsUserControllerGetUserTargets,
   invalidateNotificationsUserControllerGetWatchedItems,
   useNotificationsUserControllerDeleteWatchedItem,
-} from "@/lib/api/generated/main/notifications/notifications";
-import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/notifications";
+import type { WatchedItemResponseDto } from "@lootlog/api-client/models/main/watched-item-response-dto";
 import { ItemRarity } from "@/lib/loots/loot-types";
 
 type WatchedItemCardProps = {

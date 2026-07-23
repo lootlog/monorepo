@@ -4,7 +4,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
 import { WatchedItemCard } from "@/features/user/notifications/components/watched-item-card";
-import type { WatchedItemResponseDto } from "@/lib/api/generated/main/model";
+import type { WatchedItemResponseDto } from "@lootlog/api-client/models/main/watched-item-response-dto";
 
 const getWatchedItemGuildIds = (filters: { guildIds?: string[] } | null) =>
   filters?.guildIds ?? [];

@@ -37,7 +37,7 @@ import {
   Settings,
 } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { getApiErrorStatus } from "@/lib/api-client/api-client";
+import { getApiErrorStatus } from "@lootlog/api-client/transport";
 import {
   useEventsAssignmentControllerAddMap,
   useEventsAssignmentControllerAssignMapToLocation,
@@ -46,13 +46,11 @@ import {
   useEventsAssignmentControllerDeleteMap,
   useEventsAssignmentControllerReorderLocations,
   useEventsAssignmentControllerUpdateLocation,
-} from "@/lib/api/generated/main/events/events";
-import { useMapTemplatesControllerGetTemplates } from "@/lib/api/generated/main/map-templates/map-templates";
-import { useMapsControllerGetMaps } from "@/lib/api/generated/main/maps/maps";
-import type {
-  GameMapResponseDtoOutput,
-  MapTemplateResponseDto,
-} from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/events";
+import { useMapTemplatesControllerGetTemplates } from "@lootlog/api-client/react-query/main/map-templates";
+import { useMapsControllerGetMaps } from "@lootlog/api-client/react-query/main/maps";
+import type { GameMapResponseDtoOutput } from "@lootlog/api-client/models/main/game-map-response-dto-output";
+import type { MapTemplateResponseDto } from "@lootlog/api-client/models/main/map-template-response-dto";
 import type { LocationData } from "./map-manage-dialog.types";
 import { invalidateEventMapStructureQueries } from "../../hooks/mutations/invalidate-event-queries";
 import { LocationItem } from "./location-item";

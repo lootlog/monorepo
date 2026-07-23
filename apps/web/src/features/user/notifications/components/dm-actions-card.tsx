@@ -18,8 +18,8 @@ import {
   useNotificationsUserControllerCreateUserTarget,
   useNotificationsUserControllerTriggerUserTargetTest,
   useNotificationsUserControllerUpdateUserTarget,
-} from "@/lib/api/generated/main/notifications/notifications";
-import type { NotificationTargetWithTestTriggerResponseDto } from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/notifications";
+import type { NotificationTargetWithTestTriggerResponseDto } from "@lootlog/api-client/models/main/notification-target-with-test-trigger-response-dto";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Tooltip,

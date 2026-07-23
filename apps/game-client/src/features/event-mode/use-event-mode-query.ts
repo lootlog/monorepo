@@ -1,6 +1,6 @@
 import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
-import { eventModeControllerGetEventMode } from "@/lib/api/generated/main/event-mode/event-mode";
+import { eventModeControllerGetEventMode } from "@lootlog/api-client/react-query/main/event-mode";
 import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

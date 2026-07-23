@@ -16,7 +16,7 @@ import { getBattleSideCardScrollHandoff } from "@/features/user/battle-panel/bat
 import { battlePanelSingleBattleSearchParsers } from "@/features/user/battle-panel/battle-panel-search";
 import { useStatsCustomization } from "@/hooks/use-stats-customization";
 import type { Battle, RawBattle } from "@/lib/api/battlelog-types";
-import type { BattleTimelineResponseDtoOutput } from "@/lib/api/generated/battlelog/model";
+import type { BattleTimelineResponseDtoOutput } from "@lootlog/api-client/models/battlelog/battle-timeline-response-dto-output";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {

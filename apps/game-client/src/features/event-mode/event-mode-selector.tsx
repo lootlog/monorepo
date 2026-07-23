@@ -10,7 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { EventModeResponseDtoEventsItem } from "@/lib/api/generated/main/model/event-mode-response-dto-events-item";
+import type { EventModeResponseDtoEventsItem } from "@lootlog/api-client/models/main/event-mode-response-dto-events-item";
 import { CloudOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 

@@ -2,7 +2,7 @@ import type { Query, QueryClient } from "@tanstack/react-query";
 import {
   getEventsMonitoringControllerGetHeroRespawnConfigQueryKey,
   getListEventMapsQueryKey,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 
 const getEventTimersPath = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/timers`;

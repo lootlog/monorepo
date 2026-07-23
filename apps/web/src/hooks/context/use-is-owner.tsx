@@ -1,6 +1,6 @@
 import { useSession } from "@/hooks/auth/use-session";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
 
 export const useIsOwner = () => {
   const guildId = useGuildId();

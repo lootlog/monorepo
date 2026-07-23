@@ -14,7 +14,7 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import { useDocsControllerCreateDocument } from "@/lib/api/generated/main/docs/docs";
+import { useDocsControllerCreateDocument } from "@lootlog/api-client/react-query/main/docs";
 import { invalidateGuildDocsQueries } from "../docs-api";
 import { useTranslation } from "react-i18next";
 

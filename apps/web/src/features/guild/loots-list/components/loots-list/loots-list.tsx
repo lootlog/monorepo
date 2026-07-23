@@ -15,12 +15,10 @@ import {
   getLootsControllerFetchLootByIdQueryKey,
   lootsControllerFetchLootById,
   lootsControllerFetchLootsByGuildId,
-} from "@/lib/api/generated/main/loots/loots";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
-import type {
-  LootShareResponseDto,
-  LootsControllerFetchLootsByGuildIdParams,
-} from "@/lib/api/generated/main/model";
+} from "@lootlog/api-client/react-query/main/loots";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
+import type { LootShareResponseDto } from "@lootlog/api-client/models/main/loot-share-response-dto";
+import type { LootsControllerFetchLootsByGuildIdParams } from "@lootlog/api-client/models/main/loots-controller-fetch-loots-by-guild-id-params";
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

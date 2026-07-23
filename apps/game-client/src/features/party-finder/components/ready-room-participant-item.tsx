@@ -10,7 +10,7 @@ import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
-import { partyReadyRoomControllerRemove } from "@/lib/api/generated/main/party-ready-room/party-ready-room";
+import { partyReadyRoomControllerRemove } from "@lootlog/api-client/react-query/main/party-ready-room";
 import { cn } from "@/lib/utils";
 import { useFriendsStore } from "@/store/friends.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";

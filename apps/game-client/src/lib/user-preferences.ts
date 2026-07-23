@@ -10,7 +10,7 @@ export const cloneNotificationMutes = (
 };
 
 export const getEffectiveNotificationMutes = (
-  preferences?: UserPreferences | null,
+  preferences?: Pick<UserPreferences, "mutes"> | null,
 ) => {
   if (!preferences) {
     return cloneNotificationMutes();

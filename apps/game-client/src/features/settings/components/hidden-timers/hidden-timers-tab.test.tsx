@@ -3,13 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTimersStore } from "@/store/timers.store";
 import { HiddenTimersTab } from "./hidden-timers-tab";
-import * as UsersModule from "@/lib/api/generated/main/users/users";
+import * as UsersModule from "@lootlog/api-client/react-query/main/users";
 
 const hiddenTimersSpy = vi.fn();
 
-vi.mock("@/lib/api/generated/main/users/users", async () => {
+vi.mock("@lootlog/api-client/react-query/main/users", async () => {
   const actual = await vi.importActual<typeof UsersModule>(
-    "@/lib/api/generated/main/users/users",
+    "@lootlog/api-client/react-query/main/users",
   );
 
   return {

@@ -4,7 +4,7 @@ import {
   eventsRankingControllerGetHeroKillHistory,
   getEventsRankingControllerGetEventKillHistoryQueryKey,
   getEventsRankingControllerGetHeroKillHistoryQueryKey,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import type { HeroKill } from "./use-hero-kill-history";
 
 interface UseRecentHeroKillsOptions {

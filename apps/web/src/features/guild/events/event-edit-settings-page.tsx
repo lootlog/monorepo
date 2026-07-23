@@ -16,12 +16,12 @@ import {
   fromDateTimeLocalValueToIso,
   toDateTimeLocalValue,
 } from "./utils/date-time-local";
-import type { EventOverviewResponseDto } from "@/lib/api/generated/main/model";
+import type { EventOverviewResponseDto } from "@lootlog/api-client/models/main/event-overview-response-dto";
 import {
   getShowEventOverviewQueryKey,
   useShowEventOverview,
   useUpdateEvent,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 
 interface EventSettingsFormData {

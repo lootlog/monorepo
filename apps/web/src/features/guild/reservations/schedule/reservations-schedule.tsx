@@ -32,11 +32,11 @@ import {
   invalidateReservationsControllerGetReservations,
   useReservationsControllerDeleteReservation,
   useReservationsControllerGetReservations,
-} from "@/lib/api/generated/main/reservations/reservations";
+} from "@lootlog/api-client/react-query/main/reservations";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { useMembersControllerGetGuildMemberReferences } from "@/lib/api/generated/main/members/members";
-import type { MemberReferenceResponseDtoOutput as GuildMember } from "@/lib/api/generated/main/model";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
+import { useMembersControllerGetGuildMemberReferences } from "@lootlog/api-client/react-query/main/members";
+import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-reference-response-dto-output";
+import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
 import { getReservationSettings } from "./reservation-settings";
 
 export const ReservationsSchedule: React.FC = () => {

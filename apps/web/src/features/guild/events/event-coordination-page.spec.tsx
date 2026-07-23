@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Permission } from "@lootlog/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EventCoordinationPage } from "./event-coordination-page";
-import type { EventCoordinationResponseDto } from "@/lib/api/generated/main/model";
+import type { EventCoordinationResponseDto } from "@lootlog/api-client/models/main/event-coordination-response-dto";
 
 const mocks = vi.hoisted(() => ({
   closeRespawnWindow: vi.fn(),
@@ -56,7 +56,7 @@ vi.mock("@/hooks/api/use-guild-permissions", () => ({
   useGuildPermissions: mocks.useGuildPermissions,
 }));
 
-vi.mock("@/lib/api/generated/main/events/events", () => ({
+vi.mock("@lootlog/api-client/react-query/main/events", () => ({
   invalidateEventsMonitoringControllerGetCoordination: vi.fn(),
   useEventsAssignmentControllerSelfAssignMember: mocks.selfAssignMember,
   useEventsMonitoringControllerCloseRespawnWindow: mocks.closeRespawnWindow,

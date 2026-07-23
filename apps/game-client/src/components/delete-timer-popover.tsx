@@ -9,11 +9,11 @@ import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   guildsControllerGetGuildPermissions,
-} from "@/lib/api/generated/main/guilds/guilds";
+} from "@lootlog/api-client/react-query/main/guilds";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@/lib/api/generated/main/users/users";
+} from "@lootlog/api-client/react-query/main/users";
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
 import { cn } from "@/lib/utils";

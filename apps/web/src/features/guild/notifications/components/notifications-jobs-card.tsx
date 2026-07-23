@@ -25,8 +25,8 @@ import {
   restoreGuildNotificationCacheSnapshot,
   type GuildNotificationCacheSnapshot,
 } from "../notifications-api";
-import { useNotificationsGuildControllerCancelGuildJob } from "@/lib/api/generated/main/notifications/notifications";
-import type { NotificationJobsResponseDto } from "@/lib/api/generated/main/model";
+import { useNotificationsGuildControllerCancelGuildJob } from "@lootlog/api-client/react-query/main/notifications";
+import type { NotificationJobsResponseDto } from "@lootlog/api-client/models/main/notification-jobs-response-dto";
 
 type NotificationsPendingJobsCardProps = {
   pendingJobs: NotificationJobsResponseDto["pending"];

@@ -2,7 +2,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { RolesSettingsHeader } from "@/features/guild/settings/roles/roles-settings-header";
 import { RolesTable } from "@/features/guild/settings/roles/roles-table";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
+import { useRolesControllerGetGuildRoles } from "@lootlog/api-client/react-query/main/roles";
 import { Permission } from "@lootlog/types";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";

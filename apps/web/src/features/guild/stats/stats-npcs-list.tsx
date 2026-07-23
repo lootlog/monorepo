@@ -28,9 +28,9 @@ import { useDebounce } from "@/hooks/use-debounce";
 import {
   getKillsControllerGetGuildTopNpcsQueryKey,
   useKillsControllerGetGuildTopNpcs,
-} from "@/lib/api/generated/main/kills/kills";
-import type { GuildTopNpcsResponseDtoOutputTopNpcsItem } from "@/lib/api/generated/main/model/guild-top-npcs-response-dto-output-top-npcs-item";
-import type { NpcType } from "@/lib/api/generated/main/model/npc-type";
+} from "@lootlog/api-client/react-query/main/kills";
+import type { GuildTopNpcsResponseDtoOutputTopNpcsItem } from "@lootlog/api-client/models/main/guild-top-npcs-response-dto-output-top-npcs-item";
+import type { NpcType } from "@lootlog/api-client/models/main/npc-type";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";

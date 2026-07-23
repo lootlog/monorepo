@@ -2,7 +2,7 @@ import {
   type ChatMessage as ChatMessageType,
   MessageType,
 } from "@/api/chat.api";
-import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@/lib/api/generated/main/model";
+import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@lootlog/api-client/models/main/chat-message-response-dto-output-npc";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { isYesterday } from "@/utils/local-date";
 import { getNpcTypeByWt } from "@lootlog/types";

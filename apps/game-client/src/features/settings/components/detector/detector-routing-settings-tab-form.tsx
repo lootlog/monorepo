@@ -8,7 +8,7 @@ import { getDetectorRoutingSettingsTranslations } from "@/features/settings/comp
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@/lib/api/generated/main/users/users";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorRoutingRule } from "@lootlog/types";
 import { Plus } from "lucide-react";

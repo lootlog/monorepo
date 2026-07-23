@@ -11,7 +11,7 @@ import { t } from "@/i18n/messages";
 import {
   getNpcsControllerGetNpcsQueryKey,
   useNpcsControllerGetNpcs,
-} from "@/lib/api/generated/search/npcs/npcs";
+} from "@lootlog/api-client/react-query/search/npcs";
 import {
   areBasicRouteSearchStatesEqual,
   emptyBasicRouteSearch,
@@ -53,7 +53,9 @@ function NpcsRoute() {
       queryKey: getNpcsControllerGetNpcsQueryKey(queryParams),
     },
     request: {
-      baseUrl: searchApiUrl,
+      apiClient: {
+        baseUrl: searchApiUrl,
+      },
     },
   });
   const data = hasActiveSearch ? (npcsQuery.data ?? []) : [];

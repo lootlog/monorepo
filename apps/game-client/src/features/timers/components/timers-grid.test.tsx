@@ -20,14 +20,14 @@ const useQueriesSpy = vi.fn(
 
 let mockGuilds = [{ id: "guild-1", name: "Alpha" }];
 
-vi.mock("@/lib/api/generated/main/users/users", () => ({
+vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => ["guilds"],
   useUsersControllerGetCurrentUserAccessibleGuilds: () => ({
     data: mockGuilds,
   }),
 }));
 
-vi.mock("@/lib/api/generated/main/guilds/guilds", () => ({
+vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
   getGuildsControllerGetGuildPermissionsQueryKey: ({
     guildId,
   }: {

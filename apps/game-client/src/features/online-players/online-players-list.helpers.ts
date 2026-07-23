@@ -1,7 +1,7 @@
 import type { MargonemCharacter } from "@/api/characters.api";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getFixedT } from "@/i18n/get-fixed-t";
-import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
 
 export type OnlinePlayerAccountEntry = {
   discordId: string;

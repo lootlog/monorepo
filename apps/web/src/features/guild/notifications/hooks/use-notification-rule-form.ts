@@ -5,14 +5,12 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
-import {
-  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
-  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
-  CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy,
-  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
-  type CreateNotificationRuleDtoTriggerType,
-  type NotificationTargetResponseDto,
-} from "@/lib/api/generated/main/model";
+import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-anchor";
+import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-interval-type";
+import { CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy } from "@lootlog/api-client/models/main/create-notification-rule-dto-schedule-strategy";
+import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
+import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
+import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getDefaultGuildNotificationRuleContentTemplate,
@@ -45,14 +43,14 @@ import {
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
   useNotificationsGuildControllerUpdateGuildRule,
-} from "@/lib/api/generated/main/notifications/notifications";
+} from "@lootlog/api-client/react-query/main/notifications";
 import { invalidateGuildNotificationQueries } from "../notifications-api";
-import { useRolesControllerGetGuildRoles } from "@/lib/api/generated/main/roles/roles";
-import { useGuildsControllerGetWorldsByGuildId } from "@/lib/api/generated/main/guilds/guilds";
+import { useRolesControllerGetGuildRoles } from "@lootlog/api-client/react-query/main/roles";
+import { useGuildsControllerGetWorldsByGuildId } from "@lootlog/api-client/react-query/main/guilds";
 import {
   getNpcsControllerGetNpcsQueryKey,
   useNpcsControllerGetNpcs,
-} from "@/lib/api/generated/search/npcs/npcs";
+} from "@lootlog/api-client/react-query/search/npcs";
 
 export const useNotificationRuleForm = () => {
   const { t } = useTranslation();

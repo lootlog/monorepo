@@ -26,7 +26,7 @@ import {
 } from "@lootlog/ui/components/select";
 import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useBattlesControllerGetUserCharacters } from "@/lib/api/generated/battlelog/battles/battles";
+import { useBattlesControllerGetUserCharacters } from "@lootlog/api-client/react-query/battlelog/battles";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { useTranslation } from "react-i18next";
 

@@ -30,7 +30,7 @@ import { SingleNotificationNpc } from "@/features/notifications/components/singl
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
 import { useTranslation } from "react-i18next";
 import { getNotificationSettingsKey } from "@/features/notifications/utils/get-notification-settings-key";
-import type { MemberSummaryResponseDtoOutput } from "@/lib/api/generated/main/model";
+import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
 import type {
   NotificationMutes,
   NotificationMutesPatch,

@@ -6,7 +6,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 
 import type { FC } from "react";
-import type { PlayerHitDtoOutput } from "@/lib/api/generated/search/model";
+import type { PlayerHitDtoOutput } from "@lootlog/api-client/models/search/player-hit-dto-output";
 import { PlayerSpriteTile } from "./player-sprite-tile";
 
 type PlayerTileProps = {

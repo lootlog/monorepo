@@ -1,4 +1,4 @@
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import type { MemberResponseDto as GuildMember } from "@lootlog/api-client/models/main/member-response-dto";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";

@@ -18,7 +18,7 @@ const resolveInvitationTargets =
   vi.fn<(...args: unknown[]) => Promise<unknown>>();
 const inviteCharacterToParty = vi.fn();
 
-vi.mock("@/lib/api/generated/main/party-ready-room/party-ready-room", () => ({
+vi.mock("@lootlog/api-client/react-query/main/party-ready-room", () => ({
   partyReadyRoomControllerResolveInvitationTargets: (...args: unknown[]) =>
     resolveInvitationTargets(...args),
 }));

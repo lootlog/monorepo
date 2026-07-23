@@ -1,6 +1,6 @@
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
-import type { RoleResponseDtoOutput as GuildRole } from "@/lib/api/generated/main/model";
+import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/api-client/models/main/role-response-dto-output";
 import { getColorFromRoleColor } from "@/utils/get-color-from-role";
 import { cn } from "@/utils/cn";
 import { Permission } from "@lootlog/types";

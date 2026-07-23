@@ -23,7 +23,7 @@ vi.mock("@/features/chat/hooks/use-chat-guild-data", () => ({
   useChatGuildData: () => mocks.useChatGuildData(),
 }));
 
-vi.mock("@/lib/api/generated/main/users/users", () => ({
+vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => ["guilds"],
   useUsersControllerGetCurrentUserAccessibleGuilds: () =>
     mocks.useAccessibleGuilds(),

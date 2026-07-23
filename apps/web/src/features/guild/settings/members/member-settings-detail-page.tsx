@@ -10,9 +10,9 @@ import { Permission } from "@lootlog/types";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { useGuildsControllerGetGuildById } from "@/lib/api/generated/main/guilds/guilds";
-import { useMembersControllerGetGuildMembers } from "@/lib/api/generated/main/members/members";
-import type { MemberResponseDto as GuildMember } from "@/lib/api/generated/main/model";
+import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
+import { useMembersControllerGetGuildMembers } from "@lootlog/api-client/react-query/main/members";
+import type { MemberResponseDto as GuildMember } from "@lootlog/api-client/models/main/member-response-dto";
 import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
 import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
 import {

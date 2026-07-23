@@ -1,4 +1,4 @@
-import { getApiClient } from "@/lib/api-client";
+import { createApiClient } from "@lootlog/api-client/transport";
 import type { GameGuildMember } from "@/types/guild-member";
 
 export type Guild = {
@@ -25,10 +25,10 @@ const mapGuildMembersByUserId = (
 export async function fetchGuildMembers(
   guildId: string,
 ): Promise<Record<string, GuildMember>> {
-  const client = getApiClient("default");
-  const response = await client.get<GuildMember[]>(
+  const client = createApiClient("main");
+  const members = await client.get<GuildMember[]>(
     `/guilds/${guildId}/members/summary`,
   );
 
-  return mapGuildMembersByUserId(response.data);
+  return mapGuildMembersByUserId(members);
 }

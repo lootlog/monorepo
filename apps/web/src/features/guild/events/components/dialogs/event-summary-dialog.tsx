@@ -20,7 +20,7 @@ import { cn } from "@/utils/cn";
 import {
   getShowEventWrappedQueryKey,
   useShowEventWrapped,
-} from "@/lib/api/generated/main/events/events";
+} from "@lootlog/api-client/react-query/main/events";
 import { buildSteps } from "./event-summary/build-steps";
 import { LoadingState } from "./event-summary/loading-state";
 import { SlideNavButton } from "./event-summary/slide-nav-button";

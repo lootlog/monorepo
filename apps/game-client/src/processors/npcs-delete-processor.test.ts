@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NpcType } from "@/api/npcs.api";
 import { queryClient } from "@/lib/query-client";
-import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
+import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/api-client/react-query/main/user-lootlog-config";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { NpcsDeleteProcessor } from "./npcs-delete-processor";
