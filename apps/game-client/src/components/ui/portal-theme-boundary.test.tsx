@@ -101,6 +101,15 @@ describe("overlay theme boundary", () => {
     expect(["6px", "calc(8px - 2px)"]).toContain(
       getComputedStyle(screen.getByTestId("context-menu-content")).borderRadius,
     );
+    const contextMenuPositioner = screen.getByTestId(
+      "context-menu-content",
+    ).parentElement;
+
+    expect(contextMenuPositioner).not.toBeNull();
+    if (!contextMenuPositioner) {
+      throw new Error("Context menu positioner was not rendered");
+    }
+    expect(getComputedStyle(contextMenuPositioner).zIndex).toBe("500");
   });
 
   it("keeps a context menu open when item selection is prevented", () => {
