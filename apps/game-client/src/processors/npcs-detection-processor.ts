@@ -89,24 +89,13 @@ export class NpcsDetectionProcessor {
     const detectorReady = this.isDetectorReady(accountId);
 
     if (!detectorReady) {
-      this.keepPendingDetectionsForAccount(accountId);
-      const hasQueuedInitialDetection =
-        NpcsDetectionProcessor.pendingDetections.some(
-          (pendingDetection) =>
-            pendingDetection.accountId === accountId &&
-            pendingDetection.type !== "event",
-        );
-
-      if (!hasQueuedInitialDetection) {
-        NpcsDetectionProcessor.pendingDetections.push({
-          accountId,
-          type: "initial",
-        });
-      }
+      this.queueInitialDetection(accountId);
       return;
     }
 
-    this.processInitialDetectionFromStore();
+    if (!this.processInitialDetectionFromStore()) {
+      this.queueInitialDetection(accountId);
+    }
   }
 
   handleInitialDetection(): void {
@@ -136,16 +125,23 @@ export class NpcsDetectionProcessor {
       return;
     }
 
-    NpcsDetectionProcessor.pendingDetections = remainingDetections;
+    const deferredDetections: PendingDetection[] = [];
 
     pendingDetections.forEach((pendingDetection) => {
       if (pendingDetection.type !== "event") {
-        this.processInitialDetectionFromStore();
+        if (!this.processInitialDetectionFromStore()) {
+          deferredDetections.push(pendingDetection);
+        }
         return;
       }
 
       this.processEvent(pendingDetection.event);
     });
+
+    NpcsDetectionProcessor.pendingDetections = [
+      ...remainingDetections,
+      ...deferredDetections,
+    ];
   }
 
   private queuePendingEvent(accountId: string, event: GameEvent): void {
@@ -174,6 +170,21 @@ export class NpcsDetectionProcessor {
       type: "event",
       event,
     });
+  }
+
+  private queueInitialDetection(accountId: string): void {
+    this.keepPendingDetectionsForAccount(accountId);
+    const hasQueuedInitialDetection =
+      NpcsDetectionProcessor.pendingDetections.some(
+        (pendingDetection) => pendingDetection.type !== "event",
+      );
+
+    if (!hasQueuedInitialDetection) {
+      NpcsDetectionProcessor.pendingDetections.push({
+        accountId,
+        type: "initial",
+      });
+    }
   }
 
   private keepPendingDetectionsForAccount(accountId: string): void {
@@ -256,11 +267,12 @@ export class NpcsDetectionProcessor {
     }
   }
 
-  private processInitialDetectionFromStore(): void {
+  private processInitialDetectionFromStore(): boolean {
     const { npcsById, status } = useNpcsStore.getState();
-    if (status !== "ready") return;
+    if (status !== "ready") return false;
     const npcs = Object.values(npcsById);
     if (npcs.length > 0) this.processInitialDetection(npcs);
+    return true;
   }
 
   private processInitialDetection(npcs: RuntimeNpc[]): void {

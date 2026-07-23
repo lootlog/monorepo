@@ -13,6 +13,7 @@ import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 const mocks = vi.hoisted(() => ({
   afterGameEventHandler: undefined as (() => void) | undefined,
@@ -647,4 +648,3 @@ describe("useOtherCatchingGuildGlow", () => {
     expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
   });
 });
-import { testRuntimeWindow } from "@/test/test-runtime-window";

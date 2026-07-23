@@ -110,7 +110,7 @@ function patchOtherPrototype(other: MargonemTooltipCharacter): boolean {
 function prunePatchedCharacters(): void {
   const hero = getRuntimeHeroTooltipOwner();
   const currentOthers = Object.values(
-    useOthersStore.getState().othersById,
+    runtimeOtherHandles.getAll(),
   ) as MargonemTooltipCharacter[];
   const retainedCharacters = new Set<MargonemTooltipCharacter>(currentOthers);
   if (hero) {

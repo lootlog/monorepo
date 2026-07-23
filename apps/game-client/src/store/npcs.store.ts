@@ -27,6 +27,24 @@ type NpcsState = {
 const createNpcSnapshot = (npc: RuntimeNpc): NpcSnapshot =>
   Object.freeze({ ...npc });
 
+const areNpcSnapshotsEqual = (
+  current: NpcSnapshot,
+  next: RuntimeNpc,
+): boolean =>
+  current.actions === next.actions &&
+  current.groupId === next.groupId &&
+  current.icon === next.icon &&
+  current.id === next.id &&
+  current.level === next.level &&
+  current.name === next.name &&
+  current.profession === next.profession &&
+  current.respawnRandomness === next.respawnRandomness &&
+  current.templateId === next.templateId &&
+  current.type === next.type &&
+  current.weight === next.weight &&
+  current.x === next.x &&
+  current.y === next.y;
+
 const indexNpcs = (npcs: readonly RuntimeNpc[]): NpcsById =>
   Object.freeze(
     Object.fromEntries(
@@ -41,18 +59,33 @@ export const useNpcsStore = create<NpcsState>()((set, get) => ({
   status: "uninitialized",
   applyNpcBatch: ({ removeIds = [], upserts = [] }) =>
     set((state) => {
-      const npcsById = { ...state.npcsById };
+      let nextNpcsById: Record<number, NpcSnapshot> | undefined;
+      const getMutableNpcs = () => {
+        nextNpcsById ??= { ...state.npcsById };
+        return nextNpcsById;
+      };
 
       for (const id of removeIds) {
-        delete npcsById[id];
+        if ((nextNpcsById ?? state.npcsById)[id]) {
+          delete getMutableNpcs()[id];
+        }
       }
 
       for (const npc of upserts) {
-        npcsById[npc.id] = createNpcSnapshot(npc);
+        const currentNpc = (nextNpcsById ?? state.npcsById)[npc.id];
+        if (currentNpc && areNpcSnapshotsEqual(currentNpc, npc)) {
+          continue;
+        }
+
+        getMutableNpcs()[npc.id] = createNpcSnapshot(npc);
+      }
+
+      if (!nextNpcsById && state.status === "ready") {
+        return state;
       }
 
       return {
-        npcsById: Object.freeze(npcsById),
+        npcsById: Object.freeze(nextNpcsById ?? { ...state.npcsById }),
         revision: state.revision + 1,
         status: "ready",
       };

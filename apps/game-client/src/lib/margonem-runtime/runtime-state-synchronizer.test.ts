@@ -122,6 +122,10 @@ describe("RuntimeStateSynchronizer", () => {
     });
     synchronizer.install();
     const othersRevision = useOthersStore.getState().revision;
+    let handleObservedDuringStoreCommit: unknown;
+    const unsubscribe = useOthersStore.subscribe(() => {
+      handleObservedDuringStoreCommit = runtimeOtherHandles.get("11");
+    });
 
     applied?.({
       raw: {
@@ -156,9 +160,11 @@ describe("RuntimeStateSynchronizer", () => {
 
     expect(useOthersStore.getState().getOther("11")).toBe(other);
     expect(useOthersStore.getState().revision).toBe(othersRevision + 1);
+    expect(handleObservedDuringStoreCommit).toBe(handle);
     expect(usePartyStore.getState().members[0]?.characterId).toBe("1");
     expect(useFriendsStore.getState().friends[0]?.characterId).toBe("55");
     expect(useFriendsStore.getState().friendsMax).toBe(25);
+    unsubscribe();
   });
 
   it("invalidates every map domain when town handle hydration fails", () => {

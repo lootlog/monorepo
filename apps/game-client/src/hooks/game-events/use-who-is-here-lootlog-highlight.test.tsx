@@ -16,6 +16,7 @@ import { useGameStore } from "@/store/game.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 const mocks = vi.hoisted(() => ({
   getPlayersCatchingGuilds: vi.fn(),
@@ -663,4 +664,3 @@ describe("useWhoIsHereLootlogHighlight", () => {
     expect(document.getElementById("ll-who-is-here-lootlog-style")).toBeNull();
   });
 });
-import { testRuntimeWindow } from "@/test/test-runtime-window";

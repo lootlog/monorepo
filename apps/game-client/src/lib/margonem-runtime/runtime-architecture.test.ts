@@ -3,6 +3,18 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const sourceRoot = join(process.cwd(), "src");
+const runtimeGlobalNames =
+  "Engine|g|_g|successData|API|CFG|hero|map|message|getCookie|getZoomFactor";
+const forbiddenRuntimeAccess = new RegExp(
+  [
+    String.raw`@\/lib\/game(?:["/])`,
+    String.raw`\bGame\s*(?:\.|\[)`,
+    String.raw`(?:window|globalThis)\s*(?:\.\s*(?:${runtimeGlobalNames})\b|\[\s*["'](?:${runtimeGlobalNames})["']\s*\])`,
+    String.raw`\b(?:Engine|API|CFG)\s*(?:\.|\[)`,
+    String.raw`\bg\s*(?:\.\s*(?:npc|other|worldConfig|hero|map|party|friends)\b|\[\s*["'](?:npc|other|worldConfig|hero|map|party|friends)["']\s*\])`,
+    String.raw`\b(?:_g|successData|getCookie|getZoomFactor)\s*\(`,
+  ].join("|"),
+);
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -26,12 +38,27 @@ describe("runtime architecture", () => {
         !file.includes("/lib/margonem-runtime/adapters/") &&
         !file.includes("/lib/api/generated/"),
     );
-    const forbidden =
-      /@\/lib\/game(?:["/])|\bGame\.|window\.(?:Engine|g|_g|successData|API|CFG|hero|map|message|getCookie|getZoomFactor)\b|\b(?:Engine|API|CFG)\./;
-
     for (const file of files) {
-      expect(readFileSync(file, "utf8"), file).not.toMatch(forbidden);
+      expect(readFileSync(file, "utf8"), file).not.toMatch(
+        forbiddenRuntimeAccess,
+      );
     }
+  });
+
+  it.each([
+    "Engine.communication",
+    'Engine["communication"]',
+    "Game.hero",
+    'Game["hero"]',
+    "g.npc",
+    'g["other"]',
+    "globalThis.Engine",
+    'globalThis["successData"]',
+    'window["API"]',
+    "_g('talk&id=1')",
+    "successData(event)",
+  ])("detects forbidden runtime access: %s", (source) => {
+    expect(source).toMatch(forbiddenRuntimeAccess);
   });
 
   it("keeps Margonem model imports out of canonical domain stores", () => {

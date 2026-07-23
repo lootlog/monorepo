@@ -20,6 +20,7 @@ export const useCharacterList = () => {
   const languageVersion = getLanguageVersion(window.location.href);
 
   const query = useQuery({
+    enabled: game !== null,
     queryKey: getCharacterListQueryKey(accountId, world, languageVersion),
     queryFn: () =>
       fetchCharacterList({

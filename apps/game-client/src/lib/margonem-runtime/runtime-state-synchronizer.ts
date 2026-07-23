@@ -39,10 +39,11 @@ export class RuntimeStateSynchronizer {
   bootstrap(): boolean {
     try {
       const snapshot = this.adapter.getStateSnapshot();
+      const otherHandles = this.adapter.getAllOtherHandles();
       useGameStore.getState().replaceGame(snapshot.game);
       useNpcsStore.getState().replaceNpcs(snapshot.npcs);
+      runtimeOtherHandles.replace(otherHandles);
       useOthersStore.getState().replaceOthers(snapshot.others);
-      runtimeOtherHandles.replace(this.adapter.getAllOtherHandles());
       usePartyStore.getState().replaceParty(snapshot.party);
       useFriendsStore.getState().replaceFriends(snapshot.friends, 0);
       return true;
@@ -51,8 +52,8 @@ export class RuntimeStateSynchronizer {
       useNpcsStore.getState().clearNpcs();
       usePartyStore.getState().clearParty();
       useFriendsStore.getState().clearFriends();
-      useOthersStore.getState().clearOthers();
       runtimeOtherHandles.clear();
+      useOthersStore.getState().clearOthers();
       return false;
     }
   }
@@ -64,8 +65,8 @@ export class RuntimeStateSynchronizer {
     useNpcsStore.getState().clearNpcs();
     usePartyStore.getState().clearParty();
     useFriendsStore.getState().clearFriends();
-    useOthersStore.getState().clearOthers();
     runtimeOtherHandles.clear();
+    useOthersStore.getState().clearOthers();
   }
 
   private readonly reconcileAppliedEvent = (
@@ -120,13 +121,13 @@ export class RuntimeStateSynchronizer {
 
         useGameStore.getState().replaceGame(game, true);
         useNpcsStore.getState().replaceNpcs(npcs, true);
-        useOthersStore.getState().replaceOthers(others, true);
         runtimeOtherHandles.replace(otherHandles);
+        useOthersStore.getState().replaceOthers(others, true);
       } catch {
         useGameStore.getState().clearGame(true);
         useNpcsStore.getState().clearNpcs(true);
-        useOthersStore.getState().clearOthers(true);
         runtimeOtherHandles.clear();
+        useOthersStore.getState().clearOthers(true);
       }
       return;
     }
@@ -159,8 +160,8 @@ export class RuntimeStateSynchronizer {
           removeIds.push(otherId);
         }
       }
-      useOthersStore.getState().applyBatch({ removeIds, upserts });
       runtimeOtherHandles.applyBatch({ removeIds, upserts: handleUpserts });
+      useOthersStore.getState().applyBatch({ removeIds, upserts });
     }
 
     const affectedIds = new Set<number>();

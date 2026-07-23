@@ -6,6 +6,7 @@ import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-toolti
 import { useGlobalStore } from "@/store/global.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 const mocks = vi.hoisted(() => {
   const unsubscribe = vi.fn();
@@ -321,4 +322,3 @@ describe("useCharacterTooltipGameEvents", () => {
     expect(mocks.unsubscribe).toHaveBeenCalledOnce();
   });
 });
-import { testRuntimeWindow } from "@/test/test-runtime-window";

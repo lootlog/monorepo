@@ -13,22 +13,28 @@ export type UseUpdateLootlogCharacterSettings =
   CreateOrUpdateLootlogCharacterConfigDto;
 
 export const useUpdateLootlogCharactersConfig = () => {
-  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? null);
   const queryClient = useQueryClient();
-  const queryKey =
-    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-      accountId,
-    });
+  const queryKey = accountId
+    ? getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+        accountId,
+      })
+    : ["user-lootlog-config", "unavailable"];
 
   return useMutation({
     mutationKey: [
       "userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
     ],
-    mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) =>
-      userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig(
+    mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) => {
+      if (!accountId) {
+        throw new Error("Canonical game identity is unavailable");
+      }
+
+      return userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig(
         { accountId },
         options,
-      ),
+      );
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
     },

@@ -5,6 +5,7 @@ import {
   LOOTLOG_OTHER_GLOW_RED_ORANGE,
   lootlogOtherGlowManager,
 } from "./margonem-runtime/adapters/glow-runtime-adapter";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 const originalWindowEngine = testRuntimeWindow.Engine;
 
@@ -271,4 +272,3 @@ describe("lootlogOtherGlowManager", () => {
     expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(true);
   });
 });
-import { testRuntimeWindow } from "@/test/test-runtime-window";

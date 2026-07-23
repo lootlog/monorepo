@@ -588,7 +588,9 @@ export const DebugTab: FC = () => {
               >
                 <span className="ll:text-white">{member.name}</span>
                 <span className="ll:text-gray-400">
-                  (ID: {member.characterId})
+                  {t("settings.debug.partyMemberId", {
+                    id: member.characterId,
+                  })}
                 </span>
                 {member.isLeader && (
                   <span className="ll:text-yellow-400">

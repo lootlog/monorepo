@@ -352,6 +352,28 @@ describe("NpcsDetectionProcessor", () => {
     expect(mockPlaySound).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps a queued initial detection until the NPC domain is ready", () => {
+    mockGetNpcTypeByWt.mockReturnValue("HERO");
+    useNpcsStore.getState().clearNpcs();
+
+    processor.handleInitialDetection();
+    readyPreferences({ notifySound: true });
+    processor.flushPending("202");
+    processor.handleInitialDetection();
+
+    expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+
+    useNpcsStore
+      .getState()
+      .replaceNpcs([normalizeNpc(createGameNpc({ id: 777 }))]);
+    processor.flushPending("202");
+
+    expect(useNpcDetectorStore.getState().npcs).toEqual([
+      expect.objectContaining({ id: 777 }),
+    ]);
+    expect(mockPlaySound).toHaveBeenCalledTimes(1);
+  });
+
   it("processes initial detection immediately when preferences are ready", () => {
     readyPreferences({
       notifySound: true,
