@@ -34,7 +34,7 @@ interface OthersState {
   revision: number;
   status: RuntimeStatus;
   applyBatch: (batch: OthersBatch) => void;
-  clearOthers: () => void;
+  clearOthers: (mapChanged?: boolean) => void;
   getOther: (id: string) => RuntimeOther | undefined;
   removeOther: (id: string) => void;
   replaceOthers: (othersById: OthersById, mapChanged?: boolean) => void;
@@ -83,8 +83,9 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
         status: "ready",
       };
     }),
-  clearOthers: () =>
+  clearOthers: (mapChanged = false) =>
     set((state) => ({
+      mapEpoch: state.mapEpoch + (mapChanged ? 1 : 0),
       othersById: Object.freeze({}),
       revision: state.revision + 1,
       status: "uninitialized",

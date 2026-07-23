@@ -19,7 +19,7 @@ type NpcsState = {
   revision: number;
   status: RuntimeStatus;
   applyNpcBatch: (batch: NpcBatch) => void;
-  clearNpcs: () => void;
+  clearNpcs: (mapChanged?: boolean) => void;
   getNpc: (id: number) => NpcSnapshot | undefined;
   replaceNpcs: (npcs: readonly RuntimeNpc[], mapChanged?: boolean) => void;
 };
@@ -57,8 +57,9 @@ export const useNpcsStore = create<NpcsState>()((set, get) => ({
         status: "ready",
       };
     }),
-  clearNpcs: () =>
+  clearNpcs: (mapChanged = false) =>
     set((state) => ({
+      mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
       npcsById: Object.freeze({}),
       revision: state.revision + 1,
       status: "uninitialized",

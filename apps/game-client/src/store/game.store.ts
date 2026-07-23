@@ -9,7 +9,7 @@ type GameState = {
   mapEpoch: number;
   revision: number;
   status: RuntimeStatus;
-  clearGame: () => void;
+  clearGame: (mapChanged?: boolean) => void;
   replaceGame: (game: RuntimeGameSnapshot, mapChanged?: boolean) => void;
 };
 
@@ -18,9 +18,10 @@ export const useGameStore = create<GameState>()((set) => ({
   mapEpoch: 0,
   revision: 0,
   status: "uninitialized",
-  clearGame: () =>
+  clearGame: (mapChanged = false) =>
     set((state) => ({
       game: null,
+      mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
       revision: state.revision + 1,
       status: "uninitialized",
     })),

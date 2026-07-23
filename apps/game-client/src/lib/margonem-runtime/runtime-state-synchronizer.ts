@@ -113,17 +113,20 @@ export class RuntimeStateSynchronizer {
 
     if (mapChanged) {
       try {
-        useGameStore
-          .getState()
-          .replaceGame(this.adapter.getGameSnapshot(), true);
-        useNpcsStore.getState().replaceNpcs(this.adapter.getAllNpcs(), true);
-        useOthersStore
-          .getState()
-          .replaceOthers(this.adapter.getAllOthers(), true);
-        runtimeOtherHandles.replace(this.adapter.getAllOtherHandles());
+        const game = this.adapter.getGameSnapshot();
+        const npcs = this.adapter.getAllNpcs();
+        const others = this.adapter.getAllOthers();
+        const otherHandles = this.adapter.getAllOtherHandles();
+
+        useGameStore.getState().replaceGame(game, true);
+        useNpcsStore.getState().replaceNpcs(npcs, true);
+        useOthersStore.getState().replaceOthers(others, true);
+        runtimeOtherHandles.replace(otherHandles);
       } catch {
-        useGameStore.getState().clearGame();
-        useNpcsStore.getState().clearNpcs();
+        useGameStore.getState().clearGame(true);
+        useNpcsStore.getState().clearNpcs(true);
+        useOthersStore.getState().clearOthers(true);
+        runtimeOtherHandles.clear();
       }
       return;
     }

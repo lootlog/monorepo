@@ -7,6 +7,7 @@ import { useFriendsStore } from "@/store/friends.store";
 import type { MargonemRuntimeAdapter } from "./runtime-adapter";
 import type { RuntimeEventEnvelope } from "./runtime.types";
 import { RuntimeStateSynchronizer } from "./runtime-state-synchronizer";
+import { runtimeOtherHandles } from "./runtime-other-handles";
 
 const game = {
   hero: {
@@ -43,6 +44,7 @@ describe("RuntimeStateSynchronizer", () => {
     useOthersStore.getState().clearOthers();
     usePartyStore.getState().clearParty();
     useFriendsStore.getState().clearFriends();
+    runtimeOtherHandles.clear();
   });
 
   it("bootstraps an empty but ready world and reconciles affected npc ids after Margonem", () => {
@@ -157,5 +159,72 @@ describe("RuntimeStateSynchronizer", () => {
     expect(usePartyStore.getState().members[0]?.characterId).toBe("1");
     expect(useFriendsStore.getState().friends[0]?.characterId).toBe("55");
     expect(useFriendsStore.getState().friendsMax).toBe(25);
+  });
+
+  it("invalidates every map domain when town handle hydration fails", () => {
+    let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
+    const staleOther = Object.freeze({
+      accountId: "22",
+      characterId: "11",
+      icon: "stale.gif",
+      level: 300,
+      name: "Stale",
+      profession: "w",
+    });
+    const staleHandle = { d: { account: 22, id: 11 } };
+    const adapter = {
+      getAllNpcs: vi.fn(() => [npc]),
+      getAllOtherHandles: vi.fn(() => {
+        throw new Error("handle hydration failed");
+      }),
+      getAllOthers: vi.fn(() => ({ "11": staleOther })),
+      getGameSnapshot: vi.fn(() => game),
+      getStateSnapshot: vi.fn(() => ({
+        friends: [],
+        game,
+        npcs: [npc],
+        others: { "11": staleOther },
+        party: [],
+      })),
+    } as unknown as MargonemRuntimeAdapter;
+    const synchronizer = new RuntimeStateSynchronizer({
+      adapter,
+      bridge: {
+        subscribeApplied: (handler) => {
+          applied = handler;
+          return vi.fn();
+        },
+      },
+    });
+    synchronizer.install();
+    runtimeOtherHandles.replace({ "11": staleHandle } as never);
+    const gameEpoch = useGameStore.getState().mapEpoch;
+    const npcEpoch = useNpcsStore.getState().mapEpoch;
+    const othersEpoch = useOthersStore.getState().mapEpoch;
+
+    applied?.({ raw: { town: {} } } as unknown as RuntimeEventEnvelope);
+
+    expect(useGameStore.getState()).toEqual(
+      expect.objectContaining({
+        game: null,
+        mapEpoch: gameEpoch + 1,
+        status: "uninitialized",
+      }),
+    );
+    expect(useNpcsStore.getState()).toEqual(
+      expect.objectContaining({
+        mapEpoch: npcEpoch + 1,
+        npcsById: {},
+        status: "uninitialized",
+      }),
+    );
+    expect(useOthersStore.getState()).toEqual(
+      expect.objectContaining({
+        mapEpoch: othersEpoch + 1,
+        othersById: {},
+        status: "uninitialized",
+      }),
+    );
+    expect(runtimeOtherHandles.getAll()).toEqual({});
   });
 });

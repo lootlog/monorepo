@@ -118,3 +118,9 @@ export type RuntimeEventEnvelope = Readonly<{
 
 export type RuntimeEventHandler = (envelope: RuntimeEventEnvelope) => void;
 export type RuntimeIntentHandler = (intent: RuntimeIntent) => void;
+
+export type RuntimeObserverFailure = Readonly<{
+  error: unknown;
+  phase: "applied" | "incoming" | "intent";
+  sequence: number;
+}>;

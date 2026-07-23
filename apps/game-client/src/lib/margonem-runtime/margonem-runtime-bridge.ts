@@ -1,4 +1,5 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import { captureRuntimeObserverFailure } from "@/lib/error-monitoring";
 import { parseRuntimeFacts } from "./runtime-event-parser";
 import {
   createRuntimeAdapter,
@@ -9,6 +10,7 @@ import type {
   RuntimeEventHandler,
   RuntimeIntent,
   RuntimeIntentHandler,
+  RuntimeObserverFailure,
 } from "./runtime.types";
 
 type RuntimeInterface = "ni" | "si";
@@ -20,6 +22,7 @@ type BridgeOptions = {
   adapter?: MargonemRuntimeAdapter;
   interface?: RuntimeInterface;
   onFatalPipelineError?: () => void;
+  onObserverError?: (failure: RuntimeObserverFailure) => void;
 };
 
 export type RuntimeBridgeHealth = Readonly<{
@@ -54,6 +57,7 @@ export class MargonemRuntimeBridge {
   private readonly adapter?: MargonemRuntimeAdapter;
   private resolvedAdapter: MargonemRuntimeAdapter | null = null;
   private readonly onFatalPipelineError?: () => void;
+  private readonly onObserverError?: (failure: RuntimeObserverFailure) => void;
   private readonly runtimeInterface?: RuntimeInterface;
   private readonly eventQueue: RuntimeEventEnvelope[] = [];
   private inboundContainer: RuntimeFunctionContainer | null = null;
@@ -85,6 +89,7 @@ export class MargonemRuntimeBridge {
   constructor(options: BridgeOptions = {}) {
     this.adapter = options.adapter;
     this.onFatalPipelineError = options.onFatalPipelineError;
+    this.onObserverError = options.onObserverError;
     this.runtimeInterface = options.interface;
   }
 
@@ -106,10 +111,10 @@ export class MargonemRuntimeBridge {
     this.inboundSeam = `${runtimeInterface}:${inbound.property}`;
 
     const { container, property, original: originalInbound } = inbound;
-    const createEnvelope = this.createEnvelope.bind(this);
+    const createEnvelope = this.createEnvelopeSafely.bind(this);
     const receiveIncoming = this.receiveIncoming.bind(this);
     const emitApplied = (envelope: RuntimeEventEnvelope) => {
-      this.emit(this.appliedHandlers, envelope);
+      this.emit(this.appliedHandlers, envelope, "applied");
       this.activeIntent = null;
     };
     const wrappedInbound: RuntimeFunction = function (...args) {
@@ -172,7 +177,7 @@ export class MargonemRuntimeBridge {
     if (!import.meta.env.DEV) return false;
     const envelope = this.createEnvelope(event);
     if (!envelope) return false;
-    this.emit(this.incomingHandlers, envelope);
+    this.emit(this.incomingHandlers, envelope, "incoming");
     return true;
   }
 
@@ -183,7 +188,7 @@ export class MargonemRuntimeBridge {
     this.queuedBytes = 0;
     this.queuedFacts = 0;
     for (const envelope of queuedEvents) {
-      this.emit(this.incomingHandlers, envelope);
+      this.emit(this.incomingHandlers, envelope, "incoming");
     }
   }
 
@@ -294,7 +299,18 @@ export class MargonemRuntimeBridge {
     const improvesSnapshot = !activeIntent?.npc && Boolean(intent.npc);
     if (activeIntent?.npcId === intent.npcId && !improvesSnapshot) return;
     this.activeIntent = intent;
-    for (const handler of this.intentHandlers) handler(intent);
+    for (const handler of this.intentHandlers) {
+      try {
+        handler(intent);
+      } catch (error) {
+        this.reportObserverFailure({
+          error,
+          phase: "intent",
+          sequence: this.sequence,
+        });
+        continue;
+      }
+    }
   }
 
   private parseIntent(command: unknown): RuntimeIntent | null {
@@ -395,9 +411,22 @@ export class MargonemRuntimeBridge {
     });
   }
 
+  private createEnvelopeSafely(payload: unknown): RuntimeEventEnvelope | null {
+    try {
+      return this.createEnvelope(payload);
+    } catch (error) {
+      this.reportObserverFailure({
+        error,
+        phase: "incoming",
+        sequence: this.sequence,
+      });
+      return null;
+    }
+  }
+
   private receiveIncoming(envelope: RuntimeEventEnvelope): void {
     if (this.ready) {
-      this.emit(this.incomingHandlers, envelope);
+      this.emit(this.incomingHandlers, envelope, "incoming");
       return;
     }
     const rawBytes = this.estimateRawBytes(envelope.raw);
@@ -491,8 +520,28 @@ export class MargonemRuntimeBridge {
   private emit(
     handlers: ReadonlySet<RuntimeEventHandler>,
     envelope: RuntimeEventEnvelope,
+    phase: "applied" | "incoming",
   ): void {
-    for (const handler of handlers) handler(envelope);
+    for (const handler of handlers) {
+      try {
+        handler(envelope);
+      } catch (error) {
+        this.reportObserverFailure({
+          error,
+          phase,
+          sequence: envelope.sequence,
+        });
+        continue;
+      }
+    }
+  }
+
+  private reportObserverFailure(failure: RuntimeObserverFailure): void {
+    try {
+      this.onObserverError?.(failure);
+    } catch {
+      // Diagnostics must never affect Margonem or the remaining observers.
+    }
   }
 
   private detachInbound(): void {
@@ -542,4 +591,5 @@ function scheduleActiveRuntimeTeardown(): void {
 
 export const margonemRuntimeBridge = new MargonemRuntimeBridge({
   onFatalPipelineError: scheduleActiveRuntimeTeardown,
+  onObserverError: captureRuntimeObserverFailure,
 });
