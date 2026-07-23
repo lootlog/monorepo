@@ -102,7 +102,7 @@ describe("useTimerActions", () => {
     mockResetTimer.mockReset();
     mockDeleteTimer.mockReset();
     mockT.mockClear();
-    window.message = vi.fn();
+    testRuntimeWindow.message = vi.fn();
   });
 
   it("hides, reveals, colors, and unpins timers in local and global scopes", () => {
@@ -195,7 +195,7 @@ describe("useTimerActions", () => {
         actorCharacter: mockActorCharacter,
       },
     );
-    expect(window.message).toHaveBeenCalledWith(
+    expect(testRuntimeWindow.message).toHaveBeenCalledWith(
       "messages.resetSuccess:Tanroth",
     );
   });
@@ -239,7 +239,7 @@ describe("useTimerActions", () => {
 
     await actions.handleRestartTimer();
 
-    expect(window.message).toHaveBeenCalledWith(
+    expect(testRuntimeWindow.message).toHaveBeenCalledWith(
       "messages.resetEventWindowForbidden",
     );
   });
@@ -261,7 +261,7 @@ describe("useTimerActions", () => {
       { world: "pandora" },
     );
     await waitFor(() =>
-      expect(window.message).toHaveBeenCalledWith(
+      expect(testRuntimeWindow.message).toHaveBeenCalledWith(
         "messages.deleteSuccess:Tanroth",
       ),
     );
@@ -280,9 +280,10 @@ describe("useTimerActions", () => {
     actions.handleDeleteTimer("guild-1", "timer-1");
 
     await waitFor(() =>
-      expect(window.message).toHaveBeenCalledWith(
+      expect(testRuntimeWindow.message).toHaveBeenCalledWith(
         "messages.deleteEventWindowForbidden",
       ),
     );
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

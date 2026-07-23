@@ -1,5 +1,5 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { gameEventsManager } from "@/lib/game-events-manager";
+import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { BattleEventProcessor } from "@/processors/battle-event-processor";
 import { LootEventProcessor } from "@/processors/loot-event-processor";
 import { ChatEventProcessor } from "@/processors/chat-event-processor";
@@ -8,9 +8,12 @@ import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { NpcsDeleteProcessor } from "@/processors/npcs-delete-processor";
 import { MapChangeProcessor } from "@/processors/map-change-processor";
 import { AfkProcessor } from "@/processors/afk-processor";
-import { FriendsProcessor } from "@/processors/friends-processor";
-import { PartyProcessor } from "@/processors/party-processor";
 import { OtherEventProcessor } from "@/processors/other-event-processor";
+import { parseRuntimeFacts } from "@/lib/margonem-runtime/runtime-event-parser";
+import type {
+  RuntimeEventEnvelope,
+  RuntimeFact,
+} from "@/lib/margonem-runtime/runtime.types";
 
 function runSafe(name: string, handler: () => unknown): void {
   try {
@@ -38,72 +41,81 @@ export class EventDispatcher {
   private npcsDelete = new NpcsDeleteProcessor();
   private mapChange = new MapChangeProcessor();
   private afk = new AfkProcessor();
-  private friends = new FriendsProcessor();
-  private party = new PartyProcessor();
   private other = new OtherEventProcessor();
+  private unsubscribe: (() => void) | null = null;
 
   handleEvent = (event: GameEvent): void => {
-    if (event.chat !== undefined) {
+    for (const fact of parseRuntimeFacts(event)) this.handleFact(fact);
+  };
+
+  handleEnvelope = (envelope: RuntimeEventEnvelope): void => {
+    for (const fact of envelope.facts) this.handleFact(fact, envelope.ingress);
+  };
+
+  private handleFact(
+    fact: RuntimeFact,
+    ingress?: RuntimeEventEnvelope["ingress"],
+  ): void {
+    const event = fact.event;
+    if (fact.kind === "chat") {
       runSafe("chat", () => this.chat.handle(event));
     }
 
-    if (event.d !== undefined) {
-      runSafe("dialog", () => this.dialog.handle(event));
+    if (fact.kind === "dialog") {
+      runSafe("dialog", () => this.dialog.handle(event, ingress));
     }
 
-    if (event.f !== undefined) {
-      runSafe("battle", () => this.battle.handle(event));
+    if (fact.kind === "battle") {
+      runSafe("battle", () => this.battle.handle(event, ingress));
     }
 
-    if (event.town !== undefined) {
+    if (fact.kind === "map") {
       runSafe("map-change", () => this.mapChange.handle(event));
     }
 
-    if (event.npcs !== undefined) {
+    if (fact.kind === "npc-upsert") {
       runSafe("npc-detection", () => this.npcsDetection.handle(event));
     }
 
-    if (event.item !== undefined && event.loot?.source === "fight") {
-      runSafe("loot-from-battle", () => this.loot.handleLootFromBattle(event));
+    if (fact.kind === "loot") {
+      if (event.loot?.source === "fight") {
+        runSafe("loot-from-battle", () =>
+          this.loot.handleLootFromBattle(event, ingress),
+        );
+      } else if (event.loot?.source === "dialog") {
+        runSafe("dialog-loot", () =>
+          this.loot.handleDialogLoot(event, ingress),
+        );
+      }
     }
 
-    if (event.item !== undefined && event.loot?.source === "dialog") {
-      runSafe("dialog-loot", () => this.loot.handleDialogLoot(event));
+    if (fact.kind === "npc-delete") {
+      runSafe("npcs-delete", () => this.npcsDelete.handle(event, ingress));
     }
 
-    if (event.npcs_del !== undefined) {
-      runSafe("npcs-delete", () => this.npcsDelete.handle(event));
-    }
-
-    if (event.other !== undefined) {
+    if (fact.kind === "other") {
       runSafe("other", () => this.other.handle(event));
     }
 
-    if (event.h !== undefined) {
-      runSafe("afk", () => this.afk.handle(event));
+    if (fact.kind === "afk") {
+      runSafe("afk", () => this.afk.handle(event, ingress));
     }
-
-    if (event.friends !== undefined || event.friends_max !== undefined) {
-      runSafe("friends", () => this.friends.handle(event));
-    }
-
-    if (event.party !== undefined) {
-      runSafe("party", () => this.party.handle(event));
-    }
-  };
+  }
 
   handleInitialEvents(): void {
-    this.npcsDetection.handleInitialDetection();
-    this.party.handleInitialDetection();
-    gameEventsManager.markStripFriendsFromNextEvent();
+    this.npcsDetection.bootstrapProjection();
   }
 
   register(): void {
-    gameEventsManager.setProcessor(this.handleEvent);
+    this.unsubscribe?.();
+    this.unsubscribe = margonemRuntimeBridge.subscribeIncoming(
+      this.handleEnvelope,
+    );
   }
 
   cleanup(): void {
-    gameEventsManager.removeProcessor();
+    this.unsubscribe?.();
+    this.unsubscribe = null;
     this.npcsDetection.cleanup();
   }
 }

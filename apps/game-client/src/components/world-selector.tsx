@@ -1,11 +1,11 @@
 import { Combobox, type ComboboxGroup } from "@/components/ui/combobox";
-import { Game } from "@/lib/game";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
 } from "@/lib/api/generated/main/guilds/guilds";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
 import { type FC, useEffect, useMemo } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { storageKey } from "@/lib/storage-key";
@@ -27,9 +27,11 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   className = "",
 }) => {
   const { t } = useTranslation("common");
-  const characterId = String(Game.hero.id);
-  const accountId = String(Game.hero.account);
-  const defaultWorld = Game.getWorldName();
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
+  const defaultWorld = useGameStore((state) => state.game?.world ?? "unknown");
 
   const { guildId, world, setWorld } = useSettingsStore(
     useShallow((state) => {

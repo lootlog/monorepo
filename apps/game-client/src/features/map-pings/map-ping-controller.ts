@@ -1,59 +1,20 @@
 import type { MapPingEvent, MapPingType } from "@lootlog/types";
 import {
+  rendererRuntimeAdapter,
+  type RendererRuntimeAdapter,
+  type RuntimeDrawable,
+} from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
+import {
   getMapPingPresentation,
   type MapPingSymbol,
 } from "./map-ping-presentation";
 
 const MAIN_MAP_CANVAS_ID = "GAME_CANVAS";
 const HANDHELD_MINI_MAP_CANVAS_CLASS = "handheld-mini-map-canvas";
-const DEFAULT_TILE_SIZE = 32;
 const MAX_NETWORK_COORDINATE = 65_535;
 const MAX_ACTIVE_MAP_PINGS = 256;
 
 export type MapTile = { x: number; y: number };
-
-type MapSize = { x: number; y: number };
-
-type MapPingEngine = {
-  apiData?: { CALL_DRAW_ADD_TO_RENDERER: string };
-  renderer?: {
-    add: (drawable: MapPingDrawable) => void;
-    getHighestOrderWithoutSort?: () => number;
-  };
-  map?: {
-    d?: { id?: number };
-    offset?: [number, number];
-    size?: MapSize;
-    getOffset?: () => [number, number];
-  };
-  miniMapController?: {
-    handHeldMiniMapController?: {
-      getHandHeldMiniMapWindow?: () => {
-        getCanvas?: () => HTMLCanvasElement;
-        getCtx?: () => CanvasRenderingContext2D;
-        getMargin?: () => { left: number; top: number };
-        getSquareData?: () => { normalSize: number };
-      };
-    };
-  };
-};
-
-type MapPingApi = {
-  addCallbackToEvent: (event: string, callback: () => void) => void;
-  removeCallbackFromEvent: (event: string, callback: () => void) => void;
-};
-
-type MapPingWindow = Window & {
-  Engine?: MapPingEngine;
-  API?: MapPingApi;
-  CFG?: { tileSize?: number };
-};
-
-type MapPingDrawable = {
-  draw: (context: CanvasRenderingContext2D) => void;
-  getOrder: () => number;
-  getAlwaysDraw: () => boolean;
-};
 
 type ActiveMapPing = {
   id: string;
@@ -166,24 +127,24 @@ export const isMapPingSurface = (
 
 export class MapPingController {
   private readonly activePings = new Map<string, ActiveMapPing>();
-  private registeredEvent: string | null = null;
+  private unsubscribeDraw: (() => void) | null = null;
   private expiryTimeoutId: number | null = null;
   private enabled = false;
-  private readonly drawable: MapPingDrawable;
+  private readonly drawable: RuntimeDrawable;
 
-  constructor(private readonly now: () => number = () => performance.now()) {
+  constructor(
+    private readonly now: () => number = () => performance.now(),
+    private readonly renderer: RendererRuntimeAdapter = rendererRuntimeAdapter,
+  ) {
     this.drawable = {
       draw: (context) => this.drawMainMap(context),
-      getOrder: () =>
-        this.getEngine()?.renderer?.getHighestOrderWithoutSort?.() ?? 10,
+      getOrder: () => this.renderer.getHighestOrder(),
       getAlwaysDraw: () => true,
     };
   }
 
   register() {
-    const gameWindow = window as MapPingWindow;
-    const event = gameWindow.Engine?.apiData?.CALL_DRAW_ADD_TO_RENDERER;
-    if (!event || !gameWindow.API || this.enabled) {
+    if (!this.renderer.isAvailable() || this.enabled) {
       return false;
     }
 
@@ -262,24 +223,22 @@ export class MapPingController {
   }
 
   resolveTile(canvas: HTMLCanvasElement, clientX: number, clientY: number) {
-    const engine = this.getEngine();
-    const size = engine?.map?.size;
-    if (!engine?.map || !size) {
+    const geometry = this.renderer.getMapGeometry();
+    const size = geometry?.size;
+    if (!geometry || !size) {
       return null;
     }
 
     if (canvas.id === MAIN_MAP_CANVAS_ID) {
-      const offset = engine.map.getOffset?.() ?? engine.map.offset;
+      const offset = geometry.offset;
       if (!offset) {
         return null;
       }
 
-      const tileSize =
-        (window as MapPingWindow).CFG?.tileSize ?? DEFAULT_TILE_SIZE;
       return resolveMainMapTile(canvas, clientX, clientY, {
         offset,
         size,
-        tileSize,
+        tileSize: geometry.tileSize,
       });
     }
 
@@ -287,22 +246,22 @@ export class MapPingController {
       return null;
     }
 
-    const miniMapWindow = this.getHandheldMiniMapWindow();
-    const margin = miniMapWindow?.getMargin?.();
-    const squareData = miniMapWindow?.getSquareData?.();
-    if (!margin || !squareData) {
+    const miniMap = this.renderer.getHandheldMiniMap();
+    const margin = miniMap?.margin;
+    const normalSize = miniMap?.normalSize;
+    if (!margin || !normalSize) {
       return null;
     }
 
     return resolveHandheldMiniMapTile(canvas, clientX, clientY, {
       margin,
-      normalSize: squareData.normalSize,
+      normalSize,
       size,
     });
   }
 
   isTileValid(tile: MapTile) {
-    const size = this.getEngine()?.map?.size;
+    const size = this.renderer.getMapGeometry()?.size;
     return Boolean(size && isTileWithinMap(tile, size));
   }
 
@@ -315,20 +274,19 @@ export class MapPingController {
     }
 
     this.scheduleExpiry();
-    this.getEngine()?.renderer?.add(this.drawable);
+    this.renderer.addDrawable(this.drawable);
     this.drawHandheldMiniMap();
   };
 
   private drawMainMap(context: CanvasRenderingContext2D) {
-    const engine = this.getEngine();
-    const offset = engine?.map?.getOffset?.() ?? engine?.map?.offset;
-    const currentMapId = engine?.map?.d?.id;
+    const geometry = this.renderer.getMapGeometry();
+    const offset = geometry?.offset;
+    const currentMapId = geometry?.id;
     if (!offset || currentMapId === undefined) {
       return;
     }
 
-    const tileSize =
-      (window as MapPingWindow).CFG?.tileSize ?? DEFAULT_TILE_SIZE;
+    const tileSize = geometry.tileSize;
     const halfTileSize = tileSize / 2;
     for (const ping of this.activePings.values()) {
       if (ping.mapId !== currentMapId) {
@@ -342,30 +300,29 @@ export class MapPingController {
   }
 
   private drawHandheldMiniMap() {
-    const engine = this.getEngine();
-    const currentMapId = engine?.map?.d?.id;
-    const miniMapWindow = this.getHandheldMiniMapWindow();
-    const context = miniMapWindow?.getCtx?.();
-    const margin = miniMapWindow?.getMargin?.();
-    const squareData = miniMapWindow?.getSquareData?.();
+    const currentMapId = this.renderer.getMapGeometry()?.id;
+    const miniMap = this.renderer.getHandheldMiniMap();
+    const context = miniMap?.context;
+    const margin = miniMap?.margin;
+    const normalSize = miniMap?.normalSize;
     if (
       currentMapId === undefined ||
       !context ||
       !margin ||
-      !squareData ||
-      squareData.normalSize <= 0
+      !normalSize ||
+      normalSize <= 0
     ) {
       return;
     }
 
-    const radius = Math.min(14, Math.max(6, squareData.normalSize * 1.75));
+    const radius = Math.min(14, Math.max(6, normalSize * 1.75));
     for (const ping of this.activePings.values()) {
       if (ping.mapId !== currentMapId) {
         continue;
       }
 
-      const x = margin.left + (ping.x + 0.5) * squareData.normalSize;
-      const y = margin.top + (ping.y + 0.5) * squareData.normalSize;
+      const x = margin.left + (ping.x + 0.5) * normalSize;
+      const y = margin.top + (ping.y + 0.5) * normalSize;
       this.drawMarker(context, ping, x, y, radius, false);
     }
   }
@@ -523,35 +480,16 @@ export class MapPingController {
   }
 
   private ensureDrawRegistration(): void {
-    if (!this.enabled || this.registeredEvent || this.activePings.size === 0) {
+    if (!this.enabled || this.unsubscribeDraw || this.activePings.size === 0) {
       return;
     }
 
-    const gameWindow = window as MapPingWindow;
-    const event = gameWindow.Engine?.apiData?.CALL_DRAW_ADD_TO_RENDERER;
-    if (!event || !gameWindow.API) return;
-
-    gameWindow.API.addCallbackToEvent(event, this.handleDrawFrame);
-    this.registeredEvent = event;
+    this.unsubscribeDraw = this.renderer.subscribeDraw(this.handleDrawFrame);
   }
 
   private detachDrawRegistration(): void {
-    const gameWindow = window as MapPingWindow;
-    if (this.registeredEvent && gameWindow.API) {
-      gameWindow.API.removeCallbackFromEvent(
-        this.registeredEvent,
-        this.handleDrawFrame,
-      );
-    }
-    this.registeredEvent = null;
-  }
-
-  private getEngine() {
-    return (window as MapPingWindow).Engine;
-  }
-
-  private getHandheldMiniMapWindow() {
-    return this.getEngine()?.miniMapController?.handHeldMiniMapController?.getHandHeldMiniMapWindow?.();
+    this.unsubscribeDraw?.();
+    this.unsubscribeDraw = null;
   }
 }
 

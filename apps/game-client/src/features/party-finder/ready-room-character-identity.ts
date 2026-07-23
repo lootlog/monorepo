@@ -1,12 +1,14 @@
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import type { ReadyRoomCharacterIdentity } from "@/store/party-finder.store";
 
 export function getCurrentReadyRoomCharacterIdentity(): ReadyRoomCharacterIdentity | null {
-  const accountId = Game.getAccountId();
-  const characterId = Game.hero?.id;
-  if (!accountId || characterId === undefined || characterId === null) {
+  const hero = useGameStore.getState().game?.hero;
+  if (!hero) {
     return null;
   }
 
-  return { accountId, characterId: String(characterId) };
+  return {
+    accountId: hero.accountId,
+    characterId: hero.characterId,
+  };
 }

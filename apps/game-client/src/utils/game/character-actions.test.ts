@@ -5,7 +5,7 @@ import {
   sanitizeFriendInviteNick,
   showCharacterEquipment,
   showCharacterProfile,
-} from "@/utils/game/character-actions";
+} from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 
 describe("character actions", () => {
   it("sanitizes nicknames for friend invites", () => {
@@ -14,7 +14,7 @@ describe("character actions", () => {
 
   it("uses game commands for party and friend invites", () => {
     const gameCommandSpy = vi.fn();
-    window._g = gameCommandSpy;
+    testRuntimeWindow._g = gameCommandSpy;
 
     inviteCharacterToParty(10);
     inviteCharacterToFriends("Hero Name");
@@ -28,7 +28,7 @@ describe("character actions", () => {
   it("opens game equipment and profile windows", () => {
     const showEquipmentSpy = vi.fn();
     const showProfileSpy = vi.fn();
-    window.Engine = {
+    testRuntimeWindow.Engine = {
       showEqManager: {
         update: showEquipmentSpy,
       },
@@ -64,3 +64,4 @@ describe("character actions", () => {
     });
   });
 });
+import { testRuntimeWindow } from "@/test/test-runtime-window";

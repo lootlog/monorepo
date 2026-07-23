@@ -12,7 +12,7 @@ import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
 } from "@/lib/api/generated/main/user-lootlog-config/user-lootlog-config";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 
 type CatchingSettingsFormProps = {
   characterId: string;
@@ -32,7 +32,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   onSelectionChange,
 }) => {
   const { t } = useTranslation();
-  const accountId = String(Game.hero.account);
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const queryKey =
     getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
       accountId,

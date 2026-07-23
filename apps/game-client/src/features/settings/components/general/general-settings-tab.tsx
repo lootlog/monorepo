@@ -7,9 +7,10 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 
 export const GeneralSettingsTab: FC = () => {
+  const gameInterface = useGameStore((state) => state.game?.interface);
   const {
     allowWorldSelection,
     animationEffectsEnabled,
@@ -38,7 +39,7 @@ export const GeneralSettingsTab: FC = () => {
             id="allow-world-selection"
           />
         </SettingsControlRow>
-        {Game.interface === "ni" ? (
+        {gameInterface === "ni" ? (
           <>
             <SettingsControlRow
               label={t("settings.general.mapPingsLabel")}

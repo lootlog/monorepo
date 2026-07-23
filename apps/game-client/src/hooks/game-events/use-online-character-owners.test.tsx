@@ -4,6 +4,7 @@ import { GatewayEvent } from "@/config/gateway";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
 
 const mocks = vi.hoisted(() => ({
   emitWithAck: vi.fn(),
@@ -48,6 +49,23 @@ describe("useOnlineCharacterOwners", () => {
     useSettingsStore.setState({
       guildIdByCharId: { "hero-1": "guild-1" },
       worldByGuildId: { "guild-1": "tempest" },
+    });
+    useGameStore.getState().replaceGame({
+      hero: {
+        accountId: "1",
+        characterId: "hero-1",
+        currentHp: 1,
+        icon: "hero.gif",
+        level: 300,
+        maxHp: 1,
+        name: "Hero",
+        profession: "w",
+        x: 1,
+        y: 2,
+      },
+      interface: "ni",
+      map: { id: 1, name: "Map", visibility: 30 },
+      world: "tempest",
     });
     Object.defineProperty(window, "Engine", {
       configurable: true,

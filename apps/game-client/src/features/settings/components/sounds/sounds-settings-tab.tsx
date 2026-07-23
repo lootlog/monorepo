@@ -8,7 +8,7 @@ import {
 } from "@/hooks/api/use-sound-settings";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import type { SoundCategory } from "@/features/settings/components/sounds/types";
 import { Bell, Clock, Crosshair, Loader2, MapPin, Play } from "lucide-react";
 import { useEffect, useState, type FC, type ReactNode } from "react";
@@ -35,6 +35,7 @@ const isValidUrl = (url: string): boolean => {
 };
 
 export const SoundsSettingsTab: FC = () => {
+  const gameInterface = useGameStore((state) => state.game?.interface);
   const { data: soundSettings, isLoading } = useSoundSettings();
   const { mutate: updateSettings, isPending } = useUpdateSoundSettings();
   const { playSoundTest } = useSoundPlayback();
@@ -151,7 +152,7 @@ export const SoundsSettingsTab: FC = () => {
           }}
         />
 
-        {Game.interface === "ni" ? (
+        {gameInterface === "ni" ? (
           <SettingsSection
             title={t("sounds.categories.pings.label")}
             description={t("sounds.categories.pings.description")}

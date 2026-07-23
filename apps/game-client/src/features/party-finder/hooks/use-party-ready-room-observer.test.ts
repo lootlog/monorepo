@@ -76,22 +76,24 @@ describe("usePartyReadyRoomObserver", () => {
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
     usePartyStore.getState().setMembers([
       {
-        id: 20,
-        nick: "Second",
+        characterId: "20",
+        name: "Second",
         icon: "second.gif",
-        leader: false,
-        hp: [100, 100],
+        isLeader: false,
+        currentHp: 100,
+        maxHp: 100,
         profession: "m",
-        accountId: 2,
+        accountId: "2",
       },
       {
-        id: 10,
-        nick: "First",
+        characterId: "10",
+        name: "First",
         icon: "first.gif",
-        leader: true,
-        hp: [100, 100],
+        isLeader: true,
+        currentHp: 100,
+        maxHp: 100,
         profession: "w",
-        accountId: 1,
+        accountId: "1",
       },
     ]);
 

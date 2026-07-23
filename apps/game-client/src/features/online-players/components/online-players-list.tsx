@@ -12,7 +12,7 @@ import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query"
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
 import { useState, type ChangeEvent, type FC, type ReactNode } from "react";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { useTranslation } from "react-i18next";
 import {
   DEFAULT_ONLINE_PLAYERS_FILTERS,
@@ -33,8 +33,10 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   filtersVisible,
 }) => {
   const { t } = useTranslation("onlinePlayers");
-  const characterId = String(Game.hero.id);
-  const defaultWorld = Game.getWorldName();
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
+  const defaultWorld = useGameStore((state) => state.game?.world ?? "unknown");
 
   const { allowWorldSelection, guildIdByCharId, worldByGuildId } =
     useSettingsStore(

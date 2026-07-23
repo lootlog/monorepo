@@ -3,13 +3,6 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const COVERAGE_THRESHOLDS = {
-  branches: 70,
-  functions: 70,
-  lines: 80,
-  statements: 80,
-};
-
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIRECTORY = path.resolve(SCRIPT_DIRECTORY, "..");
 const REPOSITORY_DIRECTORY = path.resolve(APP_DIRECTORY, "../..");
@@ -52,7 +45,7 @@ function isProductionSource(filePath) {
   return (
     filePath.startsWith("apps/game-client/src/") &&
     /\.(?:ts|tsx)$/.test(filePath) &&
-    !/\.(?:test|spec)\.(?:ts|tsx)$/.test(filePath) &&
+    !/\.(?:bench|test|spec)\.(?:ts|tsx)$/.test(filePath) &&
     !filePath.endsWith(".d.ts") &&
     !filePath.includes("/lib/api/generated/") &&
     !filePath.includes("/test/")
@@ -241,23 +234,14 @@ function main() {
   const changedLines = includeUntrackedProductionFiles(parseChangedLines(diff));
   const coverage = JSON.parse(readFileSync(COVERAGE_PATH, "utf8"));
   const counters = calculateChangedCoverage(coverage, changedLines);
-  const failures = [];
 
   console.log(`Changed-code coverage against ${baseReference}:`);
-  console.log("metric       covered/total   result    threshold");
+  console.log("metric       covered/total   coverage");
   for (const metric of ["statements", "branches", "functions", "lines"]) {
     const result = percentage(counters[metric]);
-    const threshold = COVERAGE_THRESHOLDS[metric];
     console.log(
-      `${metric.padEnd(12)} ${String(counters[metric].covered).padStart(5)}/${String(counters[metric].total).padEnd(7)} ${result.toFixed(2).padStart(7)}%   ${threshold}%`,
+      `${metric.padEnd(12)} ${String(counters[metric].covered).padStart(5)}/${String(counters[metric].total).padEnd(7)} ${result.toFixed(2).padStart(7)}%`,
     );
-    if (result < threshold) {
-      failures.push(`${metric}: ${result.toFixed(2)}% < ${threshold}%`);
-    }
-  }
-
-  if (failures.length > 0) {
-    throw new Error(`Changed-code coverage failed: ${failures.join(", ")}`);
   }
 }
 

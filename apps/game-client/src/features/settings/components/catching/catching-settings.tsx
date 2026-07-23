@@ -16,7 +16,7 @@ import { CharacterTile } from "@/components/character-tile";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ import type { UserLootlogConfigAccountResponseDtoOutput } from "@/lib/api/genera
 
 export const CatchingSettings = () => {
   const queryClient = useQueryClient();
-  const accountId = String(Game.hero.account);
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const queryKey =
     getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
       accountId,
@@ -44,7 +44,9 @@ export const CatchingSettings = () => {
         },
       },
     );
-  const initialCharacterId = String(Game.hero.id);
+  const initialCharacterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
   const [selectedCharacterId, setSelectedCharacterId] =
     useState(initialCharacterId);
   const [selectionByCharacterId, setSelectionByCharacterId] = useState<

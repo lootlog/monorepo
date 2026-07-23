@@ -9,8 +9,9 @@ export const useSession = () => {
 
   if (!session.data && !session.isPending && !messageSent) {
     messageSent = true;
-    window.message(t("auth.notLoggedIn"));
+    showRuntimeMessage(t("auth.notLoggedIn"));
   }
 
   return session;
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

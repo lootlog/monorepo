@@ -378,6 +378,7 @@
     "triggerCustomEvent": "Wywołaj własny event",
     "noEvents": "Nie wywołano żadnych eventów",
     "noPartyMembers": "Brak członków grupy",
+    "partyMemberId": "(ID: {{id}})",
     "zoomFactor": "Skala powiększenia: {{value}}",
     "mode": "Tryb: {{mode}}",
     "notAvailable": "Brak",

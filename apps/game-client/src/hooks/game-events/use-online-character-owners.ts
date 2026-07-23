@@ -1,7 +1,7 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
 import {
   normalizePresence,
@@ -20,11 +20,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { useEffect, useRef } from "react";
 
 function getCurrentWorld(): string | undefined {
-  try {
-    return Game.getWorldName();
-  } catch {
-    return undefined;
-  }
+  return useGameStore.getState().game?.world;
 }
 
 function hydrateOnlineCharacterOwners({

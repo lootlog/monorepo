@@ -6,6 +6,7 @@ import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-toolti
 import { useGlobalStore } from "@/store/global.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
+import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 const mocks = vi.hoisted(() => {
   const unsubscribe = vi.fn();
@@ -14,9 +15,9 @@ const mocks = vi.hoisted(() => {
   } = {
     afterGameEventHandler: null,
   };
-  const subscribeAfterGameEvent = vi.fn(
-    (handler: (event: GameEvent) => void) => {
-      state.afterGameEventHandler = handler;
+  const subscribeApplied = vi.fn(
+    (handler: (envelope: { raw: GameEvent }) => void) => {
+      state.afterGameEventHandler = (event) => handler({ raw: event });
       return unsubscribe;
     },
   );
@@ -25,14 +26,14 @@ const mocks = vi.hoisted(() => {
   return {
     patchOtherCharacterTooltips,
     state,
-    subscribeAfterGameEvent,
+    subscribeApplied,
     unsubscribe,
   };
 });
 
-vi.mock("@/lib/game-events-manager", () => ({
-  gameEventsManager: {
-    subscribeAfterGameEvent: mocks.subscribeAfterGameEvent,
+vi.mock("@/lib/margonem-runtime/margonem-runtime-bridge", () => ({
+  margonemRuntimeBridge: {
+    subscribeApplied: mocks.subscribeApplied,
   },
 }));
 
@@ -42,7 +43,7 @@ vi.mock("@/lib/margonem-tooltips/patcher", () => ({
 
 import { useCharacterTooltipGameEvents } from "./use-character-tooltip-game-events";
 
-const originalWindowEngine = window.Engine;
+const originalWindowEngine = testRuntimeWindow.Engine;
 
 function createRuntimeOther(nick: string): Other {
   return {
@@ -59,16 +60,7 @@ function createRuntimeOther(nick: string): Other {
 }
 
 function setRuntimeOthers(others: Record<string, Other>, check = vi.fn()) {
-  check.mockImplementation(() => others);
-  Object.defineProperty(window, "Engine", {
-    configurable: true,
-    value: {
-      others: {
-        check,
-      },
-    },
-  });
-
+  useOthersStore.getState().setMany(others);
   return check;
 }
 
@@ -114,7 +106,7 @@ describe("useCharacterTooltipGameEvents", () => {
   beforeEach(() => {
     mocks.state.afterGameEventHandler = null;
     mocks.unsubscribe.mockReset();
-    mocks.subscribeAfterGameEvent.mockClear();
+    mocks.subscribeApplied.mockClear();
     mocks.patchOtherCharacterTooltips.mockClear();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useGlobalStore.getState().setGameState({ gameInitialized: false });
@@ -142,11 +134,7 @@ describe("useCharacterTooltipGameEvents", () => {
     rerender();
     rerender();
 
-    expect(check).toHaveBeenCalledOnce();
-    expect(useOthersStore.getState().othersById).toEqual({
-      1: first,
-      2: second,
-    });
+    expect(check).not.toHaveBeenCalled();
     expect(mocks.patchOtherCharacterTooltips).toHaveBeenCalledWith([
       first,
       second,
@@ -183,8 +171,8 @@ describe("useCharacterTooltipGameEvents", () => {
       },
     });
 
-    expect(useOthersStore.getState().getOther("1")).toBe(first);
-    expect(useOthersStore.getState().getOther("2")).toBeUndefined();
+    expect(useOthersStore.getState().getOther("1")?.name).toBe("first");
+    expect(useOthersStore.getState().getOther("2")?.name).toBe("untouched");
     expect(mocks.patchOtherCharacterTooltips).toHaveBeenCalledWith([first]);
   });
 
@@ -205,12 +193,12 @@ describe("useCharacterTooltipGameEvents", () => {
       },
     });
 
-    expect(useOthersStore.getState().getOther("2")).toBe(second);
-    expect(useOthersStore.getState().getOther("1")).toBeUndefined();
+    expect(useOthersStore.getState().getOther("2")?.name).toBe("second");
+    expect(useOthersStore.getState().getOther("1")?.name).toBe("first");
     expect(mocks.patchOtherCharacterTooltips).toHaveBeenCalledWith([second]);
   });
 
-  it("removes deleted others and does not patch them", () => {
+  it("does not patch deleted others", () => {
     const first = createRuntimeOther("first");
     setRuntimeOthers({ 1: first });
     useOthersStore.getState().upsertOther("1", first);
@@ -225,7 +213,7 @@ describe("useCharacterTooltipGameEvents", () => {
       },
     });
 
-    expect(useOthersStore.getState().getOther("1")).toBeUndefined();
+    expect(useOthersStore.getState().getOther("1")?.name).toBe("first");
     expect(mocks.patchOtherCharacterTooltips).toHaveBeenCalledWith([]);
   });
 
@@ -237,7 +225,7 @@ describe("useCharacterTooltipGameEvents", () => {
     expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
   });
 
-  it("clears stored others on town events without other payloads", () => {
+  it("leaves domain synchronization to RuntimeStateSynchronizer", () => {
     const oldOther = createRuntimeOther("old");
     useOthersStore.getState().setMany({ old: oldOther });
 
@@ -245,11 +233,11 @@ describe("useCharacterTooltipGameEvents", () => {
 
     mocks.state.afterGameEventHandler?.(createTownEvent());
 
-    expect(useOthersStore.getState().othersById).toEqual({});
+    expect(useOthersStore.getState().getOther("old")?.name).toBe("old");
     expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
   });
 
-  it("clears stored others before processing other payloads from town events", () => {
+  it("patches post-town handles supplied by RuntimeStateSynchronizer", () => {
     const oldOther = createRuntimeOther("old");
     const newOther = createRuntimeOther("new");
     useOthersStore.getState().setMany({ old: oldOther });
@@ -281,7 +269,7 @@ describe("useCharacterTooltipGameEvents", () => {
       },
     });
 
-    expect(useOthersStore.getState().othersById).toEqual({ new: newOther });
+    expect(useOthersStore.getState().getOther("new")?.name).toBe("new");
     expect(mocks.patchOtherCharacterTooltips).toHaveBeenCalledWith([newOther]);
   });
 
@@ -305,7 +293,7 @@ describe("useCharacterTooltipGameEvents", () => {
     ).toBeNull();
   });
 
-  it("publishes one others update for a mixed game event", () => {
+  it("does not publish domain state from the projection hook", () => {
     const removed = createRuntimeOther("removed");
     const added = createRuntimeOther("added");
     useOthersStore.getState().setMany({ removed });
@@ -321,8 +309,8 @@ describe("useCharacterTooltipGameEvents", () => {
       },
     });
 
-    expect(useOthersStore.getState().othersById).toEqual({ added });
-    expect(publish).toHaveBeenCalledOnce();
+    expect(useOthersStore.getState().getOther("added")?.name).toBe("added");
+    expect(publish).not.toHaveBeenCalled();
     unsubscribe();
   });
 

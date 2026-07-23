@@ -12,7 +12,7 @@ import {
   usePartyFinderStore,
 } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
-import { inviteCharacterToParty } from "@/utils/game/character-actions";
+import { inviteCharacterToParty } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 
 type InvitationIntent = {
   notificationId: string;
@@ -142,7 +142,7 @@ function canIssueInvitationTarget(
   }
   return !usePartyStore
     .getState()
-    .members.some(({ id }) => String(id) === target.characterId);
+    .members.some(({ characterId }) => characterId === target.characterId);
 }
 
 async function executeInvitationIntent(

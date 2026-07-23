@@ -10,7 +10,10 @@ import type {
 } from "@/lib/api/generated/main/model";
 import { MessageType } from "@/api/chat.api";
 import { restoreChatEditorSelection } from "@/features/chat/chat-editor-selection.helpers";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { ChatInput } from "./chat-input";
+
+beforeEach(() => setTestRuntimeGame());
 
 const mockSendChatMessage = vi.fn();
 const mockStartNotificationMessage = vi.fn();

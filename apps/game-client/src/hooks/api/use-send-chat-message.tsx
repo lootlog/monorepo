@@ -11,9 +11,10 @@ export const useSendChatMessage = () => {
     mutationFn: (options: SendChatMessageOptions) => sendChatMessage(options),
     onError: (error) => {
       console.warn("Chat message error:", error);
-      window.message(t("errors.sendFailed"));
+      showRuntimeMessage(t("errors.sendFailed"));
     },
   });
 
   return mutation;
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

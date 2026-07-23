@@ -146,6 +146,9 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   };
 
   const handleJoinReadyRoom = (notification: StoredNotification) => {
+    const character = buildCurrentCharacterPayload();
+    if (!character) return;
+
     applyToReadyRoom.mutate(
       {
         pathParams: {
@@ -153,7 +156,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         },
         data: {
           world: notification.world,
-          character: buildCurrentCharacterPayload(),
+          character,
         },
       },
       {

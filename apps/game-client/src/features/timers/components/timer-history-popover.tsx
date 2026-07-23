@@ -67,11 +67,11 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
       {
         onSuccess: (restoredTimer) => {
           upsertTimer(normalizeTimerResponse(restoredTimer));
-          window.message?.(t("history.restoreSuccess"));
+          showRuntimeMessage(t("history.restoreSuccess"));
           setOpen(false);
         },
         onError: () => {
-          window.message?.(t("history.restoreFailed"));
+          showRuntimeMessage(t("history.restoreFailed"));
         },
       },
     );
@@ -117,3 +117,4 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
     </Popover>
   );
 };
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
@@ -13,22 +13,28 @@ export type UseUpdateLootlogCharacterSettings =
   CreateOrUpdateLootlogCharacterConfigDto;
 
 export const useUpdateLootlogCharactersConfig = () => {
-  const accountId = String(Game.hero.account);
+  const accountId = useGameStore((state) => state.game?.hero.accountId ?? null);
   const queryClient = useQueryClient();
-  const queryKey =
-    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-      accountId,
-    });
+  const queryKey = accountId
+    ? getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+        accountId,
+      })
+    : ["user-lootlog-config", "unavailable"];
 
   return useMutation({
     mutationKey: [
       "userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
     ],
-    mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) =>
-      userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig(
+    mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) => {
+      if (!accountId) {
+        throw new Error("Canonical game identity is unavailable");
+      }
+
+      return userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig(
         { accountId },
         options,
-      ),
+      );
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
     },

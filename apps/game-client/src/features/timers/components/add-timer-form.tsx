@@ -8,6 +8,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
 import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
 import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,7 +37,6 @@ import {
 } from "@/lib/api/generated/main/users/users";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
-import { Game } from "@/lib/game";
 import { useTranslation } from "react-i18next";
 
 const SECONDS_IN_HOUR = 3600;
@@ -220,8 +220,10 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
 }) => {
   const { t } = useTranslation("timers");
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
-  const world = Game.getWorldName();
-  const characterId = String(Game.hero.id);
+  const world = useGameStore((state) => state.game?.world ?? "unknown");
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
   const { selectedGuildIdsForTimersByCharId, guildIdByCharId } =
     useSettingsStore();
   const setOpen = useWindowsStore((state) => state.setOpen);

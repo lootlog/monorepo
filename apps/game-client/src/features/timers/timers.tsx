@@ -1,7 +1,7 @@
 import { TimersView } from "@/features/timers/timers-view";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
 import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
-import { Game } from "@/lib/game";
+import { useGameStore } from "@/store/game.store";
 import { useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 
@@ -12,7 +12,8 @@ export const Timers = () => {
   const timersUnderBag = useTimersStore(
     (state) => state.generalConfig.timersUnderBag,
   );
-  const isUnderBag = timersUnderBag && Game.interface === "ni";
+  const gameInterface = useGameStore((state) => state.game?.interface);
+  const isUnderBag = timersUnderBag && gameInterface === "ni";
   const { shouldRender: shouldRenderTimersView } = useWindowPresence(open);
 
   if (isUnderBag) {

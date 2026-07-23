@@ -14,7 +14,7 @@ import { partyReadyRoomControllerRemove } from "@/lib/api/generated/main/party-r
 import { cn } from "@/lib/utils";
 import { useFriendsStore } from "@/store/friends.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
-import { inviteCharacterToFriends } from "@/utils/game/character-actions";
+import { inviteCharacterToFriends } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 
 type ReadyRoomParticipantItemProps = {
   room: PartyReadyRoomOrganizerProjection;
