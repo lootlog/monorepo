@@ -27,23 +27,32 @@ type NpcsState = {
 const createNpcSnapshot = (npc: RuntimeNpc): NpcSnapshot =>
   Object.freeze({ ...npc });
 
+const NPC_SNAPSHOT_FIELDS = [
+  "actions",
+  "groupId",
+  "icon",
+  "id",
+  "level",
+  "name",
+  "profession",
+  "respawnRandomness",
+  "templateId",
+  "type",
+  "weight",
+  "x",
+  "y",
+] as const satisfies readonly (keyof RuntimeNpc)[];
+
 const areNpcSnapshotsEqual = (
   current: NpcSnapshot,
   next: RuntimeNpc,
-): boolean =>
-  current.actions === next.actions &&
-  current.groupId === next.groupId &&
-  current.icon === next.icon &&
-  current.id === next.id &&
-  current.level === next.level &&
-  current.name === next.name &&
-  current.profession === next.profession &&
-  current.respawnRandomness === next.respawnRandomness &&
-  current.templateId === next.templateId &&
-  current.type === next.type &&
-  current.weight === next.weight &&
-  current.x === next.x &&
-  current.y === next.y;
+): boolean => {
+  for (const field of NPC_SNAPSHOT_FIELDS) {
+    if (current[field] !== next[field]) return false;
+  }
+
+  return true;
+};
 
 const indexNpcs = (npcs: readonly RuntimeNpc[]): NpcsById =>
   Object.freeze(
