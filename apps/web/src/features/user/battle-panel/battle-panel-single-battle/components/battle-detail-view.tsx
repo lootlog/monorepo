@@ -382,7 +382,9 @@ export function BattleDetailView({
     innerViewport.scrollTop += handoff.innerScrollDelta;
   };
 
-  sideCardsWheelHandlerRef.current = handleSideCardsWheelCapture;
+  useEffect(() => {
+    sideCardsWheelHandlerRef.current = handleSideCardsWheelCapture;
+  });
 
   useEffect(() => {
     const sideCardsGrid = sideCardsGridRef.current;

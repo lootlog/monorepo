@@ -1,30 +1,38 @@
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { getEffectiveNotificationMutes } from "@/lib/user-preferences";
 import { useGlobalStore } from "@/store/global.store";
-import { useRef } from "react";
+
+type EffectiveNotificationMutes = ReturnType<
+  typeof getEffectiveNotificationMutes
+>;
+
+const emptyNotificationMutes = getEffectiveNotificationMutes(undefined);
+const notificationMutesCache = new WeakMap<
+  object,
+  EffectiveNotificationMutes
+>();
+
+const getCachedEffectiveNotificationMutes = (
+  preferences: ReturnType<typeof useUserPreferences>["data"],
+) => {
+  if (!preferences) return emptyNotificationMutes;
+
+  const cachedMutes = notificationMutesCache.get(preferences);
+  if (cachedMutes) return cachedMutes;
+
+  const mutes = getEffectiveNotificationMutes(preferences);
+  notificationMutesCache.set(preferences, mutes);
+  return mutes;
+};
 
 export const useCurrentUserNotificationMutes = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
   const query = useUserPreferences(gameInitialized);
-  const cachedMutesRef = useRef<{
-    preferences: typeof query.data;
-    mutes: ReturnType<typeof getEffectiveNotificationMutes>;
-  } | null>(null);
-
-  if (
-    cachedMutesRef.current === null ||
-    cachedMutesRef.current.preferences !== query.data
-  ) {
-    cachedMutesRef.current = {
-      preferences: query.data,
-      mutes: getEffectiveNotificationMutes(query.data),
-    };
-  }
 
   return {
     isReady: query.isFetched,
-    mutes: cachedMutesRef.current.mutes,
+    mutes: getCachedEffectiveNotificationMutes(query.data),
   };
 };

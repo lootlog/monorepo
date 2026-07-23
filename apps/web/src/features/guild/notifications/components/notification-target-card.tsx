@@ -89,11 +89,15 @@ export const NotificationTargetCard = ({
   const isActionDisabled = actionsDisabled || deleteTarget.isPending;
 
   const handleDelete = async () => {
+    if (!guildId) {
+      const error = new Error("Missing guild id.");
+      toast.error(
+        getApiErrorMessage(error) ??
+          t("settings.notifications.toasts.targetDeleteError"),
+      );
+      throw error;
+    }
     try {
-      if (!guildId) {
-        throw new Error("Missing guild id.");
-      }
-
       await deleteTarget.mutateAsync({
         pathParams: { guildId, targetId: target.id },
       });

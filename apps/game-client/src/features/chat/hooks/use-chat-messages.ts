@@ -52,9 +52,11 @@ export const useChatMessagesListener = (
   const wasConnectedRef = useRef(connected);
   const accountCacheIdentity = `${sessionData?.user?.discordId ?? ""}\u0000${runtimeGame?.hero.accountId ?? ""}`;
   const previousAccountCacheIdentityRef = useRef(accountCacheIdentity);
-  sessionDiscordIdRef.current = sessionData?.user?.discordId;
-  runtimeGameRef.current = runtimeGame;
-  onRemoteMessageRef.current = options?.onRemoteMessage;
+  useEffect(() => {
+    sessionDiscordIdRef.current = sessionData?.user?.discordId;
+    runtimeGameRef.current = runtimeGame;
+    onRemoteMessageRef.current = options?.onRemoteMessage;
+  }, [options?.onRemoteMessage, runtimeGame, sessionData?.user?.discordId]);
 
   useEffect(() => {
     if (connected && !wasConnectedRef.current) {
@@ -80,123 +82,123 @@ export const useChatMessagesListener = (
   }, [joined, joinedGuilds, queryClient]);
 
   const handlerRef = useRef<(data: ChatMessage) => void>(() => undefined);
-  handlerRef.current = (data) => {
-    updateChatMessagesCache({
-      guildId: data.guildId,
-      queryClient,
-      updater: (old: ChatMessage[] | undefined) => upsertChatMessage(old, data),
-    });
-
-    if (!options?.prefetchMembers) {
-      return;
-    }
-
-    const membersQueryKey = getGuildMembersSummaryQueryKey({
-      guildId: data.guildId,
-    });
-    const cachedMembers = queryClient.getQueryData(membersQueryKey);
-
-    if (!cachedMembers) {
-      void queryClient.prefetchQuery(
-        getGuildMembersSummaryQueryOptions({
-          guildId: data.guildId,
-        }),
-      );
-    }
-  };
   const mentionNotificationRef = useRef<
     (data: ChatMessage) => void | Promise<void>
   >(() => undefined);
-  mentionNotificationRef.current = async (data) => {
-    try {
-      if (!data.message || !hasChatMentionToken(data.message)) {
-        return;
-      }
-
-      if (
-        data.senderId === sessionDiscordIdRef.current ||
-        data.characterData.nick === runtimeGameRef.current?.hero.name
-      ) {
-        return;
-      }
-
-      const currentMember = await queryClient.fetchQuery({
-        queryKey: getMembersControllerGetMeQueryKey({ guildId: data.guildId }),
-        queryFn: () => membersControllerGetMe({ guildId: data.guildId }),
-        staleTime: 5 * 60 * 1000,
-      });
-      const currentUserNames = getCurrentUserMentionNames({
-        currentCharacterNick: runtimeGameRef.current?.hero.name ?? "",
-        currentMember,
-      });
-      const currentUserRoleNames =
-        getCurrentUserMentionRoleNames(currentMember);
-
-      if (
-        !hasCurrentUserMention(data.message, {
-          currentUserNames,
-          currentUserRoleNames,
-        })
-      ) {
-        return;
-      }
-
-      presentNotifications([
-        {
-          notification: {
-            type: "chat-mention",
-            notificationId: getChatMentionNotificationId({
-              guildId: data.guildId,
-              messageId: data.id,
-            }),
-            discordId: data.senderId,
-            guildId: data.guildId,
-            world: runtimeGameRef.current?.world ?? "",
-            createdAt: data.timestamp,
-            message: data.message,
-            servers: [data.guildId],
-          },
-          playSound: false,
-        },
-      ]);
-    } catch {
-      // Mention resolution is best-effort and must not interrupt chat ingestion.
-    }
-  };
-
   const deleteHandlerRef = useRef<
     (data: { guildId: string; messageId: string }) => void
   >(() => undefined);
-  deleteHandlerRef.current = (data) => {
-    updateChatMessagesCache({
-      guildId: data.guildId,
-      queryClient,
-      updater: (old: ChatMessage[] | undefined) =>
-        old ? removeChatMessage(old, data.messageId) : old,
-    });
-  };
-
   const updateHandlerRef = useRef<
     (data: { guildId: string; messageId: string; message: string }) => void
   >(() => undefined);
-  updateHandlerRef.current = (data) => {
-    updateChatMessagesCache({
-      guildId: data.guildId,
-      queryClient,
-      updater: (old: ChatMessage[] | undefined) =>
-        old ? updateChatMessage(old, data.messageId, data.message) : old,
-    });
-  };
   const clearHandlerRef = useRef<(data: { guildId: string }) => void>(
     () => undefined,
   );
-  clearHandlerRef.current = (data) => {
-    updateChatMessagesCache({
-      guildId: data.guildId,
-      queryClient,
-      updater: [],
-    });
-  };
+
+  useEffect(() => {
+    handlerRef.current = (data) => {
+      updateChatMessagesCache({
+        guildId: data.guildId,
+        queryClient,
+        updater: (old: ChatMessage[] | undefined) =>
+          upsertChatMessage(old, data),
+      });
+
+      if (!options?.prefetchMembers) {
+        return;
+      }
+
+      const membersQueryKey = getGuildMembersSummaryQueryKey({
+        guildId: data.guildId,
+      });
+      const cachedMembers = queryClient.getQueryData(membersQueryKey);
+
+      if (!cachedMembers) {
+        void queryClient.prefetchQuery(
+          getGuildMembersSummaryQueryOptions({
+            guildId: data.guildId,
+          }),
+        );
+      }
+    };
+    mentionNotificationRef.current = async (data) => {
+      try {
+        if (!data.message || !hasChatMentionToken(data.message)) return;
+        if (
+          data.senderId === sessionDiscordIdRef.current ||
+          data.characterData.nick === runtimeGameRef.current?.hero.name
+        ) {
+          return;
+        }
+
+        const currentMember = await queryClient.fetchQuery({
+          queryKey: getMembersControllerGetMeQueryKey({
+            guildId: data.guildId,
+          }),
+          queryFn: () => membersControllerGetMe({ guildId: data.guildId }),
+          staleTime: 5 * 60 * 1000,
+        });
+        const currentUserNames = getCurrentUserMentionNames({
+          currentCharacterNick: runtimeGameRef.current?.hero.name ?? "",
+          currentMember,
+        });
+        const currentUserRoleNames =
+          getCurrentUserMentionRoleNames(currentMember);
+        if (
+          !hasCurrentUserMention(data.message, {
+            currentUserNames,
+            currentUserRoleNames,
+          })
+        ) {
+          return;
+        }
+
+        presentNotifications([
+          {
+            notification: {
+              type: "chat-mention",
+              notificationId: getChatMentionNotificationId({
+                guildId: data.guildId,
+                messageId: data.id,
+              }),
+              discordId: data.senderId,
+              guildId: data.guildId,
+              world: runtimeGameRef.current?.world ?? "",
+              createdAt: data.timestamp,
+              message: data.message,
+              servers: [data.guildId],
+            },
+            playSound: false,
+          },
+        ]);
+      } catch {
+        // Mention resolution is best-effort and must not interrupt chat ingestion.
+      }
+    };
+    deleteHandlerRef.current = (data) => {
+      updateChatMessagesCache({
+        guildId: data.guildId,
+        queryClient,
+        updater: (old: ChatMessage[] | undefined) =>
+          old ? removeChatMessage(old, data.messageId) : old,
+      });
+    };
+    updateHandlerRef.current = (data) => {
+      updateChatMessagesCache({
+        guildId: data.guildId,
+        queryClient,
+        updater: (old: ChatMessage[] | undefined) =>
+          old ? updateChatMessage(old, data.messageId, data.message) : old,
+      });
+    };
+    clearHandlerRef.current = (data) => {
+      updateChatMessagesCache({
+        guildId: data.guildId,
+        queryClient,
+        updater: [],
+      });
+    };
+  }, [options?.prefetchMembers, presentNotifications, queryClient]);
 
   useEffect(() => {
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;

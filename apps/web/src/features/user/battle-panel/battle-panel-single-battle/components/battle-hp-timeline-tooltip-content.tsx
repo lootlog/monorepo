@@ -1,4 +1,9 @@
-import type { CSSProperties, RefObject } from "react";
+import {
+  useLayoutEffect,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from "react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -46,12 +51,16 @@ export function BattleHpTimelineTooltipContent({
 }: BattleHpTimelineTooltipContentProps) {
   const { i18n, t } = useTranslation();
   const tooltipData = getBattleHpTimelineTooltipPayload(payload?.[0]?.payload);
+  const [chartRoot, setChartRoot] = useState<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    setChartRoot(chartRootRef.current);
+  }, [active, chartRootRef]);
 
   if (!active || !tooltipData) {
     return null;
   }
 
-  const chartRoot = chartRootRef.current;
   const locale = i18n.language || "pl-PL";
   const formatNumber = (value: number) =>
     formatBattleHpTimelineTooltipNumber(value, locale);

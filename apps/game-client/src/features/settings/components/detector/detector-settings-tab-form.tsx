@@ -6,9 +6,8 @@ import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorNpcType, DetectorTypeSettings } from "@lootlog/types";
-import type { FC } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { useDeepCompareEffect } from "@/hooks/use-deep-compare-effect";
+import { type FC, useEffect } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
@@ -102,12 +101,12 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
     300,
   );
 
-  const { control, watch, reset, formState, getValues } = useForm<FormData>({
+  const { control, reset, formState, getValues } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: cloneDetectorTypeSettings(currentCategorySettings),
   });
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     const nextFormValues = cloneDetectorTypeSettings(currentCategorySettings);
     const currentFormSettings =
       getDetectorTypeSettingsFromFormData(getValues());
@@ -125,9 +124,9 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
     reset(nextFormValues);
   }, [currentCategorySettings, getValues, reset]);
 
-  const watchedData = watch();
+  const watchedData = useWatch({ control }) as FormData;
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     if (!accountId || !isFetched || !formState.isDirty) {
       return;
     }

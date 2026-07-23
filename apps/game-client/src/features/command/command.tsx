@@ -4,7 +4,7 @@ import { MessageType } from "@/api/chat.api";
 import { useGameStore } from "@/store/game.store";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { CommandActions } from "./components/command-actions";
 import {
@@ -51,14 +51,14 @@ export const CommandWindow = () => {
   const { startNotificationMessage } = useNotificationChatOrchestration();
   const { handlePartyCommand } = usePartyCommand();
 
-  const { watch, setValue, handleSubmit } = useForm<FormData>({
+  const { control, setValue, handleSubmit } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       message: "",
     },
   });
 
-  const messageValue = watch("message");
+  const messageValue = useWatch({ control, name: "message" });
 
   const suggestions = useCommandSuggestions({
     inputValue: messageValue,

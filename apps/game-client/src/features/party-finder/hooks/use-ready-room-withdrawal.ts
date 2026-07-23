@@ -22,19 +22,18 @@ export const useReadyRoomWithdrawal = (
   const applyUpdate = usePartyFinderStore((state) => state.applyUpdate);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
-  const withdraw = async () => {
+  const withdraw = () => {
     if (!room || !participant || isWithdrawing) return;
 
     setIsWithdrawing(true);
-    try {
-      const update = await partyReadyRoomControllerWithdraw(
-        { notificationId: room.notificationId },
-        { participantId: participant.participantId },
-      );
-      applyUpdate(update as unknown as PartyReadyRoomClientUpdate);
-    } finally {
-      setIsWithdrawing(false);
-    }
+    return partyReadyRoomControllerWithdraw(
+      { notificationId: room.notificationId },
+      { participantId: participant.participantId },
+    )
+      .then((update) => {
+        applyUpdate(update as unknown as PartyReadyRoomClientUpdate);
+      })
+      .finally(() => setIsWithdrawing(false));
   };
 
   return { isWithdrawing, participant, withdraw };

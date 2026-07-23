@@ -1,4 +1,4 @@
-import { act, Profiler, type ProfilerOnRenderCallback } from "react";
+import { act, Profiler, useEffect, type ProfilerOnRenderCallback } from "react";
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -32,11 +32,15 @@ let presentNotifications:
   | undefined;
 
 const NotificationPresentationProbe = () => {
-  presentNotifications = useNotificationPresenter().presentNotifications;
+  const presenter = useNotificationPresenter().presentNotifications;
   const notificationCount = useNotificationsStore(
     (state) => state.notifications.length,
   );
   const open = useWindowsStore((state) => state.notifications.open);
+
+  useEffect(() => {
+    presentNotifications = presenter;
+  }, [presenter]);
 
   return <div>{`${notificationCount}:${open}`}</div>;
 };
