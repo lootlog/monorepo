@@ -297,6 +297,29 @@ describe("timers.store", () => {
     });
   });
 
+  it("resets a visible default color without hiding it", () => {
+    useTimersStore.setState({
+      hiddenDefaultColors: [],
+      defaultColorNames: { red: "Alarm" },
+      overriddenDefaultColors: {
+        red: {
+          borderColor: "#111111",
+          backgroundColor: "#22222233",
+        },
+      },
+    });
+
+    useTimersStore.getState().resetDefaultColor("red");
+
+    expect(useTimersStore.getState().hiddenDefaultColors).toEqual([]);
+    expect(useTimersStore.getState().defaultColorNames).toEqual({});
+    expect(useTimersStore.getState().overriddenDefaultColors).toEqual({});
+    expect(mockDebouncedSyncGlobalSettings).toHaveBeenLastCalledWith({
+      overriddenDefaultColors: {},
+      defaultColorNames: {},
+    });
+  });
+
   it("persists only the partialized timer state", () => {
     const store = useTimersStore.getState();
     store.setGeneralConfig({

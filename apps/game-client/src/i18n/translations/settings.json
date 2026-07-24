@@ -23,6 +23,7 @@
     "timers": "Timery",
     "gameData": "Dane z gry",
     "notifications": "Powiadomienia",
+    "sounds": "Dźwięki",
     "controls": "Sterowanie",
     "diagnostics": "Diagnostyka",
     "information": "Informacje"
@@ -30,6 +31,7 @@
   "subsections": {
     "behavior": "Zachowanie",
     "chat": "Chat",
+    "npcColors": "Kolory NPC",
     "timerAppearance": "Wygląd timerów",
     "timerColors": "Kolory timerów",
     "timerBehavior": "Działanie timerów"
@@ -73,8 +75,14 @@
       "section": "Preset",
       "label": "Sposób prezentacji",
       "readable": "Czytelny",
+      "readableDescription": "Większy tekst i więcej przestrzeni — najłatwiejszy do czytania.",
       "compact": "Kompaktowy",
-      "custom": "Własny"
+      "compactDescription": "Więcej wiadomości na ekranie przy mniejszych odstępach.",
+      "custom": "Własne ustawienia",
+      "restoreReadable": "Przywróć domyślne"
+    },
+    "advanced": {
+      "title": "Więcej opcji"
     },
     "reset": "Resetuj",
     "layout": {
@@ -98,10 +106,9 @@
       "title": "Widoczne informacje",
       "showTimestamp": "Czas wiadomości",
       "showGuildLabel": "Gildia",
-      "showNpcAvatar": "Awatar NPC",
+      "showNpcAvatar": "Avatar NPC",
       "showNpcLevel": "Poziom NPC",
-      "showNpcLocation": "Nazwa lokacji NPC",
-      "showNpcCoordinates": "Koordynaty NPC"
+      "showNpcLocationAndCoordinates": "Lokacja i koordynaty NPC"
     },
     "save": {
       "saving": "Zapisywanie…",
@@ -111,7 +118,7 @@
     "preview": {
       "ariaLabel": "Podgląd wyglądu czatu",
       "label": "Podgląd",
-      "player": "Arianna",
+      "player": "Lunara",
       "level": "85 lvl",
       "message": "Spotkajmy się przy wejściu.",
       "guild": "Strażnicy Północy",
@@ -119,6 +126,23 @@
       "npcMessage": "pojawił się na mapie",
       "location": "Stare Ruiny"
     }
+  },
+  "npcColors": {
+    "title": "Kolory typów potworów",
+    "description": "Wspólna paleta używana w chacie, powiadomieniach i wykrywaczu.",
+    "resetAll": "Przywróć wszystkie",
+    "reset": "Przywróć",
+    "modified": "Zmieniony",
+    "default": "Kolor domyślny",
+    "overridden": "Kolor użytkownika",
+    "saving": "Zapisywanie…",
+    "saveError": "Nie udało się zapisać kolorów NPC.",
+    "picker": "Wybierz kolor",
+    "hex": "Kolor HEX",
+    "editColor": "Edytuj kolor NPC",
+    "preview": "Podgląd powierzchni",
+    "notificationPreview": "Powiadomienie o wykryciu potwora",
+    "detectorPreview": "Potwór widoczny w wykrywaczu"
   },
   "general": {
     "title": "Ustawienia ogólne",
@@ -330,12 +354,25 @@
     },
     "colors": {
       "listTitle": "Lista kolorów",
+      "standardColorsTitle": "Standardowe",
+      "customColorsTitle": "Własne",
+      "standardColor": "Kolor standardowy",
+      "customColor": "Kolor własny",
+      "nameLabel": "Nazwa",
+      "resetColorTitle": "Przywróć domyślny wygląd",
+      "hideColorTitle": "Ukryj kolor",
+      "deleteColorTitle": "Usuń kolor",
       "addTitle": "Dodaj kolor",
       "namePlaceholder": "Nazwa",
       "borderLabel": "Ramka",
       "backgroundLabel": "Tło",
       "borderAria": "Kolor ramki",
+      "borderHexAria": "Kolor ramki HEX",
       "backgroundAria": "Kolor tła",
+      "backgroundHexAria": "Kolor tła HEX",
+      "editColorAria": "Edytuj kolor",
+      "actionsAria": "Więcej ustawień koloru",
+      "modified": "Zmieniony",
       "transparencyLabel": "Przezroczystość",
       "transparencyAria": "Przezroczystość tła",
       "previewLabel": "Podgląd",

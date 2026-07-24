@@ -20,8 +20,9 @@ vi.mock("@/api/npcs.api", () => ({
   },
 }));
 
-vi.mock("@lootlog/types", () => ({
-  getNpcTypeByWt: () => "hero",
+vi.mock("@lootlog/types", async (importOriginal) => ({
+  ...(await importOriginal()),
+  getNpcTypeByWt: () => "HERO",
 }));
 
 const makeChatMessage = (

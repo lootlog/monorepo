@@ -37,8 +37,9 @@ vi.mock("@/api/npcs.api", () => ({
   },
 }));
 
-vi.mock("@lootlog/types", () => ({
-  getNpcTypeByWt: () => "hero",
+vi.mock("@lootlog/types", async (importOriginal) => ({
+  ...(await importOriginal()),
+  getNpcTypeByWt: () => "HERO",
 }));
 
 const makeChatMessage = (
@@ -199,8 +200,7 @@ describe("ChatNpcMessage", () => {
           showGuildLabel: false,
           showNpcAvatar: false,
           showNpcLevel: false,
-          showNpcLocation: false,
-          showNpcCoordinates: false,
+          showNpcLocationAndCoordinates: false,
         }}
         guildName="Guild"
         message={makeChatMessage()}
@@ -216,7 +216,7 @@ describe("ChatNpcMessage", () => {
     expect(screen.queryByText("[10:00]")).not.toBeInTheDocument();
   });
 
-  it("can show coordinates without the location name", () => {
+  it("shows location and coordinates with one metadata flag", () => {
     render(
       <ChatNpcMessage
         all={false}
@@ -228,8 +228,7 @@ describe("ChatNpcMessage", () => {
           showGuildLabel: true,
           showNpcAvatar: true,
           showNpcLevel: true,
-          showNpcLocation: false,
-          showNpcCoordinates: true,
+          showNpcLocationAndCoordinates: true,
         }}
         guildName="Guild"
         message={makeChatMessage()}
@@ -237,7 +236,7 @@ describe("ChatNpcMessage", () => {
       />,
     );
 
-    expect(screen.queryByText("Swamp")).not.toBeInTheDocument();
+    expect(screen.getByText("Swamp")).toBeInTheDocument();
     expect(screen.getByText("(7, 9)")).toBeInTheDocument();
   });
 });

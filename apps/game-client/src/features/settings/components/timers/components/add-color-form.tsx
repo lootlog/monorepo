@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Tile } from "@/components/ui/tile";
+import { TimerTileView } from "@/features/timers/components/timer-tile-view";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { stripAlphaChannel, alphaToHex } from "./color-utils";
@@ -33,18 +33,18 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
   };
 
   return (
-    <div className="ll:pt-2 ll:border-t ll:border-gray-600 ll:space-y-2">
+    <div className="ll:flex ll:flex-col ll:gap-2">
       <h3 className="ll:text-sm ll:font-semibold">
         {t("settings.timers.colors.addTitle")}
       </h3>
 
-      <div className="ll:flex ll:flex-wrap ll:items-center ll:gap-2">
-        <div className="ll:flex ll:gap-4 ll:items-center">
+      <div className="ll:flex ll:flex-col ll:gap-2">
+        <div className="ll:flex ll:items-center ll:gap-2">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("settings.timers.colors.namePlaceholder")}
-            className="ll:text-xs ll:flex-1"
+            className="ll:min-w-0 ll:flex-1 ll:text-xs"
           />
           <div className="ll:flex ll:items-center ll:gap-1">
             <Label className="ll:text-[11px]">
@@ -54,7 +54,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
               type="color"
               value={stripAlphaChannel(borderColor)}
               onChange={(e) => setBorderColor(e.target.value)}
-              className="ll:h-8 ll:w-8 ll:p-0 ll:border-0 ll:bg-transparent"
+              className="ll:h-8 ll:w-8 ll:p-1"
               aria-label={t("settings.timers.colors.borderAria")}
             />
           </div>
@@ -67,7 +67,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
               type="color"
               value={stripAlphaChannel(backgroundColor)}
               onChange={(e) => setBackgroundColor(e.target.value)}
-              className="ll:h-8 ll:w-8 ll:p-0 ll:border-0 ll:bg-transparent"
+              className="ll:h-8 ll:w-8 ll:p-1"
               aria-label={t("settings.timers.colors.backgroundAria")}
             />
           </div>
@@ -107,28 +107,26 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
           </div>
         </div>
 
-        <div className="ll:grid ll:grid-cols-2 ll:items-end ll:w-full ll:gap-4">
+        <div className="ll:grid ll:grid-cols-2 ll:items-end ll:w-full ll:gap-2">
           <div className="ll:gap-1 ll:flex ll:flex-col">
             <Label className="ll:text-[11px]">
               {t("settings.timers.colors.previewLabel")}
             </Label>
 
-            <Tile
+            <TimerTileView
               customBorderColor={borderColor}
               customBackgroundColor={bgWithAlpha}
-              className="ll:h-6 ll:w-full ll:items-center ll:justify-center"
-            >
-              <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full ll:mt-1">
-                <span>{t("common:preview.name")}</span>
-                <span>{t("common:preview.time")}</span>
-              </span>
-            </Tile>
+              displayMode="row"
+              fontSize={10}
+              label={t("common:preview.name")}
+              timeLabel={t("common:preview.time")}
+            />
           </div>
 
           <Button
             onClick={handleAdd}
             disabled={!name.trim()}
-            className="ll:h-6 ll:w-full"
+            className="ll:h-7 ll:w-full"
           >
             {t("settings.timers.colors.addButton")}
           </Button>

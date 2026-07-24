@@ -21,6 +21,52 @@ const catalogHasKey = (key: SettingsCatalogKey) => {
 };
 
 describe("settings manifest persistence references", () => {
+  it("places NPC colors between chat and timer appearance", () => {
+    const appearance = SETTINGS_MANIFEST.find(
+      (domain) => domain.id === "appearance",
+    );
+
+    expect(appearance?.subsections.map((subsection) => subsection.id)).toEqual([
+      "chat",
+      "npc-colors",
+      "timer-appearance",
+      "timer-colors",
+    ]);
+    expect(
+      appearance?.subsections.find(
+        (subsection) => subsection.id === "npc-colors",
+      )?.controls[0].settingKeys,
+    ).toHaveLength(7);
+  });
+
+  it("exposes sounds as a standalone domain after notifications", () => {
+    const domainIds = SETTINGS_MANIFEST.map((domain) => domain.id);
+    const notifications = SETTINGS_MANIFEST.find(
+      (domain) => domain.id === "notifications",
+    );
+    const sounds = SETTINGS_MANIFEST.find((domain) => domain.id === "sounds");
+
+    expect(domainIds).toEqual([
+      "general",
+      "appearance",
+      "timers",
+      "game-data",
+      "notifications",
+      "sounds",
+      "controls",
+      "diagnostics",
+      "information",
+    ]);
+    expect(
+      notifications?.subsections.some(
+        (subsection) => subsection.id === "sounds",
+      ),
+    ).toBe(false);
+    expect(sounds?.subsections.map((subsection) => subsection.id)).toEqual([
+      "sounds",
+    ]);
+  });
+
   it("points every declared setting key to the shared catalog", () => {
     const settingKeys = SETTINGS_MANIFEST.flatMap((domain) =>
       domain.subsections.flatMap((subsection) =>

@@ -1,5 +1,9 @@
 import { applySettingsPatch, resolveSettingsDomain } from "./settings-resolver";
-import { SETTINGS_CATALOG, SETTINGS_DOMAINS } from "@lootlog/types";
+import {
+  CHAT_APPEARANCE_READABLE_PRESET,
+  SETTINGS_CATALOG,
+  SETTINGS_DOMAINS,
+} from "@lootlog/types";
 import { describe, expect, it } from "vitest";
 
 describe("settings resolver", () => {
@@ -20,7 +24,18 @@ describe("settings resolver", () => {
     }
   });
 
-  it("resolves appearance values through the declared scope path", () => {
+  it("keeps every chat appearance field global to the user", () => {
+    const chatFields = Object.entries(
+      SETTINGS_CATALOG.appearance.fields,
+    ).filter(([path]) => path.startsWith("chat."));
+
+    expect(chatFields.length).toBeGreaterThan(0);
+    for (const [, definition] of chatFields) {
+      expect(definition.scopes).toEqual(["USER"]);
+    }
+  });
+
+  it("keeps chat values on the user layer while ignoring lower scopes", () => {
     const resolution = resolveSettingsDomain("appearance", [
       {
         scope: { type: "USER", id: "user-1" },
@@ -51,20 +66,17 @@ describe("settings resolver", () => {
 
     expect(resolution.effective).toMatchObject({
       chat: {
-        fontScalePercent: 90,
-        messageGapPx: 8,
+        fontScalePercent: 110,
+        messageGapPx: CHAT_APPEARANCE_READABLE_PRESET.messageGapPx,
         showTimestamp: false,
       },
     });
     expect(resolution.sources).toMatchObject({
       "chat.fontScalePercent": {
-        type: "GAME_ACCOUNT",
-        id: "account-1",
+        type: "USER",
+        id: "user-1",
       },
-      "chat.messageGapPx": {
-        type: "CHARACTER",
-        id: "character-1",
-      },
+      "chat.messageGapPx": "DEFAULT",
       "chat.showTimestamp": {
         type: "USER",
         id: "user-1",
@@ -76,7 +88,7 @@ describe("settings resolver", () => {
   it("creates and removes field overrides without changing sibling values", () => {
     const withOverride = applySettingsPatch({
       domain: "appearance",
-      scope: { type: "GAME_ACCOUNT", id: "account-1" },
+      scope: { type: "USER", id: "user-1" },
       currentOverrides: {
         chat: {
           showTimestamp: false,
@@ -100,7 +112,7 @@ describe("settings resolver", () => {
     expect(
       applySettingsPatch({
         domain: "appearance",
-        scope: { type: "GAME_ACCOUNT", id: "account-1" },
+        scope: { type: "USER", id: "user-1" },
         currentOverrides: withOverride,
         set: {},
         unset: ["chat.fontScalePercent"],
@@ -171,6 +183,20 @@ describe("settings resolver", () => {
       applySettingsPatch({
         domain: "appearance",
         scope: { type: "GUILD", id: "guild-1" },
+        currentOverrides: {},
+        set: {
+          chat: {
+            fontScalePercent: 120,
+          },
+        },
+        unset: [],
+      }),
+    ).toThrow(/scope/i);
+
+    expect(() =>
+      applySettingsPatch({
+        domain: "appearance",
+        scope: { type: "GAME_ACCOUNT", id: "account-1" },
         currentOverrides: {},
         set: {
           chat: {

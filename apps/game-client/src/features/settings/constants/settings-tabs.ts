@@ -4,6 +4,7 @@ export const SETTINGS_DOMAIN_VALUES = [
   "timers",
   "game-data",
   "notifications",
+  "sounds",
   "controls",
   "diagnostics",
   "information",
@@ -16,7 +17,6 @@ export const LEGACY_SETTINGS_TAB_VALUES = [
   "hidden-timers",
   "npc-detector",
   "notification-mutes",
-  "sounds",
   "battle-panel",
   "hotkeys",
   "logs",
@@ -31,6 +31,7 @@ export type SettingsTabValue = SettingsDomainValue | LegacySettingsTabValue;
 export type SettingsSubsectionValue =
   | "behavior"
   | "chat"
+  | "npc-colors"
   | "timer-appearance"
   | "timer-colors"
   | "timer-behavior"
@@ -65,6 +66,7 @@ const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
     domain: "notifications",
     subsection: "notification-rules",
   },
+  sounds: { domain: "sounds", subsection: "sounds" },
   controls: { domain: "controls", subsection: "hotkeys" },
   diagnostics: { domain: "diagnostics", subsection: "logs" },
   information: { domain: "information", subsection: "build" },
@@ -75,7 +77,6 @@ const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
     domain: "notifications",
     subsection: "notification-mutes",
   },
-  sounds: { domain: "notifications", subsection: "sounds" },
   "battle-panel": { domain: "game-data", subsection: "battle-panel" },
   hotkeys: { domain: "controls", subsection: "hotkeys" },
   logs: { domain: "diagnostics", subsection: "logs" },
@@ -86,6 +87,10 @@ export const resolveSettingsPath = (
   activeTab?: SettingsTabValue,
   activeSubsection?: SettingsSubsectionValue,
 ): SettingsPath => {
+  if (activeSubsection === "sounds") {
+    return SETTINGS_PATHS.sounds;
+  }
+
   const basePath = activeTab
     ? SETTINGS_PATHS[activeTab]
     : DEFAULT_SETTINGS_PATH;

@@ -27,6 +27,7 @@ import {
 import { canReplyToChatMessage } from "./chat-reply.helpers";
 import type { ChatUnreadCountByGuildId } from "./chat-unread.helpers";
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
+import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/types";
 
 interface ChatViewProps {
@@ -44,6 +45,7 @@ export const ChatView = ({
 }: ChatViewProps) => {
   const { t } = useTranslation("chat");
   const preferences = useUserPreferences();
+  const { npcTypeColors } = useNpcTypeColors();
   const chatAppearance =
     preferences.data?.chatAppearance ?? CHAT_APPEARANCE_READABLE_PRESET;
   const [scrollToBottomRequest, setScrollToBottomRequest] = useState(0);
@@ -179,6 +181,7 @@ export const ChatView = ({
         <div className="ll:flex-1 ll:overflow-hidden">
           <ChatMessageList
             appearance={chatAppearance}
+            npcTypeColors={npcTypeColors}
             key={`${selectedGuildId}:${chatFilter}`}
             ariaLabel={t("window.title")}
             emptyStateLabel={t("emptyState.noMessages")}

@@ -50,6 +50,7 @@ export const TimersSettingsAppearance: FC = () => {
             controlClassName="ll:w-40"
           >
             <ToggleGroup
+              className="ll:ml-auto"
               type="single"
               size="xs"
               onValueChange={(value: "column" | "row") => {

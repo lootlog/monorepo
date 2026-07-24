@@ -70,16 +70,63 @@ describe("SettingsDocumentsService", () => {
 
     expect(response.domains.appearance.effective).toMatchObject({
       chat: {
-        fontScalePercent: 90,
+        fontScalePercent: 110,
       },
     });
     expect(
       response.domains.appearance.sources["chat.fontScalePercent"],
     ).toEqual({
-      type: "GAME_ACCOUNT",
-      id: "account-1",
+      type: "USER",
+      id: "user-1",
     });
     expect(response.domains.appearance.layers).toHaveLength(2);
+  });
+
+  it("qualifies character scopes with the game account", async () => {
+    const firstPrismaMock = createPrismaMock().prisma;
+    const secondPrismaMock = createPrismaMock().prisma;
+    firstPrismaMock.userSettingDocument.findMany.mockResolvedValue([]);
+    secondPrismaMock.userSettingDocument.findMany.mockResolvedValue([]);
+
+    await new SettingsDocumentsService(
+      firstPrismaMock as unknown as PrismaService,
+    ).getPreferences("user-1", {
+      domains: ["gameData"],
+      gameAccountId: "account-1",
+      characterId: "character-1",
+    });
+    await new SettingsDocumentsService(
+      secondPrismaMock as unknown as PrismaService,
+    ).getPreferences("user-1", {
+      domains: ["gameData"],
+      gameAccountId: "account-2",
+      characterId: "character-1",
+    });
+
+    expect(firstPrismaMock.userSettingDocument.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            {
+              scopeType: "CHARACTER",
+              scopeId: "account-1:character-1",
+            },
+          ]),
+        }),
+      }),
+    );
+    expect(secondPrismaMock.userSettingDocument.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            {
+              scopeType: "CHARACTER",
+              scopeId: "account-2:character-1",
+            },
+          ]),
+        }),
+      }),
+    );
   });
 
   it("atomically merges patches and deletes empty documents", async () => {
@@ -100,8 +147,8 @@ describe("SettingsDocumentsService", () => {
 
         return {
           overrides: {
-            chat: {
-              fontScalePercent: 120,
+            pings: {
+              enabled: true,
             },
           },
         };
@@ -125,10 +172,10 @@ describe("SettingsDocumentsService", () => {
           unset: [],
         },
         {
-          domain: "appearance",
+          domain: "gameData",
           scope: { type: "GAME_ACCOUNT", id: "account-1" },
           set: {},
-          unset: ["chat.fontScalePercent"],
+          unset: ["pings"],
         },
       ],
     });

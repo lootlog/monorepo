@@ -251,7 +251,7 @@ SELECT
   "userId",
   'gameData',
   'CHARACTER'::"SettingsScopeType",
-  "characterId",
+  "accountId" || ':' || "characterId",
   jsonb_build_object(
     'lootlog',
     jsonb_build_object('catchingGuildIds', "catchingGuildIds")

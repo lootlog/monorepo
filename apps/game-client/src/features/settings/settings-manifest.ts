@@ -10,6 +10,7 @@ export type SettingsIconName =
   | "clock"
   | "database"
   | "bell"
+  | "volume2"
   | "keyboard"
   | "activity"
   | "info";
@@ -98,8 +99,7 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
               "appearance.chat.showGuildLabel",
               "appearance.chat.showNpcAvatar",
               "appearance.chat.showNpcLevel",
-              "appearance.chat.showNpcLocation",
-              "appearance.chat.showNpcCoordinates",
+              "appearance.chat.showNpcLocationAndCoordinates",
             ],
           },
           {
@@ -133,8 +133,35 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
               "appearance.chat.showGuildLabel",
               "appearance.chat.showNpcAvatar",
               "appearance.chat.showNpcLevel",
-              "appearance.chat.showNpcLocation",
-              "appearance.chat.showNpcCoordinates",
+              "appearance.chat.showNpcLocationAndCoordinates",
+            ],
+          },
+        ],
+      },
+      {
+        id: "npc-colors",
+        labelKey: "settings.subsections.npcColors",
+        controls: [
+          {
+            id: "npc-type-colors",
+            labelKey: "settings.npcColors.title",
+            descriptionKey: "settings.npcColors.description",
+            aliases: [
+              "kolory potworów",
+              "kolory npc",
+              "elita",
+              "heros",
+              "kolos",
+              "tytan",
+            ],
+            settingKeys: [
+              "appearance.npcColors.ELITE",
+              "appearance.npcColors.ELITE2",
+              "appearance.npcColors.ELITE3",
+              "appearance.npcColors.HERO",
+              "appearance.npcColors.EVENT_HERO",
+              "appearance.npcColors.COLOSSUS",
+              "appearance.npcColors.TITAN",
             ],
           },
         ],
@@ -287,6 +314,13 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
           },
         ],
       },
+    ],
+  },
+  {
+    id: "sounds",
+    labelKey: "settings.domains.sounds",
+    icon: "volume2",
+    subsections: [
       {
         id: "sounds",
         labelKey: "settings.tabs.sounds",

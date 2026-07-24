@@ -74,8 +74,9 @@ vi.mock("@/api/npcs.api", () => ({
   },
 }));
 
-vi.mock("@lootlog/types", () => ({
-  getNpcTypeByWt: () => "hero",
+vi.mock("@lootlog/types", async (importOriginal) => ({
+  ...(await importOriginal()),
+  getNpcTypeByWt: () => "HERO",
 }));
 
 vi.mock("@/constants/margonem", () => ({
@@ -260,48 +261,8 @@ describe("ChatMessage", () => {
     expect(screen.getByText("quoted message")).toBeInTheDocument();
   });
 
-  it("scrolls to the replied message without forcing horizontal movement", () => {
+  it("routes every reply jump through the virtual list controller", () => {
     mocks.dispatchChatScrollToMessage.mockClear();
-    const originalMessage = document.createElement("div");
-    const scrollIntoView = vi.fn();
-    originalMessage.scrollIntoView = scrollIntoView;
-
-    const querySelector = vi
-      .spyOn(document, "querySelector")
-      .mockReturnValue(originalMessage);
-
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        message={makeChatMessage({
-          replyTo: {
-            messageId: "message-0",
-            senderNick: "QuotedHero",
-            message: "quoted message",
-            type: MessageType.NORMAL,
-          },
-        })}
-      />,
-    );
-
-    fireEvent.click(screen.getByText("quoted message"));
-
-    expect(querySelector).toHaveBeenCalledWith(
-      `[data-chat-message-id="message-0"]`,
-    );
-    expect(scrollIntoView).toHaveBeenCalledWith({
-      behavior: "smooth",
-      block: "center",
-      inline: "nearest",
-    });
-    expect(mocks.dispatchChatScrollToMessage).not.toHaveBeenCalled();
-  });
-
-  it("asks the virtual list to reveal an unmounted replied message", () => {
-    mocks.dispatchChatScrollToMessage.mockClear();
-    vi.spyOn(document, "querySelector").mockReturnValue(null);
 
     render(
       <ChatMessage

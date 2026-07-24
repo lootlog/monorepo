@@ -14,8 +14,7 @@ const UserPreferencesResponseSchema = z.object({
     showGuildLabel: z.boolean(),
     showNpcAvatar: z.boolean(),
     showNpcLevel: z.boolean(),
-    showNpcLocation: z.boolean(),
-    showNpcCoordinates: z.boolean(),
+    showNpcLocationAndCoordinates: z.boolean(),
   }),
   mutes: z.object({
     players: z.array(

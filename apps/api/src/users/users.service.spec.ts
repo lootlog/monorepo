@@ -195,8 +195,7 @@ describe("UsersService", () => {
         showGuildLabel: true,
         showNpcAvatar: true,
         showNpcLevel: true,
-        showNpcLocation: true,
-        showNpcCoordinates: true,
+        showNpcLocationAndCoordinates: true,
       },
       mutes: {
         players: [],
