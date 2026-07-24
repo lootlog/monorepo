@@ -8,6 +8,7 @@ import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-g
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
+import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { NotificationSettings, NotificationType } from "@lootlog/types";
 import { type FC, type FormEvent, useEffect, useState } from "react";
@@ -62,6 +63,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   categoryKey,
 }) => {
   const { t } = useTranslation();
+  const { npcTypeColors } = useNpcTypeColors();
   const {
     accountId,
     isFetched,
@@ -73,7 +75,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
 
   const currentCategorySettings: NotificationSettings =
     accountSettings[categoryKey];
-  const textColor = getTextColor(categoryKey, true);
+  const textColor = getTextColor(categoryKey, true, npcTypeColors);
   const toggleFields: Array<{
     key: keyof Pick<
       NotificationSettings,

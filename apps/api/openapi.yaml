@@ -6244,9 +6244,7 @@ components:
               type: boolean
             showNpcLevel:
               type: boolean
-            showNpcLocation:
-              type: boolean
-            showNpcCoordinates:
+            showNpcLocationAndCoordinates:
               type: boolean
           required:
             - npcLayout
@@ -6256,8 +6254,7 @@ components:
             - showGuildLabel
             - showNpcAvatar
             - showNpcLevel
-            - showNpcLocation
-            - showNpcCoordinates
+            - showNpcLocationAndCoordinates
         mutes:
           type: object
           properties:
@@ -6407,9 +6404,7 @@ components:
               type: boolean
             showNpcLevel:
               type: boolean
-            showNpcLocation:
-              type: boolean
-            showNpcCoordinates:
+            showNpcLocationAndCoordinates:
               type: boolean
         mutes:
           type: object

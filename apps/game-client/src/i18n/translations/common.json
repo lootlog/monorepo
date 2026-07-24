@@ -43,9 +43,11 @@
     "time": "00:21:37"
   },
   "npcTypes": {
+    "elite": "Elita",
     "elite2": "Elita 2",
     "elite3": "Elita 3",
     "hero": "Heros",
+    "event_hero": "Heros eventowy",
     "colossus": "Kolos",
     "titan": "Tytan",
     "message": "Komunikaty",

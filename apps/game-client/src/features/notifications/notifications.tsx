@@ -7,9 +7,11 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 
 export const Notifications = () => {
   const { t } = useTranslation("notifications");
+  const { npcTypeColors } = useNpcTypeColors();
   useNotifications();
   const open = useWindowsStore((state) => state.notifications.open);
   const defaultWindowHeight = useWindowsStore(
@@ -74,6 +76,7 @@ export const Notifications = () => {
       minWidth={242}
     >
       <NotificationsList
+        npcTypeColors={npcTypeColors}
         notifications={filteredNotifications}
         settings={settings}
       />

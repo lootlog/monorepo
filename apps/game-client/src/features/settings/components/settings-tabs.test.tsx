@@ -66,7 +66,14 @@ vi.mock("@/features/settings/components/timers/timers-settings-tab", () => ({
   TimersSettingsTab: () => <div>Timers tab</div>,
 }));
 vi.mock("@/features/settings/components/chat/chat-appearance-settings", () => ({
-  ChatAppearanceSettingsForm: () => <div>Chat appearance</div>,
+  ChatAppearanceSettingsForm: () => (
+    <details data-testid="chat-advanced-settings">
+      <summary>Więcej opcji</summary>
+      <div id="chat-font-scale" data-settings-control>
+        Skala tekstu
+      </div>
+    </details>
+  ),
 }));
 vi.mock(
   "@/features/settings/components/timers/timers-settings-appearance",
@@ -94,6 +101,10 @@ import { SettingsTabs } from "./settings-tabs";
 
 describe("SettingsTabs", () => {
   beforeEach(() => {
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: vi.fn(),
+    });
     useWindowsStore.setState((state) => ({
       ...state,
       settings: {
@@ -104,13 +115,13 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders eight domain tabs and opens the selected domain", async () => {
+  it("renders nine domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
     render(<SettingsTabs />);
 
     const tabs = screen.getAllByRole("tab");
     const tabNames = tabs.map((tab) => tab.textContent);
-    const appearanceTab = screen.getByRole("tab", { name: "Wygląd" });
+    const soundsTab = screen.getByRole("tab", { name: "Dźwięki" });
 
     expect(tabNames).toEqual([
       "Ogólne",
@@ -118,15 +129,16 @@ describe("SettingsTabs", () => {
       "Timery",
       "Dane z gry",
       "Powiadomienia",
+      "Dźwięki",
       "Sterowanie",
       "Diagnostyka",
       "Informacje",
     ]);
 
-    await user.click(appearanceTab);
+    await user.click(soundsTab);
 
-    expect(appearanceTab).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByText("Chat appearance")).toBeInTheDocument();
+    expect(soundsTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("Sounds tab")).toBeInTheDocument();
   });
 
   it("groups search results by domain and subsection", async () => {
@@ -145,6 +157,52 @@ describe("SettingsTabs", () => {
     ).toBeInTheDocument();
   });
 
+  it("groups sound controls under the standalone sounds domain", async () => {
+    const user = userEvent.setup();
+    render(<SettingsTabs />);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Szukaj w ustawieniach" }),
+      "głośność główna",
+    );
+
+    expect(screen.getAllByText("Dźwięki")).toHaveLength(2);
+    expect(
+      screen.getByRole("option", { name: "Głośność główna" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens advanced settings before revealing a search result", async () => {
+    const user = userEvent.setup();
+    render(<SettingsTabs />);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Szukaj w ustawieniach" }),
+      "skala tekstu",
+    );
+    await user.click(screen.getByRole("option", { name: "Skala tekstu" }));
+
+    expect(await screen.findByTestId("chat-advanced-settings")).toHaveAttribute(
+      "open",
+    );
+  });
+
+  it("shows subsection navigation only when the domain has multiple subsections", async () => {
+    const user = userEvent.setup();
+    render(<SettingsTabs />);
+
+    expect(
+      screen.queryByRole("button", { name: "Zachowanie" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "Wygląd" }));
+
+    expect(screen.getByRole("button", { name: "Chat" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Wygląd timerów" }),
+    ).toBeInTheDocument();
+  });
+
   it("uses an icon rail and opens the overlaid search panel when compact", async () => {
     const user = userEvent.setup();
     useWindowsStore.setState((state) => ({
@@ -158,6 +216,7 @@ describe("SettingsTabs", () => {
     render(<SettingsTabs />);
 
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dźwięki" })).toBeInTheDocument();
     await user.click(
       screen.getByRole("button", { name: "Szukaj w ustawieniach" }),
     );

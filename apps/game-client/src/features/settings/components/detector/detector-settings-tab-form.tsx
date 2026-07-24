@@ -4,6 +4,7 @@ import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-accoun
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
+import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorNpcType, DetectorTypeSettings } from "@lootlog/types";
 import { type FC, useEffect } from "react";
@@ -66,6 +67,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   categoryKey,
 }) => {
   const { t } = useTranslation();
+  const { npcTypeColors } = useNpcTypeColors();
   const {
     accountId,
     isFetched,
@@ -75,7 +77,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
     useUpdateUserGameAccountPreferences(accountId);
 
   const currentCategorySettings = accountSettings[categoryKey];
-  const textColor = getTextColor(categoryKey, true);
+  const textColor = getTextColor(categoryKey, true, npcTypeColors);
   const toggleFields: Array<{
     key: keyof DetectorTypeSettings;
     label: string;

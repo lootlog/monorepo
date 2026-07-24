@@ -6,6 +6,7 @@ export * from "./common/sound-settings.types.js";
 export * from "./common/permissions.types.js";
 export * from "./common/dev-permission-override.types.js";
 export * from "./common/npc-type.types.js";
+export * from "./common/npc-appearance-colors.js";
 export * from "./common/npc-routing.types.js";
 export * from "./common/discord-auth-scopes.js";
 export * from "./common/discord.js";

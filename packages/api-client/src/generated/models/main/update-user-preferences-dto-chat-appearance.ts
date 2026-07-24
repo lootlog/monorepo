@@ -15,6 +15,5 @@ export type UpdateUserPreferencesDtoChatAppearance = {
   showGuildLabel?: boolean;
   showNpcAvatar?: boolean;
   showNpcLevel?: boolean;
-  showNpcLocation?: boolean;
-  showNpcCoordinates?: boolean;
+  showNpcLocationAndCoordinates?: boolean;
 };

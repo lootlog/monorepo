@@ -13,6 +13,7 @@ import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settin
 import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
+import { NpcColorsSettings } from "@/features/settings/components/npc-colors/npc-colors-settings";
 import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
 import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
@@ -37,6 +38,7 @@ import {
   Palette,
   Search,
   Settings,
+  Volume2,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -49,6 +51,7 @@ const ICONS: Record<string, LucideIcon> = {
   clock: Clock,
   database: Database,
   bell: Bell,
+  volume2: Volume2,
   keyboard: Keyboard,
   activity: Activity,
   info: Info,
@@ -140,12 +143,17 @@ export const SettingsTabs = () => {
         exactControl?.closest<HTMLElement>("[data-settings-control]") ??
         exactControl ??
         document.getElementById(`settings-subsection-${result.subsectionId}`);
-      control?.scrollIntoView({ behavior: "smooth", block: "center" });
-      control?.setAttribute("data-settings-highlighted", "true");
-      window.setTimeout(
-        () => control?.removeAttribute("data-settings-highlighted"),
-        1800,
-      );
+      const collapsedSection = control?.closest("details");
+      if (collapsedSection) collapsedSection.open = true;
+
+      window.requestAnimationFrame(() => {
+        control?.scrollIntoView({ behavior: "smooth", block: "center" });
+        control?.setAttribute("data-settings-highlighted", "true");
+        window.setTimeout(
+          () => control?.removeAttribute("data-settings-highlighted"),
+          1800,
+        );
+      });
     });
   };
 
@@ -187,6 +195,9 @@ export const SettingsTabs = () => {
       break;
     case "chat":
       content = <ChatAppearanceSettingsForm />;
+      break;
+    case "npc-colors":
+      content = <NpcColorsSettings />;
       break;
     case "timer-appearance":
       content = <TimersSettingsAppearance />;
@@ -379,19 +390,21 @@ export const SettingsTabs = () => {
         navigationPanel
       )}
       <div className="ll:flex ll:min-h-0 ll:min-w-0 ll:flex-1 ll:flex-col ll:px-3">
-        <div className="ll:mb-2 ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-0 ll:border-b ll:border-solid ll:border-gray-500/30 ll:pb-2">
-          {activeDomain.subsections.map((subsection) => (
-            <button
-              key={subsection.id}
-              type="button"
-              aria-current={subsection.id === selectedSubsection}
-              onClick={() => setSettingsPath(activeDomain.id, subsection.id)}
-              className="ll:rounded-md ll:border ll:border-transparent ll:bg-transparent ll:px-2.5 ll:py-1.5 ll:text-[11px] ll:font-semibold ll:text-gray-400 ll-custom-cursor-pointer ll:hover:bg-gray-500/15 ll:aria-current:border-purple-400/60 ll:aria-current:bg-purple-500/20 ll:aria-current:text-white"
-            >
-              {t(subsection.labelKey)}
-            </button>
-          ))}
-        </div>
+        {activeDomain.subsections.length > 1 ? (
+          <div className="ll:mb-2 ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-0 ll:border-b ll:border-solid ll:border-gray-500/30 ll:pb-2">
+            {activeDomain.subsections.map((subsection) => (
+              <button
+                key={subsection.id}
+                type="button"
+                aria-current={subsection.id === selectedSubsection}
+                onClick={() => setSettingsPath(activeDomain.id, subsection.id)}
+                className="ll:rounded-md ll:border ll:border-transparent ll:bg-transparent ll:px-2.5 ll:py-1.5 ll:text-[11px] ll:font-semibold ll:text-gray-400 ll-custom-cursor-pointer ll:hover:bg-gray-500/15 ll:aria-current:border-purple-400/60 ll:aria-current:bg-purple-500/20 ll:aria-current:text-white"
+              >
+                {t(subsection.labelKey)}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <ScrollArea className="ll:min-h-0 ll:flex-1 ll:pr-2">
           {visibleDomains.map((domain) => (
             <TabsContent

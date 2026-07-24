@@ -1,5 +1,8 @@
 import { useTimersStore } from "@/store/timers.store";
 import { useTranslation } from "react-i18next";
+import { TimerTileView } from "@/features/timers/components/timer-tile-view";
+
+const TIMER_PREVIEW_CONTENT_MIN_HEIGHT_PX = 126;
 
 export const TimerAppearancePreview = () => {
   const { t } = useTranslation();
@@ -14,26 +17,44 @@ export const TimerAppearancePreview = () => {
         {t("settings.timers.preview.label")}
       </div>
       <div
-        className={
-          displayConfig.singleTimerDisplayMode === "row"
-            ? "ll:flex ll:items-center ll:justify-between ll:rounded-md ll:border ll:border-amber-500/50 ll:bg-amber-950/30 ll:px-2 ll:py-1.5"
-            : "ll:flex ll:flex-col ll:items-center ll:rounded-md ll:border ll:border-amber-500/50 ll:bg-amber-950/30 ll:px-2 ll:py-2"
-        }
+        className="ll:grid ll:content-start ll:gap-1.5"
         style={{
-          fontSize: displayConfig.fontSize,
-          minWidth: Math.min(displayConfig.minColumnWidth, 190),
+          gridTemplateColumns: `repeat(auto-fit, minmax(${Math.min(
+            displayConfig.minColumnWidth,
+            190,
+          )}px, 1fr))`,
+          minHeight: TIMER_PREVIEW_CONTENT_MIN_HEIGHT_PX,
         }}
       >
-        <div className="ll:font-semibold ll:text-amber-100">
-          {t("settings.timers.preview.npc")}
-          {displayConfig.showLevel ? (
-            <span className="ll:ml-1 ll:text-gray-400">120</span>
-          ) : null}
-          {displayConfig.showType ? (
-            <span className="ll:ml-1 ll:text-amber-300">HERO</span>
-          ) : null}
-        </div>
-        <div className="ll:font-mono ll:text-white">04:32</div>
+        <TimerTileView
+          color="violet"
+          displayMode={displayConfig.singleTimerDisplayMode}
+          fontSize={displayConfig.fontSize}
+          label={`${displayConfig.showType ? "[H]" : ""} ${t(
+            "settings.timers.preview.npc",
+          )}${displayConfig.showLevel ? " (120m)" : ""}`}
+          timeLabel="04:32"
+        />
+        <TimerTileView
+          color="orange"
+          displayMode={displayConfig.singleTimerDisplayMode}
+          fontSize={displayConfig.fontSize}
+          isMinSpawnTime
+          label={`${displayConfig.showType ? "[E2]" : ""} Mamlambo${
+            displayConfig.showLevel ? " (83h)" : ""
+          }`}
+          timeLabel="00:41"
+        />
+        <TimerTileView
+          color="blue"
+          displayMode={displayConfig.singleTimerDisplayMode}
+          fontSize={displayConfig.fontSize}
+          hasPassedRedThreshold
+          label={`${displayConfig.showType ? "[T]" : ""} Tanroth${
+            displayConfig.showLevel ? " (300w)" : ""
+          }`}
+          timeLabel="-00:12"
+        />
       </div>
     </div>
   );

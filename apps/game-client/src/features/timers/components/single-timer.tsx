@@ -3,7 +3,6 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Tile } from "@/components/ui/tile";
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +18,7 @@ import { useTimerActions } from "../hooks/use-timer-actions";
 import { useTimerDisplay } from "../hooks/use-timer-display";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
+import { TimerTileView } from "./timer-tile-view";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { useGameStore } from "@/store/game.store";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
@@ -116,7 +116,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                   <Loader2 className="ll:h-3 ll:w-3 ll:animate-spin ll:text-orange-500" />
                 </div>
               )}
-              <Tile
+              <TimerTileView
                 id={timer.npc.id.toString()}
                 color={
                   customColor || overriddenColor ? undefined : selectedColor
@@ -128,47 +128,14 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                   customColor?.backgroundColor ||
                   overriddenColor?.backgroundColor
                 }
-              >
-                <span
-                  className={cn(
-                    "ll:flex ll:justify-between ll:w-full ll:text-[11px] ll:px-1 ll:box-border ll:h-full ll:min-w-0",
-                    {
-                      "ll:text-red-500": hasPassedRedThreshold,
-                      "ll:text-orange-400":
-                        isMinSpawnTime && !hasPassedRedThreshold,
-                      "ll:text-white":
-                        !hasPassedRedThreshold && !isMinSpawnTime,
-                      "ll:py-1": document.body.classList.contains("si"),
-                      "ll:flex-col ll:py-0 ll:px-0 ll:leading-[1.05] ll:items-center":
-                        displayConfig.singleTimerDisplayMode === "column",
-                      "ll:opacity-60 ll:blur-[0.5px]": isPending,
-                    },
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "ll:whitespace-nowrap ll:truncate ll:min-w-0 ll:max-w-full",
-                      {
-                        "ll:w-full ll:text-center":
-                          displayConfig.singleTimerDisplayMode === "column",
-                      },
-                    )}
-                    style={{
-                      fontSize: `${displayConfig.fontSize}px`,
-                    }}
-                  >
-                    {resetIndicator}
-                    {shortname} {timer.npc.name} {npcDetails}
-                  </span>
-                  <div
-                    style={{
-                      fontSize: `${displayConfig.fontSize}px`,
-                    }}
-                  >
-                    {parseMsToTime(timeLeft)}
-                  </div>
-                </span>
-              </Tile>
+                displayMode={displayConfig.singleTimerDisplayMode}
+                fontSize={displayConfig.fontSize}
+                hasPassedRedThreshold={hasPassedRedThreshold}
+                isMinSpawnTime={isMinSpawnTime}
+                isPending={isPending}
+                label={`${resetIndicator}${shortname} ${timer.npc.name} ${npcDetails}`}
+                timeLabel={parseMsToTime(timeLeft)}
+              />
             </div>
           </ContextMenuTrigger>
         </TooltipTrigger>

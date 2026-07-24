@@ -42,8 +42,7 @@ const UpdateUserPreferencesSchema = z.object({
       showGuildLabel: z.boolean().optional(),
       showNpcAvatar: z.boolean().optional(),
       showNpcLevel: z.boolean().optional(),
-      showNpcLocation: z.boolean().optional(),
-      showNpcCoordinates: z.boolean().optional(),
+      showNpcLocationAndCoordinates: z.boolean().optional(),
     })
     .optional(),
   mutes: z

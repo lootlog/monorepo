@@ -5,6 +5,10 @@ import {
   CHAT_MESSAGE_GAP_MAX_PX,
   CHAT_MESSAGE_GAP_MIN_PX,
 } from "./chat-appearance-settings.js";
+import {
+  DEFAULT_NPC_TYPE_COLORS,
+  isHexAppearanceColor,
+} from "./npc-appearance-colors.js";
 
 export const SETTINGS_DOMAINS = [
   "general",
@@ -32,6 +36,11 @@ export interface SettingsScope {
   type: SettingsScopeType;
   id: string;
 }
+
+export const getCharacterSettingsScopeId = (
+  gameAccountId: string,
+  characterId: string,
+) => `${gameAccountId}:${characterId}`;
 
 export type SettingsValueSource = "DEFAULT" | SettingsScope;
 export type SettingsPersistence = "SERVER_DOCUMENT" | "DEVICE";
@@ -111,19 +120,24 @@ export const SETTINGS_CATALOG = {
     },
   },
   appearance: {
-    schemaVersion: 1,
-    migrations: [],
+    schemaVersion: 2,
+    migrations: [
+      {
+        fromVersion: 1,
+        migrate: (overrides) => overrides,
+      },
+    ],
     fields: {
       theme: field("default", userScopes, isString),
       colorMode: field("dark", userScopes, isOneOf(["light", "dark"])),
       "chat.npcLayout": field(
         CHAT_APPEARANCE_READABLE_PRESET.npcLayout,
-        characterScopes,
+        userScopes,
         isOneOf(["tile", "inline"]),
       ),
       "chat.fontScalePercent": field(
         CHAT_APPEARANCE_READABLE_PRESET.fontScalePercent,
-        characterScopes,
+        userScopes,
         isNumberInRange(
           CHAT_FONT_SCALE_MIN_PERCENT,
           CHAT_FONT_SCALE_MAX_PERCENT,
@@ -131,38 +145,68 @@ export const SETTINGS_CATALOG = {
       ),
       "chat.messageGapPx": field(
         CHAT_APPEARANCE_READABLE_PRESET.messageGapPx,
-        characterScopes,
+        userScopes,
         isNumberInRange(CHAT_MESSAGE_GAP_MIN_PX, CHAT_MESSAGE_GAP_MAX_PX),
       ),
       "chat.showTimestamp": field(
         CHAT_APPEARANCE_READABLE_PRESET.showTimestamp,
-        characterScopes,
+        userScopes,
         isBoolean,
       ),
       "chat.showGuildLabel": field(
         CHAT_APPEARANCE_READABLE_PRESET.showGuildLabel,
-        characterScopes,
+        userScopes,
         isBoolean,
       ),
       "chat.showNpcAvatar": field(
         CHAT_APPEARANCE_READABLE_PRESET.showNpcAvatar,
-        characterScopes,
+        userScopes,
         isBoolean,
       ),
       "chat.showNpcLevel": field(
         CHAT_APPEARANCE_READABLE_PRESET.showNpcLevel,
-        characterScopes,
+        userScopes,
         isBoolean,
       ),
-      "chat.showNpcLocation": field(
-        CHAT_APPEARANCE_READABLE_PRESET.showNpcLocation,
-        characterScopes,
+      "chat.showNpcLocationAndCoordinates": field(
+        CHAT_APPEARANCE_READABLE_PRESET.showNpcLocationAndCoordinates,
+        userScopes,
         isBoolean,
       ),
-      "chat.showNpcCoordinates": field(
-        CHAT_APPEARANCE_READABLE_PRESET.showNpcCoordinates,
-        characterScopes,
-        isBoolean,
+      "npcColors.ELITE": field(
+        DEFAULT_NPC_TYPE_COLORS.ELITE,
+        userScopes,
+        isHexAppearanceColor,
+      ),
+      "npcColors.ELITE2": field(
+        DEFAULT_NPC_TYPE_COLORS.ELITE2,
+        userScopes,
+        isHexAppearanceColor,
+      ),
+      "npcColors.ELITE3": field(
+        DEFAULT_NPC_TYPE_COLORS.ELITE3,
+        userScopes,
+        isHexAppearanceColor,
+      ),
+      "npcColors.HERO": field(
+        DEFAULT_NPC_TYPE_COLORS.HERO,
+        userScopes,
+        isHexAppearanceColor,
+      ),
+      "npcColors.EVENT_HERO": field(
+        DEFAULT_NPC_TYPE_COLORS.EVENT_HERO,
+        userScopes,
+        isHexAppearanceColor,
+      ),
+      "npcColors.COLOSSUS": field(
+        DEFAULT_NPC_TYPE_COLORS.COLOSSUS,
+        userScopes,
+        isHexAppearanceColor,
+      ),
+      "npcColors.TITAN": field(
+        DEFAULT_NPC_TYPE_COLORS.TITAN,
+        userScopes,
+        isHexAppearanceColor,
       ),
       "timers.displayConfig": field(
         {

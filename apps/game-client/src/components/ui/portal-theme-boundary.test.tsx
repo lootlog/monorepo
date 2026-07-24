@@ -152,6 +152,18 @@ describe("overlay theme boundary", () => {
 
     expectContentInsideThemeBoundary("popover-content");
     expectSmallRadius("popover-content");
+    const popoverPositioner =
+      screen.getByTestId("popover-content").parentElement;
+
+    expect(popoverPositioner).not.toBeNull();
+    if (!popoverPositioner) {
+      throw new Error("Popover positioner was not rendered");
+    }
+    expect(getComputedStyle(popoverPositioner).zIndex).toBe("500");
+    expect(screen.getByTestId("popover-content")).toHaveClass("ll:bg-black");
+    expect(screen.getByTestId("popover-content")).not.toHaveClass(
+      "ll:bg-black/80",
+    );
     const input = screen.getByRole("textbox", { name: "Popover input" });
     fireEvent.focus(input);
     expect(input).toHaveClass(

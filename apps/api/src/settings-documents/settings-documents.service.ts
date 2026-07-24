@@ -1,5 +1,6 @@
 import {
   SETTINGS_CATALOG,
+  getCharacterSettingsScopeId,
   isSettingsDomain,
   type SettingsDocumentLayer,
   type SettingsDomain,
@@ -26,6 +27,7 @@ export interface SettingsContext {
   domains: SettingsDomain[];
   gameAccountId?: string;
   characterId?: string;
+  characterScopeId?: string;
   guildId?: string;
 }
 
@@ -224,6 +226,19 @@ export class SettingsDocumentsService {
     userId: string,
     context: Omit<SettingsContext, "domains">,
   ): SettingsScope[] {
+    let characterScopeId = context.characterScopeId;
+    if (!characterScopeId && context.characterId) {
+      if (!context.gameAccountId) {
+        throw new BadRequestException(
+          "Character settings require a game account context",
+        );
+      }
+      characterScopeId = getCharacterSettingsScopeId(
+        context.gameAccountId,
+        context.characterId,
+      );
+    }
+
     return [
       { type: "USER", id: userId } as const,
       ...(context.gameAccountId
@@ -234,8 +249,8 @@ export class SettingsDocumentsService {
             } as const,
           ]
         : []),
-      ...(context.characterId
-        ? [{ type: "CHARACTER", id: context.characterId } as const]
+      ...(characterScopeId
+        ? [{ type: "CHARACTER", id: characterScopeId } as const]
         : []),
       ...(context.guildId
         ? [{ type: "GUILD", id: context.guildId } as const]
@@ -255,7 +270,7 @@ export class SettingsDocumentsService {
     return {
       domains: [...new Set(operations.map((operation) => operation.domain))],
       gameAccountId: scopes.get("GAME_ACCOUNT"),
-      characterId: scopes.get("CHARACTER"),
+      characterScopeId: scopes.get("CHARACTER"),
       guildId: scopes.get("GUILD"),
     };
   }

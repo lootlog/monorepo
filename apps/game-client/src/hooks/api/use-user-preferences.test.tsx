@@ -37,8 +37,7 @@ const createTestUserPreferences = (): UserPreferencesResponseDtoOutput => ({
     showGuildLabel: true,
     showNpcAvatar: true,
     showNpcLevel: true,
-    showNpcLocation: true,
-    showNpcCoordinates: true,
+    showNpcLocationAndCoordinates: true,
   },
   mutes: {
     players: [{ discordId: "discord-1", displayName: "Alpha" }],

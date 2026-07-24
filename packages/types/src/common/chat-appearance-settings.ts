@@ -8,8 +8,7 @@ export interface ChatAppearanceSettings {
   showGuildLabel: boolean;
   showNpcAvatar: boolean;
   showNpcLevel: boolean;
-  showNpcLocation: boolean;
-  showNpcCoordinates: boolean;
+  showNpcLocationAndCoordinates: boolean;
 }
 
 export type ChatAppearancePreset = "readable" | "compact" | "custom";
@@ -27,8 +26,7 @@ export const CHAT_APPEARANCE_READABLE_PRESET: ChatAppearanceSettings = {
   showGuildLabel: true,
   showNpcAvatar: true,
   showNpcLevel: true,
-  showNpcLocation: true,
-  showNpcCoordinates: true,
+  showNpcLocationAndCoordinates: true,
 };
 
 export const CHAT_APPEARANCE_COMPACT_PRESET: ChatAppearanceSettings = {
@@ -39,8 +37,7 @@ export const CHAT_APPEARANCE_COMPACT_PRESET: ChatAppearanceSettings = {
   showGuildLabel: true,
   showNpcAvatar: false,
   showNpcLevel: true,
-  showNpcLocation: true,
-  showNpcCoordinates: true,
+  showNpcLocationAndCoordinates: true,
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -67,7 +64,6 @@ export const normalizeChatAppearanceSettings = (
   fallback: ChatAppearanceSettings = CHAT_APPEARANCE_READABLE_PRESET,
 ): ChatAppearanceSettings => {
   const settings = isRecord(value) ? value : {};
-
   return {
     npcLayout:
       settings.npcLayout === "tile" || settings.npcLayout === "inline"
@@ -101,13 +97,9 @@ export const normalizeChatAppearanceSettings = (
       settings.showNpcLevel,
       fallback.showNpcLevel,
     ),
-    showNpcLocation: normalizeBoolean(
-      settings.showNpcLocation,
-      fallback.showNpcLocation,
-    ),
-    showNpcCoordinates: normalizeBoolean(
-      settings.showNpcCoordinates,
-      fallback.showNpcCoordinates,
+    showNpcLocationAndCoordinates: normalizeBoolean(
+      settings.showNpcLocationAndCoordinates,
+      fallback.showNpcLocationAndCoordinates,
     ),
   };
 };
@@ -139,8 +131,7 @@ const chatAppearanceSettingsEqual = (
   left.showGuildLabel === right.showGuildLabel &&
   left.showNpcAvatar === right.showNpcAvatar &&
   left.showNpcLevel === right.showNpcLevel &&
-  left.showNpcLocation === right.showNpcLocation &&
-  left.showNpcCoordinates === right.showNpcCoordinates;
+  left.showNpcLocationAndCoordinates === right.showNpcLocationAndCoordinates;
 
 export const getChatAppearancePreset = (
   value: unknown,

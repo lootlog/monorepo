@@ -1,6 +1,7 @@
 import "@/index.css";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createRef } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Collapsible, CollapsibleContent } from "./collapsible";
 import { Progress } from "./progress";
@@ -79,6 +80,191 @@ describe("Base UI control adapters", () => {
     expect(onValueChange).toHaveBeenCalledWith("column");
   });
 
+  it("renders the toggle group as a compact segmented switch", () => {
+    const { container } = render(
+      <ToggleGroup type="single" value="row">
+        <ToggleGroupItem value="row">Row</ToggleGroupItem>
+        <ToggleGroupItem value="column">Column</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+
+    const toggleGroup = container.querySelector('[data-slot="toggle-group"]');
+    expect(toggleGroup).toHaveClass(
+      "ll:rounded-sm",
+      "ll:border-gray-400",
+      "ll:bg-gray-700",
+      "ll:before:bg-purple-500/80",
+      "ll:before:duration-[120ms]",
+      "ll:motion-reduce:before:transition-none",
+    );
+    expect(screen.getByRole("button", { name: "Row" })).toHaveClass(
+      "ll:bg-transparent",
+      "ll:data-[pressed]:bg-transparent",
+      "ll:data-[pressed]:text-white",
+    );
+  });
+
+  it("moves one indicator between unequal single-value segments", async () => {
+    const segmentGeometry = {
+      Row: { left: 2, width: 45 },
+      Column: { left: 47, width: 70 },
+      Stack: { left: 117, width: 58 },
+    };
+    const offsetLeft = vi
+      .spyOn(HTMLElement.prototype, "offsetLeft", "get")
+      .mockImplementation(function getOffsetLeft(this: HTMLElement) {
+        return (
+          segmentGeometry[this.textContent as keyof typeof segmentGeometry]
+            ?.left ?? 0
+        );
+      });
+    const offsetWidth = vi
+      .spyOn(HTMLElement.prototype, "offsetWidth", "get")
+      .mockImplementation(function getOffsetWidth(this: HTMLElement) {
+        return (
+          segmentGeometry[this.textContent as keyof typeof segmentGeometry]
+            ?.width ?? 0
+        );
+      });
+
+    const { container, rerender } = render(
+      <ToggleGroup type="single" value="row">
+        <ToggleGroupItem value="row">Row</ToggleGroupItem>
+        <ToggleGroupItem value="column">Column</ToggleGroupItem>
+        <ToggleGroupItem value="stack">Stack</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+    const toggleGroup = container.querySelector<HTMLElement>(
+      '[data-slot="toggle-group"]',
+    );
+
+    await waitFor(() => {
+      expect(toggleGroup).toHaveAttribute("data-indicator-visible");
+      expect(toggleGroup?.style.getPropertyValue("--toggle-indicator-x")).toBe(
+        "2px",
+      );
+      expect(
+        toggleGroup?.style.getPropertyValue("--toggle-indicator-width"),
+      ).toBe("45px");
+    });
+
+    rerender(
+      <ToggleGroup type="single" value="stack">
+        <ToggleGroupItem value="row">Row</ToggleGroupItem>
+        <ToggleGroupItem value="column">Column</ToggleGroupItem>
+        <ToggleGroupItem value="stack">Stack</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+
+    await waitFor(() => {
+      expect(toggleGroup?.style.getPropertyValue("--toggle-indicator-x")).toBe(
+        "117px",
+      );
+      expect(
+        toggleGroup?.style.getPropertyValue("--toggle-indicator-width"),
+      ).toBe("58px");
+    });
+
+    offsetLeft.mockRestore();
+    offsetWidth.mockRestore();
+  });
+
+  it("keeps independent pressed backgrounds in multiple-value groups", () => {
+    const { container } = render(
+      <ToggleGroup type="multiple" value={["row", "stack"]}>
+        <ToggleGroupItem value="row">Row</ToggleGroupItem>
+        <ToggleGroupItem value="column">Column</ToggleGroupItem>
+        <ToggleGroupItem value="stack">Stack</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+
+    expect(
+      container.querySelector('[data-slot="toggle-group"]'),
+    ).not.toHaveAttribute("data-indicator-visible");
+    expect(screen.getByRole("button", { name: "Row" })).toHaveClass(
+      "ll:data-[pressed]:bg-purple-500/80",
+    );
+    expect(screen.getByRole("button", { name: "Stack" })).toHaveAttribute(
+      "data-pressed",
+    );
+  });
+
+  it("remeasures the indicator after an uncontrolled selection change", async () => {
+    const user = userEvent.setup();
+    const offsetLeft = vi
+      .spyOn(HTMLElement.prototype, "offsetLeft", "get")
+      .mockImplementation(function getOffsetLeft(this: HTMLElement) {
+        return this.textContent === "Column" ? 42 : 2;
+      });
+    const offsetWidth = vi
+      .spyOn(HTMLElement.prototype, "offsetWidth", "get")
+      .mockImplementation(function getOffsetWidth(this: HTMLElement) {
+        return this.textContent === "Column" ? 80 : 40;
+      });
+
+    const { container } = render(
+      <ToggleGroup type="single" defaultValue="row">
+        <ToggleGroupItem value="row">Row</ToggleGroupItem>
+        <ToggleGroupItem value="column">Column</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+    const toggleGroup = container.querySelector<HTMLElement>(
+      '[data-slot="toggle-group"]',
+    );
+
+    await waitFor(() =>
+      expect(
+        toggleGroup?.style.getPropertyValue("--toggle-indicator-width"),
+      ).toBe("40px"),
+    );
+    await user.click(screen.getByRole("button", { name: "Column" }));
+
+    await waitFor(() => {
+      expect(toggleGroup?.style.getPropertyValue("--toggle-indicator-x")).toBe(
+        "42px",
+      );
+      expect(
+        toggleGroup?.style.getPropertyValue("--toggle-indicator-width"),
+      ).toBe("80px");
+    });
+
+    offsetLeft.mockRestore();
+    offsetWidth.mockRestore();
+  });
+
+  it("preserves a consumer ref while measuring the indicator", () => {
+    const toggleGroupRef = createRef<HTMLDivElement>();
+
+    const { container } = render(
+      <ToggleGroup type="single" value="row" ref={toggleGroupRef}>
+        <ToggleGroupItem value="row">Row</ToggleGroupItem>
+        <ToggleGroupItem value="column">Column</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+
+    expect(toggleGroupRef.current).toBe(
+      container.querySelector('[data-slot="toggle-group"]'),
+    );
+  });
+
+  it("keeps keyboard selection for segmented controls", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+
+    render(
+      <ToggleGroup type="single" value="row" onValueChange={onValueChange}>
+        <ToggleGroupItem value="row">Row</ToggleGroupItem>
+        <ToggleGroupItem value="column">Column</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+
+    screen.getByRole("button", { name: "Row" }).focus();
+    await user.keyboard("{ArrowRight} ");
+
+    expect(screen.getByRole("button", { name: "Column" })).toHaveFocus();
+    expect(onValueChange).toHaveBeenCalledWith("column");
+  });
+
   it("keeps the array-valued slider interface and accessible name", () => {
     const onValueChange = vi.fn();
     const onValueCommit = vi.fn();
@@ -102,6 +288,34 @@ describe("Base UI control adapters", () => {
     expect(onValueCommit).toHaveBeenCalledWith([26]);
   });
 
+  it("renders the slider in the segmented-switch visual language", () => {
+    const { container } = render(
+      <Slider aria-label="Volume" defaultValue={[25]} />,
+    );
+
+    const sliderRoot = container.querySelector('[data-slot="slider"]');
+    const sliderInput = screen.getByRole("slider", { name: "Volume" });
+    const sliderThumb = sliderInput.parentElement;
+    const sliderTrack = sliderThumb?.parentElement?.firstElementChild;
+
+    expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
+    expect(sliderTrack).toHaveClass(
+      "ll:h-2",
+      "ll:box-border",
+      "ll:rounded-sm",
+      "ll:border-gray-400",
+      "ll:bg-gray-700",
+    );
+    expect(sliderThumb).toHaveClass(
+      "ll:rounded-sm",
+      "ll:bg-white",
+      "ll:group-data-[interaction=direct]/slider:scale-90",
+      "ll:group-data-[interaction=direct]/slider:transition-none",
+      "ll:motion-reduce:transition-none",
+      "ll:motion-reduce:scale-100",
+    );
+  });
+
   it("positions the slider thumb directly inside the control", () => {
     render(<Slider aria-label="Volume" defaultValue={[25]} />);
 
@@ -118,7 +332,7 @@ describe("Base UI control adapters", () => {
     const onValueChange = vi.fn();
     const onValueCommit = vi.fn();
 
-    render(
+    const { container } = render(
       <Slider
         aria-label="Volume"
         value={[25]}
@@ -129,6 +343,7 @@ describe("Base UI control adapters", () => {
 
     const sliderInput = screen.getByRole("slider", { name: "Volume" });
     const sliderControl = sliderInput.parentElement?.parentElement;
+    const sliderRoot = container.querySelector('[data-slot="slider"]');
 
     expect(sliderControl).not.toBeNull();
     if (!sliderControl) {
@@ -158,6 +373,7 @@ describe("Base UI control adapters", () => {
       pointerId: 1,
       pointerType: "mouse",
     });
+    expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
 
     expect(onValueChange).toHaveBeenCalledWith([75], expect.any(Object));
 
@@ -168,6 +384,7 @@ describe("Base UI control adapters", () => {
       pointerId: 1,
       pointerType: "mouse",
     });
+    expect(sliderRoot).toHaveAttribute("data-interaction", "direct");
     fireEvent.pointerUp(document, {
       button: 0,
       clientX: 80,
@@ -175,9 +392,34 @@ describe("Base UI control adapters", () => {
       pointerId: 1,
       pointerType: "mouse",
     });
+    expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
 
     expect(onValueChange).toHaveBeenLastCalledWith([80], expect.any(Object));
     expect(onValueCommit).toHaveBeenCalledWith([80]);
+  });
+
+  it("uses direct motion for thumb drags and resets it on pointer cancel", () => {
+    const { container } = render(
+      <Slider aria-label="Volume" defaultValue={[25]} />,
+    );
+    const sliderRoot = container.querySelector('[data-slot="slider"]');
+    const sliderThumb = screen.getByRole("slider", {
+      name: "Volume",
+    }).parentElement;
+
+    fireEvent.pointerDown(sliderThumb as HTMLElement, {
+      button: 0,
+      clientX: 25,
+      pointerId: 2,
+      pointerType: "mouse",
+    });
+    expect(sliderRoot).toHaveAttribute("data-interaction", "direct");
+
+    fireEvent.pointerCancel(document, {
+      pointerId: 2,
+      pointerType: "mouse",
+    });
+    expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
   });
 
   it("reflects controlled collapsible and progress values", () => {

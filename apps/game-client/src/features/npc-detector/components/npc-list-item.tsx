@@ -11,6 +11,7 @@ import {
   getNpcTypeByWt,
   type DetectorNpcType,
   type DetectorSettings,
+  type NpcTypeColors,
 } from "@lootlog/types";
 import type {
   GameNpcWithLocation,
@@ -53,6 +54,7 @@ type NpcListItemProps = {
   removeNpc: NpcDetectorState["removeNpc"];
   setNpcState: NpcDetectorState["setNpcState"];
   setOpen: ReturnType<typeof useWindowsStore.getState>["setOpen"];
+  npcTypeColors?: NpcTypeColors;
 };
 
 export const NPCS_WITH_LOCATION = [NpcType.HERO];
@@ -115,6 +117,7 @@ export const NpcListItem = ({
   removeNpc,
   setNpcState,
   setOpen,
+  npcTypeColors,
 }: NpcListItemProps) => {
   const { t } = useTranslation("npcDetector");
   const {
@@ -211,8 +214,16 @@ export const NpcListItem = ({
     }
   };
 
-  const background = getBackgroundColor(key, settingsByNpcType?.highlight);
-  const borderColor = getBorderColor(key, settingsByNpcType?.highlight);
+  const background = getBackgroundColor(
+    key,
+    settingsByNpcType?.highlight,
+    npcTypeColors,
+  );
+  const borderColor = getBorderColor(
+    key,
+    settingsByNpcType?.highlight,
+    npcTypeColors,
+  );
   const shouldPlayDetectionAnimation =
     animationEffectsEnabled && detectionAnimationCycle !== null;
   const content = (

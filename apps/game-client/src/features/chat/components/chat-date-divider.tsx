@@ -18,12 +18,12 @@ export const ChatDateDivider: FC<ChatDateDividerProps> = ({ timestamp }) => {
 
   return (
     <div
-      className="ll:flex ll:w-full ll:items-center ll:gap-2 ll:py-1 ll:select-none"
+      className="ll:flex ll:w-full ll:items-center ll:gap-[var(--ll-chat-space-lg)] ll:py-[var(--ll-chat-space-sm)] ll:select-none"
       role="separator"
       aria-label={label}
     >
       <div className="ll:h-px ll:flex-1 ll:bg-gray-700/80" />
-      <span className="ll:px-2 ll:py-0.5 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-[0.08em] ll:text-gray-400">
+      <span className="ll:px-[var(--ll-chat-space-lg)] ll:py-[var(--ll-chat-space-xs)] ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:font-semibold ll:uppercase ll:tracking-[0.08em] ll:text-gray-400">
         {label}
       </span>
       <div className="ll:h-px ll:flex-1 ll:bg-gray-700/80" />

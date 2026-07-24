@@ -1,4 +1,3 @@
-import { useGameStore } from "@/store/game.store";
 import {
   getSettingsDocumentsControllerGetPreferencesQueryKey,
   useSettingsDocumentsControllerGetPreferences,
@@ -6,8 +5,11 @@ import {
 import type { SettingsDocumentsControllerGetPreferencesParams } from "@lootlog/api-client/models/main/settings-documents-controller-get-preferences-params";
 import type { SettingsDocumentsResponseDtoOutput } from "@lootlog/api-client/models/main/settings-documents-response-dto-output";
 import {
+  DEFAULT_NPC_TYPE_COLORS,
   normalizeChatAppearanceSettings,
+  normalizeNpcTypeColors,
   type ChatAppearanceSettings,
+  type NpcTypeColors,
 } from "@lootlog/types";
 
 type JsonRecord = Record<string, unknown>;
@@ -53,17 +55,52 @@ export const updateChatAppearanceInSettingsDocuments = (
   };
 };
 
+export const getNpcTypeColorsFromSettingsDocuments = (
+  settingsDocuments: SettingsDocumentsResponseDtoOutput | undefined,
+) => {
+  const appearance = settingsDocuments?.domains.appearance;
+  const npcColors = isRecord(appearance?.effective)
+    ? appearance.effective.npcColors
+    : undefined;
+  return normalizeNpcTypeColors(npcColors ?? DEFAULT_NPC_TYPE_COLORS);
+};
+
+export const updateNpcTypeColorsInSettingsDocuments = (
+  settingsDocuments: SettingsDocumentsResponseDtoOutput | undefined,
+  patch: Partial<NpcTypeColors>,
+) => {
+  const appearance = settingsDocuments?.domains.appearance;
+  if (!settingsDocuments || !appearance) return settingsDocuments;
+
+  return {
+    ...settingsDocuments,
+    domains: {
+      ...settingsDocuments.domains,
+      appearance: {
+        ...appearance,
+        effective: {
+          ...appearance.effective,
+          npcColors: {
+            ...getNpcTypeColorsFromSettingsDocuments(settingsDocuments),
+            ...patch,
+          },
+        },
+      },
+    },
+  };
+};
+
+export const useNpcTypeColors = () => {
+  const query = useAppearanceSettingsDocuments();
+  return {
+    ...query,
+    npcTypeColors: getNpcTypeColorsFromSettingsDocuments(query.data),
+  };
+};
+
 export const useAppearanceSettingsDocuments = () => {
-  const gameAccountId = useGameStore(
-    (state) => state.game?.hero.accountId ?? undefined,
-  );
-  const characterId = useGameStore(
-    (state) => state.game?.hero.characterId ?? undefined,
-  );
   const params: SettingsDocumentsControllerGetPreferencesParams = {
     domains: "appearance",
-    gameAccountId,
-    characterId,
   };
   const query = useSettingsDocumentsControllerGetPreferences(params, {
     query: {
