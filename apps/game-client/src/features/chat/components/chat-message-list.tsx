@@ -432,7 +432,6 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
             ) : renderable.kind === "npc-group" ? (
               <ChatNpcMessage
                 appearance={appearance}
-                additionalSenderCount={renderable.additionalSenderCount}
                 all={selectedGuildId === "all"}
                 count={renderable.count}
                 guildName={guildNamesById[renderable.message.guildId]}

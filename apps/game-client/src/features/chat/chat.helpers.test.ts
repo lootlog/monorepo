@@ -283,14 +283,12 @@ describe("chat helpers", () => {
         timestamp: "2026-01-01T10:00:30.000Z",
       },
       {
-        additionalSenderCount: 0,
         kind: "npc-group",
         key: "npc-group:npc-1",
         count: 2,
         message: secondNpcMessage,
       },
       {
-        additionalSenderCount: 0,
         kind: "npc-group",
         key: "npc-group:npc-3",
         count: 1,
@@ -365,14 +363,12 @@ describe("chat helpers", () => {
         timestamp: "2026-01-01T10:00:10.000Z",
       },
       {
-        additionalSenderCount: 0,
         kind: "npc-group",
         key: "npc-group:npc-a-1",
         count: 2,
         message: expect.objectContaining({ id: "npc-a-2" }),
       },
       {
-        additionalSenderCount: 0,
         kind: "npc-group",
         key: "npc-group:npc-b-1",
         count: 2,
@@ -430,14 +426,12 @@ describe("chat helpers", () => {
         timestamp: "2026-01-01T10:00:00.000Z",
       },
       {
-        additionalSenderCount: 0,
         kind: "npc-group",
         key: "npc-group:npc-1",
         count: 1,
         message: expect.objectContaining({ id: "npc-1" }),
       },
       {
-        additionalSenderCount: 0,
         kind: "npc-group",
         key: "npc-group:npc-2",
         count: 1,
@@ -446,7 +440,7 @@ describe("chat helpers", () => {
     ]);
   });
 
-  it("tracks additional unique senders inside a grouped npc burst", () => {
+  it("counts grouped npc messages without exposing sender aggregation", () => {
     const hydraNpc = {
       id: 10,
       name: "Hydra",
@@ -495,7 +489,6 @@ describe("chat helpers", () => {
         timestamp: "2026-01-01T10:00:10.000Z",
       },
       {
-        additionalSenderCount: 2,
         kind: "npc-group",
         key: "npc-group:npc-a-1",
         count: 3,

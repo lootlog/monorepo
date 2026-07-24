@@ -7,7 +7,6 @@ import { ChatCharacterTooltip } from "./chat-character-tooltip";
 import { ChatNpcMessageView } from "./chat-npc-message-view";
 
 type ChatNpcMessageProps = {
-  additionalSenderCount?: number;
   all: boolean;
   appearance?: ChatAppearanceSettings;
   count?: number;
@@ -18,7 +17,6 @@ type ChatNpcMessageProps = {
 };
 
 export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
-  additionalSenderCount = 0,
   all,
   appearance,
   count = 1,
@@ -32,7 +30,6 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
 
   return (
     <ChatNpcMessageView
-      additionalSenderCount={additionalSenderCount}
       all={all}
       appearance={appearance}
       count={count}

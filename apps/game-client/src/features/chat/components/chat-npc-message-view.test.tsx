@@ -50,7 +50,6 @@ describe("ChatNpcMessageView", () => {
   it("renders the production tile metadata through its public interface", () => {
     render(
       <ChatNpcMessageView
-        additionalSenderCount={2}
         all
         appearance={CHAT_APPEARANCE_READABLE_PRESET}
         count={3}
@@ -64,12 +63,18 @@ describe("ChatNpcMessageView", () => {
     expect(screen.getByText("[Northern Guard]")).toBeInTheDocument();
     expect(screen.getByText("Arianna:")).toHaveStyle({ color: "#abcdef" });
     expect(screen.getByText("Dark Hunter tile")).toBeInTheDocument();
-    expect(screen.getByText("Dark Hunter")).toBeInTheDocument();
+    const npcName = screen.getByText("Dark Hunter");
+    const countBadge = screen.getByText("x3");
+
+    expect(npcName).toBeInTheDocument();
+    expect(npcName.parentElement?.parentElement).toContainElement(countBadge);
+    expect(countBadge.parentElement).not.toHaveClass("ll:overflow-hidden");
+    expect(countBadge.parentElement?.parentElement).not.toHaveClass(
+      "ll:overflow-hidden",
+    );
     expect(screen.getByText("(120m)")).toBeInTheDocument();
     expect(screen.getByText("Old Ruins")).toBeInTheDocument();
     expect(screen.getByText("(42, 18)")).toBeInTheDocument();
-    expect(screen.getByText("x3")).toBeInTheDocument();
-    expect(screen.getByText("+2")).toBeInTheDocument();
   });
 
   it("renders the inline variant without disabled metadata", () => {
