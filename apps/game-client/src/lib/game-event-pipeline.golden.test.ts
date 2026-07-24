@@ -13,6 +13,8 @@ import type * as ApiModule from "@/api";
 import { useGameStore } from "@/store/game.store";
 import type { MargonemRuntimeAdapter } from "./margonem-runtime/runtime-adapter";
 import { RuntimeStateSynchronizer } from "./margonem-runtime/runtime-state-synchronizer";
+import { useNpcsStore } from "@/store/npcs.store";
+import { useOthersStore } from "@/store/others.store";
 
 const effects = vi.hoisted(() => ({
   cancelMapPingInteraction: vi.fn(),
@@ -189,6 +191,8 @@ function resetPipelineState(): void {
     socketState: { connected: false, joined: false, joinedGuilds: [] },
   });
   useLootStore.setState({ lastLootId: null });
+  useNpcsStore.getState().clearNpcs();
+  useOthersStore.getState().clearOthers();
   useGameStore.getState().replaceGame({
     hero: {
       accountId: "67890",
@@ -392,4 +396,148 @@ describe("game event pipeline golden replay", () => {
 
     dispatcher.cleanup();
   });
+
+  it.each([
+    ["same packet", "legacy"],
+    ["next packet", "legacy"],
+    ["same packet", "modern"],
+    ["next packet", "modern"],
+  ] as const)(
+    "submits complete participants after a fragmentary final fight update (%s, %s HP)",
+    async (lootTiming, hpFormat) => {
+      resetPipelineState();
+      useOthersStore.getState().replaceOthers({
+        "111": Object.freeze({
+          accountId: "222",
+          characterId: "111",
+          icon: "warrior.gif",
+          level: 300,
+          name: "Warrior",
+          profession: "w",
+        }),
+      });
+      const dispatcher = new EventDispatcher();
+      pipelineWindow.successData = vi.fn(() => "game-result");
+      margonemRuntimeBridge.setupProxies();
+      dispatcher.register();
+      margonemRuntimeBridge.setReady(true);
+
+      pipelineWindow.successData?.({
+        f: {
+          init: "1",
+          w: {
+            "12345": {
+              hp: { cur: 1_000, hpp: 100, max: 1_000 },
+              hpp: 100,
+              icon: "hero.gif",
+              id: 12_345,
+              lvl: 300,
+              name: "Hero",
+              originalId: 12_345,
+              prof: "w",
+              team: 1,
+              type: 0,
+              wt: 0,
+            },
+            "111": {
+              hpp: 100,
+              icon: "warrior.gif",
+              id: 111,
+              lvl: 300,
+              name: "Warrior",
+              originalId: 111,
+              prof: "w",
+              team: 1,
+              type: 0,
+              wt: 0,
+            },
+            "-100": {
+              hp: { cur: 1_000, hpp: 100, max: 1_000 },
+              hpp: 100,
+              icon: "boss.gif",
+              id: -100,
+              lvl: 300,
+              name: "Boss",
+              originalId: 100,
+              prof: "m",
+              team: 2,
+              type: 2,
+              wt: 85,
+            },
+          },
+        },
+      } as GameEvent);
+
+      const finalWarriorPatches =
+        hpFormat === "modern"
+          ? {
+              "12345": { hp: { cur: 750, hpp: 75, max: 1_000 } },
+              "-100": { hp: { cur: 0 } },
+            }
+          : {
+              "12345": { hpp: 75 },
+              "-100": { hpp: 0 },
+            };
+      const fragmentaryFinalFightEvent = {
+        f: {
+          endBattle: 1,
+          m: ["final"],
+          w: finalWarriorPatches,
+        },
+      } as unknown as GameEvent;
+
+      if (lootTiming === "same packet") {
+        pipelineWindow.successData?.({
+          ...fightLootEvent,
+          ...fragmentaryFinalFightEvent,
+        } as GameEvent);
+      } else {
+        pipelineWindow.successData?.(fragmentaryFinalFightEvent);
+        pipelineWindow.successData?.(fightLootEvent);
+      }
+
+      expect(api.createLoot).toHaveBeenCalledOnce();
+      expect(api.createLoot).toHaveBeenCalledWith(
+        expect.objectContaining({
+          npcs: [
+            {
+              hpp: 0,
+              icon: "boss.gif",
+              id: 100,
+              location: "Nithal",
+              lvl: 300,
+              name: "Boss",
+              prof: "m",
+              type: 2,
+              wt: 85,
+            },
+          ],
+          players: expect.arrayContaining([
+            {
+              accountId: 67_890,
+              hpp: 75,
+              icon: "hero.gif",
+              id: 12_345,
+              lvl: 300,
+              name: "Hero",
+              prof: "w",
+            },
+            {
+              accountId: 222,
+              hpp: 100,
+              icon: "warrior.gif",
+              id: 111,
+              lvl: 300,
+              name: "Warrior",
+              prof: "w",
+            },
+          ]),
+        }),
+        expect.objectContaining({ source: "fight" }),
+      );
+      await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
+
+      dispatcher.cleanup();
+    },
+  );
 });
