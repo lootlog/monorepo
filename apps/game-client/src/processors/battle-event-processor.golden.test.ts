@@ -15,7 +15,7 @@ vi.mock("@/api", () => ({
 }));
 
 vi.mock("@/hooks/game-events/helpers/battle.helpers", () => ({
-  addAccountIdsToWarriors: (warriors: unknown) => warriors,
+  mergeBattleWarriorPatches: (warriors: unknown) => warriors,
 }));
 
 vi.mock("@/lib/game", () => ({
