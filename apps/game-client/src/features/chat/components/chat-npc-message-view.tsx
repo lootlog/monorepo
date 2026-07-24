@@ -15,9 +15,9 @@ import {
   getChatNpcTextColor,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
+import { ChatNpcCountBadge } from "./chat-npc-count-badge";
 
 type ChatNpcMessageViewProps = {
-  additionalSenderCount?: number;
   all: boolean;
   appearance?: ChatAppearanceSettings;
   count?: number;
@@ -30,7 +30,6 @@ type ChatNpcMessageViewProps = {
 };
 
 export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = ({
-  additionalSenderCount = 0,
   all,
   appearance = CHAT_APPEARANCE_READABLE_PRESET,
   count = 1,
@@ -101,11 +100,6 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = ({
           </span>
         ) : null}
         {wrapSender ? wrapSender(sender) : sender}{" "}
-        {count > 1 ? (
-          <span className="ll:ml-[var(--ll-chat-space-sm)] ll:inline-flex ll:rounded-full ll:bg-red-600 ll:px-[var(--ll-chat-space-md)] ll:py-px ll:text-[length:var(--ll-chat-detail-font-size)] ll:font-bold ll:leading-none ll:text-white">
-            x{count}
-          </span>
-        ) : null}
       </div>
       <div
         className={cn(
@@ -153,16 +147,7 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = ({
                 </span>
               ) : null}
             </div>
-            {additionalSenderCount > 0 ? (
-              <span
-                className={cn(
-                  "ll:shrink-0 ll:rounded-full ll:bg-gray-700/80 ll:px-[var(--ll-chat-space-sm)] ll:py-px ll:text-[length:var(--ll-chat-badge-font-size)] ll:font-semibold ll:leading-none ll:text-gray-200",
-                  { "ll:opacity-50": isMsgYesterday },
-                )}
-              >
-                +{additionalSenderCount}
-              </span>
-            ) : null}
+            <ChatNpcCountBadge count={count} />
           </div>
 
           {appearance.showNpcLocationAndCoordinates &&
