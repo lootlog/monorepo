@@ -68,6 +68,10 @@ describe("ChatNpcMessageView", () => {
 
     expect(npcName).toBeInTheDocument();
     expect(npcName.parentElement?.parentElement).toContainElement(countBadge);
+    expect(countBadge.parentElement).not.toHaveClass("ll:overflow-hidden");
+    expect(countBadge.parentElement?.parentElement).not.toHaveClass(
+      "ll:overflow-hidden",
+    );
     expect(screen.getByText("(120m)")).toBeInTheDocument();
     expect(screen.getByText("Old Ruins")).toBeInTheDocument();
     expect(screen.getByText("(42, 18)")).toBeInTheDocument();
