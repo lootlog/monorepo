@@ -397,9 +397,14 @@ describe("game event pipeline golden replay", () => {
     dispatcher.cleanup();
   });
 
-  it.each(["same packet", "next packet"] as const)(
-    "submits complete participants after a fragmentary final fight update (%s)",
-    (lootTiming) => {
+  it.each([
+    ["same packet", "legacy"],
+    ["next packet", "legacy"],
+    ["same packet", "modern"],
+    ["next packet", "modern"],
+  ] as const)(
+    "submits complete participants after a fragmentary final fight update (%s, %s HP)",
+    async (lootTiming, hpFormat) => {
       resetPipelineState();
       useOthersStore.getState().replaceOthers({
         "111": Object.freeze({
@@ -422,6 +427,7 @@ describe("game event pipeline golden replay", () => {
           init: "1",
           w: {
             "12345": {
+              hp: { cur: 1_000, hpp: 100, max: 1_000 },
               hpp: 100,
               icon: "hero.gif",
               id: 12_345,
@@ -446,6 +452,7 @@ describe("game event pipeline golden replay", () => {
               wt: 0,
             },
             "-100": {
+              hp: { cur: 1_000, hpp: 100, max: 1_000 },
               hpp: 100,
               icon: "boss.gif",
               id: -100,
@@ -461,14 +468,21 @@ describe("game event pipeline golden replay", () => {
         },
       } as GameEvent);
 
+      const finalWarriorPatches =
+        hpFormat === "modern"
+          ? {
+              "12345": { hp: { cur: 750, hpp: 75, max: 1_000 } },
+              "-100": { hp: { cur: 0 } },
+            }
+          : {
+              "12345": { hpp: 75 },
+              "-100": { hpp: 0 },
+            };
       const fragmentaryFinalFightEvent = {
         f: {
           endBattle: 1,
           m: ["final"],
-          w: {
-            "12345": { hpp: 75 },
-            "-100": { hpp: 0 },
-          },
+          w: finalWarriorPatches,
         },
       } as unknown as GameEvent;
 
@@ -521,6 +535,7 @@ describe("game event pipeline golden replay", () => {
         }),
         expect.objectContaining({ source: "fight" }),
       );
+      await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
 
       dispatcher.cleanup();
     },
