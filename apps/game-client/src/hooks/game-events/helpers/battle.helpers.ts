@@ -4,15 +4,17 @@ import { useOthersStore } from "@/store/others.store";
 import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
 import type { W } from "@lootlog/margonem/game-events";
 
-export const addAccountIdsToWarriors = (
+export const mergeBattleWarriorPatches = (
   warriors: W,
   currentWarriors: BattleWarriorsWithAccountId,
   ingress?: RuntimeIngressSnapshot,
 ) => {
-  const copy = { ...warriors } as BattleWarriorsWithAccountId;
+  const mergedWarriors = {
+    ...currentWarriors,
+  } as BattleWarriorsWithAccountId;
   const game = ingress?.game ?? useGameStore.getState().game;
 
-  Object.entries(copy).forEach(([key, warrior]) => {
+  Object.entries(warriors).forEach(([key, warrior]) => {
     let accountId = currentWarriors[key]?.accountId;
     if (accountId === undefined && key === game?.hero.characterId) {
       accountId = Number(game.hero.accountId);
@@ -26,11 +28,12 @@ export const addAccountIdsToWarriors = (
         : undefined;
     }
 
-    copy[key] = {
+    mergedWarriors[key] = {
+      ...currentWarriors[key],
       ...warrior,
       accountId,
     };
   });
 
-  return copy;
+  return mergedWarriors;
 };
