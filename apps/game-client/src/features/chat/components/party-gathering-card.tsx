@@ -25,6 +25,8 @@ type PartyGatheringCardProps = {
   guildName: string;
   all: boolean;
   isMsgYesterday: boolean;
+  showGuildLabel?: boolean;
+  showTimestamp?: boolean;
 };
 
 export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
@@ -33,6 +35,8 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   guildName,
   all,
   isMsgYesterday,
+  showGuildLabel = true,
+  showTimestamp = true,
 }) => {
   const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
@@ -59,19 +63,24 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
 
   if (!partyGathering) {
     return (
-      <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-center ll:gap-1 ll:text-white ll:text-xs ll:select-text ll:cursor-text">
+      <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-center ll:gap-[var(--ll-chat-space-sm)] ll:text-white ll:text-[length:var(--ll-chat-font-size)] ll:leading-[var(--ll-chat-line-height)] ll:select-text ll:cursor-text">
         <span
           className="ll:inline-block ll:max-w-full ll:select-text"
           style={{ overflowWrap: "anywhere" }}
         >
-          <span
-            className={cn("ll:text-[11px] ll:select-text", {
-              "ll:opacity-50": isMsgYesterday,
-            })}
-          >
-            [{format(new Date(message.timestamp), "HH:mm")}]
-          </span>{" "}
-          {all && (
+          {showTimestamp ? (
+            <span
+              className={cn(
+                "ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:select-text",
+                {
+                  "ll:opacity-50": isMsgYesterday,
+                },
+              )}
+            >
+              [{format(new Date(message.timestamp), "HH:mm")}]
+            </span>
+          ) : null}{" "}
+          {all && showGuildLabel && (
             <span
               className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
                 "ll:opacity-50": isMsgYesterday,
@@ -122,19 +131,24 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   };
 
   return (
-    <div className="ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:text-white ll:text-xs ll:select-text ll:cursor-text">
+    <div className="ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:text-white ll:text-[length:var(--ll-chat-font-size)] ll:leading-[var(--ll-chat-line-height)] ll:select-text ll:cursor-text">
       <div
-        className="ll:mb-0.5 ll:min-w-0 ll:max-w-full"
+        className="ll:mb-[var(--ll-chat-space-xs)] ll:min-w-0 ll:max-w-full"
         style={{ overflowWrap: "anywhere" }}
       >
-        <span
-          className={cn("ll:text-[11px] ll:select-text", {
-            "ll:opacity-50": isMsgYesterday,
-          })}
-        >
-          [{format(new Date(message.timestamp), "HH:mm")}]
-        </span>{" "}
-        {all && (
+        {showTimestamp ? (
+          <span
+            className={cn(
+              "ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:select-text",
+              {
+                "ll:opacity-50": isMsgYesterday,
+              },
+            )}
+          >
+            [{format(new Date(message.timestamp), "HH:mm")}]
+          </span>
+        ) : null}{" "}
+        {all && showGuildLabel && (
           <span
             className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
               "ll:opacity-50": isMsgYesterday,
@@ -159,34 +173,34 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
         </span>
       </div>
       <div
-        className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:flex-col ll:items-stretch ll:gap-1 ll:overflow-hidden ll:rounded-sm ll:border-l-2 ll:border-solid ll:bg-gray-500/30 ll:px-2 ll:py-1.5"
+        className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:flex-col ll:items-stretch ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden ll:rounded-sm ll:border-l-2 ll:border-solid ll:bg-gray-500/30 ll:px-[var(--ll-chat-space-lg)] ll:py-[var(--ll-chat-space-md)]"
         style={{ borderColor: "#FF8C00" }}
       >
-        <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-center ll:gap-1.5 ll:overflow-hidden">
+        <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-center ll:gap-[var(--ll-chat-space-md)] ll:overflow-hidden">
           <CharacterTile
             character={message.characterData}
-            className="ll:shrink-0 ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-1"
+            className="ll:shrink-0 ll:h-[var(--ll-chat-character-size)] ll:w-[var(--ll-chat-character-size)]"
           />
-          <span className="ll:flex-1 ll:min-w-0 ll:max-w-full ll:truncate ll:font-bold ll:text-[11px] ll:text-white">
+          <span className="ll:flex-1 ll:min-w-0 ll:max-w-full ll:truncate ll:font-bold ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:text-white">
             {message.characterData.nick} ({message.characterData.lvl}
             {message.characterData.prof})
           </span>
         </div>
         {message.npc && (
-          <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-center ll:gap-1.5 ll:overflow-hidden">
-            <span className="ll:flex-1 ll:min-w-0 ll:max-w-full ll:truncate ll:text-[11px] ll:text-amber-300 ll:font-semibold">
+          <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-center ll:gap-[var(--ll-chat-space-md)] ll:overflow-hidden">
+            <span className="ll:flex-1 ll:min-w-0 ll:max-w-full ll:truncate ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:text-amber-300 ll:font-semibold">
               {message.npc.name} ({message.npc.lvl}
               {message.npc.prof ?? ""})
             </span>
           </div>
         )}
         {partyGathering?.description && (
-          <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[11px] ll:text-gray-300 ll:italic">
+          <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:text-gray-300 ll:italic">
             &quot;{partyGathering.description}&quot;
           </p>
         )}
         {(partyGathering?.minLvl ?? partyGathering?.maxLvl) && (
-          <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[10px] ll:text-gray-400">
+          <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-gray-400">
             {t("partyGathering.levelRange", {
               min: partyGathering?.minLvl ?? 1,
               max: partyGathering?.maxLvl ?? 500,
@@ -212,11 +226,11 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
                   !meetsLevelReq ||
                   currentReadyRoom !== null
                 }
-                className="ll:box-border ll:w-full ll:min-w-0 ll:max-w-full ll:mt-0.5 ll:text-[11px] ll:h-6 ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
+                className="ll:box-border ll:w-full ll:min-w-0 ll:max-w-full ll:mt-[var(--ll-chat-space-xs)] ll:text-[length:var(--ll-chat-meta-font-size)] ll:h-[var(--ll-chat-control-height)] ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
               >
                 {applyToReadyRoom.isPending ? (
                   <>
-                    <Loader2 className="ll:w-3 ll:h-3 ll:animate-spin ll:mr-1" />
+                    <Loader2 className="ll:w-[var(--ll-chat-icon-size)] ll:h-[var(--ll-chat-icon-size)] ll:animate-spin ll:mr-[var(--ll-chat-space-sm)]" />
                     {t("partyGathering.volunteering")}
                   </>
                 ) : !meetsLevelReq ? (

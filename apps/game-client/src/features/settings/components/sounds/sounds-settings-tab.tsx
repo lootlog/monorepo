@@ -9,6 +9,7 @@ import {
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
 import { useGameStore } from "@/store/game.store";
+import { useSettingsStore } from "@/store/settings.store";
 import type { SoundCategory } from "@/features/settings/components/sounds/types";
 import { Bell, Clock, Crosshair, Loader2, MapPin, Play } from "lucide-react";
 import { useEffect, useState, type FC, type ReactNode } from "react";
@@ -38,6 +39,12 @@ export const SoundsSettingsTab: FC = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
   const { data: soundSettings, isLoading } = useSoundSettings();
   const { mutate: updateSettings, isPending } = useUpdateSoundSettings();
+  const masterVolume = useSettingsStore((state) => state.masterVolume);
+  const setMasterVolume = useSettingsStore((state) => state.setMasterVolume);
+  const soundsMuted = useSettingsStore((state) => state.soundsMuted);
+  const toggleSoundsMuted = useSettingsStore(
+    (state) => state.toggleSoundsMuted,
+  );
   const { playSoundTest } = useSoundPlayback();
   const { t } = useTranslation(["settings", "common"]);
   const settings = soundSettings
@@ -52,7 +59,6 @@ export const SoundsSettingsTab: FC = () => {
     pings: false,
   });
   const [localVolumes, setLocalVolumes] = useState({
-    master: 0.5,
     notifications: 0.5,
     detector: 0.5,
     timers: 0.5,
@@ -108,7 +114,6 @@ export const SoundsSettingsTab: FC = () => {
     }
 
     setLocalVolumes({
-      master: soundSettings.masterVolume ?? 0.5,
       notifications: soundSettings.notificationsVolume ?? 0.5,
       detector: soundSettings.detectorVolume ?? 0.5,
       timers: soundSettings.timersVolume ?? 0.5,
@@ -137,18 +142,16 @@ export const SoundsSettingsTab: FC = () => {
       ) : null}
       <div className="ll:flex ll:flex-col ll:gap-4 ll:pb-6 ll:pr-1">
         <MasterVolumeControl
-          volume={localVolumes.master}
+          isMuted={soundsMuted}
+          volume={masterVolume}
           onVolumeChange={(value) => {
-            setLocalVolumes((prev) => ({ ...prev, master: value[0] }));
+            setMasterVolume(value[0]);
           }}
           onVolumeCommit={(value) => {
-            updateSettings({ masterVolume: value[0] });
+            setMasterVolume(value[0]);
           }}
           onMuteToggle={() => {
-            const newVolume = localVolumes.master > 0 ? 0 : 0.5;
-
-            setLocalVolumes((prev) => ({ ...prev, master: newVolume }));
-            updateSettings({ masterVolume: newVolume });
+            toggleSoundsMuted();
           }}
         />
 

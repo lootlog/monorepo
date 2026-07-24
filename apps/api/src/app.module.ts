@@ -36,6 +36,7 @@ import { DiagnosticsModule } from "src/shared/diagnostics/diagnostics.module";
 import { PerfDiagnosticsMiddleware } from "src/shared/diagnostics/perf-diagnostics.middleware";
 import { PublicGuildStatsCardModule } from "src/public-guild-stats-card/public-guild-stats-card.module";
 import { DocsModule } from "src/docs/docs.module";
+import { SettingsDocumentsModule } from "src/settings-documents/settings-documents.module";
 
 const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
 
@@ -83,6 +84,7 @@ const isOpenApiGeneration = process.env.OPENAPI_GENERATION === "true";
     KillsModule,
     PublicGuildStatsCardModule,
     DocsModule,
+    SettingsDocumentsModule,
   ],
   controllers: [],
   providers: [

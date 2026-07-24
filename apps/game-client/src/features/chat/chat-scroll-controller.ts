@@ -1,7 +1,6 @@
 export type ChatScrollMode =
   | "initializing"
   | "following-bottom"
-  | "animating-to-bottom"
   | "reading-history"
   | "jumping-to-message";
 
@@ -17,12 +16,13 @@ type ChatScrollCommand = {
 };
 
 export type ChatScrollController = {
-  animateToBottom: (snapshot: ChatScrollSnapshot) => void;
   completeInitialization: () => void;
+  expireProgrammaticTarget: () => void;
   getMode: () => ChatScrollMode;
   jumpToMessage: (snapshot: ChatScrollSnapshot, top: number) => void;
   observe: (snapshot: ChatScrollSnapshot) => void;
   pinToBottom: (snapshot: ChatScrollSnapshot) => void;
+  preservePosition: (snapshot: ChatScrollSnapshot, top: number) => void;
   registerUserScrollIntent: (snapshot: ChatScrollSnapshot) => void;
   requestFollowBottom: () => void;
   setApplyScroll: (applyScroll: (command: ChatScrollCommand) => void) => void;
@@ -42,6 +42,7 @@ export const createChatScrollController = ({
   let applyScrollCommand = applyScroll;
   let mode: ChatScrollMode = "initializing";
   let programmaticTarget: number | null = null;
+  let userScrollIntentPending = false;
 
   const scroll = (
     snapshot: ChatScrollSnapshot,
@@ -55,12 +56,11 @@ export const createChatScrollController = ({
   };
 
   return {
-    animateToBottom: (snapshot) => {
-      mode = "animating-to-bottom";
-      scroll(snapshot, "smooth", snapshot.scrollHeight);
-    },
     completeInitialization: () => {
       if (mode === "initializing") mode = "following-bottom";
+    },
+    expireProgrammaticTarget: () => {
+      programmaticTarget = null;
     },
     getMode: () => mode,
     jumpToMessage: (snapshot, top) => {
@@ -70,32 +70,42 @@ export const createChatScrollController = ({
     observe: (snapshot) => {
       const distanceFromBottom =
         snapshot.scrollHeight - (snapshot.scrollTop + snapshot.clientHeight);
+      let missedProgrammaticTarget = false;
 
       if (programmaticTarget !== null) {
-        if (Math.abs(snapshot.scrollTop - programmaticTarget) <= 1) {
-          programmaticTarget = null;
-          if (mode === "animating-to-bottom") {
-            mode = "following-bottom";
-          } else if (mode === "jumping-to-message") {
-            mode = "reading-history";
-          }
+        const reachedProgrammaticTarget =
+          Math.abs(snapshot.scrollTop - programmaticTarget) <= 1;
+        programmaticTarget = null;
+        missedProgrammaticTarget = !reachedProgrammaticTarget;
+
+        if (mode === "jumping-to-message") {
+          mode = "reading-history";
         }
-        return;
+        if (reachedProgrammaticTarget) {
+          userScrollIntentPending = false;
+          return;
+        }
       }
 
       if (mode === "reading-history") {
-        if (distanceFromBottom <= 1) {
+        if (distanceFromBottom <= 2) {
           mode = "following-bottom";
         }
+        userScrollIntentPending = false;
         return;
       }
 
       if (
         mode === "following-bottom" &&
+        (userScrollIntentPending || missedProgrammaticTarget) &&
         distanceFromBottom > nearBottomThreshold
       ) {
         mode = "reading-history";
+        userScrollIntentPending = false;
+        return;
       }
+      userScrollIntentPending =
+        userScrollIntentPending && distanceFromBottom > 2;
     },
     pinToBottom: (snapshot) => {
       const maximumScrollTop = getMaximumScrollTop(snapshot);
@@ -106,10 +116,11 @@ export const createChatScrollController = ({
 
       scroll(snapshot, "auto", snapshot.scrollHeight);
     },
-    registerUserScrollIntent: (snapshot) => {
-      mode = "reading-history";
-      programmaticTarget = null;
-      scroll(snapshot, "auto", snapshot.scrollTop);
+    preservePosition: (snapshot, top) => {
+      scroll(snapshot, "auto", top);
+    },
+    registerUserScrollIntent: (_snapshot) => {
+      userScrollIntentPending = true;
       programmaticTarget = null;
     },
     requestFollowBottom: () => {
@@ -120,8 +131,6 @@ export const createChatScrollController = ({
       applyScrollCommand = nextApplyScroll;
     },
     shouldFollowNewMessages: () =>
-      mode === "initializing" ||
-      mode === "following-bottom" ||
-      mode === "animating-to-bottom",
+      mode === "initializing" || mode === "following-bottom",
   };
 };

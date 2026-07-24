@@ -1,4 +1,10 @@
 import { NpcType } from "@/api/npcs.api";
+import {
+  DEFAULT_NPC_TYPE_COLORS,
+  deriveNpcSurfaceColors,
+  isCombatNpcType,
+  type NpcTypeColors,
+} from "@lootlog/types";
 
 const TEXT_COLORS_BY_KEY: Record<string, string> = {
   [NpcType.COLOSSUS]: "rgba(33, 131, 128, 1)",
@@ -18,18 +24,44 @@ const BACKGROUND_COLORS_BY_KEY: Record<string, string> = {
   "party-gathering": "rgba(147, 51, 234, 0.4)",
 };
 
-export const getBackgroundColor = (key?: string, highlight?: boolean) => {
+const getNpcSurfaceColors = (
+  key: string | undefined,
+  npcTypeColors: NpcTypeColors,
+) =>
+  key && isCombatNpcType(key)
+    ? deriveNpcSurfaceColors(npcTypeColors[key])
+    : undefined;
+
+export const getBackgroundColor = (
+  key?: string,
+  highlight?: boolean,
+  npcTypeColors: NpcTypeColors = DEFAULT_NPC_TYPE_COLORS,
+) => {
+  const npcColors = getNpcSurfaceColors(key, npcTypeColors);
+  if (highlight && npcColors) return npcColors.background;
   if (!highlight || !key || !(key in BACKGROUND_COLORS_BY_KEY))
     return "transparent";
   return BACKGROUND_COLORS_BY_KEY[key];
 };
 
-export const getTextColor = (key?: string, highlight?: boolean) => {
+export const getTextColor = (
+  key?: string,
+  highlight?: boolean,
+  npcTypeColors: NpcTypeColors = DEFAULT_NPC_TYPE_COLORS,
+) => {
+  const npcColors = getNpcSurfaceColors(key, npcTypeColors);
+  if (highlight && npcColors) return npcColors.text;
   if (!highlight || !key || !(key in TEXT_COLORS_BY_KEY)) return "white";
   return TEXT_COLORS_BY_KEY[key];
 };
 
-export const getBorderColor = (key?: string, highlight?: boolean) => {
+export const getBorderColor = (
+  key?: string,
+  highlight?: boolean,
+  npcTypeColors: NpcTypeColors = DEFAULT_NPC_TYPE_COLORS,
+) => {
+  const npcColors = getNpcSurfaceColors(key, npcTypeColors);
+  if (highlight && npcColors) return npcColors.border;
   if (!highlight || !key || !(key in TEXT_COLORS_BY_KEY))
     return "rgba(156, 163, 175, 1)";
   return TEXT_COLORS_BY_KEY[key];

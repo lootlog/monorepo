@@ -6,7 +6,7 @@ import {
 } from "@/store/npc-detector.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { type FC, useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { DetectorSettings } from "@lootlog/types";
+import type { DetectorSettings, NpcTypeColors } from "@lootlog/types";
 import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
 import {
   selectOwnedReadyRoom,
@@ -19,6 +19,7 @@ import { useNpcListLifecycle } from "@/features/npc-detector/hooks/use-npc-list-
 type NpcsListProps = {
   detectorSettings: DetectorSettings;
   npcs?: GameNpcWithLocation[];
+  npcTypeColors?: NpcTypeColors;
 };
 
 const NPC_ROW_HEIGHT_PX = 50;
@@ -40,7 +41,11 @@ type ExitingNpcRow = {
   startedAt: number;
 };
 
-export const NpcsList: FC<NpcsListProps> = ({ detectorSettings, npcs }) => {
+export const NpcsList: FC<NpcsListProps> = ({
+  detectorSettings,
+  npcTypeColors,
+  npcs,
+}) => {
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
   const listContentRef = useRef<HTMLDivElement | null>(null);
   const rowLayoutAnimationsRef = useRef(new Map<number, Animation>());
@@ -338,6 +343,7 @@ export const NpcsList: FC<NpcsListProps> = ({ detectorSettings, npcs }) => {
               }}
             >
               <NpcListItem
+                npcTypeColors={npcTypeColors}
                 animationEffectsEnabled={animationEffectsEnabled}
                 npc={npc}
                 detectionAnimationCycle={
@@ -377,6 +383,7 @@ export const NpcsList: FC<NpcsListProps> = ({ detectorSettings, npcs }) => {
             }}
           >
             <NpcListItem
+              npcTypeColors={npcTypeColors}
               animationEffectsEnabled={animationEffectsEnabled}
               npc={npc}
               detectionAnimationCycle={null}

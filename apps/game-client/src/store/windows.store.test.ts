@@ -12,6 +12,13 @@ describe("windows store", () => {
     localStorage.clear();
   });
 
+  it("uses the new settings default size", () => {
+    expect(useWindowsStore.getState().settings.size).toEqual({
+      width: 760,
+      height: 520,
+    });
+  });
+
   it("does not publish when an open focused window is opened again", () => {
     useWindowsStore.setState((state) => ({
       notifications: {
@@ -123,6 +130,15 @@ describe("windows store", () => {
       "notifications",
     );
   });
+
+  it("opens a legacy destination at its mapped domain and subsection", () => {
+    useWindowsStore.getState().setSettingsActiveTab("npc-detector");
+
+    expect(useWindowsStore.getState().settings.state).toEqual({
+      activeTab: "game-data",
+      activeSubsection: "detector",
+    });
+  });
 });
 
 describe("createDeduplicatingStateStorage", () => {
@@ -145,6 +161,30 @@ describe("createDeduplicatingStateStorage", () => {
 });
 
 describe("migrateWindowsState", () => {
+  it("maps a legacy tab to its domain without changing saved geometry", () => {
+    const migrated = migrateWindowsState(
+      {
+        settings: {
+          open: true,
+          position: { x: 18, y: 24 },
+          hasDefinedPosition: true,
+          size: { width: 640, height: 470 },
+          opacity: 4,
+          locked: false,
+          state: { activeTab: "npc-detector" },
+        },
+        windowFocusHistory: [],
+      },
+      11,
+    );
+
+    expect(migrated.settings.size).toEqual({ width: 640, height: 470 });
+    expect(migrated.settings.state).toEqual({
+      activeTab: "game-data",
+      activeSubsection: "detector",
+    });
+  });
+
   it("resets only the legacy automatic quick access width", () => {
     const migrated = migrateWindowsState(
       {
@@ -209,7 +249,10 @@ describe("migrateWindowsState", () => {
     );
 
     expect(migrated.settings.hasDefinedPosition).toBe(false);
-    expect(migrated.settings.state).toEqual({});
+    expect(migrated.settings.state).toEqual({
+      activeTab: "general",
+      activeSubsection: "behavior",
+    });
   });
 
   it("keeps legacy non-zero settings position as defined", () => {

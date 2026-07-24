@@ -36,6 +36,7 @@ import { TimersModule } from "src/timers/timers.module";
 import { GuildsModule } from "src/guilds/guilds.module";
 import { EventModeController } from "./event-mode.controller";
 import { EventModeService } from "./services/event-mode.service";
+import { SettingsDocumentsModule } from "src/settings-documents/settings-documents.module";
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { EventModeService } from "./services/event-mode.service";
     RedlockModule,
     TimersModule,
     GuildsModule,
+    SettingsDocumentsModule,
   ],
   providers: [
     EventsService,

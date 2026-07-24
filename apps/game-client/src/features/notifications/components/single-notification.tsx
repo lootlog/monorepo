@@ -35,6 +35,7 @@ import type {
   NotificationMutes,
   NotificationMutesPatch,
   NotificationSettings,
+  NpcTypeColors,
 } from "@lootlog/types";
 
 const AUTO_HIDE_RING_PATH =
@@ -62,6 +63,7 @@ type SingleNotificationProps = {
   onResumeAutoHide: (listKey: string) => void;
   onUpdateMutes: (mutes: NotificationMutesPatch) => void;
   showCloseButton?: boolean;
+  npcTypeColors?: NpcTypeColors;
 };
 
 const isPartyGatheringNotification = (
@@ -164,6 +166,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   onResumeAutoHide,
   onUpdateMutes,
   showCloseButton = false,
+  npcTypeColors,
 }) => {
   const { t } = useTranslation("notifications");
   const autoHidePathRef = useRef<SVGPathElement>(null);
@@ -187,8 +190,16 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     .map((server) => guildNamesById[server] ?? "")
     .filter(Boolean);
   const time = format(new Date(notification.createdAt), "HH:mm");
-  const background = getBackgroundColor(key, categorySettings?.highlight);
-  const borderColor = getBorderColor(key, categorySettings?.highlight);
+  const background = getBackgroundColor(
+    key,
+    categorySettings?.highlight,
+    npcTypeColors,
+  );
+  const borderColor = getBorderColor(
+    key,
+    categorySettings?.highlight,
+    npcTypeColors,
+  );
   const hasAutoHideRing = autoHideDurationMs > 0;
   const showAutoHideRing = hasAutoHideRing && animationEffectsEnabled;
   const metaText = `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`;

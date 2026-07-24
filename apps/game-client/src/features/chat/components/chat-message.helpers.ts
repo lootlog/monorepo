@@ -5,7 +5,7 @@ import {
 import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@lootlog/api-client/models/main/chat-message-response-dto-output-npc";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { isYesterday } from "@/utils/local-date";
-import { getNpcTypeByWt } from "@lootlog/types";
+import { getNpcTypeByWt, type NpcTypeColors } from "@lootlog/types";
 import { NpcType } from "@/api/npcs.api";
 
 export const isChatMessageYesterdayOrOlder = (
@@ -49,10 +49,13 @@ export const getChatNpcCoordinatesLabel = (npc: ChatNpc) => {
   return `(${npc.x}, ${npc.y})`;
 };
 
-export const getChatNpcTextColor = (npc: ChatNpc) => {
+export const getChatNpcTextColor = (
+  npc: ChatNpc,
+  npcTypeColors?: NpcTypeColors,
+) => {
   const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
 
-  return getTextColor(npcType, true);
+  return getTextColor(npcType, true, npcTypeColors);
 };
 
 export const getChatMessageBody = (

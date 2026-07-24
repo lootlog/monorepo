@@ -385,6 +385,23 @@ export type EnumNpcTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumNpcTypeFilter<$PrismaModel>
 }
 
+export type EnumSettingsScopeTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.SettingsScopeType | Prisma.EnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.SettingsScopeType[] | Prisma.ListEnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SettingsScopeType[] | Prisma.ListEnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSettingsScopeTypeFilter<$PrismaModel> | $Enums.SettingsScopeType
+}
+
+export type EnumSettingsScopeTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SettingsScopeType | Prisma.EnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.SettingsScopeType[] | Prisma.ListEnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SettingsScopeType[] | Prisma.ListEnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSettingsScopeTypeWithAggregatesFilter<$PrismaModel> | $Enums.SettingsScopeType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSettingsScopeTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSettingsScopeTypeFilter<$PrismaModel>
+}
+
 export type EnumNotificationOwnerTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.NotificationOwnerType | Prisma.EnumNotificationOwnerTypeFieldRefInput<$PrismaModel>
   in?: $Enums.NotificationOwnerType[] | Prisma.ListEnumNotificationOwnerTypeFieldRefInput<$PrismaModel>
@@ -1100,6 +1117,23 @@ export type NestedEnumNpcTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumNpcTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumNpcTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumSettingsScopeTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.SettingsScopeType | Prisma.EnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.SettingsScopeType[] | Prisma.ListEnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SettingsScopeType[] | Prisma.ListEnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSettingsScopeTypeFilter<$PrismaModel> | $Enums.SettingsScopeType
+}
+
+export type NestedEnumSettingsScopeTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SettingsScopeType | Prisma.EnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.SettingsScopeType[] | Prisma.ListEnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SettingsScopeType[] | Prisma.ListEnumSettingsScopeTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSettingsScopeTypeWithAggregatesFilter<$PrismaModel> | $Enums.SettingsScopeType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSettingsScopeTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSettingsScopeTypeFilter<$PrismaModel>
 }
 
 export type NestedEnumNotificationOwnerTypeFilter<$PrismaModel = never> = {

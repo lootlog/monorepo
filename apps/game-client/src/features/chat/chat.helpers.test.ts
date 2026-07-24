@@ -137,6 +137,31 @@ describe("chat helpers", () => {
     ]);
   });
 
+  it("limits the combined chat view to the newest 500 filtered messages", () => {
+    const messagesByGuildId = Object.fromEntries(
+      ["guild-1", "guild-2"].map((guildId, guildIndex) => [
+        guildId,
+        Array.from({ length: 300 }, (_, messageIndex) => {
+          const chronologicalIndex = guildIndex * 300 + messageIndex;
+          return makeChatMessage({
+            guildId,
+            id: `message-${chronologicalIndex}`,
+            message: `message body ${chronologicalIndex}`,
+            timestamp: new Date(
+              Date.UTC(2026, 0, 1, 0, 0, chronologicalIndex),
+            ).toISOString(),
+          });
+        }),
+      ]),
+    );
+
+    const messages = getCurrentChatMessages(messagesByGuildId, "all", "all");
+
+    expect(messages).toHaveLength(500);
+    expect(messages[0]?.id).toBe("message-100");
+    expect(messages.at(-1)?.id).toBe("message-599");
+  });
+
   it("deduplicates and filters chat messages", () => {
     const duplicate = makeChatMessage({
       id: "message-2",
