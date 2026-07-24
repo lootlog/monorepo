@@ -23,6 +23,8 @@ semantics, and settings persistence unchanged.
 - Keep measurement private to `toggle-group.tsx`. The root owns its DOM ref and
   exposes the indicator through a pseudo-element driven by
   `--toggle-indicator-x` and `--toggle-indicator-width`.
+- Compose the internal measurement ref with any consumer-provided root ref so
+  existing ref behavior remains unchanged.
 - Recompute geometry after mount, selection changes, child mutations, and root
   or active-item resizing. Batch observer updates in one animation frame and
   disconnect observers on unmount.
@@ -34,9 +36,9 @@ semantics, and settings persistence unchanged.
 
 - Use the same gray rectangular track, border, purple fill, and compact thumb
   visual language as `ToggleGroup` and `Switch`.
-- Use an 8 px high `rounded-sm` gray-700 track with a gray-400 border, a
-  purple-500/80 indicator, and the existing 10×14 px thumb changed to
-  `rounded-sm` with a purple-300 border and white fill.
+- Use an 8 px total `border-box` height `rounded-sm` gray-700 track, including
+  its gray-400 border, a purple-500/80 indicator, and the existing 10×14 px
+  thumb changed to `rounded-sm` with a purple-300 border and white fill.
 - During pointer dragging, update the fill and thumb directly with no
   positional transition or trailing motion.
 - Use the 120 ms snap transition for track clicks, keyboard changes, and
@@ -64,8 +66,9 @@ semantics, and settings persistence unchanged.
 - Expose stable DOM state for verification: ToggleGroup keeps
   `data-slot="toggle-group"` and adds `data-indicator-visible`; Slider adds
   `data-slot="slider"` and `data-interaction="snap" | "direct"`. Motion classes
-  include explicit `motion-reduce:transition-none` and
-  `motion-reduce:transform-none` fallbacks.
+  include explicit `motion-reduce:transition-none` for movement and
+  `motion-reduce:scale-100` for press feedback. Reduced motion must preserve
+  positioning transforms and CSS geometry variables.
 
 ## Verification
 
