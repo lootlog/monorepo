@@ -27,7 +27,6 @@ export type ChatRenderableMessage =
   | {
       kind: "npc-group";
       key: string;
-      additionalSenderCount: number;
       count: number;
       message: ChatMessageType;
     };
@@ -180,7 +179,6 @@ type InternalRenderableMessage =
   | (Extract<ChatRenderableMessage, { kind: "npc-group" }> & {
       firstTimestamp: number;
       order: number;
-      senderIds: Set<string>;
       sortTimestamp: number;
     });
 
@@ -218,14 +216,12 @@ export const getChatRenderableMessages = (
         InternalRenderableMessage,
         { kind: "npc-group" }
       > = {
-        additionalSenderCount: 0,
         kind: "npc-group",
         key: `npc-group:${message.id}`,
         count: 1,
         message,
         firstTimestamp: timestamp,
         order: renderables.length,
-        senderIds: new Set([message.senderId]),
         sortTimestamp: timestamp,
       };
 
@@ -236,7 +232,6 @@ export const getChatRenderableMessages = (
 
     existingGroup.count += 1;
     existingGroup.message = message;
-    existingGroup.senderIds.add(message.senderId);
     existingGroup.sortTimestamp = timestamp;
   }
 
@@ -263,7 +258,6 @@ export const getChatRenderableMessages = (
             message: renderable.message,
           }
         : {
-            additionalSenderCount: Math.max(renderable.senderIds.size - 1, 0),
             kind: "npc-group",
             key: renderable.key,
             count: renderable.count,
