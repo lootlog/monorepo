@@ -403,6 +403,7 @@ export const ModelName = {
   Reservation: 'Reservation',
   UserCharactersLootlogSettings: 'UserCharactersLootlogSettings',
   UserSettings: 'UserSettings',
+  UserSettingDocument: 'UserSettingDocument',
   UserGameAccountSettings: 'UserGameAccountSettings',
   NotificationTarget: 'NotificationTarget',
   NotificationRule: 'NotificationRule',
@@ -452,7 +453,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "timerHistoryEntry" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "guildDocument" | "guildDocumentHistory" | "npcKillStats" | "userKillStats" | "guildKillSummary" | "userKillStatsBucket" | "npcKillStatsBucket" | "guildKillSummaryBucket"
+    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "timerHistoryEntry" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "userCharactersLootlogSettings" | "userSettings" | "userSettingDocument" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userGuildEventSettings" | "userSoundSettings" | "event" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "guildDocument" | "guildDocumentHistory" | "npcKillStats" | "userKillStats" | "guildKillSummary" | "userKillStatsBucket" | "npcKillStatsBucket" | "guildKillSummaryBucket"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1859,6 +1860,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserSettingsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserSettingDocument: {
+      payload: Prisma.$UserSettingDocumentPayload<ExtArgs>
+      fields: Prisma.UserSettingDocumentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserSettingDocumentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserSettingDocumentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload>
+        }
+        findFirst: {
+          args: Prisma.UserSettingDocumentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserSettingDocumentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload>
+        }
+        findMany: {
+          args: Prisma.UserSettingDocumentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload>[]
+        }
+        create: {
+          args: Prisma.UserSettingDocumentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload>
+        }
+        createMany: {
+          args: Prisma.UserSettingDocumentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserSettingDocumentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload>[]
+        }
+        delete: {
+          args: Prisma.UserSettingDocumentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload>
+        }
+        update: {
+          args: Prisma.UserSettingDocumentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserSettingDocumentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserSettingDocumentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserSettingDocumentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserSettingDocumentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserSettingDocumentPayload>
+        }
+        aggregate: {
+          args: Prisma.UserSettingDocumentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserSettingDocument>
+        }
+        groupBy: {
+          args: Prisma.UserSettingDocumentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserSettingDocumentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserSettingDocumentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserSettingDocumentCountAggregateOutputType> | number
         }
       }
     }
@@ -4705,6 +4780,21 @@ export const UserSettingsScalarFieldEnum = {
 export type UserSettingsScalarFieldEnum = (typeof UserSettingsScalarFieldEnum)[keyof typeof UserSettingsScalarFieldEnum]
 
 
+export const UserSettingDocumentScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  domain: 'domain',
+  scopeType: 'scopeType',
+  scopeId: 'scopeId',
+  overrides: 'overrides',
+  schemaVersion: 'schemaVersion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserSettingDocumentScalarFieldEnum = (typeof UserSettingDocumentScalarFieldEnum)[keyof typeof UserSettingDocumentScalarFieldEnum]
+
+
 export const UserGameAccountSettingsScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -5501,6 +5591,20 @@ export type ListEnumNpcTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pris
 
 
 /**
+ * Reference to a field of type 'SettingsScopeType'
+ */
+export type EnumSettingsScopeTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SettingsScopeType'>
+    
+
+
+/**
+ * Reference to a field of type 'SettingsScopeType[]'
+ */
+export type ListEnumSettingsScopeTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SettingsScopeType[]'>
+    
+
+
+/**
  * Reference to a field of type 'NotificationOwnerType'
  */
 export type EnumNotificationOwnerTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationOwnerType'>
@@ -5852,6 +5956,7 @@ export type GlobalOmitConfig = {
   reservation?: Prisma.ReservationOmit
   userCharactersLootlogSettings?: Prisma.UserCharactersLootlogSettingsOmit
   userSettings?: Prisma.UserSettingsOmit
+  userSettingDocument?: Prisma.UserSettingDocumentOmit
   userGameAccountSettings?: Prisma.UserGameAccountSettingsOmit
   notificationTarget?: Prisma.NotificationTargetOmit
   notificationRule?: Prisma.NotificationRuleOmit

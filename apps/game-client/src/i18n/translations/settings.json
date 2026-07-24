@@ -17,6 +17,109 @@
     "information": "Informacje",
     "debug": "Debug"
   },
+  "domains": {
+    "general": "Ogólne",
+    "appearance": "Wygląd",
+    "timers": "Timery",
+    "gameData": "Dane z gry",
+    "notifications": "Powiadomienia",
+    "controls": "Sterowanie",
+    "diagnostics": "Diagnostyka",
+    "information": "Informacje"
+  },
+  "subsections": {
+    "behavior": "Zachowanie",
+    "chat": "Chat",
+    "timerAppearance": "Wygląd timerów",
+    "timerColors": "Kolory timerów",
+    "timerBehavior": "Działanie timerów"
+  },
+  "search": {
+    "placeholder": "Szukaj",
+    "ariaLabel": "Szukaj w ustawieniach",
+    "clear": "Wyczyść wyszukiwanie",
+    "results": "Wyniki wyszukiwania ustawień",
+    "empty": "Nie znaleziono pasujących ustawień."
+  },
+  "help": {
+    "open": "Pokaż wyjaśnienie ustawienia",
+    "dependency": "Zależność:",
+    "recommendation": "Rekomendacja:",
+    "example": "Przykład:",
+    "animationsRecommendation": "Wyłącz tę opcję, jeżeli interfejs gry traci płynność."
+  },
+  "inheritance": {
+    "scopeTitle": "Zakres ustawień",
+    "scopeLabel": "Edytujesz ustawienia dla",
+    "default": "wartość domyślna",
+    "overridden": "Nadpisane tutaj",
+    "inherited": "Dziedziczone z: {{source}}",
+    "clear": "Dziedzicz",
+    "scopes": {
+      "USER": "Globalne",
+      "GAME_ACCOUNT": "Konto",
+      "CHARACTER": "Postać",
+      "GUILD": "Gildia"
+    },
+    "sources": {
+      "USER": "ustawień globalnych",
+      "GAME_ACCOUNT": "konta",
+      "CHARACTER": "postaci",
+      "GUILD": "gildii"
+    }
+  },
+  "chat": {
+    "preset": {
+      "section": "Preset",
+      "label": "Sposób prezentacji",
+      "readable": "Czytelny",
+      "compact": "Kompaktowy",
+      "custom": "Własny"
+    },
+    "reset": "Resetuj",
+    "layout": {
+      "section": "Układ i czytelność"
+    },
+    "npcLayout": {
+      "label": "Wiadomości NPC",
+      "description": "Wybierz osobny miękki kafelek albo oszczędny wpis w linii.",
+      "tile": "Kafelek",
+      "inline": "W linii",
+      "recommendation": "Kafelek jest czytelniejszy przy częstych komunikatach o NPC.",
+      "example": "Wariant w linii zajmuje mniej miejsca w gęstym czacie."
+    },
+    "fontScale": {
+      "label": "Skala tekstu"
+    },
+    "messageGap": {
+      "label": "Odstęp wiadomości"
+    },
+    "metadata": {
+      "title": "Widoczne informacje",
+      "showTimestamp": "Czas wiadomości",
+      "showGuildLabel": "Gildia",
+      "showNpcAvatar": "Awatar NPC",
+      "showNpcLevel": "Poziom NPC",
+      "showNpcLocation": "Nazwa lokacji NPC",
+      "showNpcCoordinates": "Koordynaty NPC"
+    },
+    "save": {
+      "saving": "Zapisywanie…",
+      "saved": "Zapisano",
+      "error": "Nie udało się zapisać wyglądu czatu. Przywrócono ustawienia z serwera."
+    },
+    "preview": {
+      "ariaLabel": "Podgląd wyglądu czatu",
+      "label": "Podgląd",
+      "player": "Arianna",
+      "level": "85 lvl",
+      "message": "Spotkajmy się przy wejściu.",
+      "guild": "Strażnicy Północy",
+      "npc": "Mroczny Łowca",
+      "npcMessage": "pojawił się na mapie",
+      "location": "Stare Ruiny"
+    }
+  },
   "general": {
     "title": "Ustawienia ogólne",
     "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",
@@ -239,6 +342,11 @@
       "addButton": "Dodaj",
       "hiddenDefaultsTitle": "Usunięte domyślne kolory",
       "restoreColorTitle": "Przywróć kolor"
+    },
+    "preview": {
+      "ariaLabel": "Podgląd wyglądu timera",
+      "label": "Podgląd",
+      "npc": "Mroczny Łowca"
     }
   },
   "catching": {

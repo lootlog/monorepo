@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { format } from "@/utils/local-date";
 import type { FC } from "react";
 import type { GameNpc } from "@lootlog/margonem/npcs";
+import type { ChatAppearanceSettings } from "@lootlog/types";
 import {
   getChatNpcCoordinatesLabel,
   getChatNpcLocationName,
@@ -17,15 +18,29 @@ import { ChatCharacterTooltip } from "./chat-character-tooltip";
 type ChatNpcMessageProps = {
   additionalSenderCount?: number;
   all: boolean;
+  appearance?: ChatAppearanceSettings;
   count?: number;
   guildName?: string;
   member?: GuildMember;
   message: ChatMessageType;
 };
 
+const DEFAULT_CHAT_APPEARANCE: ChatAppearanceSettings = {
+  npcLayout: "tile",
+  fontScalePercent: 100,
+  messageGapPx: 4,
+  showTimestamp: true,
+  showGuildLabel: true,
+  showNpcAvatar: true,
+  showNpcLevel: true,
+  showNpcLocation: true,
+  showNpcCoordinates: true,
+};
+
 export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
   additionalSenderCount = 0,
   all,
+  appearance = DEFAULT_CHAT_APPEARANCE,
   count = 1,
   guildName,
   member,
@@ -67,14 +82,16 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
         className="ll:mb-0.5 ll:min-w-0 ll:max-w-full"
         style={{ overflowWrap: "anywhere" }}
       >
-        <span
-          className={cn("ll:text-[11px] ll:select-text", {
-            "ll:opacity-50": isMsgYesterday,
-          })}
-        >
-          [{format(new Date(message.timestamp), "HH:mm")}]
-        </span>{" "}
-        {all && (
+        {appearance.showTimestamp ? (
+          <span
+            className={cn("ll:text-[11px] ll:select-text", {
+              "ll:opacity-50": isMsgYesterday,
+            })}
+          >
+            [{format(new Date(message.timestamp), "HH:mm")}]
+          </span>
+        ) : null}{" "}
+        {all && appearance.showGuildLabel && (
           <span
             className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
               "ll:opacity-50": isMsgYesterday,
@@ -100,16 +117,28 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
         )}
       </div>
       <div
-        className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-center ll:gap-1 ll:overflow-hidden ll:rounded-sm ll:border-l-2 ll:bg-gray-500/30 ll:px-1.5 ll:py-1"
-        style={{ borderColor: npcTextColor }}
+        className={cn(
+          "ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-center ll:gap-1 ll:overflow-hidden ll:rounded-sm ll:px-1.5 ll:py-1",
+          appearance.npcLayout === "tile"
+            ? "ll:bg-gray-500/25 ll:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+            : "ll:bg-transparent ll:px-0.5 ll:py-0",
+        )}
       >
-        <NpcTile
-          npc={tileNpc}
-          className="ll:h-auto ll:max-h-7 ll:w-auto ll:max-w-6 ll:object-contain ll:rounded"
-          containerClassName="ll:h-7 ll:w-6 ll:shrink-0 ll:items-center"
-        />
+        {appearance.showNpcAvatar ? (
+          <NpcTile
+            npc={tileNpc}
+            className="ll:h-auto ll:max-h-7 ll:w-auto ll:max-w-6 ll:object-contain ll:rounded"
+            containerClassName="ll:h-7 ll:w-6 ll:shrink-0 ll:items-center"
+          />
+        ) : null}
 
-        <div className="ll:flex ll:min-w-0 ll:max-w-full ll:flex-1 ll:flex-col ll:overflow-hidden ll:leading-tight">
+        <div
+          className={cn(
+            "ll:flex ll:min-w-0 ll:max-w-full ll:flex-1 ll:flex-col ll:overflow-hidden ll:leading-tight",
+            appearance.npcLayout === "inline" &&
+              "ll:flex-row ll:flex-wrap ll:items-baseline ll:gap-x-1 ll:overflow-visible",
+          )}
+        >
           <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-baseline ll:gap-1 ll:overflow-hidden">
             <div className="ll:flex ll:min-w-0 ll:flex-1 ll:items-baseline ll:gap-1 ll:overflow-hidden">
               <span
@@ -123,17 +152,19 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
               >
                 {npc.name}
               </span>
-              <span
-                className={cn(
-                  "ll:shrink-0 ll:text-[10px] ll:text-gray-300 ll:select-text",
-                  {
-                    "ll:text-gray-300": isMsgYesterday,
-                  },
-                )}
-              >
-                ({npc.lvl}
-                {npc.prof})
-              </span>
+              {appearance.showNpcLevel ? (
+                <span
+                  className={cn(
+                    "ll:shrink-0 ll:text-[10px] ll:text-gray-300 ll:select-text",
+                    {
+                      "ll:text-gray-300": isMsgYesterday,
+                    },
+                  )}
+                >
+                  ({npc.lvl}
+                  {npc.prof})
+                </span>
+              ) : null}
             </div>
             {additionalSenderCount > 0 && (
               <span
@@ -149,19 +180,23 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
             )}
           </div>
 
-          {npcLocationName && (
+          {((appearance.showNpcLocation && npcLocationName) ||
+            (appearance.showNpcCoordinates && npcCoordinatesLabel)) && (
             <div
               className={cn(
                 "ll:w-full ll:min-w-0 ll:max-w-full ll:whitespace-normal ll:break-words ll:text-[10px] ll:text-gray-400 ll:select-text",
+                appearance.npcLayout === "inline" && "ll:w-auto ll:flex-none",
                 {
                   "ll:text-gray-400": isMsgYesterday,
                 },
               )}
             >
-              <span>{npcLocationName}</span>
-              {npcCoordinatesLabel && (
+              {appearance.showNpcLocation && npcLocationName ? (
+                <span>{npcLocationName}</span>
+              ) : null}
+              {appearance.showNpcCoordinates && npcCoordinatesLabel && (
                 <>
-                  {" "}
+                  {appearance.showNpcLocation && npcLocationName ? " " : null}
                   <span className="ll:whitespace-nowrap">
                     {npcCoordinatesLabel}
                   </span>

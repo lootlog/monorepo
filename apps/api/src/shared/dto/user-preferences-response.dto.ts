@@ -6,6 +6,17 @@ const UserPreferencesResponseSchema = z.object({
   guildsOrder: z.array(z.string()),
   theme: z.string(),
   colorMode: z.string(),
+  chatAppearance: z.object({
+    npcLayout: z.enum(["tile", "inline"]),
+    fontScalePercent: z.number().min(70).max(150),
+    messageGapPx: z.number().min(0).max(16),
+    showTimestamp: z.boolean(),
+    showGuildLabel: z.boolean(),
+    showNpcAvatar: z.boolean(),
+    showNpcLevel: z.boolean(),
+    showNpcLocation: z.boolean(),
+    showNpcCoordinates: z.boolean(),
+  }),
   mutes: z.object({
     players: z.array(
       z.object({
