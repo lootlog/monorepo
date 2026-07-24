@@ -29,6 +29,16 @@ const createTestUserPreferences = (): UserPreferencesResponseDtoOutput => ({
   guildsOrder: ["guild-1"],
   theme: "default",
   colorMode: "dark",
+  chatAppearance: {
+    npcLayout: "tile",
+    fontScalePercent: 100,
+    messageGapPx: 4,
+    showTimestamp: true,
+    showGuildLabel: true,
+    showNpcAvatar: true,
+    showNpcLevel: true,
+    showNpcLocationAndCoordinates: true,
+  },
   mutes: {
     players: [{ discordId: "discord-1", displayName: "Alpha" }],
     npcs: [
@@ -118,6 +128,45 @@ describe("useUpdateUserPreferences", () => {
     });
 
     deferred.resolve(previousData);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  it("optimistically merges a partial chat appearance patch", async () => {
+    const deferred = createDeferred<UserPreferencesResponseDtoOutput>();
+    const previousData = createTestUserPreferences();
+    const payload: UpdateUserPreferencesDto = {
+      chatAppearance: { messageGapPx: 12 },
+    };
+
+    mockUpdateUserPreferences.mockReturnValue(deferred.promise);
+    queryClient.setQueryData(
+      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
+      previousData,
+    );
+    const { result } = renderHook(() => useUpdateUserPreferences(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => result.current.mutate(payload));
+
+    await waitFor(() => {
+      const optimistic =
+        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
+          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
+        );
+      expect(optimistic?.chatAppearance).toEqual({
+        ...previousData.chatAppearance,
+        messageGapPx: 12,
+      });
+    });
+
+    deferred.resolve({
+      ...previousData,
+      chatAppearance: {
+        ...previousData.chatAppearance,
+        messageGapPx: 12,
+      },
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 

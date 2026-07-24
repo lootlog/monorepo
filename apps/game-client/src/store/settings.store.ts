@@ -4,9 +4,19 @@ import { storageKey } from "@/lib/storage-key";
 
 const STORAGE_KEY = storageKey("ll:settings:state");
 
+export const migrateSettingsState = (persistedState: unknown) => {
+  if (typeof persistedState !== "object" || persistedState === null) {
+    return {};
+  }
+
+  return persistedState;
+};
+
 interface SettingsState {
   animationEffectsEnabled: boolean;
   lootDebugLoggingEnabled: boolean;
+  masterVolume: number;
+  soundsMuted: boolean;
   allowWorldSelection?: boolean;
   worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
@@ -15,9 +25,11 @@ interface SettingsState {
   setGuildId: (charId: string, guildId: string) => void;
   setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => void;
   setLootDebugLoggingEnabled: (enabled: boolean) => void;
+  setMasterVolume: (volume: number) => void;
   setWorld: (guildId: string, world: string) => void;
   toggleAnimationEffects: () => void;
   toggleAllowWorldSelection: () => void;
+  toggleSoundsMuted: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -25,6 +37,8 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       animationEffectsEnabled: true,
       lootDebugLoggingEnabled: false,
+      masterVolume: 0.5,
+      soundsMuted: false,
       allowWorldSelection: false,
       worldByGuildId: {},
       guildIdByCharId: {},
@@ -71,6 +85,9 @@ export const useSettingsStore = create<SettingsState>()(
       setLootDebugLoggingEnabled: (lootDebugLoggingEnabled) => {
         set({ lootDebugLoggingEnabled });
       },
+      setMasterVolume: (masterVolume) => {
+        set({ masterVolume: Math.min(1, Math.max(0, masterVolume)) });
+      },
       setWorld: (guildId: string, world: string) => {
         set((state) => ({
           worldByGuildId: {
@@ -87,12 +104,17 @@ export const useSettingsStore = create<SettingsState>()(
       toggleAllowWorldSelection: () => {
         set((state) => ({ allowWorldSelection: !state.allowWorldSelection }));
       },
+      toggleSoundsMuted: () => {
+        set((state) => ({ soundsMuted: !state.soundsMuted }));
+      },
     }),
     {
       name: STORAGE_KEY,
       partialize: (state) => ({
         animationEffectsEnabled: state.animationEffectsEnabled,
         lootDebugLoggingEnabled: state.lootDebugLoggingEnabled,
+        masterVolume: state.masterVolume,
+        soundsMuted: state.soundsMuted,
         allowWorldSelection: state.allowWorldSelection,
         worldByGuildId: state.worldByGuildId,
         guildIdByCharId: state.guildIdByCharId,
@@ -100,7 +122,8 @@ export const useSettingsStore = create<SettingsState>()(
           state.selectedGuildIdsForTimersByCharId,
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 3,
+      migrate: migrateSettingsState,
+      version: 4,
     },
   ),
 );

@@ -104,6 +104,7 @@ export const TimersSettingsGeneral: FC = () => {
           controlClassName="ll:w-28"
         >
           <ToggleGroup
+            className="ll:ml-auto"
             type="single"
             size="xs"
             onValueChange={(value: "min" | "max") => {

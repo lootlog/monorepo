@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import type { CSSProperties, FC, ReactNode } from "react";
 
 type SettingsControlRowProps = {
+  id?: string;
   label: ReactNode;
   description?: ReactNode;
   children: ReactNode;
@@ -14,6 +15,7 @@ type SettingsControlRowProps = {
 };
 
 export const SettingsControlRow: FC<SettingsControlRowProps> = ({
+  id,
   label,
   description,
   children,
@@ -26,8 +28,10 @@ export const SettingsControlRow: FC<SettingsControlRowProps> = ({
 }) => {
   return (
     <div
+      id={id}
+      data-settings-control={id}
       className={cn(
-        "ll:flex ll:items-center ll:justify-between ll:gap-4 ll:rounded-md ll:border ll:px-3 ll:py-2 ll:transition-colors",
+        "ll:flex ll:items-center ll:justify-between ll:gap-4 ll:rounded-md ll:border ll:px-3 ll:py-2 ll:transition-[background-color,border-color,box-shadow] ll:data-[settings-highlighted]:border-purple-300 ll:data-[settings-highlighted]:bg-purple-500/20 ll:data-[settings-highlighted]:shadow-[0_0_0_2px_rgba(192,132,252,0.25)]",
         disabled
           ? "ll:border-gray-700/80 ll:bg-gray-900/30 ll:opacity-60"
           : "ll:border-gray-600 ll:bg-gray-900/70 ll:hover:border-gray-500",

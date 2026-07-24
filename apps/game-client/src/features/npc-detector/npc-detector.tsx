@@ -9,9 +9,11 @@ import { NpcType } from "@/api/npcs.api";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
+import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 
 export const NpcDetector = () => {
   const { t } = useTranslation("npcDetector");
+  const { npcTypeColors } = useNpcTypeColors();
   const open = useWindowsStore((state) => state["npc-detector"].open);
   const defaultWindowHeight = useWindowsStore(
     (state) => state["npc-detector"].size.height,
@@ -87,7 +89,11 @@ export const NpcDetector = () => {
       minWidth={242}
     >
       <div className="ll:flex ll:flex-col ll:h-full ll:w-full ll:overflow-hidden">
-        <NpcsList detectorSettings={settings} npcs={filteredNpcs} />
+        <NpcsList
+          detectorSettings={settings}
+          npcTypeColors={npcTypeColors}
+          npcs={filteredNpcs}
+        />
       </div>
     </DraggableWindow>
   );

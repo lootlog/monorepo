@@ -11,6 +11,7 @@ import {
   playSoundRequest,
   preloadSoundUrl,
 } from "@/lib/shared-audio-playback";
+import { useSettingsStore } from "@/store/settings.store";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
 type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
@@ -39,6 +40,8 @@ const getSoundUrl = (
 export const useSoundPlayback = () => {
   const { data: soundSettingsData } = useSoundSettings();
   const queryClient = useQueryClient();
+  const masterVolume = useSettingsStore((state) => state.masterVolume);
+  const soundsMuted = useSettingsStore((state) => state.soundsMuted);
   const soundSettings = soundSettingsData
     ? normalizeSoundSettings(soundSettingsData)
     : undefined;
@@ -46,7 +49,7 @@ export const useSoundPlayback = () => {
   useEffect(() => acquireSoundPlayback(), []);
 
   useEffect(() => {
-    if (!soundSettings || soundSettings.masterVolume === 0) {
+    if (!soundSettings || soundsMuted || masterVolume === 0) {
       return;
     }
 
@@ -98,7 +101,7 @@ export const useSoundPlayback = () => {
       window.removeEventListener("keydown", handleFirstInteraction);
       window.removeEventListener("pointerdown", handleFirstInteraction);
     };
-  }, [soundSettings]);
+  }, [masterVolume, soundSettings, soundsMuted]);
 
   const getLatestSettings = (): UserSoundSettings | undefined => {
     const cached = queryClient.getQueryData<SoundSettingsResponseDto>(
@@ -119,9 +122,7 @@ export const useSoundPlayback = () => {
     }
 
     const categoryVolume = settings[`${category}Volume`];
-    const masterVolume = settings.masterVolume;
-
-    if (masterVolume === 0 || categoryVolume === 0) {
+    if (soundsMuted || masterVolume === 0 || categoryVolume === 0) {
       return;
     }
 
@@ -157,8 +158,6 @@ export const useSoundPlayback = () => {
     }
 
     const categoryVolume = settings[`${category}Volume`];
-    const masterVolume = settings.masterVolume;
-
     const soundUrl = customSoundUrl || getSoundUrl(settings, category, key);
 
     if (!soundUrl) {
@@ -166,7 +165,7 @@ export const useSoundPlayback = () => {
     }
 
     const effectiveVolume =
-      masterVolume === 0 || categoryVolume === 0
+      soundsMuted || masterVolume === 0 || categoryVolume === 0
         ? 1.0
         : categoryVolume * masterVolume;
 

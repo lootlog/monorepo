@@ -49,22 +49,51 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
       getInitialSliderValue(value, defaultValue),
     );
     const [dragging, setDragging] = React.useState(false);
+    const pointerGesture = React.useRef<{
+      originX: number;
+      originY: number;
+      pointerId: number;
+      startedOnThumb: boolean;
+    } | null>(null);
 
     React.useEffect(() => {
       if (Array.isArray(value)) setInternalValue(value[0] ?? 0);
     }, [value]);
 
     React.useEffect(() => {
-      if (!dragging) return;
+      const handlePointerMove = (event: PointerEvent) => {
+        const gesture = pointerGesture.current;
+        if (
+          !gesture ||
+          event.pointerId !== gesture.pointerId ||
+          gesture.startedOnThumb ||
+          (event.clientX === gesture.originX &&
+            event.clientY === gesture.originY)
+        ) {
+          return;
+        }
 
-      const endDragging = () => setDragging(false);
+        setDragging(true);
+      };
+      const endDragging = (event: PointerEvent) => {
+        if (
+          pointerGesture.current &&
+          event.pointerId !== pointerGesture.current.pointerId
+        ) {
+          return;
+        }
+        pointerGesture.current = null;
+        setDragging(false);
+      };
+      window.addEventListener("pointermove", handlePointerMove);
       window.addEventListener("pointerup", endDragging);
       window.addEventListener("pointercancel", endDragging);
       return () => {
+        window.removeEventListener("pointermove", handlePointerMove);
         window.removeEventListener("pointerup", endDragging);
         window.removeEventListener("pointercancel", endDragging);
       };
-    }, [dragging]);
+    }, []);
 
     const handleValueChange = (
       nextValue: number,
@@ -84,23 +113,43 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
     return (
       <div className="ll:w-full">
         <BaseSlider.Root
+          {...props}
           ref={ref}
           value={value === undefined ? undefined : (value[0] ?? 0)}
           defaultValue={defaultValue?.[0]}
           onValueChange={handleValueChange}
           onValueCommitted={(nextValue) => onValueCommit?.([nextValue])}
-          className={className}
-          {...props}
+          className={cn("ll:group/slider", className)}
+          data-slot="slider"
+          data-interaction={dragging ? "direct" : "snap"}
         >
-          <BaseSlider.Control className="ll:relative ll:flex ll:w-full ll:touch-none ll:select-none ll:items-center">
-            <BaseSlider.Track className="ll:relative ll:h-1.5 ll:w-full ll:grow ll:rounded-full ll:bg-purple-950/40 ll:border ll:border-purple-900/50">
-              <BaseSlider.Indicator className="ll:absolute ll:h-full ll:bg-purple-500" />
+          <BaseSlider.Control
+            className="ll:relative ll:flex ll:w-full ll:touch-none ll:select-none ll:items-center"
+            onPointerDown={(event) => {
+              const eventTarget =
+                event.target instanceof Element ? event.target : null;
+              const startedOnThumb = Boolean(
+                eventTarget?.closest('[data-slot="slider-thumb"]'),
+              );
+              pointerGesture.current = {
+                originX: event.clientX,
+                originY: event.clientY,
+                pointerId: event.pointerId,
+                startedOnThumb,
+              };
+              if (startedOnThumb) {
+                setDragging(true);
+              }
+            }}
+          >
+            <BaseSlider.Track className="ll:relative ll:box-border ll:h-2 ll:w-full ll:grow ll:overflow-hidden ll:rounded-sm ll:border ll:border-gray-400 ll:bg-gray-700">
+              <BaseSlider.Indicator className="ll:absolute ll:h-full ll:bg-purple-500/80 ll:transition-[width] ll:duration-[120ms] ll:ease-[cubic-bezier(0.4,0,0.2,1)] ll:group-data-[interaction=direct]/slider:transition-none ll:motion-reduce:transition-none" />
             </BaseSlider.Track>
             <BaseSlider.Thumb
               aria-label={ariaLabel}
-              onPointerDown={() => setDragging(true)}
+              data-slot="slider-thumb"
               className={cn(
-                "ll:relative ll:flex ll:items-center ll:justify-center ll:h-3.5 ll:w-2.5 ll:rounded-full ll:border ll:border-purple-300 ll:bg-purple-100 ll:shadow-[0_0_8px_rgba(168,85,247,0.4)] ll:transition-transform ll:hover:scale-110 ll:has-[:focus-visible]:outline-none ll:has-[:focus-visible]:ring-1 ll:has-[:focus-visible]:ring-purple-400 ll:has-[:focus-visible]:ring-offset-1 ll:has-[:focus-visible]:ring-offset-purple-950 ll:data-[disabled]:pointer-events-none ll:data-[disabled]:opacity-50 ll-custom-cursor-pointer",
+                "ll:relative ll:flex ll:h-3.5 ll:w-2.5 ll:items-center ll:justify-center ll:rounded-sm ll:border ll:border-purple-300 ll:bg-white ll:shadow-[0_0_8px_rgba(168,85,247,0.4)] ll:transition-[left,translate,scale] ll:duration-[120ms] ll:ease-[cubic-bezier(0.4,0,0.2,1)] ll:hover:scale-110 ll:has-[:focus-visible]:outline-none ll:has-[:focus-visible]:ring-1 ll:has-[:focus-visible]:ring-purple-400 ll:has-[:focus-visible]:ring-offset-1 ll:has-[:focus-visible]:ring-offset-purple-950 ll:group-data-[interaction=direct]/slider:scale-90 ll:group-data-[interaction=direct]/slider:transition-none ll:motion-reduce:scale-100 ll:motion-reduce:transition-none ll:data-[disabled]:pointer-events-none ll:data-[disabled]:opacity-50 ll-custom-cursor-pointer",
               )}
             >
               {showValue && dragging && (
