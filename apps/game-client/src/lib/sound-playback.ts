@@ -6,6 +6,7 @@ import {
   playSoundRequest,
 } from "@/lib/shared-audio-playback";
 import type { UserSoundSettings } from "@lootlog/types";
+import { useSettingsStore } from "@/store/settings.store";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
 type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
@@ -43,9 +44,9 @@ export function playSound(
   if (!settings) return;
 
   const categoryVolume = settings[`${category}Volume`];
-  const masterVolume = settings.masterVolume;
+  const { masterVolume, soundsMuted } = useSettingsStore.getState();
 
-  if (masterVolume === 0 || categoryVolume === 0) return;
+  if (soundsMuted || masterVolume === 0 || categoryVolume === 0) return;
 
   const soundConfig =
     category === "pings"

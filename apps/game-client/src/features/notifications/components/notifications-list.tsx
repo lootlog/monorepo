@@ -26,6 +26,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import type {
   NotificationMutesPatch,
   NotificationsSettings,
+  NpcTypeColors,
   PartyReadyRoomProjection,
 } from "@lootlog/types";
 import { type FC, useEffect, useRef, useState } from "react";
@@ -33,6 +34,7 @@ import { useShallow } from "zustand/react/shallow";
 
 type NotificationsListProps = {
   notifications?: StoredNotification[];
+  npcTypeColors?: NpcTypeColors;
   settings?: Partial<NotificationsSettings>;
 };
 
@@ -43,6 +45,7 @@ const MANUAL_EXIT_ANIMATION_DURATION_MS = 150;
 
 export const NotificationsList: FC<NotificationsListProps> = ({
   notifications,
+  npcTypeColors,
   settings = EMPTY_NOTIFICATION_SETTINGS,
 }) => {
   const visibleNotifications = notifications ?? EMPTY_NOTIFICATIONS;
@@ -205,6 +208,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
 
     return (
       <SingleNotification
+        npcTypeColors={npcTypeColors}
         notification={notification}
         guildNamesById={guildNamesById}
         guildMember={

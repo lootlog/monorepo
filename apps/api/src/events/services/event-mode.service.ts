@@ -94,6 +94,23 @@ export class EventModeService {
     private readonly timersService: TimersService,
   ) {}
 
+  private getPinnedEventIdsFromOverrides(overrides: unknown): string[] {
+    if (
+      typeof overrides !== "object" ||
+      overrides === null ||
+      Array.isArray(overrides)
+    ) {
+      return [];
+    }
+
+    const pinnedEvents = (overrides as Record<string, unknown>).pinnedEvents;
+    return Array.isArray(pinnedEvents)
+      ? pinnedEvents.filter(
+          (eventId): eventId is string => typeof eventId === "string",
+        )
+      : [];
+  }
+
   async getEventMode(options: GetEventModeOptions) {
     const generatedAt = new Date();
     const normalizedWorld = options.world.trim().toLowerCase();
@@ -104,20 +121,24 @@ export class EventModeService {
     }
 
     const guildIds = guildContexts.map((context) => context.guild.id);
-    const settings = await this.prisma.userGuildEventSettings.findMany({
+    const settings = await this.prisma.userSettingDocument.findMany({
       where: {
         userId: options.userId,
-        guildId: { in: guildIds },
+        domain: "events",
+        scopeType: "GUILD",
+        scopeId: { in: guildIds },
       },
       select: {
-        guildId: true,
-        pinnedEvents: true,
+        scopeId: true,
+        overrides: true,
       },
     });
     const pinnedSettings = settings
       .map((setting) => ({
-        guildId: setting.guildId,
-        pinnedEvents: Array.from(new Set(setting.pinnedEvents)),
+        guildId: setting.scopeId,
+        pinnedEvents: Array.from(
+          new Set(this.getPinnedEventIdsFromOverrides(setting.overrides)),
+        ),
       }))
       .filter((setting) => setting.pinnedEvents.length > 0);
 
