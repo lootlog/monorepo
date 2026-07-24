@@ -248,6 +248,27 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   animation-iteration-count: infinite !important;
 }
 
+@keyframes ll-chat-npc-count-bump {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.22);
+  }
+  60% {
+    transform: scale(0.95);
+  }
+  78% {
+    transform: scale(1.04);
+  }
+}
+
+#lootlog-root .ll-chat-npc-count-bump {
+  animation: ll-chat-npc-count-bump 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: right center;
+}
+
 @keyframes ll-npc-detection-flash {
   0% {
     opacity: 0;
