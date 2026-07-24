@@ -613,13 +613,26 @@ export class TimersService implements OnModuleInit {
     userId: string,
     world: string,
   ): Promise<string[]> {
-    const settings = await this.prisma.userTimerSettings.findUnique({
-      where: { userId },
-      select: { alwaysVisibleExpiredTimers: true },
+    const settings = await this.prisma.userSettingDocument.findUnique({
+      where: {
+        userId_domain_scopeType_scopeId: {
+          userId,
+          domain: "timers",
+          scopeType: "USER",
+          scopeId: userId,
+        },
+      },
+      select: { overrides: true },
     });
+    const overrides =
+      settings?.overrides &&
+      typeof settings.overrides === "object" &&
+      !Array.isArray(settings.overrides)
+        ? settings.overrides
+        : undefined;
 
     return this.getAlwaysVisibleTimerKeys(
-      settings?.alwaysVisibleExpiredTimers,
+      overrides?.alwaysVisibleExpiredTimers,
       world,
     );
   }

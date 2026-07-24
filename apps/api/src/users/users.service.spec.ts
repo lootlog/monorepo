@@ -10,6 +10,7 @@ import { GuildsService } from "src/guilds/guilds.service";
 import { MembersService } from "src/members/members.service";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import {
+  CHAT_APPEARANCE_READABLE_PRESET,
   defaultDetectorSettings,
   defaultNotificationsSettings,
 } from "@lootlog/types";
@@ -51,6 +52,9 @@ describe("UsersService", () => {
     userSettings: {
       deleteMany: mockFn(),
     },
+    userSettingDocument: {
+      deleteMany: mockFn(),
+    },
     userGameAccountSettings: {
       deleteMany: mockFn(),
     },
@@ -81,6 +85,10 @@ describe("UsersService", () => {
       findUnique: mockFn(),
       upsert: mockFn(),
     },
+    userSettingDocument: {
+      findUnique: mockFn(),
+      upsert: mockFn(),
+    },
   };
   const mockLogger = { warn: mockFn() };
   const mockAuthService = { invalidateIdpTokenCache: mockFn() };
@@ -104,6 +112,7 @@ describe("UsersService", () => {
     mockTx.npcKillStats.deleteMany.mockResolvedValue({ count: 2 });
     mockTx.userKillStats.deleteMany.mockResolvedValue({ count: 3 });
     mockTx.userSettings.deleteMany.mockResolvedValue({ count: 1 });
+    mockTx.userSettingDocument.deleteMany.mockResolvedValue({ count: 2 });
     mockTx.userGameAccountSettings.deleteMany.mockResolvedValue({ count: 2 });
     mockTx.userTimerSettings.deleteMany.mockResolvedValue({ count: 1 });
     mockTx.userSoundSettings.deleteMany.mockResolvedValue({ count: 1 });
@@ -117,6 +126,8 @@ describe("UsersService", () => {
     mockMembersService.notifyMembersRemoved.mockResolvedValue(undefined);
     mockRedisService.deleteByPattern.mockResolvedValue(1);
     mockHttpService.post.mockReturnValue(of({ data: { status: "ACCEPTED" } }));
+    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue(null);
+    mockPrismaService.userSettingDocument.upsert.mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -164,6 +175,7 @@ describe("UsersService", () => {
     mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
       null,
     );
+    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue(null);
 
     const result = await service.getUserPreferences("auth-user-current");
 
@@ -175,9 +187,134 @@ describe("UsersService", () => {
       guildsOrder: [],
       theme: "default",
       colorMode: "dark",
+      chatAppearance: {
+        npcLayout: "tile",
+        fontScalePercent: 100,
+        messageGapPx: 4,
+        showTimestamp: true,
+        showGuildLabel: true,
+        showNpcAvatar: true,
+        showNpcLevel: true,
+        showNpcLocation: true,
+        showNpcCoordinates: true,
+      },
       mutes: {
         players: [],
         npcs: [],
+      },
+    });
+  });
+
+  it("normalizes a malformed stored chat appearance value", async () => {
+    mockPrismaService.userSettings.findUnique.mockResolvedValue({
+      userId: "auth-user-current",
+      guildsOrder: ["guild-1"],
+      theme: "default",
+      colorMode: "dark",
+    });
+    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
+      overrides: "broken-json-shape",
+    });
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
+      null,
+    );
+
+    const result = await service.getUserPreferences("auth-user-current");
+
+    expect(result.chatAppearance).toEqual(CHAT_APPEARANCE_READABLE_PRESET);
+    expect(result.guildsOrder).toEqual(["guild-1"]);
+  });
+
+  it("merges and clamps a chat appearance patch without overwriting other preferences", async () => {
+    const currentSettings = {
+      id: 7,
+      userId: "auth-user-current",
+      guildsOrder: ["guild-1"],
+      theme: "fantasy",
+      colorMode: "dark",
+      chatAppearance: {
+        ...CHAT_APPEARANCE_READABLE_PRESET,
+        showNpcAvatar: false,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    mockPrismaService.userSettings.findUnique.mockResolvedValue(
+      currentSettings,
+    );
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
+      null,
+    );
+    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
+      overrides: {
+        chat: {
+          ...CHAT_APPEARANCE_READABLE_PRESET,
+          showNpcAvatar: false,
+        },
+      },
+    });
+    mockPrismaService.userSettingDocument.upsert.mockResolvedValue({
+      overrides: {
+        chat: {
+          ...CHAT_APPEARANCE_READABLE_PRESET,
+          showNpcAvatar: false,
+          fontScalePercent: 150,
+          messageGapPx: 0,
+        },
+      },
+    });
+
+    const result = await service.updateUserPreferences("auth-user-current", {
+      chatAppearance: {
+        fontScalePercent: 250,
+        messageGapPx: -4,
+      },
+    });
+
+    expect(mockPrismaService.userSettings.upsert).not.toHaveBeenCalled();
+    expect(mockPrismaService.userSettingDocument.upsert).toHaveBeenCalledWith({
+      where: {
+        userId_domain_scopeType_scopeId: {
+          userId: "auth-user-current",
+          domain: "appearance",
+          scopeType: "USER",
+          scopeId: "auth-user-current",
+        },
+      },
+      update: {
+        overrides: {
+          chat: {
+            ...CHAT_APPEARANCE_READABLE_PRESET,
+            showNpcAvatar: false,
+            fontScalePercent: 150,
+            messageGapPx: 0,
+          },
+        },
+        schemaVersion: 1,
+      },
+      create: {
+        userId: "auth-user-current",
+        domain: "appearance",
+        scopeType: "USER",
+        scopeId: "auth-user-current",
+        overrides: {
+          chat: {
+            ...CHAT_APPEARANCE_READABLE_PRESET,
+            showNpcAvatar: false,
+            fontScalePercent: 150,
+            messageGapPx: 0,
+          },
+        },
+        schemaVersion: 1,
+      },
+    });
+    expect(result).toMatchObject({
+      guildsOrder: ["guild-1"],
+      theme: "fantasy",
+      chatAppearance: {
+        ...currentSettings.chatAppearance,
+        fontScalePercent: 150,
+        messageGapPx: 0,
       },
     });
   });
@@ -367,6 +504,7 @@ describe("UsersService", () => {
       guildsOrder: [],
       theme: "default",
       colorMode: "dark",
+      chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,
       mutes: {
         players: [
           {

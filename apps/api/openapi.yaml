@@ -1425,6 +1425,71 @@ paths:
       summary: Migrate localStorage settings to backend
       tags:
         - timer-settings
+  /preferences:
+    get:
+      operationId: SettingsDocumentsController_getPreferences
+      parameters:
+        - name: domains
+          required: true
+          in: query
+          x-nestjs_zod-parent-additional-properties: false
+          schema:
+            minLength: 1
+            type: string
+        - name: gameAccountId
+          required: false
+          in: query
+          x-nestjs_zod-parent-additional-properties: false
+          schema:
+            minLength: 1
+            type: string
+        - name: characterId
+          required: false
+          in: query
+          x-nestjs_zod-parent-additional-properties: false
+          schema:
+            minLength: 1
+            type: string
+        - name: guildId
+          required: false
+          in: query
+          x-nestjs_zod-parent-additional-properties: false
+          schema:
+            minLength: 1
+            type: string
+      responses:
+        "200":
+          description: Effective settings, override layers and field sources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsDocumentsResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Get effective settings for multiple domains
+      tags:
+        - preferences
+    patch:
+      operationId: SettingsDocumentsController_patchPreferences
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchSettingsDocumentsDto"
+      responses:
+        "200":
+          description: Effective settings after applying the patch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsDocumentsResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Atomically patch settings in multiple domains
+      tags:
+        - preferences
   /guilds/{guildId}/loots:
     get:
       description: Retrieve paginated loots for a guild with optional filters
@@ -6155,6 +6220,44 @@ components:
           type: string
         colorMode:
           type: string
+        chatAppearance:
+          type: object
+          properties:
+            npcLayout:
+              type: string
+              enum:
+                - tile
+                - inline
+            fontScalePercent:
+              type: number
+              minimum: 70
+              maximum: 150
+            messageGapPx:
+              type: number
+              minimum: 0
+              maximum: 16
+            showTimestamp:
+              type: boolean
+            showGuildLabel:
+              type: boolean
+            showNpcAvatar:
+              type: boolean
+            showNpcLevel:
+              type: boolean
+            showNpcLocation:
+              type: boolean
+            showNpcCoordinates:
+              type: boolean
+          required:
+            - npcLayout
+            - fontScalePercent
+            - messageGapPx
+            - showTimestamp
+            - showGuildLabel
+            - showNpcAvatar
+            - showNpcLevel
+            - showNpcLocation
+            - showNpcCoordinates
         mutes:
           type: object
           properties:
@@ -6219,6 +6322,7 @@ components:
         - guildsOrder
         - theme
         - colorMode
+        - chatAppearance
         - mutes
     UserCurrentGuildResponseDto_Output:
       type: object
@@ -6283,6 +6387,30 @@ components:
           enum:
             - light
             - dark
+        chatAppearance:
+          type: object
+          properties:
+            npcLayout:
+              type: string
+              enum:
+                - tile
+                - inline
+            fontScalePercent:
+              type: number
+            messageGapPx:
+              type: number
+            showTimestamp:
+              type: boolean
+            showGuildLabel:
+              type: boolean
+            showNpcAvatar:
+              type: boolean
+            showNpcLevel:
+              type: boolean
+            showNpcLocation:
+              type: boolean
+            showNpcCoordinates:
+              type: boolean
         mutes:
           type: object
           properties:
@@ -8827,6 +8955,140 @@ components:
             - merge
       required:
         - localData
+    SettingsDocumentsResponseDto_Output:
+      type: object
+      properties:
+        domains:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              effective:
+                type: object
+                additionalProperties: {}
+              layers:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    scope:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - USER
+                            - GAME_ACCOUNT
+                            - CHARACTER
+                            - GUILD
+                        id:
+                          type: string
+                          minLength: 1
+                      required:
+                        - type
+                        - id
+                    overrides:
+                      type: object
+                      additionalProperties: {}
+                    schemaVersion:
+                      type: integer
+                      minimum: 1
+                      maximum: 9007199254740991
+                    updatedAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  required:
+                    - scope
+                    - overrides
+              sources:
+                type: object
+                additionalProperties:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - DEFAULT
+                    - type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - USER
+                            - GAME_ACCOUNT
+                            - CHARACTER
+                            - GUILD
+                        id:
+                          type: string
+                          minLength: 1
+                      required:
+                        - type
+                        - id
+              schemaVersion:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - effective
+              - layers
+              - sources
+              - schemaVersion
+      required:
+        - domains
+    PatchSettingsDocumentsDto:
+      type: object
+      properties:
+        operations:
+          minItems: 1
+          type: array
+          items:
+            type: object
+            properties:
+              domain:
+                type: string
+                enum:
+                  - general
+                  - appearance
+                  - timers
+                  - gameData
+                  - notifications
+                  - sounds
+                  - controls
+                  - events
+              scope:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - USER
+                      - GAME_ACCOUNT
+                      - CHARACTER
+                      - GUILD
+                  id:
+                    type: string
+                    minLength: 1
+                required:
+                  - type
+                  - id
+              set:
+                default: {}
+                type: object
+                additionalProperties: {}
+              unset:
+                default: []
+                type: array
+                items:
+                  type: string
+                  minLength: 1
+            required:
+              - domain
+              - scope
+      required:
+        - operations
     LootItemResponseDto:
       type: object
       properties:

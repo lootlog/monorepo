@@ -33,6 +33,19 @@ const UpdateUserPreferencesSchema = z.object({
     ])
     .optional(),
   colorMode: z.enum(["light", "dark"]).optional(),
+  chatAppearance: z
+    .object({
+      npcLayout: z.enum(["tile", "inline"]).optional(),
+      fontScalePercent: z.number().optional(),
+      messageGapPx: z.number().optional(),
+      showTimestamp: z.boolean().optional(),
+      showGuildLabel: z.boolean().optional(),
+      showNpcAvatar: z.boolean().optional(),
+      showNpcLevel: z.boolean().optional(),
+      showNpcLocation: z.boolean().optional(),
+      showNpcCoordinates: z.boolean().optional(),
+    })
+    .optional(),
   mutes: z
     .object({
       players: z

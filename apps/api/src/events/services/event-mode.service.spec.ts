@@ -9,7 +9,7 @@ import { EventModeService } from "./event-mode.service";
 describe("EventModeService", () => {
   const now = new Date("2026-07-13T12:00:00.000Z");
   const mockPrisma = {
-    userGuildEventSettings: {
+    userSettingDocument: {
       findMany: mockFn(),
     },
     event: {
@@ -36,10 +36,10 @@ describe("EventModeService", () => {
     mockGuildsService.getUserGuildsWithPermissions.mockResolvedValue([
       createGuildContext(),
     ]);
-    mockPrisma.userGuildEventSettings.findMany.mockResolvedValue([
+    mockPrisma.userSettingDocument.findMany.mockResolvedValue([
       {
-        guildId: "guild-1",
-        pinnedEvents: ["event-1"],
+        scopeId: "guild-1",
+        overrides: { pinnedEvents: ["event-1"] },
       },
     ]);
     mockPrisma.event.findMany.mockResolvedValue([createEvent()]);
@@ -58,11 +58,11 @@ describe("EventModeService", () => {
     const result = await service.getEventMode(createOptions());
 
     expect(result).toEqual({ generatedAt: now, events: [] });
-    expect(mockPrisma.userGuildEventSettings.findMany).not.toHaveBeenCalled();
+    expect(mockPrisma.userSettingDocument.findMany).not.toHaveBeenCalled();
   });
 
   it("returns no events without pinned settings", async () => {
-    mockPrisma.userGuildEventSettings.findMany.mockResolvedValue([]);
+    mockPrisma.userSettingDocument.findMany.mockResolvedValue([]);
 
     const result = await service.getEventMode(createOptions());
 
@@ -71,10 +71,10 @@ describe("EventModeService", () => {
   });
 
   it("normalizes the world and projects only the matching active member assignments", async () => {
-    mockPrisma.userGuildEventSettings.findMany.mockResolvedValue([
+    mockPrisma.userSettingDocument.findMany.mockResolvedValue([
       {
-        guildId: "guild-1",
-        pinnedEvents: ["event-1", "event-1"],
+        scopeId: "guild-1",
+        overrides: { pinnedEvents: ["event-1", "event-1"] },
       },
     ]);
     mockPrisma.event.findMany.mockResolvedValue([
@@ -262,7 +262,7 @@ describe("EventModeService", () => {
     mockGuildsService.getUserGuildsWithPermissions.mockResolvedValue([
       createGuildContext({ permissions: [Permission.ADMIN] }),
     ]);
-    mockPrisma.userGuildEventSettings.findMany.mockResolvedValue([]);
+    mockPrisma.userSettingDocument.findMany.mockResolvedValue([]);
     const devPermissionOverride = {
       enabled: true,
       permissions: [Permission.ADMIN],
@@ -281,7 +281,7 @@ describe("EventModeService", () => {
         devPermissionOverride,
       },
     );
-    expect(mockPrisma.userGuildEventSettings.findMany).toHaveBeenCalled();
+    expect(mockPrisma.userSettingDocument.findMany).toHaveBeenCalled();
   });
 });
 

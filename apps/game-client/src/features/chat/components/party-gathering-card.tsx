@@ -25,6 +25,8 @@ type PartyGatheringCardProps = {
   guildName: string;
   all: boolean;
   isMsgYesterday: boolean;
+  showGuildLabel?: boolean;
+  showTimestamp?: boolean;
 };
 
 export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
@@ -33,6 +35,8 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   guildName,
   all,
   isMsgYesterday,
+  showGuildLabel = true,
+  showTimestamp = true,
 }) => {
   const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
@@ -64,14 +68,16 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
           className="ll:inline-block ll:max-w-full ll:select-text"
           style={{ overflowWrap: "anywhere" }}
         >
-          <span
-            className={cn("ll:text-[11px] ll:select-text", {
-              "ll:opacity-50": isMsgYesterday,
-            })}
-          >
-            [{format(new Date(message.timestamp), "HH:mm")}]
-          </span>{" "}
-          {all && (
+          {showTimestamp ? (
+            <span
+              className={cn("ll:text-[11px] ll:select-text", {
+                "ll:opacity-50": isMsgYesterday,
+              })}
+            >
+              [{format(new Date(message.timestamp), "HH:mm")}]
+            </span>
+          ) : null}{" "}
+          {all && showGuildLabel && (
             <span
               className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
                 "ll:opacity-50": isMsgYesterday,
@@ -127,14 +133,16 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
         className="ll:mb-0.5 ll:min-w-0 ll:max-w-full"
         style={{ overflowWrap: "anywhere" }}
       >
-        <span
-          className={cn("ll:text-[11px] ll:select-text", {
-            "ll:opacity-50": isMsgYesterday,
-          })}
-        >
-          [{format(new Date(message.timestamp), "HH:mm")}]
-        </span>{" "}
-        {all && (
+        {showTimestamp ? (
+          <span
+            className={cn("ll:text-[11px] ll:select-text", {
+              "ll:opacity-50": isMsgYesterday,
+            })}
+          >
+            [{format(new Date(message.timestamp), "HH:mm")}]
+          </span>
+        ) : null}{" "}
+        {all && showGuildLabel && (
           <span
             className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
               "ll:opacity-50": isMsgYesterday,

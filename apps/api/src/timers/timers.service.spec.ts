@@ -46,7 +46,7 @@ describe("TimersService", () => {
       findMany: mockFn(),
       deleteMany: mockFn(),
     },
-    userTimerSettings: {
+    userSettingDocument: {
       findUnique: mockFn(),
     },
     $transaction: mockFn(),
@@ -164,7 +164,7 @@ describe("TimersService", () => {
     mockPrismaService.timerHistoryEntry.deleteMany.mockResolvedValue({
       count: 0,
     });
-    mockPrismaService.userTimerSettings.findUnique.mockResolvedValue(null);
+    mockPrismaService.userSettingDocument.findUnique.mockResolvedValue(null);
     mockPrismaService.$transaction.mockImplementation((callback) =>
       callback(mockPrismaService),
     );
@@ -1480,9 +1480,11 @@ describe("TimersService", () => {
           roles: [],
         },
       ]);
-      mockPrismaService.userTimerSettings.findUnique.mockResolvedValue({
-        alwaysVisibleExpiredTimers: {
-          "test-world": ["123:test-boss"],
+      mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
+        overrides: {
+          alwaysVisibleExpiredTimers: {
+            "test-world": ["123:test-boss"],
+          },
         },
       });
       mockPrismaService.timer.findMany.mockResolvedValue([]);
@@ -1563,9 +1565,11 @@ describe("TimersService", () => {
         },
       ]);
 
-      mockPrismaService.userTimerSettings.findUnique.mockResolvedValue({
-        alwaysVisibleExpiredTimers: {
-          "test-world": [timer.timerKey],
+      mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
+        overrides: {
+          alwaysVisibleExpiredTimers: {
+            "test-world": [timer.timerKey],
+          },
         },
       });
 

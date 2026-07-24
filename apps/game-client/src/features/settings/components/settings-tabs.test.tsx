@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
@@ -65,6 +65,30 @@ vi.mock("@/features/settings/components/sounds/sounds-settings-tab", () => ({
 vi.mock("@/features/settings/components/timers/timers-settings-tab", () => ({
   TimersSettingsTab: () => <div>Timers tab</div>,
 }));
+vi.mock("@/features/settings/components/chat/chat-appearance-settings", () => ({
+  ChatAppearanceSettingsForm: () => <div>Chat appearance</div>,
+}));
+vi.mock(
+  "@/features/settings/components/timers/timers-settings-appearance",
+  () => ({
+    TimersSettingsAppearance: () => <div>Timer appearance</div>,
+  }),
+);
+vi.mock(
+  "@/features/settings/components/timers/timers-settings-general",
+  () => ({
+    TimersSettingsGeneral: () => <div>Timer behavior</div>,
+  }),
+);
+vi.mock("@/features/settings/components/timers/timers-settings-colors", () => ({
+  TimersSettingsColors: () => <div>Timer colors</div>,
+}));
+vi.mock(
+  "@/features/settings/components/information/information-settings-tab",
+  () => ({
+    InformationSettingsTab: () => <div>Build information</div>,
+  }),
+);
 
 import { SettingsTabs } from "./settings-tabs";
 
@@ -74,50 +98,54 @@ describe("SettingsTabs", () => {
       ...state,
       settings: {
         ...state.settings,
-        size: { width: 640, height: 440 },
+        size: { width: 760, height: 520 },
         state: { activeTab: "general" },
       },
     }));
   });
 
-  it("places the information tab after logs and before debug and opens it", async () => {
+  it("renders eight domain tabs and opens the selected domain", async () => {
     const user = userEvent.setup();
     render(<SettingsTabs />);
 
     const tabs = screen.getAllByRole("tab");
-    const tabNames = tabs.map((tab) => tab.getAttribute("aria-label"));
-    const informationTab = screen.getByRole("tab", { name: "Informacje" });
+    const tabNames = tabs.map((tab) => tab.textContent);
+    const appearanceTab = screen.getByRole("tab", { name: "Wygląd" });
 
-    expect(tabNames.slice(-3)).toEqual(["Logi", "Informacje", "Debug"]);
+    expect(tabNames).toEqual([
+      "Ogólne",
+      "Wygląd",
+      "Timery",
+      "Dane z gry",
+      "Powiadomienia",
+      "Sterowanie",
+      "Diagnostyka",
+      "Informacje",
+    ]);
 
-    await user.click(informationTab);
+    await user.click(appearanceTab);
 
-    expect(informationTab).toHaveAttribute("aria-selected", "true");
+    expect(appearanceTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("Chat appearance")).toBeInTheDocument();
+  });
+
+  it("groups search results by domain and subsection", async () => {
+    const user = userEvent.setup();
+    render(<SettingsTabs />);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Szukaj w ustawieniach" }),
+      "discord",
+    );
+
+    expect(screen.getByText("Dane z gry")).toBeInTheDocument();
+    expect(screen.getByText("Wykrywacz")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Informacje o kliencie" }),
+      screen.getByRole("option", { name: "Routing na serwery" }),
     ).toBeInTheDocument();
   });
 
-  it("keeps both settings columns inside the settings height", () => {
-    const { container } = render(<SettingsTabs />);
-
-    const settingsLayout = container.firstElementChild;
-    const generalTab = screen.getByRole("tab", { name: "Ogólne" });
-    const tabsList = generalTab.closest('[role="tablist"]');
-    const navigationViewport = tabsList?.closest(
-      "[data-ll-scroll-area-viewport]",
-    );
-    const navigationScrollArea = navigationViewport?.parentElement;
-    const sidebar = navigationScrollArea?.parentElement;
-    const contentColumn = sidebar?.nextElementSibling;
-
-    expect(settingsLayout).toHaveClass("ll:box-border");
-    expect(sidebar).not.toHaveClass("ll:pb-2");
-    expect(contentColumn).not.toHaveClass("ll:pb-2");
-    expect(sidebar).not.toHaveTextContent("Commit SHA");
-  });
-
-  it("shows the information label in a tooltip for the compact sidebar", async () => {
+  it("uses an icon rail and opens the overlaid search panel when compact", async () => {
     const user = userEvent.setup();
     useWindowsStore.setState((state) => ({
       ...state,
@@ -129,14 +157,12 @@ describe("SettingsTabs", () => {
 
     render(<SettingsTabs />);
 
-    const informationTab = screen.getByRole("tab", { name: "Informacje" });
-
-    expect(informationTab.querySelector(".lucide-info")).toBeInTheDocument();
-
-    await user.hover(informationTab);
-
-    await waitFor(() => {
-      expect(screen.getByRole("tooltip")).toHaveTextContent("Informacje");
-    });
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Szukaj w ustawieniach" }),
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Szukaj w ustawieniach" }),
+    ).toBeInTheDocument();
   });
 });

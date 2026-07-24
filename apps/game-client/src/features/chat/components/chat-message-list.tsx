@@ -13,10 +13,13 @@ import { ChatMessage } from "./chat-message";
 import { ChatNpcMessage } from "./chat-npc-message";
 import { pruneChatRowMeasurements } from "../chat-row-measurements";
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
+import {
+  CHAT_APPEARANCE_READABLE_PRESET,
+  type ChatAppearanceSettings,
+} from "@lootlog/types";
 
 const CHAT_AUTOSCROLL_THRESHOLD_PX = 100;
 const CHAT_LIST_FALLBACK_HEIGHT_PX = 320;
-const CHAT_LIST_GAP_PX = 4;
 const CHAT_LIST_OVERSCAN_PX = 160;
 
 const observeElementResize = (observer: ResizeObserver, element: Element) => {
@@ -26,6 +29,7 @@ const observeElementResize = (observer: ResizeObserver, element: Element) => {
 type ChatGuildData = ReturnType<typeof useChatGuildData>;
 
 type ChatMessageListProps = {
+  appearance?: ChatAppearanceSettings;
   ariaLabel: string;
   emptyStateLabel: string;
   guildNamesById: Record<string, string>;
@@ -60,10 +64,11 @@ type ChatVirtualLayout = {
   viewportHeight: number;
 };
 
-const getChatRowMeasurementSource = (renderable: ChatRenderableMessage) =>
-  renderable.kind === "date-divider"
-    ? renderable.timestamp
-    : renderable.message;
+const getChatRowMeasurementSource = (
+  renderable: ChatRenderableMessage,
+  appearanceSignature: string,
+) =>
+  `${renderable.kind === "date-divider" ? renderable.timestamp : renderable.key}:${appearanceSignature}`;
 
 const refreshDisplayedChatRenderables = (
   displayedRenderables: ChatRenderableMessage[],
@@ -80,18 +85,28 @@ const refreshDisplayedChatRenderables = (
 
 const getEstimatedChatRowHeight = (
   renderable: ChatRenderableMessage,
+  scale: number,
 ): number => {
-  if (renderable.kind === "date-divider") return 20;
-  if (renderable.kind === "npc-group") return 64;
-  if (renderable.message.type === MessageType.PARTY_GATHERING) return 168;
-  if (renderable.message.type === MessageType.NPC) return 64;
+  let estimatedHeight: number;
 
-  const estimatedLineCount = Math.max(
-    1,
-    Math.ceil((renderable.message.message?.length ?? 0) / 32),
-  );
-  const replyHeight = renderable.message.replyTo ? 36 : 0;
-  return 18 + estimatedLineCount * 16 + replyHeight;
+  if (renderable.kind === "date-divider") {
+    estimatedHeight = 20;
+  } else if (renderable.kind === "npc-group") {
+    estimatedHeight = 64;
+  } else if (renderable.message.type === MessageType.PARTY_GATHERING) {
+    estimatedHeight = 168;
+  } else if (renderable.message.type === MessageType.NPC) {
+    estimatedHeight = 64;
+  } else {
+    const estimatedLineCount = Math.max(
+      1,
+      Math.ceil((renderable.message.message?.length ?? 0) / 32),
+    );
+    const replyHeight = renderable.message.replyTo ? 36 : 0;
+    estimatedHeight = 18 + estimatedLineCount * 16 + replyHeight;
+  }
+
+  return estimatedHeight * scale;
 };
 
 const getMessageId = (renderable: ChatRenderableMessage) =>
@@ -107,10 +122,16 @@ const updateChatScrollControllerSnapshot = (
 ) => controller.observe(snapshot);
 
 const getChatVirtualLayout = ({
+  appearanceSignature,
+  gapPx,
+  scale,
   measuredRows,
   renderables,
   viewport,
 }: {
+  appearanceSignature: string;
+  gapPx: number;
+  scale: number;
   measuredRows: Map<string, MeasuredChatRow>;
   renderables: ChatRenderableMessage[];
   viewport: ChatViewport;
@@ -122,14 +143,17 @@ const getChatVirtualLayout = ({
 
   for (const renderable of renderables) {
     const measuredRow = measuredRows.get(renderable.key);
-    const measurementSource = getChatRowMeasurementSource(renderable);
+    const measurementSource = getChatRowMeasurementSource(
+      renderable,
+      appearanceSignature,
+    );
     const rowHeight =
       measuredRow?.source === measurementSource
         ? measuredRow.height
-        : getEstimatedChatRowHeight(renderable);
+        : getEstimatedChatRowHeight(renderable, scale);
 
     if (rowHeight > 0 && hasVisibleRow) {
-      totalHeight += CHAT_LIST_GAP_PX;
+      totalHeight += gapPx;
     }
 
     rowOffsets.push(totalHeight);
@@ -176,6 +200,7 @@ const getChatVirtualLayout = ({
 };
 
 export const ChatMessageList: FC<ChatMessageListProps> = ({
+  appearance = CHAT_APPEARANCE_READABLE_PRESET,
   ariaLabel,
   emptyStateLabel,
   guildNamesById,
@@ -188,6 +213,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
   scrollToBottomRequest = 0,
   selectedGuildId,
 }) => {
+  const appearanceSignature = JSON.stringify(appearance);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const measuredRowsRef = useRef(new Map<string, MeasuredChatRow>());
@@ -285,6 +311,9 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
   }, [renderables]);
 
   const virtualLayout = getChatVirtualLayout({
+    appearanceSignature,
+    gapPx: appearance.messageGapPx,
+    scale: appearance.fontScalePercent / 100,
     measuredRows: measuredRowsRef.current,
     renderables,
     viewport,
@@ -397,7 +426,10 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
           ) / devicePixelRatio;
         if (measuredHeight <= 0 && element.childElementCount > 0) continue;
 
-        const measurementSource = getChatRowMeasurementSource(renderable);
+        const measurementSource = getChatRowMeasurementSource(
+          renderable,
+          appearanceSignature,
+        );
         const currentMeasurement = measuredRowsRef.current.get(renderable.key);
         if (
           currentMeasurement?.source === measurementSource &&
@@ -664,7 +696,10 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
         data-ll-draggable="false"
         ref={messageListRef}
         role="list"
-        style={{ height: totalHeight, overflowAnchor: "none" }}
+        style={{
+          height: totalHeight,
+          overflowAnchor: "none",
+        }}
       >
         {renderables.slice(startIndex, endIndex).map((renderable, index) => {
           const rowIndex = startIndex + index;
@@ -678,12 +713,16 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
               data-chat-virtual-index={rowIndex}
               key={renderable.key}
               role="listitem"
-              style={{ top: rowOffsets[rowIndex] }}
+              style={{
+                top: rowOffsets[rowIndex],
+                zoom: appearance.fontScalePercent / 100,
+              }}
             >
               {renderable.kind === "date-divider" ? (
                 <ChatDateDivider timestamp={renderable.timestamp} />
               ) : renderable.kind === "npc-group" ? (
                 <ChatNpcMessage
+                  appearance={appearance}
                   additionalSenderCount={renderable.additionalSenderCount}
                   all={selectedGuildId === "all"}
                   count={renderable.count}
@@ -697,6 +736,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
                 />
               ) : (
                 <ChatMessage
+                  appearance={appearance}
                   all={selectedGuildId === "all"}
                   guildName={guildNamesById[renderable.message.guildId]}
                   member={

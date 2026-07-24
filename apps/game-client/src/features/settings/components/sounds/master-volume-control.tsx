@@ -11,6 +11,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 interface MasterVolumeControlProps {
+  isMuted: boolean;
   volume: number;
   onVolumeChange: (value: number[]) => void;
   onVolumeCommit: (value: number[]) => void;
@@ -18,12 +19,12 @@ interface MasterVolumeControlProps {
 }
 
 export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
+  isMuted,
   volume,
   onVolumeChange,
   onVolumeCommit,
   onMuteToggle,
 }) => {
-  const isMuted = volume === 0;
   const { t } = useTranslation();
 
   return (

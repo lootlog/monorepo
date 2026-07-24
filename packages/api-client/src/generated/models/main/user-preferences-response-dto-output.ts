@@ -5,6 +5,7 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { UserPreferencesResponseDtoOutputChatAppearance } from './user-preferences-response-dto-output-chat-appearance';
 import type { UserPreferencesResponseDtoOutputMutes } from './user-preferences-response-dto-output-mutes';
 
 export interface UserPreferencesResponseDtoOutput {
@@ -12,5 +13,6 @@ export interface UserPreferencesResponseDtoOutput {
   guildsOrder: string[];
   theme: string;
   colorMode: string;
+  chatAppearance: UserPreferencesResponseDtoOutputChatAppearance;
   mutes: UserPreferencesResponseDtoOutputMutes;
 }

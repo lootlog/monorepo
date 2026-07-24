@@ -1,137 +1,136 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "src/db/prisma.service";
-import { Prisma } from "src/generated/prisma/client";
-import type { NpcTypeSoundConfig } from "@lootlog/types";
+import type {
+  NpcTypeSoundConfig,
+  SettingsDomainResolution,
+} from "@lootlog/types";
+import type { Prisma } from "src/generated/prisma/client";
+import { SettingsDocumentsService } from "src/settings-documents/settings-documents.service";
 import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
 type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;
 
-const SERIALIZABLE_TRANSACTION_ATTEMPTS = 3;
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-};
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 @Injectable()
 export class SoundSettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly settingsDocumentsService: SettingsDocumentsService,
+  ) {}
 
   async getSettings(userId: string) {
-    const settings = await this.prisma.userSoundSettings.findUnique({
-      where: { userId },
-    });
-
-    if (!settings) {
-      return this.createDefaultSettings(userId);
-    }
-
-    return this.normalizeSettings(settings);
-  }
-
-  async updateSettings(userId: string, dto: UpdateSoundSettingsDto) {
-    const settings = await this.runSerializableTransaction(
-      async (transaction) => {
-        const currentSettings = await transaction.userSoundSettings.findUnique({
-          where: { userId },
-        });
-        const defaults = this.getDefaultSettingsData();
-        const {
-          notificationsConfig,
-          detectorConfig,
-          timersConfig,
-          ...scalarPatch
-        } = dto;
-        const mergedNotificationsConfig = this.mergeSoundConfigMap(
-          currentSettings?.notificationsConfig,
-          defaults.notificationsConfig,
-          notificationsConfig,
-        );
-        const mergedDetectorConfig = this.mergeSoundConfigMap(
-          currentSettings?.detectorConfig,
-          defaults.detectorConfig,
-          detectorConfig,
-        );
-        const mergedTimersConfig = this.mergeSoundConfigMap(
-          currentSettings?.timersConfig,
-          defaults.timersConfig,
-          timersConfig,
-        );
-        const notificationsJson = this.toInputJson(mergedNotificationsConfig);
-        const detectorJson = this.toInputJson(mergedDetectorConfig);
-        const timersJson = this.toInputJson(mergedTimersConfig);
-
-        return transaction.userSoundSettings.upsert({
-          where: { userId },
-          update: {
-            ...scalarPatch,
-            ...(notificationsConfig
-              ? { notificationsConfig: notificationsJson }
-              : {}),
-            ...(detectorConfig ? { detectorConfig: detectorJson } : {}),
-            ...(timersConfig ? { timersConfig: timersJson } : {}),
-            updatedAt: new Date(),
-          },
-          create: {
-            userId,
-            ...defaults,
-            ...scalarPatch,
-            notificationsConfig: notificationsJson,
-            detectorConfig: detectorJson,
-            timersConfig: timersJson,
-          },
-        });
+    const response = await this.settingsDocumentsService.getPreferences(
+      userId,
+      {
+        domains: ["sounds"],
       },
     );
 
-    return this.normalizeSettings(settings);
+    return this.toCompatibilitySettings(userId, response.domains.sounds);
   }
 
-  private async runSerializableTransaction<T>(
-    operation: (transaction: Prisma.TransactionClient) => Promise<T>,
-    attempt = 1,
-  ): Promise<T> {
-    try {
-      return await this.prisma.$transaction(operation, {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      });
-    } catch (error) {
-      const shouldRetry =
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2034" &&
-        attempt < SERIALIZABLE_TRANSACTION_ATTEMPTS;
-      if (!shouldRetry) {
-        throw error;
-      }
+  async updateSettings(userId: string, dto: UpdateSoundSettingsDto) {
+    const currentSettings = await this.getSettings(userId);
+    const {
+      masterVolume: _deviceLocalMasterVolume,
+      notificationsConfig,
+      detectorConfig,
+      timersConfig,
+      ...scalarPatch
+    } = dto;
+    const set: Record<string, unknown> = { ...scalarPatch };
 
-      return this.runSerializableTransaction(operation, attempt + 1);
+    if (notificationsConfig) {
+      set.notificationsConfig = this.mergeSoundConfigMap(
+        currentSettings.notificationsConfig,
+        this.getDefaultSettingsData().notificationsConfig,
+        notificationsConfig,
+      );
     }
+    if (detectorConfig) {
+      set.detectorConfig = this.mergeSoundConfigMap(
+        currentSettings.detectorConfig,
+        this.getDefaultSettingsData().detectorConfig,
+        detectorConfig,
+      );
+    }
+    if (timersConfig) {
+      set.timersConfig = this.mergeSoundConfigMap(
+        currentSettings.timersConfig,
+        this.getDefaultSettingsData().timersConfig,
+        timersConfig,
+      );
+    }
+
+    if (Object.keys(set).length === 0) {
+      return currentSettings;
+    }
+
+    const response = await this.settingsDocumentsService.patchPreferences(
+      userId,
+      {
+        operations: [
+          {
+            domain: "sounds",
+            scope: { type: "USER", id: userId },
+            set,
+            unset: [],
+          },
+        ],
+      },
+    );
+
+    return this.toCompatibilitySettings(userId, response.domains.sounds);
   }
 
-  private normalizeSettings<
-    T extends {
-      notificationsConfig: unknown;
-      detectorConfig: unknown;
-      timersConfig: unknown;
-    },
-  >(settings: T) {
+  private toCompatibilitySettings(
+    userId: string,
+    resolution: SettingsDomainResolution | undefined,
+  ) {
     const defaults = this.getDefaultSettingsData();
+    const effective = resolution?.effective ?? {};
+    const updatedAt = resolution?.updatedAt
+      ? new Date(resolution.updatedAt)
+      : new Date();
 
     return {
-      ...settings,
+      userId,
+      masterVolume: defaults.masterVolume,
+      notificationsVolume: this.getVolume(
+        effective.notificationsVolume,
+        defaults.notificationsVolume,
+      ),
+      detectorVolume: this.getVolume(
+        effective.detectorVolume,
+        defaults.detectorVolume,
+      ),
+      timersVolume: this.getVolume(
+        effective.timersVolume,
+        defaults.timersVolume,
+      ),
+      pingsVolume: this.getVolume(effective.pingsVolume, defaults.pingsVolume),
       notificationsConfig: this.mergeSoundConfigMap(
-        settings.notificationsConfig,
+        effective.notificationsConfig,
         defaults.notificationsConfig,
-      ),
+      ) as unknown as Prisma.JsonValue,
       detectorConfig: this.mergeSoundConfigMap(
-        settings.detectorConfig,
+        effective.detectorConfig,
         defaults.detectorConfig,
-      ),
+      ) as unknown as Prisma.JsonValue,
       timersConfig: this.mergeSoundConfigMap(
-        settings.timersConfig,
+        effective.timersConfig,
         defaults.timersConfig,
-      ),
+      ) as unknown as Prisma.JsonValue,
+      createdAt: updatedAt,
+      updatedAt,
     };
+  }
+
+  private getVolume(value: unknown, fallback: number) {
+    return typeof value === "number" && Number.isFinite(value)
+      ? value
+      : fallback;
   }
 
   private mergeSoundConfigMap(
@@ -177,20 +176,6 @@ export class SoundSettingsService {
     return merged;
   }
 
-  private toInputJson(config: SoundConfigMap): Prisma.InputJsonValue {
-    return config as unknown as Prisma.InputJsonValue;
-  }
-
-  private createDefaultSettings(userId: string) {
-    return {
-      id: 0,
-      userId,
-      ...this.getDefaultSettingsData(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-  }
-
   private getDefaultSettingsData() {
     const defaultNpcConfig = {
       ELITE2: { volume: 0.5, soundUrl: "" },
@@ -199,18 +184,16 @@ export class SoundSettingsService {
       TITAN: { volume: 0.5, soundUrl: "" },
     };
 
-    const defaultNotificationsConfig = {
-      ...defaultNpcConfig,
-      message: { volume: 0.5, soundUrl: "" },
-    };
-
     return {
       masterVolume: 0.5,
       notificationsVolume: 0.5,
       detectorVolume: 0.5,
       timersVolume: 0.5,
       pingsVolume: 0,
-      notificationsConfig: defaultNotificationsConfig,
+      notificationsConfig: {
+        ...defaultNpcConfig,
+        message: { volume: 0.5, soundUrl: "" },
+      },
       detectorConfig: defaultNpcConfig,
       timersConfig: defaultNpcConfig,
     };

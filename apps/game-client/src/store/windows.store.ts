@@ -1,4 +1,8 @@
-import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
+import {
+  resolveSettingsPath,
+  type SettingsSubsectionValue,
+  type SettingsTabValue,
+} from "@/features/settings/constants/settings-tabs";
 import {
   APP_ERROR_WINDOW_DEFAULT_HEIGHT,
   APP_ERROR_WINDOW_WIDTH,
@@ -34,6 +38,7 @@ type CreateNotificationState = {
 
 type SettingsWindowState = {
   activeTab?: SettingsTabValue;
+  activeSubsection?: SettingsSubsectionValue;
 };
 
 type AddTimerWindowState = {
@@ -112,6 +117,10 @@ interface WindowsState {
   toggleOpen: (window: WindowId, autofocus?: boolean) => void;
   setAutofocus: (window: WindowId, autofocus: boolean) => void;
   setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
+  setSettingsPath: (
+    activeTab: SettingsTabValue,
+    activeSubsection: SettingsSubsectionValue,
+  ) => void;
 }
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
@@ -276,6 +285,26 @@ export const migrateWindowsState = (
     }
   }
 
+  if (version < 12) {
+    const settings = state.settings as Record<string, unknown> | undefined;
+    const settingsState = settings?.state as
+      | Record<string, unknown>
+      | undefined;
+    const previousActiveTab = settingsState?.activeTab as
+      | SettingsTabValue
+      | undefined;
+    const nextPath = resolveSettingsPath(previousActiveTab);
+
+    state.settings = {
+      ...settings,
+      state: {
+        ...settingsState,
+        activeTab: nextPath.domain,
+        activeSubsection: nextPath.subsection,
+      },
+    };
+  }
+
   return state as unknown as WindowsState;
 };
 
@@ -297,7 +326,7 @@ export const useWindowsStore = create<WindowsState>()(
         open: false,
         position: DEFAULT_POSITION,
         hasDefinedPosition: false,
-        size: { width: 640, height: 440 },
+        size: { width: 760, height: 520 },
         opacity: DEFAULT_OPACITY,
         locked: false,
         state: {},
@@ -581,7 +610,11 @@ export const useWindowsStore = create<WindowsState>()(
         ),
       setSettingsActiveTab: (activeTab) =>
         set((state) => {
-          if (state.settings.state.activeTab === activeTab) {
+          const nextPath = resolveSettingsPath(activeTab);
+          if (
+            state.settings.state.activeTab === nextPath.domain &&
+            state.settings.state.activeSubsection === nextPath.subsection
+          ) {
             return state;
           }
 
@@ -590,11 +623,23 @@ export const useWindowsStore = create<WindowsState>()(
               ...state.settings,
               state: {
                 ...state.settings.state,
-                activeTab,
+                activeTab: nextPath.domain,
+                activeSubsection: nextPath.subsection,
               },
             },
           };
         }),
+      setSettingsPath: (activeTab, activeSubsection) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            state: {
+              ...state.settings.state,
+              activeTab,
+              activeSubsection,
+            },
+          },
+        })),
       toggleOpen: (key: WindowId, autofocus?: boolean) => {
         const curr = get()[key].open;
         set((state) => {
@@ -640,7 +685,7 @@ export const useWindowsStore = create<WindowsState>()(
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 11,
+      version: 12,
       migrate: migrateWindowsState,
     },
   ),

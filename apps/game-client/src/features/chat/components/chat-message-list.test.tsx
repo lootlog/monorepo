@@ -3,6 +3,7 @@ import type { ReactNode, Ref } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dispatchChatScrollToMessage } from "../chat-scroll-to-message";
 import type { ChatRenderableMessage } from "../chat.helpers";
+import type { ChatAppearanceSettings } from "@lootlog/types";
 import { ChatMessageList } from "./chat-message-list";
 import { pruneChatRowMeasurements } from "../chat-row-measurements";
 
@@ -115,8 +116,10 @@ const createMessageListElement = (
   renderables: ChatRenderableMessage[],
   selectedGuildId = "guild-1",
   instanceKey?: string,
+  appearance?: ChatAppearanceSettings,
 ) => (
   <ChatMessageList
+    appearance={appearance}
     key={instanceKey}
     ariaLabel="Chat messages"
     emptyStateLabel="No messages"
@@ -270,6 +273,46 @@ describe("ChatMessageList", () => {
       document.querySelector<HTMLElement>('[data-chat-virtual-index="1"]')
         ?.style.top,
     ).toBe("124px");
+  });
+
+  it("uses the configured message gap in virtual row offsets", () => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+      bottom: 40,
+      height: 40,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    const appearance: ChatAppearanceSettings = {
+      npcLayout: "tile",
+      fontScalePercent: 100,
+      messageGapPx: 12,
+      showTimestamp: true,
+      showGuildLabel: true,
+      showNpcAvatar: true,
+      showNpcLevel: true,
+      showNpcLocation: true,
+      showNpcCoordinates: true,
+    };
+
+    render(
+      createMessageListElement(
+        createRenderables(3),
+        "guild-1",
+        undefined,
+        appearance,
+      ),
+    );
+    flushAnimationFrames(2);
+
+    expect(
+      document.querySelector<HTMLElement>('[data-chat-virtual-index="1"]')
+        ?.style.top,
+    ).toBe("52px");
   });
 
   it("limits unstable row measurements to one render per animation frame", () => {

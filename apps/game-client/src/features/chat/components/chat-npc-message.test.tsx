@@ -186,4 +186,58 @@ describe("ChatNpcMessage", () => {
 
     expect(screen.queryByText(/Swamp/)).not.toBeInTheDocument();
   });
+
+  it("renders the inline variant and respects every metadata flag", () => {
+    render(
+      <ChatNpcMessage
+        all
+        appearance={{
+          npcLayout: "inline",
+          fontScalePercent: 70,
+          messageGapPx: 0,
+          showTimestamp: false,
+          showGuildLabel: false,
+          showNpcAvatar: false,
+          showNpcLevel: false,
+          showNpcLocation: false,
+          showNpcCoordinates: false,
+        }}
+        guildName="Guild"
+        message={makeChatMessage()}
+        member={member}
+      />,
+    );
+
+    expect(screen.queryByText("[Guild]")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hydra tile")).not.toBeInTheDocument();
+    expect(screen.queryByText("(250m)")).not.toBeInTheDocument();
+    expect(screen.queryByText("Swamp")).not.toBeInTheDocument();
+    expect(screen.queryByText("(7, 9)")).not.toBeInTheDocument();
+    expect(screen.queryByText("[10:00]")).not.toBeInTheDocument();
+  });
+
+  it("can show coordinates without the location name", () => {
+    render(
+      <ChatNpcMessage
+        all={false}
+        appearance={{
+          npcLayout: "inline",
+          fontScalePercent: 100,
+          messageGapPx: 4,
+          showTimestamp: true,
+          showGuildLabel: true,
+          showNpcAvatar: true,
+          showNpcLevel: true,
+          showNpcLocation: false,
+          showNpcCoordinates: true,
+        }}
+        guildName="Guild"
+        message={makeChatMessage()}
+        member={member}
+      />,
+    );
+
+    expect(screen.queryByText("Swamp")).not.toBeInTheDocument();
+    expect(screen.getByText("(7, 9)")).toBeInTheDocument();
+  });
 });

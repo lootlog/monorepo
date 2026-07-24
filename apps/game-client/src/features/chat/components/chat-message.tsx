@@ -5,6 +5,7 @@ import { useState, type FC } from "react";
 import { MessageType } from "@/api/chat.api";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import type { MemberSummaryResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
+import type { ChatAppearanceSettings } from "@lootlog/types";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -50,6 +51,7 @@ import {
 
 type ChatMessageProps = {
   all: boolean;
+  appearance?: ChatAppearanceSettings;
   message: ChatMessageType;
   guildName?: string;
   member?: GuildMember;
@@ -59,6 +61,7 @@ type ChatMessageProps = {
 
 export const ChatMessage: FC<ChatMessageProps> = ({
   all,
+  appearance,
   message,
   guildName,
   member,
@@ -126,6 +129,8 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         guildName={guildName}
         all={all}
         isMsgYesterday={isMsgYesterday}
+        showGuildLabel={appearance?.showGuildLabel}
+        showTimestamp={appearance?.showTimestamp}
       />
     );
   }
@@ -133,6 +138,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   if (message.type === MessageType.NPC) {
     return (
       <ChatNpcMessage
+        appearance={appearance}
         all={all}
         guildName={guildName}
         member={member}
@@ -174,14 +180,16 @@ export const ChatMessage: FC<ChatMessageProps> = ({
             className="ll:inline-block ll:max-w-full ll:select-text"
             style={{ overflowWrap: "anywhere" }}
           >
-            <span
-              className={cn("ll:text-[11px] ll:select-text", {
-                "ll:opacity-50": isMsgYesterday,
-              })}
-            >
-              [{format(new Date(message.timestamp), "HH:mm")}]
-            </span>{" "}
-            {all && (
+            {appearance?.showTimestamp !== false ? (
+              <span
+                className={cn("ll:text-[11px] ll:select-text", {
+                  "ll:opacity-50": isMsgYesterday,
+                })}
+              >
+                [{format(new Date(message.timestamp), "HH:mm")}]
+              </span>
+            ) : null}{" "}
+            {all && appearance?.showGuildLabel !== false && (
               <span
                 className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
                   "ll:opacity-50": isMsgYesterday,
