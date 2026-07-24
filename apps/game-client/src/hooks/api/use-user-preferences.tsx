@@ -54,6 +54,12 @@ export const useUpdateUserPreferences = () => {
       queryClient.setQueryData<UserPreferencesResponseDtoOutput>(queryKey, {
         ...previousData,
         ...payload,
+        chatAppearance: payload.chatAppearance
+          ? {
+              ...previousData.chatAppearance,
+              ...payload.chatAppearance,
+            }
+          : previousData.chatAppearance,
         mutes: nextMutes,
       });
 

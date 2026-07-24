@@ -1,12 +1,8 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { BattlePanelSettingsTab } from "@/features/settings/components/battle-panel/battle-panel-settings-tab";
 import { CatchingSettings } from "@/features/settings/components/catching/catching-settings";
+import { ChatAppearanceSettingsForm } from "@/features/settings/components/chat/chat-appearance-settings";
 import { DebugTab } from "@/features/settings/components/debug/debug-tab";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
@@ -17,218 +13,415 @@ import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settin
 import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
-import { TimersSettingsTab } from "@/features/settings/components/timers/timers-settings-tab";
-import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
+import { NpcColorsSettings } from "@/features/settings/components/npc-colors/npc-colors-settings";
+import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
+import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
+import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
+import {
+  resolveSettingsPath,
+  type SettingsDomainValue,
+  type SettingsSubsectionValue,
+} from "@/features/settings/constants/settings-tabs";
+import { SETTINGS_MANIFEST } from "@/features/settings/settings-manifest";
+import {
+  searchSettings,
+  type SettingsSearchItem,
+} from "@/features/settings/settings-search";
 import { useWindowsStore } from "@/store/windows.store";
 import {
+  Activity,
   Bell,
-  BellOff,
-  Bug,
   Clock,
-  Crosshair,
-  EyeOff,
-  FileText,
+  Database,
   Info,
   Keyboard,
+  Palette,
+  Search,
   Settings,
-  Swords,
-  Target,
   Volume2,
+  X,
   type LucideIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-type SettingsTabDefinition = {
-  value: SettingsTabValue;
-  label: string;
-  icon: LucideIcon;
-  content: ReactNode;
+const ICONS: Record<string, LucideIcon> = {
+  settings: Settings,
+  palette: Palette,
+  clock: Clock,
+  database: Database,
+  bell: Bell,
+  volume2: Volume2,
+  keyboard: Keyboard,
+  activity: Activity,
+  info: Info,
 };
 
-const ICON_CLASSES = "ll:size-4 ll:stroke-2";
-const SETTINGS_TABS_COMPACT_WIDTH = 520;
-const SETTINGS_TAB_TRIGGER_BASE_CLASSES =
-  "ll:mt-0 ll:flex ll:min-h-8 ll:w-full ll:items-center ll:rounded-md ll:py-1.5 ll:text-gray-200 ll:font-semibold ll:transition-[background-color,border-color,color]";
-const SETTINGS_TAB_TRIGGER_REGULAR_CLASSES =
-  "ll:justify-start ll:gap-1.5 ll:border-transparent ll:px-2 ll:text-left ll:hover:border-gray-300/70 ll:hover:bg-gray-500/20 ll:data-[active]:border-purple-400/80 ll:data-[active]:bg-purple-500/20 ll:data-[active]:text-white";
-const SETTINGS_TAB_TRIGGER_COMPACT_CLASSES =
-  "ll:relative ll:justify-center ll:border-gray-500/40 ll:bg-black/5 ll:px-1.5 ll:text-gray-300 ll:hover:border-gray-300/70 ll:hover:bg-gray-500/18 ll:data-[active]:border-purple-300/80 ll:data-[active]:bg-purple-500/24 ll:data-[active]:text-white";
+const COMPACT_WIDTH = 600;
 
 export const SettingsTabs = () => {
-  const activeTab = useWindowsStore((state) => state.settings.state?.activeTab);
-  const settingsWidth = useWindowsStore((state) => state.settings.size.width);
-  const setSettingsActiveTab = useWindowsStore(
-    (state) => state.setSettingsActiveTab,
-  );
   const { t } = useTranslation();
-  const baseTabsList: SettingsTabDefinition[] = [
-    {
-      value: "general",
-      label: t("settings.tabs.general"),
-      icon: Settings,
-      content: <GeneralSettingsTab />,
-    },
-    {
-      value: "timers",
-      label: t("settings.tabs.timers"),
-      icon: Clock,
-      content: <TimersSettingsTab />,
-    },
-    {
-      value: "catching",
-      label: t("settings.tabs.catching"),
-      icon: Target,
-      content: <CatchingSettings />,
-    },
-    {
-      value: "hidden-timers",
-      label: t("settings.tabs.hiddenTimers"),
-      icon: EyeOff,
-      content: <HiddenTimersTab />,
-    },
-    {
-      value: "npc-detector",
-      label: t("settings.tabs.detector"),
-      icon: Crosshair,
-      content: <DetectorSettingsTab />,
-    },
-    {
-      value: "notifications",
-      label: t("settings.tabs.notifications"),
-      icon: Bell,
-      content: <NotificationsSettingsTab />,
-    },
-    {
-      value: "notification-mutes",
-      label: t("settings.tabs.notificationMutes"),
-      icon: BellOff,
-      content: <NotificationMutesSettingsTab />,
-    },
-    {
-      value: "sounds",
-      label: t("settings.tabs.sounds"),
-      icon: Volume2,
-      content: <SoundsSettingsTab />,
-    },
-    {
-      value: "battle-panel",
-      label: t("settings.tabs.battlePanel"),
-      icon: Swords,
-      content: <BattlePanelSettingsTab />,
-    },
-    {
-      value: "hotkeys",
-      label: t("settings.tabs.hotkeys"),
-      icon: Keyboard,
-      content: <HotkeysSettingsTab />,
-    },
-  ];
-  const logsTab: SettingsTabDefinition = {
-    value: "logs",
-    label: t("settings.tabs.logs"),
-    icon: FileText,
-    content: <LogsSettingsTab />,
+  const activeTab = useWindowsStore((state) => state.settings.state?.activeTab);
+  const activeSubsection = useWindowsStore(
+    (state) => state.settings.state?.activeSubsection,
+  );
+  const settingsWidth = useWindowsStore((state) => state.settings.size.width);
+  const setSettingsPath = useWindowsStore((state) => state.setSettingsPath);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState("");
+  const [selectedResultIndex, setSelectedResultIndex] = useState(0);
+  const [compactPanelOpen, setCompactPanelOpen] = useState(false);
+  const path = resolveSettingsPath(activeTab, activeSubsection);
+  const visibleDomains = SETTINGS_MANIFEST.map((domain) => ({
+    ...domain,
+    subsections: domain.subsections.filter(
+      (subsection) => subsection.visible?.() ?? true,
+    ),
+  }));
+  const activeDomain =
+    visibleDomains.find((domain) => domain.id === path.domain) ??
+    visibleDomains[0];
+  const selectedSubsection = activeDomain.subsections.some(
+    (subsection) => subsection.id === path.subsection,
+  )
+    ? path.subsection
+    : activeDomain.subsections[0].id;
+  const searchItems: SettingsSearchItem[] = visibleDomains.flatMap(
+    (domain, domainIndex) =>
+      domain.subsections.flatMap((subsection, subsectionIndex) =>
+        subsection.controls.map((control, controlIndex) => ({
+          categoryId: domain.id,
+          categoryLabel: t(domain.labelKey),
+          subsectionId: subsection.id,
+          subsectionLabel: t(subsection.labelKey),
+          controlId: control.id,
+          label: t(control.labelKey),
+          description: control.descriptionKey
+            ? t(control.descriptionKey)
+            : undefined,
+          keywords: control.aliases,
+          order: domainIndex * 10_000 + subsectionIndex * 100 + controlIndex,
+        })),
+      ),
+  );
+  const results = searchSettings(searchItems, query);
+  const isCompact = settingsWidth < COMPACT_WIDTH;
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        setCompactPanelOpen(true);
+        searchInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, []);
+
+  useEffect(() => {
+    setSelectedResultIndex(0);
+  }, [query]);
+
+  useEffect(() => {
+    if (compactPanelOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [compactPanelOpen]);
+
+  const openSearchResult = (result: SettingsSearchItem) => {
+    setSettingsPath(
+      result.categoryId as SettingsDomainValue,
+      result.subsectionId as SettingsSubsectionValue,
+    );
+    setCompactPanelOpen(false);
+
+    window.setTimeout(() => {
+      const exactControl = document.getElementById(result.controlId);
+      const control =
+        exactControl?.closest<HTMLElement>("[data-settings-control]") ??
+        exactControl ??
+        document.getElementById(`settings-subsection-${result.subsectionId}`);
+      const collapsedSection = control?.closest("details");
+      if (collapsedSection) collapsedSection.open = true;
+
+      window.requestAnimationFrame(() => {
+        control?.scrollIntoView({ behavior: "smooth", block: "center" });
+        control?.setAttribute("data-settings-highlighted", "true");
+        window.setTimeout(
+          () => control?.removeAttribute("data-settings-highlighted"),
+          1800,
+        );
+      });
+    });
   };
-  const informationTab: SettingsTabDefinition = {
-    value: "information",
-    label: t("settings.tabs.information"),
-    icon: Info,
-    content: <InformationSettingsTab />,
+
+  const handleSearchKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setQuery("");
+      setCompactPanelOpen(false);
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setSelectedResultIndex((currentIndex) =>
+        Math.min(currentIndex + 1, Math.max(results.length - 1, 0)),
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setSelectedResultIndex((currentIndex) => Math.max(currentIndex - 1, 0));
+      return;
+    }
+
+    if (event.key === "Enter" && results[selectedResultIndex]) {
+      event.preventDefault();
+      openSearchResult(results[selectedResultIndex]);
+    }
   };
-  const debugTab: SettingsTabDefinition = {
-    value: "debug",
-    label: t("settings.tabs.debug"),
-    icon: Bug,
-    content: <DebugTab />,
-  };
-  const tabsList: SettingsTabDefinition[] = import.meta.env.DEV
-    ? [...baseTabsList, logsTab, informationTab, debugTab]
-    : [...baseTabsList, logsTab, informationTab];
-  const selectedTab = tabsList.some((tab) => tab.value === activeTab)
-    ? activeTab
-    : "general";
-  const isCompactSidebar = settingsWidth < SETTINGS_TABS_COMPACT_WIDTH;
+
+  let content: ReactNode;
+
+  switch (selectedSubsection) {
+    case "behavior":
+      content = <GeneralSettingsTab />;
+      break;
+    case "chat":
+      content = <ChatAppearanceSettingsForm />;
+      break;
+    case "npc-colors":
+      content = <NpcColorsSettings />;
+      break;
+    case "timer-appearance":
+      content = <TimersSettingsAppearance />;
+      break;
+    case "timer-colors":
+      content = <TimersSettingsColors />;
+      break;
+    case "timer-behavior":
+      content = <TimersSettingsGeneral />;
+      break;
+    case "hidden-timers":
+      content = <HiddenTimersTab />;
+      break;
+    case "catching":
+      content = <CatchingSettings />;
+      break;
+    case "detector":
+      content = <DetectorSettingsTab />;
+      break;
+    case "battle-panel":
+      content = <BattlePanelSettingsTab />;
+      break;
+    case "notification-rules":
+      content = <NotificationsSettingsTab />;
+      break;
+    case "notification-mutes":
+      content = <NotificationMutesSettingsTab />;
+      break;
+    case "sounds":
+      content = <SoundsSettingsTab />;
+      break;
+    case "hotkeys":
+      content = <HotkeysSettingsTab />;
+      break;
+    case "logs":
+      content = <LogsSettingsTab />;
+      break;
+    case "debug":
+      content = <DebugTab />;
+      break;
+    case "build":
+      content = <InformationSettingsTab />;
+      break;
+    default:
+      content = <GeneralSettingsTab />;
+  }
+
+  const navigationPanel = (
+    <div className="ll:flex ll:h-full ll:min-h-0 ll:w-48 ll:flex-col ll:border-0 ll:border-r ll:border-solid ll:border-gray-500/30 ll:bg-black/15 ll:p-2">
+      <div className="ll:relative ll:mb-2">
+        <Search className="ll:pointer-events-none ll:absolute ll:left-2 ll:top-1/2 ll:size-3.5 ll:-translate-y-1/2 ll:text-gray-400" />
+        <input
+          ref={searchInputRef}
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={handleSearchKeyDown}
+          placeholder={t("settings.search.placeholder")}
+          aria-label={t("settings.search.ariaLabel")}
+          className="ll:h-7 ll:w-full ll:box-border ll:rounded-md ll:border ll:border-solid ll:border-gray-500 ll:bg-black/25 ll:pl-7 ll:pr-7 ll:text-xs ll:text-white ll:outline-none ll:focus:border-purple-400"
+        />
+        {query ? (
+          <button
+            type="button"
+            aria-label={t("settings.search.clear")}
+            onClick={() => setQuery("")}
+            className="ll:absolute ll:right-1.5 ll:top-1/2 ll:flex ll:size-5 ll:-translate-y-1/2 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:text-gray-400 ll-custom-cursor-pointer"
+          >
+            <X className="ll:size-3.5" />
+          </button>
+        ) : null}
+      </div>
+      <ScrollArea className="ll:min-h-0 ll:flex-1">
+        {query ? (
+          <div
+            role="listbox"
+            aria-label={t("settings.search.results")}
+            className="ll:flex ll:flex-col ll:gap-0.5"
+          >
+            {results.length === 0 ? (
+              <p className="ll:m-0 ll:px-2 ll:py-3 ll:text-[11px] ll:text-gray-400">
+                {t("settings.search.empty")}
+              </p>
+            ) : null}
+            {results.map((result, index) => {
+              const previousResult = results[index - 1];
+              const startsDomain =
+                !previousResult ||
+                previousResult.categoryId !== result.categoryId;
+              const startsSubsection =
+                startsDomain ||
+                previousResult.subsectionId !== result.subsectionId;
+
+              return (
+                <div key={result.controlId}>
+                  {startsDomain ? (
+                    <div className="ll:mt-2 ll:px-2 ll:text-[10px] ll:font-semibold ll:uppercase ll:text-gray-400">
+                      {result.categoryLabel}
+                    </div>
+                  ) : null}
+                  {startsSubsection ? (
+                    <div className="ll:px-2 ll:pt-1 ll:text-[11px] ll:font-semibold ll:text-gray-200">
+                      {result.subsectionLabel}
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={index === selectedResultIndex}
+                    onMouseEnter={() => setSelectedResultIndex(index)}
+                    onClick={() => openSearchResult(result)}
+                    className="ll:mt-0.5 ll:w-full ll:rounded-md ll:border-0 ll:bg-transparent ll:px-3 ll:py-1.5 ll:text-left ll:text-[11px] ll:text-gray-300 ll-custom-cursor-pointer ll:hover:bg-purple-500/15 ll:aria-selected:bg-purple-500/25 ll:aria-selected:text-white"
+                  >
+                    {result.label}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <TabsList className="ll:flex ll:w-full ll:flex-col ll:items-stretch ll:gap-1">
+            {visibleDomains.map((domain) => {
+              const Icon = ICONS[domain.icon];
+              return (
+                <TabsTrigger
+                  key={domain.id}
+                  value={domain.id}
+                  className="ll:mt-0 ll:flex ll:min-h-8 ll:w-full ll:items-center ll:justify-start ll:gap-2 ll:rounded-md ll:border-transparent ll:px-2 ll:py-1.5 ll:text-left ll:font-semibold ll:text-gray-300 ll:hover:bg-gray-500/20 ll:data-[active]:border-purple-400/70 ll:data-[active]:bg-purple-500/20 ll:data-[active]:text-white"
+                >
+                  <Icon className="ll:size-4 ll:shrink-0" />
+                  <span>{t(domain.labelKey)}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        )}
+      </ScrollArea>
+    </div>
+  );
 
   return (
-    <div className="ll:h-full ll:box-border ll:flex ll:flex-col ll:pt-2 ll:min-h-0">
-      <Tabs
-        value={selectedTab}
-        onValueChange={(value) =>
-          setSettingsActiveTab(value as SettingsTabValue)
+    <Tabs
+      value={activeDomain.id}
+      onValueChange={(domainId) => {
+        const domain = visibleDomains.find(({ id }) => id === domainId);
+        if (domain) {
+          setSettingsPath(domain.id, domain.subsections[0].id);
         }
-        className="ll:flex ll:h-full ll:w-full ll:min-h-0 ll:flex-row ll:gap-0"
-      >
-        <div
-          className={`ll:relative ll:flex ll:h-full ll:min-h-0 ll:flex-col ll:bg-black/10 ${
-            isCompactSidebar
-              ? "ll:w-12 ll:min-w-12 ll:px-1"
-              : "ll:w-40 ll:min-w-40 ll:px-1 ll:pr-1.5"
-          }`}
-        >
-          <div className="ll:pointer-events-none ll:absolute ll:inset-y-0 ll:right-0 ll:w-px ll:bg-gray-400/30" />
-          <ScrollArea className="ll:h-full ll:w-full ll:min-h-0 ll:flex-1 ll:box-border">
-            <TabsList className="ll:flex ll:w-full ll:flex-col ll:items-stretch ll:justify-start ll:gap-1 ll:rounded-none ll:pt-0.5">
-              {tabsList.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = selectedTab === tab.value;
-                const trigger = (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    aria-label={tab.label}
-                    className={`${SETTINGS_TAB_TRIGGER_BASE_CLASSES} ${
-                      isCompactSidebar
-                        ? SETTINGS_TAB_TRIGGER_COMPACT_CLASSES
-                        : SETTINGS_TAB_TRIGGER_REGULAR_CLASSES
-                    }`}
-                  >
-                    {isCompactSidebar && isActive ? (
-                      <span className="ll:pointer-events-none ll:absolute ll:left-1 ll:top-1/2 ll:h-4 ll:w-0.5 ll:-translate-y-1/2 ll:rounded-full ll:bg-purple-300" />
-                    ) : null}
-                    <span
-                      className={`ll:flex ll:size-4.5 ll:shrink-0 ll:items-center ll:justify-center ${
-                        isActive ? "ll:text-white" : "ll:text-gray-300"
-                      }`}
-                    >
-                      <Icon className={ICON_CLASSES} />
-                    </span>
-                    {!isCompactSidebar ? (
-                      <span className="ll:min-w-0 ll:flex-1 ll:whitespace-normal ll:leading-[1.1rem]">
-                        {tab.label}
-                      </span>
-                    ) : null}
-                  </TabsTrigger>
-                );
-
-                if (!isCompactSidebar) {
-                  return trigger;
-                }
-
-                return (
-                  <Tooltip key={tab.value}>
-                    <TooltipTrigger asChild>{trigger}</TooltipTrigger>
-                    <TooltipContent side="right">{tab.label}</TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </TabsList>
-          </ScrollArea>
-        </div>
-        <div className="ll:flex ll:min-w-0 ll:flex-1 ll:min-h-0 ll:flex-col ll:pl-2">
-          <ScrollArea className="ll:h-full ll:w-full ll:box-border ll:pr-2">
-            {tabsList.map((tab) => (
-              <TabsContent
-                key={tab.value}
-                value={tab.value}
-                className="ll:px-1 ll:pb-2"
+      }}
+      className="ll:relative ll:flex ll:h-full ll:min-h-0 ll:w-full ll:flex-row ll:gap-0 ll:pt-2"
+    >
+      {isCompact ? (
+        <>
+          <div className="ll:flex ll:h-full ll:w-12 ll:shrink-0 ll:flex-col ll:items-center ll:gap-1 ll:border-0 ll:border-r ll:border-solid ll:border-gray-500/30 ll:bg-black/15 ll:px-1">
+            <button
+              type="button"
+              aria-label={t("settings.search.ariaLabel")}
+              onClick={() => {
+                setCompactPanelOpen(true);
+                window.setTimeout(() => searchInputRef.current?.focus());
+              }}
+              className="ll:flex ll:size-8 ll:items-center ll:justify-center ll:rounded-md ll:border ll:border-gray-500/40 ll:bg-transparent ll:text-gray-300 ll-custom-cursor-pointer"
+            >
+              <Search className="ll:size-4" />
+            </button>
+            {visibleDomains.map((domain) => {
+              const Icon = ICONS[domain.icon];
+              return (
+                <button
+                  key={domain.id}
+                  type="button"
+                  aria-label={t(domain.labelKey)}
+                  aria-current={domain.id === activeDomain.id}
+                  onClick={() =>
+                    setSettingsPath(domain.id, domain.subsections[0].id)
+                  }
+                  className="ll:flex ll:size-8 ll:items-center ll:justify-center ll:rounded-md ll:border ll:border-gray-500/40 ll:bg-transparent ll:text-gray-300 ll-custom-cursor-pointer ll:aria-current:border-purple-400 ll:aria-current:bg-purple-500/25 ll:aria-current:text-white"
+                >
+                  <Icon className="ll:size-4" />
+                </button>
+              );
+            })}
+          </div>
+          {compactPanelOpen ? (
+            <div className="ll:absolute ll:inset-y-2 ll:left-12 ll:z-30 ll:shadow-2xl">
+              {navigationPanel}
+            </div>
+          ) : null}
+        </>
+      ) : (
+        navigationPanel
+      )}
+      <div className="ll:flex ll:min-h-0 ll:min-w-0 ll:flex-1 ll:flex-col ll:px-3">
+        {activeDomain.subsections.length > 1 ? (
+          <div className="ll:mb-2 ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-0 ll:border-b ll:border-solid ll:border-gray-500/30 ll:pb-2">
+            {activeDomain.subsections.map((subsection) => (
+              <button
+                key={subsection.id}
+                type="button"
+                aria-current={subsection.id === selectedSubsection}
+                onClick={() => setSettingsPath(activeDomain.id, subsection.id)}
+                className="ll:rounded-md ll:border ll:border-transparent ll:bg-transparent ll:px-2.5 ll:py-1.5 ll:text-[11px] ll:font-semibold ll:text-gray-400 ll-custom-cursor-pointer ll:hover:bg-gray-500/15 ll:aria-current:border-purple-400/60 ll:aria-current:bg-purple-500/20 ll:aria-current:text-white"
               >
-                {tab.content}
-              </TabsContent>
+                {t(subsection.labelKey)}
+              </button>
             ))}
-          </ScrollArea>
-        </div>
-      </Tabs>
-    </div>
+          </div>
+        ) : null}
+        <ScrollArea className="ll:min-h-0 ll:flex-1 ll:pr-2">
+          {visibleDomains.map((domain) => (
+            <TabsContent
+              key={domain.id}
+              value={domain.id}
+              className="ll:mt-0 ll:pb-3"
+            >
+              <div
+                id={`settings-subsection-${selectedSubsection}`}
+                className="ll:rounded-md ll:transition-[background-color,box-shadow] ll:data-[settings-highlighted]:bg-purple-500/10 ll:data-[settings-highlighted]:shadow-[0_0_0_2px_rgba(192,132,252,0.25)]"
+              >
+                {content}
+              </div>
+            </TabsContent>
+          ))}
+        </ScrollArea>
+      </div>
+    </Tabs>
   );
 };

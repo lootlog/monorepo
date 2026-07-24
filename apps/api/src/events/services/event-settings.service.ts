@@ -1,53 +1,68 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "src/db/prisma.service";
+import { SettingsDocumentsService } from "src/settings-documents/settings-documents.service";
 import type { UpdateEventSettingsDto } from "../dto/update-event-settings.dto";
+
+const asStringArray = (value: unknown) =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 
 @Injectable()
 export class EventSettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly settingsDocumentsService: SettingsDocumentsService,
+  ) {}
 
   async getSettings(userId: string, guildId: string) {
-    const settings = await this.prisma.userGuildEventSettings.findUnique({
-      where: {
-        userId_guildId: {
-          userId,
-          guildId,
-        },
-      },
-    });
-
-    if (!settings) {
-      return {
-        id: 0,
-        userId,
+    const response = await this.settingsDocumentsService.getPreferences(
+      userId,
+      {
+        domains: ["events"],
         guildId,
-        pinnedEvents: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-    }
+      },
+    );
 
-    return settings;
+    return this.toCompatibilitySettings(userId, guildId, response);
   }
 
-  updateSettings(userId: string, guildId: string, dto: UpdateEventSettingsDto) {
-    return this.prisma.userGuildEventSettings.upsert({
-      where: {
-        userId_guildId: {
-          userId,
-          guildId,
-        },
+  async updateSettings(
+    userId: string,
+    guildId: string,
+    dto: UpdateEventSettingsDto,
+  ) {
+    const response = await this.settingsDocumentsService.patchPreferences(
+      userId,
+      {
+        operations: [
+          {
+            domain: "events",
+            scope: { type: "GUILD", id: guildId },
+            set: { ...dto },
+            unset: [],
+          },
+        ],
       },
-      update: {
-        ...(dto as Record<string, unknown>),
-        updatedAt: new Date(),
-      },
-      create: {
-        userId,
-        guildId,
-        pinnedEvents: [],
-        ...(dto as Record<string, unknown>),
-      },
-    });
+    );
+
+    return this.toCompatibilitySettings(userId, guildId, response);
+  }
+
+  private toCompatibilitySettings(
+    userId: string,
+    guildId: string,
+    response: Awaited<ReturnType<SettingsDocumentsService["getPreferences"]>>,
+  ) {
+    const events = response.domains.events;
+    const updatedAt = events?.updatedAt
+      ? new Date(events.updatedAt)
+      : new Date();
+
+    return {
+      userId,
+      guildId,
+      pinnedEvents: asStringArray(events?.effective.pinnedEvents),
+      createdAt: updatedAt,
+      updatedAt,
+    };
   }
 }

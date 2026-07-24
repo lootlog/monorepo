@@ -201,6 +201,13 @@ enum NotificationScheduleStrategy {
   FIXED_DATETIME
 }
 
+enum SettingsScopeType {
+  USER
+  GAME_ACCOUNT
+  CHARACTER
+  GUILD
+}
+
 enum NotificationScheduleAnchor {
   MIN_SPAWN
   MAX_SPAWN
@@ -574,6 +581,22 @@ model UserSettings {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+}
+
+model UserSettingDocument {
+  id            Int               @id @default(autoincrement())
+  userId        String
+  domain        String
+  scopeType     SettingsScopeType
+  scopeId       String
+  overrides     Json               @default("{}")
+  schemaVersion Int                @default(1)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@unique([userId, domain, scopeType, scopeId])
+  @@index([userId, domain])
+  @@index([userId, scopeType, scopeId])
 }
 
 model UserGameAccountSettings {

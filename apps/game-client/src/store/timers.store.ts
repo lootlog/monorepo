@@ -97,6 +97,7 @@ interface TimersState {
     borderColor: string,
     backgroundColor: string,
   ) => void;
+  resetDefaultColor: (colorId: string) => void;
   deleteDefaultColor: (colorId: string) => void;
   restoreDefaultColor: (colorId: string) => void;
 }
@@ -395,6 +396,20 @@ export const useTimersStore = create<TimersState>()(
 
           debouncedSyncGlobalSettings({
             overriddenDefaultColors: updatedOverriddenDefaultColors,
+          });
+        },
+        resetDefaultColor: (colorId: string) => {
+          const state = get();
+          const overriddenDefaultColors = {
+            ...state.overriddenDefaultColors,
+          };
+          const defaultColorNames = { ...state.defaultColorNames };
+          delete overriddenDefaultColors[colorId];
+          delete defaultColorNames[colorId];
+          setWithTimestamp({ overriddenDefaultColors, defaultColorNames });
+          debouncedSyncGlobalSettings({
+            overriddenDefaultColors,
+            defaultColorNames,
           });
         },
         deleteDefaultColor: (colorId: string) => {

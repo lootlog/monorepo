@@ -16,11 +16,14 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import type { Prisma } from "src/generated/prisma/client";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import {
+  CHAT_APPEARANCE_READABLE_PRESET,
   DETECTOR_NPC_TYPES,
   defaultAirTagPreferences,
   defaultDetectorSettings,
   defaultMapPingPreferences,
   defaultNotificationsSettings,
+  mergeChatAppearanceSettings,
+  normalizeChatAppearanceSettings,
   type DetectorNpcType,
   type AirTagPreferences,
   type DetectorRoutingRule,
@@ -39,6 +42,7 @@ import {
   type UserGameAccountPreferences,
   type UserPreferences,
 } from "@lootlog/types";
+import { applySettingsPatch } from "src/settings-documents/settings-resolver";
 import {
   GuildsService,
   type CurrentUserGuildAccessSummary,
@@ -83,26 +87,41 @@ export class UsersService {
   }
 
   async getUserPreferences(userId: string) {
-    const [userSettings, notificationMutesSettings] = await Promise.all([
-      this.prisma.userSettings.findUnique({
-        where: { userId },
-      }),
-      this.prisma.userGameAccountSettings.findUnique({
-        where: {
-          userId_accountId: {
-            userId,
-            accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+    const [userSettings, notificationMutesSettings, appearanceDocument] =
+      await Promise.all([
+        this.prisma.userSettings.findUnique({
+          where: { userId },
+        }),
+        this.prisma.userGameAccountSettings.findUnique({
+          where: {
+            userId_accountId: {
+              userId,
+              accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
+            },
           },
-        },
-      }),
-    ]);
+        }),
+        this.prisma.userSettingDocument?.findUnique({
+          where: {
+            userId_domain_scopeType_scopeId: {
+              userId,
+              domain: "appearance",
+              scopeType: "USER",
+              scopeId: userId,
+            },
+          },
+        }),
+      ]);
 
     const settings = userSettings ?? this.createDefaultUserPreferences(userId);
     const mutes = this.getStoredNotificationMutes(
       notificationMutesSettings?.settings,
     );
 
-    return this.toUserPreferencesResponse(settings, mutes);
+    return this.toUserPreferencesResponse(
+      settings,
+      mutes,
+      this.getChatAppearanceFromOverrides(appearanceDocument?.overrides),
+    );
   }
 
   async getCurrentUserGuilds(
@@ -170,6 +189,9 @@ export class UsersService {
         where: { userId: discordId },
       });
       await tx.userSettings.deleteMany({ where: { userId: authUserId } });
+      await tx.userSettingDocument.deleteMany({
+        where: { userId: authUserId },
+      });
       await tx.userGameAccountSettings.deleteMany({
         where: { userId: authUserId },
       });
@@ -247,16 +269,44 @@ export class UsersService {
     userId: string,
     preferences: UpdateUserPreferencesDto,
   ) {
+    const [currentUserSettings, currentMutes, currentAppearanceDocument] =
+      await Promise.all([
+        this.prisma.userSettings.findUnique({ where: { userId } }),
+        this.getUserNotificationMutes(userId),
+        this.prisma.userSettingDocument?.findUnique({
+          where: {
+            userId_domain_scopeType_scopeId: {
+              userId,
+              domain: "appearance",
+              scopeType: "USER",
+              scopeId: userId,
+            },
+          },
+        }),
+      ]);
+    const legacyChatAppearance = (
+      currentUserSettings as { chatAppearance?: unknown } | null
+    )?.chatAppearance;
+    const nextChatAppearance = preferences.chatAppearance
+      ? mergeChatAppearanceSettings(
+          this.getChatAppearanceFromOverrides(
+            currentAppearanceDocument?.overrides,
+            legacyChatAppearance,
+          ),
+          preferences.chatAppearance,
+        )
+      : undefined;
     const nextUserSettingsPayload = {
-      guildsOrder: preferences.guildsOrder,
-      theme: preferences.theme,
-      colorMode: preferences.colorMode,
+      ...(preferences.guildsOrder !== undefined
+        ? { guildsOrder: preferences.guildsOrder }
+        : {}),
+      ...(preferences.theme !== undefined ? { theme: preferences.theme } : {}),
+      ...(preferences.colorMode !== undefined
+        ? { colorMode: preferences.colorMode }
+        : {}),
     };
     const shouldUpdateUserSettings =
-      nextUserSettingsPayload.guildsOrder !== undefined ||
-      nextUserSettingsPayload.theme !== undefined ||
-      nextUserSettingsPayload.colorMode !== undefined;
-    const currentMutes = await this.getUserNotificationMutes(userId);
+      Object.keys(nextUserSettingsPayload).length > 0;
     const nextMutes = preferences.mutes
       ? this.mergeNotificationMutes(currentMutes, preferences)
       : currentMutes;
@@ -275,9 +325,7 @@ export class UsersService {
               ...nextUserSettingsPayload,
             },
           })
-        : this.prisma.userSettings.findUnique({
-            where: { userId },
-          }),
+        : Promise.resolve(currentUserSettings),
       preferences.mutes
         ? this.prisma.userGameAccountSettings.upsert({
             where: {
@@ -301,11 +349,56 @@ export class UsersService {
             },
           })
         : Promise.resolve(null),
+      nextChatAppearance && this.prisma.userSettingDocument
+        ? this.prisma.userSettingDocument.upsert({
+            where: {
+              userId_domain_scopeType_scopeId: {
+                userId,
+                domain: "appearance",
+                scopeType: "USER",
+                scopeId: userId,
+              },
+            },
+            create: {
+              userId,
+              domain: "appearance",
+              scopeType: "USER",
+              scopeId: userId,
+              overrides: {
+                chat: nextChatAppearance,
+              } as unknown as Prisma.InputJsonValue,
+              schemaVersion: 1,
+            },
+            update: {
+              overrides: applySettingsPatch({
+                domain: "appearance",
+                scope: { type: "USER", id: userId },
+                currentOverrides:
+                  currentAppearanceDocument?.overrides &&
+                  typeof currentAppearanceDocument.overrides === "object" &&
+                  !Array.isArray(currentAppearanceDocument.overrides)
+                    ? (currentAppearanceDocument.overrides as Record<
+                        string,
+                        unknown
+                      >)
+                    : {},
+                set: { chat: nextChatAppearance },
+                unset: [],
+              }) as Prisma.InputJsonValue,
+              schemaVersion: 1,
+            },
+          })
+        : Promise.resolve(null),
     ]);
 
     return this.toUserPreferencesResponse(
       userSettings ?? this.createDefaultUserPreferences(userId),
       nextMutes,
+      nextChatAppearance ??
+        this.getChatAppearanceFromOverrides(
+          currentAppearanceDocument?.overrides,
+          legacyChatAppearance,
+        ),
     );
   }
 
@@ -472,12 +565,14 @@ export class UsersService {
       colorMode: string;
     },
     mutes: NotificationMutes,
+    chatAppearance = CHAT_APPEARANCE_READABLE_PRESET,
   ): UserPreferences {
     return {
       userId: settings.userId,
       guildsOrder: settings.guildsOrder,
       theme: settings.theme,
       colorMode: settings.colorMode,
+      chatAppearance: normalizeChatAppearanceSettings(chatAppearance),
       mutes: this.cloneNotificationMutes(mutes),
     };
   }
@@ -498,6 +593,25 @@ export class UsersService {
       theme: "default",
       colorMode: "dark",
     };
+  }
+
+  private getChatAppearanceFromOverrides(
+    overrides: unknown,
+    fallback: unknown = CHAT_APPEARANCE_READABLE_PRESET,
+  ) {
+    if (
+      !overrides ||
+      typeof overrides !== "object" ||
+      Array.isArray(overrides)
+    ) {
+      return normalizeChatAppearanceSettings(fallback);
+    }
+
+    const chatAppearance = (overrides as { chat?: unknown }).chat;
+    return normalizeChatAppearanceSettings(
+      chatAppearance,
+      normalizeChatAppearanceSettings(fallback),
+    );
   }
 
   private async getUserNotificationMutes(userId: string) {

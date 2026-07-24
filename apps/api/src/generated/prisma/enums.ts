@@ -210,6 +210,16 @@ export const NotificationScheduleStrategy = {
 export type NotificationScheduleStrategy = (typeof NotificationScheduleStrategy)[keyof typeof NotificationScheduleStrategy]
 
 
+export const SettingsScopeType = {
+  USER: 'USER',
+  GAME_ACCOUNT: 'GAME_ACCOUNT',
+  CHARACTER: 'CHARACTER',
+  GUILD: 'GUILD'
+} as const
+
+export type SettingsScopeType = (typeof SettingsScopeType)[keyof typeof SettingsScopeType]
+
+
 export const NotificationScheduleAnchor = {
   MIN_SPAWN: 'MIN_SPAWN',
   MAX_SPAWN: 'MAX_SPAWN'

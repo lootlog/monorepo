@@ -2,6 +2,7 @@ import type { UserSoundSettings } from "@lootlog/types";
 import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/api-client/react-query/main/sound-settings";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { queryClient } from "@/lib/query-client";
+import { useSettingsStore } from "@/store/settings.store";
 import { disposeSoundPlayback, playSound } from "./sound-playback";
 
 const audioInstances: AudioMock[] = [];
@@ -46,6 +47,7 @@ describe("playSound", () => {
   beforeEach(() => {
     disposeSoundPlayback();
     queryClient.clear();
+    useSettingsStore.setState(useSettingsStore.getInitialState(), true);
     audioInstances.length = 0;
     vi.stubGlobal("Audio", AudioMock);
   });
@@ -95,6 +97,32 @@ describe("playSound", () => {
     playSound("pings", "mapPing");
 
     expect(audioInstances).toHaveLength(0);
+  });
+
+  it("uses device-local master volume instead of the server value", () => {
+    queryClient.setQueryData(
+      getSoundSettingsControllerGetSettingsQueryKey(),
+      createSoundSettings({ masterVolume: 0.1 }),
+    );
+    useSettingsStore.getState().setMasterVolume(0.75);
+
+    playSound("pings", "mapPing");
+
+    expect(audioInstances[0]?.volume).toBeCloseTo(0.6);
+  });
+
+  it("stays silent when quick mute is enabled without changing volume", () => {
+    queryClient.setQueryData(
+      getSoundSettingsControllerGetSettingsQueryKey(),
+      createSoundSettings(),
+    );
+    useSettingsStore.getState().setMasterVolume(0.75);
+    useSettingsStore.getState().toggleSoundsMuted();
+
+    playSound("pings", "mapPing");
+
+    expect(audioInstances).toHaveLength(0);
+    expect(useSettingsStore.getState().masterVolume).toBe(0.75);
   });
 
   it("applies a contextual ping playback profile", () => {

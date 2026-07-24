@@ -1,6 +1,6 @@
 import { storageKey } from "@/lib/storage-key";
 import { afterEach, describe, expect, it } from "vitest";
-import { useSettingsStore } from "./settings.store";
+import { migrateSettingsState, useSettingsStore } from "./settings.store";
 
 const SETTINGS_STORAGE_KEY = storageKey("ll:settings:state");
 
@@ -16,6 +16,54 @@ describe("useSettingsStore", () => {
 
   it("disables loot debug logging by default", () => {
     expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(false);
+  });
+
+  it("uses device-local sound defaults", () => {
+    expect(useSettingsStore.getState()).toMatchObject({
+      masterVolume: 0.5,
+      soundsMuted: false,
+    });
+  });
+
+  it("persists master volume and quick mute independently", () => {
+    useSettingsStore.getState().setMasterVolume(0.72);
+    useSettingsStore.getState().toggleSoundsMuted();
+
+    expect(useSettingsStore.getState()).toMatchObject({
+      masterVolume: 0.72,
+      soundsMuted: true,
+    });
+
+    const storedSettings = JSON.parse(
+      localStorage.getItem(SETTINGS_STORAGE_KEY) ?? "{}",
+    ) as {
+      state?: {
+        masterVolume?: number;
+        soundsMuted?: boolean;
+      };
+    };
+
+    expect(storedSettings.state).toMatchObject({
+      masterVolume: 0.72,
+      soundsMuted: true,
+    });
+  });
+
+  it("clamps device-local master volume", () => {
+    useSettingsStore.getState().setMasterVolume(2);
+    expect(useSettingsStore.getState().masterVolume).toBe(1);
+
+    useSettingsStore.getState().setMasterVolume(-1);
+    expect(useSettingsStore.getState().masterVolume).toBe(0);
+  });
+
+  it("preserves version 3 device settings during migration", () => {
+    const persistedState = {
+      animationEffectsEnabled: false,
+      guildIdByCharId: { "character-1": "guild-1" },
+    };
+
+    expect(migrateSettingsState(persistedState)).toEqual(persistedState);
   });
 
   it("updates loot debug logging", () => {

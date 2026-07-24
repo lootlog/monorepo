@@ -1,4 +1,5 @@
 import type { DetectorNpcType } from "./account-preferences.types.js";
+import type { ChatAppearanceSettings } from "./chat-appearance-settings.js";
 
 export interface MutedPlayerPreference {
   discordId: string;
@@ -30,6 +31,7 @@ export interface UserPreferences {
   guildsOrder: string[];
   theme: string;
   colorMode: string;
+  chatAppearance: ChatAppearanceSettings;
   mutes: NotificationMutes;
 }
 
@@ -37,6 +39,7 @@ export interface UpdateUserPreferencesPayload {
   guildsOrder?: string[];
   theme?: string;
   colorMode?: "light" | "dark";
+  chatAppearance?: Partial<ChatAppearanceSettings>;
   mutes?: NotificationMutesPatch;
 }
 

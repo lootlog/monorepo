@@ -17,6 +17,133 @@
     "information": "Informacje",
     "debug": "Debug"
   },
+  "domains": {
+    "general": "Ogólne",
+    "appearance": "Wygląd",
+    "timers": "Timery",
+    "gameData": "Dane z gry",
+    "notifications": "Powiadomienia",
+    "sounds": "Dźwięki",
+    "controls": "Sterowanie",
+    "diagnostics": "Diagnostyka",
+    "information": "Informacje"
+  },
+  "subsections": {
+    "behavior": "Zachowanie",
+    "chat": "Chat",
+    "npcColors": "Kolory NPC",
+    "timerAppearance": "Wygląd timerów",
+    "timerColors": "Kolory timerów",
+    "timerBehavior": "Działanie timerów"
+  },
+  "search": {
+    "placeholder": "Szukaj",
+    "ariaLabel": "Szukaj w ustawieniach",
+    "clear": "Wyczyść wyszukiwanie",
+    "results": "Wyniki wyszukiwania ustawień",
+    "empty": "Nie znaleziono pasujących ustawień."
+  },
+  "help": {
+    "open": "Pokaż wyjaśnienie ustawienia",
+    "dependency": "Zależność:",
+    "recommendation": "Rekomendacja:",
+    "example": "Przykład:",
+    "animationsRecommendation": "Wyłącz tę opcję, jeżeli interfejs gry traci płynność."
+  },
+  "inheritance": {
+    "scopeTitle": "Zakres ustawień",
+    "scopeLabel": "Edytujesz ustawienia dla",
+    "default": "wartość domyślna",
+    "overridden": "Nadpisane tutaj",
+    "inherited": "Dziedziczone z: {{source}}",
+    "clear": "Dziedzicz",
+    "scopes": {
+      "USER": "Globalne",
+      "GAME_ACCOUNT": "Konto",
+      "CHARACTER": "Postać",
+      "GUILD": "Gildia"
+    },
+    "sources": {
+      "USER": "ustawień globalnych",
+      "GAME_ACCOUNT": "konta",
+      "CHARACTER": "postaci",
+      "GUILD": "gildii"
+    }
+  },
+  "chat": {
+    "preset": {
+      "section": "Preset",
+      "label": "Sposób prezentacji",
+      "readable": "Czytelny",
+      "readableDescription": "Większy tekst i więcej przestrzeni — najłatwiejszy do czytania.",
+      "compact": "Kompaktowy",
+      "compactDescription": "Więcej wiadomości na ekranie przy mniejszych odstępach.",
+      "custom": "Własne ustawienia",
+      "restoreReadable": "Przywróć domyślne"
+    },
+    "advanced": {
+      "title": "Więcej opcji"
+    },
+    "reset": "Resetuj",
+    "layout": {
+      "section": "Układ i czytelność"
+    },
+    "npcLayout": {
+      "label": "Wiadomości NPC",
+      "description": "Wybierz osobny miękki kafelek albo oszczędny wpis w linii.",
+      "tile": "Kafelek",
+      "inline": "W linii",
+      "recommendation": "Kafelek jest czytelniejszy przy częstych komunikatach o NPC.",
+      "example": "Wariant w linii zajmuje mniej miejsca w gęstym czacie."
+    },
+    "fontScale": {
+      "label": "Skala tekstu"
+    },
+    "messageGap": {
+      "label": "Odstęp wiadomości"
+    },
+    "metadata": {
+      "title": "Widoczne informacje",
+      "showTimestamp": "Czas wiadomości",
+      "showGuildLabel": "Gildia",
+      "showNpcAvatar": "Avatar NPC",
+      "showNpcLevel": "Poziom NPC",
+      "showNpcLocationAndCoordinates": "Lokacja i koordynaty NPC"
+    },
+    "save": {
+      "saving": "Zapisywanie…",
+      "saved": "Zapisano",
+      "error": "Nie udało się zapisać wyglądu czatu. Przywrócono ustawienia z serwera."
+    },
+    "preview": {
+      "ariaLabel": "Podgląd wyglądu czatu",
+      "label": "Podgląd",
+      "player": "Lunara",
+      "level": "85 lvl",
+      "message": "Spotkajmy się przy wejściu.",
+      "guild": "Strażnicy Północy",
+      "npc": "Mroczny Łowca",
+      "npcMessage": "pojawił się na mapie",
+      "location": "Stare Ruiny"
+    }
+  },
+  "npcColors": {
+    "title": "Kolory typów potworów",
+    "description": "Wspólna paleta używana w chacie, powiadomieniach i wykrywaczu.",
+    "resetAll": "Przywróć wszystkie",
+    "reset": "Przywróć",
+    "modified": "Zmieniony",
+    "default": "Kolor domyślny",
+    "overridden": "Kolor użytkownika",
+    "saving": "Zapisywanie…",
+    "saveError": "Nie udało się zapisać kolorów NPC.",
+    "picker": "Wybierz kolor",
+    "hex": "Kolor HEX",
+    "editColor": "Edytuj kolor NPC",
+    "preview": "Podgląd powierzchni",
+    "notificationPreview": "Powiadomienie o wykryciu potwora",
+    "detectorPreview": "Potwór widoczny w wykrywaczu"
+  },
   "general": {
     "title": "Ustawienia ogólne",
     "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",
@@ -227,18 +354,36 @@
     },
     "colors": {
       "listTitle": "Lista kolorów",
+      "standardColorsTitle": "Standardowe",
+      "customColorsTitle": "Własne",
+      "standardColor": "Kolor standardowy",
+      "customColor": "Kolor własny",
+      "nameLabel": "Nazwa",
+      "resetColorTitle": "Przywróć domyślny wygląd",
+      "hideColorTitle": "Ukryj kolor",
+      "deleteColorTitle": "Usuń kolor",
       "addTitle": "Dodaj kolor",
       "namePlaceholder": "Nazwa",
       "borderLabel": "Ramka",
       "backgroundLabel": "Tło",
       "borderAria": "Kolor ramki",
+      "borderHexAria": "Kolor ramki HEX",
       "backgroundAria": "Kolor tła",
+      "backgroundHexAria": "Kolor tła HEX",
+      "editColorAria": "Edytuj kolor",
+      "actionsAria": "Więcej ustawień koloru",
+      "modified": "Zmieniony",
       "transparencyLabel": "Przezroczystość",
       "transparencyAria": "Przezroczystość tła",
       "previewLabel": "Podgląd",
       "addButton": "Dodaj",
       "hiddenDefaultsTitle": "Usunięte domyślne kolory",
       "restoreColorTitle": "Przywróć kolor"
+    },
+    "preview": {
+      "ariaLabel": "Podgląd wyglądu timera",
+      "label": "Podgląd",
+      "npc": "Mroczny Łowca"
     }
   },
   "catching": {
