@@ -190,9 +190,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
 }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
-  const [measuredRows, setMeasuredRows] = useState(
-    () => new Map<string, MeasuredChatRow>(),
-  );
+  const measuredRowsRef = useRef(new Map<string, MeasuredChatRow>());
   const [measurementCycle, setMeasurementCycle] = useState(0);
   const [viewport, setViewport] = useState<ChatViewport>({
     height: CHAT_LIST_FALLBACK_HEIGHT_PX,
@@ -282,16 +280,18 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
     scrollToBottomRequest,
   ]);
 
-  const activeMeasuredRows = new Map(measuredRows);
-  pruneChatRowMeasurements(activeMeasuredRows, renderables);
+  useEffect(() => {
+    pruneChatRowMeasurements(measuredRowsRef.current, renderables);
+  }, [renderables]);
+
   const virtualLayout = getChatVirtualLayout({
-    measuredRows: activeMeasuredRows,
+    measuredRows: measuredRowsRef.current,
     renderables,
     viewport,
   });
   const { endIndex, rowOffsets, startIndex, totalHeight } = virtualLayout;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     virtualLayoutRef.current = virtualLayout;
   }, [virtualLayout]);
 
@@ -379,17 +379,15 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
     if (!messageList) return () => undefined;
 
     const measureRows = (elements: Element[]) => {
-      const measurements: Array<{
-        height: number;
-        key: string;
-        source: unknown;
-      }> = [];
+      const currentLayout = virtualLayoutRef.current;
+      if (!currentLayout) return;
 
+      let changed = false;
       for (const element of elements) {
         if (!(element instanceof HTMLElement)) continue;
 
         const rowIndex = Number(element.dataset.chatVirtualIndex);
-        const renderable = virtualLayout.renderables[rowIndex];
+        const renderable = currentLayout.renderables[rowIndex];
         if (!renderable) continue;
 
         const devicePixelRatio = window.devicePixelRatio || 1;
@@ -400,35 +398,23 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
         if (measuredHeight <= 0 && element.childElementCount > 0) continue;
 
         const measurementSource = getChatRowMeasurementSource(renderable);
-        measurements.push({
-          height: measuredHeight,
-          key: renderable.key,
-          source: measurementSource,
-        });
-      }
-
-      const nextRows = new Map(measuredRows);
-      const previousRowCount = nextRows.size;
-      pruneChatRowMeasurements(nextRows, virtualLayout.renderables);
-      let changed = nextRows.size !== previousRowCount;
-      for (const measurement of measurements) {
-        const currentMeasurement = measuredRows.get(measurement.key);
+        const currentMeasurement = measuredRowsRef.current.get(renderable.key);
         if (
-          currentMeasurement &&
-          currentMeasurement.source === measurement.source &&
-          Math.abs(currentMeasurement.height - measurement.height) <
-            1 / (window.devicePixelRatio || 1)
+          currentMeasurement?.source === measurementSource &&
+          Math.abs(currentMeasurement.height - measuredHeight) <
+            1 / devicePixelRatio
         ) {
           continue;
         }
-        nextRows.set(measurement.key, {
-          height: measurement.height,
-          source: measurement.source,
+
+        measuredRowsRef.current.set(renderable.key, {
+          height: measuredHeight,
+          source: measurementSource,
         });
         changed = true;
       }
+
       if (!changed) return;
-      setMeasuredRows(nextRows);
 
       const scrollMode = scrollController.getMode();
       if (
