@@ -43,7 +43,7 @@ semantics, and settings persistence unchanged.
   positional transition or trailing motion.
 - Use the 120 ms snap transition for track clicks, keyboard changes, and
   programmatic value updates.
-- Scale the thumb down subtly while pressed and restore it on release.
+- Scale the thumb to 90% while pressed and restore it on release.
 - Preserve the current value tooltip, endpoint labels, controlled and
   uncontrolled modes, commit behavior, and public props.
 - Treat a thumb pointer-down as direct dragging immediately. For a track
