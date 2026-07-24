@@ -272,6 +272,79 @@ describe("ChatMessageList", () => {
     ).toBe("124px");
   });
 
+  it("limits unstable row measurements to one render per animation frame", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverHarness);
+    let measuredHeight = 40;
+    let measurementCount = 0;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function getBoundingClientRect(this: HTMLElement) {
+        measurementCount += 1;
+        measuredHeight = measuredHeight === 40 ? 41 : 40;
+
+        return {
+          bottom: measuredHeight,
+          height: measuredHeight,
+          left: 0,
+          right: 100,
+          top: 0,
+          width: 100,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        };
+      },
+    );
+
+    expect(() => renderMessageList(createRenderables(1))).not.toThrow();
+    expect(measurementCount).toBeGreaterThan(0);
+    const visibleRow = document.querySelector<HTMLElement>(
+      "[data-chat-virtual-index]",
+    );
+    expect(visibleRow).toBeDefined();
+
+    const measurementCountBeforeResize = measurementCount;
+    act(() => {
+      triggerResizeObserver(visibleRow as HTMLElement);
+      triggerResizeObserver(visibleRow as HTMLElement);
+      triggerResizeObserver(visibleRow as HTMLElement);
+    });
+    expect(measurementCount).toBe(measurementCountBeforeResize + 3);
+
+    for (let frame = 0; frame < 3; frame += 1) {
+      const previousMeasurementCount = measurementCount;
+      flushAnimationFrames(1);
+      expect(measurementCount).toBe(previousMeasurementCount + 1);
+    }
+  });
+
+  it("does not continuously scroll to the bottom while row heights remain unstable", () => {
+    let measuredHeight = 40;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function getBoundingClientRect(this: HTMLElement) {
+        measuredHeight = measuredHeight === 40 ? 41 : 40;
+
+        return {
+          bottom: measuredHeight,
+          height: measuredHeight,
+          left: 0,
+          right: 100,
+          top: 0,
+          width: 100,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        };
+      },
+    );
+
+    renderMessageList(createRenderables(1));
+    scrollRequests.length = 0;
+
+    flushAnimationFrames(20);
+
+    expect(scrollRequests.length).toBeLessThanOrEqual(1);
+  });
+
   it("keeps the exact scroll position while history rows are remeasured", () => {
     vi.stubGlobal("ResizeObserver", ResizeObserverHarness);
     const measuredHeightsByIndex = new Map<number, number>();
