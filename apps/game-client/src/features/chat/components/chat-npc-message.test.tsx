@@ -87,7 +87,6 @@ describe("ChatNpcMessage", () => {
   it("renders a compact npc card with sender, guild label and group badge", () => {
     render(
       <ChatNpcMessage
-        additionalSenderCount={2}
         all
         guildName="Guild"
         message={makeChatMessage()}
@@ -103,7 +102,6 @@ describe("ChatNpcMessage", () => {
     expect(screen.getByText("Hydra").parentElement).toHaveTextContent(
       "Hydra(250m)",
     );
-    expect(screen.getByText("+2")).toBeInTheDocument();
     expect(screen.getByText("(250m)")).toBeInTheDocument();
     expect(screen.getByText("Swamp")).toBeInTheDocument();
     expect(screen.getByText("(7, 9)")).toHaveClass("ll:whitespace-nowrap");
@@ -121,21 +119,6 @@ describe("ChatNpcMessage", () => {
     );
 
     expect(screen.queryByText("x1")).not.toBeInTheDocument();
-  });
-
-  it("does not show the additional sender badge when only one sender contributed", () => {
-    render(
-      <ChatNpcMessage
-        additionalSenderCount={0}
-        all={false}
-        guildName="Guild"
-        message={makeChatMessage()}
-        member={member}
-        count={3}
-      />,
-    );
-
-    expect(screen.queryByText("+1")).not.toBeInTheDocument();
   });
 
   it("falls back to the character nick when member metadata is missing", () => {
