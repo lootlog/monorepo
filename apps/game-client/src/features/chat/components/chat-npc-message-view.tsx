@@ -119,12 +119,12 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = ({
 
         <div
           className={cn(
-            "ll:flex ll:min-w-0 ll:max-w-full ll:flex-1 ll:flex-col ll:overflow-hidden ll:leading-tight",
+            "ll:flex ll:min-w-0 ll:max-w-full ll:flex-1 ll:flex-col ll:leading-tight",
             appearance.npcLayout === "inline" &&
-              "ll:flex-row ll:flex-wrap ll:items-baseline ll:gap-x-[var(--ll-chat-space-sm)] ll:overflow-visible",
+              "ll:flex-row ll:flex-wrap ll:items-baseline ll:gap-x-[var(--ll-chat-space-sm)]",
           )}
         >
-          <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-baseline ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden">
+          <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-baseline ll:gap-[var(--ll-chat-space-sm)]">
             <div className="ll:flex ll:min-w-0 ll:flex-1 ll:items-baseline ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden">
               <span
                 className={cn(
