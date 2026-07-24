@@ -98,6 +98,12 @@ export const createChatScrollController = ({
       }
     },
     pinToBottom: (snapshot) => {
+      const maximumScrollTop = getMaximumScrollTop(snapshot);
+      if (Math.abs(snapshot.scrollTop - maximumScrollTop) <= 1) {
+        programmaticTarget = null;
+        return;
+      }
+
       scroll(snapshot, "auto", snapshot.scrollHeight);
     },
     registerUserScrollIntent: (snapshot) => {
