@@ -50,7 +50,7 @@ vi.mock("@/helpers/mappers/battlelog.mappers", () => ({
 }));
 
 vi.mock("@/hooks/game-events/helpers/battle.helpers", () => ({
-  addAccountIdsToWarriors: vi.fn().mockImplementation((warriors) => warriors),
+  mergeBattleWarriorPatches: vi.fn().mockImplementation((warriors) => warriors),
 }));
 
 const mockBattlePanelStore = {

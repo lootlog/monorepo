@@ -3,7 +3,7 @@ import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/api/npcs.api";
-import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
+import { mergeBattleWarriorPatches } from "@/hooks/game-events/helpers/battle.helpers";
 import { useGameStore } from "@/store/game.store";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
@@ -150,7 +150,7 @@ export class BattleEventProcessor {
 
     let battleWarriors = startsBattle ? {} : stateAtIngress.battleWarriors;
     if (event.f.w) {
-      battleWarriors = addAccountIdsToWarriors(
+      battleWarriors = mergeBattleWarriorPatches(
         event.f.w,
         battleWarriors,
         ingress,
