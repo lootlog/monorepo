@@ -309,196 +309,47 @@ pnpm dev                    # Runs Hono dev server
 
 ## Version Management with Changesets
 
-This project uses [Changesets](https://github.com/changesets/changesets) to manage versions, changelogs, and releases across all packages and apps in the monorepo.
+This project uses [Changesets](https://github.com/changesets/changesets) to manage independent versions, changelogs, Git tags, and GitHub Releases for every app and package in the monorepo.
 
-### What are Changesets?
+All workspace packages are private. Releases document deployable versions in GitHub; nothing is published to npm.
 
-Changesets is a tool that helps track which packages need to be released and what version bump they need (major, minor, or patch). It generates changelogs automatically based on the changes you describe.
-
-### Workflow
-
-#### 1. Making Changes
-
-When you make changes to any package or app, you need to create a changeset to document what changed:
+### Contributor Workflow
 
 ```bash
-# After making your changes, create a changeset
 pnpm changeset
 ```
 
-This will:
+Select every directly affected workspace, choose the SemVer bump, and write a clear English summary. Use:
 
-1. Prompt you to select which packages have changed
-2. Ask whether the change is a major, minor, or patch
-3. Request a description of the changes (used in the changelog)
+- **Patch** for fixes and compatible internal improvements.
+- **Minor** for backwards-compatible features.
+- **Major** for breaking consumer-facing changes.
 
-**Versioning Guidelines:**
-
-- **Major** (1.0.0 → 2.0.0) - Breaking changes that require users to modify their code
-- **Minor** (1.0.0 → 1.1.0) - New features that are backwards compatible
-- **Patch** (1.0.0 → 1.0.1) - Bug fixes and small improvements
-
-#### 2. Changeset Files
-
-After running `pnpm changeset`, a new markdown file will be created in `.changeset/` directory:
-
-```markdown
----
-"@lootlog/api": patch
-"@lootlog/types": patch
----
-
-Fixed authentication bug in API service
-```
-
-Commit this file along with your code changes:
+Changesets automatically add patch releases for runtime dependents of changed internal packages. If files inside a workspace change but the change does not require a release, create an explicit empty changeset:
 
 ```bash
-git add .
-git commit -m "fix: authentication bug + changeset"
+pnpm changeset --empty
 ```
 
-#### 3. Versioning Packages
+Pull request CI validates changesets against the PR base commit.
 
-When you're ready to create a new version (typically before a release):
+### Automated Release Workflow
 
-```bash
-# Update package versions and generate changelogs
-pnpm version
-```
+1. Merge changes containing changesets into `develop`. These changes continue to deploy automatically to dev, but no release is created.
+2. Promote a tested batch with a pull request from `develop` to `main`.
+3. After that PR is merged, Changesets creates or updates the `chore: release packages` version PR against `main`.
+4. Review and merge the version PR. Do not edit versions or generated changelogs manually.
+5. The merge creates package tags such as `@lootlog/api@1.0.1`, GitHub Releases, and immutable Docker images for released services.
+6. Images are built before the `prod` approval. Review the workflow summary and apply any listed Prisma or Drizzle migrations manually.
+7. Approving the `prod` environment writes every released image version to the infra repository in one commit. ArgoCD then performs the rollout.
 
-This command:
+Each released workspace owns its generated `CHANGELOG.md`. Use `pnpm changeset status --verbose` to preview the pending release plan. The `pnpm version` and `pnpm release` commands are reserved for release automation.
 
-- Reads all changeset files
-- Updates `package.json` versions for affected packages
-- Updates `CHANGELOG.md` files
-- Removes consumed changeset files
+Production images use both `prod-<semver>` and `sha-<release-commit>` tags and are never overwritten. To promote or roll back one service, run the **Promote an existing image to prod** workflow from `main` with the service and an existing semantic version. Rollbacks only change GitOps; they never rebuild an image.
 
-**Commit the version changes:**
+A successful deployment workflow means the GitOps change was accepted. ArgoCD remains the source of truth for the actual cluster rollout and health.
 
-```bash
-git add .
-git commit -m "chore: version packages"
-git push
-```
-
-#### 4. Publishing (Optional)
-
-If you're publishing packages to npm:
-
-```bash
-# Build all packages and publish to npm
-pnpm release
-```
-
-**Note:** This project uses `"access": "restricted"` in changeset config, meaning packages are private by default.
-
-### Common Scenarios
-
-#### Single Package Change
-
-```bash
-# 1. Make your changes to apps/api
-# 2. Create changeset
-pnpm changeset
-# Select: @lootlog/api
-# Version: patch
-# Description: "Fixed guild sync bug"
-
-# 3. Commit
-git add .
-git commit -m "fix(api): guild sync bug"
-```
-
-#### Multiple Package Changes
-
-```bash
-# 1. Make changes to apps/api and packages/types
-# 2. Create changeset
-pnpm changeset
-# Select: @lootlog/api, @lootlog/types
-# Version: minor (for new feature)
-# Description: "Added support for custom guild roles"
-
-# 3. Commit
-git add .
-git commit -m "feat: custom guild roles"
-```
-
-#### No Changeset Needed
-
-If your changes don't affect any package functionality (docs, tests, config):
-
-```bash
-# Just commit normally without creating a changeset
-git add .
-git commit -m "docs: update README"
-```
-
-### Configuration
-
-Changeset configuration is in `.changeset/config.json`:
-
-- **Base Branch**: `develop` - all changesets are based on this branch
-- **Commit**: `false` - changesets won't auto-commit (you control commits)
-- **Access**: `restricted` - packages are private by default
-- **Update Internal Dependencies**: `patch` - internal package updates trigger patch versions
-
-### Commands Reference
-
-```bash
-# Create a new changeset
-pnpm changeset
-
-# Version packages (consume changesets)
-pnpm version
-
-# Build and publish to npm
-pnpm release
-
-# View changeset status
-pnpm changeset status
-```
-
-### Best Practices
-
-1. **Create changesets for every functional change** - Don't batch multiple unrelated changes in one changeset
-2. **Write clear descriptions** - They become your changelog entries
-3. **Version appropriately** - Be conservative with major versions
-4. **Review generated changelogs** - Check `CHANGELOG.md` files after running `pnpm version`
-5. **Commit changesets with your code** - Don't create changesets in separate commits
-
-### Example Workflow
-
-```bash
-# Day 1: Add new feature
-git checkout -b feat/notifications
-# ... make changes ...
-pnpm changeset
-# Select packages, choose minor, describe feature
-git add .
-git commit -m "feat: add notification system"
-git push
-
-# Day 2: Fix bug found in review
-# ... make changes ...
-pnpm changeset
-# Select packages, choose patch, describe fix
-git add .
-git commit -m "fix: notification timing issue"
-git push
-
-# Day 3: Ready to release
-git checkout develop
-git pull
-pnpm version  # Consumes all changesets, updates versions
-git add .
-git commit -m "chore: version packages"
-git push
-
-# Optional: Publish to npm (if applicable)
-pnpm release
-```
+Production GitOps jobs currently read `INFRA_REPO_PUSH_TOKEN` from repository secrets so existing dev deployments continue to work. A `prod` environment secret with the same name will automatically take precedence when a dedicated production credential is provisioned; do not remove the repository secret until dev has its own credential.
 
 ## Documentation
 
@@ -506,7 +357,6 @@ pnpm release
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project
 - **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** - Community guidelines
 - **[SECURITY.md](SECURITY.md)** - Security policy and reporting
-- **[CHANGELOG.md](CHANGELOG.md)** - Project history and releases
 
 ## Project Status
 
