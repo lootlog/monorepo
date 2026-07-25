@@ -26,6 +26,7 @@ import {
   hasChatMentionToken,
   type ChatMentionContext,
 } from "@/features/chat/chat-mentions.helpers";
+import type { AsyncResourceState } from "@/types/async-resource-state";
 
 type UseChatGuildDataOptions = {
   currentCharacterNick: string;
@@ -152,6 +153,36 @@ export const useChatGuildData = ({
       staleTime: 5 * 60 * 1000,
     })),
   });
+  const hasMessagesResponse = messageQueries.some(
+    (query) => query.data !== undefined,
+  );
+  const failedGuildIds = guildIdsToLoad.filter(
+    (_guildId, index) => messageQueries[index]?.isError,
+  );
+  const firstMessageError = messageQueries.find(
+    (query) => query.isError,
+  )?.error;
+  const initialLoading =
+    guildIdsToLoad.length > 0 &&
+    !hasMessagesResponse &&
+    messageQueries.some((query) => query.isPending || query.isFetching);
+  const refreshing =
+    hasMessagesResponse && messageQueries.some((query) => query.isFetching);
+
+  const retryFailed = () => {
+    messageQueries.forEach((query) => {
+      if (query.isError) {
+        void query.refetch();
+      }
+    });
+  };
+  const resourceState: AsyncResourceState = {
+    error: hasMessagesResponse ? null : (firstMessageError ?? null),
+    initialLoading,
+    refreshing,
+    retry: retryFailed,
+    stale: false,
+  };
 
   const guildDataById = guildIdsToLoad.reduce<Record<string, ChatGuildData>>(
     (result, guildId, index) => {
@@ -195,7 +226,10 @@ export const useChatGuildData = ({
   ) as Record<string, ChatMentionContext>;
 
   return {
+    ...resourceState,
+    failedGuildIds,
     guildIdsToLoad,
+    hasMessagesResponse,
     membersByGuildId,
     mentionContextsByGuildId,
     messagesByGuildId,

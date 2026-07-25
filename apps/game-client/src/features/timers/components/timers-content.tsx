@@ -8,6 +8,9 @@ import { TimersEmptyState } from "./timers-empty-state";
 import { TimersFooter } from "./timers-footer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "@/lib/utils";
+import { AsyncContent } from "@/components/async-content";
+import { useTranslation } from "react-i18next";
+import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 
 type ColorStat = {
   color: string;
@@ -31,8 +34,14 @@ type TimersContentProps = {
   isUnderBag: boolean;
   minColumnWidth: number;
   onAddTimer: () => void;
+  onResetFilters: () => void;
   world?: string;
   compactView?: boolean;
+  error?: unknown;
+  initialLoading?: boolean;
+  onRetry?: () => void;
+  refreshError?: boolean;
+  refreshing?: boolean;
 };
 
 export const TimersContent: FC<TimersContentProps> = ({
@@ -48,39 +57,76 @@ export const TimersContent: FC<TimersContentProps> = ({
   isUnderBag,
   minColumnWidth,
   onAddTimer,
+  onResetFilters,
   world,
   compactView = false,
+  error = null,
+  initialLoading = false,
+  onRetry,
+  refreshError = false,
+  refreshing = false,
 }) => {
+  const { t } = useTranslation(["timers", "common"]);
+
   return (
     <span
       className={cn(
-        "ll:h-full ll:flex ll:flex-1 ll:flex-col ll:box-border ll:pt-1 ll:w-full",
+        "ll:relative ll:h-full ll:flex ll:flex-1 ll:flex-col ll:box-border ll:pt-1 ll:w-full",
         {
           "ll:pt-0! ll:h-[calc(100%-2rem)]": isUnderBag,
         },
       )}
     >
+      <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
+        <AsyncStatusIndicator
+          active={refreshError}
+          kind="error"
+          label={t("states.refreshError")}
+          onRetry={onRetry}
+          retryLabel={t("actions.retry", { ns: "common" })}
+        />
+        <AsyncStatusIndicator
+          active={!refreshError && refreshing}
+          delay
+          kind="loading"
+          label={t("states.refreshing")}
+        />
+      </div>
       {!compactView && !isGrouping && <GuildSwitcher className="ll:mb-1!" />}
       {!compactView && allowWorldSelection && !isGrouping && <WorldSelector />}
       {!compactView && timerFiltersEnabled && (
         <TimersFilters filtersKey={settingsKey} />
       )}
 
-      <ScrollArea
-        data-testid="timers-scroll-container"
-        className="ll:flex-1 ll:w-full! ll:py-1"
-      >
-        {sortedTimers.length === 0 ? (
-          <TimersEmptyState areFiltersActive={areFiltersActive} />
-        ) : (
-          <TimersGrid
-            timers={sortedTimers}
-            settingsKey={settingsKey}
-            hiddenTimers={hiddenTimers}
-            minColumnWidth={minColumnWidth}
-          />
-        )}
-      </ScrollArea>
+      <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:py-1">
+        <AsyncContent
+          error={error}
+          errorLabel={t("states.loadError")}
+          isLoading={initialLoading}
+          loadingLabel={t("states.loading")}
+          onRetry={onRetry}
+          retryLabel={t("actions.retry", { ns: "common" })}
+        >
+          {sortedTimers.length === 0 ? (
+            <TimersEmptyState
+              areFiltersActive={areFiltersActive}
+              onResetFilters={onResetFilters}
+            />
+          ) : (
+            <ScrollArea
+              data-testid="timers-scroll-container"
+              className="ll:h-full ll:w-full! ll:py-1"
+            >
+              <TimersGrid
+                timers={sortedTimers}
+                settingsKey={settingsKey}
+                hiddenTimers={hiddenTimers}
+                minColumnWidth={minColumnWidth}
+              />
+            </ScrollArea>
+          )}
+        </AsyncContent>
+      </div>
 
       {!compactView && (
         <TimersFooter

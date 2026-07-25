@@ -15,6 +15,8 @@ import {
   type ChatRenderableMessage,
 } from "../chat.helpers";
 import { ChatDateDivider } from "./chat-date-divider";
+import { EmptyState } from "@/components/empty-state";
+import { MessageCircle } from "lucide-react";
 import { ChatMessage } from "./chat-message";
 import { ChatNpcMessage } from "./chat-npc-message";
 
@@ -27,7 +29,7 @@ type ChatMessageListProps = {
   appearance?: ChatAppearanceSettings;
   npcTypeColors?: NpcTypeColors;
   ariaLabel: string;
-  emptyStateLabel: string;
+  emptyStateTitle: string;
   guildNamesById: Record<string, string>;
   hasRenderableMessages: boolean;
   membersByGuildId: ChatGuildData["membersByGuildId"];
@@ -61,7 +63,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
   appearance = CHAT_APPEARANCE_READABLE_PRESET,
   npcTypeColors,
   ariaLabel,
-  emptyStateLabel,
+  emptyStateTitle,
   guildNamesById,
   hasRenderableMessages: latestHasRenderableMessages,
   membersByGuildId,
@@ -390,14 +392,11 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
 
   if (renderables.length === 0) {
     return (
-      <ScrollArea
-        ref={scrollAreaRef}
-        className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400 ll:p-1"
-      >
-        <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
-          {emptyStateLabel}
-        </div>
-      </ScrollArea>
+      <EmptyState
+        className="ll:box-border ll:rounded-sm ll:border ll:border-gray-400"
+        icon={MessageCircle}
+        title={emptyStateTitle}
+      />
     );
   }
 
