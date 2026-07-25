@@ -9,80 +9,79 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SigninRouteImport } from './routes/signin'
-import { Route as InitRouteImport } from './routes/init'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as BattlesIdRouteImport } from './routes/battles.$id'
-import { Route as AuthenticatedAtmeRouteImport } from './routes/_authenticated/@me'
+import { Route as InitRouteImport } from './routes/init'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as AuthenticatedGuildIdRouteImport } from './routes/_authenticated/$guildId'
-import { Route as AuthenticatedAtmeIndexRouteImport } from './routes/_authenticated/@me/index'
+import { Route as AuthenticatedAtmeRouteImport } from './routes/_authenticated/@me'
+import { Route as BattlesIdRouteImport } from './routes/battles.$id'
 import { Route as AuthenticatedGuildIdIndexRouteImport } from './routes/_authenticated/$guildId/index'
-import { Route as AuthenticatedAtmeSettingsRouteImport } from './routes/_authenticated/@me/settings'
-import { Route as AuthenticatedAtmeNotificationsRouteImport } from './routes/_authenticated/@me/notifications'
-import { Route as AuthenticatedAtmeKillsRouteImport } from './routes/_authenticated/@me/kills'
-import { Route as AuthenticatedAtmeBattlePanelRouteImport } from './routes/_authenticated/@me/battle-panel'
-import { Route as AuthenticatedGuildIdTimersRouteImport } from './routes/_authenticated/$guildId/timers'
-import { Route as AuthenticatedGuildIdStatsRouteImport } from './routes/_authenticated/$guildId/stats'
-import { Route as AuthenticatedGuildIdSettingsRouteImport } from './routes/_authenticated/$guildId/settings'
-import { Route as AuthenticatedGuildIdReservationsRouteImport } from './routes/_authenticated/$guildId/reservations'
-import { Route as AuthenticatedGuildIdNotificationsRouteImport } from './routes/_authenticated/$guildId/notifications'
-import { Route as AuthenticatedGuildIdEventsRouteImport } from './routes/_authenticated/$guildId/events'
-import { Route as AuthenticatedGuildIdDocsRouteImport } from './routes/_authenticated/$guildId/docs'
 import { Route as AuthenticatedGuildIdActivityLogsRouteImport } from './routes/_authenticated/$guildId/activity-logs'
-import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from './routes/_authenticated/@me/settings/index'
-import { Route as AuthenticatedAtmeBattlePanelIndexRouteImport } from './routes/_authenticated/@me/battle-panel/index'
-import { Route as AuthenticatedGuildIdStatsIndexRouteImport } from './routes/_authenticated/$guildId/stats/index'
-import { Route as AuthenticatedGuildIdSettingsIndexRouteImport } from './routes/_authenticated/$guildId/settings/index'
-import { Route as AuthenticatedGuildIdReservationsIndexRouteImport } from './routes/_authenticated/$guildId/reservations/index'
-import { Route as AuthenticatedGuildIdNotificationsIndexRouteImport } from './routes/_authenticated/$guildId/notifications/index'
+import { Route as AuthenticatedGuildIdDocsRouteImport } from './routes/_authenticated/$guildId/docs'
+import { Route as AuthenticatedGuildIdEventsRouteImport } from './routes/_authenticated/$guildId/events'
+import { Route as AuthenticatedGuildIdNotificationsRouteImport } from './routes/_authenticated/$guildId/notifications'
+import { Route as AuthenticatedGuildIdReservationsRouteImport } from './routes/_authenticated/$guildId/reservations'
+import { Route as AuthenticatedGuildIdSettingsRouteImport } from './routes/_authenticated/$guildId/settings'
+import { Route as AuthenticatedGuildIdStatsRouteImport } from './routes/_authenticated/$guildId/stats'
+import { Route as AuthenticatedGuildIdTimersRouteImport } from './routes/_authenticated/$guildId/timers'
+import { Route as AuthenticatedAtmeIndexRouteImport } from './routes/_authenticated/@me/index'
+import { Route as AuthenticatedAtmeBattlePanelRouteImport } from './routes/_authenticated/@me/battle-panel'
+import { Route as AuthenticatedAtmeKillsRouteImport } from './routes/_authenticated/@me/kills'
+import { Route as AuthenticatedAtmeNotificationsRouteImport } from './routes/_authenticated/@me/notifications'
+import { Route as AuthenticatedAtmeSettingsRouteImport } from './routes/_authenticated/@me/settings'
 import { Route as AuthenticatedGuildIdDocsIndexRouteImport } from './routes/_authenticated/$guildId/docs/index'
-import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
-import { Route as AuthenticatedAtmeSettingsAccountRouteImport } from './routes/_authenticated/@me/settings/account'
-import { Route as AuthenticatedAtmeBattlePanelStatisticsRouteImport } from './routes/_authenticated/@me/battle-panel/statistics'
-import { Route as AuthenticatedAtmeBattlePanelAbyssRouteImport } from './routes/_authenticated/@me/battle-panel/abyss'
-import { Route as AuthenticatedGuildIdStatsRankingRouteImport } from './routes/_authenticated/$guildId/stats/ranking'
-import { Route as AuthenticatedGuildIdStatsLootsRouteImport } from './routes/_authenticated/$guildId/stats/loots'
-import { Route as AuthenticatedGuildIdStatsKillsRouteImport } from './routes/_authenticated/$guildId/stats/kills'
-import { Route as AuthenticatedGuildIdSettingsRolesRouteImport } from './routes/_authenticated/$guildId/settings/roles'
-import { Route as AuthenticatedGuildIdSettingsReservationsRouteImport } from './routes/_authenticated/$guildId/settings/reservations'
-import { Route as AuthenticatedGuildIdSettingsNpcsRouteImport } from './routes/_authenticated/$guildId/settings/npcs'
-import { Route as AuthenticatedGuildIdSettingsMembersRouteImport } from './routes/_authenticated/$guildId/settings/members'
-import { Route as AuthenticatedGuildIdSettingsMapTemplatesRouteImport } from './routes/_authenticated/$guildId/settings/map-templates'
-import { Route as AuthenticatedGuildIdSettingsInfoRouteImport } from './routes/_authenticated/$guildId/settings/info'
-import { Route as AuthenticatedGuildIdReservationsReservationIdRouteImport } from './routes/_authenticated/$guildId/reservations/$reservationId'
-import { Route as AuthenticatedGuildIdNotificationsHistoryRouteImport } from './routes/_authenticated/$guildId/notifications/history'
-import { Route as AuthenticatedGuildIdNotificationsCreateRouteImport } from './routes/_authenticated/$guildId/notifications/create'
-import { Route as AuthenticatedGuildIdNotificationsRuleIdRouteImport } from './routes/_authenticated/$guildId/notifications/$ruleId'
-import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_'
 import { Route as AuthenticatedGuildIdDocsDocIdRouteImport } from './routes/_authenticated/$guildId/docs/$docId'
-import { Route as AuthenticatedGuildIdStatsNpcsIndexRouteImport } from './routes/_authenticated/$guildId/stats/npcs.index'
+import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_'
+import { Route as AuthenticatedGuildIdNotificationsIndexRouteImport } from './routes/_authenticated/$guildId/notifications/index'
+import { Route as AuthenticatedGuildIdNotificationsRuleIdRouteImport } from './routes/_authenticated/$guildId/notifications/$ruleId'
+import { Route as AuthenticatedGuildIdNotificationsCreateRouteImport } from './routes/_authenticated/$guildId/notifications/create'
+import { Route as AuthenticatedGuildIdNotificationsHistoryRouteImport } from './routes/_authenticated/$guildId/notifications/history'
+import { Route as AuthenticatedGuildIdReservationsIndexRouteImport } from './routes/_authenticated/$guildId/reservations/index'
+import { Route as AuthenticatedGuildIdReservationsReservationIdRouteImport } from './routes/_authenticated/$guildId/reservations/$reservationId'
+import { Route as AuthenticatedGuildIdSettingsIndexRouteImport } from './routes/_authenticated/$guildId/settings/index'
+import { Route as AuthenticatedGuildIdSettingsInfoRouteImport } from './routes/_authenticated/$guildId/settings/info'
+import { Route as AuthenticatedGuildIdSettingsMapTemplatesRouteImport } from './routes/_authenticated/$guildId/settings/map-templates'
+import { Route as AuthenticatedGuildIdSettingsMembersRouteImport } from './routes/_authenticated/$guildId/settings/members'
+import { Route as AuthenticatedGuildIdSettingsNpcsRouteImport } from './routes/_authenticated/$guildId/settings/npcs'
+import { Route as AuthenticatedGuildIdSettingsReservationsRouteImport } from './routes/_authenticated/$guildId/settings/reservations'
+import { Route as AuthenticatedGuildIdSettingsRolesRouteImport } from './routes/_authenticated/$guildId/settings/roles'
+import { Route as AuthenticatedGuildIdStatsIndexRouteImport } from './routes/_authenticated/$guildId/stats/index'
+import { Route as AuthenticatedGuildIdStatsKillsRouteImport } from './routes/_authenticated/$guildId/stats/kills'
+import { Route as AuthenticatedGuildIdStatsLootsRouteImport } from './routes/_authenticated/$guildId/stats/loots'
+import { Route as AuthenticatedGuildIdStatsRankingRouteImport } from './routes/_authenticated/$guildId/stats/ranking'
+import { Route as AuthenticatedAtmeBattlePanelIndexRouteImport } from './routes/_authenticated/@me/battle-panel/index'
+import { Route as AuthenticatedAtmeBattlePanelAbyssRouteImport } from './routes/_authenticated/@me/battle-panel/abyss'
+import { Route as AuthenticatedAtmeBattlePanelStatisticsRouteImport } from './routes/_authenticated/@me/battle-panel/statistics'
+import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from './routes/_authenticated/@me/settings/index'
+import { Route as AuthenticatedAtmeSettingsAccountRouteImport } from './routes/_authenticated/@me/settings/account'
+import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
 import { Route as AuthenticatedGuildIdEventsEventIdIndexRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_/index'
-import { Route as AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.matchmaking-h2h'
-import { Route as AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.h2h'
-import { Route as AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport } from './routes/_authenticated/@me/battle-panel/battles_.$battleId'
-import { Route as AuthenticatedAtmeBattlePanelAbyssH2hRouteImport } from './routes/_authenticated/@me/battle-panel/abyss_.h2h'
-import { Route as AuthenticatedGuildIdStatsNpcsNpcIdRouteImport } from './routes/_authenticated/$guildId/stats/npcs.$npcId'
-import { Route as AuthenticatedGuildIdStatsMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/stats/members.$memberId'
-import { Route as AuthenticatedGuildIdSettingsRolesRoleIdRouteImport } from './routes/_authenticated/$guildId/settings/roles_.$roleId'
-import { Route as AuthenticatedGuildIdSettingsNpcsNpcIdRouteImport } from './routes/_authenticated/$guildId/settings/npcs_.$npcId'
-import { Route as AuthenticatedGuildIdSettingsMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/settings/members_.$memberId'
-import { Route as AuthenticatedGuildIdEventsEventIdRankingRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.ranking'
-import { Route as AuthenticatedGuildIdEventsEventIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.kills'
-import { Route as AuthenticatedGuildIdEventsEventIdEditRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit'
 import { Route as AuthenticatedGuildIdEventsEventIdCoordinationRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.coordination'
+import { Route as AuthenticatedGuildIdEventsEventIdEditRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit'
+import { Route as AuthenticatedGuildIdEventsEventIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.kills'
+import { Route as AuthenticatedGuildIdEventsEventIdRankingRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.ranking'
+import { Route as AuthenticatedGuildIdSettingsMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/settings/members_.$memberId'
+import { Route as AuthenticatedGuildIdSettingsNpcsNpcIdRouteImport } from './routes/_authenticated/$guildId/settings/npcs_.$npcId'
+import { Route as AuthenticatedGuildIdSettingsRolesRoleIdRouteImport } from './routes/_authenticated/$guildId/settings/roles_.$roleId'
+import { Route as AuthenticatedGuildIdStatsMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/stats/members.$memberId'
+import { Route as AuthenticatedGuildIdStatsNpcsIndexRouteImport } from './routes/_authenticated/$guildId/stats/npcs.index'
+import { Route as AuthenticatedGuildIdStatsNpcsNpcIdRouteImport } from './routes/_authenticated/$guildId/stats/npcs.$npcId'
+import { Route as AuthenticatedAtmeBattlePanelAbyssH2hRouteImport } from './routes/_authenticated/@me/battle-panel/abyss_.h2h'
+import { Route as AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport } from './routes/_authenticated/@me/battle-panel/battles_.$battleId'
+import { Route as AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.h2h'
+import { Route as AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.matchmaking-h2h'
 import { Route as AuthenticatedGuildIdEventsEventIdEditIndexRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit/index'
-import { Route as AuthenticatedGuildIdEventsEventIdMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.members_.$memberId'
-import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId'
-import { Route as AuthenticatedGuildIdEventsEventIdEditSettingsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit/settings'
-import { Route as AuthenticatedGuildIdEventsEventIdEditScoringRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit/scoring'
 import { Route as AuthenticatedGuildIdEventsEventIdEditRulebookRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit/rulebook'
-import { Route as AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.player-vs-player.$myId.$opponentId'
+import { Route as AuthenticatedGuildIdEventsEventIdEditScoringRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit/scoring'
+import { Route as AuthenticatedGuildIdEventsEventIdEditSettingsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit/settings'
+import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId'
+import { Route as AuthenticatedGuildIdEventsEventIdMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.members_.$memberId'
 import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills'
+import { Route as AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.player-vs-player.$myId.$opponentId'
 import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills_.$killId'
 
-const SigninRoute = SigninRouteImport.update({
-  id: '/signin',
-  path: '/signin',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InitRoute = InitRouteImport.update({
@@ -90,99 +89,30 @@ const InitRoute = InitRouteImport.update({
   path: '/init',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
   getParentRoute: () => rootRouteImport,
-} as any)
-const BattlesIdRoute = BattlesIdRouteImport.update({
-  id: '/battles/$id',
-  path: '/battles/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAtmeRoute = AuthenticatedAtmeRouteImport.update({
-  id: '/@me',
-  path: '/@me',
-  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedGuildIdRoute = AuthenticatedGuildIdRouteImport.update({
   id: '/$guildId',
   path: '/$guildId',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAtmeIndexRoute = AuthenticatedAtmeIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedAtmeRoute,
+const AuthenticatedAtmeRoute = AuthenticatedAtmeRouteImport.update({
+  id: '/@me',
+  path: '/@me',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const BattlesIdRoute = BattlesIdRouteImport.update({
+  id: '/battles/$id',
+  path: '/battles/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedGuildIdIndexRoute =
   AuthenticatedGuildIdIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
-const AuthenticatedAtmeSettingsRoute =
-  AuthenticatedAtmeSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any)
-const AuthenticatedAtmeNotificationsRoute =
-  AuthenticatedAtmeNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any)
-const AuthenticatedAtmeKillsRoute = AuthenticatedAtmeKillsRouteImport.update({
-  id: '/kills',
-  path: '/kills',
-  getParentRoute: () => AuthenticatedAtmeRoute,
-} as any)
-const AuthenticatedAtmeBattlePanelRoute =
-  AuthenticatedAtmeBattlePanelRouteImport.update({
-    id: '/battle-panel',
-    path: '/battle-panel',
-    getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any)
-const AuthenticatedGuildIdTimersRoute =
-  AuthenticatedGuildIdTimersRouteImport.update({
-    id: '/timers',
-    path: '/timers',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
-const AuthenticatedGuildIdStatsRoute =
-  AuthenticatedGuildIdStatsRouteImport.update({
-    id: '/stats',
-    path: '/stats',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsRoute =
-  AuthenticatedGuildIdSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
-const AuthenticatedGuildIdReservationsRoute =
-  AuthenticatedGuildIdReservationsRouteImport.update({
-    id: '/reservations',
-    path: '/reservations',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
-const AuthenticatedGuildIdNotificationsRoute =
-  AuthenticatedGuildIdNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
-const AuthenticatedGuildIdEventsRoute =
-  AuthenticatedGuildIdEventsRouteImport.update({
-    id: '/events',
-    path: '/events',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
-const AuthenticatedGuildIdDocsRoute =
-  AuthenticatedGuildIdDocsRouteImport.update({
-    id: '/docs',
-    path: '/docs',
     getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
 const AuthenticatedGuildIdActivityLogsRoute =
@@ -191,41 +121,75 @@ const AuthenticatedGuildIdActivityLogsRoute =
     path: '/activity-logs',
     getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
-const AuthenticatedAtmeSettingsIndexRoute =
-  AuthenticatedAtmeSettingsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
+const AuthenticatedGuildIdDocsRoute =
+  AuthenticatedGuildIdDocsRouteImport.update({
+    id: '/docs',
+    path: '/docs',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
-const AuthenticatedAtmeBattlePanelIndexRoute =
-  AuthenticatedAtmeBattlePanelIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+const AuthenticatedGuildIdEventsRoute =
+  AuthenticatedGuildIdEventsRouteImport.update({
+    id: '/events',
+    path: '/events',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
-const AuthenticatedGuildIdStatsIndexRoute =
-  AuthenticatedGuildIdStatsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+const AuthenticatedGuildIdNotificationsRoute =
+  AuthenticatedGuildIdNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
-const AuthenticatedGuildIdSettingsIndexRoute =
-  AuthenticatedGuildIdSettingsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+const AuthenticatedGuildIdReservationsRoute =
+  AuthenticatedGuildIdReservationsRouteImport.update({
+    id: '/reservations',
+    path: '/reservations',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
-const AuthenticatedGuildIdReservationsIndexRoute =
-  AuthenticatedGuildIdReservationsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
+const AuthenticatedGuildIdSettingsRoute =
+  AuthenticatedGuildIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
-const AuthenticatedGuildIdNotificationsIndexRoute =
-  AuthenticatedGuildIdNotificationsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
+const AuthenticatedGuildIdStatsRoute =
+  AuthenticatedGuildIdStatsRouteImport.update({
+    id: '/stats',
+    path: '/stats',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
+  } as any)
+const AuthenticatedGuildIdTimersRoute =
+  AuthenticatedGuildIdTimersRouteImport.update({
+    id: '/timers',
+    path: '/timers',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
+  } as any)
+const AuthenticatedAtmeIndexRoute = AuthenticatedAtmeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAtmeRoute,
+} as any)
+const AuthenticatedAtmeBattlePanelRoute =
+  AuthenticatedAtmeBattlePanelRouteImport.update({
+    id: '/battle-panel',
+    path: '/battle-panel',
+    getParentRoute: () => AuthenticatedAtmeRoute,
+  } as any)
+const AuthenticatedAtmeKillsRoute = AuthenticatedAtmeKillsRouteImport.update({
+  id: '/kills',
+  path: '/kills',
+  getParentRoute: () => AuthenticatedAtmeRoute,
+} as any)
+const AuthenticatedAtmeNotificationsRoute =
+  AuthenticatedAtmeNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedAtmeRoute,
+  } as any)
+const AuthenticatedAtmeSettingsRoute =
+  AuthenticatedAtmeSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAtmeRoute,
   } as any)
 const AuthenticatedGuildIdDocsIndexRoute =
   AuthenticatedGuildIdDocsIndexRouteImport.update({
@@ -233,100 +197,22 @@ const AuthenticatedGuildIdDocsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedGuildIdDocsRoute,
   } as any)
-const AuthenticatedAtmeSettingsAppearanceRoute =
-  AuthenticatedAtmeSettingsAppearanceRouteImport.update({
-    id: '/appearance',
-    path: '/appearance',
-    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
+const AuthenticatedGuildIdDocsDocIdRoute =
+  AuthenticatedGuildIdDocsDocIdRouteImport.update({
+    id: '/$docId',
+    path: '/$docId',
+    getParentRoute: () => AuthenticatedGuildIdDocsRoute,
   } as any)
-const AuthenticatedAtmeSettingsAccountRoute =
-  AuthenticatedAtmeSettingsAccountRouteImport.update({
-    id: '/account',
-    path: '/account',
-    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
+const AuthenticatedGuildIdEventsEventIdRoute =
+  AuthenticatedGuildIdEventsEventIdRouteImport.update({
+    id: '/events_/$eventId_',
+    path: '/events/$eventId',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
-const AuthenticatedAtmeBattlePanelStatisticsRoute =
-  AuthenticatedAtmeBattlePanelStatisticsRouteImport.update({
-    id: '/statistics',
-    path: '/statistics',
-    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
-const AuthenticatedAtmeBattlePanelAbyssRoute =
-  AuthenticatedAtmeBattlePanelAbyssRouteImport.update({
-    id: '/abyss',
-    path: '/abyss',
-    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
-const AuthenticatedGuildIdStatsRankingRoute =
-  AuthenticatedGuildIdStatsRankingRouteImport.update({
-    id: '/ranking',
-    path: '/ranking',
-    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
-const AuthenticatedGuildIdStatsLootsRoute =
-  AuthenticatedGuildIdStatsLootsRouteImport.update({
-    id: '/loots',
-    path: '/loots',
-    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
-const AuthenticatedGuildIdStatsKillsRoute =
-  AuthenticatedGuildIdStatsKillsRouteImport.update({
-    id: '/kills',
-    path: '/kills',
-    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsRolesRoute =
-  AuthenticatedGuildIdSettingsRolesRouteImport.update({
-    id: '/roles',
-    path: '/roles',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsReservationsRoute =
-  AuthenticatedGuildIdSettingsReservationsRouteImport.update({
-    id: '/reservations',
-    path: '/reservations',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsNpcsRoute =
-  AuthenticatedGuildIdSettingsNpcsRouteImport.update({
-    id: '/npcs',
-    path: '/npcs',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsMembersRoute =
-  AuthenticatedGuildIdSettingsMembersRouteImport.update({
-    id: '/members',
-    path: '/members',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsMapTemplatesRoute =
-  AuthenticatedGuildIdSettingsMapTemplatesRouteImport.update({
-    id: '/map-templates',
-    path: '/map-templates',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsInfoRoute =
-  AuthenticatedGuildIdSettingsInfoRouteImport.update({
-    id: '/info',
-    path: '/info',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
-const AuthenticatedGuildIdReservationsReservationIdRoute =
-  AuthenticatedGuildIdReservationsReservationIdRouteImport.update({
-    id: '/$reservationId',
-    path: '/$reservationId',
-    getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
-  } as any)
-const AuthenticatedGuildIdNotificationsHistoryRoute =
-  AuthenticatedGuildIdNotificationsHistoryRouteImport.update({
-    id: '/history',
-    path: '/history',
-    getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
-  } as any)
-const AuthenticatedGuildIdNotificationsCreateRoute =
-  AuthenticatedGuildIdNotificationsCreateRouteImport.update({
-    id: '/create',
-    path: '/create',
+const AuthenticatedGuildIdNotificationsIndexRoute =
+  AuthenticatedGuildIdNotificationsIndexRouteImport.update({
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
   } as any)
 const AuthenticatedGuildIdNotificationsRuleIdRoute =
@@ -335,100 +221,136 @@ const AuthenticatedGuildIdNotificationsRuleIdRoute =
     path: '/$ruleId',
     getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
   } as any)
-const AuthenticatedGuildIdEventsEventIdRoute =
-  AuthenticatedGuildIdEventsEventIdRouteImport.update({
-    id: '/events_/$eventId_',
-    path: '/events/$eventId',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
+const AuthenticatedGuildIdNotificationsCreateRoute =
+  AuthenticatedGuildIdNotificationsCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
   } as any)
-const AuthenticatedGuildIdDocsDocIdRoute =
-  AuthenticatedGuildIdDocsDocIdRouteImport.update({
-    id: '/$docId',
-    path: '/$docId',
-    getParentRoute: () => AuthenticatedGuildIdDocsRoute,
+const AuthenticatedGuildIdNotificationsHistoryRoute =
+  AuthenticatedGuildIdNotificationsHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
   } as any)
-const AuthenticatedGuildIdStatsNpcsIndexRoute =
-  AuthenticatedGuildIdStatsNpcsIndexRouteImport.update({
-    id: '/npcs/',
-    path: '/npcs/',
+const AuthenticatedGuildIdReservationsIndexRoute =
+  AuthenticatedGuildIdReservationsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
+  } as any)
+const AuthenticatedGuildIdReservationsReservationIdRoute =
+  AuthenticatedGuildIdReservationsReservationIdRouteImport.update({
+    id: '/$reservationId',
+    path: '/$reservationId',
+    getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsIndexRoute =
+  AuthenticatedGuildIdSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsInfoRoute =
+  AuthenticatedGuildIdSettingsInfoRouteImport.update({
+    id: '/info',
+    path: '/info',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsMapTemplatesRoute =
+  AuthenticatedGuildIdSettingsMapTemplatesRouteImport.update({
+    id: '/map-templates',
+    path: '/map-templates',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsMembersRoute =
+  AuthenticatedGuildIdSettingsMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsNpcsRoute =
+  AuthenticatedGuildIdSettingsNpcsRouteImport.update({
+    id: '/npcs',
+    path: '/npcs',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsReservationsRoute =
+  AuthenticatedGuildIdSettingsReservationsRouteImport.update({
+    id: '/reservations',
+    path: '/reservations',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsRolesRoute =
+  AuthenticatedGuildIdSettingsRolesRouteImport.update({
+    id: '/roles',
+    path: '/roles',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdStatsIndexRoute =
+  AuthenticatedGuildIdStatsIndexRouteImport.update({
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
+const AuthenticatedGuildIdStatsKillsRoute =
+  AuthenticatedGuildIdStatsKillsRouteImport.update({
+    id: '/kills',
+    path: '/kills',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
+const AuthenticatedGuildIdStatsLootsRoute =
+  AuthenticatedGuildIdStatsLootsRouteImport.update({
+    id: '/loots',
+    path: '/loots',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
+const AuthenticatedGuildIdStatsRankingRoute =
+  AuthenticatedGuildIdStatsRankingRouteImport.update({
+    id: '/ranking',
+    path: '/ranking',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
+const AuthenticatedAtmeBattlePanelIndexRoute =
+  AuthenticatedAtmeBattlePanelIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
+const AuthenticatedAtmeBattlePanelAbyssRoute =
+  AuthenticatedAtmeBattlePanelAbyssRouteImport.update({
+    id: '/abyss',
+    path: '/abyss',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
+const AuthenticatedAtmeBattlePanelStatisticsRoute =
+  AuthenticatedAtmeBattlePanelStatisticsRouteImport.update({
+    id: '/statistics',
+    path: '/statistics',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
+const AuthenticatedAtmeSettingsIndexRoute =
+  AuthenticatedAtmeSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
+  } as any)
+const AuthenticatedAtmeSettingsAccountRoute =
+  AuthenticatedAtmeSettingsAccountRouteImport.update({
+    id: '/account',
+    path: '/account',
+    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
+  } as any)
+const AuthenticatedAtmeSettingsAppearanceRoute =
+  AuthenticatedAtmeSettingsAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
+    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
   } as any)
 const AuthenticatedGuildIdEventsEventIdIndexRoute =
   AuthenticatedGuildIdEventsEventIdIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
-const AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute =
-  AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport.update({
-    id: '/statistics_/matchmaking-h2h',
-    path: '/statistics/matchmaking-h2h',
-    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
-const AuthenticatedAtmeBattlePanelStatisticsH2hRoute =
-  AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport.update({
-    id: '/statistics_/h2h',
-    path: '/statistics/h2h',
-    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
-const AuthenticatedAtmeBattlePanelBattlesBattleIdRoute =
-  AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport.update({
-    id: '/battles_/$battleId',
-    path: '/battles/$battleId',
-    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
-const AuthenticatedAtmeBattlePanelAbyssH2hRoute =
-  AuthenticatedAtmeBattlePanelAbyssH2hRouteImport.update({
-    id: '/abyss_/h2h',
-    path: '/abyss/h2h',
-    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any)
-const AuthenticatedGuildIdStatsNpcsNpcIdRoute =
-  AuthenticatedGuildIdStatsNpcsNpcIdRouteImport.update({
-    id: '/npcs/$npcId',
-    path: '/npcs/$npcId',
-    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
-const AuthenticatedGuildIdStatsMembersMemberIdRoute =
-  AuthenticatedGuildIdStatsMembersMemberIdRouteImport.update({
-    id: '/members/$memberId',
-    path: '/members/$memberId',
-    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsRolesRoleIdRoute =
-  AuthenticatedGuildIdSettingsRolesRoleIdRouteImport.update({
-    id: '/roles_/$roleId',
-    path: '/roles/$roleId',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsNpcsNpcIdRoute =
-  AuthenticatedGuildIdSettingsNpcsNpcIdRouteImport.update({
-    id: '/npcs_/$npcId',
-    path: '/npcs/$npcId',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
-const AuthenticatedGuildIdSettingsMembersMemberIdRoute =
-  AuthenticatedGuildIdSettingsMembersMemberIdRouteImport.update({
-    id: '/members_/$memberId',
-    path: '/members/$memberId',
-    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any)
-const AuthenticatedGuildIdEventsEventIdRankingRoute =
-  AuthenticatedGuildIdEventsEventIdRankingRouteImport.update({
-    id: '/ranking',
-    path: '/ranking',
-    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
-const AuthenticatedGuildIdEventsEventIdKillsRoute =
-  AuthenticatedGuildIdEventsEventIdKillsRouteImport.update({
-    id: '/kills',
-    path: '/kills',
-    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
-const AuthenticatedGuildIdEventsEventIdEditRoute =
-  AuthenticatedGuildIdEventsEventIdEditRouteImport.update({
-    id: '/edit',
-    path: '/edit',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
   } as any)
 const AuthenticatedGuildIdEventsEventIdCoordinationRoute =
@@ -437,28 +359,94 @@ const AuthenticatedGuildIdEventsEventIdCoordinationRoute =
     path: '/coordination',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
   } as any)
+const AuthenticatedGuildIdEventsEventIdEditRoute =
+  AuthenticatedGuildIdEventsEventIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
+  } as any)
+const AuthenticatedGuildIdEventsEventIdKillsRoute =
+  AuthenticatedGuildIdEventsEventIdKillsRouteImport.update({
+    id: '/kills',
+    path: '/kills',
+    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
+  } as any)
+const AuthenticatedGuildIdEventsEventIdRankingRoute =
+  AuthenticatedGuildIdEventsEventIdRankingRouteImport.update({
+    id: '/ranking',
+    path: '/ranking',
+    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsMembersMemberIdRoute =
+  AuthenticatedGuildIdSettingsMembersMemberIdRouteImport.update({
+    id: '/members_/$memberId',
+    path: '/members/$memberId',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsNpcsNpcIdRoute =
+  AuthenticatedGuildIdSettingsNpcsNpcIdRouteImport.update({
+    id: '/npcs_/$npcId',
+    path: '/npcs/$npcId',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdSettingsRolesRoleIdRoute =
+  AuthenticatedGuildIdSettingsRolesRoleIdRouteImport.update({
+    id: '/roles_/$roleId',
+    path: '/roles/$roleId',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
+const AuthenticatedGuildIdStatsMembersMemberIdRoute =
+  AuthenticatedGuildIdStatsMembersMemberIdRouteImport.update({
+    id: '/members/$memberId',
+    path: '/members/$memberId',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
+const AuthenticatedGuildIdStatsNpcsIndexRoute =
+  AuthenticatedGuildIdStatsNpcsIndexRouteImport.update({
+    id: '/npcs/',
+    path: '/npcs/',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
+const AuthenticatedGuildIdStatsNpcsNpcIdRoute =
+  AuthenticatedGuildIdStatsNpcsNpcIdRouteImport.update({
+    id: '/npcs/$npcId',
+    path: '/npcs/$npcId',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
+const AuthenticatedAtmeBattlePanelAbyssH2hRoute =
+  AuthenticatedAtmeBattlePanelAbyssH2hRouteImport.update({
+    id: '/abyss_/h2h',
+    path: '/abyss/h2h',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
+const AuthenticatedAtmeBattlePanelBattlesBattleIdRoute =
+  AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport.update({
+    id: '/battles_/$battleId',
+    path: '/battles/$battleId',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
+const AuthenticatedAtmeBattlePanelStatisticsH2hRoute =
+  AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport.update({
+    id: '/statistics_/h2h',
+    path: '/statistics/h2h',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
+const AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute =
+  AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport.update({
+    id: '/statistics_/matchmaking-h2h',
+    path: '/statistics/matchmaking-h2h',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
 const AuthenticatedGuildIdEventsEventIdEditIndexRoute =
   AuthenticatedGuildIdEventsEventIdEditIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdEditRoute,
   } as any)
-const AuthenticatedGuildIdEventsEventIdMembersMemberIdRoute =
-  AuthenticatedGuildIdEventsEventIdMembersMemberIdRouteImport.update({
-    id: '/members_/$memberId',
-    path: '/members/$memberId',
-    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
-const AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute =
-  AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport.update({
-    id: '/heroes_/$heroId',
-    path: '/heroes/$heroId',
-    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
-const AuthenticatedGuildIdEventsEventIdEditSettingsRoute =
-  AuthenticatedGuildIdEventsEventIdEditSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
+const AuthenticatedGuildIdEventsEventIdEditRulebookRoute =
+  AuthenticatedGuildIdEventsEventIdEditRulebookRouteImport.update({
+    id: '/rulebook',
+    path: '/rulebook',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdEditRoute,
   } as any)
 const AuthenticatedGuildIdEventsEventIdEditScoringRoute =
@@ -467,11 +455,29 @@ const AuthenticatedGuildIdEventsEventIdEditScoringRoute =
     path: '/scoring',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdEditRoute,
   } as any)
-const AuthenticatedGuildIdEventsEventIdEditRulebookRoute =
-  AuthenticatedGuildIdEventsEventIdEditRulebookRouteImport.update({
-    id: '/rulebook',
-    path: '/rulebook',
+const AuthenticatedGuildIdEventsEventIdEditSettingsRoute =
+  AuthenticatedGuildIdEventsEventIdEditSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdEditRoute,
+  } as any)
+const AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute =
+  AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport.update({
+    id: '/heroes_/$heroId',
+    path: '/heroes/$heroId',
+    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
+  } as any)
+const AuthenticatedGuildIdEventsEventIdMembersMemberIdRoute =
+  AuthenticatedGuildIdEventsEventIdMembersMemberIdRouteImport.update({
+    id: '/members_/$memberId',
+    path: '/members/$memberId',
+    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
+  } as any)
+const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute =
+  AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport.update({
+    id: '/heroes_/$heroId_/kills',
+    path: '/heroes/$heroId/kills',
+    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
   } as any)
 const AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute =
   AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport.update(
@@ -481,12 +487,6 @@ const AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute =
       getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
     } as any,
   )
-const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute =
-  AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport.update({
-    id: '/heroes_/$heroId_/kills',
-    path: '/heroes/$heroId/kills',
-    getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
-  } as any)
 const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute =
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteImport.update({
     id: '/heroes_/$heroId_/kills_/$killId',
@@ -917,11 +917,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signin': {
-      id: '/signin'
-      path: '/signin'
-      fullPath: '/signin'
-      preLoaderRoute: typeof SigninRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/init': {
@@ -931,26 +931,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InitRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/battles/$id': {
-      id: '/battles/$id'
-      path: '/battles/$id'
-      fullPath: '/battles/$id'
-      preLoaderRoute: typeof BattlesIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/@me': {
-      id: '/_authenticated/@me'
-      path: '/@me'
-      fullPath: '/@me'
-      preLoaderRoute: typeof AuthenticatedAtmeRouteImport
-      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/$guildId': {
       id: '/_authenticated/$guildId'
@@ -959,95 +945,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/@me/': {
-      id: '/_authenticated/@me/'
-      path: '/'
-      fullPath: '/@me/'
-      preLoaderRoute: typeof AuthenticatedAtmeIndexRouteImport
-      parentRoute: typeof AuthenticatedAtmeRoute
+    '/_authenticated/@me': {
+      id: '/_authenticated/@me'
+      path: '/@me'
+      fullPath: '/@me'
+      preLoaderRoute: typeof AuthenticatedAtmeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/battles/$id': {
+      id: '/battles/$id'
+      path: '/battles/$id'
+      fullPath: '/battles/$id'
+      preLoaderRoute: typeof BattlesIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/$guildId/': {
       id: '/_authenticated/$guildId/'
       path: '/'
       fullPath: '/$guildId/'
       preLoaderRoute: typeof AuthenticatedGuildIdIndexRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
-    }
-    '/_authenticated/@me/settings': {
-      id: '/_authenticated/@me/settings'
-      path: '/settings'
-      fullPath: '/@me/settings'
-      preLoaderRoute: typeof AuthenticatedAtmeSettingsRouteImport
-      parentRoute: typeof AuthenticatedAtmeRoute
-    }
-    '/_authenticated/@me/notifications': {
-      id: '/_authenticated/@me/notifications'
-      path: '/notifications'
-      fullPath: '/@me/notifications'
-      preLoaderRoute: typeof AuthenticatedAtmeNotificationsRouteImport
-      parentRoute: typeof AuthenticatedAtmeRoute
-    }
-    '/_authenticated/@me/kills': {
-      id: '/_authenticated/@me/kills'
-      path: '/kills'
-      fullPath: '/@me/kills'
-      preLoaderRoute: typeof AuthenticatedAtmeKillsRouteImport
-      parentRoute: typeof AuthenticatedAtmeRoute
-    }
-    '/_authenticated/@me/battle-panel': {
-      id: '/_authenticated/@me/battle-panel'
-      path: '/battle-panel'
-      fullPath: '/@me/battle-panel'
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelRouteImport
-      parentRoute: typeof AuthenticatedAtmeRoute
-    }
-    '/_authenticated/$guildId/timers': {
-      id: '/_authenticated/$guildId/timers'
-      path: '/timers'
-      fullPath: '/$guildId/timers'
-      preLoaderRoute: typeof AuthenticatedGuildIdTimersRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
-    }
-    '/_authenticated/$guildId/stats': {
-      id: '/_authenticated/$guildId/stats'
-      path: '/stats'
-      fullPath: '/$guildId/stats'
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
-    }
-    '/_authenticated/$guildId/settings': {
-      id: '/_authenticated/$guildId/settings'
-      path: '/settings'
-      fullPath: '/$guildId/settings'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
-    }
-    '/_authenticated/$guildId/reservations': {
-      id: '/_authenticated/$guildId/reservations'
-      path: '/reservations'
-      fullPath: '/$guildId/reservations'
-      preLoaderRoute: typeof AuthenticatedGuildIdReservationsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
-    }
-    '/_authenticated/$guildId/notifications': {
-      id: '/_authenticated/$guildId/notifications'
-      path: '/notifications'
-      fullPath: '/$guildId/notifications'
-      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
-    }
-    '/_authenticated/$guildId/events': {
-      id: '/_authenticated/$guildId/events'
-      path: '/events'
-      fullPath: '/$guildId/events'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
-    }
-    '/_authenticated/$guildId/docs': {
-      id: '/_authenticated/$guildId/docs'
-      path: '/docs'
-      fullPath: '/$guildId/docs'
-      preLoaderRoute: typeof AuthenticatedGuildIdDocsRouteImport
       parentRoute: typeof AuthenticatedGuildIdRoute
     }
     '/_authenticated/$guildId/activity-logs': {
@@ -1057,47 +973,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdActivityLogsRouteImport
       parentRoute: typeof AuthenticatedGuildIdRoute
     }
-    '/_authenticated/@me/settings/': {
-      id: '/_authenticated/@me/settings/'
-      path: '/'
-      fullPath: '/@me/settings/'
-      preLoaderRoute: typeof AuthenticatedAtmeSettingsIndexRouteImport
-      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    '/_authenticated/$guildId/docs': {
+      id: '/_authenticated/$guildId/docs'
+      path: '/docs'
+      fullPath: '/$guildId/docs'
+      preLoaderRoute: typeof AuthenticatedGuildIdDocsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
     }
-    '/_authenticated/@me/battle-panel/': {
-      id: '/_authenticated/@me/battle-panel/'
-      path: '/'
-      fullPath: '/@me/battle-panel/'
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelIndexRouteImport
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    '/_authenticated/$guildId/events': {
+      id: '/_authenticated/$guildId/events'
+      path: '/events'
+      fullPath: '/$guildId/events'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
     }
-    '/_authenticated/$guildId/stats/': {
-      id: '/_authenticated/$guildId/stats/'
-      path: '/'
-      fullPath: '/$guildId/stats/'
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsIndexRouteImport
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    '/_authenticated/$guildId/notifications': {
+      id: '/_authenticated/$guildId/notifications'
+      path: '/notifications'
+      fullPath: '/$guildId/notifications'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
     }
-    '/_authenticated/$guildId/settings/': {
-      id: '/_authenticated/$guildId/settings/'
-      path: '/'
-      fullPath: '/$guildId/settings/'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsIndexRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    '/_authenticated/$guildId/reservations': {
+      id: '/_authenticated/$guildId/reservations'
+      path: '/reservations'
+      fullPath: '/$guildId/reservations'
+      preLoaderRoute: typeof AuthenticatedGuildIdReservationsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
     }
-    '/_authenticated/$guildId/reservations/': {
-      id: '/_authenticated/$guildId/reservations/'
-      path: '/'
-      fullPath: '/$guildId/reservations/'
-      preLoaderRoute: typeof AuthenticatedGuildIdReservationsIndexRouteImport
-      parentRoute: typeof AuthenticatedGuildIdReservationsRoute
+    '/_authenticated/$guildId/settings': {
+      id: '/_authenticated/$guildId/settings'
+      path: '/settings'
+      fullPath: '/$guildId/settings'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
     }
-    '/_authenticated/$guildId/notifications/': {
-      id: '/_authenticated/$guildId/notifications/'
+    '/_authenticated/$guildId/stats': {
+      id: '/_authenticated/$guildId/stats'
+      path: '/stats'
+      fullPath: '/$guildId/stats'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/timers': {
+      id: '/_authenticated/$guildId/timers'
+      path: '/timers'
+      fullPath: '/$guildId/timers'
+      preLoaderRoute: typeof AuthenticatedGuildIdTimersRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/@me/': {
+      id: '/_authenticated/@me/'
       path: '/'
-      fullPath: '/$guildId/notifications/'
-      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsIndexRouteImport
-      parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
+      fullPath: '/@me/'
+      preLoaderRoute: typeof AuthenticatedAtmeIndexRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/@me/battle-panel': {
+      id: '/_authenticated/@me/battle-panel'
+      path: '/battle-panel'
+      fullPath: '/@me/battle-panel'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/@me/kills': {
+      id: '/_authenticated/@me/kills'
+      path: '/kills'
+      fullPath: '/@me/kills'
+      preLoaderRoute: typeof AuthenticatedAtmeKillsRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/@me/notifications': {
+      id: '/_authenticated/@me/notifications'
+      path: '/notifications'
+      fullPath: '/@me/notifications'
+      preLoaderRoute: typeof AuthenticatedAtmeNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/@me/settings': {
+      id: '/_authenticated/@me/settings'
+      path: '/settings'
+      fullPath: '/@me/settings'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
     }
     '/_authenticated/$guildId/docs/': {
       id: '/_authenticated/$guildId/docs/'
@@ -1106,116 +1064,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdDocsIndexRouteImport
       parentRoute: typeof AuthenticatedGuildIdDocsRoute
     }
-    '/_authenticated/@me/settings/appearance': {
-      id: '/_authenticated/@me/settings/appearance'
-      path: '/appearance'
-      fullPath: '/@me/settings/appearance'
-      preLoaderRoute: typeof AuthenticatedAtmeSettingsAppearanceRouteImport
-      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    '/_authenticated/$guildId/docs/$docId': {
+      id: '/_authenticated/$guildId/docs/$docId'
+      path: '/$docId'
+      fullPath: '/$guildId/docs/$docId'
+      preLoaderRoute: typeof AuthenticatedGuildIdDocsDocIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdDocsRoute
     }
-    '/_authenticated/@me/settings/account': {
-      id: '/_authenticated/@me/settings/account'
-      path: '/account'
-      fullPath: '/@me/settings/account'
-      preLoaderRoute: typeof AuthenticatedAtmeSettingsAccountRouteImport
-      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    '/_authenticated/$guildId/events_/$eventId_': {
+      id: '/_authenticated/$guildId/events_/$eventId_'
+      path: '/events/$eventId'
+      fullPath: '/$guildId/events/$eventId'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
     }
-    '/_authenticated/@me/battle-panel/statistics': {
-      id: '/_authenticated/@me/battle-panel/statistics'
-      path: '/statistics'
-      fullPath: '/@me/battle-panel/statistics'
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRouteImport
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
-    }
-    '/_authenticated/@me/battle-panel/abyss': {
-      id: '/_authenticated/@me/battle-panel/abyss'
-      path: '/abyss'
-      fullPath: '/@me/battle-panel/abyss'
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelAbyssRouteImport
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
-    }
-    '/_authenticated/$guildId/stats/ranking': {
-      id: '/_authenticated/$guildId/stats/ranking'
-      path: '/ranking'
-      fullPath: '/$guildId/stats/ranking'
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsRankingRouteImport
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute
-    }
-    '/_authenticated/$guildId/stats/loots': {
-      id: '/_authenticated/$guildId/stats/loots'
-      path: '/loots'
-      fullPath: '/$guildId/stats/loots'
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsLootsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute
-    }
-    '/_authenticated/$guildId/stats/kills': {
-      id: '/_authenticated/$guildId/stats/kills'
-      path: '/kills'
-      fullPath: '/$guildId/stats/kills'
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsKillsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute
-    }
-    '/_authenticated/$guildId/settings/roles': {
-      id: '/_authenticated/$guildId/settings/roles'
-      path: '/roles'
-      fullPath: '/$guildId/settings/roles'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRolesRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
-    '/_authenticated/$guildId/settings/reservations': {
-      id: '/_authenticated/$guildId/settings/reservations'
-      path: '/reservations'
-      fullPath: '/$guildId/settings/reservations'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsReservationsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
-    '/_authenticated/$guildId/settings/npcs': {
-      id: '/_authenticated/$guildId/settings/npcs'
-      path: '/npcs'
-      fullPath: '/$guildId/settings/npcs'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNpcsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
-    '/_authenticated/$guildId/settings/members': {
-      id: '/_authenticated/$guildId/settings/members'
-      path: '/members'
-      fullPath: '/$guildId/settings/members'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMembersRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
-    '/_authenticated/$guildId/settings/map-templates': {
-      id: '/_authenticated/$guildId/settings/map-templates'
-      path: '/map-templates'
-      fullPath: '/$guildId/settings/map-templates'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMapTemplatesRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
-    '/_authenticated/$guildId/settings/info': {
-      id: '/_authenticated/$guildId/settings/info'
-      path: '/info'
-      fullPath: '/$guildId/settings/info'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsInfoRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
-    '/_authenticated/$guildId/reservations/$reservationId': {
-      id: '/_authenticated/$guildId/reservations/$reservationId'
-      path: '/$reservationId'
-      fullPath: '/$guildId/reservations/$reservationId'
-      preLoaderRoute: typeof AuthenticatedGuildIdReservationsReservationIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdReservationsRoute
-    }
-    '/_authenticated/$guildId/notifications/history': {
-      id: '/_authenticated/$guildId/notifications/history'
-      path: '/history'
-      fullPath: '/$guildId/notifications/history'
-      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsHistoryRouteImport
-      parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
-    }
-    '/_authenticated/$guildId/notifications/create': {
-      id: '/_authenticated/$guildId/notifications/create'
-      path: '/create'
-      fullPath: '/$guildId/notifications/create'
-      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsCreateRouteImport
+    '/_authenticated/$guildId/notifications/': {
+      id: '/_authenticated/$guildId/notifications/'
+      path: '/'
+      fullPath: '/$guildId/notifications/'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsIndexRouteImport
       parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
     }
     '/_authenticated/$guildId/notifications/$ruleId': {
@@ -1225,116 +1092,158 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdNotificationsRuleIdRouteImport
       parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
     }
-    '/_authenticated/$guildId/events_/$eventId_': {
-      id: '/_authenticated/$guildId/events_/$eventId_'
-      path: '/events/$eventId'
-      fullPath: '/$guildId/events/$eventId'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
+    '/_authenticated/$guildId/notifications/create': {
+      id: '/_authenticated/$guildId/notifications/create'
+      path: '/create'
+      fullPath: '/$guildId/notifications/create'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsCreateRouteImport
+      parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
     }
-    '/_authenticated/$guildId/docs/$docId': {
-      id: '/_authenticated/$guildId/docs/$docId'
-      path: '/$docId'
-      fullPath: '/$guildId/docs/$docId'
-      preLoaderRoute: typeof AuthenticatedGuildIdDocsDocIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdDocsRoute
+    '/_authenticated/$guildId/notifications/history': {
+      id: '/_authenticated/$guildId/notifications/history'
+      path: '/history'
+      fullPath: '/$guildId/notifications/history'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsHistoryRouteImport
+      parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
     }
-    '/_authenticated/$guildId/stats/npcs/': {
-      id: '/_authenticated/$guildId/stats/npcs/'
+    '/_authenticated/$guildId/reservations/': {
+      id: '/_authenticated/$guildId/reservations/'
+      path: '/'
+      fullPath: '/$guildId/reservations/'
+      preLoaderRoute: typeof AuthenticatedGuildIdReservationsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdReservationsRoute
+    }
+    '/_authenticated/$guildId/reservations/$reservationId': {
+      id: '/_authenticated/$guildId/reservations/$reservationId'
+      path: '/$reservationId'
+      fullPath: '/$guildId/reservations/$reservationId'
+      preLoaderRoute: typeof AuthenticatedGuildIdReservationsReservationIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdReservationsRoute
+    }
+    '/_authenticated/$guildId/settings/': {
+      id: '/_authenticated/$guildId/settings/'
+      path: '/'
+      fullPath: '/$guildId/settings/'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/info': {
+      id: '/_authenticated/$guildId/settings/info'
+      path: '/info'
+      fullPath: '/$guildId/settings/info'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsInfoRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/map-templates': {
+      id: '/_authenticated/$guildId/settings/map-templates'
+      path: '/map-templates'
+      fullPath: '/$guildId/settings/map-templates'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMapTemplatesRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/members': {
+      id: '/_authenticated/$guildId/settings/members'
+      path: '/members'
+      fullPath: '/$guildId/settings/members'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMembersRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/npcs': {
+      id: '/_authenticated/$guildId/settings/npcs'
       path: '/npcs'
-      fullPath: '/$guildId/stats/npcs/'
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRouteImport
+      fullPath: '/$guildId/settings/npcs'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNpcsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/reservations': {
+      id: '/_authenticated/$guildId/settings/reservations'
+      path: '/reservations'
+      fullPath: '/$guildId/settings/reservations'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsReservationsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/roles': {
+      id: '/_authenticated/$guildId/settings/roles'
+      path: '/roles'
+      fullPath: '/$guildId/settings/roles'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRolesRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/stats/': {
+      id: '/_authenticated/$guildId/stats/'
+      path: '/'
+      fullPath: '/$guildId/stats/'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsIndexRouteImport
       parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/stats/kills': {
+      id: '/_authenticated/$guildId/stats/kills'
+      path: '/kills'
+      fullPath: '/$guildId/stats/kills'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsKillsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/stats/loots': {
+      id: '/_authenticated/$guildId/stats/loots'
+      path: '/loots'
+      fullPath: '/$guildId/stats/loots'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsLootsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/stats/ranking': {
+      id: '/_authenticated/$guildId/stats/ranking'
+      path: '/ranking'
+      fullPath: '/$guildId/stats/ranking'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsRankingRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/@me/battle-panel/': {
+      id: '/_authenticated/@me/battle-panel/'
+      path: '/'
+      fullPath: '/@me/battle-panel/'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelIndexRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/abyss': {
+      id: '/_authenticated/@me/battle-panel/abyss'
+      path: '/abyss'
+      fullPath: '/@me/battle-panel/abyss'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelAbyssRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/statistics': {
+      id: '/_authenticated/@me/battle-panel/statistics'
+      path: '/statistics'
+      fullPath: '/@me/battle-panel/statistics'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/settings/': {
+      id: '/_authenticated/@me/settings/'
+      path: '/'
+      fullPath: '/@me/settings/'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    }
+    '/_authenticated/@me/settings/account': {
+      id: '/_authenticated/@me/settings/account'
+      path: '/account'
+      fullPath: '/@me/settings/account'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsAccountRouteImport
+      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    }
+    '/_authenticated/@me/settings/appearance': {
+      id: '/_authenticated/@me/settings/appearance'
+      path: '/appearance'
+      fullPath: '/@me/settings/appearance'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsAppearanceRouteImport
+      parentRoute: typeof AuthenticatedAtmeSettingsRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/': {
       id: '/_authenticated/$guildId/events_/$eventId_/'
       path: '/'
       fullPath: '/$guildId/events/$eventId/'
       preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdIndexRouteImport
-      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
-    }
-    '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h': {
-      id: '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h'
-      path: '/statistics/matchmaking-h2h'
-      fullPath: '/@me/battle-panel/statistics/matchmaking-h2h'
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
-    }
-    '/_authenticated/@me/battle-panel/statistics_/h2h': {
-      id: '/_authenticated/@me/battle-panel/statistics_/h2h'
-      path: '/statistics/h2h'
-      fullPath: '/@me/battle-panel/statistics/h2h'
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
-    }
-    '/_authenticated/@me/battle-panel/battles_/$battleId': {
-      id: '/_authenticated/@me/battle-panel/battles_/$battleId'
-      path: '/battles/$battleId'
-      fullPath: '/@me/battle-panel/battles/$battleId'
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
-    }
-    '/_authenticated/@me/battle-panel/abyss_/h2h': {
-      id: '/_authenticated/@me/battle-panel/abyss_/h2h'
-      path: '/abyss/h2h'
-      fullPath: '/@me/battle-panel/abyss/h2h'
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelAbyssH2hRouteImport
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
-    }
-    '/_authenticated/$guildId/stats/npcs/$npcId': {
-      id: '/_authenticated/$guildId/stats/npcs/$npcId'
-      path: '/npcs/$npcId'
-      fullPath: '/$guildId/stats/npcs/$npcId'
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsNpcIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute
-    }
-    '/_authenticated/$guildId/stats/members/$memberId': {
-      id: '/_authenticated/$guildId/stats/members/$memberId'
-      path: '/members/$memberId'
-      fullPath: '/$guildId/stats/members/$memberId'
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsMembersMemberIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute
-    }
-    '/_authenticated/$guildId/settings/roles_/$roleId': {
-      id: '/_authenticated/$guildId/settings/roles_/$roleId'
-      path: '/roles/$roleId'
-      fullPath: '/$guildId/settings/roles/$roleId'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRolesRoleIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
-    '/_authenticated/$guildId/settings/npcs_/$npcId': {
-      id: '/_authenticated/$guildId/settings/npcs_/$npcId'
-      path: '/npcs/$npcId'
-      fullPath: '/$guildId/settings/npcs/$npcId'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNpcsNpcIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
-    '/_authenticated/$guildId/settings/members_/$memberId': {
-      id: '/_authenticated/$guildId/settings/members_/$memberId'
-      path: '/members/$memberId'
-      fullPath: '/$guildId/settings/members/$memberId'
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMembersMemberIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
-    }
-    '/_authenticated/$guildId/events_/$eventId_/ranking': {
-      id: '/_authenticated/$guildId/events_/$eventId_/ranking'
-      path: '/ranking'
-      fullPath: '/$guildId/events/$eventId/ranking'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdRankingRouteImport
-      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
-    }
-    '/_authenticated/$guildId/events_/$eventId_/kills': {
-      id: '/_authenticated/$guildId/events_/$eventId_/kills'
-      path: '/kills'
-      fullPath: '/$guildId/events/$eventId/kills'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdKillsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
-    }
-    '/_authenticated/$guildId/events_/$eventId_/edit': {
-      id: '/_authenticated/$guildId/events_/$eventId_/edit'
-      path: '/edit'
-      fullPath: '/$guildId/events/$eventId/edit'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdEditRouteImport
       parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/coordination': {
@@ -1344,39 +1253,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdCoordinationRouteImport
       parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
     }
+    '/_authenticated/$guildId/events_/$eventId_/edit': {
+      id: '/_authenticated/$guildId/events_/$eventId_/edit'
+      path: '/edit'
+      fullPath: '/$guildId/events/$eventId/edit'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdEditRouteImport
+      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/kills': {
+      id: '/_authenticated/$guildId/events_/$eventId_/kills'
+      path: '/kills'
+      fullPath: '/$guildId/events/$eventId/kills'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdKillsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/ranking': {
+      id: '/_authenticated/$guildId/events_/$eventId_/ranking'
+      path: '/ranking'
+      fullPath: '/$guildId/events/$eventId/ranking'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdRankingRouteImport
+      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
+    }
+    '/_authenticated/$guildId/settings/members_/$memberId': {
+      id: '/_authenticated/$guildId/settings/members_/$memberId'
+      path: '/members/$memberId'
+      fullPath: '/$guildId/settings/members/$memberId'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMembersMemberIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/npcs_/$npcId': {
+      id: '/_authenticated/$guildId/settings/npcs_/$npcId'
+      path: '/npcs/$npcId'
+      fullPath: '/$guildId/settings/npcs/$npcId'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNpcsNpcIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/roles_/$roleId': {
+      id: '/_authenticated/$guildId/settings/roles_/$roleId'
+      path: '/roles/$roleId'
+      fullPath: '/$guildId/settings/roles/$roleId'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRolesRoleIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/stats/members/$memberId': {
+      id: '/_authenticated/$guildId/stats/members/$memberId'
+      path: '/members/$memberId'
+      fullPath: '/$guildId/stats/members/$memberId'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsMembersMemberIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/stats/npcs/': {
+      id: '/_authenticated/$guildId/stats/npcs/'
+      path: '/npcs'
+      fullPath: '/$guildId/stats/npcs/'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/stats/npcs/$npcId': {
+      id: '/_authenticated/$guildId/stats/npcs/$npcId'
+      path: '/npcs/$npcId'
+      fullPath: '/$guildId/stats/npcs/$npcId'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsNpcIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/@me/battle-panel/abyss_/h2h': {
+      id: '/_authenticated/@me/battle-panel/abyss_/h2h'
+      path: '/abyss/h2h'
+      fullPath: '/@me/battle-panel/abyss/h2h'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelAbyssH2hRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/battles_/$battleId': {
+      id: '/_authenticated/@me/battle-panel/battles_/$battleId'
+      path: '/battles/$battleId'
+      fullPath: '/@me/battle-panel/battles/$battleId'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/statistics_/h2h': {
+      id: '/_authenticated/@me/battle-panel/statistics_/h2h'
+      path: '/statistics/h2h'
+      fullPath: '/@me/battle-panel/statistics/h2h'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h': {
+      id: '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h'
+      path: '/statistics/matchmaking-h2h'
+      fullPath: '/@me/battle-panel/statistics/matchmaking-h2h'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
     '/_authenticated/$guildId/events_/$eventId_/edit/': {
       id: '/_authenticated/$guildId/events_/$eventId_/edit/'
       path: '/'
       fullPath: '/$guildId/events/$eventId/edit/'
       preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdEditIndexRouteImport
-      parentRoute: typeof AuthenticatedGuildIdEventsEventIdEditRoute
-    }
-    '/_authenticated/$guildId/events_/$eventId_/members_/$memberId': {
-      id: '/_authenticated/$guildId/events_/$eventId_/members_/$memberId'
-      path: '/members/$memberId'
-      fullPath: '/$guildId/events/$eventId/members/$memberId'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdMembersMemberIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
-    }
-    '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId': {
-      id: '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId'
-      path: '/heroes/$heroId'
-      fullPath: '/$guildId/events/$eventId/heroes/$heroId'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport
-      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
-    }
-    '/_authenticated/$guildId/events_/$eventId_/edit/settings': {
-      id: '/_authenticated/$guildId/events_/$eventId_/edit/settings'
-      path: '/settings'
-      fullPath: '/$guildId/events/$eventId/edit/settings'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdEditSettingsRouteImport
-      parentRoute: typeof AuthenticatedGuildIdEventsEventIdEditRoute
-    }
-    '/_authenticated/$guildId/events_/$eventId_/edit/scoring': {
-      id: '/_authenticated/$guildId/events_/$eventId_/edit/scoring'
-      path: '/scoring'
-      fullPath: '/$guildId/events/$eventId/edit/scoring'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdEditScoringRouteImport
       parentRoute: typeof AuthenticatedGuildIdEventsEventIdEditRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/edit/rulebook': {
@@ -1386,12 +1358,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdEditRulebookRouteImport
       parentRoute: typeof AuthenticatedGuildIdEventsEventIdEditRoute
     }
-    '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId': {
-      id: '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId'
-      path: '/statistics/player-vs-player/$myId/$opponentId'
-      fullPath: '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    '/_authenticated/$guildId/events_/$eventId_/edit/scoring': {
+      id: '/_authenticated/$guildId/events_/$eventId_/edit/scoring'
+      path: '/scoring'
+      fullPath: '/$guildId/events/$eventId/edit/scoring'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdEditScoringRouteImport
+      parentRoute: typeof AuthenticatedGuildIdEventsEventIdEditRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/edit/settings': {
+      id: '/_authenticated/$guildId/events_/$eventId_/edit/settings'
+      path: '/settings'
+      fullPath: '/$guildId/events/$eventId/edit/settings'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdEditSettingsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdEventsEventIdEditRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId': {
+      id: '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId'
+      path: '/heroes/$heroId'
+      fullPath: '/$guildId/events/$eventId/heroes/$heroId'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/members_/$memberId': {
+      id: '/_authenticated/$guildId/events_/$eventId_/members_/$memberId'
+      path: '/members/$memberId'
+      fullPath: '/$guildId/events/$eventId/members/$memberId'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdMembersMemberIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills': {
       id: '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills'
@@ -1399,6 +1392,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$guildId/events/$eventId/heroes/$heroId/kills'
       preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport
       parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
+    }
+    '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId': {
+      id: '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId'
+      path: '/statistics/player-vs-player/$myId/$opponentId'
+      fullPath: '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId': {
       id: '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId'
