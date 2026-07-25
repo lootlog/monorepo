@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
-[![pnpm](https://img.shields.io/badge/pnpm-10.32.1-orange)](https://pnpm.io/)
+[![pnpm](https://img.shields.io/badge/pnpm-11.17.0-orange)](https://pnpm.io/)
 
 [Features](#features) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Documentation](#documentation) • [Contributing](CONTRIBUTING.md)
 
@@ -97,7 +97,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 ### Prerequisites
 
 - **Node.js** >= 20
-- **pnpm** >= 10.32.1
+- **pnpm** >= 11.17.0
 - **Docker** and **Docker Compose**
 - **Git**
 

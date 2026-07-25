@@ -24,6 +24,8 @@
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@hookform/resolvers": "catalog:",
+    "@lexical/react": "0.48.0",
+    "@lexical/utils": "0.48.0",
     "@lootlog/api-client": "workspace:*",
     "@lootlog/margonem": "workspace:*",
     "@lootlog/socket-parser": "workspace:*",
@@ -36,6 +38,7 @@
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
     "i18next": "^26.3.6",
+    "lexical": "0.48.0",
     "lucide-react": "^1.26.0",
     "react": "catalog:",
     "react-dom": "catalog:",

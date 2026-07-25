@@ -4,9 +4,9 @@ import {
   CHAT_APPEARANCE_READABLE_PRESET,
   type ChatAppearanceSettings,
 } from "@lootlog/types";
-import type { FC, ReactNode } from "react";
+import type { ComponentPropsWithRef, FC, ReactNode } from "react";
 
-type ChatPlayerMessageViewProps = {
+type ChatPlayerMessageViewProps = ComponentPropsWithRef<"div"> & {
   all: boolean;
   appearance?: ChatAppearanceSettings;
   body: ReactNode;
@@ -21,14 +21,20 @@ export const ChatPlayerMessageView: FC<ChatPlayerMessageViewProps> = ({
   all,
   appearance = CHAT_APPEARANCE_READABLE_PRESET,
   body,
+  className,
   guildName,
   isMsgYesterday,
   messageId,
   sender,
   timestamp,
+  ...rootProps
 }) => (
   <div
-    className="ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:cursor-text ll:select-text ll:rounded-sm ll:text-[length:var(--ll-chat-font-size)] ll:leading-[var(--ll-chat-line-height)] ll:text-white ll:transition-colors ll:hover:bg-gray-500/20"
+    {...rootProps}
+    className={cn(
+      "ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:cursor-text ll:select-text ll:rounded-sm ll:text-[length:var(--ll-chat-font-size)] ll:leading-[var(--ll-chat-line-height)] ll:text-white ll:transition-colors ll:hover:bg-gray-500/20",
+      className,
+    )}
     data-chat-message-id={messageId}
   >
     <span
