@@ -124,6 +124,25 @@ describe("lootlogOtherGlowManager", () => {
     );
   });
 
+  it("ignores flat other handles from the legacy interface", () => {
+    const flatOther = {
+      account: 1,
+      icon: "other.gif",
+      id: "617",
+      lvl: 300,
+      nick: "Other 617",
+      prof: "w",
+    };
+
+    expect(() =>
+      lootlogOtherGlowManager.setGlow(
+        flatOther as unknown as Other,
+        LOOTLOG_OTHER_GLOW_BLUE,
+      ),
+    ).not.toThrow();
+    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
+  });
+
   it("updates colors and clears only managed glows", () => {
     lootlogOtherGlowManager.install();
     lootlogOtherGlowManager.setGlow(
