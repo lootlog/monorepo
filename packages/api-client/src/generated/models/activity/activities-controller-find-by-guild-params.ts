@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Activity Logger API
  * The Activity Logger API documentation
- * OpenAPI spec version: 0.0.1
+ * OpenAPI spec version: 1.0
  */
 import type { ActivitiesControllerFindByGuildSourceItem } from './activities-controller-find-by-guild-source-item';
 import type { ActivitiesControllerFindByGuildTypeItem } from './activities-controller-find-by-guild-type-item';
