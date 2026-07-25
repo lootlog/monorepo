@@ -13,7 +13,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV TURBO_TELEMETRY_DISABLED="1"
 
-RUN npm install -g pnpm@10.32.1 turbo@2.9.18
+RUN npm install -g pnpm@11.17.0 turbo@2.9.18
 
 WORKDIR /usr/src/app
 
@@ -105,8 +105,6 @@ COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/developer/package.json ./apps/developer/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 COPY packages/ui/package.json ./packages/ui/package.json
-
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 
 COPY apps/developer/ ./apps/developer/
 COPY packages/typescript-config/ ./packages/typescript-config/
