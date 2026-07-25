@@ -22,7 +22,7 @@ export * as $Enums from './enums'
 export * from "./enums"
 /**
  * ## Prisma Client
- *
+ * 
  * Type-safe database client for TypeScript
  * @example
  * ```
@@ -32,7 +32,7 @@ export * from "./enums"
  * // Fetch zero or more Activities
  * const activities = await prisma.activity.findMany()
  * ```
- *
+ * 
  * Read more in our [docs](https://pris.ly/d/client).
  */
 export const PrismaClient = $Class.getPrismaClientClass()
@@ -56,6 +56,6 @@ export type ActivityActorSnapshot = Prisma.ActivityActorSnapshotModel
 export type MemberActivityStats = Prisma.MemberActivityStatsModel
 /**
  * Model MemberActivitySession
- *
+ * 
  */
 export type MemberActivitySession = Prisma.MemberActivitySessionModel

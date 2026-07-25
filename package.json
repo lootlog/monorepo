@@ -72,22 +72,22 @@
     "copy-entrypoint": "turbo run copy-entrypoint",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "turbo run build && changeset publish",
+    "release": "changeset publish",
     "prepare": "husky"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
+    "@changesets/cli": "^2.31.1",
     "@lootlog/socket-parser": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "husky": "^9.1.7",
-    "knip": "^6.5.0",
-    "lint-staged": "^16.4.0",
-    "oxfmt": "^0.43.0",
-    "oxlint": "^1.61.0",
+    "knip": "^6.29.0",
+    "lint-staged": "^17.2.0",
+    "oxfmt": "^0.60.0",
+    "oxlint": "^1.75.0",
     "socket.io-client": "^4.8.3",
-    "tsx": "^4.22.4",
-    "turbo": "^2.9.18",
-    "typescript": "6.0.3"
+    "tsx": "catalog:",
+    "turbo": "^2.10.6",
+    "typescript": "catalog:"
   },
   "devEngines": {
     "packageManager": {
