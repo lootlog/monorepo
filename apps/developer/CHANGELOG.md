@@ -1,5 +1,11 @@
 # @lootlog/developer
 
+## 0.0.2
+
+### Patch Changes
+
+- ac38e7c: Fix developer portal Docker builds with injected workspace dependencies.
+
 ## 0.0.1
 
 ### Patch Changes
