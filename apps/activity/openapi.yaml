@@ -470,7 +470,7 @@ paths:
 info:
   title: Activity Logger API
   description: The Activity Logger API documentation
-  version: 0.0.1
+  version: "1.0"
   contact: {}
 tags: []
 servers: []

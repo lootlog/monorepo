@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Activity Logger API
  * The Activity Logger API documentation
- * OpenAPI spec version: 0.0.1
+ * OpenAPI spec version: 1.0
  */
 import type { HealthzControllerCheck200Details } from './healthz-controller-check200-details';
 import type { HealthzControllerCheck200Error } from './healthz-controller-check200-error';
