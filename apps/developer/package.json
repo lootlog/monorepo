@@ -1,5 +1,6 @@
 {
   "name": "@lootlog/developer",
+  "version": "0.0.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -7,6 +8,7 @@
     "dev": "BASE_PATH=/developer/ vite dev",
     "build": "vite build",
     "start": "node server.js",
+    "test": "node --test server-handler.test.js",
     "lint": "oxlint .",
     "typecheck": "tsc --noEmit"
   },

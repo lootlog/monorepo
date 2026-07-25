@@ -209,11 +209,11 @@ jobs:
           if [[ "${{ needs.test.result }}" == "failure" ]] || \
              [[ "${{ needs.build-and-push.result }}" == "failure" ]] || \
              [[ "${{ needs.update-kustomize.result }}" == "failure" ]]; then
-            echo "status=failure" >> $GITHUB_OUTPUT
-            echo "color=15158332" >> $GITHUB_OUTPUT
+            echo "status=failure" >> "$GITHUB_OUTPUT"
+            echo "color=15158332" >> "$GITHUB_OUTPUT"
           else
-            echo "status=success" >> $GITHUB_OUTPUT
-            echo "color=3066993" >> $GITHUB_OUTPUT
+            echo "status=success" >> "$GITHUB_OUTPUT"
+            echo "color=3066993" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Send notification
