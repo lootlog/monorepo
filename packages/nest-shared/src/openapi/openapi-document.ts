@@ -6,7 +6,7 @@ type OpenApiDictionary = Record<string, unknown>;
 export type OpenApiYamlDumpOptions = {
   noRefs: true;
   lineWidth: -1;
-  quotingType: '"';
+  quoteStyle: "double";
 };
 
 const httpMethods = new Set([
@@ -23,7 +23,7 @@ const httpMethods = new Set([
 export const openApiYamlDumpOptions = {
   noRefs: true,
   lineWidth: -1,
-  quotingType: '"',
+  quoteStyle: "double",
 } satisfies OpenApiYamlDumpOptions;
 
 export function writeOpenApiDocumentToYamlFile(
