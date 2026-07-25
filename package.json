@@ -72,7 +72,7 @@
     "copy-entrypoint": "turbo run copy-entrypoint",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "turbo run build && changeset publish",
+    "release": "changeset publish",
     "prepare": "husky"
   },
   "devDependencies": {
