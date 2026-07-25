@@ -93,20 +93,28 @@ describe("usePlayersPresence", () => {
     const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
 
     await waitFor(() => {
-      expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Karka-han");
+      expect(result.current.onlinePlayers["discord-1"]?.[0]?.mapName).toBe(
+        "Karka-han",
+      );
     });
 
-    expect(result.current[0]["discord-1"]?.[0]?.player?.lvl).toBe(123);
-    expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
-      "Karka-han",
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.player?.lvl).toBe(
+      123,
     );
-    expect(result.current[0]["discord-1"]?.[0]?.player?.clan).toEqual({
+    expect(
+      result.current.onlinePlayers["discord-1"]?.[0]?.player?.location?.map,
+    ).toBe("Karka-han");
+    expect(
+      result.current.onlinePlayers["discord-1"]?.[0]?.player?.clan,
+    ).toEqual({
       id: 15191,
       name: "Karhu",
       rank: 100,
     });
-    expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
-    expect(result.current[0]["discord-1"]?.[0]?.sessionId).toBe("session-1");
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.isAfk).toBe(true);
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.sessionId).toBe(
+      "session-1",
+    );
     expect(emitWithAckSpy).toHaveBeenCalledWith(
       GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH,
       {
@@ -179,14 +187,16 @@ describe("usePlayersPresence", () => {
     const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
 
     await waitFor(() => {
-      expect(result.current[0]["discord-1"]).toHaveLength(2);
+      expect(result.current.onlinePlayers["discord-1"]).toHaveLength(2);
     });
 
     expect(
-      result.current[0]["discord-1"]?.map((presence) => presence.mapName),
+      result.current.onlinePlayers["discord-1"]?.map(
+        (presence) => presence.mapName,
+      ),
     ).toEqual(["Ithan", "Torneg"]);
-    expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
-    expect(result.current[0]["discord-1"]?.[0]?.updatedAt).toBe(200);
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.isAfk).toBe(true);
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.updatedAt).toBe(200);
   });
 
   it("updates existing presence entries from gateway mapName updates without status", async () => {
@@ -219,7 +229,9 @@ describe("usePlayersPresence", () => {
     const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
 
     await waitFor(() => {
-      expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Karka-han");
+      expect(result.current.onlinePlayers["discord-1"]?.[0]?.mapName).toBe(
+        "Karka-han",
+      );
     });
 
     act(() => {
@@ -247,13 +259,17 @@ describe("usePlayersPresence", () => {
     });
 
     await waitFor(() => {
-      expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Ithan");
+      expect(result.current.onlinePlayers["discord-1"]?.[0]?.mapName).toBe(
+        "Ithan",
+      );
     });
-    expect(result.current[0]["discord-1"]?.[0]?.isAfk).toBe(true);
-    expect(result.current[0]["discord-1"]?.[0]?.player?.location?.map).toBe(
-      "Ithan",
-    );
-    expect(result.current[0]["discord-1"]?.[0]?.player?.clan).toEqual({
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.isAfk).toBe(true);
+    expect(
+      result.current.onlinePlayers["discord-1"]?.[0]?.player?.location?.map,
+    ).toBe("Ithan");
+    expect(
+      result.current.onlinePlayers["discord-1"]?.[0]?.player?.clan,
+    ).toEqual({
       id: 15191,
       name: "Karhu",
       rank: 100,
@@ -286,9 +302,9 @@ describe("usePlayersPresence", () => {
     );
     const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
     await waitFor(() => {
-      expect(result.current[0]["discord-2"]).toHaveLength(1);
+      expect(result.current.onlinePlayers["discord-2"]).toHaveLength(1);
     });
-    const untouchedAccount = result.current[0]["discord-2"];
+    const untouchedAccount = result.current.onlinePlayers["discord-2"];
 
     act(() => {
       eventHandlers[GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE]?.({
@@ -301,7 +317,7 @@ describe("usePlayersPresence", () => {
       });
     });
 
-    expect(result.current[0]["discord-2"]).toBe(untouchedAccount);
+    expect(result.current.onlinePlayers["discord-2"]).toBe(untouchedAccount);
   });
 
   it("coalesces gateway update bursts into one render per animation frame", async () => {
@@ -341,7 +357,9 @@ describe("usePlayersPresence", () => {
       return usePlayersPresence("guild-1", "alpha");
     });
     await waitFor(() => {
-      expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Karka-han");
+      expect(result.current.onlinePlayers["discord-1"]?.[0]?.mapName).toBe(
+        "Karka-han",
+      );
     });
     const renderCountBeforeBurst = renderCount;
 
@@ -366,13 +384,17 @@ describe("usePlayersPresence", () => {
 
     expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
     expect(renderCount).toBe(renderCountBeforeBurst);
-    expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Karka-han");
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.mapName).toBe(
+      "Karka-han",
+    );
 
     act(() => {
       scheduledFrame?.(16);
     });
 
-    expect(result.current[0]["discord-1"]?.[0]?.mapName).toBe("Karka-han II");
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.mapName).toBe(
+      "Karka-han II",
+    );
     expect(renderCount).toBe(renderCountBeforeBurst + 1);
   });
 
@@ -406,7 +428,7 @@ describe("usePlayersPresence", () => {
     const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
 
     await waitFor(() => {
-      expect(result.current[0]["discord-1"]).toHaveLength(1);
+      expect(result.current.onlinePlayers["discord-1"]).toHaveLength(1);
     });
 
     act(() => {
@@ -429,7 +451,7 @@ describe("usePlayersPresence", () => {
     });
 
     await waitFor(() => {
-      expect(result.current[0]["discord-1"]).toBeUndefined();
+      expect(result.current.onlinePlayers["discord-1"]).toBeUndefined();
     });
   });
 
@@ -444,10 +466,73 @@ describe("usePlayersPresence", () => {
     const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
 
     await waitFor(() => {
-      expect(result.current[3]).toBe("forbidden");
+      expect(result.current.accessState).toBe("forbidden");
     });
 
-    expect(result.current[0]).toEqual({});
+    expect(result.current.onlinePlayers).toEqual({});
+  });
+
+  it("exposes a retryable error when the initial presence request fails", async () => {
+    emitWithAckSpy.mockRejectedValue(new Error("network"));
+
+    const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
+
+    expect(result.current.initialLoading).toBe(true);
+
+    await waitFor(() => {
+      expect(result.current.error).toBeInstanceOf(Error);
+    });
+
+    expect(result.current.initialLoading).toBe(false);
+    expect(result.current.hasLoaded).toBe(false);
+
+    act(() => result.current.retry());
+
+    await waitFor(() => {
+      expect(emitWithAckSpy).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  it("keeps loaded players and marks them stale after disconnecting", async () => {
+    emitWithAckSpy.mockResolvedValue({
+      status: "success",
+      players: {
+        "discord-1": [
+          {
+            discordId: "discord-1",
+            platform: "game",
+            player: {
+              world: "alpha",
+              name: "Hero",
+              lvl: 123,
+              icon: "hero.png",
+              characterId: "10",
+              accountId: "20",
+              prof: "w",
+            },
+          },
+        ],
+      },
+    });
+
+    const { result, rerender } = renderHook(() =>
+      usePlayersPresence("guild-1", "alpha"),
+    );
+
+    await waitFor(() => {
+      expect(result.current.onlinePlayers["discord-1"]).toHaveLength(1);
+    });
+
+    mockUseSocket.mockReturnValue({
+      socket: mockSocket,
+      connected: false,
+      joined: false,
+      joinedGuilds: [],
+    });
+    rerender();
+
+    expect(result.current.stale).toBe(true);
+    expect(result.current.onlinePlayers["discord-1"]).toHaveLength(1);
   });
 
   it("refetches and clears stale players after permissions are updated", async () => {
@@ -486,14 +571,14 @@ describe("usePlayersPresence", () => {
     const { result } = renderHook(() => usePlayersPresence("guild-1", "alpha"));
 
     await waitFor(() => {
-      expect(result.current[0]["discord-1"]).toHaveLength(1);
+      expect(result.current.onlinePlayers["discord-1"]).toHaveLength(1);
     });
 
     act(() => {
       eventHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({});
     });
 
-    expect(result.current[0]["discord-1"]).toHaveLength(1);
+    expect(result.current.onlinePlayers["discord-1"]).toHaveLength(1);
 
     await act(async () => {
       if (!resolvePermissionsRefetch) {
@@ -507,9 +592,9 @@ describe("usePlayersPresence", () => {
     });
 
     await waitFor(() => {
-      expect(result.current[3]).toBe("forbidden");
+      expect(result.current.accessState).toBe("forbidden");
     });
 
-    expect(result.current[0]).toEqual({});
+    expect(result.current.onlinePlayers).toEqual({});
   });
 });

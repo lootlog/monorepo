@@ -1,5 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
@@ -38,6 +44,10 @@ const createGuild = (id: string, name: string): GuildIdentity => ({
 });
 
 describe("GuildSwitcher", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     runtime.heroId = 123;
@@ -79,6 +89,24 @@ describe("GuildSwitcher", () => {
     render(<GuildSwitcher />);
 
     expect(useSettingsStore.getState().guildIdByCharId["123"]).toBeUndefined();
+  });
+
+  it("shows a delayed loading status while guilds are unavailable", () => {
+    vi.useFakeTimers();
+    mockUseAccessibleGuilds.mockReturnValue({
+      data: undefined,
+      error: null,
+      isFetched: false,
+      isLoading: true,
+      refetch: vi.fn(),
+    });
+
+    render(<GuildSwitcher />);
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(200));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Ładowanie serwerów");
   });
 
   it("does not write a selection before the character identity is available", () => {

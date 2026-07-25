@@ -272,7 +272,12 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
 
   const searchGuildId = selectedGuildId || currentGuildId || "";
 
-  const { data: npcResults } = useTimersControllerSearchNpcsWithTimerData(
+  const {
+    data: npcResults,
+    isError: npcSearchFailed,
+    isFetching: npcSearchLoading,
+    refetch: retryNpcSearch,
+  } = useTimersControllerSearchNpcsWithTimerData(
     { guildId: searchGuildId },
     {
       limit: 10,
@@ -432,7 +437,11 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
 
   const hasSearchResults = npcResults && npcResults.length > 0;
   const showNoResults =
-    showSuggestions && debouncedSearch.length >= 2 && !hasSearchResults;
+    showSuggestions &&
+    debouncedSearch.length >= 2 &&
+    !hasSearchResults &&
+    !npcSearchLoading &&
+    !npcSearchFailed;
 
   return (
     <form
@@ -487,7 +496,17 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
               />
               <AutocompleteSuggestions<SearchTimersNpcResponseDtoOutput>
                 items={npcResults ?? []}
+                errorMessage={
+                  showSuggestions && npcSearchFailed
+                    ? t("addForm.npcSearchError")
+                    : undefined
+                }
+                isLoading={showSuggestions && npcSearchLoading}
                 isOpen={showSuggestions && !!hasSearchResults}
+                loadingMessage={t("addForm.npcSearching")}
+                onRetry={() => {
+                  void retryNpcSearch();
+                }}
                 onSelect={handleNpcSelect}
                 selectedIndex={selectedIndex}
                 keyExtractor={(npc) => npc.npcId}

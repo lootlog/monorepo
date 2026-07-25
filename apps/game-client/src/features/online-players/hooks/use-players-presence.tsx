@@ -10,26 +10,37 @@ import {
   type PlayerPresenceResponse,
   type PlayerPresenceUpdatePayload,
 } from "@/lib/online-players-presence";
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import type { AsyncResourceState } from "@/types/async-resource-state";
 
 export type OnlinePlayersAccessState = "allowed" | "forbidden";
+
+export type PlayersPresenceState = AsyncResourceState & {
+  accessState: OnlinePlayersAccessState;
+  hasLoaded: boolean;
+  onlinePlayers: PlayerPresenceResponse;
+  setOnlinePlayers: Dispatch<SetStateAction<PlayerPresenceResponse>>;
+};
 
 export const usePlayersPresence = (
   selectedGuildId?: string,
   world?: string,
-): [
-  PlayerPresenceResponse,
-  boolean,
-  React.Dispatch<React.SetStateAction<PlayerPresenceResponse>>,
-  OnlinePlayersAccessState,
-] => {
+): PlayersPresenceState => {
   const [onlinePlayers, setOnlinePlayers] = useState<PlayerPresenceResponse>(
     {},
   );
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<unknown>(null);
   const [accessState, setAccessState] =
     useState<OnlinePlayersAccessState>("allowed");
-  const [permissionsVersion, setPermissionsVersion] = useState(0);
+  const [requestVersion, setRequestVersion] = useState(0);
   const { joined, connected, socket } = useSocket();
 
   const selectedGuildIdRef = useRef(selectedGuildId);
@@ -58,8 +69,24 @@ export const usePlayersPresence = (
       visibleScopeRef.current = { guildId: selectedGuildId, world };
       setOnlinePlayers({});
       setLoading(false);
+      setLoaded(false);
+      setError(null);
       setAccessState("allowed");
       return;
+    }
+
+    const scopeChanged =
+      visibleScopeRef.current.guildId !== selectedGuildId ||
+      visibleScopeRef.current.world !== world;
+
+    if (scopeChanged) {
+      requestIdRef.current += 1;
+      visibleScopeRef.current = { guildId: selectedGuildId, world };
+      setOnlinePlayers({});
+      setLoaded(false);
+      setLoading(false);
+      setError(null);
+      setAccessState("allowed");
     }
 
     if (
@@ -68,20 +95,14 @@ export const usePlayersPresence = (
       !socket ||
       !selectedGuildIdRef.current ||
       !world
-    )
+    ) {
       return;
-
-    const scopeChanged =
-      visibleScopeRef.current.guildId !== selectedGuildId ||
-      visibleScopeRef.current.world !== world;
-    const currentRequestId = ++requestIdRef.current;
-    visibleScopeRef.current = { guildId: selectedGuildId, world };
-
-    if (scopeChanged) {
-      setOnlinePlayers({});
     }
 
+    const currentRequestId = ++requestIdRef.current;
+    visibleScopeRef.current = { guildId: selectedGuildId, world };
     setAccessState("allowed");
+    setError(null);
     setLoading(true);
 
     requestServerPresence(socket, selectedGuildIdRef.current, world)
@@ -90,23 +111,31 @@ export const usePlayersPresence = (
         if (requestIdRef.current !== currentRequestId) return;
 
         if (!data) {
+          setError(new Error("Online players response was empty"));
           return;
         }
 
         if (data.status === "forbidden") {
           setOnlinePlayers({});
           setAccessState("forbidden");
+          setLoaded(true);
           return;
         }
 
         setOnlinePlayers(normalizePresenceResponse(data.players));
+        setLoaded(true);
+      })
+      .catch((requestError: unknown) => {
+        if (requestIdRef.current !== currentRequestId) return;
+
+        setError(requestError);
       })
       .finally(() => {
         if (requestIdRef.current === currentRequestId) {
           setLoading(false);
         }
       });
-  }, [joined, connected, socket, world, selectedGuildId, permissionsVersion]);
+  }, [joined, connected, socket, world, selectedGuildId, requestVersion]);
 
   useEffect(() => {
     if (!socket || !connected || !joined) return;
@@ -160,7 +189,7 @@ export const usePlayersPresence = (
     if (!socket || !connected || !joined) return;
 
     const handlePermissionsUpdated = () => {
-      setPermissionsVersion((version) => version + 1);
+      setRequestVersion((version) => version + 1);
     };
 
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
@@ -170,5 +199,17 @@ export const usePlayersPresence = (
     };
   }, [socket, joined, connected]);
 
-  return [onlinePlayers, loading, setOnlinePlayers, accessState];
+  const hasScope = Boolean(selectedGuildId && world);
+
+  return {
+    accessState,
+    error,
+    hasLoaded: loaded,
+    initialLoading: hasScope && !loaded && !error,
+    onlinePlayers,
+    refreshing: loading && loaded,
+    retry: () => setRequestVersion((version) => version + 1),
+    setOnlinePlayers,
+    stale: hasScope && loaded && (!connected || !joined),
+  };
 };

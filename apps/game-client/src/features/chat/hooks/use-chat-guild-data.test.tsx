@@ -195,4 +195,74 @@ describe("useChatGuildData", () => {
       "updated over socket",
     );
   });
+
+  it("keeps successful guild histories when another guild fails", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClients.push(queryClient);
+    mocks.getChatMessages.mockImplementation(
+      ({ guildId }: { guildId: string }) => {
+        if (guildId === "guild-2") {
+          return Promise.reject(new Error("guild-2 failed"));
+        }
+
+        return Promise.resolve([
+          createMessage("message-1", "2026-01-01T10:01:00.000Z"),
+        ]);
+      },
+    );
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(
+      () =>
+        useChatGuildData({
+          currentCharacterNick: "Hero",
+          guilds: [
+            { id: "guild-1", name: "Guild 1" },
+            { id: "guild-2", name: "Guild 2" },
+          ],
+          selectedGuildId: "all",
+        }),
+      { wrapper },
+    );
+
+    await waitFor(() => {
+      expect(result.current.failedGuildIds).toEqual(["guild-2"]);
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.initialLoading).toBe(false);
+    expect(result.current.messagesByGuildId["guild-1"]).toHaveLength(1);
+  });
+
+  it("exposes an initial error when no guild history loads", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClients.push(queryClient);
+    mocks.getChatMessages.mockRejectedValue(new Error("network"));
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(
+      () =>
+        useChatGuildData({
+          currentCharacterNick: "Hero",
+          guilds: [{ id: "guild-1", name: "Guild" }],
+          selectedGuildId: "guild-1",
+        }),
+      { wrapper },
+    );
+
+    expect(result.current.initialLoading).toBe(true);
+
+    await waitFor(() => {
+      expect(result.current.error).toBeInstanceOf(Error);
+    });
+
+    expect(result.current.initialLoading).toBe(false);
+    expect(result.current.hasMessagesResponse).toBe(false);
+  });
 });
