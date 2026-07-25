@@ -83,9 +83,11 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     colorFiltersEnabled,
     toggleColorFiltersEnabled,
     timerFiltersSearchText,
+    setTimerFiltersSearchText,
     timersSortOrder,
     setTimersSortOrder,
     timersFilters,
+    setTimersFilters,
     displayConfig,
     timersColors,
     customColors,
@@ -102,9 +104,11 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       colorFiltersEnabled: state.colorFiltersEnabled,
       toggleColorFiltersEnabled: state.toggleColorFiltersEnabled,
       timerFiltersSearchText: state.timerFiltersSearchText,
+      setTimerFiltersSearchText: state.setTimerFiltersSearchText,
       timersSortOrder: state.timersSortOrder,
       setTimersSortOrder: state.setTimersSortOrder,
       timersFilters: state.timersFilters,
+      setTimersFilters: state.setTimersFilters,
       displayConfig: state.displayConfig,
       timersColors: state.timersColors,
       customColors: state.customColors,
@@ -113,7 +117,17 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       alwaysVisibleExpiredTimers: state.alwaysVisibleExpiredTimers,
     })),
   );
-  const { data: timers } = useTimers({ world: desiredWorld });
+  const {
+    data: timers,
+    error: timersError,
+    isFetching: timersFetching,
+    isLoading: timersLoading,
+    refetch: refetchTimers,
+  } = useTimers({ world: desiredWorld });
+  const hasTimersResponse = timers !== undefined;
+  const initialTimersLoading = timersLoading && !hasTimersResponse;
+  const timersRefreshError = Boolean(timersError) && hasTimersResponse;
+  const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
   const [timerClockEnabled, setTimerClockEnabled] = useState(!isUnderBag);
   const timerClockEpoch = useTimersUpdate(timerClockEnabled);
@@ -135,7 +149,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   );
   const areFiltersActive = checkFiltersActive(
     timerFiltersSearchText ?? "",
-    hiddenTimersForSettings.length,
+    showHiddenTimers ? 0 : hiddenTimersForSettings.length,
     filters,
   );
   const visibleTimers = useTimersFiltering({
@@ -171,6 +185,15 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const handleAddTimer = () => {
     setOpen("add-timer", true, { guildId });
   };
+  const handleResetFilters = () => {
+    setTimerFiltersSearchText("");
+    setTimersFilters(settingsKey, {
+      ...DEFAULT_TIMERS_FILTERS,
+      selectedColors: [...DEFAULT_TIMERS_FILTERS.selectedColors],
+      selectedNpcTypes: [...DEFAULT_TIMERS_FILTERS.selectedNpcTypes],
+    });
+    setShowHiddenTimers(true);
+  };
 
   if (isUnderBag) {
     return (
@@ -203,8 +226,16 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           isUnderBag
           minColumnWidth={displayConfig.minColumnWidth}
           onAddTimer={handleAddTimer}
+          onResetFilters={handleResetFilters}
           world={desiredWorld}
           compactView={generalConfig.compactView}
+          error={!hasTimersResponse ? timersError : null}
+          initialLoading={initialTimersLoading}
+          onRetry={() => {
+            void refetchTimers();
+          }}
+          refreshError={timersRefreshError}
+          refreshing={timersRefreshing}
         />
       </UnderBagTimers>
     );
@@ -248,8 +279,16 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           isUnderBag={false}
           minColumnWidth={displayConfig.minColumnWidth}
           onAddTimer={handleAddTimer}
+          onResetFilters={handleResetFilters}
           world={desiredWorld}
           compactView={generalConfig.compactView}
+          error={!hasTimersResponse ? timersError : null}
+          initialLoading={initialTimersLoading}
+          onRetry={() => {
+            void refetchTimers();
+          }}
+          refreshError={timersRefreshError}
+          refreshing={timersRefreshing}
         />
       </div>
     </DraggableWindow>

@@ -75,6 +75,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ChatReadyRoomIndicator } from "@/features/chat/components/chat-ready-room-indicator";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type ChatInputProps = {
   selectedGuildId?: string;
@@ -450,6 +452,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       resetInputState();
       focusEditorCaret(0);
     } catch {
+      toast.error(t("errors.clearFailed"));
       focusEditorCaret(caretIndex);
     }
   };
@@ -522,6 +525,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       resetInputState();
       focusEditorCaret(0);
     } catch {
+      toast.error(t("errors.sendFailed"));
       focusEditorCaret(currentCaretIndex);
     }
   };
@@ -645,6 +649,10 @@ export const ChatInput: FC<ChatInputProps> = ({
           suggestionMode={suggestionMode}
           suggestions={activeSuggestions}
           isOpen={suggestionMode !== null && activeSuggestions.length > 0}
+          isLoading={
+            isMentionSuggestionsOpen &&
+            (isFetchingMemberNames || isFetchingRoleNames)
+          }
           showNoResults={showMentionSuggestionNoResults}
           selectedIndex={selectedMentionIndex}
           onSelect={handleSuggestionSelect}
@@ -674,6 +682,12 @@ export const ChatInput: FC<ChatInputProps> = ({
               onCaretChange={setCaretIndex}
               onKeyDown={handleInputKeyDown}
             />
+            {isPending ? (
+              <Loader2
+                aria-label={t("input.pending")}
+                className="ll:pointer-events-none ll:absolute ll:right-1 ll:top-1/2 ll:size-3.5 ll:-translate-y-1/2 ll:animate-spin ll:motion-reduce:animate-none"
+              />
+            ) : null}
           </div>
           <PopoverContent
             anchor={clearConfirmAnchorRef}
@@ -710,7 +724,14 @@ export const ChatInput: FC<ChatInputProps> = ({
                     void handleClearChatConfirm();
                   }}
                 >
-                  {t("input.clearChatConfirm.confirm")}
+                  {isClearingChat ? (
+                    <Loader2
+                      aria-hidden
+                      className="ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
+                    />
+                  ) : (
+                    t("input.clearChatConfirm.confirm")
+                  )}
                 </Button>
               </div>
             </div>

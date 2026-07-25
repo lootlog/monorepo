@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";
 import { useShallow } from "zustand/react/shallow";
+import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 
 type GuildSwitcherProps = {
   disabled?: boolean;
@@ -47,14 +48,19 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
 }) => {
   const { t } = useTranslation("common");
   const characterId = useCurrentCharacterId();
-  const { data: guilds, isFetched } =
-    useUsersControllerGetCurrentUserAccessibleGuilds({
-      query: {
-        queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-        refetchOnMount: false,
-        staleTime: 1000 * 60 * 5,
-      },
-    });
+  const {
+    data: guilds,
+    error,
+    isFetched,
+    isLoading,
+    refetch,
+  } = useUsersControllerGetCurrentUserAccessibleGuilds({
+    query: {
+      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      refetchOnMount: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  });
   const { data: userPreferences } = useUserPreferences();
   const { setGuildId, guildId } = useSettingsStore(
     useShallow((state) => ({
@@ -97,7 +103,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     }
   };
 
-  const content = (
+  let content = (
     <>
       {allowAll && !multiple && (
         <GuildButton
@@ -140,6 +146,29 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       ))}
     </>
   );
+
+  if (!guilds && isLoading) {
+    content = (
+      <AsyncStatusIndicator
+        active
+        delay
+        kind="loading"
+        label={t("async.loadingGuilds")}
+      />
+    );
+  } else if (!guilds && error) {
+    content = (
+      <AsyncStatusIndicator
+        active
+        kind="error"
+        label={t("async.guildsError")}
+        onRetry={() => {
+          void refetch();
+        }}
+        retryLabel={t("actions.retry")}
+      />
+    );
+  }
 
   if (layout === "grid") {
     return (

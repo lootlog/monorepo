@@ -11,6 +11,7 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { storageKey } from "@/lib/storage-key";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
+import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 
 const recentWorldsKey = (accountId: string, characterId: string) =>
   storageKey(`ll:recent-worlds:${accountId}:${characterId}`);
@@ -45,7 +46,11 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
       };
     }),
   );
-  const { data: worlds, isFetched } = useGuildsControllerGetWorldsByGuildId(
+  const {
+    data: worlds,
+    isFetched,
+    isLoading,
+  } = useGuildsControllerGetWorldsByGuildId(
     { guildId: guildId ?? "" },
     {
       query: {
@@ -61,6 +66,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     recentWorldsKey(accountId, characterId),
     [],
   );
+  const showLoading = useDelayedVisibility(isLoading);
 
   useEffect(() => {
     if (!isFetched || !guildId || !worlds) return;
@@ -133,10 +139,12 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
       value={world}
       onValueChange={handleWorldChange}
       groups={worldGroups}
-      placeholder={t("worldSelector.placeholder")}
+      placeholder={
+        showLoading ? t("async.loading") : t("worldSelector.placeholder")
+      }
       searchPlaceholder={t("worldSelector.searchPlaceholder")}
       emptyText={t("worldSelector.empty")}
-      disabled={disabled}
+      disabled={disabled || isLoading}
       triggerClassName={cn(
         "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-6 ll:mb-1 ll-custom-cursor-pointer ll:w-full",
         className,
