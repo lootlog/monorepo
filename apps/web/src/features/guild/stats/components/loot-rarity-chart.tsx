@@ -135,8 +135,10 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
               ))}
             </Pie>
             <ChartLegend
-              content=<ChartLegendContent nameKey="name" />
-              className="flex-wrap"
+              content=<ChartLegendContent
+                nameKey="name"
+                className="flex-wrap"
+              />
             />
           </PieChart>
         </ChartContainer>

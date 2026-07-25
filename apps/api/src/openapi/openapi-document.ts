@@ -2,6 +2,12 @@ import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { cleanupOpenApiDoc } from "nestjs-zod";
 import { sanitizeOpenApiDocument } from "@lootlog/nest-shared/openapi";
+import {
+  NotificationAllowedMentionsResponseDto,
+  NotificationJobPayloadSnapshotResponseDto,
+} from "src/notifications/dto/notification-response.dto";
+import { LootShareResponseDto } from "src/shared/dto/loot-response.dto";
+import { TimerNpcResponseDto } from "src/shared/dto/timer-npc-response.dto";
 
 export function createOpenApiDocument(app: NestFastifyApplication) {
   const config = new DocumentBuilder()
@@ -14,6 +20,12 @@ export function createOpenApiDocument(app: NestFastifyApplication) {
   return sanitizeOpenApiDocument(
     cleanupOpenApiDoc(
       SwaggerModule.createDocument(app, config, {
+        extraModels: [
+          LootShareResponseDto,
+          NotificationAllowedMentionsResponseDto,
+          NotificationJobPayloadSnapshotResponseDto,
+          TimerNpcResponseDto,
+        ],
         operationIdFactory: (controllerKey, methodKey) =>
           `${controllerKey}_${methodKey}`,
       }),

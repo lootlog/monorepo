@@ -30,6 +30,7 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 
 - Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/) as defined in [`commitlint.config.js`](commitlint.config.js).
 - Allowed commit types: `feat`, `fix`, `docs`, `chore`, `style`, `refactor`, `ci`, `test`, `revert`, `perf`.
+- Pull request titles and descriptions must be written in English.
 - Never use `--no-verify` or otherwise bypass verification hooks. If a hook fails, fix the underlying issue or report the blocker instead of skipping checks.
 
 ## Refactoring
