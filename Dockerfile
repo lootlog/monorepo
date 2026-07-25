@@ -106,8 +106,6 @@ COPY apps/developer/package.json ./apps/developer/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 COPY packages/ui/package.json ./packages/ui/package.json
 
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
-
 COPY apps/developer/ ./apps/developer/
 COPY packages/typescript-config/ ./packages/typescript-config/
 COPY packages/ui/ ./packages/ui/
