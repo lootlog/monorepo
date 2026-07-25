@@ -500,6 +500,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: |
+      needs.changes.outputs.activity == 'true' ||
       needs.changes.outputs.api == 'true' ||
       needs.changes.outputs.auth == 'true' ||
       needs.changes.outputs.gateway == 'true' ||
@@ -536,6 +537,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: |
+      needs.changes.outputs.activity == 'true' ||
       needs.changes.outputs.api == 'true' ||
       needs.changes.outputs.auth == 'true' ||
       needs.changes.outputs.gateway == 'true' ||

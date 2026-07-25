@@ -40,13 +40,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Require main and semantic version
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
           if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
             echo "::error::Production promotion must run from main."
             exit 1
           fi
 
-          if [[ ! "${{ inputs.version }}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
             echo "::error::Version must be a valid semantic version."
             exit 1
           fi
@@ -61,12 +63,15 @@ jobs:
         run: docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG"
 
       - name: Write promotion summary
+        env:
+          SERVICE: ${{ inputs.service }}
+          VERSION: ${{ inputs.version }}
         run: |
           {
             echo "# Production promotion"
             echo
-            echo "- Service: \`${{ inputs.service }}\`"
-            echo "- Version: \`${{ inputs.version }}\`"
+            echo "- Service: \`$SERVICE\`"
+            echo "- Version: \`$VERSION\`"
             echo "- Immutable image: \`$IMAGE:$IMAGE_TAG\`"
             echo
             echo "Approval changes GitOps only. The image will not be rebuilt."
@@ -112,6 +117,9 @@ jobs:
           fi
 
       - name: Commit and push GitOps change
+        env:
+          SERVICE: ${{ inputs.service }}
+          VERSION: ${{ inputs.version }}
         working-directory: ${{ env.INFRA_REPO_PATH }}
         run: |
           git config user.name "github-actions[bot]"
@@ -123,7 +131,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "ci: promote ${{ inputs.service }} to ${{ inputs.version }}"
+          git commit -m "ci: promote $SERVICE to $VERSION"
 
           for attempt in {1..5}; do
             git fetch origin main
