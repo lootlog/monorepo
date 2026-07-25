@@ -16,7 +16,10 @@ import {
   buildChatMentionContext,
   hasChatMentionToken,
 } from "@/features/chat/chat-mentions.helpers";
-import { ChatInputEditor } from "@/features/chat/components/chat-input-editor";
+import {
+  ChatInputEditor,
+  type ChatInputEditorHandle,
+} from "@/features/chat/components/chat-input-editor";
 import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview";
 import {
   ChatMentionSuggestions,
@@ -102,7 +105,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const queryClient = useQueryClient();
   const replyDraft = useChatStore((state) => state.replyDraft);
   const clearReplyDraft = useChatStore((state) => state.clearReplyDraft);
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<ChatInputEditorHandle>(null);
   const clearConfirmAnchorRef = useRef<HTMLDivElement>(null);
   const world = useGameStore((state) => state.game?.world ?? "unknown");
   const currentCharacterNick = useGameStore(
@@ -303,7 +306,7 @@ export const ChatInput: FC<ChatInputProps> = ({
         return;
       }
 
-      editorRef.current?.focus();
+      editorRef.current?.focus(nextCaretIndex);
       setCaretIndex(nextCaretIndex);
       pendingFocusCaretRef.current = null;
     });
@@ -321,7 +324,7 @@ export const ChatInput: FC<ChatInputProps> = ({
         return;
       }
 
-      editorRef.current?.focus();
+      editorRef.current?.focus(nextCaretIndex);
       setCaretIndex(nextCaretIndex);
       pendingFocusCaretRef.current = null;
     });
@@ -424,6 +427,7 @@ export const ChatInput: FC<ChatInputProps> = ({
     setTabCompletionSession(null);
     clearReplyDraft();
     setIsClearConfirmOpen(false);
+    editorRef.current?.setValue("", 0);
   };
 
   const handleClearChatConfirm = async () => {
@@ -523,6 +527,10 @@ export const ChatInput: FC<ChatInputProps> = ({
   };
 
   const handleInputKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.nativeEvent.isComposing) {
+      return;
+    }
+
     if (isClearConfirmOpen && event.key === "Escape") {
       event.preventDefault();
       setIsClearConfirmOpen(false);
@@ -650,10 +658,10 @@ export const ChatInput: FC<ChatInputProps> = ({
             )}
           >
             <ChatInputEditor
+              ref={editorRef}
               autoFocus={autofocus}
               caretIndex={caretIndex}
               disabled={isPending}
-              editorRef={editorRef}
               message={messageValue}
               mentionContext={mentionContext}
               placeholder={t("input.placeholder")}
