@@ -289,6 +289,8 @@ class LootlogOtherGlowManager {
   }
 
   setGlow(other: Other, color: string): void {
+    if (!other?.d || other.d.id === undefined || other.d.id === null) return;
+
     const characterId = String(other.d.id);
     const runtimeOther = other as RuntimeOther;
     const existingGlow = this.glowsByCharacterId.get(characterId);

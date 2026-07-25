@@ -474,6 +474,33 @@ describe("useOtherCatchingGuildGlow", () => {
     );
   });
 
+  it("ignores flat runtime handles when shift activates glows", () => {
+    useOthersStore.getState().setMany({
+      "1": {
+        accountId: "9822301",
+        characterId: "1",
+        icon: "other.gif",
+        level: 300,
+        name: "Other 1",
+        profession: "w",
+      },
+    });
+    useSettingsStore.setState({
+      guildIdByCharId: {
+        "101": "guild-blue",
+      },
+    });
+
+    renderHook(() => useOtherCatchingGuildGlow());
+
+    expect(() => {
+      act(() => {
+        useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+      });
+    }).not.toThrow();
+    expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
+  });
+
   it("requests visible characters when online owners become known after shift", async () => {
     const other = createOther("1");
     useOthersStore.getState().setMany({
