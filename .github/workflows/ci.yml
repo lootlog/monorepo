@@ -104,7 +104,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate changesets
-        run: pnpm changeset status --since=${{ github.event.pull_request.base.sha }}
+        run: node tools/release/validate-workspace-changesets.mjs "${{ github.event.pull_request.base.sha }}"
 
   test-release-pipeline:
     name: Test Release Pipeline
@@ -120,7 +120,7 @@ jobs:
           node-version: 24
 
       - name: Test release matrix and Developer Portal health check
-        run: node --test tools/release/create-deployment-matrix.test.mjs apps/developer/server-handler.test.js
+        run: node --test tools/release/*.test.mjs apps/developer/server-handler.test.js
 
   lint:
     name: Lint Code
