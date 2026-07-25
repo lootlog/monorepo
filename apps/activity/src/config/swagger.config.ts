@@ -1,5 +1,3 @@
-import { env } from "src/config/env";
-
 export interface SwaggerConfig {
   path: string;
   title: string;
@@ -11,5 +9,5 @@ export const swaggerConfig: SwaggerConfig = {
   path: "docs",
   title: "Activity Logger API",
   description: "The Activity Logger API documentation",
-  version: env.APP_VERSION,
+  version: "1.0",
 };

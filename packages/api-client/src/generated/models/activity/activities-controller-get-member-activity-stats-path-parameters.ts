@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Activity Logger API
  * The Activity Logger API documentation
- * OpenAPI spec version: 0.0.1
+ * OpenAPI spec version: 1.0
  */
 
 export type ActivitiesControllerGetMemberActivityStatsPathParameters = {
