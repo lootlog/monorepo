@@ -1,7 +1,8 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join } from "node:path";
 import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 const mimeTypes = {
   ".css": "text/css",
@@ -42,58 +43,82 @@ function nodeRequestToWebRequest(request, port) {
 }
 
 async function sendWebResponse(response, webResponse) {
-  response.writeHead(
-    webResponse.status,
-    Object.fromEntries(webResponse.headers.entries()),
-  );
+  const headers = {};
+  for (const [name, value] of webResponse.headers.entries()) {
+    if (name !== "set-cookie") {
+      headers[name] = value;
+    }
+  }
+
+  const setCookies = webResponse.headers.getSetCookie();
+  if (setCookies.length > 0) {
+    headers["set-cookie"] = setCookies;
+  }
+
+  response.writeHead(webResponse.status, headers);
 
   if (!webResponse.body) {
     response.end();
     return;
   }
 
-  const reader = webResponse.body.getReader();
-  try {
-    while (true) {
-      // oxlint-disable-next-line no-await-in-loop -- sequential stream reading is intentional
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      response.write(value);
-    }
-  } finally {
-    response.end();
-  }
+  await pipeline(Readable.fromWeb(webResponse.body), response);
 }
 
 export function createDeveloperServer({ clientDirectory, port, serverEntry }) {
   return createServer(async (request, response) => {
-    const url = new URL(request.url ?? "/", `http://localhost:${port}`);
+    try {
+      const url = new URL(request.url ?? "/", `http://localhost:${port}`);
 
-    if (url.pathname === "/healthz") {
-      response.writeHead(200, {
+      if (url.pathname === "/healthz") {
+        response.writeHead(200, {
+          "Cache-Control": "no-store",
+          "Content-Type": "text/plain; charset=utf-8",
+        });
+        response.end("OK\n");
+        return;
+      }
+
+      if (url.pathname.startsWith("/assets/")) {
+        const filePath = join(clientDirectory, url.pathname);
+        try {
+          const file = await readFile(filePath);
+          response.writeHead(200, {
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "Content-Type": getMimeType(url.pathname),
+          });
+          response.end(file);
+          return;
+        } catch (error) {
+          if (
+            !(error instanceof Error && "code" in error) ||
+            (error.code !== "ENOENT" && error.code !== "ENOTDIR")
+          ) {
+            throw error;
+          }
+        }
+      }
+
+      const webRequest = nodeRequestToWebRequest(request, port);
+      const webResponse = await serverEntry.default.fetch(webRequest);
+      await sendWebResponse(response, webResponse);
+    } catch (error) {
+      const requestError =
+        error instanceof Error ? error : new Error(String(error));
+      console.warn("Developer portal request failed", requestError);
+
+      if (response.headersSent) {
+        if (!response.destroyed) {
+          response.destroy(requestError);
+        }
+        return;
+      }
+
+      response.writeHead(500, {
         "Cache-Control": "no-store",
         "Content-Type": "text/plain; charset=utf-8",
       });
-      response.end("OK\n");
-      return;
+      response.end("Internal Server Error\n");
     }
-
-    if (url.pathname.startsWith("/assets/")) {
-      const filePath = join(clientDirectory, url.pathname);
-      if (existsSync(filePath)) {
-        response.writeHead(200, {
-          "Cache-Control": "public, max-age=31536000, immutable",
-          "Content-Type": getMimeType(url.pathname),
-        });
-        response.end(readFileSync(filePath));
-        return;
-      }
-    }
-
-    const webRequest = nodeRequestToWebRequest(request, port);
-    const webResponse = await serverEntry.default.fetch(webRequest);
-    await sendWebResponse(response, webResponse);
   });
 }
