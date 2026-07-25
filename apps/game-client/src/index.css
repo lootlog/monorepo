@@ -341,7 +341,7 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   cursor: pointer;
 }
 
-body:has(> #lootlog-root) .inner-wrapper {
+body:has(> #lootlog-root) .interface-layer > .main-column > .inner-wrapper {
   height: 100%;
 }
 

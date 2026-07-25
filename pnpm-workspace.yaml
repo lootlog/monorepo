@@ -40,44 +40,33 @@ catalog:
   vitest: ^4.1.10
   zod: ^4.4.3
 allowBuilds:
-  "@prisma/engines": set this to true or false
-  "@scarf/scarf": set this to true or false
-  "@sentry/cli": set this to true or false
-  "@swc/core": set this to true or false
-  cpu-features: set this to true or false
-  esbuild: set this to true or false
-  msgpackr-extract: set this to true or false
-  necord: set this to true or false
-  prisma: set this to true or false
-  protobufjs: set this to true or false
-  sharp: set this to true or false
-  ssh2: set this to true or false
-  workerd: set this to true or false
+  "@nestjs/core": true
+  "@prisma/client": true
+  "@prisma/engines": true
+  "@scarf/scarf": true
+  "@sentry/cli": false
+  "@swc/core": true
+  "@tailwindcss/oxide": true
+  core-js-pure: true
+  cpu-features: true
+  esbuild: true
+  msgpackr-extract: true
+  necord: false
+  prisma: true
+  protobufjs: true
+  rolldown: true
+  sharp: true
+  ssh2: true
+  unrs-resolver: true
+  workerd: true
 injectWorkspacePackages: true
+minimumReleaseAge: 0
 minimumReleaseAgeExclude:
   - esbuild@0.24.3
   - "@hono/node-server@1.19.13"
   - postcss@8.5.10
   - js-cookie@3.0.6
   - esbuild@0.28.1
-onlyBuiltDependencies:
-  - "@nestjs/core"
-  - "@prisma/client"
-  - "@prisma/engines"
-  - "@scarf/scarf"
-  - "@swc/core"
-  - "@tailwindcss/oxide"
-  - core-js-pure
-  - cpu-features
-  - esbuild
-  - msgpackr-extract
-  - rolldown
-  - prisma
-  - protobufjs
-  - sharp
-  - ssh2
-  - unrs-resolver
-  - workerd
 overrides:
   "@nestjs/platform-fastify@11.1.28>@fastify/static": "^8.0.0 || ^9.0.0 || ^10.0.0"
   "@swc/cli@0.8.1>chokidar": "^4.0.0 || ^5.0.0"
