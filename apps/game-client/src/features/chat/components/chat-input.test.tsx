@@ -7,7 +7,6 @@ import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/
 import type { NullableMemberResponseDto } from "@lootlog/api-client/models/main/nullable-member-response-dto";
 import type { RoleResponseDtoOutput } from "@lootlog/api-client/models/main/role-response-dto-output";
 import { MessageType } from "@/api/chat.api";
-import { restoreChatEditorSelection } from "@/features/chat/chat-editor-selection.helpers";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { ChatInput } from "./chat-input";
 
@@ -64,105 +63,28 @@ let mockCurrentMember: NullableMemberResponseDto = {
 };
 let mockGuildPermissions: Permission[] = [];
 
-const createDomRect = ({
-  height = 0,
-  left = 0,
-  top = 0,
-  width = 0,
-}: {
-  height?: number;
-  left?: number;
-  top?: number;
-  width?: number;
-}) => {
-  return {
-    x: left,
-    y: top,
-    top,
-    left,
-    width,
-    height,
-    right: left + width,
-    bottom: top + height,
-    toJSON: () => ({}),
-  } as DOMRect;
-};
-
-const getEditorForRange = (range: Range) => {
-  const container =
-    range.endContainer.nodeType === Node.ELEMENT_NODE
-      ? (range.endContainer as Element)
-      : range.endContainer.parentElement;
-
-  return container?.closest(
-    "[data-slot='chat-input']",
-  ) as HTMLDivElement | null;
-};
-
-const getRangeTextOffset = ({
+const setPlainEditorSelection = ({
   editor,
-  range,
+  end,
+  start,
 }: {
-  editor: HTMLDivElement;
-  range: Range;
+  editor: HTMLElement;
+  end?: number;
+  start: number;
 }) => {
-  const measurementRange = editor.ownerDocument.createRange();
-  measurementRange.selectNodeContents(editor);
-  measurementRange.setEnd(range.endContainer, range.endOffset);
+  const textNode = editor.querySelector("[data-lexical-text]")?.firstChild;
+  const selection = document.getSelection();
 
-  return measurementRange.toString().length;
-};
+  if (!(textNode instanceof Text) || !selection) {
+    throw new Error("Expected a plain text Lexical node");
+  }
 
-const createDomRectList = (rect: DOMRect) => {
-  return {
-    0: rect,
-    length: 1,
-    item: (index: number) => {
-      return index === 0 ? rect : null;
-    },
-    [Symbol.iterator]: function* iterator() {
-      yield rect;
-    },
-  } as unknown as DOMRectList;
-};
-
-const setEditorScrollMetrics = ({
-  clientWidth,
-  editor,
-  left = 0,
-  scrollWidth,
-}: {
-  clientWidth: number;
-  editor: HTMLDivElement;
-  left?: number;
-  scrollWidth: number;
-}) => {
-  let currentScrollLeft = 0;
-
-  Object.defineProperty(editor, "clientWidth", {
-    configurable: true,
-    value: clientWidth,
-  });
-  Object.defineProperty(editor, "scrollWidth", {
-    configurable: true,
-    value: scrollWidth,
-  });
-  Object.defineProperty(editor, "scrollLeft", {
-    configurable: true,
-    get: () => currentScrollLeft,
-    set: (value: number) => {
-      currentScrollLeft = value;
-    },
-  });
-
-  vi.spyOn(editor, "getBoundingClientRect").mockReturnValue(
-    createDomRect({
-      left,
-      top: 0,
-      width: clientWidth,
-      height: 20,
-    }),
-  );
+  const range = document.createRange();
+  range.setStart(textNode, start);
+  range.setEnd(textNode, end ?? start);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  fireEvent(document, new Event("selectionchange"));
 };
 
 const createSentMessageResponse = (): ChatMessageResponseDtoOutput => ({
@@ -364,36 +286,6 @@ describe("ChatInput", () => {
     vi.spyOn(HTMLElement.prototype, "scrollIntoView").mockImplementation(
       mockScrollIntoView,
     );
-    vi.spyOn(Range.prototype, "getBoundingClientRect").mockImplementation(
-      function mockRangeBoundingClientRect(this: Range) {
-        const editor = getEditorForRange(this);
-
-        if (!editor) {
-          return createDomRect({});
-        }
-
-        const textOffset = getRangeTextOffset({
-          editor,
-          range: this,
-        });
-        const editorRect = editor.getBoundingClientRect();
-        const characterWidth = 7;
-        const caretLeft =
-          editorRect.left + 4 + textOffset * characterWidth - editor.scrollLeft;
-
-        return createDomRect({
-          left: caretLeft,
-          top: editorRect.top + 3,
-          width: 1,
-          height: 14,
-        });
-      },
-    );
-    vi.spyOn(Range.prototype, "getClientRects").mockImplementation(
-      function mockRangeClientRects(this: Range) {
-        return createDomRectList(this.getBoundingClientRect());
-      },
-    );
     mockSendChatMessage.mockReset();
     mockStartNotificationMessage.mockReset();
     mockHandlePartyCommand.mockReset();
@@ -460,7 +352,8 @@ describe("ChatInput", () => {
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
-    await user.type(editor, "@ra");
+    await user.click(editor);
+    await user.paste("@ra");
 
     const listbox = screen.getByRole("listbox");
     expect(listbox).toBeInTheDocument();
@@ -484,7 +377,8 @@ describe("ChatInput", () => {
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
-    await user.type(editor, "@ra");
+    await user.click(editor);
+    await user.paste("@ra");
 
     await user.keyboard("{Tab}");
     expect(editor.textContent).toBe("@Raid Team ");
@@ -502,7 +396,8 @@ describe("ChatInput", () => {
     const firstRender = render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
-    await user.type(editor, "hej @ra");
+    await user.click(editor);
+    await user.paste("hej @ra");
 
     await user.keyboard("{ArrowDown}{Enter}");
     expect(editor.textContent).toBe("hej @Raider ");
@@ -513,7 +408,8 @@ describe("ChatInput", () => {
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const resetEditor = getEditor();
-    await user.type(resetEditor, "@ra");
+    await user.click(resetEditor);
+    await user.paste("@ra");
     expect(
       screen.getByRole("option", { name: "@Raid Team" }),
     ).toBeInTheDocument();
@@ -536,7 +432,7 @@ describe("ChatInput", () => {
       ).not.toBeInTheDocument();
     });
 
-    await user.type(resetEditor, "i");
+    await user.paste("i");
     expect(
       screen.getByRole("option", { name: "@Raid Team" }),
     ).toBeInTheDocument();
@@ -600,7 +496,8 @@ describe("ChatInput", () => {
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
-    await user.type(editor, "@");
+    await user.click(editor);
+    await user.paste("@");
 
     expect(screen.getAllByRole("option")).toHaveLength(10);
     expect(
@@ -631,45 +528,170 @@ describe("ChatInput", () => {
 
     const editor = getEditor() as HTMLDivElement;
     await user.click(editor);
-    await user.type(editor, "hello world");
+    await user.paste("hello world");
 
-    restoreChatEditorSelection({
-      root: editor,
+    setPlainEditorSelection({
+      editor,
       start: 6,
       end: 11,
     });
     fireEvent.cut(editor, { clipboardData });
 
     expect(clipboardData.setData).toHaveBeenCalledWith("text/plain", "world");
-    expect(editor.textContent).toBe("hello ");
+    await waitFor(() => {
+      expect(editor.textContent).toBe("hello ");
+    });
   });
 
-  it("scrolls the single-line editor horizontally to keep the caret visible", async () => {
+  it("deletes the previous word with Ctrl+Backspace", async () => {
     const user = userEvent.setup();
     render(<ChatInput selectedGuildId="guild-1" />);
 
-    const editor = getEditor() as HTMLDivElement;
-    setEditorScrollMetrics({
-      editor,
-      clientWidth: 80,
-      scrollWidth: 840,
-    });
-
+    const editor = getEditor();
     await user.click(editor);
-    await user.type(
-      editor,
-      "to-jest-bardzo-dluga-wiadomosc-ktora-ma-przesunac-kursor",
-    );
+    await user.paste("hello world");
+    await user.keyboard("{Control>}{Backspace}{/Control}");
 
-    expect(editor.scrollLeft).toBeGreaterThan(0);
-
-    restoreChatEditorSelection({
-      root: editor,
-      start: 0,
+    await waitFor(() => {
+      expect(editor.textContent).toBe("hello ");
     });
-    fireEvent(document, new Event("selectionchange"));
+  });
 
-    expect(editor.scrollLeft).toBe(0);
+  it("preserves a reverse selection when Shift+ArrowRight is pressed", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("hello world");
+
+    const textNode = editor.querySelector("[data-lexical-text]")?.firstChild;
+    const selection = document.getSelection();
+
+    expect(textNode).toBeInstanceOf(Text);
+    expect(selection).not.toBeNull();
+
+    selection?.setBaseAndExtent(textNode as Text, 11, textNode as Text, 6);
+    fireEvent(document, new Event("selectionchange"));
+    fireEvent.keyDown(editor, { key: "ArrowRight", shiftKey: true });
+    fireEvent.keyUp(editor, { key: "ArrowRight", shiftKey: true });
+
+    expect(selection?.isCollapsed).toBe(false);
+    expect(selection?.anchorOffset).toBe(11);
+    expect(selection?.focusOffset).toBe(6);
+  });
+
+  it("deletes reverse selections without collapsing them first", async () => {
+    const user = userEvent.setup();
+    const clipboardData = {
+      setData: vi.fn(),
+    };
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("hello world");
+
+    const textNode = editor.querySelector("[data-lexical-text]")?.firstChild;
+    const selection = document.getSelection();
+
+    expect(textNode).toBeInstanceOf(Text);
+    selection?.setBaseAndExtent(textNode as Text, 11, textNode as Text, 6);
+    fireEvent(document, new Event("selectionchange"));
+    fireEvent.cut(editor, { clipboardData });
+
+    expect(clipboardData.setData).toHaveBeenCalledWith("text/plain", "world");
+    await waitFor(() => {
+      expect(editor.textContent).toBe("hello ");
+    });
+  });
+
+  it("supports undo and redo through the native platform shortcuts", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("hello");
+
+    await user.keyboard("{Control>}z{/Control}");
+    await waitFor(() => {
+      expect(editor.textContent).toBe("");
+    });
+
+    await user.keyboard("{Control>}{Shift>}z{/Shift}{/Control}");
+    await waitFor(() => {
+      expect(editor.textContent).toBe("hello");
+    });
+  });
+
+  it("keeps resolved mentions atomic and serializes them as plain chat text", async () => {
+    const user = userEvent.setup();
+    mockSendChatMessage.mockResolvedValue(createSentMessageResponse());
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("@Raider ");
+
+    const mention = editor.querySelector("[data-chat-mention='raider']");
+
+    expect(mention).toHaveTextContent("@Raider");
+    expect(mention).toHaveStyle({ color: "#12ab34" });
+
+    await user.keyboard("{Control>}{Backspace}{/Control}");
+    await waitFor(() => {
+      expect(editor.textContent).toBe("");
+    });
+
+    await user.paste("@ra");
+    await user.keyboard("{Enter}{Enter}");
+    await waitFor(() => {
+      expect(mockSendChatMessage).toHaveBeenCalledTimes(1);
+    });
+    expect(mockSendChatMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          message: "@Raid Team ",
+        }),
+      }),
+    );
+  });
+
+  it("limits pasted composer text to 120 characters", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("a".repeat(140));
+
+    expect(editor.textContent).toBe("a".repeat(120));
+  });
+
+  it("does not submit while an IME composition is active", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("zażółć");
+    fireEvent.compositionStart(editor);
+    fireEvent.keyDown(editor, { key: "Enter", isComposing: true });
+    fireEvent.compositionEnd(editor, { data: "ć" });
+
+    expect(mockSendChatMessage).not.toHaveBeenCalled();
+    expect(editor.textContent).toBe("zażółć");
+  });
+
+  it("keeps the single-line editor horizontally scrollable", () => {
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    expect(getEditor()).toHaveClass(
+      "ll:overflow-x-auto",
+      "ll:overflow-y-hidden",
+      "ll:whitespace-pre",
+    );
   });
 
   it("shows the placeholder again after deleting the editor content to zero", async () => {
@@ -680,12 +702,23 @@ describe("ChatInput", () => {
     await user.click(editor);
     expect(screen.getByText("Wiadomość...")).toBeInTheDocument();
 
-    await user.type(editor, "abc");
+    await user.paste("abc");
     expect(screen.queryByText("Wiadomość...")).not.toBeInTheDocument();
 
-    await user.keyboard("{Backspace}{Backspace}{Backspace}");
+    setPlainEditorSelection({
+      editor,
+      start: 0,
+      end: 3,
+    });
+    fireEvent.cut(editor, {
+      clipboardData: {
+        setData: vi.fn(),
+      },
+    });
 
-    expect(editor.textContent).toBe("");
+    await waitFor(() => {
+      expect(editor.textContent).toBe("");
+    });
     expect(screen.getByText("Wiadomość...")).toBeInTheDocument();
   });
 
@@ -694,7 +727,8 @@ describe("ChatInput", () => {
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
-    await user.type(editor, "/g");
+    await user.click(editor);
+    await user.paste("/g");
 
     expect(screen.getByText("Szukaj grupy")).toBeInTheDocument();
     expect(
@@ -711,7 +745,8 @@ describe("ChatInput", () => {
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
-    await user.type(editor, "!abc");
+    await user.click(editor);
+    await user.paste("!abc");
 
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
@@ -722,7 +757,8 @@ describe("ChatInput", () => {
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
-    await user.type(editor, "/c");
+    await user.click(editor);
+    await user.paste("/c");
 
     expect(screen.getByText("Wyczyść czat")).toBeInTheDocument();
   });
@@ -732,7 +768,8 @@ describe("ChatInput", () => {
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
-    await user.type(editor, "/c");
+    await user.click(editor);
+    await user.paste("/c");
 
     expect(screen.queryByText("Wyczyść czat")).not.toBeInTheDocument();
   });
@@ -744,7 +781,8 @@ describe("ChatInput", () => {
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
-    await user.type(editor, "/clr");
+    await user.click(editor);
+    await user.paste("/clr");
     await user.keyboard("{Enter}");
     await user.keyboard("{Enter}");
 
@@ -766,22 +804,28 @@ describe("ChatInput", () => {
   it("stops keyboard events from bubbling outside the editor", async () => {
     const user = userEvent.setup();
     const windowKeyDownHandler = vi.fn();
+    const windowKeyPressHandler = vi.fn();
     const windowKeyUpHandler = vi.fn();
     window.addEventListener("keydown", windowKeyDownHandler);
+    window.addEventListener("keypress", windowKeyPressHandler);
     window.addEventListener("keyup", windowKeyUpHandler);
 
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
     await user.click(editor);
+    await user.paste("w");
     fireEvent.keyDown(editor, { key: "w" });
+    fireEvent.keyPress(editor, { charCode: 119, key: "w" });
     fireEvent.keyUp(editor, { key: "w" });
 
     expect(editor.textContent).toBe("w");
     expect(windowKeyDownHandler).not.toHaveBeenCalled();
+    expect(windowKeyPressHandler).not.toHaveBeenCalled();
     expect(windowKeyUpHandler).not.toHaveBeenCalled();
 
     window.removeEventListener("keydown", windowKeyDownHandler);
+    window.removeEventListener("keypress", windowKeyPressHandler);
     window.removeEventListener("keyup", windowKeyUpHandler);
   });
 
@@ -795,7 +839,7 @@ describe("ChatInput", () => {
 
     const editor = getEditor();
     await user.click(editor);
-    await user.type(editor, "hello");
+    await user.paste("hello");
     await user.keyboard("{Enter}");
 
     await waitFor(() => {
@@ -806,5 +850,24 @@ describe("ChatInput", () => {
     });
     expect(onMessageSent).toHaveBeenCalledTimes(1);
     expect(editor.textContent).toBe("");
+  });
+
+  it("preserves the draft and restores focus after a send error", async () => {
+    const user = userEvent.setup();
+    mockSendChatMessage.mockRejectedValue(new Error("send failed"));
+    render(<ChatInput selectedGuildId="guild-1" />);
+
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("hello");
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => {
+      expect(mockSendChatMessage).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(editor).toHaveFocus();
+    });
+    expect(editor.textContent).toBe("hello");
   });
 });
