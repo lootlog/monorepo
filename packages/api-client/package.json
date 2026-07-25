@@ -33,15 +33,15 @@
   "devDependencies": {
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
-    "@tanstack/react-query": "^5.99.2",
-    "@types/node": "25.6.0",
-    "orval": "^8.17.0",
-    "oxfmt": "^0.43.0",
-    "oxlint": "^1.61.0",
-    "react": "^19.2.5",
-    "tsx": "^4.22.4",
-    "typescript": "~6.0.3",
-    "vitest": "^4.1.8"
+    "@tanstack/react-query": "catalog:",
+    "@types/node": "catalog:",
+    "orval": "^8.22.0",
+    "oxfmt": "^0.60.0",
+    "oxlint": "^1.75.0",
+    "react": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.99.2",

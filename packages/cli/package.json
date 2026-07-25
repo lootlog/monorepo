@@ -14,19 +14,19 @@
     "test": "tsx src/utils/env-generator.test.ts"
   },
   "dependencies": {
-    "@clack/prompts": "^1.2.0",
+    "@clack/prompts": "^1.7.0",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/types": "workspace:*",
-    "amqplib": "^1.0.3",
-    "node-html-parser": "^7.1.0",
+    "amqplib": "^2.0.1",
+    "node-html-parser": "^9.0.0",
     "random-words": "^2.0.1",
-    "uuid": "^14.0.0",
+    "uuid": "^14.0.1",
     "zx": "^8.8.5"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.8",
-    "@types/node": "^25.6.0",
+    "@types/node": "catalog:",
     "dotenv": "^17.4.2",
-    "tsx": "^4.22.4"
+    "tsx": "catalog:"
   }
 }
