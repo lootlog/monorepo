@@ -64,6 +64,14 @@ const flushAnimationFrame = async () => {
   });
 };
 
+const triggerResizeObserverCycles = async (remainingCycles: number) => {
+  if (remainingCycles === 0) return;
+
+  await triggerResizeObservers();
+  await flushAnimationFrame();
+  await triggerResizeObserverCycles(remainingCycles - 1);
+};
+
 const mockElementRenderedHeight = (element: HTMLElement, height: number) => {
   Object.defineProperty(element, "getBoundingClientRect", {
     configurable: true,
@@ -747,6 +755,76 @@ describe("DraggableWindow", () => {
     await waitFor(() => {
       expect(windowElement.style.height).toBe("210px");
     });
+  });
+
+  it("keeps auto height stable when scroll content mirrors the viewport with fractional pixels", async () => {
+    const { container } = render(
+      <DraggableWindow
+        isOpen
+        id="notifications"
+        title="Powiadomienia"
+        resizable={false}
+        minWidth={242}
+        minHeight={82}
+        heightMode="auto-up-to-max"
+        maxContentHeight={272}
+      >
+        {createScrollAreaChildren()}
+      </DraggableWindow>,
+    );
+
+    const {
+      windowElement,
+      titleBarElement,
+      contentElement,
+      viewportElement,
+      viewportContent,
+      measuredContentElement,
+    } = getNestedScrollAreaElements(container);
+
+    Object.defineProperty(titleBarElement, "offsetHeight", {
+      configurable: true,
+      value: 28,
+    });
+    Object.defineProperty(contentElement, "clientHeight", {
+      configurable: true,
+      get: () =>
+        Math.max(0, Number.parseFloat(windowElement.style.height) - 28),
+    });
+    Object.defineProperty(viewportElement, "scrollHeight", {
+      configurable: true,
+      get: () => contentElement.clientHeight,
+    });
+    Object.defineProperty(viewportContent, "scrollHeight", {
+      configurable: true,
+      get: () => contentElement.clientHeight,
+    });
+    Object.defineProperty(measuredContentElement, "scrollHeight", {
+      configurable: true,
+      value: 54,
+    });
+    mockElementRenderedHeight(measuredContentElement, 54);
+    Object.defineProperty(viewportContent, "getBoundingClientRect", {
+      configurable: true,
+      value: () => {
+        const height = contentElement.clientHeight + 0.6;
+        return {
+          width: 0,
+          height,
+          top: 0,
+          right: 0,
+          bottom: height,
+          left: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        };
+      },
+    });
+
+    await triggerResizeObserverCycles(8);
+
+    expect(windowElement.style.height).toBe("82px");
   });
 
   it("does not undershoot nested scroll area height while the window opening scale transform is active", async () => {
