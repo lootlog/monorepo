@@ -46,10 +46,14 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 
-  it("delivers a repeated event id to Lootlog once without changing Margonem or applied delivery", () => {
-    const event = Object.freeze({
+  it("delivers distinct incoming packets that share an event id", () => {
+    const firstEvent = Object.freeze({
       ev: 1_785_091_976.123,
       f: { m: ["turn-1"] },
+    }) as GameEvent;
+    const secondEvent = Object.freeze({
+      ev: 1_785_091_976.123,
+      f: { m: ["turn-2"] },
     }) as GameEvent;
     const original = vi.fn(() => "margonem-result");
     runtimeWindow.successData = original;
@@ -61,10 +65,17 @@ describe("MargonemRuntimeBridge", () => {
 
     bridge.install();
     bridge.setReady(true);
-    runtimeWindow.successData?.(event);
-    runtimeWindow.successData?.(event);
+    runtimeWindow.successData?.(firstEvent);
+    runtimeWindow.successData?.(secondEvent);
 
-    expect(incoming).toHaveBeenCalledOnce();
+    expect(incoming).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ raw: firstEvent }),
+    );
+    expect(incoming).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ raw: secondEvent }),
+    );
     expect(original).toHaveBeenCalledTimes(2);
     expect(applied).toHaveBeenCalledTimes(2);
     bridge.cleanup();
@@ -87,19 +98,19 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 
-  it("deduplicates repeated event ids while the incoming queue is waiting", () => {
+  it("queues distinct incoming packets that share an event id", () => {
     runtimeWindow.successData = vi.fn();
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
     const incoming = vi.fn();
     bridge.subscribeIncoming(incoming);
 
     bridge.install();
-    runtimeWindow.successData?.({ ev: 10, f: { m: ["queued"] } });
-    runtimeWindow.successData?.({ ev: 10, f: { m: ["queued"] } });
+    runtimeWindow.successData?.({ ev: 10, f: { m: ["first"] } });
+    runtimeWindow.successData?.({ ev: 10, f: { m: ["second"] } });
 
-    expect(bridge.getHealth().queueEvents).toBe(1);
+    expect(bridge.getHealth().queueEvents).toBe(2);
     bridge.setReady(true);
-    expect(incoming).toHaveBeenCalledOnce();
+    expect(incoming).toHaveBeenCalledTimes(2);
     bridge.cleanup();
   });
 
