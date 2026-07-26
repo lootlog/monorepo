@@ -259,8 +259,6 @@ title: Mechanika walk i audyt battle panelu
 description: Zakres mechanik Margonem obsługiwanych przez battle panel oraz raport pokrycia akcji z R2.
 ---
 
-# Mechanika walk i audyt battle panelu
-
 Źródła: dokumentacja Margonem "Mechanika walk", obecne zachowanie \`@lootlog/battle-processor\` oraz próbka R2.
 
 ## Zakres
