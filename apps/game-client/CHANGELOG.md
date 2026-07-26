@@ -1,5 +1,18 @@
 # @lootlog/game-client
 
+## 1.1.0
+
+### Minor Changes
+
+- fee6e4d: Add synchronized Discord server visibility preferences for the web and game clients.
+
+### Patch Changes
+
+- bddc4c2: Polish server selector states when one or all accessible servers are hidden.
+- Updated dependencies [fee6e4d]
+  - @lootlog/types@1.1.0
+  - @lootlog/api-client@1.1.0
+
 ## 1.0.4
 
 ### Patch Changes
