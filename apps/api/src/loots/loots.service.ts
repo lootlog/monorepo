@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  ServiceUnavailableException,
   type OnModuleInit,
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
@@ -82,11 +83,17 @@ type CachedLootQueryResult = Omit<
 };
 
 const LOOTS_LIST_CACHE_TTL_SECONDS = 10;
+const LOOT_LOCK_TTL_MS = 30_000;
+const LOOT_LOCK_RETRY_OPTIONS = {
+  retryCount: 100,
+  retryDelay: 100,
+  retryJitter: 50,
+} as const;
 
 @Injectable()
 export class LootsService implements OnModuleInit {
   private redlock: ReturnType<RedlockService["createInstance"]>;
-  private readonly lockTtl = 10000;
+  private readonly lockTtl = LOOT_LOCK_TTL_MS;
 
   constructor(
     private readonly amqpConnection: AmqpConnection,
@@ -108,9 +115,7 @@ export class LootsService implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    this.redlock = this.redlockService.createInstance({
-      automaticExtensionThreshold: 5000,
-    });
+    this.redlock = this.redlockService.createInstance();
   }
 
   private createRejectedGuild(
@@ -355,7 +360,11 @@ export class LootsService implements OnModuleInit {
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
 
     try {
-      lock = await this.redlock.acquire([lockKey], this.lockTtl);
+      lock = await this.redlock.acquire(
+        [lockKey],
+        this.lockTtl,
+        LOOT_LOCK_RETRY_OPTIONS,
+      );
 
       const existingLoot = await this.prisma.loot.findUnique({
         where: { uniqueId },
@@ -642,7 +651,7 @@ export class LootsService implements OnModuleInit {
           message: "Lock acquisition failed for createLoot",
           uniqueId,
         });
-        throw new BadRequestException("Failed to acquire lock");
+        throw new ServiceUnavailableException("Failed to acquire loot lock");
       }
 
       throw error;
