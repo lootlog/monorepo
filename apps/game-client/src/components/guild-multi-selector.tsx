@@ -10,6 +10,8 @@ import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
+import { useTranslation } from "react-i18next";
+import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 
 type GuildMultiSelectorProps = {
   disabled?: boolean;
@@ -24,7 +26,13 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
   onChange,
   value,
 }) => {
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+  const { t } = useTranslation("common");
+  const {
+    data: guilds,
+    error,
+    isLoading,
+    refetch,
+  } = useUsersControllerGetCurrentUserAccessibleGuilds();
 
   const handleToggle = (guildId: string) => {
     if (disabled) return;
@@ -48,6 +56,25 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
         orientation="horizontal"
       >
         <div className="ll:flex ll:gap-1 ll:mt-1">
+          {!guilds && isLoading ? (
+            <AsyncStatusIndicator
+              active
+              delay
+              kind="loading"
+              label={t("async.loadingGuilds")}
+            />
+          ) : null}
+          {!guilds && error ? (
+            <AsyncStatusIndicator
+              active
+              kind="error"
+              label={t("async.guildsError")}
+              onRetry={() => {
+                void refetch();
+              }}
+              retryLabel={t("actions.retry")}
+            />
+          ) : null}
           {guilds?.map((guild) => {
             const isSelected = value.includes(guild.id);
 

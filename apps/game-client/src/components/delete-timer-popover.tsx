@@ -18,7 +18,7 @@ import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 type DeleteTimerPopoverProps = {
   timer: TimerWithTimeLeft;
@@ -51,6 +51,9 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
       staleTime: 5 * 60 * 1000,
     })),
   });
+  const permissionsLoading = permissionsQueries.some(
+    (query) => query.isPending,
+  );
 
   const guildsWithPermissions = uniqueGuildIds
     .map((guildId, index) => {
@@ -67,6 +70,15 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
       };
     })
     .filter((g) => g.canDelete && g.timerKey !== "");
+
+  if (permissionsLoading) {
+    return (
+      <ContextMenuItem disabled>
+        <Loader2 className="ll:mr-2 ll:size-4 ll:animate-spin ll:motion-reduce:animate-none" />
+        {t("contextMenu.loadingPermissions")}
+      </ContextMenuItem>
+    );
+  }
 
   if (guildsWithPermissions.length === 0) {
     return null;

@@ -9,7 +9,19 @@
     "party": "Grupa"
   },
   "emptyState": {
-    "noMessages": "Brak wiadomości"
+    "guildTitle": "Brak wiadomości",
+    "allTitle": "Brak wiadomości"
+  },
+  "states": {
+    "loading": "Ładowanie wiadomości",
+    "loadError": "Nie udało się załadować wiadomości",
+    "refreshing": "Odświeżanie wiadomości",
+    "refreshError": "Nie udało się odświeżyć danych czatu",
+    "offline": "Połączenie przerwane — wiadomości mogą być nieaktualne",
+    "partialError_one": "Nie udało się załadować wiadomości z jednego serwera",
+    "partialError_few": "Nie udało się załadować wiadomości z {{count}} serwerów",
+    "partialError_many": "Nie udało się załadować wiadomości z {{count}} serwerów",
+    "partialError_other": "Nie udało się załadować wiadomości z {{count}} serwerów"
   },
   "dateDividers": {
     "today": "Dzisiaj",
@@ -18,6 +30,7 @@
   "input": {
     "hint": "(! = powiadomienie, /grp = szukaj grupy)",
     "placeholder": "Wiadomość...",
+    "pending": "Wysyłanie wiadomości",
     "clearChatConfirm": {
       "title": "Wyczyścić czat?",
       "description": "Ta operacja usunie historię czatu dla wszystkich członków gildii.",
@@ -30,6 +43,7 @@
     "mentionSuggestions": {
       "roles": "Role",
       "members": "Nicki",
+      "loading": "Ładowanie mentionów...",
       "noResults": "Brak pasujących mentionów"
     }
   },
@@ -55,6 +69,7 @@
     "reply": "Odpowiedz",
     "edit": "Edytuj",
     "delete": "Usuń",
+    "deleting": "Usuwanie wiadomości",
     "showEquipment": "Pokaż ekwipunek",
     "inviteFriends": "Zaproś do przyjaciół",
     "inviteParty": "Zaproś do drużyny",
@@ -72,6 +87,9 @@
     }
   },
   "errors": {
-    "sendFailed": "Nie udało się wysłać wiadomości na czat"
+    "sendFailed": "Nie udało się wysłać wiadomości na czat",
+    "clearFailed": "Nie udało się wyczyścić czatu",
+    "editFailed": "Nie udało się edytować wiadomości",
+    "deleteFailed": "Nie udało się usunąć wiadomości"
   }
 }

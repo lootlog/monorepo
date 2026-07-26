@@ -1,20 +1,63 @@
 {
+  "seo": {
+    "title": "Lootlog – timery respów, łupy i analiza walk w Margonem",
+    "description": "Darmowy dodatek do Margonem dla graczy i klanów. Synchronizuj timery respów, zapisuj łupy, analizuj walki i sprawdzaj aktywność w jednym panelu.",
+    "socialImageAlt": "Lootlog – timery respów, łupy i analiza walk w Margonem",
+    "keywords": [
+      "Lootlog",
+      "dodatek do Margonem",
+      "klan Margonem",
+      "timery respów",
+      "historia łupów",
+      "analiza walk"
+    ]
+  },
   "header": {
-    "brand": "lootlog.pl",
+    "brand": "Lootlog",
     "docs": "Dokumentacja",
     "github": "GitHub",
     "support": "Wesprzyj",
+    "install": "Zainstaluj",
+    "navigationLabel": "Główna nawigacja",
+    "product": "Możliwości",
+    "workflow": "Jak działa",
+    "trust": "O projekcie",
+    "faq": "FAQ",
     "goToLootlog": "Przejdź do Lootloga",
     "lootlog": "Lootlog",
-    "login": "Zaloguj się"
+    "login": "Zaloguj się",
+    "loginLoading": "Łączenie z Discordem…",
+    "loginError": "Nie udało się rozpocząć logowania przez Discord. Spróbuj ponownie."
   },
   "hero": {
-    "titleLine1": "Przejmij kontrolę nad",
-    "titleLine2": "Lootami i Timerami",
-    "subtitle": "Lootlog to Twoje centrum dowodzenia w Margonem.",
-    "subtitleLine2": "Synchronizowane timery, historia łupów i analiza walk.",
-    "installAddon": "Zainstaluj Dodatek",
-    "docs": "Dokumentacja"
+    "recordLabel": "Rejestr operacyjny gildii",
+    "title": "Resp, loot, wynik. Cały klan widzi to samo.",
+    "description": "Lootlog zbiera obsługiwane zdarzenia z gry i porządkuje je w jednym panelu: timery respów, historię łupów i statystyki walk. Bez przeklejania informacji na Discordzie i ręcznego liczenia.",
+    "installAddon": "Zainstaluj dodatek",
+    "openDashboard": "Otwórz Lootloga",
+    "trustLine": "Darmowy · open source · tworzony przez społeczność",
+    "evidenceLabel": "Bieżący widok produktu",
+    "evidenceIndex": "Zapis 01 / Panel walk",
+    "screenshotAlt": "Aktualny dashboard Lootloga ze statystykami gracza i najczęściej bitymi potworami",
+    "screenshotCaption": "Panel gracza w Lootlogu",
+    "capabilities": {
+      "battles": {
+        "title": "Historia walk",
+        "description": "Pełny zapis drużyn, wyników i przeciwników."
+      },
+      "timers": {
+        "title": "Wspólne timery",
+        "description": "Jedno odliczanie widoczne dla całej gildii."
+      },
+      "statistics": {
+        "title": "Statystyki gildii",
+        "description": "Rankingi i aktywność zamiast zgadywania."
+      },
+      "reservations": {
+        "title": "Rezerwacje",
+        "description": "Ustalenia, które nie giną na czacie."
+      }
+    }
   },
   "heroAlt": {
     "subtitle": "Otwartoźródłowy, zaawansowany dodatek do gry Margonem, który automatycznie śledzi łupy i timery respawnu potworów, oraz ułatwia organizację w klanie.",
@@ -96,18 +139,18 @@
     }
   },
   "faq": {
-    "q1": "Gdzie analizować walki?",
-    "a1": "Po zainstalowaniu dodatku, logi walki trafiają do Panelu Gracza, gdzie możesz je przeglądać.",
+    "q1": "Gdzie znajdę analizę walk?",
+    "a1": "Po zainstalowaniu dodatku obsługiwane logi walk trafiają do Panelu Gracza, gdzie możesz przeglądać przebieg i statystyki starć.",
     "q2": "Czy dostanę bana?",
-    "a2": "Nie. Lootlog to nakładka UI, która nie ingeruje w silnik gry ani nie wykonuje ruchów za postać.",
-    "q3": "Ile to kosztuje?",
-    "a3": "0 SŁ. Projekt jest darmowy i tworzony przez społeczność (Open Source).",
-    "q4": "Jak działają timery?",
-    "a4": "Timery synchronizują się automatycznie między graczami w klanie. Wystarczy, że jeden gracz zabije elitę, a reszta zobaczy odliczanie.",
-    "q5": "Czy mogę używać na wielu postaciach?",
-    "a5": "Tak! Dodatek działa na wszystkich postaciach i światach. Dane są przypisane do konta Discord.",
-    "q6": "Jak zgłosić błąd lub zaproponować funkcję?",
-    "a6": "Najlepiej przez naszego Discorda lub bezpośrednio na GitHubie w sekcji Issues. Chętnie przyjmujemy też pull requesty!"
+    "a2": "Lootlog nie steruje postacią, nie wykonuje ruchów i nie ingeruje w silnik gry. Ostateczne decyzje dotyczące zgodności dodatków należą jednak do administracji Margonem.",
+    "q3": "Ile kosztuje Lootlog?",
+    "a3": "Nic. Lootlog jest darmowy i rozwijany jako projekt open source.",
+    "q4": "Jak synchronizują się timery?",
+    "a4": "Gdy gracz w klanie zabije obsługiwanego przeciwnika, Lootlog aktualizuje timer i udostępnia odliczanie pozostałym członkom klanu.",
+    "q5": "Czy Lootlog działa na wielu postaciach i światach?",
+    "a5": "Tak. Dane z różnych postaci i światów są dostępne z jednego konta połączonego z Discordem.",
+    "q6": "Gdzie zgłosić błąd lub pomysł?",
+    "a6": "Napisz na Discordzie Lootloga albo utwórz zgłoszenie na GitHubie. Przyjmujemy też pull requesty."
   },
   "testimonials": {
     "kamil": {
@@ -166,7 +209,9 @@
     }
   },
   "quickStart": {
+    "label": "Jak to działa",
     "title": "Szybki Start",
+    "subtitle": "Instalujesz dodatek raz. Potem grasz normalnie, a Lootlog synchronizuje dane z panelem Twojej gildii.",
     "fullGuide": "Pełna instrukcja",
     "step1": {
       "title": "Pobierz",
@@ -186,7 +231,90 @@
       "description": "Dostęp do panelu lootloga"
     }
   },
+  "proof": {
+    "label": "Dowody zamiast obietnic",
+    "title": "Od zdarzenia w grze do danych, z których korzysta cały klan.",
+    "description": "Lootlog zbiera obsługiwane zdarzenia podczas gry i udostępnia je w panelu. Klan może sprawdzić historię łupów, aktywność i statystyki bez szukania informacji na czacie.",
+    "record": "Zapis {{index}}",
+    "dashboard": {
+      "title": "Łupy trafiają do wspólnego zapisu.",
+      "description": "Po walce Lootlog porządkuje zebrane dane według potwora, świata i czasu. Członkowie klanu mogą przeglądać lootlog i szybko wrócić do potrzebnych informacji.",
+      "decision": "Zobacz zapis łupów klanu",
+      "alt": "Lootlog klanu La Famiglia Gorilla na świecie Luvia z kartami potworów i łupami",
+      "caption": "Łupy · filtry · wspólny zapis"
+    },
+    "statistics": {
+      "title": "Aktywność klanu bez ręcznego liczenia.",
+      "description": "Liczba bić, ranking członków i najczęściej wybierani przeciwnicy pokazują, jak klan gra w wybranym okresie. Łatwiej porównać aktywność i ustalić kolejne priorytety.",
+      "decision": "Sprawdź statystyki klanu",
+      "alt": "Statystyki bić klanu w Lootlogu z rankingiem członków i najczęściej wybieranymi potworami",
+      "caption": "Klan · aktywność · priorytety"
+    }
+  },
+  "workflow": {
+    "label": "Przepływ danych",
+    "title": "Od zdarzenia w grze do decyzji klanu.",
+    "description": "Instalujesz dodatek raz i grasz jak zwykle. Lootlog rozpoznaje obsługiwane zdarzenia, synchronizuje dane i pokazuje je w panelu.",
+    "guide": "Zobacz instrukcję instalacji",
+    "steps": {
+      "observe": {
+        "state": "W grze",
+        "title": "Graj",
+        "description": "Dodatek rozpoznaje obsługiwane walki, łupy i inne zdarzenia podczas zwykłej gry."
+      },
+      "sync": {
+        "state": "Synchronizacja",
+        "title": "Zapisuj",
+        "description": "Dane trafiają do wspólnego panelu Twojego klanu."
+      },
+      "inspect": {
+        "state": "Panel",
+        "title": "Sprawdź",
+        "description": "Filtrujesz lootlog, przeglądasz timery, historię walk i statystyki."
+      },
+      "decide": {
+        "state": "Klan",
+        "title": "Działaj",
+        "description": "Klan ustala kolejne respy i priorytety na podstawie tych samych danych."
+      }
+    }
+  },
+  "trust": {
+    "label": "Rejestr zaufania",
+    "title": "Sprawdź Lootloga przed instalacją.",
+    "description": "Lootlog jest darmowym projektem open source rozwijanym przez społeczność. Kod i dokumentacja są publiczne, więc możesz dokładnie sprawdzić narzędzie przed instalacją.",
+    "verified": "Potwierdzone",
+    "auditPrompt": "Sprawdź kod albo przejdź przez dokumentację instalacji.",
+    "github": "Sprawdź kod na GitHubie",
+    "docs": "Przeczytaj dokumentację",
+    "items": {
+      "free": {
+        "title": "0 SŁ",
+        "description": "Korzystanie z Lootloga nic nie kosztuje."
+      },
+      "openSource": {
+        "title": "Open source",
+        "description": "Kod źródłowy jest publiczny i dostępny do samodzielnej weryfikacji."
+      },
+      "discordAccount": {
+        "title": "Konto Discord",
+        "description": "Logowanie przez Discord łączy Twoje postacie z dostępem do panelu."
+      },
+      "multiWorld": {
+        "title": "Wiele postaci i światów",
+        "description": "Jedno konto porządkuje dane z różnych postaci oraz światów."
+      }
+    }
+  },
+  "closingCta": {
+    "label": "Następny ruch",
+    "title": "Zacznij zbierać dane, których potrzebuje Twój klan.",
+    "description": "Zainstaluj dodatek, połącz konto Discord i przejdź przez krótką konfigurację. Potem graj jak zwykle — Lootlog zacznie porządkować obsługiwane zdarzenia w panelu.",
+    "install": "Zainstaluj dodatek",
+    "guide": "Zobacz instrukcję"
+  },
   "footer": {
+    "navigationLabel": "Linki w stopce",
     "docs": "Dokumentacja",
     "discord": "Discord",
     "github": "GitHub",
@@ -197,8 +325,8 @@
     "copyright": "Lootlog © {{year}} • Open Source"
   },
   "cookieConsent": {
-    "title": "Ciasteczka? 🍪",
-    "description": "Używamy plików cookie, aby zapewnić Ci najlepsze doświadczenia.",
+    "title": "Ustawienia plików cookie",
+    "description": "Używamy plików cookie, aby utrzymać działanie serwisu i zapamiętać wybrane ustawienia.",
     "accept": "Akceptuję",
     "reject": "Odrzuć"
   },
@@ -209,8 +337,9 @@
   "page": {
     "opinionsLabel": "Opinie",
     "opinionsTitle": "Co mówią gracze?",
-    "opinionsSubtitle": "Dołącz do tysięcy zadowolonych użytkowników.",
+    "opinionsSubtitle": "Głos graczy, którzy korzystają z Lootloga podczas codziennej gry.",
     "faqLabel": "FAQ",
-    "faqTitle": "Częste pytania"
+    "faqTitle": "Najważniejsze pytania przed instalacją.",
+    "faqDescription": "Instalacja, bezpieczeństwo, timery, konta i rozwój projektu — bez ogólników."
   }
 }

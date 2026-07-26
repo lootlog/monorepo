@@ -35,8 +35,16 @@
     "notConnected": "Nie połączono z żadnym serwerem"
   },
   "emptyState": {
-    "filtered": "Brak timerów dla wybranych filtrów",
-    "none": "Brak timerów"
+    "filteredTitle": "Brak pasujących timerów",
+    "showAll": "Pokaż wszystkie",
+    "noneTitle": "Brak timerów"
+  },
+  "states": {
+    "loading": "Ładowanie timerów",
+    "loadError": "Nie udało się załadować timerów",
+    "refreshError": "Nie udało się odświeżyć timerów",
+    "refreshing": "Odświeżanie timerów",
+    "offline": "Dane timerów mogą być nieaktualne"
   },
   "contextMenu": {
     "creating": "Tworzenie timera...",
@@ -53,6 +61,7 @@
     "restart": "Odliczaj od początku",
     "history": "Historia",
     "delete": "Usuń timer",
+    "loadingPermissions": "Sprawdzanie uprawnień...",
     "deleteChooseGuild": "Wybierz serwer do usunięcia timera:"
   },
   "history": {
@@ -128,6 +137,8 @@
     "guildRequired": "Wybierz serwer",
     "searchNpcLabel": "Szukaj potwora",
     "searchNpcPlaceholder": "Wpisz nazwę potwora...",
+    "npcSearching": "Szukanie potwora...",
+    "npcSearchError": "Nie udało się wyszukać potwora",
     "npcNotFound": "Nie znaleziono potwora",
     "mobFallback": "mob",
     "nameLabel": "Nazwa",

@@ -43,8 +43,16 @@
     "unknown": "Nieznany użytkownik Discord"
   },
   "emptyState": {
-    "notFound": "Nie znaleziono graczy",
-    "noPlayers": "Brak graczy online.",
-    "noAccess": "Nie masz uprawnień do wyświetlania graczy online na tym serwerze."
+    "notFoundTitle": "Brak pasujących graczy",
+    "clearFilters": "Wyczyść filtry",
+    "noPlayersTitle": "Nikt nie jest teraz online",
+    "noAccessTitle": "Brak dostępu do listy"
+  },
+  "states": {
+    "loading": "Ładowanie graczy online",
+    "loadError": "Nie udało się załadować graczy online",
+    "refreshError": "Nie udało się odświeżyć graczy online",
+    "refreshing": "Odświeżanie graczy online",
+    "offline": "Połączenie przerwane — dane mogą być nieaktualne"
   }
 }

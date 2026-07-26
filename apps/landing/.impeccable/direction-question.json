@@ -1,0 +1,18 @@
+{
+  "title": "Choose the visual world",
+  "question": "Keep the Night Watch Ledger direction, steer it, or ask for a fresh roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Night Watch Ledger",
+      "kicker": "RECOMMENDED DIRECTION",
+      "lineage": "astronomical observing log × incident-command status board",
+      "body": "A dark, independent instrument for the guild decision-maker. The first viewport reads like an active operations record: a plain Lootlog wordmark, one decisive promise, a narrow live-status rail, and a large current product view—not a floating app mockup. Coal and ink-black surfaces carry bone-white text; signal green, amber, and coral appear only where state or urgency earns them. Condensed labels and monospaced figures make the data feel recorded rather than decorated. The page unfolds as one ruled event ledger: capture in game, synchronize the guild, inspect the evidence, decide what happens next. Honest risk: if the ruling and labels become too dense, it can feel technical; we counter that with generous scale, one dominant fact per section, and real screenshots doing the explaining.",
+      "hero": "/Users/kamil/workspace/margo/monorepo/apps/landing/.impeccable/research/battle-panel.png",
+      "board": "/Users/kamil/workspace/margo/monorepo/apps/landing/.impeccable/research/guild-kill-stats.png"
+    }
+  ],
+  "reroll": true,
+  "canon": false,
+  "steer": true
+}

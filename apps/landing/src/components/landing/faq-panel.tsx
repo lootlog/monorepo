@@ -14,24 +14,29 @@ export function FaqPanel() {
   const { t } = useTranslation();
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full">
       <Accordion
         type="single"
         collapsible
         defaultValue="item-0"
-        className="w-full space-y-4"
+        className="w-full border-t border-[#31425b]"
       >
         {faqKeys.map((key, index) => (
           <AccordionItem
-            key={index}
+            key={key}
             value={`item-${index}`}
-            className="border border-white/[0.06] bg-white/[0.03] rounded-xl px-6 data-[state=open]:bg-white/[0.07] data-[state=open]:border-primary/20 hover:border-white/15 transition-all duration-300"
+            className="border-b border-[#31425b] px-0"
           >
-            <AccordionTrigger className="py-4 text-left hover:no-underline hover:text-primary transition-colors">
-              {t(`landing.faq.q${key}`)}
+            <AccordionTrigger className="min-h-20 gap-5 rounded-md px-0 py-5 text-left text-lg font-bold text-[#f7f8f2] hover:text-[#c8f135] hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#0d1a2c]">
+              <span className="flex items-start gap-4">
+                <span className="mt-1 text-xs font-bold text-[#7f93ae]">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span>{t(`landing.faq.q${key}`)}</span>
+              </span>
             </AccordionTrigger>
-            <AccordionContent className="pb-4">
-              <p className="text-muted-foreground leading-relaxed text-sm">
+            <AccordionContent className="pb-7 pl-9 pr-6">
+              <p className="max-w-[68ch] text-base leading-7 text-[#aebed4]">
                 {t(`landing.faq.a${key}`)}
               </p>
             </AccordionContent>

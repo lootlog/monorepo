@@ -97,6 +97,18 @@ describe("DeleteTimerPopover", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("shows a pending item while delete permissions load", () => {
+    mockUseQueries.mockReturnValue([
+      { data: undefined, isPending: true },
+      { data: undefined, isPending: true },
+    ]);
+
+    render(<DeleteTimerPopover timer={timer} onDeleteTimer={vi.fn()} />);
+
+    expect(screen.getByText("Sprawdzanie uprawnień...")).toBeVisible();
+    expect(screen.queryByText("Usuń timer")).not.toBeInTheDocument();
+  });
+
   it("treats LOOTLOG_TIMERS_DELETE as sufficient permission for single-guild delete", async () => {
     const user = userEvent.setup();
     const onDeleteTimer = vi.fn();
