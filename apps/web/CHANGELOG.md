@@ -1,5 +1,17 @@
 # @lootlog/web
 
+## 1.1.0
+
+### Minor Changes
+
+- fee6e4d: Add synchronized Discord server visibility preferences for the web and game clients.
+
+### Patch Changes
+
+- Updated dependencies [fee6e4d]
+  - @lootlog/types@1.1.0
+  - @lootlog/api-client@1.1.0
+
 ## 1.0.2
 
 ### Patch Changes
