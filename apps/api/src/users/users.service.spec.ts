@@ -185,6 +185,7 @@ describe("UsersService", () => {
     expect(result).toEqual({
       userId: "auth-user-current",
       guildsOrder: [],
+      hiddenGuildIds: [],
       theme: "default",
       colorMode: "dark",
       chatAppearance: {
@@ -208,6 +209,7 @@ describe("UsersService", () => {
     mockPrismaService.userSettings.findUnique.mockResolvedValue({
       userId: "auth-user-current",
       guildsOrder: ["guild-1"],
+      hiddenGuildIds: [],
       theme: "default",
       colorMode: "dark",
     });
@@ -224,11 +226,61 @@ describe("UsersService", () => {
     expect(result.guildsOrder).toEqual(["guild-1"]);
   });
 
+  it("updates hidden guild ids without overwriting other preferences", async () => {
+    const currentSettings = {
+      id: 7,
+      userId: "auth-user-current",
+      guildsOrder: ["guild-2", "guild-1"],
+      hiddenGuildIds: ["guild-unavailable"],
+      theme: "fantasy",
+      colorMode: "dark",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const updatedSettings = {
+      ...currentSettings,
+      hiddenGuildIds: ["guild-unavailable", "guild-1"],
+    };
+    mockPrismaService.userSettings.findUnique.mockResolvedValue(
+      currentSettings,
+    );
+    mockPrismaService.userSettings.upsert.mockResolvedValue(updatedSettings);
+    mockPrismaService.userGameAccountSettings.findUnique.mockResolvedValue(
+      null,
+    );
+
+    const result = await service.updateUserPreferences("auth-user-current", {
+      hiddenGuildIds: ["guild-unavailable", "guild-1"],
+    });
+
+    expect(mockPrismaService.userSettings.upsert).toHaveBeenCalledWith({
+      where: { userId: "auth-user-current" },
+      update: {
+        hiddenGuildIds: ["guild-unavailable", "guild-1"],
+        updatedAt: expect.any(Date),
+      },
+      create: {
+        userId: "auth-user-current",
+        guildsOrder: [],
+        hiddenGuildIds: ["guild-unavailable", "guild-1"],
+        theme: "default",
+        colorMode: "dark",
+      },
+    });
+    expect(result).toMatchObject({
+      guildsOrder: ["guild-2", "guild-1"],
+      hiddenGuildIds: ["guild-unavailable", "guild-1"],
+      theme: "fantasy",
+      colorMode: "dark",
+    });
+  });
+
   it("merges and clamps a chat appearance patch without overwriting other preferences", async () => {
     const currentSettings = {
       id: 7,
       userId: "auth-user-current",
       guildsOrder: ["guild-1"],
+      hiddenGuildIds: [],
       theme: "fantasy",
       colorMode: "dark",
       chatAppearance: {
@@ -501,6 +553,7 @@ describe("UsersService", () => {
     expect(result).toEqual({
       userId: "auth-user-current",
       guildsOrder: [],
+      hiddenGuildIds: [],
       theme: "default",
       colorMode: "dark",
       chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,

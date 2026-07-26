@@ -22,6 +22,10 @@
   },
   "search": "Szukaj...",
   "noResults": "Brak wyników",
+  "actions": {
+    "retry": "Spróbuj ponownie",
+    "undo": "Cofnij"
+  },
   "boolean": {
     "yes": "Tak",
     "no": "Nie"

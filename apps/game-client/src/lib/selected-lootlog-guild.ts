@@ -35,6 +35,22 @@ export function orderLootlogGuilds(
   ];
 }
 
+export function getVisibleLootlogGuilds(
+  guilds: GuildIdentity[],
+  guildsOrder?: string[],
+  hiddenGuildIds: string[] = [],
+): GuildIdentity[] {
+  if (hiddenGuildIds.length === 0) {
+    return orderLootlogGuilds(guilds, guildsOrder);
+  }
+
+  const hiddenGuildIdSet = new Set(hiddenGuildIds);
+
+  return orderLootlogGuilds(guilds, guildsOrder).filter(
+    (guild) => !hiddenGuildIdSet.has(guild.id),
+  );
+}
+
 export function getSelectedLootlogGuildId(
   guildIdByCharId: Record<string, string | undefined>,
 ): string | undefined {

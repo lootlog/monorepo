@@ -1,0 +1,2 @@
+ALTER TABLE "UserSettings"
+ADD COLUMN "hiddenGuildIds" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

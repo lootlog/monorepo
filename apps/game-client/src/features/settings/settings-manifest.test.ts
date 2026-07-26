@@ -48,6 +48,7 @@ describe("settings manifest persistence references", () => {
 
     expect(domainIds).toEqual([
       "general",
+      "servers",
       "appearance",
       "timers",
       "game-data",
@@ -64,6 +65,29 @@ describe("settings manifest persistence references", () => {
     ).toBe(false);
     expect(sounds?.subsections.map((subsection) => subsection.id)).toEqual([
       "sounds",
+    ]);
+  });
+
+  it("exposes server visibility as a searchable settings domain", () => {
+    const servers = SETTINGS_MANIFEST.find((domain) => domain.id === "servers");
+
+    expect(servers).toMatchObject({
+      icon: "server",
+      labelKey: "settings.domains.servers",
+    });
+    expect(servers?.subsections).toEqual([
+      {
+        id: "visibility",
+        labelKey: "settings.subsections.serverVisibility",
+        controls: [
+          {
+            id: "server-visibility",
+            labelKey: "settings.servers.title",
+            descriptionKey: "settings.servers.description",
+            aliases: ["serwery", "discord", "ukryte serwery"],
+          },
+        ],
+      },
     ]);
   });
 
