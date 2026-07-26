@@ -15,6 +15,7 @@ let mockGuilds = [
   { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
   { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-1" },
 ];
+let mockHiddenGuildIds: string[] = [];
 
 let mockNpcResults: SearchTimersNpcResponseDtoOutput[] = [];
 let mockSelectedGuildIdsForTimersByCharId: Record<string, string[]> = {
@@ -28,6 +29,16 @@ vi.mock("@/hooks/api/use-create-manual-timer", () => ({
   useCreateManualTimer: () => ({
     mutate: mockMutate,
     isPending: false,
+  }),
+}));
+
+vi.mock("@/hooks/api/use-user-preferences", () => ({
+  useUserPreferences: () => ({
+    data: {
+      guildsOrder: [],
+      hiddenGuildIds: mockHiddenGuildIds,
+    },
+    isFetched: true,
   }),
 }));
 
@@ -55,6 +66,7 @@ vi.mock("@lootlog/api-client/react-query/main/users", () => ({
   ],
   useUsersControllerGetCurrentUserAccessibleGuilds: () => ({
     data: mockGuilds,
+    isFetched: true,
   }),
 }));
 
@@ -153,19 +165,21 @@ vi.mock("@/components/guild-switcher", () => ({
     onChange?: (guildId: string) => void;
     disabled?: boolean;
   }) => (
-    <select
-      aria-label="Serwer"
-      value={value}
-      disabled={disabled}
-      onChange={(event) => onChange?.(event.currentTarget.value)}
-    >
-      <option value="">--</option>
-      {mockGuilds.map((guild) => (
-        <option key={guild.id} value={guild.id}>
-          {guild.name}
-        </option>
-      ))}
-    </select>
+    <div data-testid="guild-switcher">
+      <select
+        aria-label="Serwer"
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange?.(event.currentTarget.value)}
+      >
+        <option value="">--</option>
+        {mockGuilds.map((guild) => (
+          <option key={guild.id} value={guild.id}>
+            {guild.name}
+          </option>
+        ))}
+      </select>
+    </div>
   ),
 }));
 
@@ -226,6 +240,7 @@ describe("AddTimerForm", () => {
       { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-1" },
     ];
     mockNpcResults = [];
+    mockHiddenGuildIds = [];
     mockSelectedGuildIdsForTimersByCharId = {
       "101": ["guild-2"],
     };
@@ -300,6 +315,39 @@ describe("AddTimerForm", () => {
 
     expect(screen.getByLabelText("Serwer")).toHaveValue("guild-1");
     expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();
+  });
+
+  it("uses the only visible guild without rendering a server picker", async () => {
+    const user = userEvent.setup();
+    mockHiddenGuildIds = ["guild-2"];
+
+    render(<AddTimerForm />);
+
+    expect(screen.queryByTestId("guild-switcher")).not.toBeInTheDocument();
+    expect(screen.queryByText("Serwer")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Nazwa"), "Tanroth");
+    await user.type(screen.getByLabelText("Minimalny czas (max 300h)"), "1m");
+    await user.type(screen.getByLabelText("Maksymalny czas (max 300h)"), "2m");
+    await user.click(screen.getByRole("button", { name: "Dodaj" }));
+
+    expect(mockMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guildIds: ["guild-1"],
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("keeps the settings notice without a required error when no guild is visible", () => {
+    mockHiddenGuildIds = ["guild-1", "guild-2"];
+
+    render(<AddTimerForm />);
+
+    expect(screen.getByTestId("guild-switcher")).toBeInTheDocument();
+    expect(screen.queryByText("Serwer")).not.toBeInTheDocument();
+    expect(screen.queryByText("Wybierz serwer")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dodaj" })).toBeDisabled();
   });
 
   it("submits a manual level when provided", async () => {

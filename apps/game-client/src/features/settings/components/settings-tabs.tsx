@@ -13,6 +13,7 @@ import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settin
 import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
+import { ServerVisibilitySettingsTab } from "@/features/settings/components/servers/server-visibility-settings-tab";
 import { NpcColorsSettings } from "@/features/settings/components/npc-colors/npc-colors-settings";
 import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
@@ -37,6 +38,7 @@ import {
   Keyboard,
   Palette,
   Search,
+  Server,
   Settings,
   Volume2,
   X,
@@ -47,6 +49,7 @@ import { useTranslation } from "react-i18next";
 
 const ICONS: Record<string, LucideIcon> = {
   settings: Settings,
+  server: Server,
   palette: Palette,
   clock: Clock,
   database: Database,
@@ -190,6 +193,9 @@ export const SettingsTabs = () => {
   let content: ReactNode;
 
   switch (selectedSubsection) {
+    case "visibility":
+      content = <ServerVisibilitySettingsTab />;
+      break;
     case "behavior":
       content = <GeneralSettingsTab />;
       break;

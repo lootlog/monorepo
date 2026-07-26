@@ -18,6 +18,7 @@
     "add": "Dodaj",
     "close": "Zamknij",
     "openSettings": "Otwórz ustawienia",
+    "undo": "Cofnij",
     "copyAction": "Kopiuj akcję",
     "copyRequest": "Kopiuj request",
     "exportJson": "Eksportuj JSON",
@@ -66,7 +67,11 @@
     "closeWindow": "Zamknij okno"
   },
   "guildSwitcher": {
-    "allServers": "Wszystkie serwery"
+    "allServers": "Wszystkie serwery",
+    "allHidden": "Wszystkie serwery są ukryte",
+    "hideInGameClient": "Ukryj w grze",
+    "hidden": "Ukryto {{name}} w grze",
+    "hideError": "Nie udało się ukryć serwera."
   },
   "characterTooltip": {
     "owner": {
