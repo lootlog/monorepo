@@ -57,6 +57,13 @@ vi.mock("@/hooks/api/use-guild-permissions", () => ({
 }));
 
 vi.mock("@lootlog/api-client/react-query/main/events", () => ({
+  getEventsMonitoringControllerGetCoordinationQueryKey: ({
+    guildId,
+    eventId,
+  }: {
+    guildId: string;
+    eventId: string;
+  }) => ["events", guildId, eventId, "coordination"],
   invalidateEventsMonitoringControllerGetCoordination: vi.fn(),
   useEventsAssignmentControllerSelfAssignMember: mocks.selfAssignMember,
   useEventsMonitoringControllerCloseRespawnWindow: mocks.closeRespawnWindow,

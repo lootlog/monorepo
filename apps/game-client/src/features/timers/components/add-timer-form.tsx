@@ -36,6 +36,8 @@ import {
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
 import { useTranslation } from "react-i18next";
+import { useUserPreferences } from "@/hooks/api/use-user-preferences";
+import { getVisibleLootlogGuilds } from "@/lib/selected-lootlog-guild";
 
 const SECONDS_IN_HOUR = 3600;
 const SECONDS_IN_MINUTE = 60;
@@ -232,6 +234,15 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
       staleTime: 1000 * 60 * 5,
     },
   });
+  const { data: userPreferences } = useUserPreferences();
+  const visibleGuilds =
+    guilds && userPreferences
+      ? getVisibleLootlogGuilds(
+          guilds,
+          userPreferences.guildsOrder,
+          userPreferences.hiddenGuildIds,
+        )
+      : [];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -251,7 +262,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
     ? selectedGuildIdsForTimersByCharId[characterId]?.[0]
     : undefined;
   const guildSelectionContextKey = `${characterId}:${initialGuildId ?? ""}:${savedGuildId ?? ""}`;
-  const availableGuildIds = new Set(guilds?.map((guild) => guild.id) ?? []);
+  const availableGuildIds = new Set(visibleGuilds.map((guild) => guild.id));
   let preferredGuildId = "";
 
   if (initialGuildId && availableGuildIds.has(initialGuildId)) {
@@ -261,7 +272,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   } else if (currentGuildId && availableGuildIds.has(currentGuildId)) {
     preferredGuildId = currentGuildId;
   } else {
-    preferredGuildId = guilds?.[0]?.id ?? "";
+    preferredGuildId = visibleGuilds[0]?.id ?? "";
   }
 
   const selectedGuildId =
