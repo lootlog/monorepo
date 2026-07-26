@@ -29,6 +29,9 @@ import type { ChatUnreadCountByGuildId } from "./chat-unread.helpers";
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/types";
+import { AsyncContent } from "@/components/async-content";
+import { AsyncStatusIndicator } from "@/components/async-status-indicator";
+import { useSocket } from "@/contexts/socket-context";
 
 interface ChatViewProps {
   isOpen: boolean;
@@ -44,6 +47,7 @@ export const ChatView = ({
   unreadCountByGuildId,
 }: ChatViewProps) => {
   const { t } = useTranslation("chat");
+  const { connected, joined } = useSocket();
   const preferences = useUserPreferences();
   const { npcTypeColors } = useNpcTypeColors();
   const chatAppearance =
@@ -71,7 +75,13 @@ export const ChatView = ({
     })),
   );
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
+  const {
+    data: guilds,
+    error: guildsError,
+    isFetching: guildsFetching,
+    isLoading: guildsLoading,
+    refetch: refetchGuilds,
+  } = useUsersControllerGetCurrentUserAccessibleGuilds({
     query: {
       queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
       refetchOnMount: false,
@@ -81,12 +91,21 @@ export const ChatView = ({
   const currentCharacterNick = useGameStore(
     (state) => state.game?.hero.name ?? "",
   );
-  const { membersByGuildId, mentionContextsByGuildId, messagesByGuildId } =
-    useChatGuildData({
-      currentCharacterNick,
-      guilds,
-      selectedGuildId,
-    });
+  const {
+    failedGuildIds,
+    hasMessagesResponse,
+    error: chatInitialError,
+    initialLoading: chatInitialLoading,
+    membersByGuildId,
+    mentionContextsByGuildId,
+    messagesByGuildId,
+    refreshing: chatRefreshing,
+    retry: retryFailed,
+  } = useChatGuildData({
+    currentCharacterNick,
+    guilds,
+    selectedGuildId,
+  });
   useEffect(() => {
     const nextSelectedGuildId = getNextSelectedGuildId(selectedGuildId, guilds);
 
@@ -115,6 +134,25 @@ export const ChatView = ({
     currentMessages,
     guildNamesById,
   );
+  const guildsLoaded = guilds !== undefined;
+  const waitingForGuildSelection =
+    guildsLoaded && guilds.length > 0 && !selectedGuildId;
+  const initialLoading =
+    (!guildsLoaded && guildsLoading) ||
+    waitingForGuildSelection ||
+    chatInitialLoading;
+  const initialError = !guildsLoaded ? guildsError : chatInitialError;
+  const partialError =
+    (guildsLoaded && Boolean(guildsError)) || failedGuildIds.length > 0;
+  const refreshing =
+    (guildsLoaded && guildsFetching) || (hasMessagesResponse && chatRefreshing);
+  const stale = hasMessagesResponse && (!connected || !joined);
+  const retryChatData = () => {
+    if (guildsError) {
+      void refetchGuilds();
+    }
+    retryFailed();
+  };
 
   const handleReplyToMessage = (message: ChatMessageType) => {
     if (!canReplyToChatMessage(message)) {
@@ -178,23 +216,62 @@ export const ChatView = ({
             ))}
           </div>
         )}
-        <div className="ll:flex-1 ll:overflow-hidden">
-          <ChatMessageList
-            appearance={chatAppearance}
-            npcTypeColors={npcTypeColors}
-            key={`${selectedGuildId}:${chatFilter}`}
-            ariaLabel={t("window.title")}
-            emptyStateLabel={t("emptyState.noMessages")}
-            guildNamesById={guildNamesById}
-            hasRenderableMessages={hasRenderableMessages}
-            membersByGuildId={membersByGuildId}
-            mentionContextsByGuildId={mentionContextsByGuildId}
-            onReplyToMessage={handleReplyToMessage}
-            renderSignature={currentRenderSignature}
-            renderables={currentRenderableMessages}
-            scrollToBottomRequest={scrollToBottomRequest}
-            selectedGuildId={selectedGuildId}
-          />
+        <div className="ll:relative ll:flex-1 ll:overflow-hidden">
+          <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
+            <AsyncStatusIndicator
+              active={partialError}
+              kind="error"
+              label={
+                failedGuildIds.length > 0
+                  ? t("states.partialError", {
+                      count: failedGuildIds.length,
+                    })
+                  : t("states.refreshError")
+              }
+              onRetry={retryChatData}
+              retryLabel={t("actions.retry", { ns: "common" })}
+            />
+            <AsyncStatusIndicator
+              active={!partialError && stale}
+              kind="warning"
+              label={t("states.offline")}
+            />
+            <AsyncStatusIndicator
+              active={!partialError && !stale && refreshing}
+              delay
+              kind="loading"
+              label={t("states.refreshing")}
+            />
+          </div>
+          <AsyncContent
+            error={initialError}
+            errorLabel={t("states.loadError")}
+            isLoading={initialLoading}
+            loadingLabel={t("states.loading")}
+            onRetry={retryChatData}
+            retryLabel={t("actions.retry", { ns: "common" })}
+          >
+            <ChatMessageList
+              appearance={chatAppearance}
+              npcTypeColors={npcTypeColors}
+              key={`${selectedGuildId}:${chatFilter}`}
+              ariaLabel={t("window.title")}
+              emptyStateTitle={t(
+                selectedGuildId === "all"
+                  ? "emptyState.allTitle"
+                  : "emptyState.guildTitle",
+              )}
+              guildNamesById={guildNamesById}
+              hasRenderableMessages={hasRenderableMessages}
+              membersByGuildId={membersByGuildId}
+              mentionContextsByGuildId={mentionContextsByGuildId}
+              onReplyToMessage={handleReplyToMessage}
+              renderSignature={currentRenderSignature}
+              renderables={currentRenderableMessages}
+              scrollToBottomRequest={scrollToBottomRequest}
+              selectedGuildId={selectedGuildId}
+            />
+          </AsyncContent>
         </div>
         {selectedGuildId !== "all" && isChatInputEnabled && (
           <ChatInput

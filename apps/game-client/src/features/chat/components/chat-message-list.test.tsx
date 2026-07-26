@@ -126,7 +126,7 @@ const createMessageListElement = (
     appearance={appearance}
     key={instanceKey}
     ariaLabel="Chat messages"
-    emptyStateLabel="No messages"
+    emptyStateTitle="No messages"
     guildNamesById={{ [selectedGuildId]: "Guild" }}
     hasRenderableMessages={renderables.length > 0}
     membersByGuildId={{}}
@@ -683,6 +683,12 @@ describe("ChatMessageList", () => {
     renderMessageList([]);
 
     expect(screen.getByText("No messages")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveClass(
+      "ll:box-border",
+      "ll:h-full",
+      "ll:items-center",
+      "ll:justify-center",
+    );
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 });

@@ -192,6 +192,18 @@ describe("log actions retry", () => {
 });
 
 describe("log value retention", () => {
+  it("omits undefined object fields instead of exporting them as strings", () => {
+    expect(
+      serializeLogValue({
+        partyGathering: undefined,
+        respBaseSeconds: 561,
+        respawnRandomness: undefined,
+      }),
+    ).toEqual({
+      respBaseSeconds: 561,
+    });
+  });
+
   it("serializes cyclic and oversized values into a bounded diagnostic", () => {
     const payload: Record<string, unknown> = {
       events: Array.from({ length: 1_100 }, (_, index) => ({

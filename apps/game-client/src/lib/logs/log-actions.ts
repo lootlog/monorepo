@@ -218,11 +218,12 @@ const serializeLogValueWithinBudget = (
     context.ancestors.add(value);
     consumeSerializationBudget(context, 2);
     const serializedRecord: Record<string, SerializableValue> = {};
+    const serializableEntries = Object.entries(value).filter(
+      ([, nestedValue]) => nestedValue !== undefined,
+    );
 
     try {
-      for (const [index, [key, nestedValue]] of Object.entries(
-        value,
-      ).entries()) {
+      for (const [index, [key, nestedValue]] of serializableEntries.entries()) {
         if (index > 0) {
           consumeSerializationBudget(context, 1);
         }

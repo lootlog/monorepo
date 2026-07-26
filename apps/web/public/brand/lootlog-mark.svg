@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Lootlog Resp Orbit</title>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#07111f"/>
+  <path
+    d="M373.4 138.6A166 166 0 1 0 419.5 227.2"
+    fill="none"
+    stroke="#c8f135"
+    stroke-linecap="round"
+    stroke-width="52"
+  />
+  <circle cx="419.5" cy="227.2" r="29" fill="#35d3e4"/>
+  <circle cx="256" cy="256" r="42" fill="#ffbd3f"/>
+</svg>

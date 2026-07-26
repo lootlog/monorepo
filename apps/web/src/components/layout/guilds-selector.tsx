@@ -10,6 +10,7 @@ import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skel
 import { useUser } from "@/hooks/api/user/use-user";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { Separator } from "@lootlog/ui/components/separator";
+import { BrandNavItem } from "@/components/layout/brand-nav-item";
 import {
   useSetUsersControllerGetUserPreferencesQueryData,
   useUsersControllerGetCurrentUserGuilds,
@@ -105,6 +106,8 @@ export const GuildsSelector: FC = () => {
 
   return (
     <div className="flex flex-col gap-2 w-16 border-r border-solid pt-2 pb-2 h-full overflow-hidden">
+      <BrandNavItem />
+      <Separator className="-mt-[1px]" />
       <UserNavItem />
       <Separator className="-mt-[1px]" />
       <ScrollArea className="flex-1 h-24">
