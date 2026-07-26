@@ -12,6 +12,7 @@ import type { CreateBattleDtoEventsItemParty } from './create-battle-dto-events-
 export type CreateBattleDtoEventsItem = {
   party?: CreateBattleDtoEventsItemParty;
   f: CreateBattleDtoEventsItemF;
-  ev: number;
+  ev?: number;
   match_summary?: CreateBattleDtoEventsItemMatchSummary;
+  matchmaking_state?: number;
 };
