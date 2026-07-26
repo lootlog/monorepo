@@ -1,180 +1,114 @@
 ---
-title: FAQ
-description: Najczęściej zadawane pytania dotyczące Lootlog
+title: Pomoc i FAQ
+description: Rozwiąż najczęstsze problemy z instalacją, synchronizacją, dostępem do klanu i analizą walk.
 ---
 
-## Ogólne
+Zacznij od sekcji odpowiadającej objawowi. Jeżeli problem pozostaje, przygotuj
+nazwę przeglądarki, opis wykonanych kroków i zrzut ekranu bez prywatnych
+danych.
+
+## Produkt i konto
 
 ### Czy Lootlog jest darmowy?
 
-Tak. Lootlog jest całkowicie darmowy i otwartoźródłowy. Projekt jest tworzony przez społeczność graczy Margonem.
+Tak. Lootlog jest bezpłatny i otwartoźródłowy. Kod jest dostępny na
+[GitHubie](https://github.com/lootlog/monorepo).
 
-### Czy grozi mi ban za używanie Lootlog?
+### Czy dodatek automatyzuje rozgrywkę?
 
-Nie. Lootlog to nakładka UI, która nie ingeruje w silnik gry. Nie modyfikuje żadnych danych gry ani nie automatyzuje rozgrywki.
+Nie. Lootlog nie steruje postacią, nie porusza nią i nie wykonuje akcji w
+imieniu gracza. Jest nakładką zbierającą i prezentującą obsługiwane dane.
 
-### Czy Lootlog jest bezpieczny?
+### Czy używanie Lootlog gwarantuje brak blokady konta?
 
-Tak. Kod źródłowy jest publicznie dostępny na [GitHub](https://github.com/lootlog/monorepo) — każdy może go zweryfikować.
+Żadne zewnętrzne narzędzie nie powinno składać takiej gwarancji w imieniu
+operatora gry. Lootlog ogranicza się do opisanych funkcji i nie automatyzuje
+rozgrywki. Aktualne zasady gry zawsze oceniaj na podstawie oficjalnych
+regulaminów Margonem.
 
-### Czy muszę mieć konto Discord?
+### Czy konto Discord jest wymagane?
 
-Tak. Logowanie odbywa się przez Discord. Jest to jedyny sposób autoryzacji w Lootlog.
-
-### Czy Lootlog działa na wielu postaciach?
-
-Tak. Dodatek działa na wszystkich postaciach i światach. Możesz konfigurować, do których klanów trafiają dane z poszczególnych postaci w [ustawieniach](/docs/settings).
+Tak. Discord jest używany do logowania i powiązania z obsługiwanymi klanami.
 
 ## Instalacja
 
-### Nie mogę zainstalować dodatku
+### Dodatek nie pojawia się po instalacji
 
-Upewnij się, że:
+1. Sprawdź, czy skrypt jest włączony w Tampermonkey.
+2. Odśwież kartę gry z pominięciem pamięci podręcznej.
+3. Upewnij się, że rozszerzenie może działać na stronie Margonem.
+4. Zezwól na wymagane pliki cookie stron trzecich.
+5. Tymczasowo wyłącz inne skrypty i sprawdź konflikt.
 
-1. Masz zainstalowany [Tampermonkey](https://www.tampermonkey.net/) (lub inny menedżer skryptów)
-2. Twoja przeglądarka obsługuje rozszerzenia (Chrome, Firefox, Edge, Opera)
-3. Skrypt został poprawnie zainstalowany — sprawdź w panelu Tampermonkey
+Pełna procedura znajduje się w [Instalacji](/docs/installation).
 
-### Dodatek nie działa po instalacji
+### Logowanie przez Discord nie wraca do gry
 
-Spróbuj:
+Sprawdź blokadę wyskakujących okien i plików cookie, a następnie rozpocznij
+logowanie ponownie z interfejsu dodatku.
 
-1. Odświeżyć stronę gry (F5)
-2. Sprawdzić, czy skrypt jest włączony w Tampermonkey
-3. **Upewnić się, że pliki cookie stron trzecich (3rd party cookies) są włączone** w ustawieniach przeglądarki — Lootlog wymaga ich do poprawnego działania
-4. Wyczyścić cache przeglądarki (Ctrl+Shift+Delete)
-5. Sprawdzić, czy nie masz konfliktu z innymi skryptami
+## Dane i synchronizacja
 
-## Łupy i timery
+### Nie widzę nowych łupów
 
-### Nie widzę łupów w panelu
+Sprawdź kolejno:
 
-Możliwe przyczyny:
+1. aktywność dodatku podczas zdobycia przedmiotu;
+2. wybrany świat i klan;
+3. przypisanie postaci;
+4. filtry listy;
+5. uprawnienie `LOOTLOG_LOOTS_READ`.
 
-1. Nie masz uprawnienia `LOOTS_READ` w klanie — poproś lidera o nadanie roli
-2. Postać nie jest przypisana do klanu — sprawdź [ustawienia postaci](/docs/settings)
-3. Filtry w panelu ukrywają łupy — zresetuj filtry
+### Timery nie są widoczne
 
-### Timery się nie synchronizują
+Upewnij się, że patrzysz na właściwy klan i masz
+`LOOTLOG_TIMERS_READ`. Dostęp do tytanów lub herosów może wymagać dodatkowego
+uprawnienia kategorii.
 
-1. Sprawdź połączenie z internetem
-2. Wyloguj się i zaloguj ponownie
-3. Upewnij się, że masz uprawnienie `TIMERS_READ`
-4. Sprawdź status serwera na [Discord](https://discord.gg/mPcczaeYMu)
+### Dane pojawiają się w złym klanie
 
-### Jak dodać timer ręcznie?
-
-1. Otwórz panel timerów
-2. Kliknij przycisk dodawania
-3. Wybierz potwora i ustaw czas respawnu
-4. Zatwierdź — timer pojawi się u wszystkich członków klanu z odpowiednimi uprawnieniami
+Sprawdź przypisania postaci w [Ustawieniach](/docs/settings). Po poprawce
+wykonaj nowe zdarzenie testowe; wcześniejsze wpisy nie muszą zostać
+automatycznie przeniesione.
 
 ## Panel walki
 
-### Gdzie znajdę analizę walk?
+### Nie widzę walki
 
-Po zainstalowaniu dodatku, logi walk PvP automatycznie trafiają do [Panelu walki](/docs/battle-panel) w strefie osobistej (@me → Panel walki) na [lootlog.pl](https://lootlog.pl/@me).
+Walki są rejestrowane od momentu aktywacji dodatku. Sprawdź postać, świat,
+zakres czasu oraz to, czy dodatek działał podczas walki.
 
-### Nie widzę swoich walk
+### Czy mogę wysłać link do walki?
 
-Walki rejestrowane są tylko od momentu instalacji dodatku. Wcześniejsze walki nie są dostępne. Upewnij się, że dodatek jest aktywny podczas walki.
+Tak, jeżeli zmienisz jej widoczność na publiczną. Przed udostępnieniem
+sprawdź zawartość strony. Szczegóły opisuje
+[Analiza walk](/docs/battle-panel).
 
-### Czy mogę udostępnić walkę innym?
+## Klan i dostęp
 
-Tak. Publiczne walki mają bezpośredni link, który możesz udostępnić. Prywatne walki są widoczne tylko dla ciebie.
+### Nie widzę klanu
 
-## Klan
+Sprawdź, czy korzystasz z konta Discord należącego do serwera klanu. Jeśli
+klan nadal się nie pojawia, poproś administratora o potwierdzenie integracji.
 
-### Jak dołączyć do klanu?
+### Nie widzę konkretnej sekcji
 
-Klan w Lootlog odpowiada serwerowi Discord. Dołącz do serwera Discord klanu, a po zalogowaniu do Lootlog klan pojawi się automatycznie.
+Najczęściej brakuje wymaganej roli. Porównaj zakres z
+[kanoniczną listą uprawnień](/docs/permissions) i poproś lidera o możliwie
+najwęższy potrzebny dostęp.
 
-### Jak zarządzać uprawnieniami?
+## Prywatność
 
-1. Przejdź do ustawień klanu → Role
-2. Stwórz lub edytuj rolę
-3. Zaznacz odpowiednie uprawnienia
-4. Przypisz rolę członkom w zakładce Członkowie
+Aktualny zakres przetwarzania danych i prawa użytkownika opisuje
+[Polityka prywatności](https://lootlog.pl/privacy-policy). To ona jest
+źródłem prawdy dla pytań o przechowywanie, udostępnianie i usuwanie danych.
 
-Szczegóły w sekcji [Uprawnienia](/docs/permissions).
+## Nadal potrzebujesz pomocy?
 
-### Nie widzę niektórych funkcji klanu
+- [Discord Lootlog](https://discord.gg/mPcczaeYMu) — pomoc społeczności i
+  bieżące komunikaty;
+- [GitHub Issues](https://github.com/lootlog/monorepo/issues) — powtarzalne
+  błędy z krokami odtworzenia.
 
-Prawdopodobnie nie masz odpowiednich uprawnień. Poproś lidera klanu o nadanie odpowiedniej roli. Sprawdź [listę uprawnień](/docs/permissions), aby dowiedzieć się, które uprawnienie jest potrzebne.
-
-## Rezerwacje
-
-### Jak zarezerwować mapę?
-
-1. Przejdź do sekcji klanu → Rezerwacje
-2. Znajdź wolną mapę (oznaczoną jako "Wolna")
-3. Kliknij na nią, aby zarezerwować
-
-Potrzebujesz uprawnienia `RESERVATIONS_WRITE`.
-
-### Rezerwacja wygasła — co teraz?
-
-Rezerwacje wygasają automatycznie po określonym czasie. Po prostu zarezerwuj mapę ponownie, jeśli nadal jej potrzebujesz.
-
-## Discord
-
-### Jak dodać bota Discord?
-
-Skontaktuj się z zespołem Lootlog na [Discord](https://discord.gg/mPcczaeYMu), aby skonfigurować integrację bota z serwerem klanu.
-
-### Bot nie wysyła powiadomień
-
-Sprawdź, czy:
-
-1. Bot ma odpowiednie uprawnienia na serwerze Discord
-2. Kanał powiadomień jest poprawnie skonfigurowany
-3. Powiadomienia są włączone w ustawieniach klanu
-
-## Problemy techniczne
-
-### Dodatek powoduje spowolnienia w grze
-
-Spróbuj:
-
-1. Wyłączyć nieużywane funkcje (np. wykrywacz NPC, jeśli go nie potrzebujesz)
-2. Sprawdzić, czy nie masz konfliktu z innymi skryptami Tampermonkey
-3. Zgłosić problem na [Discord](https://discord.gg/mPcczaeYMu)
-
-### Dane nie synchronizują się
-
-1. Sprawdź połączenie z internetem
-2. Wyloguj się i zaloguj ponownie
-3. Sprawdź status serwera na [Discord](https://discord.gg/mPcczaeYMu)
-
-## Prywatność i bezpieczeństwo
-
-### Jakie dane są zbierane?
-
-Lootlog zbiera tylko dane niezbędne do działania: informacje o łupach, timerach i walkach z gry. Szczegóły w [Polityce Prywatności](https://lootlog.pl/privacy-policy).
-
-### Czy mogę usunąć swoje dane?
-
-Tak. Możesz usunąć swoje konto wraz ze wszystkimi danymi w ustawieniach panelu webowego.
-
-### Czy dane są udostępniane osobom trzecim?
-
-Nie. Dane nie są sprzedawane ani udostępniane. Zobacz [Politykę Prywatności](https://lootlog.pl/privacy-policy).
-
-## Pomoc i wsparcie
-
-### Gdzie mogę zgłosić błąd?
-
-- Na [Discord](https://discord.gg/mPcczaeYMu) — najszybsza odpowiedź
-- Przez [GitHub Issues](https://github.com/lootlog/monorepo/issues) — formalne zgłoszenia
-
-### Jak mogę pomóc w rozwoju?
-
-Lootlog jest otwartoźródłowy. Możesz:
-
-- Zgłaszać błędy i sugestie
-- Tworzyć pull requesty z nowymi funkcjami
-- Wspierać finansowo przez [BuyCoffee](https://buycoffee.to/lootlog)
-
-### Nie znalazłem odpowiedzi na swoje pytanie
-
-Dołącz do [serwera Discord](https://discord.gg/mPcczaeYMu) i zadaj pytanie społeczności.
+Nie publikuj tokenów, plików cookie ani danych logowania. Do zgłoszenia dodaj
+tylko informacje potrzebne do odtworzenia problemu.
