@@ -1,5 +1,14 @@
 # @lootlog/auth
 
+## 1.0.2
+
+### Patch Changes
+
+- 332d70b: Restore Discord OAuth registration after the Better Auth provider input validation change while keeping Discord identities immutable.
+- Updated dependencies [fee6e4d]
+  - @lootlog/types@1.1.0
+  - @lootlog/nest-shared@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes
