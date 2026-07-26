@@ -48,6 +48,8 @@ import {
   showCharacterProfile,
   startPrivateMessage,
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type ChatMessageProps = {
   all: boolean;
@@ -93,6 +95,9 @@ export const ChatMessage: FC<ChatMessageProps> = ({
           });
           setIsEditing(false);
         },
+        onError: () => {
+          toast.error(t("errors.editFailed"));
+        },
       },
     });
   const { mutate: deleteChatMessageMutation, isPending: isDeleting } =
@@ -105,6 +110,9 @@ export const ChatMessage: FC<ChatMessageProps> = ({
             updater: (old: ChatMessageType[] | undefined) =>
               old ? removeChatMessage(old, message.id) : old,
           });
+        },
+        onError: () => {
+          toast.error(t("errors.deleteFailed"));
         },
       },
     });
@@ -189,7 +197,14 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                   type="submit"
                   disabled={isUpdating || draftMessage.trim().length === 0}
                 >
-                  {t("edit.save")}
+                  {isUpdating ? (
+                    <Loader2
+                      aria-hidden
+                      className="ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
+                    />
+                  ) : (
+                    t("edit.save")
+                  )}
                 </Button>
                 <Button
                   type="button"
@@ -210,6 +225,12 @@ export const ChatMessage: FC<ChatMessageProps> = ({
                   wordBreak: "normal",
                 }}
               >
+                {isDeleting ? (
+                  <Loader2
+                    aria-label={t("contextMenu.deleting")}
+                    className="ll:mr-1 ll:inline ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
+                  />
+                ) : null}
                 {message.replyTo && (
                   <ChatReplyPreview
                     reply={message.replyTo}
