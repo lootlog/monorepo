@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { GuildSwitcher } from "./guild-switcher";
 
 const mockUseAccessibleGuilds = vi.fn();
@@ -81,6 +82,13 @@ describe("GuildSwitcher", () => {
       world: "tempest",
     });
     useSettingsStore.setState({ guildIdByCharId: {} });
+    useWindowsStore.setState((state) => ({
+      settings: {
+        ...state.settings,
+        open: false,
+        state: {},
+      },
+    }));
 
     mockUseAccessibleGuilds.mockReturnValue({
       data: [
@@ -287,7 +295,24 @@ describe("GuildSwitcher", () => {
     await waitFor(() => expect(handleChange).toHaveBeenCalledWith("guild-1"));
   });
 
-  it("shows a settings action instead of the all option when every guild is hidden", () => {
+  it("does not render a server picker when only one guild is visible", () => {
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: [],
+        hiddenGuildIds: ["guild-2", "guild-3"],
+      },
+      isFetched: true,
+    });
+
+    render(<GuildSwitcher allowAll value="all" />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Wszystkie serwery są ukryte"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a full-width settings notice when every guild is hidden", () => {
     mockUseUserPreferences.mockReturnValue({
       data: {
         guildsOrder: [],
@@ -296,12 +321,28 @@ describe("GuildSwitcher", () => {
       isFetched: true,
     });
 
-    render(<GuildSwitcher allowAll value="all" />);
+    const { container } = render(<GuildSwitcher allowAll value="all" />);
 
     expect(screen.queryByText("*")).not.toBeInTheDocument();
     expect(screen.getByText("Wszystkie serwery są ukryte")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveClass(
+      "ll:h-7",
+      "ll:w-full",
+      "ll:border-gray-700/90",
+      "ll:bg-gray-900/60",
+    );
     expect(
-      screen.getByRole("button", { name: "Otwórz ustawienia" }),
-    ).toBeInTheDocument();
+      container.querySelector("[data-ll-scroll-area-viewport]"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Otwórz ustawienia" }));
+
+    expect(useWindowsStore.getState().settings).toMatchObject({
+      open: true,
+      state: {
+        activeTab: "servers",
+        activeSubsection: "visibility",
+      },
+    });
   });
 });
