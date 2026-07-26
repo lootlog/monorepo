@@ -1,4 +1,17 @@
 {
+  "seo": {
+    "title": "Lootlog – timery respów, łupy i analiza walk w Margonem",
+    "description": "Darmowy dodatek do Margonem dla graczy i klanów. Synchronizuj timery respów, zapisuj łupy, analizuj walki i sprawdzaj aktywność w jednym panelu.",
+    "socialImageAlt": "Lootlog – timery respów, łupy i analiza walk w Margonem",
+    "keywords": [
+      "Lootlog",
+      "dodatek do Margonem",
+      "klan Margonem",
+      "timery respów",
+      "historia łupów",
+      "analiza walk"
+    ]
+  },
   "header": {
     "brand": "Lootlog",
     "docs": "Dokumentacja",

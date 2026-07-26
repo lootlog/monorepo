@@ -1,23 +1,17 @@
 import type { Metadata } from "next";
 import type { JSX } from "react";
 import { HomeContent } from "@/src/components/landing/home-content";
+import landingTranslations from "@/src/i18n/translations/landing.json";
+
+const { seo } = landingTranslations;
 
 export const metadata: Metadata = {
-  title: "Lootlog – timery respów, łupy i analiza walk w Margonem",
-  description:
-    "Darmowy dodatek do Margonem dla graczy i klanów. Synchronizuj timery respów, zapisuj łupy, analizuj walki i sprawdzaj aktywność w jednym panelu.",
-  keywords: [
-    "Lootlog",
-    "dodatek do Margonem",
-    "klan Margonem",
-    "timery respów",
-    "historia łupów",
-    "analiza walk",
-  ],
+  title: seo.title,
+  description: seo.description,
+  keywords: seo.keywords,
   openGraph: {
-    title: "Lootlog – timery respów, łupy i analiza walk w Margonem",
-    description:
-      "Darmowy dodatek do Margonem dla graczy i klanów. Synchronizuj timery respów, zapisuj łupy, analizuj walki i sprawdzaj aktywność w jednym panelu.",
+    title: seo.title,
+    description: seo.description,
     type: "website",
     locale: "pl_PL",
     siteName: "Lootlog.pl",
@@ -27,15 +21,14 @@ export const metadata: Metadata = {
         url: "/brand/lootlog-social.png",
         width: 1200,
         height: 630,
-        alt: "Lootlog – timery respów, łupy i analiza walk w Margonem",
+        alt: seo.socialImageAlt,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lootlog – timery respów, łupy i analiza walk w Margonem",
-    description:
-      "Darmowy dodatek do Margonem dla graczy i klanów. Synchronizuj timery respów, zapisuj łupy, analizuj walki i sprawdzaj aktywność w jednym panelu.",
+    title: seo.title,
+    description: seo.description,
     images: ["/brand/lootlog-social.png"],
   },
 };
@@ -45,8 +38,7 @@ const jsonLd = {
   "@type": "WebApplication",
   name: "Lootlog",
   url: "https://lootlog.pl",
-  description:
-    "Darmowy dodatek do Margonem dla graczy i klanów. Synchronizuj timery respów, zapisuj łupy, analizuj walki i sprawdzaj aktywność w jednym panelu.",
+  description: seo.description,
   applicationCategory: "GameApplication",
   operatingSystem: "Web",
   offers: {

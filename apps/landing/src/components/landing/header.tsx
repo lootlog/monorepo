@@ -29,14 +29,18 @@ export function LandingHeader() {
     setSignInError(false);
 
     try {
-      await authClient.signIn.social({
+      const result = await authClient.signIn.social({
         provider: "discord",
         callbackURL: `${window.location.origin}/@me`,
         scopes: ["guilds.members.read", "guilds", "identify", "email"],
       });
-      setIsSigningIn(false);
+
+      if (result.error) {
+        setSignInError(true);
+      }
     } catch {
       setSignInError(true);
+    } finally {
       setIsSigningIn(false);
     }
   };

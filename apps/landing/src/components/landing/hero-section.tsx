@@ -100,7 +100,6 @@ export function HeroSection() {
             alt={t("landing.hero.screenshotAlt")}
             caption={t("landing.hero.screenshotCaption")}
             priority
-            imageViewportClassName="aspect-[16/5.4] sm:aspect-[16/7] lg:aspect-video"
             className="relative shadow-[18px_24px_64px_rgba(0,0,0,0.38)]"
           />
         </div>
