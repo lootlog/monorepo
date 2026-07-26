@@ -1,5 +1,26 @@
 # @lootlog/game-client
 
+## 1.1.1
+
+### Patch Changes
+
+- 4b501b7: Prevent repeated Margonem events and equivalent battle submissions from creating duplicated battles or doubled combat statistics.
+- Updated dependencies [4b501b7]
+  - @lootlog/api-client@1.1.1
+
+## 1.1.0
+
+### Minor Changes
+
+- fee6e4d: Add synchronized Discord server visibility preferences for the web and game clients.
+
+### Patch Changes
+
+- bddc4c2: Polish server selector states when one or all accessible servers are hidden.
+- Updated dependencies [fee6e4d]
+  - @lootlog/types@1.1.0
+  - @lootlog/api-client@1.1.0
+
 ## 1.0.4
 
 ### Patch Changes

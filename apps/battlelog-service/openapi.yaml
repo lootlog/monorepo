@@ -1868,9 +1868,10 @@ components:
                   - opponent_rating
                   - rating
                   - status
+              matchmaking_state:
+                type: number
             required:
               - f
-              - ev
       required:
         - accountId
         - characterId

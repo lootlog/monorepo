@@ -104,8 +104,9 @@ const CreateBattleMatchSummarySchema = z.object({
 const CreateBattleEventsSchema = z.object({
   party: CreateBattlePartyEventSchema.optional(),
   f: CreateBattleFightEventSchema,
-  ev: z.number(),
+  ev: z.number().optional(),
   match_summary: CreateBattleMatchSummarySchema.optional(),
+  matchmaking_state: z.number().optional(),
 });
 
 export const CreateBattleSchema = z.object({

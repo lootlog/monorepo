@@ -1,5 +1,12 @@
 # @lootlog/cli
 
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [fee6e4d]
+  - @lootlog/types@1.1.0
+
 ## 1.0.1
 
 ### Patch Changes
