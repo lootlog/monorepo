@@ -91,7 +91,7 @@ input:focus-visible {
   height: var(--fd-header-height);
   align-items: center;
   gap: 24px;
-  padding: 0 clamp(20px, 3vw, 48px);
+  padding-inline: 20px;
   border-bottom: 1px solid var(--rule-blue);
   background: color-mix(in srgb, var(--night-ink) 96%, transparent);
   box-shadow: 0 8px 28px rgb(0 0 0 / 18%);

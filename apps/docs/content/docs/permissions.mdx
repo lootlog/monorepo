@@ -8,12 +8,12 @@ ról otrzymuje sumę ich uprawnień.
 
 ## Poziomy nadrzędne
 
-| Uprawnienie | Znaczenie |
-| --- | --- |
-| `OWNER` | Właściciel klanu i najwyższy poziom dostępu |
-| `ADMIN` | Administracja klanem i konfiguracją |
-| `LOOTLOG_MANAGE` | Zarządzanie danymi Lootlog |
-| `LOOTLOG_ACCESS` | Podstawowy dostęp do strefy klanu |
+| Uprawnienie      | Znaczenie                                   |
+| ---------------- | ------------------------------------------- |
+| `OWNER`          | Właściciel klanu i najwyższy poziom dostępu |
+| `ADMIN`          | Administracja klanem i konfiguracją         |
+| `LOOTLOG_MANAGE` | Zarządzanie danymi Lootlog                  |
+| `LOOTLOG_ACCESS` | Podstawowy dostęp do strefy klanu           |
 
 <Callout type="warning" title="Zasada najmniejszego dostępu">
   Nie nadawaj `ADMIN` lub `LOOTLOG_MANAGE` tylko po to, aby odblokować jeden
@@ -26,64 +26,64 @@ Poniższe identyfikatory odpowiadają wartościom używanym przez aplikację.
 
 ### Łupy
 
-| Uprawnienie | Zakres |
-| --- | --- |
-| `LOOTLOG_LOOTS_READ` | Odczyt łupów |
-| `LOOTLOG_LOOTS_WRITE` | Dodawanie i zmiana łupów |
-| `LOOTLOG_LOOTS_TITANS_READ` | Odczyt łupów z tytanów |
-| `LOOTLOG_LOOTS_HEROES_READ` | Odczyt łupów z herosów |
+| Uprawnienie                 | Zakres                   |
+| --------------------------- | ------------------------ |
+| `LOOTLOG_LOOTS_READ`        | Odczyt łupów             |
+| `LOOTLOG_LOOTS_WRITE`       | Dodawanie i zmiana łupów |
+| `LOOTLOG_LOOTS_TITANS_READ` | Odczyt łupów z tytanów   |
+| `LOOTLOG_LOOTS_HEROES_READ` | Odczyt łupów z herosów   |
 
 ### Timery
 
-| Uprawnienie | Zakres |
-| --- | --- |
-| `LOOTLOG_TIMERS_READ` | Odczyt timerów |
-| `LOOTLOG_TIMERS_WRITE` | Tworzenie timerów |
-| `LOOTLOG_TIMERS_RESET` | Resetowanie timerów |
-| `LOOTLOG_TIMERS_DELETE` | Usuwanie timerów |
+| Uprawnienie                  | Zakres                 |
+| ---------------------------- | ---------------------- |
+| `LOOTLOG_TIMERS_READ`        | Odczyt timerów         |
+| `LOOTLOG_TIMERS_WRITE`       | Tworzenie timerów      |
+| `LOOTLOG_TIMERS_RESET`       | Resetowanie timerów    |
+| `LOOTLOG_TIMERS_DELETE`      | Usuwanie timerów       |
 | `LOOTLOG_TIMERS_TITANS_READ` | Odczyt timerów tytanów |
 | `LOOTLOG_TIMERS_HEROES_READ` | Odczyt timerów herosów |
 
 ### Rezerwacje i członkowie
 
-| Uprawnienie | Zakres |
-| --- | --- |
-| `LOOTLOG_RESERVATIONS_READ` | Odczyt rezerwacji |
-| `LOOTLOG_RESERVATIONS_WRITE` | Tworzenie i zmiana rezerwacji |
-| `LOOTLOG_MEMBERS_READ` | Odczyt listy członków |
-| `LOOTLOG_ONLINE_PLAYERS_READ` | Odczyt listy graczy online |
+| Uprawnienie                   | Zakres                        |
+| ----------------------------- | ----------------------------- |
+| `LOOTLOG_RESERVATIONS_READ`   | Odczyt rezerwacji             |
+| `LOOTLOG_RESERVATIONS_WRITE`  | Tworzenie i zmiana rezerwacji |
+| `LOOTLOG_MEMBERS_READ`        | Odczyt listy członków         |
+| `LOOTLOG_ONLINE_PLAYERS_READ` | Odczyt listy graczy online    |
 
 ### Czat
 
-| Uprawnienie | Zakres |
-| --- | --- |
-| `LOOTLOG_CHAT_READ` | Odczyt czatu |
-| `LOOTLOG_CHAT_WRITE` | Wysyłanie wiadomości |
+| Uprawnienie                | Zakres                          |
+| -------------------------- | ------------------------------- |
+| `LOOTLOG_CHAT_READ`        | Odczyt czatu                    |
+| `LOOTLOG_CHAT_WRITE`       | Wysyłanie wiadomości            |
 | `LOOTLOG_CHAT_TITANS_READ` | Dostęp do informacji o tytanach |
 | `LOOTLOG_CHAT_HEROES_READ` | Dostęp do informacji o herosach |
 
 ### Powiadomienia
 
-| Uprawnienie | Zakres |
-| --- | --- |
-| `LOOTLOG_NOTIFICATIONS_READ` | Odczyt powiadomień |
-| `LOOTLOG_NOTIFICATIONS_SEND` | Wysyłanie powiadomień |
+| Uprawnienie                         | Zakres                   |
+| ----------------------------------- | ------------------------ |
+| `LOOTLOG_NOTIFICATIONS_READ`        | Odczyt powiadomień       |
+| `LOOTLOG_NOTIFICATIONS_SEND`        | Wysyłanie powiadomień    |
 | `LOOTLOG_NOTIFICATIONS_TITANS_READ` | Powiadomienia o tytanach |
 | `LOOTLOG_NOTIFICATIONS_HEROES_READ` | Powiadomienia o herosach |
 
 ### Eventy
 
-| Uprawnienie | Zakres |
-| --- | --- |
-| `LOOTLOG_EVENTS_READ` | Odczyt eventów i rankingów |
-| `LOOTLOG_EVENTS_WRITE` | Samodzielne przypisania |
-| `LOOTLOG_EVENTS_MANAGE` | Zarządzanie eventami |
+| Uprawnienie             | Zakres                     |
+| ----------------------- | -------------------------- |
+| `LOOTLOG_EVENTS_READ`   | Odczyt eventów i rankingów |
+| `LOOTLOG_EVENTS_WRITE`  | Samodzielne przypisania    |
+| `LOOTLOG_EVENTS_MANAGE` | Zarządzanie eventami       |
 
 ### Dokumenty
 
-| Uprawnienie | Zakres |
-| --- | --- |
-| `LOOTLOG_DOCS_READ` | Odczyt dokumentów klanu |
+| Uprawnienie          | Zakres                              |
+| -------------------- | ----------------------------------- |
+| `LOOTLOG_DOCS_READ`  | Odczyt dokumentów klanu             |
 | `LOOTLOG_DOCS_WRITE` | Tworzenie i zmiana dokumentów klanu |
 
 ## Utwórz rolę
