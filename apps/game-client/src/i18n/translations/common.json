@@ -23,7 +23,8 @@
     "exportJson": "Eksportuj JSON",
     "playSound": "Odtwórz dźwięk",
     "mute": "Wycisz",
-    "unmute": "Włącz dźwięk"
+    "unmute": "Włącz dźwięk",
+    "retry": "Spróbuj ponownie"
   },
   "auth": {
     "notLoggedIn": "Nie jesteś zalogowany, zaloguj się, aby załadować dodatek"
@@ -31,6 +32,11 @@
   "errors": {
     "requestFailed": "Błąd żądania",
     "unknown": "Nieznany błąd"
+  },
+  "async": {
+    "loading": "Ładowanie...",
+    "loadingGuilds": "Ładowanie serwerów",
+    "guildsError": "Nie udało się załadować serwerów"
   },
   "guildSelection": {
     "enabled": "Włączone",

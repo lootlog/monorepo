@@ -84,4 +84,20 @@ describe("useGameEventHandlers", () => {
 
     expect(mockCleanup).toHaveBeenCalledTimes(1);
   });
+
+  it("shares one dispatcher when the client is mounted more than once", () => {
+    gameInitialized = true;
+    const firstClient = renderHook(() => useGameEventHandlers());
+    const secondClient = renderHook(() => useGameEventHandlers());
+
+    expect(mockEventDispatcherConstructor).toHaveBeenCalledTimes(1);
+    expect(mockRegister).toHaveBeenCalledTimes(1);
+    expect(mockHandleInitialEvents).toHaveBeenCalledTimes(1);
+
+    firstClient.unmount();
+    expect(mockCleanup).not.toHaveBeenCalled();
+
+    secondClient.unmount();
+    expect(mockCleanup).toHaveBeenCalledTimes(1);
+  });
 });

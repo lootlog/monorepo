@@ -7,6 +7,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, type FC } from "react";
 import { useTranslation } from "react-i18next";
+import { Loader2 } from "lucide-react";
+import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 
 export type ChatInputSuggestion =
   | ({
@@ -23,6 +25,7 @@ type ChatMentionSuggestionsProps = {
   showNoResults: boolean;
   selectedIndex: number;
   onSelect: (suggestion: ChatInputSuggestion) => void;
+  isLoading?: boolean;
 };
 
 export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
@@ -32,9 +35,11 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
   showNoResults,
   selectedIndex,
   onSelect,
+  isLoading = false,
 }) => {
   const { t } = useTranslation("chat");
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const showLoading = useDelayedVisibility(isLoading);
 
   useEffect(() => {
     if (!isOpen || selectedIndex < 0) {
@@ -47,13 +52,28 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
     });
   }, [isOpen, selectedIndex, suggestions]);
 
-  if (!isOpen && !showNoResults) {
+  if (!isOpen && !showNoResults && !isLoading) {
+    return null;
+  }
+
+  if (isLoading && !showLoading) {
     return null;
   }
 
   return (
     <div className="ll:absolute ll:bottom-full ll:left-1 ll:right-1 ll:z-50 ll:mb-1 ll:overflow-hidden ll:rounded-sm ll:border ll:border-gray-500 ll:bg-black/96 ll:shadow-[0_8px_24px_rgba(0,0,0,0.55)]">
-      {showNoResults ? (
+      {isLoading ? (
+        <div
+          className="ll:flex ll:items-center ll:justify-center ll:gap-2 ll:px-3 ll:py-2 ll:text-xs ll:text-gray-300"
+          role="status"
+        >
+          <Loader2
+            aria-hidden
+            className="ll:size-3.5 ll:animate-spin ll:motion-reduce:animate-none"
+          />
+          {t("input.mentionSuggestions.loading")}
+        </div>
+      ) : showNoResults ? (
         <p className="ll:px-3 ll:py-2 ll:text-center ll:text-xs ll:text-gray-400">
           {suggestionMode === "command"
             ? t("input.commandSuggestions.noResults")

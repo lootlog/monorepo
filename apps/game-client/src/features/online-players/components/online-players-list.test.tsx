@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -26,7 +26,25 @@ vi.mock("@/components/world-selector", () => ({
 }));
 
 vi.mock("@/features/online-players/hooks/use-players-presence", () => ({
-  usePlayersPresence: (...args: unknown[]) => mockUsePlayersPresence(...args),
+  usePlayersPresence: (...args: unknown[]) => {
+    const result = mockUsePlayersPresence(...args);
+
+    if (!Array.isArray(result)) {
+      return result;
+    }
+
+    return {
+      onlinePlayers: result[0],
+      initialLoading: result[1],
+      hasLoaded: true,
+      setOnlinePlayers: result[2],
+      accessState: result[3],
+      error: null,
+      refreshing: false,
+      retry: vi.fn(),
+      stale: false,
+    };
+  },
 }));
 
 vi.mock("@/hooks/api/guild-members-summary-query", () => ({
@@ -135,6 +153,59 @@ describe("OnlinePlayersList", () => {
     expect(screen.getByText("Karka-han • pandora")).toBeVisible();
     expect(screen.getByText("Scout (80h)")).toBeVisible();
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
+  });
+
+  it("shows a delayed spinner instead of an empty state while presence loads", () => {
+    vi.useFakeTimers();
+    mockUsePlayersPresence.mockReturnValue({
+      accessState: "allowed",
+      error: null,
+      hasLoaded: false,
+      initialLoading: true,
+      onlinePlayers: {},
+      refreshing: false,
+      retry: vi.fn(),
+      setOnlinePlayers: vi.fn(),
+      stale: false,
+    });
+
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+
+    expect(
+      screen.queryByText("Nikt nie jest teraz online"),
+    ).not.toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(200));
+
+    expect(screen.getByRole("status").querySelector("svg")).toHaveClass(
+      "ll:animate-spin",
+    );
+    vi.useRealTimers();
+  });
+
+  it("allows retrying an initial presence error", async () => {
+    const user = userEvent.setup();
+    const retry = vi.fn();
+    mockUsePlayersPresence.mockReturnValue({
+      accessState: "allowed",
+      error: new Error("network"),
+      hasLoaded: false,
+      initialLoading: false,
+      onlinePlayers: {},
+      refreshing: false,
+      retry,
+      setOnlinePlayers: vi.fn(),
+      stale: false,
+    });
+
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+
+    await user.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));
+
+    expect(retry).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByText("Nikt nie jest teraz online"),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps long account names and locations constrained for truncation", () => {
@@ -351,7 +422,27 @@ describe("OnlinePlayersList", () => {
     });
 
     expect(screen.queryByText("Hero (123w)")).not.toBeInTheDocument();
-    expect(screen.getByText("Nie znaleziono graczy")).toBeVisible();
+    expect(screen.getByText("Brak pasujących graczy")).toBeVisible();
+  });
+
+  it("clears all filters from the filtered empty state", async () => {
+    const user = userEvent.setup();
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+
+    fireEvent.change(screen.getByPlaceholderText(/Szukaj/), {
+      target: { value: "missing" },
+    });
+    fireEvent.change(screen.getByLabelText("Minimalny poziom"), {
+      target: { value: "200" },
+    });
+
+    await user.click(screen.getByRole("button", { name: "Wyczyść filtry" }));
+
+    expect(screen.getByPlaceholderText(/Szukaj/)).toHaveValue("");
+    expect(screen.getByLabelText("Minimalny poziom")).toHaveValue(0);
+    expect(screen.getByLabelText("Maksymalny poziom")).toHaveValue(500);
+    expect(screen.getByText("Hero (123w)")).toBeVisible();
+    expect(screen.getByText("Scout (80h)")).toBeVisible();
   });
 
   it("filters account entries by level range and keeps min lower than max", () => {
@@ -457,7 +548,7 @@ describe("OnlinePlayersList", () => {
     });
 
     expect(screen.queryByText("(2) Discord User")).not.toBeInTheDocument();
-    expect(screen.getByText("Brak graczy online.")).toBeVisible();
+    expect(screen.getByText("Brak pasujących graczy")).toBeVisible();
   });
 
   it("hides guild, world and filters controls when filters are hidden", () => {
@@ -479,16 +570,38 @@ describe("OnlinePlayersList", () => {
     expect(screen.getByText("Hero (123w)")).toBeVisible();
   });
 
+  it("renders the empty presence state centered in the data viewport", () => {
+    mockUsePlayersPresence.mockReturnValue({
+      accessState: "allowed",
+      error: null,
+      hasLoaded: true,
+      initialLoading: false,
+      onlinePlayers: {},
+      refreshing: false,
+      retry: vi.fn(),
+      setOnlinePlayers: vi.fn(),
+      stale: false,
+    });
+
+    render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+
+    expect(screen.getByText("Nikt nie jest teraz online")).toBeVisible();
+    expect(screen.getByRole("status")).toHaveClass(
+      "ll:box-border",
+      "ll:h-full",
+      "ll:items-center",
+      "ll:justify-center",
+    );
+  });
+
   it("shows no access feedback when online players permission is missing", () => {
     mockUsePlayersPresence.mockReturnValue([{}, false, vi.fn(), "forbidden"]);
 
     render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
 
+    expect(screen.getByText("Brak dostępu do listy")).toBeVisible();
     expect(
-      screen.getByText(
-        "Nie masz uprawnień do wyświetlania graczy online na tym serwerze.",
-      ),
-    ).toBeVisible();
-    expect(screen.queryByText("Brak graczy online.")).not.toBeInTheDocument();
+      screen.queryByText("Nikt nie jest teraz online"),
+    ).not.toBeInTheDocument();
   });
 });

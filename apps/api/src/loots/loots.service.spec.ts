@@ -1,7 +1,11 @@
 import type { Mock } from "vitest";
 import { mockFn } from "src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { LootsService } from "./loots.service";
@@ -19,6 +23,7 @@ import { LootCommentService } from "./services/loot-comment.service";
 import { LootStatsService } from "./services/loot-stats.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RedlockService } from "src/lib/redlock/redlock.service";
+import { ExecutionError } from "redlock";
 import type { CreateLootDto } from "./dto/create-loot.dto";
 import type { UpdateLootDto } from "./dto/update-loot.dto";
 import type { CreateCommentDto } from "./dto/create-comment-dto";
@@ -380,7 +385,26 @@ describe("LootsService", () => {
           world: "testworld",
         },
       ]);
+      expect(service["redlock"].acquire).toHaveBeenCalledWith(
+        [expect.stringMatching(/^loot:lock:/)],
+        30_000,
+        {
+          retryCount: 100,
+          retryDelay: 100,
+          retryJitter: 50,
+        },
+      );
       expect(result).toEqual(expectedSuccessResponse);
+    });
+
+    it("should return a retryable error when loot lock contention outlasts the wait", async () => {
+      vi.spyOn(service["redlock"], "acquire").mockRejectedValue(
+        new ExecutionError("Lock contention", []),
+      );
+
+      await expect(
+        service.createLoot(discordId, userId, mockCreateLootDto),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
 
     it("should return existing loot when it already exists", async () => {
