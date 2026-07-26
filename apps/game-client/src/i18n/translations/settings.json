@@ -19,6 +19,7 @@
   },
   "domains": {
     "general": "Ogólne",
+    "servers": "Serwery",
     "appearance": "Wygląd",
     "timers": "Timery",
     "gameData": "Dane z gry",
@@ -30,11 +31,40 @@
   },
   "subsections": {
     "behavior": "Zachowanie",
+    "serverVisibility": "Widoczność",
     "chat": "Chat",
     "npcColors": "Kolory NPC",
     "timerAppearance": "Wygląd timerów",
     "timerColors": "Kolory timerów",
     "timerBehavior": "Działanie timerów"
+  },
+  "servers": {
+    "title": "Widoczność serwerów",
+    "description": "Ukryte serwery znikną z przełączników w grze. Powiadomienia i przetwarzanie w tle nadal będą działać.",
+    "listTitle": "Serwery Lootloga",
+    "searchPlaceholder": "Szukaj serwera",
+    "filters": {
+      "all": "Wszystkie",
+      "visible": "Widoczne",
+      "hidden": "Ukryte"
+    },
+    "showAll": "Pokaż wszystkie",
+    "switchLabel": "Pokaż {{name}} w grze",
+    "visibleCount_one": "{{count}} widoczny",
+    "visibleCount_few": "{{count}} widoczne",
+    "visibleCount_many": "{{count}} widocznych",
+    "visibleCount_other": "{{count}} widocznych",
+    "hiddenCount_one": "{{count}} ukryty",
+    "hiddenCount_few": "{{count}} ukryte",
+    "hiddenCount_many": "{{count}} ukrytych",
+    "hiddenCount_other": "{{count}} ukrytych",
+    "loading": "Ładowanie serwerów…",
+    "loadError": "Nie udało się pobrać listy serwerów.",
+    "noGuilds": "Nie masz jeszcze dostępu do żadnego serwera Lootloga.",
+    "noResults": "Nie znaleziono serwerów pasujących do wybranych filtrów.",
+    "saving": "Zapisywanie…",
+    "saved": "Zapisano",
+    "saveError": "Nie udało się zapisać zmian. Przywróciliśmy poprzedni stan."
   },
   "search": {
     "placeholder": "Szukaj",

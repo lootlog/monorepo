@@ -32,6 +32,7 @@ import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/types";
 import { AsyncContent } from "@/components/async-content";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useSocket } from "@/contexts/socket-context";
+import { getVisibleLootlogGuilds } from "@/lib/selected-lootlog-guild";
 
 interface ChatViewProps {
   isOpen: boolean;
@@ -88,6 +89,14 @@ export const ChatView = ({
       staleTime: 1000 * 60 * 5,
     },
   });
+  const visibleGuilds =
+    guilds && preferences.data
+      ? getVisibleLootlogGuilds(
+          guilds,
+          preferences.data.guildsOrder,
+          preferences.data.hiddenGuildIds,
+        )
+      : undefined;
   const currentCharacterNick = useGameStore(
     (state) => state.game?.hero.name ?? "",
   );
@@ -103,18 +112,21 @@ export const ChatView = ({
     retry: retryFailed,
   } = useChatGuildData({
     currentCharacterNick,
-    guilds,
+    guilds: visibleGuilds,
     selectedGuildId,
   });
   useEffect(() => {
-    const nextSelectedGuildId = getNextSelectedGuildId(selectedGuildId, guilds);
+    const nextSelectedGuildId = getNextSelectedGuildId(
+      selectedGuildId,
+      visibleGuilds,
+    );
 
     if (nextSelectedGuildId) {
       setSelectedGuildId(nextSelectedGuildId);
     }
-  }, [selectedGuildId, setSelectedGuildId, guilds]);
+  }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
 
-  const guildNamesById = getGuildNamesById(guilds);
+  const guildNamesById = getGuildNamesById(visibleGuilds);
   const chatFilters: { key: ChatFilter; label: string }[] = [
     { key: "all", label: t("filters.all") },
     { key: "normal", label: t("filters.normal") },
@@ -134,14 +146,16 @@ export const ChatView = ({
     currentMessages,
     guildNamesById,
   );
-  const guildsLoaded = guilds !== undefined;
+  const guildsLoaded = visibleGuilds !== undefined;
   const waitingForGuildSelection =
-    guildsLoaded && guilds.length > 0 && !selectedGuildId;
+    guildsLoaded && visibleGuilds.length > 0 && !selectedGuildId;
   const initialLoading =
-    (!guildsLoaded && guildsLoading) ||
+    (!guildsLoaded && (guildsLoading || preferences.isLoading)) ||
     waitingForGuildSelection ||
     chatInitialLoading;
-  const initialError = !guildsLoaded ? guildsError : chatInitialError;
+  const initialError = !guildsLoaded
+    ? (guildsError ?? preferences.error)
+    : chatInitialError;
   const partialError =
     (guildsLoaded && Boolean(guildsError)) || failedGuildIds.length > 0;
   const refreshing =
@@ -150,6 +164,9 @@ export const ChatView = ({
   const retryChatData = () => {
     if (guildsError) {
       void refetchGuilds();
+    }
+    if (preferences.error) {
+      void preferences.refetch();
     }
     retryFailed();
   };

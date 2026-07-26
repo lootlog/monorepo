@@ -31,6 +31,15 @@ vi.mock("@/hooks/api/use-create-manual-timer", () => ({
   }),
 }));
 
+vi.mock("@/hooks/api/use-user-preferences", () => ({
+  useUserPreferences: () => ({
+    data: {
+      guildsOrder: [],
+      hiddenGuildIds: [],
+    },
+  }),
+}));
+
 vi.mock("@/store/windows.store", () => ({
   useWindowsStore: (
     selector: (state: { setOpen: typeof mockSetOpen }) => unknown,

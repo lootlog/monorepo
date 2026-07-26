@@ -13,6 +13,8 @@ import { GuildSwitcher } from "./guild-switcher";
 
 const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserPreferences = vi.fn();
+const mockUpdatePreferences = vi.fn();
+const mockToastSuccess = vi.hoisted(() => vi.fn());
 const runtime = vi.hoisted(() => ({ heroId: 123 as number | undefined }));
 
 vi.mock("@lootlog/api-client/react-query/main/users", () => ({
@@ -25,6 +27,16 @@ vi.mock("@lootlog/api-client/react-query/main/users", () => ({
 
 vi.mock("@/hooks/api/use-user-preferences", () => ({
   useUserPreferences: () => mockUseUserPreferences(),
+  useUpdateUserPreferences: () => ({
+    mutate: mockUpdatePreferences,
+  }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: mockToastSuccess,
+  },
 }));
 
 vi.mock("@/lib/game", () => ({
@@ -81,7 +93,40 @@ describe("GuildSwitcher", () => {
     mockUseUserPreferences.mockReturnValue({
       data: {
         guildsOrder: [],
+        hiddenGuildIds: [],
       },
+      isFetched: true,
+    });
+    mockUpdatePreferences.mockImplementation(
+      (
+        _payload: unknown,
+        options?: {
+          onSuccess?: () => void;
+        },
+      ) => options?.onSuccess?.(),
+    );
+  });
+
+  it("hides a guild from its context menu and can undo the change", async () => {
+    render(<GuildSwitcher />);
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "A" }));
+    fireEvent.click(
+      await screen.findByText("Ukryj w grze", {}, { timeout: 1000 }),
+    );
+
+    expect(mockUpdatePreferences).toHaveBeenCalledWith(
+      { hiddenGuildIds: ["guild-1"] },
+      expect.any(Object),
+    );
+
+    const toastOptions = mockToastSuccess.mock.calls[0]?.[1] as {
+      action: { onClick: () => void };
+    };
+    toastOptions.action.onClick();
+
+    expect(mockUpdatePreferences).toHaveBeenLastCalledWith({
+      hiddenGuildIds: [],
     });
   });
 
@@ -133,7 +178,9 @@ describe("GuildSwitcher", () => {
     mockUseUserPreferences.mockReturnValue({
       data: {
         guildsOrder: ["guild-2", "guild-1"],
+        hiddenGuildIds: [],
       },
+      isFetched: true,
     });
 
     render(<GuildSwitcher />);
@@ -149,7 +196,9 @@ describe("GuildSwitcher", () => {
     mockUseUserPreferences.mockReturnValue({
       data: {
         guildsOrder: ["guild-2", "guild-1"],
+        hiddenGuildIds: [],
       },
+      isFetched: true,
     });
 
     render(<GuildSwitcher value="missing-guild" onChange={handleChange} />);
@@ -191,5 +240,42 @@ describe("GuildSwitcher", () => {
 
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("9+")).toBeInTheDocument();
+  });
+
+  it("removes hidden guilds and falls back to the first visible guild", async () => {
+    const handleChange = vi.fn();
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: ["guild-2", "guild-1"],
+        hiddenGuildIds: ["guild-2"],
+      },
+      isFetched: true,
+    });
+
+    render(<GuildSwitcher value="guild-2" onChange={handleChange} />);
+
+    expect(screen.queryByText("B")).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button").map((button) => button.textContent),
+    ).toEqual(["A", "G"]);
+    await waitFor(() => expect(handleChange).toHaveBeenCalledWith("guild-1"));
+  });
+
+  it("shows a settings action instead of the all option when every guild is hidden", () => {
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: [],
+        hiddenGuildIds: ["guild-1", "guild-2", "guild-3"],
+      },
+      isFetched: true,
+    });
+
+    render(<GuildSwitcher allowAll value="all" />);
+
+    expect(screen.queryByText("*")).not.toBeInTheDocument();
+    expect(screen.getByText("Wszystkie serwery są ukryte")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Otwórz ustawienia" }),
+    ).toBeInTheDocument();
   });
 });

@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { cloneNotificationMutes } from "@/lib/user-preferences";
 import {
   getUsersControllerGetUserPreferencesQueryKey,
   useUsersControllerGetUserPreferences,
@@ -8,18 +7,15 @@ import {
 import type { UpdateUserPreferencesDto } from "@lootlog/api-client/models/main/update-user-preferences-dto";
 import type { UserPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-preferences-response-dto-output";
 
-export const useUserPreferences = (enabled = true) => {
-  return useUsersControllerGetUserPreferences({
+export const useUserPreferences = () =>
+  useUsersControllerGetUserPreferences({
     query: {
       queryKey: getUsersControllerGetUserPreferencesQueryKey(),
-      enabled,
-      staleTime: 60_000,
-      refetchOnMount: false,
       refetchOnWindowFocus: true,
       retry: false,
+      staleTime: 60_000,
     },
   });
-};
 
 export const useUpdateUserPreferences = () => {
   const queryClient = useQueryClient();
@@ -32,52 +28,40 @@ export const useUpdateUserPreferences = () => {
       usersControllerUpdateUserPreferences(payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey });
-
       const previousData =
         queryClient.getQueryData<UserPreferencesResponseDtoOutput>(queryKey);
 
-      if (!previousData) {
-        return { previousData };
+      if (previousData) {
+        queryClient.setQueryData<UserPreferencesResponseDtoOutput>(queryKey, {
+          ...previousData,
+          ...payload,
+          chatAppearance: payload.chatAppearance
+            ? {
+                ...previousData.chatAppearance,
+                ...payload.chatAppearance,
+              }
+            : previousData.chatAppearance,
+          mutes: payload.mutes
+            ? {
+                players: payload.mutes.players ?? previousData.mutes.players,
+                npcs: payload.mutes.npcs ?? previousData.mutes.npcs,
+              }
+            : previousData.mutes,
+        });
       }
-
-      const previousMutes = cloneNotificationMutes(previousData.mutes);
-      const nextMutes = payload.mutes
-        ? {
-            players: payload.mutes.players
-              ? payload.mutes.players.map((player) => ({ ...player }))
-              : previousMutes.players,
-            npcs: payload.mutes.npcs
-              ? payload.mutes.npcs.map((npc) => ({ ...npc }))
-              : previousMutes.npcs,
-          }
-        : previousData.mutes;
-
-      queryClient.setQueryData<UserPreferencesResponseDtoOutput>(queryKey, {
-        ...previousData,
-        ...payload,
-        chatAppearance: payload.chatAppearance
-          ? {
-              ...previousData.chatAppearance,
-              ...payload.chatAppearance,
-            }
-          : previousData.chatAppearance,
-        mutes: nextMutes,
-      });
 
       return { previousData };
     },
     onError: (_error, _payload, context) => {
-      if (!context?.previousData) {
-        return;
+      if (context?.previousData) {
+        queryClient.setQueryData(queryKey, context.previousData);
       }
-
-      queryClient.setQueryData(queryKey, context.previousData);
     },
     onSuccess: (data) => {
       queryClient.setQueryData(queryKey, data);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 };

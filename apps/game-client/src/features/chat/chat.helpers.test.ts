@@ -107,14 +107,15 @@ describe("chat helpers", () => {
     expect(updatedMessages.at(-1)).toBe(nextMessage);
   });
 
-  it("returns the first guild id only when selection is missing", () => {
+  it("returns the first guild id when selection is missing or unavailable", () => {
     expect(
       getNextSelectedGuildId("", [{ id: "guild-1" }, { id: "guild-2" }]),
     ).toBe("guild-1");
 
     expect(getNextSelectedGuildId("guild-2", [{ id: "guild-1" }])).toBe(
-      undefined,
+      "guild-1",
     );
+    expect(getNextSelectedGuildId("all", [{ id: "guild-1" }])).toBe(undefined);
     expect(getNextSelectedGuildId("", [])).toBe(undefined);
   });
 

@@ -6,6 +6,7 @@ import type { SettingsCatalogKey } from "@lootlog/types";
 
 export type SettingsIconName =
   | "settings"
+  | "server"
   | "palette"
   | "clock"
   | "database"
@@ -73,6 +74,25 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
             labelKey: "settings.general.mapPingsLabel",
             descriptionKey: "settings.general.mapPingsDescription",
             settingKeys: ["gameData.pings"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "servers",
+    labelKey: "settings.domains.servers",
+    icon: "server",
+    subsections: [
+      {
+        id: "visibility",
+        labelKey: "settings.subsections.serverVisibility",
+        controls: [
+          {
+            id: "server-visibility",
+            labelKey: "settings.servers.title",
+            descriptionKey: "settings.servers.description",
+            aliases: ["serwery", "discord", "ukryte serwery"],
           },
         ],
       },

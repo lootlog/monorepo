@@ -35,7 +35,15 @@ export const getNextSelectedGuildId = (
   selectedGuildId: string | undefined,
   guilds?: { id: string }[],
 ) => {
-  if (selectedGuildId || !guilds || guilds.length === 0) return undefined;
+  if (
+    selectedGuildId === "all" ||
+    !guilds ||
+    guilds.length === 0 ||
+    guilds.some((guild) => guild.id === selectedGuildId)
+  ) {
+    return undefined;
+  }
+
   return guilds[0].id;
 };
 

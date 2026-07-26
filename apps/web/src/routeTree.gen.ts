@@ -55,6 +55,7 @@ import { Route as AuthenticatedAtmeBattlePanelStatisticsRouteImport } from './ro
 import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from './routes/_authenticated/@me/settings/index'
 import { Route as AuthenticatedAtmeSettingsAccountRouteImport } from './routes/_authenticated/@me/settings/account'
 import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
+import { Route as AuthenticatedAtmeSettingsServersRouteImport } from './routes/_authenticated/@me/settings/servers'
 import { Route as AuthenticatedGuildIdEventsEventIdIndexRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_/index'
 import { Route as AuthenticatedGuildIdEventsEventIdCoordinationRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.coordination'
 import { Route as AuthenticatedGuildIdEventsEventIdEditRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit'
@@ -347,6 +348,12 @@ const AuthenticatedAtmeSettingsAppearanceRoute =
     path: '/appearance',
     getParentRoute: () => AuthenticatedAtmeSettingsRoute,
   } as any)
+const AuthenticatedAtmeSettingsServersRoute =
+  AuthenticatedAtmeSettingsServersRouteImport.update({
+    id: '/servers',
+    path: '/servers',
+    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
+  } as any)
 const AuthenticatedGuildIdEventsEventIdIndexRoute =
   AuthenticatedGuildIdEventsEventIdIndexRouteImport.update({
     id: '/',
@@ -534,6 +541,7 @@ export interface FileRoutesByFullPath {
   '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
+  '/@me/settings/servers': typeof AuthenticatedAtmeSettingsServersRoute
   '/$guildId/docs/': typeof AuthenticatedGuildIdDocsIndexRoute
   '/$guildId/notifications/': typeof AuthenticatedGuildIdNotificationsIndexRoute
   '/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
@@ -596,6 +604,7 @@ export interface FileRoutesByTo {
   '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
+  '/@me/settings/servers': typeof AuthenticatedAtmeSettingsServersRoute
   '/$guildId/docs': typeof AuthenticatedGuildIdDocsIndexRoute
   '/$guildId/notifications': typeof AuthenticatedGuildIdNotificationsIndexRoute
   '/$guildId/reservations': typeof AuthenticatedGuildIdReservationsIndexRoute
@@ -668,6 +677,7 @@ export interface FileRoutesById {
   '/_authenticated/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/_authenticated/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/_authenticated/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
+  '/_authenticated/@me/settings/servers': typeof AuthenticatedAtmeSettingsServersRoute
   '/_authenticated/$guildId/docs/': typeof AuthenticatedGuildIdDocsIndexRoute
   '/_authenticated/$guildId/notifications/': typeof AuthenticatedGuildIdNotificationsIndexRoute
   '/_authenticated/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
@@ -742,6 +752,7 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/statistics'
     | '/@me/settings/account'
     | '/@me/settings/appearance'
+    | '/@me/settings/servers'
     | '/$guildId/docs/'
     | '/$guildId/notifications/'
     | '/$guildId/reservations/'
@@ -804,6 +815,7 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/statistics'
     | '/@me/settings/account'
     | '/@me/settings/appearance'
+    | '/@me/settings/servers'
     | '/$guildId/docs'
     | '/$guildId/notifications'
     | '/$guildId/reservations'
@@ -875,6 +887,7 @@ export interface FileRouteTypes {
     | '/_authenticated/@me/battle-panel/statistics'
     | '/_authenticated/@me/settings/account'
     | '/_authenticated/@me/settings/appearance'
+    | '/_authenticated/@me/settings/servers'
     | '/_authenticated/$guildId/docs/'
     | '/_authenticated/$guildId/notifications/'
     | '/_authenticated/$guildId/reservations/'
@@ -1237,6 +1250,13 @@ declare module '@tanstack/react-router' {
       path: '/appearance'
       fullPath: '/@me/settings/appearance'
       preLoaderRoute: typeof AuthenticatedAtmeSettingsAppearanceRouteImport
+      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    }
+    '/_authenticated/@me/settings/servers': {
+      id: '/_authenticated/@me/settings/servers'
+      path: '/servers'
+      fullPath: '/@me/settings/servers'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsServersRouteImport
       parentRoute: typeof AuthenticatedAtmeSettingsRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/': {
@@ -1675,6 +1695,7 @@ const AuthenticatedAtmeBattlePanelRouteWithChildren =
 interface AuthenticatedAtmeSettingsRouteChildren {
   AuthenticatedAtmeSettingsAccountRoute: typeof AuthenticatedAtmeSettingsAccountRoute
   AuthenticatedAtmeSettingsAppearanceRoute: typeof AuthenticatedAtmeSettingsAppearanceRoute
+  AuthenticatedAtmeSettingsServersRoute: typeof AuthenticatedAtmeSettingsServersRoute
   AuthenticatedAtmeSettingsIndexRoute: typeof AuthenticatedAtmeSettingsIndexRoute
 }
 
@@ -1684,6 +1705,8 @@ const AuthenticatedAtmeSettingsRouteChildren: AuthenticatedAtmeSettingsRouteChil
       AuthenticatedAtmeSettingsAccountRoute,
     AuthenticatedAtmeSettingsAppearanceRoute:
       AuthenticatedAtmeSettingsAppearanceRoute,
+    AuthenticatedAtmeSettingsServersRoute:
+      AuthenticatedAtmeSettingsServersRoute,
     AuthenticatedAtmeSettingsIndexRoute: AuthenticatedAtmeSettingsIndexRoute,
   }
 

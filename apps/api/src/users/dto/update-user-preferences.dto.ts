@@ -9,6 +9,12 @@ const UpdateUserPreferencesSchema = z.object({
       message: "guildsOrder must contain unique values",
     })
     .optional(),
+  hiddenGuildIds: z
+    .array(z.string().min(1))
+    .refine((guildIds) => new Set(guildIds).size === guildIds.length, {
+      message: "hiddenGuildIds must contain unique values",
+    })
+    .optional(),
   theme: z
     .enum([
       "default",

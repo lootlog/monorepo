@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
-import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
+import { getVisibleLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
@@ -49,9 +49,10 @@ export function useSelectedLootlogGuildInitialization(): void {
       return;
     }
 
-    const orderedGuildIds = orderLootlogGuilds(
+    const orderedGuildIds = getVisibleLootlogGuilds(
       guilds,
       userPreferences?.guildsOrder,
+      userPreferences?.hiddenGuildIds,
     ).map((guild) => guild.id);
     ensureGuildId(characterId, orderedGuildIds);
   }, [
@@ -62,5 +63,6 @@ export function useSelectedLootlogGuildInitialization(): void {
     guilds,
     queryEnabled,
     userPreferences?.guildsOrder,
+    userPreferences?.hiddenGuildIds,
   ]);
 }
