@@ -29,13 +29,10 @@ import {
   getTimersControllerSearchNpcsWithTimerDataQueryKey,
   useTimersControllerSearchNpcsWithTimerData,
 } from "@lootlog/api-client/react-query/main/timers";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/api-client/react-query/main/users";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
 import { useTranslation } from "react-i18next";
+import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 
 const SECONDS_IN_HOUR = 3600;
 const SECONDS_IN_MINUTE = 60;
@@ -225,13 +222,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   const { selectedGuildIdsForTimersByCharId, guildIdByCharId } =
     useSettingsStore();
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
+  const { visibleGuilds } = useVisibleLootlogGuilds();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -251,7 +242,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
     ? selectedGuildIdsForTimersByCharId[characterId]?.[0]
     : undefined;
   const guildSelectionContextKey = `${characterId}:${initialGuildId ?? ""}:${savedGuildId ?? ""}`;
-  const availableGuildIds = new Set(guilds?.map((guild) => guild.id) ?? []);
+  const availableGuildIds = new Set(visibleGuilds.map((guild) => guild.id));
   let preferredGuildId = "";
 
   if (initialGuildId && availableGuildIds.has(initialGuildId)) {
@@ -261,7 +252,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   } else if (currentGuildId && availableGuildIds.has(currentGuildId)) {
     preferredGuildId = currentGuildId;
   } else {
-    preferredGuildId = guilds?.[0]?.id ?? "";
+    preferredGuildId = visibleGuilds[0]?.id ?? "";
   }
 
   const selectedGuildId =
@@ -270,7 +261,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
       ? selectedGuildSelection.guildId
       : preferredGuildId;
 
-  const searchGuildId = selectedGuildId || currentGuildId || "";
+  const searchGuildId = selectedGuildId;
 
   const {
     data: npcResults,
@@ -449,19 +440,16 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
       onSubmit={handleSubmit(onSubmit)}
       className="ll:flex ll:flex-col ll:h-full ll:box-border ll:overflow-hidden ll:w-full"
     >
-      <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
-        <Label>{t("addForm.guildLabel")}</Label>
-        <GuildSwitcher
-          value={selectedGuildId}
-          onChange={handleGuildSelectionChange}
-          disabled={isPending}
-        />
-        {!selectedGuildId && (
-          <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-            {t("addForm.guildRequired")}
-          </p>
-        )}
-      </div>
+      {visibleGuilds.length !== 1 && (
+        <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
+          {visibleGuilds.length > 1 && <Label>{t("addForm.guildLabel")}</Label>}
+          <GuildSwitcher
+            value={selectedGuildId}
+            onChange={handleGuildSelectionChange}
+            disabled={isPending}
+          />
+        </div>
+      )}
 
       <div className="ll:min-h-0 ll:flex-1 ll:overflow-hidden">
         <ScrollArea

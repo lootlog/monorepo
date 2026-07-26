@@ -8,10 +8,6 @@ import { ChatMessageList } from "@/features/chat/components/chat-message-list";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
 import { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
 import { getGuildNamesById } from "@/lib/api/generated-helpers";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/api-client/react-query/main/users";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import { cn } from "@/lib/utils";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
@@ -26,12 +22,12 @@ import {
 } from "./chat.helpers";
 import { canReplyToChatMessage } from "./chat-reply.helpers";
 import type { ChatUnreadCountByGuildId } from "./chat-unread.helpers";
-import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/types";
 import { AsyncContent } from "@/components/async-content";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useSocket } from "@/contexts/socket-context";
+import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 
 interface ChatViewProps {
   isOpen: boolean;
@@ -48,7 +44,12 @@ export const ChatView = ({
 }: ChatViewProps) => {
   const { t } = useTranslation("chat");
   const { connected, joined } = useSocket();
-  const preferences = useUserPreferences();
+  const {
+    areVisibleGuildsResolved,
+    guildsQuery,
+    preferencesQuery: preferences,
+    visibleGuilds: resolvedVisibleGuilds,
+  } = useVisibleLootlogGuilds();
   const { npcTypeColors } = useNpcTypeColors();
   const chatAppearance =
     preferences.data?.chatAppearance ?? CHAT_APPEARANCE_READABLE_PRESET;
@@ -76,18 +77,16 @@ export const ChatView = ({
   );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const {
-    data: guilds,
     error: guildsError,
     isFetching: guildsFetching,
     isLoading: guildsLoading,
     refetch: refetchGuilds,
-  } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
+  } = guildsQuery;
+  const visibleGuilds = areVisibleGuildsResolved
+    ? resolvedVisibleGuilds
+    : undefined;
+  const effectiveSelectedGuildId =
+    visibleGuilds?.length === 0 ? "" : selectedGuildId;
   const currentCharacterNick = useGameStore(
     (state) => state.game?.hero.name ?? "",
   );
@@ -103,18 +102,21 @@ export const ChatView = ({
     retry: retryFailed,
   } = useChatGuildData({
     currentCharacterNick,
-    guilds,
-    selectedGuildId,
+    guilds: visibleGuilds,
+    selectedGuildId: effectiveSelectedGuildId,
   });
   useEffect(() => {
-    const nextSelectedGuildId = getNextSelectedGuildId(selectedGuildId, guilds);
+    const nextSelectedGuildId = getNextSelectedGuildId(
+      selectedGuildId,
+      visibleGuilds,
+    );
 
-    if (nextSelectedGuildId) {
+    if (nextSelectedGuildId !== undefined) {
       setSelectedGuildId(nextSelectedGuildId);
     }
-  }, [selectedGuildId, setSelectedGuildId, guilds]);
+  }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
 
-  const guildNamesById = getGuildNamesById(guilds);
+  const guildNamesById = getGuildNamesById(visibleGuilds);
   const chatFilters: { key: ChatFilter; label: string }[] = [
     { key: "all", label: t("filters.all") },
     { key: "normal", label: t("filters.normal") },
@@ -123,7 +125,7 @@ export const ChatView = ({
   ];
   const currentMessages = getCurrentChatMessages(
     messagesByGuildId,
-    selectedGuildId,
+    effectiveSelectedGuildId,
     chatFilter,
   );
   const currentRenderableMessages = getChatRenderableMessages(currentMessages);
@@ -134,14 +136,16 @@ export const ChatView = ({
     currentMessages,
     guildNamesById,
   );
-  const guildsLoaded = guilds !== undefined;
+  const guildsLoaded = visibleGuilds !== undefined;
   const waitingForGuildSelection =
-    guildsLoaded && guilds.length > 0 && !selectedGuildId;
+    guildsLoaded && visibleGuilds.length > 0 && !selectedGuildId;
   const initialLoading =
-    (!guildsLoaded && guildsLoading) ||
+    (!guildsLoaded && (guildsLoading || preferences.isLoading)) ||
     waitingForGuildSelection ||
     chatInitialLoading;
-  const initialError = !guildsLoaded ? guildsError : chatInitialError;
+  const initialError = !guildsLoaded
+    ? (guildsError ?? preferences.error)
+    : chatInitialError;
   const partialError =
     (guildsLoaded && Boolean(guildsError)) || failedGuildIds.length > 0;
   const refreshing =
@@ -150,6 +154,9 @@ export const ChatView = ({
   const retryChatData = () => {
     if (guildsError) {
       void refetchGuilds();
+    }
+    if (preferences.error) {
+      void preferences.refetch();
     }
     retryFailed();
   };
@@ -254,10 +261,10 @@ export const ChatView = ({
             <ChatMessageList
               appearance={chatAppearance}
               npcTypeColors={npcTypeColors}
-              key={`${selectedGuildId}:${chatFilter}`}
+              key={`${effectiveSelectedGuildId}:${chatFilter}`}
               ariaLabel={t("window.title")}
               emptyStateTitle={t(
-                selectedGuildId === "all"
+                effectiveSelectedGuildId === "all"
                   ? "emptyState.allTitle"
                   : "emptyState.guildTitle",
               )}
@@ -269,18 +276,20 @@ export const ChatView = ({
               renderSignature={currentRenderSignature}
               renderables={currentRenderableMessages}
               scrollToBottomRequest={scrollToBottomRequest}
-              selectedGuildId={selectedGuildId}
+              selectedGuildId={effectiveSelectedGuildId}
             />
           </AsyncContent>
         </div>
-        {selectedGuildId !== "all" && isChatInputEnabled && (
-          <ChatInput
-            onMessageSent={() =>
-              setScrollToBottomRequest((currentRequest) => currentRequest + 1)
-            }
-            selectedGuildId={selectedGuildId}
-          />
-        )}
+        {Boolean(effectiveSelectedGuildId) &&
+          effectiveSelectedGuildId !== "all" &&
+          isChatInputEnabled && (
+            <ChatInput
+              onMessageSent={() =>
+                setScrollToBottomRequest((currentRequest) => currentRequest + 1)
+              }
+              selectedGuildId={effectiveSelectedGuildId}
+            />
+          )}
       </div>
     </DraggableWindow>
   );

@@ -5,6 +5,14 @@ import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 import { env } from "src/config/env";
 import { betterAuthSchema, db } from "src/database/drizzle";
 import { authRedisSecondaryStorage } from "./auth-redis-storage";
+import { createDiscordAuthOptions } from "./discord-auth-options";
+
+const discordAuthOptions = createDiscordAuthOptions({
+  clientId: env.DISCORD_CLIENT_ID,
+  clientSecret: env.DISCORD_CLIENT_SECRET,
+  redirectURI: `${env.APP_URL}/idp/callback/discord`,
+  scopes: DISCORD_AUTH_SCOPES,
+});
 
 export const auth = betterAuth({
   appName: "@lootlog/auth",
@@ -18,18 +26,7 @@ export const auth = betterAuth({
   account: {
     encryptOAuthTokens: true,
   },
-  user: {
-    additionalFields: {
-      discordId: {
-        type: "string",
-        required: true,
-        input: false,
-      },
-    },
-    deleteUser: {
-      enabled: true,
-    },
-  },
+  ...discordAuthOptions,
   secret: env.AUTH_SECRET,
   session: {
     storeSessionInDatabase: true,
@@ -74,20 +71,6 @@ export const auth = betterAuth({
     bearer(),
     admin({ adminUserIds: env.ADMIN_ACCOUNT_IDS }),
   ],
-  socialProviders: {
-    discord: {
-      clientId: env.DISCORD_CLIENT_ID,
-      clientSecret: env.DISCORD_CLIENT_SECRET,
-      redirectURI: `${env.APP_URL}/idp/callback/discord`,
-      prompt: "consent",
-      scopes: DISCORD_AUTH_SCOPES,
-      mapProfileToUser: (profile) => ({
-        firstName: profile.given_name,
-        lastName: profile.family_name,
-        discordId: profile.id,
-      }),
-    },
-  },
 });
 
 export type AppUserSession = typeof auth.$Infer.Session;

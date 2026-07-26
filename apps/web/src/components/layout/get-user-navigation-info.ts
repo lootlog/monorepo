@@ -180,6 +180,20 @@ export function getUserNavigationInfo({
     };
   }
 
+  if (normalizedPath === ROUTES.user.settings.servers) {
+    return {
+      breadcrumbs: [
+        {
+          label: t("layout.navigation.settings"),
+          path: ROUTES.user.settings.base,
+        },
+        { label: t("settings.servers.title"), path: null },
+      ],
+      showBack: true,
+      backPath: ROUTES.user.settings.base,
+    };
+  }
+
   if (normalizedPath.startsWith(ROUTES.user.settings.base)) {
     return {
       breadcrumbs: [{ label: t("layout.navigation.settings"), path: null }],

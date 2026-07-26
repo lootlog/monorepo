@@ -13,6 +13,8 @@ import type { UpdateUserPreferencesDtoTheme } from './update-user-preferences-dt
 export interface UpdateUserPreferencesDto {
   /** @minItems 1 */
   guildsOrder?: string[];
+  /** @items.minLength 1 */
+  hiddenGuildIds?: string[];
   theme?: UpdateUserPreferencesDtoTheme;
   colorMode?: UpdateUserPreferencesDtoColorMode;
   chatAppearance?: UpdateUserPreferencesDtoChatAppearance;

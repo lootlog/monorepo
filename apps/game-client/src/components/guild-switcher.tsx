@@ -1,21 +1,27 @@
 import { cn } from "@/lib/utils";
-import { useUserPreferences } from "@/hooks/api/use-user-preferences";
+import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { type FC, useEffect } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { AvatarFallback } from "@/components/ui/avatar";
+import { type FC, useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { GuildButton } from "@/components/guild-button";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/api-client/react-query/main/users";
 import { useTranslation } from "react-i18next";
-import { orderLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";
+import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 import { useShallow } from "zustand/react/shallow";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
+import { useWindowsStore } from "@/store/windows.store";
+import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { GuildSwitcherItem } from "@/components/guild-switcher-item";
+import { toast } from "sonner";
 
 type GuildSwitcherProps = {
   disabled?: boolean;
@@ -48,38 +54,46 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
 }) => {
   const { t } = useTranslation("common");
   const characterId = useCurrentCharacterId();
+  const { guildsQuery, preferencesQuery, visibleGuilds } =
+    useVisibleLootlogGuilds();
+  const { data: guilds, error, isFetched, isLoading, refetch } = guildsQuery;
   const {
-    data: guilds,
-    error,
-    isFetched,
-    isLoading,
-    refetch,
-  } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
-  const { data: userPreferences } = useUserPreferences();
+    data: userPreferences,
+    error: preferencesError,
+    isFetched: arePreferencesFetched,
+    isLoading: arePreferencesLoading,
+    refetch: refetchPreferences,
+  } = preferencesQuery;
+  const updatePreferences = useUpdateUserPreferences();
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { setGuildId, guildId } = useSettingsStore(
     useShallow((state) => ({
       setGuildId: state.setGuildId,
       guildId: characterId ? state.guildIdByCharId[characterId] : undefined,
     })),
   );
-  const guildsOrder = userPreferences?.guildsOrder;
-  const orderedGuilds = orderLootlogGuilds(guilds ?? [], guildsOrder);
+  const hiddenGuildIds = userPreferences?.hiddenGuildIds;
+  const latestHiddenGuildIds = useRef(hiddenGuildIds ?? []);
+  latestHiddenGuildIds.current = hiddenGuildIds ?? [];
   useEffect(() => {
-    if (!isFetched || orderedGuilds.length === 0) return;
+    if (!isFetched || !arePreferencesFetched || visibleGuilds.length === 0)
+      return;
     if (multiple) return;
     if (!onChange) return;
     const currentValue = value;
     if (allowAll && currentValue === "all") return;
-    const exists = orderedGuilds.some((guild) => guild.id === currentValue);
+    const exists = visibleGuilds.some((guild) => guild.id === currentValue);
     if (exists) return;
-    onChange(orderedGuilds[0].id);
-  }, [isFetched, orderedGuilds, value, allowAll, multiple, onChange]);
+    onChange(visibleGuilds[0].id);
+  }, [
+    allowAll,
+    arePreferencesFetched,
+    isFetched,
+    multiple,
+    onChange,
+    value,
+    visibleGuilds,
+  ]);
 
   const selectedValue = value !== undefined ? value : guildId;
   const selectedGuildIds = selectedValues ?? [];
@@ -103,9 +117,95 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     }
   };
 
+  const hideGuild = (guildIdToHide: string, guildName: string) => {
+    const confirmedHiddenGuildIds = hiddenGuildIds ?? [];
+    if (confirmedHiddenGuildIds.includes(guildIdToHide)) {
+      return;
+    }
+
+    updatePreferences.mutate(
+      {
+        hiddenGuildIds: [...confirmedHiddenGuildIds, guildIdToHide],
+      },
+      {
+        onSuccess: () => {
+          toast.success(t("guildSwitcher.hidden", { name: guildName }), {
+            action: {
+              label: t("actions.undo"),
+              onClick: () =>
+                updatePreferences.mutate({
+                  hiddenGuildIds: latestHiddenGuildIds.current.filter(
+                    (hiddenGuildId) => hiddenGuildId !== guildIdToHide,
+                  ),
+                }),
+            },
+          });
+        },
+        onError: () => {
+          toast.error(t("guildSwitcher.hideError"));
+        },
+      },
+    );
+  };
+
+  if (
+    guilds &&
+    isFetched &&
+    arePreferencesFetched &&
+    visibleGuilds.length === 1
+  ) {
+    return null;
+  }
+
+  if (
+    guilds &&
+    isFetched &&
+    arePreferencesFetched &&
+    visibleGuilds.length === 0
+  ) {
+    return (
+      <TooltipProvider>
+        <div
+          className={cn(
+            "ll:mt-1 ll:flex ll:h-7 ll:w-full ll:items-center ll:justify-between ll:box-border ll:rounded-sm ll:border ll:border-gray-700/90 ll:bg-gray-900/60 ll:pl-2 ll:pr-0.5",
+            className,
+          )}
+          role="status"
+        >
+          <span className="ll:min-w-0 ll:flex-1 ll:truncate ll:text-[11px] ll:text-gray-300">
+            {t("guildSwitcher.allHidden")}
+          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                aria-label={t("actions.openSettings")}
+                onClick={() =>
+                  setOpen("settings", true, {
+                    activeTab: "servers",
+                    activeSubsection: "visibility",
+                  })
+                }
+                className="ll:size-6 ll:shrink-0 ll:border-gray-700/90 ll:bg-transparent ll:text-gray-400 hover:ll:bg-gray-800/70 hover:ll:text-gray-200"
+              >
+                <Settings className="ll:size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="ll:z-500">
+              <p className="ll:text-xs ll:font-semibold">
+                {t("actions.openSettings")}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
+    );
+  }
+
   let content = (
     <>
-      {allowAll && !multiple && (
+      {allowAll && !multiple && visibleGuilds.length > 0 && (
         <GuildButton
           key="all"
           isSelected={"all" === selectedValue}
@@ -120,8 +220,8 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           </AvatarFallback>
         </GuildButton>
       )}
-      {orderedGuilds.map((guild) => (
-        <GuildButton
+      {visibleGuilds.map((guild) => (
+        <GuildSwitcherItem
           key={guild.id}
           isSelected={
             multiple
@@ -130,24 +230,17 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           }
           disabled={disabled}
           onClick={() => handleChange(guild.id)}
-          tooltipLabel={guild.name}
-          className={resolvedButtonClassName}
+          onHide={() => hideGuild(guild.id, guild.name)}
+          hideLabel={t("guildSwitcher.hideInGameClient")}
+          guild={guild}
+          buttonClassName={resolvedButtonClassName}
           unreadBadge={formatChatUnreadBadge(unreadCountByGuildId?.[guild.id])}
-        >
-          <AvatarImage
-            src={guild.icon ?? undefined}
-            alt={guild.name}
-            className="ll:object-cover ll:size-full ll:rounded-sm"
-          />
-          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:text-xs ll:font-semibold ll:leading-none">
-            {guild.name.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </GuildButton>
+        />
       ))}
     </>
   );
 
-  if (!guilds && isLoading) {
+  if ((!guilds && isLoading) || (!userPreferences && arePreferencesLoading)) {
     content = (
       <AsyncStatusIndicator
         active
@@ -156,14 +249,14 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
         label={t("async.loadingGuilds")}
       />
     );
-  } else if (!guilds && error) {
+  } else if ((!guilds && error) || (!userPreferences && preferencesError)) {
     content = (
       <AsyncStatusIndicator
         active
         kind="error"
         label={t("async.guildsError")}
         onRetry={() => {
-          void refetch();
+          void Promise.all([refetch(), refetchPreferences()]);
         }}
         retryLabel={t("actions.retry")}
       />
