@@ -1,11 +1,36 @@
 import type { Metadata } from "next";
 import type { JSX } from "react";
 import { HomeContent } from "@/src/components/landing/home-content";
+import landingTranslations from "@/src/i18n/translations/landing.json";
+
+const { seo } = landingTranslations;
 
 export const metadata: Metadata = {
-  title: "Lootlog.pl - Dodatek do Margonem | Timery, Łupy, Analiza Walk",
-  description:
-    "Przejmij kontrolę nad Margonem. Lootlog to darmowy dodatek z synchronizowanymi timerami, historią łupów i analizą walk. Open Source, tworzony przez społeczność.",
+  title: seo.title,
+  description: seo.description,
+  keywords: seo.keywords,
+  openGraph: {
+    title: seo.title,
+    description: seo.description,
+    type: "website",
+    locale: "pl_PL",
+    siteName: "Lootlog.pl",
+    url: "https://lootlog.pl",
+    images: [
+      {
+        url: "/brand/lootlog-social.png",
+        width: 1200,
+        height: 630,
+        alt: seo.socialImageAlt,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: seo.title,
+    description: seo.description,
+    images: ["/brand/lootlog-social.png"],
+  },
 };
 
 const jsonLd = {
@@ -13,8 +38,7 @@ const jsonLd = {
   "@type": "WebApplication",
   name: "Lootlog",
   url: "https://lootlog.pl",
-  description:
-    "Darmowy dodatek do gry Margonem z synchronizowanymi timerami, historią łupów i analizą walk.",
+  description: seo.description,
   applicationCategory: "GameApplication",
   operatingSystem: "Web",
   offers: {
