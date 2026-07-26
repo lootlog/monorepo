@@ -108,7 +108,7 @@ describe("GuildSwitcher", () => {
   });
 
   it("hides a guild from its context menu and can undo the change", async () => {
-    render(<GuildSwitcher />);
+    const { rerender } = render(<GuildSwitcher />);
 
     fireEvent.contextMenu(screen.getByRole("button", { name: "A" }));
     fireEvent.click(
@@ -123,11 +123,37 @@ describe("GuildSwitcher", () => {
     const toastOptions = mockToastSuccess.mock.calls[0]?.[1] as {
       action: { onClick: () => void };
     };
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: [],
+        hiddenGuildIds: ["guild-1", "guild-2"],
+      },
+      isFetched: true,
+    });
+    rerender(<GuildSwitcher />);
     toastOptions.action.onClick();
 
     expect(mockUpdatePreferences).toHaveBeenLastCalledWith({
-      hiddenGuildIds: [],
+      hiddenGuildIds: ["guild-2"],
     });
+  });
+
+  it("keeps cached guilds visible after a preferences refetch error", () => {
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: [],
+        hiddenGuildIds: [],
+      },
+      error: new Error("refetch failed"),
+      isFetched: true,
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    render(<GuildSwitcher />);
+
+    expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("does not initialize the global selection from an uncontrolled switcher", () => {

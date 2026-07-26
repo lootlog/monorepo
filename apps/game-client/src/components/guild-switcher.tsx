@@ -6,7 +6,7 @@ import {
 import { useSettingsStore } from "@/store/settings.store";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AvatarFallback } from "@/components/ui/avatar";
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { GuildButton } from "@/components/guild-button";
@@ -86,6 +86,8 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   );
   const guildsOrder = userPreferences?.guildsOrder;
   const hiddenGuildIds = userPreferences?.hiddenGuildIds;
+  const latestHiddenGuildIds = useRef(hiddenGuildIds ?? []);
+  latestHiddenGuildIds.current = hiddenGuildIds ?? [];
   const visibleGuilds = getVisibleLootlogGuilds(
     guilds ?? [],
     guildsOrder,
@@ -150,7 +152,9 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
               label: t("actions.undo"),
               onClick: () =>
                 updatePreferences.mutate({
-                  hiddenGuildIds: confirmedHiddenGuildIds,
+                  hiddenGuildIds: latestHiddenGuildIds.current.filter(
+                    (hiddenGuildId) => hiddenGuildId !== guildIdToHide,
+                  ),
                 }),
             },
           });
@@ -199,7 +203,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     </>
   );
 
-  if ((!guilds && isLoading) || arePreferencesLoading) {
+  if ((!guilds && isLoading) || (!userPreferences && arePreferencesLoading)) {
     content = (
       <AsyncStatusIndicator
         active
@@ -208,7 +212,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
         label={t("async.loadingGuilds")}
       />
     );
-  } else if ((!guilds && error) || preferencesError) {
+  } else if ((!guilds && error) || (!userPreferences && preferencesError)) {
     content = (
       <AsyncStatusIndicator
         active

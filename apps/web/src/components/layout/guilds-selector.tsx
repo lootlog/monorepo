@@ -5,7 +5,7 @@ import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder, motion } from "framer-motion";
-import { useState, useEffect, type FC } from "react";
+import { useState, useEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { Separator } from "@lootlog/ui/components/separator";
@@ -31,6 +31,10 @@ export const GuildsSelector: FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
   const updateUserPreferences = useUpdateUserPreferences();
+  const latestHiddenGuildIds = useRef(
+    preferencesQuery.data?.hiddenGuildIds ?? [],
+  );
+  latestHiddenGuildIds.current = preferencesQuery.data?.hiddenGuildIds ?? [];
 
   const getOrderedGuilds = () => {
     if (!guilds?.length) {
@@ -46,7 +50,14 @@ export const GuildsSelector: FC = () => {
   useEffect(() => {
     if (!isDragging && pendingOrder) {
       if (orderedGuildsKey !== pendingOrderKey) {
-        updateUserPreferences.mutate({ guildsOrder: pendingOrder });
+        updateUserPreferences.mutate(
+          { guildsOrder: pendingOrder },
+          {
+            onSettled: () => setPendingOrder(null),
+          },
+        );
+      } else {
+        setPendingOrder(null);
       }
     }
   }, [
@@ -100,10 +111,21 @@ export const GuildsSelector: FC = () => {
             {
               action: {
                 label: t("common.actions.undo"),
-                onClick: () =>
+                onClick: () => {
+                  const currentHiddenGuildIds = latestHiddenGuildIds.current;
+                  let undoHiddenGuildIds = currentHiddenGuildIds;
+                  if (isHidden && !currentHiddenGuildIds.includes(guildId)) {
+                    undoHiddenGuildIds = [...currentHiddenGuildIds, guildId];
+                  } else if (!isHidden) {
+                    undoHiddenGuildIds = currentHiddenGuildIds.filter(
+                      (hiddenGuildId) => hiddenGuildId !== guildId,
+                    );
+                  }
+
                   updateUserPreferences.mutate({
-                    hiddenGuildIds: confirmedHiddenGuildIds,
-                  }),
+                    hiddenGuildIds: undoHiddenGuildIds,
+                  });
+                },
               },
             },
           );
@@ -125,7 +147,8 @@ export const GuildsSelector: FC = () => {
       <UserNavItem />
       <Separator className="-mt-[1px]" />
       <ScrollArea className="flex-1 h-24">
-        {guildsQuery.isError || preferencesQuery.isError ? (
+        {(guildsQuery.isError && !guilds) ||
+        (preferencesQuery.isError && preferencesQuery.data === undefined) ? (
           <div className="flex h-12 items-center justify-center">
             <Button
               size="icon"
