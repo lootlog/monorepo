@@ -115,7 +115,7 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders nine domain tabs in order and opens the selected domain", async () => {
+  it("renders ten domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
     render(<SettingsTabs />);
 
@@ -125,6 +125,7 @@ describe("SettingsTabs", () => {
 
     expect(tabNames).toEqual([
       "Ogólne",
+      "Serwery",
       "Wygląd",
       "Timery",
       "Dane z gry",

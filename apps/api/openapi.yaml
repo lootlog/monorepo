@@ -6212,6 +6212,10 @@ components:
           type: array
           items:
             type: string
+        hiddenGuildIds:
+          type: array
+          items:
+            type: string
         theme:
           type: string
         colorMode:
@@ -6313,6 +6317,7 @@ components:
       required:
         - userId
         - guildsOrder
+        - hiddenGuildIds
         - theme
         - colorMode
         - chatAppearance
@@ -6353,6 +6358,11 @@ components:
           type: array
           items:
             type: string
+        hiddenGuildIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
         theme:
           type: string
           enum:
