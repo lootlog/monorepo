@@ -1,5 +1,11 @@
 # @lootlog/web
 
+## 1.0.2
+
+### Patch Changes
+
+- c1ee3a0: Introduce the Resp Orbit brand mark across browser icons, landing metadata, the web app shell, and userscript metadata.
+
 ## 1.0.1
 
 ### Patch Changes
