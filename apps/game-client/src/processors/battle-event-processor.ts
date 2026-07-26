@@ -124,7 +124,7 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
 };
 
 export class BattleEventProcessor {
-  private readonly recentBattleHashes = new Map<string, number>();
+  private readonly recentBattleReplayKeys = new Map<string, number>();
   private observedTeams = new Set<number>();
   private hasMultipleTeams = false;
   private hasWarnedCaptureOverflow = false;
@@ -259,20 +259,21 @@ export class BattleEventProcessor {
             const characterId = game.hero.characterId;
             const world = game.world;
             const battleHash = await createSHA256Hash(
-              JSON.stringify({
-                accountId,
-                characterId,
-                moves: capture.turns,
-                world,
-              }),
+              JSON.stringify(capture.turns),
             );
+            const battleReplayKey = JSON.stringify({
+              accountId,
+              battleHash,
+              characterId,
+              world,
+            });
             const events = mapBattleEventsToPayload(capture.events);
 
             if (
               events &&
               !hasNpcInBattle &&
               this.hasMultipleTeams &&
-              !this.hasRecentBattleHash(battleHash)
+              !this.hasRecentBattleReplayKey(battleReplayKey)
             ) {
               const submissionId = await createSHA256Hash(
                 JSON.stringify({
@@ -290,7 +291,7 @@ export class BattleEventProcessor {
                 events,
                 world,
               };
-              this.recentBattleHashes.set(battleHash, Date.now());
+              this.recentBattleReplayKeys.set(battleReplayKey, Date.now());
             }
             nextLastBattleHash = battleHash;
           }
@@ -334,13 +335,13 @@ export class BattleEventProcessor {
     }
   }
 
-  private hasRecentBattleHash(battleHash: string): boolean {
+  private hasRecentBattleReplayKey(battleReplayKey: string): boolean {
     const now = Date.now();
-    for (const [hash, observedAt] of this.recentBattleHashes) {
+    for (const [key, observedAt] of this.recentBattleReplayKeys) {
       if (now - observedAt >= BATTLE_REPLAY_WINDOW_MS) {
-        this.recentBattleHashes.delete(hash);
+        this.recentBattleReplayKeys.delete(key);
       }
     }
-    return this.recentBattleHashes.has(battleHash);
+    return this.recentBattleReplayKeys.has(battleReplayKey);
   }
 }

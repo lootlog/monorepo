@@ -9,7 +9,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { and, eq } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
 import type { BattleTimelineResponseInput } from "src/battles/dto/battle-response.dto";
 import type { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
@@ -55,8 +55,15 @@ import type {
 
 const BATTLE_DEDUPLICATION_TTL_SECONDS = 10;
 const BATTLE_DEDUPLICATION_LOCK_TTL_SECONDS = 30;
+const BATTLE_DEDUPLICATION_LOCK_REFRESH_INTERVAL_MS = 10_000;
 const BATTLE_DEDUPLICATION_WAIT_TIMEOUT_MS = 30_000;
 const BATTLE_DEDUPLICATION_WAIT_INTERVAL_MS = 50;
+const EXTEND_BATTLE_DEDUPLICATION_LOCK_SCRIPT = `
+if redis.call("get", KEYS[1]) == ARGV[1] then
+  return redis.call("expire", KEYS[1], ARGV[2])
+end
+return 0
+`;
 const RELEASE_BATTLE_DEDUPLICATION_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("del", KEYS[1])
@@ -87,13 +94,23 @@ export class BattlesService implements IBattlesService {
         data: normalizedData,
         userId,
       });
+      const analysis = this.analyzeBattle(normalizedData);
 
-      return await this.runBattleCreationSingleFlight(semanticFingerprint, () =>
-        this.createCanonicalBattle({
-          data: normalizedData,
-          semanticFingerprint,
-          userId,
-        }),
+      return await this.runBattleCreationSingleFlight(
+        semanticFingerprint,
+        () =>
+          this.createCanonicalBattle({
+            analysis,
+            data: normalizedData,
+            semanticFingerprint,
+            userId,
+          }),
+        (result) =>
+          this.preserveCanonicalBattleDuration(
+            result.battleId,
+            analysis.duration,
+            userId,
+          ),
       );
     } catch (error) {
       this.logger.error(`Failed to create battle for user ${userId}:`, error);
@@ -105,29 +122,37 @@ export class BattlesService implements IBattlesService {
   }
 
   private async createCanonicalBattle({
+    analysis,
     data,
     semanticFingerprint,
     userId,
   }: {
+    analysis: BattleAnalysis;
     data: CreateBattleDto;
     semanticFingerprint: string;
     userId: string;
   }): Promise<CreateBattleResult> {
-    const analysis = this.analyzeBattle(data);
     const existingBattleId = await this.getRecentBattleIdBySemanticFingerprint(
       semanticFingerprint,
       userId,
     );
-    const battleId =
-      existingBattleId ??
-      (
-        await this.storeBattleInDatabase(
-          data,
-          userId,
-          analysis,
-          semanticFingerprint,
-        )
-      ).id;
+    if (existingBattleId) {
+      await this.preserveCanonicalBattleDuration(
+        existingBattleId,
+        analysis.duration,
+        userId,
+      );
+      return { battleId: existingBattleId };
+    }
+
+    const battleId = (
+      await this.storeBattleInDatabase(
+        data,
+        userId,
+        analysis,
+        semanticFingerprint,
+      )
+    ).id;
 
     await this.storeRawBattleData(battleId, {
       events: analysis.parsedMoves,
@@ -144,6 +169,7 @@ export class BattlesService implements IBattlesService {
   private async runBattleCreationSingleFlight(
     semanticFingerprint: string,
     createBattle: () => Promise<CreateBattleResult>,
+    reconcileCachedBattle: (result: CreateBattleResult) => Promise<void>,
   ): Promise<CreateBattleResult> {
     const cacheKey = `battle-submission:${semanticFingerprint}`;
     const lockKey = `${cacheKey}:lock`;
@@ -153,7 +179,10 @@ export class BattlesService implements IBattlesService {
       const cachedResult = await this.requireBattleDeduplicationRedis(() =>
         this.redisService.getJson<CreateBattleResult>(cacheKey),
       );
-      if (cachedResult) return cachedResult;
+      if (cachedResult) {
+        await reconcileCachedBattle(cachedResult);
+        return cachedResult;
+      }
       this.throwIfBattleDeduplicationTimedOut(deadline);
 
       const lockToken = randomUUID();
@@ -167,26 +196,94 @@ export class BattlesService implements IBattlesService {
 
       if (lockAcquired) {
         try {
-          const cachedAfterLock = await this.requireBattleDeduplicationRedis(
-            () => this.redisService.getJson<CreateBattleResult>(cacheKey),
-          );
-          if (cachedAfterLock) return cachedAfterLock;
+          return await this.runWithRenewedBattleDeduplicationLock(
+            lockKey,
+            lockToken,
+            async () => {
+              const cachedAfterLock =
+                await this.requireBattleDeduplicationRedis(() =>
+                  this.redisService.getJson<CreateBattleResult>(cacheKey),
+                );
+              if (cachedAfterLock) {
+                await reconcileCachedBattle(cachedAfterLock);
+                return cachedAfterLock;
+              }
 
-          const result = await createBattle();
-          await this.requireBattleDeduplicationRedis(() =>
-            this.redisService.setJson(
-              cacheKey,
-              result,
-              BATTLE_DEDUPLICATION_TTL_SECONDS,
-            ),
+              const result = await createBattle();
+              await this.requireBattleDeduplicationRedis(() =>
+                this.redisService.setJson(
+                  cacheKey,
+                  result,
+                  BATTLE_DEDUPLICATION_TTL_SECONDS,
+                ),
+              );
+              return result;
+            },
           );
-          return result;
         } finally {
           await this.releaseBattleDeduplicationLock(lockKey, lockToken);
         }
       }
 
       await sleep(BATTLE_DEDUPLICATION_WAIT_INTERVAL_MS);
+    }
+  }
+
+  private async runWithRenewedBattleDeduplicationLock<Result>(
+    lockKey: string,
+    lockToken: string,
+    operation: () => Promise<Result>,
+  ): Promise<Result> {
+    let rejectLockLoss!: (error: unknown) => void;
+    const lockLoss = new Promise<never>((_resolve, reject) => {
+      rejectLockLoss = reject;
+    });
+    let renewal = Promise.resolve();
+    const refreshTimer = setInterval(() => {
+      renewal = renewal
+        .then(async () => {
+          const extended = await this.requireBattleDeduplicationRedis(() =>
+            this.redisService.eval<number>(
+              EXTEND_BATTLE_DEDUPLICATION_LOCK_SCRIPT,
+              [lockKey],
+              [lockToken, BATTLE_DEDUPLICATION_LOCK_TTL_SECONDS],
+            ),
+          );
+          if (extended !== 1) {
+            throw new ServiceUnavailableException(
+              "Battle deduplication lock was lost; retry the request",
+            );
+          }
+        })
+        .catch((error: unknown) => {
+          clearInterval(refreshTimer);
+          rejectLockLoss(error);
+        });
+    }, BATTLE_DEDUPLICATION_LOCK_REFRESH_INTERVAL_MS);
+
+    try {
+      return await Promise.race([operation(), lockLoss]);
+    } finally {
+      clearInterval(refreshTimer);
+      await renewal;
+    }
+  }
+
+  private async preserveCanonicalBattleDuration(
+    battleId: string,
+    duration: number,
+    userId: string,
+  ): Promise<void> {
+    if (duration <= 0) return;
+
+    const updated = await this.drizzle.db
+      .update(battles)
+      .set({ duration, updatedAt: new Date() })
+      .where(and(eq(battles.id, battleId), lt(battles.duration, duration)))
+      .returning({ id: battles.id });
+
+    if (updated.length > 0) {
+      await this.battleAnalyticsService.invalidateAnalyticsCache(userId);
     }
   }
 
