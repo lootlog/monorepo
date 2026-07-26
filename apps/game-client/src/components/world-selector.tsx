@@ -12,6 +12,7 @@ import { storageKey } from "@/lib/storage-key";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
+import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 
 const recentWorldsKey = (accountId: string, characterId: string) =>
   storageKey(`ll:recent-worlds:${accountId}:${characterId}`);
@@ -28,6 +29,8 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   className = "",
 }) => {
   const { t } = useTranslation("common");
+  const { guildsQuery, preferencesQuery, visibleGuilds } =
+    useVisibleLootlogGuilds();
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
@@ -133,6 +136,14 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
 
     setWorld(guildId, newWorld);
   };
+
+  if (
+    !guildsQuery.isFetched ||
+    !preferencesQuery.isFetched ||
+    visibleGuilds.length === 0
+  ) {
+    return null;
+  }
 
   return (
     <Combobox
