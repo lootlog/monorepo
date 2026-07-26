@@ -1,106 +1,185 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2, Heart, LogIn } from "lucide-react";
+import { ArrowUpRight, Heart, Loader2, LogIn } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@lootlog/ui/components/button";
+
+import { links } from "@/src/config/links";
 import { useSession } from "@/src/hooks/use-session";
 import { authClient } from "@/src/lib/auth-client";
-import { Button } from "@lootlog/ui/components/button";
-import { links } from "@/src/config/links";
+import { LootlogMark } from "./lootlog-mark";
 
 export function LandingHeader() {
   const { t } = useTranslation();
   const session = useSession();
+  const [isClientReady, setIsClientReady] = useState(false);
   const isAuthenticated = !!session.data;
-  const isLoading = session.isPending;
+  const isLoading = !isClientReady || session.isPending;
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState(false);
+
+  useEffect(() => {
+    setIsClientReady(true);
+  }, []);
 
   const handleLoginAction = async () => {
-    const url = `${window.location.href}@me`;
+    setIsSigningIn(true);
+    setSignInError(false);
 
-    await authClient.signIn.social({
-      provider: "discord",
-      callbackURL: url,
-      scopes: ["guilds.members.read", "guilds", "identify", "email"],
-    });
+    try {
+      const result = await authClient.signIn.social({
+        provider: "discord",
+        callbackURL: `${window.location.origin}/@me`,
+        scopes: ["guilds.members.read", "guilds", "identify", "email"],
+      });
+
+      if (result.error) {
+        setSignInError(true);
+      }
+    } catch {
+      setSignInError(true);
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   return (
-    <header className="w-full border-b border-white/5 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-      <div className="flex h-16 items-center px-4 md:px-6 lg:px-8 justify-between">
-        <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="flex items-center gap-2 font-bold text-xl tracking-tight text-white hover:text-primary transition-colors"
+    <header className="sticky top-0 z-50 bg-[#07111f]/95 shadow-[0_8px_28px_rgba(0,0,0,0.18)] backdrop-blur-md">
+      <div className="mx-auto flex h-[4.5rem] max-w-[96rem] items-center px-5 sm:px-8 lg:px-12">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 rounded-md text-xl font-black tracking-[-0.035em] text-[#f7f8f2] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
+        >
+          <LootlogMark className="size-7 shrink-0 rounded-md" />
+          {t("landing.header.brand")}
+        </Link>
+
+        <nav
+          aria-label={t("landing.header.navigationLabel")}
+          className="ml-10 hidden items-center gap-7 text-sm font-semibold text-[#9fb1ca] lg:flex"
+        >
+          <a
+            href="#product"
+            className="rounded-md transition-colors hover:text-[#c8f135] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
           >
-            {t("landing.header.brand")}
-          </Link>
+            {t("landing.header.product")}
+          </a>
+          <a
+            href="#workflow"
+            className="rounded-md transition-colors hover:text-[#c8f135] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
+          >
+            {t("landing.header.workflow")}
+          </a>
+          <a
+            href="#trust"
+            className="rounded-md transition-colors hover:text-[#c8f135] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
+          >
+            {t("landing.header.trust")}
+          </a>
+          <a
+            href="#faq"
+            className="rounded-md transition-colors hover:text-[#c8f135] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
+          >
+            {t("landing.header.faq")}
+          </a>
+          <a
+            href={links.docs}
+            className="inline-flex items-center gap-1 rounded-md transition-colors hover:text-[#c8f135] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
+          >
+            {t("landing.header.docs")}
+            <ArrowUpRight className="size-3.5" />
+          </a>
+        </nav>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground ml-4">
-            <a
-              href={links.docs}
-              className="hover:text-primary transition-colors"
+        <div className="ml-auto flex items-center gap-2">
+          {isLoading ? (
+            <Button
+              disabled
+              size="sm"
+              variant="outline"
+              className="h-11 min-w-11 rounded-xl border-[#3b4d67] bg-transparent text-[#d8e3f1] disabled:opacity-70"
+              aria-label={t("landing.header.loginLoading")}
             >
-              {t("landing.header.docs")}
-            </a>
-            <a
-              href={links.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-primary transition-colors"
+              <Loader2 className="size-4 animate-spin" />
+            </Button>
+          ) : isAuthenticated ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-11 rounded-xl border-[#3b4d67] bg-transparent px-3 font-bold text-[#e6edf7] transition-[background-color,transform] hover:bg-[#14233a] hover:text-white motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f] md:hidden"
+              asChild
             >
-              {t("landing.header.github")}
-            </a>
-          </nav>
-        </div>
+              <a href={links.dashboard}>
+                <span className="sm:hidden">{t("landing.header.lootlog")}</span>
+                <span className="hidden sm:inline">
+                  {t("landing.header.goToLootlog")}
+                </span>
+                <ArrowUpRight className="size-3.5" />
+              </a>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-11 rounded-xl border-[#3b4d67] bg-transparent px-3 font-bold text-[#e6edf7] transition-[background-color,transform] hover:bg-[#14233a] hover:text-white motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f] disabled:opacity-70"
+              onClick={handleLoginAction}
+              disabled={isSigningIn}
+            >
+              {isSigningIn ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <LogIn className="size-4" />
+              )}
+              <span className="hidden sm:inline">
+                {isSigningIn
+                  ? t("landing.header.loginLoading")
+                  : t("landing.header.login")}
+              </span>
+            </Button>
+          )}
 
-        <div className="flex items-center gap-3">
           <Button
-            variant="outline"
             size="sm"
-            className="h-9 border-pink-500/30 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
+            variant="outline"
+            className="h-11 rounded-xl border-[#ff665b]/35 bg-[#ff665b]/10 px-3 font-bold text-[#ff9a92] transition-[background-color,color,transform] hover:border-[#ff665b]/55 hover:bg-[#ff665b]/20 hover:text-[#ffc1bc] motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#ff665b] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
             asChild
           >
             <a
               href={links.support}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2"
+              aria-label={t("landing.header.support")}
             >
-              <Heart className="h-4 w-4 shrink-0" />
-              <span className="sr-only md:not-sr-only">
+              <Heart className="size-4 fill-current" />
+              <span className="hidden sm:inline">
                 {t("landing.header.support")}
               </span>
             </a>
           </Button>
-          {isLoading ? (
-            <Button disabled size="sm" className="gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </Button>
-          ) : isAuthenticated ? (
-            <Button
-              size="sm"
-              className="h-9 shadow-[0_0_15px_-5px_hsl(var(--primary))]"
-              asChild
-            >
-              <a href={links.dashboard} className="flex items-center">
-                <span className="md:hidden">{t("landing.header.lootlog")}</span>
-                <span className="sr-only md:not-sr-only">
-                  {t("landing.header.goToLootlog")}
-                </span>
-              </a>
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              className="gap-2 shadow-[0_0_15px_-5px_hsl(var(--primary))]"
-              onClick={handleLoginAction}
-            >
-              <LogIn className="w-4 h-4" />
-              {t("landing.header.login")}
-            </Button>
-          )}
+
+          <Button
+            size="sm"
+            className="hidden h-11 rounded-xl bg-[#c8f135] px-4 font-bold text-[#07111f] shadow-none transition-[background-color,transform] hover:bg-[#d8ff5a] motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#35d3e4] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f] md:inline-flex"
+            asChild
+          >
+            <a href={links.dashboard}>
+              {t("landing.header.goToLootlog")}
+              <ArrowUpRight className="size-4" />
+            </a>
+          </Button>
         </div>
       </div>
+
+      {signInError && (
+        <div
+          role="alert"
+          className="absolute right-4 top-[calc(100%+0.5rem)] max-w-sm rounded-xl bg-[#541f1b] px-4 py-3 text-sm text-[#ffe8e5] shadow-[10px_14px_32px_rgba(0,0,0,0.3)] sm:right-6 lg:right-8"
+        >
+          {t("landing.header.loginError")}
+        </div>
+      )}
     </header>
   );
 }
