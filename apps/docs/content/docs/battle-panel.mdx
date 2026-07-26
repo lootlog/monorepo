@@ -1,111 +1,72 @@
 ---
-title: Panel walki
-description: Analiza walk PvP — statystyki, porównania, historia bitew
+title: Analiza walk
+description: Przeglądaj zapisane walki PvP, ich przebieg i statystyki postaci w panelu Lootlog.
 ---
 
-## Czym jest Panel walki?
+Panel walki jest osobistym modułem analitycznym. Wykorzystuje logi
+obsługiwanych walk zarejestrowane przez dodatek i nie jest symulatorem
+mechaniki Margonem.
 
-Panel walki to osobisty moduł analityczny do walk PvP w Margonem. Pozwala przeglądać historię bitew, analizować wydajność postaci i porównywać się z innymi graczami.
+## Zanim zaczniesz
 
-Panel walki znajduje się w strefie osobistej (@me → Panel walki) w [panelu webowym](https://lootlog.pl/@me).
+- Dodatek musi być aktywny podczas walki.
+- Musisz być zalogowany na właściwe konto.
+- W panelu wybierz postać i świat, na których odbyła się walka.
 
-> **Jak działają dane walk:** Dodatek w grze automatycznie rejestruje logi walk. Po instalacji i zalogowaniu, każda walka PvP jest zapisywana i dostępna w panelu walki.
+Walki sprzed instalacji dodatku nie są dostępne.
 
-## Dashboard
+## Dashboard walk
 
-Dashboard to strona główna panelu walki, pokazująca podsumowanie twoich wyników:
+Dashboard podsumowuje historię i pozwala szybko ocenić między innymi:
 
-- **Łączne walki** — ile walk stoczyłeś
-- **Współczynnik wygranych** — procent wygranych z rozbiciem na wygrane i przegrane (W/L)
-- **Zdobyte punkty honoru (PH)** — łączna liczba zdobytych punktów
+- liczbę zapisanych walk;
+- bilans zwycięstw i porażek;
+- serię wyników;
+- częstych przeciwników;
+- czas trwania oraz inne dostępne agregaty.
 
-Dashboard wyświetla też ostatnie walki z szybkim podglądem wyników.
+Zakres widoków może zależeć od rodzaju i kompletności zarejestrowanej walki.
 
-## Lista walk
+## Znajdź konkretną walkę
 
-W widoku listy walk znajdziesz chronologiczny spis wszystkich twoich walk PvP.
+Na liście możesz filtrować dane według dostępnych kryteriów, takich jak
+postać, okres, poziom przeciwnika lub rodzaj walki.
 
-### Filtrowanie walk
+Po otwarciu wpisu zobaczysz:
 
-Możesz zawęzić listę używając filtrów:
+- uczestników i wynik;
+- dostępne wartości obrażeń, leczenia i defensywy;
+- przebieg tura po turze;
+- rozpoznane efekty, zasoby i zdarzenia;
+- ustawienie widoczności walki.
 
-- **Postać** — wybierz konkretną postać, jeśli grasz na wielu
-- **Okres** — 7 dni, 30 dni, 90 dni lub cały czas
-- **Zakres poziomów** — minimum i maksimum poziomu przeciwnika
-- **Walki PH** — pokaż tylko walki o punkty honoru
-- **Walki matchmakingowe** — pokaż tylko walki z matchmakingu
+<Callout type="info" title="Nie każdy log ma ten sam zakres danych">
+  Starsze lub niepełne zapisy mogą nie zawierać wszystkich źródłowych
+  zdarzeń. Panel pokazuje tylko informacje możliwe do wiarygodnego wyliczenia.
+</Callout>
 
-### Informacje o walce
+## Udostępnianie
 
-Każda walka na liście pokazuje:
+Prywatna walka jest widoczna tylko dla właściciela. Po zmianie widoczności na
+publiczną możesz skopiować bezpośredni link. W każdej chwili możesz ponownie
+ukryć udostępniony zapis.
 
-- Datę i godzinę
-- Uczestników (ty i przeciwnicy)
-- Wynik (wygrana/przegrana)
-- Zdobyte/utracone punkty honoru
-- Czy walka jest publiczna czy prywatna
+Przed wysłaniem linku sprawdź, czy widok zawiera dane, które chcesz pokazać.
 
-## Szczegóły walki
+## Sprawdź rezultat
 
-Kliknij na walkę, aby zobaczyć pełną analizę:
+Analiza działa poprawnie, gdy nowa walka pojawia się na liście właściwej
+postaci, a jej szczegóły pokazują uczestników, wynik i dostępny przebieg tur.
 
-### Przegląd
+Jeżeli walki brakuje:
 
-- Skład drużyn (postacie, poziomy, profesje)
-- Łączne obrażenia zadane i otrzymane
-- Leczenie i absorpcja
+1. sprawdź, czy dodatek był aktywny;
+2. wybierz właściwą postać, świat i zakres czasu;
+3. odśwież panel;
+4. w razie powtarzalnego problemu zgłoś identyfikator walki na
+   [Discordzie](https://discord.gg/mPcczaeYMu).
 
-### Przebieg walki
+## Następny krok
 
-Tura po turze — każda akcja w walce z informacją o:
-
-- Obrażeniach (fizycznych, magicznych, żywiołowych: ogień, lód, błyskawica, trucizna)
-- Efektach specjalnych (cios krytyczny, ogłuszenie, głęboka rana, trucizna)
-- Blokach, unikach, kontrach
-- Leczeniu i absorpcji
-- Efektach legendarnych (klątwa, dotyk anioła, cios bardzo krytyczny)
-
-## Statystyki
-
-Moduł statystyk oferuje kilka widoków analitycznych:
-
-### Ogólne statystyki
-
-Podsumowanie wydajności twojej postaci:
-
-- Współczynnik wygranych ogółem
-- Współczynnik wygranych według profesji przeciwnika (wojownik, paladyn, łowca, mag, tancerz ostrzy, tropiciel)
-- Seria zwycięstw/porażek (streak)
-- Średni czas walki
-
-### Head-to-Head (H2H)
-
-Porównanie wyników z konkretnymi przeciwnikami:
-
-- Z kim walczyłeś najczęściej
-- Bilans wygranych/przegranych z każdym przeciwnikiem
-- Top 5 najczęstszych przeciwników
-
-### Statystyki matchmakingowe
-
-Analiza walk z systemu matchmakingu:
-
-- Bilans wygranych/przegranych w matchmakingu
-- Porównania z konkretnymi graczami w trybie matchmakingowym
-
-### Wykresy
-
-Panel walki zawiera wykresy pokazujące:
-
-- **Wzrost PH** — jak zmieniała się twoja liczba punktów honoru w czasie
-- **Wzrost ratingu** — progresja twojego ratingu
-- **Delta ratingu** — jak rating zmienia się w zależności od przeciwnika
-
-## Widoczność walk
-
-Każda walka może być:
-
-- **Publiczna** — widoczna dla wszystkich (można udostępnić link)
-- **Prywatna** — widoczna tylko dla ciebie
-
-Publiczne walki są dostępne pod bezpośrednim linkiem, nawet dla osób niezalogowanych.
+Wróć do [Panelu webowego](/docs/web-panel) albo przejdź do
+[Pomocy i FAQ](/docs/faq), jeśli logi nie są rejestrowane.

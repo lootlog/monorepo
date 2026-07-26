@@ -1,115 +1,106 @@
 ---
-title: Uprawnienia
-description: System ról i uprawnień w Lootlog — jak kontrolować dostęp członków klanu
+title: Role i uprawnienia
+description: Kontroluj dostęp członków klanu za pomocą ról opartych na kanonicznych uprawnieniach Lootlog.
 ---
 
-## Jak działają uprawnienia?
+Uprawnienia są przypisywane do ról, a role do członków. Członek mający kilka
+ról otrzymuje sumę ich uprawnień.
 
-Lootlog posiada szczegółowy system uprawnień, który pozwala precyzyjnie kontrolować, co poszczególni członkowie klanu mogą robić. Uprawnienia przypisuje się do ról, a role — do członków.
+## Poziomy nadrzędne
 
-## Hierarchia ról
+| Uprawnienie | Znaczenie |
+| --- | --- |
+| `OWNER` | Właściciel klanu i najwyższy poziom dostępu |
+| `ADMIN` | Administracja klanem i konfiguracją |
+| `LOOTLOG_MANAGE` | Zarządzanie danymi Lootlog |
+| `LOOTLOG_ACCESS` | Podstawowy dostęp do strefy klanu |
 
-System rozróżnia cztery poziomy dostępu:
+<Callout type="warning" title="Zasada najmniejszego dostępu">
+  Nie nadawaj `ADMIN` lub `LOOTLOG_MANAGE` tylko po to, aby odblokować jeden
+  widok. Wybierz najwęższy zestaw uprawnień potrzebny danej roli.
+</Callout>
 
-| Rola                      | Opis                                                                                                |
-| ------------------------- | --------------------------------------------------------------------------------------------------- |
-| **Właściciel (Owner)**    | Pełna kontrola nad klanem. Może wszystko, włącznie z ręczną edycją punktów w eventach.              |
-| **Administrator (Admin)** | Zarządzanie lootlogiem — nadawanie uprawnień, edycja konfiguracji. Ma dostęp do wszystkich funkcji. |
-| **Moderator (Manage)**    | Zarządzanie lootlogiem — usuwanie/edycja lootów, timerów i innych danych.                           |
-| **Dostęp (Access)**       | Podstawowe uprawnienie pozwalające na dostęp do danego lootloga klanu.                              |
+## Kanoniczna lista uprawnień
 
-> **Dziedziczenie:** Właściciel automatycznie ma wszystkie uprawnienia Administratora. Administrator ma wszystkie uprawnienia Moderatora. Moderator ma uprawnienie Dostępu.
-
-## Lista uprawnień
-
-### Dostęp i administracja
-
-| Uprawnienie      | Opis                                   |
-| ---------------- | -------------------------------------- |
-| `LOOTLOG_ACCESS` | Podstawowy dostęp do aplikacji klanu   |
-| `LOOTLOG_MANAGE` | Moderowanie — edycja i usuwanie danych |
-| `ADMIN`          | Pełne zarządzanie klanem               |
-| `OWNER`          | Właściciel klanu — najwyższy poziom    |
+Poniższe identyfikatory odpowiadają wartościom używanym przez aplikację.
 
 ### Łupy
 
-| Uprawnienie         | Opis                         |
-| ------------------- | ---------------------------- |
-| `LOOTS_READ`        | Przeglądanie łupów           |
-| `LOOTS_WRITE`       | Dodawanie i edycja łupów     |
-| `LOOTS_TITANS_READ` | Przeglądanie łupów z tytanów |
-| `LOOTS_HEROES_READ` | Przeglądanie łupów z herosów |
+| Uprawnienie | Zakres |
+| --- | --- |
+| `LOOTLOG_LOOTS_READ` | Odczyt łupów |
+| `LOOTLOG_LOOTS_WRITE` | Dodawanie i zmiana łupów |
+| `LOOTLOG_LOOTS_TITANS_READ` | Odczyt łupów z tytanów |
+| `LOOTLOG_LOOTS_HEROES_READ` | Odczyt łupów z herosów |
 
 ### Timery
 
-| Uprawnienie          | Opis                         |
-| -------------------- | ---------------------------- |
-| `TIMERS_READ`        | Przeglądanie timerów         |
-| `TIMERS_WRITE`       | Tworzenie timerów            |
-| `TIMERS_RESET`       | Resetowanie timerów          |
-| `TIMERS_DELETE`      | Usuwanie timerów             |
-| `TIMERS_TITANS_READ` | Przeglądanie timerów tytanów |
-| `TIMERS_HEROES_READ` | Przeglądanie timerów herosów |
+| Uprawnienie | Zakres |
+| --- | --- |
+| `LOOTLOG_TIMERS_READ` | Odczyt timerów |
+| `LOOTLOG_TIMERS_WRITE` | Tworzenie timerów |
+| `LOOTLOG_TIMERS_RESET` | Resetowanie timerów |
+| `LOOTLOG_TIMERS_DELETE` | Usuwanie timerów |
+| `LOOTLOG_TIMERS_TITANS_READ` | Odczyt timerów tytanów |
+| `LOOTLOG_TIMERS_HEROES_READ` | Odczyt timerów herosów |
 
-### Rezerwacje
+### Rezerwacje i członkowie
 
-| Uprawnienie          | Opis                                 |
-| -------------------- | ------------------------------------ |
-| `RESERVATIONS_READ`  | Przeglądanie rezerwacji              |
-| `RESERVATIONS_WRITE` | Tworzenie i zarządzanie rezerwacjami |
-
-### Członkowie
-
-| Uprawnienie    | Opis                              |
-| -------------- | --------------------------------- |
-| `MEMBERS_READ` | Przeglądanie listy członków klanu |
+| Uprawnienie | Zakres |
+| --- | --- |
+| `LOOTLOG_RESERVATIONS_READ` | Odczyt rezerwacji |
+| `LOOTLOG_RESERVATIONS_WRITE` | Tworzenie i zmiana rezerwacji |
+| `LOOTLOG_MEMBERS_READ` | Odczyt listy członków |
+| `LOOTLOG_ONLINE_PLAYERS_READ` | Odczyt listy graczy online |
 
 ### Czat
 
-| Uprawnienie        | Opis                              |
-| ------------------ | --------------------------------- |
-| `CHAT_READ`        | Przeglądanie wiadomości na czacie |
-| `CHAT_WRITE`       | Wysyłanie wiadomości              |
-| `CHAT_TITANS_READ` | Dostęp do kanału tytanów          |
-| `CHAT_HEROES_READ` | Dostęp do kanału herosów          |
+| Uprawnienie | Zakres |
+| --- | --- |
+| `LOOTLOG_CHAT_READ` | Odczyt czatu |
+| `LOOTLOG_CHAT_WRITE` | Wysyłanie wiadomości |
+| `LOOTLOG_CHAT_TITANS_READ` | Dostęp do informacji o tytanach |
+| `LOOTLOG_CHAT_HEROES_READ` | Dostęp do informacji o herosach |
 
 ### Powiadomienia
 
-| Uprawnienie                 | Opis                     |
-| --------------------------- | ------------------------ |
-| `NOTIFICATIONS_READ`        | Przeglądanie powiadomień |
-| `NOTIFICATIONS_SEND`        | Wysyłanie powiadomień    |
-| `NOTIFICATIONS_TITANS_READ` | Powiadomienia o tytanach |
-| `NOTIFICATIONS_HEROES_READ` | Powiadomienia o herosach |
+| Uprawnienie | Zakres |
+| --- | --- |
+| `LOOTLOG_NOTIFICATIONS_READ` | Odczyt powiadomień |
+| `LOOTLOG_NOTIFICATIONS_SEND` | Wysyłanie powiadomień |
+| `LOOTLOG_NOTIFICATIONS_TITANS_READ` | Powiadomienia o tytanach |
+| `LOOTLOG_NOTIFICATIONS_HEROES_READ` | Powiadomienia o herosach |
 
 ### Eventy
 
-| Uprawnienie     | Opis                                                                            |
-| --------------- | ------------------------------------------------------------------------------- |
-| `EVENTS_READ`   | Przeglądanie eventów, herosów, map i rankingów                                  |
-| `EVENTS_WRITE`  | Samodzielne przypisywanie się do map w eventach                                 |
-| `EVENTS_MANAGE` | Tworzenie eventów, zarządzanie herosami i mapami, przypisywanie innych członków |
+| Uprawnienie | Zakres |
+| --- | --- |
+| `LOOTLOG_EVENTS_READ` | Odczyt eventów i rankingów |
+| `LOOTLOG_EVENTS_WRITE` | Samodzielne przypisania |
+| `LOOTLOG_EVENTS_MANAGE` | Zarządzanie eventami |
 
-## Zarządzanie rolami
+### Dokumenty
 
-### Tworzenie roli
+| Uprawnienie | Zakres |
+| --- | --- |
+| `LOOTLOG_DOCS_READ` | Odczyt dokumentów klanu |
+| `LOOTLOG_DOCS_WRITE` | Tworzenie i zmiana dokumentów klanu |
 
-1. Przejdź do ustawień klanu → Role
-2. Kliknij "Dodaj rolę"
-3. Nadaj nazwę roli
-4. Zaznacz uprawnienia, które chcesz przypisać
-5. Zapisz rolę
+## Utwórz rolę
 
-### Przypisywanie ról
+1. Otwórz **Klan → Ustawienia → Role**.
+2. Wybierz dodanie roli.
+3. Nadaj nazwę opisującą odpowiedzialność, nie konkretną osobę.
+4. Zaznacz wymagane uprawnienia.
+5. Zapisz rolę i przypisz ją wybranym członkom.
 
-1. Przejdź do ustawień klanu → Członkowie
-2. Znajdź członka
-3. Przypisz mu rolę
+## Sprawdź rezultat
 
-Członek może mieć wiele ról — jego uprawnienia to suma uprawnień ze wszystkich przypisanych ról.
+Przetestuj rolę na koncie bez uprawnień właściciela. Członek powinien widzieć
+potrzebne sekcje i nie powinien mieć dostępu do operacji spoza swojej
+odpowiedzialności.
 
-### Podgląd tytanów i herosów
+## Następny krok
 
-Uprawnienia z przyrostkiem `_TITANS_READ` i `_HEROES_READ` kontrolują dostęp do informacji o najsilniejszych potworach. Klan może przyznawać te uprawnienia tylko zaufanym członkom, aby chronić informacje strategiczne.
-
-> **Konfiguracja uprawnień eventowych:** Uprawnienia eventowe (`EVENTS_*`) konfigurujesz w ustawieniach klanu → Role → wybrana rola → sekcja "Eventy". Więcej o eventach w sekcji [Eventy klanowe](/docs/events).
+Przejdź do [Ustawień](/docs/settings), aby skonfigurować członków, NPC i
+szablony map.

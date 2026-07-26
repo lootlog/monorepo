@@ -1,48 +1,75 @@
 ---
 title: Instalacja
-description: Jak zainstalować dodatek Lootlog do gry Margonem
+description: Zainstaluj dodatek Lootlog przez Tampermonkey i potwierdź, że działa w Margonem.
 ---
 
-## Wymagania
+Po tej instrukcji zobaczysz interfejs Lootlog w grze i zalogujesz się przez
+Discord.
 
-Przed instalacją upewnij się, że masz:
+## Zanim zaczniesz
 
-- Przeglądarkę obsługującą rozszerzenia (Chrome, Firefox, Edge, Opera)
-- Zainstalowany menedżer skryptów — zalecany [Tampermonkey](https://www.tampermonkey.net/)
-- Konto [Discord](https://discord.com) — służy do logowania
-- **Włączone pliki cookie stron trzecich (3rd party cookies)** w przeglądarce — wymagane do poprawnego działania dodatku
+Potrzebujesz:
 
-## Instalacja dodatku
+- przeglądarki obsługującej rozszerzenia, na przykład Chrome, Firefox, Edge
+  lub Opera;
+- menedżera skryptów
+  [Tampermonkey](https://www.tampermonkey.net/);
+- konta Discord używanego do logowania;
+- włączonych plików cookie stron trzecich, jeżeli przeglądarka blokuje
+  komunikację logowania pomiędzy grą i Lootlog.
 
-### Krok 1: Zainstaluj Tampermonkey
+## Zainstaluj dodatek
 
-Jeśli nie masz jeszcze menedżera skryptów, zainstaluj [Tampermonkey](https://www.tampermonkey.net/) z oficjalnego sklepu rozszerzeń swojej przeglądarki.
+### 1. Dodaj Tampermonkey
 
-### Krok 2: Pobierz skrypt Lootlog
+Zainstaluj Tampermonkey z oficjalnego sklepu rozszerzeń swojej przeglądarki.
+Po instalacji ikona rozszerzenia powinna pojawić się na pasku narzędzi.
 
-Kliknij przycisk **"Zainstaluj dodatek"** na [stronie głównej Lootlog](https://lootlog.pl). Tampermonkey automatycznie wykryje skrypt.
+### 2. Otwórz instalator Lootlog
 
-### Krok 3: Potwierdź instalację
+Przejdź na [lootlog.pl](https://lootlog.pl) i wybierz
+**Zainstaluj dodatek**. Tampermonkey otworzy podgląd skryptu.
 
-Tampermonkey wyświetli okno z podglądem skryptu. Kliknij **"Zainstaluj"** (lub **"Install"**).
+### 3. Potwierdź instalację
 
-### Krok 4: Odśwież grę
+W oknie Tampermonkey wybierz **Zainstaluj**. Nie zmieniaj kodu ani zakresu
+stron przed pierwszym uruchomieniem.
 
-Odśwież stronę gry Margonem (F5). Dodatek załaduje się automatycznie.
+### 4. Odśwież Margonem
 
-## Pierwsze uruchomienie
+Otwórz grę lub odśwież jej kartę. Lootlog powinien załadować się razem z
+interfejsem gry.
 
-Po załadowaniu gry z zainstalowanym dodatkiem:
+### 5. Zaloguj się przez Discord
 
-1. **Zaloguj się** — kliknij przycisk "Zaloguj się przez Discord" w interfejsie Lootlog
-2. **Autoryzuj aplikację** — zaloguj się na swoje konto Discord i potwierdź dostęp
-3. **Gotowe** — Lootlog zacznie automatycznie śledzić twoje łupy i timery
+W interfejsie Lootlog wybierz **Zaloguj się przez Discord**, zaloguj się na
+właściwe konto i zatwierdź autoryzację.
 
-> **Panel webowy:** Po zalogowaniu możesz też korzystać z panelu webowego pod adresem [lootlog.pl](https://lootlog.pl/@me), gdzie znajdziesz rozszerzone statystyki, zarządzanie klanem i analizę walk.
+## Sprawdź rezultat
 
-## Co dalej?
+Instalacja zakończyła się poprawnie, jeżeli:
 
-- [Podstawy używania](/docs/getting-started) — jak korzystać z dodatku
-- [Panel webowy](/docs/web-panel) — nawigacja po dashboardzie
-- [Funkcje](/docs/features) — pełny opis funkcji
-- [FAQ](/docs/faq) — najczęstsze pytania i rozwiązania problemów
+- skrypt Lootlog jest włączony na liście Tampermonkey;
+- po odświeżeniu gry widzisz interfejs dodatku;
+- po logowaniu dodatek pokazuje twoje konto;
+- [panel webowy](https://lootlog.pl/@me) otwiera się na tym samym koncie.
+
+<Callout type="success" title="Dodatek działa">
+  Możesz teraz grać normalnie. Lootlog zacznie rejestrować obsługiwane
+  zdarzenia od momentu aktywacji — nie odtwarza danych sprzed instalacji.
+</Callout>
+
+## Gdy interfejs się nie pojawia
+
+1. Sprawdź, czy skrypt jest włączony w Tampermonkey.
+2. Odśwież grę z pominięciem pamięci podręcznej.
+3. Zezwól na pliki cookie stron trzecich dla logowania.
+4. Tymczasowo wyłącz inne skrypty działające na stronie gry i sprawdź
+   potencjalny konflikt.
+5. Jeśli problem pozostaje, opisz przeglądarkę i wykonane kroki na
+   [Discordzie](https://discord.gg/mPcczaeYMu).
+
+## Następny krok
+
+Przejdź do [Pierwszych kroków](/docs/getting-started), aby połączyć dodatek z
+panelem i sprawdzić pierwszą synchronizację.

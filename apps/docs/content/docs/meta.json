@@ -1,16 +1,22 @@
 {
   "title": "Dokumentacja",
   "pages": [
+    "---01 · Start---",
     "index",
     "installation",
     "getting-started",
-    "web-panel",
+    "---02 · Addon---",
     "features",
+    "---03 · Panel---",
+    "web-panel",
     "battle-panel",
-    "battle-panel-mechanics",
+    "!battle-panel-mechanics",
+    "---04 · Clan---",
+    "clan-features",
     "events",
     "permissions",
     "settings",
+    "---05 · Help---",
     "faq"
   ]
 }
