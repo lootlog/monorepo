@@ -7,6 +7,9 @@ import type { JSX, ReactNode } from "react";
 import { CookieConsent } from "@/src/components/cookie-consent";
 import { I18nProvider } from "@/src/components/i18n-provider";
 import { MotionProvider } from "@/src/components/motion-provider";
+import landingTranslations from "@/src/i18n/translations/landing.json";
+
+const { seo } = landingTranslations;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,29 +24,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://lootlog.pl"),
   title: {
-    default: "Lootlog – dodatek do Margonem dla graczy i klanów",
+    default: seo.title,
     template: "%s | Lootlog.pl",
   },
-  description:
-    "Darmowy dodatek do Margonem dla graczy i klanów. Timery respów, historia łupów i analiza walk w jednym panelu.",
-  keywords: [
-    "margonem",
-    "dodatek",
-    "lootlog",
-    "timery",
-    "łupy",
-    "mmorpg",
-    "gra",
-    "discord",
-    "addon",
-    "margonem dodatek",
-    "loot tracker",
-    "timer synchronizacja",
-    "analiza walk",
-    "klan Margonem",
-    "timery respów",
-    "historia łupów",
-  ],
+  description: seo.description,
+  keywords: seo.keywords,
   authors: [{ name: "Lootlog.pl Team" }],
   creator: "Lootlog.pl Team",
   robots: {
@@ -55,9 +40,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Lootlog – dodatek do Margonem dla graczy i klanów",
-    description:
-      "Darmowy dodatek do Margonem dla graczy i klanów. Timery respów, historia łupów i analiza walk w jednym panelu.",
+    title: seo.title,
+    description: seo.description,
     type: "website",
     locale: "pl_PL",
     siteName: "Lootlog.pl",
@@ -67,15 +51,14 @@ export const metadata: Metadata = {
         url: "/brand/lootlog-social.png",
         width: 1200,
         height: 630,
-        alt: "Lootlog – timery respów, łupy i analiza walk w Margonem",
+        alt: seo.socialImageAlt,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lootlog – dodatek do Margonem dla graczy i klanów",
-    description:
-      "Darmowy dodatek do Margonem dla graczy i klanów. Timery respów, historia łupów i analiza walk w jednym panelu.",
+    title: seo.title,
+    description: seo.description,
     images: ["/brand/lootlog-social.png"],
   },
   alternates: {
