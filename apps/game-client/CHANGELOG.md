@@ -1,5 +1,13 @@
 # @lootlog/game-client
 
+## 1.0.4
+
+### Patch Changes
+
+- c1ee3a0: Introduce the Resp Orbit brand mark across browser icons, landing metadata, the web app shell, and userscript metadata.
+- 9406178: Prevent duplicate game-event side effects when multiple client consumers mount, omit undefined fields from exported diagnostic logs, and keep concurrent loot submissions retryable while their distributed lock is held.
+- de6352a: Improve foreground loading, refresh, retry, connection, and centered empty states across timers, online players, chat, selectors, and autocomplete surfaces.
+
 ## 1.0.3
 
 ### Patch Changes
