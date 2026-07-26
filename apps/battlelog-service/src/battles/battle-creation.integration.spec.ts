@@ -49,6 +49,17 @@ const battleEvent = {
   f: { endBattle: 1, init: "1", m: moves, w: warriors },
 };
 
+const incrementalBattleEvents = [
+  {
+    ev: 1_785_091_976.6,
+    f: { init: "1", m: moves.slice(0, 6), w: warriors },
+  },
+  {
+    ev: 1_785_091_976.9,
+    f: { endBattle: 1, m: moves.slice(6) },
+  },
+];
+
 const battleContext = {
   accountId: "account-1",
   characterId: "220",
@@ -75,7 +86,11 @@ type StoredWarrior = Record<string, unknown> & {
   turns: number;
 };
 
-const createDatabaseBoundary = () => {
+const createDatabaseBoundary = ({
+  beforeTransaction,
+}: {
+  beforeTransaction?: () => Promise<void>;
+} = {}) => {
   const storedBattles: StoredBattle[] = [];
 
   const findBattle = ({
@@ -180,6 +195,23 @@ const createDatabaseBoundary = () => {
     }),
   });
 
+  const createUpdate = () => ({
+    set: (values: Record<string, unknown>) => ({
+      where: () => ({
+        returning: async () => {
+          const duration = Number(values.duration);
+          const battle = storedBattles.find(
+            (candidate) => Number(candidate.duration) < duration,
+          );
+          if (!battle) return [];
+
+          Object.assign(battle, values);
+          return [{ id: battle.id }];
+        },
+      }),
+    }),
+  });
+
   return {
     service: {
       db: {
@@ -188,9 +220,11 @@ const createDatabaseBoundary = () => {
             findFirst: vi.fn(async (query) => findBattle(query) ?? null),
           },
         },
-        transaction: vi.fn(async (factory) =>
-          factory({ insert: createInsert }),
-        ),
+        transaction: vi.fn(async (factory) => {
+          await beforeTransaction?.();
+          return factory({ insert: createInsert });
+        }),
+        update: vi.fn(createUpdate),
       },
     },
     storedBattles,
@@ -202,20 +236,32 @@ const createRedisBoundary = () => {
     string,
     { expiresAt: number | null; value: unknown }
   >();
-  const locks = new Map<string, string>();
+  const locks = new Map<string, { expiresAt: number | null; token: string }>();
 
   return {
     del: vi.fn(async (key: string) => (values.delete(key) ? 1 : 0)),
     deleteByPattern: vi.fn(),
-    eval: vi.fn(async (_script: string, keys: string[], args: string[]) => {
-      const [key] = keys;
-      const [token] = args;
-      if (key && locks.get(key) === token) {
-        locks.delete(key);
-        return 1;
-      }
-      return 0;
-    }),
+    eval: vi.fn(
+      async (_script: string, keys: string[], args: Array<string | number>) => {
+        const [key] = keys;
+        const [token, ttlSeconds] = args;
+        const lock = key ? locks.get(key) : undefined;
+        if (
+          key &&
+          lock &&
+          lock.token === token &&
+          (lock.expiresAt === null || lock.expiresAt > Date.now())
+        ) {
+          if (ttlSeconds !== undefined) {
+            lock.expiresAt = Date.now() + Number(ttlSeconds) * 1_000;
+            return 1;
+          }
+          locks.delete(key);
+          return 1;
+        }
+        return 0;
+      },
+    ),
     getJson: vi.fn(async (key: string) => {
       const cached = values.get(key);
       if (!cached) return null;
@@ -234,20 +280,31 @@ const createRedisBoundary = () => {
         value,
       });
     }),
-    setNX: vi.fn(async (key: string, token: string) => {
-      if (locks.has(key)) return false;
-      locks.set(key, token);
+    setNX: vi.fn(async (key: string, token: string, ttlSeconds?: number) => {
+      const existingLock = locks.get(key);
+      if (
+        existingLock &&
+        (existingLock.expiresAt === null || existingLock.expiresAt > Date.now())
+      ) {
+        return false;
+      }
+      locks.set(key, {
+        expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1_000 : null,
+        token,
+      });
       return true;
     }),
   };
 };
 
 const createTestApplication = async ({
+  beforeTransaction,
   redis = createRedisBoundary(),
 }: {
+  beforeTransaction?: () => Promise<void>;
   redis?: ReturnType<typeof createRedisBoundary>;
 } = {}) => {
-  const database = createDatabaseBoundary();
+  const database = createDatabaseBoundary({ beforeTransaction });
   const module = await Test.createTestingModule({
     controllers: [BattlesController],
     providers: [
@@ -300,6 +357,7 @@ describe("battle creation API deduplication", () => {
 
   afterEach(async () => {
     await app?.close();
+    vi.useRealTimers();
   });
 
   it("stores one canonical battle for duplicated incremental and compact payloads", async () => {
@@ -338,6 +396,92 @@ describe("battle creation API deduplication", () => {
     );
 
     expect(cashtelan.turns).toBe(12);
+    expect(testApplication.database.storedBattles).toHaveLength(1);
+  });
+
+  it("preserves the incremental duration when a compact replay arrives first", async () => {
+    const testApplication = await createTestApplication();
+    app = testApplication.app;
+
+    const compactResponse = await request(app.getHttpServer())
+      .post("/battles")
+      .set(authHeaders)
+      .send({
+        ...battleContext,
+        submissionId: "compact-duration-submission",
+        events: [battleEvent],
+      })
+      .expect(201);
+    const incrementalResponse = await request(app.getHttpServer())
+      .post("/battles")
+      .set(authHeaders)
+      .send({
+        ...battleContext,
+        submissionId: "incremental-duration-submission",
+        events: incrementalBattleEvents,
+      })
+      .expect(201);
+
+    expect(incrementalResponse.body).toEqual(compactResponse.body);
+    expect(testApplication.database.storedBattles).toHaveLength(1);
+    expect(
+      Number(testApplication.database.storedBattles[0]?.duration),
+    ).toBeCloseTo(0.3, 5);
+  });
+
+  it("keeps equivalent creation single-flight after the initial lock TTL", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-26T18:52:57.000Z"));
+
+    let releaseTransaction!: () => void;
+    const transactionGate = new Promise<void>((resolve) => {
+      releaseTransaction = resolve;
+    });
+    let markTransactionStarted!: () => void;
+    const transactionStarted = new Promise<void>((resolve) => {
+      markTransactionStarted = resolve;
+    });
+    const testApplication = await createTestApplication({
+      beforeTransaction: async () => {
+        markTransactionStarted();
+        await transactionGate;
+      },
+    });
+    app = testApplication.app;
+    const battlesService = app.get(BattlesService);
+    const firstCreation = battlesService.createBattle({
+      data: {
+        ...battleContext,
+        submissionId: "long-running-first",
+        events: [battleEvent],
+      },
+      userId: "user-1",
+    });
+
+    await transactionStarted;
+    await vi.advanceTimersByTimeAsync(31_000);
+
+    const secondCreation = battlesService.createBattle({
+      data: {
+        ...battleContext,
+        submissionId: "long-running-second",
+        events: [battleEvent],
+      },
+      userId: "user-1",
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    const transactionCallsDuringContention =
+      testApplication.database.service.db.transaction.mock.calls.length;
+
+    releaseTransaction();
+    await vi.advanceTimersByTimeAsync(50);
+    const [firstResult, secondResult] = await Promise.all([
+      firstCreation,
+      secondCreation,
+    ]);
+
+    expect(secondResult).toEqual(firstResult);
+    expect(transactionCallsDuringContention).toBe(1);
     expect(testApplication.database.storedBattles).toHaveLength(1);
   });
 

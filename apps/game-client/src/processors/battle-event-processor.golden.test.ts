@@ -116,7 +116,7 @@ describe("BattleEventProcessor golden payload", () => {
       '{"accountId":"67890","characterId":"12345","submissionId":"8e0ae1f434c3eae298187f56e33f06740373d377c2c349a97b1542b51fde3e08","events":[{"f":{"m":["alpha"],"init":"1","w":{"111":{"icon":"one.gif","lvl":100,"name":"Player1","originalId":111,"prof":"w","team":1},"222":{"icon":"two.gif","lvl":101,"name":"Player2","originalId":222,"prof":"m","team":2}}}},{"f":{"m":["omega"],"endBattle":1}}],"world":"pandora"}',
     );
     expect(useBattleStore.getState().lastBattleHash).toBe(
-      "07d2abdf7167ebc04c5968489e8039f6a9dd9ea89bae26777ec2433b5a5831d1",
+      "90757b5e1de33a79eca635bda0f55da404fb206359ef757da52057ce2653b5f1",
     );
     expect(useBattleStore.getState().events).toEqual([]);
     expect(useBattleStore.getState().battleState).toBe("idle");
