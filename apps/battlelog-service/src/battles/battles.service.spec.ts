@@ -114,9 +114,13 @@ describe("BattlesService", () => {
 
     const mockRedisService = {
       get: vi.fn(),
+      getJson: vi.fn().mockResolvedValue(null),
       set: vi.fn(),
+      setJson: vi.fn(),
+      setNX: vi.fn().mockResolvedValue(true),
       del: vi.fn(),
       deleteByPattern: vi.fn(),
+      eval: vi.fn(),
       getOrSetJsonBestEffort: vi.fn(
         ({ factory }: { factory: () => Promise<unknown> }) => factory(),
       ),
@@ -188,9 +192,9 @@ describe("BattlesService", () => {
         },
       ),
     );
-    mockDrizzleService.db.query.battles.findFirst.mockResolvedValueOnce(
-      existingBattle,
-    );
+    mockDrizzleService.db.query.battles.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(existingBattle);
 
     await expect(
       service.createBattle({
