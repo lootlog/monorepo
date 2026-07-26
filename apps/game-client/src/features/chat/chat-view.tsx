@@ -8,10 +8,6 @@ import { ChatMessageList } from "@/features/chat/components/chat-message-list";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
 import { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
 import { getGuildNamesById } from "@/lib/api/generated-helpers";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/api-client/react-query/main/users";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import { cn } from "@/lib/utils";
 import { type ChatFilter, useChatStore } from "@/store/chat.store";
@@ -26,13 +22,12 @@ import {
 } from "./chat.helpers";
 import { canReplyToChatMessage } from "./chat-reply.helpers";
 import type { ChatUnreadCountByGuildId } from "./chat-unread.helpers";
-import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/types";
 import { AsyncContent } from "@/components/async-content";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useSocket } from "@/contexts/socket-context";
-import { getVisibleLootlogGuilds } from "@/lib/selected-lootlog-guild";
+import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 
 interface ChatViewProps {
   isOpen: boolean;
@@ -49,7 +44,12 @@ export const ChatView = ({
 }: ChatViewProps) => {
   const { t } = useTranslation("chat");
   const { connected, joined } = useSocket();
-  const preferences = useUserPreferences();
+  const {
+    areVisibleGuildsResolved,
+    guildsQuery,
+    preferencesQuery: preferences,
+    visibleGuilds: resolvedVisibleGuilds,
+  } = useVisibleLootlogGuilds();
   const { npcTypeColors } = useNpcTypeColors();
   const chatAppearance =
     preferences.data?.chatAppearance ?? CHAT_APPEARANCE_READABLE_PRESET;
@@ -77,26 +77,14 @@ export const ChatView = ({
   );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const {
-    data: guilds,
     error: guildsError,
     isFetching: guildsFetching,
     isLoading: guildsLoading,
     refetch: refetchGuilds,
-  } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
-  const visibleGuilds =
-    guilds && preferences.data
-      ? getVisibleLootlogGuilds(
-          guilds,
-          preferences.data.guildsOrder,
-          preferences.data.hiddenGuildIds,
-        )
-      : undefined;
+  } = guildsQuery;
+  const visibleGuilds = areVisibleGuildsResolved
+    ? resolvedVisibleGuilds
+    : undefined;
   const effectiveSelectedGuildId =
     visibleGuilds?.length === 0 ? "" : selectedGuildId;
   const currentCharacterNick = useGameStore(
