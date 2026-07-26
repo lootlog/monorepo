@@ -1,66 +1,72 @@
 ---
 title: Panel webowy
-description: Nawigacja po dashboardzie Lootlog na lootlog.pl
+description: Poznaj układ panelu Lootlog i przełączaj się pomiędzy danymi osobistymi a narzędziami klanu.
 ---
 
-## Czym jest panel webowy?
+Panel pod adresem [lootlog.pl/@me](https://lootlog.pl/@me) porządkuje dane
+zebrane przez dodatek. Logujesz się do niego tym samym kontem Discord.
 
-Panel webowy to dashboard dostępny pod adresem [lootlog.pl](https://lootlog.pl/@me). Daje pełny dostęp do danych zebranych przez dodatek w grze — statystyki, zarządzanie klanem, analiza walk i więcej.
+## Zanim zaczniesz
 
-Aby korzystać z panelu webowego, zaloguj się przez Discord (to samo konto, co w dodatku).
+Najpierw wykonaj [Pierwsze kroki](/docs/getting-started). Bez aktywnego dodatku
+panel nie odtworzy zdarzeń, które miały miejsce wcześniej.
 
-## Struktura nawigacji
+## Strefa osobista
 
-Panel dzieli się na dwa główne obszary: strefę osobistą i strefę klanu.
+Strefa osobista dotyczy twojego konta i postaci, niezależnie od wybranego
+klanu.
 
-### Strefa osobista
+| Widok         | Do czego służy                                   |
+| ------------- | ------------------------------------------------ |
+| Dashboard     | Podsumowanie aktywności z filtrem świata i czasu |
+| Kille         | Historia pokonanych potworów                     |
+| Panel walki   | Analiza obsługiwanych walk PvP                   |
+| Powiadomienia | Komunikaty związane z kontem                     |
+| Ustawienia    | Preferencje i konfiguracja postaci               |
 
-Strefa osobista zawiera dane dotyczące twojego konta, niezależnie od klanu.
+<ProductScreenshot
+  src="/screenshots/dashboard-current.png"
+  alt="Osobisty dashboard Lootlog z filtrem świata, statystykami bić i rankingiem potworów"
+  title="Strefa osobista · Dashboard"
+/>
 
-| Sekcja            | Opis                                                             |
-| ----------------- | ---------------------------------------------------------------- |
-| **Strona główna** | Osobiste statystyki z możliwością filtrowania po światach        |
-| **Kille**         | Historia twoich zabójstw potworów                                |
-| **Panel walki**   | Analiza walk PvP — dashboard, lista walk, statystyki, porównania |
-| **Ustawienia**    | Wygląd aplikacji (motyw, kolory)                                 |
+Jeśli wynik wygląda na niepełny, najpierw sprawdź wybrany świat i zakres czasu.
 
-> Szczegóły panelu walki znajdziesz w sekcji [Panel walki](/docs/battle-panel).
+## Strefa klanu
 
-### Strefa klanu
+Po wybraniu klanu nawigacja przełącza się na wspólne dane i narzędzia:
 
-Po wybraniu klanu z bocznego menu zobaczysz pełny zestaw narzędzi klanowych.
+- listę łupów i timery;
+- rezerwacje map;
+- eventy;
+- statystyki i rankingi;
+- dokumenty, czat, powiadomienia i logi aktywności;
+- członków, role oraz konfigurację.
 
-| Sekcja              | Opis                                                                      |
-| ------------------- | ------------------------------------------------------------------------- |
-| **Łupy**            | Historia łupów klanu — filtrowanie, wyszukiwanie, szczegóły przedmiotów   |
-| **Eventy**          | Polowania na eventowych herosów — przypisania do map, rankingi, punktacja |
-| **Rezerwacje**      | System rezerwacji map spawnów NPC                                         |
-| **Statystyki**      | Ranking członków, statystyki killi, lootów i potworów                     |
-| **Timery**          | Synchronizowane timery respawnu bossów                                    |
-| **Logi aktywności** | Historia działań w klanie (kto co zrobił i kiedy)                         |
-| **Ustawienia**      | Zarządzanie członkami, rolami, konfiguracją NPC i szablonami map          |
+Zakres widocznych pozycji zależy od [roli i uprawnień](/docs/permissions).
+Brak sekcji nie musi oznaczać błędu aplikacji.
 
-### Przełączanie klanów
+## Przełączanie kontekstu
 
-Jeśli należysz do wielu klanów (serwerów Discord), możesz przełączać się między nimi w bocznym menu nawigacji. Każdy klan ma własne dane, ustawienia i uprawnienia.
+Jeżeli korzystasz z wielu postaci, światów lub klanów:
 
-## Statystyki klanu
+1. sprawdź aktywne konto w dolnej części nawigacji;
+2. wybierz właściwy klan albo strefę osobistą;
+3. ustaw filtr świata;
+4. dopiero potem porównuj wyniki.
 
-Sekcja statystyk zawiera kilka widoków:
+Każdy klan ma oddzielne dane, role i ustawienia.
 
-- **Ranking członków** — zestawienie aktywności i wyników członków klanu
-- **Statystyki killi** — ile potworów zabili członkowie klanu
-- **Statystyki lootów** — analiza zebranych łupów
-- **Potwory** — śledzenie konkretnych NPC (bossów, herosów)
-- **Profil członka** — indywidualne statystyki wybranego członka
+## Sprawdź rezultat
 
-## Ustawienia klanu
+Panel jest poprawnie skonfigurowany, gdy pokazuje właściwe konto, pozwala
+zmienić świat i wyświetla sekcje zgodne z twoją rolą.
 
-W ustawieniach klanu (wymagane odpowiednie uprawnienia) możesz zarządzać:
+## Następny krok
 
-- **Członkowie** — lista i zarządzanie członkami klanu
-- **Role** — tworzenie i edycja ról z granularnymi uprawnieniami
-- **Konfiguracja NPC** — filtrowanie typów potworów i rzadkości przedmiotów
-- **Szablony map** — predefiniowane zestawy map do szybkiego użycia w eventach
-
-> Szczegóły systemu uprawnień znajdziesz w sekcji [Uprawnienia](/docs/permissions).
+- Przejdź do [Analizy walk](/docs/battle-panel), jeśli interesują cię dane
+  PvP.
+- Otwórz [Funkcje klanowe](/docs/clan-features), jeśli pracujesz na danych
+  współdzielonych.
+- Zobacz [Role i uprawnienia](/docs/permissions), gdy brakuje oczekiwanej
+  sekcji.
