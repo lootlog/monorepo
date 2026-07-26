@@ -1,75 +1,72 @@
 ---
-title: Podstawy używania
-description: Pierwsze kroki z Lootlog — jak korzystać z dodatku w grze i panelu webowego
+title: Pierwsze kroki
+description: Połącz dodatek z panelem, wybierz kontekst postaci i sprawdź pierwsze zsynchronizowane dane.
 ---
 
-## Dwa sposoby korzystania
+Ta ścieżka zajmuje kilka minut. Jej rezultatem jest działający przepływ:
+**gra → dodatek → panel webowy**.
 
-Lootlog działa w dwóch miejscach:
+## Wymagania
 
-1. **Dodatek w grze** — nakładka widoczna podczas grania w Margonem, która automatycznie zbiera dane (łupy, timery, wykrywanie NPC)
-2. **Panel webowy** ([lootlog.pl](https://lootlog.pl/@me)) — dashboard z rozszerzonymi funkcjami: statystyki, zarządzanie klanem, analiza walk, eventy
+- Zainstalowany i aktywny [dodatek Lootlog](/docs/installation).
+- Logowanie przez Discord zakończone w grze.
+- Postać uruchomiona na świecie, z którego chcesz zbierać dane.
 
-Dodatek w grze jest źródłem danych — automatycznie rejestruje wszystko, co dzieje się w grze. Panel webowy pozwala te dane przeglądać, analizować i zarządzać klanem.
+## 1. Sprawdź dodatek w grze
 
-## Dodatek w grze
+Otwórz interfejs Lootlog i upewnij się, że pokazuje zalogowane konto. Dodatek
+obsługuje między innymi:
 
-Po zalogowaniu zobaczysz interfejs Lootlog w grze. Główne elementy:
+- rejestrowanie łupów;
+- timery respawnu, czyli odrodzenia potworów;
+- wykrywanie NPC na bieżącej mapie;
+- przekazywanie logów obsługiwanych walk do panelu analitycznego.
 
-### Lootlog (łupy)
+Szczegóły znajdziesz na stronie [Dodatek w grze](/docs/features).
 
-Dodatek automatycznie rejestruje każdy przedmiot, który podniesiesz. Nie musisz nic robić — po prostu graj normalnie. W panelu łupów możesz przeglądać historię zebranych przedmiotów.
+## 2. Otwórz panel webowy
 
-### Timery respawnu
+Przejdź do [lootlog.pl/@me](https://lootlog.pl/@me) i zaloguj się tym samym
+kontem Discord. Strefa osobista pokazuje dane przypisane do twojego konta i
+postaci.
 
-Gdy ty lub członek klanu pokonacie bossa lub elitarnego potwora, Lootlog automatycznie uruchomi timer odliczający do respawnu. Timery synchronizują się między wszystkimi członkami klanu.
+Jeżeli grasz na kilku światach, ustaw właściwy filtr świata przed oceną
+wyników.
 
-- Timery dzielą się na kategorie: **Tytani**, **Herosi**, **E2** (elitarne)
-- Otrzymasz powiadomienie 5 minut przed respawnem i w momencie respawnu
-- Możesz też ręcznie dodać timer, jeśli znasz czas respawnu
+## 3. Wybierz klan
 
-### Wykrywacz NPC
+Klan w Lootlog jest powiązany z serwerem Discord. Jeżeli należysz do kilku
+obsługiwanych klanów, możesz przełączać ich kontekst w nawigacji panelu.
+Każdy klan ma oddzielne dane, ustawienia i role.
 
-Wykrywacz automatycznie skanuje bieżącą mapę i pokazuje wszystkie potwory wraz z ich poziomem, typem i lokalizacją. Możesz filtrować potwory według poziomu, typu i rzadkości.
+<Callout type="info" title="Nie widzisz klanu?">
+  Sprawdź, czy korzystasz z właściwego konta Discord i należysz do serwera
+  klanu. Dostęp do poszczególnych sekcji zależy również od roli nadanej w
+  Lootlog.
+</Callout>
 
-## Panel webowy
+## 4. Wygeneruj pierwsze dane
 
-Panel webowy pod adresem [lootlog.pl](https://lootlog.pl/@me) oferuje pełny dostęp do wszystkich funkcji. Po zalogowaniu zobaczysz dwa główne obszary:
+Zagraj normalnie i wykonaj czynność obsługiwaną przez Lootlog, na przykład
+zdobądź łup lub pokonaj śledzonego potwora. Następnie:
 
-### Strefa osobista (@me)
+1. wróć do panelu webowego;
+2. wybierz właściwy świat lub klan;
+3. odśwież widok;
+4. sprawdź odpowiednią listę albo statystykę.
 
-- **Strona główna** — podgląd osobistych statystyk z filtrem po światach
-- **Kille** — historia twoich zabójstw
-- **Panel walki** — szczegółowa analiza PvP (obrażenia, statystyki, porównania)
-- **Ustawienia** — wygląd i preferencje
+## Sprawdź rezultat
 
-### Strefa klanu
+Konfiguracja jest gotowa, gdy panel pokazuje właściwe konto, postać lub klan,
+a nowe obsługiwane zdarzenie jest widoczne w odpowiednim widoku.
 
-Po wybraniu klanu z listy zobaczysz:
+Jeśli dane się nie pojawiają, sprawdź filtry, przypisanie postaci i wymagane
+[role oraz uprawnienia](/docs/permissions).
 
-- **Łupy** — historia łupów klanu z filtrami i wyszukiwaniem
-- **Eventy** — zarządzanie polowaniami na eventowych herosów
-- **Rezerwacje** — rezerwowanie map spawnów
-- **Statystyki** — rankingi członków, statystyki killi i lootów, potwory
-- **Timery** — synchronizowane timery respawnu
-- **Logi aktywności** — historia działań w klanie
-- **Ustawienia** — role, członkowie, konfiguracja NPC, szablony map
+## Następny krok
 
-> Szczegółowy opis nawigacji znajdziesz w sekcji [Panel webowy](/docs/web-panel).
-
-## Dołączanie do klanu
-
-Klan w Lootlog odpowiada serwerowi Discord. Aby dołączyć do klanu:
-
-1. Dołącz do serwera Discord swojego klanu
-2. Zaloguj się do Lootlog przez Discord
-3. Klan pojawi się automatycznie na liście w panelu webowym
-
-Nie musisz tworzyć klanu ręcznie — klany synchronizują się z serwerami Discord.
-
-## Następne kroki
-
-- [Panel webowy](/docs/web-panel) — szczegółowa nawigacja po dashboardzie
-- [Funkcje](/docs/features) — opis wszystkich funkcji
-- [Panel walki](/docs/battle-panel) — analiza PvP
-- [Eventy klanowe](/docs/events) — koordynacja polowań
+- Poznaj wszystkie widoki [panelu webowego](/docs/web-panel).
+- Skonfiguruj sposób działania dodatku na stronie
+  [Dodatek w grze](/docs/features).
+- Jeśli odpowiadasz za klan, przejdź do
+  [Funkcji klanowych](/docs/clan-features).
