@@ -97,6 +97,8 @@ export const ChatView = ({
           preferences.data.hiddenGuildIds,
         )
       : undefined;
+  const effectiveSelectedGuildId =
+    visibleGuilds?.length === 0 ? "" : selectedGuildId;
   const currentCharacterNick = useGameStore(
     (state) => state.game?.hero.name ?? "",
   );
@@ -113,7 +115,7 @@ export const ChatView = ({
   } = useChatGuildData({
     currentCharacterNick,
     guilds: visibleGuilds,
-    selectedGuildId,
+    selectedGuildId: effectiveSelectedGuildId,
   });
   useEffect(() => {
     const nextSelectedGuildId = getNextSelectedGuildId(
@@ -121,7 +123,7 @@ export const ChatView = ({
       visibleGuilds,
     );
 
-    if (nextSelectedGuildId) {
+    if (nextSelectedGuildId !== undefined) {
       setSelectedGuildId(nextSelectedGuildId);
     }
   }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
@@ -135,7 +137,7 @@ export const ChatView = ({
   ];
   const currentMessages = getCurrentChatMessages(
     messagesByGuildId,
-    selectedGuildId,
+    effectiveSelectedGuildId,
     chatFilter,
   );
   const currentRenderableMessages = getChatRenderableMessages(currentMessages);
@@ -271,10 +273,10 @@ export const ChatView = ({
             <ChatMessageList
               appearance={chatAppearance}
               npcTypeColors={npcTypeColors}
-              key={`${selectedGuildId}:${chatFilter}`}
+              key={`${effectiveSelectedGuildId}:${chatFilter}`}
               ariaLabel={t("window.title")}
               emptyStateTitle={t(
-                selectedGuildId === "all"
+                effectiveSelectedGuildId === "all"
                   ? "emptyState.allTitle"
                   : "emptyState.guildTitle",
               )}
@@ -286,18 +288,20 @@ export const ChatView = ({
               renderSignature={currentRenderSignature}
               renderables={currentRenderableMessages}
               scrollToBottomRequest={scrollToBottomRequest}
-              selectedGuildId={selectedGuildId}
+              selectedGuildId={effectiveSelectedGuildId}
             />
           </AsyncContent>
         </div>
-        {selectedGuildId !== "all" && isChatInputEnabled && (
-          <ChatInput
-            onMessageSent={() =>
-              setScrollToBottomRequest((currentRequest) => currentRequest + 1)
-            }
-            selectedGuildId={selectedGuildId}
-          />
-        )}
+        {Boolean(effectiveSelectedGuildId) &&
+          effectiveSelectedGuildId !== "all" &&
+          isChatInputEnabled && (
+            <ChatInput
+              onMessageSent={() =>
+                setScrollToBottomRequest((currentRequest) => currentRequest + 1)
+              }
+              selectedGuildId={effectiveSelectedGuildId}
+            />
+          )}
       </div>
     </DraggableWindow>
   );

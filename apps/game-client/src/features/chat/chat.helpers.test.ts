@@ -117,6 +117,7 @@ describe("chat helpers", () => {
     );
     expect(getNextSelectedGuildId("all", [{ id: "guild-1" }])).toBe(undefined);
     expect(getNextSelectedGuildId("", [])).toBe(undefined);
+    expect(getNextSelectedGuildId("guild-1", [])).toBe("");
   });
 
   it("returns messages for the selected guild or for all guilds", () => {
