@@ -82,7 +82,7 @@ export default defineConfig(({ mode }) => {
       monkey({
         entry: "src/main.tsx",
         userscript: {
-          icon: "https://vitejs.dev/logo.svg",
+          icon: "https://lootlog.pl/brand/lootlog-icon-192.png",
           namespace: "npm/vite-plugin-monkey",
           author: "Wildstylez & friends",
           name: "@lootlog/game-client",
