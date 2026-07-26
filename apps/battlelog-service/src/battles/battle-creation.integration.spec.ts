@@ -485,6 +485,60 @@ describe("battle creation API deduplication", () => {
     expect(testApplication.database.storedBattles).toHaveLength(1);
   });
 
+  it("waits for an in-flight creation to finish after losing the lock", async () => {
+    vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-26T18:52:57.000Z"));
+
+    let releaseTransaction!: () => void;
+    const transactionGate = new Promise<void>((resolve) => {
+      releaseTransaction = resolve;
+    });
+    let markTransactionStarted!: () => void;
+    const transactionStarted = new Promise<void>((resolve) => {
+      markTransactionStarted = resolve;
+    });
+    const redis = createRedisBoundary();
+    redis.eval.mockResolvedValue(0);
+    const testApplication = await createTestApplication({
+      beforeTransaction: async () => {
+        markTransactionStarted();
+        await transactionGate;
+      },
+      redis,
+    });
+    app = testApplication.app;
+    const battlesService = app.get(BattlesService);
+    let creationSettled = false;
+    const creationOutcome = battlesService
+      .createBattle({
+        data: {
+          ...battleContext,
+          submissionId: "lost-lock",
+          events: [battleEvent],
+        },
+        userId: "user-1",
+      })
+      .then(
+        () => "resolved",
+        () => "rejected",
+      )
+      .finally(() => {
+        creationSettled = true;
+      });
+
+    await transactionStarted;
+    await vi.advanceTimersByTimeAsync(10_000);
+    const settledBeforeTransactionFinished = creationSettled;
+
+    releaseTransaction();
+    await vi.advanceTimersByTimeAsync(0);
+
+    await expect(creationOutcome).resolves.toBe("rejected");
+    expect(settledBeforeTransactionFinished).toBe(false);
+    expect(testApplication.database.storedBattles).toHaveLength(1);
+  });
+
   it("preserves separate battle events that do not have event ids", async () => {
     const testApplication = await createTestApplication();
     app = testApplication.app;
