@@ -11,6 +11,7 @@
     "**/*.tsbuildinfo",
     "**/next-env.d.ts",
     "**/pnpm-lock.yaml",
+    ".agents/skills/**/scripts/**",
     "packages/api-client/src/generated/**",
     "apps/landing/.source/source.config.mjs",
     "apps/landing/source.config.ts"
