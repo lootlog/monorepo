@@ -46,6 +46,63 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 
+  it("delivers a repeated event id to Lootlog once without changing Margonem or applied delivery", () => {
+    const event = Object.freeze({
+      ev: 1_785_091_976.123,
+      f: { m: ["turn-1"] },
+    }) as GameEvent;
+    const original = vi.fn(() => "margonem-result");
+    runtimeWindow.successData = original;
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const incoming = vi.fn();
+    const applied = vi.fn();
+    bridge.subscribeIncoming(incoming);
+    bridge.subscribeApplied(applied);
+
+    bridge.install();
+    bridge.setReady(true);
+    runtimeWindow.successData?.(event);
+    runtimeWindow.successData?.(event);
+
+    expect(incoming).toHaveBeenCalledOnce();
+    expect(original).toHaveBeenCalledTimes(2);
+    expect(applied).toHaveBeenCalledTimes(2);
+    bridge.cleanup();
+  });
+
+  it("keeps distinct event ids and events without ids", () => {
+    runtimeWindow.successData = vi.fn();
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const incoming = vi.fn();
+    bridge.subscribeIncoming(incoming);
+
+    bridge.install();
+    bridge.setReady(true);
+    runtimeWindow.successData?.({ ev: 1, f: { m: ["first"] } });
+    runtimeWindow.successData?.({ ev: 2, f: { m: ["second"] } });
+    runtimeWindow.successData?.({ f: { m: ["without-id"] } });
+    runtimeWindow.successData?.({ f: { m: ["without-id"] } });
+
+    expect(incoming).toHaveBeenCalledTimes(4);
+    bridge.cleanup();
+  });
+
+  it("deduplicates repeated event ids while the incoming queue is waiting", () => {
+    runtimeWindow.successData = vi.fn();
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const incoming = vi.fn();
+    bridge.subscribeIncoming(incoming);
+
+    bridge.install();
+    runtimeWindow.successData?.({ ev: 10, f: { m: ["queued"] } });
+    runtimeWindow.successData?.({ ev: 10, f: { m: ["queued"] } });
+
+    expect(bridge.getHealth().queueEvents).toBe(1);
+    bridge.setReady(true);
+    expect(incoming).toHaveBeenCalledOnce();
+    bridge.cleanup();
+  });
+
   it("does not expose applied observer failures to Margonem callers", () => {
     const event = Object.freeze({ h: { stasis: 1 } }) as GameEvent;
     const observerFailure = new Error("observer failed");

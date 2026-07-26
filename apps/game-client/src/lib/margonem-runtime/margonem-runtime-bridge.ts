@@ -48,6 +48,7 @@ export type RuntimeBridgeHealth = Readonly<{
 export const MAX_QUEUED_RUNTIME_EVENTS = 1_000;
 export const MAX_QUEUED_RUNTIME_BYTES = 4 * 1024 * 1024;
 export const MAX_QUEUED_RUNTIME_FACTS = 10_000;
+const MAX_RECENT_RUNTIME_EVENT_IDS = 1_000;
 const INSTALL_RETRY_DELAY_MS = 100;
 const MAX_INSTALL_RETRIES = 20;
 
@@ -68,6 +69,7 @@ export class MargonemRuntimeBridge {
   private readonly onObserverError?: (failure: RuntimeObserverFailure) => void;
   private readonly runtimeInterface?: RuntimeInterface;
   private readonly eventQueue: RuntimeEventEnvelope[] = [];
+  private readonly recentEventIds = new Set<number>();
   private inboundContainer: RuntimeFunctionContainer | null = null;
   private inboundProperty: string | null = null;
   private originalInbound: RuntimeFunction | null = null;
@@ -243,6 +245,7 @@ export class MargonemRuntimeBridge {
     this.ready = false;
     this.sequence = 0;
     this.eventQueue.length = 0;
+    this.recentEventIds.clear();
     this.queuedBytes = 0;
     this.queuedFacts = 0;
     this.clearInstallRetry();
@@ -434,6 +437,8 @@ export class MargonemRuntimeBridge {
   }
 
   private receiveIncoming(envelope: RuntimeEventEnvelope): void {
+    if (this.isDuplicateIncomingEvent(envelope.raw)) return;
+
     if (this.ready) {
       this.emit(this.incomingHandlers, envelope, "incoming");
       return;
@@ -452,6 +457,21 @@ export class MargonemRuntimeBridge {
     this.eventQueue.push(envelope);
     this.queuedBytes += rawBytes;
     this.queuedFacts = nextFacts;
+  }
+
+  private isDuplicateIncomingEvent(event: GameEvent | undefined): boolean {
+    const eventId = event?.ev;
+    if (typeof eventId !== "number" || !Number.isFinite(eventId)) return false;
+    if (this.recentEventIds.has(eventId)) return true;
+
+    this.recentEventIds.add(eventId);
+    if (this.recentEventIds.size > MAX_RECENT_RUNTIME_EVENT_IDS) {
+      const oldestEventId = this.recentEventIds.values().next().value;
+      if (oldestEventId !== undefined) {
+        this.recentEventIds.delete(oldestEventId);
+      }
+    }
+    return false;
   }
 
   private estimateRawBytes(event: GameEvent | undefined): number {
