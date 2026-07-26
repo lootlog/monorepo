@@ -1,0 +1,431 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-26T02:10:59Z",
+  "title": "Design System: Lootlog Signal System",
+  "extensions": {
+    "colorMeta": {
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#07111f",
+        "tonalRamp": [
+          "oklch(15% 0.025 255)",
+          "oklch(26% 0.025 255)",
+          "oklch(38% 0.023 255)",
+          "oklch(50% 0.02 255)",
+          "oklch(62% 0.017 255)",
+          "oklch(74% 0.013 255)",
+          "oklch(85% 0.008 255)",
+          "oklch(95% 0.003 255)"
+        ]
+      },
+      "raised-ink": {
+        "role": "neutral",
+        "displayName": "Raised Ink",
+        "canonical": "#0d1a2c",
+        "tonalRamp": [
+          "oklch(15% 0.035 255)",
+          "oklch(26% 0.034 255)",
+          "oklch(38% 0.03 255)",
+          "oklch(50% 0.026 255)",
+          "oklch(62% 0.021 255)",
+          "oklch(74% 0.016 255)",
+          "oklch(85% 0.01 255)",
+          "oklch(95% 0.004 255)"
+        ]
+      },
+      "signal-paper": {
+        "role": "neutral",
+        "displayName": "Signal Paper",
+        "canonical": "#f4f1e8",
+        "tonalRamp": [
+          "oklch(15% 0.012 85)",
+          "oklch(26% 0.012 85)",
+          "oklch(38% 0.011 85)",
+          "oklch(50% 0.01 85)",
+          "oklch(62% 0.009 85)",
+          "oklch(74% 0.008 85)",
+          "oklch(85% 0.006 85)",
+          "oklch(95% 0.004 85)"
+        ]
+      },
+      "paper-ink": {
+        "role": "neutral",
+        "displayName": "Paper Ink",
+        "canonical": "#0a1830",
+        "tonalRamp": [
+          "oklch(15% 0.04 255)",
+          "oklch(26% 0.038 255)",
+          "oklch(38% 0.034 255)",
+          "oklch(50% 0.029 255)",
+          "oklch(62% 0.023 255)",
+          "oklch(74% 0.017 255)",
+          "oklch(85% 0.01 255)",
+          "oklch(95% 0.004 255)"
+        ]
+      },
+      "broadcast-cobalt": {
+        "role": "primary",
+        "displayName": "Broadcast Cobalt",
+        "canonical": "#3157f6",
+        "tonalRamp": [
+          "oklch(15% 0.11 265)",
+          "oklch(27% 0.17 265)",
+          "oklch(39% 0.22 265)",
+          "oklch(51% 0.25 265)",
+          "oklch(63% 0.23 265)",
+          "oklch(75% 0.18 265)",
+          "oklch(85% 0.11 265)",
+          "oklch(95% 0.04 265)"
+        ]
+      },
+      "sync-cyan": {
+        "role": "secondary",
+        "displayName": "Sync Cyan",
+        "canonical": "#35d3e4",
+        "tonalRamp": [
+          "oklch(15% 0.055 205)",
+          "oklch(27% 0.1 205)",
+          "oklch(39% 0.14 205)",
+          "oklch(51% 0.17 205)",
+          "oklch(63% 0.17 205)",
+          "oklch(75% 0.14 205)",
+          "oklch(85% 0.09 205)",
+          "oklch(95% 0.035 205)"
+        ]
+      },
+      "resp-lime": {
+        "role": "primary",
+        "displayName": "Resp Lime",
+        "canonical": "#c8f135",
+        "tonalRamp": [
+          "oklch(15% 0.055 125)",
+          "oklch(27% 0.1 125)",
+          "oklch(39% 0.15 125)",
+          "oklch(51% 0.2 125)",
+          "oklch(63% 0.22 125)",
+          "oklch(75% 0.19 125)",
+          "oklch(85% 0.13 125)",
+          "oklch(95% 0.05 125)"
+        ]
+      },
+      "timer-amber": {
+        "role": "secondary",
+        "displayName": "Timer Amber",
+        "canonical": "#ffbd3f",
+        "tonalRamp": [
+          "oklch(15% 0.05 80)",
+          "oklch(27% 0.09 80)",
+          "oklch(39% 0.14 80)",
+          "oklch(51% 0.18 80)",
+          "oklch(63% 0.19 80)",
+          "oklch(75% 0.16 80)",
+          "oklch(85% 0.11 80)",
+          "oklch(95% 0.045 80)"
+        ]
+      },
+      "alert-coral": {
+        "role": "tertiary",
+        "displayName": "Alert Coral",
+        "canonical": "#ff665b",
+        "tonalRamp": [
+          "oklch(15% 0.06 28)",
+          "oklch(27% 0.11 28)",
+          "oklch(39% 0.17 28)",
+          "oklch(51% 0.22 28)",
+          "oklch(63% 0.23 28)",
+          "oklch(75% 0.19 28)",
+          "oklch(85% 0.13 28)",
+          "oklch(95% 0.05 28)"
+        ]
+      },
+      "signal-white": {
+        "role": "neutral",
+        "displayName": "Signal White",
+        "canonical": "#f7f8f2",
+        "tonalRamp": [
+          "oklch(15% 0.008 110)",
+          "oklch(26% 0.008 110)",
+          "oklch(38% 0.007 110)",
+          "oklch(50% 0.006 110)",
+          "oklch(62% 0.005 110)",
+          "oklch(74% 0.004 110)",
+          "oklch(85% 0.003 110)",
+          "oklch(95% 0.002 110)"
+        ]
+      },
+      "text-cloud": {
+        "role": "neutral",
+        "displayName": "Text Cloud",
+        "canonical": "#b9c8de",
+        "tonalRamp": [
+          "oklch(15% 0.025 255)",
+          "oklch(26% 0.024 255)",
+          "oklch(38% 0.022 255)",
+          "oklch(50% 0.019 255)",
+          "oklch(62% 0.016 255)",
+          "oklch(74% 0.012 255)",
+          "oklch(85% 0.008 255)",
+          "oklch(95% 0.003 255)"
+        ]
+      },
+      "text-quiet": {
+        "role": "neutral",
+        "displayName": "Text Quiet",
+        "canonical": "#91a4bf",
+        "tonalRamp": [
+          "oklch(15% 0.03 255)",
+          "oklch(26% 0.029 255)",
+          "oklch(38% 0.026 255)",
+          "oklch(50% 0.022 255)",
+          "oklch(62% 0.018 255)",
+          "oklch(74% 0.013 255)",
+          "oklch(85% 0.008 255)",
+          "oklch(95% 0.003 255)"
+        ]
+      },
+      "rule-blue": {
+        "role": "neutral",
+        "displayName": "Rule Blue",
+        "canonical": "#2b3b53",
+        "tonalRamp": [
+          "oklch(15% 0.03 255)",
+          "oklch(26% 0.029 255)",
+          "oklch(38% 0.026 255)",
+          "oklch(50% 0.022 255)",
+          "oklch(62% 0.018 255)",
+          "oklch(74% 0.013 255)",
+          "oklch(85% 0.008 255)",
+          "oklch(95% 0.003 255)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Broadcast Display",
+        "purpose": "The first promise or one campaign-scale conclusion."
+      },
+      "headline": {
+        "displayName": "Chapter Headline",
+        "purpose": "Major section conclusions and category introductions."
+      },
+      "title": {
+        "displayName": "Product Title",
+        "purpose": "Product areas, workflow steps, cards and reading sections."
+      },
+      "body": {
+        "displayName": "Explanatory Body",
+        "purpose": "Persuasive, operational and long-form explanation."
+      },
+      "label": {
+        "displayName": "Interface Label",
+        "purpose": "Navigation, captions, controls and compact status language."
+      },
+      "mono": {
+        "displayName": "Machine Evidence",
+        "purpose": "Code, identifiers, timestamps and tabular facts."
+      }
+    },
+    "shadows": [
+      {
+        "name": "product-hero",
+        "value": "18px 24px 64px rgba(0, 0, 0, 0.38)",
+        "purpose": "The primary product proof on a Persuade surface."
+      },
+      {
+        "name": "product-standard",
+        "value": "14px 18px 48px rgba(0, 0, 0, 0.32)",
+        "purpose": "Secondary product screenshots and evidence windows."
+      },
+      {
+        "name": "sticky-header",
+        "value": "0 8px 28px rgba(0, 0, 0, 0.18)",
+        "purpose": "Quiet separation for persistent navigation."
+      },
+      {
+        "name": "overlay",
+        "value": "10px 14px 32px rgba(0, 0, 0, 0.3)",
+        "purpose": "Consent, errors and detached overlays."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-change",
+        "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Color, border and compact control response."
+      },
+      {
+        "name": "signal-draw",
+        "value": "1150ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The single hero route drawing into view."
+      },
+      {
+        "name": "signal-pulse",
+        "value": "2800ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "A subtle hero node pulse that establishes live synchronization."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Resp Orbit Lockup",
+      "kind": "custom",
+      "refersTo": "brand-mark",
+      "description": "The stable Lootlog identity used across headers, footers and compact app rails.",
+      "html": "<a class=\"ds-lockup\" href=\"#\"><svg viewBox=\"0 0 64 64\" aria-hidden=\"true\"><rect x=\"2\" y=\"2\" width=\"60\" height=\"60\" rx=\"14\" fill=\"#07111f\"/><path d=\"M46.7 17.3A20.8 20.8 0 1 0 52.4 28.4\" fill=\"none\" stroke=\"#c8f135\" stroke-width=\"6.5\" stroke-linecap=\"round\"/><circle cx=\"52.4\" cy=\"28.4\" r=\"3.6\" fill=\"#35d3e4\"/><circle cx=\"32\" cy=\"32\" r=\"5.2\" fill=\"#ffbd3f\"/></svg><strong>Lootlog</strong></a>",
+      "css": ".ds-lockup { display: inline-flex; align-items: center; gap: 8px; color: #f7f8f2; text-decoration: none; font: 900 20px/1 Geist, Arial, sans-serif; letter-spacing: -0.035em; } .ds-lockup svg { width: 28px; height: 28px; flex: none; } .ds-lockup:hover { color: #fff; } .ds-lockup:focus-visible { outline: 2px solid #c8f135; outline-offset: 4px; border-radius: 8px; }"
+    },
+    {
+      "name": "Primary Install Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The high-contrast primary installation action on dark surfaces.",
+      "html": "<button class=\"ds-btn-primary\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3v12m0 0 4-4m-4 4-4-4M5 19h14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>Zainstaluj dodatek</span></button>",
+      "css": ".ds-btn-primary { height: 56px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 24px; border: 0; border-radius: 12px; background: #f7f8f2; color: #07111f; font: 700 16px/1 Geist, Arial, sans-serif; cursor: pointer; box-shadow: 8px 12px 28px rgba(0,0,0,.24); transition: background-color 150ms ease, transform 150ms ease; } .ds-btn-primary svg { width: 16px; height: 16px; } .ds-btn-primary:hover { background: #fff; transform: translateY(-2px); } .ds-btn-primary:active { transform: translateY(0); } .ds-btn-primary:focus-visible { outline: 2px solid #c8f135; outline-offset: 4px; }"
+    },
+    {
+      "name": "Brand Action Button",
+      "kind": "button",
+      "refersTo": "button-brand",
+      "description": "The cobalt action used to open or continue into Lootlog.",
+      "html": "<button class=\"ds-btn-brand\"><span>Otwórz Lootloga</span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 17 17 7M9 7h8v8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></button>",
+      "css": ".ds-btn-brand { height: 56px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 24px; border: 0; border-radius: 12px; background: #3157f6; color: #f7f8f2; font: 700 16px/1 Geist, Arial, sans-serif; cursor: pointer; box-shadow: 8px 12px 28px rgba(0,0,0,.2); transition: background-color 150ms ease, transform 150ms ease; } .ds-btn-brand:hover { background: #4168ff; transform: translateY(-2px); } .ds-btn-brand:active { transform: translateY(0); } .ds-btn-brand:focus-visible { outline: 2px solid #35d3e4; outline-offset: 4px; } .ds-btn-brand svg { width: 16px; height: 16px; }"
+    },
+    {
+      "name": "Signal Action Button",
+      "kind": "button",
+      "refersTo": "button-signal",
+      "description": "A compact lime action for confident navigation and confirmed positive state.",
+      "html": "<button class=\"ds-btn-signal\"><span>Przejdź do Lootloga</span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 17 17 7M9 7h8v8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></button>",
+      "css": ".ds-btn-signal { height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 0; border-radius: 12px; background: #c8f135; color: #07111f; font: 700 14px/1 Geist, Arial, sans-serif; cursor: pointer; transition: background-color 150ms ease, transform 150ms ease; } .ds-btn-signal:hover { background: #d8ff5a; transform: translateY(-2px); } .ds-btn-signal:active { transform: translateY(0); } .ds-btn-signal:focus-visible { outline: 2px solid #35d3e4; outline-offset: 4px; } .ds-btn-signal svg { width: 16px; height: 16px; }"
+    },
+    {
+      "name": "Domain Navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "A sticky Night Ink bar anchored by Resp Orbit and quiet destinations.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Główna nawigacja\"><span class=\"ds-nav-brand\"><i aria-hidden=\"true\"></i><strong>Lootlog</strong></span><div><a href=\"#\">Możliwości</a><a href=\"#\">Jak działa</a><a href=\"#\">O projekcie</a><a href=\"#\">FAQ</a></div></nav>",
+      "css": ".ds-nav { min-height: 72px; display: flex; align-items: center; gap: 40px; padding: 0 32px; background: #07111f; color: #f7f8f2; box-shadow: 0 8px 28px rgba(0,0,0,.18); font-family: Geist, Arial, sans-serif; } .ds-nav-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 20px; letter-spacing: -0.035em; } .ds-nav-brand i { width: 28px; height: 28px; border: 5px solid #c8f135; border-right-color: #35d3e4; border-radius: 50%; } .ds-nav div { display: flex; gap: 28px; } .ds-nav a { color: #91a4bf; font-size: 14px; font-weight: 700; text-decoration: none; } .ds-nav a:hover { color: #c8f135; } .ds-nav a:focus-visible { outline: 2px solid #c8f135; outline-offset: 4px; border-radius: 4px; }"
+    },
+    {
+      "name": "Product Window",
+      "kind": "card",
+      "refersTo": "product-window",
+      "description": "The canonical frame for current, readable product evidence.",
+      "html": "<figure class=\"ds-product\"><div class=\"ds-product-bar\"><i></i><i></i><i></i></div><div class=\"ds-product-view\" role=\"img\" aria-label=\"Bieżący widok produktu\">BIEŻĄCY WIDOK PRODUKTU</div></figure>",
+      "css": ".ds-product { margin: 0; overflow: hidden; border-radius: 16px; background: #05080f; color: #91a4bf; box-shadow: 14px 18px 48px rgba(0,0,0,.32); } .ds-product-bar { height: 36px; display: flex; align-items: center; gap: 6px; padding: 0 16px; background: #101827; } .ds-product-bar i { width: 8px; height: 8px; border-radius: 50%; background: #ff665b; } .ds-product-bar i:nth-child(2) { background: #ffbd3f; } .ds-product-bar i:nth-child(3) { background: #c8f135; } .ds-product-view { aspect-ratio: 16/9; display: grid; place-items: center; background: #05080f; font: 500 12px/1.5 'Geist Mono', Consolas, monospace; }"
+    },
+    {
+      "name": "Broadcast Chapter",
+      "kind": "card",
+      "refersTo": "broadcast-chapter",
+      "description": "A broad Persuade surface pairing one conclusion with one piece of product evidence.",
+      "html": "<section class=\"ds-chapter\"><div><span>ŁUPY · FILTRY · WSPÓLNY ZAPIS</span><h2>Łupy trafiają do wspólnego zapisu.</h2><p>Jeden widok porządkuje informacje potrzebne całemu klanowi.</p></div><div class=\"ds-chapter-proof\">PRODUCT EVIDENCE</div></section>",
+      "css": ".ds-chapter { min-height: 520px; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 64px; padding: 64px; border-radius: 28px; background: #3157f6; color: #f7f8f2; font-family: Geist, Arial, sans-serif; } .ds-chapter span { color: #dff7ff; font-size: 14px; font-weight: 700; } .ds-chapter h2 { max-width: 560px; margin: 24px 0 0; font-size: 60px; line-height: .98; letter-spacing: -.035em; } .ds-chapter p { max-width: 64ch; margin: 24px 0 0; color: #d8e3ff; font-size: 18px; line-height: 1.75; } .ds-chapter-proof { aspect-ratio: 16/9; display: grid; place-items: center; border-radius: 16px; background: #07111f; color: #91a4bf; font: 500 12px/1.5 'Geist Mono', Consolas, monospace; }"
+    },
+    {
+      "name": "Signal Route",
+      "kind": "custom",
+      "description": "The shared synchronization path used as controlled orientation, never as wallpaper.",
+      "html": "<div class=\"ds-route\" aria-hidden=\"true\"><span></span><i></i><b></b></div>",
+      "css": ".ds-route { position: relative; width: 520px; height: 120px; color: #35d3e4; } .ds-route span { position: absolute; left: 0; right: 0; top: 52px; height: 14px; border-radius: 9999px; background: currentColor; } .ds-route i { position: absolute; left: 42%; top: 30px; width: 58px; height: 58px; border: 14px solid currentColor; border-radius: 50%; background: #07111f; } .ds-route b { position: absolute; left: calc(42% + 24px); top: 54px; width: 10px; height: 10px; border-radius: 50%; background: #07111f; }"
+    },
+    {
+      "name": "FAQ Disclosure Row",
+      "kind": "custom",
+      "description": "A full-width ruled disclosure that keeps answers readable and avoids card clutter.",
+      "html": "<details class=\"ds-faq\" open><summary><span><i>01</i>Jak działa synchronizacja?</span><b aria-hidden=\"true\">⌄</b></summary><p>Dane z obsługiwanych zdarzeń trafiają do wspólnego panelu klanu.</p></details>",
+      "css": ".ds-faq { border-top: 1px solid #2b3b53; border-bottom: 1px solid #2b3b53; background: #0d1a2c; color: #f7f8f2; font-family: Geist, Arial, sans-serif; } .ds-faq summary { min-height: 80px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 0; cursor: pointer; font-size: 18px; font-weight: 700; list-style: none; } .ds-faq summary span { display: flex; align-items: flex-start; gap: 16px; } .ds-faq summary i { margin-top: 4px; color: #91a4bf; font: 700 12px/1.25 Geist, Arial, sans-serif; font-style: normal; } .ds-faq summary:hover { color: #c8f135; } .ds-faq summary:focus-visible { outline: 2px solid #c8f135; outline-offset: 4px; border-radius: 4px; } .ds-faq summary b { transition: transform 200ms ease; } .ds-faq[open] summary b { transform: rotate(180deg); } .ds-faq p { max-width: 68ch; margin: 0; padding: 0 24px 28px 36px; color: #b9c8de; font-size: 16px; line-height: 1.75; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Shared Signal",
+    "overview": "Lootlog looks like one signal moving between the game, a clan and the decisions made from shared data. The visual system is dark, flat, direct and unusually colorful: Night Ink establishes continuity while cobalt, cyan, lime, amber and coral make routes, states and chapter changes immediately legible. Resp Orbit is the permanent brand anchor; signal routes, rings and nodes are its larger compositional vocabulary.\n\nThe landing page is the system's most expressive Persuade surface and the source of its identity. Other products inherit the same tokens and grammar at the intensity appropriate to their mode. Web is Operate: dense, precise and data-first. Wiki and Developer are Read: calm, structured and optimized for long-form comprehension. They share a world without reproducing the landing composition.\n\nReal product interfaces and real data are the evidence. Decoration explains flow, synchronization, timing or priority; it never invents fantasy content or competes with the task.",
+    "keyCharacteristics": [
+      "Ink-dark continuity with bold, flat chapter color",
+      "Resp Orbit, signal routes, rings and nodes as one geometric family",
+      "Geist typography with decisive weight and compact tracking",
+      "Real product UI and data as the visual proof",
+      "Expressive Persuade, restrained Operate and calm Read modes"
+    ],
+    "rules": [
+      {
+        "name": "Signal Has Meaning",
+        "body": "Cobalt, cyan, lime, amber and coral must communicate route, state, priority or action; never scatter them as arbitrary confetti.",
+        "section": "colors"
+      },
+      {
+        "name": "One Dominant Signal",
+        "body": "A screen may have many states, but only one accent should dominate its visual hierarchy.",
+        "section": "colors"
+      },
+      {
+        "name": "Mode Intensity",
+        "body": "Persuade may use accent colors as broad chapter fields; Operate and Read reserve them for actions, states, callouts and orientation.",
+        "section": "colors"
+      },
+      {
+        "name": "One Heavy Voice",
+        "body": "Use at most one display-scale statement in a viewport; supporting hierarchy must step down decisively.",
+        "section": "typography"
+      },
+      {
+        "name": "Mono Is Evidence",
+        "body": "Use Geist Mono only when the content is intrinsically machine-readable or tabular.",
+        "section": "typography"
+      },
+      {
+        "name": "Shared Datum",
+        "body": "Align each major block to the page frame, shell rail, article column or an established split line; avoid isolated floating containers.",
+        "section": "layout"
+      },
+      {
+        "name": "Flat First",
+        "body": "A surface must work through color, alignment and spacing before it earns a shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "Evidence Is Not Wallpaper",
+        "body": "Screenshots remain upright, readable and unretouched inside explicit product windows; never blur, tint or use them as backgrounds.",
+        "section": "elevation"
+      },
+      {
+        "name": "Instrument, Not Toy",
+        "body": "Playfulness comes from scale, route geometry and color—not from cartoon controls, excessive rounding or decorative mascots.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do use Resp Orbit and the Lootlog wordmark as the stable anchor across every domain surface.",
+      "Do adapt expression to Persuade, Operate or Read mode while preserving the same tokens and signal grammar.",
+      "Do let current product screenshots, real data and code examples carry the proof.",
+      "Do use accent colors to communicate synchronization, time, priority, error or action.",
+      "Do preserve keyboard focus, reduced-motion behavior and responsive single-column order."
+    ],
+    "donts": [
+      "Don't bring back pixel-art chests, fantasy parchment, characters, 3D renders or generic AI imagery.",
+      "Don't use purple ambience, glassmorphism, gradient text or neon glow as a substitute for hierarchy.",
+      "Don't turn working product screens or documentation into marketing chapter layouts.",
+      "Don't crop, rotate, blur, tint or redraw real product screenshots for visual effect.",
+      "Don't add bento grids, equal feature-card collections or arbitrary decorative nodes."
+    ]
+  }
+}

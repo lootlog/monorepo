@@ -51,6 +51,7 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 
 ## Design Guidelines
 
+- Treat [`DESIGN.md`](DESIGN.md) as the canonical Lootlog brand and visual system for `apps/landing`, `apps/web`, `apps/wiki`, and `apps/developer`. Apply its Persuade, Operate, and Read mode guidance instead of copying landing-page composition across surfaces.
 - When working on `apps/web`, follow the design system defined in [`apps/web/design-guideline.md`](apps/web/design-guideline.md). All pages must use the unified layout patterns, design tokens, and component styling described there.
 
 ## Additional Notes
