@@ -23,6 +23,7 @@ const TRACKABLE_NPC_TYPES = new Set([
   NpcType.COLOSSUS,
   NpcType.TITAN,
 ]);
+const BATTLE_REPLAY_WINDOW_MS = 10_000;
 
 const showBattleCreatedToast = (battleId: string) => {
   const t = getFixedT("timers");
@@ -123,6 +124,7 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
 };
 
 export class BattleEventProcessor {
+  private readonly recentBattleReplayKeys = new Map<string, number>();
   private observedTeams = new Set<number>();
   private hasMultipleTeams = false;
   private hasWarnedCaptureOverflow = false;
@@ -251,40 +253,48 @@ export class BattleEventProcessor {
             );
           }
         } else {
-          const battleHash = await createSHA256Hash(
-            JSON.stringify(capture.turns),
-          );
-
-          if (nextLastBattleHash !== battleHash) {
+          const game = ingress?.game ?? useGameStore.getState().game;
+          if (game) {
+            const accountId = game.hero.accountId;
+            const characterId = game.hero.characterId;
+            const world = game.world;
+            const battleHash = await createSHA256Hash(
+              JSON.stringify(capture.turns),
+            );
+            const battleReplayKey = JSON.stringify({
+              accountId,
+              battleHash,
+              characterId,
+              world,
+            });
             const events = mapBattleEventsToPayload(capture.events);
 
-            // Use incremental hasMultipleTeams flag instead of O(N*M) loop
-            if (events && !hasNpcInBattle && this.hasMultipleTeams) {
-              const game = ingress?.game ?? useGameStore.getState().game;
-              if (game) {
-                const accountId = game.hero.accountId;
-                const characterId = game.hero.characterId;
-                const world = game.world;
-                const submissionId = await createSHA256Hash(
-                  JSON.stringify({
-                    accountId,
-                    characterId,
-                    events,
-                    world,
-                  }),
-                );
-
-                battleIntent = {
+            if (
+              events &&
+              !hasNpcInBattle &&
+              this.hasMultipleTeams &&
+              !this.hasRecentBattleReplayKey(battleReplayKey)
+            ) {
+              const submissionId = await createSHA256Hash(
+                JSON.stringify({
                   accountId,
                   characterId,
-                  submissionId,
                   events,
                   world,
-                };
-              }
+                }),
+              );
+
+              battleIntent = {
+                accountId,
+                characterId,
+                submissionId,
+                events,
+                world,
+              };
+              this.recentBattleReplayKeys.set(battleReplayKey, Date.now());
             }
+            nextLastBattleHash = battleHash;
           }
-          nextLastBattleHash = battleHash;
         }
       }
 
@@ -323,5 +333,15 @@ export class BattleEventProcessor {
         this.finalizingGeneration = null;
       }
     }
+  }
+
+  private hasRecentBattleReplayKey(battleReplayKey: string): boolean {
+    const now = Date.now();
+    for (const [key, observedAt] of this.recentBattleReplayKeys) {
+      if (now - observedAt >= BATTLE_REPLAY_WINDOW_MS) {
+        this.recentBattleReplayKeys.delete(key);
+      }
+    }
+    return this.recentBattleReplayKeys.has(battleReplayKey);
   }
 }

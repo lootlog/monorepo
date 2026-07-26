@@ -28,6 +28,7 @@ export const battles = pgTable(
 
     accountId: text("accountId").notNull(),
     characterId: text("characterId").notNull(),
+    semanticFingerprint: text("semanticFingerprint"),
     submissionId: text("submissionId"),
     world: text("world").notNull(),
     duration: doublePrecision("duration").notNull(),
@@ -70,6 +71,10 @@ export const battles = pgTable(
     ),
     index("battles_characterId_createdAt_idx").on(
       table.characterId,
+      table.createdAt,
+    ),
+    index("battles_semanticFingerprint_createdAt_idx").on(
+      table.semanticFingerprint,
       table.createdAt,
     ),
     uniqueIndex("battles_submissionId_key").on(table.submissionId),
