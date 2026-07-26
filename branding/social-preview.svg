@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">Lootlog</title>
+  <desc id="description">Timery respów, łupy i analiza walk w Margonem</desc>
+  <rect width="1200" height="630" fill="#07111f"/>
+  <circle cx="1090" cy="80" r="245" fill="#ff665b" opacity=".13"/>
+  <circle cx="70" cy="610" r="270" fill="#3559f6" opacity=".19"/>
+  <path
+    d="M181.7 177.3A154 154 0 1 0 224.5 259.5"
+    fill="none"
+    stroke="#c8f135"
+    stroke-linecap="round"
+    stroke-width="48"
+  />
+  <circle cx="224.5" cy="259.5" r="27" fill="#35d3e4"/>
+  <circle cx="73" cy="286" r="38" fill="#ffbd3f"/>
+  <path
+    d="M251 286H432C485 286 492 363 545 363H1160"
+    fill="none"
+    stroke="#35d3e4"
+    stroke-linecap="round"
+    stroke-width="10"
+    opacity=".38"
+  />
+  <circle cx="545" cy="363" r="13" fill="#35d3e4"/>
+  <text
+    x="390"
+    y="252"
+    fill="#f7f8f2"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="104"
+    font-weight="800"
+    letter-spacing="-5"
+  >Lootlog</text>
+  <text
+    x="397"
+    y="329"
+    fill="#b9c8de"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="31"
+    font-weight="500"
+  >Timery respów, łupy i analiza walk</text>
+  <text
+    x="397"
+    y="377"
+    fill="#b9c8de"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="31"
+    font-weight="500"
+  >w Margonem</text>
+  <rect x="397" y="426" width="184" height="54" rx="27" fill="#c8f135"/>
+  <text
+    x="489"
+    y="462"
+    fill="#07111f"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="20"
+    font-weight="700"
+    text-anchor="middle"
+  >lootlog.pl</text>
+</svg>
