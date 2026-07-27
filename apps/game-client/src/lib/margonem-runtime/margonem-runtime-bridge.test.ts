@@ -105,12 +105,22 @@ describe("MargonemRuntimeBridge", () => {
     bridge.subscribeIncoming(incoming);
 
     bridge.install();
-    runtimeWindow.successData?.({ ev: 10, f: { m: ["first"] } });
-    runtimeWindow.successData?.({ ev: 10, f: { m: ["second"] } });
+    const firstEvent = { ev: 10, f: { m: ["first"] } };
+    const secondEvent = { ev: 10, f: { m: ["second"] } };
+    runtimeWindow.successData?.(firstEvent);
+    runtimeWindow.successData?.(secondEvent);
 
     expect(bridge.getHealth().queueEvents).toBe(2);
     bridge.setReady(true);
     expect(incoming).toHaveBeenCalledTimes(2);
+    expect(incoming).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ raw: firstEvent }),
+    );
+    expect(incoming).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ raw: secondEvent }),
+    );
     bridge.cleanup();
   });
 
