@@ -301,6 +301,61 @@ describe("LootEventProcessor", () => {
     });
   });
 
+  it("submits an identical battle loot effect once", async () => {
+    useBattleStore.setState({
+      battleWarriors: {
+        "1": createBattleWarrior(),
+      },
+    });
+    mockGetLoot.mockReturnValue([
+      {
+        id: 1,
+        name: "Legendarny miecz",
+      },
+    ]);
+    mockGetBattleParticipants.mockReturnValue({
+      npcs: [{ id: 501, name: "Boss" }],
+      party: [{ id: 101, name: "Tester" }],
+    });
+    mockCreateLoot.mockResolvedValue({ id: 999 });
+    const event = createBattleLootEvent();
+
+    processor.handleLootFromBattle(event);
+    processor.handleLootFromBattle(event);
+
+    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    processor.handleLootFromBattle(event);
+
+    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
+    expect(useLootStore.getState().lastLootId).toBe(999);
+  });
+
+  it("submits different battle loot effects that share an event id", () => {
+    useBattleStore.setState({
+      battleWarriors: {
+        "1": createBattleWarrior(),
+      },
+    });
+    mockGetLoot
+      .mockReturnValueOnce([{ id: 1, name: "Legendarny miecz" }])
+      .mockReturnValueOnce([{ id: 2, name: "Legendarny łuk" }]);
+    mockGetBattleParticipants.mockReturnValue({
+      npcs: [{ id: 501, name: "Boss" }],
+      party: [{ id: 101, name: "Tester" }],
+    });
+    mockCreateLoot.mockResolvedValue({ id: 999 });
+    const event = { ...createBattleLootEvent(), ev: 77 };
+
+    processor.handleLootFromBattle(event);
+    processor.handleLootFromBattle(event);
+
+    expect(mockCreateLoot).toHaveBeenCalledTimes(2);
+  });
+
   it("stops battle loot creation when parsed loot list is empty", () => {
     const consoleLogSpy = vi
       .spyOn(console, "log")
@@ -374,7 +429,7 @@ describe("LootEventProcessor", () => {
     });
   });
 
-  it("logs warning when battle loot request fails", async () => {
+  it("logs warning and permits retry when battle loot request fails", async () => {
     const consoleWarnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
@@ -398,10 +453,14 @@ describe("LootEventProcessor", () => {
     });
     mockCreateLoot.mockRejectedValue(new Error("battle failed"));
 
-    processor.handleLootFromBattle(createBattleLootEvent());
+    const event = createBattleLootEvent();
+    processor.handleLootFromBattle(event);
 
     await Promise.resolve();
     await Promise.resolve();
+
+    mockCreateLoot.mockResolvedValue({ id: 999 });
+    processor.handleLootFromBattle(event);
 
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       "[LootEventProcessor] Failed to create loot:",
@@ -413,6 +472,7 @@ describe("LootEventProcessor", () => {
       source: "fight",
       stage: "failed",
     });
+    expect(mockCreateLoot).toHaveBeenCalledTimes(2);
   });
 
   it("ignores dialog loot without tracked npc", () => {

@@ -51,6 +51,17 @@ const parseNumericValue = (value: unknown) => {
   return null;
 };
 
+const deduplicateBattleEventsById = (events: GameEvent[]): GameEvent[] => {
+  const seenEventIds = new Set<number>();
+
+  return events.filter((event) => {
+    if (event.ev === undefined) return true;
+    if (seenEventIds.has(event.ev)) return false;
+    seenEventIds.add(event.ev);
+    return true;
+  });
+};
+
 const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
   const legacyHpp = parseNumericValue((warrior as { hpp?: unknown }).hpp);
   if (legacyHpp !== null) return legacyHpp <= 0;
@@ -261,25 +272,20 @@ export class BattleEventProcessor {
             const battleHash = await createSHA256Hash(
               JSON.stringify(capture.turns),
             );
-            const battleReplayKey = JSON.stringify({
-              accountId,
-              battleHash,
-              characterId,
-              world,
-            });
-            const events = mapBattleEventsToPayload(capture.events);
+            const canonicalCapturedEvents = deduplicateBattleEventsById(
+              capture.events,
+            );
+            const canonicalTurns = canonicalCapturedEvents.flatMap(
+              (event) => event.f?.m ?? [],
+            );
+            const events = mapBattleEventsToPayload(canonicalCapturedEvents);
 
-            if (
-              events &&
-              !hasNpcInBattle &&
-              this.hasMultipleTeams &&
-              !this.hasRecentBattleReplayKey(battleReplayKey)
-            ) {
+            if (events && !hasNpcInBattle && this.hasMultipleTeams) {
               const submissionId = await createSHA256Hash(
                 JSON.stringify({
                   accountId,
                   characterId,
-                  events,
+                  moves: canonicalTurns,
                   world,
                 }),
               );
@@ -291,7 +297,6 @@ export class BattleEventProcessor {
                 events,
                 world,
               };
-              this.recentBattleReplayKeys.set(battleReplayKey, Date.now());
             }
             nextLastBattleHash = battleHash;
           }
@@ -300,6 +305,17 @@ export class BattleEventProcessor {
 
       if (endingGeneration !== this.battleGeneration) {
         return;
+      }
+
+      if (battleIntent) {
+        if (this.hasRecentBattleReplayKey(battleIntent.submissionId)) {
+          battleIntent = null;
+        } else {
+          this.recentBattleReplayKeys.set(
+            battleIntent.submissionId,
+            Date.now(),
+          );
+        }
       }
 
       battleStore.clearEvents();
