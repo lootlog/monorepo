@@ -6,12 +6,13 @@ type BattleEvent = CreateBattleDto["events"][number];
 export const normalizeBattleEvents = (
   events: CreateBattleDto["events"],
 ): CreateBattleDto["events"] => {
-  const seenEventIds = new Set<number>();
+  const seenEventPayloads = new Set<string>();
 
   return events.filter((event) => {
     if (event.ev === undefined) return true;
-    if (seenEventIds.has(event.ev)) return false;
-    seenEventIds.add(event.ev);
+    const eventPayload = JSON.stringify(event);
+    if (seenEventPayloads.has(eventPayload)) return false;
+    seenEventPayloads.add(eventPayload);
     return true;
   });
 };

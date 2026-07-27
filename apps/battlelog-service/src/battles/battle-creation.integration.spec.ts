@@ -578,6 +578,47 @@ describe("battle creation API deduplication", () => {
     expect(cashtelan.turns).toBe(12);
   });
 
+  it("preserves distinct battle events that share an event id", async () => {
+    const testApplication = await createTestApplication();
+    app = testApplication.app;
+
+    const response = await request(app.getHttpServer())
+      .post("/battles")
+      .set(authHeaders)
+      .send({
+        ...battleContext,
+        submissionId: "events-with-repeated-id",
+        events: [
+          {
+            ev: 1_785_091_976.7,
+            f: {
+              init: "1",
+              m: moves.slice(0, 6),
+              w: warriors,
+            },
+          },
+          {
+            ev: 1_785_091_976.7,
+            f: {
+              endBattle: 1,
+              m: moves.slice(6),
+            },
+          },
+        ],
+      })
+      .expect(201);
+
+    const battleResponse = await request(app.getHttpServer())
+      .get(`/battles/${response.body.battleId}`)
+      .set(authHeaders)
+      .expect(200);
+    const cashtelan = battleResponse.body.warriors.find(
+      (warrior: { name: string }) => warrior.name === "cashtelan",
+    );
+
+    expect(cashtelan.turns).toBe(12);
+  });
+
   it("allows an identical battle after the deduplication window", async () => {
     const dateNow = vi
       .spyOn(Date, "now")

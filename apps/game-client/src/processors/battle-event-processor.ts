@@ -51,13 +51,14 @@ const parseNumericValue = (value: unknown) => {
   return null;
 };
 
-const deduplicateBattleEventsById = (events: GameEvent[]): GameEvent[] => {
-  const seenEventIds = new Set<number>();
+const deduplicateBattleEvents = (events: GameEvent[]): GameEvent[] => {
+  const seenEventPayloads = new Set<string>();
 
   return events.filter((event) => {
     if (event.ev === undefined) return true;
-    if (seenEventIds.has(event.ev)) return false;
-    seenEventIds.add(event.ev);
+    const eventPayload = JSON.stringify(event);
+    if (seenEventPayloads.has(eventPayload)) return false;
+    seenEventPayloads.add(eventPayload);
     return true;
   });
 };
@@ -272,7 +273,7 @@ export class BattleEventProcessor {
             const battleHash = await createSHA256Hash(
               JSON.stringify(capture.turns),
             );
-            const canonicalCapturedEvents = deduplicateBattleEventsById(
+            const canonicalCapturedEvents = deduplicateBattleEvents(
               capture.events,
             );
             const canonicalTurns = canonicalCapturedEvents.flatMap(

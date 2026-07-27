@@ -1150,6 +1150,43 @@ describe("BattleEventProcessor", () => {
   });
 
   describe("duplicate battle detection", () => {
+    it("preserves distinct battle packets that share an event id", async () => {
+      const { mapBattleEventsToPayload } =
+        await import("@/helpers/mappers/battlelog.mappers");
+      vi.mocked(mapBattleEventsToPayload).mockImplementation(
+        (events) => events as never,
+      );
+      const startEvent = {
+        ev: 77,
+        f: {
+          init: "1",
+          m: ["start"],
+          w: {
+            "111": { id: 111, name: "One", team: 1 },
+            "222": { id: 222, name: "Two", team: 2 },
+          },
+        },
+      } as unknown as GameEvent;
+      const middleEvent = {
+        ev: 77,
+        f: { m: ["middle"] },
+      } as GameEvent;
+      const endEvent = {
+        ev: 78,
+        f: { endBattle: 1, m: ["end"] },
+      } as GameEvent;
+
+      await processor.handle(startEvent);
+      await processor.handle(middleEvent);
+      await processor.handle(endEvent);
+
+      expect(mockCreateBattle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          events: [startEvent, middleEvent, endEvent],
+        }),
+      );
+    });
+
     it("submits duplicated incremental and compact replay once", async () => {
       const { createSHA256Hash } =
         await import("@/helpers/create-sha-256-hash");
