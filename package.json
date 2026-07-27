@@ -86,7 +86,7 @@
     "oxlint": "^1.75.0",
     "socket.io-client": "^4.8.3",
     "tsx": "catalog:",
-    "turbo": "^2.10.6",
+    "turbo": "^2.10.7",
     "typescript": "catalog:"
   },
   "devEngines": {
