@@ -35,7 +35,7 @@
     "@lootlog/typescript-config": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@types/node": "catalog:",
-    "orval": "^8.22.0",
+    "orval": "^8.23.0",
     "oxfmt": "^0.60.0",
     "oxlint": "^1.75.0",
     "react": "catalog:",
