@@ -261,25 +261,14 @@ export class BattleEventProcessor {
             const battleHash = await createSHA256Hash(
               JSON.stringify(capture.turns),
             );
-            const battleReplayKey = JSON.stringify({
-              accountId,
-              battleHash,
-              characterId,
-              world,
-            });
             const events = mapBattleEventsToPayload(capture.events);
 
-            if (
-              events &&
-              !hasNpcInBattle &&
-              this.hasMultipleTeams &&
-              !this.hasRecentBattleReplayKey(battleReplayKey)
-            ) {
+            if (events && !hasNpcInBattle && this.hasMultipleTeams) {
               const submissionId = await createSHA256Hash(
                 JSON.stringify({
                   accountId,
                   characterId,
-                  events,
+                  moves: capture.turns,
                   world,
                 }),
               );
@@ -291,7 +280,6 @@ export class BattleEventProcessor {
                 events,
                 world,
               };
-              this.recentBattleReplayKeys.set(battleReplayKey, Date.now());
             }
             nextLastBattleHash = battleHash;
           }
@@ -300,6 +288,17 @@ export class BattleEventProcessor {
 
       if (endingGeneration !== this.battleGeneration) {
         return;
+      }
+
+      if (battleIntent) {
+        if (this.hasRecentBattleReplayKey(battleIntent.submissionId)) {
+          battleIntent = null;
+        } else {
+          this.recentBattleReplayKeys.set(
+            battleIntent.submissionId,
+            Date.now(),
+          );
+        }
       }
 
       battleStore.clearEvents();

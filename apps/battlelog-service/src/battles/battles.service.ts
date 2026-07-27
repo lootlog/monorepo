@@ -132,6 +132,13 @@ export class BattlesService implements IBattlesService {
     semanticFingerprint: string;
     userId: string;
   }): Promise<CreateBattleResult> {
+    const rawBattleData = {
+      events: analysis.parsedMoves,
+      sourceEvents: data.events,
+      accountId: data.accountId,
+      characterId: data.characterId,
+      world: data.world,
+    };
     const existingBattleId = await this.getRecentBattleIdBySemanticFingerprint(
       semanticFingerprint,
       userId,
@@ -142,6 +149,7 @@ export class BattlesService implements IBattlesService {
         analysis.duration,
         userId,
       );
+      await this.storeRawBattleData(existingBattleId, rawBattleData);
       return { battleId: existingBattleId };
     }
 
@@ -154,13 +162,7 @@ export class BattlesService implements IBattlesService {
       )
     ).id;
 
-    await this.storeRawBattleData(battleId, {
-      events: analysis.parsedMoves,
-      sourceEvents: data.events,
-      accountId: data.accountId,
-      characterId: data.characterId,
-      world: data.world,
-    });
+    await this.storeRawBattleData(battleId, rawBattleData);
     await this.battleAnalyticsService.invalidateAnalyticsCache(userId);
 
     return { battleId };
@@ -261,8 +263,12 @@ export class BattlesService implements IBattlesService {
         });
     }, BATTLE_DEDUPLICATION_LOCK_REFRESH_INTERVAL_MS);
 
+    const operationPromise = Promise.resolve().then(operation);
     try {
-      return await Promise.race([operation(), lockLoss]);
+      return await Promise.race([operationPromise, lockLoss]);
+    } catch (error) {
+      await operationPromise.catch(() => undefined);
+      throw error;
     } finally {
       clearInterval(refreshTimer);
       await renewal;

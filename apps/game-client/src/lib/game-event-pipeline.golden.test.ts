@@ -486,10 +486,12 @@ describe("game event pipeline golden replay", () => {
           profession: "w",
         }),
       });
-      const dispatcher = new EventDispatcher();
+      const firstDispatcher = new EventDispatcher();
+      const secondDispatcher = new EventDispatcher();
       pipelineWindow.successData = vi.fn(() => "game-result");
       margonemRuntimeBridge.setupProxies();
-      dispatcher.register();
+      firstDispatcher.register();
+      secondDispatcher.register();
       margonemRuntimeBridge.setReady(true);
 
       pipelineWindow.successData?.({
@@ -607,20 +609,22 @@ describe("game event pipeline golden replay", () => {
       );
       await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
 
-      dispatcher.cleanup();
+      firstDispatcher.cleanup();
+      secondDispatcher.cleanup();
     },
   );
 
-  it("submits the duplicated incremental and compact Keukta replay as one canonical battle", async () => {
+  it("submits one complete battle when dispatcher registrations overlap and a compact replay follows", async () => {
     resetPipelineState();
-    const dispatcher = new EventDispatcher();
+    const firstDispatcher = new EventDispatcher();
+    const secondDispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn(() => "game-result");
     margonemRuntimeBridge.setupProxies();
-    dispatcher.register();
+    firstDispatcher.register();
+    secondDispatcher.register();
     margonemRuntimeBridge.setReady(true);
 
     for (const event of keuktaIncrementalEvents) {
-      pipelineWindow.successData?.(event);
       pipelineWindow.successData?.(event);
     }
     pipelineWindow.successData?.(compactKeuktaEvent);
@@ -636,8 +640,27 @@ describe("game event pipeline golden replay", () => {
     expect(
       submittedMoves.filter((move) => move.startsWith("220=")),
     ).toHaveLength(12);
+    expect(submittedBattle?.events[0]?.f?.w).toEqual({
+      "220": {
+        icon: "cashtelan.gif",
+        lvl: 300,
+        name: "cashtelan",
+        originalId: 220,
+        prof: "p",
+        team: 1,
+      },
+      "7533": {
+        icon: "keukta.gif",
+        lvl: 300,
+        name: "keukta",
+        originalId: 7533,
+        prof: "w",
+        team: 2,
+      },
+    });
 
-    dispatcher.cleanup();
+    firstDispatcher.cleanup();
+    secondDispatcher.cleanup();
   });
 
   it("accepts an identical battle after the semantic replay window expires", async () => {
