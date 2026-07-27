@@ -43,10 +43,9 @@ On the expanded desktop shell:
 - both headers occupy `y = 0–56`;
 - the approved curve begins at `x = 64, y = 56`.
 
-The contextual navigation receives a `top-left` radius of approximately 20–22
-px. Its top border turns into its left border through this radius, so the curve
-travels downward beside the rail. The guild/sidebar header above it remains
-rectangular.
+The contextual navigation receives an exact 22 px `top-left` radius. Its top
+border turns into its left border through this radius, so the curve travels
+downward beside the rail. The guild/sidebar header above it remains rectangular.
 
 ### Border treatment
 
@@ -184,6 +183,19 @@ instance or state owner; it must not duplicate state, permissions, keyboard
 behavior or mobile availability. Responsive placement must render a control in
 exactly one location at a time.
 
+Each route feature owns its action components, controller state and permission
+checks. `ShellPageHeader` exposes only the header action-slot destination.
+Feature-level integration chooses the destination:
+
+- at `lg+`, the feature renders one action group into the header slot;
+- below `lg`, the same feature renders one action group in its existing toolbar;
+- state lives above this responsive placement boundary, so crossing `lg` may
+  remount presentation but cannot reset the selected world, view or filter
+  state.
+
+Shell adapters must not import route-feature controls or become owners of route
+state.
+
 ## Component boundaries
 
 Implementation should preserve focused components:
@@ -191,7 +203,9 @@ Implementation should preserve focused components:
 - `ShellPageHeader` owns the shared three-zone header layout and responsive title
   hierarchy.
 - Guild/user shell adapters provide localized parent context, current title and
-  existing route actions.
+  the action-slot destination.
+- Route features own action components and state and select either the header
+  destination or their existing toolbar destination.
 - `SidebarNav` owns the approved navigation-panel radius.
 - `UserMenu` owns command-dock presentation and menu interaction.
 - The guild rail remains responsible only for guild selection and guild actions.
@@ -239,6 +253,8 @@ Component coverage should include:
 - header root route and nested route context;
 - independent truncation of long parent and current Polish labels;
 - route actions present and absent;
+- promoted controls render in exactly one destination at every breakpoint;
+- promoted-control state survives crossing the `lg` breakpoint;
 - mobile current-title-only layout;
 - command dock name truncation and optional secondary status;
 - command dock keyboard/open states.
