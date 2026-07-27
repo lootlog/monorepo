@@ -1021,7 +1021,10 @@
     "description": "Dostosuj wygląd aplikacji według swoich preferencji.",
     "themeLabel": "Motyw",
     "themes": {
-      "default": { "title": "Default", "description": "Domyślny" },
+      "default": {
+        "title": "Default v2",
+        "description": "Ciemny system sygnałów Lootloga"
+      },
       "cyberpunk": { "title": "Cyberpunk", "description": "Neon" },
       "pastel": { "title": "Pastel", "description": "Miękkie kolory" },
       "fantasy": {

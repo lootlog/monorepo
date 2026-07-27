@@ -26,8 +26,8 @@ export const MetricCard = ({
     <AnimatedPanel
       delay={0.05}
       className={cn(
-        "rounded-3xl border px-4 py-4 backdrop-blur-sm transition-colors",
-        tone === "default" && "border-border/70 bg-background/70",
+        "rounded-3xl border px-4 py-4  transition-colors",
+        tone === "default" && "border-border/70 bg-background",
         tone === "warm" && "border-amber-400/30 bg-amber-500/10",
         tone === "danger" && "border-rose-500/30 bg-rose-500/10",
         tone === "emerald" && "border-emerald-500/30 bg-emerald-500/10",

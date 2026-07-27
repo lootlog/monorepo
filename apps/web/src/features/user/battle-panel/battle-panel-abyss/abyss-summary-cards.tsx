@@ -81,10 +81,7 @@ export function AbyssSummaryCards({ season }: AbyssSummaryCardsProps) {
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
       {cards.map((card) => (
-        <Card
-          key={card.key}
-          className="gap-2 border-border bg-card/40 p-3 backdrop-blur-sm"
-        >
+        <Card key={card.key} className="gap-2 border-border bg-card p-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <card.icon className="size-3.5" />
             {card.label}

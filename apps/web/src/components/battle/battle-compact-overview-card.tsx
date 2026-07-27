@@ -52,7 +52,7 @@ export const BattleCompactOverviewCard: FC<BattleCompactOverviewCardProps> = ({
   );
 
   return (
-    <Card className="w-full gap-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm">
+    <Card className="w-full gap-0 overflow-hidden border-border bg-card p-0">
       <div
         className={cn(BATTLE_SURFACE_COLORS.overview.teamGradient, "px-3 py-3")}
       >

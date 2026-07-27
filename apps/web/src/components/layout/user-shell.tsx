@@ -46,7 +46,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
 
   return (
     <UserHeaderActionsContext.Provider value={headerActionsElement}>
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-row bg-background/70">
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-row bg-background">
         <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
           <PageHeader>
             <div className="flex w-full flex-row items-center justify-between gap-2">

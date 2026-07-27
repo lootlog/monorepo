@@ -6,29 +6,6 @@
 }
 
 :root {
-  --sea-ink: #232019;
-  --sea-ink-soft: #665e4f;
-  --accent: #d7a739;
-  --accent-deep: #9b6f15;
-  --forest: #3a604c;
-  --sand: #f1eadb;
-  --foam: #faf5eb;
-  --surface: rgba(255, 251, 244, 0.78);
-  --surface-soft: rgba(250, 244, 232, 0.9);
-  --surface-strong: rgba(255, 253, 248, 0.94);
-  --line: rgba(52, 42, 28, 0.14);
-  --inset-glint: rgba(255, 255, 255, 0.86);
-  --kicker: rgba(111, 79, 18, 0.92);
-  --bg-base: #efe5d3;
-  --header-bg: rgba(250, 245, 234, 0.84);
-  --chip-bg: rgba(255, 250, 244, 0.84);
-  --chip-line: rgba(111, 79, 18, 0.2);
-  --link-bg-hover: rgba(255, 253, 248, 0.94);
-  --hero-a: rgba(215, 167, 57, 0.22);
-  --hero-b: rgba(58, 96, 76, 0.16);
-}
-
-:root[data-theme="dark"] {
   --sea-ink: #f2e5c6;
   --sea-ink-soft: #ccb99a;
   --accent: #f0c666;
@@ -49,31 +26,7 @@
   --link-bg-hover: rgba(41, 31, 24, 0.88);
   --hero-a: rgba(240, 198, 102, 0.14);
   --hero-b: rgba(142, 181, 150, 0.12);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --sea-ink: #f2e5c6;
-    --sea-ink-soft: #ccb99a;
-    --accent: #f0c666;
-    --accent-deep: #f7df9e;
-    --forest: #8eb596;
-    --sand: #17130f;
-    --foam: #14100d;
-    --surface: rgba(29, 23, 17, 0.82);
-    --surface-soft: rgba(24, 19, 15, 0.92);
-    --surface-strong: rgba(24, 18, 13, 0.96);
-    --line: rgba(242, 229, 198, 0.12);
-    --inset-glint: rgba(245, 233, 208, 0.08);
-    --kicker: #f0c666;
-    --bg-base: #0f0b09;
-    --header-bg: rgba(16, 12, 10, 0.82);
-    --chip-bg: rgba(29, 23, 17, 0.94);
-    --chip-line: rgba(242, 229, 198, 0.14);
-    --link-bg-hover: rgba(41, 31, 24, 0.88);
-    --hero-a: rgba(240, 198, 102, 0.14);
-    --hero-b: rgba(142, 181, 150, 0.12);
-  }
+  color-scheme: dark;
 }
 
 * {
@@ -129,20 +82,6 @@ body::before {
       transparent 42%
     ),
     radial-gradient(circle at 42% 82%, rgba(58, 96, 76, 0.12), transparent 36%);
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.14;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: radial-gradient(circle at 50% 30%, black, transparent 78%);
 }
 
 a {

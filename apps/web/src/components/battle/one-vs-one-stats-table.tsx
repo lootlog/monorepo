@@ -283,7 +283,7 @@ export function OneVsOneStatsTable({
 
   if (!user || !opponent) {
     return (
-      <Card className="border-border bg-card/40 backdrop-blur-sm p-8 w-full text-center text-muted-foreground">
+      <Card className="border-border bg-card  p-8 w-full text-center text-muted-foreground">
         {t("battleUi.oneVsOne.empty")}
       </Card>
     );
@@ -292,7 +292,7 @@ export function OneVsOneStatsTable({
   return (
     <Card
       className={cn(
-        "border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full",
+        "border-border bg-card  overflow-hidden gap-0 p-0 w-full",
         cardClassName,
       )}
     >
@@ -469,7 +469,7 @@ export function OneVsOneStatsTable({
                   >
                     <TableCell
                       className={cn(
-                        "sticky left-0 z-10 border-r border-border/70 bg-background font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] hover:bg-background/50",
+                        "sticky left-0 z-10 border-r border-border/70 bg-background font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] hover:bg-background",
                         compact ? "px-2 py-1 leading-[1.35]" : "py-2",
                         stat.color,
                       )}

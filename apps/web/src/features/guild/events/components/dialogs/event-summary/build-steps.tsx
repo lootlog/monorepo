@@ -189,7 +189,7 @@ export const buildSteps = (
           </div>
 
           <div className="grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[28px] border border-border/70 bg-background/70 p-4 backdrop-blur-sm">
+            <div className="rounded-[28px] border border-border/70 bg-background p-4">
               <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
                 {t("events.summaryDialog.labels.coverage")}
               </p>
@@ -200,7 +200,7 @@ export const buildSteps = (
                 {t("events.summaryDialog.captions.coverage")}
               </p>
             </div>
-            <div className="rounded-[28px] border border-border/70 bg-background/70 p-4 backdrop-blur-sm">
+            <div className="rounded-[28px] border border-border/70 bg-background p-4">
               <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
                 {t("events.summaryDialog.labels.afkTime")}
               </p>
@@ -254,7 +254,7 @@ export const buildSteps = (
             {data.loot.heroBreakdown.slice(0, 4).map((hero) => (
               <div
                 key={hero.heroNpcId}
-                className="rounded-[28px] border border-border/70 bg-background/70 p-4 backdrop-blur-sm"
+                className="rounded-[28px] border border-border/70 bg-background p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -265,7 +265,7 @@ export const buildSteps = (
                       {hero.npcName}
                     </h4>
                   </div>
-                  <Badge variant="outline" className="bg-background/70 text-xs">
+                  <Badge variant="outline" className="bg-background text-xs">
                     {formatMetric(hero.totalLoots)}
                   </Badge>
                 </div>
@@ -441,7 +441,7 @@ export const buildSteps = (
             ) : null}
 
             {richestHero ? (
-              <div className="rounded-[32px] border border-yellow-500/25 bg-yellow-500/10 p-5 backdrop-blur-sm">
+              <div className="rounded-[32px] border border-yellow-500/25 bg-yellow-500/10 p-5">
                 <p className="text-[10px] uppercase tracking-[0.24em] text-yellow-800 dark:text-yellow-200/80">
                   {t("events.summaryDialog.labels.richestHero")}
                 </p>
@@ -488,7 +488,7 @@ export const buildSteps = (
             {heroCast.slice(1).map(({ hero, loot }) => (
               <div
                 key={hero.heroNpcId}
-                className="rounded-[28px] border border-border/70 bg-background/70 p-4 backdrop-blur-sm"
+                className="rounded-[28px] border border-border/70 bg-background p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -499,7 +499,7 @@ export const buildSteps = (
                       {hero.npcName}
                     </h4>
                   </div>
-                  <Badge variant="outline" className="bg-background/70 text-xs">
+                  <Badge variant="outline" className="bg-background text-xs">
                     {formatMetric(hero.mapCount)}{" "}
                     {t("events.summaryDialog.units.maps")}
                   </Badge>
@@ -548,7 +548,7 @@ export const buildSteps = (
                 coverageLabel={t("events.summaryDialog.labels.coverage")}
               />
             ) : null}
-            <div className="rounded-[32px] border border-border/70 bg-background/70 p-5 backdrop-blur-sm">
+            <div className="rounded-[32px] border border-border/70 bg-background p-5">
               <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
                 {t("events.summaryDialog.labels.finalHeadline")}
               </p>
@@ -573,7 +573,7 @@ export const buildSteps = (
             {data.heroes.slice(0, 4).map((hero) => (
               <div
                 key={hero.heroNpcId}
-                className="rounded-[28px] border border-border/70 bg-background/70 p-4 backdrop-blur-sm"
+                className="rounded-[28px] border border-border/70 bg-background p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -584,7 +584,7 @@ export const buildSteps = (
                       {hero.npcName}
                     </h4>
                   </div>
-                  <Badge variant="outline" className="bg-background/70 text-xs">
+                  <Badge variant="outline" className="bg-background text-xs">
                     {formatMetric(hero.rarityTotals.legendary)}{" "}
                     {t("events.summaryDialog.labels.legendaryShort")}
                   </Badge>

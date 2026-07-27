@@ -27,7 +27,7 @@ export const UserMenu = () => {
   };
 
   return (
-    <div className="flex border-t w-full h-14 items-center px-2 bg-sidebar">
+    <div className="flex h-14 w-full items-center bg-sidebar px-2">
       {isPending && (
         <div className="flex flex-1 items-center gap-2.5 px-1">
           <Avatar className="size-8 rounded-full">

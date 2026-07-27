@@ -119,7 +119,7 @@ export const NotificationsSettings = () => {
 
   return (
     <>
-      <div className="flex h-full min-h-0 flex-col bg-background/50">
+      <div className="flex h-full min-h-0 flex-col bg-background">
         <ScrollArea className="min-h-0 flex-1">
           <div className="flex flex-col gap-3 px-3 py-3">
             <PageHeader
@@ -145,9 +145,9 @@ export const NotificationsSettings = () => {
             />
 
             {!hasRequiredPermissions ? (
-              <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="gap-3 border-border bg-card p-4">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-amber-500/10 p-2.5 shadow-inner shadow-amber-500/10">
+                  <div className="rounded-xl bg-amber-500/10 p-2.5">
                     <ShieldAlert className="size-4 text-amber-500" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -181,7 +181,7 @@ export const NotificationsSettings = () => {
             {isLoading ? (
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                 <div className="space-y-4 lg:col-span-2">
-                  <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+                  <Card className="border-border bg-card p-4">
                     <Skeleton className="mb-3 h-5 w-32" />
                     <div className="space-y-2">
                       {Array.from({ length: 3 }).map((_, i) => (
@@ -189,7 +189,7 @@ export const NotificationsSettings = () => {
                       ))}
                     </div>
                   </Card>
-                  <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+                  <Card className="border-border bg-card p-4">
                     <Skeleton className="mb-3 h-5 w-24" />
                     <div className="space-y-2">
                       {Array.from({ length: 3 }).map((_, i) => (
@@ -199,7 +199,7 @@ export const NotificationsSettings = () => {
                   </Card>
                 </div>
                 <div className="space-y-4">
-                  <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+                  <Card className="border-border bg-card p-4">
                     <Skeleton className="mb-3 h-5 w-24" />
                     <div className="space-y-2">
                       <Skeleton className="h-10 rounded-md" />

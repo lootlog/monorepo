@@ -9,12 +9,14 @@ type Props = {
   items: Item[];
   anchorRect: DOMRect;
   watchContext: WatchedItemScope;
+  selectedItemNames: string[];
 };
 
 export const ItemStackExpanded: FC<Props> = ({
   items,
   anchorRect,
   watchContext,
+  selectedItemNames,
 }) =>
   createPortal(
     <motion.div
@@ -22,7 +24,7 @@ export const ItemStackExpanded: FC<Props> = ({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.85, y: -8 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="fixed z-50 flex flex-col gap-1 p-1.5 rounded-lg bg-popover/95 backdrop-blur-md border border-border shadow-lg"
+      className="fixed z-50 flex flex-col gap-1 p-1.5 rounded-lg bg-popover/95  border border-border shadow-lg"
       style={{
         top: anchorRect.bottom + 4,
         left: anchorRect.left + anchorRect.width / 2,
@@ -35,6 +37,7 @@ export const ItemStackExpanded: FC<Props> = ({
           key={`${item.hid}-${idx}`}
           item={item}
           watchContext={watchContext}
+          selectedItemNames={selectedItemNames}
         />
       ))}
     </motion.div>,

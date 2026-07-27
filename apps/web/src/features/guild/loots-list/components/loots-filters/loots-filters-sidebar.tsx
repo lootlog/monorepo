@@ -1,7 +1,6 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
-import { Separator } from "@lootlog/ui/components/separator";
 import { Label } from "@lootlog/ui/components/label";
 import { Input } from "@lootlog/ui/components/input";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -77,10 +76,12 @@ type SavedFilter = {
 
 type LootsFiltersSidebarProps = {
   className?: string;
+  embedded?: boolean;
 };
 
 export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   className,
+  embedded = false,
 }) => {
   const { t } = useTranslation();
   const {
@@ -291,6 +292,30 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
 
   const canSaveCurrentFilter =
     hasActiveFilters && !isCurrentFilterAlreadySaved();
+  const npcActiveFilterCount =
+    Number(filters.npcTypes.length > 0) +
+    Number(filters.npcs.length > 0) +
+    Number(Boolean(filters.npcLevelMin || filters.npcLevelMax));
+  const itemActiveFilterCount =
+    Number(filters.rarities.length > 0) +
+    Number(filters.professions.length > 0) +
+    Number(filters.itemNames.length > 0 || Boolean(filters.hid)) +
+    Number(Boolean(filters.itemLevelMin || filters.itemLevelMax));
+  const playerActiveFilterCount =
+    Number(filters.players.length > 0) +
+    Number(Boolean(filters.playerLevelMin || filters.playerLevelMax));
+  const initiallyOpenSections = [
+    ...(npcActiveFilterCount > 0 ? ["npc"] : []),
+    ...(itemActiveFilterCount > 0 ? ["item"] : []),
+    ...(playerActiveFilterCount > 0 ? ["player"] : []),
+  ];
+
+  if (initiallyOpenSections.length === 0) {
+    initiallyOpenSections.push("npc");
+  }
+
+  const isQuickFilterApplied = (filter: SavedFilter["filters"]) =>
+    JSON.stringify(filter) === JSON.stringify(getCurrentFiltersForSaving());
 
   return (
     <>
@@ -335,15 +360,21 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
 
       <div
         className={cn(
-          "w-[320px] h-full flex flex-col shrink-0 bg-background/50 py-3 pr-3",
+          "h-full flex shrink-0 flex-col bg-background",
+          embedded ? "w-full p-0" : "w-[340px] py-3 pr-3",
           className,
         )}
       >
-        <Card className="flex-1 flex flex-col min-h-0 bg-filters-sidebar border-border backdrop-blur-sm p-0">
+        <Card
+          className={cn(
+            "flex min-h-0 flex-1 flex-col bg-filters-sidebar p-0",
+            embedded ? "rounded-none border-0" : "border-border",
+          )}
+        >
           <div className="flex-1 overflow-hidden">
             <ScrollArea className="h-full">
-              <div className="p-4 space-y-4">
-                <div className="space-y-3">
+              <div className="space-y-3 p-3 sm:p-4">
+                <div className="space-y-3 rounded-xl border border-border bg-card/35 p-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-semibold">
                       {t("loots.filtersPanel.quickFilters.title")}
@@ -360,12 +391,26 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                       </Button>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {allQuickFilters.map((filter) => (
                       <Badge
                         key={filter.id}
-                        className="cursor-pointer hover:bg-primary/80 transition-colors group"
+                        variant={
+                          isQuickFilterApplied(filter.filters)
+                            ? "default"
+                            : "outline"
+                        }
+                        className="group min-h-7 cursor-pointer transition-colors hover:border-primary/45 hover:bg-primary/10 hover:text-foreground"
                         onClick={() => applyFilter(filter.filters)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            applyFilter(filter.filters);
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={isQuickFilterApplied(filter.filters)}
                       >
                         {"category" in filter && (
                           <span className="text-xs opacity-80">
@@ -377,7 +422,11 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                         </span>
                         {!("isDefault" in filter && filter.isDefault) && (
                           <button
-                            className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            type="button"
+                            aria-label={t("common.removeOption", {
+                              label: filter.label,
+                            })}
+                            className="ml-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRemoveCustomFilter(filter.id);
@@ -391,27 +440,33 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                   </div>
                 </div>
 
-                <Separator />
-
                 <Accordion
                   type="multiple"
-                  defaultValue={["npc", "item", "player"]}
-                  className="space-y-4"
+                  defaultValue={initiallyOpenSections}
+                  className="space-y-2"
                 >
-                  <AccordionItem value="npc" className="space-y-3">
-                    <AccordionTrigger>
+                  <AccordionItem
+                    value="npc"
+                    className="overflow-hidden rounded-xl border border-border bg-card/30 px-3"
+                  >
+                    <AccordionTrigger className="min-h-11 py-0">
                       {t("loots.filtersPanel.npcSection.title")}
+                      {npcActiveFilterCount > 0 && (
+                        <span className="ml-2 inline-flex size-5 items-center justify-center rounded-md bg-primary/15 text-[11px] font-semibold text-primary">
+                          {npcActiveFilterCount}
+                        </span>
+                      )}
                     </AccordionTrigger>
-                    <AccordionContent className="space-y-3">
+                    <AccordionContent className="space-y-4 border-t border-border/70 pb-3 pt-3">
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
                           {t("loots.filtersPanel.npcSection.npcTypesLabel")}
                         </Label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                           {npcTypeOptions.map((npcType) => (
                             <div
                               key={npcType.value}
-                              className="flex items-center gap-2"
+                              className="flex min-h-8 items-center gap-2"
                             >
                               <Checkbox
                                 id={`npcType-${npcType.value}`}
@@ -474,7 +529,6 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                             }
                             min={0}
                             max={500}
-                            className="h-8"
                           />
                         </div>
                         <div>
@@ -490,29 +544,34 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                             }
                             min={0}
                             max={500}
-                            className="h-8"
                           />
                         </div>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
 
-                  <Separator />
-
-                  <AccordionItem value="item" className="space-y-3">
-                    <AccordionTrigger>
+                  <AccordionItem
+                    value="item"
+                    className="overflow-hidden rounded-xl border border-border bg-card/30 px-3"
+                  >
+                    <AccordionTrigger className="min-h-11 py-0">
                       {t("loots.filtersPanel.itemSection.title")}
+                      {itemActiveFilterCount > 0 && (
+                        <span className="ml-2 inline-flex size-5 items-center justify-center rounded-md bg-primary/15 text-[11px] font-semibold text-primary">
+                          {itemActiveFilterCount}
+                        </span>
+                      )}
                     </AccordionTrigger>
-                    <AccordionContent className="space-y-3">
+                    <AccordionContent className="space-y-4 border-t border-border/70 pb-3 pt-3">
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
                           {t("loots.filtersPanel.itemSection.raritiesLabel")}
                         </Label>
-                        <div className="flex flex-col gap-2">
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                           {rarityOptions.map((rarity) => (
                             <div
                               key={rarity.value}
-                              className="flex items-center gap-2"
+                              className="flex min-h-8 items-center gap-2"
                             >
                               <Checkbox
                                 id={`rarity-${rarity.value}`}
@@ -545,11 +604,11 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                         <Label className="text-xs text-muted-foreground mb-2 block">
                           {t("loots.filtersPanel.itemSection.professionsLabel")}
                         </Label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                           {professionOptions.map((profession) => (
                             <div
                               key={profession.value}
-                              className="flex items-center gap-2"
+                              className="flex min-h-8 items-center gap-2"
                             >
                               <Checkbox
                                 id={`itemProfession-${profession.value}`}
@@ -598,6 +657,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           onSearchChange={setDebouncedItemsSearchValue}
                           searchValue={debouncedItemsSearchValue}
                           loading={itemsQuery.isLoading}
+                          minimumSearchLength={2}
                         />
                       </div>
 
@@ -649,7 +709,6 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                             }
                             min={0}
                             max={500}
-                            className="h-8"
                           />
                         </div>
                         <div>
@@ -665,20 +724,25 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                             }
                             min={0}
                             max={500}
-                            className="h-8"
                           />
                         </div>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
 
-                  <Separator />
-
-                  <AccordionItem value="player" className="space-y-3">
-                    <AccordionTrigger>
+                  <AccordionItem
+                    value="player"
+                    className="overflow-hidden rounded-xl border border-border bg-card/30 px-3"
+                  >
+                    <AccordionTrigger className="min-h-11 py-0">
                       {t("loots.filtersPanel.playerSection.title")}
+                      {playerActiveFilterCount > 0 && (
+                        <span className="ml-2 inline-flex size-5 items-center justify-center rounded-md bg-primary/15 text-[11px] font-semibold text-primary">
+                          {playerActiveFilterCount}
+                        </span>
+                      )}
                     </AccordionTrigger>
-                    <AccordionContent className="space-y-3">
+                    <AccordionContent className="space-y-4 border-t border-border/70 pb-3 pt-3">
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
                           {t("loots.filtersPanel.playerSection.playersLabel")}
@@ -747,9 +811,9 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                 animate={{ opacity: 1, scaleY: 1 }}
                 exit={{ opacity: 0, scaleY: 0.96 }}
                 style={{ transformOrigin: "bottom" }}
-                className="border-t border-border px-4 overflow-hidden"
+                className="overflow-hidden border-t border-border bg-background/95 px-3"
               >
-                <div className="h-14 flex items-center w-full">
+                <div className="flex h-14 w-full items-center">
                   <Button
                     onClick={clearFilters}
                     variant="outline"

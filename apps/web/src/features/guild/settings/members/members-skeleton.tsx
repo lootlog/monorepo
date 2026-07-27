@@ -6,7 +6,7 @@ const filterButtons = Array.from({ length: 5 });
 
 export const MembersSettingsSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden bg-background/50 px-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden bg-background px-3">
       <Card className="shrink-0 px-5 py-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 flex-1 items-center gap-3">

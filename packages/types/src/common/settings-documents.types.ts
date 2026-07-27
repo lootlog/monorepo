@@ -120,16 +120,19 @@ export const SETTINGS_CATALOG = {
     },
   },
   appearance: {
-    schemaVersion: 2,
+    schemaVersion: 3,
     migrations: [
       {
         fromVersion: 1,
         migrate: (overrides) => overrides,
       },
+      {
+        fromVersion: 2,
+        migrate: ({ colorMode: _colorMode, ...overrides }) => overrides,
+      },
     ],
     fields: {
       theme: field("default", userScopes, isString),
-      colorMode: field("dark", userScopes, isOneOf(["light", "dark"])),
       "chat.npcLayout": field(
         CHAT_APPEARANCE_READABLE_PRESET.npcLayout,
         userScopes,

@@ -74,7 +74,7 @@ export const EventEditScoringPage = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Skeleton className="h-9 w-9 rounded-xl" />
@@ -86,7 +86,7 @@ export const EventEditScoringPage = () => {
             <Skeleton className="h-8 w-28 rounded-md" />
           </div>
         </Card>
-        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-3">
           <div className="space-y-2">
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-10 w-full" />
@@ -109,7 +109,7 @@ export const EventEditScoringPage = () => {
   }
 
   return (
-    <ScrollArea className="h-full bg-background/50">
+    <ScrollArea className="h-full bg-background">
       <EventEditScoringForm
         key={`${event.id}:${event.updatedAt}:${event.scoringMode}`}
         event={event}
@@ -212,10 +212,10 @@ const EventEditScoringForm = ({
 
   return (
     <div className="flex flex-col gap-3 px-3 py-3">
-      <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+      <Card className="gap-4 border-border bg-card p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="rounded-xl bg-emerald-500/10 p-2 shadow-inner shadow-emerald-500/10">
+            <div className="rounded-xl bg-emerald-500/10 p-2">
               <Trophy className="size-4 text-emerald-500" />
             </div>
             <div className="min-w-0">
@@ -246,7 +246,7 @@ const EventEditScoringForm = ({
       </Card>
 
       <form className="space-y-3 pb-24" onSubmit={form.handleSubmit(onSubmit)}>
-        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-3">
           <div className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("events.scoring.mode")}
@@ -265,7 +265,7 @@ const EventEditScoringForm = ({
         </Card>
 
         {scoringMode === "ADVANCED" && (
-          <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-3">
             <div className="space-y-3">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                 <Settings className="size-3" />

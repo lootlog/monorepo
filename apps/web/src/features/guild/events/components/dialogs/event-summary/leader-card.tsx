@@ -34,7 +34,7 @@ export const LeaderCard = ({
               ease: [0.22, 1, 0.36, 1],
             }
       }
-      className="rounded-3xl border border-border/70 bg-background/70 px-4 py-4 backdrop-blur-sm"
+      className="rounded-3xl border border-border/70 bg-background px-4 py-4"
     >
       <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
         {title}

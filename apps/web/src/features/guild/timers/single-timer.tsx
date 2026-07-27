@@ -67,7 +67,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const imageHasDomain = npcIcon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
 
   return (
-    <div className="group flex items-center gap-3 rounded-lg border border-border/50 bg-card/40 px-3 py-2.5 hover:bg-card/60 hover:border-primary/50 transition-all cursor-pointer">
+    <div className="group flex items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-2.5 hover:bg-card hover:border-primary/50 transition-all cursor-pointer">
       {npcIcon && (
         <div className="size-8 shrink-0 flex items-center justify-center">
           {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}

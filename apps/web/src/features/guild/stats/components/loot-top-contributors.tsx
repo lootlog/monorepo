@@ -148,7 +148,7 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
 
   if (isLoading) {
     return (
-      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+      <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
         <h2 className="text-base font-semibold flex items-center gap-2">
           <Package className="h-5 w-5" />
           <Skeleton className="h-5 w-40" />
@@ -165,7 +165,7 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
   const topThree = data?.slice(0, 3) ?? [];
 
   return (
-    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+    <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
       <h2 className="text-base font-semibold flex items-center gap-2">
         <Package className="h-5 w-5" />
         {t("loots.stats.topContributors.title")}

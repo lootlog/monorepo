@@ -3,7 +3,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const RoleSettingsDetailSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 bg-background/50 px-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 bg-background px-3">
       <Card className="shrink-0 border-b border-t border-border px-4 py-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
@@ -22,7 +22,7 @@ export const RoleSettingsDetailSkeleton = () => {
           </div>
         </div>
       </Card>
-      <Card className="border-border bg-card/50 p-0 backdrop-blur-sm">
+      <Card className="border-border bg-card p-0">
         <div className="p-3">
           <div className="mb-3 flex items-center gap-3">
             <Skeleton className="size-8 shrink-0 rounded-lg" />
@@ -42,7 +42,7 @@ export const RoleSettingsDetailSkeleton = () => {
         {Array.from({ length: 4 }).map((_, index) => (
           <Card
             key={index}
-            className="overflow-hidden border-border bg-card/50 p-0 backdrop-blur-sm"
+            className="overflow-hidden border-border bg-card p-0"
           >
             <Skeleton className="h-16 w-full rounded-none" />
           </Card>

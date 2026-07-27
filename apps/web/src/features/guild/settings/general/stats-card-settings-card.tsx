@@ -89,7 +89,7 @@ export const StatsCardSettingsCard = ({
   };
 
   return (
-    <Card className="bg-card/50 backdrop-blur-sm border-border p-0 gap-0">
+    <Card className="bg-card  border-border p-0 gap-0">
       <div className="p-3">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -127,7 +127,7 @@ export const StatsCardSettingsCard = ({
             {t("settings.general.statsCard.toggleDescription")}
           </FormDescription>
 
-          <div className="w-full max-w-xl overflow-hidden rounded-lg border border-border bg-background/50">
+          <div className="w-full max-w-xl overflow-hidden rounded-lg border border-border bg-background">
             {savedEnabled && !imageError ? (
               <img
                 src={previewUrl}

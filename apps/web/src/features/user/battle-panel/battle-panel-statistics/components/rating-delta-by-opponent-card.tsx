@@ -76,7 +76,7 @@ export function RatingDeltaByOpponentCard({
     event: KeyboardEvent<HTMLTableRowElement>,
     opponentId: string,
   ) => {
-    if (event.key !== "Enter" && event.key !== " ") {
+    if (event.key !== "Enter" && event.key !== "") {
       return;
     }
 
@@ -211,7 +211,7 @@ export function RatingDeltaByOpponentCard({
                 key={opponent.opponentId}
                 type="button"
                 onClick={() => handleRowClick(opponent.opponentId)}
-                className="min-w-0 rounded-lg border border-border bg-card/40 p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-w-0 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <PlayerTile
@@ -240,7 +240,7 @@ export function RatingDeltaByOpponentCard({
                   />
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                  <div className="min-w-0 rounded-md bg-background/60 p-2">
+                  <div className="min-w-0 rounded-md bg-background p-2">
                     <div className="truncate text-muted-foreground">
                       {t("battlePanel.statistics.columns.winLoss")}
                     </div>
@@ -264,7 +264,7 @@ export function RatingDeltaByOpponentCard({
                       </span>
                     </div>
                   </div>
-                  <div className="min-w-0 rounded-md bg-background/60 p-2">
+                  <div className="min-w-0 rounded-md bg-background p-2">
                     <div className="truncate text-muted-foreground">
                       {t("battlePanel.statistics.columns.totalRatingDelta")}
                     </div>
@@ -277,7 +277,7 @@ export function RatingDeltaByOpponentCard({
                       {formatSignedRating(opponent.totalRatingDelta)}
                     </div>
                   </div>
-                  <div className="min-w-0 rounded-md bg-background/60 p-2">
+                  <div className="min-w-0 rounded-md bg-background p-2">
                     <div className="truncate text-muted-foreground">
                       {t("battlePanel.statistics.columns.avgRating")}
                     </div>
@@ -295,7 +295,7 @@ export function RatingDeltaByOpponentCard({
             ))}
           </div>
         ) : (
-          <ScrollArea className="min-w-0 rounded-lg border border-border bg-card/40">
+          <ScrollArea className="min-w-0 rounded-lg border border-border bg-card">
             <Table className="border-b">
               <TanStackTableHeader
                 table={table}
@@ -313,7 +313,7 @@ export function RatingDeltaByOpponentCard({
                   role: "link",
                   tabIndex: 0,
                   className:
-                    "cursor-pointer border-b border-border bg-background/30 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "cursor-pointer border-b border-border bg-background transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 })}
               />
             </Table>

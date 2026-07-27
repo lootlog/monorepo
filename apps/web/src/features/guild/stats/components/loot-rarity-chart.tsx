@@ -64,7 +64,7 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
 
   if (isLoading) {
     return (
-      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+      <Card className="bg-card  border-border p-3 gap-3">
         <h2 className="text-base font-semibold">
           {t("loots.stats.rarity.title")}
         </h2>
@@ -75,7 +75,7 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
 
   if (!hasData) {
     return (
-      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+      <Card className="bg-card  border-border p-3 gap-3">
         <h2 className="text-base font-semibold">
           {t("loots.stats.rarity.title")}
         </h2>
@@ -87,7 +87,7 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
   }
 
   return (
-    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+    <Card className="bg-card  border-border p-3 gap-3">
       <h2 className="text-base font-semibold">
         {t("loots.stats.rarity.title")}
       </h2>

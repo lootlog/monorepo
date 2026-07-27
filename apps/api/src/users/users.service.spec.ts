@@ -187,7 +187,6 @@ describe("UsersService", () => {
       guildsOrder: [],
       hiddenGuildIds: [],
       theme: "default",
-      colorMode: "dark",
       chatAppearance: {
         npcLayout: "tile",
         fontScalePercent: 100,
@@ -211,7 +210,6 @@ describe("UsersService", () => {
       guildsOrder: ["guild-1"],
       hiddenGuildIds: [],
       theme: "default",
-      colorMode: "dark",
     });
     mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
       overrides: "broken-json-shape",
@@ -233,7 +231,6 @@ describe("UsersService", () => {
       guildsOrder: ["guild-2", "guild-1"],
       hiddenGuildIds: ["guild-unavailable"],
       theme: "fantasy",
-      colorMode: "dark",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -264,14 +261,12 @@ describe("UsersService", () => {
         guildsOrder: [],
         hiddenGuildIds: ["guild-unavailable", "guild-1"],
         theme: "default",
-        colorMode: "dark",
       },
     });
     expect(result).toMatchObject({
       guildsOrder: ["guild-2", "guild-1"],
       hiddenGuildIds: ["guild-unavailable", "guild-1"],
       theme: "fantasy",
-      colorMode: "dark",
     });
   });
 
@@ -282,7 +277,6 @@ describe("UsersService", () => {
       guildsOrder: ["guild-1"],
       hiddenGuildIds: [],
       theme: "fantasy",
-      colorMode: "dark",
       chatAppearance: {
         ...CHAT_APPEARANCE_READABLE_PRESET,
         showNpcAvatar: false,
@@ -555,7 +549,6 @@ describe("UsersService", () => {
       guildsOrder: [],
       hiddenGuildIds: [],
       theme: "default",
-      colorMode: "dark",
       chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,
       mutes: {
         players: [

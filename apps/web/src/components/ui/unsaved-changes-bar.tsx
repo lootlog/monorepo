@@ -46,7 +46,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
           }}
           className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-[theme(width.64)] z-50 flex justify-center px-4 pb-4"
         >
-          <div className="pointer-events-auto w-full max-w-2xl rounded-xl border bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 p-3 shadow-lg flex items-center justify-between gap-4">
+          <div className="pointer-events-auto w-full max-w-2xl rounded-xl border bg-background/90  supports-[backdrop-filter]:bg-background p-3 shadow-lg flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
               <p className="text-sm font-medium">

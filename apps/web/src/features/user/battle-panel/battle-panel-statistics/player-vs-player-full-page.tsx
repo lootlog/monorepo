@@ -169,7 +169,7 @@ export function PlayerVsPlayerFullPage() {
     event: KeyboardEvent<HTMLTableRowElement>,
     battleId: string,
   ) => {
-    if (event.key !== "Enter" && event.key !== " ") {
+    if (event.key !== "Enter" && event.key !== "") {
       return;
     }
 
@@ -282,9 +282,9 @@ export function PlayerVsPlayerFullPage() {
         </BattlePanelMobileFiltersDrawer>
       )}
 
-      <div className="flex h-full w-full flex-col overflow-hidden bg-background/50">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-background">
         <div className="px-3 pb-0 pt-3">
-          <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-3 border-border bg-card p-4">
             <div className="flex items-center gap-3">
               {myCharacter ? (
                 <PlayerTile
@@ -296,7 +296,7 @@ export function PlayerVsPlayerFullPage() {
                   }}
                 />
               ) : (
-                <div className="rounded-lg bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                <div className="rounded-lg bg-primary/10 p-2.5">
                   <Swords className="size-4 text-primary" />
                 </div>
               )}

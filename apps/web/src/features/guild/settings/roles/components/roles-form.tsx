@@ -283,7 +283,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
       >
-        <Card className="bg-card/50 backdrop-blur-sm border-border p-0">
+        <Card className="bg-card  border-border p-0">
           <div className="p-3">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -358,7 +358,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
               return (
                 <Card
                   key={group.groupKey}
-                  className="bg-card/50 backdrop-blur-sm border-border overflow-hidden p-0"
+                  className="bg-card  border-border overflow-hidden p-0"
                 >
                   <AccordionItem value={group.groupKey} className="border-0">
                     <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30 transition-colors">
