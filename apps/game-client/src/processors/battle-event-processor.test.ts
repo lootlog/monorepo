@@ -1150,6 +1150,88 @@ describe("BattleEventProcessor", () => {
   });
 
   describe("duplicate battle detection", () => {
+    it("preserves distinct battle packets that share an event id", async () => {
+      const { mapBattleEventsToPayload } =
+        await import("@/helpers/mappers/battlelog.mappers");
+      vi.mocked(mapBattleEventsToPayload).mockImplementation(
+        (events) => events as never,
+      );
+      const startEvent = {
+        ev: 77,
+        f: {
+          init: "1",
+          m: ["start"],
+          w: {
+            "111": { id: 111, name: "One", team: 1 },
+            "222": { id: 222, name: "Two", team: 2 },
+          },
+        },
+      } as unknown as GameEvent;
+      const middleEvent = {
+        ev: 77,
+        f: { m: ["middle"] },
+      } as GameEvent;
+      const endEvent = {
+        ev: 78,
+        f: { endBattle: 1, m: ["end"] },
+      } as GameEvent;
+
+      await processor.handle(startEvent);
+      await processor.handle(middleEvent);
+      await processor.handle(endEvent);
+
+      expect(mockCreateBattle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          events: [startEvent, middleEvent, endEvent],
+        }),
+      );
+    });
+
+    it("submits incremental and compact replay once", async () => {
+      const { createSHA256Hash } =
+        await import("@/helpers/create-sha-256-hash");
+      const { mapBattleEventsToPayload } =
+        await import("@/helpers/mappers/battlelog.mappers");
+      vi.mocked(createSHA256Hash).mockImplementation((value) =>
+        Promise.resolve(value),
+      );
+      vi.mocked(mapBattleEventsToPayload).mockImplementation(
+        (events) => events as never,
+      );
+      const warriors = {
+        "111": { id: 111, name: "One", team: 1 },
+        "222": { id: 222, name: "Two", team: 2 },
+      };
+      const incrementalEvents = [
+        {
+          ev: 1,
+          f: { init: "1", m: ["start"], w: warriors },
+        },
+        { ev: 2, f: { m: ["middle"] } },
+        { ev: 3, f: { endBattle: 1, m: ["end"] } },
+      ] as GameEvent[];
+
+      await processor.handle(incrementalEvents[0]);
+      await processor.handle(incrementalEvents[1]);
+      await processor.handle(incrementalEvents[2]);
+      await processor.handle({
+        ev: 4,
+        f: {
+          endBattle: 1,
+          init: "1",
+          m: ["start", "middle", "end"],
+          w: warriors,
+        },
+      } as unknown as GameEvent);
+
+      expect(mockCreateBattle).toHaveBeenCalledTimes(1);
+      expect(mockCreateBattle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          events: incrementalEvents,
+        }),
+      );
+    });
+
     it("should not process duplicate battles with same hash", async () => {
       const { createSHA256Hash } =
         await import("@/helpers/create-sha-256-hash");
