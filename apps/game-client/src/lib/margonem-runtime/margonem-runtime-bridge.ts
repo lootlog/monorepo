@@ -91,8 +91,9 @@ export class MargonemRuntimeBridge {
   private activeIntent: RuntimeIntent | null = null;
   private gameInitCallback: (() => boolean) | null = null;
   private gameInitCallbackExecuted = false;
-  private legacyProcessor: ((event: GameEvent) => void) | null = null;
-  private unsubscribeLegacyProcessor: (() => void) | null = null;
+  private activeProcessor: RuntimeEventHandler | null = null;
+  private unsubscribeActiveProcessor: (() => void) | null = null;
+  private readonly processorRegistrations = new Set<symbol>();
 
   constructor(options: BridgeOptions = {}) {
     this.adapter = options.adapter;
@@ -156,18 +157,35 @@ export class MargonemRuntimeBridge {
     return this.install();
   }
 
-  setProcessor(processor: (event: GameEvent) => void): void {
-    this.legacyProcessor = processor;
-    this.unsubscribeLegacyProcessor?.();
-    this.unsubscribeLegacyProcessor = this.subscribeIncoming((envelope) => {
-      if (envelope.raw) processor(envelope.raw);
-    });
+  acquireProcessor(processor: RuntimeEventHandler): () => boolean {
+    if (!this.activeProcessor) {
+      this.activeProcessor = processor;
+      this.unsubscribeActiveProcessor = this.subscribeIncoming((envelope) => {
+        processor(envelope);
+      });
+    }
+
+    const registration = Symbol("runtime-processor-registration");
+    this.processorRegistrations.add(registration);
+    let released = false;
+
+    return () => {
+      if (released) return false;
+
+      released = true;
+      if (!this.processorRegistrations.delete(registration)) return false;
+      if (this.processorRegistrations.size > 0) return false;
+
+      this.removeProcessor();
+      return true;
+    };
   }
 
-  removeProcessor(): void {
-    this.unsubscribeLegacyProcessor?.();
-    this.unsubscribeLegacyProcessor = null;
-    this.legacyProcessor = null;
+  private removeProcessor(): void {
+    this.unsubscribeActiveProcessor?.();
+    this.unsubscribeActiveProcessor = null;
+    this.activeProcessor = null;
+    this.processorRegistrations.clear();
   }
 
   subscribeAfterGameEvent(handler: (event: GameEvent) => void): () => void {

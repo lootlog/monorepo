@@ -15,8 +15,7 @@ const mocks = vi.hoisted(() => ({
   npcsInitialDetectionHandle: vi.fn(),
   otherHandle: vi.fn(),
   runtimeBridge: {
-    removeProcessor: vi.fn(),
-    setProcessor: vi.fn(),
+    acquireProcessor: vi.fn(() => vi.fn(() => true)),
   },
 }));
 

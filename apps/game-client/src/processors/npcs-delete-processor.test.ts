@@ -269,28 +269,6 @@ describe("NpcsDeleteProcessor", () => {
     expect(mockCreateAutoTimer).not.toHaveBeenCalled();
   });
 
-  it("submits an identical automatic timer effect once", () => {
-    mockGame.getNpc.mockReturnValue({
-      ...createGameNpc(),
-      resp_rand: 15,
-    });
-    mockGetNpcTypeByWt.mockReturnValue(NpcType.HERO);
-    queryClient.setQueryData(lootlogCharacterConfigQueryKey, {
-      "101": {
-        catchingGuildIds: ["guild-1"],
-      },
-    });
-    const event = {
-      ev: 77,
-      npcs_del: [{ id: 500, respBaseSeconds: 30 }],
-    };
-
-    handle(event);
-    handle(event);
-
-    expect(mockCreateAutoTimer).toHaveBeenCalledTimes(1);
-  });
-
   it("submits different timer effects that share an event id", () => {
     mockGame.getNpc.mockReturnValue({
       ...createGameNpc(),

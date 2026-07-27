@@ -114,6 +114,36 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 
+  it("shares one processor across overlapping registrations without filtering packets", () => {
+    runtimeWindow.successData = vi.fn();
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const firstProcessor = vi.fn();
+    const secondProcessor = vi.fn();
+    const observer = vi.fn();
+    const releaseFirstProcessor = bridge.acquireProcessor(firstProcessor);
+    const releaseSecondProcessor = bridge.acquireProcessor(secondProcessor);
+    bridge.subscribeIncoming(observer);
+
+    bridge.install();
+    bridge.setReady(true);
+    runtimeWindow.successData?.({ ev: 10, f: { m: ["first"] } });
+    runtimeWindow.successData?.({ ev: 10, f: { m: ["second"] } });
+
+    expect(firstProcessor).toHaveBeenCalledTimes(2);
+    expect(secondProcessor).not.toHaveBeenCalled();
+    expect(observer).toHaveBeenCalledTimes(2);
+
+    expect(releaseFirstProcessor()).toBe(false);
+    runtimeWindow.successData?.({ f: { m: ["third"] } });
+    expect(firstProcessor).toHaveBeenCalledTimes(3);
+
+    expect(releaseSecondProcessor()).toBe(true);
+    runtimeWindow.successData?.({ f: { m: ["fourth"] } });
+    expect(firstProcessor).toHaveBeenCalledTimes(3);
+    expect(observer).toHaveBeenCalledTimes(4);
+    bridge.cleanup();
+  });
+
   it("does not expose applied observer failures to Margonem callers", () => {
     const event = Object.freeze({ h: { stasis: 1 } }) as GameEvent;
     const observerFailure = new Error("observer failed");

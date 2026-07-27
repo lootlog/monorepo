@@ -10,11 +10,8 @@ import { queryClient } from "@/lib/query-client";
 import { createAutoTimer } from "@/api";
 import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/api-client/react-query/main/user-lootlog-config";
 import type { UserLootlogConfigAccountResponseDtoOutput } from "@lootlog/api-client/models/main/user-lootlog-config-account-response-dto-output";
-import { EffectReplayGuard } from "./effect-replay-guard";
 
 export class NpcsDeleteProcessor {
-  private readonly effectReplayGuard = new EffectReplayGuard();
-
   handle(event: GameEvent, ingress?: RuntimeIngressSnapshot): void {
     if (!event.npcs_del?.length) return;
 
@@ -90,7 +87,7 @@ export class NpcsDeleteProcessor {
         return;
       }
 
-      const payload = {
+      createAutoTimer({
         respawnRandomness: data.respawnRandomness,
         respBaseSeconds: deletion.respBaseSeconds,
         characterId: context.characterId,
@@ -107,14 +104,7 @@ export class NpcsDeleteProcessor {
           name: npcName,
           location: context.mapName,
         },
-      };
-      const effectKey = JSON.stringify(payload);
-      if (!this.effectReplayGuard.reserve(effectKey)) {
-        return;
-      }
-
-      createAutoTimer(payload).catch((error) => {
-        this.effectReplayGuard.forget(effectKey);
+      }).catch((error) => {
         console.warn("[NpcsDeleteProcessor] Failed to create timer:", error);
       });
     });
