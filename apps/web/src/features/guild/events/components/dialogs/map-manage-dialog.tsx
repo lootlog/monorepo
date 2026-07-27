@@ -659,7 +659,7 @@ export const MapManageDialog = ({
 
               <ScrollArea className="h-[180px] rounded-lg border relative">
                 {addMap.isPending && (
-                  <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-background backdrop-blur-[1px] z-10 flex items-center justify-center">
                     <Spinner className="size-5 text-primary" />
                   </div>
                 )}

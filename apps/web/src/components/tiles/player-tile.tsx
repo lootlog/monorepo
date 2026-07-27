@@ -34,7 +34,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
             tileClassName="transition-all"
           />
         </TooltipTrigger>
-        <TooltipContent className="bg-popover/95 backdrop-blur-md border-border/50">
+        <TooltipContent className="bg-popover/95  border-border/50">
           <p className="text-foreground">
             {name}{" "}
             <span className="text-muted-foreground">

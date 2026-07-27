@@ -6218,8 +6218,6 @@ components:
             type: string
         theme:
           type: string
-        colorMode:
-          type: string
         chatAppearance:
           type: object
           properties:
@@ -6319,7 +6317,6 @@ components:
         - guildsOrder
         - hiddenGuildIds
         - theme
-        - colorMode
         - chatAppearance
         - mutes
     UserCurrentGuildResponseDto_Output:
@@ -6385,11 +6382,6 @@ components:
             - cat-purple
             - cat-blue
             - cat-random
-        colorMode:
-          type: string
-          enum:
-            - light
-            - dark
         chatAppearance:
           type: object
           properties:

@@ -111,15 +111,15 @@ export const EventRankingPage = () => {
     : rankings;
 
   return (
-    <ScrollArea className="h-full bg-background/50">
+    <ScrollArea className="h-full bg-background">
       <EventParticipationConfirmationDialog
         guildId={guildId}
         eventId={eventId}
       />
       <div className="flex flex-col gap-4 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+            <div className="rounded-xl bg-primary/10 p-2">
               <Trophy className="size-4 text-primary" />
             </div>
             <div className="min-w-0">
@@ -136,7 +136,7 @@ export const EventRankingPage = () => {
         </Card>
 
         {heroes.length > 0 && (
-          <Card className="gap-2 border-border bg-card/40 p-2.5 backdrop-blur-sm">
+          <Card className="gap-2 border-border bg-card p-2.5">
             <Tabs
               value={effectiveSelectedHeroName ?? heroes[0]?.npcName}
               onValueChange={setSelectedHeroName}
@@ -152,7 +152,7 @@ export const EventRankingPage = () => {
           </Card>
         )}
 
-        <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-3 border-border bg-card p-3">
           {rankingError && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {t(

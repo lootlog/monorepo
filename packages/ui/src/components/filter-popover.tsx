@@ -113,7 +113,11 @@ export function FilterPopover<T extends string = string>({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className={cn(width, "justify-between h-10", triggerClassName)}
+          className={cn(
+            width,
+            "h-10 justify-between focus-visible:ring-inset focus-visible:ring-offset-0 data-[state=open]:border-ring data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-ring",
+            triggerClassName,
+          )}
         >
           <div className="flex items-center gap-2">
             {Icon && <Icon className="h-4 w-4" />}
@@ -123,13 +127,25 @@ export function FilterPopover<T extends string = string>({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={cn("p-0", width, contentClassName)}
+        className={cn(
+          "overflow-hidden rounded-xl border-border bg-popover p-1 shadow-lg",
+          width,
+          contentClassName,
+        )}
         align={align}
         onWheel={(e) => e.stopPropagation()}
       >
-        <Command shouldFilter={shouldFilter}>
-          {showSearch && <CommandInput placeholder={searchPlaceholder} />}
-          <CommandList>
+        <Command
+          className="rounded-lg bg-transparent"
+          shouldFilter={shouldFilter}
+        >
+          {showSearch && (
+            <CommandInput
+              className="h-9 py-2"
+              placeholder={searchPlaceholder}
+            />
+          )}
+          <CommandList className="max-h-52">
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
@@ -141,6 +157,7 @@ export function FilterPopover<T extends string = string>({
                     key={option.value}
                     value={option.value}
                     onSelect={() => handleSelect(option.value)}
+                    className="min-h-9 rounded-md px-2.5 data-[selected=true]:bg-primary/15 data-[selected=true]:text-foreground"
                   >
                     {option.render ? (
                       option.render()

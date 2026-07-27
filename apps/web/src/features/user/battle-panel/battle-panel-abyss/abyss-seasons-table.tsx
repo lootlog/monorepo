@@ -36,9 +36,9 @@ export function AbyssSeasonsTable({
   const isMobile = useIsMobile();
 
   return (
-    <Card className="min-w-0 gap-3 border-border bg-card/40 p-0 backdrop-blur-sm">
+    <Card className="min-w-0 gap-3 border-border bg-card p-0">
       <div className="flex items-start gap-3 border-b border-border p-4">
-        <div className="rounded-xl bg-amber-500/10 p-2.5 shadow-inner shadow-amber-500/10">
+        <div className="rounded-xl bg-amber-500/10 p-2.5">
           <Trophy className="size-4 text-amber-500" />
         </div>
         <div className="min-w-0 space-y-1">

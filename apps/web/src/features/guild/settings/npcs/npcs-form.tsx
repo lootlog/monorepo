@@ -104,7 +104,7 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
       >
-        <Card className="bg-card/50 backdrop-blur-sm border-border overflow-hidden p-0 gap-0">
+        <Card className="bg-card  border-border overflow-hidden p-0 gap-0">
           <div className="px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">

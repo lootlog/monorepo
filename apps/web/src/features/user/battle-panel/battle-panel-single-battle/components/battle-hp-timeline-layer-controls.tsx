@@ -32,7 +32,7 @@ export function BattleHpTimelineLayerControls({
   const { t } = useTranslation();
 
   return (
-    <aside className="flex min-h-0 flex-col border-t bg-card/40 lg:w-72 lg:border-l lg:border-t-0">
+    <aside className="flex min-h-0 flex-col border-t bg-card lg:w-72 lg:border-l lg:border-t-0">
       <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
           <SlidersHorizontal className="size-4 shrink-0 text-primary" />
@@ -62,7 +62,7 @@ export function BattleHpTimelineLayerControls({
               <div
                 key={definition.key}
                 className={cn(
-                  "flex items-center gap-3 rounded-sm border border-transparent px-2.5 py-2 transition-colors hover:border-border hover:bg-background/70",
+                  "flex items-center gap-3 rounded-sm border border-transparent px-2.5 py-2 transition-colors hover:border-border hover:bg-background",
                   count === 0 && "text-muted-foreground",
                 )}
               >

@@ -577,7 +577,6 @@ model UserSettings {
   guildsOrder    String[] @default([])
   hiddenGuildIds String[] @default([])
   theme          String   @default("default")
-  colorMode      String   @default("dark")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

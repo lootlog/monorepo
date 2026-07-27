@@ -23,17 +23,17 @@ export type MemberDiscordSyncCardProps = {
 };
 
 const iconContainerClassNames: Record<MemberDiscordSyncTone, string> = {
-  success: "bg-emerald-500/10 text-emerald-500 shadow-emerald-500/10",
-  warning: "bg-amber-500/10 text-amber-500 shadow-amber-500/10",
-  danger: "bg-destructive/10 text-destructive shadow-destructive/10",
-  neutral: "bg-muted text-muted-foreground shadow-muted/10",
+  success: "bg-emerald-500/10 text-emerald-500",
+  warning: "bg-amber-500/10 text-amber-500",
+  danger: "bg-destructive/10 text-destructive",
+  neutral: "bg-muted text-muted-foreground",
 };
 
 const badgeClassNames: Record<MemberDiscordSyncTone, string> = {
   success: "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",
   warning: "border-amber-500/25 bg-amber-500/10 text-amber-500",
   danger: "border-destructive/25 bg-destructive/10 text-destructive",
-  neutral: "border-border bg-background/40 text-muted-foreground",
+  neutral: "border-border bg-background text-muted-foreground",
 };
 
 const iconByTone = {
@@ -94,12 +94,12 @@ export const MemberDiscordSyncCard: FC<MemberDiscordSyncCardProps> = ({
   ];
 
   return (
-    <Card className="bg-card/50 backdrop-blur-sm border-border p-4 gap-4">
+    <Card className="bg-card  border-border p-4 gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <div
             className={cn(
-              "rounded-xl p-2.5 shadow-inner shrink-0",
+              "rounded-xl p-2.5  shrink-0",
               iconContainerClassNames[presentation.tone],
             )}
           >
@@ -136,7 +136,7 @@ export const MemberDiscordSyncCard: FC<MemberDiscordSyncCardProps> = ({
         {rows.map((row) => (
           <div
             key={row.label}
-            className="rounded-lg border border-border/60 bg-background/30 px-3 py-2"
+            className="rounded-lg border border-border/60 bg-background px-3 py-2"
           >
             <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               {row.label}

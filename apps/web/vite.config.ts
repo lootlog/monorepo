@@ -44,7 +44,6 @@ const vendorChunkGroups = {
     "/node_modules/cmdk/",
     "/node_modules/vaul/",
     "/node_modules/sonner/",
-    "/node_modules/next-themes/",
   ],
   "vendor-style": [
     "/node_modules/class-variance-authority/",

@@ -62,7 +62,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
   };
 
   return (
-    <Card className="border-border bg-card/40 backdrop-blur-sm overflow-hidden gap-0 p-0 w-full">
+    <Card className="border-border bg-card  overflow-hidden gap-0 p-0 w-full">
       {showHeader && (
         <BattleOverviewHeader
           isPublic={battle.public}

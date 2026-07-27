@@ -3,8 +3,8 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const RolesSettingsSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background/50 px-3 gap-3">
-      <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm shrink-0">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background px-3 gap-3">
+      <Card className="gap-4 border-border bg-card p-4  shrink-0">
         <div className="flex items-center gap-3">
           <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
           <div className="space-y-1.5">

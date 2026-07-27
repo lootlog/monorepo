@@ -28,7 +28,7 @@ describe("NPC appearance colors", () => {
         scopes: ["USER"],
       });
     }
-    expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(2);
+    expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(3);
   });
 
   it("normalizes malformed values per type instead of rejecting the palette", () => {

@@ -17,7 +17,6 @@ const modes = [
     descKey: "events.scoring.modeSimpleDescription",
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
-    shadowColor: "shadow-blue-500/10",
     activeRing: "ring-blue-500/30 border-blue-500",
   },
   {
@@ -27,7 +26,6 @@ const modes = [
     descKey: "events.scoring.modeAdvancedDescription",
     color: "text-amber-500",
     bgColor: "bg-amber-500/10",
-    shadowColor: "shadow-amber-500/10",
     activeRing: "ring-amber-500/30 border-amber-500",
   },
 ];
@@ -54,18 +52,12 @@ export const ScoringModeSelector = ({
               className={cn(
                 "p-3 transition-all cursor-pointer",
                 isActive
-                  ? `ring-1 ${mode.activeRing} bg-card/60`
-                  : "border-border bg-card/40 opacity-70 hover:opacity-90",
+                  ? `ring-1 ${mode.activeRing} bg-card`
+                  : "border-border bg-card opacity-70 hover:opacity-90",
               )}
             >
               <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "rounded-xl p-2 shadow-inner",
-                    mode.bgColor,
-                    mode.shadowColor,
-                  )}
-                >
+                <div className={cn("rounded-xl p-2", mode.bgColor)}>
                   <Icon className={cn("size-4", mode.color)} />
                 </div>
                 <div className="min-w-0">

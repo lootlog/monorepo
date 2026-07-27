@@ -22,10 +22,10 @@ const renderTeamSkeleton = () => (
 
 export const BattlePanelBattlesSkeleton = () => {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-background/50">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       <div className="flex flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
-          <Card className="flex h-full min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm">
+          <Card className="flex h-full min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
             <div className="grid shrink-0 gap-2 border-b border-border bg-background/80 px-3 py-3 md:min-h-[64px] md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div className="flex min-w-0 items-center gap-2">
                 <Skeleton className="h-10 min-w-0 flex-1 rounded-md md:max-w-[360px]" />
@@ -53,7 +53,7 @@ export const BattlePanelBattlesSkeleton = () => {
                 {tableRows.map((_, rowIndex) => (
                   <div
                     key={rowIndex}
-                    className="grid min-h-14 grid-cols-[9%_27%_27%_22%_15%] items-center border-b border-border bg-background/20 px-2 md:grid-cols-[40px_minmax(210px,1fr)_minmax(210px,1fr)_116px_176px_112px_76px_64px] md:px-3"
+                    className="grid min-h-14 grid-cols-[9%_27%_27%_22%_15%] items-center border-b border-border bg-background px-2 md:grid-cols-[40px_minmax(210px,1fr)_minmax(210px,1fr)_116px_176px_112px_76px_64px] md:px-3"
                   >
                     <Skeleton className="mx-auto size-4 rounded-sm" />
                     {renderTeamSkeleton()}
@@ -92,8 +92,8 @@ export const BattlePanelBattlesSkeleton = () => {
           </Card>
         </div>
 
-        <div className="hidden h-full w-[320px] shrink-0 flex-col overflow-hidden bg-background/50 py-3 pr-3 md:flex">
-          <Card className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0 backdrop-blur-sm">
+        <div className="hidden h-full w-[320px] shrink-0 flex-col overflow-hidden bg-background py-3 pr-3 md:flex">
+          <Card className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0">
             <div className="min-h-0 flex-1 overflow-hidden">
               <div className="space-y-4 p-4">
                 {filterGroups.map((_, index) => (

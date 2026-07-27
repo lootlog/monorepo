@@ -14,6 +14,7 @@ type FilterComboboxProps = {
   onSearchChange?: (value: string) => void;
   loading?: boolean;
   searchValue?: string;
+  minimumSearchLength?: number;
 };
 
 export const FilterCombobox: FC<FilterComboboxProps> = ({
@@ -27,6 +28,7 @@ export const FilterCombobox: FC<FilterComboboxProps> = ({
   name,
   loading,
   searchValue,
+  minimumSearchLength,
   onSearchChange,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -47,13 +49,13 @@ export const FilterCombobox: FC<FilterComboboxProps> = ({
       value={selectedOptions}
       placeholder={placeholder}
       variant="inverted"
-      animation={2}
       maxCount={2}
       controlledSearch={controlledSearch}
       commandSearch={commandSearch}
       onSearchChange={onSearchChange}
       searchValue={searchValue}
       loading={loading}
+      minimumSearchLength={minimumSearchLength}
     />
   );
 

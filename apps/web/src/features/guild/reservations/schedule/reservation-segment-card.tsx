@@ -142,7 +142,7 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
       ) : (
         <div className="flex flex-col h-full justify-between p-1.5 min-w-0">
           <div className="flex items-start justify-between w-full">
-            <span className="text-[9px] font-semibold opacity-90 leading-none bg-background/40 px-1 rounded backdrop-blur-[1px]">
+            <span className="text-[9px] font-semibold opacity-90 leading-none bg-background px-1 rounded backdrop-blur-[1px]">
               {displayStartLabel}
             </span>
 
@@ -176,7 +176,7 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
           </div>
 
           <div className="flex flex-col items-end w-full gap-0.5">
-            <span className="text-[9px] font-semibold opacity-90 leading-none bg-background/40 px-1 rounded backdrop-blur-[1px]">
+            <span className="text-[9px] font-semibold opacity-90 leading-none bg-background px-1 rounded backdrop-blur-[1px]">
               {displayEndLabel}
             </span>
           </div>

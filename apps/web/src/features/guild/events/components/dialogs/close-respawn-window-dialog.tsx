@@ -154,7 +154,7 @@ export const CloseRespawnWindowDialog = ({
               />
 
               {createNewWindow && (
-                <div className="space-y-4 pl-6 border-l-2 border-muted">
+                <div className="space-y-4 rounded-xl border border-muted p-4">
                   <FormField
                     control={form.control}
                     name="minTime"

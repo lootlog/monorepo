@@ -29,7 +29,6 @@ const createTestUserPreferences = (): UserPreferencesResponseDtoOutput => ({
   guildsOrder: ["guild-1"],
   hiddenGuildIds: [],
   theme: "default",
-  colorMode: "dark",
   chatAppearance: {
     npcLayout: "tile",
     fontScalePercent: 100,

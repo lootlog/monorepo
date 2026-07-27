@@ -4,7 +4,6 @@ import {
   DEFAULT_THEME_ID,
   THEME_CLASS_IDS,
   type CatThemeVariant,
-  type ColorMode,
   type ResolvedThemeId,
   type ThemeFamily,
   type ThemeId,
@@ -82,15 +81,14 @@ export const resolveThemeClass = (
 
 export const applyThemeClassToRoot = ({
   root,
-  colorMode,
   resolvedTheme,
 }: {
   root: HTMLElement;
-  colorMode: ColorMode;
   resolvedTheme: ResolvedThemeId;
 }) => {
   root.classList.remove("light", "dark", ...THEME_CLASS_IDS);
-  root.classList.add(colorMode);
+  root.classList.add("dark");
+  root.style.colorScheme = "dark";
 
   if (resolvedTheme !== DEFAULT_THEME_ID) {
     root.classList.add(resolvedTheme);

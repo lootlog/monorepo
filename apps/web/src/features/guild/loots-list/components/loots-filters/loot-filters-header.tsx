@@ -15,15 +15,19 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { cn } from "@lootlog/ui/lib/utils";
 
 export type LootFiltersHeaderProps = {
   isFiltersOpen: boolean;
+  isCompactLayout: boolean;
   hasActiveFilters: boolean;
   onToggleFilters: () => void;
 };
 
 export const LootFiltersHeader = ({
   isFiltersOpen,
+  isCompactLayout,
   hasActiveFilters,
   onToggleFilters,
 }: LootFiltersHeaderProps) => {
@@ -31,6 +35,7 @@ export const LootFiltersHeader = ({
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const { world } = useGuildContext();
   const { filters } = useLootsFilters();
   const { viewMode, setViewMode } = useViewMode("loots-view-mode");
 
@@ -53,135 +58,163 @@ export const LootFiltersHeader = ({
 
   return (
     <>
-      <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+      {(!isMobile || world) && (
+        <Card className="gap-2 rounded-xl border-border bg-card p-2 shadow-none">
           <div
-            className="flex-1 min-w-0"
-            onMouseEnter={() => setHoveredButton("search")}
-            onMouseLeave={() => setHoveredButton(null)}
+            className={cn(
+              "flex gap-2",
+              isMobile ? "flex-col items-stretch" : "items-center",
+              isCompactLayout && !isMobile && "flex-wrap",
+            )}
           >
-            <ThemeInteractiveFrame
-              isHovered={hoveredButton === "search"}
-              isActive={false}
-              className="w-full"
-            >
-              <Button
-                variant="outline"
-                onClick={() => setIsCommandOpen(true)}
-                className="relative w-full justify-start text-muted-foreground"
-              >
-                <Search className="h-4 w-4 mr-2" />
-                <span className="max-w-full truncate">
-                  {t("loots.header.searchPlaceholder")}
-                </span>
-                <kbd className="pointer-events-none absolute right-2 top-[50%] translate-y-[-50%] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                  <span className="text-xs">{t("loots.header.shortcut")}</span>
-                </kbd>
-                <AnimatePresence>
-                  {hasSearchFilters && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute -top-1 -left-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
-                    />
-                  )}
-                </AnimatePresence>
-              </Button>
-            </ThemeInteractiveFrame>
-          </div>
-
-          {!isMobile && (
-            <>
-              <WorldSwitcher className="max-w-48" />
-
-              <div className="flex items-center gap-1 border-r border-border pr-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      onMouseEnter={() => setHoveredButton("list")}
-                      onMouseLeave={() => setHoveredButton(null)}
-                    >
-                      <ThemeInteractiveFrame
-                        isHovered={hoveredButton === "list"}
-                        isActive={viewMode === "list"}
-                      >
-                        <Button
-                          onClick={() => setViewMode("list")}
-                          variant={viewMode === "list" ? "default" : "ghost"}
-                          size="icon"
-                          className="h-8 w-8"
-                        >
-                          <List className="h-4 w-4" />
-                        </Button>
-                      </ThemeInteractiveFrame>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>{t("loots.header.listView")}</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      onMouseEnter={() => setHoveredButton("grid")}
-                      onMouseLeave={() => setHoveredButton(null)}
-                    >
-                      <ThemeInteractiveFrame
-                        isHovered={hoveredButton === "grid"}
-                        isActive={viewMode === "grid"}
-                      >
-                        <Button
-                          onClick={() => setViewMode("grid")}
-                          variant={viewMode === "grid" ? "default" : "ghost"}
-                          size="icon"
-                          className="h-8 w-8"
-                        >
-                          <Grid2X2 className="h-4 w-4" />
-                        </Button>
-                      </ThemeInteractiveFrame>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>{t("loots.header.gridView")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-
+            {(!isMobile || world) && (
               <div
-                onMouseEnter={() => setHoveredButton("filter")}
-                onMouseLeave={() => setHoveredButton(null)}
+                className={cn(
+                  "min-w-0 flex-1",
+                  (isMobile || isCompactLayout) && "w-full basis-full",
+                )}
               >
-                <ThemeInteractiveFrame
-                  isHovered={hoveredButton === "filter"}
-                  isActive={isFiltersOpen}
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCommandOpen(true)}
+                  className="relative h-9 w-full justify-start text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
                 >
-                  <Button
-                    onClick={onToggleFilters}
-                    variant={isFiltersOpen ? "default" : "outline"}
-                    size="icon"
-                    className="relative shrink-0 h-8 w-8"
-                  >
-                    <Filter className="h-4 w-4" />
-                    <AnimatePresence>
-                      {hasActiveFilters && !isFiltersOpen && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                          className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
-                        />
-                      )}
-                    </AnimatePresence>
-                  </Button>
-                </ThemeInteractiveFrame>
+                  <Search className="mr-2 h-4 w-4 shrink-0" />
+                  <span className="truncate">
+                    {t("loots.header.searchPlaceholder")}
+                  </span>
+                  <kbd className="pointer-events-none absolute right-2 top-[50%] hidden h-5 translate-y-[-50%] select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                    <span className="text-xs">
+                      {t("loots.header.shortcut")}
+                    </span>
+                  </kbd>
+                  <AnimatePresence>
+                    {hasSearchFilters && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className="absolute -left-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-primary"
+                      />
+                    )}
+                  </AnimatePresence>
+                </Button>
               </div>
-            </>
-          )}
+            )}
 
-          {isMobile && <WorldSwitcher />}
-        </div>
-      </Card>
+            {!isMobile && (
+              <>
+                <WorldSwitcher
+                  className={cn(
+                    "max-w-48",
+                    isCompactLayout && "mr-auto w-[140px] md:w-[140px]",
+                  )}
+                />
+
+                <div
+                  className={cn(
+                    "flex items-center gap-0.5 rounded-xl border border-border bg-background/35 p-0.5",
+                    isCompactLayout && "ml-auto",
+                  )}
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        onMouseEnter={() => setHoveredButton("list")}
+                        onMouseLeave={() => setHoveredButton(null)}
+                      >
+                        <ThemeInteractiveFrame
+                          isHovered={hoveredButton === "list"}
+                          isActive={viewMode === "list"}
+                        >
+                          <Button
+                            onClick={() => setViewMode("list")}
+                            variant={viewMode === "list" ? "default" : "ghost"}
+                            size="icon"
+                            aria-label={t("loots.header.listView")}
+                            aria-pressed={viewMode === "list"}
+                            className="h-8 w-8"
+                          >
+                            <List className="h-4 w-4" />
+                          </Button>
+                        </ThemeInteractiveFrame>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{t("loots.header.listView")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        onMouseEnter={() => setHoveredButton("grid")}
+                        onMouseLeave={() => setHoveredButton(null)}
+                      >
+                        <ThemeInteractiveFrame
+                          isHovered={hoveredButton === "grid"}
+                          isActive={viewMode === "grid"}
+                        >
+                          <Button
+                            onClick={() => setViewMode("grid")}
+                            variant={viewMode === "grid" ? "default" : "ghost"}
+                            size="icon"
+                            aria-label={t("loots.header.gridView")}
+                            aria-pressed={viewMode === "grid"}
+                            className="h-8 w-8"
+                          >
+                            <Grid2X2 className="h-4 w-4" />
+                          </Button>
+                        </ThemeInteractiveFrame>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{t("loots.header.gridView")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+
+                <div
+                  onMouseEnter={() => setHoveredButton("filter")}
+                  onMouseLeave={() => setHoveredButton(null)}
+                >
+                  <ThemeInteractiveFrame
+                    isHovered={hoveredButton === "filter"}
+                    isActive={isFiltersOpen}
+                  >
+                    <Button
+                      onClick={onToggleFilters}
+                      variant={isFiltersOpen ? "default" : "outline"}
+                      size="icon"
+                      aria-label={t("loots.header.mobileFiltersTitle")}
+                      aria-expanded={isFiltersOpen}
+                      className="relative shrink-0 h-8 w-8"
+                    >
+                      <Filter className="h-4 w-4" />
+                      <AnimatePresence>
+                        {hasActiveFilters && !isFiltersOpen && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
+                          />
+                        )}
+                      </AnimatePresence>
+                    </Button>
+                  </ThemeInteractiveFrame>
+                </div>
+              </>
+            )}
+
+            {isMobile && (
+              <WorldSwitcher
+                width="w-full"
+                triggerClassName="w-full justify-between"
+              />
+            )}
+          </div>
+        </Card>
+      )}
 
       <LootSearchCommand open={isCommandOpen} onOpenChange={setIsCommandOpen} />
     </>

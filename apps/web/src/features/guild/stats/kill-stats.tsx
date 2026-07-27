@@ -58,12 +58,12 @@ export const KillStats: React.FC = () => {
 
   return (
     <>
-      <ScrollArea className="h-full bg-background/50">
+      <ScrollArea className="h-full bg-background">
         <div className="px-3 pb-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                <div className="rounded-xl bg-primary/10 p-2.5">
                   <BarChart3 className="size-4 text-primary" />
                 </div>
                 <div className="min-w-0">

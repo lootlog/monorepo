@@ -53,9 +53,9 @@ export const AccountSettings: FC = () => {
   return (
     <ScrollArea className="h-full">
       <div className="px-3 pb-3 flex flex-col gap-4">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+            <div className="rounded-xl bg-primary/10 p-2.5">
               <UserCog className="size-4 text-primary" />
             </div>
             <div>
@@ -69,9 +69,9 @@ export const AccountSettings: FC = () => {
           </div>
         </Card>
 
-        <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-3 border-border bg-card p-3">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-blue-500/10 p-2.5 shadow-inner shadow-blue-500/10">
+            <div className="rounded-xl bg-blue-500/10 p-2.5">
               <LogOut className="size-4 text-blue-500" />
             </div>
             <div className="flex-1 min-w-0">
@@ -94,9 +94,9 @@ export const AccountSettings: FC = () => {
           </Button>
         </Card>
 
-        <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-3 border-border bg-card p-3">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-red-500/10 p-2.5 shadow-inner shadow-red-500/10">
+            <div className="rounded-xl bg-red-500/10 p-2.5">
               <Trash2 className="size-4 text-red-500" />
             </div>
             <div className="flex-1 min-w-0">
