@@ -37,9 +37,9 @@ const sections = [
 ] as const;
 
 const colorClasses = {
-  blue: "bg-blue-500/10 shadow-blue-500/10 text-blue-500",
-  amber: "bg-amber-500/10 shadow-amber-500/10 text-amber-500",
-  green: "bg-green-500/10 shadow-green-500/10 text-green-500",
+  blue: "bg-blue-500/10 text-blue-500",
+  amber: "bg-amber-500/10 text-amber-500",
+  green: "bg-green-500/10 text-green-500",
 } as const;
 
 export const UserNotificationsInfoDialog = ({
@@ -60,7 +60,7 @@ export const UserNotificationsInfoDialog = ({
           {sections.map(({ key, icon: Icon, color }) => (
             <div key={key} className="flex items-start gap-3">
               <div
-                className={`shrink-0 rounded-xl p-2.5 shadow-inner ${colorClasses[color]}`}
+                className={`shrink-0 rounded-xl p-2.5  ${colorClasses[color]}`}
               >
                 <Icon className="size-4" />
               </div>

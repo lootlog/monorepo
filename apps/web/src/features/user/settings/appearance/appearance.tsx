@@ -28,9 +28,9 @@ export const AppearanceSettings: FC = () => {
   return (
     <ScrollArea className="h-full">
       <div className="px-3 pb-3 flex flex-col gap-4">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+            <div className="rounded-xl bg-primary/10 p-2.5">
               <Palette className="size-4 text-primary" />
             </div>
             <div>

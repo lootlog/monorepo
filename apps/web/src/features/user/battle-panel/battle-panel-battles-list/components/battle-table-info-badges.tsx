@@ -22,10 +22,10 @@ type BattleTableInfoBadgesProps = {
 };
 
 const BATTLE_INFO_TAG_CLASS_NAME =
-  "inline-flex h-[17px] max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-foreground/30 bg-background/40 px-2 py-0 text-[10px] font-semibold leading-none text-muted-foreground";
+  "inline-flex h-[17px] max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-foreground/30 bg-background px-2 py-0 text-[10px] font-semibold leading-none text-muted-foreground";
 
 const BATTLE_INFO_TAG_ACTION_CLASS_NAME =
-  "cursor-pointer transition-colors hover:bg-background/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+  "cursor-pointer transition-colors hover:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
 
 export const BattleTableInfoBadges = ({
   battle,
@@ -63,7 +63,7 @@ export const BattleTableInfoBadges = ({
     event: KeyboardEvent<HTMLElement>,
     action: () => void,
   ) => {
-    if (event.key !== "Enter" && event.key !== " ") {
+    if (event.key !== "Enter" && event.key !== "") {
       return;
     }
 

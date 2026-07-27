@@ -1,4 +1,4 @@
-import { MARGONEM_PROFILE_URL } from "@/constants/margonem";
+import { getMargonemProfileUrl } from "@/constants/margonem";
 import type { MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus } from "@lootlog/api-client/models/main/member-lootlog-config-summary-response-dto-output-characters-item-metadata-status";
 
 type MemberLootlogProfileTargetInput = {
@@ -35,8 +35,8 @@ export function getMemberLootlogProfileTarget({
 }: MemberLootlogProfileTargetInput): MemberLootlogProfileTarget | null {
   const parsedAccountId = Number(accountId);
   const parsedCharacterId = Number(characterId);
-
-  if (!Number.isInteger(parsedAccountId) || parsedAccountId <= 0) {
+  const href = getMargonemProfileUrl({ accountId, characterId, world });
+  if (!href) {
     return null;
   }
 
@@ -47,14 +47,14 @@ export function getMemberLootlogProfileTarget({
   ) {
     return {
       accountId: parsedAccountId,
-      href: `${MARGONEM_PROFILE_URL},${parsedAccountId}`,
+      href,
     };
   }
 
   return {
     accountId: parsedAccountId,
     characterId: parsedCharacterId,
-    href: `${MARGONEM_PROFILE_URL},${parsedAccountId}#char_${parsedCharacterId},${world}`,
+    href,
     world,
   };
 }

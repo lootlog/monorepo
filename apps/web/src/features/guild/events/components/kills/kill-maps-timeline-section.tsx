@@ -38,7 +38,7 @@ export const KillMapsTimelineSection = ({
 
   if (isLoading) {
     return (
-      <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+      <Card className="gap-3 border-border bg-card p-3">
         <div className="space-y-2 py-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-12 rounded-lg" />
@@ -60,9 +60,9 @@ export const KillMapsTimelineSection = ({
   });
 
   return (
-    <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+    <Card className="gap-3 border-border bg-card p-3">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+        <div className="rounded-xl bg-primary/10 p-2">
           <Map className="size-4 text-primary" />
         </div>
         <div>

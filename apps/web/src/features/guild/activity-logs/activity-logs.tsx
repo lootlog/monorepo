@@ -97,7 +97,7 @@ export const ActivityLogs: FC = () => {
         </Drawer>
       )}
 
-      <div className="w-full flex flex-col h-full overflow-hidden bg-background/50">
+      <div className="w-full flex flex-col h-full overflow-hidden bg-background">
         <div className="px-3 pt-3 pb-0">
           <ActivityLogsFiltersHeader
             onToggleFilters={handleOpenSidebar}

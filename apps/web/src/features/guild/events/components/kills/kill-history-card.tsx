@@ -52,7 +52,7 @@ export const KillHistoryCard = ({
 
   if (compact) {
     const content = (
-      <div className="p-3 rounded-lg border border-border hover:border-primary bg-card/30 hover:bg-card/50 transition-colors cursor-pointer">
+      <div className="p-3 rounded-lg border border-border hover:border-primary bg-card/30 hover:bg-card transition-colors cursor-pointer">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0">
             {kill.heroNpc.npcIcon ? (
@@ -139,7 +139,7 @@ export const KillHistoryCard = ({
 
   if (minimal) {
     const content = (
-      <div className="p-3 rounded-lg border border-border bg-card/30 hover:bg-card/50 transition-colors cursor-pointer">
+      <div className="p-3 rounded-lg border border-border bg-card/30 hover:bg-card transition-colors cursor-pointer">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0">
             {kill.heroNpc.npcIcon ? (
@@ -212,8 +212,8 @@ export const KillHistoryCard = ({
   return (
     <div
       className={cn(
-        "p-3 rounded-lg border border-border/50 bg-card/30 hover:bg-card/50 transition-colors",
-        expanded && "bg-card/50",
+        "p-3 rounded-lg border border-border/50 bg-card/30 hover:bg-card transition-colors",
+        expanded && "bg-card",
       )}
     >
       <div className="flex items-start justify-between gap-3 mb-2">

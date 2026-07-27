@@ -31,7 +31,6 @@ export interface UserPreferences {
   guildsOrder: string[];
   hiddenGuildIds: string[];
   theme: string;
-  colorMode: string;
   chatAppearance: ChatAppearanceSettings;
   mutes: NotificationMutes;
 }
@@ -40,7 +39,6 @@ export interface UpdateUserPreferencesPayload {
   guildsOrder?: string[];
   hiddenGuildIds?: string[];
   theme?: string;
-  colorMode?: "light" | "dark";
   chatAppearance?: Partial<ChatAppearanceSettings>;
   mutes?: NotificationMutesPatch;
 }

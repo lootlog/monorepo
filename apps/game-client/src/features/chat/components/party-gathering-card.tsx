@@ -173,7 +173,7 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
         </span>
       </div>
       <div
-        className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:flex-col ll:items-stretch ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden ll:rounded-sm ll:border-l-2 ll:border-solid ll:bg-gray-500/30 ll:px-[var(--ll-chat-space-lg)] ll:py-[var(--ll-chat-space-md)]"
+        className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:flex-col ll:items-stretch ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden ll:rounded-sm ll:border ll:border-solid ll:bg-gray-500/30 ll:px-[var(--ll-chat-space-lg)] ll:py-[var(--ll-chat-space-md)]"
         style={{ borderColor: "#FF8C00" }}
       >
         <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-center ll:gap-[var(--ll-chat-space-md)] ll:overflow-hidden">

@@ -21,7 +21,7 @@ export const RarityBreakdown = ({
   return (
     <AnimatedPanel
       delay={0.04}
-      className="rounded-[28px] border border-border/70 bg-background/70 p-4 backdrop-blur-sm"
+      className="rounded-[28px] border border-border/70 bg-background p-4"
     >
       <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
         {label}

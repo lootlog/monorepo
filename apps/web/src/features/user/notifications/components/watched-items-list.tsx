@@ -22,9 +22,9 @@ export const WatchedItemsList = ({
   const watchedItemsCount = watchedItems.length;
 
   return (
-    <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+    <Card className="gap-3 border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-amber-500/10 p-2.5 shadow-inner shadow-amber-500/10">
+        <div className="rounded-xl bg-amber-500/10 p-2.5">
           <BellRing className="size-4 text-amber-500" />
         </div>
         <div className="min-w-0">
@@ -68,7 +68,7 @@ export const WatchedItemsList = ({
           })}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-border/80 bg-background/20 p-6 text-sm text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-border/80 bg-background p-6 text-sm text-muted-foreground">
           {t("settings.userNotifications.empty.watchedItems")}
         </div>
       )}

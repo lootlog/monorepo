@@ -178,9 +178,9 @@ export const MemberStatsPage: React.FC = () => {
   if (!member) {
     if (isLoading) {
       return (
-        <div className="flex flex-col h-full min-h-0 bg-background/50">
+        <div className="flex flex-col h-full min-h-0 bg-background">
           <div className="px-3 py-3 flex flex-col gap-4">
-            <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+            <Card className="gap-4 border-border bg-card p-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="flex flex-col gap-2 flex-1">
@@ -189,7 +189,7 @@ export const MemberStatsPage: React.FC = () => {
                 </div>
               </div>
             </Card>
-            <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+            <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
               <div>
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
@@ -236,10 +236,10 @@ export const MemberStatsPage: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background/50">
+    <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12 shrink-0 border-2 border-background shadow-lg">
                 <AvatarImage
@@ -283,7 +283,7 @@ export const MemberStatsPage: React.FC = () => {
             )}
           </Card>
 
-          <Card className="border-border bg-card/40 p-3 backdrop-blur-sm gap-3">
+          <Card className="border-border bg-card p-3  gap-3">
             <div className="flex items-center gap-2 lg:hidden">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -355,7 +355,7 @@ export const MemberStatsPage: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {isLoading ? (
                 <div>

@@ -455,7 +455,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
             </div>,
             ...DAYS.map((day, dayIdx) => {
               const backgroundClass =
-                dayIdx % 2 === 0 ? "bg-background/50" : "bg-muted/50";
+                dayIdx % 2 === 0 ? "bg-background" : "bg-muted/50";
 
               return (
                 <div

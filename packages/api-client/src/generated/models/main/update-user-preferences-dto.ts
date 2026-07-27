@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { UpdateUserPreferencesDtoChatAppearance } from './update-user-preferences-dto-chat-appearance';
-import type { UpdateUserPreferencesDtoColorMode } from './update-user-preferences-dto-color-mode';
 import type { UpdateUserPreferencesDtoMutes } from './update-user-preferences-dto-mutes';
 import type { UpdateUserPreferencesDtoTheme } from './update-user-preferences-dto-theme';
 
@@ -16,7 +15,6 @@ export interface UpdateUserPreferencesDto {
   /** @items.minLength 1 */
   hiddenGuildIds?: string[];
   theme?: UpdateUserPreferencesDtoTheme;
-  colorMode?: UpdateUserPreferencesDtoColorMode;
   chatAppearance?: UpdateUserPreferencesDtoChatAppearance;
   mutes?: UpdateUserPreferencesDtoMutes;
 }

@@ -18,7 +18,7 @@ export const LootTopItems: React.FC<LootTopItemsProps> = ({
 
   if (isLoading) {
     return (
-      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+      <Card className="bg-card  border-border p-3 gap-3">
         <h2 className="text-base font-semibold">
           {t("loots.stats.topItems.title")}
         </h2>
@@ -37,7 +37,7 @@ export const LootTopItems: React.FC<LootTopItemsProps> = ({
 
   if (!data?.length) {
     return (
-      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+      <Card className="bg-card  border-border p-3 gap-3">
         <h2 className="text-base font-semibold">
           {t("loots.stats.topItems.title")}
         </h2>
@@ -49,7 +49,7 @@ export const LootTopItems: React.FC<LootTopItemsProps> = ({
   }
 
   return (
-    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3">
+    <Card className="bg-card  border-border p-3 gap-3">
       <h2 className="text-base font-semibold">
         {t("loots.stats.topItems.title")}
       </h2>

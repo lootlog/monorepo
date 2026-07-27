@@ -125,7 +125,7 @@ export const MemberData = ({
       label: t("settings.members.access.inactive"),
       description: t("settings.members.access.inactiveDescription"),
       icon: UserMinus,
-      className: "border-border bg-background/40 text-muted-foreground",
+      className: "border-border bg-background text-muted-foreground",
     },
     online: {
       label: t("settings.members.access.ok"),
@@ -186,7 +186,7 @@ export const MemberData = ({
           <Badge
             variant="outline"
             className={cn(
-              "border-border bg-background/40 text-muted-foreground",
+              "border-border bg-background text-muted-foreground",
               isOnline &&
                 "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",
             )}
@@ -198,7 +198,7 @@ export const MemberData = ({
           {accessSummary.description}
         </p>
         {(!member.active || hasProblem) && (
-          <p className="mt-3 flex items-start gap-2 border-l-2 border-amber-500/60 bg-amber-500/5 px-3 py-2 text-xs text-amber-500">
+          <p className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/60 bg-amber-500/5 px-3 py-2 text-xs text-amber-500">
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
             {member.active
               ? t("settings.members.syncProblemHint")
@@ -241,7 +241,7 @@ export const MemberData = ({
           ))}
         </dl>
         {member.isStale && (
-          <p className="mt-3 flex items-start gap-2 border-l-2 border-amber-500/60 bg-amber-500/5 px-3 py-2 text-xs text-amber-500">
+          <p className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/60 bg-amber-500/5 px-3 py-2 text-xs text-amber-500">
             <Clock3 className="mt-0.5 size-3.5 shrink-0" />
             {t("settings.members.discordSync.staleAccessHint")}
           </p>
@@ -349,7 +349,7 @@ export const MemberData = ({
                         return (
                           <span
                             key={permission}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background/30 px-2 py-1 text-[11px] text-muted-foreground"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background px-2 py-1 text-[11px] text-muted-foreground"
                           >
                             {IconComponent && (
                               <IconComponent

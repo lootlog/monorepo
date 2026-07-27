@@ -173,7 +173,7 @@ export const ScoringSimulatorDialog = ({
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-4">
             {/* Results — prominent at the top */}
-            <div className="rounded-lg border bg-card/60 p-3">
+            <div className="rounded-lg border bg-card p-3">
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="size-3.5 text-amber-500" />
                 <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-muted-foreground">
@@ -487,7 +487,7 @@ export const ScoringSimulatorDialog = ({
                       className={cn(
                         "flex items-center gap-2 w-full rounded-md px-2.5 py-1.5 text-left transition-colors cursor-pointer",
                         isActive
-                          ? "bg-card/40 hover:bg-card/60"
+                          ? "bg-card hover:bg-card"
                           : "opacity-40 hover:opacity-60",
                       )}
                     >

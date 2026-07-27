@@ -29,11 +29,12 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Frown } from "lucide-react";
+import { Frown, Globe2 } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useEffect, useEffectEvent, useRef, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { ThemeEmptyStateIcon, useThemedKey } from "@/themes";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 
 const LOOTS_PAGE_LIMIT = 20;
 const LOOTS_QUERY_STALE_TIME_MS = 30_000;
@@ -593,14 +594,27 @@ export const LootsList: FC = () => {
 
   if (!world) {
     return (
-      <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
-        <ThemeEmptyStateIcon
-          className="w-[72px] h-[72px] text-muted-foreground/50"
-          fallback={<Frown size="72" className="text-muted-foreground/50" />}
-        />
-        <span className="font-semibold text-foreground">
-          {t(themedKey("loots.list.noWorldSelected"))}
-        </span>
+      <div className="flex flex-1 items-start justify-center px-4 pb-8 pt-5 sm:px-6 md:items-center md:py-8">
+        <section className="flex w-full max-w-sm flex-col items-center rounded-2xl border border-border bg-card px-4 py-5 text-center shadow-sm sm:px-7 sm:py-8">
+          <div className="mb-4 flex size-14 items-center justify-center rounded-xl border border-border bg-background">
+            <ThemeEmptyStateIcon
+              className="size-8 text-muted-foreground"
+              fallback={<Globe2 className="size-8 text-primary" />}
+            />
+          </div>
+          <h2 className="text-base font-semibold text-foreground">
+            {t("loots.list.selectWorldTitle")}
+          </h2>
+          <p className="mt-1 max-w-xs text-sm leading-5 text-muted-foreground">
+            {t(themedKey("loots.list.noWorldSelected"))}
+          </p>
+          <div className="mt-5 w-full text-left">
+            <WorldSwitcher
+              width="w-full"
+              triggerClassName="h-11 w-full justify-between px-3"
+            />
+          </div>
+        </section>
       </div>
     );
   }
@@ -667,14 +681,14 @@ export const LootsList: FC = () => {
                 >
                   {isLoaderRow ? (
                     hasNextPage ? (
-                      <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
+                      <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30  h-16">
                         <Spinner className="h-5 w-5 text-primary" />
                         <span className="text-sm text-muted-foreground font-medium">
                           {t(themedKey("loots.list.loadingMore"))}
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
+                      <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30  h-16">
                         <span className="text-xs text-muted-foreground">
                           {t(themedKey("loots.list.end"))}
                         </span>
@@ -725,14 +739,14 @@ export const LootsList: FC = () => {
                 >
                   {isLoaderRow ? (
                     hasNextPage ? (
-                      <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
+                      <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30  h-16">
                         <Spinner className="h-5 w-5 text-primary" />
                         <span className="text-sm text-muted-foreground font-medium">
                           {t(themedKey("loots.list.loadingMore"))}
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
+                      <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30  h-16">
                         <span className="text-xs text-muted-foreground">
                           {t(themedKey("loots.list.end"))}
                         </span>

@@ -276,7 +276,7 @@ export const BattlesListFilterToolbar = ({
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between rounded-md border border-border/70 bg-background/40 p-3">
+            <div className="flex items-center justify-between rounded-md border border-border/70 bg-background p-3">
               <div className="flex items-center gap-2">
                 <Award className="size-4" aria-hidden="true" />
                 <Label htmlFor="battles-toolbar-ph" className="cursor-pointer">
@@ -290,7 +290,7 @@ export const BattlesListFilterToolbar = ({
               />
             </div>
             {showMatchmakingFilter && (
-              <div className="flex items-center justify-between rounded-md border border-border/70 bg-background/40 p-3">
+              <div className="flex items-center justify-between rounded-md border border-border/70 bg-background p-3">
                 <div className="flex items-center gap-2">
                   <Swords className="size-4" aria-hidden="true" />
                   <Label

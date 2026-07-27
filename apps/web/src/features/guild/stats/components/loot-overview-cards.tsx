@@ -8,28 +8,28 @@ import type { LootStatsResponseDtoOutputOverview } from "@lootlog/api-client/mod
 const OVERVIEW_CONFIG = {
   totalLoots: {
     icon: <Package className="h-5 w-5" />,
-    gradient: "from-emerald-500/10 to-green-500/5",
+    gradient: "bg-emerald-500/8",
     iconBg: "bg-emerald-500/10",
     iconColor: "text-emerald-500",
     key: "totalLoots" as const,
   },
   totalItems: {
     icon: <Layers className="h-5 w-5" />,
-    gradient: "from-violet-500/10 to-purple-500/5",
-    iconBg: "bg-violet-500/10",
-    iconColor: "text-violet-500",
+    gradient: "bg-cyan-500/8",
+    iconBg: "bg-cyan-500/10",
+    iconColor: "text-cyan-400",
     key: "totalItems" as const,
   },
   legendaryItems: {
     icon: <Crown className="h-5 w-5" />,
-    gradient: "from-red-500/10 to-rose-500/5",
+    gradient: "bg-red-500/8",
     iconBg: "bg-red-500/10",
     iconColor: "text-red-500",
     key: "legendaryItems" as const,
   },
   heroicItems: {
     icon: <Sword className="h-5 w-5" />,
-    gradient: "from-blue-500/10 to-cyan-500/5",
+    gradient: "bg-blue-500/8",
     iconBg: "bg-blue-500/10",
     iconColor: "text-blue-500",
     key: "heroicItems" as const,
@@ -81,10 +81,7 @@ export const LootOverviewCards: React.FC<LootOverviewCardsProps> = ({
         const value = data?.[config.key] ?? 0;
 
         return (
-          <Card
-            key={key}
-            className={cn("bg-gradient-to-br border-0", config.gradient)}
-          >
+          <Card key={key} className={cn("border-border/80", config.gradient)}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div

@@ -11,7 +11,7 @@ export const ReservationCardSkeleton: FC<ReservationCardSkeletonProps> = ({
 }) => {
   if (viewMode === "list") {
     return (
-      <Card className="flex flex-row items-center gap-4 p-3 bg-card/40 backdrop-blur-sm border-border">
+      <Card className="flex flex-row items-center gap-4 p-3 bg-card  border-border">
         <div className="flex flex-col gap-2 flex-1 min-w-0">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-20" />
@@ -26,7 +26,7 @@ export const ReservationCardSkeleton: FC<ReservationCardSkeletonProps> = ({
   }
 
   return (
-    <Card className="flex flex-col justify-between p-4 bg-card/40 backdrop-blur-sm border-border h-full">
+    <Card className="flex flex-col justify-between p-4 bg-card  border-border h-full">
       <div className="flex flex-wrap gap-3 items-center">
         <Skeleton className="h-10 w-8 rounded-lg" />
         <Skeleton className="h-10 w-8 rounded-lg" />

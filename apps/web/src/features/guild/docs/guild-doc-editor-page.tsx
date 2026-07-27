@@ -202,10 +202,10 @@ export const GuildDocEditorPage = () => {
 
   if (documentQuery.isError || !document) {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-background/50">
+      <div className="flex h-full min-h-0 flex-col bg-background">
         <ScrollArea className="min-h-0 flex-1">
           <div className="px-3 py-3">
-            <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card/40 py-12 backdrop-blur-sm">
+            <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12">
               <FileText className="size-12 text-muted-foreground opacity-50" />
               <p className="text-sm text-muted-foreground">
                 {t("docs.editor.loadError")}
@@ -218,13 +218,13 @@ export const GuildDocEditorPage = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex min-h-[calc(100vh-3.5rem)] flex-col gap-4 px-3 py-3">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                <div className="rounded-xl bg-primary/10 p-2.5">
                   <FileText className="size-4 text-primary" />
                 </div>
                 <div className="min-w-0">
@@ -294,7 +294,7 @@ export const GuildDocEditorPage = () => {
           </Card>
 
           <form className="flex min-h-0 flex-1 flex-col" onSubmit={saveDraft}>
-            <Card className="flex min-h-0 flex-1 flex-col gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+            <Card className="flex min-h-0 flex-1 flex-col gap-3 border-border bg-card p-3">
               <div className="space-y-2">
                 <Label
                   htmlFor="guild-doc-editor-title"

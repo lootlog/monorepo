@@ -43,7 +43,7 @@ export const RolesSettingsContent = () => {
   const hasActiveFilters = normalizedSearchValue !== "";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background/50 px-3 gap-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background px-3 gap-3">
       <RolesSettingsHeader />
       <Card className="p-0 gap-0">
         <div className="flex shrink-0 flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">

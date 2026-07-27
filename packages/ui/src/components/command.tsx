@@ -92,12 +92,15 @@ const CommandInputRaw = React.forwardRef<
   React.ElementRef<typeof Input>,
   React.ComponentPropsWithoutRef<typeof Input>
 >(({ className, ...props }, ref) => (
-  <div className="flex items-center border-b px-3 h-12">
-    <Search className="h-4 mr-2 w-4 shrink-0 opacity-50" />
+  <div
+    data-slot="command-input-wrapper"
+    className="flex h-9 items-center gap-2 border-b px-3"
+  >
+    <Search className="size-4 shrink-0 opacity-50" />
     <Input
       ref={ref}
       className={cn(
-        "flex h-10 w-full rounded-md border-none !bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 p-0 focus-visible:ring-transparent",
+        "h-10 w-full rounded-md border-none !bg-transparent p-0 py-3 text-sm outline-hidden placeholder:text-muted-foreground focus-visible:ring-transparent disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
