@@ -74,13 +74,18 @@ navigation.
 ### Geometry
 
 - The dock is inset 12 px from the navigation edges and bottom.
-- It has a controlled 10–12 px radius and a single Rule Blue border.
+- It is exactly 60 px high, has an 11 px radius and a single Rule Blue border.
 - There is no additional horizontal divider above the dock.
 - The avatar is centered vertically with no upward translation, overlap,
   hover-scale or glow.
-- The avatar remains 36–40 px depending on the final footer fit.
+- The avatar is exactly 40 px.
 - The chevron sits in a quiet, bounded action area but the full dock remains the
   menu trigger.
+
+The dock lives in `SidebarFooter`, outside the scrolling `SidebarContent`.
+`SidebarFooter` is 72 px high: the 60 px dock plus its 12 px bottom inset. Long
+navigation, pinned events and permission-gated items scroll independently and
+must never overlap, displace or scroll the dock.
 
 ### Content hierarchy
 
@@ -110,11 +115,14 @@ The shared 56 px page header is divided into three conceptual zones:
 - The plate begins at the content edge and uses Raised Ink against the Night Ink
   header background.
 - It contains the sidebar trigger/back action and stacked route context.
-- It ends before the center of wide screens, targeting a responsive width of
-  roughly 320–400 px.
-- Its bottom-right corner uses a controlled radius around 20 px.
-- A short token-driven accent segment may terminate the lower border; it must
-  not become a glow or full-width cyan rule.
+- At `md` and above it is exactly
+  `width: clamp(20rem, 36vw, 25rem)` (320–400 px).
+- Its bottom-right corner has a 20 px radius.
+- A 72 px accent segment terminates the lower border 20 px before the curve. It
+  uses the existing signal/accent token at subdued opacity and never becomes a
+  glow or full-width cyan rule.
+- Below `md` the title plate shape is removed and the mobile header treatment
+  applies.
 
 ### Stacked route context
 
@@ -131,6 +139,19 @@ For root routes, use the available account, guild or module context rather than
 rendering an empty placeholder. Do not duplicate a label when parent and current
 title are identical.
 
+Context is resolved deterministically:
+
+| Route shape               | Parent context                                                                         | Current title                | Missing-data fallback                                            |
+| ------------------------- | -------------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------------------- |
+| `/@me`                    | localized `Konto`                                                                      | localized `Dashboard`        | parent remains `Konto`                                           |
+| `/@me/<feature>`          | localized `Konto`, followed by existing intermediate breadcrumb labels joined with `·` | existing current route label | omit unavailable intermediate labels                             |
+| `/<guild-slug>`           | guild display name followed by the localized root navigation label, joined with `·`    | existing current route label | use the root navigation label when the guild name is unavailable |
+| `/<guild-slug>/<feature>` | guild display name followed by existing parent breadcrumb labels joined with `·`       | existing current route label | omit the unavailable guild name and retain parent labels         |
+
+All fixed labels in this mapping must come from i18n. Existing route and
+breadcrumb labels remain the source of truth; adapters do not create parallel
+route-name maps.
+
 Mobile hierarchy:
 
 - retain the existing 56 px header;
@@ -140,21 +161,28 @@ Mobile hierarchy:
 
 ### Route-aware actions
 
-The right side may contain controls or actions that already belong to the
-current route, for example:
+At `lg` and above, the right side contains controls or actions that already
+belong to the current route:
 
-- guild world selection;
-- list/grid view selection;
-- filtering;
-- create or primary route actions.
+| Route                        | Header actions at `lg+`                                            | What remains below the header                            |
+| ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------- |
+| `/@me`                       | existing dashboard scope and world selectors                       | dashboard content                                        |
+| `/@me/battle-panel`          | no new actions                                                     | existing Walki/Analityka/Otchłań tabs and battle filters |
+| `/<guild-slug>` Lootlog root | existing world selector, list/grid selector and filter trigger     | search input and result content                          |
+| Other user/guild routes      | only actions already supplied through the shared route-action slot | existing route-local toolbars                            |
+
+Between `md` and `lg`, controls listed above remain in their existing route
+toolbars to protect title width. Below `md`, existing mobile layouts remain the
+source of truth.
 
 Do not add fake metadata or ornamental badges to fill space. Routes without
 actions leave this area empty. The negative space is intentional because the
 title plate has a visible end rather than pretending to fill the full header.
 
-Promoting an existing control into the header must not change its state model,
-permissions, keyboard behavior or mobile availability. Controls that do not fit
-comfortably at intermediate widths remain in their existing route toolbar.
+Promoting an existing control into the header must reuse the same component
+instance or state owner; it must not duplicate state, permissions, keyboard
+behavior or mobile availability. Responsive placement must render a control in
+exactly one location at a time.
 
 ## Component boundaries
 
