@@ -26,11 +26,8 @@ import type {
   RuntimeNpc,
 } from "@/lib/margonem-runtime/runtime.types";
 import { useGameStore } from "@/store/game.store";
-import { EffectReplayGuard } from "./effect-replay-guard";
 
 export class LootEventProcessor {
-  private readonly effectReplayGuard = new EffectReplayGuard();
-
   handleLootFromBattle(
     event: GameEvent,
     ingress?: RuntimeIngressSnapshot,
@@ -64,7 +61,6 @@ export class LootEventProcessor {
       return;
     }
 
-    const previousLastLootId = lootStore.lastLootId;
     lootStore.setLastLootId(null);
     if (!game) {
       reportLootSkipped({
@@ -75,7 +71,7 @@ export class LootEventProcessor {
       });
       return;
     }
-    this.createLootFromBattle(event, debugContext, game, previousLastLootId);
+    this.createLootFromBattle(event, debugContext, game);
   }
 
   handleDialogLoot(event: GameEvent, ingress?: RuntimeIngressSnapshot): void {
@@ -109,7 +105,6 @@ export class LootEventProcessor {
     }
 
     const lootStore = useLootStore.getState();
-    const previousLastLootId = lootStore.lastLootId;
     lootStore.setLastLootId(null);
 
     const { npcContext } = dialogStore;
@@ -148,21 +143,13 @@ export class LootEventProcessor {
       });
       return;
     }
-    this.createLootFromDialog(
-      event,
-      debugContext,
-      npc,
-      resolutionSource,
-      game,
-      previousLastLootId,
-    );
+    this.createLootFromDialog(event, debugContext, npc, resolutionSource, game);
   }
 
   private createLootFromBattle(
     event: GameEvent,
     debugContext: LootCreateDebugContext,
     game: RuntimeGameSnapshot,
-    previousLastLootId: number | null,
   ): void {
     const loot = event.loot;
     if (!loot) return;
@@ -227,16 +214,6 @@ export class LootEventProcessor {
       payload,
     });
 
-    const effectKey = JSON.stringify(payload);
-    if (!this.effectReplayGuard.reserve(effectKey)) {
-      useLootStore.getState().setLastLootId(previousLastLootId);
-      logLootCreateDebug("skipped", {
-        ...debugContext,
-        reason: "duplicate-loot-effect",
-      });
-      return;
-    }
-
     createLoot(payload, debugContext)
       .then((response) => {
         useLootStore.getState().setLastLootId(response.id);
@@ -247,7 +224,6 @@ export class LootEventProcessor {
         });
       })
       .catch((error) => {
-        this.effectReplayGuard.forget(effectKey);
         logLootCreateDebug("failed", {
           ...debugContext,
           error,
@@ -262,7 +238,6 @@ export class LootEventProcessor {
     npcData: RuntimeNpc,
     resolutionSource: DialogNpcContextSource,
     game: RuntimeGameSnapshot,
-    previousLastLootId: number | null,
   ): void {
     const loot = event.loot;
     if (!loot) return;
@@ -335,18 +310,6 @@ export class LootEventProcessor {
       resolutionSource,
     });
 
-    const effectKey = JSON.stringify(payload);
-    if (!this.effectReplayGuard.reserve(effectKey)) {
-      useLootStore.getState().setLastLootId(previousLastLootId);
-      useDialogStore.getState().clearNpcContext();
-      logLootCreateDebug("skipped", {
-        ...debugContext,
-        reason: "duplicate-loot-effect",
-        resolutionSource,
-      });
-      return;
-    }
-
     useDialogStore.getState().clearNpcContext();
     createLoot(payload, debugContext)
       .then((response) => {
@@ -358,7 +321,6 @@ export class LootEventProcessor {
         });
       })
       .catch((error) => {
-        this.effectReplayGuard.forget(effectKey);
         logLootCreateDebug("failed", {
           ...debugContext,
           error,

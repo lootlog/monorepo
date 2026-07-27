@@ -301,39 +301,6 @@ describe("LootEventProcessor", () => {
     });
   });
 
-  it("submits an identical battle loot effect once", async () => {
-    useBattleStore.setState({
-      battleWarriors: {
-        "1": createBattleWarrior(),
-      },
-    });
-    mockGetLoot.mockReturnValue([
-      {
-        id: 1,
-        name: "Legendarny miecz",
-      },
-    ]);
-    mockGetBattleParticipants.mockReturnValue({
-      npcs: [{ id: 501, name: "Boss" }],
-      party: [{ id: 101, name: "Tester" }],
-    });
-    mockCreateLoot.mockResolvedValue({ id: 999 });
-    const event = createBattleLootEvent();
-
-    processor.handleLootFromBattle(event);
-    processor.handleLootFromBattle(event);
-
-    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    processor.handleLootFromBattle(event);
-
-    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
-    expect(useLootStore.getState().lastLootId).toBe(999);
-  });
-
   it("submits different battle loot effects that share an event id", () => {
     useBattleStore.setState({
       battleWarriors: {

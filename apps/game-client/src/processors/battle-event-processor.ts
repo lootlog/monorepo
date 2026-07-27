@@ -51,18 +51,6 @@ const parseNumericValue = (value: unknown) => {
   return null;
 };
 
-const deduplicateBattleEvents = (events: GameEvent[]): GameEvent[] => {
-  const seenEventPayloads = new Set<string>();
-
-  return events.filter((event) => {
-    if (event.ev === undefined) return true;
-    const eventPayload = JSON.stringify(event);
-    if (seenEventPayloads.has(eventPayload)) return false;
-    seenEventPayloads.add(eventPayload);
-    return true;
-  });
-};
-
 const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
   const legacyHpp = parseNumericValue((warrior as { hpp?: unknown }).hpp);
   if (legacyHpp !== null) return legacyHpp <= 0;
@@ -273,20 +261,14 @@ export class BattleEventProcessor {
             const battleHash = await createSHA256Hash(
               JSON.stringify(capture.turns),
             );
-            const canonicalCapturedEvents = deduplicateBattleEvents(
-              capture.events,
-            );
-            const canonicalTurns = canonicalCapturedEvents.flatMap(
-              (event) => event.f?.m ?? [],
-            );
-            const events = mapBattleEventsToPayload(canonicalCapturedEvents);
+            const events = mapBattleEventsToPayload(capture.events);
 
             if (events && !hasNpcInBattle && this.hasMultipleTeams) {
               const submissionId = await createSHA256Hash(
                 JSON.stringify({
                   accountId,
                   characterId,
-                  moves: canonicalTurns,
+                  moves: capture.turns,
                   world,
                 }),
               );

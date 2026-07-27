@@ -1187,7 +1187,7 @@ describe("BattleEventProcessor", () => {
       );
     });
 
-    it("submits duplicated incremental and compact replay once", async () => {
+    it("submits incremental and compact replay once", async () => {
       const { createSHA256Hash } =
         await import("@/helpers/create-sha-256-hash");
       const { mapBattleEventsToPayload } =
@@ -1212,10 +1212,7 @@ describe("BattleEventProcessor", () => {
       ] as GameEvent[];
 
       await processor.handle(incrementalEvents[0]);
-      await processor.handle(incrementalEvents[0]);
       await processor.handle(incrementalEvents[1]);
-      await processor.handle(incrementalEvents[1]);
-      await processor.handle(incrementalEvents[2]);
       await processor.handle(incrementalEvents[2]);
       await processor.handle({
         ev: 4,

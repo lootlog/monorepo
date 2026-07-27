@@ -3,4 +3,4 @@
 "@lootlog/game-client": patch
 ---
 
-Preserve inbound runtime packets, deduplicate battle, loot, and timer effects at their domain boundaries, and harden battle creation retries after lock or raw-storage failures.
+Preserve every inbound runtime packet, share one full-envelope game event processor across overlapping client registrations, deduplicate semantic battle replays, and harden battle creation retries after lock or raw-storage failures.
