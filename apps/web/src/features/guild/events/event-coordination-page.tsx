@@ -188,7 +188,7 @@ export const EventCoordinationPage = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <EventActionDialog
         open={closingHero !== null}
         onOpenChange={(open) => {
@@ -210,7 +210,7 @@ export const EventCoordinationPage = () => {
           <EventCoordinationSummaryCard coordination={coordination} />
 
           {coordination.heroes.length === 0 ? (
-            <Card className="flex flex-col items-center justify-center gap-3 bg-card/40 py-12 backdrop-blur-sm">
+            <Card className="flex flex-col items-center justify-center gap-3 bg-card py-12">
               <Crosshair className="w-12 h-12 text-muted-foreground opacity-50" />
               <p className="text-muted-foreground">
                 {t("events.coordination.empty")}

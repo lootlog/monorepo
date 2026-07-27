@@ -103,7 +103,7 @@ export const EventEditRulebookPage = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
             <div className="space-y-1.5">
@@ -112,7 +112,7 @@ export const EventEditRulebookPage = () => {
             </div>
           </div>
         </Card>
-        <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+        <Card className="border-border bg-card p-4">
           <div className="space-y-2">
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-32 w-full" />
@@ -135,11 +135,11 @@ export const EventEditRulebookPage = () => {
   }
 
   return (
-    <ScrollArea className="h-full bg-background/50">
+    <ScrollArea className="h-full bg-background">
       <div className="flex flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="rounded-xl bg-amber-500/10 p-2 shadow-inner shadow-amber-500/10">
+            <div className="rounded-xl bg-amber-500/10 p-2">
               <BookOpenText className="size-4 text-amber-500" />
             </div>
             <div className="min-w-0">
@@ -155,7 +155,7 @@ export const EventEditRulebookPage = () => {
           className="space-y-3 pb-24"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-3">
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                 <BookOpenText className="size-3" />

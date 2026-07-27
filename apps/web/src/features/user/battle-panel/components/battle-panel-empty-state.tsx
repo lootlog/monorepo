@@ -24,7 +24,7 @@ export const BattlePanelEmptyState = ({
         className,
       )}
     >
-      <div className="rounded-xl bg-muted/40 p-3 shadow-inner shadow-primary/5">
+      <div className="rounded-xl bg-muted/40 p-3">
         <Icon className="size-5 text-muted-foreground" />
       </div>
       <div className="space-y-1">
@@ -42,9 +42,5 @@ export const BattlePanelEmptyState = ({
     return content;
   }
 
-  return (
-    <Card className="border-border bg-card/40 p-0 backdrop-blur-sm">
-      {content}
-    </Card>
-  );
+  return <Card className="border-border bg-card p-0">{content}</Card>;
 };

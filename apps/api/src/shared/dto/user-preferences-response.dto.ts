@@ -6,7 +6,6 @@ const UserPreferencesResponseSchema = z.object({
   guildsOrder: z.array(z.string()),
   hiddenGuildIds: z.array(z.string()),
   theme: z.string(),
-  colorMode: z.string(),
   chatAppearance: z.object({
     npcLayout: z.enum(["tile", "inline"]),
     fontScalePercent: z.number().min(70).max(150),

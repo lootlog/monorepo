@@ -51,7 +51,6 @@ export type ThemeId = (typeof THEME_IDS)[number];
 export type ResolvedThemeId = (typeof THEME_CLASS_IDS)[number];
 export type CatThemeVariant = (typeof CAT_THEME_VARIANTS)[number];
 export type ThemeFamily = "standard" | "rukia" | "rias" | "cat";
-export type ColorMode = "light" | "dark";
 
 export interface ThemePreview {
   name: ThemeId;
@@ -62,17 +61,15 @@ export interface ThemePreview {
 
 export const DEFAULT_THEME_ID: ThemeId = "default";
 export const DEFAULT_CAT_THEME_VARIANT: CatThemeVariant = "cat-pink";
-export const DEFAULT_COLOR_MODE: ColorMode = "dark";
 export const THEME_STORAGE_KEY = "lootlog-theme";
-export const COLOR_MODE_STORAGE_KEY = "lootlog-color-mode";
 
 export const THEME_CATALOG: ThemePreview[] = [
   {
     name: "default",
     family: "standard",
-    colors: ["#7C3AED", "#1F1F1F", "#3F3F46"],
+    colors: ["#3157F6", "#35D3E4", "#C8F135"],
     backgroundImage:
-      "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='defaultGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%237C3AED;stop-opacity:0.08' /%3E%3Cstop offset='50%25' style='stop-color:%234C1D95;stop-opacity:0.05' /%3E%3Cstop offset='100%25' style='stop-color:%232D1B69;stop-opacity:0.08' /%3E%3C/linearGradient%3E%3Cpattern id='stars' x='0' y='0' width='50' height='50' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='5' cy='5' r='1' fill='%23fff' opacity='0.05'/%3E%3Ccircle cx='25' cy='25' r='1.5' fill='%23fff' opacity='0.06'/%3E%3Ccircle cx='40' cy='10' r='0.8' fill='%23fff' opacity='0.05'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23defaultGrad)'/%3E%3Crect width='400' height='300' fill='url(%23stars)'/%3E%3C/svg%3E",
+      "data:image/svg+xml,%3Csvg width='400' height='300' viewBox='0 0 400 300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='400' height='300' fill='%2307111f'/%3E%3Cpath d='M-24 218h116c28 0 28-46 56-46h104c28 0 28-66 56-66h116' fill='none' stroke='%233157f6' stroke-width='12' stroke-linecap='round'/%3E%3Ccircle cx='92' cy='218' r='18' fill='%2307111f' stroke='%23c8f135' stroke-width='8'/%3E%3Ccircle cx='252' cy='172' r='12' fill='%2335d3e4'/%3E%3Ccircle cx='308' cy='106' r='7' fill='%23ffbd3f'/%3E%3C/svg%3E",
   },
   {
     name: "cyberpunk",

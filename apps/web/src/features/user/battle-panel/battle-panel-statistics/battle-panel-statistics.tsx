@@ -162,7 +162,7 @@ export function BattlePanelStatistics() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex min-h-full flex-col gap-4 px-3 py-3">
           <SectionHeader

@@ -6,6 +6,7 @@ import {
   THEME_IDS,
 } from "./catalog";
 import {
+  applyThemeClassToRoot,
   getThemeFamily,
   isCatTheme,
   isRukiaTheme,
@@ -39,5 +40,30 @@ describe("theme registry", () => {
   it("passes non-random themes through unchanged", () => {
     expect(resolveThemeClass("rukia")).toBe("rukia");
     expect(resolveThemeClass(DEFAULT_THEME_ID)).toBe(DEFAULT_THEME_ID);
+  });
+
+  it("always applies the permanent dark theme invariant", () => {
+    const classes = new Set(["light", "cyberpunk"]);
+    const root = {
+      classList: {
+        add: (...classNames: string[]) => {
+          for (const className of classNames) classes.add(className);
+        },
+        contains: (className: string) => classes.has(className),
+        remove: (...classNames: string[]) => {
+          for (const className of classNames) classes.delete(className);
+        },
+      },
+      style: {},
+    } as unknown as HTMLElement;
+
+    applyThemeClassToRoot({
+      root,
+      resolvedTheme: "default",
+    });
+
+    expect(classes.has("dark")).toBe(true);
+    expect(classes.has("light")).toBe(false);
+    expect(classes.has("cyberpunk")).toBe(false);
   });
 });

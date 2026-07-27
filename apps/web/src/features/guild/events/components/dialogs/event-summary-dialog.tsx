@@ -105,10 +105,10 @@ export const EventSummaryDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-[88vh] max-h-[88vh] gap-0 overflow-hidden border-border/70 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.08),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.08),transparent_22%),hsl(var(--background))] p-0 sm:max-w-5xl sm:h-[min(92vh,820px)] sm:max-h-[min(92vh,820px)] flex flex-col">
-        <DialogHeader className="shrink-0 border-b border-border/70 bg-background/80 px-5 pt-5 pb-4 backdrop-blur-xl">
+        <DialogHeader className="shrink-0 border-b border-border/70 bg-background/80 px-5 pt-5 pb-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex items-start gap-3">
-              <div className="rounded-2xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+              <div className="rounded-2xl bg-primary/10 p-2.5">
                 <Sparkles className="size-4 text-primary" />
               </div>
               <div className="min-w-0">
@@ -299,7 +299,7 @@ export const EventSummaryDialog = ({
               </div>
             ) : error || !data || !activeStep ? (
               <div className="flex h-full items-center justify-center px-2 sm:px-10">
-                <div className="w-full max-w-3xl rounded-[32px] border border-dashed border-border/70 bg-background/60 p-8 text-center">
+                <div className="w-full max-w-3xl rounded-[32px] border border-dashed border-border/70 bg-background p-8 text-center">
                   <p className="text-sm font-medium text-foreground">
                     {t("events.summaryDialog.errorTitle")}
                   </p>

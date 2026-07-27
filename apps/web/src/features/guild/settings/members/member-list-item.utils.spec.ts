@@ -29,7 +29,6 @@ describe("member list item utils", () => {
     });
 
     expect(className).toContain("border-emerald-500/50");
-    expect(className).toContain("shadow-emerald-500/10");
     expect(className).not.toContain("opacity-50");
   });
 

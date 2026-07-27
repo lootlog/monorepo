@@ -35,9 +35,9 @@ export const ActivityLogsFiltersHeader = ({
   const { t } = useTranslation();
 
   return (
-    <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
+    <Card className="gap-3 border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+        <div className="rounded-xl bg-primary/10 p-2">
           <Activity className="size-4 text-primary" />
         </div>
         <h2 className="text-base font-semibold">{t("activityLogs.title")}</h2>

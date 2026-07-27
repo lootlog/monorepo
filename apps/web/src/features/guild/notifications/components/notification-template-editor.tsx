@@ -253,13 +253,13 @@ export const NotificationTemplateEditor = ({
     {
       key: "everyone",
       label: "@everyone",
-      snippet: "@everyone ",
+      snippet: "@everyone",
       type: "mention",
     },
     {
       key: "here",
       label: "@here",
-      snippet: "@here ",
+      snippet: "@here",
       type: "mention",
     },
     ...roles.map((role) => ({
@@ -339,7 +339,7 @@ export const NotificationTemplateEditor = ({
       if (suggestion.type === "variable") {
         nextSelection.insertNodes([
           $createNotificationTemplateVariableNode(suggestion.templateKey),
-          $createTextNode(" "),
+          $createTextNode(""),
         ]);
       } else {
         nextSelection.insertNodes([
@@ -350,7 +350,7 @@ export const NotificationTemplateEditor = ({
             roleId: suggestion.role?.id ?? suggestion.key,
             roleName: suggestion.role?.name ?? suggestion.label.slice(1),
           }),
-          $createTextNode(" "),
+          $createTextNode(""),
         ]);
       }
     });
@@ -515,7 +515,7 @@ export const NotificationTemplateEditor = ({
           },
         }}
       >
-        <div className="overflow-visible rounded-xl border border-border/70 bg-background/30">
+        <div className="overflow-visible rounded-xl border border-border/70 bg-background">
           <div className="border-b border-border/60 bg-muted/20 px-3 py-2">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               {t("settings.notifications.templateEditor.label")}
@@ -526,7 +526,7 @@ export const NotificationTemplateEditor = ({
           </div>
           <div
             ref={editorSurfaceRef}
-            className="relative min-h-[220px] bg-background/40"
+            className="relative min-h-[220px] bg-background"
           >
             <PlainTextPlugin
               contentEditable=<ContentEditable
@@ -706,8 +706,8 @@ export const NotificationTemplateEditor = ({
             <p className="text-xs text-muted-foreground">
               {t("settings.notifications.templateEditor.previewNotice")}
             </p>
-            <div className="rounded-xl border border-border/60 bg-background/40 px-4 py-4 text-sm">
-              <div className="max-w-none whitespace-pre-wrap break-words text-foreground [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_hr]:border-border [&_li]:ml-4 [&_p]:leading-6 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_strong]:font-semibold">
+            <div className="rounded-xl border border-border/60 bg-background px-4 py-4 text-sm">
+              <div className="max-w-none whitespace-pre-wrap break-words text-foreground [&_blockquote]:rounded-md [&_blockquote]:border [&_blockquote]:border-border [&_blockquote]:px-3 [&_blockquote]:py-2 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_hr]:border-border [&_li]:ml-4 [&_p]:leading-6 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_strong]:font-semibold">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {renderTemplatePreview(value, previewTemplateValues)}
                 </ReactMarkdown>
@@ -717,14 +717,14 @@ export const NotificationTemplateEditor = ({
         </DialogContent>
       </Dialog>
 
-      <div className="rounded-xl border border-dashed border-border/70 bg-background/20 px-3 py-3">
+      <div className="rounded-xl border border-dashed border-border/70 bg-background px-3 py-3">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
           {t("settings.notifications.templateEditor.availableVariables")}
         </p>
         <p className="mt-2 text-xs leading-6 text-muted-foreground">
           {variableSuggestions
             .map((suggestion) => suggestion.snippet)
-            .join(", ")}
+            .join(",")}
         </p>
       </div>
     </div>

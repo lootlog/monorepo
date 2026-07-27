@@ -292,12 +292,9 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   }
 }
 
-@keyframes ll-npc-detection-bounce {
+@keyframes ll-npc-detection-settle {
   0% {
     transform: translateY(-6px) scale(0.988);
-  }
-  45% {
-    transform: translateY(0) scale(1.006);
   }
   100% {
     transform: translateY(0) scale(1);
@@ -319,8 +316,8 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   animation: ll-npc-detection-flash 820ms ease-out both;
 }
 
-#lootlog-root .ll-npc-detection-bounce {
-  animation: ll-npc-detection-bounce 340ms ease-out both;
+#lootlog-root .ll-npc-detection-settle {
+  animation: ll-npc-detection-settle 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 #lootlog-root .ll-npc-list-enter {

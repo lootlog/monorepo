@@ -85,8 +85,8 @@ const MemberSettingsDetailPageContent = () => {
 
   if (members && !member) {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-background/50">
-        <header className="shrink-0 border-b border-border bg-background/70 px-4 py-3 backdrop-blur-sm">
+      <div className="flex h-full min-h-0 flex-col bg-background">
+        <header className="shrink-0 border-b border-border bg-background px-4 py-3">
           <Button type="button" variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft className="size-4" />
             {t("settings.members.backToMembers")}
@@ -114,7 +114,7 @@ const MemberSettingsDetailPageContent = () => {
   const memberColor = getColorFromRole(member.roles);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 bg-background/50 px-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 bg-background px-3">
       <Card className="shrink-0 border-b border-t border-border px-4 py-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">

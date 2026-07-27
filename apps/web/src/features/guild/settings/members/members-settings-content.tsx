@@ -175,7 +175,7 @@ export const MembersSettingsContent = () => {
     statusFilter !== defaultStatusFilter || searchValue.trim() !== "";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background/50 px-3 gap-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background px-3 gap-3">
       <MembersSettingsHeader
         {...memberStats}
         onProblemsClick={() => {

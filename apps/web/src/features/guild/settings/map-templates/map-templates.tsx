@@ -86,15 +86,12 @@ export const MapTemplatesSettings = () => {
   return (
     <div className="flex flex-col h-full min-h-0">
       <MapTemplatesHeader onAddClick={() => setCreateDialogOpen(true)} />
-      <ScrollArea className="flex-1 min-h-0 bg-background/50">
+      <ScrollArea className="flex-1 min-h-0 bg-background">
         <div className="p-3 flex flex-col gap-3">
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Card
-                  key={i}
-                  className="border-border bg-card/40 p-3 backdrop-blur-sm"
-                >
+                <Card key={i} className="border-border bg-card p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-8 w-8 rounded-lg" />
@@ -106,7 +103,7 @@ export const MapTemplatesSettings = () => {
               ))}
             </div>
           ) : templates?.length === 0 ? (
-            <Card className="flex flex-col items-center justify-center h-64 gap-4 bg-card/40 backdrop-blur-sm">
+            <Card className="flex flex-col items-center justify-center h-64 gap-4 bg-card">
               <FileText className="w-16 h-16 text-muted-foreground" />
               <p className="text-muted-foreground">
                 {t("settings.mapTemplates.noTemplates")}
@@ -119,7 +116,7 @@ export const MapTemplatesSettings = () => {
                 open={expandedTemplates[template.id]}
                 onOpenChange={() => toggleExpanded(template.id)}
               >
-                <div className="rounded-lg border bg-card/40 backdrop-blur-sm overflow-hidden">
+                <div className="rounded-lg border bg-card  overflow-hidden">
                   <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-primary/10">

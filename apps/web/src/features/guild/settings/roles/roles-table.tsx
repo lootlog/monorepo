@@ -108,7 +108,7 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
         <col className="w-16" />
       </colgroup>
       <TableHeader
-        className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur-sm [&_tr]:!border-b-0"
+        className="sticky top-0 z-10 bg-sidebar/95  [&_tr]:!border-b-0"
         style={{ boxShadow: "inset 0 -1px 0 var(--border)" }}
       >
         <TableRow className="h-10 border-b-0 hover:bg-transparent">
@@ -145,7 +145,7 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
                 openRoleDetails(role);
               }}
               onKeyDown={(event) => {
-                if (event.key !== "Enter" && event.key !== " ") {
+                if (event.key !== "Enter" && event.key !== "") {
                   return;
                 }
 

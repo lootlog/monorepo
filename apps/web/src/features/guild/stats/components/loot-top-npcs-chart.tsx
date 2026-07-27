@@ -52,7 +52,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
 
   if (isLoading) {
     return (
-      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+      <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
         <h2 className="text-base font-semibold">
           {t("loots.stats.topNpcs.title")}
         </h2>
@@ -65,7 +65,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
 
   if (!data?.length) {
     return (
-      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+      <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
         <h2 className="text-base font-semibold">
           {t("loots.stats.topNpcs.title")}
         </h2>
@@ -79,7 +79,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
   }
 
   return (
-    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+    <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
       <h2 className="text-base font-semibold">
         {t("loots.stats.topNpcs.title")}
       </h2>

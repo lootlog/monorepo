@@ -16,7 +16,7 @@ type AppSidebarProps = {
 
 export const AppSidebar = ({ navigation }: AppSidebarProps) => {
   return (
-    <Sidebar>
+    <Sidebar className="border-r border-sidebar-border bg-sidebar">
       <SidebarContent className="h-full bg-sidebar">
         <SidebarGroup className="h-full p-0">
           <SidebarGroupContent className="h-full">
@@ -27,7 +27,7 @@ export const AppSidebar = ({ navigation }: AppSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="bg-sidebar p-0">
+      <SidebarFooter className="border-t border-sidebar-border bg-sidebar p-0">
         <UserMenu />
       </SidebarFooter>
     </Sidebar>

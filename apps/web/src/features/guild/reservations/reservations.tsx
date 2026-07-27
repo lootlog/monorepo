@@ -159,10 +159,10 @@ export const Reservations: React.FC = () => {
         .sort((a, b) => b.lvl - a.lvl);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-3 border-border bg-card p-4">
             <div className="flex items-center gap-3">
               <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

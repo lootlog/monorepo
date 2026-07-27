@@ -38,7 +38,6 @@ const UpdateUserPreferencesSchema = z.object({
       "cat-random",
     ])
     .optional(),
-  colorMode: z.enum(["light", "dark"]).optional(),
   chatAppearance: z
     .object({
       npcLayout: z.enum(["tile", "inline"]).optional(),

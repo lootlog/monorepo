@@ -3,7 +3,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const NpcSettingsDetailSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 bg-background/50 px-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 bg-background px-3">
       <Card className="shrink-0 border-b border-t border-border px-4 py-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
@@ -20,7 +20,7 @@ export const NpcSettingsDetailSkeleton = () => {
           </div>
         </div>
       </Card>
-      <Card className="overflow-hidden border-border bg-card/50 p-0 backdrop-blur-sm gap-0">
+      <Card className="overflow-hidden border-border bg-card p-0  gap-0">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
             <Skeleton className="size-9 shrink-0 rounded-lg" />
