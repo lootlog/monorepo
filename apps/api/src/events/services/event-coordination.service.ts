@@ -77,6 +77,7 @@ export class EventCoordinationService {
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, guildId },
       select: {
+        assignmentTimeoutMinutes: true,
         id: true,
         world: true,
         heroNpcs: {
@@ -232,6 +233,7 @@ export class EventCoordinationService {
       .sort(compareCoordinationHeroes);
 
     return {
+      assignmentTimeoutMinutes: event.assignmentTimeoutMinutes,
       generatedAt: now,
       eventId: event.id,
       world: event.world,

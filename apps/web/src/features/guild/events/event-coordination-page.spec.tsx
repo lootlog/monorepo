@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Permission } from "@lootlog/types";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventCoordinationPage } from "./event-coordination-page";
 import type { EventCoordinationResponseDto } from "@lootlog/api-client/models/main/event-coordination-response-dto";
 
@@ -76,6 +76,8 @@ vi.mock("./components/dialogs/event-action-dialog", () => ({
 
 describe("EventCoordinationPage", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-19T12:00:00.000Z"));
     vi.clearAllMocks();
     mocks.useParams.mockReturnValue({
       eventId: "event-1",
@@ -90,6 +92,10 @@ describe("EventCoordinationPage", () => {
       isPending: false,
       mutateAsync: vi.fn(),
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("renders the loading state", () => {
@@ -151,6 +157,28 @@ describe("EventCoordinationPage", () => {
     expect(html).toContain("events.coordination.actions.selfAssign");
     expect(html).toContain("events.coordination.actions.close_window");
   });
+
+  it("disables self assignment and shows a countdown before the assignment window", () => {
+    mocks.useGuildPermissions.mockReturnValue({
+      data: [Permission.LOOTLOG_EVENTS_WRITE],
+    });
+    mocks.getCoordination.mockReturnValue({
+      data: createCoordination([
+        createHero({
+          maxSpawnTime: "2026-06-19T13:30:00.000Z",
+          minSpawnTime: "2026-06-19T13:00:00.000Z",
+        }),
+      ]),
+      error: null,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    const html = renderPage();
+
+    expect(html).toContain('disabled=""');
+    expect(html).toContain("events.maps.assignmentDisabledWithTime");
+  });
 });
 
 function renderPage() {
@@ -161,6 +189,7 @@ function createCoordination(
   heroes: EventCoordinationResponseDto["heroes"],
 ): EventCoordinationResponseDto {
   return {
+    assignmentTimeoutMinutes: 5,
     eventId: "event-1",
     generatedAt: "2026-06-19T12:00:00.000Z",
     heroes,
@@ -180,7 +209,11 @@ function createCoordination(
   };
 }
 
-function createHero(): EventCoordinationResponseDto["heroes"][number] {
+function createHero(
+  timerOverrides: Partial<
+    NonNullable<EventCoordinationResponseDto["heroes"][number]["timer"]>
+  > = {},
+): EventCoordinationResponseDto["heroes"][number] {
   return {
     activeGaps: [
       {
@@ -215,6 +248,7 @@ function createHero(): EventCoordinationResponseDto["heroes"][number] {
       overdueMs: null,
       status: "OPEN",
       world: "pandora",
+      ...timerOverrides,
     },
   };
 }

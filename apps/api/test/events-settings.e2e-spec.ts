@@ -6,6 +6,7 @@ import {
   closeE2EApp,
   createE2EApp,
   createGuildFixture,
+  createMemberFixture,
   resetEventsTimersState,
   TEST_AUTH,
   withAuth,
@@ -30,6 +31,7 @@ describe("Events Settings E2E", () => {
 
   it("gets defaults and updates event settings", async () => {
     const guild = await createGuildFixture(prisma);
+    await createMemberFixture(prisma, { guildId: guild.id });
 
     await withAuth(
       request(app.getHttpServer()).get(`/guilds/${guild.id}/event-settings`),

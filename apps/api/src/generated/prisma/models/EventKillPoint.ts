@@ -59,6 +59,7 @@ export type EventKillPointMinAggregateOutputType = {
   trackingDurationPercentage: number | null
   confirmationDeadlineAt: Date | null
   confirmedAt: Date | null
+  confirmationExpiredAcknowledgedAt: Date | null
   timeOnMapSeconds: number | null
   afkPercentage: number | null
   wasPresent: boolean | null
@@ -76,6 +77,7 @@ export type EventKillPointMaxAggregateOutputType = {
   trackingDurationPercentage: number | null
   confirmationDeadlineAt: Date | null
   confirmedAt: Date | null
+  confirmationExpiredAcknowledgedAt: Date | null
   timeOnMapSeconds: number | null
   afkPercentage: number | null
   wasPresent: boolean | null
@@ -93,6 +95,7 @@ export type EventKillPointCountAggregateOutputType = {
   trackingDurationPercentage: number
   confirmationDeadlineAt: number
   confirmedAt: number
+  confirmationExpiredAcknowledgedAt: number
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: number
@@ -136,6 +139,7 @@ export type EventKillPointMinAggregateInputType = {
   trackingDurationPercentage?: true
   confirmationDeadlineAt?: true
   confirmedAt?: true
+  confirmationExpiredAcknowledgedAt?: true
   timeOnMapSeconds?: true
   afkPercentage?: true
   wasPresent?: true
@@ -153,6 +157,7 @@ export type EventKillPointMaxAggregateInputType = {
   trackingDurationPercentage?: true
   confirmationDeadlineAt?: true
   confirmedAt?: true
+  confirmationExpiredAcknowledgedAt?: true
   timeOnMapSeconds?: true
   afkPercentage?: true
   wasPresent?: true
@@ -170,6 +175,7 @@ export type EventKillPointCountAggregateInputType = {
   trackingDurationPercentage?: true
   confirmationDeadlineAt?: true
   confirmedAt?: true
+  confirmationExpiredAcknowledgedAt?: true
   timeOnMapSeconds?: true
   afkPercentage?: true
   wasPresent?: true
@@ -276,6 +282,7 @@ export type EventKillPointGroupByOutputType = {
   trackingDurationPercentage: number | null
   confirmationDeadlineAt: Date | null
   confirmedAt: Date | null
+  confirmationExpiredAcknowledgedAt: Date | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -318,6 +325,7 @@ export type EventKillPointWhereInput = {
   trackingDurationPercentage?: Prisma.FloatNullableFilter<"EventKillPoint"> | number | null
   confirmationDeadlineAt?: Prisma.DateTimeNullableFilter<"EventKillPoint"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"EventKillPoint"> | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.DateTimeNullableFilter<"EventKillPoint"> | Date | string | null
   timeOnMapSeconds?: Prisma.IntFilter<"EventKillPoint"> | number
   afkPercentage?: Prisma.FloatFilter<"EventKillPoint"> | number
   wasPresent?: Prisma.BoolFilter<"EventKillPoint"> | boolean
@@ -339,6 +347,7 @@ export type EventKillPointOrderByWithRelationInput = {
   trackingDurationPercentage?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  confirmationExpiredAcknowledgedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   timeOnMapSeconds?: Prisma.SortOrder
   afkPercentage?: Prisma.SortOrder
   wasPresent?: Prisma.SortOrder
@@ -364,6 +373,7 @@ export type EventKillPointWhereUniqueInput = Prisma.AtLeast<{
   trackingDurationPercentage?: Prisma.FloatNullableFilter<"EventKillPoint"> | number | null
   confirmationDeadlineAt?: Prisma.DateTimeNullableFilter<"EventKillPoint"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"EventKillPoint"> | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.DateTimeNullableFilter<"EventKillPoint"> | Date | string | null
   timeOnMapSeconds?: Prisma.IntFilter<"EventKillPoint"> | number
   afkPercentage?: Prisma.FloatFilter<"EventKillPoint"> | number
   wasPresent?: Prisma.BoolFilter<"EventKillPoint"> | boolean
@@ -385,6 +395,7 @@ export type EventKillPointOrderByWithAggregationInput = {
   trackingDurationPercentage?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  confirmationExpiredAcknowledgedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   timeOnMapSeconds?: Prisma.SortOrder
   afkPercentage?: Prisma.SortOrder
   wasPresent?: Prisma.SortOrder
@@ -412,6 +423,7 @@ export type EventKillPointScalarWhereWithAggregatesInput = {
   trackingDurationPercentage?: Prisma.FloatNullableWithAggregatesFilter<"EventKillPoint"> | number | null
   confirmationDeadlineAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EventKillPoint"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EventKillPoint"> | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EventKillPoint"> | Date | string | null
   timeOnMapSeconds?: Prisma.IntWithAggregatesFilter<"EventKillPoint"> | number
   afkPercentage?: Prisma.FloatWithAggregatesFilter<"EventKillPoint"> | number
   wasPresent?: Prisma.BoolWithAggregatesFilter<"EventKillPoint"> | boolean
@@ -429,6 +441,7 @@ export type EventKillPointCreateInput = {
   trackingDurationPercentage?: number | null
   confirmationDeadlineAt?: Date | string | null
   confirmedAt?: Date | string | null
+  confirmationExpiredAcknowledgedAt?: Date | string | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -450,6 +463,7 @@ export type EventKillPointUncheckedCreateInput = {
   trackingDurationPercentage?: number | null
   confirmationDeadlineAt?: Date | string | null
   confirmedAt?: Date | string | null
+  confirmationExpiredAcknowledgedAt?: Date | string | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -467,6 +481,7 @@ export type EventKillPointUpdateInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -488,6 +503,7 @@ export type EventKillPointUncheckedUpdateInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -507,6 +523,7 @@ export type EventKillPointCreateManyInput = {
   trackingDurationPercentage?: number | null
   confirmationDeadlineAt?: Date | string | null
   confirmedAt?: Date | string | null
+  confirmationExpiredAcknowledgedAt?: Date | string | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -524,6 +541,7 @@ export type EventKillPointUpdateManyMutationInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -543,6 +561,7 @@ export type EventKillPointUncheckedUpdateManyInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -577,6 +596,7 @@ export type EventKillPointCountOrderByAggregateInput = {
   trackingDurationPercentage?: Prisma.SortOrder
   confirmationDeadlineAt?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
+  confirmationExpiredAcknowledgedAt?: Prisma.SortOrder
   timeOnMapSeconds?: Prisma.SortOrder
   afkPercentage?: Prisma.SortOrder
   wasPresent?: Prisma.SortOrder
@@ -607,6 +627,7 @@ export type EventKillPointMaxOrderByAggregateInput = {
   trackingDurationPercentage?: Prisma.SortOrder
   confirmationDeadlineAt?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
+  confirmationExpiredAcknowledgedAt?: Prisma.SortOrder
   timeOnMapSeconds?: Prisma.SortOrder
   afkPercentage?: Prisma.SortOrder
   wasPresent?: Prisma.SortOrder
@@ -624,6 +645,7 @@ export type EventKillPointMinOrderByAggregateInput = {
   trackingDurationPercentage?: Prisma.SortOrder
   confirmationDeadlineAt?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
+  confirmationExpiredAcknowledgedAt?: Prisma.SortOrder
   timeOnMapSeconds?: Prisma.SortOrder
   afkPercentage?: Prisma.SortOrder
   wasPresent?: Prisma.SortOrder
@@ -742,6 +764,7 @@ export type EventKillPointCreateWithoutMemberInput = {
   trackingDurationPercentage?: number | null
   confirmationDeadlineAt?: Date | string | null
   confirmedAt?: Date | string | null
+  confirmationExpiredAcknowledgedAt?: Date | string | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -761,6 +784,7 @@ export type EventKillPointUncheckedCreateWithoutMemberInput = {
   trackingDurationPercentage?: number | null
   confirmationDeadlineAt?: Date | string | null
   confirmedAt?: Date | string | null
+  confirmationExpiredAcknowledgedAt?: Date | string | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -809,6 +833,7 @@ export type EventKillPointScalarWhereInput = {
   trackingDurationPercentage?: Prisma.FloatNullableFilter<"EventKillPoint"> | number | null
   confirmationDeadlineAt?: Prisma.DateTimeNullableFilter<"EventKillPoint"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"EventKillPoint"> | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.DateTimeNullableFilter<"EventKillPoint"> | Date | string | null
   timeOnMapSeconds?: Prisma.IntFilter<"EventKillPoint"> | number
   afkPercentage?: Prisma.FloatFilter<"EventKillPoint"> | number
   wasPresent?: Prisma.BoolFilter<"EventKillPoint"> | boolean
@@ -826,6 +851,7 @@ export type EventKillPointCreateWithoutKillInput = {
   trackingDurationPercentage?: number | null
   confirmationDeadlineAt?: Date | string | null
   confirmedAt?: Date | string | null
+  confirmationExpiredAcknowledgedAt?: Date | string | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -845,6 +871,7 @@ export type EventKillPointUncheckedCreateWithoutKillInput = {
   trackingDurationPercentage?: number | null
   confirmationDeadlineAt?: Date | string | null
   confirmedAt?: Date | string | null
+  confirmationExpiredAcknowledgedAt?: Date | string | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -889,6 +916,7 @@ export type EventKillPointCreateManyMemberInput = {
   trackingDurationPercentage?: number | null
   confirmationDeadlineAt?: Date | string | null
   confirmedAt?: Date | string | null
+  confirmationExpiredAcknowledgedAt?: Date | string | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -906,6 +934,7 @@ export type EventKillPointUpdateWithoutMemberInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -925,6 +954,7 @@ export type EventKillPointUncheckedUpdateWithoutMemberInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -943,6 +973,7 @@ export type EventKillPointUncheckedUpdateManyWithoutMemberInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -961,6 +992,7 @@ export type EventKillPointCreateManyKillInput = {
   trackingDurationPercentage?: number | null
   confirmationDeadlineAt?: Date | string | null
   confirmedAt?: Date | string | null
+  confirmationExpiredAcknowledgedAt?: Date | string | null
   timeOnMapSeconds: number
   afkPercentage: number
   wasPresent: boolean
@@ -978,6 +1010,7 @@ export type EventKillPointUpdateWithoutKillInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -997,6 +1030,7 @@ export type EventKillPointUncheckedUpdateWithoutKillInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1015,6 +1049,7 @@ export type EventKillPointUncheckedUpdateManyWithoutKillInput = {
   trackingDurationPercentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   confirmationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmationExpiredAcknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timeOnMapSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   afkPercentage?: Prisma.FloatFieldUpdateOperationsInput | number
   wasPresent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1036,6 +1071,7 @@ export type EventKillPointSelect<ExtArgs extends runtime.Types.Extensions.Intern
   trackingDurationPercentage?: boolean
   confirmationDeadlineAt?: boolean
   confirmedAt?: boolean
+  confirmationExpiredAcknowledgedAt?: boolean
   timeOnMapSeconds?: boolean
   afkPercentage?: boolean
   wasPresent?: boolean
@@ -1057,6 +1093,7 @@ export type EventKillPointSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   trackingDurationPercentage?: boolean
   confirmationDeadlineAt?: boolean
   confirmedAt?: boolean
+  confirmationExpiredAcknowledgedAt?: boolean
   timeOnMapSeconds?: boolean
   afkPercentage?: boolean
   wasPresent?: boolean
@@ -1078,6 +1115,7 @@ export type EventKillPointSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   trackingDurationPercentage?: boolean
   confirmationDeadlineAt?: boolean
   confirmedAt?: boolean
+  confirmationExpiredAcknowledgedAt?: boolean
   timeOnMapSeconds?: boolean
   afkPercentage?: boolean
   wasPresent?: boolean
@@ -1099,6 +1137,7 @@ export type EventKillPointSelectScalar = {
   trackingDurationPercentage?: boolean
   confirmationDeadlineAt?: boolean
   confirmedAt?: boolean
+  confirmationExpiredAcknowledgedAt?: boolean
   timeOnMapSeconds?: boolean
   afkPercentage?: boolean
   wasPresent?: boolean
@@ -1107,7 +1146,7 @@ export type EventKillPointSelectScalar = {
   createdAt?: boolean
 }
 
-export type EventKillPointOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "killId" | "memberId" | "basePoints" | "points" | "manualAdjustmentPoints" | "trackingDurationSeconds" | "trackingDurationPercentage" | "confirmationDeadlineAt" | "confirmedAt" | "timeOnMapSeconds" | "afkPercentage" | "wasPresent" | "bonusBreakdown" | "mapPresenceData" | "createdAt", ExtArgs["result"]["eventKillPoint"]>
+export type EventKillPointOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "killId" | "memberId" | "basePoints" | "points" | "manualAdjustmentPoints" | "trackingDurationSeconds" | "trackingDurationPercentage" | "confirmationDeadlineAt" | "confirmedAt" | "confirmationExpiredAcknowledgedAt" | "timeOnMapSeconds" | "afkPercentage" | "wasPresent" | "bonusBreakdown" | "mapPresenceData" | "createdAt", ExtArgs["result"]["eventKillPoint"]>
 export type EventKillPointInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   kill?: boolean | Prisma.EventHeroKillDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
@@ -1138,6 +1177,7 @@ export type $EventKillPointPayload<ExtArgs extends runtime.Types.Extensions.Inte
     trackingDurationPercentage: number | null
     confirmationDeadlineAt: Date | null
     confirmedAt: Date | null
+    confirmationExpiredAcknowledgedAt: Date | null
     timeOnMapSeconds: number
     afkPercentage: number
     wasPresent: boolean
@@ -1579,6 +1619,7 @@ export interface EventKillPointFieldRefs {
   readonly trackingDurationPercentage: Prisma.FieldRef<"EventKillPoint", 'Float'>
   readonly confirmationDeadlineAt: Prisma.FieldRef<"EventKillPoint", 'DateTime'>
   readonly confirmedAt: Prisma.FieldRef<"EventKillPoint", 'DateTime'>
+  readonly confirmationExpiredAcknowledgedAt: Prisma.FieldRef<"EventKillPoint", 'DateTime'>
   readonly timeOnMapSeconds: Prisma.FieldRef<"EventKillPoint", 'Int'>
   readonly afkPercentage: Prisma.FieldRef<"EventKillPoint", 'Float'>
   readonly wasPresent: Prisma.FieldRef<"EventKillPoint", 'Boolean'>

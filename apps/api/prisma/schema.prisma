@@ -1031,6 +1031,7 @@ model EventKillPoint {
   trackingDurationPercentage  Float?
   confirmationDeadlineAt      DateTime?
   confirmedAt                 DateTime?
+  confirmationExpiredAcknowledgedAt DateTime?
   timeOnMapSeconds        Int
   afkPercentage           Float
   wasPresent              Boolean

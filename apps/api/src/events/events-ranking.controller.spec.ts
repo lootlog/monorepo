@@ -6,12 +6,13 @@ import { EventsRankingController } from "./events-ranking.controller";
 describe("EventsRankingController", () => {
   const mockEventsService = {
     getPendingParticipationConfirmations: vi.fn(),
+    acknowledgeExpiredParticipationConfirmations: vi.fn(),
     confirmParticipationForKill: vi.fn(),
     getEventOverview: vi.fn(),
     getRanking: vi.fn(),
+    getRankingEditHistories: vi.fn(),
     filterEventHeroesByLevel: vi.fn(),
     updateRankingPoints: vi.fn(),
-    getRankingEditHistory: vi.fn(),
     getEventHeroTimers: vi.fn(),
     isHeroVisibleToUser: vi.fn(),
     getEventHeroStats: vi.fn(),
@@ -55,8 +56,8 @@ describe("EventsRankingController", () => {
       heroNpcs: [{ npcName: "Visible Hero" }],
     });
     mockEventsService.getRanking.mockResolvedValue([
-      { heroNpcName: "Visible Hero" },
-      { heroNpcName: "Hidden Hero" },
+      { id: "ranking-1", heroNpcName: "Visible Hero" },
+      { id: "ranking-2", heroNpcName: "Hidden Hero" },
     ]);
     mockEventsService.filterEventHeroesByLevel.mockReturnValue({
       heroNpcs: [{ npcName: "Visible Hero" }],
@@ -66,7 +67,102 @@ describe("EventsRankingController", () => {
       controller.getRanking({ id: "guild-1" }, "event-1", [] as never, [
         Permission.LOOTLOG_EVENTS_READ,
       ]),
-    ).resolves.toEqual([{ heroNpcName: "Visible Hero" }]);
+    ).resolves.toEqual([
+      {
+        id: "ranking-1",
+        heroNpcName: "Visible Hero",
+        editHistory: [],
+      },
+    ]);
+    expect(mockEventsService.getRankingEditHistories).not.toHaveBeenCalled();
+  });
+
+  it("attaches bulk edit histories for owners after hero filtering", async () => {
+    mockEventsService.getEventOverview.mockResolvedValue({
+      heroNpcs: [{ npcName: "Visible Hero" }],
+    });
+    mockEventsService.getRanking.mockResolvedValue([
+      { id: "ranking-1", heroNpcName: "Visible Hero" },
+      { id: "ranking-2", heroNpcName: "Hidden Hero" },
+    ]);
+    mockEventsService.filterEventHeroesByLevel.mockReturnValue({
+      heroNpcs: [{ npcName: "Visible Hero" }],
+    });
+    mockEventsService.getRankingEditHistories.mockResolvedValue(
+      new Map([
+        [
+          "ranking-1",
+          [
+            {
+              id: "history-1",
+              rankingId: "ranking-1",
+            },
+          ],
+        ],
+      ]),
+    );
+
+    await expect(
+      controller.getRanking({ id: "guild-1" }, "event-1", [] as never, [
+        Permission.OWNER,
+      ]),
+    ).resolves.toEqual([
+      {
+        id: "ranking-1",
+        heroNpcName: "Visible Hero",
+        editHistory: [
+          {
+            id: "history-1",
+            rankingId: "ranking-1",
+          },
+        ],
+      },
+    ]);
+    expect(mockEventsService.getRankingEditHistories).toHaveBeenCalledWith(
+      "guild-1",
+      "event-1",
+      ["ranking-1"],
+    );
+  });
+
+  it("skips edit history queries when no ranking rows are visible", async () => {
+    mockEventsService.getEventOverview.mockResolvedValue({
+      heroNpcs: [{ npcName: "Visible Hero" }],
+    });
+    mockEventsService.getRanking.mockResolvedValue([
+      { id: "ranking-1", heroNpcName: "Hidden Hero" },
+    ]);
+    mockEventsService.filterEventHeroesByLevel.mockReturnValue({
+      heroNpcs: [{ npcName: "Visible Hero" }],
+    });
+
+    await expect(
+      controller.getRanking({ id: "guild-1" }, "event-1", [] as never, [
+        Permission.OWNER,
+      ]),
+    ).resolves.toEqual([]);
+    expect(mockEventsService.getRankingEditHistories).not.toHaveBeenCalled();
+  });
+
+  it("acknowledges expired confirmations for the current guild member", async () => {
+    mockEventsService.acknowledgeExpiredParticipationConfirmations.mockResolvedValue(
+      {
+        acknowledgedCount: 2,
+      },
+    );
+
+    await expect(
+      controller.acknowledgeExpiredParticipationConfirmations(
+        { id: "guild-1" },
+        "event-1",
+        { id: 123 },
+        { killIds: ["kill-1", "kill-2"] },
+      ),
+    ).resolves.toEqual({ acknowledgedCount: 2 });
+
+    expect(
+      mockEventsService.acknowledgeExpiredParticipationConfirmations,
+    ).toHaveBeenCalledWith("guild-1", "event-1", 123, ["kill-1", "kill-2"]);
   });
 
   it("filters event hero timers by hero visibility", async () => {
