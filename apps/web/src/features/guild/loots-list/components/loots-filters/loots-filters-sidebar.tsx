@@ -1,6 +1,5 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
 import { Input } from "@lootlog/ui/components/input";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -365,17 +364,17 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
           className,
         )}
       >
-        <Card
+        <div
           className={cn(
-            "flex min-h-0 flex-1 flex-col bg-filters-sidebar p-0",
-            embedded ? "rounded-none border-0" : "border-border",
+            "flex min-h-0 flex-1 flex-col overflow-hidden bg-filters-sidebar",
+            embedded ? "border-0" : "rounded-2xl border border-border",
           )}
         >
           <div className="flex-1 overflow-hidden">
             <ScrollArea className="h-full">
-              <div className="space-y-3 p-3 sm:p-4">
-                <div className="space-y-3 rounded-xl border border-border bg-card/35 p-3">
-                  <div className="flex items-center justify-between">
+              <div>
+                <div className="space-y-3 border-b border-border/70 p-3 sm:p-4">
+                  <div className="flex min-h-7 items-center justify-between">
                     <Label className="text-sm font-semibold">
                       {t("loots.filtersPanel.quickFilters.title")}
                     </Label>
@@ -440,14 +439,10 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                   </div>
                 </div>
 
-                <Accordion
-                  type="multiple"
-                  defaultValue={initiallyOpenSections}
-                  className="space-y-2"
-                >
+                <Accordion type="multiple" defaultValue={initiallyOpenSections}>
                   <AccordionItem
                     value="npc"
-                    className="overflow-hidden rounded-xl border border-border bg-card/30 px-3"
+                    className="border-b border-border/70 px-3 sm:px-4"
                   >
                     <AccordionTrigger className="min-h-11 py-0">
                       {t("loots.filtersPanel.npcSection.title")}
@@ -552,7 +547,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
 
                   <AccordionItem
                     value="item"
-                    className="overflow-hidden rounded-xl border border-border bg-card/30 px-3"
+                    className="border-b border-border/70 px-3 sm:px-4"
                   >
                     <AccordionTrigger className="min-h-11 py-0">
                       {t("loots.filtersPanel.itemSection.title")}
@@ -730,10 +725,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                     </AccordionContent>
                   </AccordionItem>
 
-                  <AccordionItem
-                    value="player"
-                    className="overflow-hidden rounded-xl border border-border bg-card/30 px-3"
-                  >
+                  <AccordionItem value="player" className="px-3 sm:px-4">
                     <AccordionTrigger className="min-h-11 py-0">
                       {t("loots.filtersPanel.playerSection.title")}
                       {playerActiveFilterCount > 0 && (
@@ -827,7 +819,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
               </motion.div>
             )}
           </AnimatePresence>
-        </Card>
+        </div>
       </div>
     </>
   );

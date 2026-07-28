@@ -217,7 +217,7 @@ export const LootSearchCommand = ({
         onValueChange={setSearchQuery}
         className="h-14 pr-12 text-base"
       />
-      <CommandList className="custom-scrollbar h-64 min-h-64 p-2 sm:h-72 sm:min-h-72 [&>div]:min-h-full">
+      <CommandList className="custom-scrollbar h-[min(60dvh,32rem)] max-h-[min(60dvh,32rem)] p-2 [&>div]:h-full">
         <AnimatePresence mode="wait" initial={false}>
           {!trimmedSearch && (
             <motion.div
@@ -226,7 +226,7 @@ export const LootSearchCommand = ({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex min-h-52 flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
               <div className="flex size-12 items-center justify-center rounded-xl border border-border bg-background">
                 <PackageSearch className="size-6 text-primary" />
@@ -254,7 +254,7 @@ export const LootSearchCommand = ({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex min-h-36 flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
               <PackageSearch className="size-6 text-primary" />
               <p className="mt-3 text-sm text-muted-foreground">
@@ -270,7 +270,7 @@ export const LootSearchCommand = ({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex min-h-44 flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
               <div className="flex size-11 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10">
                 <CircleAlert className="size-5 text-amber-400" />
@@ -294,7 +294,7 @@ export const LootSearchCommand = ({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex min-h-44 flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
               <Spinner className="size-6 text-primary" />
               <h3 className="mt-4 text-sm font-semibold text-foreground">
@@ -313,7 +313,7 @@ export const LootSearchCommand = ({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex min-h-44 flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
               <div className="flex size-11 items-center justify-center rounded-xl border border-destructive/30 bg-destructive/10">
                 <CircleAlert className="size-5 text-destructive" />
@@ -334,7 +334,7 @@ export const LootSearchCommand = ({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex min-h-44 flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
               <div className="flex size-11 items-center justify-center rounded-xl border border-border bg-background">
                 <SearchX className="size-5 text-muted-foreground" />
@@ -363,7 +363,7 @@ export const LootSearchCommand = ({
                 <CommandItem
                   value={`hid-${hidItem.hid}`}
                   onSelect={() => handleSelectItemByHid(hidItem.hid)}
-                  className="min-h-16 rounded-lg px-3 py-2.5"
+                  className="min-h-14 rounded-lg px-3 py-2"
                 >
                   <ItemImage
                     icon={hidItem.icon}
@@ -390,7 +390,7 @@ export const LootSearchCommand = ({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex min-h-40 flex-col items-center justify-center py-10 text-muted-foreground"
+              className="flex h-full flex-col items-center justify-center py-10 text-muted-foreground"
             >
               <Spinner className="mb-3 size-6 text-primary" />
               <span className="text-sm">
@@ -418,7 +418,7 @@ export const LootSearchCommand = ({
                         key={`npc-${npc.id}`}
                         value={`npc-${npc.id}`}
                         onSelect={() => handleSelectNpc(npc)}
-                        className="h-16 min-h-16 rounded-lg px-3 py-2"
+                        className="h-14 min-h-14 rounded-lg px-3 py-1.5"
                       >
                         <NpcSearchTile icon={npc.icon} name={npc.name} />
                         <div className="min-w-0 flex-1">
@@ -448,7 +448,7 @@ export const LootSearchCommand = ({
                         key={`item-${item.id}`}
                         value={`item-${item.id}`}
                         onSelect={() => handleSelectItem(item)}
-                        className="h-16 min-h-16 rounded-lg px-3 py-2"
+                        className="h-14 min-h-14 rounded-lg px-3 py-1.5"
                       >
                         <ItemImage
                           icon={item.icon}
@@ -490,7 +490,7 @@ export const LootSearchCommand = ({
                         key={`player-${player.id}`}
                         value={`player-${player.id}`}
                         onSelect={() => handleSelectPlayer(player)}
-                        className="h-16 min-h-16 rounded-lg px-3 py-2"
+                        className="h-14 min-h-14 rounded-lg px-3 py-1.5"
                       >
                         <PlayerSearchTile
                           icon={player.icon}
@@ -518,7 +518,7 @@ export const LootSearchCommand = ({
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="flex min-h-44 flex-col items-center justify-center px-6 py-8 text-center"
+                className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
               >
                 <div className="flex size-11 items-center justify-center rounded-xl border border-border bg-background">
                   <SearchX className="size-5 text-muted-foreground" />
