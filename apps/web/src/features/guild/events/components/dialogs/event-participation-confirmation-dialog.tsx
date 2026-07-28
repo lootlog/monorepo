@@ -188,12 +188,7 @@ const EventParticipationConfirmationDialogContent = ({
         }),
       });
     } catch {
-      toast.error(
-        t(
-          "events.confirmation.acknowledgeError",
-          "Nie udało się zapamiętać przeterminowanych potwierdzeń",
-        ),
-      );
+      toast.error(t("events.confirmation.acknowledgeError"));
     }
   };
 

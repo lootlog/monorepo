@@ -30,7 +30,7 @@ vi.mock("@tanstack/react-query", () => ({
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string) => fallback,
+    t: (key: string, fallback?: string) => fallback ?? key,
   }),
 }));
 
