@@ -82,7 +82,7 @@ overrides:
   sharp@<0.35.0: ">=0.35.0"
   valibot@<=1.4.1: ">=1.4.2"
 packageExtensions:
-  "@nestjs/cli@11.0.24":
+  "@nestjs/cli@^11.0.24":
     dependencies:
       typescript-legacy: "npm:typescript@6.0.3"
   "@hookform/resolvers":
