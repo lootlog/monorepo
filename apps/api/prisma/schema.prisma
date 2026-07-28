@@ -296,6 +296,7 @@ model Member {
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
   @@index([userId, guildId, active, lastDiscordSyncAt])
+  @@index([globalUserId, guildId, active])
 }
 
 model Timer {
