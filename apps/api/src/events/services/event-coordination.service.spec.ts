@@ -37,6 +37,7 @@ describe("EventCoordinationService", () => {
     );
 
     mockPrisma.event.findFirst.mockResolvedValue({
+      assignmentTimeoutMinutes: 7,
       id: eventId,
       world: "tempest",
       heroNpcs: [createHero()],
@@ -60,6 +61,7 @@ describe("EventCoordinationService", () => {
   it("marks heroes without timers as idle and uses assigned maps as coverage", async () => {
     const result = await service.getCoordination(guildId, eventId);
 
+    expect(result.assignmentTimeoutMinutes).toBe(7);
     expect(result.summary).toMatchObject({
       criticalCount: 0,
       warningCount: 0,

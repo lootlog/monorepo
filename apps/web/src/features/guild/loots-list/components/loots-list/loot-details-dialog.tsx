@@ -10,7 +10,7 @@ import { LootComments } from "@/features/guild/loots-list/components/loots-list/
 import { LootDetails } from "@/features/guild/loots-list/components/loots-list/loot-details";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
+import { PlayerTile } from "@/components/tiles";
 import { LootDetailsActions } from "@/features/guild/loots-list/components/loots-list/loot-details-actions";
 import { AlertCircle, Calendar, MapPin } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";

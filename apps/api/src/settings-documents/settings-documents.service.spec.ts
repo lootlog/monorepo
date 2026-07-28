@@ -20,7 +20,7 @@ const createPrismaMock = () => {
         findMany: vi.fn(),
       },
       member: {
-        findUnique: vi.fn(),
+        findFirst: vi.fn(),
       },
       $transaction: vi.fn(
         async (operation: (client: typeof transactionClient) => unknown) =>
@@ -31,6 +31,51 @@ const createPrismaMock = () => {
 };
 
 describe("SettingsDocumentsService", () => {
+  it("allows guild settings for an active member linked to the user", async () => {
+    const { prisma } = createPrismaMock();
+    prisma.member.findFirst.mockImplementation(({ where }) => {
+      if (
+        where.globalUserId === "user-1" &&
+        where.guildId === "guild-1" &&
+        where.active === true
+      ) {
+        return { id: 1 };
+      }
+
+      return null;
+    });
+    prisma.userSettingDocument.findMany.mockResolvedValue([]);
+    const service = new SettingsDocumentsService(
+      prisma as unknown as PrismaService,
+    );
+
+    await expect(
+      service.getPreferences("user-1", {
+        domains: ["events"],
+        guildId: "guild-1",
+      }),
+    ).resolves.toEqual({
+      domains: {
+        events: expect.any(Object),
+      },
+    });
+  });
+
+  it("rejects guild settings without an active member linked to the user", async () => {
+    const { prisma } = createPrismaMock();
+    prisma.member.findFirst.mockResolvedValue(null);
+    const service = new SettingsDocumentsService(
+      prisma as unknown as PrismaService,
+    );
+
+    await expect(
+      service.getPreferences("user-1", {
+        domains: ["events"],
+        guildId: "guild-1",
+      }),
+    ).rejects.toThrow("Guild settings are not accessible");
+  });
+
   it("returns effective values, layers and field sources for a context", async () => {
     const { prisma } = createPrismaMock();
     prisma.userSettingDocument.findMany.mockResolvedValue([

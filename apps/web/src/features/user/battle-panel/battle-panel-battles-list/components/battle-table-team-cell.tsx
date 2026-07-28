@@ -1,4 +1,4 @@
-import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
+import { PlayerTile } from "@/components/tiles";
 import {
   BattleDamageTags,
   getBattleDamageTags,

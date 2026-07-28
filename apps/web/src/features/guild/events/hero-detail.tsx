@@ -40,6 +40,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
+import { getAssignmentAvailability } from "./utils/get-assignment-availability";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   useGuildsControllerGetGuildById,
@@ -351,29 +352,16 @@ export const HeroDetail = () => {
     );
   }
 
-  const getAssignmentStatus = () => {
-    if (!hero) return { allowed: false, enabledAt: null };
-    if (!heroTimer) return { allowed: false, enabledAt: null };
-
-    if (windowStatus === "OVERDUE") {
-      return { allowed: false, enabledAt: null };
-    }
-
-    const minSpawn = new Date(heroTimer.minSpawnTime);
-    const now = new Date();
-    const timeoutMinutes = event?.assignmentTimeoutMinutes ?? 5;
-    const timeoutMs = timeoutMinutes * 60 * 1000;
-
-    const allowed = minSpawn.getTime() - now.getTime() <= timeoutMs;
-    const enabledAt = allowed ? null : new Date(minSpawn.getTime() - timeoutMs);
-
-    return { allowed, enabledAt };
-  };
-
-  const { allowed: assignmentAllowed, enabledAt: assignmentEnabledAt } =
-    getAssignmentStatus();
+  const {
+    allowed: assignmentAllowed,
+    enabledAt: assignmentEnabledAt,
+    reason: assignmentDisabledReason,
+  } = getAssignmentAvailability({
+    assignmentTimeoutMinutes: event?.assignmentTimeoutMinutes ?? 5,
+    timer: heroTimer,
+  });
   const assignmentDisabledMessage =
-    windowStatus === "OVERDUE"
+    assignmentDisabledReason === "OVERDUE"
       ? t("events.maps.assignmentDisabledOverdue")
       : null;
 

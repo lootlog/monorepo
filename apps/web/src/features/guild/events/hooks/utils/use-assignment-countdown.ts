@@ -13,7 +13,13 @@ export const useAssignmentCountdown = (
   assignmentEnabledAt?: Date | null,
 ) => {
   const [isEnabled, setIsEnabled] = useState(!assignmentDisabled);
-  const [formattedTime, setFormattedTime] = useState<string | null>(null);
+  const [formattedTime, setFormattedTime] = useState<string | null>(() => {
+    if (!assignmentDisabled || !assignmentEnabledAt) {
+      return null;
+    }
+
+    return formatTimeRemaining(assignmentEnabledAt);
+  });
 
   useEffect(() => {
     if (!assignmentDisabled) {

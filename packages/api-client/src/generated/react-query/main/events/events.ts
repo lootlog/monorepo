@@ -27,6 +27,18 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AcknowledgeExpiredParticipationConfirmationsDto
+} from '../../../models/main/acknowledge-expired-participation-confirmations-dto';
+
+import type {
+  AcknowledgeExpiredParticipationConfirmationsPathParameters
+} from '../../../models/main/acknowledge-expired-participation-confirmations-path-parameters';
+
+import type {
+  AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput
+} from '../../../models/main/acknowledge-expired-participation-confirmations-response-dto-output';
+
+import type {
   AssignMapLocationDto
 } from '../../../models/main/assign-map-location-dto';
 
@@ -311,10 +323,6 @@ import type {
 } from '../../../models/main/list-pending-participation-confirmations-path-parameters';
 
 import type {
-  ListRankingEditHistoryPathParameters
-} from '../../../models/main/list-ranking-edit-history-path-parameters';
-
-import type {
   NullableCoverageGapResponseDto
 } from '../../../models/main/nullable-coverage-gap-response-dto';
 
@@ -325,10 +333,6 @@ import type {
 import type {
   PendingParticipationConfirmationsResponseDto
 } from '../../../models/main/pending-participation-confirmations-response-dto';
-
-import type {
-  RankingEditHistoryEntryResponseDto
-} from '../../../models/main/ranking-edit-history-entry-response-dto';
 
 import type {
   RecalculateEventPointsPathParameters
@@ -2722,7 +2726,78 @@ export const useGetListPendingParticipationConfirmationsQueryData = () => {
 }
 
 
-export const getConfirmParticipationForKillUrl = ({ guildId, eventId, killId }: ConfirmParticipationForKillPathParameters,) => {
+export const getAcknowledgeExpiredParticipationConfirmationsUrl = ({ guildId, eventId }: AcknowledgeExpiredParticipationConfirmationsPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/events/${eventId}/participation-confirmations/expired/acknowledge`
+}
+
+/**
+ * @summary Acknowledge expired participation confirmations
+ */
+export const acknowledgeExpiredParticipationConfirmations = async ({ guildId, eventId }: AcknowledgeExpiredParticipationConfirmationsPathParameters,
+    acknowledgeExpiredParticipationConfirmationsDto: AcknowledgeExpiredParticipationConfirmationsDto, options?: Parameters<typeof mainFetch>[1]): Promise<AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput> => {
+
+  return mainFetch<AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput>(getAcknowledgeExpiredParticipationConfirmationsUrl({ guildId, eventId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(acknowledgeExpiredParticipationConfirmationsDto)
+  }
+);}
+
+
+
+
+
+export const getAcknowledgeExpiredParticipationConfirmationsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acknowledgeExpiredParticipationConfirmations>>, TError,{pathParams: AcknowledgeExpiredParticipationConfirmationsPathParameters;data: BodyType<AcknowledgeExpiredParticipationConfirmationsDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acknowledgeExpiredParticipationConfirmations>>, TError,{pathParams: AcknowledgeExpiredParticipationConfirmationsPathParameters;data: BodyType<AcknowledgeExpiredParticipationConfirmationsDto>}, TContext> => {
+
+const mutationKey = ['acknowledgeExpiredParticipationConfirmations'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acknowledgeExpiredParticipationConfirmations>>, {pathParams: AcknowledgeExpiredParticipationConfirmationsPathParameters;data: BodyType<AcknowledgeExpiredParticipationConfirmationsDto>}> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  acknowledgeExpiredParticipationConfirmations(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcknowledgeExpiredParticipationConfirmationsMutationResult = NonNullable<Awaited<ReturnType<typeof acknowledgeExpiredParticipationConfirmations>>>
+    export type AcknowledgeExpiredParticipationConfirmationsMutationBody = BodyType<AcknowledgeExpiredParticipationConfirmationsDto>
+    export type AcknowledgeExpiredParticipationConfirmationsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Acknowledge expired participation confirmations
+ */
+export const useAcknowledgeExpiredParticipationConfirmations = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acknowledgeExpiredParticipationConfirmations>>, TError,{pathParams: AcknowledgeExpiredParticipationConfirmationsPathParameters;data: BodyType<AcknowledgeExpiredParticipationConfirmationsDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof acknowledgeExpiredParticipationConfirmations>>,
+        TError,
+        {pathParams: AcknowledgeExpiredParticipationConfirmationsPathParameters;data: BodyType<AcknowledgeExpiredParticipationConfirmationsDto>},
+        TContext
+      > => {
+      return useMutation(getAcknowledgeExpiredParticipationConfirmationsMutationOptions(options), queryClient);
+    }
+    export const getConfirmParticipationForKillUrl = ({ guildId, eventId, killId }: ConfirmParticipationForKillPathParameters,) => {
 
 
 
@@ -3008,150 +3083,7 @@ export const useUpdateRankingPoints = <TError = ErrorType<void>,
       > => {
       return useMutation(getUpdateRankingPointsMutationOptions(options), queryClient);
     }
-    export const getListRankingEditHistoryUrl = ({ guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters,) => {
-
-
-
-
-  return `/guilds/${guildId}/events/${eventId}/ranking/${rankingId}/history`
-}
-
-/**
- * Get the edit history for a ranking entry (OWNER/ADMIN only)
- * @summary Get ranking edit history
- */
-export const listRankingEditHistory = async ({ guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<RankingEditHistoryEntryResponseDto[]> => {
-
-  return mainFetch<RankingEditHistoryEntryResponseDto[]>(getListRankingEditHistoryUrl({ guildId, eventId, rankingId }),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListRankingEditHistoryQueryKey = ({ guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters,) => {
-    return [
-    `/guilds/${guildId}/events/${eventId}/ranking/${rankingId}/history`
-    ] as const;
-    }
-
-
-export const getListRankingEditHistoryQueryOptions = <TData = Awaited<ReturnType<typeof listRankingEditHistory>>, TError = ErrorType<void>>({ guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRankingEditHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListRankingEditHistoryQueryKey({ guildId, eventId, rankingId });
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRankingEditHistory>>> = ({ signal }) => listRankingEditHistory({ guildId, eventId, rankingId }, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined && eventId !== null && eventId !== undefined && rankingId !== null && rankingId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRankingEditHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ListRankingEditHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof listRankingEditHistory>>>
-export type ListRankingEditHistoryQueryError = ErrorType<void>
-
-
-export function useListRankingEditHistory<TData = Awaited<ReturnType<typeof listRankingEditHistory>>, TError = ErrorType<void>>(
- pathParams: ListRankingEditHistoryPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRankingEditHistory>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listRankingEditHistory>>,
-          TError,
-          Awaited<ReturnType<typeof listRankingEditHistory>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof mainFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListRankingEditHistory<TData = Awaited<ReturnType<typeof listRankingEditHistory>>, TError = ErrorType<void>>(
- pathParams: ListRankingEditHistoryPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRankingEditHistory>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listRankingEditHistory>>,
-          TError,
-          Awaited<ReturnType<typeof listRankingEditHistory>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof mainFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListRankingEditHistory<TData = Awaited<ReturnType<typeof listRankingEditHistory>>, TError = ErrorType<void>>(
- pathParams: ListRankingEditHistoryPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRankingEditHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Get ranking edit history
- */
-
-export function useListRankingEditHistory<TData = Awaited<ReturnType<typeof listRankingEditHistory>>, TError = ErrorType<void>>(
- { guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRankingEditHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getListRankingEditHistoryQueryOptions({ guildId, eventId, rankingId },options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @summary Get ranking edit history
- */
-export const prefetchListRankingEditHistoryQuery = async <TData = Awaited<ReturnType<typeof listRankingEditHistory>>, TError = ErrorType<void>>(
- queryClient: QueryClient, { guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRankingEditHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
-
-  ): Promise<QueryClient> => {
-
-  const queryOptions = getListRankingEditHistoryQueryOptions({ guildId, eventId, rankingId },options)
-
-  await queryClient.prefetchQuery(queryOptions);
-
-  return queryClient;
-}
-
-/**
- * @summary Get ranking edit history
- */
-export const invalidateListRankingEditHistory = async (
- queryClient: QueryClient, { guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters, options?: InvalidateOptions
-  ): Promise<QueryClient> => {
-
-  await queryClient.invalidateQueries({ queryKey: getListRankingEditHistoryQueryKey({ guildId, eventId, rankingId }) }, options);
-
-  return queryClient;
-}
-
-/**
- * @summary Get ranking edit history
- */
-export const useSetListRankingEditHistoryQueryData = () => {
-  const queryClient = useQueryClient();
-  return ({ guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters,updater: Awaited<ReturnType<typeof listRankingEditHistory>> | undefined | ((old: Awaited<ReturnType<typeof listRankingEditHistory>> | undefined) => Awaited<ReturnType<typeof listRankingEditHistory>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listRankingEditHistory>>>({ queryKey: getListRankingEditHistoryQueryKey({ guildId, eventId, rankingId }) }, updater);
-  };
-}
-
-/**
- * @summary Get ranking edit history
- */
-export const useGetListRankingEditHistoryQueryData = () => {
-  const queryClient = useQueryClient();
-  return ({ guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters,) =>
-    queryClient.getQueryData<Awaited<ReturnType<typeof listRankingEditHistory>>>(getListRankingEditHistoryQueryKey({ guildId, eventId, rankingId }));
-}
-
-
-export const getListEventHeroTimersUrl = ({ guildId, eventId }: ListEventHeroTimersPathParameters,
+    export const getListEventHeroTimersUrl = ({ guildId, eventId }: ListEventHeroTimersPathParameters,
     params: ListEventHeroTimersParams,) => {
   const normalizedParams = new URLSearchParams();
 
