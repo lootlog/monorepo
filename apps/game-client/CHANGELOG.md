@@ -1,5 +1,20 @@
 # @lootlog/game-client
 
+## 1.2.0
+
+### Minor Changes
+
+- 9096829: Introduce the dark-only Lootlog Signal System across frontend surfaces, replace
+  the default web theme with Default v2, and remove the obsolete color-mode
+  preference from the database and public API contracts.
+
+### Patch Changes
+
+- 6defdc4: Preserve every inbound runtime packet, share one full-envelope game event processor across overlapping client registrations, deduplicate semantic battle replays, and harden battle creation retries after lock or raw-storage failures.
+- Updated dependencies [9096829]
+  - @lootlog/api-client@2.0.0
+  - @lootlog/types@2.0.0
+
 ## 1.1.1
 
 ### Patch Changes
