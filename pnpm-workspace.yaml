@@ -93,3 +93,4 @@ syncInjectedDepsAfterScripts:
 verifyDepsBeforeRun: false
 patchedDependencies:
   "@nestjs/cli": patches/@nestjs__cli.patch
+  next@16.2.11: patches/next@16.2.11.patch

@@ -26,6 +26,7 @@ RUN turbo prune @lootlog/api --docker --out-dir /pruned
 
 FROM build-base AS build-api
 COPY --from=pruner-api /pruned/json/ .
+COPY --from=pruner-api /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-api /pruned/full/ .
 COPY --from=pruner-api /usr/src/app/tools/clean-swagger-metadata.mjs ./tools/clean-swagger-metadata.mjs
@@ -38,6 +39,7 @@ RUN turbo prune @lootlog/auth --docker --out-dir /pruned
 
 FROM build-base AS build-auth
 COPY --from=pruner-auth /pruned/json/ .
+COPY --from=pruner-auth /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-auth /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/auth
@@ -49,6 +51,7 @@ RUN turbo prune @lootlog/search --docker --out-dir /pruned
 
 FROM build-base AS build-search
 COPY --from=pruner-search /pruned/json/ .
+COPY --from=pruner-search /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-search /pruned/full/ .
 COPY --from=pruner-search /usr/src/app/tools/clean-swagger-metadata.mjs ./tools/clean-swagger-metadata.mjs
@@ -61,6 +64,7 @@ RUN turbo prune @lootlog/discord-bot --docker --out-dir /pruned
 
 FROM build-base AS build-discord-bot
 COPY --from=pruner-discord-bot /pruned/json/ .
+COPY --from=pruner-discord-bot /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-discord-bot /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/discord-bot
@@ -72,6 +76,7 @@ RUN turbo prune @lootlog/gateway --docker --out-dir /pruned
 
 FROM build-base AS build-gateway
 COPY --from=pruner-gateway /pruned/json/ .
+COPY --from=pruner-gateway /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-gateway /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/gateway
@@ -83,6 +88,7 @@ RUN turbo prune @lootlog/battlelog-service --docker --out-dir /pruned
 
 FROM build-base AS build-battlelog-service
 COPY --from=pruner-battlelog-service /pruned/json/ .
+COPY --from=pruner-battlelog-service /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-battlelog-service /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/battlelog-service
@@ -94,6 +100,7 @@ RUN turbo prune @lootlog/activity --docker --out-dir /pruned
 
 FROM build-base AS build-activity
 COPY --from=pruner-activity /pruned/json/ .
+COPY --from=pruner-activity /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-activity /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/activity
@@ -102,6 +109,7 @@ RUN pnpm deploy --filter=@lootlog/activity --prod /prod/activity
 FROM build-base AS build-developer
 
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY patches/ ./patches/
 COPY apps/developer/package.json ./apps/developer/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 COPY packages/ui/package.json ./packages/ui/package.json
