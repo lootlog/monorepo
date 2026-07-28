@@ -5,7 +5,6 @@
     "target": "ES2022",
     "jsx": "react-jsx",
     "module": "ESNext",
-    "baseUrl": ".",
     "paths": {
       "#/*": ["./src/*"],
       "@/*": ["./src/*"]
@@ -17,7 +16,6 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
-    "ignoreDeprecations": "6.0",
     "noEmit": true,
 
     /* Linting */

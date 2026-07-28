@@ -9,8 +9,6 @@
     "outDir": "./dist",
     "declaration": false,
     "rootDir": ".",
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
