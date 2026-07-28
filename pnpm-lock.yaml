@@ -131,7 +131,7 @@ overrides:
   sharp@<0.35.0: '>=0.35.0'
   valibot@<=1.4.1: '>=1.4.2'
 
-packageExtensionsChecksum: sha256-Jb4M3nhVzGt2QkFFNfZ9XOnmetkI1ibrH9oJ3esh2cE=
+packageExtensionsChecksum: sha256-HM6zqo37u/lzL+dLA7dBkapSoy+G3GRGUIUU1sxXLpQ=
 
 patchedDependencies:
   '@nestjs/cli': c6cfbd1b159490d2c98d1cf5523093f0e872530567bc06a966fdad9668147b8c
