@@ -105,6 +105,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
         href={profileUrl}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label={t("loots.list.playerActions.openMargonemProfile")}
         onClick={(event) => event.stopPropagation()}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
