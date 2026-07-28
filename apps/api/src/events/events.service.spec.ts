@@ -65,7 +65,7 @@ describe("EventsService", () => {
     updateRankingAfterKill: mockFn(),
     updateKillPoint: mockFn(),
     updateRankingPoints: mockFn(),
-    getRankingEditHistory: mockFn(),
+    getRankingEditHistories: mockFn(),
   };
 
   const mockTrackingService = {

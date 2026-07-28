@@ -291,7 +291,8 @@
     "expiredTitle": "Przeterminowane potwierdzenia",
     "expiredDescription": "Dla tych bić nie potwierdzono udziału na czas, więc punkty nie zostały naliczone.",
     "success": "Udział został potwierdzony i punkty doliczone",
-    "error": "Nie udało się potwierdzić udziału (limit czasu mógł minąć)"
+    "error": "Nie udało się potwierdzić udziału (limit czasu mógł minąć)",
+    "acknowledgeError": "Nie udało się zapamiętać przeterminowanych potwierdzeń"
   },
   "ranking": {
     "subtitle": "Statystyki",

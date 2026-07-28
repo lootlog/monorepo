@@ -445,11 +445,15 @@ export class EventsService {
     );
   }
 
-  getRankingEditHistory(guildId: string, eventId: string, rankingId: string) {
-    return this.pointsService.getRankingEditHistory(
+  getRankingEditHistories(
+    guildId: string,
+    eventId: string,
+    rankingIds: string[],
+  ) {
+    return this.pointsService.getRankingEditHistories(
       guildId,
       eventId,
-      rankingId,
+      rankingIds,
     );
   }
 
@@ -512,6 +516,20 @@ export class EventsService {
       guildId,
       eventId,
       memberId,
+    );
+  }
+
+  acknowledgeExpiredParticipationConfirmations(
+    guildId: string,
+    eventId: string,
+    memberId: number,
+    killIds: string[],
+  ) {
+    return this.pointsService.acknowledgeExpiredParticipationConfirmations(
+      guildId,
+      eventId,
+      memberId,
+      killIds,
     );
   }
 

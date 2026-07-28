@@ -78,5 +78,8 @@ playground
 playground/**
 
 # Local planning documents
-/docs/
+/docs/*
+!/docs/superpowers/
+!/docs/superpowers/specs/
+!/docs/superpowers/specs/*.md
 .superpowers/

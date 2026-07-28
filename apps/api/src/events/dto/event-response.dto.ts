@@ -134,6 +134,19 @@ const EventRankingMemberResponseSchema = z.object({
   name: z.string(),
 });
 
+const RankingEditHistoryEntryResponseSchema = z.object({
+  id: z.string(),
+  rankingId: z.string(),
+  previousPoints: z.number(),
+  newPoints: z.number(),
+  deltaPoints: z.number(),
+  editType: z.nativeEnum(PointsEditType),
+  editedByUserId: z.string(),
+  editedByName: z.string().nullable(),
+  comment: z.string().nullable(),
+  editedAt: isoDatetimeCodec,
+});
+
 const EventRankingEntryResponseSchema = z.object({
   id: z.string(),
   eventId: z.string(),
@@ -146,6 +159,7 @@ const EventRankingEntryResponseSchema = z.object({
   pointsModified: z.boolean(),
   updatedAt: isoDatetimeCodec,
   member: EventRankingMemberResponseSchema,
+  editHistory: z.array(RankingEditHistoryEntryResponseSchema),
 });
 
 export class EventRankingEntryResponseDto extends createZodDto(
@@ -208,33 +222,6 @@ export class EventTimerResponseDto extends createZodDto(
 
 export class EventTimersResponseDto extends createZodDto(
   z.array(EventTimerResponseSchema),
-  {
-    codec: true,
-  },
-) {}
-
-const RankingEditHistoryEntryResponseSchema = z.object({
-  id: z.string(),
-  rankingId: z.string(),
-  previousPoints: z.number(),
-  newPoints: z.number(),
-  deltaPoints: z.number(),
-  editType: z.nativeEnum(PointsEditType),
-  editedByUserId: z.string(),
-  editedByName: z.string().nullable(),
-  comment: z.string().nullable(),
-  editedAt: isoDatetimeCodec,
-});
-
-export class RankingEditHistoryEntryResponseDto extends createZodDto(
-  RankingEditHistoryEntryResponseSchema,
-  {
-    codec: true,
-  },
-) {}
-
-export class RankingEditHistoryResponseDto extends createZodDto(
-  z.array(RankingEditHistoryEntryResponseSchema),
   {
     codec: true,
   },
