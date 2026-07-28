@@ -1,14 +1,14 @@
-const generatedApiClientPattern =
-  /(?:^|\/)apps\/(?:web|game-client)\/src\/lib\/api\/generated\//;
+const generatedSourcePattern =
+  /(?:^|\/)apps\/(?:(?:web|game-client)\/src\/lib\/api\/generated|api\/src\/generated\/prisma)\//;
 
 const quote = (file) => JSON.stringify(file);
 
-const filterGeneratedApiClients = (files) => {
-  return files.filter((file) => !generatedApiClientPattern.test(file));
+const filterGeneratedSources = (files) => {
+  return files.filter((file) => !generatedSourcePattern.test(file));
 };
 
 const buildCommand = (command, files) => {
-  const targets = filterGeneratedApiClients(files);
+  const targets = filterGeneratedSources(files);
 
   if (targets.length === 0) {
     return [];

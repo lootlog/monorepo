@@ -27,6 +27,7 @@ describe("EventPointsService", () => {
       findMany: mockFn(),
       findFirst: mockFn(),
       update: mockFn(),
+      updateMany: mockFn(),
     },
     eventMap: {
       findMany: mockFn(),
@@ -766,11 +767,76 @@ describe("EventPointsService", () => {
     });
   });
 
-  describe("getRankingEditHistory", () => {
-    it("returns delta points, comment and editor name", async () => {
-      mockPrismaService.eventRanking.findFirst.mockResolvedValue({
-        id: "ranking-1",
+  describe("acknowledgeExpiredParticipationConfirmations", () => {
+    it("acknowledges only expired unconfirmed kills for the current member and event", async () => {
+      mockPrismaService.eventKillPoint.updateMany.mockResolvedValue({
+        count: 2,
       });
+
+      await expect(
+        service.acknowledgeExpiredParticipationConfirmations(
+          "guild-1",
+          "event-1",
+          123,
+          ["kill-1", "kill-2"],
+        ),
+      ).resolves.toEqual({ acknowledgedCount: 2 });
+
+      expect(mockPrismaService.eventKillPoint.updateMany).toHaveBeenCalledWith({
+        where: {
+          killId: {
+            in: ["kill-1", "kill-2"],
+          },
+          memberId: 123,
+          confirmedAt: null,
+          confirmationDeadlineAt: {
+            lt: expect.any(Date),
+          },
+          confirmationExpiredAcknowledgedAt: null,
+          kill: {
+            heroNpc: {
+              eventId: "event-1",
+              event: {
+                guildId: "guild-1",
+              },
+            },
+          },
+        },
+        data: {
+          confirmationExpiredAcknowledgedAt: expect.any(Date),
+        },
+      });
+    });
+  });
+
+  describe("getPendingParticipationConfirmations", () => {
+    it("returns only expired confirmations that have not been acknowledged", async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue({ id: "event-1" });
+      mockPrismaService.eventKillPoint.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      await service.getPendingParticipationConfirmations(
+        "guild-1",
+        "event-1",
+        123,
+      );
+
+      expect(mockPrismaService.eventKillPoint.findMany).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          where: expect.objectContaining({
+            memberId: 123,
+            confirmedAt: null,
+            confirmationExpiredAcknowledgedAt: null,
+          }),
+        }),
+      );
+    });
+  });
+
+  describe("getRankingEditHistories", () => {
+    it("returns histories grouped by ranking with editor names", async () => {
       mockPrismaService.eventPointsEditHistory.findMany.mockResolvedValue([
         {
           id: "history-1",
@@ -782,6 +848,16 @@ describe("EventPointsService", () => {
           comment: "Komentarz",
           editedAt: new Date("2026-03-12T20:00:00.000Z"),
         },
+        {
+          id: "history-2",
+          rankingId: "ranking-2",
+          previousPoints: 20,
+          newPoints: 18,
+          editType: "KILL_POINT",
+          editedByUserId: "user-2",
+          comment: null,
+          editedAt: new Date("2026-03-11T20:00:00.000Z"),
+        },
       ]);
       mockPrismaService.member.findMany.mockResolvedValue([
         {
@@ -790,17 +866,33 @@ describe("EventPointsService", () => {
         },
       ]);
 
-      const result = await service.getRankingEditHistory(
+      const result = await service.getRankingEditHistories(
         "guild-1",
         "event-1",
-        "ranking-1",
+        ["ranking-1", "ranking-2"],
       );
 
+      expect(
+        mockPrismaService.eventPointsEditHistory.findMany,
+      ).toHaveBeenCalledWith({
+        where: {
+          rankingId: {
+            in: ["ranking-1", "ranking-2"],
+          },
+          ranking: {
+            eventId: "event-1",
+            event: {
+              guildId: "guild-1",
+            },
+          },
+        },
+        orderBy: { editedAt: "desc" },
+      });
       expect(mockPrismaService.member.findMany).toHaveBeenCalledWith({
         where: {
           guildId: "guild-1",
           globalUserId: {
-            in: ["user-1"],
+            in: ["user-1", "user-2"],
           },
         },
         select: {
@@ -808,14 +900,43 @@ describe("EventPointsService", () => {
           name: true,
         },
       });
-      expect(result).toEqual([
-        expect.objectContaining({
-          id: "history-1",
-          deltaPoints: 1.5,
-          editedByName: "Kamil",
-          comment: "Komentarz",
-        }),
-      ]);
+      expect(result).toEqual(
+        new Map([
+          [
+            "ranking-1",
+            [
+              expect.objectContaining({
+                id: "history-1",
+                deltaPoints: 1.5,
+                editedByName: "Kamil",
+                comment: "Komentarz",
+              }),
+            ],
+          ],
+          [
+            "ranking-2",
+            [
+              expect.objectContaining({
+                id: "history-2",
+                deltaPoints: -2,
+                editedByName: null,
+                comment: null,
+              }),
+            ],
+          ],
+        ]),
+      );
+    });
+
+    it("skips history and editor queries without ranking ids", async () => {
+      await expect(
+        service.getRankingEditHistories("guild-1", "event-1", []),
+      ).resolves.toEqual(new Map());
+
+      expect(
+        mockPrismaService.eventPointsEditHistory.findMany,
+      ).not.toHaveBeenCalled();
+      expect(mockPrismaService.member.findMany).not.toHaveBeenCalled();
     });
   });
 });

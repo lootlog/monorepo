@@ -5165,6 +5165,7 @@ export const EventKillPointScalarFieldEnum = {
   trackingDurationPercentage: 'trackingDurationPercentage',
   confirmationDeadlineAt: 'confirmationDeadlineAt',
   confirmedAt: 'confirmedAt',
+  confirmationExpiredAcknowledgedAt: 'confirmationExpiredAcknowledgedAt',
   timeOnMapSeconds: 'timeOnMapSeconds',
   afkPercentage: 'afkPercentage',
   wasPresent: 'wasPresent',

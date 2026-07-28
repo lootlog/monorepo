@@ -137,7 +137,11 @@ describe("EventTrackingService", () => {
       heroNpc: {
         npcId: 123,
         npcName: "Test Hero",
-        event: { mapAssignmentCap: null, world: "tempest" },
+        event: {
+          assignmentTimeoutMinutes: 5,
+          mapAssignmentCap: null,
+          world: "tempest",
+        },
       },
       assignedMembers: [],
     };
@@ -149,6 +153,7 @@ describe("EventTrackingService", () => {
     it("should assign member to map successfully", async () => {
       mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        minSpawnTime: new Date(Date.now() - 60_000),
         maxSpawnTime: new Date(Date.now() + 60_000),
       });
       mockPrismaService.eventMapAssignmentHistory.findFirst.mockResolvedValue(
@@ -218,6 +223,7 @@ describe("EventTrackingService", () => {
       };
       mockPrismaService.eventMap.findFirst.mockResolvedValue(mapAtCap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        minSpawnTime: new Date(Date.now() - 60_000),
         maxSpawnTime: new Date(Date.now() + 60_000),
       });
 
@@ -229,6 +235,7 @@ describe("EventTrackingService", () => {
     it("should not create duplicate assignment history", async () => {
       mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        minSpawnTime: new Date(Date.now() - 60_000),
         maxSpawnTime: new Date(Date.now() + 60_000),
       });
       mockPrismaService.eventMap.update.mockResolvedValue({
@@ -255,6 +262,7 @@ describe("EventTrackingService", () => {
       const emptyMap = { ...mockMap, assignedMembers: [] };
       mockPrismaService.eventMap.findFirst.mockResolvedValue(emptyMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        minSpawnTime: new Date(Date.now() - 60_000),
         maxSpawnTime: new Date(Date.now() + 60_000),
       });
       mockPrismaService.eventMap.update.mockResolvedValue({
@@ -292,6 +300,7 @@ describe("EventTrackingService", () => {
     it("should throw BadRequestException when assigning after max spawn time", async () => {
       mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
       mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        minSpawnTime: new Date(Date.now() - 120_000),
         maxSpawnTime: new Date(Date.now() - 60_000),
       });
 
@@ -300,6 +309,64 @@ describe("EventTrackingService", () => {
       ).rejects.toThrow(BadRequestException);
 
       expect(mockPrismaService.eventMap.update).not.toHaveBeenCalled();
+    });
+
+    it("should reject assignment before the configured assignment window", async () => {
+      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockTimersService.getEventRespawnTimer.mockResolvedValue({
+        minSpawnTime: new Date(Date.now() + 60 * 60_000),
+        maxSpawnTime: new Date(Date.now() + 90 * 60_000),
+      });
+
+      await expect(
+        service.assignMemberToMap(guildId, eventId, mapId, memberId),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrismaService.eventMap.update).not.toHaveBeenCalled();
+      expect(
+        mockPrismaService.eventMapAssignmentHistory.create,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("should reject assignment without an active respawn timer", async () => {
+      mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+      mockTimersService.getEventRespawnTimer.mockResolvedValue(null);
+
+      await expect(
+        service.assignMemberToMap(guildId, eventId, mapId, memberId),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrismaService.eventMap.update).not.toHaveBeenCalled();
+    });
+
+    it("should allow assignment exactly when the configured window opens", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-07-28T12:00:00.000Z"));
+
+      try {
+        mockPrismaService.eventMap.findFirst.mockResolvedValue(mockMap);
+        mockTimersService.getEventRespawnTimer.mockResolvedValue({
+          minSpawnTime: new Date("2026-07-28T12:05:00.000Z"),
+          maxSpawnTime: new Date("2026-07-28T12:30:00.000Z"),
+        });
+        mockPrismaService.eventMapAssignmentHistory.findFirst.mockResolvedValue(
+          null,
+        );
+        mockPrismaService.eventMap.update.mockResolvedValue({
+          ...mockMap,
+          assignedMembers: [{ id: memberId }],
+        });
+        mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+        mockEventEmitter.emitMapStatusUpdate.mockResolvedValue(undefined);
+
+        await expect(
+          service.assignMemberToMap(guildId, eventId, mapId, memberId),
+        ).resolves.toMatchObject({
+          assignedMembers: [{ id: memberId }],
+        });
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

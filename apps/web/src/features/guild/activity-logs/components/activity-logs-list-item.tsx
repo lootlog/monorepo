@@ -16,7 +16,7 @@ import {
   MapPin,
   ChevronDown,
 } from "lucide-react";
-import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
+import { PlayerTile } from "@/components/tiles";
 import type { PaginatedActivitiesResponseDtoDataItem } from "@lootlog/api-client/models/activity/paginated-activities-response-dto-data-item";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
