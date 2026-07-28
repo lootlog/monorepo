@@ -15,6 +15,9 @@
   "guildsSelector": {
     "unreadLootsOverflow": "99+"
   },
+  "userMenu": {
+    "account": "Konto"
+  },
   "breadcrumbs": {
     "statistics": "Statystyki",
     "abyss": "Otchłań",
