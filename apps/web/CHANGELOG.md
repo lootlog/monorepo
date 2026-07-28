@@ -1,5 +1,21 @@
 # @lootlog/web
 
+## 1.2.0
+
+### Minor Changes
+
+- 9096829: Introduce the dark-only Lootlog Signal System across frontend surfaces, replace
+  the default web theme with Default v2, and remove the obsolete color-mode
+  preference from the database and public API contracts.
+
+### Patch Changes
+
+- e1e6c48: Refine the loot filters layout and search density, stabilize the search dialog height, center its feedback states, improve loot header and footer alignment, truncate long locations, prevent quick-filter layout shifts, keep the search divider visible, expand the world selector, and redesign the sidebar account control with a full-width menu and shared logout action.
+- Updated dependencies [9096829]
+  - @lootlog/api-client@2.0.0
+  - @lootlog/types@2.0.0
+  - @lootlog/ui@2.0.0
+
 ## 1.1.1
 
 ### Patch Changes

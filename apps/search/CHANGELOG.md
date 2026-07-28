@@ -1,5 +1,13 @@
 # @lootlog/search
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [9096829]
+  - @lootlog/types@2.0.0
+  - @lootlog/nest-shared@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
