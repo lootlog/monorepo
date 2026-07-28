@@ -3,9 +3,9 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const NpcsIndexPageSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="flex flex-col gap-4 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1 space-y-1.5">
@@ -23,7 +23,7 @@ export const NpcsIndexPageSkeleton = () => {
       </div>
 
       <div className="flex-1 px-3 pb-3">
-        <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm">
+        <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
           <div className="flex gap-4 border-b border-border px-4 py-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-4 flex-1" />

@@ -156,7 +156,7 @@ const EventParticipationConfirmationDialogContent = ({
                       return (
                         <div
                           key={item.killId}
-                          className="rounded-lg border border-border/70 bg-card/60 px-3 py-2.5"
+                          className="rounded-lg border border-border/70 bg-card px-3 py-2.5"
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2 min-w-0">

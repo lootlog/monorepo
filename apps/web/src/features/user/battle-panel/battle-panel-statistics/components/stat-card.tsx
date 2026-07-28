@@ -51,7 +51,7 @@ export function StatCard({
       tabIndex={tabIndex}
       variant={onClick ? "interactive" : "default"}
       className={cn(
-        "flex min-w-0 flex-col border-border bg-card/40 p-0 backdrop-blur-sm",
+        "flex min-w-0 flex-col border-border bg-card p-0",
         className,
       )}
     >

@@ -19,12 +19,23 @@ import {
   useNotificationsUserControllerDeleteWatchedItem,
 } from "@lootlog/api-client/react-query/main/notifications";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, BellOff, LoaderCircle, Plus } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  Check,
+  Copy,
+  ListFilter,
+  LoaderCircle,
+  Plus,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { formatItemHid } from "@/lib/utils/hid-detection";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type WatchableItemTileProps = ItemTileProps & {
   watchContext: WatchedItemScope;
+  selectedItemNames?: string[];
 };
 
 export const WatchableItemTile = ({
@@ -33,6 +44,7 @@ export const WatchableItemTile = ({
   shareIndex,
   shareNickname,
   watchContext,
+  selectedItemNames = [],
 }: WatchableItemTileProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -75,9 +87,32 @@ export const WatchableItemTile = ({
     wouldCreateNewWatchedItem;
 
   const isRemovePending = deleteWatchedItem.isPending;
+  const formattedItemHid = formatItemHid(item.hid, watchContext.world);
+  const hasItemFilter = selectedItemNames.length > 0;
+  const isItemSelected = selectedItemNames.includes(item.name);
 
   const openNotifications = () => {
     void navigate({ to: ROUTES.user.notifications.base });
+  };
+
+  const handleCopyItemId = async () => {
+    try {
+      await navigator.clipboard.writeText(formattedItemHid);
+      toast.success(t("loots.details.copySuccess"));
+    } catch {
+      toast.error(t("loots.details.copyError"));
+    }
+  };
+
+  const showLootsWithItem = () => {
+    if (!effectiveGuildId) {
+      return;
+    }
+
+    void navigate({
+      to: ROUTES.guild.lootlog(effectiveGuildId),
+      search: { itemNames: [item.name] },
+    });
   };
 
   const handleRemove = async () => {
@@ -163,13 +198,28 @@ export const WatchableItemTile = ({
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <span className="relative inline-flex" tabIndex={0} role="button">
+        <span
+          className={cn(
+            "relative inline-flex rounded-lg transition-[opacity,filter] duration-200",
+            hasItemFilter && !isItemSelected && "opacity-35 grayscale-[0.45]",
+          )}
+          tabIndex={0}
+          role="button"
+        >
           <ItemTile
             item={item}
             color={color}
             shareIndex={shareIndex}
             shareNickname={shareNickname}
           />
+          {hasItemFilter && isItemSelected ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -left-1 -top-1 z-10 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-background"
+            >
+              <Check className="size-2.5" />
+            </span>
+          ) : null}
           {isWatchedInScope ? (
             <span
               aria-hidden="true"
@@ -182,6 +232,24 @@ export const WatchableItemTile = ({
         </span>
       </ContextMenuTrigger>
       <ContextMenuContent className="min-w-[15rem]">
+        <ContextMenuItem
+          className="gap-2"
+          onSelect={() => {
+            void handleCopyItemId();
+          }}
+        >
+          <Copy className="h-4 w-4 text-muted-foreground" />
+          {t("loots.list.itemActions.copyId")}
+        </ContextMenuItem>
+        <ContextMenuItem
+          className="gap-2"
+          disabled={!effectiveGuildId}
+          onSelect={showLootsWithItem}
+        >
+          <ListFilter className="h-4 w-4 text-primary" />
+          {t("loots.list.itemActions.showLoots")}
+        </ContextMenuItem>
+        <ContextMenuSeparator />
         {state === "loading" || isQuickAddPending || isRemovePending ? (
           <ContextMenuItem disabled className="gap-2">
             <LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />

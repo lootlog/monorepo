@@ -197,7 +197,7 @@ const RankingRow = ({
                               </span>
                             </div>
                             {entry.comment && (
-                              <p className="mt-2 whitespace-pre-wrap break-words rounded-md bg-background/70 px-2 py-1.5 text-xs text-muted-foreground">
+                              <p className="mt-2 whitespace-pre-wrap break-words rounded-md bg-background px-2 py-1.5 text-xs text-muted-foreground">
                                 {entry.comment}
                               </p>
                             )}

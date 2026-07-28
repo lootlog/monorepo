@@ -161,6 +161,74 @@ describe("BattlesService", () => {
     expect(service).toBeDefined();
   });
 
+  it("repairs raw storage when a canonical battle already exists", async () => {
+    vi.spyOn(service as never, "analyzeBattle").mockReturnValue({
+      duration: 0,
+      outcome: {
+        hasFlee: false,
+        loser: "Team 2",
+        losingTeam: 2,
+        winner: "Team 1",
+        winningTeam: 1,
+      },
+      parsedMoves: [],
+      statistics: {},
+      type: "pvp",
+      warriors: [],
+    } as never);
+    mockDrizzleService.db.query.battles.findFirst.mockResolvedValueOnce({
+      id: "battle-existing",
+    });
+
+    await expect(
+      service.createBattle({
+        userId: "user-1",
+        data: {
+          accountId: "account-1",
+          characterId: "character-1",
+          submissionId: "submission-retry",
+          world: "pandora",
+          events: [
+            {
+              ev: 1,
+              f: {
+                m: ["move"],
+                w: {
+                  "1": {
+                    icon: "a.gif",
+                    lvl: 100,
+                    name: "A",
+                    originalId: 1,
+                    prof: "w",
+                    team: 1,
+                  },
+                  "2": {
+                    icon: "b.gif",
+                    lvl: 100,
+                    name: "B",
+                    originalId: 2,
+                    prof: "m",
+                    team: 2,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      }),
+    ).resolves.toEqual({ battleId: "battle-existing" });
+
+    expect(mockR2Service.uploadBattleData).toHaveBeenCalledWith(
+      "battle-existing",
+      expect.objectContaining({
+        battleId: "battle-existing",
+        rawData: expect.objectContaining({
+          sourceEvents: expect.any(Array),
+        }),
+      }),
+    );
+  });
+
   it("returns an existing battle when a repeated submission hits the unique constraint", async () => {
     const analysis = {
       duration: 12,

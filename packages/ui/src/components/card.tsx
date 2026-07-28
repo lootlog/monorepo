@@ -7,12 +7,13 @@ import { RukiaFrostCardOverlay } from "@lootlog/ui/components/rukia-frost-card-o
 import { RiasMagicCardOverlay } from "@lootlog/ui/components/rias-magic-card-overlay";
 
 const cardVariants = cva(
-  "bg-card/40 text-card-foreground relative flex flex-col gap-6 overflow-hidden rounded-xl border py-6 shadow-sm",
+  "bg-card text-card-foreground relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-border py-5 shadow-xs",
   {
     variants: {
       variant: {
         default: "",
-        interactive: "cursor-pointer transition-colors hover:border-primary",
+        interactive:
+          "cursor-pointer transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/70 hover:bg-accent/35",
       },
     },
     defaultVariants: {

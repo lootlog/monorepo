@@ -3,8 +3,8 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const SigninPageSkeleton = () => {
   return (
-    <div className="flex h-full items-center justify-center bg-background/50">
-      <Card className="w-full max-w-sm border-border bg-card/60 p-6 backdrop-blur-sm">
+    <div className="flex h-full items-center justify-center bg-background">
+      <Card className="w-full max-w-sm border-border bg-card p-6">
         <div className="space-y-4">
           <div className="space-y-2 text-center">
             <Skeleton className="mx-auto h-10 w-10 rounded-xl" />

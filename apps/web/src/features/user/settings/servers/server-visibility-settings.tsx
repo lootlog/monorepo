@@ -62,13 +62,13 @@ export const ServerVisibilitySettings = () => {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-4 px-3 pb-3">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                <div className="rounded-xl bg-primary/10 p-2.5">
                   <Server className="size-4 text-primary" />
                 </div>
                 <div>
@@ -97,7 +97,7 @@ export const ServerVisibilitySettings = () => {
           </Card>
 
           {isLoading ? (
-            <Card className="flex h-64 items-center justify-center bg-card/40">
+            <Card className="flex h-64 items-center justify-center bg-card">
               <Spinner className="size-8" />
               <span className="sr-only">{t("settings.servers.loading")}</span>
             </Card>
@@ -105,7 +105,7 @@ export const ServerVisibilitySettings = () => {
 
           {!isLoading && loadError ? (
             <Card
-              className="flex h-64 flex-col items-center justify-center gap-3 bg-card/40"
+              className="flex h-64 flex-col items-center justify-center gap-3 bg-card"
               role="alert"
             >
               <p className="text-sm text-muted-foreground">
@@ -126,7 +126,7 @@ export const ServerVisibilitySettings = () => {
           ) : null}
 
           {!isLoading && !loadError && orderedGuilds.length === 0 ? (
-            <Card className="flex h-64 flex-col items-center justify-center gap-3 bg-card/40">
+            <Card className="flex h-64 flex-col items-center justify-center gap-3 bg-card">
               <Server className="size-10 text-muted-foreground opacity-50" />
               <p className="text-sm text-muted-foreground">
                 {t("settings.servers.noGuilds")}
@@ -135,7 +135,7 @@ export const ServerVisibilitySettings = () => {
           ) : null}
 
           {!isLoading && !loadError && orderedGuilds.length > 0 ? (
-            <Card className="gap-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm">
+            <Card className="gap-0 overflow-hidden border-border bg-card p-0">
               <div className="flex flex-col gap-3 border-b border-border p-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="relative min-w-0 flex-1">
@@ -182,7 +182,7 @@ export const ServerVisibilitySettings = () => {
                     {t("settings.servers.visibleCount", {
                       count: visibleCount,
                     })}
-                    {" · "}
+                    {" ·"}
                     {t("settings.servers.hiddenCount", { count: hiddenCount })}
                   </span>
                 </div>

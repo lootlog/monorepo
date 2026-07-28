@@ -124,7 +124,7 @@ export const GuildDocTableDialog = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2">
+          <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2">
             <Checkbox
               id="guild-doc-table-headers"
               checked={includeHeaders}

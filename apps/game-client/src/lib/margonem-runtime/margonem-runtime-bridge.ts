@@ -48,7 +48,6 @@ export type RuntimeBridgeHealth = Readonly<{
 export const MAX_QUEUED_RUNTIME_EVENTS = 1_000;
 export const MAX_QUEUED_RUNTIME_BYTES = 4 * 1024 * 1024;
 export const MAX_QUEUED_RUNTIME_FACTS = 10_000;
-const MAX_RECENT_RUNTIME_EVENT_IDS = 1_000;
 const INSTALL_RETRY_DELAY_MS = 100;
 const MAX_INSTALL_RETRIES = 20;
 
@@ -69,7 +68,6 @@ export class MargonemRuntimeBridge {
   private readonly onObserverError?: (failure: RuntimeObserverFailure) => void;
   private readonly runtimeInterface?: RuntimeInterface;
   private readonly eventQueue: RuntimeEventEnvelope[] = [];
-  private readonly recentEventIds = new Set<number>();
   private inboundContainer: RuntimeFunctionContainer | null = null;
   private inboundProperty: string | null = null;
   private originalInbound: RuntimeFunction | null = null;
@@ -93,8 +91,9 @@ export class MargonemRuntimeBridge {
   private activeIntent: RuntimeIntent | null = null;
   private gameInitCallback: (() => boolean) | null = null;
   private gameInitCallbackExecuted = false;
-  private legacyProcessor: ((event: GameEvent) => void) | null = null;
-  private unsubscribeLegacyProcessor: (() => void) | null = null;
+  private activeProcessor: RuntimeEventHandler | null = null;
+  private unsubscribeActiveProcessor: (() => void) | null = null;
+  private readonly processorRegistrations = new Set<symbol>();
 
   constructor(options: BridgeOptions = {}) {
     this.adapter = options.adapter;
@@ -158,18 +157,35 @@ export class MargonemRuntimeBridge {
     return this.install();
   }
 
-  setProcessor(processor: (event: GameEvent) => void): void {
-    this.legacyProcessor = processor;
-    this.unsubscribeLegacyProcessor?.();
-    this.unsubscribeLegacyProcessor = this.subscribeIncoming((envelope) => {
-      if (envelope.raw) processor(envelope.raw);
-    });
+  acquireProcessor(processor: RuntimeEventHandler): () => boolean {
+    if (!this.activeProcessor) {
+      this.activeProcessor = processor;
+      this.unsubscribeActiveProcessor = this.subscribeIncoming((envelope) => {
+        processor(envelope);
+      });
+    }
+
+    const registration = Symbol("runtime-processor-registration");
+    this.processorRegistrations.add(registration);
+    let released = false;
+
+    return () => {
+      if (released) return false;
+
+      released = true;
+      if (!this.processorRegistrations.delete(registration)) return false;
+      if (this.processorRegistrations.size > 0) return false;
+
+      this.removeProcessor();
+      return true;
+    };
   }
 
-  removeProcessor(): void {
-    this.unsubscribeLegacyProcessor?.();
-    this.unsubscribeLegacyProcessor = null;
-    this.legacyProcessor = null;
+  private removeProcessor(): void {
+    this.unsubscribeActiveProcessor?.();
+    this.unsubscribeActiveProcessor = null;
+    this.activeProcessor = null;
+    this.processorRegistrations.clear();
   }
 
   subscribeAfterGameEvent(handler: (event: GameEvent) => void): () => void {
@@ -245,7 +261,6 @@ export class MargonemRuntimeBridge {
     this.ready = false;
     this.sequence = 0;
     this.eventQueue.length = 0;
-    this.recentEventIds.clear();
     this.queuedBytes = 0;
     this.queuedFacts = 0;
     this.clearInstallRetry();
@@ -437,8 +452,6 @@ export class MargonemRuntimeBridge {
   }
 
   private receiveIncoming(envelope: RuntimeEventEnvelope): void {
-    if (this.isDuplicateIncomingEvent(envelope.raw)) return;
-
     if (this.ready) {
       this.emit(this.incomingHandlers, envelope, "incoming");
       return;
@@ -457,21 +470,6 @@ export class MargonemRuntimeBridge {
     this.eventQueue.push(envelope);
     this.queuedBytes += rawBytes;
     this.queuedFacts = nextFacts;
-  }
-
-  private isDuplicateIncomingEvent(event: GameEvent | undefined): boolean {
-    const eventId = event?.ev;
-    if (typeof eventId !== "number" || !Number.isFinite(eventId)) return false;
-    if (this.recentEventIds.has(eventId)) return true;
-
-    this.recentEventIds.add(eventId);
-    if (this.recentEventIds.size > MAX_RECENT_RUNTIME_EVENT_IDS) {
-      const oldestEventId = this.recentEventIds.values().next().value;
-      if (oldestEventId !== undefined) {
-        this.recentEventIds.delete(oldestEventId);
-      }
-    }
-    return false;
   }
 
   private estimateRawBytes(event: GameEvent | undefined): number {

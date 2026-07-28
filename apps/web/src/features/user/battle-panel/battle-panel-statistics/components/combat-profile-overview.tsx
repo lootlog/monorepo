@@ -34,7 +34,7 @@ export function CombatProfileOverview({
 
   if (isLoading || !data) {
     return (
-      <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+      <Card className="border-border bg-card p-4">
         <p className="text-sm text-muted-foreground">
           {t("battlePanel.statistics.loading")}
         </p>
@@ -91,10 +91,7 @@ export function CombatProfileOverview({
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {kpis.map((kpi) => (
-          <Card
-            key={kpi.key}
-            className="gap-2 border-border bg-card/40 p-3 backdrop-blur-sm"
-          >
+          <Card key={kpi.key} className="gap-2 border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <kpi.icon className="size-3.5" />
               {kpi.label}

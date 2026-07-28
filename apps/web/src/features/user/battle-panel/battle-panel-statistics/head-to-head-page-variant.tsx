@@ -130,7 +130,7 @@ export function HeadToHeadPageVariant({
     event: KeyboardEvent<HTMLTableRowElement>,
     opponentId: string,
   ) => {
-    if (event.key !== "Enter" && event.key !== " ") {
+    if (event.key !== "Enter" && event.key !== "") {
       return;
     }
 
@@ -384,7 +384,7 @@ export function HeadToHeadPageVariant({
         </BattlePanelMobileFiltersDrawer>
       )}
 
-      <div className="flex h-full w-full flex-col overflow-hidden bg-background/50">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-background">
         <div className="px-3 pb-0 pt-3">
           <SectionHeader
             icon={Swords}

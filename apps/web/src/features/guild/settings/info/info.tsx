@@ -51,13 +51,13 @@ export const InfoSettings = () => {
   const hasRequiredPermissions = hasConfirmedGuildDiscordPermissions(data);
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background/50">
+    <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="rounded-xl bg-green-500/10 p-2.5 shadow-inner shadow-green-500/10">
+                <div className="rounded-xl bg-green-500/10 p-2.5">
                   <Info className="size-4 text-green-500" />
                 </div>
                 <div>
@@ -86,7 +86,7 @@ export const InfoSettings = () => {
 
           {isLoading ? (
             <>
-              <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="border-border bg-card p-4">
                 <div className="grid gap-4 lg:grid-cols-3">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="space-y-2">
@@ -96,7 +96,7 @@ export const InfoSettings = () => {
                   ))}
                 </div>
               </Card>
-              <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="border-border bg-card p-4">
                 <Skeleton className="mb-3 h-5 w-32" />
                 <div className="space-y-2">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -104,7 +104,7 @@ export const InfoSettings = () => {
                   ))}
                 </div>
               </Card>
-              <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="border-border bg-card p-4">
                 <Skeleton className="mb-3 h-5 w-24" />
                 <div className="grid gap-4 lg:grid-cols-2">
                   <Skeleton className="h-16 rounded-xl" />
@@ -114,13 +114,13 @@ export const InfoSettings = () => {
             </>
           ) : (
             <>
-              <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="gap-3 border-border bg-card p-4">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`rounded-xl p-2.5 shadow-inner ${
+                    className={`rounded-xl p-2.5  ${
                       hasRequiredPermissions
-                        ? "bg-green-500/10 shadow-green-500/10"
-                        : "bg-amber-500/10 shadow-amber-500/10"
+                        ? "bg-green-500/10"
+                        : "bg-amber-500/10"
                     }`}
                   >
                     {hasRequiredPermissions ? (
@@ -140,7 +140,7 @@ export const InfoSettings = () => {
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-3">
-                  <div className="rounded-xl border border-border/70 bg-background/30 p-3">
+                  <div className="rounded-xl border border-border/70 bg-background p-3">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       {t("settings.guildInfo.fields.status")}
                     </p>
@@ -150,7 +150,7 @@ export const InfoSettings = () => {
                       </Badge>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/70 bg-background/30 p-3">
+                  <div className="rounded-xl border border-border/70 bg-background p-3">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       {t("settings.guildInfo.fields.channels")}
                     </p>
@@ -161,7 +161,7 @@ export const InfoSettings = () => {
                       })}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-border/70 bg-background/30 p-3">
+                  <div className="rounded-xl border border-border/70 bg-background p-3">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       {t("settings.guildInfo.fields.permissions")}
                     </p>
@@ -178,7 +178,7 @@ export const InfoSettings = () => {
                 </div>
               </Card>
 
-              <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="gap-3 border-border bg-card p-4">
                 <h3 className="text-base font-semibold">
                   {t("settings.guildInfo.permissionSection.title")}
                 </h3>
@@ -232,12 +232,12 @@ export const InfoSettings = () => {
                 )}
               </Card>
 
-              <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="gap-3 border-border bg-card p-4">
                 <h3 className="text-base font-semibold">
                   {t("settings.guildInfo.activity.title")}
                 </h3>
                 <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="rounded-xl border border-border/70 bg-background/30 p-3">
+                  <div className="rounded-xl border border-border/70 bg-background p-3">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       {t("settings.guildInfo.fields.lastAttempt")}
                     </p>
@@ -250,7 +250,7 @@ export const InfoSettings = () => {
                         : t("settings.guildInfo.notAvailable")}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-border/70 bg-background/30 p-3">
+                  <div className="rounded-xl border border-border/70 bg-background p-3">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       {t("settings.guildInfo.fields.lastSuccess")}
                     </p>
@@ -265,7 +265,7 @@ export const InfoSettings = () => {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/30 p-3">
+                <div className="rounded-xl border border-border/70 bg-background p-3">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {t("settings.guildInfo.fields.lastError")}
                   </p>

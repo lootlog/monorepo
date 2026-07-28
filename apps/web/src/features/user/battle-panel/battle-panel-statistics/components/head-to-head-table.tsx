@@ -69,7 +69,7 @@ export function HeadToHeadTable({
       return;
     }
 
-    if (event.key !== "Enter" && event.key !== " ") {
+    if (event.key !== "Enter" && event.key !== "") {
       return;
     }
 
@@ -204,7 +204,7 @@ export function HeadToHeadTable({
       ariaLabel={t("battlePanel.statistics.directMatchups.link")}
     >
       <div className="flex min-h-72 min-w-0 flex-1 flex-col">
-        <ScrollArea className="min-w-0 rounded-lg border border-border bg-card/40">
+        <ScrollArea className="min-w-0 rounded-lg border border-border bg-card">
           <Table className="border-b">
             <TanStackTableHeader
               table={table}
@@ -214,7 +214,7 @@ export function HeadToHeadTable({
             />
             <TanStackTableBody
               table={table}
-              rowClassName="border-b border-border bg-background/30 transition-colors hover:bg-muted/50"
+              rowClassName="border-b border-border bg-background transition-colors hover:bg-muted/50"
               cellClassName="whitespace-nowrap"
             />
           </Table>

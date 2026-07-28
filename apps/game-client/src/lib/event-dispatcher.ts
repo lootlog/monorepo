@@ -42,7 +42,7 @@ export class EventDispatcher {
   private mapChange = new MapChangeProcessor();
   private afk = new AfkProcessor();
   private other = new OtherEventProcessor();
-  private unsubscribe: (() => void) | null = null;
+  private releaseProcessor: (() => boolean) | null = null;
 
   handleEvent = (event: GameEvent): void => {
     for (const fact of parseRuntimeFacts(event)) this.handleFact(fact);
@@ -107,15 +107,17 @@ export class EventDispatcher {
   }
 
   register(): void {
-    this.unsubscribe?.();
-    this.unsubscribe = margonemRuntimeBridge.subscribeIncoming(
+    this.releaseProcessor?.();
+    this.releaseProcessor = margonemRuntimeBridge.acquireProcessor(
       this.handleEnvelope,
     );
   }
 
   cleanup(): void {
-    this.unsubscribe?.();
-    this.unsubscribe = null;
-    this.npcsDetection.cleanup();
+    const releasedActiveProcessor = this.releaseProcessor?.() ?? false;
+    this.releaseProcessor = null;
+    if (releasedActiveProcessor) {
+      this.npcsDetection.cleanup();
+    }
   }
 }

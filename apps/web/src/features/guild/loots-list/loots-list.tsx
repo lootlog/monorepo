@@ -10,17 +10,27 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@lootlog/ui/components/drawer";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@lootlog/ui/components/sheet";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { useMaxWidth } from "@lootlog/ui/hooks/use-max-width";
 import { useLocalStorage } from "usehooks-ts";
 import { LootDetailsDialog } from "@/features/guild/loots-list/components/loots-list/loot-details-dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
 
 const FILTERS_OPEN_KEY = "loots-filters-open";
+const COMPACT_FILTERS_BREAKPOINT = 1100;
 
 export const LootsListPage: React.FC = () => {
   const { t } = useTranslation();
+  const { world } = useGuildContext();
   const { hasActiveFilters } = useLootsFilters();
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
     FILTERS_OPEN_KEY,
@@ -28,9 +38,11 @@ export const LootsListPage: React.FC = () => {
   );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const isMobile = useIsMobile();
+  const usesOverlayFilters = useMaxWidth(COMPACT_FILTERS_BREAKPOINT);
+  const usesSideSheet = usesOverlayFilters && !isMobile;
 
   const handleOpenSidebar = () => {
-    if (isMobile) {
+    if (usesOverlayFilters) {
       setIsMobileFiltersOpen((prev) => !prev);
       return;
     }
@@ -38,7 +50,9 @@ export const LootsListPage: React.FC = () => {
     setIsFiltersOpen((prev) => !prev);
   };
 
-  const filtersOpenForHeader = isMobile ? isMobileFiltersOpen : isFiltersOpen;
+  const filtersOpenForHeader = usesOverlayFilters
+    ? isMobileFiltersOpen
+    : isFiltersOpen;
 
   return (
     <>
@@ -48,32 +62,46 @@ export const LootsListPage: React.FC = () => {
           onOpenChange={setIsMobileFiltersOpen}
           shouldScaleBackground={false}
         >
-          <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
-            <DrawerHeader className="border-b px-4 py-3 shrink-0">
+          <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden p-0">
+            <DrawerHeader className="shrink-0 border-b px-4 py-3">
               <DrawerTitle>{t("loots.header.mobileFiltersTitle")}</DrawerTitle>
             </DrawerHeader>
             <div className="flex-1 overflow-hidden">
-              <LootsFiltersSidebar className="w-full border-l-0 h-full p-0" />
+              <LootsFiltersSidebar embedded />
             </div>
           </DrawerContent>
         </Drawer>
       )}
 
-      <div className="w-full flex flex-col h-full overflow-hidden bg-background/50">
+      {usesSideSheet && (
+        <Sheet open={isMobileFiltersOpen} onOpenChange={setIsMobileFiltersOpen}>
+          <SheetContent className="w-[min(400px,calc(100vw-12px))] gap-0 border-border bg-background p-0 sm:max-w-[400px]">
+            <SheetHeader className="h-14 shrink-0 justify-center border-b border-border px-4 pr-12">
+              <SheetTitle>{t("loots.header.mobileFiltersTitle")}</SheetTitle>
+            </SheetHeader>
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <LootsFiltersSidebar embedded />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+
+      <div className="w-full flex flex-col h-full overflow-hidden bg-background">
         <div className="px-3 pt-3 pb-0">
           <LootFiltersHeader
             onToggleFilters={handleOpenSidebar}
             isFiltersOpen={filtersOpenForHeader}
+            isCompactLayout={usesOverlayFilters}
             hasActiveFilters={hasActiveFilters}
           />
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden py-3">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden pt-3">
             <LootsList />
           </div>
 
-          {!isMobile && (
+          {!usesOverlayFilters && (
             <AnimatePresence initial={false}>
               {isFiltersOpen && (
                 <motion.div
@@ -92,11 +120,12 @@ export const LootsListPage: React.FC = () => {
         </div>
       </div>
 
-      {isMobile && (
+      {isMobile && world && (
         <Button
           onClick={handleOpenSidebar}
           size="icon"
-          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-20"
+          aria-label={t("loots.header.mobileFiltersTitle")}
+          className="fixed bottom-4 right-4 z-20 h-12 w-12 rounded-xl border border-primary/30 shadow-lg"
         >
           <Filter className="h-5 w-5" />
         </Button>

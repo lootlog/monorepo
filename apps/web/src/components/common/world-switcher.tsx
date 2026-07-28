@@ -109,7 +109,10 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
         emptyMessage={t("common.noResults")}
         searchPlaceholder={t("common.search")}
         width={cn(width ?? "w-[140px] md:w-[180px]", className)}
-        triggerClassName={cn("h-9 shrink-0", triggerClassName)}
+        triggerClassName={cn(
+          "h-9 shrink-0 hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground",
+          triggerClassName,
+        )}
         contentClassName="max-h-64"
         showSearch
       />

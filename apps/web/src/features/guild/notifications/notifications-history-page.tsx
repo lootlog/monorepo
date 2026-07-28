@@ -48,7 +48,7 @@ export const NotificationsHistoryPage = () => {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-4 px-3 py-3">
           <PageHeader
@@ -62,10 +62,7 @@ export const NotificationsHistoryPage = () => {
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Card
-                  key={i}
-                  className="border-border bg-card/40 p-3 backdrop-blur-sm"
-                >
+                <Card key={i} className="border-border bg-card p-3">
                   <div className="flex items-center gap-3">
                     <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
                     <div className="min-w-0 flex-1 space-y-1.5">
@@ -87,10 +84,10 @@ export const NotificationsHistoryPage = () => {
                   variant="interactive"
                   role="button"
                   tabIndex={0}
-                  className="gap-2 border-border/70 bg-background/30 p-3 text-left backdrop-blur-sm hover:bg-background/50"
+                  className="gap-2 border-border/70 bg-background p-3 text-left  hover:bg-background"
                   onClick={() => openJobDetails(job)}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
+                    if (event.key === "Enter" || event.key === "") {
                       event.preventDefault();
                       openJobDetails(job);
                     }
@@ -128,7 +125,7 @@ export const NotificationsHistoryPage = () => {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-border/80 bg-background/20 p-6 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-border/80 bg-background p-6 text-sm text-muted-foreground">
               {t("settings.notifications.empty.historyJobs")}
             </div>
           )}

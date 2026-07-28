@@ -28,7 +28,7 @@ export const MembersSettingsHeader = ({
     <Card className="shrink-0 px-5 py-4">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+          <div className="rounded-xl bg-primary/10 p-2.5">
             <Users className="size-4 text-primary" />
           </div>
           <div className="min-w-0">
@@ -39,7 +39,7 @@ export const MembersSettingsHeader = ({
               {t("settings.members.description")}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] leading-tight text-muted-foreground">
-              <span>{summaryItems.join(" · ")}</span>
+              <span>{summaryItems.join(" ·")}</span>
               <span aria-hidden="true">·</span>
               <button
                 type="button"

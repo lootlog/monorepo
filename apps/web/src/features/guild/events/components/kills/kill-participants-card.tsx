@@ -149,7 +149,7 @@ const ParticipantRow = ({
             tabIndex={0}
             className="flex items-center gap-3 p-3 w-full text-left hover:bg-muted/40 transition-colors cursor-pointer"
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
+              if (e.key === "Enter" || e.key === "") {
                 e.preventDefault();
                 onToggle();
               }
@@ -438,9 +438,9 @@ export const KillParticipantsCard = ({
   };
 
   return (
-    <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+    <Card className="gap-3 border-border bg-card p-3">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+        <div className="rounded-xl bg-primary/10 p-2">
           <Users className="size-4 text-primary" />
         </div>
         <div>

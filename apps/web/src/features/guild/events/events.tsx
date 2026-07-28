@@ -139,12 +139,12 @@ export const Events = () => {
   }
 
   return (
-    <ScrollArea className="h-full bg-background/50">
+    <ScrollArea className="h-full bg-background">
       <div className="flex flex-col gap-4 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+              <div className="rounded-xl bg-primary/10 p-2.5">
                 <Trophy className="size-4 text-primary" />
               </div>
               <div className="min-w-0">
@@ -172,10 +172,7 @@ export const Events = () => {
         {isLoading ? (
           <div className="flex flex-col gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Card
-                key={i}
-                className="border-border bg-card/40 p-3 backdrop-blur-sm"
-              >
+              <Card key={i} className="border-border bg-card p-3">
                 <div className="flex items-center gap-3">
                   <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
                   <div className="min-w-0 flex-1 space-y-1.5">
@@ -191,7 +188,7 @@ export const Events = () => {
             ))}
           </div>
         ) : events?.length === 0 ? (
-          <Card className="flex flex-col items-center justify-center gap-3 bg-card/40 py-12 backdrop-blur-sm">
+          <Card className="flex flex-col items-center justify-center gap-3 bg-card py-12">
             <Trophy className="w-12 h-12 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground">{t("events.noEvents")}</p>
             <Button onClick={() => setCreateDialogOpen(true)}>
@@ -227,7 +224,7 @@ export const Events = () => {
                   params={{ guildId: guildId ?? "", eventId: event.id }}
                 >
                   <Card
-                    className={`p-3 bg-card/40 backdrop-blur-sm hover:bg-card/60 transition-all cursor-pointer ${
+                    className={`p-3 bg-card  hover:bg-card transition-all cursor-pointer ${
                       isEventActive
                         ? "border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:border-yellow-500/70"
                         : "border-border hover:border-primary/30"
@@ -273,7 +270,7 @@ export const Events = () => {
                                     locale: pl,
                                   },
                                 )}
-                                {" – "}
+                                {" –"}
                                 {event.endsAt
                                   ? format(
                                       new Date(event.endsAt),

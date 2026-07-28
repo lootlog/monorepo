@@ -17,25 +17,25 @@ const NPC_TYPE_CONFIG: Record<
 > = {
   TITAN: {
     icon: <Mountain className="h-5 w-5" />,
-    gradient: "from-red-500/10 to-orange-500/5",
+    gradient: "bg-red-500/8",
     iconBg: "bg-red-500/10",
     iconColor: "text-red-500",
   },
   COLOSSUS: {
     icon: <Flame className="h-5 w-5" />,
-    gradient: "from-purple-500/10 to-pink-500/5",
-    iconBg: "bg-purple-500/10",
-    iconColor: "text-purple-500",
+    gradient: "bg-cyan-500/8",
+    iconBg: "bg-cyan-500/10",
+    iconColor: "text-cyan-400",
   },
   HERO: {
     icon: <Shield className="h-5 w-5" />,
-    gradient: "from-amber-500/10 to-yellow-500/5",
+    gradient: "bg-amber-500/8",
     iconBg: "bg-amber-500/10",
     iconColor: "text-amber-500",
   },
   ELITE2: {
     icon: <Sword className="h-5 w-5" />,
-    gradient: "from-blue-500/10 to-cyan-500/5",
+    gradient: "bg-blue-500/8",
     iconBg: "bg-blue-500/10",
     iconColor: "text-blue-500",
   },
@@ -80,10 +80,7 @@ export const NpcTypeStatsCards: React.FC<NpcTypeStatsCardsProps> = ({
         const config = NPC_TYPE_CONFIG[type];
         if (!config) return null;
         return (
-          <Card
-            key={type}
-            className={cn("bg-gradient-to-br border-0", config.gradient)}
-          >
+          <Card key={type} className={cn("border-border/80", config.gradient)}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div

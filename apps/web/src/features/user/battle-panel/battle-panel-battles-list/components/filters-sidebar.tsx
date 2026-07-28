@@ -161,11 +161,11 @@ export const FiltersSidebar = ({
   return (
     <div
       className={cn(
-        "w-[320px] h-full flex flex-col shrink-0 bg-background/50 py-3 pr-3",
+        "w-[320px] h-full flex flex-col shrink-0 bg-background py-3 pr-3",
         className,
       )}
     >
-      <Card className="flex-1 flex flex-col min-h-0 bg-filters-sidebar border-border backdrop-blur-sm p-0">
+      <Card className="flex-1 flex flex-col min-h-0 bg-filters-sidebar border-border  p-0">
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">

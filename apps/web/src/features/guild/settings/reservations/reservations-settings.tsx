@@ -13,7 +13,7 @@ export const ReservationsSettings = () => {
   return (
     <div className="flex flex-col h-full min-h-0">
       <ReservationsSettingsHeader />
-      <ScrollArea className="flex-1 min-h-0 bg-background/50">
+      <ScrollArea className="flex-1 min-h-0 bg-background">
         {guild && <ReservationsSettingsForm guild={guild} />}
       </ScrollArea>
     </div>

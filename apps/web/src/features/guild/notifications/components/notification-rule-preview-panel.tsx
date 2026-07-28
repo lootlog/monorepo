@@ -26,15 +26,15 @@ export const NotificationRulePreviewPanel = ({
   const previewTemplateValues = createPreviewTemplateValues(t);
 
   return (
-    <Card className="sticky top-0 gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+    <Card className="sticky top-0 gap-3 border-border bg-card p-4">
       <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {t("settings.notifications.templateEditor.previewLabel")}
       </p>
       <p className="text-xs text-muted-foreground">
         {t("settings.notifications.templateEditor.previewDescription")}
       </p>
-      <div className="rounded-xl border border-border/60 bg-background/40 px-4 py-4 text-sm">
-        <div className="max-w-none whitespace-pre-wrap break-words text-foreground [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_hr]:border-border [&_li]:ml-4 [&_p]:leading-6 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_strong]:font-semibold">
+      <div className="rounded-xl border border-border/60 bg-background px-4 py-4 text-sm">
+        <div className="max-w-none whitespace-pre-wrap break-words text-foreground [&_blockquote]:rounded-md [&_blockquote]:border [&_blockquote]:border-border [&_blockquote]:px-3 [&_blockquote]:py-2 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_hr]:border-border [&_li]:ml-4 [&_p]:leading-6 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_strong]:font-semibold">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={previewMarkdownComponents}

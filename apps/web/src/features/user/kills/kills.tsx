@@ -237,10 +237,10 @@ export const KillsPage: React.FC = () => {
     <div className="flex flex-col h-full min-h-0">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="rounded-xl bg-red-500/10 p-2.5 shadow-inner shadow-red-500/10">
+                <div className="rounded-xl bg-red-500/10 p-2.5">
                   <Skull className="size-4 text-red-500" />
                 </div>
                 <div className="min-w-0">
@@ -269,7 +269,7 @@ export const KillsPage: React.FC = () => {
             />
           </Card>
 
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {isLoading ? (
                 <TableRowsSkeleton trailingColumns={2} />
@@ -297,7 +297,7 @@ export const KillsPage: React.FC = () => {
                       />
                       <TanStackTableBody
                         table={table}
-                        rowClassName="bg-background/30 border-b border-border h-14"
+                        rowClassName="bg-background border-b border-border h-14"
                         cellClassName="whitespace-nowrap"
                       />
                     </Table>

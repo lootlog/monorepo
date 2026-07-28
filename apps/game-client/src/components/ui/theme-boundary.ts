@@ -1,6 +1,5 @@
 const INHERITED_THEME_CLASS_NAMES = [
   "dark-theme",
-  "light",
   "ll-reduced-motion",
 ] as const;
 

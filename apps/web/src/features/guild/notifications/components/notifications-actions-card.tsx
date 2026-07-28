@@ -21,9 +21,9 @@ export const NotificationsActionsCard = ({
   const guildId = useGuildId();
 
   return (
-    <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+    <Card className="gap-3 border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+        <div className="rounded-xl bg-primary/10 p-2.5">
           <Settings className="size-4 text-primary" />
         </div>
         <h3 className="text-base font-semibold">

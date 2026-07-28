@@ -178,13 +178,13 @@ export const StatsRanking: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background/50">
+    <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                <div className="rounded-xl bg-primary/10 p-2.5">
                   <Users className="size-4 text-primary" />
                 </div>
                 <div className="min-w-0">
@@ -249,7 +249,7 @@ export const StatsRanking: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {isLoading ? (
                 <div>
@@ -288,7 +288,7 @@ export const StatsRanking: React.FC = () => {
                           key={member.memberId}
                           type="button"
                           onClick={() => handleRowClick(member.memberId)}
-                          className="min-w-0 rounded-lg border border-border bg-background/60 p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="min-w-0 rounded-lg border border-border bg-background p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-medium text-muted-foreground">
@@ -370,7 +370,7 @@ export const StatsRanking: React.FC = () => {
                         return (
                           <TableRow
                             key={member.memberId}
-                            className="bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors"
+                            className="bg-background border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors"
                             onClick={() => handleRowClick(member.memberId)}
                           >
                             <TableCell className="whitespace-nowrap">

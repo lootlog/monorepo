@@ -1,0 +1,74 @@
+---
+title: Funkcje klanowe
+description: Korzystaj ze wspólnych łupów, rezerwacji, statystyk, czatu i powiadomień klanu.
+---
+
+Strefa klanu zbiera dane członków w jednym kontekście. Dostęp do każdego
+narzędzia zależy od roli przypisanej w Lootlog.
+
+## Zanim zaczniesz
+
+- Zaloguj się kontem Discord należącym do serwera klanu.
+- Wybierz właściwy klan w panelu.
+- Sprawdź, czy masz co najmniej `LOOTLOG_ACCESS` oraz uprawnienia wymagane
+  przez konkretny widok.
+
+## Łupy i statystyki
+
+Lista łupów pozwala przeglądać wspólne wpisy, a statystyki agregują aktywność
+członków, potworów i zdobytych przedmiotów. Filtry świata i typu NPC pomagają
+porównywać dane o tej samej skali.
+
+<ProductScreenshot
+  src="/screenshots/guild-kill-stats-current.png"
+  alt="Statystyki killi klanu w Lootlog z filtrami, licznikami kategorii i rankingiem członków"
+  title="Klan · Statystyki killi"
+/>
+
+## Rezerwacje map
+
+Rezerwacje pomagają ograniczyć nakładanie się polowań na tych samych mapach.
+
+1. Otwórz **Klan → Rezerwacje**.
+2. Znajdź wolną mapę.
+3. Wybierz ją, aby utworzyć rezerwację.
+4. Po zakończeniu zwolnij mapę lub poczekaj na automatyczne wygaśnięcie.
+
+Odczyt wymaga `LOOTLOG_RESERVATIONS_READ`, a tworzenie i zmiana
+`LOOTLOG_RESERVATIONS_WRITE`.
+
+## Czat i powiadomienia
+
+Czat zapewnia wspólny kanał komunikacji, a powiadomienia mogą przenosić
+istotne zdarzenia do wybranych odbiorców lub kanałów Discord.
+
+Dostęp kontrolują między innymi:
+
+- `LOOTLOG_CHAT_READ` i `LOOTLOG_CHAT_WRITE`;
+- `LOOTLOG_NOTIFICATIONS_READ` i `LOOTLOG_NOTIFICATIONS_SEND`;
+- oddzielne uprawnienia do informacji o tytanach i herosach.
+
+## Logi aktywności
+
+Logi pomagają ustalić, kto i kiedy wykonał istotną zmianę, na przykład w
+eventach, timerach, rezerwacjach lub konfiguracji. Korzystaj z nich do
+wyjaśniania zmian, a nie jako zamiennika właściwego podziału uprawnień.
+
+## Integracja Discord
+
+Discord jest używany do logowania i identyfikacji klanów. Dodatkowa
+konfiguracja bota może rozszerzać przepływ o powiadomienia na serwerze.
+Aktualny sposób podłączenia integracji potwierdzisz na
+[Discordzie Lootlog](https://discord.gg/mPcczaeYMu).
+
+## Sprawdź rezultat
+
+Konfiguracja jest poprawna, gdy członkowie widzą wyłącznie sekcje zgodne z
+rolą, nowe dane trafiają do właściwego klanu, a rezerwacje i powiadomienia
+mają oczekiwanych odbiorców.
+
+## Następny krok
+
+- Skonfiguruj [Eventy](/docs/events).
+- Uporządkuj [Role i uprawnienia](/docs/permissions).
+- Dostosuj [Ustawienia](/docs/settings) klanu.
