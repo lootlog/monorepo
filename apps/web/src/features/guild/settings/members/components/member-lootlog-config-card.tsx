@@ -1,6 +1,6 @@
 import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";
-import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
+import { PlayerTile } from "@/components/tiles";
 import {
   getMemberLootlogConfigMetadataTranslationKey,
   getMemberLootlogProfileTarget,

@@ -1,5 +1,5 @@
 import { ItemRarity, type Loot, type Item } from "@/lib/loots/loot-types";
-import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
+import { PlayerTile } from "@/components/tiles";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { Card } from "@lootlog/ui/components/card";

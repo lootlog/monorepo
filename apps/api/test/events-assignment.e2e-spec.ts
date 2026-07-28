@@ -10,6 +10,7 @@ import {
   createGuildFixture,
   createLocationFixture,
   createMemberFixture,
+  createTimerFixture,
   FORBIDDEN_AUTH,
   resetEventsTimersState,
   withAuth,
@@ -45,6 +46,12 @@ describe("Events Assignment E2E", () => {
     const { event, map } = await createEventFixture(prisma, {
       guildId: guild.id,
     });
+    await createTimerFixture(prisma, {
+      guildId: guild.id,
+      memberId: member.id,
+      minSpawnTime: new Date(Date.now() + 4 * 60_000),
+      maxSpawnTime: new Date(Date.now() + 30 * 60_000),
+    });
 
     await withAuth(
       request(app.getHttpServer())
@@ -78,6 +85,38 @@ describe("Events Assignment E2E", () => {
         `/guilds/${guild.id}/events/${event.id}/maps/${map.id}/self-assign`,
       ),
     ).expect(200);
+  });
+
+  it("rejects self assignment before the configured assignment window", async () => {
+    const guild = await createGuildFixture(prisma);
+    const { member } = await createMemberFixture(prisma, {
+      guildId: guild.id,
+      permissions: [
+        Permission.LOOTLOG_EVENTS_WRITE,
+        Permission.LOOTLOG_EVENTS_READ,
+      ],
+    });
+    const { event, map } = await createEventFixture(prisma, {
+      guildId: guild.id,
+    });
+    await createTimerFixture(prisma, {
+      guildId: guild.id,
+      memberId: member.id,
+      minSpawnTime: new Date(Date.now() + 60 * 60_000),
+      maxSpawnTime: new Date(Date.now() + 90 * 60_000),
+    });
+
+    await withAuth(
+      request(app.getHttpServer()).post(
+        `/guilds/${guild.id}/events/${event.id}/maps/${map.id}/self-assign`,
+      ),
+    ).expect(400);
+
+    await expect(
+      prisma.eventMapAssignmentHistory.count({
+        where: { mapId: map.id, memberId: member.id },
+      }),
+    ).resolves.toBe(0);
   });
 
   it("covers hero, map, location and map-location mutations", async () => {

@@ -15,7 +15,6 @@ import type { HeroRespawnConfigResponseDtoWindowStatus } from "@lootlog/api-clie
 import type { KillTimelineMapResponseDto } from "@lootlog/api-client/models/main/kill-timeline-map-response-dto";
 import type { KillTimelineMapResponseDtoAssignmentsItem } from "@lootlog/api-client/models/main/kill-timeline-map-response-dto-assignments-item";
 import type { KillTimelineMapResponseDtoGapsItem } from "@lootlog/api-client/models/main/kill-timeline-map-response-dto-gaps-item";
-import type { RankingEditHistoryEntryResponseDto } from "@lootlog/api-client/models/main/ranking-edit-history-entry-response-dto";
 
 export type MemberRole =
   EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem;
@@ -71,7 +70,7 @@ export type EventWrappedLootHero =
   EventWrappedApiResponseDtoOutputLootHeroBreakdownItem;
 export type EventWrapped = EventWrappedApiResponseDtoOutput;
 
-export type PointsEditHistoryEntry = RankingEditHistoryEntryResponseDto;
+export type PointsEditHistoryEntry = EventRanking["editHistory"][number];
 
 export type WindowStatus = HeroRespawnConfigResponseDtoWindowStatus;
 export type RespawnConfig = HeroRespawnConfigResponseDto;
