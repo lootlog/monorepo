@@ -1,5 +1,18 @@
 # @lootlog/battlelog-service
 
+## 0.0.6
+
+### Patch Changes
+
+- 25406a5: Upgrade workspace compilation and type-checking to TypeScript 7.0.2 while
+  preserving the Nest CLI compiler integration through an isolated compatibility
+  bridge for its legacy programmatic API.
+- Updated dependencies [25406a5]
+  - @lootlog/battle-processor@1.0.2
+  - @lootlog/instrumentation@0.0.2
+  - @lootlog/nest-shared@1.0.4
+  - @lootlog/types@2.0.1
+
 ## 0.0.5
 
 ### Patch Changes

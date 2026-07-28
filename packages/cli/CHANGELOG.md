@@ -1,5 +1,13 @@
 # @lootlog/cli
 
+## 1.0.4
+
+### Patch Changes
+
+- Updated dependencies [25406a5]
+  - @lootlog/battle-processor@1.0.2
+  - @lootlog/types@2.0.1
+
 ## 1.0.3
 
 ### Patch Changes

@@ -1,5 +1,21 @@
 # @lootlog/game-client
 
+## 1.2.1
+
+### Patch Changes
+
+- 25406a5: Upgrade workspace compilation and type-checking to TypeScript 7.0.2 while
+  preserving the Nest CLI compiler integration through an isolated compatibility
+  bridge for its legacy programmatic API.
+- Updated dependencies [5af6865]
+- Updated dependencies [5af6865]
+- Updated dependencies [5af6865]
+- Updated dependencies [25406a5]
+  - @lootlog/api-client@3.0.0
+  - @lootlog/margonem@1.0.2
+  - @lootlog/socket-parser@1.0.2
+  - @lootlog/types@2.0.1
+
 ## 1.2.0
 
 ### Minor Changes
