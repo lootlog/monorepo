@@ -19,6 +19,27 @@ afterEach(() => {
 });
 
 describe("PlayerTile", () => {
+  it("gives the profile link an accessible name", () => {
+    render(
+      <PlayerTile
+        player={{
+          id: "player-1",
+          name: "Tester",
+          icon: "tester.png",
+        }}
+        accountId={123}
+      />,
+    );
+
+    const profileLink = screen.getByRole("link", {
+      name: "loots.list.playerActions.openMargonemProfile",
+    });
+
+    expect(profileLink.getAttribute("href")).toBe(
+      "https://www.margonem.pl/profile/view,123",
+    );
+  });
+
   it("shows and hides player details on hover without a shared tooltip provider", async () => {
     const { container } = render(
       <PlayerTile
