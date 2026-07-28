@@ -1,5 +1,18 @@
 # @lootlog/battlelog-service
 
+## 0.0.5
+
+### Patch Changes
+
+- c95e8ff: Redesign the documentation with the Lootlog Night Ink reading experience, static search, revised navigation, and clearer onboarding content.
+
+  Keep generated battle panel audit pages compatible with the documentation page title layout.
+
+- 6defdc4: Preserve every inbound runtime packet, share one full-envelope game event processor across overlapping client registrations, deduplicate semantic battle replays, and harden battle creation retries after lock or raw-storage failures.
+- Updated dependencies [9096829]
+  - @lootlog/types@2.0.0
+  - @lootlog/nest-shared@1.0.3
+
 ## 0.0.4
 
 ### Patch Changes
