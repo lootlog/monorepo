@@ -78,6 +78,7 @@ const EventCoordinationSummarySchema = z.object({
 });
 
 const EventCoordinationResponseSchema = z.object({
+  assignmentTimeoutMinutes: z.number(),
   generatedAt: isoDatetimeCodec,
   eventId: z.string(),
   world: z.string(),

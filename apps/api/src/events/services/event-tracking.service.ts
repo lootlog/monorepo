@@ -70,6 +70,7 @@ export class EventTrackingService implements OnModuleInit {
           include: {
             event: {
               select: {
+                assignmentTimeoutMinutes: true,
                 world: true,
                 mapAssignmentCap: true,
               },
@@ -119,9 +120,28 @@ export class EventTrackingService implements OnModuleInit {
       npcName: map.heroNpc.npcName,
     });
 
-    if (timer && new Date() >= new Date(timer.maxSpawnTime)) {
+    if (!timer) {
+      throw new BadRequestException(
+        "Cannot assign members without an active respawn window",
+      );
+    }
+
+    const now = new Date();
+
+    if (now >= new Date(timer.maxSpawnTime)) {
       throw new BadRequestException(
         "Cannot assign members after the respawn window is overdue",
+      );
+    }
+
+    const assignmentEnabledAt = new Date(
+      new Date(timer.minSpawnTime).getTime() -
+        map.heroNpc.event.assignmentTimeoutMinutes * 60 * 1000,
+    );
+
+    if (now < assignmentEnabledAt) {
+      throw new BadRequestException(
+        "Cannot assign members before the assignment window opens",
       );
     }
 

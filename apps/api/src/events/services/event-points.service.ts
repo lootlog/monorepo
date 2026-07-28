@@ -1269,6 +1269,7 @@ export class EventPointsService {
         where: {
           memberId,
           confirmedAt: null,
+          confirmationExpiredAcknowledgedAt: null,
           confirmationDeadlineAt: {
             not: null,
             lt: now,
@@ -1356,6 +1357,43 @@ export class EventPointsService {
     return {
       items: dedupeByKillId(pendingKillPoints),
       expiredItems: dedupeByKillId(expiredKillPoints),
+    };
+  }
+
+  async acknowledgeExpiredParticipationConfirmations(
+    guildId: string,
+    eventId: string,
+    memberId: number,
+    killIds: string[],
+  ): Promise<{ acknowledgedCount: number }> {
+    const acknowledgedAt = new Date();
+    const result = await this.prisma.eventKillPoint.updateMany({
+      where: {
+        killId: {
+          in: killIds,
+        },
+        memberId,
+        confirmedAt: null,
+        confirmationDeadlineAt: {
+          lt: acknowledgedAt,
+        },
+        confirmationExpiredAcknowledgedAt: null,
+        kill: {
+          heroNpc: {
+            eventId,
+            event: {
+              guildId,
+            },
+          },
+        },
+      },
+      data: {
+        confirmationExpiredAcknowledgedAt: acknowledgedAt,
+      },
+    });
+
+    return {
+      acknowledgedCount: result.count,
     };
   }
 
@@ -1623,25 +1661,27 @@ export class EventPointsService {
     return updated;
   }
 
-  async getRankingEditHistory(
+  async getRankingEditHistories(
     guildId: string,
     eventId: string,
-    rankingId: string,
+    rankingIds: string[],
   ) {
-    const ranking = await this.prisma.eventRanking.findFirst({
-      where: {
-        id: rankingId,
-        eventId,
-        event: { guildId },
-      },
-    });
-
-    if (!ranking) {
-      throw new NotFoundException("Ranking not found");
+    if (rankingIds.length === 0) {
+      return new Map();
     }
 
     const historyEntries = await this.prisma.eventPointsEditHistory.findMany({
-      where: { rankingId },
+      where: {
+        rankingId: {
+          in: rankingIds,
+        },
+        ranking: {
+          eventId,
+          event: {
+            guildId,
+          },
+        },
+      },
       orderBy: { editedAt: "desc" },
     });
 
@@ -1671,13 +1711,26 @@ export class EventPointsService {
       ),
     );
 
-    return historyEntries.map((entry) => ({
+    const enrichedHistoryEntries = historyEntries.map((entry) => ({
       ...entry,
       deltaPoints: this.roundPointsValue(
         entry.newPoints - entry.previousPoints,
       ),
       editedByName: editorNameByUserId.get(entry.editedByUserId) ?? null,
     }));
+    const historiesByRankingId = new Map<
+      string,
+      typeof enrichedHistoryEntries
+    >();
+
+    for (const entry of enrichedHistoryEntries) {
+      const rankingHistory = historiesByRankingId.get(entry.rankingId) ?? [];
+
+      rankingHistory.push(entry);
+      historiesByRankingId.set(entry.rankingId, rankingHistory);
+    }
+
+    return historiesByRankingId;
   }
 
   private async emitRankingUpdateByEventId(eventId: string): Promise<void> {

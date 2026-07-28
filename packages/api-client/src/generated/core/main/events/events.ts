@@ -6,6 +6,18 @@
  * OpenAPI spec version: 1.0
  */
 import type {
+  AcknowledgeExpiredParticipationConfirmationsDto
+} from '../../../models/main/acknowledge-expired-participation-confirmations-dto';
+
+import type {
+  AcknowledgeExpiredParticipationConfirmationsPathParameters
+} from '../../../models/main/acknowledge-expired-participation-confirmations-path-parameters';
+
+import type {
+  AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput
+} from '../../../models/main/acknowledge-expired-participation-confirmations-response-dto-output';
+
+import type {
   AssignMapLocationDto
 } from '../../../models/main/assign-map-location-dto';
 
@@ -290,10 +302,6 @@ import type {
 } from '../../../models/main/list-pending-participation-confirmations-path-parameters';
 
 import type {
-  ListRankingEditHistoryPathParameters
-} from '../../../models/main/list-ranking-edit-history-path-parameters';
-
-import type {
   NullableCoverageGapResponseDto
 } from '../../../models/main/nullable-coverage-gap-response-dto';
 
@@ -304,10 +312,6 @@ import type {
 import type {
   PendingParticipationConfirmationsResponseDto
 } from '../../../models/main/pending-participation-confirmations-response-dto';
-
-import type {
-  RankingEditHistoryEntryResponseDto
-} from '../../../models/main/ranking-edit-history-entry-response-dto';
 
 import type {
   RecalculateEventPointsPathParameters
@@ -991,6 +995,30 @@ export const listPendingParticipationConfirmations = async ({ guildId, eventId }
 );}
 
 
+export const getAcknowledgeExpiredParticipationConfirmationsUrl = ({ guildId, eventId }: AcknowledgeExpiredParticipationConfirmationsPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/events/${eventId}/participation-confirmations/expired/acknowledge`
+}
+
+/**
+ * @summary Acknowledge expired participation confirmations
+ */
+export const acknowledgeExpiredParticipationConfirmations = async ({ guildId, eventId }: AcknowledgeExpiredParticipationConfirmationsPathParameters,
+    acknowledgeExpiredParticipationConfirmationsDto: AcknowledgeExpiredParticipationConfirmationsDto, options?: Parameters<typeof mainFetch>[1]): Promise<AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput> => {
+
+  return mainFetch<AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput>(getAcknowledgeExpiredParticipationConfirmationsUrl({ guildId, eventId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(acknowledgeExpiredParticipationConfirmationsDto)
+  }
+);}
+
+
 export const getConfirmParticipationForKillUrl = ({ guildId, eventId, killId }: ConfirmParticipationForKillPathParameters,) => {
 
 
@@ -1060,30 +1088,6 @@ export const updateRankingPoints = async ({ guildId, eventId, rankingId }: Updat
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(updateRankingPointsDto)
-  }
-);}
-
-
-export const getListRankingEditHistoryUrl = ({ guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters,) => {
-
-
-
-
-  return `/guilds/${guildId}/events/${eventId}/ranking/${rankingId}/history`
-}
-
-/**
- * Get the edit history for a ranking entry (OWNER/ADMIN only)
- * @summary Get ranking edit history
- */
-export const listRankingEditHistory = async ({ guildId, eventId, rankingId }: ListRankingEditHistoryPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<RankingEditHistoryEntryResponseDto[]> => {
-
-  return mainFetch<RankingEditHistoryEntryResponseDto[]>(getListRankingEditHistoryUrl({ guildId, eventId, rankingId }),
-  {
-    ...options,
-    method: 'GET'
-
-
   }
 );}
 

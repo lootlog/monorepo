@@ -6,8 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type ListRankingEditHistoryPathParameters = {
+export type AcknowledgeExpiredParticipationConfirmationsPathParameters = {
  guildId: string,
     eventId: string,
-    rankingId: string,
  }

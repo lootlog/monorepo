@@ -316,17 +316,16 @@ export class SettingsDocumentsService {
         continue;
       }
 
-      const member = await this.prisma.member.findUnique({
+      const member = await this.prisma.member.findFirst({
         where: {
-          memberId: {
-            userId,
-            guildId: scope.id,
-          },
+          globalUserId: userId,
+          guildId: scope.id,
+          active: true,
         },
-        select: { active: true },
+        select: { id: true },
       });
 
-      if (!member?.active) {
+      if (!member) {
         throw new ForbiddenException("Guild settings are not accessible");
       }
     }
