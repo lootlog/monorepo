@@ -5,8 +5,6 @@
     "declaration": false,
     "rootDir": ".",
     "strict": true,
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
     "types": ["node", "vitest/globals"],
     "paths": {
       "src/*": ["./src/*"]

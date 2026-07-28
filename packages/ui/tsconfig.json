@@ -2,8 +2,6 @@
   "extends": "@lootlog/typescript-config/react-library.json",
   "compilerOptions": {
     //"outDir": "dist"
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@lootlog/ui/*": ["./src/*"]
     }

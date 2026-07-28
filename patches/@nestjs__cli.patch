@@ -1,0 +1,13 @@
+diff --git a/lib/compiler/typescript-loader.js b/lib/compiler/typescript-loader.js
+index ba87eb2e6b3447eca5272ed770af09f98198ba9a..d1f8268a1d86341a671e7d36520cdbd23d789087 100644
+--- a/lib/compiler/typescript-loader.js
++++ b/lib/compiler/typescript-loader.js
+@@ -9,7 +9,7 @@ class TypeScriptBinaryLoader {
+         }
+         let tsBinary;
+         try {
+-            const tsBinaryPath = require.resolve('typescript', {
++            const tsBinaryPath = require.resolve('typescript-legacy', {
+                 paths: [process.cwd(), ...this.getModulePaths()],
+             });
+             // eslint-disable-next-line @typescript-eslint/no-var-requires
