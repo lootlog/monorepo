@@ -1,5 +1,19 @@
 # @lootlog/api
 
+## 2.0.0
+
+### Major Changes
+
+- 9096829: Introduce the dark-only Lootlog Signal System across frontend surfaces, replace
+  the default web theme with Default v2, and remove the obsolete color-mode
+  preference from the database and public API contracts.
+
+### Patch Changes
+
+- Updated dependencies [9096829]
+  - @lootlog/types@2.0.0
+  - @lootlog/nest-shared@1.0.3
+
 ## 1.1.0
 
 ### Minor Changes
