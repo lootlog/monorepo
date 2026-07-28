@@ -64,23 +64,28 @@ export const LootNpcs: FC<LootNpcsProps> = ({ npcs, className }) => {
     firstNpcType && isSpecialNpcType(firstNpcType) ? firstNpcType : undefined;
 
   return (
-    <div className={cn("leading-none flex flex-row gap-2", className)}>
-      {specialNpcType && (
-        <span
-          className={cn(
-            "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border w-fit",
-            getNpcBadgeStyle(specialNpcType),
-          )}
-        >
-          {t(`npcType.${specialNpcType}`)}
-        </span>
+    <div
+      className={cn(
+        "flex min-w-0 flex-row items-center gap-2 leading-none",
+        className,
       )}
+    >
       {firstNpc && (
-        <span className="text-foreground font-bold text-sm">
+        <span className="truncate text-sm font-bold text-foreground">
           {firstNpc.name}{" "}
           {firstNpc.lvl !== 0
             ? `(${firstNpc.lvl}${firstNpc.prof?.charAt(0).toLowerCase() ?? ""})`
             : ""}
+        </span>
+      )}
+      {specialNpcType && (
+        <span
+          className={cn(
+            "inline-flex w-fit shrink-0 items-center rounded-md border px-2 py-0.5 text-xs font-semibold",
+            getNpcBadgeStyle(specialNpcType),
+          )}
+        >
+          {t(`npcType.${specialNpcType}`)}
         </span>
       )}
     </div>

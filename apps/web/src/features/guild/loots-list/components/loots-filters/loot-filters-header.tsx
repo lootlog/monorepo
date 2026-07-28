@@ -44,6 +44,7 @@ export const LootFiltersHeader = ({
     filters.itemNames.length > 0 ||
     filters.hid !== "" ||
     filters.players.length > 0;
+  const usesStackedControls = isMobile || isCompactLayout;
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -62,7 +63,8 @@ export const LootFiltersHeader = ({
         <Card className="gap-2 rounded-xl border-border bg-card p-2 shadow-none">
           <div
             className={cn(
-              "flex gap-2",
+              "flex",
+              "gap-0",
               isMobile ? "flex-col items-stretch" : "items-center",
               isCompactLayout && !isMobile && "flex-wrap",
             )}
@@ -102,14 +104,29 @@ export const LootFiltersHeader = ({
               </div>
             )}
 
+            {usesStackedControls ? (
+              <div
+                aria-hidden
+                className="flex h-2 w-full basis-full items-center"
+              >
+                <div className="h-px w-full bg-border" />
+              </div>
+            ) : (
+              <div aria-hidden className="relative h-9 w-3 shrink-0">
+                <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
+              </div>
+            )}
+
             {!isMobile && (
-              <>
-                <WorldSwitcher
-                  className={cn(
-                    "max-w-48",
-                    isCompactLayout && "mr-auto w-[140px] md:w-[140px]",
-                  )}
-                />
+              <div
+                className={cn(
+                  "flex min-w-0 items-center gap-2",
+                  isCompactLayout ? "w-full" : "w-80 shrink-0",
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <WorldSwitcher width="w-full" />
+                </div>
 
                 <div
                   className={cn(
@@ -203,14 +220,16 @@ export const LootFiltersHeader = ({
                     </Button>
                   </ThemeInteractiveFrame>
                 </div>
-              </>
+              </div>
             )}
 
             {isMobile && (
-              <WorldSwitcher
-                width="w-full"
-                triggerClassName="w-full justify-between"
-              />
+              <div className="w-full">
+                <WorldSwitcher
+                  width="w-full"
+                  triggerClassName="w-full justify-between"
+                />
+              </div>
             )}
           </div>
         </Card>

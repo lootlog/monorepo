@@ -237,12 +237,22 @@ const LootContent = ({
 const MetaItem = ({
   icon: Icon,
   children,
+  className,
+  title,
 }: {
   icon: React.FC<{ className?: string }>;
   children: React.ReactNode;
+  className?: string;
+  title?: string;
 }) => (
-  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-    <Icon className="h-3 w-3" />
+  <span
+    className={cn(
+      "flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground",
+      className,
+    )}
+    title={title}
+  >
+    <Icon className="h-3 w-3 shrink-0" />
     {children}
   </span>
 );
@@ -259,13 +269,16 @@ const LootFooter = ({
   itemsCount: number;
 }) => (
   <div className="flex items-center justify-between gap-3 mt-auto border-t border-border/30 -mx-4 px-4 py-1">
-    <div className="flex items-center gap-0">
-      <MetaItem icon={MapPin}>{location}</MetaItem>
-      <Dot className="text-muted-foreground" />
-      <MetaItem icon={Calendar}>{date}</MetaItem>
+    <div className="flex min-w-0 flex-1 items-center gap-0">
+      <MetaItem icon={MapPin} className="min-w-0 flex-1" title={location}>
+        <span className="truncate">{location}</span>
+      </MetaItem>
     </div>
-    <div className="flex items-center gap-3">
+    <div className="flex shrink-0 items-center gap-2">
+      <MetaItem icon={Calendar}>{date}</MetaItem>
+      <Dot className="shrink-0 text-muted-foreground" />
       <MetaItem icon={Users}>{playersCount}</MetaItem>
+      <Dot className="shrink-0 text-muted-foreground" />
       <MetaItem icon={Package}>{itemsCount}</MetaItem>
     </div>
   </div>
