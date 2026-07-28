@@ -53,7 +53,10 @@ export const AppLayout = () => {
   );
 
   return (
-    <div className="flex h-dvh w-full flex-col overflow-hidden">
+    <div
+      className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground"
+      data-design-system="signal-v2"
+    >
       <Suspense fallback={null}>
         <ThemeAnnouncement />
       </Suspense>

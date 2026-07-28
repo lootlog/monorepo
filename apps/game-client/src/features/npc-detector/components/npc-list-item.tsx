@@ -393,7 +393,7 @@ export const NpcListItem = ({
     <div
       className={cn(
         className,
-        shouldPlayDetectionAnimation && "ll-npc-detection-bounce",
+        shouldPlayDetectionAnimation && "ll-npc-detection-settle",
       )}
       style={style}
     >

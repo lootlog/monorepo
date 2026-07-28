@@ -57,7 +57,7 @@ export const NotificationJobDetailDialog = ({
               <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                 {t("settings.notifications.jobDetail.sectionOverview")}
               </p>
-              <div className="mt-2 flex flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-4">
+              <div className="mt-2 flex flex-col gap-3 rounded-xl border border-border/70 bg-background p-4">
                 <NotificationJobDetailRow
                   label={t("settings.notifications.jobDetail.rule")}
                   value={
@@ -140,7 +140,7 @@ export const NotificationJobDetailDialog = ({
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                   {t("settings.notifications.jobDetail.sectionContent")}
                 </p>
-                <div className="mt-2 rounded-xl border border-dashed border-border/80 bg-background/20 p-4">
+                <div className="mt-2 rounded-xl border border-dashed border-border/80 bg-background p-4">
                   {title ? (
                     <p className="mb-2 text-sm font-semibold">{title}</p>
                   ) : null}
@@ -156,7 +156,7 @@ export const NotificationJobDetailDialog = ({
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                   {t("settings.notifications.jobDetail.sectionDelivery")}
                 </p>
-                <div className="mt-2 flex flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-4">
+                <div className="mt-2 flex flex-col gap-3 rounded-xl border border-border/70 bg-background p-4">
                   {job.attemptCount > 0 ? (
                     <NotificationJobDetailRow
                       label={t("settings.notifications.jobDetail.attemptCount")}

@@ -236,7 +236,7 @@ const StatsMetricCard = ({
   value: string | number;
   valueClassName?: string;
 }) => (
-  <div className="rounded-lg border border-border/70 bg-card/50 px-2.5 py-2">
+  <div className="rounded-lg border border-border/70 bg-card px-2.5 py-2">
     <p className="text-xs text-muted-foreground">{label}</p>
     <p className={`text-sm font-semibold ${valueClassName ?? ""}`}>{value}</p>
   </div>
@@ -353,7 +353,7 @@ const MemberKillCard = ({
       }}
       className="block"
     >
-      <div className="rounded-xl border border-border/70 bg-card/40 p-2.5 shadow-sm transition-colors hover:border-primary/35 hover:bg-card/60">
+      <div className="rounded-xl border border-border/70 bg-card p-2.5 shadow-sm transition-colors hover:border-primary/35 hover:bg-card">
         <div className="flex items-start justify-between gap-2.5">
           <div className="flex min-w-0 flex-1 items-center gap-1.5">
             {kill.heroNpc.npcIcon ? (
@@ -459,7 +459,7 @@ const MemberSummarySidebar = ({
   return (
     <aside className="order-1 lg:order-2">
       <div className="space-y-4 lg:sticky lg:top-3">
-        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-3">
           <div className="hidden items-center gap-3 lg:flex">
             <Avatar className="h-12 w-12 rounded-xl ring-1 ring-border/70">
               <AvatarImage src={avatarUrl} />
@@ -512,7 +512,7 @@ const MemberSummarySidebar = ({
           </div>
         </Card>
 
-        <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-3 border-border bg-card p-3">
           <div className="flex items-center gap-2">
             <Swords className="h-4 w-4 text-yellow-500" />
             <h3 className="text-sm font-semibold">
@@ -632,7 +632,7 @@ const MemberKillsListSection = ({
   return (
     <section className="order-2 flex min-h-0 flex-1 flex-col gap-3 lg:order-1">
       {heroes.length > 0 && (
-        <Card className="gap-2 border-border bg-card/40 p-2.5 backdrop-blur-sm">
+        <Card className="gap-2 border-border bg-card p-2.5">
           <Tabs
             value={selectedHeroId ?? "all"}
             onValueChange={(value) =>
@@ -699,14 +699,14 @@ const MemberKillsListSection = ({
                 >
                   {isLoaderRow ? (
                     hasNextPage ? (
-                      <div className="relative flex h-14 items-center justify-center gap-2.5 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md">
+                      <div className="relative flex h-14 items-center justify-center gap-2.5 rounded-xl border border-border/50 bg-card/30">
                         <Spinner className="h-4.5 w-4.5 text-primary" />
                         <span className="text-xs font-medium text-muted-foreground">
                           {t("events.kills.loading")}
                         </span>
                       </div>
                     ) : (
-                      <div className="flex h-14 items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md">
+                      <div className="flex h-14 items-center justify-center rounded-xl border border-border/50 bg-card/30">
                         <span className="text-xs text-muted-foreground">
                           {t("events.kills.endOfList")}
                         </span>
@@ -860,13 +860,13 @@ const EventMemberKillsPageContent = ({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <EventParticipationConfirmationDialog
         guildId={guildId}
         eventId={eventId}
       />
 
-      <Card className="mx-3 mt-3 flex-row items-center justify-between gap-3 border-border bg-card/40 p-3 backdrop-blur-sm lg:hidden">
+      <Card className="mx-3 mt-3 flex-row items-center justify-between gap-3 border-border bg-card p-3  lg:hidden">
         <div className="flex items-center gap-3 min-w-0">
           <Avatar className="h-10 w-10 shrink-0 rounded-xl ring-1 ring-border/70">
             <AvatarImage

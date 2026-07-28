@@ -158,7 +158,7 @@ export const EventEditSettingsPage = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <Skeleton className="h-9 w-9 rounded-xl" />
             <div className="flex flex-col gap-2">
@@ -167,7 +167,7 @@ export const EventEditSettingsPage = () => {
             </div>
           </div>
         </Card>
-        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-3">
           <div className="grid gap-4">
             <div className="space-y-2">
               <Skeleton className="h-3 w-24" />
@@ -211,11 +211,11 @@ export const EventEditSettingsPage = () => {
   }
 
   return (
-    <ScrollArea className="h-full bg-background/50">
+    <ScrollArea className="h-full bg-background">
       <div className="flex flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+            <div className="rounded-xl bg-primary/10 p-2">
               <Settings className="size-4 text-primary" />
             </div>
             <div className="min-w-0">
@@ -231,7 +231,7 @@ export const EventEditSettingsPage = () => {
           className="space-y-3 pb-24"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-3">
             <div className="grid gap-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

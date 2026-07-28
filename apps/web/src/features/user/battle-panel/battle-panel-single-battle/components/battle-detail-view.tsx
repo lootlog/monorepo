@@ -412,7 +412,7 @@ export function BattleDetailView({
   return (
     <ScrollArea
       ref={scrollViewportRef}
-      className="h-full min-h-0 bg-background/50"
+      className="h-full min-h-0 bg-background"
       onScroll={handleBattleScroll}
     >
       <div className="px-3 py-3 flex flex-col gap-4" style={layoutStyle}>

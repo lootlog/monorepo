@@ -40,9 +40,9 @@ export const NotificationsRecentHistoryCard = ({
   };
 
   return (
-    <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+    <Card className="gap-3 border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+        <div className="rounded-xl bg-primary/10 p-2.5">
           <History className="size-4 text-primary" />
         </div>
         <div>
@@ -62,10 +62,10 @@ export const NotificationsRecentHistoryCard = ({
               variant="interactive"
               role="button"
               tabIndex={0}
-              className="gap-1 border-border/70 bg-background/30 p-3 text-left backdrop-blur-sm hover:bg-background/50"
+              className="gap-1 border-border/70 bg-background p-3 text-left  hover:bg-background"
               onClick={() => openJobDetails(job)}
               onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
+                if (event.key === "Enter" || event.key === "") {
                   event.preventDefault();
                   openJobDetails(job);
                 }
@@ -108,7 +108,7 @@ export const NotificationsRecentHistoryCard = ({
           </Button>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-border/80 bg-background/20 p-6 text-sm text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-border/80 bg-background p-6 text-sm text-muted-foreground">
           {t("settings.notifications.empty.historyJobs")}
         </div>
       )}

@@ -1,13 +1,12 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { CheckIcon, XCircle, ChevronDown, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDown, XIcon } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
-import { Button } from "@lootlog/ui/components/button";
 import { Separator } from "@lootlog/ui/components/separator";
 import {
   Command,
@@ -20,24 +19,25 @@ import {
 } from "@lootlog/ui/components/command";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@/utils/cn";
-import { Badge } from "@lootlog/ui/components/badge";
+import { useTranslation } from "react-i18next";
 
 /**
  * Variants for the multi-select component to handle different styles.
- * Uses class-variance-authority (cva) to define different styles based on "variant" prop.
+ * Uses class-variance-authority (cva) to define different styles based on the variant prop.
  */
 const multiSelectVariants = cva(
-  "m-1 transition ease-in-out delay-150 hover:-translate-y-1 hover:scale-110 duration-300",
+  "inline-flex min-w-0 items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
   {
     variants: {
       variant: {
         default:
-          "border-foreground/10 text-foreground bg-card hover:bg-card/80",
+          "border-primary/25 bg-primary/10 text-foreground hover:bg-primary/15",
         secondary:
-          "border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border-border bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        inverted: "inverted",
+        inverted:
+          "border-primary/30 bg-primary/15 text-foreground hover:bg-primary/20",
       },
     },
     defaultVariants: {
@@ -51,7 +51,7 @@ const multiSelectVariants = cva(
  */
 interface MultiSelectProps
   extends
-    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    Omit<React.HTMLAttributes<HTMLDivElement>, "defaultValue" | "onChange">,
     VariantProps<typeof multiSelectVariants> {
   /**
    * An array of option objects to be displayed in the multi-select component.
@@ -81,15 +81,9 @@ interface MultiSelectProps
 
   /**
    * Placeholder text to be displayed when no values are selected.
-   * Optional, defaults to "Select options".
+   * Optional, defaults to a localized label.
    */
   placeholder?: string;
-
-  /**
-   * Animation duration in seconds for the visual effects (e.g., bouncing badges).
-   * Optional, defaults to 0 (no animation).
-   */
-  animation?: number;
 
   /**
    * Maximum number of items to display. Extra selected items will be summarized.
@@ -105,12 +99,6 @@ interface MultiSelectProps
   modalPopover?: boolean;
 
   /**
-   * If true, renders the multi-select component as a child of another component.
-   * Optional, defaults to false.
-   */
-  asChild?: boolean;
-
-  /**
    * Additional class names to apply custom styles to the multi-select component.
    * Optional, can be used to add custom styles.
    */
@@ -124,12 +112,11 @@ interface MultiSelectProps
   loading?: boolean;
   searchPlaceholder?: string;
   emptyMessage?: string;
+  minimumSearchLength?: number;
+  disabled?: boolean;
 }
 
-export const MultiSelect = React.forwardRef<
-  HTMLButtonElement,
-  MultiSelectProps
->(
+export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
   (
     {
       options,
@@ -138,8 +125,7 @@ export const MultiSelect = React.forwardRef<
       variant,
       defaultValue = [],
       value,
-      placeholder = "Select options",
-      animation = 0,
+      placeholder,
       maxCount = 3,
       modalPopover = false,
       commandSearch = false,
@@ -147,19 +133,39 @@ export const MultiSelect = React.forwardRef<
       onSearchChange,
       searchValue,
       loading = false,
-      searchPlaceholder = "Szukaj...",
-      emptyMessage = "Brak wyników.",
-      //   asChild = false,
+      searchPlaceholder,
+      emptyMessage,
+      minimumSearchLength = 1,
+      disabled = false,
       className,
       ...props
     },
     ref,
   ) => {
+    const { t } = useTranslation();
     const [selectedValues, setSelectedValues] = React.useState<string[]>(
       value ?? defaultValue,
     );
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-    const [isAnimating] = React.useState(false);
+    const [inputSearchValue, setInputSearchValue] = React.useState(
+      searchValue ?? "",
+    );
+    const optionCacheRef = React.useRef(
+      new Map(options.map((option) => [option.value, option])),
+    );
+    const resolvedPlaceholder = placeholder ?? t("common.selectOptions");
+    const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
+    const resolvedEmptyMessage = emptyMessage ?? t("common.noResults");
+    const hasSearch = commandSearch || controlledSearch;
+    const shouldPromptForSearch =
+      controlledSearch && inputSearchValue.length < minimumSearchLength;
+    const searchPrompt =
+      minimumSearchLength > 1
+        ? t("common.searchMinimumCharacters", {
+            count: minimumSearchLength,
+          })
+        : t("common.startTypingToSearch");
+    const visibleOptions = shouldPromptForSearch ? [] : options;
 
     React.useEffect(() => {
       if (value !== undefined) {
@@ -172,6 +178,18 @@ export const MultiSelect = React.forwardRef<
         setSelectedValues(defaultValue);
       }
     }, [defaultValue, value]);
+
+    React.useEffect(() => {
+      if (!isPopoverOpen) {
+        setInputSearchValue(searchValue ?? "");
+      }
+    }, [isPopoverOpen, searchValue]);
+
+    React.useEffect(() => {
+      for (const option of options) {
+        optionCacheRef.current.set(option.value, option);
+      }
+    }, [options]);
 
     const handleInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>,
@@ -215,18 +233,41 @@ export const MultiSelect = React.forwardRef<
         return;
       }
 
+      if (disabled) {
+        return;
+      }
+
       setIsPopoverOpen(isOpen);
     };
 
-    const handleTogglePopover = () => {
-      setIsPopoverOpen((prev) => !prev);
+    const handleTriggerKeyDown = (
+      event: React.KeyboardEvent<HTMLDivElement>,
+    ) => {
+      props.onKeyDown?.(event);
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      if (
+        event.key !== "Enter" &&
+        event.key !== " " &&
+        event.key !== "ArrowDown"
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      if (!disabled) {
+        setIsPopoverOpen(true);
+      }
     };
 
-    const clearExtraOptions = () => {
-      const newSelectedValues = selectedValues.slice(0, maxCount);
-      setSelectedValues(newSelectedValues);
-      onValueChange(newSelectedValues);
-      onClose(newSelectedValues);
+    const handleControlledSearchChange = (
+      event: React.ChangeEvent<HTMLInputElement>,
+    ) => {
+      const nextSearchValue = event.target.value;
+      setInputSearchValue(nextSearchValue);
+      onSearchChange?.(nextSearchValue);
     };
 
     return (
@@ -236,159 +277,195 @@ export const MultiSelect = React.forwardRef<
         modal={modalPopover}
       >
         <PopoverTrigger asChild>
-          <Button
+          <div
             ref={ref}
             {...props}
-            onClick={handleTogglePopover}
+            role="combobox"
+            aria-expanded={isPopoverOpen}
+            aria-disabled={disabled}
+            tabIndex={disabled ? -1 : (props.tabIndex ?? 0)}
+            onKeyDown={handleTriggerKeyDown}
             className={cn(
-              "flex w-full p-0 rounded-md border min-h-8 h-auto items-center justify-between bg-inherit hover:bg-inherit bg-secondary hover:bg-input/50",
+              "group flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-border bg-background px-2.5 py-1.5 text-left text-sm text-foreground outline-none transition-[background-color,border-color,box-shadow]",
+              "hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground",
+              "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              "data-[state=open]:border-ring data-[state=open]:bg-foreground/[0.04] data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-ring",
+              "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
               className,
             )}
           >
             {selectedValues.length > 0 ? (
-              <div className="flex justify-between items-center w-full">
-                <div className="flex flex-wrap items-center">
+              <>
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
                   {selectedValues.slice(0, maxCount).map((value) => {
-                    const option = options.find((o) => o.value === value);
+                    const currentOption = options.find(
+                      (option) => option.value === value,
+                    );
+                    const cachedOption = optionCacheRef.current.get(value);
+                    const label =
+                      currentOption?.label ?? cachedOption?.label ?? value;
 
                     return (
-                      <Badge
+                      <button
+                        type="button"
                         key={value}
-                        className={cn(
-                          "px-1",
-                          "max-w-20",
-                          isAnimating ? "animate-bounce" : "",
-                          multiSelectVariants({ variant }),
-                        )}
-                        style={{ animationDuration: `${animation}s` }}
-                      >
-                        <span className="max-w-24 text-ellipsis overflow-hidden mr-1">
-                          {option?.label}
-                        </span>
-                        <div
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            toggleOption(value, true);
-                          }}
-                        >
-                          <XCircle className="h-4 w-4 cursor-pointer" />
-                        </div>
-                      </Badge>
-                    );
-                  })}
-                  {selectedValues.length > maxCount && (
-                    <Badge
-                      className={cn(
-                        "bg-transparent max-w-14 px-2 text-foreground border-foreground/1 hover:bg-transparent border border-border",
-                        isAnimating ? "animate-bounce" : "",
-                        multiSelectVariants({ variant }),
-                      )}
-                      style={{ animationDuration: `${animation}s` }}
-                    >
-                      {`+ ${selectedValues.length - maxCount}`}
-                      <div
+                        aria-label={t("common.removeOption", { label })}
+                        className={multiSelectVariants({ variant })}
+                        onPointerDown={(event) => event.stopPropagation()}
                         onClick={(event) => {
                           event.stopPropagation();
-                          clearExtraOptions();
+                          toggleOption(value, true);
                         }}
                       >
-                        <XCircle className="ml-2 h-4 w-4 cursor-pointer" />
-                      </div>
-                    </Badge>
-                  )}
+                        <span className="max-w-28 truncate">{label}</span>
+                        <XIcon
+                          aria-hidden="true"
+                          className="size-3.5 shrink-0 opacity-60"
+                        />
+                      </button>
+                    );
+                  })}
+                  {selectedValues.length > maxCount ? (
+                    <span
+                      className={cn(
+                        multiSelectVariants({ variant }),
+                        "border-border bg-transparent text-muted-foreground",
+                      )}
+                    >
+                      +{selectedValues.length - maxCount}
+                    </span>
+                  ) : null}
                 </div>
-                <div
-                  className="flex items-center justify-between"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleClear();
-                  }}
-                >
-                  <XIcon className="h-4 mx-2 cursor-pointer text-muted-foreground" />
+                <div className="flex shrink-0 items-center self-stretch">
+                  <button
+                    type="button"
+                    aria-label={t("common.clear")}
+                    className="flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleClear();
+                    }}
+                  >
+                    <XIcon aria-hidden="true" className="size-4" />
+                  </button>
                   <Separator
                     orientation="vertical"
-                    className="flex min-h-6 h-full"
+                    className="mx-1 h-5 bg-border/80"
+                  />
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
                   />
                 </div>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center justify-between mx-auto w-full">
-                <span className="text-sm text-muted-foreground mx-3">
-                  {placeholder}
+              <>
+                <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                  {resolvedPlaceholder}
                 </span>
-                <ChevronDown className="h-4 mx-2 cursor-pointer text-muted-foreground" />
-              </div>
+                <ChevronDown
+                  aria-hidden="true"
+                  className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                />
+              </>
             )}
-          </Button>
+          </div>
         </PopoverTrigger>
         <PopoverContent
-          className="p-0 w-64"
+          className="w-[var(--radix-popover-trigger-width)] min-w-64 max-w-[min(24rem,calc(100vw-2rem))] rounded-xl border-border bg-popover p-1 shadow-xl"
           align="start"
+          sideOffset={6}
+          onWheel={(event) => event.stopPropagation()}
           onEscapeKeyDown={() => setIsPopoverOpen(false)}
         >
-          <Command className="bg-background">
-            {commandSearch && (
+          <Command
+            className="rounded-lg bg-transparent"
+            shouldFilter={!controlledSearch}
+          >
+            {commandSearch ? (
               <CommandInput
-                placeholder={searchPlaceholder}
+                className="h-10 py-2"
+                placeholder={resolvedSearchPlaceholder}
                 onKeyDown={handleInputKeyDown}
               />
-            )}
-            {controlledSearch && (
+            ) : null}
+            {controlledSearch ? (
               <CommandInputRaw
-                placeholder={searchPlaceholder}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  onSearchChange?.(e.target.value)
-                }
-                defaultValue={searchValue}
+                placeholder={resolvedSearchPlaceholder}
+                value={inputSearchValue}
+                onKeyDown={handleInputKeyDown}
+                onChange={handleControlledSearchChange}
               />
-            )}
+            ) : null}
             <ScrollArea
-              className={cn("transition-[height] duration-200", {
-                "h-10": options.length === 0 && !loading,
-                "h-64": options.length > 6 || loading,
-              })}
+              className={cn(
+                hasSearch && "h-24",
+                !hasSearch && loading && "h-24",
+                !hasSearch && options.length === 0 && !loading && "h-12",
+              )}
               style={
-                options.length > 0 && options.length <= 6 && !loading
-                  ? { height: `${options.length * 2.5}rem` }
+                !hasSearch && options.length > 0 && !loading
+                  ? { height: `${Math.min(options.length, 6) * 2.5}rem` }
                   : undefined
               }
             >
-              <CommandList className="max-h-none overflow-visible">
-                <CommandEmpty className="py-2 px-3 text-sm">
-                  {emptyMessage}
-                </CommandEmpty>
-                <CommandGroup>
-                  {loading && (
-                    <div className="py-6 px-6 text-center text-sm flex items-center justify-center">
-                      <Spinner />
-                    </div>
-                  )}
-                  {options.map((option) => {
-                    const isSelected = selectedValues.includes(option.value);
-                    return (
-                      <CommandItem
-                        key={option.value}
-                        onSelect={() => toggleOption(option.value)}
-                        className="cursor-pointer group"
-                      >
-                        <div
+              <CommandList className="h-full max-h-none overflow-visible">
+                {!loading ? (
+                  <CommandEmpty
+                    className={cn(
+                      "flex items-center justify-center px-4 py-3 text-center text-sm text-muted-foreground",
+                      hasSearch ? "h-24" : "h-12",
+                    )}
+                  >
+                    {shouldPromptForSearch
+                      ? searchPrompt
+                      : resolvedEmptyMessage}
+                  </CommandEmpty>
+                ) : null}
+                {loading ? (
+                  <div
+                    className="flex h-24 items-center justify-center"
+                    role="status"
+                  >
+                    <Spinner />
+                    <span className="sr-only">{t("common.loading")}</span>
+                  </div>
+                ) : (
+                  <CommandGroup className="p-1">
+                    {visibleOptions.map((option) => {
+                      const isSelected = selectedValues.includes(option.value);
+
+                      return (
+                        <CommandItem
+                          key={option.value}
+                          value={option.label}
+                          aria-selected={isSelected}
+                          onSelect={() => toggleOption(option.value)}
                           className={cn(
-                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border-2 border-primary",
-                            isSelected
-                              ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible",
+                            "min-h-9 cursor-pointer rounded-lg px-2.5 text-foreground data-[selected=true]:bg-foreground/[0.06] data-[selected=true]:text-foreground",
+                            isSelected &&
+                              "bg-primary/15 data-[selected=true]:bg-primary/20",
                           )}
                         >
-                          <CheckIcon className="h-4 w-4" />
-                        </div>
-                        {option.icon && (
-                          <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        )}
-                        <span>{option.label}</span>
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
+                          {option.icon ? (
+                            <option.icon className="mr-2 size-4 shrink-0 text-muted-foreground" />
+                          ) : null}
+                          <span className="min-w-0 flex-1 truncate">
+                            {option.label}
+                          </span>
+                          <CheckIcon
+                            aria-hidden="true"
+                            className={cn(
+                              "ml-2 size-4 shrink-0 text-primary transition-opacity",
+                              isSelected ? "opacity-100" : "opacity-0",
+                            )}
+                          />
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                )}
               </CommandList>
             </ScrollArea>
           </Command>

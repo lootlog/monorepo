@@ -21,7 +21,13 @@
     "save": "Zapisz"
   },
   "search": "Szukaj...",
+  "startTypingToSearch": "Zacznij wpisywać, aby wyszukać.",
+  "searchMinimumCharacters": "Wpisz co najmniej {{count}} znaki, aby wyszukać.",
   "noResults": "Brak wyników",
+  "clear": "Wyczyść",
+  "selectOptions": "Wybierz opcje",
+  "loading": "Ładowanie...",
+  "removeOption": "Usuń {{label}}",
   "actions": {
     "retry": "Spróbuj ponownie",
     "undo": "Cofnij"

@@ -13,7 +13,6 @@ export interface UserPreferencesResponseDtoOutput {
   guildsOrder: string[];
   hiddenGuildIds: string[];
   theme: string;
-  colorMode: string;
   chatAppearance: UserPreferencesResponseDtoOutputChatAppearance;
   mutes: UserPreferencesResponseDtoOutputMutes;
 }

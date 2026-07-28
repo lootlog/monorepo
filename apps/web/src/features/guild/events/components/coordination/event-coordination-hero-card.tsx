@@ -49,7 +49,7 @@ export const EventCoordinationHeroCard = ({
   const timerTime = getTimerDisplayTime(hero);
 
   return (
-    <Card className="border-border bg-card/40 p-3 backdrop-blur-sm gap-3">
+    <Card className="border-border bg-card p-3  gap-3">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           {hero.npcIcon ? (
@@ -61,7 +61,7 @@ export const EventCoordinationHeroCard = ({
               }}
             />
           ) : (
-            <div className="rounded-xl bg-yellow-500/10 p-2.5 shadow-inner shadow-yellow-500/10">
+            <div className="rounded-xl bg-yellow-500/10 p-2.5">
               <Timer className="size-4 text-yellow-500" />
             </div>
           )}

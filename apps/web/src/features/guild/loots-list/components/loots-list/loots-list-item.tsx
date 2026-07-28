@@ -21,6 +21,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useThemeMeta } from "@/themes";
 import { buildLootItemOwnerMap } from "@/features/guild/loots-list/utils/build-loot-share-maps";
+import { useLootsFilters } from "@/hooks/use-loots-filters";
 
 type Props = {
   loot: Loot;
@@ -99,7 +100,7 @@ const LootHeader = ({
             e.stopPropagation();
             onOpenDetails();
           }}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md border border-border/50 hover:bg-secondary hover:text-foreground transition-colors duration-200"
+          className="flex cursor-pointer items-center gap-1.5 rounded-md border border-border/50 bg-secondary/50 px-2 py-1 text-xs text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
         >
           <MessageSquare className="h-3 w-3" />
           <span className="font-medium">{commentsCount}</span>
@@ -110,7 +111,7 @@ const LootHeader = ({
             e.stopPropagation();
             onOpenDetails();
           }}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md border border-border/50 hover:bg-secondary hover:text-foreground transition-colors duration-200"
+          className="flex cursor-pointer items-center gap-1.5 rounded-md border border-border/50 bg-secondary/50 px-2 py-1 text-xs text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
         >
           <ExternalLink className="h-3 w-3" />
           <span className="font-medium">{t("loots.list.details")}</span>
@@ -124,23 +125,51 @@ const PlayerWithItems = ({
   player,
   items,
   watchContext,
+  onShowLoots,
+  hasPlayerFilter,
+  isPlayerSelected,
+  selectedItemNames,
 }: {
   player: Loot["players"][number];
   items: Item[];
   watchContext: WatchedItemScope;
+  onShowLoots: () => void;
+  hasPlayerFilter: boolean;
+  isPlayerSelected: boolean;
+  selectedItemNames: string[];
 }) => (
   <div className="flex flex-col items-center gap-0.5">
-    <PlayerTile player={player} />
-    <ItemStack items={items} watchContext={watchContext} />
+    <PlayerTile
+      player={player}
+      accountId={player.accountId ?? undefined}
+      characterId={player.characterId ?? undefined}
+      world={watchContext.world}
+      onShowLoots={onShowLoots}
+      highlighted={hasPlayerFilter && isPlayerSelected}
+      className={cn(
+        "rounded-lg transition-[opacity,filter,box-shadow] duration-200",
+        hasPlayerFilter &&
+          isPlayerSelected &&
+          "ring-2 ring-primary ring-offset-2 ring-offset-card",
+        hasPlayerFilter && !isPlayerSelected && "opacity-35 grayscale-[0.45]",
+      )}
+    />
+    <ItemStack
+      items={items}
+      watchContext={watchContext}
+      selectedItemNames={selectedItemNames}
+    />
   </div>
 );
 
 const UnassignedItems = ({
   items,
   watchContext,
+  selectedItemNames,
 }: {
   items: Item[];
   watchContext: WatchedItemScope;
+  selectedItemNames: string[];
 }) => {
   const { t } = useTranslation();
 
@@ -157,6 +186,7 @@ const UnassignedItems = ({
             key={`unassigned-${item.hid}-${itemIdx}`}
             item={item}
             watchContext={watchContext}
+            selectedItemNames={selectedItemNames}
           />
         ))}
       </div>
@@ -169,11 +199,17 @@ const LootContent = ({
   itemsByPlayer,
   unassignedItems,
   watchContext,
+  onShowPlayerLoots,
+  selectedPlayerNames,
+  selectedItemNames,
 }: {
   sortedPlayers: Loot["players"];
   itemsByPlayer: ItemsByPlayer;
   unassignedItems: Item[];
   watchContext: WatchedItemScope;
+  onShowPlayerLoots: (playerName: string) => void;
+  selectedPlayerNames: string[];
+  selectedItemNames: string[];
 }) => (
   <div className="flex flex-row justify-between gap-4 py-2 border-t border-border/30 -mx-4 px-4 flex-1">
     <div className="flex flex-row items-start gap-2 flex-wrap">
@@ -183,22 +219,40 @@ const LootContent = ({
           player={player}
           items={itemsByPlayer[player.id] || []}
           watchContext={watchContext}
+          onShowLoots={() => onShowPlayerLoots(player.name)}
+          hasPlayerFilter={selectedPlayerNames.length > 0}
+          isPlayerSelected={selectedPlayerNames.includes(player.name)}
+          selectedItemNames={selectedItemNames}
         />
       ))}
     </div>
-    <UnassignedItems items={unassignedItems} watchContext={watchContext} />
+    <UnassignedItems
+      items={unassignedItems}
+      watchContext={watchContext}
+      selectedItemNames={selectedItemNames}
+    />
   </div>
 );
 
 const MetaItem = ({
   icon: Icon,
   children,
+  className,
+  title,
 }: {
   icon: React.FC<{ className?: string }>;
   children: React.ReactNode;
+  className?: string;
+  title?: string;
 }) => (
-  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-    <Icon className="h-3 w-3" />
+  <span
+    className={cn(
+      "flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground",
+      className,
+    )}
+    title={title}
+  >
+    <Icon className="h-3 w-3 shrink-0" />
     {children}
   </span>
 );
@@ -215,13 +269,16 @@ const LootFooter = ({
   itemsCount: number;
 }) => (
   <div className="flex items-center justify-between gap-3 mt-auto border-t border-border/30 -mx-4 px-4 py-1">
-    <div className="flex items-center gap-0">
-      <MetaItem icon={MapPin}>{location}</MetaItem>
-      <Dot className="text-muted-foreground" />
-      <MetaItem icon={Calendar}>{date}</MetaItem>
+    <div className="flex min-w-0 flex-1 items-center gap-0">
+      <MetaItem icon={MapPin} className="min-w-0 flex-1" title={location}>
+        <span className="truncate">{location}</span>
+      </MetaItem>
     </div>
-    <div className="flex items-center gap-3">
+    <div className="flex shrink-0 items-center gap-2">
+      <MetaItem icon={Calendar}>{date}</MetaItem>
+      <Dot className="shrink-0 text-muted-foreground" />
       <MetaItem icon={Users}>{playersCount}</MetaItem>
+      <Dot className="shrink-0 text-muted-foreground" />
       <MetaItem icon={Package}>{itemsCount}</MetaItem>
     </div>
   </div>
@@ -229,6 +286,7 @@ const LootFooter = ({
 
 export const LootsListItem = ({ loot, isNew }: Props) => {
   const { openLootDetails } = useSelectedLoot();
+  const { filters, setFilters } = useLootsFilters();
   const date = timestampToDate(loot.createdAt);
   const { isRukiaTheme } = useThemeMeta();
   const shouldReduceMotion = useReducedMotion();
@@ -266,7 +324,7 @@ export const LootsListItem = ({ loot, isNew }: Props) => {
       <Card
         className={cn(
           "group relative px-4 pt-2 pb-1 h-full flex flex-col gap-0",
-          "bg-card/95 border-border overflow-visible",
+          "bg-card border-border overflow-visible",
           "hover:bg-card hover:border-primary/30 hover:shadow-md transition-[background-color,border-color,box-shadow] duration-200",
           isNew && "border-primary/70 ring-1 ring-primary/40 shadow-lg",
           hasLegendaryItem &&
@@ -283,6 +341,11 @@ export const LootsListItem = ({ loot, isNew }: Props) => {
           itemsByPlayer={itemsByPlayer}
           unassignedItems={unassignedItems}
           watchContext={watchContext}
+          onShowPlayerLoots={(playerName) =>
+            setFilters({ players: [playerName] })
+          }
+          selectedPlayerNames={filters.players}
+          selectedItemNames={filters.itemNames}
         />
         <LootFooter
           location={loot.location}

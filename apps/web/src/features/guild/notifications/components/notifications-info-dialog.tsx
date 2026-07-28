@@ -21,31 +21,31 @@ export const NotificationsInfoDialog = ({
   const sections = [
     {
       icon: <Hash className="size-4 text-indigo-500" />,
-      iconBg: "bg-indigo-500/10 shadow-indigo-500/10",
+      iconBg: "bg-indigo-500/10",
       title: t("settings.notifications.info.targets.title"),
       description: t("settings.notifications.info.targets.description"),
     },
     {
       icon: <ListChecks className="size-4 text-emerald-500" />,
-      iconBg: "bg-emerald-500/10 shadow-emerald-500/10",
+      iconBg: "bg-emerald-500/10",
       title: t("settings.notifications.info.rules.title"),
       description: t("settings.notifications.info.rules.description"),
     },
     {
       icon: <CalendarClock className="size-4 text-blue-500" />,
-      iconBg: "bg-blue-500/10 shadow-blue-500/10",
+      iconBg: "bg-blue-500/10",
       title: t("settings.notifications.info.scheduling.title"),
       description: t("settings.notifications.info.scheduling.description"),
     },
     {
       icon: <Clock3 className="size-4 text-primary" />,
-      iconBg: "bg-primary/10 shadow-primary/10",
+      iconBg: "bg-primary/10",
       title: t("settings.notifications.info.jobs.title"),
       description: t("settings.notifications.info.jobs.description"),
     },
     {
       icon: <Gauge className="size-4 text-amber-500" />,
-      iconBg: "bg-amber-500/10 shadow-amber-500/10",
+      iconBg: "bg-amber-500/10",
       title: t("settings.notifications.info.limits.title"),
       description: t("settings.notifications.info.limits.description"),
     },
@@ -60,9 +60,7 @@ export const NotificationsInfoDialog = ({
         <div className="flex flex-col gap-4 px-5 pt-2 pb-5">
           {sections.map((section) => (
             <div key={section.title} className="flex items-start gap-3">
-              <div
-                className={`shrink-0 rounded-xl p-2.5 shadow-inner ${section.iconBg}`}
-              >
+              <div className={`shrink-0 rounded-xl p-2.5  ${section.iconBg}`}>
                 {section.icon}
               </div>
               <div className="pt-0.5">

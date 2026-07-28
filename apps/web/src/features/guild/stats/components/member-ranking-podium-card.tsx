@@ -183,7 +183,7 @@ export const MemberRankingPodiumCard: React.FC<
 
   if (isLoading) {
     return (
-      <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+      <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -211,7 +211,7 @@ export const MemberRankingPodiumCard: React.FC<
       .slice(0, 3) ?? [];
 
   return (
-    <Card className="bg-card/40 backdrop-blur-sm border-border p-3 gap-3 flex flex-col">
+    <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-base font-semibold flex items-center gap-2">
           <Users className="h-5 w-5" />

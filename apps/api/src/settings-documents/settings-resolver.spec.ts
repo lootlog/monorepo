@@ -1,6 +1,7 @@
 import { applySettingsPatch, resolveSettingsDomain } from "./settings-resolver";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
+  migrateSettingsDocument,
   SETTINGS_CATALOG,
   SETTINGS_DOMAINS,
 } from "@lootlog/types";
@@ -33,6 +34,28 @@ describe("settings resolver", () => {
     for (const [, definition] of chatFields) {
       expect(definition.scopes).toEqual(["USER"]);
     }
+  });
+
+  it("removes the obsolete color mode when migrating appearance settings", () => {
+    expect(
+      migrateSettingsDocument(
+        "appearance",
+        {
+          theme: "default",
+          colorMode: "light",
+          chat: {
+            fontScalePercent: 110,
+          },
+        },
+        2,
+      ),
+    ).toEqual({
+      theme: "default",
+      chat: {
+        fontScalePercent: 110,
+      },
+    });
+    expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(3);
   });
 
   it("keeps chat values on the user layer while ignoring lower scopes", () => {

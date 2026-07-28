@@ -315,9 +315,9 @@ export const EventDetail = () => {
 
   if (isLoading || isMapsLoading) {
     return (
-      <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <div className="flex flex-col h-full min-h-0 bg-background">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex items-center gap-3">
               <Skeleton className="h-10 w-10 rounded-xl" />
               <div className="flex flex-col gap-2 flex-1">
@@ -332,7 +332,7 @@ export const EventDetail = () => {
           </Card>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
-              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
+              <Card className="p-3 bg-card  border-border gap-2">
                 <Skeleton className="h-5 w-32 mb-3" />
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div
@@ -350,7 +350,7 @@ export const EventDetail = () => {
               </Card>
             </div>
             <div className="space-y-4">
-              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
+              <Card className="p-3 bg-card  border-border gap-2">
                 <Skeleton className="h-5 w-24 mb-3" />
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-3 py-2">
@@ -400,7 +400,7 @@ export const EventDetail = () => {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background/50">
+    <div className="flex flex-col h-full min-h-0 bg-background">
       <EventParticipationConfirmationDialog
         guildId={guildId}
         eventId={eventId}
@@ -523,11 +523,11 @@ export const EventDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                  <div className="rounded-xl bg-primary/10 p-2.5">
                     <Trophy className="size-4 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -633,7 +633,7 @@ export const EventDetail = () => {
           )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
-              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2 h-fit">
+              <Card className="p-3 bg-card  border-border gap-2 h-fit">
                 <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <Swords className="w-4 h-4 text-yellow-500" />

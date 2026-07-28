@@ -9,7 +9,7 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
   const PLAYERS_COUNT = (index % 4) + 1;
 
   return (
-    <article className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-md p-4">
+    <article className="rounded-xl border border-border/50 bg-card  p-4">
       <div className="flex flex-row justify-between items-start gap-2 mb-3">
         <div className="flex-1 space-y-2">
           <Skeleton className="w-48 h-5 rounded-md bg-muted/50" />

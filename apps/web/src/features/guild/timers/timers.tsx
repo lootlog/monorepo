@@ -69,10 +69,10 @@ export const Timers = () => {
   const groups = groupBy(sorted, (timer) => timer.npc?.type ?? "");
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-3 border-border bg-card p-4">
             <div className="flex items-center gap-3">
               <SearchInput
                 placeholder={t("timers.searchPlaceholder")}
@@ -130,7 +130,7 @@ export const Timers = () => {
             </div>
           )}
           {!isPending && timers && timers.length === 0 && (
-            <Card className="flex flex-col items-center justify-center gap-3 bg-card/40 py-12 backdrop-blur-sm">
+            <Card className="flex flex-col items-center justify-center gap-3 bg-card py-12">
               <p className="text-muted-foreground">{t("timers.empty")}</p>
             </Card>
           )}

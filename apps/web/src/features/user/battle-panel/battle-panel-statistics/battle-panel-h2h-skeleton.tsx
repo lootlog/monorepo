@@ -3,9 +3,9 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const BattlePanelH2hSkeleton = () => {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-background/50">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       <div className="px-3 pt-3 pb-0">
-        <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-3 border-border bg-card p-4">
           <div className="flex min-w-0 items-center gap-3">
             <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1 space-y-1.5">
@@ -19,7 +19,7 @@ export const BattlePanelH2hSkeleton = () => {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
-          <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm">
+          <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
             <div className="flex gap-4 border-b border-border px-4 py-3">
               {Array.from({ length: 6 }).map((_, index) => (
                 <Skeleton key={index} className="h-4 flex-1" />
@@ -48,8 +48,8 @@ export const BattlePanelH2hSkeleton = () => {
           </Card>
         </div>
 
-        <div className="hidden h-full w-[320px] shrink-0 flex-col overflow-hidden bg-background/50 py-3 pr-3 md:flex">
-          <Card className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0 backdrop-blur-sm">
+        <div className="hidden h-full w-[320px] shrink-0 flex-col overflow-hidden bg-background py-3 pr-3 md:flex">
+          <Card className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0">
             <div className="space-y-4 p-4">
               {Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="space-y-2">

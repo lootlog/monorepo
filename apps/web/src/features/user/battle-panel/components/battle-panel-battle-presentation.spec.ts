@@ -114,7 +114,7 @@ describe("battle panel battle presentation", () => {
 
   it("falls back to neutral row colors when a result is not available", () => {
     expect(getBattleResultRowClassName(undefined)).toBe(
-      "bg-background/30 hover:bg-muted/50",
+      "bg-background hover:bg-muted/50",
     );
   });
 });

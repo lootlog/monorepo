@@ -3,9 +3,9 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const SidebarLayoutSkeleton = () => {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-background/50">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       <div className="px-3 pb-0 pt-3">
-        <Card className="gap-3 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-3 border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <Skeleton className="h-9 flex-1" />
             <Skeleton className="h-8 w-8 rounded-md" />

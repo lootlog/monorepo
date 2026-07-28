@@ -23,7 +23,12 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
-  const { data: comments } = useLootsControllerGetComments(
+  const [value, setValue] = useState("");
+  const {
+    data: comments,
+    isLoading,
+    isError,
+  } = useLootsControllerGetComments(
     { guildId: guildId ?? "", lootId },
     {
       query: {
@@ -46,47 +51,53 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
           guildId,
           lootId,
         });
+        setValue("");
       },
     },
   });
-  const [value, setValue] = useState("");
+  const normalizedValue = value.trim();
+  const isSubmitDisabled =
+    normalizedValue.length === 0 || value.length > MAX_LENGTH || isPending;
 
   const handleAddComment = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (value.length === 0 || value.length > MAX_LENGTH || !guildId) {
+    if (isSubmitDisabled || !guildId) {
       return;
     }
 
     createComment({
       pathParams: { guildId, lootId },
-      data: { content: value },
+      data: { content: normalizedValue },
     });
-    setValue("");
   };
 
   return (
-    <div className="space-y-2 flex flex-col">
-      <div className="p-4 flex flex-col border-b border-border/50 gap-2 bg-card/20">
-        <form onSubmit={handleAddComment}>
+    <section className="flex flex-col">
+      <div className="flex items-center justify-between border-b border-border px-5 py-3 sm:px-6">
+        <h3 className="text-sm font-semibold text-foreground">
+          {t("loots.details.comments.title", { count: comments?.length ?? 0 })}
+        </h3>
+      </div>
+
+      <div className="border-b border-border bg-card/20 px-5 py-4 sm:px-6">
+        <form className="space-y-3" onSubmit={handleAddComment}>
           <Textarea
-            className="w-full h-24 p-2 rounded-lg bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-primary/50"
+            className="min-h-24 w-full resize-y rounded-xl border-border bg-background px-3 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary/60"
             placeholder={t("loots.details.comments.placeholder")}
             autoFocus={false}
             maxLength={MAX_LENGTH}
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">
               {value.length}/{MAX_LENGTH}
             </span>
             <Button
-              className="mt-2 h-8 w-32"
+              className="h-8 min-w-32 cursor-pointer"
               size="sm"
               type="submit"
-              disabled={
-                value.length === 0 || value.length > MAX_LENGTH || isPending
-              }
+              disabled={isSubmitDisabled}
             >
               {isPending ? (
                 <Spinner className="h-4 w-4" />
@@ -98,14 +109,28 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
         </form>
       </div>
 
-      <h3 className="text-sm font-semibold px-4 pb-2 border-b border-border/50 text-foreground">
-        {t("loots.details.comments.title", { count: comments?.length || 0 })}
-      </h3>
-      <ul className="p-0 !m-0">
-        {comments?.map((comment) => (
-          <LootSingleComment key={comment.id} comment={comment} />
-        ))}
-      </ul>
-    </div>
+      {isLoading && (
+        <div className="flex items-center justify-center px-5 py-6">
+          <Spinner className="size-5 text-muted-foreground" />
+        </div>
+      )}
+      {isError && (
+        <p className="px-5 py-6 text-center text-sm text-destructive sm:px-6">
+          {t("loots.details.comments.error")}
+        </p>
+      )}
+      {!isLoading && !isError && comments?.length === 0 && (
+        <p className="px-5 py-6 text-center text-sm text-muted-foreground sm:px-6">
+          {t("loots.details.comments.empty")}
+        </p>
+      )}
+      {!isLoading && !isError && comments && comments.length > 0 && (
+        <ul className="m-0 p-0">
+          {comments.map((comment) => (
+            <LootSingleComment key={comment.id} comment={comment} />
+          ))}
+        </ul>
+      )}
+    </section>
   );
 };

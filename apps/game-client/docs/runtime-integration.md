@@ -17,6 +17,11 @@ The bridge has three streams:
 3. `applied` describes the same envelope after the original Margonem handler
    returns successfully. Domain state is reconciled only on this stream.
 
+Incoming observers are additive, but the domain event processor has shared
+ownership. Overlapping client registrations keep one full-envelope processor
+active until the final registration is released. This prevents duplicate
+backend effects without filtering, coalescing, or modifying inbound packets.
+
 `applied` is not emitted when the original handler throws. The original `this`,
 argument objects, callbacks, exception, and return value are preserved.
 Every observer is isolated from every other observer and from Margonem. An

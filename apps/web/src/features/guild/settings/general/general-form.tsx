@@ -116,7 +116,7 @@ export const GeneralForm = () => {
         className="w-full mx-auto pb-24"
       >
         <div className="p-3">
-          <Card className="bg-card/50 backdrop-blur-sm border-border p-0 gap-0">
+          <Card className="bg-card  border-border p-0 gap-0">
             <div className="p-3">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 rounded-lg bg-primary/10">

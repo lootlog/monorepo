@@ -1,86 +1,71 @@
 ---
 title: Ustawienia
-description: Konfiguracja wyglądu, dźwięków, timerów i ustawień klanu w Lootlog
+description: Skonfiguruj preferencje konta, przypisania postaci oraz sposób działania narzędzi klanu.
 ---
+
+Ustawienia są podzielone na osobiste i klanowe. Zanim wprowadzisz zmianę,
+sprawdź aktywną strefę w panelu.
 
 ## Ustawienia osobiste
 
-Ustawienia osobiste dotyczą twojego konta i są niezależne od klanu. Znajdziesz je w strefie osobistej (@me → Ustawienia).
+W strefie osobistej możesz dostosować dostępne preferencje konta, wyglądu i
+powiadomień.
 
-### Wygląd
+### Dźwięki i timery
 
-- **Motyw kolorystyczny** — dostosuj kolory interfejsu do swoich preferencji
+W zależności od dostępnej konfiguracji możesz zmienić:
 
-### Dźwięki
+- głośność powiadomień;
+- alerty związane z timerami;
+- widoczność wybranych kategorii;
+- kolory lub sposób porządkowania timerów.
 
-Skonfiguruj powiadomienia dźwiękowe:
+Po zmianie ustawień wywołaj bezpieczne powiadomienie testowe lub obserwuj
+najbliższy timer, aby potwierdzić rezultat.
 
-- **Głośność** — ogólna głośność powiadomień
-- **Dźwięki timerów** — powiadomienia o zbliżającym się respawnie i respawnie potwora
-- **Dźwięki powiadomień** — alerty o wydarzeniach klanowych
+### Przypisanie postaci
 
-### Ustawienia timerów
-
-Personalizacja wyświetlania timerów:
-
-- **Kolory** — oznaczanie timerów kolorami dla lepszej organizacji
-- **Filtry** — ukrywanie lub przypinanie konkretnych timerów
-- **Widoczność** — konfiguracja, które kategorie timerów wyświetlać (tytani, herosi, E2)
-
-### Konfiguracja postaci
-
-W ustawieniach postaci możesz określić:
-
-- **Białe listy klanów** — do których klanów trafiają łupy i timery z danej postaci
-- Przydatne, gdy grasz na wielu postaciach w różnych klanach
+Jeżeli grasz w kilku klanach, sprawdź, do których kontekstów mogą trafiać dane
+konkretnej postaci. Błędne przypisanie jest częstą przyczyną braku wpisów w
+oczekiwanym panelu.
 
 ## Ustawienia klanu
 
-Ustawienia klanu są dostępne dla członków z odpowiednimi uprawnieniami. Znajdziesz je w strefie klanu → Ustawienia.
+Sekcja klanowa wymaga odpowiednich
+[ról i uprawnień](/docs/permissions).
 
-### Członkowie
+### Członkowie i role
 
-Zarządzanie członkami klanu:
+Lista członków jest powiązana z kontami Discord. W tym miejscu przypisujesz
+role i kontrolujesz dostęp do funkcji Lootlog.
 
-- Przeglądanie listy wszystkich członków
-- Przypisywanie ról
-- Zarządzanie dostępem
-
-Członkowie synchronizują się z serwerem Discord — nowi członkowie serwera automatycznie pojawiają się na liście po zalogowaniu do Lootlog.
-
-### Role
-
-Tworzenie i edycja ról z granularnymi uprawnieniami:
-
-- Dodawanie nowych ról
-- Konfiguracja uprawnień per rola
-- Przypisywanie ról do członków
-
-> Szczegółowy opis systemu uprawnień znajdziesz w sekcji [Uprawnienia](/docs/permissions).
+Po zmianie roli zweryfikuj efekt na koncie bez `OWNER` lub `ADMIN`.
 
 ### Konfiguracja NPC
 
-Filtrowanie, które potwory i łupy są śledzone w klanie:
-
-- **Typy NPC** — które typy potworów (zwykłe, elitarne, herosi, tytani) mają być rejestrowane
-- **Rzadkości przedmiotów** — które rzadkości łupów (pospolite, unikatowe, heroiczne, legendarne) mają być śledzone
-
-Przydatne, gdy klan chce śledzić tylko wartościowe łupy i ignorować pospolite przedmioty.
+Konfiguracja określa, które rodzaje potworów i łupów są istotne dla klanu.
+Ogranicz zakres do danych, które rzeczywiście wykorzystujecie — ułatwi to
+czytanie list i statystyk.
 
 ### Szablony map
 
-Szablony map to predefiniowane zestawy map, które przyspieszają konfigurację eventów.
+Szablon zapisuje zestaw map używany podczas eventów.
 
-#### Tworzenie szablonu
+1. Otwórz **Klan → Ustawienia → Szablony map**.
+2. Utwórz szablon i nadaj mu jednoznaczną nazwę.
+3. Dodaj mapy.
+4. Zapisz i sprawdź szablon podczas tworzenia testowego eventu.
 
-1. Przejdź do ustawień klanu → Szablony map
-2. Kliknij "Dodaj szablon"
-3. Nadaj nazwę (np. "Mapy herosów zimowych")
-4. Wyszukaj i dodaj mapy do szablonu
-5. Zapisz
+Zamiast edytować używany szablon bez ostrzeżenia, poinformuj uczestników o
+zmianie zakresu map.
 
-#### Użycie szablonu
+## Sprawdź rezultat
 
-Podczas tworzenia eventu, zamiast ręcznie dodawać mapy, możesz załadować cały szablon jednym kliknięciem. To oszczędza czas, szczególnie gdy te same mapy są używane w wielu eventach.
+Ustawienia są poprawne, gdy dane trafiają do właściwego klanu, członkowie mają
+oczekiwany dostęp, a nowe eventy mogą korzystać z właściwych szablonów.
 
-Szablony można edytować i usuwać w dowolnym momencie.
+## Następny krok
+
+Jeżeli konfigurujesz dostęp, wróć do
+[Ról i uprawnień](/docs/permissions). Przy problemie z synchronizacją przejdź
+do [Pomocy i FAQ](/docs/faq).

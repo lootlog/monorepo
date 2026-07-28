@@ -21,7 +21,7 @@ export const ChatReplyPreview: FC<ChatReplyPreviewProps> = ({
   return (
     <div
       className={cn(
-        "ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-start ll:justify-between ll:gap-[var(--ll-chat-space-lg)] ll:overflow-hidden ll:rounded-sm ll:border-l-2 ll:border-gray-500 ll:bg-gray-700/30 ll:px-[var(--ll-chat-space-lg)] ll:py-[var(--ll-chat-space-sm)]",
+        "ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-start ll:justify-between ll:gap-[var(--ll-chat-space-lg)] ll:overflow-hidden ll:rounded-sm ll:border ll:border-gray-500 ll:bg-gray-700/30 ll:px-[var(--ll-chat-space-lg)] ll:py-[var(--ll-chat-space-sm)]",
         {
           "ll:cursor-pointer ll:hover:bg-gray-700/45": !!onClick,
         },

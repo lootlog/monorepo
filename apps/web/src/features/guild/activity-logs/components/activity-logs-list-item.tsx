@@ -93,9 +93,9 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
 
   return (
     <Card
-      className={`p-4 transition-all duration-300 border bg-background/30 backdrop-blur-md ${
+      className={`p-4 transition-all duration-300 border bg-background  ${
         hasAdditionalData
-          ? "cursor-pointer border-border hover:bg-card/50 hover:border-primary/50"
+          ? "cursor-pointer border-border hover:bg-card hover:border-primary/50"
           : "border-border"
       }`}
       onClick={handleCardClick}

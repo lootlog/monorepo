@@ -404,7 +404,6 @@ export const UserSettingsScalarFieldEnum = {
   guildsOrder: 'guildsOrder',
   hiddenGuildIds: 'hiddenGuildIds',
   theme: 'theme',
-  colorMode: 'colorMode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

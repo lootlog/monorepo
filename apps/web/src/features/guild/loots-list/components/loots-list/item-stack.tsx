@@ -7,6 +7,7 @@ import { AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState, type FC } from "react";
 import { ItemStackBadge } from "@/features/guild/loots-list/components/loots-list/item-stack-badge";
 import { ItemStackExpanded } from "@/features/guild/loots-list/components/loots-list/item-stack-expanded";
+import { Check } from "lucide-react";
 
 const RARITY_PRIORITY: Record<ItemRarity, number> = {
   [ItemRarity.LEGENDARY]: 4,
@@ -26,9 +27,14 @@ const sortByRarity = (items: Item[]): Item[] =>
 type Props = {
   items: Item[];
   watchContext: WatchedItemScope;
+  selectedItemNames: string[];
 };
 
-export const ItemStack: FC<Props> = ({ items, watchContext }) => {
+export const ItemStack: FC<Props> = ({
+  items,
+  watchContext,
+  selectedItemNames,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const stackRef = useRef<HTMLDivElement>(null);
@@ -51,7 +57,13 @@ export const ItemStack: FC<Props> = ({ items, watchContext }) => {
 
   if (items.length === 1) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return <WatchableItemTile item={items[0]!} watchContext={watchContext} />;
+    return (
+      <WatchableItemTile
+        item={items[0]!}
+        watchContext={watchContext}
+        selectedItemNames={selectedItemNames}
+      />
+    );
   }
 
   const sorted = sortByRarity(items);
@@ -60,6 +72,10 @@ export const ItemStack: FC<Props> = ({ items, watchContext }) => {
     return null;
   }
   const remainingCount = sorted.length - 1;
+  const hasItemFilter = selectedItemNames.length > 0;
+  const hasSelectedItem = items.some((item) =>
+    selectedItemNames.includes(item.name),
+  );
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -72,7 +88,11 @@ export const ItemStack: FC<Props> = ({ items, watchContext }) => {
   return (
     <div
       ref={stackRef}
-      className={cn("relative cursor-pointer", isExpanded && "z-40")}
+      className={cn(
+        "relative cursor-pointer rounded-lg transition-[opacity,filter] duration-200",
+        isExpanded && "z-40",
+        hasItemFilter && !hasSelectedItem && "opacity-35 grayscale-[0.45]",
+      )}
       onClick={handleClick}
     >
       <div className="relative">
@@ -89,6 +109,14 @@ export const ItemStack: FC<Props> = ({ items, watchContext }) => {
           />
         </div>
         <ItemStackBadge count={remainingCount} />
+        {hasItemFilter && hasSelectedItem ? (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-1 -top-1 z-10 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-background"
+          >
+            <Check className="size-2.5" />
+          </span>
+        ) : null}
       </div>
 
       <AnimatePresence>
@@ -97,6 +125,7 @@ export const ItemStack: FC<Props> = ({ items, watchContext }) => {
             items={sorted}
             anchorRect={anchorRect}
             watchContext={watchContext}
+            selectedItemNames={selectedItemNames}
           />
         )}
       </AnimatePresence>

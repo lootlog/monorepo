@@ -34,7 +34,7 @@ export const BattlePanelResultsSurface = ({
     chips.length > 0 && clearFiltersLabel !== undefined && onClearFilters;
 
   return (
-    <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm">
+    <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
       {(toolbar || toolbarEnd) && (
         <div className="grid shrink-0 gap-2 border-b border-border bg-background/80 px-3 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
           <div className="min-w-0">{toolbar}</div>
@@ -57,7 +57,7 @@ export const BattlePanelResultsSurface = ({
         {withHorizontalScroll && <ScrollBar orientation="horizontal" />}
       </ScrollArea>
       {selectionBar && (
-        <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur-sm">
+        <div className="shrink-0 border-t border-border bg-background/95">
           {selectionBar}
         </div>
       )}

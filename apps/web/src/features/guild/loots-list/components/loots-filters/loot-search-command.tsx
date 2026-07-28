@@ -1,6 +1,5 @@
 import {
   CommandDialog,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -28,23 +27,36 @@ import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
 import { cn } from "@lootlog/ui/lib/utils";
 import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
-import { motion, Reorder } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useTranslation } from "react-i18next";
-import { ThemeInteractiveFrame } from "@/themes";
+import {
+  ArrowRight,
+  CircleAlert,
+  ClipboardPaste,
+  PackageSearch,
+  SearchX,
+} from "lucide-react";
 
 export type LootSearchCommandProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-const containerVariants = {
-  hidden: { opacity: 0 },
+const containerVariants: Variants = {
+  hidden: { opacity: 0, y: 4 },
   visible: {
     opacity: 1,
+    y: 0,
     transition: {
-      duration: 0.15,
+      duration: 0.2,
+      ease: [0.22, 1, 0.36, 1],
     },
+  },
+  exit: {
+    opacity: 0,
+    y: -4,
+    transition: { duration: 0.12 },
   },
 };
 
@@ -73,6 +85,9 @@ export const LootSearchCommand = ({
   const { world } = useGuildContext();
   const guildId = useGuildId();
   const { setFilters } = useLootsFilters();
+  const trimmedSearch = searchQuery.trim();
+  const parsedHid = parseItemHid(trimmedSearch);
+  const isHidInput = trimmedSearch.toUpperCase().startsWith("ITEM#");
 
   const searchResultsQuery = useAllControllerSearchAll(
     {
@@ -85,14 +100,13 @@ export const LootSearchCommand = ({
           search: debouncedSearch,
           world: world || "",
         }),
-        enabled: debouncedSearch.length >= 2,
+        enabled: debouncedSearch.length >= 2 && !isHidInput,
       },
     },
   );
   const searchResults = searchResultsQuery.data;
-  const isLoading = searchResultsQuery.isLoading;
+  const isSearchLoading = searchResultsQuery.isLoading;
 
-  const parsedHid = parseItemHid(searchQuery.trim());
   const isHid = !!parsedHid;
   const hidLootQueryParams:
     | LootsControllerFetchLootsByGuildIdParams
@@ -103,7 +117,12 @@ export const LootSearchCommand = ({
         limit: 1,
       }
     : undefined;
-  const { data: hidItem } = useQuery({
+  const {
+    data: hidItem,
+    isError: isHidError,
+    isFetched: isHidFetched,
+    isFetching: isHidLoading,
+  } = useQuery({
     queryKey: hidLootQueryParams
       ? getLootsControllerFetchLootsByGuildIdQueryKey(
           { guildId: guildId ?? "" },
@@ -170,13 +189,25 @@ export const LootSearchCommand = ({
     setSearchQuery("");
   };
 
-  const hasResults =
-    hidItem ||
+  const hasSearchResults =
     (searchResults?.npcs && searchResults.npcs.length > 0) ||
     (searchResults?.items && searchResults.items.length > 0) ||
     (searchResults?.players && searchResults.players.length > 0);
 
-  const showLoading = isLoading && debouncedSearch && !hasResults;
+  const showSearchLoading =
+    !isHidInput &&
+    trimmedSearch.length >= 2 &&
+    (debouncedSearch !== trimmedSearch ||
+      (isSearchLoading && Boolean(debouncedSearch) && !hasSearchResults));
+  const showHidNotFound =
+    isHid && isHidFetched && !isHidLoading && !isHidError && !hidItem;
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    onOpenChange(nextOpen);
+    if (!nextOpen) {
+      setSearchQuery("");
+    }
+  };
 
   const dialogContent = (
     <>
@@ -184,204 +215,323 @@ export const LootSearchCommand = ({
         placeholder={t("loots.searchCommand.placeholder")}
         value={searchQuery}
         onValueChange={setSearchQuery}
+        className="h-14 pr-12 text-base"
       />
-      <CommandList className="h-[350px] min-h-[350px] custom-scrollbar">
-        {showLoading && (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="flex flex-col items-center justify-center py-12 text-muted-foreground"
-          >
-            <Spinner className="mb-2 h-6 w-6" />
-            <span className="text-sm">{t("loots.searchCommand.loading")}</span>
-          </motion.div>
-        )}
+      <CommandList className="custom-scrollbar h-[min(60dvh,32rem)] max-h-[min(60dvh,32rem)] p-2 [&>div]:h-full">
+        <AnimatePresence mode="wait" initial={false}>
+          {!trimmedSearch && (
+            <motion.div
+              key="idle"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+            >
+              <div className="flex size-12 items-center justify-center rounded-xl border border-border bg-background">
+                <PackageSearch className="size-6 text-primary" />
+              </div>
+              <h3 className="mt-4 text-sm font-semibold text-foreground">
+                {t("loots.searchCommand.idleTitle")}
+              </h3>
+              <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
+                {t("loots.searchCommand.startTyping")}
+              </p>
+              <div className="mt-5 grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1.5 rounded-lg border border-border bg-background px-3 py-2 text-left text-xs text-muted-foreground sm:flex">
+                <ClipboardPaste className="size-4 text-primary" />
+                <span>{t("loots.searchCommand.hidHint")}</span>
+                <code className="col-span-2 font-mono text-foreground sm:col-auto">
+                  {t("loots.searchCommand.hidExample")}
+                </code>
+              </div>
+            </motion.div>
+          )}
 
-        {!debouncedSearch && !isLoading && (
-          <motion.div
-            key="empty-state"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <CommandEmpty>{t("loots.searchCommand.startTyping")}</CommandEmpty>
-          </motion.div>
-        )}
+          {!isHidInput && trimmedSearch.length === 1 && (
+            <motion.div
+              key="keep-typing"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+            >
+              <PackageSearch className="size-6 text-primary" />
+              <p className="mt-3 text-sm text-muted-foreground">
+                {t("loots.searchCommand.keepTyping")}
+              </p>
+            </motion.div>
+          )}
 
-        {debouncedSearch && !showLoading && (
-          <motion.div
-            key="results"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-          >
-            {hidItem && (
+          {isHidInput && !isHid && (
+            <motion.div
+              key="invalid-hid"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+            >
+              <div className="flex size-11 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10">
+                <CircleAlert className="size-5 text-amber-400" />
+              </div>
+              <h3 className="mt-4 text-sm font-semibold text-foreground">
+                {t("loots.searchCommand.hidInvalidTitle")}
+              </h3>
+              <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
+                {t("loots.searchCommand.hidInvalidDescription")}
+              </p>
+              <code className="mt-3 rounded-md bg-background px-2.5 py-1.5 font-mono text-xs text-foreground">
+                {t("loots.searchCommand.hidExample")}
+              </code>
+            </motion.div>
+          )}
+
+          {isHid && isHidLoading && (
+            <motion.div
+              key="hid-loading"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+            >
+              <Spinner className="size-6 text-primary" />
+              <h3 className="mt-4 text-sm font-semibold text-foreground">
+                {t("loots.searchCommand.hidLoadingTitle")}
+              </h3>
+              <code className="mt-2 max-w-full truncate font-mono text-xs text-muted-foreground">
+                {trimmedSearch}
+              </code>
+            </motion.div>
+          )}
+
+          {isHid && isHidError && (
+            <motion.div
+              key="hid-error"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+            >
+              <div className="flex size-11 items-center justify-center rounded-xl border border-destructive/30 bg-destructive/10">
+                <CircleAlert className="size-5 text-destructive" />
+              </div>
+              <h3 className="mt-4 text-sm font-semibold text-foreground">
+                {t("loots.searchCommand.hidErrorTitle")}
+              </h3>
+              <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
+                {t("loots.searchCommand.hidErrorDescription")}
+              </p>
+            </motion.div>
+          )}
+
+          {showHidNotFound && (
+            <motion.div
+              key="hid-not-found"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+            >
+              <div className="flex size-11 items-center justify-center rounded-xl border border-border bg-background">
+                <SearchX className="size-5 text-muted-foreground" />
+              </div>
+              <h3 className="mt-4 text-sm font-semibold text-foreground">
+                {t("loots.searchCommand.hidNotFoundTitle")}
+              </h3>
+              <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
+                {t("loots.searchCommand.hidNotFoundDescription")}
+              </p>
+              <code className="mt-3 max-w-full truncate font-mono text-xs text-muted-foreground">
+                {trimmedSearch}
+              </code>
+            </motion.div>
+          )}
+
+          {isHid && hidItem && (
+            <motion.div
+              key="hid-result"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
               <CommandGroup heading={t("loots.searchCommand.itemById")}>
                 <CommandItem
                   value={`hid-${hidItem.hid}`}
                   onSelect={() => handleSelectItemByHid(hidItem.hid)}
-                  className="p-2! px-2!"
+                  className="min-h-14 rounded-lg px-3 py-2"
                 >
                   <ItemImage
                     icon={hidItem.icon}
                     rarity={hidItem.rarity ?? ItemRarity.COMMON}
                   />
-                  <span>{hidItem.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    Lvl {hidItem.lvl}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-semibold">{hidItem.name}</div>
+                    <div className="mt-0.5 flex min-w-0 text-xs text-muted-foreground">
+                      <code className="truncate font-mono">
+                        {trimmedSearch}
+                      </code>
+                    </div>
+                  </div>
+                  <ArrowRight className="size-4 text-primary" />
                 </CommandItem>
               </CommandGroup>
-            )}
+            </motion.div>
+          )}
 
-            {!isHid && searchResults?.npcs && searchResults.npcs.length > 0 && (
-              <CommandGroup heading={t("loots.searchCommand.npcs")}>
-                <Reorder.Group
-                  axis="y"
-                  values={searchResults.npcs}
-                  onReorder={() => {}}
-                  as="div"
-                >
-                  {searchResults.npcs.map((npc) => {
-                    return (
-                      <Reorder.Item
+          {showSearchLoading && (
+            <motion.div
+              key="search-loading"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="flex h-full flex-col items-center justify-center py-10 text-muted-foreground"
+            >
+              <Spinner className="mb-3 size-6 text-primary" />
+              <span className="text-sm">
+                {t("loots.searchCommand.loading")}
+              </span>
+            </motion.div>
+          )}
+
+          {!isHidInput &&
+            trimmedSearch.length >= 2 &&
+            debouncedSearch &&
+            !showSearchLoading &&
+            hasSearchResults && (
+              <motion.div
+                key="search-results"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                {searchResults?.npcs && searchResults.npcs.length > 0 && (
+                  <CommandGroup heading={t("loots.searchCommand.npcs")}>
+                    {searchResults.npcs.map((npc) => (
+                      <CommandItem
                         key={`npc-${npc.id}`}
-                        value={npc}
-                        as="div"
-                        drag={false}
-                        layout
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
+                        value={`npc-${npc.id}`}
+                        onSelect={() => handleSelectNpc(npc)}
+                        className="h-14 min-h-14 rounded-lg px-3 py-1.5"
                       >
-                        <CommandItem
-                          value={`npc-${npc.id}`}
-                          onSelect={() => handleSelectNpc(npc)}
-                          className="p-2! px-2!"
-                        >
-                          <NpcSearchTile icon={npc.icon} name={npc.name} />
-                          <div className="flex flex-col">
-                            <span className="font-semibold">{npc.name}</span>
+                        <NpcSearchTile icon={npc.icon} name={npc.name} />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-semibold">
+                            {npc.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {NPC_TYPE_NAMES[npc.type]}
+                          </div>
+                        </div>
+                        {npc.lvl > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {t("loots.searchCommand.level", {
+                              level: npc.lvl,
+                            })}
+                          </span>
+                        )}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
 
-                            <span className="text-xs text-muted-foreground">
-                              {NPC_TYPE_NAMES[npc.type]}
-                            </span>
-                          </div>
-                          <span className="ml-auto text-xs text-muted-foreground">
-                            Lvl {npc.lvl}
-                          </span>
-                        </CommandItem>
-                      </Reorder.Item>
-                    );
-                  })}
-                </Reorder.Group>
-              </CommandGroup>
-            )}
-            {!isHid &&
-              searchResults?.items &&
-              searchResults.items.length > 0 && (
-                <CommandGroup heading={t("loots.searchCommand.items")}>
-                  <Reorder.Group
-                    axis="y"
-                    values={searchResults.items}
-                    onReorder={() => {}}
-                    as="div"
-                  >
+                {searchResults?.items && searchResults.items.length > 0 && (
+                  <CommandGroup heading={t("loots.searchCommand.items")}>
                     {searchResults.items.map((item) => (
-                      <Reorder.Item
+                      <CommandItem
                         key={`item-${item.id}`}
-                        value={item}
-                        as="div"
-                        drag={false}
-                        layout
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
+                        value={`item-${item.id}`}
+                        onSelect={() => handleSelectItem(item)}
+                        className="h-14 min-h-14 rounded-lg px-3 py-1.5"
                       >
-                        <CommandItem
-                          value={`item-${item.id}`}
-                          onSelect={() => handleSelectItem(item)}
-                          className="p-2! px-2!"
-                        >
-                          <ItemImage
-                            icon={item.icon}
-                            rarity={
-                              (item.rarity as ItemRarity) ?? ItemRarity.COMMON
-                            }
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-semibold">{item.name}</span>
-                            {item.rarity && (
-                              <span
-                                className={cn(
-                                  "text-xs font-semibold",
-                                  getRarityStyle(item.rarity),
-                                )}
-                              >
-                                {ITEM_RARITY_NAMES[item.rarity] ?? item.rarity}
-                              </span>
-                            )}
+                        <ItemImage
+                          icon={item.icon}
+                          rarity={
+                            (item.rarity as ItemRarity) ?? ItemRarity.COMMON
+                          }
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-semibold">
+                            {item.name}
                           </div>
-                          <span className="ml-auto text-xs text-muted-foreground">
-                            Lvl {item.lvl}
+                          {item.rarity && (
+                            <div
+                              className={cn(
+                                "text-xs font-semibold",
+                                getRarityStyle(item.rarity),
+                              )}
+                            >
+                              {ITEM_RARITY_NAMES[item.rarity] ?? item.rarity}
+                            </div>
+                          )}
+                        </div>
+                        {item.lvl > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {t("loots.searchCommand.level", {
+                              level: item.lvl,
+                            })}
                           </span>
-                        </CommandItem>
-                      </Reorder.Item>
+                        )}
+                      </CommandItem>
                     ))}
-                  </Reorder.Group>
-                </CommandGroup>
-              )}
-            {!isHid &&
-              searchResults?.players &&
-              searchResults.players.length > 0 && (
-                <CommandGroup heading={t("loots.searchCommand.players")}>
-                  <Reorder.Group
-                    axis="y"
-                    values={searchResults.players}
-                    onReorder={() => {}}
-                    as="div"
-                  >
+                  </CommandGroup>
+                )}
+
+                {searchResults?.players && searchResults.players.length > 0 && (
+                  <CommandGroup heading={t("loots.searchCommand.players")}>
                     {searchResults.players.map((player) => (
-                      <Reorder.Item
+                      <CommandItem
                         key={`player-${player.id}`}
-                        value={player}
-                        as="div"
-                        drag={false}
-                        layout
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
+                        value={`player-${player.id}`}
+                        onSelect={() => handleSelectPlayer(player)}
+                        className="h-14 min-h-14 rounded-lg px-3 py-1.5"
                       >
-                        <CommandItem
-                          value={`player-${player.id}`}
-                          onSelect={() => handleSelectPlayer(player)}
-                          className="p-0! px-2!"
-                        >
-                          <PlayerSearchTile
-                            icon={player.icon}
-                            name={player.name}
-                            className="scale-75"
-                          />
-                          <span className="font-semibold">{player.name}</span>
-                        </CommandItem>
-                      </Reorder.Item>
+                        <PlayerSearchTile
+                          icon={player.icon}
+                          name={player.name}
+                          className="scale-75"
+                        />
+                        <span className="truncate font-semibold">
+                          {player.name}
+                        </span>
+                      </CommandItem>
                     ))}
-                  </Reorder.Group>
-                </CommandGroup>
-              )}
-            {!hasResults && (
-              <CommandEmpty>{t("loots.searchCommand.noResults")}</CommandEmpty>
+                  </CommandGroup>
+                )}
+              </motion.div>
             )}
-          </motion.div>
-        )}
+
+          {!isHidInput &&
+            trimmedSearch.length >= 2 &&
+            debouncedSearch &&
+            !showSearchLoading &&
+            !hasSearchResults && (
+              <motion.div
+                key="no-results"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+              >
+                <div className="flex size-11 items-center justify-center rounded-xl border border-border bg-background">
+                  <SearchX className="size-5 text-muted-foreground" />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-foreground">
+                  {t("loots.searchCommand.noResults")}
+                </h3>
+                <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
+                  {t("loots.searchCommand.noResultsDescription")}
+                </p>
+              </motion.div>
+            )}
+        </AnimatePresence>
       </CommandList>
     </>
   );
@@ -390,12 +540,12 @@ export const LootSearchCommand = ({
     <CommandDialog
       shouldFilter={false}
       open={open}
-      onOpenChange={onOpenChange}
-      className="top-[25%] sm:top-[50%]"
+      onOpenChange={handleOpenChange}
+      title={t("loots.searchCommand.dialogTitle")}
+      description={t("loots.searchCommand.dialogDescription")}
+      className="top-1/2 w-[calc(100%-2rem)] max-w-xl rounded-2xl border-border bg-popover shadow-[0_24px_80px_rgba(0,0,0,0.45)] [&_[data-slot=command]]:rounded-2xl [&_[data-slot=command]]:bg-popover"
     >
-      <ThemeInteractiveFrame isHovered={false} isActive={open} subtle>
-        {dialogContent}
-      </ThemeInteractiveFrame>
+      {dialogContent}
     </CommandDialog>
   );
 };

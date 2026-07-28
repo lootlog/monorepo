@@ -107,9 +107,9 @@ export const NotificationsPendingJobsCard = ({
   };
 
   return (
-    <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+    <Card className="gap-3 border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+        <div className="rounded-xl bg-primary/10 p-2.5">
           <Clock3 className="size-4 text-primary" />
         </div>
         <div>
@@ -131,7 +131,7 @@ export const NotificationsPendingJobsCard = ({
             {pendingJobs.map((job) => (
               <div
                 key={job.id}
-                className="rounded-xl border border-border/70 bg-background/30 p-3"
+                className="rounded-xl border border-border/70 bg-background p-3"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-2">
@@ -205,7 +205,7 @@ export const NotificationsPendingJobsCard = ({
           </div>
         </ScrollArea>
       ) : (
-        <div className="rounded-xl border border-dashed border-border/80 bg-background/20 p-6 text-sm text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-border/80 bg-background p-6 text-sm text-muted-foreground">
           {t("settings.notifications.empty.pendingJobs")}
         </div>
       )}

@@ -485,6 +485,60 @@ describe("battle creation API deduplication", () => {
     expect(testApplication.database.storedBattles).toHaveLength(1);
   });
 
+  it("waits for an in-flight creation to finish after losing the lock", async () => {
+    vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-26T18:52:57.000Z"));
+
+    let releaseTransaction!: () => void;
+    const transactionGate = new Promise<void>((resolve) => {
+      releaseTransaction = resolve;
+    });
+    let markTransactionStarted!: () => void;
+    const transactionStarted = new Promise<void>((resolve) => {
+      markTransactionStarted = resolve;
+    });
+    const redis = createRedisBoundary();
+    redis.eval.mockResolvedValue(0);
+    const testApplication = await createTestApplication({
+      beforeTransaction: async () => {
+        markTransactionStarted();
+        await transactionGate;
+      },
+      redis,
+    });
+    app = testApplication.app;
+    const battlesService = app.get(BattlesService);
+    let creationSettled = false;
+    const creationOutcome = battlesService
+      .createBattle({
+        data: {
+          ...battleContext,
+          submissionId: "lost-lock",
+          events: [battleEvent],
+        },
+        userId: "user-1",
+      })
+      .then(
+        () => "resolved",
+        () => "rejected",
+      )
+      .finally(() => {
+        creationSettled = true;
+      });
+
+    await transactionStarted;
+    await vi.advanceTimersByTimeAsync(10_000);
+    const settledBeforeTransactionFinished = creationSettled;
+
+    releaseTransaction();
+    await vi.advanceTimersByTimeAsync(0);
+
+    await expect(creationOutcome).resolves.toBe("rejected");
+    expect(settledBeforeTransactionFinished).toBe(false);
+    expect(testApplication.database.storedBattles).toHaveLength(1);
+  });
+
   it("preserves separate battle events that do not have event ids", async () => {
     const testApplication = await createTestApplication();
     app = testApplication.app;
@@ -504,6 +558,47 @@ describe("battle creation API deduplication", () => {
             },
           },
           {
+            f: {
+              endBattle: 1,
+              m: moves.slice(6),
+            },
+          },
+        ],
+      })
+      .expect(201);
+
+    const battleResponse = await request(app.getHttpServer())
+      .get(`/battles/${response.body.battleId}`)
+      .set(authHeaders)
+      .expect(200);
+    const cashtelan = battleResponse.body.warriors.find(
+      (warrior: { name: string }) => warrior.name === "cashtelan",
+    );
+
+    expect(cashtelan.turns).toBe(12);
+  });
+
+  it("preserves distinct battle events that share an event id", async () => {
+    const testApplication = await createTestApplication();
+    app = testApplication.app;
+
+    const response = await request(app.getHttpServer())
+      .post("/battles")
+      .set(authHeaders)
+      .send({
+        ...battleContext,
+        submissionId: "events-with-repeated-id",
+        events: [
+          {
+            ev: 1_785_091_976.7,
+            f: {
+              init: "1",
+              m: moves.slice(0, 6),
+              w: warriors,
+            },
+          },
+          {
+            ev: 1_785_091_976.7,
             f: {
               endBattle: 1,
               m: moves.slice(6),
