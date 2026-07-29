@@ -5,10 +5,6 @@ on:
     branches:
       - main
 
-concurrency:
-  group: production-gitops
-  cancel-in-progress: false
-
 permissions:
   contents: read
 
@@ -25,9 +21,11 @@ jobs:
       contents: write
       pull-requests: write
     outputs:
-      deployment-matrix: ${{ steps.matrix.outputs.value }}
+      cloudflare-matrix: ${{ steps.plan.outputs.cloudflare }}
+      docker-matrix: ${{ steps.plan.outputs.docker }}
       published: ${{ steps.changesets.outputs.published }}
       published-packages: ${{ steps.changesets.outputs.publishedPackages }}
+      release-plan: ${{ steps.plan.outputs.value }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -64,27 +62,40 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PULL_REQUEST_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
         run: |
-          head_ref="$(gh pr view "$PULL_REQUEST_NUMBER" --json headRefName --jq .headRefName)"
-          gh workflow run ci.yml --ref "$head_ref"
+          pull_request="$(
+            gh pr view "$PULL_REQUEST_NUMBER" \
+              --json baseRefOid,headRefName,headRefOid
+          )"
+          base_sha="$(jq -r '.baseRefOid' <<< "$pull_request")"
+          head_ref="$(jq -r '.headRefName' <<< "$pull_request")"
+          head_sha="$(jq -r '.headRefOid' <<< "$pull_request")"
 
-      - name: Prepare deployment matrix
-        id: matrix
+          gh workflow run ci.yml \
+            --ref "$head_ref" \
+            --field base_sha="$base_sha" \
+            --field head_sha="$head_sha" \
+            --field pull_request_number="$PULL_REQUEST_NUMBER"
+
+      - name: Prepare release plan
+        id: plan
         env:
           PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages || '[]' }}
         run: |
-          matrix="$(node tools/release/create-deployment-matrix.mjs "$PUBLISHED_PACKAGES")"
-          echo "value=$matrix" >> "$GITHUB_OUTPUT"
+          plan="$(node tools/release/create-deployment-matrix.mjs "$PUBLISHED_PACKAGES")"
+          echo "value=$(jq -c . <<< "$plan")" >> "$GITHUB_OUTPUT"
+          echo "docker=$(jq -c '.docker' <<< "$plan")" >> "$GITHUB_OUTPUT"
+          echo "cloudflare=$(jq -c '.cloudflare' <<< "$plan")" >> "$GITHUB_OUTPUT"
 
   build-images:
     name: Build ${{ matrix.service }} ${{ matrix.version }}
-    if: needs.release.outputs.published == 'true' && needs.release.outputs.deployment-matrix != '[]'
     needs: release
+    if: needs.release.outputs.published == 'true' && needs.release.outputs.docker-matrix != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.release.outputs.deployment-matrix) }}
+        include: ${{ fromJSON(needs.release.outputs.docker-matrix) }}
     steps:
       - name: Checkout release commit
         uses: actions/checkout@v7
@@ -124,16 +135,123 @@ jobs:
           build-args: |
             GITHUB_SHA=${{ github.sha }}
             GITHUB_REF=${{ github.ref }}
-          cache-from: type=gha,scope=release-${{ matrix.service }}
-          cache-to: type=gha,mode=min,scope=release-${{ matrix.service }}
+          cache-from: type=gha,scope=docker-${{ matrix.service }}
+          cache-to: type=gha,mode=min,scope=docker-${{ matrix.service }}
           provenance: false
+
+  build-cloudflare:
+    name: Build ${{ matrix.project }} ${{ matrix.version }}
+    needs: release
+    if: needs.release.outputs.published == 'true' && needs.release.outputs.cloudflare-matrix != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.release.outputs.cloudflare-matrix) }}
+    env:
+      GAME_CLIENT_ENVIRONMENT: ${{ vars.GAME_CLIENT_ENVIRONMENT }}
+      GAME_CLIENT_GAME_CLIENT_URL: ${{ vars.GAME_CLIENT_GAME_CLIENT_URL }}
+      GAME_CLIENT_VITE_API_URL: ${{ vars.GAME_CLIENT_VITE_API_URL }}
+      GAME_CLIENT_VITE_AUTH_SERVICE_URL: ${{ vars.GAME_CLIENT_VITE_AUTH_SERVICE_URL }}
+      GAME_CLIENT_VITE_BATTLELOG_API_URL: ${{ vars.GAME_CLIENT_VITE_BATTLELOG_API_URL }}
+      GAME_CLIENT_VITE_GATEWAY_URL: ${{ vars.GAME_CLIENT_VITE_GATEWAY_URL }}
+      GAME_CLIENT_VITE_LOOTLOG_APP_URL: ${{ vars.GAME_CLIENT_VITE_LOOTLOG_APP_URL }}
+      GAME_CLIENT_VITE_SENTRY_DSN: ${{ vars.GAME_CLIENT_VITE_SENTRY_DSN }}
+      LANDING_NEXT_PUBLIC_ADDON_URL: ${{ vars.LANDING_NEXT_PUBLIC_ADDON_URL }}
+      LANDING_NEXT_PUBLIC_AUTH_SERVICE_URL: ${{ vars.LANDING_NEXT_PUBLIC_AUTH_SERVICE_URL }}
+      WEB_VITE_ACTIVITY_API_URL: ${{ vars.WEB_VITE_ACTIVITY_API_URL }}
+      WEB_VITE_ADDON_INSTALL_URL: ${{ vars.WEB_VITE_ADDON_INSTALL_URL }}
+      WEB_VITE_API_URL: ${{ vars.WEB_VITE_API_URL }}
+      WEB_VITE_AUTH_SERVICE_URL: ${{ vars.WEB_VITE_AUTH_SERVICE_URL }}
+      WEB_VITE_BATTLELOG_API_URL: ${{ vars.WEB_VITE_BATTLELOG_API_URL }}
+      WEB_VITE_BATTLELOG_PUBLIC_URL: ${{ vars.WEB_VITE_BATTLELOG_PUBLIC_URL }}
+      WEB_VITE_DISCORD_BOT_PERMISSIONS: ${{ vars.WEB_VITE_DISCORD_BOT_PERMISSIONS }}
+      WEB_VITE_DISCORD_CLIENT_ID: ${{ vars.WEB_VITE_DISCORD_CLIENT_ID }}
+      WEB_VITE_GATEWAY_URL: ${{ vars.WEB_VITE_GATEWAY_URL }}
+      WEB_VITE_SEARCH_API_URL: ${{ vars.WEB_VITE_SEARCH_API_URL }}
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build immutable Cloudflare artifact
+        env:
+          ARTIFACT_PATH: ${{ matrix.artifactPath }}
+          PACKAGE_NAME: ${{ matrix.packageName }}
+        run: |
+          case "$PACKAGE_NAME" in
+            @lootlog/landing)
+              export NEXT_PUBLIC_ADDON_URL="$LANDING_NEXT_PUBLIC_ADDON_URL"
+              export NEXT_PUBLIC_AUTH_SERVICE_URL="$LANDING_NEXT_PUBLIC_AUTH_SERVICE_URL"
+              ;;
+            @lootlog/web)
+              export VITE_ACTIVITY_API_URL="$WEB_VITE_ACTIVITY_API_URL"
+              export VITE_ADDON_INSTALL_URL="$WEB_VITE_ADDON_INSTALL_URL"
+              export VITE_API_URL="$WEB_VITE_API_URL"
+              export VITE_AUTH_SERVICE_URL="$WEB_VITE_AUTH_SERVICE_URL"
+              export VITE_BATTLELOG_API_URL="$WEB_VITE_BATTLELOG_API_URL"
+              export VITE_BATTLELOG_PUBLIC_URL="$WEB_VITE_BATTLELOG_PUBLIC_URL"
+              export VITE_DISCORD_BOT_PERMISSIONS="$WEB_VITE_DISCORD_BOT_PERMISSIONS"
+              export VITE_DISCORD_CLIENT_ID="$WEB_VITE_DISCORD_CLIENT_ID"
+              export VITE_GATEWAY_URL="$WEB_VITE_GATEWAY_URL"
+              export VITE_SEARCH_API_URL="$WEB_VITE_SEARCH_API_URL"
+              ;;
+            @lootlog/game-client)
+              export ENVIRONMENT="$GAME_CLIENT_ENVIRONMENT"
+              export GAME_CLIENT_URL="$GAME_CLIENT_GAME_CLIENT_URL"
+              export VITE_API_URL="$GAME_CLIENT_VITE_API_URL"
+              export VITE_AUTH_SERVICE_URL="$GAME_CLIENT_VITE_AUTH_SERVICE_URL"
+              export VITE_BATTLELOG_API_URL="$GAME_CLIENT_VITE_BATTLELOG_API_URL"
+              export VITE_GATEWAY_URL="$GAME_CLIENT_VITE_GATEWAY_URL"
+              export VITE_LOOTLOG_APP_URL="$GAME_CLIENT_VITE_LOOTLOG_APP_URL"
+              export VITE_SENTRY_DSN="$GAME_CLIENT_VITE_SENTRY_DSN"
+              ;;
+          esac
+
+          pnpm --filter="$PACKAGE_NAME" build
+          test -d "$ARTIFACT_PATH"
+          archive="$RUNNER_TEMP/cloudflare-artifact.tar.gz"
+          tar -C "$ARTIFACT_PATH" -czf "$archive" .
+          (
+            cd "$RUNNER_TEMP"
+            sha256sum cloudflare-artifact.tar.gz > cloudflare-artifact.tar.gz.sha256
+          )
+
+      - name: Upload immutable Cloudflare artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: cloudflare-${{ matrix.project }}-${{ matrix.version }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/cloudflare-artifact.tar.gz
+            ${{ runner.temp }}/cloudflare-artifact.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7
 
   release-summary:
     name: Production release summary
-    if: needs.release.outputs.published == 'true' && needs.release.outputs.deployment-matrix != '[]'
     needs:
       - release
       - build-images
+      - build-cloudflare
+    if: |
+      always() &&
+      needs.release.result == 'success' &&
+      needs.release.outputs.published == 'true' &&
+      (needs.release.outputs.docker-matrix != '[]' || needs.release.outputs.cloudflare-matrix != '[]') &&
+      (needs.build-images.result == 'success' || needs.build-images.result == 'skipped') &&
+      (needs.build-cloudflare.result == 'success' || needs.build-cloudflare.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository and tags
@@ -141,20 +259,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Summarize versions and database migrations
+      - name: Summarize artifacts and database migrations
         env:
-          DEPLOYMENT_MATRIX: ${{ needs.release.outputs.deployment-matrix }}
+          CLOUDFLARE_MATRIX: ${{ needs.release.outputs.cloudflare-matrix }}
+          DOCKER_MATRIX: ${{ needs.release.outputs.docker-matrix }}
         run: |
           {
             echo "# Production release"
             echo
-            echo "Images were built from commit \`$GITHUB_SHA\`. Production remains unchanged until the \`prod\` environment is approved."
+            echo "Artifacts were built from commit \`$GITHUB_SHA\`. Production remains unchanged until the \`prod\` environment is approved."
             echo
-            echo "## Images"
+            echo "## Docker images"
             echo
             echo "| Service | Version | Image |"
             echo "| --- | --- | --- |"
-            echo "$DEPLOYMENT_MATRIX" | jq -r '.[] | "| \(.service) | \(.version) | `\(.image):prod-\(.version)` |"'
+            jq -r '.[] | "| \(.service) | \(.version) | `\(.image):prod-\(.version)` |"' <<< "$DOCKER_MATRIX"
+            echo
+            echo "## Cloudflare artifacts"
+            echo
+            echo "| Package | Version | Target |"
+            echo "| --- | --- | --- |"
+            jq -r '.[] | "| \(.packageName) | \(.version) | \(.kind):\(.project) |"' <<< "$CLOUDFLARE_MATRIX"
             echo
             echo "## Database migrations requiring manual review"
             echo
@@ -203,23 +328,141 @@ jobs:
                 echo "</details>"
               fi
               echo
-            done < <(jq -c '.[]' <<< "$DEPLOYMENT_MATRIX")
+            done < <(jq -c '.[]' <<< "$DOCKER_MATRIX")
 
             echo "> Migrations are never executed by this workflow. Apply compatible expand/contract migrations manually before approving production."
           } >> "$GITHUB_STEP_SUMMARY"
 
   update-production:
-    name: Approve and update production GitOps
-    if: needs.release.outputs.published == 'true' && needs.release.outputs.deployment-matrix != '[]'
+    name: Approve and promote production
     needs:
       - release
       - build-images
+      - build-cloudflare
       - release-summary
+    if: |
+      always() &&
+      needs.release.result == 'success' &&
+      needs.release.outputs.published == 'true' &&
+      (needs.release.outputs.docker-matrix != '[]' || needs.release.outputs.cloudflare-matrix != '[]') &&
+      (needs.build-images.result == 'success' || needs.build-images.result == 'skipped') &&
+      (needs.build-cloudflare.result == 'success' || needs.build-cloudflare.result == 'skipped') &&
+      needs.release-summary.result == 'success'
+    concurrency:
+      group: production-gitops
+      cancel-in-progress: false
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: prod
     steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        if: needs.release.outputs.cloudflare-matrix != '[]'
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        if: needs.release.outputs.cloudflare-matrix != '[]'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install deployment tooling
+        if: needs.release.outputs.cloudflare-matrix != '[]'
+        run: pnpm install --frozen-lockfile
+
+      - name: Download immutable Cloudflare artifacts
+        if: needs.release.outputs.cloudflare-matrix != '[]'
+        uses: actions/download-artifact@v8
+        with:
+          pattern: cloudflare-*-${{ github.sha }}
+          path: ${{ runner.temp }}/cloudflare-artifacts
+
+      - name: Deploy Cloudflare release artifacts
+        if: needs.release.outputs.cloudflare-matrix != '[]'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_MATRIX: ${{ needs.release.outputs.cloudflare-matrix }}
+          ROLLBACK_STATE: ${{ runner.temp }}/cloudflare-rollback.jsonl
+        run: |
+          : > "$ROLLBACK_STATE"
+
+          while IFS= read -r item; do
+            kind="$(jq -r '.kind' <<< "$item")"
+            project="$(jq -r '.project' <<< "$item")"
+            package_name="$(jq -r '.packageName' <<< "$item")"
+            version="$(jq -r '.version' <<< "$item")"
+            artifact_path="$(jq -r '.artifactPath' <<< "$item")"
+            config_path="$(jq -r '.configPath // empty' <<< "$item")"
+            artifact_directory="$RUNNER_TEMP/cloudflare-artifacts/cloudflare-$project-$version-$GITHUB_SHA"
+
+            (
+              cd "$artifact_directory"
+              sha256sum -c cloudflare-artifact.tar.gz.sha256
+            )
+            mkdir -p "$artifact_path"
+            tar -C "$artifact_path" -xzf "$artifact_directory/cloudflare-artifact.tar.gz"
+
+            if [[ "$kind" == "pages" ]]; then
+              previous_id="$(
+                pnpm exec wrangler pages deployment list \
+                  --project-name "$project" \
+                  --environment production \
+                  --json |
+                  jq -r '.[0].Id'
+              )"
+              jq -cn \
+                --arg kind "$kind" \
+                --arg previousId "$previous_id" \
+                --arg project "$project" \
+                '{kind: $kind, previousId: $previousId, project: $project}' \
+                >> "$ROLLBACK_STATE"
+
+              pnpm exec wrangler pages deploy "$artifact_path" \
+                --project-name "$project" \
+                --branch main \
+                --commit-hash "$GITHUB_SHA" \
+                --commit-message "Release $package_name@$version" \
+                --commit-dirty=false
+              continue
+            fi
+
+            previous_id="$(
+              pnpm exec wrangler deployments list \
+                --config "$config_path" \
+                --env="" \
+                --name "$project" \
+                --json |
+                jq -r 'sort_by(.created_on) | last | .versions[] | select(.percentage == 100) | .version_id' |
+                head -n 1
+            )"
+            jq -cn \
+              --arg configPath "$config_path" \
+              --arg kind "$kind" \
+              --arg previousId "$previous_id" \
+              --arg project "$project" \
+              '{configPath: $configPath, kind: $kind, previousId: $previousId, project: $project}' \
+              >> "$ROLLBACK_STATE"
+
+            if [[ "$package_name" == "@lootlog/wiki" ]]; then
+              pnpm exec wrangler deploy "$artifact_path/server/index.js" \
+                --config "$config_path" \
+                --env="" \
+                --assets "$artifact_path/client" \
+                --keep-vars
+            else
+              pnpm exec wrangler deploy \
+                --config "$config_path" \
+                --env="" \
+                --keep-vars
+            fi
+          done < <(jq -c '.[]' <<< "$CLOUDFLARE_MATRIX")
+
       - name: Checkout infra repository
+        if: needs.release.outputs.docker-matrix != '[]'
         uses: actions/checkout@v7
         with:
           repository: ${{ env.INFRA_REPOSITORY }}
@@ -228,9 +471,10 @@ jobs:
           path: ${{ env.INFRA_REPO_PATH }}
           fetch-depth: 0
 
-      - name: Update all released images
+      - name: Update all released Docker images
+        if: needs.release.outputs.docker-matrix != '[]'
         env:
-          DEPLOYMENT_MATRIX: ${{ needs.release.outputs.deployment-matrix }}
+          DOCKER_MATRIX: ${{ needs.release.outputs.docker-matrix }}
         run: |
           while IFS= read -r item; do
             service="$(jq -r '.service' <<< "$item")"
@@ -251,13 +495,14 @@ jobs:
               echo "::error::Failed to update $service to prod-$version"
               exit 1
             fi
-          done < <(jq -c '.[]' <<< "$DEPLOYMENT_MATRIX")
+          done < <(jq -c '.[]' <<< "$DOCKER_MATRIX")
 
       - name: Enable Developer Portal after its first release
+        if: needs.release.outputs.docker-matrix != '[]'
         env:
-          DEPLOYMENT_MATRIX: ${{ needs.release.outputs.deployment-matrix }}
+          DOCKER_MATRIX: ${{ needs.release.outputs.docker-matrix }}
         run: |
-          if jq -e '.[] | select(.service == "developer")' <<< "$DEPLOYMENT_MATRIX" >/dev/null &&
+          if jq -e '.[] | select(.service == "developer")' <<< "$DOCKER_MATRIX" >/dev/null &&
              ! grep -qE '^[[:space:]]*-[[:space:]]+developer$' "$INFRA_REPO_PATH/apps/prod/kustomization.yml"; then
             docker run --rm \
               --user "$(id -u):$(id -g)" \
@@ -267,10 +512,11 @@ jobs:
               apps/prod/kustomization.yml
           fi
 
-      - name: Commit and push one GitOps change
+      - name: Commit and push one production GitOps change
+        if: needs.release.outputs.docker-matrix != '[]'
         working-directory: ${{ env.INFRA_REPO_PATH }}
         env:
-          DEPLOYMENT_MATRIX: ${{ needs.release.outputs.deployment-matrix }}
+          DOCKER_MATRIX: ${{ needs.release.outputs.docker-matrix }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -281,7 +527,7 @@ jobs:
             exit 0
           fi
 
-          versions="$(jq -r 'map("\(.service)=\(.version)") | join(", ")' <<< "$DEPLOYMENT_MATRIX")"
+          versions="$(jq -r 'map("\(.service)=\(.version)") | join(", ")' <<< "$DOCKER_MATRIX")"
           git commit -m "ci: promote release to production" -m "$versions"
 
           for attempt in {1..5}; do
@@ -297,3 +543,39 @@ jobs:
               exit 1
             fi
           done
+
+      - name: Roll back partial Cloudflare promotion
+        if: failure() && needs.release.outputs.cloudflare-matrix != '[]'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ROLLBACK_STATE: ${{ runner.temp }}/cloudflare-rollback.jsonl
+        run: |
+          if [[ ! -s "$ROLLBACK_STATE" ]]; then
+            echo "No Cloudflare deployment was changed."
+            exit 0
+          fi
+
+          while IFS= read -r item; do
+            config_path="$(jq -r '.configPath // empty' <<< "$item")"
+            kind="$(jq -r '.kind' <<< "$item")"
+            previous_id="$(jq -r '.previousId' <<< "$item")"
+            project="$(jq -r '.project' <<< "$item")"
+
+            if [[ "$kind" == "pages" ]]; then
+              curl --fail-with-body --silent --show-error \
+                --request POST \
+                --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                --header "Content-Type: application/json" \
+                --data '{}' \
+                "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$project/deployments/$previous_id/rollback"
+              continue
+            fi
+
+            pnpm exec wrangler rollback "$previous_id" \
+              --config "$config_path" \
+              --env="" \
+              --name "$project" \
+              --message "Rollback failed release $GITHUB_SHA" \
+              --yes
+          done < <(tac "$ROLLBACK_STATE")

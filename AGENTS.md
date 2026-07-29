@@ -41,7 +41,7 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 - Write changeset summaries in clear English; they become changelog and GitHub Release entries.
 - For workspace-only changes that do not require a release, such as tests, documentation, or non-release configuration, add an empty changeset with `pnpm changeset --empty`.
 - Never edit package versions or generated changelogs manually, and never run `pnpm version`. The automated release pull request owns those changes.
-- Releases are created only from `main`. Merging to `develop` may deploy dev but must never create release artifacts.
+- Releases are created only from `main`. Merging an ordinary feature pull request to `main` may deploy dev but must never create release artifacts.
 - Merging the Changesets version PR creates immutable Git tags, GitHub Releases, and Docker images. Production promotion requires approval of the `prod` environment.
 - Production rollback or promotion must reuse an existing `prod-<semver>` image and update GitOps only. Never rebuild an image for rollback.
 
