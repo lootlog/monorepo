@@ -87,7 +87,8 @@
     "socket.io-client": "^4.8.3",
     "tsx": "catalog:",
     "turbo": "^2.10.6",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "wrangler": "^4.114.0"
   },
   "devEngines": {
     "packageManager": {

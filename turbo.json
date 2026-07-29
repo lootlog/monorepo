@@ -43,8 +43,11 @@
     },
     "build:game-client": {},
     "copy-entrypoint": {},
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
     "lint": {
-      "dependsOn": ["^lint"],
+      "dependsOn": ["transit"],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",

@@ -21,10 +21,6 @@ on:
         required: true
         type: string
 
-concurrency:
-  group: production-gitops
-  cancel-in-progress: false
-
 permissions:
   contents: read
 
@@ -80,6 +76,9 @@ jobs:
   promote:
     name: Approve and update production GitOps
     needs: validate
+    concurrency:
+      group: production-gitops
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: prod

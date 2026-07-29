@@ -11,22 +11,72 @@ const deployableServices = new Set([
   "search",
 ]);
 
+const cloudflareTargets = new Map([
+  [
+    "@lootlog/landing",
+    {
+      artifactPath: "apps/landing/out",
+      kind: "pages",
+      project: "lootlog-landing",
+    },
+  ],
+  [
+    "@lootlog/web",
+    {
+      artifactPath: "apps/web/dist",
+      kind: "pages",
+      project: "lootlog-web-monorepo",
+    },
+  ],
+  [
+    "@lootlog/game-client",
+    {
+      artifactPath: "apps/game-client/dist/@lootlog",
+      kind: "pages",
+      project: "lootlog-game-client-monorepo",
+    },
+  ],
+  [
+    "@lootlog/docs",
+    {
+      artifactPath: "apps/docs/out",
+      configPath: "apps/docs/wrangler.jsonc",
+      kind: "worker",
+      project: "lootlog-docs",
+    },
+  ],
+  [
+    "@lootlog/wiki",
+    {
+      artifactPath: "apps/wiki/dist",
+      configPath: "apps/wiki/wrangler.jsonc",
+      kind: "worker",
+      project: "lootlog-wiki",
+    },
+  ],
+]);
+
 const semanticVersionPattern =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
-export function createDeploymentMatrix(publishedPackages) {
+export function createReleasePlan(publishedPackages) {
   if (!Array.isArray(publishedPackages)) {
     throw new TypeError("Published packages must be an array");
   }
 
   const seenPackages = new Set();
+  const releasePlan = {
+    cloudflare: [],
+    docker: [],
+  };
 
-  return publishedPackages.flatMap((publishedPackage) => {
+  for (const publishedPackage of publishedPackages) {
     const { name, version } = publishedPackage;
     const service = name?.startsWith("@lootlog/") ? name.slice(9) : undefined;
+    const cloudflareTarget = cloudflareTargets.get(name);
 
-    if (!service || !deployableServices.has(service)) {
-      return [];
+    if ((!service || !deployableServices.has(service)) && !cloudflareTarget) {
+      continue;
     }
 
     if (!semanticVersionPattern.test(version)) {
@@ -38,15 +88,25 @@ export function createDeploymentMatrix(publishedPackages) {
     }
     seenPackages.add(name);
 
-    return [
-      {
+    if (service && deployableServices.has(service)) {
+      releasePlan.docker.push({
         image: `kamilwronka7/lootlog-${service}`,
         packageName: name,
         service,
         version,
-      },
-    ];
-  });
+      });
+    }
+
+    if (cloudflareTarget) {
+      releasePlan.cloudflare.push({
+        ...cloudflareTarget,
+        packageName: name,
+        version,
+      });
+    }
+  }
+
+  return releasePlan;
 }
 
 const isCommandLineInvocation =
@@ -54,7 +114,5 @@ const isCommandLineInvocation =
 
 if (isCommandLineInvocation) {
   const publishedPackages = JSON.parse(process.argv[2] ?? "[]");
-  process.stdout.write(
-    JSON.stringify(createDeploymentMatrix(publishedPackages)),
-  );
+  process.stdout.write(JSON.stringify(createReleasePlan(publishedPackages)));
 }

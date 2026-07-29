@@ -155,7 +155,7 @@ Related to #
 ### Git
 
 - [ ] My commits follow the Conventional Commits specification
-- [ ] I have rebased my branch on the latest develop
+- [ ] My pull request targets `main` and is ready for merge queue validation
 - [ ] I have resolved all merge conflicts
 
 ## Additional Notes
