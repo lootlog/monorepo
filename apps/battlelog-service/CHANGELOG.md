@@ -1,5 +1,14 @@
 # @lootlog/battlelog-service
 
+## 0.0.7
+
+### Patch Changes
+
+- 3e25d98: Consolidate duplicated scoring, date and time handling, runtime types, Nest infrastructure, RabbitMQ retry behavior, canonical serialization, and reusable React UI primitives.
+- Updated dependencies [3e25d98]
+  - @lootlog/nest-shared@1.0.5
+  - @lootlog/types@2.0.2
+
 ## 0.0.6
 
 ### Patch Changes
