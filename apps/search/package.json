@@ -4,16 +4,16 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "dev": "nest start --watch",
     "prebuild": "node ../../tools/clean-swagger-metadata.mjs",
     "build": "nest build",
-    "dev": "nest start --watch",
-    "openapi:generate": "OPENAPI_GENERATION=true pnpm build && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
     "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
-    "seed": "tsx src/scripts/seed.ts",
     "test": "vitest run --config ./vitest.config.ts",
+    "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
+    "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism",
     "test:watch": "vitest --config ./vitest.config.ts",
-    "test:cov": "vitest run --config ./vitest.config.ts --coverage",
-    "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism"
+    "openapi:generate": "OPENAPI_GENERATION=true pnpm build && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
+    "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^9.0.2",

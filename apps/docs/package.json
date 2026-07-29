@@ -5,12 +5,12 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "postinstall": "fumadocs-mdx",
     "dev": "next dev -p 3005 --turbopack",
     "build": "next build",
     "start": "next start",
-    "postinstall": "fumadocs-mdx",
-    "lint": "oxlint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint ."
   },
   "dependencies": {
     "@types/mdx": "^2.0.14",

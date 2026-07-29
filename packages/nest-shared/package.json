@@ -37,8 +37,8 @@
     }
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "build": "tsc"
   },
   "dependencies": {
     "@axiomhq/winston": "^1.8.0",

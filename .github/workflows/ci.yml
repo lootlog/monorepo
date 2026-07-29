@@ -221,9 +221,9 @@ jobs:
         env:
           COVERAGE_BASE_REF: ${{ needs.plan.outputs.base-sha }}
         run: |
-          pnpm --filter=@lootlog/game-client check-types
+          pnpm --filter=@lootlog/game-client typecheck
           pnpm --filter=@lootlog/game-client test:coverage
-          pnpm --filter=@lootlog/game-client report:changed-coverage
+          pnpm --filter=@lootlog/game-client test:coverage:changed
 
       - name: Upload Game Client coverage
         if: always() && contains(fromJSON(needs.plan.outputs.packages), '@lootlog/game-client')
@@ -266,7 +266,7 @@ jobs:
           R2_ENDPOINT: http://localhost
           R2_BUCKET_NAME: ci
           API_SERVICE_URL: http://localhost:4000
-        run: pnpm api:client:check
+        run: pnpm api-client:check
 
   docker:
     name: Docker ${{ matrix.service }}

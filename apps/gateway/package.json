@@ -6,17 +6,17 @@
   "license": "MIT",
   "author": "",
   "scripts": {
-    "build": "nest build",
-    "format": "oxfmt src test",
     "dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
+    "build": "nest build",
     "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
+    "start:debug": "nest start --debug --watch",
     "lint": "oxlint src",
+    "format": "oxfmt src test",
     "test": "vitest run --config ./vitest.config.ts",
-    "test:watch": "vitest --config ./vitest.config.ts",
-    "test:cov": "vitest run --config ./vitest.config.ts --coverage",
+    "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
     "test:debug": "vitest --config ./vitest.config.ts --inspect-brk --no-file-parallelism",
-    "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
+    "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "test:watch": "vitest --config ./vitest.config.ts"
   },
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^9.0.2",

@@ -10,8 +10,8 @@
   "module": "ESNext",
   "exports": "./dist/index.mjs",
   "scripts": {
-    "env:generate": "tsx src/commands/env/generate.ts",
-    "test": "tsx src/utils/env-generator.test.ts"
+    "test": "tsx src/utils/env-generator.test.ts",
+    "env:generate": "tsx src/commands/env/generate.ts"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",

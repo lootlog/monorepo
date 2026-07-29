@@ -11,9 +11,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "doctor": "npx -y react-doctor@latest .",
+    "preview": "vite preview",
     "lint": "oxlint .",
-    "preview": "vite preview"
+    "doctor": "npx -y react-doctor@latest ."
   },
   "dependencies": {
     "@hookform/resolvers": "catalog:",
