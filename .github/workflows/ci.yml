@@ -296,7 +296,7 @@ jobs:
           provenance: false
 
   ci-success:
-    name: CI Success
+    name: ${{ github.event_name == 'workflow_dispatch' && 'Automated CI result' || 'CI Success' }}
     needs:
       - plan
       - quality
@@ -315,3 +315,36 @@ jobs:
               .result == "success" or .result == "skipped"
             )
           ' <<< "$JOB_RESULTS"
+
+  publish-automated-status:
+    name: Publish automated CI status
+    needs:
+      - plan
+      - ci-success
+    if: always() && github.event_name == 'workflow_dispatch'
+    permissions:
+      statuses: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Publish required status
+        env:
+          CI_RESULT: ${{ needs.ci-success.result }}
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.plan.outputs.head-sha }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          state="failure"
+          description="Automated CI failed."
+          if [[ "$CI_RESULT" == "success" ]]; then
+            state="success"
+            description="Automated CI passed."
+          fi
+
+          gh api \
+            --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" \
+            --raw-field state="$state" \
+            --raw-field context="CI Success" \
+            --raw-field description="$description" \
+            --raw-field target_url="$TARGET_URL"
