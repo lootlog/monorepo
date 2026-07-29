@@ -84,10 +84,10 @@ export const GuildDocTrashDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40 backdrop-blur-xl sm:max-w-2xl">
-        <DialogHeader className="border-b border-border/70 bg-card/50 px-4 py-3 pr-12">
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40  sm:max-w-2xl">
+        <DialogHeader className="border-b border-border/70 bg-card px-4 py-3 pr-12">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <span className="rounded-xl bg-destructive/10 p-2 shadow-inner shadow-destructive/10">
+            <span className="rounded-xl bg-destructive/10 p-2">
               <Trash2 className="size-4 text-destructive" />
             </span>
             {t("docs.trash.title")}
@@ -133,7 +133,7 @@ export const GuildDocTrashDialog = ({
                 return (
                   <div
                     key={document.id}
-                    className="flex flex-col gap-3 rounded-md border border-border/80 bg-card/35 p-3 transition-colors hover:bg-card/50 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 rounded-md border border-border/80 bg-card/35 p-3 transition-colors hover:bg-card sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex min-w-0 items-center gap-2">

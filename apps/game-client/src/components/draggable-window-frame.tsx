@@ -127,18 +127,34 @@ const getMeasuredContentHeight = (
       let nextMeasuredHeight = viewportElement.scrollHeight;
 
       if (viewportContent instanceof HTMLElement) {
-        const renderedHeight = Math.ceil(
-          viewportContent.getBoundingClientRect().height,
+        const contentChildren = Array.from(viewportContent.children).filter(
+          (element): element is HTMLElement => element instanceof HTMLElement,
         );
-        const scrollHeight = viewportContent.scrollHeight;
-        const isSmallTransformedUndershoot =
-          renderedHeight > 0 &&
-          scrollHeight > renderedHeight &&
-          scrollHeight - renderedHeight <= TRANSFORMED_MEASUREMENT_TOLERANCE;
 
-        nextMeasuredHeight = isSmallTransformedUndershoot
-          ? scrollHeight
-          : renderedHeight || scrollHeight;
+        if (contentChildren.length > 0) {
+          nextMeasuredHeight = contentChildren.reduce(
+            (maxContentHeight, contentChild) => {
+              const renderedHeight = Math.ceil(
+                contentChild.getBoundingClientRect().height,
+              );
+              const scrollHeight = contentChild.scrollHeight;
+              const isSmallTransformedUndershoot =
+                renderedHeight > 0 &&
+                scrollHeight > renderedHeight &&
+                scrollHeight - renderedHeight <=
+                  TRANSFORMED_MEASUREMENT_TOLERANCE;
+              const contentChildHeight = isSmallTransformedUndershoot
+                ? scrollHeight
+                : renderedHeight || scrollHeight;
+
+              return Math.max(
+                maxContentHeight,
+                contentChild.offsetTop + contentChildHeight,
+              );
+            },
+            0,
+          );
+        }
       }
 
       return Math.max(maxScrollHeight, nextMeasuredHeight);

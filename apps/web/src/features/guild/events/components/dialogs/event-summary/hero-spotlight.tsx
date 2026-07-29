@@ -36,7 +36,7 @@ export const HeroSpotlight = ({
               ease: [0.22, 1, 0.36, 1],
             }
       }
-      className="relative overflow-hidden rounded-[28px] border border-border/70 bg-background/70 p-4 backdrop-blur-sm"
+      className="relative overflow-hidden rounded-[28px] border border-border/70 bg-background p-4"
     >
       {!prefersReducedMotion ? (
         <motion.div
@@ -60,7 +60,7 @@ export const HeroSpotlight = ({
             {hero.npcName}
           </h4>
         </div>
-        <Badge variant="outline" className="bg-background/70 text-xs">
+        <Badge variant="outline" className="bg-background text-xs">
           {hero.mapCount}
         </Badge>
       </div>

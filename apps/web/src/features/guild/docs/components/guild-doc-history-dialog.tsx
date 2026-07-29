@@ -94,8 +94,8 @@ export const GuildDocHistoryDialog = ({
         className={cn(
           "group relative w-full rounded-md border px-2.5 py-1.5 text-left transition-colors",
           isSelected
-            ? "border-primary/80 bg-primary/10 shadow-inner shadow-primary/10"
-            : "border-border/80 bg-card/35 hover:border-primary/40 hover:bg-card/60",
+            ? "border-primary/80 bg-primary/10"
+            : "border-border/80 bg-card/35 hover:border-primary/40 hover:bg-card",
         )}
         aria-label={t("docs.history.version", { version: history.version })}
         title={history.title}
@@ -126,11 +126,11 @@ export const GuildDocHistoryDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         aria-describedby={undefined}
-        className="flex h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40 backdrop-blur-xl sm:max-w-none lg:h-[min(92vh,860px)] lg:max-h-[min(92vh,860px)] xl:w-[1200px]"
+        className="flex h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40  sm:max-w-none lg:h-[min(92vh,860px)] lg:max-h-[min(92vh,860px)] xl:w-[1200px]"
       >
-        <DialogHeader className="shrink-0 border-b border-border/70 bg-card/50 px-4 py-3 pr-12 backdrop-blur-xl sm:px-5">
+        <DialogHeader className="shrink-0 border-b border-border/70 bg-card px-4 py-3 pr-12  sm:px-5">
           <DialogTitle className="flex items-center gap-2 px-0 pt-0 text-base sm:text-lg">
-            <span className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+            <span className="rounded-xl bg-primary/10 p-2">
               <FileClock className="size-4 text-primary" />
             </span>
             {t("docs.history.title")}
@@ -168,7 +168,7 @@ export const GuildDocHistoryDialog = ({
             </ScrollArea>
           </aside>
 
-          <section className="flex min-h-0 flex-col bg-background/40">
+          <section className="flex min-h-0 flex-col bg-background">
             {snapshotQuery.isLoading ? (
               <div className="flex min-h-0 flex-1 flex-col gap-3 p-3">
                 <Skeleton className="h-14 w-full rounded-md" />
@@ -188,7 +188,7 @@ export const GuildDocHistoryDialog = ({
                       })}
                     </p>
                   </div>
-                  <Badge variant="outline" className="bg-background/70">
+                  <Badge variant="outline" className="bg-background">
                     {t(`docs.history.actions.${snapshotQuery.data.action}`)}
                   </Badge>
                 </div>

@@ -38,7 +38,7 @@ export const KillDetailStatsCard = ({
       : null;
 
   return (
-    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
+    <Card className="p-3 bg-card  border-border gap-2">
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-green-500/10">

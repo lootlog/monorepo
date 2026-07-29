@@ -13,6 +13,7 @@ import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settin
 import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
+import { ServerVisibilitySettingsTab } from "@/features/settings/components/servers/server-visibility-settings-tab";
 import { NpcColorsSettings } from "@/features/settings/components/npc-colors/npc-colors-settings";
 import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
@@ -37,6 +38,7 @@ import {
   Keyboard,
   Palette,
   Search,
+  Server,
   Settings,
   Volume2,
   X,
@@ -47,6 +49,7 @@ import { useTranslation } from "react-i18next";
 
 const ICONS: Record<string, LucideIcon> = {
   settings: Settings,
+  server: Server,
   palette: Palette,
   clock: Clock,
   database: Database,
@@ -190,6 +193,9 @@ export const SettingsTabs = () => {
   let content: ReactNode;
 
   switch (selectedSubsection) {
+    case "visibility":
+      content = <ServerVisibilitySettingsTab />;
+      break;
     case "behavior":
       content = <GeneralSettingsTab />;
       break;
@@ -308,7 +314,7 @@ export const SettingsTabs = () => {
                     aria-selected={index === selectedResultIndex}
                     onMouseEnter={() => setSelectedResultIndex(index)}
                     onClick={() => openSearchResult(result)}
-                    className="ll:mt-0.5 ll:w-full ll:rounded-md ll:border-0 ll:bg-transparent ll:px-3 ll:py-1.5 ll:text-left ll:text-[11px] ll:text-gray-300 ll-custom-cursor-pointer ll:hover:bg-purple-500/15 ll:aria-selected:bg-purple-500/25 ll:aria-selected:text-white"
+                    className="ll:mt-0.5 ll:w-full ll:rounded-md ll:border-0 ll:bg-transparent ll:px-3 ll:py-1.5 ll:text-left ll:text-[11px] ll:text-white/80 ll-custom-cursor-pointer ll:hover:bg-blue-500/15 ll:aria-selected:bg-blue-500/25 ll:aria-selected:text-white"
                   >
                     {result.label}
                   </button>
@@ -324,7 +330,7 @@ export const SettingsTabs = () => {
                 <TabsTrigger
                   key={domain.id}
                   value={domain.id}
-                  className="ll:mt-0 ll:flex ll:min-h-8 ll:w-full ll:items-center ll:justify-start ll:gap-2 ll:rounded-md ll:border-transparent ll:px-2 ll:py-1.5 ll:text-left ll:font-semibold ll:text-gray-300 ll:hover:bg-gray-500/20 ll:data-[active]:border-purple-400/70 ll:data-[active]:bg-purple-500/20 ll:data-[active]:text-white"
+                  className="ll:mt-0 ll:flex ll:min-h-8 ll:w-full ll:items-center ll:justify-start ll:gap-2 ll:rounded-md ll:border-transparent ll:px-2 ll:py-1.5 ll:text-left ll:font-semibold ll:text-white/80 ll:hover:bg-gray-500/20 ll:data-[active]:border-blue-400/70 ll:data-[active]:bg-blue-500/20 ll:data-[active]:text-white"
                 >
                   <Icon className="ll:size-4 ll:shrink-0" />
                   <span>{t(domain.labelKey)}</span>
@@ -373,7 +379,7 @@ export const SettingsTabs = () => {
                   onClick={() =>
                     setSettingsPath(domain.id, domain.subsections[0].id)
                   }
-                  className="ll:flex ll:size-8 ll:items-center ll:justify-center ll:rounded-md ll:border ll:border-gray-500/40 ll:bg-transparent ll:text-gray-300 ll-custom-cursor-pointer ll:aria-current:border-purple-400 ll:aria-current:bg-purple-500/25 ll:aria-current:text-white"
+                  className="ll:flex ll:size-8 ll:items-center ll:justify-center ll:rounded-md ll:border ll:border-gray-500/40 ll:bg-transparent ll:text-white/80 ll-custom-cursor-pointer ll:aria-current:border-blue-400 ll:aria-current:bg-blue-500/25 ll:aria-current:text-white"
                 >
                   <Icon className="ll:size-4" />
                 </button>
@@ -398,7 +404,7 @@ export const SettingsTabs = () => {
                 type="button"
                 aria-current={subsection.id === selectedSubsection}
                 onClick={() => setSettingsPath(activeDomain.id, subsection.id)}
-                className="ll:rounded-md ll:border ll:border-transparent ll:bg-transparent ll:px-2.5 ll:py-1.5 ll:text-[11px] ll:font-semibold ll:text-gray-400 ll-custom-cursor-pointer ll:hover:bg-gray-500/15 ll:aria-current:border-purple-400/60 ll:aria-current:bg-purple-500/20 ll:aria-current:text-white"
+                className="ll:rounded-md ll:border ll:border-transparent ll:bg-transparent ll:px-2.5 ll:py-1.5 ll:text-[11px] ll:font-semibold ll:text-white/70 ll-custom-cursor-pointer ll:hover:bg-gray-500/15 ll:aria-current:border-blue-400/60 ll:aria-current:bg-blue-500/20 ll:aria-current:text-white"
               >
                 {t(subsection.labelKey)}
               </button>

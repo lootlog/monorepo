@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";
@@ -13,6 +13,8 @@ const mockCheckFiltersActive = vi.fn();
 const mockToggleOpen = vi.fn();
 const mockSetOpen = vi.fn();
 const mockSetSelectedGuildIdsForTimers = vi.fn();
+const mockSetTimerFiltersSearchText = vi.fn();
+const mockSetTimersFilters = vi.fn();
 const timersContentSpy = vi.fn();
 const timersActionsSpy = vi.fn();
 const timersUnderBagActionsSpy = vi.fn();
@@ -41,9 +43,11 @@ let timersStoreState = {
   colorFiltersEnabled: true,
   toggleColorFiltersEnabled: vi.fn(),
   timerFiltersSearchText: "tan",
+  setTimerFiltersSearchText: mockSetTimerFiltersSearchText,
   timersSortOrder: "asc" as const,
   setTimersSortOrder: vi.fn(),
   timersFilters: {},
+  setTimersFilters: mockSetTimersFilters,
   displayConfig: {
     showType: true,
     showLevel: false,
@@ -203,6 +207,8 @@ describe("Timers", () => {
     mockToggleOpen.mockReset();
     mockSetOpen.mockReset();
     mockSetSelectedGuildIdsForTimers.mockReset();
+    mockSetTimerFiltersSearchText.mockReset();
+    mockSetTimersFilters.mockReset();
     timersContentSpy.mockReset();
     timersActionsSpy.mockReset();
     timersUnderBagActionsSpy.mockReset();
@@ -247,6 +253,10 @@ describe("Timers", () => {
 
     mockUseTimers.mockReturnValue({
       data: [],
+      error: null,
+      isFetching: false,
+      isLoading: false,
+      refetch: vi.fn(),
     });
     mockUseTimersFiltering.mockImplementation(
       ({ calculatedTimers }: { calculatedTimers: unknown }) => calculatedTimers,
@@ -302,6 +312,34 @@ describe("Timers", () => {
     expect(screen.getByText("TimersActions")).toBeInTheDocument();
   });
 
+  it("passes initial loading and retry state to the timer content", () => {
+    const refetch = vi.fn();
+    const error = new Error("network");
+    mockUseTimers.mockReturnValue({
+      data: undefined,
+      error,
+      isFetching: false,
+      isLoading: false,
+      refetch,
+    });
+
+    render(<Timers />);
+
+    expect(timersContentSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error,
+        initialLoading: false,
+        onRetry: expect.any(Function),
+      }),
+    );
+
+    const contentProps = timersContentSpy.mock.calls[0]?.[0] as {
+      onRetry: () => void;
+    };
+    contentProps.onRetry();
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
   it("opens add timer with the selected timers guild", () => {
     render(<Timers />);
 
@@ -316,6 +354,38 @@ describe("Timers", () => {
       guildId: "guild-1",
     });
     expect(mockToggleOpen).not.toHaveBeenCalled();
+  });
+
+  it("resets timer filters without removing saved hidden timers", () => {
+    timersStoreState = {
+      ...timersStoreState,
+      hiddenTimers: {
+        "guild-1": ["timer-1"],
+      },
+    };
+    render(<Timers />);
+
+    const timersContentProps = timersContentSpy.mock.calls.at(-1)?.[0] as {
+      onResetFilters: () => void;
+    };
+
+    act(() => timersContentProps.onResetFilters());
+
+    expect(mockSetTimerFiltersSearchText).toHaveBeenCalledWith("");
+    expect(mockSetTimersFilters).toHaveBeenCalledWith("guild-1", {
+      minLvl: 0,
+      maxLvl: 300,
+      selectedNpcTypes: ["hero", "elite2", "elite3", "titan"],
+      selectedColors: [],
+    });
+    expect(timersStoreState.hiddenTimers).toEqual({
+      "guild-1": ["timer-1"],
+    });
+    expect(mockUseTimersFiltering).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        showHiddenTimers: true,
+      }),
+    );
   });
 
   it("renders the under-bag path when enabled for the ni interface", () => {

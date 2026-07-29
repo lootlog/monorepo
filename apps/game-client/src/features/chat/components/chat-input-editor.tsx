@@ -1,25 +1,27 @@
+import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { EditorRefPlugin } from "@lexical/react/LexicalEditorRefPlugin";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { ChatInputConstraintsPlugin } from "@/features/chat/components/chat-input-constraints-plugin";
+import { ChatInputEditorPlugin } from "@/features/chat/components/chat-input-editor-plugin";
+import { ChatInputMentionsPlugin } from "@/features/chat/components/chat-input-mentions-plugin";
+import { ChatMentionNode } from "@/features/chat/chat-mention-node";
 import {
-  CHAT_EDITOR_MAX_LENGTH,
-  getChatEditorSelectionOffsets,
-  normalizeChatEditorText,
-  restoreChatEditorSelection,
-} from "@/features/chat/chat-editor-selection.helpers";
-import { ChatMentionText } from "@/features/chat/components/chat-mention-text";
-import {
-  getChatMentionSegments,
-  type ChatMentionContext,
-} from "@/features/chat/chat-mentions.helpers";
+  focusChatInputEditor,
+  setChatInputEditorValue,
+} from "@/features/chat/chat-input-editor.helpers";
+import type { ChatMentionContext } from "@/features/chat/chat-mentions.helpers";
 import { cn } from "@/lib/utils";
 import {
-  useEffect,
-  useLayoutEffect,
+  forwardRef,
+  useImperativeHandle,
   useRef,
-  type ClipboardEvent,
-  type FC,
-  type FormEvent,
   type KeyboardEvent,
-  type RefObject,
 } from "react";
+import type { LexicalEditor } from "lexical";
 
 type ChatInputEditorProps = {
   autoFocus?: boolean;
@@ -29,477 +31,129 @@ type ChatInputEditorProps = {
   mentionContext?: ChatMentionContext;
   placeholder: string;
   className?: string;
-  editorRef: RefObject<HTMLDivElement | null>;
   onChange: (message: string, caretIndex: number) => void;
   onCaretChange: (caretIndex: number) => void;
   onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
 };
 
-const CARET_SCROLL_PADDING = 8;
-
-const isNodeInsideEditor = ({
-  editor,
-  node,
-}: {
-  editor: HTMLDivElement;
-  node: Node | null;
-}) => {
-  if (!node) {
-    return false;
-  }
-
-  return node === editor || editor.contains(node);
+export type ChatInputEditorHandle = {
+  focus: (caretIndex: number) => void;
+  setValue: (message: string, caretIndex: number) => void;
 };
 
-const syncEditorScrollToCaret = ({
-  editor,
-  currentCaretIndex,
-  messageLength,
-}: {
-  editor: HTMLDivElement;
-  currentCaretIndex: number;
-  messageLength: number;
-}) => {
-  const maxScrollLeft = Math.max(0, editor.scrollWidth - editor.clientWidth);
-
-  if (maxScrollLeft === 0) {
-    editor.scrollLeft = 0;
-    return;
-  }
-
-  const selection = editor.ownerDocument.getSelection();
-
-  if (!selection || selection.rangeCount === 0) {
-    return;
-  }
-
-  const selectionRange = selection.getRangeAt(0);
-
-  if (
-    !isNodeInsideEditor({
-      editor,
-      node: selectionRange.startContainer,
-    }) ||
-    !isNodeInsideEditor({
-      editor,
-      node: selectionRange.endContainer,
-    })
-  ) {
-    return;
-  }
-
-  const caretRange = selectionRange.cloneRange();
-  caretRange.collapse(false);
-
-  const caretRect =
-    caretRange.getClientRects()[0] ?? caretRange.getBoundingClientRect();
-
-  if (caretRect.width === 0 && caretRect.left === 0 && caretRect.right === 0) {
-    if (currentCaretIndex <= 0) {
-      editor.scrollLeft = 0;
-      return;
-    }
-
-    if (currentCaretIndex >= messageLength) {
-      editor.scrollLeft = maxScrollLeft;
-    }
-
-    return;
-  }
-
-  const editorRect = editor.getBoundingClientRect();
-  const overflowRight =
-    caretRect.right - (editorRect.right - CARET_SCROLL_PADDING);
-  const overflowLeft = editorRect.left + CARET_SCROLL_PADDING - caretRect.left;
-
-  if (overflowRight > 0) {
-    editor.scrollLeft = Math.min(
-      maxScrollLeft,
-      editor.scrollLeft + overflowRight,
-    );
-    return;
-  }
-
-  if (overflowLeft > 0) {
-    editor.scrollLeft = Math.max(0, editor.scrollLeft - overflowLeft);
-  }
+const initialConfig = {
+  namespace: "LootlogChatInput",
+  nodes: [ChatMentionNode],
+  onError: (error: Error) => {
+    throw error;
+  },
 };
 
-const syncEditorSelectionOffsets = ({
-  editor,
-  messageLength,
-  onCaretChange,
-}: {
-  editor: HTMLDivElement | null;
-  messageLength: number;
-  onCaretChange: (caretIndex: number) => void;
-}) => {
-  if (!editor) {
-    return null;
-  }
+export const ChatInputEditor = forwardRef<
+  ChatInputEditorHandle,
+  ChatInputEditorProps
+>(function ChatInputEditor(
+  {
+    autoFocus,
+    caretIndex,
+    disabled,
+    message,
+    mentionContext,
+    placeholder,
+    className,
+    onChange,
+    onCaretChange,
+    onKeyDown,
+  },
+  ref,
+) {
+  const lexicalEditorRef = useRef<LexicalEditor>(null);
 
-  const selectionOffsets = getChatEditorSelectionOffsets(editor);
+  useImperativeHandle(ref, () => ({
+    focus: (nextCaretIndex) => {
+      const editor = lexicalEditorRef.current;
 
-  if (!selectionOffsets) {
-    return null;
-  }
-
-  syncEditorScrollToCaret({
-    editor,
-    currentCaretIndex: selectionOffsets.end,
-    messageLength,
-  });
-  onCaretChange(selectionOffsets.end);
-  return selectionOffsets;
-};
-
-export const ChatInputEditor: FC<ChatInputEditorProps> = ({
-  autoFocus,
-  caretIndex,
-  disabled,
-  message,
-  mentionContext,
-  placeholder,
-  className,
-  editorRef,
-  onChange,
-  onCaretChange,
-  onKeyDown,
-}) => {
-  const isComposingRef = useRef(false);
-  const hasAutoFocusedRef = useRef(false);
-  const mentionSegments = getChatMentionSegments(message, mentionContext);
-
-  const syncMessageFromDom = () => {
-    const editor = editorRef.current;
-
-    if (!editor) {
-      return;
-    }
-
-    const rawMessage = editor.textContent ?? "";
-    const selectionOffsets = getChatEditorSelectionOffsets(editor) ?? {
-      start: rawMessage.length,
-      end: rawMessage.length,
-    };
-    const normalizedMessage = normalizeChatEditorText(rawMessage);
-    const normalizedCaretIndex = Math.min(
-      normalizeChatEditorText(rawMessage.slice(0, selectionOffsets.end)).length,
-      normalizedMessage.length,
-    );
-
-    onChange(normalizedMessage, normalizedCaretIndex);
-  };
-
-  const replaceSelection = ({
-    selectionStart,
-    selectionEnd,
-    insertedText,
-  }: {
-    selectionStart: number;
-    selectionEnd: number;
-    insertedText: string;
-  }) => {
-    const availableLength =
-      CHAT_EDITOR_MAX_LENGTH -
-      (message.length - (selectionEnd - selectionStart));
-    const normalizedInsertedText = normalizeChatEditorText(
-      insertedText,
-      Math.max(0, availableLength),
-    );
-    const nextMessage = `${message.slice(0, selectionStart)}${normalizedInsertedText}${message.slice(selectionEnd)}`;
-    const nextCaretIndex = selectionStart + normalizedInsertedText.length;
-
-    onChange(nextMessage, nextCaretIndex);
-  };
-
-  useEffect(() => {
-    if (!autoFocus || disabled || hasAutoFocusedRef.current) {
-      return;
-    }
-
-    const editor = editorRef.current;
-
-    if (!editor) {
-      return;
-    }
-
-    editor.focus();
-    restoreChatEditorSelection({
-      root: editor,
-      start: message.length,
-    });
-    syncEditorScrollToCaret({
-      editor,
-      currentCaretIndex: message.length,
-      messageLength: message.length,
-    });
-    onCaretChange(message.length);
-    hasAutoFocusedRef.current = true;
-  }, [autoFocus, disabled, editorRef, message.length, onCaretChange]);
-
-  useEffect(() => {
-    const handleSelectionChange = () => {
-      syncEditorSelectionOffsets({
-        editor: editorRef.current,
-        messageLength: message.length,
-        onCaretChange,
-      });
-    };
-
-    document.addEventListener("selectionchange", handleSelectionChange);
-
-    return () => {
-      document.removeEventListener("selectionchange", handleSelectionChange);
-    };
-  }, [editorRef, message.length, onCaretChange]);
-
-  useLayoutEffect(() => {
-    const editor = editorRef.current;
-
-    if (
-      !editor ||
-      document.activeElement !== editor ||
-      isComposingRef.current
-    ) {
-      return;
-    }
-
-    restoreChatEditorSelection({
-      root: editor,
-      start: caretIndex,
-    });
-    syncEditorScrollToCaret({
-      editor,
-      currentCaretIndex: caretIndex,
-      messageLength: message.length,
-    });
-  }, [caretIndex, editorRef, message.length]);
-
-  const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-    event.preventDefault();
-
-    const editor = editorRef.current;
-
-    if (!editor) {
-      return;
-    }
-
-    const selectionOffsets = getChatEditorSelectionOffsets(editor) ?? {
-      start: message.length,
-      end: message.length,
-    };
-    const pastedText = normalizeChatEditorText(
-      event.clipboardData.getData("text/plain"),
-      CHAT_EDITOR_MAX_LENGTH,
-    );
-    replaceSelection({
-      selectionStart: selectionOffsets.start,
-      selectionEnd: selectionOffsets.end,
-      insertedText: pastedText,
-    });
-  };
-
-  const handleCut = (event: ClipboardEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-
-    const editor = editorRef.current;
-
-    if (!editor) {
-      return;
-    }
-
-    const selectionOffsets = getChatEditorSelectionOffsets(editor);
-
-    if (!selectionOffsets || selectionOffsets.start === selectionOffsets.end) {
-      return;
-    }
-
-    event.preventDefault();
-    event.clipboardData.setData(
-      "text/plain",
-      message.slice(selectionOffsets.start, selectionOffsets.end),
-    );
-    replaceSelection({
-      selectionStart: selectionOffsets.start,
-      selectionEnd: selectionOffsets.end,
-      insertedText: "",
-    });
-  };
-
-  const handleEditorKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-    onKeyDown?.(event);
-
-    if (event.defaultPrevented || disabled || isComposingRef.current) {
-      return;
-    }
-
-    const editor = editorRef.current;
-
-    if (!editor) {
-      return;
-    }
-
-    const selectionOffsets = getChatEditorSelectionOffsets(editor) ?? {
-      start: message.length,
-      end: message.length,
-    };
-
-    if (
-      event.key.length === 1 &&
-      !event.altKey &&
-      !event.ctrlKey &&
-      !event.metaKey
-    ) {
-      event.preventDefault();
-      replaceSelection({
-        selectionStart: selectionOffsets.start,
-        selectionEnd: selectionOffsets.end,
-        insertedText: event.key,
-      });
-      return;
-    }
-
-    if (event.key === "Backspace") {
-      event.preventDefault();
-
-      if (selectionOffsets.start !== selectionOffsets.end) {
-        replaceSelection({
-          selectionStart: selectionOffsets.start,
-          selectionEnd: selectionOffsets.end,
-          insertedText: "",
+      if (editor) {
+        focusChatInputEditor({
+          caretIndex: nextCaretIndex,
+          editor,
         });
-        return;
       }
+    },
+    setValue: (nextMessage, nextCaretIndex) => {
+      const editor = lexicalEditorRef.current;
 
-      if (selectionOffsets.start === 0) {
-        return;
-      }
-
-      replaceSelection({
-        selectionStart: selectionOffsets.start - 1,
-        selectionEnd: selectionOffsets.end,
-        insertedText: "",
-      });
-      return;
-    }
-
-    if (event.key === "Delete") {
-      event.preventDefault();
-
-      if (selectionOffsets.start !== selectionOffsets.end) {
-        replaceSelection({
-          selectionStart: selectionOffsets.start,
-          selectionEnd: selectionOffsets.end,
-          insertedText: "",
+      if (editor) {
+        setChatInputEditorValue({
+          caretIndex: nextCaretIndex,
+          editor,
+          message: nextMessage,
         });
-        return;
       }
-
-      if (selectionOffsets.end >= message.length) {
-        return;
-      }
-
-      replaceSelection({
-        selectionStart: selectionOffsets.start,
-        selectionEnd: selectionOffsets.end + 1,
-        insertedText: "",
-      });
-    }
-  };
+    },
+  }));
 
   return (
-    <div
-      className={cn(
-        "ll:relative ll:h-full ll:w-full ll:min-w-0 ll:box-border",
-        className,
-      )}
-    >
-      {!message && (
-        <span
-          aria-hidden
-          className="ll:pointer-events-none ll:absolute ll:left-1 ll:top-1 ll:text-xs ll:leading-[14px] ll:text-gray-500"
-        >
-          {placeholder}
-        </span>
-      )}
+    <LexicalComposer initialConfig={initialConfig}>
       <div
-        ref={editorRef}
-        role="textbox"
-        aria-label={placeholder}
-        aria-multiline="false"
-        contentEditable={!disabled}
-        suppressContentEditableWarning
-        spellCheck={false}
-        tabIndex={disabled ? -1 : 0}
-        data-slot="chat-input"
         className={cn(
-          "ll:box-border ll:block ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-hidden ll:overflow-y-hidden ll:px-1 ll:py-1 ll:text-xs ll:leading-[14px] ll:text-white ll:outline-none ll:whitespace-pre",
-          disabled && "ll:cursor-not-allowed ll:opacity-50",
+          "ll:relative ll:h-full ll:w-full ll:min-w-0 ll:box-border",
+          className,
         )}
-        onMouseDown={(event) => {
-          event.stopPropagation();
-        }}
-        onFocus={() => {
-          syncEditorSelectionOffsets({
-            editor: editorRef.current,
-            messageLength: message.length,
-            onCaretChange,
-          });
-        }}
-        onInput={(event: FormEvent<HTMLDivElement>) => {
-          const nativeInputEvent = event.nativeEvent as InputEvent;
-
-          nativeInputEvent.stopPropagation();
-
-          if (isComposingRef.current) {
-            return;
-          }
-
-          syncMessageFromDom();
-        }}
-        onKeyDown={handleEditorKeyDown}
-        onKeyUp={(event) => {
-          event.stopPropagation();
-          syncEditorSelectionOffsets({
-            editor: editorRef.current,
-            messageLength: message.length,
-            onCaretChange,
-          });
-        }}
-        onMouseUp={() => {
-          syncEditorSelectionOffsets({
-            editor: editorRef.current,
-            messageLength: message.length,
-            onCaretChange,
-          });
-        }}
-        onPaste={handlePaste}
-        onCut={handleCut}
-        onBeforeInput={(event: FormEvent<HTMLDivElement>) => {
-          const nativeInputEvent = event.nativeEvent as InputEvent;
-
-          nativeInputEvent.stopPropagation();
-
-          if (
-            nativeInputEvent.inputType === "insertParagraph" ||
-            nativeInputEvent.inputType === "insertLineBreak"
-          ) {
-            event.preventDefault();
-          }
-        }}
-        onCompositionStart={() => {
-          isComposingRef.current = true;
-        }}
-        onCompositionEnd={() => {
-          isComposingRef.current = false;
-          syncMessageFromDom();
-        }}
       >
-        <ChatMentionText segments={mentionSegments} plainTextAsTextNode />
+        <PlainTextPlugin
+          ErrorBoundary={LexicalErrorBoundary}
+          contentEditable=<ContentEditable
+            role="textbox"
+            aria-label={placeholder}
+            aria-multiline={false}
+            spellCheck={false}
+            tabIndex={disabled ? -1 : 0}
+            data-slot="chat-input"
+            className={cn(
+              "ll:box-border ll:block ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-auto ll:overflow-y-hidden ll:px-1 ll:py-1 ll:text-xs ll:leading-[14px] ll:text-white ll:outline-none ll:whitespace-pre",
+              disabled && "ll:cursor-not-allowed ll:opacity-50",
+            )}
+            onMouseDown={(event) => {
+              event.stopPropagation();
+            }}
+            onInput={(event) => {
+              event.stopPropagation();
+            }}
+            onKeyDown={(event) => {
+              event.stopPropagation();
+              onKeyDown?.(event);
+            }}
+            onKeyUp={(event) => {
+              event.stopPropagation();
+            }}
+            onPaste={(event) => {
+              event.stopPropagation();
+            }}
+            onCut={(event) => {
+              event.stopPropagation();
+            }}
+          />
+          placeholder=<span
+            aria-hidden
+            className="ll:pointer-events-none ll:absolute ll:left-1 ll:top-1 ll:text-xs ll:leading-[14px] ll:text-gray-500"
+          >
+            {placeholder}
+          </span>
+        />
+        <HistoryPlugin />
+        <EditorRefPlugin editorRef={lexicalEditorRef} />
+        <ChatInputConstraintsPlugin />
+        <ChatInputMentionsPlugin mentionContext={mentionContext} />
+        {autoFocus && <AutoFocusPlugin defaultSelection="rootEnd" />}
+        <ChatInputEditorPlugin
+          caretIndex={caretIndex}
+          disabled={disabled}
+          message={message}
+          onChange={onChange}
+          onCaretChange={onCaretChange}
+        />
       </div>
-    </div>
+    </LexicalComposer>
   );
-};
+});

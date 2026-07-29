@@ -46,6 +46,114 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 
+  it("delivers distinct incoming packets that share an event id", () => {
+    const firstEvent = Object.freeze({
+      ev: 1_785_091_976.123,
+      f: { m: ["turn-1"] },
+    }) as GameEvent;
+    const secondEvent = Object.freeze({
+      ev: 1_785_091_976.123,
+      f: { m: ["turn-2"] },
+    }) as GameEvent;
+    const original = vi.fn(() => "margonem-result");
+    runtimeWindow.successData = original;
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const incoming = vi.fn();
+    const applied = vi.fn();
+    bridge.subscribeIncoming(incoming);
+    bridge.subscribeApplied(applied);
+
+    bridge.install();
+    bridge.setReady(true);
+    runtimeWindow.successData?.(firstEvent);
+    runtimeWindow.successData?.(secondEvent);
+
+    expect(incoming).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ raw: firstEvent }),
+    );
+    expect(incoming).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ raw: secondEvent }),
+    );
+    expect(original).toHaveBeenCalledTimes(2);
+    expect(applied).toHaveBeenCalledTimes(2);
+    bridge.cleanup();
+  });
+
+  it("keeps distinct event ids and events without ids", () => {
+    runtimeWindow.successData = vi.fn();
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const incoming = vi.fn();
+    bridge.subscribeIncoming(incoming);
+
+    bridge.install();
+    bridge.setReady(true);
+    runtimeWindow.successData?.({ ev: 1, f: { m: ["first"] } });
+    runtimeWindow.successData?.({ ev: 2, f: { m: ["second"] } });
+    runtimeWindow.successData?.({ f: { m: ["without-id"] } });
+    runtimeWindow.successData?.({ f: { m: ["without-id"] } });
+
+    expect(incoming).toHaveBeenCalledTimes(4);
+    bridge.cleanup();
+  });
+
+  it("queues distinct incoming packets that share an event id", () => {
+    runtimeWindow.successData = vi.fn();
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const incoming = vi.fn();
+    bridge.subscribeIncoming(incoming);
+
+    bridge.install();
+    const firstEvent = { ev: 10, f: { m: ["first"] } };
+    const secondEvent = { ev: 10, f: { m: ["second"] } };
+    runtimeWindow.successData?.(firstEvent);
+    runtimeWindow.successData?.(secondEvent);
+
+    expect(bridge.getHealth().queueEvents).toBe(2);
+    bridge.setReady(true);
+    expect(incoming).toHaveBeenCalledTimes(2);
+    expect(incoming).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ raw: firstEvent }),
+    );
+    expect(incoming).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ raw: secondEvent }),
+    );
+    bridge.cleanup();
+  });
+
+  it("shares one processor across overlapping registrations without filtering packets", () => {
+    runtimeWindow.successData = vi.fn();
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const firstProcessor = vi.fn();
+    const secondProcessor = vi.fn();
+    const observer = vi.fn();
+    const releaseFirstProcessor = bridge.acquireProcessor(firstProcessor);
+    const releaseSecondProcessor = bridge.acquireProcessor(secondProcessor);
+    bridge.subscribeIncoming(observer);
+
+    bridge.install();
+    bridge.setReady(true);
+    runtimeWindow.successData?.({ ev: 10, f: { m: ["first"] } });
+    runtimeWindow.successData?.({ ev: 10, f: { m: ["second"] } });
+
+    expect(firstProcessor).toHaveBeenCalledTimes(2);
+    expect(secondProcessor).not.toHaveBeenCalled();
+    expect(observer).toHaveBeenCalledTimes(2);
+
+    expect(releaseFirstProcessor()).toBe(false);
+    runtimeWindow.successData?.({ f: { m: ["third"] } });
+    expect(firstProcessor).toHaveBeenCalledTimes(3);
+
+    expect(releaseSecondProcessor()).toBe(true);
+    runtimeWindow.successData?.({ f: { m: ["fourth"] } });
+    expect(firstProcessor).toHaveBeenCalledTimes(3);
+    expect(observer).toHaveBeenCalledTimes(4);
+    bridge.cleanup();
+  });
+
   it("does not expose applied observer failures to Margonem callers", () => {
     const event = Object.freeze({ h: { stasis: 1 } }) as GameEvent;
     const observerFailure = new Error("observer failed");

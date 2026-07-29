@@ -3,9 +3,9 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const NotificationsPageSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="flex flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex min-w-0 items-center gap-3">
             <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1 space-y-1.5">
@@ -17,7 +17,7 @@ export const NotificationsPageSkeleton = () => {
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
-            <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+            <Card className="border-border bg-card p-4">
               <Skeleton className="mb-3 h-5 w-32" />
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -25,7 +25,7 @@ export const NotificationsPageSkeleton = () => {
                 ))}
               </div>
             </Card>
-            <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+            <Card className="border-border bg-card p-4">
               <Skeleton className="mb-3 h-5 w-24" />
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -35,14 +35,14 @@ export const NotificationsPageSkeleton = () => {
             </Card>
           </div>
           <div className="space-y-4">
-            <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+            <Card className="border-border bg-card p-4">
               <Skeleton className="mb-3 h-5 w-24" />
               <div className="space-y-2">
                 <Skeleton className="h-10 rounded-md" />
                 <Skeleton className="h-10 rounded-md" />
               </div>
             </Card>
-            <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+            <Card className="border-border bg-card p-4">
               <Skeleton className="mb-3 h-5 w-32" />
               <Skeleton className="h-8 rounded-md" />
             </Card>

@@ -3,16 +3,27 @@ name: Continuous Integration
 on:
   pull_request:
     branches:
-      - develop
       - main
-  push:
-    branches:
-      - develop
-      - main
+  merge_group:
+    types:
+      - checks_requested
   workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Base commit used for affected package detection
+        required: true
+        type: string
+      head_sha:
+        description: Head commit to validate
+        required: true
+        type: string
+      pull_request_number:
+        description: Pull request associated with an automated dispatch
+        required: false
+        type: string
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.event.merge_group.head_ref || inputs.pull_request_number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -20,88 +31,26 @@ permissions:
   pull-requests: read
 
 jobs:
-  changes:
-    name: Detect Changes
+  plan:
+    name: Plan affected CI
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     outputs:
-      activity: ${{ steps.filter.outputs.activity }}
-      api: ${{ steps.filter.outputs.api }}
-      auth: ${{ steps.filter.outputs.auth }}
-      gateway: ${{ steps.filter.outputs.gateway }}
-      discord-bot: ${{ steps.filter.outputs.discord-bot }}
-      search: ${{ steps.filter.outputs.search }}
-      battlelog-service: ${{ steps.filter.outputs.battlelog-service }}
-      developer: ${{ steps.filter.outputs.developer }}
-      game-client: ${{ steps.filter.outputs.game-client }}
-      packages: ${{ steps.filter.outputs.packages }}
+      base-sha: ${{ steps.context.outputs.base_sha }}
+      head-sha: ${{ steps.context.outputs.head_sha }}
+      packages: ${{ steps.plan.outputs.packages }}
+      docker-services: ${{ steps.plan.outputs.docker_services }}
+      run-api-client-check: ${{ steps.plan.outputs.run_api_client_check }}
+      version-pull-request: ${{ steps.plan.outputs.version_pull_request }}
     steps:
-      - name: Checkout code
+      - name: Checkout validation commit
         uses: actions/checkout@v7
-
-      - name: Check for file changes
-        uses: dorny/paths-filter@v4
-        id: filter
         with:
-          filters: |
-            activity:
-              - 'apps/activity/**'
-              - 'packages/**'
-            api:
-              - 'apps/api/**'
-              - 'packages/**'
-            auth:
-              - 'apps/auth/**'
-              - 'packages/**'
-            gateway:
-              - 'apps/gateway/**'
-              - 'packages/**'
-            discord-bot:
-              - 'apps/discord-bot/**'
-              - 'packages/**'
-            search:
-              - 'apps/search/**'
-              - 'packages/**'
-            battlelog-service:
-              - 'apps/battlelog-service/**'
-              - 'packages/**'
-            developer:
-              - 'apps/developer/**'
-              - 'packages/**'
-            game-client:
-              - 'apps/game-client/**'
-              - 'packages/margonem/**'
-              - 'packages/socket-parser/**'
-              - 'packages/types/**'
-              - 'pnpm-lock.yaml'
-              - 'turbo.json'
-            packages:
-              - 'packages/**'
-
-  lint:
-    name: Lint Code
-    runs-on: ubuntu-latest
-    needs: changes
-    if: |
-      needs.changes.outputs.activity == 'true' ||
-      needs.changes.outputs.api == 'true' ||
-      needs.changes.outputs.auth == 'true' ||
-      needs.changes.outputs.gateway == 'true' ||
-      needs.changes.outputs.discord-bot == 'true' ||
-      needs.changes.outputs.search == 'true' ||
-      needs.changes.outputs.battlelog-service == 'true' ||
-      needs.changes.outputs.developer == 'true' ||
-      needs.changes.outputs.game-client == 'true' ||
-      needs.changes.outputs.packages == 'true'
-    timeout-minutes: 15
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'merge_group' && github.event.merge_group.head_sha || inputs.head_sha }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -112,312 +61,174 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run linter
-        run: pnpm lint
+      - name: Resolve validation context
+        id: context
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_BASE_SHA: ${{ inputs.base_sha }}
+          INPUT_HEAD_SHA: ${{ inputs.head_sha }}
+          INPUT_PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          MERGE_GROUP_HEAD_SHA: ${{ github.event.merge_group.head_sha }}
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PULL_REQUEST_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PULL_REQUEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          case "$EVENT_NAME" in
+            pull_request)
+              base_sha="$PULL_REQUEST_BASE_SHA"
+              head_sha="$PULL_REQUEST_HEAD_SHA"
+              pull_request_heads="$(jq -cn --arg head "$PULL_REQUEST_HEAD_REF" '[$head]')"
+              ;;
+            merge_group)
+              base_sha="$MERGE_GROUP_BASE_SHA"
+              head_sha="$MERGE_GROUP_HEAD_SHA"
+              pull_request_heads="$(
+                gh api "repos/$GITHUB_REPOSITORY/commits/$head_sha/pulls" \
+                  --jq '[.[].head.ref]'
+              )"
+              ;;
+            workflow_dispatch)
+              base_sha="$INPUT_BASE_SHA"
+              head_sha="$INPUT_HEAD_SHA"
+              if [[ -n "$INPUT_PULL_REQUEST_NUMBER" ]]; then
+                pull_request_heads="$(
+                  gh pr view "$INPUT_PULL_REQUEST_NUMBER" \
+                    --json headRefName \
+                    --jq '[.headRefName]'
+                )"
+              else
+                pull_request_heads="$(
+                  gh api "repos/$GITHUB_REPOSITORY/commits/$head_sha/pulls" \
+                    --jq '[.[].head.ref]'
+                )"
+              fi
+              ;;
+            *)
+              echo "::error::Unsupported event: $EVENT_NAME"
+              exit 1
+              ;;
+          esac
+
+          git cat-file -e "$base_sha^{commit}"
+          git cat-file -e "$head_sha^{commit}"
+          echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          echo "pull_request_heads=$(jq -c . <<< "$pull_request_heads")" >> "$GITHUB_OUTPUT"
+
+      - name: Create affected CI plan
+        id: plan
+        env:
+          BASE_SHA: ${{ steps.context.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.context.outputs.head_sha }}
+          PULL_REQUEST_HEADS: ${{ steps.context.outputs.pull_request_heads }}
+        run: |
+          affected="$(
+            pnpm exec turbo query affected \
+              --base "$BASE_SHA" \
+              --head "$HEAD_SHA" \
+              --packages
+          )"
+          affected_packages="$(
+            jq -c '[.data.affectedPackages.items[].name]' <<< "$affected"
+          )"
+          plan="$(
+            node tools/ci/create-ci-plan.mjs \
+              "$affected_packages" \
+              "$PULL_REQUEST_HEADS"
+          )"
+
+          echo "packages=$(jq -c '.packages' <<< "$plan")" >> "$GITHUB_OUTPUT"
+          echo "docker_services=$(jq -c '.dockerServices' <<< "$plan")" >> "$GITHUB_OUTPUT"
+          echo "run_api_client_check=$(jq -r '.runApiClientCheck' <<< "$plan")" >> "$GITHUB_OUTPUT"
+          echo "version_pull_request=$(jq -r '.versionPullRequest' <<< "$plan")" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Affected CI plan"
+            echo
+            echo '```json'
+            jq . <<< "$plan"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  quality:
+    name: Affected quality checks
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout validation commit
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.plan.outputs.head-sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test CI and release tooling
+        run: node --test tools/ci/*.test.mjs tools/release/*.test.mjs apps/developer/server-handler.test.js
+
+      - name: Validate changesets
+        if: needs.plan.outputs.version-pull-request != 'true'
+        run: node tools/release/validate-workspace-changesets.mjs "${{ needs.plan.outputs.base-sha }}"
 
       - name: Check formatting
         run: pnpm format:check
 
-  test-api:
-    name: Test API
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.api == 'true'
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test --filter=@lootlog/api
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v6
-        if: always()
-        with:
-          files: ./apps/api/coverage/lcov.info
-          flags: api
-          name: api-coverage
-
-  test-auth:
-    name: Test Auth
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.auth == 'true'
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test --filter=@lootlog/auth
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v6
-        if: always()
-        with:
-          files: ./apps/auth/coverage/lcov.info
-          flags: auth
-          name: auth-coverage
-
-  test-gateway:
-    name: Test Gateway
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.gateway == 'true'
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test --filter=@lootlog/gateway
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v6
-        if: always()
-        with:
-          files: ./apps/gateway/coverage/lcov.info
-          flags: gateway
-          name: gateway-coverage
-
-  test-discord-bot:
-    name: Test Discord Bot
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.discord-bot == 'true'
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test --filter=@lootlog/discord-bot
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v6
-        if: always()
-        with:
-          files: ./apps/discord-bot/coverage/lcov.info
-          flags: discord-bot
-          name: discord-bot-coverage
-
-  test-search:
-    name: Test Search
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.search == 'true'
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test --filter=@lootlog/search
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v6
-        if: always()
-        with:
-          files: ./apps/search/coverage/lcov.info
-          flags: search
-          name: search-coverage
-
-  test-battlelog-service:
-    name: Test Battlelog Service
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.battlelog-service == 'true'
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test --filter=@lootlog/battlelog-service
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v6
-        if: always()
-        with:
-          files: ./apps/battlelog-service/coverage/lcov.info
-          flags: battlelog-service
-          name: battlelog-service-coverage
-
-  test-game-client:
-    name: Test Game Client
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.game-client == 'true'
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build game client workspace dependencies
-        run: pnpm turbo run build --filter=@lootlog/game-client^...
-
-      - name: Check types
-        run: pnpm --filter=@lootlog/game-client check-types
-
-      - name: Run coverage suite
-        run: pnpm --filter=@lootlog/game-client test:coverage
-
-      - name: Report changed-code coverage
-        if: github.event_name == 'pull_request'
+      - name: Lint and build affected workspaces
         env:
-          COVERAGE_BASE_REF: ${{ github.event.pull_request.base.sha }}
-        run: pnpm --filter=@lootlog/game-client report:changed-coverage
+          PACKAGES: ${{ needs.plan.outputs.packages }}
+        run: |
+          mapfile -t filters < <(jq -r '.[] | "--filter=" + .' <<< "$PACKAGES")
+          if [[ "${#filters[@]}" -eq 0 ]]; then
+            echo "No affected workspaces."
+            exit 0
+          fi
+          pnpm exec turbo run lint build "${filters[@]}"
 
-      - name: Build release userscript
-        run: pnpm --filter=@lootlog/game-client build
+      - name: Test affected workspaces except Game Client
+        env:
+          PACKAGES: ${{ needs.plan.outputs.packages }}
+        run: |
+          mapfile -t filters < <(
+            jq -r '.[] | select(. != "@lootlog/game-client") | "--filter=" + .' <<< "$PACKAGES"
+          )
+          if [[ "${#filters[@]}" -eq 0 ]]; then
+            echo "No non-Game Client tests to run."
+            exit 0
+          fi
+          pnpm exec turbo run test "${filters[@]}"
 
-      - name: Upload game-client coverage
-        if: always()
+      - name: Test Game Client coverage
+        if: contains(fromJSON(needs.plan.outputs.packages), '@lootlog/game-client')
+        env:
+          COVERAGE_BASE_REF: ${{ needs.plan.outputs.base-sha }}
+        run: |
+          pnpm --filter=@lootlog/game-client check-types
+          pnpm --filter=@lootlog/game-client test:coverage
+          pnpm --filter=@lootlog/game-client report:changed-coverage
+
+      - name: Upload Game Client coverage
+        if: always() && contains(fromJSON(needs.plan.outputs.packages), '@lootlog/game-client')
         uses: codecov/codecov-action@v6
         with:
           files: ./apps/game-client/coverage/lcov.info
           flags: game-client
           name: game-client-coverage
 
-  api-client-check:
-    name: Check Generated API Clients
-    runs-on: ubuntu-latest
-    needs: changes
-    if: |
-      needs.changes.outputs.activity == 'true' ||
-      needs.changes.outputs.api == 'true' ||
-      needs.changes.outputs.auth == 'true' ||
-      needs.changes.outputs.search == 'true' ||
-      needs.changes.outputs.battlelog-service == 'true' ||
-      needs.changes.outputs.packages == 'true'
-    timeout-minutes: 25
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Regenerate and check API clients
+        if: needs.plan.outputs.run-api-client-check == 'true'
         env:
           PORT: "4000"
           RABBITMQ_URI: amqp://guest:guest@localhost:5672
@@ -451,92 +262,56 @@ jobs:
           API_SERVICE_URL: http://localhost:4000
         run: pnpm api:client:check
 
-  build:
-    name: Build All Services
+  docker:
+    name: Docker ${{ matrix.service }}
+    needs: plan
+    if: needs.plan.outputs.docker-services != '[]'
     runs-on: ubuntu-latest
-    needs: changes
-    if: |
-      needs.changes.outputs.api == 'true' ||
-      needs.changes.outputs.auth == 'true' ||
-      needs.changes.outputs.gateway == 'true' ||
-      needs.changes.outputs.discord-bot == 'true' ||
-      needs.changes.outputs.search == 'true' ||
-      needs.changes.outputs.battlelog-service == 'true' ||
-      needs.changes.outputs.developer == 'true' ||
-      needs.changes.outputs.game-client == 'true' ||
-      needs.changes.outputs.packages == 'true'
-    timeout-minutes: 20
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.32.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build all packages and services
-        run: pnpm build
-
-  docker-build:
-    name: Test Docker Build
-    runs-on: ubuntu-latest
-    needs: changes
-    if: |
-      needs.changes.outputs.api == 'true' ||
-      needs.changes.outputs.auth == 'true' ||
-      needs.changes.outputs.gateway == 'true' ||
-      needs.changes.outputs.discord-bot == 'true' ||
-      needs.changes.outputs.search == 'true' ||
-      needs.changes.outputs.battlelog-service == 'true' ||
-      needs.changes.outputs.developer == 'true' ||
-      needs.changes.outputs.game-client == 'true' ||
-      needs.changes.outputs.packages == 'true'
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.plan.outputs.docker-services) }}
     steps:
-      - name: Checkout code
+      - name: Checkout validation commit
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.head-sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build Docker images (no push)
-        run: |
-          services=(api auth gateway discord-bot search battlelog-service developer)
-          for service in "${services[@]}"; do
-            echo "Building $service..."
-            docker build \
-              --target $service \
-              --cache-from type=registry,ref=kamilwronka7/lootlog-$service:dev-buildcache \
-              --tag lootlog-$service:test \
-              .
-          done
+      - name: Build affected Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: ${{ matrix.service }}
+          push: false
+          tags: lootlog-${{ matrix.service }}:ci
+          build-args: |
+            GITHUB_SHA=${{ needs.plan.outputs.head-sha }}
+            GITHUB_REF=${{ github.ref }}
+          cache-from: type=gha,scope=docker-${{ matrix.service }}
+          cache-to: type=gha,mode=min,scope=docker-${{ matrix.service }}
+          provenance: false
 
   ci-success:
     name: CI Success
-    runs-on: ubuntu-latest
-    needs: [lint, test-game-client, api-client-check, build, docker-build]
+    needs:
+      - plan
+      - quality
+      - docker
     if: always()
+    runs-on: ubuntu-latest
     timeout-minutes: 5
-
     steps:
-      - name: Check job results
+      - name: Check every CI result
+        env:
+          JOB_RESULTS: ${{ toJSON(needs) }}
         run: |
-          if [[ "${{ needs.lint.result }}" == "failure" ]] || \
-             [[ "${{ needs.test-game-client.result }}" == "failure" ]] || \
-             [[ "${{ needs.api-client-check.result }}" == "failure" ]] || \
-             [[ "${{ needs.build.result }}" == "failure" ]] || \
-             [[ "${{ needs.docker-build.result }}" == "failure" ]]; then
-            echo "CI failed"
-            exit 1
-          fi
-          echo "CI passed"
+          jq -e '
+            all(
+              .[];
+              .result == "success" or .result == "skipped"
+            )
+          ' <<< "$JOB_RESULTS"

@@ -18,12 +18,14 @@
     "add": "Dodaj",
     "close": "Zamknij",
     "openSettings": "Otwórz ustawienia",
+    "undo": "Cofnij",
     "copyAction": "Kopiuj akcję",
     "copyRequest": "Kopiuj request",
     "exportJson": "Eksportuj JSON",
     "playSound": "Odtwórz dźwięk",
     "mute": "Wycisz",
-    "unmute": "Włącz dźwięk"
+    "unmute": "Włącz dźwięk",
+    "retry": "Spróbuj ponownie"
   },
   "auth": {
     "notLoggedIn": "Nie jesteś zalogowany, zaloguj się, aby załadować dodatek"
@@ -31,6 +33,11 @@
   "errors": {
     "requestFailed": "Błąd żądania",
     "unknown": "Nieznany błąd"
+  },
+  "async": {
+    "loading": "Ładowanie...",
+    "loadingGuilds": "Ładowanie serwerów",
+    "guildsError": "Nie udało się załadować serwerów"
   },
   "guildSelection": {
     "enabled": "Włączone",
@@ -60,7 +67,11 @@
     "closeWindow": "Zamknij okno"
   },
   "guildSwitcher": {
-    "allServers": "Wszystkie serwery"
+    "allServers": "Wszystkie serwery",
+    "allHidden": "Wszystkie serwery są ukryte",
+    "hideInGameClient": "Ukryj w grze",
+    "hidden": "Ukryto {{name}} w grze",
+    "hideError": "Nie udało się ukryć serwera."
   },
   "characterTooltip": {
     "owner": {

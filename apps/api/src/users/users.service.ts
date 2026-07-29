@@ -300,10 +300,10 @@ export class UsersService {
       ...(preferences.guildsOrder !== undefined
         ? { guildsOrder: preferences.guildsOrder }
         : {}),
-      ...(preferences.theme !== undefined ? { theme: preferences.theme } : {}),
-      ...(preferences.colorMode !== undefined
-        ? { colorMode: preferences.colorMode }
+      ...(preferences.hiddenGuildIds !== undefined
+        ? { hiddenGuildIds: preferences.hiddenGuildIds }
         : {}),
+      ...(preferences.theme !== undefined ? { theme: preferences.theme } : {}),
     };
     const shouldUpdateUserSettings =
       Object.keys(nextUserSettingsPayload).length > 0;
@@ -561,8 +561,8 @@ export class UsersService {
     settings: {
       userId: string;
       guildsOrder: string[];
+      hiddenGuildIds: string[];
       theme: string;
-      colorMode: string;
     },
     mutes: NotificationMutes,
     chatAppearance = CHAT_APPEARANCE_READABLE_PRESET,
@@ -570,8 +570,8 @@ export class UsersService {
     return {
       userId: settings.userId,
       guildsOrder: settings.guildsOrder,
+      hiddenGuildIds: settings.hiddenGuildIds,
       theme: settings.theme,
-      colorMode: settings.colorMode,
       chatAppearance: normalizeChatAppearanceSettings(chatAppearance),
       mutes: this.cloneNotificationMutes(mutes),
     };
@@ -590,8 +590,8 @@ export class UsersService {
   private getDefaultUserPreferencesData() {
     return {
       guildsOrder: [],
+      hiddenGuildIds: [],
       theme: "default",
-      colorMode: "dark",
     };
   }
 

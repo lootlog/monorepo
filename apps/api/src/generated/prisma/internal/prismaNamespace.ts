@@ -4784,8 +4784,8 @@ export const UserSettingsScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   guildsOrder: 'guildsOrder',
+  hiddenGuildIds: 'hiddenGuildIds',
   theme: 'theme',
-  colorMode: 'colorMode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -5165,6 +5165,7 @@ export const EventKillPointScalarFieldEnum = {
   trackingDurationPercentage: 'trackingDurationPercentage',
   confirmationDeadlineAt: 'confirmationDeadlineAt',
   confirmedAt: 'confirmedAt',
+  confirmationExpiredAcknowledgedAt: 'confirmationExpiredAcknowledgedAt',
   timeOnMapSeconds: 'timeOnMapSeconds',
   afkPercentage: 'afkPercentage',
   wasPresent: 'wasPresent',

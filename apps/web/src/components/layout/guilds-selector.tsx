@@ -5,59 +5,43 @@ import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder, motion } from "framer-motion";
-import { useState, useEffect, type FC } from "react";
+import { useState, useEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
-import { useUser } from "@/hooks/api/user/use-user";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { Separator } from "@lootlog/ui/components/separator";
+import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/api-client/react-query/main/users";
 import {
-  useSetUsersControllerGetUserPreferencesQueryData,
-  useUsersControllerGetCurrentUserGuilds,
-  useUsersControllerUpdateUserPreferences,
-} from "@lootlog/api-client/react-query/main/users";
+  useUpdateUserPreferences,
+  useUserPreferences,
+} from "@/hooks/api/user/use-user-preferences";
+import { orderGuilds } from "@/features/user/settings/servers/server-visibility";
+import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { Button } from "@lootlog/ui/components/button";
+import { RotateCcw } from "lucide-react";
 
 export const GuildsSelector: FC = () => {
-  const { data: guilds, isLoading } = useUsersControllerGetCurrentUserGuilds();
-  const { user } = useUser();
+  const { t } = useTranslation();
+  const guildsQuery = useUsersControllerGetCurrentUserGuilds();
+  const guilds = guildsQuery.data;
+  const preferencesQuery = useUserPreferences();
   const { lootUnreadCounts } = useGateway();
   const currentGuildId = useGuildId();
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();
   const [isDragging, setIsDragging] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
-  const setUserPreferences = useSetUsersControllerGetUserPreferencesQueryData();
-  const { mutate: updateUserPreferences } =
-    useUsersControllerUpdateUserPreferences({
-      mutation: {
-        onSuccess: (updatedPreferences) => {
-          setUserPreferences(updatedPreferences);
-        },
-      },
-    });
+  const updateUserPreferences = useUpdateUserPreferences();
+  const latestHiddenGuildIds = useRef(
+    preferencesQuery.data?.hiddenGuildIds ?? [],
+  );
+  latestHiddenGuildIds.current = preferencesQuery.data?.hiddenGuildIds ?? [];
 
   const getOrderedGuilds = () => {
     if (!guilds?.length) {
       return [];
     }
 
-    const savedOrder = user?.preferences?.guildsOrder;
-    if (!savedOrder?.length) {
-      return guilds;
-    }
-
-    try {
-      const guildMap = new Map(guilds.map((guild) => [guild.id, guild]));
-
-      const ordered = savedOrder
-        .map((id: string) => guildMap.get(id))
-        .filter(Boolean) as typeof guilds;
-
-      const orderedIds = new Set(savedOrder);
-      const newGuilds = guilds.filter((guild) => !orderedIds.has(guild.id));
-
-      return [...ordered, ...newGuilds];
-    } catch {
-      return guilds;
-    }
+    return orderGuilds(guilds, preferencesQuery.data?.guildsOrder);
   };
   const orderedGuilds = getOrderedGuilds();
   const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
@@ -66,11 +50,14 @@ export const GuildsSelector: FC = () => {
   useEffect(() => {
     if (!isDragging && pendingOrder) {
       if (orderedGuildsKey !== pendingOrderKey) {
-        updateUserPreferences({
-          data: {
-            guildsOrder: pendingOrder,
+        updateUserPreferences.mutate(
+          { guildsOrder: pendingOrder },
+          {
+            onSettled: () => setPendingOrder(null),
           },
-        });
+        );
+      } else {
+        setPendingOrder(null);
       }
     }
   }, [
@@ -78,7 +65,7 @@ export const GuildsSelector: FC = () => {
     orderedGuildsKey,
     pendingOrder,
     pendingOrderKey,
-    updateUserPreferences,
+    updateUserPreferences.mutate,
   ]);
 
   const handleReorder = (newGuilds: typeof guilds) => {
@@ -98,6 +85,58 @@ export const GuildsSelector: FC = () => {
     setIsDragging(false);
   };
 
+  const toggleGuildVisibility = (
+    guildId: string,
+    guildName: string,
+    isHidden: boolean,
+  ) => {
+    const confirmedHiddenGuildIds = preferencesQuery.data?.hiddenGuildIds ?? [];
+    const nextHiddenGuildIds = isHidden
+      ? confirmedHiddenGuildIds.filter(
+          (hiddenGuildId) => hiddenGuildId !== guildId,
+        )
+      : [...confirmedHiddenGuildIds, guildId];
+
+    updateUserPreferences.mutate(
+      { hiddenGuildIds: nextHiddenGuildIds },
+      {
+        onSuccess: () => {
+          toast.success(
+            t(
+              isHidden
+                ? "settings.servers.shownToast"
+                : "settings.servers.hiddenToast",
+              { name: guildName },
+            ),
+            {
+              action: {
+                label: t("common.actions.undo"),
+                onClick: () => {
+                  const currentHiddenGuildIds = latestHiddenGuildIds.current;
+                  let undoHiddenGuildIds = currentHiddenGuildIds;
+                  if (isHidden && !currentHiddenGuildIds.includes(guildId)) {
+                    undoHiddenGuildIds = [...currentHiddenGuildIds, guildId];
+                  } else if (!isHidden) {
+                    undoHiddenGuildIds = currentHiddenGuildIds.filter(
+                      (hiddenGuildId) => hiddenGuildId !== guildId,
+                    );
+                  }
+
+                  updateUserPreferences.mutate({
+                    hiddenGuildIds: undoHiddenGuildIds,
+                  });
+                },
+              },
+            },
+          );
+        },
+        onError: () => {
+          toast.error(t("settings.servers.saveError"));
+        },
+      },
+    );
+  };
+
   const guildList =
     isDragging || (pendingOrderKey && pendingOrderKey !== orderedGuildsKey)
       ? (localGuilds ?? orderedGuilds)
@@ -108,14 +147,31 @@ export const GuildsSelector: FC = () => {
       <UserNavItem />
       <Separator className="-mt-[1px]" />
       <ScrollArea className="flex-1 h-24">
-        {isLoading ? (
+        {(guildsQuery.isError && !guilds) ||
+        (preferencesQuery.isError && preferencesQuery.data === undefined) ? (
+          <div className="flex h-12 items-center justify-center">
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={t("settings.servers.loadError")}
+              onClick={() => {
+                void guildsQuery.refetch();
+                void preferencesQuery.refetch();
+              }}
+            >
+              <RotateCcw className="size-4" />
+            </Button>
+          </div>
+        ) : guildsQuery.isLoading ||
+          preferencesQuery.isLoading ||
+          preferencesQuery.data === undefined ? (
           <GuildsSelectorSkeleton />
         ) : (
           <Reorder.Group
             axis="y"
             values={guildList}
             onReorder={handleReorder}
-            className="flex flex-col gap-0.5"
+            className="flex flex-col gap-0.5 py-2"
             as="div"
           >
             {guildList.map((guild, index) => (
@@ -148,6 +204,20 @@ export const GuildsSelector: FC = () => {
                     isDragging={isDragging}
                     currentGuildId={currentGuildId}
                     unreadLootsCount={lootUnreadCounts[guild.id] ?? 0}
+                    isHidden={
+                      preferencesQuery.data?.hiddenGuildIds.includes(
+                        guild.id,
+                      ) ?? false
+                    }
+                    onToggleHidden={() =>
+                      toggleGuildVisibility(
+                        guild.id,
+                        guild.name,
+                        preferencesQuery.data?.hiddenGuildIds.includes(
+                          guild.id,
+                        ) ?? false,
+                      )
+                    }
                   />
                 </motion.div>
               </Reorder.Item>

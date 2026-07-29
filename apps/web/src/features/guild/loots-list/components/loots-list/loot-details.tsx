@@ -55,10 +55,10 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
     return (
       <div
         key={item.hid}
-        className="flex gap-4 items-start w-full border-b border-border/50 p-4 bg-card/20 hover:bg-card/40 transition-colors"
+        className="flex w-full items-start gap-3 border-b border-border bg-card/20 px-5 py-4 transition-colors hover:bg-card/50 sm:px-6"
       >
         <WatchableItemTile item={item} watchContext={watchContext} />
-        <div className="flex flex-col flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
           <span className="text-sm font-medium text-foreground">
             {item.name}
           </span>
@@ -67,19 +67,21 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
               {t("loots.list.obtainedBy")} {owner}
             </span>
           )}
-          <div className="w-full flex mt-2 gap-1">
+          <div className="mt-2 flex w-full min-w-0 gap-2">
             <Input
-              className="h-6 px-2 !text-xs bg-secondary/50 border-border/50"
+              className="h-8 min-w-0 flex-1 border-border bg-background px-2.5 font-mono !text-xs"
               value={formattedItemHid}
               readOnly
             />
             <Button
               size="icon"
-              className="h-6"
+              className="size-8 shrink-0 cursor-pointer rounded-lg"
               variant="ghost"
               onClick={() => handleCopyId(formattedItemHid)}
+              aria-label={t("loots.details.copyId")}
+              title={t("loots.details.copyId")}
             >
-              <Copy />
+              <Copy className="size-4" />
             </Button>
           </div>
         </div>
@@ -97,7 +99,7 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
           <CollapsibleTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full mt-2 text-muted-foreground hover:text-foreground"
+              className="my-2 w-full cursor-pointer text-muted-foreground hover:text-foreground"
             >
               {open
                 ? t("loots.details.showLess")

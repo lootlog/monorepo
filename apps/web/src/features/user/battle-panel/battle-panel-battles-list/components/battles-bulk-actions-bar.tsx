@@ -28,7 +28,7 @@ export const BattlesBulkActionsBar = ({
       <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
         <span
           aria-live="polite"
-          className="inline-flex min-h-8 items-center rounded-md border border-border bg-card/70 px-2.5 text-xs font-medium text-muted-foreground"
+          className="inline-flex min-h-8 items-center rounded-md border border-border bg-card px-2.5 text-xs font-medium text-muted-foreground"
         >
           {t("battlePanel.bulk.selected", {
             count: selectedCount,

@@ -99,13 +99,13 @@ export const GuildDocsListPage = () => {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-4 px-3 py-3">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                <div className="rounded-xl bg-primary/10 p-2.5">
                   <FileText className="size-4 text-primary" />
                 </div>
                 <div className="min-w-0">
@@ -171,14 +171,14 @@ export const GuildDocsListPage = () => {
           </Card>
 
           {documentsQuery.isError ? (
-            <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card/40 py-12 backdrop-blur-sm">
+            <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12">
               <FileX2 className="size-12 text-muted-foreground opacity-50" />
               <p className="text-sm text-muted-foreground">
                 {t("docs.list.loadError")}
               </p>
             </Card>
           ) : filteredDocuments.length === 0 ? (
-            <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card/40 py-12 text-center backdrop-blur-sm">
+            <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12 text-center">
               <FileText className="size-12 text-muted-foreground opacity-50" />
               <div className="space-y-1">
                 <p className="text-sm font-medium">{emptyTitle}</p>
@@ -196,7 +196,7 @@ export const GuildDocsListPage = () => {
                 return (
                   <Card
                     key={document.id}
-                    className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm transition-colors hover:bg-card/60"
+                    className="gap-3 border-border bg-card p-4  transition-colors hover:bg-card"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 space-y-1">

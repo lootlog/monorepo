@@ -89,7 +89,7 @@ export const WatchedItemCard = ({
   };
 
   return (
-    <div className="rounded-xl border border-border/70 bg-background/30 p-3">
+    <div className="rounded-xl border border-border/70 bg-background p-3">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-3">
           <div className="flex min-w-0 items-center gap-3">

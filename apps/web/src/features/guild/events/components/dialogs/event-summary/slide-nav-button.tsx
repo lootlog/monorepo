@@ -21,7 +21,7 @@ export const SlideNavButton = ({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "pointer-events-auto absolute top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/80 text-foreground shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-xl transition-all duration-200 sm:size-12",
+        "pointer-events-auto absolute top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/80 text-foreground shadow-[0_18px_50px_rgba(15,23,42,0.18)]  transition-all duration-200 sm:size-12",
         direction === "previous" ? "left-3 sm:left-4" : "right-3 sm:right-4",
         disabled
           ? "cursor-not-allowed opacity-35"

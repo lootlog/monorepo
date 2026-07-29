@@ -76,8 +76,8 @@ export const ReservationCard: FC<ReservationCardProps> = ({
         onClick={onClick}
         className={cn(
           "relative flex flex-row items-center gap-4 p-3 transition-all cursor-pointer w-full",
-          "hover:bg-card/80 hover:border-primary/30 hover:shadow-lg hover:scale-[1.01]",
-          "bg-card/40 backdrop-blur-sm border-border",
+          "hover:bg-card hover:border-primary/30 hover:shadow-lg hover:scale-[1.01]",
+          "bg-card  border-border",
           isOccupied
             ? "border-red-500/30 bg-red-500/5 hover:bg-red-500/10"
             : "border-border",
@@ -133,8 +133,8 @@ export const ReservationCard: FC<ReservationCardProps> = ({
       onClick={onClick}
       className={cn(
         "relative flex flex-col justify-between p-4 transition-all overflow-visible cursor-pointer h-full",
-        "hover:bg-card/80 hover:border-primary/30 hover:shadow-lg hover:scale-[1.01]",
-        "bg-card/40 backdrop-blur-sm border-border",
+        "hover:bg-card hover:border-primary/30 hover:shadow-lg hover:scale-[1.01]",
+        "bg-card  border-border",
         isOccupied
           ? "border-red-500/40 bg-red-500/5 hover:border-red-500/60 hover:bg-red-500/10"
           : "border-border hover:border-primary/50",

@@ -76,11 +76,11 @@ export const NotificationRuleFormPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-background/50">
+      <div className="flex h-full min-h-0 flex-col bg-background">
         <div className="flex flex-col gap-3 px-3 py-3">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="border-border bg-card p-4">
                 <div className="space-y-4">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="space-y-2">
@@ -92,7 +92,7 @@ export const NotificationRuleFormPage = () => {
               </Card>
             </div>
             <div className="hidden lg:block">
-              <Card className="border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="border-border bg-card p-4">
                 <Skeleton className="mb-3 h-5 w-24" />
                 <Skeleton className="h-40 w-full rounded-lg" />
               </Card>
@@ -124,12 +124,12 @@ export const NotificationRuleFormPage = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="flex flex-col gap-4 px-3 py-3">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <Card className="gap-3 border-border bg-card/40 p-4 backdrop-blur-sm">
+              <Card className="gap-3 border-border bg-card p-4">
                 <Form {...form}>
                   <form
                     onSubmit={form.handleSubmit(handleSubmit)}
@@ -284,7 +284,7 @@ export const NotificationRuleFormPage = () => {
                           control={form.control}
                           name="manualNpcEntry"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background/30 px-3 py-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-3">
                               <div className="pr-3">
                                 <FormLabel className="text-sm font-medium">
                                   {t(
@@ -759,7 +759,7 @@ export const NotificationRuleFormPage = () => {
                         control={form.control}
                         name="enabled"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background/30 px-3 py-3">
+                          <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-3">
                             <div>
                               <FormLabel className="text-sm font-medium">
                                 {t("settings.notifications.fields.enabled")}

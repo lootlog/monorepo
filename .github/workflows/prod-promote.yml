@@ -1,0 +1,147 @@
+name: Promote an existing image to prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: Service to promote or roll back
+        required: true
+        type: choice
+        options:
+          - activity
+          - api
+          - auth
+          - battlelog-service
+          - developer
+          - discord-bot
+          - gateway
+          - search
+      version:
+        description: Existing semantic version, without the prod- prefix
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: kamilwronka7/lootlog-${{ inputs.service }}
+  IMAGE_TAG: prod-${{ inputs.version }}
+  INFRA_REPOSITORY: lootlog/infra
+  INFRA_REPO_PATH: infra-repo
+
+jobs:
+  validate:
+    name: Validate immutable image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require main and semantic version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Production promotion must run from main."
+            exit 1
+          fi
+
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "::error::Version must be a valid semantic version."
+            exit 1
+          fi
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+
+      - name: Verify image exists
+        run: docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG"
+
+      - name: Write promotion summary
+        env:
+          SERVICE: ${{ inputs.service }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          {
+            echo "# Production promotion"
+            echo
+            echo "- Service: \`$SERVICE\`"
+            echo "- Version: \`$VERSION\`"
+            echo "- Immutable image: \`$IMAGE:$IMAGE_TAG\`"
+            echo
+            echo "Approval changes GitOps only. The image will not be rebuilt."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  promote:
+    name: Approve and update production GitOps
+    needs: validate
+    concurrency:
+      group: production-gitops
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: prod
+    steps:
+      - name: Checkout infra repository
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.INFRA_REPOSITORY }}
+          ref: main
+          token: ${{ secrets.INFRA_REPO_PUSH_TOKEN }}
+          path: ${{ env.INFRA_REPO_PATH }}
+          fetch-depth: 0
+
+      - name: Update requested image
+        env:
+          SERVICE: ${{ inputs.service }}
+        run: |
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e IMAGE \
+            -e IMAGE_TAG \
+            -v "$PWD/$INFRA_REPO_PATH:/workdir" \
+            mikefarah/yq:4.53.3 \
+            -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(IMAGE_TAG)' \
+            "apps/prod/$SERVICE/kustomization.yml"
+
+          if [[ "$SERVICE" == "developer" ]] &&
+             ! grep -qE '^[[:space:]]*-[[:space:]]+developer$' "$INFRA_REPO_PATH/apps/prod/kustomization.yml"; then
+            docker run --rm \
+              --user "$(id -u):$(id -g)" \
+              -v "$PWD/$INFRA_REPO_PATH:/workdir" \
+              mikefarah/yq:4.53.3 \
+              -i '.resources += ["developer"]' \
+              apps/prod/kustomization.yml
+          fi
+
+      - name: Commit and push GitOps change
+        env:
+          SERVICE: ${{ inputs.service }}
+          VERSION: ${{ inputs.version }}
+        working-directory: ${{ env.INFRA_REPO_PATH }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/prod
+
+          if git diff --cached --quiet; then
+            echo "Production already uses $IMAGE:$IMAGE_TAG."
+            exit 0
+          fi
+
+          git commit -m "ci: promote $SERVICE to $VERSION"
+
+          for attempt in {1..5}; do
+            git fetch origin main
+            git rebase origin/main
+
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            if [[ "$attempt" -eq 5 ]]; then
+              echo "::error::Failed to push the production GitOps update."
+              exit 1
+            fi
+          done

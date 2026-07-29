@@ -16,7 +16,7 @@ import {
   MapPin,
   ChevronDown,
 } from "lucide-react";
-import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
+import { PlayerTile } from "@/components/tiles";
 import type { PaginatedActivitiesResponseDtoDataItem } from "@lootlog/api-client/models/activity/paginated-activities-response-dto-data-item";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -93,9 +93,9 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
 
   return (
     <Card
-      className={`p-4 transition-all duration-300 border bg-background/30 backdrop-blur-md ${
+      className={`p-4 transition-all duration-300 border bg-background  ${
         hasAdditionalData
-          ? "cursor-pointer border-border hover:bg-card/50 hover:border-primary/50"
+          ? "cursor-pointer border-border hover:bg-card hover:border-primary/50"
           : "border-border"
       }`}
       onClick={handleCardClick}

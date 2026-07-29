@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 const footerSpy = vi.fn();
@@ -69,6 +69,70 @@ const timer = {
 } satisfies TimerWithTimeLeft;
 
 describe("TimersContent", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("shows timer placeholders instead of the empty state during initial loading", () => {
+    vi.useFakeTimers();
+
+    render(
+      <TimersContent
+        sortedTimers={[]}
+        settingsKey="guild-1"
+        hiddenTimers={[]}
+        areFiltersActive={false}
+        colorStatistics={[]}
+        isGrouping={false}
+        allowWorldSelection={false}
+        timerFiltersEnabled={false}
+        isUnderBag={false}
+        initialLoading
+        minColumnWidth={180}
+        onAddTimer={vi.fn()}
+        onResetFilters={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("TimersEmptyState")).not.toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(200));
+
+    expect(screen.getByRole("status").querySelector("svg")).toHaveClass(
+      "ll:animate-spin",
+    );
+    expect(screen.queryByText("TimersEmptyState")).not.toBeInTheDocument();
+  });
+
+  it("shows a retry action when the initial timer request fails", async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+
+    render(
+      <TimersContent
+        sortedTimers={[]}
+        settingsKey="guild-1"
+        hiddenTimers={[]}
+        areFiltersActive={false}
+        colorStatistics={[]}
+        error={new Error("network")}
+        isGrouping={false}
+        allowWorldSelection={false}
+        timerFiltersEnabled={false}
+        isUnderBag={false}
+        minColumnWidth={180}
+        onAddTimer={vi.fn()}
+        onResetFilters={vi.fn()}
+        onRetry={onRetry}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));
+
+    expect(onRetry).toHaveBeenCalledOnce();
+    expect(screen.queryByText("TimersEmptyState")).not.toBeInTheDocument();
+  });
+
   it("renders selectors, filters, grid, and footer when the content is populated", async () => {
     const user = userEvent.setup();
     const onAddTimer = vi.fn();
@@ -87,6 +151,7 @@ describe("TimersContent", () => {
         isUnderBag={false}
         minColumnWidth={180}
         onAddTimer={onAddTimer}
+        onResetFilters={vi.fn()}
         world="pandora"
       />,
     );
@@ -119,7 +184,7 @@ describe("TimersContent", () => {
 
     expect(scrollContainer).toHaveClass(
       "ll:min-h-0",
-      "ll:flex-1",
+      "ll:h-full",
       "ll:overflow-hidden",
     );
     expect(scrollViewport).toHaveStyle({
@@ -145,6 +210,7 @@ describe("TimersContent", () => {
           isUnderBag={false}
           minColumnWidth={180}
           onAddTimer={vi.fn()}
+          onResetFilters={vi.fn()}
         />
       </div>,
     );
@@ -174,6 +240,7 @@ describe("TimersContent", () => {
         isUnderBag
         minColumnWidth={120}
         onAddTimer={vi.fn()}
+        onResetFilters={vi.fn()}
         world="pandora"
         compactView
       />,

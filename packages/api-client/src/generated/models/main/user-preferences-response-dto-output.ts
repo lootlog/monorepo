@@ -11,8 +11,8 @@ import type { UserPreferencesResponseDtoOutputMutes } from './user-preferences-r
 export interface UserPreferencesResponseDtoOutput {
   userId: string;
   guildsOrder: string[];
+  hiddenGuildIds: string[];
   theme: string;
-  colorMode: string;
   chatAppearance: UserPreferencesResponseDtoOutputChatAppearance;
   mutes: UserPreferencesResponseDtoOutputMutes;
 }

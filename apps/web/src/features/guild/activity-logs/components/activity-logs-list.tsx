@@ -167,14 +167,14 @@ export const ActivityLogsList = () => {
             >
               {isLoaderRow ? (
                 hasNextPage ? (
-                  <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
+                  <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30  h-16">
                     <Spinner className="h-5 w-5 text-primary" />
                     <span className="text-sm text-muted-foreground font-medium">
                       {t(themedKey("common.activityLogs.loadingMore"))}
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
+                  <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30  h-16">
                     <span className="text-xs text-muted-foreground">
                       {t(themedKey("common.activityLogs.end"))}
                     </span>

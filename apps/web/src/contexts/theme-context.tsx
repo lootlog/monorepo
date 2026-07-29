@@ -6,7 +6,6 @@ import {
   type FC,
   type ReactNode,
 } from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useSession } from "@/hooks/auth/use-session";
 import {
   getUsersControllerGetUserPreferencesQueryKey,
@@ -16,13 +15,10 @@ import {
 } from "@lootlog/api-client/react-query/main/users";
 import {
   applyThemeClassToRoot,
-  COLOR_MODE_STORAGE_KEY,
-  DEFAULT_COLOR_MODE,
   DEFAULT_THEME_ID,
   getRootResolvedTheme,
   resolveThemeClass,
   THEME_STORAGE_KEY,
-  type ColorMode,
   type ResolvedThemeId,
   type ThemeId,
 } from "@/themes";
@@ -30,9 +26,7 @@ import {
 interface ThemeContextType {
   theme: ThemeId;
   resolvedTheme: ResolvedThemeId;
-  colorMode: ColorMode;
   setTheme: (theme: ThemeId) => void;
-  setColorMode: (mode: ColorMode) => void;
   isLoading: boolean;
 }
 
@@ -70,14 +64,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     ) as ThemeId | null;
     return savedTheme ?? DEFAULT_THEME_ID;
   });
-  const [localColorMode, setLocalColorMode] = useState<ColorMode>(() => {
-    const savedColorMode = localStorage.getItem(
-      COLOR_MODE_STORAGE_KEY,
-    ) as ColorMode | null;
-    return savedColorMode ?? DEFAULT_COLOR_MODE;
-  });
   const [hasThemeOverride, setHasThemeOverride] = useState(false);
-  const [hasColorModeOverride, setHasColorModeOverride] = useState(false);
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedThemeId>(() =>
     resolveThemeClass(
       localTheme,
@@ -89,18 +76,10 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     !isLoading && preferences?.theme && !hasThemeOverride
       ? (preferences.theme as ThemeId)
       : localTheme;
-  const colorMode =
-    !isLoading && preferences?.colorMode && !hasColorModeOverride
-      ? (preferences.colorMode as ColorMode)
-      : localColorMode;
 
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
-
-  useEffect(() => {
-    localStorage.setItem(COLOR_MODE_STORAGE_KEY, colorMode);
-  }, [colorMode]);
 
   useLayoutEffect(() => {
     setResolvedTheme((currentResolvedTheme) =>
@@ -114,10 +93,9 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   useLayoutEffect(() => {
     applyThemeClassToRoot({
       root: document.documentElement,
-      colorMode,
       resolvedTheme,
     });
-  }, [colorMode, resolvedTheme]);
+  }, [resolvedTheme]);
 
   const setTheme = (newTheme: ThemeId) => {
     setHasThemeOverride(true);
@@ -125,32 +103,16 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     updatePreferences.mutate({ data: { theme: newTheme } });
   };
 
-  const setColorMode = (newMode: ColorMode) => {
-    setHasColorModeOverride(true);
-    setLocalColorMode(newMode);
-    updatePreferences.mutate({ data: { colorMode: newMode } });
-  };
-
   return (
     <ThemeContext.Provider
       value={{
         theme,
         resolvedTheme,
-        colorMode,
         setTheme,
-        setColorMode,
         isLoading,
       }}
     >
-      <NextThemesProvider
-        attribute="class"
-        defaultTheme="dark"
-        enableSystem={false}
-        disableTransitionOnChange
-        forcedTheme={colorMode}
-      >
-        {children}
-      </NextThemesProvider>
+      {children}
     </ThemeContext.Provider>
   );
 };

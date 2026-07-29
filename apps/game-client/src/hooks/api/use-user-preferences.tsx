@@ -15,7 +15,7 @@ export const useUserPreferences = (enabled = true) => {
       enabled,
       staleTime: 60_000,
       refetchOnMount: false,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       retry: false,
     },
   });
@@ -27,6 +27,7 @@ export const useUpdateUserPreferences = () => {
 
   return useMutation({
     mutationKey: ["usersControllerUpdateUserPreferences"],
+    scope: { id: "user-preferences" },
     mutationFn: (payload: UpdateUserPreferencesDto) =>
       usersControllerUpdateUserPreferences(payload),
     onMutate: async (payload) => {

@@ -20,10 +20,7 @@ import {
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  useListRankingEditHistory,
-  useUpdateRankingPoints,
-} from "@lootlog/api-client/react-query/main/events";
+import { useUpdateRankingPoints } from "@lootlog/api-client/react-query/main/events";
 import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranking-queries";
 import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
@@ -61,13 +58,6 @@ const RankingRow = ({
   const { t } = useTranslation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-
-  const { data: editHistory, isLoading: historyLoading } =
-    useListRankingEditHistory({
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
-      rankingId: ranking.id,
-    });
 
   const isTop3 = position <= 3;
   const memberLabel =
@@ -137,7 +127,12 @@ const RankingRow = ({
           {ranking.pointsModified && canEdit && (
             <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
               <PopoverTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-6 w-6">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  aria-label={t("events.points.history")}
+                >
                   <PenLine className="h-3 w-3 text-amber-500" />
                 </Button>
               </PopoverTrigger>
@@ -152,13 +147,9 @@ const RankingRow = ({
                     </div>
                   </div>
                   <ScrollArea className="h-60">
-                    {historyLoading ? (
-                      <div className="p-4 text-center text-sm text-muted-foreground">
-                        {t("events.kills.loading")}
-                      </div>
-                    ) : editHistory && editHistory.length > 0 ? (
+                    {ranking.editHistory.length > 0 ? (
                       <div className="space-y-2 p-2">
-                        {editHistory.map((entry) => (
+                        {ranking.editHistory.map((entry) => (
                           <div
                             key={entry.id}
                             className="rounded-md bg-muted/50 p-2 text-sm"
@@ -197,7 +188,7 @@ const RankingRow = ({
                               </span>
                             </div>
                             {entry.comment && (
-                              <p className="mt-2 whitespace-pre-wrap break-words rounded-md bg-background/70 px-2 py-1.5 text-xs text-muted-foreground">
+                              <p className="mt-2 whitespace-pre-wrap break-words rounded-md bg-background px-2 py-1.5 text-xs text-muted-foreground">
                                 {entry.comment}
                               </p>
                             )}

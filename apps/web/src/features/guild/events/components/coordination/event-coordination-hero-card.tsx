@@ -14,6 +14,8 @@ import {
   getCoordinationStatusLabelKey,
   getCoveragePercentage,
 } from "../../utils/coordination-utils";
+import { getAssignmentAvailability } from "../../utils/get-assignment-availability";
+import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import { EventCoordinationPriorityBadge } from "./event-coordination-priority-badge";
 import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item";
 
@@ -21,11 +23,15 @@ interface EventCoordinationHeroCardProps {
   hero: EventCoordinationResponseDtoHeroesItem;
   guildId: string;
   eventId: string;
+  assignmentTimeoutMinutes: number;
   canWrite: boolean;
   canManage: boolean;
   assigningMapId: string | null;
   closingHeroId: string | null;
-  onSelfAssign: (mapId: string) => void;
+  onSelfAssign: (
+    mapId: string,
+    hero: EventCoordinationResponseDtoHeroesItem,
+  ) => void;
   onCloseWindow: (hero: EventCoordinationResponseDtoHeroesItem) => void;
 }
 
@@ -33,6 +39,7 @@ export const EventCoordinationHeroCard = ({
   hero,
   guildId,
   eventId,
+  assignmentTimeoutMinutes,
   canWrite,
   canManage,
   assigningMapId,
@@ -47,9 +54,20 @@ export const EventCoordinationHeroCard = ({
   const isClosing = hero.heroId === closingHeroId;
   const timerStatus = hero.timer?.status ?? "NONE";
   const timerTime = getTimerDisplayTime(hero);
+  const assignmentAvailability = getAssignmentAvailability({
+    assignmentTimeoutMinutes,
+    timer: hero.timer,
+  });
+  const {
+    isEnabled: isAssignmentEnabled,
+    formattedTime: assignmentCountdownTime,
+  } = useAssignmentCountdown(
+    !assignmentAvailability.allowed,
+    assignmentAvailability.enabledAt,
+  );
 
   return (
-    <Card className="border-border bg-card/40 p-3 backdrop-blur-sm gap-3">
+    <Card className="border-border bg-card p-3  gap-3">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           {hero.npcIcon ? (
@@ -61,7 +79,7 @@ export const EventCoordinationHeroCard = ({
               }}
             />
           ) : (
-            <div className="rounded-xl bg-yellow-500/10 p-2.5 shadow-inner shadow-yellow-500/10">
+            <div className="rounded-xl bg-yellow-500/10 p-2.5">
               <Timer className="size-4 text-yellow-500" />
             </div>
           )}
@@ -115,15 +133,19 @@ export const EventCoordinationHeroCard = ({
               size="sm"
               variant="outline"
               className="shrink-0"
-              disabled={isAssigning}
-              onClick={() => onSelfAssign(targetGap.mapId)}
+              disabled={isAssigning || !isAssignmentEnabled}
+              onClick={() => onSelfAssign(targetGap.mapId, hero)}
             >
               {isAssigning ? (
                 <Spinner className="size-3.5" />
               ) : (
                 <UserPlus className="size-3.5" />
               )}
-              {t("events.coordination.actions.selfAssign")}
+              {!isAssignmentEnabled && assignmentCountdownTime
+                ? t("events.maps.assignmentDisabledWithTime", {
+                    time: assignmentCountdownTime,
+                  })
+                : t("events.coordination.actions.selfAssign")}
             </Button>
           )}
 

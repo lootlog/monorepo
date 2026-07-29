@@ -167,6 +167,76 @@ const fightLootEvent = {
   },
 } as unknown as GameEvent;
 
+const keuktaWarriors = {
+  "220": {
+    hpp: 100,
+    icon: "cashtelan.gif",
+    id: 220,
+    lvl: 300,
+    name: "cashtelan",
+    originalId: 220,
+    prof: "p",
+    team: 1,
+    type: 0,
+    wt: 0,
+  },
+  "7533": {
+    hpp: 100,
+    icon: "keukta.gif",
+    id: 7533,
+    lvl: 300,
+    name: "keukta",
+    originalId: 7533,
+    prof: "w",
+    team: 2,
+    type: 0,
+    wt: 0,
+  },
+};
+
+const keuktaMoves = [
+  ...Array.from({ length: 40 }, (_, index) => `0;0;txt=opening-${index}`),
+  ...Array.from(
+    { length: 12 },
+    (_, index) => `220=100;7533=90;+dmg=${index + 1};-dmg=${index + 1}`,
+  ),
+  ...Array.from({ length: 64 }, (_, index) => `0;0;txt=tempo-${index}`),
+  "0;0;winner=cashtelan",
+  "0;0;loser=keukta",
+];
+
+const keuktaIncrementalEvents = [
+  {
+    ev: 1_785_091_976.1,
+    f: {
+      init: "1",
+      m: keuktaMoves.slice(0, 40),
+      w: keuktaWarriors,
+    },
+  },
+  {
+    ev: 1_785_091_976.2,
+    f: { m: keuktaMoves.slice(40, 80) },
+  },
+  {
+    ev: 1_785_091_976.3,
+    f: {
+      endBattle: 1,
+      m: keuktaMoves.slice(80),
+    },
+  },
+] as GameEvent[];
+
+const compactKeuktaEvent = {
+  ev: 1_785_091_976.4,
+  f: {
+    endBattle: 1,
+    init: "1",
+    m: keuktaMoves,
+    w: keuktaWarriors,
+  },
+} as GameEvent;
+
 function resetPipelineState(): void {
   margonemRuntimeBridge.cleanup();
   api.createBattle.mockClear();
@@ -416,10 +486,12 @@ describe("game event pipeline golden replay", () => {
           profession: "w",
         }),
       });
-      const dispatcher = new EventDispatcher();
+      const firstDispatcher = new EventDispatcher();
+      const secondDispatcher = new EventDispatcher();
       pipelineWindow.successData = vi.fn(() => "game-result");
       margonemRuntimeBridge.setupProxies();
-      dispatcher.register();
+      firstDispatcher.register();
+      secondDispatcher.register();
       margonemRuntimeBridge.setReady(true);
 
       pipelineWindow.successData?.({
@@ -537,7 +609,84 @@ describe("game event pipeline golden replay", () => {
       );
       await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
 
-      dispatcher.cleanup();
+      firstDispatcher.cleanup();
+      secondDispatcher.cleanup();
     },
   );
+
+  it("submits one complete battle when dispatcher registrations overlap and a compact replay follows", async () => {
+    resetPipelineState();
+    const firstDispatcher = new EventDispatcher();
+    const secondDispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn(() => "game-result");
+    margonemRuntimeBridge.setupProxies();
+    firstDispatcher.register();
+    secondDispatcher.register();
+    margonemRuntimeBridge.setReady(true);
+
+    for (const event of keuktaIncrementalEvents) {
+      pipelineWindow.successData?.(event);
+    }
+    pipelineWindow.successData?.(compactKeuktaEvent);
+
+    await vi.waitFor(() => expect(api.createBattle).toHaveBeenCalledOnce());
+    const submittedBattle = api.createBattle.mock.calls[0]?.[0] as
+      | ApiModule.CreateBattleOptions
+      | undefined;
+    const submittedMoves =
+      submittedBattle?.events.flatMap((event) => event.f?.m ?? []) ?? [];
+
+    expect(submittedMoves).toHaveLength(118);
+    expect(
+      submittedMoves.filter((move) => move.startsWith("220=")),
+    ).toHaveLength(12);
+    expect(submittedBattle?.events[0]?.f?.w).toEqual({
+      "220": {
+        icon: "cashtelan.gif",
+        lvl: 300,
+        name: "cashtelan",
+        originalId: 220,
+        prof: "p",
+        team: 1,
+      },
+      "7533": {
+        icon: "keukta.gif",
+        lvl: 300,
+        name: "keukta",
+        originalId: 7533,
+        prof: "w",
+        team: 2,
+      },
+    });
+
+    firstDispatcher.cleanup();
+    secondDispatcher.cleanup();
+  });
+
+  it("accepts an identical battle after the semantic replay window expires", async () => {
+    const dateNow = vi
+      .spyOn(Date, "now")
+      .mockReturnValue(Date.parse("2026-07-26T18:52:57.000Z"));
+    resetPipelineState();
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn(() => "game-result");
+    margonemRuntimeBridge.setupProxies();
+    dispatcher.register();
+    margonemRuntimeBridge.setReady(true);
+
+    for (const event of keuktaIncrementalEvents) {
+      pipelineWindow.successData?.(event);
+    }
+    await vi.waitFor(() => expect(api.createBattle).toHaveBeenCalledOnce());
+    dateNow.mockReturnValue(Date.parse("2026-07-26T18:53:07.001Z"));
+    pipelineWindow.successData?.({
+      ...compactKeuktaEvent,
+      ev: 1_785_091_986.4,
+    });
+
+    await vi.waitFor(() => expect(api.createBattle).toHaveBeenCalledTimes(2));
+
+    dispatcher.cleanup();
+    dateNow.mockRestore();
+  });
 });

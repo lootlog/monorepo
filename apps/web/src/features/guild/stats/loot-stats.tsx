@@ -50,7 +50,7 @@ export const LootStats: React.FC = () => {
   if (!settings.world) {
     return (
       <>
-        <div className="flex flex-col items-center justify-center h-[400px] gap-4 bg-background/50">
+        <div className="flex flex-col items-center justify-center h-[400px] gap-4 bg-background">
           <Globe className="h-12 w-12 text-muted-foreground" />
           <p className="text-muted-foreground">
             {t("loots.stats.selectWorldRequired")}
@@ -73,12 +73,12 @@ export const LootStats: React.FC = () => {
 
   return (
     <>
-      <ScrollArea className="h-full bg-background/50 px-3 pb-3">
+      <ScrollArea className="h-full bg-background px-3 pb-3">
         <div className="flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="rounded-xl bg-emerald-500/10 p-2.5 shadow-inner shadow-emerald-500/10">
+                <div className="rounded-xl bg-emerald-500/10 p-2.5">
                   <Gift className="size-4 text-emerald-500" />
                 </div>
                 <div className="min-w-0">

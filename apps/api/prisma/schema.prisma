@@ -296,6 +296,7 @@ model Member {
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
   @@index([userId, guildId, active, lastDiscordSyncAt])
+  @@index([globalUserId, guildId, active])
 }
 
 model Timer {
@@ -572,13 +573,13 @@ model UserCharactersLootlogSettings {
 }
 
 model UserSettings {
-  id          Int      @id @default(autoincrement())
-  userId      String   @unique
-  guildsOrder String[] @default([])
-  theme       String   @default("default")
-  colorMode   String   @default("dark")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  userId         String   @unique
+  guildsOrder    String[] @default([])
+  hiddenGuildIds String[] @default([])
+  theme          String   @default("default")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([userId])
 }
@@ -1031,6 +1032,7 @@ model EventKillPoint {
   trackingDurationPercentage  Float?
   confirmationDeadlineAt      DateTime?
   confirmedAt                 DateTime?
+  confirmationExpiredAcknowledgedAt DateTime?
   timeOnMapSeconds        Int
   afkPercentage           Float
   wasPresent              Boolean

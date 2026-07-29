@@ -102,15 +102,15 @@ const EventKillsHistoryContent = ({
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background/50">
+    <div className="flex flex-col h-full min-h-0 bg-background">
       <EventParticipationConfirmationDialog
         guildId={guildId}
         eventId={eventId}
       />
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+        <Card className="gap-4 border-border bg-card p-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="rounded-xl bg-red-500/10 p-2 shadow-inner shadow-red-500/10">
+            <div className="rounded-xl bg-red-500/10 p-2">
               <Skull className="size-4 text-red-500" />
             </div>
             <div className="min-w-0">
@@ -127,7 +127,7 @@ const EventKillsHistoryContent = ({
         </Card>
 
         {heroes.length > 0 && (
-          <Card className="gap-2 border-border bg-card/40 p-2.5 backdrop-blur-sm">
+          <Card className="gap-2 border-border bg-card p-2.5">
             <Tabs
               value={selectedHeroId ?? "all"}
               onValueChange={(value) =>
@@ -153,7 +153,7 @@ const EventKillsHistoryContent = ({
           </Card>
         )}
 
-        <Card className="flex min-h-0 flex-1 flex-col gap-2.5 border-border bg-card/40 p-2.5 backdrop-blur-sm">
+        <Card className="flex min-h-0 flex-1 flex-col gap-2.5 border-border bg-card p-2.5">
           {killsLoading ? (
             <div className="flex flex-1 items-center justify-center">
               <Spinner className="h-6 w-6" />

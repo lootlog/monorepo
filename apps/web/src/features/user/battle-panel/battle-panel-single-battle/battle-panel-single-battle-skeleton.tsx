@@ -18,12 +18,12 @@ const recentRows = Array.from({ length: 7 });
 
 export const BattlePanelSingleBattleSkeleton = () => {
   return (
-    <ScrollArea className="h-full bg-background/50" aria-hidden="true">
+    <ScrollArea className="h-full bg-background" aria-hidden="true">
       <div className="flex flex-col gap-4 px-3 py-3" style={layoutStyle}>
-        <Card className="w-full gap-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm">
+        <Card className="w-full gap-0 overflow-hidden border-border bg-card p-0">
           <div className="bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 px-3 py-3">
             <div className="grid grid-cols-1 items-stretch gap-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
-              <section className="min-w-0 rounded-sm bg-background/35 px-2.5 py-2 shadow-inner shadow-green-500/5">
+              <section className="min-w-0 rounded-sm bg-background/35 px-2.5 py-2">
                 <div className="mb-1.5 flex items-center gap-2">
                   <Skeleton className="size-3.5 rounded-sm" />
                   <Skeleton className="h-3 w-24" />
@@ -52,7 +52,7 @@ export const BattlePanelSingleBattleSkeleton = () => {
                 <Skeleton className="h-6 w-9 rounded-sm" />
               </div>
 
-              <section className="min-w-0 rounded-sm bg-background/35 px-2.5 py-2 shadow-inner shadow-destructive/5">
+              <section className="min-w-0 rounded-sm bg-background/35 px-2.5 py-2">
                 <div className="mb-1.5 flex items-center gap-2 lg:justify-end">
                   <Skeleton className="size-3.5 rounded-sm" />
                   <Skeleton className="h-3 w-24" />
@@ -93,7 +93,7 @@ export const BattlePanelSingleBattleSkeleton = () => {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.3fr)] xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)_minmax(300px,0.9fr)]">
             <div className="min-w-0">
-              <Card className="flex w-full flex-col gap-0 overflow-hidden border-border bg-card/40 p-0 backdrop-blur-sm lg:h-[var(--battle-side-card-height)] lg:min-h-0">
+              <Card className="flex w-full flex-col gap-0 overflow-hidden border-border bg-card p-0  lg:h-[var(--battle-side-card-height)] lg:min-h-0">
                 <div className="flex min-h-[57px] items-center justify-between gap-3 border-b bg-background px-3 py-3">
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <Skeleton className="size-4 rounded-sm" />

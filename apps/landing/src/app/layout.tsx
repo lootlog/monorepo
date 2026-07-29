@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@lootlog/ui/globals.css";
+import "./landing.css";
 import type { JSX, ReactNode } from "react";
 
 import { CookieConsent } from "@/src/components/cookie-consent";
 import { I18nProvider } from "@/src/components/i18n-provider";
 import { MotionProvider } from "@/src/components/motion-provider";
+import landingTranslations from "@/src/i18n/translations/landing.json";
+
+const { seo } = landingTranslations;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,26 +24,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://lootlog.pl"),
   title: {
-    default: "Lootlog.pl - Dodatek do gry Margonem",
+    default: seo.title,
     template: "%s | Lootlog.pl",
   },
-  description:
-    "Zaawansowany dodatek do gry Margonem, który automatycznie śledzi łupy i timery respawnu potworów. Synchronizowane timery, analiza walk i historia łupów. Darmowy i Open Source.",
-  keywords: [
-    "margonem",
-    "dodatek",
-    "lootlog",
-    "timery",
-    "łupy",
-    "mmorpg",
-    "gra",
-    "discord",
-    "addon",
-    "margonem dodatek",
-    "loot tracker",
-    "timer synchronizacja",
-    "analiza walk",
-  ],
+  description: seo.description,
+  keywords: seo.keywords,
   authors: [{ name: "Lootlog.pl Team" }],
   creator: "Lootlog.pl Team",
   robots: {
@@ -51,19 +40,26 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Lootlog.pl - Dodatek do gry Margonem",
-    description:
-      "Synchronizowane timery, historia łupów i analiza walk. Darmowy dodatek Open Source dla graczy Margonem.",
+    title: seo.title,
+    description: seo.description,
     type: "website",
     locale: "pl_PL",
     siteName: "Lootlog.pl",
     url: "https://lootlog.pl",
+    images: [
+      {
+        url: "/brand/lootlog-social.png",
+        width: 1200,
+        height: 630,
+        alt: seo.socialImageAlt,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lootlog.pl - Dodatek do gry Margonem",
-    description:
-      "Synchronizowane timery, historia łupów i analiza walk. Darmowy dodatek Open Source dla graczy Margonem.",
+    title: seo.title,
+    description: seo.description,
+    images: ["/brand/lootlog-social.png"],
   },
   alternates: {
     canonical: "https://lootlog.pl",
@@ -76,7 +72,8 @@ export default function RootLayout({
   return (
     <html lang="pl" className="dark" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-white`}
+        className={`${geistSans.variable} ${geistMono.variable} bg-[#070908] text-[#e9e7de] antialiased`}
+        style={{ fontFamily: "var(--font-geist-sans)" }}
       >
         <I18nProvider>
           <MotionProvider>

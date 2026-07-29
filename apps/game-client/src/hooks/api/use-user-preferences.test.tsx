@@ -27,8 +27,8 @@ vi.mock("@lootlog/api-client/react-query/main/users", async () => {
 const createTestUserPreferences = (): UserPreferencesResponseDtoOutput => ({
   userId: "user-1",
   guildsOrder: ["guild-1"],
+  hiddenGuildIds: [],
   theme: "default",
-  colorMode: "dark",
   chatAppearance: {
     npcLayout: "tile",
     fontScalePercent: 100,
@@ -166,6 +166,79 @@ describe("useUpdateUserPreferences", () => {
         ...previousData.chatAppearance,
         messageGapPx: 12,
       },
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  it("optimistically replaces hidden guild ids", async () => {
+    const deferred = createDeferred<UserPreferencesResponseDtoOutput>();
+    const previousData = createTestUserPreferences();
+
+    mockUpdateUserPreferences.mockReturnValue(deferred.promise);
+    queryClient.setQueryData(
+      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
+      previousData,
+    );
+    const { result } = renderHook(() => useUpdateUserPreferences(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      result.current.mutate({
+        hiddenGuildIds: ["guild-1", "guild-unavailable"],
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
+          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
+        )?.hiddenGuildIds,
+      ).toEqual(["guild-1", "guild-unavailable"]);
+    });
+
+    deferred.resolve({
+      ...previousData,
+      hiddenGuildIds: ["guild-1", "guild-unavailable"],
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  it("serializes rapid preference updates", async () => {
+    const firstDeferred = createDeferred<UserPreferencesResponseDtoOutput>();
+    const secondDeferred = createDeferred<UserPreferencesResponseDtoOutput>();
+    const previousData = createTestUserPreferences();
+    mockUpdateUserPreferences
+      .mockReturnValueOnce(firstDeferred.promise)
+      .mockReturnValueOnce(secondDeferred.promise);
+    queryClient.setQueryData(
+      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
+      previousData,
+    );
+    const { result } = renderHook(() => useUpdateUserPreferences(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      result.current.mutate({ hiddenGuildIds: ["guild-1"] });
+      result.current.mutate({ hiddenGuildIds: ["guild-1", "guild-2"] });
+    });
+
+    await waitFor(() =>
+      expect(mockUpdateUserPreferences).toHaveBeenCalledTimes(1),
+    );
+
+    firstDeferred.resolve({
+      ...previousData,
+      hiddenGuildIds: ["guild-1"],
+    });
+    await waitFor(() =>
+      expect(mockUpdateUserPreferences).toHaveBeenCalledTimes(2),
+    );
+
+    secondDeferred.resolve({
+      ...previousData,
+      hiddenGuildIds: ["guild-1", "guild-2"],
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });

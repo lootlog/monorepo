@@ -1,4 +1,5 @@
 import type { RedisService } from "@lootlog/nest-shared/redis";
+import { EventKillHistoryResponseDto } from "../dto/event-kill-response.dto";
 import { EventReadCacheService } from "./event-read-cache.service";
 
 type CachedPayload = {
@@ -69,5 +70,45 @@ describe("EventReadCacheService", () => {
     );
 
     expect(result.updatedAt).toBe(freshDate);
+  });
+
+  it("revives cached event kill spawn dates before response encoding", async () => {
+    const service = new EventReadCacheService(redis as unknown as RedisService);
+    const freshKillHistory = {
+      data: [
+        {
+          id: "kill-1",
+          heroNpcId: "hero-1",
+          killedAt: new Date("2026-06-19T11:00:00.000Z"),
+          minSpawnTimeAtKill: new Date("2026-06-19T09:00:00.000Z"),
+          maxSpawnTimeAtKill: new Date("2026-06-19T12:00:00.000Z"),
+          isManualClose: false,
+          heroNpc: {
+            id: "hero-1",
+            npcId: 1,
+            npcName: "Hero",
+            npcIcon: null,
+            npcLvl: 300,
+          },
+          points: [],
+        },
+      ],
+      nextCursor: null,
+    };
+    const cachedKillHistory = JSON.parse(JSON.stringify(freshKillHistory));
+
+    redis.getOrSetJsonBestEffort.mockResolvedValue(cachedKillHistory);
+
+    const result = await service.getOrSet("event-read:test", () =>
+      Promise.resolve(freshKillHistory),
+    );
+    const encoded = EventKillHistoryResponseDto.schema.encode(result);
+
+    expect(encoded.data[0]?.minSpawnTimeAtKill).toBe(
+      "2026-06-19T09:00:00.000Z",
+    );
+    expect(encoded.data[0]?.maxSpawnTimeAtKill).toBe(
+      "2026-06-19T12:00:00.000Z",
+    );
   });
 });

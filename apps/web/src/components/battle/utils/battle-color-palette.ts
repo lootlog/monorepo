@@ -156,7 +156,7 @@ export const BATTLE_SURFACE_COLORS = {
     won: "bg-green-500/5 hover:bg-green-500/10",
     lost: "bg-red-500/5 hover:bg-red-500/10",
     flee: "bg-yellow-500/5 hover:bg-yellow-500/10",
-    unknown: "bg-background/30 hover:bg-muted/50",
+    unknown: "bg-background hover:bg-muted/50",
   },
   team: {
     friendlyRow: "bg-green-400/10 hover:bg-green-400/20",
@@ -168,7 +168,7 @@ export const BATTLE_SURFACE_COLORS = {
     enemyHeader: "bg-red-950 text-red-50",
     currentCharacterBorder: "border-green-500",
     currentCharacterStrongBorder: "border-green-500/70 bg-green-500/10",
-    friendlyShadow: "shadow-inner shadow-green-500/5",
-    enemyShadow: "shadow-inner shadow-red-500/5",
+    friendlyShadow: "",
+    enemyShadow: "",
   },
 } as const;

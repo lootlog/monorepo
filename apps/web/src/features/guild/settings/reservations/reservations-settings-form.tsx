@@ -103,7 +103,7 @@ export const ReservationsSettingsForm = ({
         className="w-full mx-auto pb-24"
       >
         <div className="p-3">
-          <Card className="bg-card/50 backdrop-blur-sm border-border p-0 gap-0">
+          <Card className="bg-card  border-border p-0 gap-0">
             <div className="p-3">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -185,7 +185,7 @@ export const ReservationsSettingsForm = ({
         </div>
 
         <div className="px-3 pb-3">
-          <Card className="bg-card/50 backdrop-blur-sm border-border p-0 gap-0">
+          <Card className="bg-card  border-border p-0 gap-0">
             <div className="p-3">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 rounded-lg bg-blue-500/10">
@@ -275,7 +275,7 @@ export const ReservationsSettingsForm = ({
         </div>
 
         <div className="px-3 pb-3">
-          <Card className="bg-card/50 backdrop-blur-sm border-border p-0 gap-0">
+          <Card className="bg-card  border-border p-0 gap-0">
             <div className="p-3">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 rounded-lg bg-amber-500/10">

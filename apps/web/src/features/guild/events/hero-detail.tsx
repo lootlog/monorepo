@@ -40,6 +40,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
+import { getAssignmentAvailability } from "./utils/get-assignment-availability";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   useGuildsControllerGetGuildById,
@@ -351,29 +352,16 @@ export const HeroDetail = () => {
     );
   }
 
-  const getAssignmentStatus = () => {
-    if (!hero) return { allowed: false, enabledAt: null };
-    if (!heroTimer) return { allowed: false, enabledAt: null };
-
-    if (windowStatus === "OVERDUE") {
-      return { allowed: false, enabledAt: null };
-    }
-
-    const minSpawn = new Date(heroTimer.minSpawnTime);
-    const now = new Date();
-    const timeoutMinutes = event?.assignmentTimeoutMinutes ?? 5;
-    const timeoutMs = timeoutMinutes * 60 * 1000;
-
-    const allowed = minSpawn.getTime() - now.getTime() <= timeoutMs;
-    const enabledAt = allowed ? null : new Date(minSpawn.getTime() - timeoutMs);
-
-    return { allowed, enabledAt };
-  };
-
-  const { allowed: assignmentAllowed, enabledAt: assignmentEnabledAt } =
-    getAssignmentStatus();
+  const {
+    allowed: assignmentAllowed,
+    enabledAt: assignmentEnabledAt,
+    reason: assignmentDisabledReason,
+  } = getAssignmentAvailability({
+    assignmentTimeoutMinutes: event?.assignmentTimeoutMinutes ?? 5,
+    timer: heroTimer,
+  });
   const assignmentDisabledMessage =
-    windowStatus === "OVERDUE"
+    assignmentDisabledReason === "OVERDUE"
       ? t("events.maps.assignmentDisabledOverdue")
       : null;
 
@@ -569,7 +557,7 @@ export const HeroDetail = () => {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background/50">
+    <div className="flex flex-col h-full min-h-0 bg-background">
       <EventParticipationConfirmationDialog
         guildId={guildId}
         eventId={eventId}
@@ -577,7 +565,7 @@ export const HeroDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 {hero.npcIcon ? (
@@ -589,7 +577,7 @@ export const HeroDetail = () => {
                     }}
                   />
                 ) : (
-                  <div className="rounded-xl bg-yellow-500/10 p-2 shadow-inner shadow-yellow-500/10">
+                  <div className="rounded-xl bg-yellow-500/10 p-2">
                     <Swords className="size-4 text-yellow-500" />
                   </div>
                 )}
@@ -647,7 +635,7 @@ export const HeroDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
               {uniqueMembers.length > 0 && (
-                <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
+                <Card className="p-3 bg-card  border-border gap-2">
                   <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
                     <Users className="w-4 h-4" />
                     {t("events.participants.title")}{" "}
@@ -663,7 +651,7 @@ export const HeroDetail = () => {
                 </Card>
               )}
 
-              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
+              <Card className="p-3 bg-card  border-border gap-2">
                 <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <MapPin className="w-4 h-4" />

@@ -14,15 +14,6 @@ const messages = {
     npcs: "NPC",
     players: "Gracze",
   },
-  theme: {
-    auto: "Auto",
-    dark: "Ciemny",
-    light: "Jasny",
-    autoLabel:
-      "Tryb motywu: automatyczny. Kliknij, aby przełączyć na tryb jasny.",
-    darkLabel: "Tryb motywu: ciemny. Kliknij, aby przełączyć tryb.",
-    lightLabel: "Tryb motywu: jasny. Kliknij, aby przełączyć tryb.",
-  },
   footer: {
     copyright: "Lootlog",
     builtWith: "Wiki na TanStack Start i Cloudflare Workers",

@@ -28,7 +28,7 @@ export const MemberStatusBadge = ({ member }: { member: GuildMember }) => {
   if (!member.active) {
     copy = {
       label: t("settings.members.statusInactive"),
-      className: "border-border bg-background/50 text-muted-foreground",
+      className: "border-border bg-background text-muted-foreground",
       icon: UserMinus,
     };
   } else if (member.roles.length === 0) {

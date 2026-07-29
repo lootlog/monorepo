@@ -13,7 +13,7 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-row bg-background/60">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-row bg-background">
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
         {variant === "ready" ? (
           <GuildBreadcrumbs />

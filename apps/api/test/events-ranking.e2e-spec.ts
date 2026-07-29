@@ -126,11 +126,27 @@ describe("Events Ranking E2E", () => {
 
     await withAuth(
       request(app.getHttpServer()).get(
-        `/guilds/${guild.id}/events/${event.id}/ranking/${ranking.id}/history`,
+        `/guilds/${guild.id}/events/${event.id}/ranking`,
       ),
     )
       .expect(200)
-      .expect((response) => expect(response.body).toHaveLength(1));
+      .expect((response) => {
+        expect(response.body).toHaveLength(1);
+        expect(response.body[0]).toEqual(
+          expect.objectContaining({
+            id: ranking.id,
+            editHistory: [
+              expect.objectContaining({
+                rankingId: ranking.id,
+                previousPoints: 1,
+                newPoints: 3,
+                deltaPoints: 2,
+                comment: "bonus",
+              }),
+            ],
+          }),
+        );
+      });
 
     await withAuth(
       request(app.getHttpServer())

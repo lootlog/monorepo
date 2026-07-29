@@ -33,12 +33,25 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 - Pull request titles and descriptions must be written in English.
 - Never use `--no-verify` or otherwise bypass verification hooks. If a hook fails, fix the underlying issue or report the blocker instead of skipping checks.
 
+## Versioning and Changesets
+
+- Add a changeset for every workspace whose runtime behavior, user-facing behavior, public contract, build output, or dependencies change.
+- Include every directly affected workspace in the changeset. Internal runtime dependents are patched automatically by Changesets.
+- Use `patch` for fixes and compatible internal improvements, `minor` for backwards-compatible features, and `major` for breaking consumer-facing changes.
+- Write changeset summaries in clear English; they become changelog and GitHub Release entries.
+- For workspace-only changes that do not require a release, such as tests, documentation, or non-release configuration, add an empty changeset with `pnpm changeset --empty`.
+- Never edit package versions or generated changelogs manually, and never run `pnpm version`. The automated release pull request owns those changes.
+- Releases are created only from `main`. Merging an ordinary feature pull request to `main` may deploy dev but must never create release artifacts.
+- Merging the Changesets version PR creates immutable Git tags, GitHub Releases, and Docker images. Production promotion requires approval of the `prod` environment.
+- Production rollback or promotion must reuse an existing `prod-<semver>` image and update GitOps only. Never rebuild an image for rollback.
+
 ## Refactoring
 
 - Do not create or preserve files that only re-export symbols. Update imports to the real module and delete re-export-only wrappers.
 
 ## Design Guidelines
 
+- Treat [`DESIGN.md`](DESIGN.md) as the canonical Lootlog brand and visual system for `apps/landing`, `apps/web`, `apps/wiki`, and `apps/developer`. Apply its Persuade, Operate, and Read mode guidance instead of copying landing-page composition across surfaces.
 - When working on `apps/web`, follow the design system defined in [`apps/web/design-guideline.md`](apps/web/design-guideline.md). All pages must use the unified layout patterns, design tokens, and component styling described there.
 
 ## Additional Notes

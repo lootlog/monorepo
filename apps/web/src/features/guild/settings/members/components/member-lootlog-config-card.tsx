@@ -1,6 +1,6 @@
 import { Badge } from "@lootlog/ui/components/badge";
 import { Card } from "@lootlog/ui/components/card";
-import { PlayerTile } from "@/features/guild/loots-list/components/loots-list/player-tile";
+import { PlayerTile } from "@/components/tiles";
 import {
   getMemberLootlogConfigMetadataTranslationKey,
   getMemberLootlogProfileTarget,
@@ -45,7 +45,7 @@ export const MemberLootlogConfigCard = ({
   }
 
   return (
-    <Card className="border-border bg-card/50 p-4 backdrop-blur-sm gap-3">
+    <Card className="border-border bg-card p-4  gap-3">
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">
           {t("settings.members.lootlogTitle")}
@@ -107,7 +107,7 @@ export const MemberLootlogConfigCard = ({
             return (
               <div
                 key={`${character.accountId}:${character.characterId}`}
-                className="flex max-w-full items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-2.5 py-2"
+                className="flex max-w-full items-center gap-2 rounded-xl border border-border/60 bg-background px-2.5 py-2"
               >
                 <PlayerTile
                   player={{

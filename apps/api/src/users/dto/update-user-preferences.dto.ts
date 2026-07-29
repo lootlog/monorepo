@@ -9,6 +9,12 @@ const UpdateUserPreferencesSchema = z.object({
       message: "guildsOrder must contain unique values",
     })
     .optional(),
+  hiddenGuildIds: z
+    .array(z.string().min(1))
+    .refine((guildIds) => new Set(guildIds).size === guildIds.length, {
+      message: "hiddenGuildIds must contain unique values",
+    })
+    .optional(),
   theme: z
     .enum([
       "default",
@@ -32,7 +38,6 @@ const UpdateUserPreferencesSchema = z.object({
       "cat-random",
     ])
     .optional(),
-  colorMode: z.enum(["light", "dark"]).optional(),
   chatAppearance: z
     .object({
       npcLayout: z.enum(["tile", "inline"]).optional(),

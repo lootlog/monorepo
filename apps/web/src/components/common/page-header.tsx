@@ -1,31 +1,30 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Card } from "@lootlog/ui/components/card";
 
 const iconColorMap = {
   primary: {
-    bg: "bg-primary/10 shadow-inner shadow-primary/10",
+    bg: "bg-primary/12",
     text: "text-primary",
   },
   blue: {
-    bg: "bg-blue-500/10 shadow-inner shadow-blue-500/10",
-    text: "text-blue-500",
+    bg: "bg-signal-live/10",
+    text: "text-signal-live",
   },
   red: {
-    bg: "bg-red-500/10 shadow-inner shadow-red-500/10",
-    text: "text-red-500",
+    bg: "bg-signal-alert/10",
+    text: "text-signal-alert",
   },
   amber: {
-    bg: "bg-amber-500/10 shadow-inner shadow-amber-500/10",
-    text: "text-amber-500",
+    bg: "bg-signal-timer/10",
+    text: "text-signal-timer",
   },
   green: {
-    bg: "bg-green-500/10 shadow-inner shadow-green-500/10",
-    text: "text-green-500",
+    bg: "bg-signal-ready/10",
+    text: "text-signal-ready",
   },
   yellow: {
-    bg: "bg-yellow-500/10 shadow-inner shadow-yellow-500/10",
-    text: "text-yellow-500",
+    bg: "bg-signal-timer/10",
+    text: "text-signal-timer",
   },
 } as const;
 
@@ -47,19 +46,23 @@ export const PageHeader = ({
   const colors = iconColorMap[iconColor];
 
   return (
-    <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
-      <div className="flex min-w-0 items-center gap-3">
+    <header className="flex min-w-0 flex-col gap-3 border-b border-border/80 pb-4 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className={`rounded-xl p-2.5 ${colors.bg}`}>
-          <Icon className={`size-4 ${colors.text}`} />
+          <Icon className={`size-4 ${colors.text}`} aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold leading-tight">{title}</h2>
-          <p className="text-xs leading-tight text-muted-foreground">
+          <h1 className="text-lg font-semibold leading-tight tracking-[-0.02em]">
+            {title}
+          </h1>
+          <p className="mt-1 text-sm leading-snug text-muted-foreground">
             {description}
           </p>
         </div>
-        {actions}
       </div>
-    </Card>
+      {actions && (
+        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+      )}
+    </header>
   );
 };

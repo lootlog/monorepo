@@ -96,17 +96,33 @@
     "mobileFiltersTitle": "Filtry łupów"
   },
   "searchCommand": {
-    "placeholder": "Szukaj przedmiotów, potworów, graczy...",
+    "dialogTitle": "Wyszukaj łup",
+    "dialogDescription": "Wyszukaj przedmiot, potwora lub gracza albo wklej identyfikator HID.",
+    "placeholder": "Szukaj lub wklej HID przedmiotu...",
     "loading": "Wyszukiwanie...",
-    "startTyping": "Zacznij wpisywać aby wyszukać...",
-    "itemById": "Znaleziony przedmiot (ID)",
+    "idleTitle": "Znajdź łup szybciej",
+    "startTyping": "Wpisz nazwę przedmiotu, potwora lub gracza.",
+    "keepTyping": "Wpisz jeszcze co najmniej jeden znak.",
+    "hidHint": "Możesz też wkleić",
+    "hidExample": "ITEM#identyfikator.świat",
+    "hidInvalidTitle": "Nie rozpoznaję tego HID",
+    "hidInvalidDescription": "Wklej pełny identyfikator razem z nazwą świata.",
+    "hidLoadingTitle": "Sprawdzamy przedmiot z HID…",
+    "hidNotFoundTitle": "Nie znaleziono przedmiotu",
+    "hidNotFoundDescription": "Sprawdź identyfikator i nazwę świata, a następnie spróbuj ponownie.",
+    "hidErrorTitle": "Nie udało się sprawdzić HID",
+    "hidErrorDescription": "Połączenie z wyszukiwarką nie powiodło się. Spróbuj ponownie za chwilę.",
+    "itemById": "Przedmiot z HID",
+    "level": "Poziom {{level}}",
     "npcs": "Potwory",
     "items": "Przedmioty",
     "players": "Gracze",
-    "noResults": "Nie znaleziono wyników."
+    "noResults": "Brak wyników",
+    "noResultsDescription": "Spróbuj krótszej nazwy albo sprawdź pisownię."
   },
   "list": {
-    "noWorldSelected": "Brak wybranego świata, wybierz go z listy na górze.",
+    "selectWorldTitle": "Wybierz świat",
+    "noWorldSelected": "Wybierz świat, z którego chcesz zobaczyć łupy.",
     "noWorldSelectedCat": "Miau! Wybierz świat, żeby zobaczyć łupy 🐱",
     "noWorldSelectedRukia": "Lodowa cisza... Wybierz świat, by przełamać mróz.",
     "noWorldSelectedRias": "Krąg magiczny nieaktywny... Wybierz świat, by go przywołać.",
@@ -125,17 +141,30 @@
     "unassignedItems": "Przedmioty bez podziału",
     "obtainedBy": "Zdobyto przez:",
     "stackCount": "+{{count}} więcej",
-    "details": "Szczegóły"
+    "details": "Szczegóły",
+    "playerActions": {
+      "label": "Akcje gracza {{name}}",
+      "showLoots": "Pokaż łupy tego gracza",
+      "openMargonemProfile": "Pokaż profil Margonem"
+    },
+    "itemActions": {
+      "copyId": "Kopiuj ID przedmiotu",
+      "showLoots": "Pokaż łupy z tym przedmiotem"
+    }
   },
   "details": {
     "copySuccess": "ID skopiowane",
     "copyError": "Nie udało się skopiować ID. Spróbuj ponownie.",
+    "copyId": "Kopiuj identyfikator przedmiotu",
     "notFound": "Nie znaleziono łupu",
     "obtainedAt": "Zdobyto {{date}}",
+    "participants": "Uczestnicy ({{count}})",
     "comments": {
       "title": "Komentarze ({{count}})",
       "placeholder": "Dodaj komentarz...",
-      "submit": "Dodaj komentarz"
+      "submit": "Dodaj komentarz",
+      "empty": "Brak komentarzy. Dodaj pierwszy.",
+      "error": "Nie udało się wczytać komentarzy."
     },
     "showLess": "Pokaż mniej",
     "showMore": "Pokaż więcej ({{count}})"

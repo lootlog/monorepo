@@ -174,9 +174,9 @@ export const NpcKillersPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <div className="flex flex-col h-full min-h-0 bg-background">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex items-center gap-3">
               <Skeleton className="h-10 w-10 rounded" />
               <div className="flex flex-col gap-2 flex-1">
@@ -185,7 +185,7 @@ export const NpcKillersPage: React.FC = () => {
               </div>
             </div>
           </Card>
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
             <div>
               {Array.from({ length: 10 }).map((_, i) => (
                 <div
@@ -218,10 +218,10 @@ export const NpcKillersPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background/50">
+    <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
+          <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {npc.npcIcon && (
@@ -300,7 +300,7 @@ export const NpcKillersPage: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card/40 p-0 backdrop-blur-sm overflow-hidden gap-0">
+          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {filteredKillers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
@@ -326,7 +326,7 @@ export const NpcKillersPage: React.FC = () => {
                             memberId: killer.memberId.toString(),
                           }}
                           className={cn(
-                            "min-w-0 rounded-lg border border-border bg-background/60 p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            "min-w-0 rounded-lg border border-border bg-background p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             globalIndex === 0 &&
                               "border-yellow-500/30 bg-yellow-500/5",
                           )}
@@ -387,7 +387,7 @@ export const NpcKillersPage: React.FC = () => {
                           <TableRow
                             key={killer.memberId}
                             className={cn(
-                              "bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors",
+                              "bg-background border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors",
                               globalIndex === 0 && "bg-yellow-500/5",
                             )}
                           >

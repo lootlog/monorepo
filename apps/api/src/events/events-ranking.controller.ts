@@ -25,11 +25,14 @@ import {
   UpdateRankingPointsDto,
 } from "./dto/update-points.dto";
 import {
+  AcknowledgeExpiredParticipationConfirmationsDto,
+  AcknowledgeExpiredParticipationConfirmationsResponseDto,
+} from "./dto/acknowledge-participation-confirmations.dto";
+import {
   ConfirmParticipationForKillResponseDto,
   EventRankingEntryResponseDto,
   EventTimerResponseDto,
   PendingParticipationConfirmationsResponseDto,
-  RankingEditHistoryEntryResponseDto,
 } from "./dto/event-response.dto";
 import {
   EventHeroStatsResponseDto,
@@ -78,6 +81,36 @@ export class EventsRankingController {
       guildData.id,
       eventId,
       member.id,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Post(
+    "/guilds/:guildId/events/:eventId/participation-confirmations/expired/acknowledge",
+  )
+  @ApiOperation({
+    operationId: "acknowledgeExpiredParticipationConfirmations",
+    summary: "Acknowledge expired participation confirmations",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID" })
+  @ApiParam({ name: "eventId", description: "Event ID" })
+  @ZodResponse({
+    status: 201,
+    description: "Expired confirmations acknowledged",
+    type: AcknowledgeExpiredParticipationConfirmationsResponseDto,
+  })
+  acknowledgeExpiredParticipationConfirmations(
+    @GuildData() guildData: { id: string },
+    @Param("eventId") eventId: string,
+    @GuildMember() member: { id: number },
+    @Body() data: AcknowledgeExpiredParticipationConfirmationsDto,
+  ) {
+    return this.eventsService.acknowledgeExpiredParticipationConfirmations(
+      guildData.id,
+      eventId,
+      member.id,
+      data.killIds,
     );
   }
 
@@ -148,9 +181,34 @@ export class EventsRankingController {
       filteredOverview.heroNpcs.map((hero) => hero.npcName),
     );
 
-    return rankings.filter((ranking) =>
+    const visibleRankings = rankings.filter((ranking) =>
       visibleHeroNames.has(ranking.heroNpcName),
     );
+
+    if (visibleRankings.length === 0) {
+      return [];
+    }
+
+    const canViewEditHistory =
+      permissions.includes(Permission.OWNER) ||
+      permissions.includes(Permission.ADMIN);
+    if (!canViewEditHistory) {
+      return visibleRankings.map((ranking) => ({
+        ...ranking,
+        editHistory: [],
+      }));
+    }
+
+    const editHistories = await this.eventsService.getRankingEditHistories(
+      guildData.id,
+      eventId,
+      visibleRankings.map((ranking) => ranking.id),
+    );
+
+    return visibleRankings.map((ranking) => ({
+      ...ranking,
+      editHistory: editHistories.get(ranking.id) ?? [],
+    }));
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
@@ -184,35 +242,6 @@ export class EventsRankingController {
       data.pointsDelta,
       data.comment,
       userId,
-    );
-  }
-
-  @Permissions(Permission.OWNER, Permission.ADMIN)
-  @UseGuards(PermissionsGuard)
-  @Get("/guilds/:guildId/events/:eventId/ranking/:rankingId/history")
-  @ApiOperation({
-    operationId: "listRankingEditHistory",
-    summary: "Get ranking edit history",
-    description: "Get the edit history for a ranking entry (OWNER/ADMIN only)",
-  })
-  @ApiParam({ name: "guildId", description: "Guild ID" })
-  @ApiParam({ name: "eventId", description: "Event ID" })
-  @ApiParam({ name: "rankingId", description: "Ranking ID" })
-  @ZodResponse({
-    status: 200,
-    description: "Edit history returned",
-    type: [RankingEditHistoryEntryResponseDto],
-  })
-  @ApiResponse({ status: 404, description: "Ranking not found" })
-  getRankingEditHistory(
-    @GuildData() guildData: { id: string },
-    @Param("eventId") eventId: string,
-    @Param("rankingId") rankingId: string,
-  ) {
-    return this.eventsService.getRankingEditHistory(
-      guildData.id,
-      eventId,
-      rankingId,
     );
   }
 

@@ -23,6 +23,7 @@ import { EventCoordinationSummaryCard } from "./components/coordination/event-co
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
+import { getAssignmentAvailability } from "./utils/get-assignment-availability";
 import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item";
 
 export const EventCoordinationPage = () => {
@@ -125,8 +126,20 @@ export const EventCoordinationPage = () => {
     permissions?.includes(Permission.OWNER) ||
     false;
 
-  const handleSelfAssign = async (mapId: string) => {
+  const handleSelfAssign = async (
+    mapId: string,
+    hero: EventCoordinationResponseDtoHeroesItem,
+  ) => {
     if (!guildId || !eventId) return;
+
+    const assignmentAvailability = getAssignmentAvailability({
+      assignmentTimeoutMinutes: coordination?.assignmentTimeoutMinutes ?? 5,
+      timer: hero.timer,
+    });
+    if (!assignmentAvailability.allowed) {
+      toast.error(t("events.maps.assignError"));
+      return;
+    }
 
     try {
       setAssigningMapId(mapId);
@@ -188,7 +201,7 @@ export const EventCoordinationPage = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <EventActionDialog
         open={closingHero !== null}
         onOpenChange={(open) => {
@@ -210,7 +223,7 @@ export const EventCoordinationPage = () => {
           <EventCoordinationSummaryCard coordination={coordination} />
 
           {coordination.heroes.length === 0 ? (
-            <Card className="flex flex-col items-center justify-center gap-3 bg-card/40 py-12 backdrop-blur-sm">
+            <Card className="flex flex-col items-center justify-center gap-3 bg-card py-12">
               <Crosshair className="w-12 h-12 text-muted-foreground opacity-50" />
               <p className="text-muted-foreground">
                 {t("events.coordination.empty")}
@@ -224,6 +237,9 @@ export const EventCoordinationPage = () => {
                   hero={hero}
                   guildId={guildId ?? ""}
                   eventId={eventId ?? ""}
+                  assignmentTimeoutMinutes={
+                    coordination.assignmentTimeoutMinutes
+                  }
                   canWrite={canWrite}
                   canManage={canManage}
                   assigningMapId={assigningMapId}

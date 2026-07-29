@@ -1,12 +1,21 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { GuildSwitcher } from "./guild-switcher";
 
 const mockUseAccessibleGuilds = vi.fn();
 const mockUseUserPreferences = vi.fn();
+const mockUpdatePreferences = vi.fn();
+const mockToastSuccess = vi.hoisted(() => vi.fn());
 const runtime = vi.hoisted(() => ({ heroId: 123 as number | undefined }));
 
 vi.mock("@lootlog/api-client/react-query/main/users", () => ({
@@ -19,6 +28,16 @@ vi.mock("@lootlog/api-client/react-query/main/users", () => ({
 
 vi.mock("@/hooks/api/use-user-preferences", () => ({
   useUserPreferences: () => mockUseUserPreferences(),
+  useUpdateUserPreferences: () => ({
+    mutate: mockUpdatePreferences,
+  }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: mockToastSuccess,
+  },
 }));
 
 vi.mock("@/lib/game", () => ({
@@ -38,6 +57,10 @@ const createGuild = (id: string, name: string): GuildIdentity => ({
 });
 
 describe("GuildSwitcher", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     runtime.heroId = 123;
@@ -59,6 +82,13 @@ describe("GuildSwitcher", () => {
       world: "tempest",
     });
     useSettingsStore.setState({ guildIdByCharId: {} });
+    useWindowsStore.setState((state) => ({
+      settings: {
+        ...state.settings,
+        open: false,
+        state: {},
+      },
+    }));
 
     mockUseAccessibleGuilds.mockReturnValue({
       data: [
@@ -71,14 +101,91 @@ describe("GuildSwitcher", () => {
     mockUseUserPreferences.mockReturnValue({
       data: {
         guildsOrder: [],
+        hiddenGuildIds: [],
       },
+      isFetched: true,
     });
+    mockUpdatePreferences.mockImplementation(
+      (
+        _payload: unknown,
+        options?: {
+          onSuccess?: () => void;
+        },
+      ) => options?.onSuccess?.(),
+    );
+  });
+
+  it("hides a guild from its context menu and can undo the change", async () => {
+    const { rerender } = render(<GuildSwitcher />);
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "A" }));
+    fireEvent.click(
+      await screen.findByText("Ukryj w grze", {}, { timeout: 1000 }),
+    );
+
+    expect(mockUpdatePreferences).toHaveBeenCalledWith(
+      { hiddenGuildIds: ["guild-1"] },
+      expect.any(Object),
+    );
+
+    const toastOptions = mockToastSuccess.mock.calls[0]?.[1] as {
+      action: { onClick: () => void };
+    };
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: [],
+        hiddenGuildIds: ["guild-1", "guild-2"],
+      },
+      isFetched: true,
+    });
+    rerender(<GuildSwitcher />);
+    toastOptions.action.onClick();
+
+    expect(mockUpdatePreferences).toHaveBeenLastCalledWith({
+      hiddenGuildIds: ["guild-2"],
+    });
+  });
+
+  it("keeps cached guilds visible after a preferences refetch error", () => {
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: [],
+        hiddenGuildIds: [],
+      },
+      error: new Error("refetch failed"),
+      isFetched: true,
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    render(<GuildSwitcher />);
+
+    expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("does not initialize the global selection from an uncontrolled switcher", () => {
     render(<GuildSwitcher />);
 
     expect(useSettingsStore.getState().guildIdByCharId["123"]).toBeUndefined();
+  });
+
+  it("shows a delayed loading status while guilds are unavailable", () => {
+    vi.useFakeTimers();
+    mockUseAccessibleGuilds.mockReturnValue({
+      data: undefined,
+      error: null,
+      isFetched: false,
+      isLoading: true,
+      refetch: vi.fn(),
+    });
+
+    render(<GuildSwitcher />);
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(200));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Ładowanie serwerów");
   });
 
   it("does not write a selection before the character identity is available", () => {
@@ -105,7 +212,9 @@ describe("GuildSwitcher", () => {
     mockUseUserPreferences.mockReturnValue({
       data: {
         guildsOrder: ["guild-2", "guild-1"],
+        hiddenGuildIds: [],
       },
+      isFetched: true,
     });
 
     render(<GuildSwitcher />);
@@ -121,7 +230,9 @@ describe("GuildSwitcher", () => {
     mockUseUserPreferences.mockReturnValue({
       data: {
         guildsOrder: ["guild-2", "guild-1"],
+        hiddenGuildIds: [],
       },
+      isFetched: true,
     });
 
     render(<GuildSwitcher value="missing-guild" onChange={handleChange} />);
@@ -163,5 +274,75 @@ describe("GuildSwitcher", () => {
 
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("9+")).toBeInTheDocument();
+  });
+
+  it("removes hidden guilds and falls back to the first visible guild", async () => {
+    const handleChange = vi.fn();
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: ["guild-2", "guild-1"],
+        hiddenGuildIds: ["guild-2"],
+      },
+      isFetched: true,
+    });
+
+    render(<GuildSwitcher value="guild-2" onChange={handleChange} />);
+
+    expect(screen.queryByText("B")).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button").map((button) => button.textContent),
+    ).toEqual(["A", "G"]);
+    await waitFor(() => expect(handleChange).toHaveBeenCalledWith("guild-1"));
+  });
+
+  it("does not render a server picker when only one guild is visible", () => {
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: [],
+        hiddenGuildIds: ["guild-2", "guild-3"],
+      },
+      isFetched: true,
+    });
+
+    render(<GuildSwitcher allowAll value="all" />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Wszystkie serwery są ukryte"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a full-width settings notice when every guild is hidden", () => {
+    mockUseUserPreferences.mockReturnValue({
+      data: {
+        guildsOrder: [],
+        hiddenGuildIds: ["guild-1", "guild-2", "guild-3"],
+      },
+      isFetched: true,
+    });
+
+    const { container } = render(<GuildSwitcher allowAll value="all" />);
+
+    expect(screen.queryByText("*")).not.toBeInTheDocument();
+    expect(screen.getByText("Wszystkie serwery są ukryte")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveClass(
+      "ll:h-7",
+      "ll:w-full",
+      "ll:border-gray-700/90",
+      "ll:bg-gray-900/60",
+    );
+    expect(
+      container.querySelector("[data-ll-scroll-area-viewport]"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Otwórz ustawienia" }));
+
+    expect(useWindowsStore.getState().settings).toMatchObject({
+      open: true,
+      state: {
+        activeTab: "servers",
+        activeSubsection: "visibility",
+      },
+    });
   });
 });

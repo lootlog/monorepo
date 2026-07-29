@@ -4272,6 +4272,40 @@ paths:
       summary: Get participation confirmations
       tags:
         - events
+  /guilds/{guildId}/events/{eventId}/participation-confirmations/expired/acknowledge:
+    post:
+      operationId: acknowledgeExpiredParticipationConfirmations
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          description: Event ID
+          schema:
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcknowledgeExpiredParticipationConfirmationsDto"
+      responses:
+        "201":
+          description: Expired confirmations acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcknowledgeExpiredParticipationConfirmationsResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Acknowledge expired participation confirmations
+      tags:
+        - events
   /guilds/{guildId}/events/{eventId}/kills/{killId}/confirm-participation:
     post:
       description: Confirm member participation for a kill within configured confirmation window
@@ -4377,45 +4411,6 @@ paths:
       security:
         - bearer: []
       summary: Update ranking points
-      tags:
-        - events
-  /guilds/{guildId}/events/{eventId}/ranking/{rankingId}/history:
-    get:
-      description: Get the edit history for a ranking entry (OWNER/ADMIN only)
-      operationId: listRankingEditHistory
-      parameters:
-        - name: eventId
-          required: true
-          in: path
-          description: Event ID
-          schema:
-            type: string
-        - name: rankingId
-          required: true
-          in: path
-          description: Ranking ID
-          schema:
-            type: string
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Edit history returned
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RankingEditHistoryEntryResponseDto"
-        "404":
-          description: Ranking not found
-      security:
-        - bearer: []
-      summary: Get ranking edit history
       tags:
         - events
   /guilds/{guildId}/events/{eventId}/timers:
@@ -6212,9 +6207,11 @@ components:
           type: array
           items:
             type: string
+        hiddenGuildIds:
+          type: array
+          items:
+            type: string
         theme:
-          type: string
-        colorMode:
           type: string
         chatAppearance:
           type: object
@@ -6313,8 +6310,8 @@ components:
       required:
         - userId
         - guildsOrder
+        - hiddenGuildIds
         - theme
-        - colorMode
         - chatAppearance
         - mutes
     UserCurrentGuildResponseDto_Output:
@@ -6353,6 +6350,11 @@ components:
           type: array
           items:
             type: string
+        hiddenGuildIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
         theme:
           type: string
           enum:
@@ -6375,11 +6377,6 @@ components:
             - cat-purple
             - cat-blue
             - cat-random
-        colorMode:
-          type: string
-          enum:
-            - light
-            - dark
         chatAppearance:
           type: object
           properties:
@@ -15354,6 +15351,25 @@ components:
       required:
         - items
         - expiredItems
+    AcknowledgeExpiredParticipationConfirmationsDto:
+      type: object
+      properties:
+        killIds:
+          minItems: 1
+          type: array
+          items:
+            type: string
+      required:
+        - killIds
+    AcknowledgeExpiredParticipationConfirmationsResponseDto_Output:
+      type: object
+      properties:
+        acknowledgedCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - acknowledgedCount
     ConfirmParticipationForKillResponseDto_Output:
       type: object
       properties:
@@ -15399,6 +15415,49 @@ components:
           required:
             - id
             - name
+        editHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              rankingId:
+                type: string
+              previousPoints:
+                type: number
+              newPoints:
+                type: number
+              deltaPoints:
+                type: number
+              editType:
+                type: string
+                enum:
+                  - KILL_POINT
+                  - RANKING
+              editedByUserId:
+                type: string
+              editedByName:
+                type: string
+                nullable: true
+              comment:
+                type: string
+                nullable: true
+              editedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - id
+              - rankingId
+              - previousPoints
+              - newPoints
+              - deltaPoints
+              - editType
+              - editedByUserId
+              - editedByName
+              - comment
+              - editedAt
       required:
         - id
         - eventId
@@ -15411,6 +15470,7 @@ components:
         - pointsModified
         - updatedAt
         - member
+        - editHistory
     UpdateRankingPointsDto:
       type: object
       properties:
@@ -15421,47 +15481,6 @@ components:
           maxLength: 500
       required:
         - pointsDelta
-    RankingEditHistoryEntryResponseDto:
-      type: object
-      properties:
-        id:
-          type: string
-        rankingId:
-          type: string
-        previousPoints:
-          type: number
-        newPoints:
-          type: number
-        deltaPoints:
-          type: number
-        editType:
-          type: string
-          enum:
-            - KILL_POINT
-            - RANKING
-        editedByUserId:
-          type: string
-        editedByName:
-          type: string
-          nullable: true
-        comment:
-          type: string
-          nullable: true
-        editedAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-      required:
-        - id
-        - rankingId
-        - previousPoints
-        - newPoints
-        - deltaPoints
-        - editType
-        - editedByUserId
-        - editedByName
-        - comment
-        - editedAt
     EventTimerResponseDto:
       type: object
       properties:
@@ -16120,6 +16139,8 @@ components:
     EventCoordinationResponseDto:
       type: object
       properties:
+        assignmentTimeoutMinutes:
+          type: number
         generatedAt:
           type: string
           format: date-time
@@ -16282,6 +16303,7 @@ components:
               - priority
               - recommendedAction
       required:
+        - assignmentTimeoutMinutes
         - generatedAt
         - eventId
         - world
