@@ -2,7 +2,7 @@ packages:
   - "apps/*"
   - "packages/*"
 catalog:
-  "@hookform/resolvers": ^5.4.2
+  "@hookform/resolvers": ^5.5.7
   "@nestjs/axios": ^4.0.1
   "@nestjs/cli": ^11.0.24
   "@nestjs/common": ^11.1.28
@@ -13,7 +13,7 @@ catalog:
   "@nestjs/swagger": ^11.4.6
   "@nestjs/testing": ^11.1.28
   "@swc/cli": ^0.8.1
-  "@swc/core": ^1.15.46
+  "@swc/core": ^1.15.47
   "@tailwindcss/postcss": ^4.3.3
   "@tailwindcss/vite": ^4.3.3
   "@tanstack/react-query": ^5.101.4

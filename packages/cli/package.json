@@ -18,7 +18,7 @@
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/types": "workspace:*",
     "amqplib": "^2.0.1",
-    "node-html-parser": "^9.0.0",
+    "node-html-parser": "^9.0.1",
     "random-words": "^2.0.1",
     "uuid": "^14.0.1",
     "zx": "^8.8.5"
