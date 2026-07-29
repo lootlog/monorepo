@@ -27,7 +27,7 @@ function resolveBaseReference() {
     return process.env.COVERAGE_BASE_REF;
   }
 
-  for (const candidate of ["origin/develop", "HEAD^"]) {
+  for (const candidate of ["origin/main", "HEAD^"]) {
     const result = spawnSync("git", ["rev-parse", "--verify", candidate], {
       cwd: REPOSITORY_DIRECTORY,
       encoding: "utf8",

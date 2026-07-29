@@ -41,11 +41,12 @@ The app uses file-based TanStack Router routes under `src/routes`.
 
 Deployments are handled by Cloudflare Workers Builds. The Wrangler config maps:
 
-- the production branch `main` to `wiki.lootlog.pl`
-- `develop` to `dev-wiki.lootlog.pl`
+- the top-level production environment to `wiki.lootlog.pl`
+- the `develop` Wrangler environment to `dev-wiki.lootlog.pl`
 
-Cloudflare should use `main` as the production branch and enable non-production branch builds for
-`develop`. The production build uses the top-level Wrangler environment; the develop build uses
+Both Cloudflare integrations use `main` as their source branch. The production integration uploads
+a version without changing traffic; the release workflow deploys that application after `prod`
+approval. The `lootlog-wiki-develop` integration deploys the same `main` commit immediately with
 the `develop` Wrangler environment.
 
 Use `apps/wiki` as the Workers Builds root directory. TanStack Start emits the deployable Worker
@@ -56,11 +57,11 @@ Production build settings:
 
 ```bash
 Build command: pnpm run build
-Deploy command: npx wrangler deploy dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client
+Deploy command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client
 Version command: npx wrangler versions upload dist/server/index.js --config wrangler.jsonc --env="" --assets dist/client
 ```
 
-Develop build settings:
+Development build settings:
 
 ```bash
 Build command: pnpm run build

@@ -1,29 +1,43 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createDeploymentMatrix } from "./create-deployment-matrix.mjs";
+import { createReleasePlan } from "./create-deployment-matrix.mjs";
 
-test("keeps only deployable applications and maps their release metadata", () => {
+test("maps published applications to Docker and Cloudflare release targets", () => {
   const publishedPackages = [
     { name: "@lootlog/api", version: "1.2.3" },
     { name: "@lootlog/ui", version: "2.0.0" },
-    { name: "@lootlog/developer", version: "0.0.1" },
+    { name: "@lootlog/web", version: "1.4.0" },
+    { name: "@lootlog/wiki", version: "0.2.0" },
   ];
 
-  assert.deepEqual(createDeploymentMatrix(publishedPackages), [
-    {
-      image: "kamilwronka7/lootlog-api",
-      packageName: "@lootlog/api",
-      service: "api",
-      version: "1.2.3",
-    },
-    {
-      image: "kamilwronka7/lootlog-developer",
-      packageName: "@lootlog/developer",
-      service: "developer",
-      version: "0.0.1",
-    },
-  ]);
+  assert.deepEqual(createReleasePlan(publishedPackages), {
+    cloudflare: [
+      {
+        artifactPath: "apps/web/dist",
+        kind: "pages",
+        packageName: "@lootlog/web",
+        project: "lootlog-web-monorepo",
+        version: "1.4.0",
+      },
+      {
+        artifactPath: "apps/wiki/dist",
+        configPath: "apps/wiki/wrangler.jsonc",
+        kind: "worker",
+        packageName: "@lootlog/wiki",
+        project: "lootlog-wiki",
+        version: "0.2.0",
+      },
+    ],
+    docker: [
+      {
+        image: "kamilwronka7/lootlog-api",
+        packageName: "@lootlog/api",
+        service: "api",
+        version: "1.2.3",
+      },
+    ],
+  });
 });
 
 test("supports all eight deployable applications", () => {
@@ -43,14 +57,57 @@ test("supports all eight deployable applications", () => {
   }));
 
   assert.deepEqual(
-    createDeploymentMatrix(publishedPackages).map(({ service }) => service),
+    createReleasePlan(publishedPackages).docker.map(({ service }) => service),
     services,
+  );
+});
+
+test("supports all five Cloudflare applications", () => {
+  const publishedPackages = [
+    { name: "@lootlog/landing", version: "1.0.0" },
+    { name: "@lootlog/web", version: "1.0.0" },
+    { name: "@lootlog/game-client", version: "1.0.0" },
+    { name: "@lootlog/docs", version: "1.0.0" },
+    { name: "@lootlog/wiki", version: "1.0.0" },
+  ];
+
+  assert.deepEqual(
+    createReleasePlan(publishedPackages).cloudflare.map(
+      ({ kind, packageName, project }) => ({ kind, packageName, project }),
+    ),
+    [
+      {
+        kind: "pages",
+        packageName: "@lootlog/landing",
+        project: "lootlog-landing",
+      },
+      {
+        kind: "pages",
+        packageName: "@lootlog/web",
+        project: "lootlog-web-monorepo",
+      },
+      {
+        kind: "pages",
+        packageName: "@lootlog/game-client",
+        project: "lootlog-game-client-monorepo",
+      },
+      {
+        kind: "worker",
+        packageName: "@lootlog/docs",
+        project: "lootlog-docs",
+      },
+      {
+        kind: "worker",
+        packageName: "@lootlog/wiki",
+        project: "lootlog-wiki",
+      },
+    ],
   );
 });
 
 test("rejects malformed package versions", () => {
   assert.throws(
-    () => createDeploymentMatrix([{ name: "@lootlog/api", version: "latest" }]),
+    () => createReleasePlan([{ name: "@lootlog/api", version: "latest" }]),
     /Invalid semantic version/,
   );
 });
@@ -58,7 +115,7 @@ test("rejects malformed package versions", () => {
 test("rejects duplicate deployable packages", () => {
   assert.throws(
     () =>
-      createDeploymentMatrix([
+      createReleasePlan([
         { name: "@lootlog/api", version: "1.0.0" },
         { name: "@lootlog/api", version: "1.0.1" },
       ]),
