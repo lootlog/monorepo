@@ -70,11 +70,10 @@ jobs:
           head_ref="$(jq -r '.headRefName' <<< "$pull_request")"
           head_sha="$(jq -r '.headRefOid' <<< "$pull_request")"
 
-          gh workflow run ci.yml \
-            --ref "$head_ref" \
-            --field base_sha="$base_sha" \
-            --field head_sha="$head_sha" \
-            --field pull_request_number="$PULL_REQUEST_NUMBER"
+          BASE_SHA="$base_sha" \
+            HEAD_REF="$head_ref" \
+            HEAD_SHA="$head_sha" \
+            node tools/ci/dispatch-automated-pr-ci.mjs
 
       - name: Prepare release plan
         id: plan

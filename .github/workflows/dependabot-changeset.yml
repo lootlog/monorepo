@@ -52,9 +52,4 @@ jobs:
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
           HEAD_SHA: ${{ steps.changeset.outputs.commit_sha }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          gh workflow run ci.yml \
-            --ref "$HEAD_REF" \
-            --field base_sha="$BASE_SHA" \
-            --field head_sha="$HEAD_SHA" \
-            --field pull_request_number="$PULL_REQUEST_NUMBER"
+        run: node tools/ci/dispatch-automated-pr-ci.mjs
