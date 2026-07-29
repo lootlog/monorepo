@@ -1,5 +1,5 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { RabbitMqRetryService } from "@lootlog/nest-shared";
+import { RabbitMqRetryService } from "@lootlog/nest-shared/rabbitmq";
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
