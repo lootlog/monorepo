@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 
@@ -8,6 +8,7 @@ type LevelFiltersProps = {
   onMinLvlChange: (value: string) => void;
   onMaxLvlChange: (value: string) => void;
   inputClassName?: string;
+  separator?: ReactNode;
 };
 
 export const LevelFilters: React.FC<LevelFiltersProps> = ({
@@ -16,6 +17,7 @@ export const LevelFilters: React.FC<LevelFiltersProps> = ({
   onMinLvlChange,
   onMaxLvlChange,
   inputClassName = "w-[100px]",
+  separator,
 }) => {
   const { t } = useTranslation();
   const minInputRef = useRef<HTMLInputElement>(null);
@@ -78,6 +80,7 @@ export const LevelFilters: React.FC<LevelFiltersProps> = ({
         onInput={handleMinLvlInput}
         className={inputClassName}
       />
+      {separator}
       <Input
         ref={maxInputRef}
         type="text"

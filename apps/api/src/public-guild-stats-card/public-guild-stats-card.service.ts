@@ -8,7 +8,7 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import sharp from "sharp";
 import { serviceConfig } from "src/config/service.config";
 import { PrismaService } from "src/db/prisma.service";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 
 type GuildStatsCardData = {
   guild: {

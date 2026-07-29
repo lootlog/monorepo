@@ -1,6 +1,6 @@
 import { env } from "src/config/env";
 import { Permission } from "src/generated/prisma/client";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 import {
   isDevPermissionOverrideEnabled,
   parseDevPermissionOverrideHeader,

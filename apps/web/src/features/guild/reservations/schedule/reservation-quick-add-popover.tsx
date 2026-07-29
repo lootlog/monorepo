@@ -10,20 +10,7 @@ import { Textarea } from "@lootlog/ui/components/textarea";
 import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  invalidateReservationsControllerGetReservations,
-  useReservationsControllerCreateReservation,
-} from "@lootlog/api-client/react-query/main/reservations";
-import {
-  getOptimisticReservationId,
-  getReservationsCacheSnapshot,
-  replaceReservationInReservationsCache,
-  reservationsCacheQueryKey,
-  restoreReservationsCacheSnapshot,
-  upsertReservationInReservationsCache,
-  type ReservationsCacheMutationContext,
-} from "../reservations-api";
+import { useCreateReservation } from "../hooks/use-create-reservation";
 import {
   type ReservationSettings,
   validateReservationDateRange,
@@ -54,81 +41,7 @@ export const ReservationQuickAddPopover: React.FC<
   const [comment, setComment] = useState("");
   const { t } = useTranslation();
   const guildId = useGuildId();
-  const queryClient = useQueryClient();
-  const createReservationMutation = useReservationsControllerCreateReservation<
-    unknown,
-    ReservationsCacheMutationContext
-  >({
-    mutation: {
-      onMutate: async (variables) => {
-        if (!guildId) {
-          return {
-            previousReservations: undefined,
-          };
-        }
-
-        await queryClient.cancelQueries({
-          queryKey: reservationsCacheQueryKey(guildId),
-        });
-
-        const previousReservations = getReservationsCacheSnapshot(
-          queryClient,
-          guildId,
-        );
-        const optimisticReservationId = getOptimisticReservationId();
-
-        upsertReservationInReservationsCache(queryClient, guildId, {
-          id: optimisticReservationId,
-          reservationId: variables.data.reservationId,
-          createdDate: variables.data.createdDate,
-          fromDate: variables.data.fromDate,
-          toDate: variables.data.toDate,
-          createdBy: variables.data.createdBy,
-          comment: variables.data.comment ?? null,
-        });
-
-        return {
-          previousReservations,
-          optimisticReservationId,
-        };
-      },
-      onSuccess: async (reservation, _variables, mutationContext) => {
-        if (!guildId) {
-          return;
-        }
-
-        if (mutationContext?.optimisticReservationId) {
-          replaceReservationInReservationsCache(
-            queryClient,
-            guildId,
-            mutationContext.optimisticReservationId,
-            reservation,
-          );
-        } else {
-          upsertReservationInReservationsCache(
-            queryClient,
-            guildId,
-            reservation,
-          );
-        }
-
-        await invalidateReservationsControllerGetReservations(queryClient, {
-          guildId,
-        });
-      },
-      onError: (_error, _variables, mutationContext) => {
-        if (!guildId) {
-          return;
-        }
-
-        restoreReservationsCacheSnapshot(
-          queryClient,
-          guildId,
-          mutationContext?.previousReservations,
-        );
-      },
-    },
-  });
+  const createReservationMutation = useCreateReservation(guildId);
   const createReservation = createReservationMutation.mutateAsync;
   const isCreating = createReservationMutation.isPending;
 

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Crown, Medal, Skull, Trophy } from "lucide-react";
+import { ArrowRight, Skull } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { NpcTile } from "@/components/tiles/npc-tile";
+import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import { cn } from "@lootlog/ui/lib/utils";
 import {
   TRACKABLE_NPC_TYPES,
@@ -26,19 +27,6 @@ import {
   useKillsControllerGetUserKillStats,
 } from "@lootlog/api-client/react-query/main/kills";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
-
-const getRankIcon = (index: number) => {
-  switch (index) {
-    case 0:
-      return <Crown className="h-4 w-4 text-yellow-500" />;
-    case 1:
-      return <Trophy className="h-4 w-4 text-slate-400" />;
-    case 2:
-      return <Medal className="h-4 w-4 text-amber-600" />;
-    default:
-      return null;
-  }
-};
 
 type TopKilledNpcsCardProps = {
   world?: string;
@@ -148,11 +136,14 @@ export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-6 h-6">
-                    {getRankIcon(index) ?? (
-                      <span className="text-sm font-medium text-muted-foreground">
-                        {index + 1}
-                      </span>
-                    )}
+                    <PodiumRankIcon
+                      rank={index + 1}
+                      fallback={
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {index + 1}
+                        </span>
+                      }
+                    />
                   </div>
                   {npc.npcIcon && (
                     <NpcTile

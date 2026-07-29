@@ -1,10 +1,4 @@
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@lootlog/ui/components/pagination";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { getPaginationDisplayRange } from "./battle-panel-filter-state";
 
 type BattlePanelPaginationFooterProps = {
@@ -38,30 +32,12 @@ export const BattlePanelPaginationFooter = ({
   });
 
   return (
-    <div className="flex h-14 shrink-0 items-center justify-between border-t border-border px-4 py-4">
-      <div className="whitespace-nowrap text-sm text-muted-foreground">
-        {label({ from, to, total: totalCount })}
-      </div>
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={onPreviousPage}
-              className={
-                !hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"
-              }
-            />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationNext
-              onClick={onNextPage}
-              className={
-                !hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"
-              }
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    </div>
+    <TablePaginationFooter
+      totalLabel={label({ from, to, total: totalCount })}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
+      onPreviousPage={onPreviousPage}
+      onNextPage={onNextPage}
+    />
   );
 };

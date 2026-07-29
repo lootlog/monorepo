@@ -7,7 +7,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { EventSettingsService } from "./services/event-settings.service";
 import { UpdateEventSettingsDto } from "./dto/update-event-settings.dto";
 import { EventSettingsResponseDto } from "./dto/event-settings-response.dto";

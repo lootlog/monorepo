@@ -8,8 +8,8 @@ import type { KillDetailResponseDtoKill } from "@lootlog/api-client/models/main/
 import type { KillDetailResponseDtoKillHeroNpc } from "@lootlog/api-client/models/main/kill-detail-response-dto-kill-hero-npc";
 import type { KillDetailResponseDtoKillPointsItem } from "@lootlog/api-client/models/main/kill-detail-response-dto-kill-points-item";
 import type { KillDetailResponseDtoKillTimerCreatedBy } from "@lootlog/api-client/models/main/kill-detail-response-dto-kill-timer-created-by";
-import type { EventScoringRules } from "../../types/scoring-rules";
-import { normalizeScoringRules } from "../../utils/scoring-rules";
+import type { EventScoringRules } from "@lootlog/scoring";
+import { normalizeEventScoringRules } from "@lootlog/scoring";
 export type KillDetailMember = KillDetailResponseDtoKillTimerCreatedBy;
 export type KillDetailParticipant = KillDetailResponseDtoKillPointsItem;
 export type KillDetailHeroNpc = KillDetailResponseDtoKillHeroNpc;
@@ -55,7 +55,7 @@ export const useKillDetail = ({
         eventConfig: {
           ...response.eventConfig,
           scoringRules: response.eventConfig.scoringRules
-            ? normalizeScoringRules(response.eventConfig.scoringRules)
+            ? normalizeEventScoringRules(response.eventConfig.scoringRules)
             : null,
         },
       } satisfies KillDetailResponse;

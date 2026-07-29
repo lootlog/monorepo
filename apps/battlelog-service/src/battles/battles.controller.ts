@@ -58,7 +58,7 @@ import type {
   BattleWithRelations,
   GetAllBattlesResult,
 } from "src/battles/interfaces/battle-service.interface";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { BattleAccessGuard } from "src/shared/guards/battle-access.guard";
 import { BattleOwnerGuard } from "src/shared/guards/battle-owner.guard";
 

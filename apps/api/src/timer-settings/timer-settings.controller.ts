@@ -16,7 +16,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { TimerSettingsService } from "./timer-settings.service";
 import { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";
 import { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto";

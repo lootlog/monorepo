@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
-import { Crown, Medal, Search, Trophy, Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -18,6 +18,7 @@ import {
 } from "@lootlog/ui/components/table";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { NpcTile } from "@/components/tiles/npc-tile";
@@ -64,19 +65,6 @@ const MemberNameWithColor: React.FC<MemberNameWithColorProps> = ({
       {name}
     </span>
   );
-};
-
-const getRankIcon = (index: number) => {
-  switch (index) {
-    case 0:
-      return <Crown className="h-5 w-5 text-yellow-500" />;
-    case 1:
-      return <Trophy className="h-5 w-5 text-slate-400" />;
-    case 2:
-      return <Medal className="h-5 w-5 text-amber-600" />;
-    default:
-      return null;
-  }
 };
 
 export const NpcKillersPage: React.FC = () => {
@@ -333,9 +321,11 @@ export const NpcKillersPage: React.FC = () => {
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-medium text-muted-foreground">
-                              {getRankIcon(globalIndex) ?? (
-                                <span>{globalIndex + 1}</span>
-                              )}
+                              <PodiumRankIcon
+                                rank={globalIndex + 1}
+                                className="size-5"
+                                fallback={<span>{globalIndex + 1}</span>}
+                              />
                             </div>
                             <Avatar className="size-8 shrink-0">
                               <AvatarImage
@@ -393,11 +383,15 @@ export const NpcKillersPage: React.FC = () => {
                           >
                             <TableCell className="text-center">
                               <div className="flex items-center justify-center">
-                                {getRankIcon(globalIndex) ?? (
-                                  <span className="text-sm font-medium text-muted-foreground">
-                                    {globalIndex + 1}
-                                  </span>
-                                )}
+                                <PodiumRankIcon
+                                  rank={globalIndex + 1}
+                                  className="size-5"
+                                  fallback={
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                      {globalIndex + 1}
+                                    </span>
+                                  }
+                                />
                               </div>
                             </TableCell>
                             <TableCell>

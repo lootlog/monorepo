@@ -9,18 +9,14 @@ import { EventEmitterService } from "./event-emitter.service";
 import { EventReadCacheService } from "./event-read-cache.service";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
-  type EventScoringMode,
-  type EventScoringRules,
-} from "../constants/scoring-rules.constant";
-import {
+  evaluateEventScoring,
   normalizeEventScoringMode,
   normalizeEventScoringRules,
-} from "../utils/scoring-rules.util";
-import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util";
-import {
-  evaluateEventScoring,
   type EventScoringAppliedBonus,
-} from "../utils/scoring-engine.util";
+  type EventScoringMode,
+  type EventScoringRules,
+} from "@lootlog/scoring";
+import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util";
 import {
   calculateTrackingDurationSeconds,
   clipIntervalToWindow,

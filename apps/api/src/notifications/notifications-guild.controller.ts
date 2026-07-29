@@ -35,7 +35,7 @@ import { NotificationJobService } from "src/notifications/notification-job.servi
 import { NotificationRuleService } from "src/notifications/notification-rule.service";
 import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 

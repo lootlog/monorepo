@@ -8,7 +8,7 @@ import {
   type Guild,
   type Role,
 } from "src/generated/prisma/client";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { mockFn } from "src/test/mock-fn";
 import { CreateCommentDto } from "./dto/create-comment-dto";

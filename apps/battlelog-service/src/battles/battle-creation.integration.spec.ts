@@ -9,7 +9,7 @@ import { BattleAnalyticsService } from "./services/battle-analytics.service";
 import { BattleListFilterService } from "./services/battle-list-filter.service";
 import { BattleMetadataService } from "./services/battle-metadata.service";
 import { PaginationService } from "./services/pagination.service";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { BattleAccessGuard } from "src/shared/guards/battle-access.guard";
 import { BattleOwnerGuard } from "src/shared/guards/battle-owner.guard";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
