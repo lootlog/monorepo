@@ -33,7 +33,7 @@ const bundleUrl = "$GAME_CLIENT_LOCAL_BUNDLE_URL$";
     url: `${bundleUrl}?cacheBust=${Date.now()}`,
     onerror: () => {
       reportFailure(
-        `Could not load the local production bundle from ${bundleUrl}. Is local:prod running?`,
+        `Could not load the local production bundle from ${bundleUrl}. Is dev:local-prod running?`,
       );
     },
     ontimeout: () => {

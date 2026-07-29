@@ -4,18 +4,18 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "build": "nest build",
     "dev": "nest start --watch",
-    "openapi:generate": "OPENAPI_GENERATION=true pnpm build && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
+    "build": "nest build",
     "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
     "start:debug": "nest start --debug --watch",
     "lint": "oxlint src",
     "test": "vitest run --config ./vitest.config.ts",
+    "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
     "test:watch": "vitest --config ./vitest.config.ts",
-    "test:cov": "vitest run --config ./vitest.config.ts --coverage",
+    "openapi:generate": "OPENAPI_GENERATION=true pnpm build && OPENAPI_GENERATION=true node --import ./dist/src/instrumentation.js dist/src/openapi/generate-openapi.js",
     "auth:generate": "drizzle-kit generate",
-    "auth:migrate:init": "node --import tsx scripts/migrate-init.ts",
     "auth:migrate:dev": "node --import tsx scripts/migrate.ts",
+    "auth:migrate:init": "node --import tsx scripts/migrate-init.ts",
     "auth:migrate:prod": "node --import tsx scripts/migrate.ts"
   },
   "dependencies": {

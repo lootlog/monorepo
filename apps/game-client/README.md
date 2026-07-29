@@ -25,7 +25,7 @@ To build the fully minified client against the production Lootlog services and
 serve it to Tampermonkey locally, run:
 
 ```bash
-pnpm --filter @lootlog/game-client local:prod
+pnpm --filter @lootlog/game-client dev:local-prod
 ```
 
 The command prints an installation URL for
@@ -41,7 +41,7 @@ Margonem globals such as `window.Engine` and `window.g` are unavailable.
 ## Key Scripts
 
 - `pnpm --filter @lootlog/game-client build`
-- `pnpm --filter @lootlog/game-client local:prod`
+- `pnpm --filter @lootlog/game-client dev:local-prod`
 - `pnpm --filter @lootlog/game-client preview`
 - `pnpm --filter @lootlog/game-client test`
 - `pnpm --filter @lootlog/game-client test:coverage`

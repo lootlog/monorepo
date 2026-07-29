@@ -72,5 +72,5 @@ Version command: npx wrangler versions upload dist/server/index.js --config wran
 If Cloudflare binding types need to be refreshed, run:
 
 ```bash
-pnpm --filter @lootlog/wiki cf-typegen
+pnpm --filter @lootlog/wiki cloudflare:typegen
 ```

@@ -21,7 +21,6 @@ The dev server runs on port `3003`.
 ## Key Scripts
 
 - `pnpm --filter @lootlog/landing build`
-- `pnpm --filter @lootlog/landing export:landing`
 - `pnpm --filter @lootlog/landing start`
 - `pnpm --filter @lootlog/landing lint`
 - `pnpm --filter @lootlog/landing typecheck`
