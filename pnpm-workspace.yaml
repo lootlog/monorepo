@@ -2,7 +2,7 @@ packages:
   - "apps/*"
   - "packages/*"
 catalog:
-  "@hookform/resolvers": ^5.4.2
+  "@hookform/resolvers": ^5.5.7
   "@nestjs/axios": ^4.0.1
   "@nestjs/cli": ^11.0.24
   "@nestjs/common": ^11.1.28
