@@ -1,14 +1,6 @@
-import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@lootlog/ui/components/chart";
-import { StatCard } from "./stat-card";
 import { useTranslation } from "react-i18next";
-import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
 import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { GrowthChartCard } from "./growth-chart-card";
 
 interface RatingGrowthDataPoint {
   date: string;
@@ -24,12 +16,6 @@ interface RatingGrowthChartProps {
 
 export function RatingGrowthChart({ data, isLoading }: RatingGrowthChartProps) {
   const { t } = useTranslation();
-  const chartConfig = {
-    rating: {
-      label: t("battlePanel.statistics.ratingGrowth.chartLabel"),
-      color: BATTLE_HEX_COLORS.chart.rating,
-    },
-  } satisfies ChartConfig;
   const chartData = data.map((point) => ({
     date: new Date(point.date).toLocaleDateString("pl-PL", {
       day: "2-digit",
@@ -40,78 +26,27 @@ export function RatingGrowthChart({ data, isLoading }: RatingGrowthChartProps) {
   }));
 
   return (
-    <StatCard
-      title={t("battlePanel.statistics.ratingGrowth.title")}
+    <GrowthChartCard
+      chartData={chartData}
+      color={BATTLE_HEX_COLORS.chart.rating}
+      dataKey="rating"
       description={t("battlePanel.statistics.ratingGrowth.description")}
-      isLoading={isLoading}
-      isEmpty={data.length === 0}
       emptyMessage={t("battlePanel.statistics.ratingGrowth.empty")}
-    >
-      <div className="min-w-0">
-        <div className="min-w-0 rounded-lg bg-muted/30">
-          <div className="min-w-0 p-4">
-            <BattlePanelChartFrame className="h-72 w-full">
-              <ChartContainer
-                config={chartConfig}
-                className="h-full min-w-0 w-full"
-              >
-                <LineChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: -24,
-                    top: 20,
-                    right: 12,
-                    bottom: 20,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={24}
-                  />
-                  <YAxis tickLine={false} axisLine={false} tickMargin={4} />
-                  <ChartTooltip
-                    cursor={false}
-                    content=<ChartTooltipContent
-                      indicator="line"
-                      labelFormatter={(value) =>
-                        t("battlePanel.statistics.ratingGrowth.tooltipDate", {
-                          date: value,
-                        })
-                      }
-                      formatter={(value, _name, props) => {
-                        const ratingDelta =
-                          (props.payload?.ratingDelta as number) ?? 0;
-                        const sign = ratingDelta >= 0 ? "+" : "";
-                        return [
-                          t(
-                            "battlePanel.statistics.ratingGrowth.tooltipValue",
-                            {
-                              value,
-                              delta: `${sign}${ratingDelta}`,
-                            },
-                          ),
-                          "",
-                        ];
-                      }}
-                    />
-                  />
-                  <Line
-                    dataKey="rating"
-                    type="monotone"
-                    stroke="var(--color-rating)"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ChartContainer>
-            </BattlePanelChartFrame>
-          </div>
-        </div>
-      </div>
-    </StatCard>
+      isLoading={isLoading}
+      label={t("battlePanel.statistics.ratingGrowth.chartLabel")}
+      title={t("battlePanel.statistics.ratingGrowth.title")}
+      tooltipDate={(date) =>
+        t("battlePanel.statistics.ratingGrowth.tooltipDate", { date })
+      }
+      tooltipValue={(value, payload) => {
+        const ratingDelta =
+          typeof payload.ratingDelta === "number" ? payload.ratingDelta : 0;
+
+        return t("battlePanel.statistics.ratingGrowth.tooltipValue", {
+          value,
+          delta: `${ratingDelta >= 0 ? "+" : ""}${ratingDelta}`,
+        });
+      }}
+    />
   );
 }

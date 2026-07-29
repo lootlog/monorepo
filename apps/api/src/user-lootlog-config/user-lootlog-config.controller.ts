@@ -17,7 +17,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import {

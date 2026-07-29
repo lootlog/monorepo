@@ -38,7 +38,8 @@
   },
   "scripts": {
     "dev": "tsc --watch",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "vitest run src"
   },
   "dependencies": {
     "@axiomhq/winston": "^1.8.0",
@@ -52,15 +53,18 @@
   "devDependencies": {
     "@nestjs/common": "catalog:",
     "@nestjs/core": "catalog:",
+    "@nestjs/platform-fastify": "catalog:",
     "@types/node": "catalog:",
     "ioredis": "^5.11.1",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-fastify": "^11.0.0",
     "ioredis": "^5.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.0.0"

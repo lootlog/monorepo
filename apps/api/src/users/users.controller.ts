@@ -17,7 +17,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { StatusOkResponseDto } from "src/shared/dto/common-response.dto";
 import { UserGameAccountPreferencesResponseDto } from "src/shared/dto/user-account-preferences-response.dto";
 import { UserPreferencesResponseDto } from "src/shared/dto/user-preferences-response.dto";

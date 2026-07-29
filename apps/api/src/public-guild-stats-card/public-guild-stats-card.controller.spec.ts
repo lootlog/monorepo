@@ -1,9 +1,9 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { FastifyReply } from "fastify";
 import { serviceConfig } from "src/config/service.config";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { mockFn } from "src/test/mock-fn";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 import { PublicGuildStatsCardController } from "./public-guild-stats-card.controller";
 import { PublicGuildStatsCardService } from "./public-guild-stats-card.service";
 

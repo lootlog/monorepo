@@ -33,7 +33,7 @@ import { EventsService } from "./events.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 

@@ -1,5 +1,5 @@
 import { env } from "src/config/env";
-import type { RuntimeEnvironment } from "src/types/runtime.types";
+import type { RuntimeEnvironment } from "@lootlog/types";
 
 interface ServiceConfig {
   env: RuntimeEnvironment;

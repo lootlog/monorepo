@@ -1,14 +1,13 @@
-import { useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { TrendingUp } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
-import { Input } from "@lootlog/ui/components/input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,
 } from "@/features/kills/components/kill-stats-period-select";
+import { LevelFilters } from "./level-filters";
 
 type StatsRankingFiltersMobileProps = {
   world: string | null;
@@ -32,49 +31,6 @@ export const StatsRankingFiltersMobile = ({
   onPeriodChange,
 }: StatsRankingFiltersMobileProps) => {
   const { t } = useTranslation();
-  const minInputRef = useRef<HTMLInputElement>(null);
-  const maxInputRef = useRef<HTMLInputElement>(null);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (minInputRef.current && minInputRef.current !== document.activeElement) {
-      minInputRef.current.value = minLvl;
-    }
-  }, [minLvl]);
-
-  useEffect(() => {
-    if (maxInputRef.current && maxInputRef.current !== document.activeElement) {
-      maxInputRef.current.value = maxLvl;
-    }
-  }, [maxLvl]);
-
-  const handleMinLvlInput = (e: React.FormEvent<HTMLInputElement>) => {
-    const value = e.currentTarget.value;
-    if (value !== "" && !/^\d+$/.test(value)) {
-      e.currentTarget.value = minLvl;
-      return;
-    }
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    debounceTimerRef.current = setTimeout(() => {
-      onMinLvlChange(value);
-    }, 300);
-  };
-
-  const handleMaxLvlInput = (e: React.FormEvent<HTMLInputElement>) => {
-    const value = e.currentTarget.value;
-    if (value !== "" && !/^\d+$/.test(value)) {
-      e.currentTarget.value = maxLvl;
-      return;
-    }
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    debounceTimerRef.current = setTimeout(() => {
-      onMaxLvlChange(value);
-    }, 300);
-  };
 
   return (
     <MobileFiltersDrawer
@@ -103,29 +59,14 @@ export const StatsRankingFiltersMobile = ({
       <div className="space-y-2">
         <Label>{t("kills.filters.levelRange")}</Label>
         <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <Input
-              ref={minInputRef}
-              type="text"
-              inputMode="numeric"
-              placeholder={t("kills.filters.minLevel")}
-              defaultValue={minLvl}
-              onInput={handleMinLvlInput}
-              className="w-full"
-            />
-          </div>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          <div className="flex-1">
-            <Input
-              ref={maxInputRef}
-              type="text"
-              inputMode="numeric"
-              placeholder={t("kills.filters.maxLevel")}
-              defaultValue={maxLvl}
-              onInput={handleMaxLvlInput}
-              className="w-full"
-            />
-          </div>
+          <LevelFilters
+            minLvl={minLvl}
+            maxLvl={maxLvl}
+            onMinLvlChange={onMinLvlChange}
+            onMaxLvlChange={onMaxLvlChange}
+            inputClassName="min-w-0 flex-1"
+            separator={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+          />
         </div>
       </div>
     </MobileFiltersDrawer>

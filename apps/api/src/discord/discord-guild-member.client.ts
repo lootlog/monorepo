@@ -21,7 +21,7 @@ import {
 } from "./discord-cache.util";
 import { serviceConfig } from "src/config/service.config";
 import { RedlockService } from "src/lib/redlock/redlock.service";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
 import {
   isDiscordNotFoundError,
