@@ -63,7 +63,7 @@
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "catalog:",
-    "drizzle-kit": "1.0.0-beta.20",
+    "drizzle-kit": "1.0.0-rc.4",
     "supertest": "^7.2.2",
     "typescript": "catalog:",
     "unplugin-swc": "catalog:",

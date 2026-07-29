@@ -50,7 +50,7 @@
     "@types/node": "catalog:",
     "@types/pg": "^8.20.0",
     "@vitest/coverage-v8": "catalog:",
-    "drizzle-kit": "^0.31.10",
+    "drizzle-kit": "^1.0.0-rc.4",
     "typescript": "catalog:",
     "unplugin-swc": "catalog:",
     "vitest": "catalog:"
