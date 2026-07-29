@@ -69,6 +69,7 @@ jobs:
           INPUT_HEAD_SHA: ${{ inputs.head_sha }}
           INPUT_PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
           MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          MERGE_GROUP_HEAD_REF: ${{ github.event.merge_group.head_ref }}
           MERGE_GROUP_HEAD_SHA: ${{ github.event.merge_group.head_sha }}
           PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PULL_REQUEST_HEAD_REF: ${{ github.event.pull_request.head.ref }}
@@ -84,9 +85,14 @@ jobs:
             merge_group)
               base_sha="$MERGE_GROUP_BASE_SHA"
               head_sha="$MERGE_GROUP_HEAD_SHA"
+              pull_request_number="$(
+                node tools/ci/merge-group-pull-request.mjs \
+                  "$MERGE_GROUP_HEAD_REF"
+              )"
               pull_request_heads="$(
-                gh api "repos/$GITHUB_REPOSITORY/commits/$head_sha/pulls" \
-                  --jq '[.[].head.ref]'
+                gh pr view "$pull_request_number" \
+                  --json headRefName \
+                  --jq '[.headRefName]'
               )"
               ;;
             workflow_dispatch)
