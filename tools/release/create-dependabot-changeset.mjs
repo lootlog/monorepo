@@ -13,6 +13,9 @@ const dependencyFields = [
   ...developmentDependencyFields,
 ];
 const workspaceManifestPattern = /^(apps|packages)\/[^/]+\/package\.json$/;
+const githubActionsWorkflowPattern = /^\.github\/workflows\/[^/]+\.ya?ml$/;
+const githubActionUsePattern =
+  /^(?<prefix>\s*(?:-\s*)?uses:\s*["']?)(?<action>[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_./-]+)?)@(?<ref>[^"'#\s]+)(?<suffix>["']?\s*(?:#.*)?)$/;
 
 function withoutDependencyFields(manifest) {
   return Object.fromEntries(
@@ -28,6 +31,7 @@ function changedAnyField(before, after, fields) {
 
 export function createDependabotChangeset({
   changedManifests,
+  hasToolingChanges = false,
   pullRequestNumber,
 }) {
   if (!Array.isArray(changedManifests)) {
@@ -36,7 +40,7 @@ export function createDependabotChangeset({
   if (!Number.isInteger(pullRequestNumber) || pullRequestNumber <= 0) {
     throw new TypeError("Pull request number must be a positive integer");
   }
-  if (changedManifests.length === 0) {
+  if (changedManifests.length === 0 && !hasToolingChanges) {
     return null;
   }
 
@@ -106,7 +110,7 @@ export function createDependabotChangeset({
     };
   }
 
-  if (hasDevelopmentChanges) {
+  if (hasDevelopmentChanges || hasToolingChanges) {
     return {
       content: [
         "---",
@@ -151,17 +155,31 @@ async function requestGitHub(path, { body, method = "GET", token }) {
 }
 
 async function readRepositoryJson({ path, ref, repository, token }) {
+  const content = await readRepositoryContent({
+    path,
+    ref,
+    repository,
+    token,
+  });
+  return JSON.parse(content);
+}
+
+async function readRepositoryContent({ path, ref, repository, token }) {
   const encodedPath = encodeRepositoryPath(path);
   const result = await requestGitHub(
     `/repos/${repository}/contents/${encodedPath}?ref=${encodeURIComponent(ref)}`,
     { token },
   );
-  return JSON.parse(Buffer.from(result.content, "base64").toString("utf8"));
+  return Buffer.from(result.content, "base64").toString("utf8");
 }
 
-export function selectChangedManifestPaths({ filenames, pullRequestNumber }) {
+export function classifyChangedDependencyPaths({
+  filenames,
+  pullRequestNumber,
+}) {
   const ownChangeset = `.changeset/dependabot-pr-${pullRequestNumber}.md`;
   const manifestPaths = [];
+  const toolingPaths = [];
 
   for (const filename of filenames) {
     if (filename === "pnpm-lock.yaml" || filename === ownChangeset) {
@@ -174,11 +192,56 @@ export function selectChangedManifestPaths({ filenames, pullRequestNumber }) {
       manifestPaths.push(filename);
       continue;
     }
+    if (filename.match(githubActionsWorkflowPattern)) {
+      toolingPaths.push(filename);
+      continue;
+    }
 
     throw new Error(`Cannot classify Dependabot file ${filename}`);
   }
 
-  return [...new Set(manifestPaths)].sort();
+  return {
+    manifestPaths: [...new Set(manifestPaths)].sort(),
+    toolingPaths: [...new Set(toolingPaths)].sort(),
+  };
+}
+
+function parseGitHubActionUse(line) {
+  return line.match(githubActionUsePattern)?.groups;
+}
+
+export function validateGitHubActionsDependencyUpdate({ after, before, path }) {
+  const afterLines = after.split(/\r?\n/);
+  const beforeLines = before.split(/\r?\n/);
+  if (afterLines.length !== beforeLines.length) {
+    throw new Error(`Cannot classify Dependabot changes in ${path}`);
+  }
+
+  let changedActions = 0;
+  for (const [index, beforeLine] of beforeLines.entries()) {
+    const afterLine = afterLines[index];
+    if (beforeLine === afterLine) {
+      continue;
+    }
+
+    const beforeUse = parseGitHubActionUse(beforeLine);
+    const afterUse = parseGitHubActionUse(afterLine);
+    if (
+      !beforeUse ||
+      !afterUse ||
+      beforeUse.prefix !== afterUse.prefix ||
+      beforeUse.action !== afterUse.action ||
+      beforeUse.suffix !== afterUse.suffix ||
+      beforeUse.ref === afterUse.ref
+    ) {
+      throw new Error(`Cannot classify Dependabot changes in ${path}`);
+    }
+    changedActions += 1;
+  }
+
+  if (changedActions === 0) {
+    throw new Error(`Cannot classify Dependabot changes in ${path}`);
+  }
 }
 
 async function listChangedFiles({ pullRequestNumber, repository, token }) {
@@ -218,7 +281,7 @@ export async function automateDependabotChangeset({
     repository,
     token,
   });
-  const manifestPaths = selectChangedManifestPaths({
+  const { manifestPaths, toolingPaths } = classifyChangedDependencyPaths({
     filenames,
     pullRequestNumber,
   });
@@ -239,8 +302,27 @@ export async function automateDependabotChangeset({
       path,
     })),
   );
+  const changedToolingFiles = await Promise.all(
+    toolingPaths.map(async (path) => ({
+      after: await readRepositoryContent({
+        path,
+        ref: headSha,
+        repository,
+        token,
+      }),
+      before: await readRepositoryContent({
+        path,
+        ref: baseSha,
+        repository,
+        token,
+      }),
+      path,
+    })),
+  );
+  changedToolingFiles.forEach(validateGitHubActionsDependencyUpdate);
   const changeset = createDependabotChangeset({
     changedManifests,
+    hasToolingChanges: changedToolingFiles.length > 0,
     pullRequestNumber,
   });
 
