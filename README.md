@@ -335,13 +335,12 @@ Pull request CI validates changesets against the PR base commit.
 
 ### Automated Release Workflow
 
-1. Merge changes containing changesets into `develop`. These changes continue to deploy automatically to dev, but no release is created.
-2. Promote a tested batch with a pull request from `develop` to `main`.
-3. After that PR is merged, Changesets creates or updates the `chore: release packages` version PR against `main`.
-4. Review and merge the version PR. Do not edit versions or generated changelogs manually.
-5. The merge creates package tags such as `@lootlog/api@1.0.1`, GitHub Releases, and immutable Docker images for released services.
-6. Images are built before the `prod` approval. Review the workflow summary and apply any listed Prisma or Drizzle migrations manually.
-7. Approving the `prod` environment writes every released image version to the infra repository in one commit. ArgoCD then performs the rollout.
+1. Merge feature pull requests through the merge queue into `main`. Affected services deploy automatically to dev, but no release artifacts are created.
+2. Changesets creates or updates the `chore: release packages` version PR against `main`.
+3. Review and merge the version PR. Do not edit versions or generated changelogs manually.
+4. The merge creates package tags such as `@lootlog/api@1.0.1`, GitHub Releases, immutable Docker images, and checksummed Cloudflare artifacts for released applications. It does not deploy dev.
+5. Artifacts are built before the `prod` approval. Review the workflow summary and apply any listed Prisma or Drizzle migrations manually.
+6. Approving the `prod` environment deploys the prepared Cloudflare artifacts first, then writes every released Docker image version to the infra repository in one commit. ArgoCD performs the container rollout.
 
 Each released workspace owns its generated `CHANGELOG.md`. Use `pnpm changeset status --verbose` to preview the pending release plan. The `pnpm version` and `pnpm release` commands are reserved for release automation.
 
