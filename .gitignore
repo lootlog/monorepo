@@ -18,6 +18,7 @@ coverage
 
 # Turbo
 .turbo
+**/.tanstack/
 
 # Vercel
 .vercel
@@ -77,9 +78,8 @@ tools/k6/.secrets.local
 playground
 playground/**
 
-# Local planning documents
+# Local planning and agent session documents
 /docs/*
-!/docs/superpowers/
-!/docs/superpowers/specs/
-!/docs/superpowers/specs/*.md
+**/.impeccable/direction-question.json
+**/.impeccable/questions/
 .superpowers/

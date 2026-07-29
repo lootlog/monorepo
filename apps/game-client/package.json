@@ -6,20 +6,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local-prod": "pnpm run build:local-prod && node ./src/scripts/serve-local-build.mjs",
     "build": "tsc && vite build && node ./src/scripts/copy-entrypoint.mjs",
     "build:fast": "tsc && FAST_BUILD=1 vite build && node ./src/scripts/copy-entrypoint.mjs",
     "build:local-prod": "tsc && vite build --mode production-local && node ./src/scripts/generate-local-entrypoint.mjs --output ./dist/@lootlog/game-client-local.user.js --bundle-url http://127.0.0.1:4173/@lootlog/game-client.user.js",
-    "bench:runtime": "vitest bench src/lib/margonem-runtime/runtime-replay.bench.ts",
-    "check-types": "tsc --noEmit",
-    "report:changed-coverage": "node ./scripts/report-changed-coverage.mjs",
-    "doctor": "npx -y react-doctor@latest .",
-    "lint": "oxlint src --deny-warnings",
-    "local:prod": "pnpm run build:local-prod && node ./src/scripts/serve-local-build.mjs",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src --deny-warnings",
+    "doctor": "npx -y react-doctor@latest .",
     "test": "vitest run",
-    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:changed": "node ./scripts/report-changed-coverage.mjs",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:watch": "vitest",
+    "bench:runtime": "vitest bench src/lib/margonem-runtime/runtime-replay.bench.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

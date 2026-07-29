@@ -41,8 +41,6 @@
         "generated/**"
       ]
     },
-    "build:game-client": {},
-    "copy-entrypoint": {},
     "transit": {
       "dependsOn": ["^transit"]
     },
@@ -57,8 +55,8 @@
         ".oxlintrc.json"
       ]
     },
-    "check-types": {
-      "dependsOn": ["^check-types"],
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",
@@ -68,7 +66,7 @@
         "tsconfig.json"
       ]
     },
-    "check:changed-coverage": {
+    "test:coverage:changed": {
       "cache": false,
       "dependsOn": ["test:coverage"],
       "env": ["COVERAGE_BASE_REF"],
