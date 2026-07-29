@@ -1,7 +1,7 @@
 import { ConnectionService } from "./connection.service";
 import { Platform } from "../enums/platform.enum";
 import { env } from "src/config/env";
-import { RuntimeEnvironment } from "src/types/common.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 
 describe("ConnectionService", () => {
   let service: ConnectionService;

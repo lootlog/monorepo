@@ -28,11 +28,11 @@ import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
   type EventScoringRules,
-} from "../../types/scoring-rules";
+} from "@lootlog/scoring";
 import {
-  normalizeScoringMode,
-  normalizeScoringRules,
-} from "../../utils/scoring-rules";
+  normalizeEventScoringMode,
+  normalizeEventScoringRules,
+} from "@lootlog/scoring";
 import { getApiErrorMessage } from "../../utils/get-api-error-message";
 import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
 
@@ -60,7 +60,9 @@ const getDefaultValues = (): FormData => ({
   participationConfirmationMinutes: 0,
   rulebookMarkdown: "",
   scoringMode: "SIMPLE",
-  scoringRules: normalizeScoringRules(DEFAULT_ADVANCED_EVENT_SCORING_RULES),
+  scoringRules: normalizeEventScoringRules(
+    DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+  ),
 });
 
 export const EventCreateDialog = ({
@@ -86,7 +88,7 @@ export const EventCreateDialog = ({
     defaultValues: getDefaultValues(),
   });
 
-  const scoringMode = normalizeScoringMode(form.watch("scoringMode"));
+  const scoringMode = normalizeEventScoringMode(form.watch("scoringMode"));
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {
@@ -117,7 +119,7 @@ export const EventCreateDialog = ({
       return;
     }
 
-    const normalizedMode = normalizeScoringMode(data.scoringMode);
+    const normalizedMode = normalizeEventScoringMode(data.scoringMode);
 
     createEvent.mutate(
       {
@@ -142,7 +144,7 @@ export const EventCreateDialog = ({
             : {}),
           ...(normalizedMode === "ADVANCED"
             ? {
-                scoringRules: normalizeScoringRules(data.scoringRules),
+                scoringRules: normalizeEventScoringRules(data.scoringRules),
               }
             : {}),
         },

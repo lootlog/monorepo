@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Search, Crown, Trophy, Medal, Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import {
   Avatar,
   AvatarFallback,
@@ -47,19 +48,6 @@ const NPC_TYPE_ORDER: NpcType[] = [
   "ELITE",
   "COMMON",
 ];
-
-const getRankIcon = (rank: number) => {
-  switch (rank) {
-    case 1:
-      return <Crown className="h-4 w-4 text-yellow-500" />;
-    case 2:
-      return <Trophy className="h-4 w-4 text-slate-400" />;
-    case 3:
-      return <Medal className="h-4 w-4 text-amber-600" />;
-    default:
-      return null;
-  }
-};
 
 export const StatsRanking: React.FC = () => {
   const { t } = useTranslation();
@@ -282,7 +270,6 @@ export const StatsRanking: React.FC = () => {
                   <div className="grid gap-2 p-3 md:hidden">
                     {paginatedData.map((member, index) => {
                       const rank = cursor + index + 1;
-                      const icon = getRankIcon(rank);
                       return (
                         <button
                           key={member.memberId}
@@ -292,7 +279,7 @@ export const StatsRanking: React.FC = () => {
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-medium text-muted-foreground">
-                              {icon ?? rank}
+                              <PodiumRankIcon rank={rank} fallback={rank} />
                             </div>
                             <Avatar className="size-8 shrink-0">
                               <AvatarImage
@@ -366,7 +353,6 @@ export const StatsRanking: React.FC = () => {
                     <TableBody>
                       {paginatedData.map((member, index) => {
                         const rank = cursor + index + 1;
-                        const icon = getRankIcon(rank);
                         return (
                           <TableRow
                             key={member.memberId}
@@ -375,11 +361,14 @@ export const StatsRanking: React.FC = () => {
                           >
                             <TableCell className="whitespace-nowrap">
                               <div className="flex items-center justify-center w-8">
-                                {icon ?? (
-                                  <span className="text-sm font-medium text-muted-foreground">
-                                    {rank}
-                                  </span>
-                                )}
+                                <PodiumRankIcon
+                                  rank={rank}
+                                  fallback={
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                      {rank}
+                                    </span>
+                                  }
+                                />
                               </div>
                             </TableCell>
                             <TableCell className="whitespace-nowrap">

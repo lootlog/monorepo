@@ -15,11 +15,11 @@ import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
   type EventScoringRules,
-} from "./types/scoring-rules";
+} from "@lootlog/scoring";
 import {
-  normalizeScoringMode,
-  normalizeScoringRules,
-} from "./utils/scoring-rules";
+  normalizeEventScoringMode,
+  normalizeEventScoringRules,
+} from "@lootlog/scoring";
 import { getApiErrorMessage } from "./utils/get-api-error-message";
 import { ScoringRulesEditor } from "./components/scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "./components/scoring/scoring-mode-selector";
@@ -41,13 +41,13 @@ interface EventScoringFormData {
 const toScoringDefaults = (
   event: EventOverviewResponseDto,
 ): EventScoringFormData => {
-  const scoringMode = normalizeScoringMode(event.scoringMode);
+  const scoringMode = normalizeEventScoringMode(event.scoringMode);
   return {
     scoringMode,
     scoringRules:
       scoringMode === "ADVANCED"
-        ? normalizeScoringRules(event.scoringRules)
-        : normalizeScoringRules(DEFAULT_ADVANCED_EVENT_SCORING_RULES),
+        ? normalizeEventScoringRules(event.scoringRules)
+        : normalizeEventScoringRules(DEFAULT_ADVANCED_EVENT_SCORING_RULES),
   };
 };
 
@@ -162,7 +162,7 @@ const EventEditScoringForm = ({
     defaultValues: toScoringDefaults(event),
   });
 
-  const scoringMode = normalizeScoringMode(
+  const scoringMode = normalizeEventScoringMode(
     useWatch({
       control: form.control,
       name: "scoringMode",
@@ -171,11 +171,11 @@ const EventEditScoringForm = ({
   );
 
   const onSubmit = async (data: EventScoringFormData) => {
-    const normalizedMode = normalizeScoringMode(data.scoringMode);
+    const normalizedMode = normalizeEventScoringMode(data.scoringMode);
     const normalizedScoringRules =
       normalizedMode === "ADVANCED"
-        ? normalizeScoringRules(data.scoringRules)
-        : normalizeScoringRules(DEFAULT_ADVANCED_EVENT_SCORING_RULES);
+        ? normalizeEventScoringRules(data.scoringRules)
+        : normalizeEventScoringRules(DEFAULT_ADVANCED_EVENT_SCORING_RULES);
 
     try {
       await updateEvent.mutateAsync({
@@ -256,7 +256,7 @@ const EventEditScoringForm = ({
               name="scoringMode"
               render={({ field }) => (
                 <ScoringModeSelector
-                  value={normalizeScoringMode(field.value)}
+                  value={normalizeEventScoringMode(field.value)}
                   onChange={(mode) => field.onChange(mode)}
                 />
               )}

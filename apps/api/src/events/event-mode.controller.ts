@@ -6,7 +6,7 @@ import {
   DEV_PERMISSION_OVERRIDE_HEADER,
   parseDevPermissionOverrideHeader,
 } from "src/shared/permissions/dev-permission-override";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { EventModeQueryDto } from "./dto/event-mode-query.dto";
 import { EventModeResponseDto } from "./dto/event-mode-response.dto";
 import { EventModeService } from "./services/event-mode.service";

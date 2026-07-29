@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Shield, Percent, Globe, HelpCircle } from "lucide-react";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type { EventScoringRules } from "@lootlog/scoring";
 
 type ScoringRulesFormValues = {
   scoringRules: EventScoringRules;

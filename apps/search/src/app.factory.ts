@@ -1,19 +1,9 @@
-import { NestFactory } from "@nestjs/core";
 import {
-  FastifyAdapter,
+  createNestFastifyApp,
   type NestFastifyApplication,
-} from "@nestjs/platform-fastify";
-import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
+} from "@lootlog/nest-shared";
 import { AppModule } from "./app.module";
 
-export async function createApp(): Promise<NestFastifyApplication> {
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter(),
-    { bufferLogs: true },
-  );
-
-  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
-
-  return app;
+export function createApp(): Promise<NestFastifyApplication> {
+  return createNestFastifyApp(AppModule);
 }

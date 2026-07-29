@@ -36,7 +36,7 @@ import { NotificationRuleService } from "src/notifications/notification-rule.ser
 import { NotificationTargetService } from "src/notifications/notification-target.service";
 import { WatchedItemService } from "src/notifications/watched-item.service";
 import { SuccessResponseDto } from "src/shared/dto/common-response.dto";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 
 @ApiTags("notifications")
 @ApiBearerAuth()

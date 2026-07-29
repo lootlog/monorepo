@@ -1,6 +1,6 @@
 import type { NecordModuleOptions } from "necord";
 import { IntentsBitField } from "discord.js";
-import { RuntimeEnvironment } from "src/types/common.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 import { env } from "./env";
 import { serviceConfig } from "./service.config";
 

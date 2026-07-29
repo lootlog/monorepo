@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@lootlog/ui/components/button";
-import { ArrowUpDown, Crown, Medal, Trophy } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
+import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { NPC_TYPE_NAMES } from "@/constants/npc";
 import i18n from "@/i18n/config";
@@ -8,33 +9,22 @@ import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/api-client/
 
 type NpcKill = UserNpcKillsResponseDtoOutputNpcsItem;
 
-const getRankIcon = (rank: number) => {
-  switch (rank) {
-    case 1:
-      return <Crown className="h-4 w-4 text-yellow-500" />;
-    case 2:
-      return <Trophy className="h-4 w-4 text-slate-400" />;
-    case 3:
-      return <Medal className="h-4 w-4 text-amber-600" />;
-    default:
-      return null;
-  }
-};
-
 export const createKillsColumns = (startRank: number): ColumnDef<NpcKill>[] => [
   {
     id: "rank",
     header: () => <div className="text-center w-8">#</div>,
     cell: ({ row }) => {
       const rank = startRank + row.index + 1;
-      const icon = getRankIcon(rank);
       return (
         <div className="flex items-center justify-center w-8">
-          {icon ?? (
-            <span className="text-sm font-medium text-muted-foreground">
-              {rank}
-            </span>
-          )}
+          <PodiumRankIcon
+            rank={rank}
+            fallback={
+              <span className="text-sm font-medium text-muted-foreground">
+                {rank}
+              </span>
+            }
+          />
         </div>
       );
     },

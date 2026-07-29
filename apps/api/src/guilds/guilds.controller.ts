@@ -27,7 +27,7 @@ import { GuildsService } from "src/guilds/guilds.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { DiscordGuildSyncStateResponseDto } from "src/shared/dto/discord-guild-sync-response.dto";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";

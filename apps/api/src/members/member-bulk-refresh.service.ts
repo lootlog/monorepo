@@ -11,7 +11,7 @@ import type { Logger } from "winston";
 import { serviceConfig } from "src/config/service.config";
 import { PrismaService } from "src/db/prisma.service";
 import type { MemberRefreshJob } from "src/generated/prisma/client";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 import { getAdminBulkRefreshRateLimit } from "./constants/member-cache.constant";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 import { ErrorKey } from "./enum/error-key.enum";

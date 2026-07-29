@@ -22,7 +22,7 @@ import { HelpCircle } from "lucide-react";
 import {
   EVENT_SCORING_NUMERIC_FACTORS,
   EVENT_SCORING_NUMERIC_OPERATORS,
-} from "../../types/scoring-rules";
+} from "@lootlog/scoring";
 import {
   getScoringFactorDescription,
   getScoringFactorLabel,

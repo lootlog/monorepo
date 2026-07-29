@@ -1,4 +1,5 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { RabbitMqRetryService } from "@lootlog/nest-shared";
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
@@ -8,156 +9,25 @@ import {
   RETRY_EXCHANGE_NAME,
 } from "src/config/rabbitmq.config";
 
-interface AmqpMessage {
-  properties: {
-    headers?: Record<string, unknown>;
-  };
-}
-
-interface RetryConfig {
-  maxRetries?: number;
-  retryDelayMs?: number;
-  retryExchange?: string;
-  dlqExchange?: string;
-}
-
-const DEFAULT_MAX_RETRIES = 3;
-const DEFAULT_RETRY_DELAY_MS = 30000;
-
 @Injectable()
-export class RetryService {
+export class RetryService extends RabbitMqRetryService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly amqp: AmqpConnection,
-  ) {}
-
-  shouldRetry(
-    headers: Record<string, unknown>,
-    maxRetries: number = DEFAULT_MAX_RETRIES,
-  ): boolean {
-    const retryCount = this.getRetryCount(headers);
-    return retryCount < maxRetries;
-  }
-
-  getRetryCount(headers: Record<string, unknown>): number {
-    const retryCount = headers["x-retry-count"];
-    if (typeof retryCount === "number") {
-      return retryCount;
-    }
-
-    const xDeath = headers["x-death"];
-    if (Array.isArray(xDeath) && xDeath.length > 0) {
-      const count = xDeath[0]?.count;
-      return typeof count === "number" ? count : 0;
-    }
-
-    return 0;
-  }
-
-  async sendToDlq(
-    message: unknown,
-    dlqRoutingKey: string,
-    headers: Record<string, unknown> = {},
-    config: RetryConfig = {},
-  ): Promise<void> {
-    const dlqExchange = config.dlqExchange ?? DEAD_LETTER_EXCHANGE_NAME;
-
-    this.logger.log({
-      level: "warn",
-      message: `Sending message to DLQ: ${dlqRoutingKey}`,
-    });
-
-    await this.amqp.publish(dlqExchange, dlqRoutingKey, message, {
-      headers: {
-        ...headers,
-        "x-final-attempt": true,
-        "x-sent-to-dlq-at": new Date().toISOString(),
-      },
-    });
-  }
-
-  getRetryQueueOptions(
-    mainRoutingKey: string,
-    retryDelayMs: number = DEFAULT_RETRY_DELAY_MS,
+    @Inject(WINSTON_MODULE_PROVIDER) logger: Logger,
+    amqp: AmqpConnection,
   ) {
-    const mainExchange = DEFAULT_EXCHANGE_NAME;
-
-    return {
-      durable: true,
-      messageTtl: retryDelayMs,
-      deadLetterExchange: mainExchange,
-      deadLetterRoutingKey: mainRoutingKey,
-    };
-  }
-
-  getMainQueueOptions(retryRoutingKey: string, config: RetryConfig = {}) {
-    return {
-      durable: true,
-      deadLetterExchange: config.retryExchange ?? RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: retryRoutingKey,
-    };
-  }
-
-  async handleRetryLogic(
-    data: unknown,
-    headers: Record<string, unknown>,
-    dlqRoutingKey: string,
-    identifier: string,
-    config: RetryConfig = {},
-  ): Promise<boolean> {
-    const retryCount = this.getRetryCount(headers);
-    const maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
-
-    if (!this.shouldRetry(headers, maxRetries)) {
-      this.logger.log({
-        level: "warn",
-        message: `Max retries (${maxRetries}) exceeded for ${identifier}, sending to DLQ`,
-      });
-      await this.sendToDlq(data, dlqRoutingKey, headers, config);
-      return false;
-    }
-
-    this.logger.log({
-      level: "info",
-      message: `Processing ${identifier} (attempt ${retryCount + 1}/${maxRetries})`,
-    });
-    return true;
-  }
-
-  handleRetryQueue(
-    _data: unknown,
-    amqpMsg: AmqpMessage,
-    identifier: string,
-    config: RetryConfig = {},
-  ): void {
-    const headers = amqpMsg.properties.headers ?? {};
-    const currentRetryCount = this.getRetryCount(headers);
-    const retryDelayMs = config.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
-
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Processing retry for ${identifier}`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Current headers: ${JSON.stringify(headers)}`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Current retry count: ${currentRetryCount}`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] TTL: ${retryDelayMs}ms`,
-    });
-
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Message will expire in ${retryDelayMs}ms and return to main queue`,
-    });
-    this.logger.log({
-      level: "info",
-      message: `[RETRY QUEUE] Next attempt will be #${currentRetryCount + 1}`,
-    });
+    super(
+      amqp,
+      {
+        info: (message) => logger.log({ level: "info", message }),
+        warn: (message) => logger.log({ level: "warn", message }),
+      },
+      {
+        dlqExchange: DEAD_LETTER_EXCHANGE_NAME,
+        mainExchange: DEFAULT_EXCHANGE_NAME,
+        maxRetries: 3,
+        retryDelayMs: 30_000,
+        retryExchange: RETRY_EXCHANGE_NAME,
+      },
+    );
   }
 }

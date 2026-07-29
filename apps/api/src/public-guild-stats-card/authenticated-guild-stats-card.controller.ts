@@ -8,7 +8,7 @@ import {
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
 import { Permission } from "src/generated/prisma/client";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { RefreshStatsCardResponseDto } from "./dto/refresh-stats-card-response.dto";

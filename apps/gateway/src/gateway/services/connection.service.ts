@@ -3,7 +3,7 @@ import { Platform } from "src/gateway/enums/platform.enum";
 import { GAME_URL_REGEX } from "src/gateway/constants/game-url-regex.constant";
 import type { Socket, SocketUser } from "src/gateway/types/socket-user.type";
 import { env } from "src/config/env";
-import { RuntimeEnvironment } from "src/types/common.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 
 interface ConnectionMetadata {
   platform: Platform;

@@ -5,7 +5,7 @@ import {
   getDateFormatter,
   getLocalDate,
   toUtcDateFromLocal,
-} from "src/shared/utils/timezone.util";
+} from "@lootlog/datetime";
 
 type TimeOfDayParts = {
   hours: number;

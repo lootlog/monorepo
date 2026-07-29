@@ -1,11 +1,11 @@
 import { z } from "zod";
 import {
   DEV_PERMISSION_OVERRIDE_HEADER,
+  RuntimeEnvironment,
   type DevPermissionOverride,
 } from "@lootlog/types";
 import { env } from "src/config/env";
 import { Permission } from "src/generated/prisma/client";
-import { RuntimeEnvironment } from "src/types/runtime.types";
 
 export { DEV_PERMISSION_OVERRIDE_HEADER };
 

@@ -20,7 +20,7 @@ import { ZodResponse } from "nestjs-zod";
 import { DiscordId } from "@lootlog/nest-shared/decorators";
 import { type Guild, Permission } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { CreateReservationDto } from "./dto/create-reservation.dto";

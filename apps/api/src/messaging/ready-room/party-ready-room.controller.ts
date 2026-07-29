@@ -28,7 +28,7 @@ import {
   PartyReadyRoomProjectionDto,
 } from "src/messaging/ready-room/dto/party-ready-room-projection.dto";
 import { ReadyRoomService } from "src/messaging/ready-room/ready-room.service";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 
 const READY_ROOM_PERMISSIONS = [
   Permission.LOOTLOG_NOTIFICATIONS_SEND,
