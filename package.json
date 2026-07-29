@@ -82,13 +82,13 @@
     "husky": "^9.1.7",
     "knip": "^6.29.0",
     "lint-staged": "^17.2.0",
-    "oxfmt": "^0.60.0",
-    "oxlint": "^1.75.0",
+    "oxfmt": "^0.61.0",
+    "oxlint": "^1.76.0",
     "socket.io-client": "^4.8.3",
     "tsx": "catalog:",
-    "turbo": "^2.10.6",
+    "turbo": "^2.10.7",
     "typescript": "catalog:",
-    "wrangler": "^4.114.0"
+    "wrangler": "^4.115.0"
   },
   "devEngines": {
     "packageManager": {
