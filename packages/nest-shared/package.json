@@ -15,6 +15,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./app": {
+      "types": "./dist/app/create-nest-fastify-app.d.ts",
+      "default": "./dist/app/create-nest-fastify-app.js"
+    },
     "./config": {
       "types": "./dist/config/index.d.ts",
       "default": "./dist/config/index.js"
@@ -30,6 +34,14 @@
     "./redis": {
       "types": "./dist/redis/index.d.ts",
       "default": "./dist/redis/index.js"
+    },
+    "./rabbitmq": {
+      "types": "./dist/rabbitmq/rabbitmq-retry.service.d.ts",
+      "default": "./dist/rabbitmq/rabbitmq-retry.service.js"
+    },
+    "./utils/stable-stringify": {
+      "types": "./dist/utils/stable-stringify.d.ts",
+      "default": "./dist/utils/stable-stringify.js"
     },
     "./validators/query-helpers": {
       "types": "./dist/validators/query-helpers.d.ts",

@@ -1,5 +1,5 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { RabbitMqRetryService } from "@lootlog/nest-shared";
+import { RabbitMqRetryService } from "@lootlog/nest-shared/rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
 import { GatewayConfig } from "./constants/gateway-config.constant";
 
