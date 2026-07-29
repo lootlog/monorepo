@@ -18,8 +18,8 @@
     "./postcss.config.mjs": "./postcss.config.mjs"
   },
   "scripts": {
-    "doctor": "npx -y react-doctor@latest .",
-    "lint": "oxlint ."
+    "lint": "oxlint .",
+    "doctor": "npx -y react-doctor@latest ."
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

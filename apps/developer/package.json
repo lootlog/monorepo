@@ -8,9 +8,9 @@
     "dev": "BASE_PATH=/developer/ vite dev",
     "build": "vite build",
     "start": "node server.js",
-    "test": "node --test server-handler.test.js",
+    "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
-    "typecheck": "tsc --noEmit"
+    "test": "node --test server-handler.test.js"
   },
   "dependencies": {
     "@lootlog/ui": "workspace:*",

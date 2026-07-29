@@ -121,11 +121,6 @@
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "66e8a50c83c3c724fcfe0769701b665c56cec220cc4f49cc1aee8bdfc07de94a"
     },
-    "nestjs-best-practices": {
-      "source": "kadajett/agent-nestjs-skills",
-      "sourceType": "github",
-      "computedHash": "1b6f82e889d19d305e38e35594de08eca0242321f353cafa4cf5e61dd3aa1a73"
-    },
     "prd": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
