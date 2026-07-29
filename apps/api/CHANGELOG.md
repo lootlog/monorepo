@@ -1,5 +1,11 @@
 # @lootlog/api
 
+## 3.0.1
+
+### Patch Changes
+
+- 0036206: Prevent cached event kill history responses from failing date validation.
+
 ## 3.0.0
 
 ### Major Changes
