@@ -3,7 +3,7 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { serviceConfig } from "src/config/service.config";
 import { PrismaService } from "src/db/prisma.service";
 import { mockFn } from "src/test/mock-fn";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 import { PublicGuildStatsCardService } from "./public-guild-stats-card.service";
 
 describe("PublicGuildStatsCardService", () => {

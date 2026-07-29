@@ -10,7 +10,7 @@ import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnost
 import { ErrorKey as GuildErrorKey } from "src/guilds/enum/error-key.enum";
 import type { Member } from "src/generated/prisma/client";
 import { serviceConfig } from "src/config/service.config";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 import {
   getMemberCacheSoftTtl,
   getRefreshPermissionsTtl,

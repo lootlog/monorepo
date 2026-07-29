@@ -2,7 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
 import { RolesController } from "./roles.controller";
 import { RolesService } from "./roles.service";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 
 describe("RolesController", () => {

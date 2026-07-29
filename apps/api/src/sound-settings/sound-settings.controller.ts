@@ -2,7 +2,7 @@ import { Body, Controller, Get, Patch, UseGuards } from "@nestjs/common";
 import { UserId } from "@lootlog/nest-shared/decorators";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
 import { SoundSettingsService } from "src/sound-settings/sound-settings.service";
 import { SoundSettingsResponseDto } from "./dto/sound-settings-response.dto";

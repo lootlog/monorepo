@@ -17,7 +17,7 @@ import { EventWrappedService } from "./services/event-wrapped.service";
 import { EventCoordinationService } from "./services/event-coordination.service";
 import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
-import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "./constants/scoring-rules.constant";
+import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "@lootlog/scoring";
 import { EVENT_HERO_KILL_JOB_NAME } from "./utils/event-hero-kill-job";
 
 describe("EventsService", () => {

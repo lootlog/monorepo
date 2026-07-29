@@ -1,9 +1,9 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   eventsRankingControllerGetEventKillHistory,
   getEventsRankingControllerGetEventKillHistoryQueryKey,
 } from "@lootlog/api-client/react-query/main/events";
 import type { HeroKill, KillHistoryResponse } from "./use-hero-kill-history";
+import { useCursorInfiniteQuery } from "./use-cursor-infinite-query";
 
 interface UseEventKillHistoryOptions {
   guildId: string;
@@ -23,25 +23,20 @@ export const useEventKillHistory = ({
     ...(heroId ? { heroId } : {}),
   };
 
-  return useInfiniteQuery({
+  return useCursorInfiniteQuery({
     queryKey: getEventsRankingControllerGetEventKillHistoryQueryKey(
       { guildId, eventId },
       baseParams,
     ),
-    queryFn: ({ pageParam }) =>
+    fetchPage: (cursor) =>
       eventsRankingControllerGetEventKillHistory(
         { guildId, eventId },
         {
           ...baseParams,
-          cursor: typeof pageParam === "string" ? pageParam : undefined,
+          cursor,
         },
       ) as Promise<KillHistoryResponse>,
     enabled: !!guildId && !!eventId,
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage) return undefined;
-      return lastPage.nextCursor ?? undefined;
-    },
   });
 };
 

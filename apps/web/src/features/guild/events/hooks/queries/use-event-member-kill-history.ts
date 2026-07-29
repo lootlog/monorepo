@@ -1,4 +1,3 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   eventsRankingControllerGetMemberKillHistory,
   getEventsRankingControllerGetMemberKillHistoryQueryKey,
@@ -8,6 +7,7 @@ import type {
   KillParticipant,
   KillParticipantMember,
 } from "./use-hero-kill-history";
+import { useCursorInfiniteQuery } from "./use-cursor-infinite-query";
 
 export interface EventMemberKill {
   id: string;
@@ -46,24 +46,19 @@ export const useEventMemberKillHistory = ({
     ...(heroId ? { heroId } : {}),
   };
 
-  return useInfiniteQuery({
+  return useCursorInfiniteQuery({
     queryKey: getEventsRankingControllerGetMemberKillHistoryQueryKey(
       { guildId, eventId, memberId },
       baseParams,
     ),
-    queryFn: ({ pageParam }) =>
+    fetchPage: (cursor) =>
       eventsRankingControllerGetMemberKillHistory(
         { guildId, eventId, memberId },
         {
           ...baseParams,
-          cursor: typeof pageParam === "string" ? pageParam : undefined,
+          cursor,
         },
       ) as Promise<EventMemberKillHistoryResponse>,
     enabled: !!guildId && !!eventId && !!memberId,
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage) return undefined;
-      return lastPage.nextCursor ?? undefined;
-    },
   });
 };

@@ -43,7 +43,7 @@ import {
   LootResponseDto,
   NullableLootResponseDto,
 } from "src/shared/dto/loot-response.dto";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 

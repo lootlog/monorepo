@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Card } from "@lootlog/ui/components/card";
 import { Zap, Settings } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { EventScoringMode } from "../../types/scoring-rules";
+import type { EventScoringMode } from "@lootlog/scoring";
 
 interface ScoringModeSelectorProps {
   value: EventScoringMode;

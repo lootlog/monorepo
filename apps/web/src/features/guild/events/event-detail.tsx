@@ -40,9 +40,9 @@ import { HeroCard } from "./components/heroes/hero-card";
 import { EventActionsCard } from "./components/shared/event-actions-card";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 import {
-  normalizeScoringMode,
-  normalizeScoringRules,
-} from "./utils/scoring-rules";
+  normalizeEventScoringMode,
+  normalizeEventScoringRules,
+} from "@lootlog/scoring";
 import { getEventStatusAtTimestamp } from "./utils/event-activity";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
@@ -238,10 +238,10 @@ export const EventDetail = () => {
       maps: mapsData?.maps ?? [],
     };
   });
-  const scoringMode = normalizeScoringMode(event?.scoringMode);
+  const scoringMode = normalizeEventScoringMode(event?.scoringMode);
   const scoringRules =
     scoringMode === "ADVANCED"
-      ? normalizeScoringRules(event?.scoringRules)
+      ? normalizeEventScoringRules(event?.scoringRules)
       : null;
   const eventDateRangeLabel = event
     ? `${format(new Date(event.startsAt || event.createdAt), "d MMM yyyy", {

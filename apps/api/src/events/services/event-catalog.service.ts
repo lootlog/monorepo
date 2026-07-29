@@ -15,8 +15,10 @@ import { TIMER_TYPES } from "src/timers/constants/timer-limits";
 import { getEventWrappedCachePattern } from "src/shared/constants/cache.constant";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+  normalizeEventScoringMode,
+  normalizeEventScoringRules,
   type EventScoringMode,
-} from "../constants/scoring-rules.constant";
+} from "@lootlog/scoring";
 import type { CreateEventDto } from "../dto/create-event.dto";
 import type { CreateHeroDto } from "../dto/create-hero.dto";
 import type { CreateLocationDto } from "../dto/create-location.dto";
@@ -32,10 +34,6 @@ import {
   buildActiveEventWhere,
   compareEventsByActivityAndStart,
 } from "../utils/event-activity.util";
-import {
-  normalizeEventScoringMode,
-  normalizeEventScoringRules,
-} from "../utils/scoring-rules.util";
 
 interface TimerNpcData {
   id: number;

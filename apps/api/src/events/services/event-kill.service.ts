@@ -26,7 +26,7 @@ import {
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
-} from "../utils/scoring-rules.util";
+} from "@lootlog/scoring";
 import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util";
 import {
   calculateTrackingDurationSeconds,

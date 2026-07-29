@@ -2,7 +2,7 @@ import { Body, Controller, Get, Patch, Query, UseGuards } from "@nestjs/common";
 import { UserId } from "@lootlog/nest-shared/decorators";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import {
   GetSettingsDocumentsQueryDto,
   PatchSettingsDocumentsDto,

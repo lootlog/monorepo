@@ -15,7 +15,7 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import i18n from "@/i18n/config";
 
-export const headToHeadColumns: ColumnDef<HeadToHeadRecord>[] = [
+export const headToHeadBaseColumns: ColumnDef<HeadToHeadRecord>[] = [
   {
     id: "lastBattleResult",
     header: () => (
@@ -136,39 +136,45 @@ export const headToHeadColumns: ColumnDef<HeadToHeadRecord>[] = [
       </div>
     ),
   },
-  {
-    accessorKey: "lastBattleDate",
-    header: ({ column }) => (
-      <div className="text-right">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8"
-        >
-          {i18n.t("battlePanel.statistics.columns.lastBattle")}
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      </div>
-    ),
-    cell: ({ row }) => {
-      const exactTime = format(
-        new Date(row.original.lastBattleDate),
-        "dd.MM.yyyy HH:mm",
-      );
+];
 
-      return (
-        <div className="flex min-w-0 justify-end">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
-                {getRelativeTime(row.original.lastBattleDate)}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>{exactTime}</TooltipContent>
-          </Tooltip>
-        </div>
-      );
-    },
+export const headToHeadLastBattleColumn: ColumnDef<HeadToHeadRecord> = {
+  accessorKey: "lastBattleDate",
+  header: ({ column }) => (
+    <div className="text-right">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-8"
+      >
+        {i18n.t("battlePanel.statistics.columns.lastBattle")}
+        <ArrowUpDown className="ml-2 h-3 w-3" />
+      </Button>
+    </div>
+  ),
+  cell: ({ row }) => {
+    const exactTime = format(
+      new Date(row.original.lastBattleDate),
+      "dd.MM.yyyy HH:mm",
+    );
+
+    return (
+      <div className="flex min-w-0 justify-end">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
+              {getRelativeTime(row.original.lastBattleDate)}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{exactTime}</TooltipContent>
+        </Tooltip>
+      </div>
+    );
   },
+};
+
+export const headToHeadColumns: ColumnDef<HeadToHeadRecord>[] = [
+  ...headToHeadBaseColumns,
+  headToHeadLastBattleColumn,
 ];

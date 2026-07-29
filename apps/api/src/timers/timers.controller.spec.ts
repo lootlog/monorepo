@@ -3,7 +3,7 @@ import { mockFn } from "src/test/mock-fn";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { TimersController } from "./timers.controller";
 import { TimersService } from "./timers.service";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 
 describe("TimersController", () => {

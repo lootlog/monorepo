@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
-import { AuthGuard } from "src/shared/guards/auth.guard";
+import { AuthGuard } from "@lootlog/nest-shared";
 import { EventModeQueryDto } from "./dto/event-mode-query.dto";
 import { EventModeController } from "./event-mode.controller";
 import { EventModeService } from "./services/event-mode.service";
