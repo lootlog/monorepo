@@ -45,10 +45,10 @@ export const STATUS_STYLES: Record<
     dot: "bg-green-500",
   },
   ASSIGNED_ABSENT: {
-    bg: "bg-yellow-500/10",
-    border: "border-yellow-500/30",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/30",
     label: "Nieobecny",
-    dot: "bg-yellow-500",
+    dot: "bg-orange-500",
   },
   ASSIGNED_AFK: {
     bg: "bg-orange-500/10",
@@ -57,10 +57,10 @@ export const STATUS_STYLES: Record<
     dot: "bg-orange-500",
   },
   ASSIGNED_UNKNOWN: {
-    bg: "bg-muted/30",
-    border: "border-border",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/30",
     label: "Przypisany",
-    dot: "bg-muted-foreground/50",
+    dot: "bg-orange-500",
   },
   UNASSIGNED: {
     bg: "bg-destructive/10",

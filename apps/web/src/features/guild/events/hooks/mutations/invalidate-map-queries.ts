@@ -24,10 +24,18 @@ export function invalidateMapQueries(
   eventId: string,
   mapId: string,
 ) {
+  invalidateEventMapListQuery(queryClient, guildId, eventId);
+  invalidateGapQueries(queryClient, guildId, eventId, mapId);
+}
+
+export function invalidateEventMapListQuery(
+  queryClient: QueryClient,
+  guildId: string,
+  eventId: string,
+) {
   queryClient.invalidateQueries({
     queryKey: getListEventMapsQueryKey({ guildId, eventId }),
   });
-  invalidateGapQueries(queryClient, guildId, eventId, mapId);
 }
 
 export function invalidateGapQueries(
