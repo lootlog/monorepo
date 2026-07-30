@@ -1600,6 +1600,57 @@ describe("GatewayService", () => {
       );
     });
 
+    it("should finish joining rooms before notifying the client", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
+      let resolveEventsRoomJoin: (() => void) | undefined;
+      const mockUserSocket = {
+        id: "socket-123",
+        data: {
+          discordId,
+          platform: Platform.WEB_APP,
+        },
+        rooms: new Set(["socket-123", "guild-1:presence"]),
+        leave: vi.fn(),
+        join: vi.fn((room: string) => {
+          if (room !== "guild-1:events") {
+            return Promise.resolve();
+          }
+
+          return new Promise<void>((resolve) => {
+            resolveEventsRoomJoin = resolve;
+          });
+        }),
+        emit: vi.fn(),
+      };
+
+      mockGuildsService.getUserGuilds.mockResolvedValue([
+        {
+          guild: { id: "guild-1", ownerId: "owner-1" },
+          roles: [],
+        },
+      ]);
+      mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
+
+      const rebalancePromise = service.rebalanceUserSocketRooms(
+        discordId,
+        userId,
+      );
+      await vi.waitFor(() => {
+        expect(mockUserSocket.join).toHaveBeenCalledWith("guild-1:events");
+      });
+
+      expect(mockUserSocket.emit).not.toHaveBeenCalled();
+
+      resolveEventsRoomJoin?.();
+      await rebalancePromise;
+
+      expect(mockUserSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.PERMISSIONS_UPDATED,
+        expect.any(Object),
+      );
+    });
+
     it("should publish disconnect cleanup for guilds removed during rebalance", async () => {
       const discordId = "discord-123";
       const userId = "user-123";
