@@ -4,6 +4,7 @@ import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { invalidateKillQueries } from "../mutations/invalidate-kill-queries";
 import {
+  invalidateEventMapListQuery,
   invalidateMapQueries,
   invalidateGapQueries,
 } from "../mutations/invalidate-map-queries";
@@ -93,6 +94,13 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       );
     },
   );
+  const handlePermissionsUpdated = useEffectEvent(() => {
+    if (!guildId || !eventId) {
+      return;
+    }
+
+    invalidateEventMapListQuery(queryClient, guildId, eventId);
+  });
 
   useEffect(() => {
     if (!guildId || !eventId) {
@@ -102,6 +110,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
     socket.on(GatewayEvent.EVENT_MAP_STATUS_UPDATE, handleMapStatusUpdate);
     socket.on(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
     socket.on(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
+    socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     socket.on(
       GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED,
       handleRespawnWindowChange,
@@ -115,6 +124,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       socket.off(GatewayEvent.EVENT_MAP_STATUS_UPDATE, handleMapStatusUpdate);
       socket.off(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
       socket.off(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
+      socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
       socket.off(
         GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED,
         handleRespawnWindowChange,
