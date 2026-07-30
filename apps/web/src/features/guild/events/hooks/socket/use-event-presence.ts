@@ -147,8 +147,6 @@ export const useEventPresence = ({
 
   const handlePermissionsUpdated = useEffectEvent(() => {
     requestIdRef.current += 1;
-    setPresenceData(undefined);
-    setAccessState("forbidden");
     setRefreshVersion((version) => version + 1);
   });
 

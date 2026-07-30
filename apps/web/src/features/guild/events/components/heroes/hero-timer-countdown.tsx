@@ -11,26 +11,11 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import type { EventTimer } from "../../types/api";
+import { getHeroTimerCountdownState } from "./hero-timer-countdown-state";
 
 interface HeroTimerCountdownProps {
   timer: EventTimer | undefined;
 }
-
-const getHeroTimerCountdown = (timer: EventTimer) => {
-  const now = Date.now();
-  const minSpawnTime = new Date(timer.minSpawnTime).getTime();
-  const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
-
-  if (now < minSpawnTime) {
-    return minSpawnTime - now;
-  }
-
-  if (now < maxSpawnTime) {
-    return maxSpawnTime - now;
-  }
-
-  return 0;
-};
 
 export const HeroTimerCountdown = ({ timer }: HeroTimerCountdownProps) => {
   const { t } = useTranslation();
@@ -38,7 +23,7 @@ export const HeroTimerCountdown = ({ timer }: HeroTimerCountdownProps) => {
     return (
       <span className="text-xs text-muted-foreground flex items-center gap-1">
         <Clock className="w-3 h-3" />
-        {t("events.heroes.noTimer", "Brak timera")}
+        {t("events.heroes.noTimer")}
       </span>
     );
   }
@@ -53,73 +38,72 @@ export const HeroTimerCountdown = ({ timer }: HeroTimerCountdownProps) => {
 
 const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
   const { t } = useTranslation();
-  const [timeLeft, setTimeLeft] = useState(() => getHeroTimerCountdown(timer));
+  const [countdownState, setCountdownState] = useState(() =>
+    getHeroTimerCountdownState(timer, Date.now()),
+  );
 
   useEffect(() => {
-    const minSpawnTime = new Date(timer.minSpawnTime).getTime();
-    const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
-
     const interval = setInterval(() => {
-      const currentTime = Date.now();
-      if (currentTime < minSpawnTime) {
-        setTimeLeft(minSpawnTime - currentTime);
-      } else if (currentTime < maxSpawnTime) {
-        setTimeLeft(maxSpawnTime - currentTime);
-      } else {
+      const nextCountdownState = getHeroTimerCountdownState(timer, Date.now());
+      setCountdownState(nextCountdownState);
+
+      if (nextCountdownState.phase === "expired") {
         clearInterval(interval);
-        setTimeLeft(0);
       }
     }, 1000);
 
     return () => clearInterval(interval);
   }, [timer.maxSpawnTime, timer.minSpawnTime]);
 
-  if (timeLeft <= 0) {
+  if (countdownState.phase === "expired") {
     return (
       <span className="text-xs text-muted-foreground flex items-center gap-1">
         <Clock className="w-3 h-3" />
-        {t("events.heroes.timerExpired", "Timer wygasł")}
+        {t("events.heroes.timerExpired")}
       </span>
     );
   }
 
-  const minSpawnTime = new Date(timer.minSpawnTime).getTime();
-  const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
-  const isInSpawnWindow = timeLeft <= maxSpawnTime - minSpawnTime;
-  const isClose = timeLeft < 60000;
+  const isWaiting = countdownState.phase === "waiting";
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
+          tabIndex={0}
           className={cn(
             "flex items-center gap-1.5 px-2 py-1 rounded-md text-sm font-medium",
-            isInSpawnWindow
-              ? "bg-green-500/20 text-green-400"
-              : isClose
-                ? "bg-orange-500/20 text-orange-400"
-                : "bg-primary/20 text-primary",
+            isWaiting
+              ? "bg-amber-500/10 text-amber-500"
+              : "bg-green-500/10 text-green-500",
           )}
         >
           <Clock className="w-4 h-4" />
-          <span className="font-mono">{parseMsToTime(timeLeft)}</span>
+          <span className="font-mono">
+            {parseMsToTime(countdownState.timeLeftMilliseconds)}
+          </span>
         </div>
       </TooltipTrigger>
       <TooltipContent>
         <div className="text-sm space-y-1">
           <p>
-            Min:{" "}
+            {t("events.respawn.minSpawnTime")}:{" "}
             {format(new Date(timer.minSpawnTime), "HH:mm:ss", { locale: pl })}
           </p>
           <p>
-            Max:{" "}
+            {t("events.respawn.maxSpawnTime")}:{" "}
             {format(new Date(timer.maxSpawnTime), "HH:mm:ss", { locale: pl })}
           </p>
-          {isInSpawnWindow && (
-            <p className="text-green-400 font-medium">
-              {t("events.heroes.inSpawnWindow", "W oknie respawnu!")}
-            </p>
-          )}
+          <p
+            className={cn(
+              "font-medium",
+              isWaiting ? "text-amber-500" : "text-green-500",
+            )}
+          >
+            {isWaiting
+              ? t("events.heroes.countdownUntilSpawnWindow")
+              : t("events.heroes.countdownUntilSpawnWindowEnd")}
+          </p>
         </div>
       </TooltipContent>
     </Tooltip>

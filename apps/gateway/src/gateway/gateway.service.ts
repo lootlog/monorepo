@@ -324,13 +324,8 @@ export class GatewayService {
           (room) => !currentRooms.includes(room),
         );
 
-        for (const room of roomsToLeave) {
-          socket.leave(room);
-        }
-
-        for (const room of roomsToJoin) {
-          socket.join(room);
-        }
+        await Promise.all(roomsToLeave.map((room) => socket.leave(room)));
+        await Promise.all(roomsToJoin.map((room) => socket.join(room)));
 
         await this.cleanupRemovedGuildSessions(socket, removedGuildIds);
 
