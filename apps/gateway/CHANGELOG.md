@@ -1,5 +1,13 @@
 # @lootlog/gateway
 
+## 1.0.6
+
+### Patch Changes
+
+- feb696f: Correct event hero timer and map status colors, preserve presence during room
+  rebalancing, wait for gateway room changes, and resynchronize realtime map
+  assignments afterward.
+
 ## 1.0.5
 
 ### Patch Changes
