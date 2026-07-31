@@ -19,6 +19,11 @@
   "ongoing": "W trakcie",
   "ended": "Zakończony",
   "noEvents": "Brak eventów",
+  "emptyDescription": "Utwórz event, aby rozpocząć koordynację wydarzenia w klanie.",
+  "searchPlaceholder": "Szukaj eventu...",
+  "noResults": "Nie znaleziono eventów",
+  "noResultsDescription": "Spróbuj zmienić wyszukiwaną frazę.",
+  "clearSearch": "Wyczyść wyszukiwanie",
   "error": "Błąd podczas pobierania",
   "accessDenied": "Brak dostępu do eventów",
   "backToList": "Powrót do listy",
@@ -88,138 +93,82 @@
   },
   "summaryDialog": {
     "trigger": "Wrapped eventu",
-    "title": "Wrapped eventu",
-    "loadingTitle": "Składam historię eventu",
-    "loadingDescription": "Łączę bicia, punkty, coverage i dropy w jedną opowieść.",
-    "errorTitle": "Nie udało się zbudować wrapped",
-    "errorDescription": "Spróbuj ponownie za chwilę. Jeśli problem wraca, sprawdź czy event ma już dane rankingowe i lootowe.",
-    "stepCounter": "Krok {{current}} z {{total}}",
-    "dotAriaLabel": "Przejdź do kroku {{step}}",
+    "title": "Podsumowanie eventu",
+    "loadingTitle": "Przygotowuję podsumowanie",
+    "loadingDescription": "Sprawdzam dostępne statystyki eventu.",
+    "errorTitle": "Nie udało się pobrać podsumowania",
+    "errorDescription": "Odśwież dane i spróbuj ponownie.",
+    "retry": "Spróbuj ponownie",
+    "close": "Zamknij",
+    "stepCounter": "{{current}} / {{total}}",
+    "progressLabel": "Przejdź do slajdu {{current}} z {{total}}",
     "previous": "Wstecz",
     "next": "Dalej",
-    "finish": "Finał",
-    "footerHint": "Historia eventu w sześciu kadrach",
-    "steps": {
-      "intro": {
-        "label": "Otwarcie",
-        "title": "Szybkie wejście",
-        "description": "Najkrótsza wersja historii eventu.",
-        "lead": "Najpierw szybki zwiad po eventowych stołach: ile było respów, kto bił, ile wpadło punktów i gdzie sypnęło łupem."
+    "finish": "Zakończ",
+    "pause": "Wstrzymaj automatyczne przejście",
+    "play": "Wznów automatyczne przejście",
+    "openingProgressLabel": "Otwarcie",
+    "finaleProgressLabel": "Podsumowanie",
+    "eyebrow": "Event wrapped",
+    "openingDescription": "Najważniejsze potwierdzone statystyki z przebiegu eventu.",
+    "finaleEyebrow": "W skrócie",
+    "finaleTitle": "To był ten event",
+    "sparseEyebrow": "Podsumowanie",
+    "sparseDescription": "Danych jest jeszcze za mało na pełne wrapped. Pokazujemy tylko statystyki, które można potwierdzić.",
+    "noVerifiedFacts": "Nie ma jeszcze potwierdzonych statystyk do pokazania.",
+    "facts": {
+      "kills": {
+        "label": "Odnotowane bicia",
+        "description": "Łączna liczba bić zapisana w historii eventu."
       },
-      "scale": {
-        "label": "Skala",
-        "title": "Tempo eventu",
-        "description": "Jak długo trzymała warta, kiedy był największy ruch i jaki był przelicznik całej obstawy."
+      "tracked-time": {
+        "label": "Czas w rankingu",
+        "description": "Łączny czas aktywności uwzględniony w rankingu."
       },
-      "loot": {
-        "label": "Dropy",
-        "title": "Łup w liczbach",
-        "description": "Najcenniejsze rarity i herosi, którzy nosili ten ciężar."
+      "loot-records": {
+        "label": "Zapisane looty",
+        "description": "Liczba zapisów lootu powiązanych z eventem."
       },
-      "leaders": {
-        "label": "Liderzy",
-        "title": "Twarze eventu",
-        "description": "Kto był katem herosów, kto kasował punkty i kto najdłużej siedział na warcie."
+      "rarity-items": {
+        "label": "Przedmioty z rzadkością",
+        "description": "Łączna liczba unikatowych, heroicznych i legendarnych przedmiotów w zapisanych lootach."
       },
       "coverage": {
-        "label": "Obsada",
-        "title": "Herosy, które niosły event",
-        "description": "Herosi z największym ciężarem, lootem i presją na rotacji."
+        "label": "Pokrycie map",
+        "description": "Potwierdzone pokrycie dla {{count}} okien respawnu."
       },
-      "finale": {
-        "label": "Finał",
-        "title": "Kto zostaje w pamięci",
-        "description": "Końcowe spotlighty i najgłośniejszy akcent eventu."
+      "busiest-hour": {
+        "label": "Najbardziej aktywna godzina",
+        "description": "W tej godzinie zapisano {{count}} bić."
+      },
+      "top-scorer": {
+        "label": "Najwięcej punktów",
+        "value": "{{value}} pkt",
+        "description": "Jedyny najwyższy wynik wśród co najmniej dwóch sklasyfikowanych osób."
+      },
+      "longest-duty": {
+        "label": "Najdłuższa obstawa",
+        "value": "{{value}}",
+        "description": "Najdłuższy potwierdzony czas przypisania w granicach eventu."
+      },
+      "top-hunter": {
+        "label": "Najwięcej bić",
+        "value": "{{value}} bić",
+        "description": "Jedyny najwyższy wynik, zgodny z historią bić eventu."
+      },
+      "dominant-hero": {
+        "label": "Najczęściej bity heros",
+        "value": "{{value}} bić",
+        "description": "Jedyny heros z najwyższą liczbą bić w spójnych danych rankingowych."
+      },
+      "participants": {
+        "label": "Uczestnicy rankingu",
+        "description": "Liczba osób uwzględnionych w rankingu eventu."
+      },
+      "points": {
+        "label": "Punkty",
+        "description": "Łączna liczba punktów zapisana w rankingu eventu."
       }
-    },
-    "labels": {
-      "eventWrapped": "EVENT WRAPPED",
-      "heroesCount": "{{count}} herosów",
-      "mapsCount": "{{count}} map",
-      "spawns": "Spawny",
-      "kills": "Bicia",
-      "participants": "Uczestnicy",
-      "points": "Punkty",
-      "trackedTime": "Czas obstawy",
-      "afkTime": "AFK",
-      "busiestHour": "Peak hour",
-      "avgMapsPerSpawn": "Mapy / spawn",
-      "killsPerSpawn": "Bicia / resp",
-      "lootsPerSpawn": "Dropy / resp",
-      "legendaryPerHero": "Legi / heros",
-      "averageWatch": "Średnia warta",
-      "pointsPerKill": "Pkt / bicie",
-      "lootsPerHero": "Dropy / heros",
-      "killsPerPlayer": "Bicia / gracz",
-      "coverage": "Coverage",
-      "dominantHero": "Najmocniejszy heros",
-      "lootTotals": "Pełny loot pool",
-      "heroLoots": "Loot per heros",
-      "richestHero": "Najbogatszy heros",
-      "totalLoots": "Łączny loot",
-      "topHunter": "Najwięcej bić",
-      "topScorer": "Najwięcej punktów",
-      "longestDuty": "Najdłuższa obstawa",
-      "topAfk": "Najwięcej AFK",
-      "mostFlexible": "Najbardziej elastyczny",
-      "topEfficiency": "Najlepsza wydajność",
-      "uncovered": "Uncovered",
-      "unassigned": "Unassigned",
-      "windowTime": "Czas okien",
-      "bestCoverage": "Najmocniejszy coverage",
-      "roughestCoverage": "Najtrudniejszy coverage",
-      "headlineHero": "Hero numer jeden",
-      "finalHeadline": "Nagłówek końcowy",
-      "heroSpotlight": "Hero spotlight",
-      "legendary": "Legendarne",
-      "heroic": "Heroiczne",
-      "unique": "Unikatowe",
-      "legendaryShort": "leg",
-      "heroicShort": "hero",
-      "uniqueShort": "unik"
-    },
-    "captions": {
-      "spawnCount": "Zamknięte okna i zanotowane bicia",
-      "killPace": "Łączna liczba bić w obrębie eventu",
-      "rosterSize": "Osoby, które realnie nabiły ranking albo trzymały mapy",
-      "totalPointPool": "Cała pula punktów wyciągnięta z tego eventu",
-      "totalLootPool": "Wszystkie odnotowane dropy z eventowych stołów",
-      "legendaryPressure": "Liczba legend, które realnie poleciały podczas eventu",
-      "killsPerSpawn": "Średnio tyle bić przypadało na jedno zamknięte okno respu",
-      "lootsPerSpawn": "Średnia liczba dropów na jedno okno respu",
-      "legendaryPerHero": "Średnia liczba legend przypięta do jednego herosa w evencie",
-      "pointsPool": "Suma punktów rozdzielonych przez cały event",
-      "trackedTime": "Łączny czas, który ranking widzi jako aktywną obecność",
-      "busiestHour": "{{count}} bić w najgęstszej godzinie",
-      "avgMapsPerSpawn": "Średnia liczba map, które ktoś realnie trzymał w oknie spawnu",
-      "coverage": "Coverage liczony na poziomie map-sekund z zamkniętych okien respawnu",
-      "dominantHero": "{{kills}} bić i {{points}} pkt sprawiły, że ten heros praktycznie cały czas wracał do rozmów.",
-      "afkTime": "Czas oznaczony jako AFK w danych rankingowych",
-      "averageWatch": "Tyle średnio trwała aktywna warta jednego gracza",
-      "pointsPerKill": "Średni przelicznik punktów za jedno bicie w całym evencie",
-      "lootsPerHero": "Średni loot przypadający na jednego herosa z rozpiski",
-      "killsPerPlayer": "Średnia liczba bić przypadających na jednego gracza z rankingu",
-      "pointsPerKillLeaders": "To jest bazowy przelicznik eventu, zanim spojrzymy na indywidualnych kozaków",
-      "averageWatchLeaders": "Średni czas warty daje tło do tego, kto naprawdę przesiedział event",
-      "flexHeroCount": "Obejmował {{count}} herosów",
-      "flexAvgMapsPerRespawn": "Średnio {{count}} map na resp",
-      "efficiencyContext": "Na bazie {{count}} bić",
-      "topHunterOnHero": "Najwięcej bić na {{hero}} robił {{hunter}}.",
-      "richestHeroPool": "Z tego herosa wpadło łącznie {{count}} dropów, więc to tutaj najczęściej robiło się głośno.",
-      "heroMapSpread": "{{count}} map było przypiętych do tego herosa.",
-      "coverageWindows": "{{count}} zamkniętych okien respawnu",
-      "uncovered": "Czas, gdy mapa miała przypisanie, ale nie miała obserwatora",
-      "unassigned": "Czas bez żadnego przypisania do mapy",
-      "windowTime": "Suma czasu wszystkich okien respawnu",
-      "finalHeadline": "{{kills}} bić, {{participants}} osób i wystarczająco dużo danych, żeby to już miało własny charakter.",
-      "richestHero": "Najwięcej legendarnych przedmiotów zebrał {{hero}}: {{count}}.",
-      "noRichestHero": "W tym evencie nie udało się jeszcze wyciągnąć wyraźnego lootowego bohatera."
-    },
-    "units": {
-      "kills": "bić",
-      "points": "pkt",
-      "maps": "map",
-      "pointsPerKill": "pkt / bicie"
     }
   },
   "actionsCard": {

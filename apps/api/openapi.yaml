@@ -14417,129 +14417,195 @@ components:
             topHunter:
               type: object
               properties:
-                memberId:
-                  type: number
-                name:
-                  type: string
-                avatar:
-                  type: string
+                winner:
+                  type: object
+                  properties:
+                    memberId:
+                      type: number
+                    name:
+                      type: string
+                    avatar:
+                      type: string
+                      nullable: true
+                    primaryValue:
+                      type: number
+                    secondaryValue:
+                      type: number
+                      nullable: true
+                  required:
+                    - memberId
+                    - name
+                    - avatar
+                    - primaryValue
                   nullable: true
-                primaryValue:
+                candidateCount:
                   type: number
-                secondaryValue:
+                tiedWinnerCount:
                   type: number
-                  nullable: true
               required:
-                - memberId
-                - name
-                - avatar
-                - primaryValue
-              nullable: true
+                - winner
+                - candidateCount
+                - tiedWinnerCount
             topScorer:
               type: object
               properties:
-                memberId:
-                  type: number
-                name:
-                  type: string
-                avatar:
-                  type: string
+                winner:
+                  type: object
+                  properties:
+                    memberId:
+                      type: number
+                    name:
+                      type: string
+                    avatar:
+                      type: string
+                      nullable: true
+                    primaryValue:
+                      type: number
+                    secondaryValue:
+                      type: number
+                      nullable: true
+                  required:
+                    - memberId
+                    - name
+                    - avatar
+                    - primaryValue
                   nullable: true
-                primaryValue:
+                candidateCount:
                   type: number
-                secondaryValue:
+                tiedWinnerCount:
                   type: number
-                  nullable: true
               required:
-                - memberId
-                - name
-                - avatar
-                - primaryValue
-              nullable: true
+                - winner
+                - candidateCount
+                - tiedWinnerCount
             longestDuty:
               type: object
               properties:
-                memberId:
-                  type: number
-                name:
-                  type: string
-                avatar:
-                  type: string
+                winner:
+                  type: object
+                  properties:
+                    memberId:
+                      type: number
+                    name:
+                      type: string
+                    avatar:
+                      type: string
+                      nullable: true
+                    primaryValue:
+                      type: number
+                    secondaryValue:
+                      type: number
+                      nullable: true
+                  required:
+                    - memberId
+                    - name
+                    - avatar
+                    - primaryValue
                   nullable: true
-                primaryValue:
+                candidateCount:
                   type: number
-                secondaryValue:
+                tiedWinnerCount:
                   type: number
-                  nullable: true
               required:
-                - memberId
-                - name
-                - avatar
-                - primaryValue
-              nullable: true
+                - winner
+                - candidateCount
+                - tiedWinnerCount
             topAfk:
               type: object
               properties:
-                memberId:
-                  type: number
-                name:
-                  type: string
-                avatar:
-                  type: string
+                winner:
+                  type: object
+                  properties:
+                    memberId:
+                      type: number
+                    name:
+                      type: string
+                    avatar:
+                      type: string
+                      nullable: true
+                    primaryValue:
+                      type: number
+                    secondaryValue:
+                      type: number
+                      nullable: true
+                  required:
+                    - memberId
+                    - name
+                    - avatar
+                    - primaryValue
                   nullable: true
-                primaryValue:
+                candidateCount:
                   type: number
-                secondaryValue:
+                tiedWinnerCount:
                   type: number
-                  nullable: true
               required:
-                - memberId
-                - name
-                - avatar
-                - primaryValue
-              nullable: true
+                - winner
+                - candidateCount
+                - tiedWinnerCount
             mostFlexible:
               type: object
               properties:
-                memberId:
-                  type: number
-                name:
-                  type: string
-                avatar:
-                  type: string
+                winner:
+                  type: object
+                  properties:
+                    memberId:
+                      type: number
+                    name:
+                      type: string
+                    avatar:
+                      type: string
+                      nullable: true
+                    primaryValue:
+                      type: number
+                    secondaryValue:
+                      type: number
+                      nullable: true
+                  required:
+                    - memberId
+                    - name
+                    - avatar
+                    - primaryValue
                   nullable: true
-                primaryValue:
+                candidateCount:
                   type: number
-                secondaryValue:
+                tiedWinnerCount:
                   type: number
-                  nullable: true
               required:
-                - memberId
-                - name
-                - avatar
-                - primaryValue
-              nullable: true
+                - winner
+                - candidateCount
+                - tiedWinnerCount
             topEfficiency:
               type: object
               properties:
-                memberId:
-                  type: number
-                name:
-                  type: string
-                avatar:
-                  type: string
+                winner:
+                  type: object
+                  properties:
+                    memberId:
+                      type: number
+                    name:
+                      type: string
+                    avatar:
+                      type: string
+                      nullable: true
+                    primaryValue:
+                      type: number
+                    secondaryValue:
+                      type: number
+                      nullable: true
+                  required:
+                    - memberId
+                    - name
+                    - avatar
+                    - primaryValue
                   nullable: true
-                primaryValue:
+                candidateCount:
                   type: number
-                secondaryValue:
+                tiedWinnerCount:
                   type: number
-                  nullable: true
               required:
-                - memberId
-                - name
-                - avatar
-                - primaryValue
-              nullable: true
+                - winner
+                - candidateCount
+                - tiedWinnerCount
           required:
             - topHunter
             - topScorer
@@ -14661,24 +14727,35 @@ components:
               topHunter:
                 type: object
                 properties:
-                  memberId:
-                    type: number
-                  name:
-                    type: string
-                  avatar:
-                    type: string
+                  winner:
+                    type: object
+                    properties:
+                      memberId:
+                        type: number
+                      name:
+                        type: string
+                      avatar:
+                        type: string
+                        nullable: true
+                      primaryValue:
+                        type: number
+                      secondaryValue:
+                        type: number
+                        nullable: true
+                    required:
+                      - memberId
+                      - name
+                      - avatar
+                      - primaryValue
                     nullable: true
-                  primaryValue:
+                  candidateCount:
                     type: number
-                  secondaryValue:
+                  tiedWinnerCount:
                     type: number
-                    nullable: true
                 required:
-                  - memberId
-                  - name
-                  - avatar
-                  - primaryValue
-                nullable: true
+                  - winner
+                  - candidateCount
+                  - tiedWinnerCount
             required:
               - heroNpcId
               - npcId

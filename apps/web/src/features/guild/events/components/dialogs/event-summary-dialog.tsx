@@ -1,31 +1,25 @@
-import { startTransition, useEffect, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  type Transition,
-} from "framer-motion";
+import { startTransition, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@lootlog/ui/components/badge";
+import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Sparkles, Trophy } from "lucide-react";
-import { cn } from "@/utils/cn";
+import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 import {
   getShowEventWrappedQueryKey,
   useShowEventWrapped,
 } from "@lootlog/api-client/react-query/main/events";
-import { buildSteps } from "./event-summary/build-steps";
+import { buildWrappedDeck } from "./event-summary/build-wrapped-slides";
+import { buildWrappedQualityModel } from "./event-summary/wrapped-data-quality";
 import { LoadingState } from "./event-summary/loading-state";
-import { SlideNavButton } from "./event-summary/slide-nav-button";
-import { StepDots } from "./event-summary/step-dots";
-import { getStepMotionPreset } from "./event-summary/utils";
+import { useWrappedAutoplay } from "./event-summary/use-wrapped-autoplay";
+import { WrappedProgress } from "./event-summary/wrapped-progress";
+import { WrappedSlideContent } from "./event-summary/wrapped-slide-content";
+import { WrappedSparseSummary } from "./event-summary/wrapped-sparse-summary";
 
 interface EventSummaryDialogProps {
   open: boolean;
@@ -43,319 +37,271 @@ export const EventSummaryDialog = ({
   eventName,
 }: EventSummaryDialogProps) => {
   const { t } = useTranslation();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const prefersReducedMotion = useReducedMotion();
-  const { data, isLoading, error } = useShowEventWrapped(
-    {
-      guildId,
-      eventId,
-    },
+  const prefersReducedMotion = Boolean(useReducedMotion());
+  const stageRef = useRef<HTMLElement>(null);
+  const previousIndexRef = useRef(0);
+  const [currentSlideId, setCurrentSlideId] = useState("opening");
+  const [direction, setDirection] = useState<1 | -1>(1);
+  const { data, isLoading, error, refetch } = useShowEventWrapped(
+    { guildId, eventId },
     {
       query: {
         enabled: open,
-        queryKey: getShowEventWrappedQueryKey({
-          guildId,
-          eventId,
-        }),
+        queryKey: getShowEventWrappedQueryKey({ guildId, eventId }),
       },
     },
   );
+
+  const deck = data ? buildWrappedDeck(buildWrappedQualityModel(data)) : null;
+  const slides = deck?.mode === "presentation" ? deck.slides : [];
+  const matchingIndex = slides.findIndex(
+    (slide) => slide.id === currentSlideId,
+  );
+  const activeIndex =
+    matchingIndex >= 0
+      ? matchingIndex
+      : Math.min(previousIndexRef.current, Math.max(slides.length - 1, 0));
+  const activeSlide = slides[activeIndex];
+  const isFinalSlide = activeSlide?.kind === "finale";
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
+    previousIndexRef.current = 0;
     startTransition(() => {
       setDirection(1);
-      setCurrentStep(0);
+      setCurrentSlideId("opening");
     });
   }, [open]);
 
-  const steps = data ? buildSteps(t, data) : [];
-  const safeStep = Math.min(currentStep, Math.max(steps.length - 1, 0));
-  const activeStep = steps[safeStep];
-  const hasReducedMotion = Boolean(prefersReducedMotion);
-  const stepMotionPreset = activeStep
-    ? getStepMotionPreset(activeStep.id, direction, hasReducedMotion)
-    : getStepMotionPreset("default", direction, hasReducedMotion);
+  useEffect(() => {
+    previousIndexRef.current = activeIndex;
+    if (activeSlide && activeSlide.id !== currentSlideId) {
+      setCurrentSlideId(activeSlide.id);
+    }
+  }, [activeIndex, activeSlide, currentSlideId]);
 
-  const selectStep = (index: number) => {
-    if (index === safeStep) {
+  const advanceAutomatically = () => {
+    if (!activeSlide || activeIndex >= slides.length - 1) {
       return;
     }
 
-    setDirection(index > safeStep ? 1 : -1);
-
-    startTransition(() => {
-      setCurrentStep(index);
-    });
+    setDirection(1);
+    setCurrentSlideId(slides[activeIndex + 1]?.id ?? activeSlide.id);
   };
 
-  const slideTransition: Transition = prefersReducedMotion
-    ? { duration: 0.12 }
-    : {
-        type: "spring",
-        stiffness: 240,
-        damping: 28,
-        mass: 0.9,
-      };
+  const autoplay = useWrappedAutoplay({
+    activeSlideId: activeSlide?.id ?? "empty",
+    enabled:
+      open &&
+      deck?.mode === "presentation" &&
+      !isFinalSlide &&
+      !prefersReducedMotion,
+    interactionEnabled: open && deck?.mode === "presentation",
+    stageRef,
+    onAdvance: advanceAutomatically,
+  });
+
+  const selectSlide = (index: number) => {
+    const nextSlide = slides[index];
+    if (!nextSlide || index === activeIndex) {
+      return;
+    }
+
+    setDirection(index > activeIndex ? 1 : -1);
+    autoplay.reset();
+    setCurrentSlideId(nextSlide.id);
+  };
+
+  useEffect(() => {
+    if (!open || deck?.mode !== "presentation") {
+      return;
+    }
+
+    const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
+      const target = keyboardEvent.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest("button, a, input, textarea, select, [contenteditable]")
+      ) {
+        return;
+      }
+
+      if (keyboardEvent.key === "ArrowLeft" && activeIndex > 0) {
+        keyboardEvent.preventDefault();
+        selectSlide(activeIndex - 1);
+      }
+
+      if (
+        keyboardEvent.key === "ArrowRight" &&
+        activeIndex < slides.length - 1
+      ) {
+        keyboardEvent.preventDefault();
+        selectSlide(activeIndex + 1);
+      }
+
+      if (keyboardEvent.key === " ") {
+        keyboardEvent.preventDefault();
+        autoplay.toggleUserPaused();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
+
+  let activeSlideLabel = "";
+  if (activeSlide?.kind === "fact") {
+    activeSlideLabel = t(`events.summaryDialog.facts.${activeSlide.id}.label`);
+  } else if (activeSlide) {
+    activeSlideLabel = t(
+      `events.summaryDialog.${activeSlide.kind}ProgressLabel`,
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[88vh] max-h-[88vh] gap-0 overflow-hidden border-border/70 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.08),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.08),transparent_22%),hsl(var(--background))] p-0 sm:max-w-5xl sm:h-[min(92vh,820px)] sm:max-h-[min(92vh,820px)] flex flex-col">
-        <DialogHeader className="shrink-0 border-b border-border/70 bg-background/80 px-5 pt-5 pb-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex items-start gap-3">
-              <div className="rounded-2xl bg-primary/10 p-2.5">
-                <Sparkles className="size-4 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <DialogTitle className="px-0 pt-0 text-base sm:text-lg">
-                  {t("events.summaryDialog.title")}
-                </DialogTitle>
-                <DialogDescription className="px-0 text-xs sm:text-sm">
-                  {eventName}
-                </DialogDescription>
-                {!isLoading && activeStep ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Badge
-                      variant="outline"
-                      className="bg-background/80 text-xs"
-                    >
-                      {activeStep.label}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="bg-background/80 text-xs"
-                    >
-                      {t("events.summaryDialog.stepCounter", {
-                        current: safeStep + 1,
-                        total: steps.length,
-                      })}
-                    </Badge>
-                  </div>
-                ) : null}
-              </div>
+      <DialogContent
+        className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none flex-col gap-0 overflow-hidden rounded-2xl border-border bg-card p-0 shadow-xl sm:h-[calc(100dvh-2rem)] sm:max-h-[900px] sm:w-[calc(100vw-2rem)] sm:max-w-6xl"
+        showCloseButton={false}
+      >
+        <header className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4 pr-1">
+            <div className="min-w-0">
+              <DialogTitle className="px-0 pt-0 text-base">
+                {t("events.summaryDialog.title")}
+              </DialogTitle>
+              <DialogDescription className="mt-1 truncate px-0 text-xs">
+                {eventName}
+              </DialogDescription>
             </div>
-
-            {!isLoading && steps.length > 0 ? (
-              <StepDots
-                total={steps.length}
-                current={safeStep}
-                onSelect={selectStep}
-                getAriaLabel={(index) =>
-                  t("events.summaryDialog.dotAriaLabel", {
-                    step: index + 1,
-                  })
-                }
-              />
-            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+            >
+              {t("events.summaryDialog.close")}
+            </Button>
           </div>
-        </DialogHeader>
-
-        <div className="relative flex-1 min-h-0 overflow-hidden">
-          {!prefersReducedMotion ? (
-            <>
-              <motion.div
-                aria-hidden
-                className="pointer-events-none absolute left-[-12%] top-[-8%] h-44 w-44 rounded-full bg-sky-500/12 blur-3xl"
-                animate={{
-                  x: [0, 28, 0],
-                  y: [0, 20, 0],
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 10,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              <motion.div
-                aria-hidden
-                className="pointer-events-none absolute bottom-[-10%] right-[-6%] h-52 w-52 rounded-full bg-yellow-500/12 blur-3xl"
-                animate={{
-                  x: [0, -24, 0],
-                  y: [0, -18, 0],
-                  scale: [1.04, 0.96, 1.04],
-                }}
-                transition={{
-                  duration: 12,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              {activeStep ? (
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`ambient-${activeStep.id}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.35 }}
-                    className="pointer-events-none absolute inset-0"
-                  >
-                    <motion.div
-                      aria-hidden
-                      className={cn(
-                        "absolute blur-3xl",
-                        activeStep.id === "intro" &&
-                          "left-[8%] top-[12%] h-44 w-44 rounded-full bg-yellow-400/12",
-                        activeStep.id === "scale" &&
-                          "left-[14%] top-[24%] h-40 w-56 rounded-full bg-emerald-400/10",
-                        activeStep.id === "loot" &&
-                          "right-[12%] top-[18%] h-44 w-44 rounded-full bg-rose-400/10",
-                        activeStep.id === "leaders" &&
-                          "left-[18%] bottom-[16%] h-36 w-60 rounded-full bg-sky-400/10",
-                        activeStep.id === "coverage" &&
-                          "right-[8%] bottom-[18%] h-48 w-48 rounded-full bg-blue-400/12",
-                        activeStep.id === "finale" &&
-                          "left-[22%] top-[16%] h-44 w-64 rounded-full bg-yellow-300/10",
-                      )}
-                      animate={{
-                        x: [0, activeStep.id === "scale" ? 18 : 12, 0],
-                        y: [0, activeStep.id === "leaders" ? -14 : 14, 0],
-                        scale: [1, activeStep.id === "loot" ? 1.12 : 1.08, 1],
-                      }}
-                      transition={{
-                        duration: 8.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                    />
-                    <motion.div
-                      aria-hidden
-                      className={cn(
-                        "absolute blur-3xl",
-                        activeStep.id === "intro" &&
-                          "right-[14%] bottom-[18%] h-40 w-52 rounded-full bg-sky-400/10",
-                        activeStep.id === "scale" &&
-                          "right-[10%] bottom-[18%] h-44 w-44 rounded-full bg-yellow-300/10",
-                        activeStep.id === "loot" &&
-                          "left-[10%] bottom-[20%] h-48 w-60 rounded-full bg-yellow-300/10",
-                        activeStep.id === "leaders" &&
-                          "right-[12%] top-[20%] h-42 w-42 rounded-full bg-amber-300/10",
-                        activeStep.id === "coverage" &&
-                          "left-[10%] top-[18%] h-52 w-64 rounded-full bg-cyan-300/10",
-                        activeStep.id === "finale" &&
-                          "right-[10%] bottom-[14%] h-52 w-52 rounded-full bg-rose-300/10",
-                      )}
-                      animate={{
-                        x: [0, activeStep.id === "coverage" ? -16 : -12, 0],
-                        y: [0, activeStep.id === "finale" ? 16 : -10, 0],
-                        scale: [1.02, 0.94, 1.02],
-                      }}
-                      transition={{
-                        duration: 10.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: 0.4,
-                      }}
-                    />
-                  </motion.div>
-                </AnimatePresence>
-              ) : null}
-            </>
-          ) : null}
-
-          {!isLoading && activeStep ? (
-            <div className="pointer-events-none absolute inset-0 z-20">
-              <SlideNavButton
-                direction="previous"
-                disabled={safeStep === 0 || steps.length === 0}
-                onClick={() => selectStep(Math.max(safeStep - 1, 0))}
-                label={t("events.summaryDialog.previous")}
-              />
-              <SlideNavButton
-                direction="next"
-                disabled={steps.length === 0}
-                onClick={() => {
-                  if (safeStep >= steps.length - 1) {
-                    onOpenChange(false);
-                    return;
-                  }
-
-                  selectStep(Math.min(safeStep + 1, steps.length - 1));
-                }}
-                label={
-                  safeStep >= steps.length - 1
-                    ? t("events.summaryDialog.finish")
-                    : t("events.summaryDialog.next")
-                }
+          {deck?.mode === "presentation" && activeSlide ? (
+            <div className="mt-3">
+              <WrappedProgress
+                slides={slides}
+                activeIndex={activeIndex}
+                progress={isFinalSlide ? 1 : autoplay.progress}
+                isUserPaused={autoplay.isUserPaused}
+                onSelect={selectSlide}
+                onTogglePaused={autoplay.toggleUserPaused}
               />
             </div>
           ) : null}
+        </header>
 
-          <div className="relative h-full min-h-0 px-3 pb-3 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
-            {isLoading ? (
-              <div className="flex h-full items-center justify-center px-2 sm:px-10">
-                <div className="w-full max-w-4xl">
-                  <LoadingState
-                    title={t("events.summaryDialog.loadingTitle")}
-                    description={t("events.summaryDialog.loadingDescription")}
-                  />
-                </div>
+        <main
+          ref={stageRef}
+          className="relative min-h-0 flex-1 overflow-hidden bg-background"
+        >
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center px-6">
+              <div className="w-full max-w-xl">
+                <LoadingState
+                  title={t("events.summaryDialog.loadingTitle")}
+                  description={t("events.summaryDialog.loadingDescription")}
+                />
               </div>
-            ) : error || !data || !activeStep ? (
-              <div className="flex h-full items-center justify-center px-2 sm:px-10">
-                <div className="w-full max-w-3xl rounded-[32px] border border-dashed border-border/70 bg-background p-8 text-center">
-                  <p className="text-sm font-medium text-foreground">
-                    {t("events.summaryDialog.errorTitle")}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {t("events.summaryDialog.errorDescription")}
-                  </p>
-                </div>
-              </div>
+            </div>
+          ) : error || !data || !deck ? (
+            <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center px-6 text-center">
+              <p className="text-lg font-semibold">
+                {t("events.summaryDialog.errorTitle")}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {t("events.summaryDialog.errorDescription")}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-6"
+                onClick={() => void refetch()}
+              >
+                <RotateCcw className="size-4" />
+                {t("events.summaryDialog.retry")}
+              </Button>
+            </div>
+          ) : deck.mode === "sparse" ? (
+            <WrappedSparseSummary eventName={eventName} facts={deck.facts} />
+          ) : activeSlide ? (
+            <AnimatePresence initial={false} mode="wait" custom={direction}>
+              <motion.div
+                key={activeSlide.id}
+                custom={direction}
+                initial={
+                  prefersReducedMotion
+                    ? { opacity: 0 }
+                    : { opacity: 0, x: direction * 40 }
+                }
+                animate={{ opacity: 1, x: 0 }}
+                exit={
+                  prefersReducedMotion
+                    ? { opacity: 0 }
+                    : { opacity: 0, x: direction * -40 }
+                }
+                transition={{ duration: prefersReducedMotion ? 0.12 : 0.24 }}
+                className="h-full"
+              >
+                <WrappedSlideContent
+                  slide={activeSlide}
+                  eventName={eventName}
+                  world={data.event.world}
+                />
+              </motion.div>
+            </AnimatePresence>
+          ) : null}
+          <p className="sr-only" aria-live="polite" aria-atomic="true">
+            {activeSlideLabel}
+          </p>
+        </main>
+
+        {deck?.mode === "presentation" && activeSlide ? (
+          <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => selectSlide(activeIndex - 1)}
+              disabled={activeIndex === 0}
+            >
+              <ArrowLeft className="size-4" />
+              <span className="hidden sm:inline">
+                {t("events.summaryDialog.previous")}
+              </span>
+            </Button>
+            <p className="text-xs tabular-nums text-muted-foreground">
+              {t("events.summaryDialog.stepCounter", {
+                current: activeIndex + 1,
+                total: slides.length,
+              })}
+            </p>
+            {isFinalSlide ? (
+              <Button type="button" onClick={() => onOpenChange(false)}>
+                {t("events.summaryDialog.finish")}
+              </Button>
             ) : (
-              <AnimatePresence custom={direction} initial={false} mode="wait">
-                <motion.div
-                  key={activeStep.id}
-                  custom={direction}
-                  initial={stepMotionPreset.initial}
-                  animate={stepMotionPreset.animate}
-                  exit={stepMotionPreset.exit}
-                  transition={slideTransition}
-                  className="h-full"
-                >
-                  <ScrollArea className="h-full">
-                    <div className="space-y-4 px-10 pb-6 pt-2 sm:px-14 sm:pb-8 sm:pt-3">
-                      <motion.div
-                        initial={
-                          prefersReducedMotion ? false : { opacity: 0, y: 12 }
-                        }
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                          delay: prefersReducedMotion ? 0 : 0.08,
-                          duration: 0.22,
-                        }}
-                        className="flex flex-wrap items-center gap-2 text-muted-foreground"
-                      >
-                        <Badge
-                          variant="outline"
-                          className="gap-1 bg-background/80 text-xs shadow-sm"
-                        >
-                          <Sparkles className="size-3" />
-                          {activeStep.title}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className="gap-1 bg-background/80 text-xs shadow-sm"
-                        >
-                          <Trophy className="size-3" />
-                          {activeStep.description}
-                        </Badge>
-                      </motion.div>
-
-                      {activeStep.content}
-                    </div>
-                  </ScrollArea>
-                </motion.div>
-              </AnimatePresence>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => selectSlide(activeIndex + 1)}
+              >
+                <span className="hidden sm:inline">
+                  {t("events.summaryDialog.next")}
+                </span>
+                <ArrowRight className="size-4" />
+              </Button>
             )}
-          </div>
-        </div>
+          </footer>
+        ) : null}
       </DialogContent>
     </Dialog>
   );

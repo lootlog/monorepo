@@ -12,6 +12,12 @@ export interface EventWrappedLeaderDto {
   secondaryValue?: number | null;
 }
 
+export interface EventWrappedLeaderResultDto {
+  winner: EventWrappedLeaderDto | null;
+  candidateCount: number;
+  tiedWinnerCount: number;
+}
+
 export interface EventWrappedHeroCoverageDto {
   heroNpcId: string;
   npcName: string;
@@ -31,7 +37,7 @@ export interface EventWrappedHeroDto {
   totalPoints: number;
   coveragePercentage: number;
   rarityTotals: EventWrappedRarityTotalsDto;
-  topHunter: EventWrappedLeaderDto | null;
+  topHunter: EventWrappedLeaderResultDto;
 }
 
 export interface EventWrappedLootHeroDto {
@@ -68,12 +74,12 @@ export interface EventWrappedOverviewDto {
 }
 
 export interface EventWrappedLeadersDto {
-  topHunter: EventWrappedLeaderDto | null;
-  topScorer: EventWrappedLeaderDto | null;
-  longestDuty: EventWrappedLeaderDto | null;
-  topAfk: EventWrappedLeaderDto | null;
-  mostFlexible: EventWrappedLeaderDto | null;
-  topEfficiency: EventWrappedLeaderDto | null;
+  topHunter: EventWrappedLeaderResultDto;
+  topScorer: EventWrappedLeaderResultDto;
+  longestDuty: EventWrappedLeaderResultDto;
+  topAfk: EventWrappedLeaderResultDto;
+  mostFlexible: EventWrappedLeaderResultDto;
+  topEfficiency: EventWrappedLeaderResultDto;
 }
 
 export interface EventWrappedCoverageDto {

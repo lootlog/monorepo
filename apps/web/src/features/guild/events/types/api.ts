@@ -7,7 +7,6 @@ import type { EventRankingEntryResponseDto } from "@lootlog/api-client/models/ma
 import type { EventWrappedApiResponseDtoOutput } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output";
 import type { EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output-coverage-best-hero-coverage";
 import type { EventWrappedApiResponseDtoOutputHeroesItem } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output-heroes-item";
-import type { EventWrappedApiResponseDtoOutputLeadersTopHunter } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output-leaders-top-hunter";
 import type { EventWrappedApiResponseDtoOutputLootHeroBreakdownItem } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output-loot-hero-breakdown-item";
 import type { EventWrappedApiResponseDtoOutputOverviewRarityTotals } from "@lootlog/api-client/models/main/event-wrapped-api-response-dto-output-overview-rarity-totals";
 import type { HeroRespawnConfigResponseDto } from "@lootlog/api-client/models/main/hero-respawn-config-response-dto";
@@ -61,8 +60,18 @@ export type EventMapsResponse = Omit<EventMapsResponseDtoOutput, "heroNpcs"> & {
 
 export type EventWrappedRarityTotals =
   EventWrappedApiResponseDtoOutputOverviewRarityTotals;
-export type EventWrappedLeader =
-  EventWrappedApiResponseDtoOutputLeadersTopHunter;
+export type EventWrappedLeader = {
+  memberId: number;
+  name: string;
+  avatar: string | null;
+  primaryValue: number;
+  secondaryValue?: number | null;
+};
+export type EventWrappedLeaderResult = {
+  winner: EventWrappedLeader | null;
+  candidateCount: number;
+  tiedWinnerCount: number;
+};
 export type EventWrappedHeroCoverage =
   EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage;
 export type EventWrappedHero = EventWrappedApiResponseDtoOutputHeroesItem;
