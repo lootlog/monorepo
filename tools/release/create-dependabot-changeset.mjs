@@ -30,6 +30,10 @@ function changedAnyField(before, after, fields) {
 }
 
 export function createDependabotChangeset({
+  catalogChanges = {
+    hasDevelopmentChanges: false,
+    runtimePackages: [],
+  },
   changedManifests,
   hasToolingChanges = false,
   pullRequestNumber,
@@ -40,12 +44,23 @@ export function createDependabotChangeset({
   if (!Number.isInteger(pullRequestNumber) || pullRequestNumber <= 0) {
     throw new TypeError("Pull request number must be a positive integer");
   }
-  if (changedManifests.length === 0 && !hasToolingChanges) {
+  if (
+    !Array.isArray(catalogChanges.runtimePackages) ||
+    typeof catalogChanges.hasDevelopmentChanges !== "boolean"
+  ) {
+    throw new TypeError("Catalog changes must contain classified dependencies");
+  }
+  if (
+    changedManifests.length === 0 &&
+    catalogChanges.runtimePackages.length === 0 &&
+    !catalogChanges.hasDevelopmentChanges &&
+    !hasToolingChanges
+  ) {
     return null;
   }
 
-  const runtimePackages = new Set();
-  let hasDevelopmentChanges = false;
+  const runtimePackages = new Set(catalogChanges.runtimePackages);
+  let hasDevelopmentChanges = catalogChanges.hasDevelopmentChanges;
 
   for (const { after, before, path } of changedManifests) {
     const isRootManifest = path === "package.json";
@@ -126,6 +141,143 @@ export function createDependabotChangeset({
   return null;
 }
 
+function readCatalogEntries(contents, path) {
+  const entries = new Map();
+  const lines = contents.split(/\r?\n/);
+  let catalogFound = false;
+  let insideCatalog = false;
+
+  for (const [index, line] of lines.entries()) {
+    if (line === "catalog:") {
+      if (catalogFound) {
+        throw new Error(`Cannot classify Dependabot changes in ${path}`);
+      }
+      catalogFound = true;
+      insideCatalog = true;
+      continue;
+    }
+
+    if (!insideCatalog) {
+      continue;
+    }
+    if (line.length > 0 && !line.startsWith(" ")) {
+      insideCatalog = false;
+      continue;
+    }
+    if (line.trim() === "" || line.trimStart().startsWith("#")) {
+      continue;
+    }
+
+    const entry = line.match(
+      /^ {2}(?:"([^"]+)"|'([^']+)'|([^"'#:][^:]*)):\s*(\S.*)$/,
+    );
+    if (!entry) {
+      throw new Error(`Cannot classify Dependabot changes in ${path}`);
+    }
+    entries.set(index, {
+      dependency: (entry[1] ?? entry[2] ?? entry[3]).trim(),
+      value: entry[4].trim(),
+    });
+  }
+
+  if (!catalogFound) {
+    throw new Error(`Cannot classify Dependabot changes in ${path}`);
+  }
+
+  return { entries, lines };
+}
+
+function usesCatalogDependency(manifest, field, dependency) {
+  return manifest[field]?.[dependency] === "catalog:";
+}
+
+export function classifyCatalogDependencyUpdate({
+  after,
+  before,
+  workspaceManifests,
+}) {
+  if (
+    typeof after !== "string" ||
+    typeof before !== "string" ||
+    !Array.isArray(workspaceManifests)
+  ) {
+    throw new TypeError(
+      "Catalog contents and workspace manifests are required",
+    );
+  }
+
+  const path = "pnpm-workspace.yaml";
+  const afterCatalog = readCatalogEntries(after, path);
+  const beforeCatalog = readCatalogEntries(before, path);
+  if (afterCatalog.lines.length !== beforeCatalog.lines.length) {
+    throw new Error(`Cannot classify Dependabot changes in ${path}`);
+  }
+
+  const changedDependencies = new Set();
+  for (const [index, beforeLine] of beforeCatalog.lines.entries()) {
+    const afterLine = afterCatalog.lines[index];
+    if (beforeLine === afterLine) {
+      continue;
+    }
+
+    const beforeEntry = beforeCatalog.entries.get(index);
+    const afterEntry = afterCatalog.entries.get(index);
+    if (
+      !beforeEntry ||
+      !afterEntry ||
+      beforeEntry.dependency !== afterEntry.dependency ||
+      beforeEntry.value === afterEntry.value
+    ) {
+      throw new Error(`Cannot classify Dependabot changes in ${path}`);
+    }
+    changedDependencies.add(afterEntry.dependency);
+  }
+
+  if (changedDependencies.size === 0) {
+    throw new Error(`Cannot classify Dependabot changes in ${path}`);
+  }
+
+  const runtimePackages = new Set();
+  let hasDevelopmentChanges = false;
+  const classifiedDependencies = new Set();
+
+  for (const manifest of workspaceManifests) {
+    if (!manifest?.name) {
+      throw new Error(`Cannot classify Dependabot changes in ${path}`);
+    }
+
+    for (const dependency of changedDependencies) {
+      const hasRuntimeChanges = runtimeDependencyFields.some((field) =>
+        usesCatalogDependency(manifest, field, dependency),
+      );
+      const hasDevChanges = developmentDependencyFields.some((field) =>
+        usesCatalogDependency(manifest, field, dependency),
+      );
+
+      if (hasRuntimeChanges) {
+        if (!manifest.name.startsWith("@lootlog/")) {
+          throw new Error(`Cannot classify Dependabot changes in ${path}`);
+        }
+        runtimePackages.add(manifest.name);
+        classifiedDependencies.add(dependency);
+      }
+      if (hasDevChanges) {
+        hasDevelopmentChanges = true;
+        classifiedDependencies.add(dependency);
+      }
+    }
+  }
+
+  if (classifiedDependencies.size !== changedDependencies.size) {
+    throw new Error(`Cannot classify Dependabot changes in ${path}`);
+  }
+
+  return {
+    hasDevelopmentChanges,
+    runtimePackages: [...runtimePackages].sort(),
+  };
+}
+
 function encodeRepositoryPath(path) {
   return path.split("/").map(encodeURIComponent).join("/");
 }
@@ -180,9 +332,14 @@ export function classifyChangedDependencyPaths({
   const ownChangeset = `.changeset/dependabot-pr-${pullRequestNumber}.md`;
   const manifestPaths = [];
   const toolingPaths = [];
+  let catalogPath;
 
   for (const filename of filenames) {
     if (filename === "pnpm-lock.yaml" || filename === ownChangeset) {
+      continue;
+    }
+    if (filename === "pnpm-workspace.yaml") {
+      catalogPath = filename;
       continue;
     }
     if (
@@ -201,6 +358,7 @@ export function classifyChangedDependencyPaths({
   }
 
   return {
+    catalogPath,
     manifestPaths: [...new Set(manifestPaths)].sort(),
     toolingPaths: [...new Set(toolingPaths)].sort(),
   };
@@ -260,6 +418,27 @@ async function listChangedFiles({ pullRequestNumber, repository, token }) {
   }
 }
 
+async function listRepositoryManifestPaths({ ref, repository, token }) {
+  const tree = await requestGitHub(
+    `/repos/${repository}/git/trees/${encodeURIComponent(ref)}?recursive=1`,
+    { token },
+  );
+  if (tree.truncated) {
+    throw new Error(`Repository tree for ${ref} is truncated`);
+  }
+
+  return [
+    "package.json",
+    ...tree.tree
+      .filter(
+        ({ path, type }) =>
+          type === "blob" && path.match(workspaceManifestPattern),
+      )
+      .map(({ path }) => path)
+      .sort(),
+  ];
+}
+
 function writeOutput(outputPath, values) {
   const output = Object.entries(values)
     .map(([key, value]) => `${key}=${value}`)
@@ -281,10 +460,11 @@ export async function automateDependabotChangeset({
     repository,
     token,
   });
-  const { manifestPaths, toolingPaths } = classifyChangedDependencyPaths({
-    filenames,
-    pullRequestNumber,
-  });
+  const { catalogPath, manifestPaths, toolingPaths } =
+    classifyChangedDependencyPaths({
+      filenames,
+      pullRequestNumber,
+    });
   const changedManifests = await Promise.all(
     manifestPaths.map(async (path) => ({
       after: await readRepositoryJson({
@@ -320,7 +500,45 @@ export async function automateDependabotChangeset({
     })),
   );
   changedToolingFiles.forEach(validateGitHubActionsDependencyUpdate);
+  let catalogChanges;
+  if (catalogPath) {
+    const [after, before, repositoryManifestPaths] = await Promise.all([
+      readRepositoryContent({
+        path: catalogPath,
+        ref: headSha,
+        repository,
+        token,
+      }),
+      readRepositoryContent({
+        path: catalogPath,
+        ref: baseSha,
+        repository,
+        token,
+      }),
+      listRepositoryManifestPaths({
+        ref: headSha,
+        repository,
+        token,
+      }),
+    ]);
+    const workspaceManifests = await Promise.all(
+      repositoryManifestPaths.map((path) =>
+        readRepositoryJson({
+          path,
+          ref: headSha,
+          repository,
+          token,
+        }),
+      ),
+    );
+    catalogChanges = classifyCatalogDependencyUpdate({
+      after,
+      before,
+      workspaceManifests,
+    });
+  }
   const changeset = createDependabotChangeset({
+    catalogChanges,
     changedManifests,
     hasToolingChanges: changedToolingFiles.length > 0,
     pullRequestNumber,
