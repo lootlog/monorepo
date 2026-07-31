@@ -1,5 +1,11 @@
 # @lootlog/api-client
 
+## 4.0.0
+
+### Major Changes
+
+- ed13484: Rebuild event wrapped as a verified, story-style presentation and expose leader evidence so ambiguous or inconsistent superlatives can be omitted.
+
 ## 3.0.1
 
 ### Patch Changes
