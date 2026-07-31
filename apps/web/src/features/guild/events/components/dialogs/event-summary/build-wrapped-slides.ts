@@ -39,9 +39,36 @@ export type WrappedDeck =
 const validPositive = (value: number): boolean =>
   Number.isFinite(value) && value > 0;
 
+const getPrimaryLeader = (
+  quality: WrappedQualityModel,
+): WrappedFactSlide | null => {
+  if (quality.leaders.topScorer) {
+    return {
+      id: "top-scorer",
+      kind: "fact",
+      value: quality.leaders.topScorer.leader.primaryValue,
+      subject: quality.leaders.topScorer.leader.name,
+      avatar: quality.leaders.topScorer.leader.avatar,
+    };
+  }
+
+  if (quality.leaders.topHunter) {
+    return {
+      id: "top-hunter",
+      kind: "fact",
+      value: quality.leaders.topHunter.leader.primaryValue,
+      subject: quality.leaders.topHunter.leader.name,
+      avatar: quality.leaders.topHunter.leader.avatar,
+    };
+  }
+
+  return null;
+};
+
 export const buildWrappedDeck = (quality: WrappedQualityModel): WrappedDeck => {
   const { data } = quality;
-  const candidates: Array<WrappedFactSlide | null> = [
+  const primaryLeader = getPrimaryLeader(quality);
+  const spotlightCandidates: Array<WrappedFactSlide | null> = [
     validPositive(data.overview.totalKills)
       ? { id: "kills", kind: "fact", value: data.overview.totalKills }
       : null,
@@ -86,33 +113,7 @@ export const buildWrappedDeck = (quality: WrappedQualityModel): WrappedDeck => {
           secondaryValue: data.overview.busiestHourKills,
         }
       : null,
-    quality.leaders.topScorer
-      ? {
-          id: "top-scorer",
-          kind: "fact",
-          value: quality.leaders.topScorer.leader.primaryValue,
-          subject: quality.leaders.topScorer.leader.name,
-          avatar: quality.leaders.topScorer.leader.avatar,
-        }
-      : null,
-    quality.leaders.longestDuty
-      ? {
-          id: "longest-duty",
-          kind: "fact",
-          value: quality.leaders.longestDuty.leader.primaryValue,
-          subject: quality.leaders.longestDuty.leader.name,
-          avatar: quality.leaders.longestDuty.leader.avatar,
-        }
-      : null,
-    quality.leaders.topHunter
-      ? {
-          id: "top-hunter",
-          kind: "fact",
-          value: quality.leaders.topHunter.leader.primaryValue,
-          subject: quality.leaders.topHunter.leader.name,
-          avatar: quality.leaders.topHunter.leader.avatar,
-        }
-      : null,
+    primaryLeader,
     quality.dominantHero
       ? {
           id: "dominant-hero",
@@ -120,6 +121,17 @@ export const buildWrappedDeck = (quality: WrappedQualityModel): WrappedDeck => {
           value: quality.dominantHero.totalKills,
           subject: quality.dominantHero.npcName,
           avatar: quality.dominantHero.npcIcon,
+        }
+      : null,
+  ];
+  const supportingCandidates: Array<WrappedFactSlide | null> = [
+    quality.leaders.longestDuty
+      ? {
+          id: "longest-duty",
+          kind: "fact",
+          value: quality.leaders.longestDuty.leader.primaryValue,
+          subject: quality.leaders.longestDuty.leader.name,
+          avatar: quality.leaders.longestDuty.leader.avatar,
         }
       : null,
     validPositive(data.overview.participantCount)
@@ -133,7 +145,7 @@ export const buildWrappedDeck = (quality: WrappedQualityModel): WrappedDeck => {
       ? { id: "points", kind: "fact", value: data.overview.totalPoints }
       : null,
   ];
-  const facts = candidates
+  const facts = [...spotlightCandidates, ...supportingCandidates]
     .filter((candidate): candidate is WrappedFactSlide => candidate !== null)
     .slice(0, 8);
 

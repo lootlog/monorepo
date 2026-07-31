@@ -112,6 +112,20 @@ describe("event wrapped deck", () => {
     );
   });
 
+  it("keeps the hero spotlight and only one primary leader in a full deck", () => {
+    const deck = buildWrappedDeck(buildWrappedQualityModel(createWrapped()));
+
+    expect(deck.mode).toBe("presentation");
+    if (deck.mode !== "presentation") {
+      return;
+    }
+
+    const slideIds = deck.slides.map((slide) => slide.id);
+    expect(slideIds).toContain("dominant-hero");
+    expect(slideIds).toContain("top-scorer");
+    expect(slideIds).not.toContain("top-hunter");
+  });
+
   it("suppresses kill-derived superlatives when sources disagree", () => {
     const wrapped = createWrapped();
     wrapped.overview.totalKills = 25;

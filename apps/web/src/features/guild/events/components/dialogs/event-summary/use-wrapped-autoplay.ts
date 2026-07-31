@@ -135,7 +135,7 @@ export const useWrappedAutoplay = ({
 
     animationFrameId = requestAnimationFrame(updateProgress);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [enabled, isInteractionPaused, isUserPaused]);
+  }, [activeSlideId, enabled, isInteractionPaused, isUserPaused]);
 
   const reset = () => {
     elapsedMillisecondsRef.current = 0;
