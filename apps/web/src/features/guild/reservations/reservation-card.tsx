@@ -1,5 +1,7 @@
-import type { FC } from "react";
+import type { FC, KeyboardEvent, ReactNode } from "react";
 import { format } from "date-fns";
+import { ChevronRight, Clock3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
 import { NpcSearchTile } from "@/components/tiles";
@@ -9,7 +11,6 @@ import type { ReservationResponseDto } from "@lootlog/api-client/models/main/res
 export interface ReservationCardProps {
   name: string;
   title: string;
-  size: string;
   images?: string[];
   reservations: ReservationResponseDto[];
   members?: GuildMember[];
@@ -55,75 +56,149 @@ const formatReservationTime = (reservation: ReservationResponseDto): string => {
 
 export const ReservationCard: FC<ReservationCardProps> = ({
   title,
+  name,
   images,
   reservations,
   members = [],
   onClick,
   viewMode = "grid",
 }) => {
+  const { t } = useTranslation();
   const currentOccupant = getCurrentOccupant(reservations);
   const nextReservation = getNextReservation(reservations);
   const isOccupied = currentOccupant !== null;
+  const activeReservationsCount = getActiveReservationsCount(reservations);
+  const statusReservation = currentOccupant ?? nextReservation;
+  const hasImages = Boolean(images?.length);
 
   const getMemberName = (discordId: string): string => {
     const member = members.find((m) => m.userId === discordId);
     return member?.name ?? discordId;
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    onClick();
+  };
+
+  const imageTiles = hasImages ? (
+    <div className="flex min-h-10 items-center gap-2 overflow-hidden [&>*]:shrink-0">
+      {images?.slice(0, 4).map((icon, index) => (
+        <NpcSearchTile
+          key={`${icon}-${index}`}
+          icon={icon}
+          name={title}
+          className="cursor-inherit"
+        />
+      ))}
+    </div>
+  ) : null;
+
+  let statusPanelClassName = "border-border/80 bg-muted/30";
+  let statusIconClassName = "text-muted-foreground";
+  let statusLabelClassName = "text-muted-foreground";
+  let statusLabel = t("reservations.card.none");
+  let statusDetail: ReactNode = (
+    <span className="text-xs text-muted-foreground">
+      {t("reservations.card.noneDescription")}
+    </span>
+  );
+
+  if (statusReservation) {
+    statusIconClassName = "text-primary";
+    statusLabel = t("reservations.card.next");
+    statusDetail = (
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="truncate font-semibold text-foreground">
+          {getMemberName(statusReservation.createdBy)}
+        </span>
+        <span className="shrink-0 text-muted-foreground">·</span>
+        <span className="shrink-0 text-muted-foreground">
+          {formatReservationTime(statusReservation)}
+        </span>
+      </div>
+    );
+
+    if (isOccupied) {
+      statusPanelClassName = "border-destructive/20 bg-destructive/[0.06]";
+      statusIconClassName = "text-destructive";
+      statusLabelClassName = "text-destructive";
+      statusLabel = t("reservations.card.occupied");
+    }
+  }
+
+  const reservationStatus = (
+    <div
+      className={cn(
+        "flex min-w-0 items-center gap-2.5 rounded-lg border px-2.5 py-2 text-xs",
+        statusPanelClassName,
+      )}
+    >
+      <Clock3 className={cn("size-4 shrink-0", statusIconClassName)} />
+      <div className="min-w-0">
+        <p className={cn("text-[11px] font-medium", statusLabelClassName)}>
+          {statusLabel}
+        </p>
+        {statusDetail}
+      </div>
+    </div>
+  );
+
+  const activeReservationsBadge = (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+        activeReservationsCount > 0
+          ? "bg-primary/10 text-primary"
+          : "bg-muted text-muted-foreground",
+      )}
+    >
+      {t("reservations.card.activeCount", {
+        count: activeReservationsCount,
+      })}
+    </span>
+  );
+
+  const cardInteractionClassName =
+    "cursor-pointer border-border bg-card text-left outline-none transition-[background-color,border-color] hover:border-primary/40 hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
   if (viewMode === "list") {
     return (
       <Card
         onClick={onClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-label={t("reservations.card.open", { name })}
         className={cn(
-          "relative flex flex-row items-center gap-4 p-3 transition-all cursor-pointer w-full",
-          "hover:bg-card hover:border-primary/30 hover:shadow-lg hover:scale-[1.01]",
-          "bg-card  border-border",
-          isOccupied
-            ? "border-red-500/30 bg-red-500/5 hover:bg-red-500/10"
-            : "border-border",
+          "group relative grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2.5 p-3 sm:grid-cols-[12rem_9.5rem_minmax(0,1fr)_13rem_auto]",
+          cardInteractionClassName,
+          isOccupied &&
+            "border-destructive/30 bg-destructive/[0.035] hover:border-destructive/45 hover:bg-destructive/[0.055]",
         )}
       >
-        <div className="flex flex-col text-left min-w-0 flex-1">
-          <h3 className="font-semibold text-sm truncate">{title}</h3>
-          <p className="text-xs text-muted-foreground">
-            Zapisów: {getActiveReservationsCount(reservations)}
-          </p>
-          {isOccupied && currentOccupant && (
-            <p className="text-xs text-red-400 mt-1">
-              Zajęte:{" "}
-              <span className="font-semibold">
-                {getMemberName(currentOccupant.createdBy)}
-              </span>
-              <span className="text-muted-foreground ml-1">
-                ({formatReservationTime(currentOccupant)})
-              </span>
-            </p>
-          )}
-          {!isOccupied && nextReservation && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Najbliższa rezerwacja:{" "}
-              <span className="font-semibold text-foreground">
-                {getMemberName(nextReservation.createdBy)}
-              </span>
-              <span className="ml-1">
-                ({formatReservationTime(nextReservation)})
-              </span>
-            </p>
-          )}
+        <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
+          <h3 className="min-w-0 flex-1 truncate text-sm font-semibold sm:w-full sm:flex-none">
+            {title}
+          </h3>
+          {activeReservationsBadge}
         </div>
 
-        {images && images.length > 0 && (
-          <div className="flex items-center gap-2 shrink-0">
-            {images.slice(0, 4).map((icon, idx) => (
-              <NpcSearchTile
-                key={idx}
-                icon={icon}
-                name={title}
-                className="scale-125"
-              />
-            ))}
+        {imageTiles && (
+          <div className="col-span-2 col-start-1 row-start-2 overflow-hidden sm:col-span-1 sm:col-start-2 sm:row-start-1">
+            {imageTiles}
           </div>
         )}
+
+        <div className="col-span-2 col-start-1 row-start-3 min-w-0 sm:col-span-1 sm:col-start-4 sm:row-start-1">
+          {reservationStatus}
+        </div>
+
+        <ChevronRight className="col-start-2 row-start-1 size-4 text-muted-foreground transition-colors group-hover:text-foreground sm:col-start-5" />
       </Card>
     );
   }
@@ -131,60 +206,28 @@ export const ReservationCard: FC<ReservationCardProps> = ({
   return (
     <Card
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={t("reservations.card.open", { name })}
       className={cn(
-        "relative flex flex-col justify-between p-4 transition-all overflow-visible cursor-pointer h-full",
-        "hover:bg-card hover:border-primary/30 hover:shadow-lg hover:scale-[1.01]",
-        "bg-card  border-border",
-        isOccupied
-          ? "border-red-500/40 bg-red-500/5 hover:border-red-500/60 hover:bg-red-500/10"
-          : "border-border hover:border-primary/50",
+        "group relative flex h-full min-h-40 flex-col gap-3 overflow-hidden p-3.5",
+        cardInteractionClassName,
+        isOccupied &&
+          "border-destructive/30 bg-destructive/[0.035] hover:border-destructive/45 hover:bg-destructive/[0.055]",
       )}
     >
-      {images && images.length > 0 && (
-        <div className="flex flex-wrap gap-3 items-center">
-          {images.slice(0, 4).map((icon, idx) => (
-            <NpcSearchTile
-              key={idx}
-              icon={icon}
-              name={title}
-              className="scale-125"
-            />
-          ))}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h3 className="min-w-0 truncate text-sm font-semibold">{title}</h3>
+          {activeReservationsBadge}
         </div>
-      )}
-
-      <div className="mt-auto text-left space-y-1">
-        <div>
-          <h3 className="font-semibold text-sm">{title}</h3>
-          <p className="text-xs text-muted-foreground">
-            Aktualnie zapisów: {getActiveReservationsCount(reservations)}
-          </p>
-        </div>
-
-        {isOccupied && currentOccupant && (
-          <div className="text-xs text-red-400">
-            Zajęte:{" "}
-            <span className="font-semibold">
-              {getMemberName(currentOccupant.createdBy)}
-            </span>
-            <span className="text-red-400/70 ml-1">
-              ({formatReservationTime(currentOccupant)})
-            </span>
-          </div>
-        )}
-
-        {!isOccupied && nextReservation && (
-          <div className="text-xs text-muted-foreground">
-            Najbliższa rezerwacja:{" "}
-            <span className="font-semibold text-foreground">
-              {getMemberName(nextReservation.createdBy)}
-            </span>
-            <span className="ml-1">
-              ({formatReservationTime(nextReservation)})
-            </span>
-          </div>
-        )}
+        <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
       </div>
+
+      {imageTiles}
+
+      <div className="mt-auto">{reservationStatus}</div>
     </Card>
   );
 };

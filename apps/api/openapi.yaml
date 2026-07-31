@@ -15526,6 +15526,9 @@ components:
         npcLvl:
           type: number
           nullable: true
+        npcProf:
+          type: string
+          nullable: true
         killCount:
           type: number
       required:
@@ -15533,6 +15536,7 @@ components:
         - npcId
         - npcName
         - npcLvl
+        - npcProf
         - killCount
     EventKillHistoryResponseDto__schema0:
       anyOf:

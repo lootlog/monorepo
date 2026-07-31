@@ -60,34 +60,36 @@ export const KillStats: React.FC = () => {
     <>
       <ScrollArea className="h-full bg-background">
         <div className="px-3 pb-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="rounded-xl bg-primary/10 p-2.5">
+          <Card className="gap-3 border-border bg-card p-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                   <BarChart3 className="size-4 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-base font-semibold leading-tight">
+                  <h2 className="text-lg font-semibold leading-tight">
                     {t("common.stats.kills")}
                   </h2>
                 </div>
               </div>
-              <div className="hidden md:flex w-full flex-wrap justify-start gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
+              <div className="hidden w-full grid-cols-2 gap-2 md:grid min-[1280px]:grid-cols-4">
                 <LevelFilters
                   minLvl={settings.minLvl}
                   maxLvl={settings.maxLvl}
                   onMinLvlChange={setMinLvl}
                   onMaxLvlChange={setMaxLvl}
+                  inputClassName="min-w-0 w-full"
                 />
                 <KillStatsPeriodSelect
                   value={settings.period}
                   onValueChange={setPeriod}
+                  className="w-full"
                 />
                 <WorldSwitcher
                   value={settings.world}
                   onValueChange={setWorld}
                   showAllOption
-                  width="w-[160px]"
+                  width="w-full"
                 />
               </div>
             </div>
@@ -95,7 +97,7 @@ export const KillStats: React.FC = () => {
 
           <NpcTypeStatsCards data={data?.overview} isLoading={isLoading} />
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,24rem),1fr))] gap-4">
             <MemberRankingPodiumCard
               data={data?.memberRanking}
               isLoading={isLoading}

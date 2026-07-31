@@ -337,7 +337,7 @@ export class EventKillService {
 
   getEventHeroStats(guildId: string, eventId: string) {
     return this.eventReadCache.getOrSet(
-      this.eventReadCache.getEventKey(guildId, eventId, "hero-stats"),
+      this.eventReadCache.getEventKey(guildId, eventId, "hero-stats-v2"),
       () => this.getEventHeroStatsUncached(guildId, eventId),
     );
   }
@@ -366,11 +366,39 @@ export class EventKillService {
       throw new NotFoundException("Event not found");
     }
 
+    const npcIds = event.heroNpcs.flatMap((hero) =>
+      hero.npcId === null ? [] : [hero.npcId],
+    );
+    const npcStats =
+      npcIds.length > 0
+        ? await this.prisma.npcKillStats.findMany({
+            where: {
+              guildId,
+              world: event.world,
+              npcId: { in: npcIds },
+              npcProf: { not: null },
+            },
+            select: {
+              npcId: true,
+              npcProf: true,
+            },
+            orderBy: {
+              updatedAt: "desc",
+            },
+            distinct: ["npcId"],
+          })
+        : [];
+    const npcProfById = new Map(
+      npcStats.map((npcStat) => [npcStat.npcId, npcStat.npcProf]),
+    );
+
     return event.heroNpcs.map((hero) => ({
       heroId: hero.id,
       npcId: hero.npcId,
       npcName: hero.npcName,
       npcLvl: hero.npcLvl,
+      npcProf:
+        hero.npcId === null ? null : (npcProfById.get(hero.npcId) ?? null),
       killCount: hero._count.kills,
     }));
   }

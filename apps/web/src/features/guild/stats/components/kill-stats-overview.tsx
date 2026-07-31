@@ -56,9 +56,9 @@ export const NpcTypeStatsCards: React.FC<NpcTypeStatsCardsProps> = ({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 min-[1280px]:grid-cols-4">
         {NPC_TYPES_TO_DISPLAY.map((type) => (
-          <Card key={type}>
+          <Card key={type} className="gap-0 py-0">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-10 w-10 rounded-lg" />
@@ -75,12 +75,15 @@ export const NpcTypeStatsCards: React.FC<NpcTypeStatsCardsProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 gap-3 min-[1280px]:grid-cols-4">
       {NPC_TYPES_TO_DISPLAY.map((type) => {
         const config = NPC_TYPE_CONFIG[type];
         if (!config) return null;
         return (
-          <Card key={type} className={cn("border-border/80", config.gradient)}>
+          <Card
+            key={type}
+            className={cn("gap-0 border-border/80 py-0", config.gradient)}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div

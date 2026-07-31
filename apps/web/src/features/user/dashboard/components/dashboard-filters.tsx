@@ -1,12 +1,3 @@
-import { useTranslation } from "react-i18next";
-import { Globe } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
 import type { DashboardFilters } from "../hooks/use-dashboard-filters";
 import {
   getKillsControllerGetUserKillStatsQueryKey,
@@ -16,6 +7,7 @@ import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,
 } from "@/features/kills/components/kill-stats-period-select";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 
 type DashboardFiltersProps = {
   filters: DashboardFilters;
@@ -28,7 +20,6 @@ export const DashboardFiltersBar: React.FC<DashboardFiltersProps> = ({
   onWorldChange,
   onPeriodChange,
 }) => {
-  const { t } = useTranslation();
   const { data } = useKillsControllerGetUserKillStats(undefined, {
     query: {
       queryKey: getKillsControllerGetUserKillStatsQueryKey(),
@@ -40,34 +31,25 @@ export const DashboardFiltersBar: React.FC<DashboardFiltersProps> = ({
     ? Object.keys(data.overview.killsByWorld).sort()
     : [];
 
-  const handleWorldChange = (value: string) => {
-    onWorldChange(value === "all" ? undefined : value);
+  const handleWorldChange = (value: string | null) => {
+    onWorldChange(value ?? undefined);
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-start gap-3 md:justify-end">
+    <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end">
       <KillStatsPeriodSelect
         value={filters.period}
         onValueChange={onPeriodChange}
+        className="w-full sm:w-[160px]"
       />
-      <Select value={filters.world ?? "all"} onValueChange={handleWorldChange}>
-        <SelectTrigger className="w-[180px]">
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <SelectValue placeholder={t("kills.home.filters.allWorlds")} />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">
-            {t("kills.home.filters.allWorlds")}
-          </SelectItem>
-          {worlds.map((world) => (
-            <SelectItem key={world} value={world}>
-              {world.charAt(0).toUpperCase() + world.slice(1)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <WorldSwitcher
+        value={filters.world ?? null}
+        onValueChange={handleWorldChange}
+        showAllOption
+        worlds={worlds}
+        width="w-full sm:w-[180px]"
+        triggerClassName="w-full"
+      />
     </div>
   );
 };
