@@ -23,6 +23,8 @@ import {
   BookText,
   Sparkles,
   Crosshair,
+  Globe2,
+  Star,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -63,6 +65,8 @@ import {
 } from "@lootlog/api-client/react-query/main/events";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
+import { useToggleEventPin } from "./hooks/mutations/use-toggle-event-pin";
+import { cn } from "@/utils/cn";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -74,8 +78,17 @@ export const EventDetail = () => {
   const { guildId, eventId } = useParams({ strict: false });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const {
+    togglePin,
+    isPinned,
+    isLoading: isPinLoading,
+  } = useToggleEventPin(guildId ?? "");
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const hasEventRouteParams = Boolean(guildId && eventId);
+  const eventIsPinned = eventId ? isPinned(eventId) : false;
+  const pinActionLabel = t(
+    eventIsPinned ? "events.unpinEvent" : "events.pinEvent",
+  );
 
   const {
     data: event,
@@ -523,97 +536,122 @@ export const EventDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <Card className="gap-0 overflow-hidden border-border bg-card p-0">
+            <div className="flex items-start gap-3 p-4">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <Trophy className="size-4 text-primary" />
+              </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-primary/10 p-2.5">
-                    <Trophy className="size-4 text-primary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="min-w-0 text-base font-semibold leading-tight break-words">
-                        {event.name}
-                      </h2>
-                      <Badge variant={eventStatusVariant} className="text-xs">
-                        {eventStatusLabel}
-                      </Badge>
-                    </div>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <h2 className="min-w-0 break-words text-lg font-semibold leading-tight">
+                    {event.name}
+                  </h2>
+                  <Badge
+                    variant={eventStatusVariant}
+                    className="h-5 px-2 text-[11px]"
+                  >
+                    {eventStatusLabel}
+                  </Badge>
+                </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {event.world.charAt(0).toUpperCase() +
-                          event.world.slice(1)}
-                      </Badge>
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Globe2 className="size-3.5" />
+                    {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
+                  </span>
 
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge
-                            variant="outline"
-                            className="cursor-help gap-1 text-xs"
-                          >
-                            <Clock className="w-3 h-3" />
-                            {event.assignmentTimeoutMinutes ?? 5} min
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{t("events.header.assignmentTimeoutTooltip")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-
-                      <Badge
-                        variant="outline"
-                        className="order-last flex w-full justify-start gap-1 px-2 py-1 text-xs whitespace-normal sm:order-none sm:w-auto sm:whitespace-nowrap"
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                       >
-                        <CalendarDays className="mt-0.5 h-3 w-3 shrink-0 sm:mt-0" />
-                        <span>{eventDateRangeLabel}</span>
-                      </Badge>
-                    </div>
-                  </div>
+                        <Clock className="size-3.5" />
+                        {t("events.header.assignmentTimeoutValue", {
+                          minutes: event.assignmentTimeoutMinutes ?? 5,
+                        })}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("events.header.assignmentTimeoutTooltip")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                    <CalendarDays className="size-3.5 shrink-0" />
+                    <span>{eventDateRangeLabel}</span>
+                  </span>
                 </div>
               </div>
-
-              <div className="flex shrink-0 flex-wrap gap-2">
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  className="shrink-0"
-                >
-                  <Link
-                    to="/$guildId/events/$eventId/coordination"
-                    params={{ guildId: guildId ?? "", eventId: eventId ?? "" }}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    aria-label={pinActionLabel}
+                    aria-pressed={eventIsPinned}
+                    disabled={!eventId || isPinLoading}
+                    className={cn(
+                      "h-9 shrink-0 gap-2 px-3",
+                      eventIsPinned
+                        ? "border-yellow-500/35 bg-yellow-500/10 text-yellow-500 hover:border-yellow-500/50 hover:bg-yellow-500/15 hover:text-yellow-500"
+                        : "border-primary/30 bg-primary/5 text-primary hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
+                    )}
+                    onClick={() => {
+                      if (eventId) {
+                        togglePin(eventId);
+                      }
+                    }}
                   >
-                    <Crosshair className="size-3.5" />
-                    {t("events.coordination.trigger")}
-                  </Link>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="shrink-0"
-                  onClick={() => setSummaryDialogOpen(true)}
+                    <Star
+                      className={cn("size-4", eventIsPinned && "fill-current")}
+                    />
+                    <span className="hidden sm:inline">{pinActionLabel}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{pinActionLabel}</TooltipContent>
+              </Tooltip>
+            </div>
+
+            <div className="grid gap-1 border-t border-border bg-muted/20 p-1.5 sm:grid-cols-3">
+              <Button
+                asChild
+                size="sm"
+                variant="ghost"
+                className="w-full min-w-0 justify-center text-muted-foreground hover:text-foreground"
+              >
+                <Link
+                  to="/$guildId/events/$eventId/coordination"
+                  params={{ guildId: guildId ?? "", eventId: eventId ?? "" }}
                 >
-                  <Sparkles className="size-3.5" />
-                  {t("events.summaryDialog.trigger")}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="shrink-0"
-                  onClick={() => setRulesDialogOpen(true)}
-                >
-                  <BookText className="size-3.5" />
-                  {t("events.rulesDialog.trigger")}
-                </Button>
-              </div>
+                  <Crosshair className="size-3.5" />
+                  {t("events.coordination.trigger")}
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-full min-w-0 justify-center text-muted-foreground hover:text-foreground"
+                onClick={() => setSummaryDialogOpen(true)}
+              >
+                <Sparkles className="size-3.5" />
+                {t("events.summaryDialog.trigger")}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-full min-w-0 justify-center text-muted-foreground hover:text-foreground"
+                onClick={() => setRulesDialogOpen(true)}
+              >
+                <BookText className="size-3.5" />
+                {t("events.rulesDialog.trigger")}
+              </Button>
             </div>
           </Card>
 
-          <div className="lg:hidden">
+          <div className="xl:hidden">
             <EventActionsCard
-              eventId={eventId ?? ""}
-              guildId={guildId ?? ""}
               canManage={canManage ?? false}
               canDeleteEvent={canDeleteEvent ?? false}
               isActive={isEventActive}
@@ -631,14 +669,23 @@ export const EventDetail = () => {
               {rankingError && <p>{t("events.ranking.error")}</p>}
             </div>
           )}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 space-y-4">
-              <Card className="p-3 bg-card  border-border gap-2 h-fit">
-                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-base font-semibold flex items-center gap-2">
-                    <Swords className="w-4 h-4 text-yellow-500" />
-                    {t("events.heroes.title")}
-                  </h2>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+            <div className="min-w-0 space-y-4">
+              <Card className="h-fit gap-3 border-border bg-card p-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-yellow-500/10 p-2">
+                      <Swords className="size-4 text-yellow-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                        {t("events.heroes.subtitle")}
+                      </p>
+                      <h2 className="text-base font-semibold">
+                        {t("events.heroes.title")}
+                      </h2>
+                    </div>
+                  </div>
                   {canManage && (
                     <Button
                       variant="outline"
@@ -649,7 +696,7 @@ export const EventDetail = () => {
                         setHeroDialogOpen(true);
                       }}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="mr-2 size-4" />
                       {t("events.heroes.addButton")}
                     </Button>
                   )}
@@ -694,11 +741,9 @@ export const EventDetail = () => {
               />
             </div>
 
-            <div className="space-y-4">
-              <div className="hidden lg:block">
+            <div className="min-w-0 space-y-4">
+              <div className="hidden xl:block">
                 <EventActionsCard
-                  eventId={eventId ?? ""}
-                  guildId={guildId ?? ""}
                   canManage={canManage ?? false}
                   canDeleteEvent={canDeleteEvent ?? false}
                   isActive={isEventActive}

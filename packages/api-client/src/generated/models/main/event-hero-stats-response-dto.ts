@@ -13,5 +13,7 @@ export interface EventHeroStatsResponseDto {
   npcName: string;
   /** @nullable */
   npcLvl: number | null;
+  /** @nullable */
+  npcProf: string | null;
   killCount: number;
 }

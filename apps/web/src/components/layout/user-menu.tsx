@@ -29,19 +29,19 @@ export const UserMenu = () => {
   };
 
   return (
-    <div className="flex h-18 w-full items-stretch bg-sidebar">
+    <div className="flex h-14 w-full items-stretch bg-sidebar">
       {isPending && (
-        <div className="flex flex-1 items-center gap-3 pl-3">
-          <Avatar className="size-9 rounded-full">
+        <div className="flex flex-1 items-center gap-2.5 pl-2">
+          <Avatar className="size-8 rounded-full">
             <AvatarFallback>
-              <Spinner className="h-4 w-4" />
+              <Spinner className="size-4" />
             </AvatarFallback>
           </Avatar>
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="h-2.5 w-12 animate-pulse rounded bg-muted/60" />
             <div className="h-3.5 w-20 animate-pulse rounded bg-muted" />
           </div>
-          <div className="flex h-9 w-13 shrink-0 items-center justify-center border-l border-sidebar-border">
+          <div className="flex h-8 w-12 shrink-0 items-center justify-center border-l border-sidebar-border">
             <div className="size-3.5 animate-pulse rounded bg-muted/60" />
           </div>
         </div>
@@ -51,17 +51,17 @@ export const UserMenu = () => {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="group flex h-full w-full cursor-pointer items-center gap-3 pl-3 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[state=open]:bg-sidebar-accent/45"
+              className="group flex h-full w-full cursor-pointer items-center gap-2.5 pl-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[state=open]:bg-sidebar-accent/45"
             >
               <div className="relative shrink-0">
-                <Avatar className="size-9 rounded-full ring-1 ring-sidebar-border transition-[box-shadow] group-hover:ring-primary/45">
+                <Avatar className="size-8 rounded-full ring-1 ring-sidebar-border transition-[box-shadow] group-hover:ring-primary/45">
                   <AvatarImage src={user.image ?? undefined} />
                   <AvatarFallback>
                     <User2 className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+              <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
                 <span className="text-[11px] font-medium leading-none text-sidebar-foreground/55">
                   {t("layout.userMenu.account")}
                 </span>
@@ -69,7 +69,7 @@ export const UserMenu = () => {
                   {user.name}
                 </span>
               </div>
-              <span className="flex h-9 w-13 shrink-0 items-center justify-center border-l border-sidebar-border text-sidebar-foreground/55 transition-colors group-hover:text-sidebar-foreground">
+              <span className="flex h-8 w-12 shrink-0 items-center justify-center border-l border-sidebar-border text-sidebar-foreground/55 transition-colors group-hover:text-sidebar-foreground">
                 <ChevronUp className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
               </span>
             </button>

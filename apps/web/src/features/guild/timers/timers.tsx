@@ -3,12 +3,20 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@lootlog/ui/components/empty";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import groupBy from "lodash/groupBy";
-import { Grid2X2, List } from "lucide-react";
+import { Clock3, Globe2, Grid2X2, List, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
 import { NPC_TYPE_NAMES, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
@@ -23,6 +31,7 @@ import {
   getTimersControllerGetTimersQueryKey,
   useTimersControllerGetTimers,
 } from "@lootlog/api-client/react-query/main/timers";
+import { ThemeEmptyStateIcon } from "@/themes";
 
 export const Timers = () => {
   const guildId = useGuildId();
@@ -45,10 +54,16 @@ export const Timers = () => {
   const isMobile = useIsMobile();
   const { viewMode, setViewMode } = useViewMode("timers-view-mode", "list");
   const { t } = useTranslation();
+  const normalizedSearch = search.trim().toLowerCase();
 
   const filtered = timers?.filter((timer) =>
-    timer.npc?.name.toLowerCase().includes(search.toLowerCase()),
+    timer.npc?.name.toLowerCase().includes(normalizedSearch),
   );
+  const hasFilteredTimers = (filtered?.length ?? 0) > 0;
+  const showsNoSearchResults =
+    Boolean(normalizedSearch) &&
+    (timers?.length ?? 0) > 0 &&
+    !hasFilteredTimers;
 
   const sortedByTime = filtered?.sort((a, b) => {
     return (
@@ -70,103 +85,165 @@ export const Timers = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-3 border-border bg-card p-4">
-            <div className="flex items-center gap-3">
-              <SearchInput
-                placeholder={t("timers.searchPlaceholder")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-9"
-                wrapperClassName="flex-1"
-              />
-              {!isMobile && (
-                <div className="flex items-center gap-2 shrink-0 border-l border-border pl-3">
-                  <WorldSwitcher />
+      <div className="px-3 pt-3">
+        <Card className="gap-2 border-border bg-card p-2">
+          <div className="flex items-center gap-2">
+            <SearchInput
+              placeholder={t("timers.searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9"
+              wrapperClassName="flex-1"
+            />
+            {!isMobile && (
+              <div className="flex shrink-0 items-center border-l border-border pl-2">
+                <WorldSwitcher />
+              </div>
+            )}
+            {isMobile && <WorldSwitcher />}
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setViewMode("list")}
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="icon"
+                    className="h-8 w-8"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{t("timers.view.list")}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setViewMode("grid")}
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="icon"
+                    className="h-8 w-8"
+                  >
+                    <Grid2X2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{t("timers.view.grid")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col pt-3">
+        {!world ? (
+          <div className="flex flex-1 items-start justify-center px-4 pb-8 pt-5 sm:px-6 md:items-center md:py-8">
+            <section className="flex w-full max-w-sm flex-col items-center rounded-2xl border border-border bg-card px-4 py-5 text-center shadow-sm sm:px-7 sm:py-8">
+              <div className="mb-4 flex size-14 items-center justify-center rounded-xl border border-border bg-background">
+                <ThemeEmptyStateIcon
+                  className="size-8 text-muted-foreground"
+                  fallback={<Globe2 className="size-8 text-primary" />}
+                />
+              </div>
+              <h2 className="text-base font-semibold text-foreground">
+                {t("timers.selectWorldTitle")}
+              </h2>
+              <p className="mt-1 max-w-xs text-sm leading-5 text-muted-foreground">
+                {t("timers.noWorldSelected")}
+              </p>
+              <div className="mt-5 w-full text-left">
+                <WorldSwitcher
+                  width="w-full"
+                  triggerClassName="h-11 w-full justify-between px-3"
+                />
+              </div>
+            </section>
+          </div>
+        ) : !isPending && timers && !hasFilteredTimers ? (
+          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+            <Empty className="min-h-56 w-full max-w-xl">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  {showsNoSearchResults ? (
+                    <SearchX />
+                  ) : (
+                    <ThemeEmptyStateIcon fallback={<Clock3 />} />
+                  )}
+                </EmptyMedia>
+                <EmptyTitle>
+                  {t(
+                    showsNoSearchResults ? "timers.noResults" : "timers.empty",
+                  )}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {t(
+                    showsNoSearchResults
+                      ? "timers.noResultsDescription"
+                      : "timers.emptyDescription",
+                  )}
+                </EmptyDescription>
+              </EmptyHeader>
+              {showsNoSearchResults && (
+                <EmptyContent>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSearch("")}
+                  >
+                    {t("timers.clearSearch")}
+                  </Button>
+                </EmptyContent>
+              )}
+            </Empty>
+          </div>
+        ) : (
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="flex flex-col gap-4 px-3 pb-3">
+              {isPending && (
+                <div className="flex flex-col gap-3">
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <Skeleton key={index} className="h-20 w-full rounded-xl" />
+                  ))}
                 </div>
               )}
-              {isMobile && <WorldSwitcher />}
-              <div className="flex items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={() => setViewMode("list")}
-                      variant={viewMode === "list" ? "default" : "ghost"}
-                      size="icon"
-                      className="h-8 w-8"
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>{t("timers.view.list")}</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={() => setViewMode("grid")}
-                      variant={viewMode === "grid" ? "default" : "ghost"}
-                      size="icon"
-                      className="h-8 w-8"
-                    >
-                      <Grid2X2 className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>{t("timers.view.grid")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              {!isPending && timers && hasFilteredTimers && (
+                <div className="flex flex-col gap-4">
+                  {Object.keys(groups).map((key) => {
+                    return (
+                      <div key={key}>
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground px-1 mb-2">
+                          {NPC_TYPE_NAMES[key as keyof typeof NPC_TYPE_NAMES] ??
+                            t("timers.npcType.manual")}{" "}
+                          ({groups[key]?.length})
+                        </p>
+                        <div
+                          className={
+                            viewMode === "grid"
+                              ? "grid grid-cols-1 gap-1.5 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                              : "flex flex-col gap-1.5"
+                          }
+                        >
+                          {groups[key]?.map((timer) => {
+                            return (
+                              <SingleTimer
+                                key={timer.npc?.id ?? timer.timerKey}
+                                timer={timer}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </Card>
-
-          {isPending && (
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: 8 }).map((_, index) => (
-                <Skeleton key={index} className="h-20 w-full rounded-xl" />
-              ))}
-            </div>
-          )}
-          {!isPending && timers && timers.length === 0 && (
-            <Card className="flex flex-col items-center justify-center gap-3 bg-card py-12">
-              <p className="text-muted-foreground">{t("timers.empty")}</p>
-            </Card>
-          )}
-          {!isPending && timers && timers.length > 0 && (
-            <div className="flex flex-col gap-4">
-              {Object.keys(groups).map((key) => {
-                return (
-                  <div key={key}>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground px-1 mb-2">
-                      {NPC_TYPE_NAMES[key as keyof typeof NPC_TYPE_NAMES] ??
-                        t("timers.npcType.manual")}{" "}
-                      ({groups[key]?.length})
-                    </p>
-                    <div
-                      className={
-                        viewMode === "grid"
-                          ? "grid grid-cols-1 gap-1.5 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-                          : "flex flex-col gap-1.5"
-                      }
-                    >
-                      {groups[key]?.map((timer) => {
-                        return (
-                          <SingleTimer
-                            key={timer.npc?.id ?? timer.timerKey}
-                            timer={timer}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+          </ScrollArea>
+        )}
+      </div>
     </div>
   );
 };

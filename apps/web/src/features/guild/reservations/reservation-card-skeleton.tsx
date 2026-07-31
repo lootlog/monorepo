@@ -11,32 +11,34 @@ export const ReservationCardSkeleton: FC<ReservationCardSkeletonProps> = ({
 }) => {
   if (viewMode === "list") {
     return (
-      <Card className="flex flex-row items-center gap-4 p-3 bg-card  border-border">
-        <div className="flex flex-col gap-2 flex-1 min-w-0">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-3 w-48" />
+      <Card className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2.5 border-border bg-card p-3 sm:grid-cols-[12rem_9.5rem_minmax(0,1fr)_13rem_auto]">
+        <div className="col-start-1 row-start-1 flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-5 w-14 rounded-md" />
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="col-span-2 col-start-1 row-start-2 flex items-center gap-2 overflow-hidden sm:col-span-1 sm:col-start-2 sm:row-start-1">
           <Skeleton className="h-10 w-8 rounded-lg" />
           <Skeleton className="h-10 w-8 rounded-lg" />
+          <Skeleton className="h-10 w-8 rounded-lg" />
         </div>
+        <Skeleton className="col-span-2 col-start-1 row-start-3 h-12 w-full rounded-lg sm:col-span-1 sm:col-start-4 sm:row-start-1" />
+        <Skeleton className="col-start-2 row-start-1 size-4 rounded-sm sm:col-start-5" />
       </Card>
     );
   }
 
   return (
-    <Card className="flex flex-col justify-between p-4 bg-card  border-border h-full">
-      <div className="flex flex-wrap gap-3 items-center">
+    <Card className="flex min-h-40 h-full flex-col gap-3 border-border bg-card p-3.5">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-5 w-14 rounded-md" />
+      </div>
+      <div className="flex items-center gap-2">
         <Skeleton className="h-10 w-8 rounded-lg" />
         <Skeleton className="h-10 w-8 rounded-lg" />
         <Skeleton className="h-10 w-8 rounded-lg" />
       </div>
-      <div className="mt-auto space-y-2 pt-4">
-        <Skeleton className="h-4 w-36" />
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-3 w-48" />
-      </div>
+      <Skeleton className="mt-auto h-12 w-full rounded-lg" />
     </Card>
   );
 };

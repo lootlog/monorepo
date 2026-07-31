@@ -1,20 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Skull } from "lucide-react";
+import { ChevronRight, Skull } from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@lootlog/ui/components/card";
+import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -99,21 +94,20 @@ export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
             <Skull className="h-5 w-5" />
             {t("kills.home.topKilledNpcs.title")}
           </CardTitle>
-          <Select value={npcType} onValueChange={onNpcTypeChange}>
-            <SelectTrigger size="sm" className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TRACKABLE_NPC_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {t(`npcType.${type}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FilterPopover
+            options={TRACKABLE_NPC_TYPES.map((type) => ({
+              value: type,
+              label: t(`npcType.${type}`),
+            }))}
+            value={npcType}
+            onValueChange={onNpcTypeChange}
+            width="w-[120px]"
+            triggerClassName="h-8"
+            showSearch={false}
+          />
         </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
+      <CardContent className="flex flex-1 flex-col gap-3">
         {topNpcs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center py-8">
             <p className="text-sm text-muted-foreground text-center">
@@ -175,13 +169,12 @@ export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
             ))}
           </div>
         )}
-        <Link
-          to="/@me/kills"
-          className="flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors pt-2"
-        >
-          {t("kills.home.topKilledNpcs.viewAll")}
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        <Button asChild variant="outline" size="sm" className="mt-auto w-full">
+          <Link to="/@me/kills">
+            {t("kills.home.topKilledNpcs.viewAll")}
+            <ChevronRight className="ml-2 size-4" />
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   );

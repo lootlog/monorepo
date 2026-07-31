@@ -10,9 +10,9 @@
     "rulebook": "Regulamin",
     "scoring": "Ustawienia punktów"
   },
-  "delete": "Usuń Event",
-  "pinEvent": "Przypnij event",
-  "unpinEvent": "Odepnij event",
+  "delete": "Usuń event",
+  "pinEvent": "Przypnij",
+  "unpinEvent": "Odepnij",
   "upcoming": "Nadchodzący",
   "active": "Aktywny",
   "inactive": "Nieaktywny",
@@ -396,6 +396,7 @@
     }
   },
   "heroes": {
+    "subtitle": "Cele eventu",
     "title": "Herosi Eventowi",
     "count_one": "{{count}} heros eventowy",
     "count_few": "{{count}} herosi eventowi",
@@ -415,6 +416,7 @@
     "timerActive": "Timer aktywny",
     "add": "Dodaj herosa",
     "addButton": "Dodaj",
+    "actions": "Akcje herosa",
     "edit": "Edytuj herosa",
     "manageMaps": "Mapy",
     "addDescription": "Dodaj nowego herosa do eventu",
@@ -823,6 +825,7 @@
   },
   "header": {
     "assignmentTimeoutTooltip": "Czas przed respawnem, kiedy można się przypisać do mapy",
+    "assignmentTimeoutValue": "{{minutes}} min",
     "autoPointsOn": "Auto",
     "multipliers_one": "{{count}} mnożnik",
     "multipliers_few": "{{count}} mnożniki",

@@ -13,6 +13,7 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { Link, useLocation } from "@tanstack/react-router";
 import { ThemeCircularFrame, useThemeMeta } from "@/themes";
+import type { MouseEvent } from "react";
 
 export const UserNavItem = () => {
   const { data } = useSession();
@@ -20,6 +21,11 @@ export const UserNavItem = () => {
   const { isRukiaTheme } = useThemeMeta();
 
   const isActive = pathname.startsWith("/@me");
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.detail > 0) {
+      event.currentTarget.blur();
+    }
+  };
   const avatarElement = (
     <Avatar
       className={cn(
@@ -41,7 +47,11 @@ export const UserNavItem = () => {
           {isActive && !isRukiaTheme && (
             <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]" />
           )}
-          <Link to={ROUTES.user.dashboard} className="block">
+          <Link
+            to={ROUTES.user.dashboard}
+            className="block"
+            onClick={handleClick}
+          >
             <ThemeCircularFrame isActive={isActive}>
               {avatarElement}
             </ThemeCircularFrame>
