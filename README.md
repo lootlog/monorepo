@@ -358,6 +358,8 @@ Each released workspace owns its generated `CHANGELOG.md`. Use `pnpm changeset s
 
 Production images use both `prod-<semver>` and `sha-<release-commit>` tags and are never overwritten. To promote or roll back one service, run the **Promote an existing image to prod** workflow from `main` with the service and an existing semantic version. Rollbacks only change GitOps; they never rebuild an image.
 
+Cloudflare frontends use the same changeset, version PR, immutable artifact, and `prod` approval flow as backend services. They are not handled by the Docker image promotion workflow. A frontend production deployment always uses the checksummed artifact built by its release run; if no valid artifact exists, publish a new patch release instead of rebuilding an existing version.
+
 If an artifact matrix fails after versions have been created, use **Re-run failed jobs**. Do not rerun the entire workflow: successful immutable image jobs must not attempt to overwrite their existing tags.
 
 A successful deployment workflow means the GitOps change was accepted. ArgoCD remains the source of truth for the actual cluster rollout and health.
