@@ -1,5 +1,11 @@
 # @lootlog/web
 
+## 1.2.4
+
+### Patch Changes
+
+- 0a285b3: Rebuild immutable frontend artifacts with reliable Cloudflare promotion handling.
+
 ## 1.2.3
 
 ### Patch Changes
