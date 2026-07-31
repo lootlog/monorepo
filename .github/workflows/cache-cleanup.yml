@@ -21,4 +21,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PULL_REQUEST_REF: refs/pull/${{ github.event.pull_request.number }}/merge
-        run: gh cache delete --all --succeed-on-no-caches --ref "$PULL_REQUEST_REF"
+        run: |
+          gh cache delete \
+            --all \
+            --succeed-on-no-caches \
+            --ref "$PULL_REQUEST_REF" \
+            --repo "$GITHUB_REPOSITORY"

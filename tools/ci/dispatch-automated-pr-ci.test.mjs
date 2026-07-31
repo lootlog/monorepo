@@ -13,7 +13,7 @@ const baseInput = {
   token: "test-token",
 };
 
-test("waits for the automatic pull request run before dispatching CI", async () => {
+test("does not dispatch CI when the automatic pull request run appears", async () => {
   const requests = [];
   const sleepCalls = [];
   const responses = [
@@ -22,7 +22,6 @@ test("waits for the automatic pull request run before dispatching CI", async () 
       total_count: 1,
       workflow_runs: [{ id: 123, event: "pull_request", head_sha: "head-sha" }],
     }),
-    new Response(null, { status: 204 }),
   ];
 
   await dispatchAutomatedPullRequestCi({
@@ -38,13 +37,39 @@ test("waits for the automatic pull request run before dispatching CI", async () 
     },
   });
 
-  assert.equal(requests.length, 3);
+  assert.equal(requests.length, 2);
   assert.equal(
     requests[0].url,
     "https://api.github.test/repos/lootlog/monorepo/actions/workflows/ci.yml/runs?event=pull_request&head_sha=head-sha&per_page=1",
   );
   assert.equal(requests[0].options.method, "GET");
   assert.deepEqual(sleepCalls, [1]);
+  assert.deepEqual(
+    requests.map(({ options }) => options.method),
+    ["GET", "GET"],
+  );
+});
+
+test("dispatches CI when the automatic pull request run does not appear", async () => {
+  const requests = [];
+  const responses = [
+    Response.json({ total_count: 0, workflow_runs: [] }),
+    Response.json({ total_count: 0, workflow_runs: [] }),
+    new Response(null, { status: 204 }),
+  ];
+
+  await dispatchAutomatedPullRequestCi({
+    ...baseInput,
+    fetchImplementation: (url, options) => {
+      requests.push({ options, url: url.toString() });
+      return responses.shift();
+    },
+    maxPollAttempts: 2,
+    pollIntervalMs: 1,
+    sleep: () => Promise.resolve(),
+  });
+
+  assert.equal(requests.length, 3);
   assert.equal(
     requests[2].url,
     "https://api.github.test/repos/lootlog/monorepo/actions/workflows/ci.yml/dispatches",
@@ -60,32 +85,9 @@ test("waits for the automatic pull request run before dispatching CI", async () 
   });
 });
 
-test("fails without dispatching when the automatic run does not appear", async () => {
-  let requestCount = 0;
-
-  await assert.rejects(
-    dispatchAutomatedPullRequestCi({
-      ...baseInput,
-      fetchImplementation: () => {
-        requestCount += 1;
-        return Response.json({ total_count: 0, workflow_runs: [] });
-      },
-      maxPollAttempts: 2,
-      pollIntervalMs: 1,
-      sleep: () => Promise.resolve(),
-    }),
-    /automatic pull_request run/,
-  );
-
-  assert.equal(requestCount, 2);
-});
-
 test("reports a failed workflow dispatch", async () => {
   const responses = [
-    Response.json({
-      total_count: 1,
-      workflow_runs: [{ id: 123, event: "pull_request", head_sha: "head-sha" }],
-    }),
+    Response.json({ total_count: 0, workflow_runs: [] }),
     Response.json({ message: "dispatch failed" }, { status: 422 }),
   ];
 
@@ -93,6 +95,7 @@ test("reports a failed workflow dispatch", async () => {
     dispatchAutomatedPullRequestCi({
       ...baseInput,
       fetchImplementation: () => responses.shift(),
+      maxPollAttempts: 1,
       sleep: () => Promise.resolve(),
     }),
     /dispatch failed \(422\)/,
