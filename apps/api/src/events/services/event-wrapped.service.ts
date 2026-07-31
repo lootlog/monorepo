@@ -18,11 +18,11 @@ import type {
   EventWrappedCoverageDto,
   EventWrappedHeroCoverageDto,
   EventWrappedHeroDto,
-  EventWrappedLeaderDto,
   EventWrappedLootHeroDto,
   EventWrappedRarityTotalsDto,
   EventWrappedResponseDto,
 } from "../dto/event-wrapped.dto";
+import { selectEventWrappedLeader } from "../utils/select-event-wrapped-leader";
 
 type RankingRow = {
   memberId: number;
@@ -271,7 +271,7 @@ export class EventWrappedService {
           (sum, ranking) => sum + ranking.totalKills,
           0,
         );
-        const topHunter = this.selectLeader(
+        const topHunter = selectEventWrappedLeader(
           heroRankings,
           (ranking) => ranking.totalKills,
         );
@@ -363,25 +363,28 @@ export class EventWrappedService {
         rarityTotals: totalRarityTotals,
       },
       leaders: {
-        topHunter: this.selectLeader(memberList, (member) => member.totalKills),
-        topScorer: this.selectLeader(
+        topHunter: selectEventWrappedLeader(
+          memberList,
+          (member) => member.totalKills,
+        ),
+        topScorer: selectEventWrappedLeader(
           memberList,
           (member) => member.totalPoints,
         ),
-        longestDuty: this.selectLeader(
+        longestDuty: selectEventWrappedLeader(
           memberList,
           (member) => member.totalAssignedSeconds,
         ),
-        topAfk: this.selectLeader(
+        topAfk: selectEventWrappedLeader(
           memberList,
           (member) => member.totalAfkSeconds,
         ),
-        mostFlexible: this.selectLeader(
+        mostFlexible: selectEventWrappedLeader(
           memberList,
           (member) => member.maxMapsPerRespawn,
           (member) => member.avgMapsPerRespawn,
         ),
-        topEfficiency: this.selectLeader(
+        topEfficiency: selectEventWrappedLeader(
           memberList.filter((member) => member.totalKills > 0),
           (member) => member.totalPoints / member.totalKills,
           (member) => member.totalKills,
@@ -836,61 +839,5 @@ export class EventWrappedService {
     }
 
     return totalAssignedMapsAcrossWindows / kills.length;
-  }
-
-  private selectLeader<
-    T extends {
-      memberId: number;
-      member?: { id: number; name: string; avatar: string | null };
-      name?: string;
-      avatar?: string | null;
-    },
-  >(
-    entries: T[],
-    getPrimaryValue: (entry: T) => number,
-    getSecondaryValue?: (entry: T) => number,
-  ): EventWrappedLeaderDto | null {
-    const sorted = [...entries]
-      .map((entry) => ({
-        entry,
-        primaryValue: getPrimaryValue(entry),
-        secondaryValue: getSecondaryValue ? getSecondaryValue(entry) : null,
-      }))
-      .sort((left, right) => {
-        if (right.primaryValue !== left.primaryValue) {
-          return right.primaryValue - left.primaryValue;
-        }
-
-        return (right.secondaryValue ?? 0) - (left.secondaryValue ?? 0);
-      });
-
-    const winner = sorted.find((entry) => entry.primaryValue > 0);
-    if (!winner) {
-      return null;
-    }
-
-    if ("member" in winner.entry && winner.entry.member) {
-      return {
-        memberId: winner.entry.member.id,
-        name: winner.entry.member.name,
-        avatar: winner.entry.member.avatar,
-        primaryValue: roundToTwo(winner.primaryValue),
-        secondaryValue:
-          winner.secondaryValue !== null
-            ? roundToTwo(winner.secondaryValue)
-            : null,
-      };
-    }
-
-    return {
-      memberId: winner.entry.memberId,
-      name: winner.entry.name ?? "Unknown",
-      avatar: winner.entry.avatar ?? null,
-      primaryValue: roundToTwo(winner.primaryValue),
-      secondaryValue:
-        winner.secondaryValue !== null
-          ? roundToTwo(winner.secondaryValue)
-          : null,
-    };
   }
 }
