@@ -15,6 +15,12 @@ const EventWrappedLeaderResponseSchema = z.object({
   secondaryValue: z.number().nullable().optional(),
 });
 
+const EventWrappedLeaderResultResponseSchema = z.object({
+  winner: EventWrappedLeaderResponseSchema.nullable(),
+  candidateCount: z.number(),
+  tiedWinnerCount: z.number(),
+});
+
 const EventWrappedHeroCoverageResponseSchema = z.object({
   heroNpcId: z.string(),
   npcName: z.string(),
@@ -34,7 +40,7 @@ const EventWrappedHeroResponseSchema = z.object({
   totalPoints: z.number(),
   coveragePercentage: z.number(),
   rarityTotals: EventWrappedRarityTotalsResponseSchema,
-  topHunter: EventWrappedLeaderResponseSchema.nullable(),
+  topHunter: EventWrappedLeaderResultResponseSchema,
 });
 
 const EventWrappedLootHeroResponseSchema = z.object({
@@ -71,12 +77,12 @@ const EventWrappedOverviewResponseSchema = z.object({
 });
 
 const EventWrappedLeadersResponseSchema = z.object({
-  topHunter: EventWrappedLeaderResponseSchema.nullable(),
-  topScorer: EventWrappedLeaderResponseSchema.nullable(),
-  longestDuty: EventWrappedLeaderResponseSchema.nullable(),
-  topAfk: EventWrappedLeaderResponseSchema.nullable(),
-  mostFlexible: EventWrappedLeaderResponseSchema.nullable(),
-  topEfficiency: EventWrappedLeaderResponseSchema.nullable(),
+  topHunter: EventWrappedLeaderResultResponseSchema,
+  topScorer: EventWrappedLeaderResultResponseSchema,
+  longestDuty: EventWrappedLeaderResultResponseSchema,
+  topAfk: EventWrappedLeaderResultResponseSchema,
+  mostFlexible: EventWrappedLeaderResultResponseSchema,
+  topEfficiency: EventWrappedLeaderResultResponseSchema,
 });
 
 const EventWrappedCoverageResponseSchema = z.object({

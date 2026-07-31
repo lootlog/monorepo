@@ -5,16 +5,11 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { EventWrappedApiResponseDtoOutputLeadersLongestDutyWinner } from './event-wrapped-api-response-dto-output-leaders-longest-duty-winner';
 
-/**
- * @nullable
- */
 export type EventWrappedApiResponseDtoOutputLeadersLongestDuty = {
-  memberId: number;
-  name: string;
   /** @nullable */
-  avatar: string | null;
-  primaryValue: number;
-  /** @nullable */
-  secondaryValue?: number | null;
-} | null;
+  winner: EventWrappedApiResponseDtoOutputLeadersLongestDutyWinner;
+  candidateCount: number;
+  tiedWinnerCount: number;
+};
