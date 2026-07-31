@@ -16,7 +16,7 @@ export const Dashboard: React.FC = () => {
           onPeriodChange={(period) => updateFilters({ period })}
         />
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))] gap-4">
           <PlayerKillStatsCard world={filters.world} period={filters.period} />
           <TopKilledNpcsCard
             world={filters.world}

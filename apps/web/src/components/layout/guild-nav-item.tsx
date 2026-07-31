@@ -45,10 +45,15 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   const isActive =
     currentGuildId === guild.id || currentGuildId === guild.vanityUrl;
 
-  const handleClick = (e: MouseEvent) => {
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (isDragging) {
-      e.preventDefault();
-      e.stopPropagation();
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (event.detail > 0) {
+      event.currentTarget.blur();
     }
   };
 

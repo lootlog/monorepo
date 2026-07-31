@@ -4,6 +4,23 @@
     "list": "Widok listy",
     "grid": "Widok siatki"
   },
+  "card": {
+    "activeCount_one": "{{count}} zapis",
+    "activeCount_few": "{{count}} zapisy",
+    "activeCount_many": "{{count}} zapisów",
+    "activeCount_other": "{{count}} zapisów",
+    "occupied": "Zajęte teraz",
+    "next": "Najbliższa rezerwacja",
+    "none": "Brak rezerwacji",
+    "noneDescription": "Kliknij, aby wybrać termin",
+    "open": "Otwórz rezerwacje: {{name}}"
+  },
+  "empty": {
+    "title": "Nie znaleziono expowisk",
+    "description": "Brak dostępnych expowisk do wyświetlenia.",
+    "searchDescription": "Spróbuj zmienić wyszukiwaną frazę.",
+    "clearSearch": "Wyczyść wyszukiwanie"
+  },
   "datePicker": {
     "placeholder": "Wybierz datę i godzinę",
     "clear": "Wyczyść datę",

@@ -35,6 +35,9 @@ describe("EventKillService", () => {
       findMany: mockFn(),
       create: mockFn(),
     },
+    npcKillStats: {
+      findMany: mockFn(),
+    },
     eventKillPoint: {
       create: mockFn(),
       createMany: mockFn(),
@@ -301,6 +304,7 @@ describe("EventKillService", () => {
     it("should return hero stats with kill counts", async () => {
       const mockEvent = {
         id: eventId,
+        world: "tempest",
         heroNpcs: [
           {
             id: "hero-1",
@@ -320,12 +324,18 @@ describe("EventKillService", () => {
       };
 
       mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
+      mockPrismaService.npcKillStats.findMany.mockResolvedValue([
+        { npcId: 123, npcProf: "w" },
+        { npcId: 456, npcProf: "m" },
+      ]);
 
       const result = await service.getEventHeroStats(guildId, eventId);
 
       expect(result).toHaveLength(2);
       expect(result[0].killCount).toBe(3);
+      expect(result[0].npcProf).toBe("w");
       expect(result[1].killCount).toBe(1);
+      expect(result[1].npcProf).toBe("m");
     });
 
     it("should throw NotFoundException when event not found", async () => {
