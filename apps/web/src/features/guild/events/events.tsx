@@ -15,6 +15,7 @@ import {
   ShieldX,
   Trash2,
   Star,
+  ChevronRight,
 } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
@@ -35,6 +36,7 @@ import {
 } from "@lootlog/api-client/react-query/main/events";
 import type { EventListItemResponseDto } from "@lootlog/api-client/models/main/event-list-item-response-dto";
 import type { Event } from "./types/api";
+import { cn } from "@lootlog/ui/lib/utils";
 
 export const Events = () => {
   const { t } = useTranslation();
@@ -140,64 +142,76 @@ export const Events = () => {
 
   return (
     <ScrollArea className="h-full bg-background">
-      <div className="flex flex-col gap-4 px-3 py-3">
-        <Card className="gap-4 border-border bg-card p-4">
+      <div className="flex flex-col gap-3 px-3 py-3">
+        <Card className="gap-0 border-border bg-card p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="rounded-xl bg-primary/10 p-2.5">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                 <Trophy className="size-4 text-primary" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-semibold leading-tight">
+                <h2 className="text-lg font-semibold leading-tight">
                   {t("events.title")}
                 </h2>
-                <p className="text-xs text-muted-foreground leading-tight">
+                <p className="mt-1 text-xs leading-tight text-muted-foreground">
                   {t("events.description")}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                className="w-full sm:w-auto"
-                onClick={() => setCreateDialogOpen(true)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {t("events.create")}
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              <Plus className="size-4" />
+              {t("events.create")}
+            </Button>
           </div>
         </Card>
 
         {isLoading ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="border-border bg-card p-3">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <Skeleton className="h-4 w-40" />
-                    <div className="flex gap-2">
+              <Card
+                key={i}
+                className="flex-row items-stretch gap-0 overflow-hidden border-border bg-card p-0"
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-3 p-4">
+                  <Skeleton className="size-9 shrink-0 rounded-lg" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-40" />
                       <Skeleton className="h-5 w-16 rounded-full" />
-                      <Skeleton className="h-5 w-20 rounded-full" />
-                      <Skeleton className="h-5 w-24 rounded-full" />
+                    </div>
+                    <div className="flex gap-3">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-3 w-32" />
                     </div>
                   </div>
+                </div>
+                <div className="flex items-center gap-1 border-l border-border px-2">
+                  <Skeleton className="size-8 rounded-lg" />
+                  {canDeleteEvent && <Skeleton className="size-8 rounded-lg" />}
                 </div>
               </Card>
             ))}
           </div>
         ) : events?.length === 0 ? (
-          <Card className="flex flex-col items-center justify-center gap-3 bg-card py-12">
-            <Trophy className="w-12 h-12 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">{t("events.noEvents")}</p>
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
+          <Card className="flex flex-col items-center justify-center gap-4 bg-card px-6 py-12 text-center">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
+              <Trophy className="size-5 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t("events.noEvents")}
+            </p>
+            <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="size-4" />
               {t("events.create")}
             </Button>
           </Card>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {events?.map((event: Event) => {
               const eventStatus = getEventStatusAtTimestamp(
                 event,
@@ -216,120 +230,129 @@ export const Events = () => {
                   : eventStatus === "upcoming"
                     ? "outline"
                     : "secondary";
+              const formattedWorld =
+                event.world.charAt(0).toUpperCase() + event.world.slice(1);
 
               return (
-                <Link
+                <Card
                   key={event.id}
-                  to="/$guildId/events/$eventId"
-                  params={{ guildId: guildId ?? "", eventId: event.id }}
+                  className={cn(
+                    "flex-row items-stretch gap-0 overflow-hidden border-border bg-card p-0 transition-colors",
+                    isEventActive &&
+                      "border-yellow-500/40 bg-yellow-500/[0.025]",
+                  )}
                 >
-                  <Card
-                    className={`p-3 bg-card  hover:bg-card transition-all cursor-pointer ${
-                      isEventActive
-                        ? "border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:border-yellow-500/70"
-                        : "border-border hover:border-primary/30"
-                    }`}
+                  <Link
+                    to="/$guildId/events/$eventId"
+                    params={{ guildId: guildId ?? "", eventId: event.id }}
+                    className="group/event flex min-w-0 flex-1 items-center gap-3 p-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <Trophy
-                            className={`w-4 h-4 ${isEventActive ? "text-yellow-500" : "text-muted-foreground"}`}
-                          />
-                          {isEventActive && (
-                            <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-base">
-                            {event.name}
-                          </h3>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                            <div className="flex items-center gap-1">
-                              <Globe className="w-3 h-3" />
-                              <span>{event.world}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Swords className="w-3 h-3" />
-                              <span>
-                                {t("events.heroes.count", {
-                                  count: event.heroNpcs?.length || 0,
-                                })}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <CalendarDays className="w-3 h-3" />
-                              <span>
-                                {format(
-                                  new Date(event.startsAt || event.createdAt),
-                                  "d MMM yyyy",
-                                  {
-                                    locale: pl,
-                                  },
-                                )}
-                                {" –"}
-                                {event.endsAt
-                                  ? format(
-                                      new Date(event.endsAt),
-                                      "d MMM yyyy",
-                                      {
-                                        locale: pl,
-                                      },
-                                    )
-                                  : t("events.ongoing")}
-                              </span>
-                            </div>
-                            <Badge variant={eventStatusVariant}>
-                              {eventStatusLabel}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          title={
-                            isPinned(event.id)
-                              ? t("events.unpinEvent")
-                              : t("events.pinEvent")
-                          }
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            togglePin(event.id);
-                          }}
-                        >
-                          <Star
-                            className={`w-3.5 h-3.5 ${
-                              isPinned(event.id)
-                                ? "fill-yellow-500 text-yellow-500"
-                                : "text-muted-foreground"
-                            }`}
-                          />
-                        </Button>
-                        {canDeleteEvent && (
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setEventToDelete(event);
-                            }}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                    <div
+                      className={cn(
+                        "relative flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted",
+                        isEventActive && "bg-yellow-500/10",
+                      )}
+                    >
+                      <Trophy
+                        className={cn(
+                          "size-4 text-muted-foreground",
+                          isEventActive && "text-yellow-500",
                         )}
+                      />
+                      {isEventActive && (
+                        <span className="absolute -right-0.5 -top-0.5 flex size-2">
+                          <span className="absolute inline-flex size-full animate-ping rounded-full bg-yellow-400 opacity-75" />
+                          <span className="relative inline-flex size-2 rounded-full bg-yellow-500" />
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <h3 className="min-w-0 break-words text-base font-semibold leading-tight">
+                          {event.name}
+                        </h3>
+                        <Badge
+                          variant={eventStatusVariant}
+                          className="h-5 px-2 text-[11px]"
+                        >
+                          {eventStatusLabel}
+                        </Badge>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Globe className="size-3.5" />
+                          {formattedWorld}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Swords className="size-3.5" />
+                          {t("events.heroes.count", {
+                            count: event.heroNpcs?.length ?? 0,
+                          })}
+                        </span>
+                        <span className="inline-flex min-w-0 items-center gap-1.5">
+                          <CalendarDays className="size-3.5 shrink-0" />
+                          <span>
+                            {format(
+                              new Date(event.startsAt ?? event.createdAt),
+                              "d MMM yyyy",
+                              {
+                                locale: pl,
+                              },
+                            )}
+                            {" – "}
+                            {event.endsAt
+                              ? format(new Date(event.endsAt), "d MMM yyyy", {
+                                  locale: pl,
+                                })
+                              : t("events.ongoing")}
+                          </span>
+                        </span>
                       </div>
                     </div>
-                  </Card>
-                </Link>
+
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover/event:translate-x-0.5 group-hover/event:text-foreground" />
+                  </Link>
+
+                  <div className="flex shrink-0 items-center gap-1 border-l border-border px-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      title={
+                        isPinned(event.id)
+                          ? t("events.unpinEvent")
+                          : t("events.pinEvent")
+                      }
+                      aria-label={
+                        isPinned(event.id)
+                          ? t("events.unpinEvent")
+                          : t("events.pinEvent")
+                      }
+                      onClick={() => togglePin(event.id)}
+                    >
+                      <Star
+                        className={cn(
+                          "size-4 text-muted-foreground",
+                          isPinned(event.id) &&
+                            "fill-yellow-500 text-yellow-500",
+                        )}
+                      />
+                    </Button>
+                    {canDeleteEvent && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={t("events.delete")}
+                        title={t("events.delete")}
+                        onClick={() => setEventToDelete(event)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    )}
+                  </div>
+                </Card>
               );
             })}
           </div>

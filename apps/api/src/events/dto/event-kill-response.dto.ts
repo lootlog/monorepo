@@ -139,6 +139,7 @@ const EventHeroStatsResponseSchema = z.object({
   npcId: z.number().nullable(),
   npcName: z.string(),
   npcLvl: z.number().nullable(),
+  npcProf: z.string().nullable(),
   killCount: z.number(),
 });
 

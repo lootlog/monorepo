@@ -90,7 +90,7 @@
   },
   "header": {
     "searchPlaceholder": "Szukaj przedmiotów, potworów, graczy...",
-    "shortcut": "Ctrl + K",
+    "shortcut": "{{modifier}} + K",
     "listView": "Widok listy",
     "gridView": "Widok siatki",
     "mobileFiltersTitle": "Filtry łupów"
@@ -130,6 +130,10 @@
     "emptyCat": "Kot przeszukał wszystko... nic nie znalazł 😿",
     "emptyRukia": "Absolutne zero... nie znaleziono żadnych łupów.",
     "emptyRias": "Moc Zniszczenia nie wykryła żadnych łupów.",
+    "emptyDescription": "Nowe łupy z wybranego świata pojawią się tutaj automatycznie.",
+    "noResults": "Brak pasujących łupów",
+    "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej łupów.",
+    "clearFilters": "Wyczyść filtry",
     "loadingMore": "Ładowanie kolejnych lootów...",
     "loadingMoreCat": "Kotek poluje na kolejne łupy...",
     "loadingMoreRukia": "Szron pokrywa kolejne łupy...",

@@ -4,7 +4,13 @@
     "list": "Widok listy",
     "grid": "Widok siatki"
   },
-  "empty": "Brak timerów",
+  "empty": "Brak aktywnych timerów",
+  "emptyDescription": "Nowe timery z wybranego świata pojawią się tutaj automatycznie.",
+  "noResults": "Brak pasujących timerów",
+  "noResultsDescription": "Spróbuj zmienić lub wyczyścić wyszukiwaną nazwę potwora.",
+  "clearSearch": "Wyczyść wyszukiwanie",
+  "selectWorldTitle": "Wybierz świat",
+  "noWorldSelected": "Wybierz świat, z którego chcesz zobaczyć timery.",
   "npcType": {
     "manual": "Dodane ręcznie"
   },

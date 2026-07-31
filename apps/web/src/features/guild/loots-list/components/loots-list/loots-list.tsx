@@ -22,6 +22,15 @@ import type { LootsControllerFetchLootsByGuildIdParams } from "@lootlog/api-clie
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Button } from "@lootlog/ui/components/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@lootlog/ui/components/empty";
 import {
   useInfiniteQuery,
   useQueryClient,
@@ -29,7 +38,7 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Frown, Globe2 } from "lucide-react";
+import { Globe2, PackageOpen, SearchX } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useEffect, useEffectEvent, useRef, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -282,7 +291,7 @@ export const LootsList: FC = () => {
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
-  const { filters } = useLootsFilters();
+  const { filters, hasActiveFilters, clearFilters } = useLootsFilters();
   const [newLootIds, setNewLootIds] = useState<Record<number, boolean>>({});
   const newLootTimeoutsRef = useRef<Record<number, number>>({});
   const clearNewLootTimeouts = () => {
@@ -621,14 +630,42 @@ export const LootsList: FC = () => {
 
   if (!isLoading && !hasLoots) {
     return (
-      <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
-        <ThemeEmptyStateIcon
-          className="w-[72px] h-[72px] text-muted-foreground/50"
-          fallback={<Frown size="72" className="text-muted-foreground/50" />}
-        />
-        <span className="font-semibold text-foreground">
-          {t(themedKey("loots.list.empty"))}
-        </span>
+      <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+        <Empty className="min-h-56 w-full max-w-xl">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              {hasActiveFilters ? (
+                <SearchX />
+              ) : (
+                <ThemeEmptyStateIcon fallback={<PackageOpen />} />
+              )}
+            </EmptyMedia>
+            <EmptyTitle>
+              {hasActiveFilters
+                ? t("loots.list.noResults")
+                : t(themedKey("loots.list.empty"))}
+            </EmptyTitle>
+            <EmptyDescription>
+              {t(
+                hasActiveFilters
+                  ? "loots.list.noResultsDescription"
+                  : "loots.list.emptyDescription",
+              )}
+            </EmptyDescription>
+          </EmptyHeader>
+          {hasActiveFilters && (
+            <EmptyContent>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+              >
+                {t("loots.list.clearFilters")}
+              </Button>
+            </EmptyContent>
+          )}
+        </Empty>
       </div>
     );
   }

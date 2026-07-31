@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Grid2X2, List, Search } from "lucide-react";
+import { Grid2X2, List, SearchX } from "lucide-react";
 import { ReservationCard } from "./reservation-card";
 import { reservationSlug } from "./reservation-slug";
 import {
@@ -12,7 +12,6 @@ import {
   useReservationsControllerGetReservationsCards,
 } from "@lootlog/api-client/react-query/main/reservations";
 import type { ReservationsCardsResponseDtoOutputItem } from "@lootlog/api-client/models/main/reservations-cards-response-dto-output-item";
-import { Input } from "@lootlog/ui/components/input";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -33,6 +32,7 @@ import {
   getMembersControllerGetGuildMemberReferencesQueryKey,
   useMembersControllerGetGuildMemberReferences,
 } from "@lootlog/api-client/react-query/main/members";
+import { SearchInput } from "@/components/ui/search-input";
 
 type ReservationCardEntries = Array<
   [string, ReservationsCardsResponseDtoOutputItem[]]
@@ -161,19 +161,17 @@ export const Reservations: React.FC = () => {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-3 border-border bg-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={searchValue}
-                  onChange={(event) => setSearchValue(event.target.value)}
-                  placeholder={t("reservations.searchPlaceholder")}
-                  className="pl-9 w-full"
-                  disabled={isLoading}
-                />
-              </div>
+        <div className="flex flex-col gap-3 px-3 py-3">
+          <Card className="gap-2 border-border bg-card p-2">
+            <div className="flex items-center gap-2">
+              <SearchInput
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                placeholder={t("reservations.searchPlaceholder")}
+                className="h-9"
+                wrapperClassName="min-w-0 flex-1"
+                disabled={isLoading}
+              />
 
               <div className="flex items-center gap-1">
                 <Tooltip>
@@ -182,6 +180,8 @@ export const Reservations: React.FC = () => {
                       onClick={() => setViewMode("list")}
                       variant={viewMode === "list" ? "default" : "ghost"}
                       size="icon"
+                      aria-label={t("reservations.view.list")}
+                      aria-pressed={viewMode === "list"}
                       className="h-8 w-8"
                     >
                       <List className="h-4 w-4" />
@@ -197,6 +197,8 @@ export const Reservations: React.FC = () => {
                       onClick={() => setViewMode("grid")}
                       variant={viewMode === "grid" ? "default" : "ghost"}
                       size="icon"
+                      aria-label={t("reservations.view.grid")}
+                      aria-pressed={viewMode === "grid"}
                       className="h-8 w-8"
                     >
                       <Grid2X2 className="h-4 w-4" />
@@ -222,6 +224,32 @@ export const Reservations: React.FC = () => {
                 <ReservationCardSkeleton key={i} viewMode={viewMode} />
               ))}
             </div>
+          ) : sortedCards.length === 0 ? (
+            <Card className="flex min-h-56 flex-col items-center justify-center gap-3 border-dashed border-border bg-card/60 p-6 text-center">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                <SearchX className="size-5" />
+              </div>
+              <div className="max-w-sm space-y-1">
+                <h2 className="text-sm font-semibold">
+                  {t("reservations.empty.title")}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {normalizedSearch
+                    ? t("reservations.empty.searchDescription")
+                    : t("reservations.empty.description")}
+                </p>
+              </div>
+              {normalizedSearch && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearchValue("")}
+                >
+                  {t("reservations.empty.clearSearch")}
+                </Button>
+              )}
+            </Card>
           ) : (
             <div
               className={
@@ -236,7 +264,6 @@ export const Reservations: React.FC = () => {
                     key={`${name}-${idx}`}
                     name={name}
                     title={name}
-                    size={reservationsForCard.length.toString()}
                     images={item.images}
                     reservations={reservationsForCard}
                     members={members}

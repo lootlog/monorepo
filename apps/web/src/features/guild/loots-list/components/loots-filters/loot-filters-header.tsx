@@ -1,5 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
+import { Kbd } from "@lootlog/ui/components/kbd";
 import { AnimatePresence, motion } from "framer-motion";
 import { Filter, Grid2X2, List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -17,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { cn } from "@lootlog/ui/lib/utils";
+import { getPrimaryModifierKeyLabel } from "@/utils/platform/get-primary-modifier-key-label";
 
 export type LootFiltersHeaderProps = {
   isFiltersOpen: boolean;
@@ -38,6 +40,7 @@ export const LootFiltersHeader = ({
   const { world } = useGuildContext();
   const { filters } = useLootsFilters();
   const { viewMode, setViewMode } = useViewMode("loots-view-mode");
+  const primaryModifierKeyLabel = getPrimaryModifierKeyLabel();
 
   const hasSearchFilters =
     filters.npcs.length > 0 ||
@@ -63,33 +66,35 @@ export const LootFiltersHeader = ({
         <Card className="gap-2 rounded-xl border-border bg-card p-2 shadow-none">
           <div
             className={cn(
-              "flex",
-              "gap-0",
-              isMobile ? "flex-col items-stretch" : "items-center",
-              isCompactLayout && !isMobile && "flex-wrap",
+              "flex items-center gap-2",
+              isMobile ? "flex-nowrap" : "flex-wrap",
             )}
           >
             {(!isMobile || world) && (
               <div
                 className={cn(
                   "min-w-0 flex-1",
-                  (isMobile || isCompactLayout) && "w-full basis-full",
+                  !isMobile && isCompactLayout && "min-w-48 flex-[1_1_16rem]",
                 )}
               >
                 <Button
                   variant="outline"
                   onClick={() => setIsCommandOpen(true)}
-                  className="relative h-9 w-full justify-start text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
+                  className="relative h-9 w-full justify-start font-normal text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
                 >
-                  <Search className="mr-2 h-4 w-4 shrink-0" />
-                  <span className="truncate">
+                  <Search className="size-4 shrink-0" />
+                  <span
+                    className={cn("truncate", !usesStackedControls && "pr-16")}
+                  >
                     {t("loots.header.searchPlaceholder")}
                   </span>
-                  <kbd className="pointer-events-none absolute right-2 top-[50%] hidden h-5 translate-y-[-50%] select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                    <span className="text-xs">
-                      {t("loots.header.shortcut")}
-                    </span>
-                  </kbd>
+                  {!usesStackedControls && (
+                    <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">
+                      {t("loots.header.shortcut", {
+                        modifier: primaryModifierKeyLabel,
+                      })}
+                    </Kbd>
+                  )}
                   <AnimatePresence>
                     {hasSearchFilters && (
                       <motion.div
@@ -104,14 +109,7 @@ export const LootFiltersHeader = ({
               </div>
             )}
 
-            {usesStackedControls ? (
-              <div
-                aria-hidden
-                className="flex h-2 w-full basis-full items-center"
-              >
-                <div className="h-px w-full bg-border" />
-              </div>
-            ) : (
+            {!usesStackedControls && (
               <div aria-hidden className="relative h-9 w-3 shrink-0">
                 <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
               </div>
@@ -121,10 +119,14 @@ export const LootFiltersHeader = ({
               <div
                 className={cn(
                   "flex min-w-0 items-center gap-2",
-                  isCompactLayout ? "w-full" : "w-80 shrink-0",
+                  isCompactLayout ? "contents" : "w-80 shrink-0",
                 )}
               >
-                <div className="min-w-0 flex-1">
+                <div
+                  className={
+                    isCompactLayout ? "w-[180px] shrink-0" : "min-w-0 flex-1"
+                  }
+                >
                   <WorldSwitcher width="w-full" />
                 </div>
 
@@ -224,7 +226,7 @@ export const LootFiltersHeader = ({
             )}
 
             {isMobile && (
-              <div className="w-full">
+              <div className="w-[42%] min-w-28 shrink-0">
                 <WorldSwitcher
                   width="w-full"
                   triggerClassName="w-full justify-between"
