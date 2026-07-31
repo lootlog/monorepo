@@ -13,16 +13,10 @@ import type { EventWrappedApiResponseDtoOutputLeadersTopHunter } from './event-w
 import type { EventWrappedApiResponseDtoOutputLeadersTopScorer } from './event-wrapped-api-response-dto-output-leaders-top-scorer';
 
 export type EventWrappedApiResponseDtoOutputLeaders = {
-  /** @nullable */
   topHunter: EventWrappedApiResponseDtoOutputLeadersTopHunter;
-  /** @nullable */
   topScorer: EventWrappedApiResponseDtoOutputLeadersTopScorer;
-  /** @nullable */
   longestDuty: EventWrappedApiResponseDtoOutputLeadersLongestDuty;
-  /** @nullable */
   topAfk: EventWrappedApiResponseDtoOutputLeadersTopAfk;
-  /** @nullable */
   mostFlexible: EventWrappedApiResponseDtoOutputLeadersMostFlexible;
-  /** @nullable */
   topEfficiency: EventWrappedApiResponseDtoOutputLeadersTopEfficiency;
 };

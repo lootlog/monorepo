@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Archive, FileText, FileX2, Plus, Search, Trash2 } from "lucide-react";
+import { Archive, FileText, FileX2, Plus, SearchX, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -16,7 +16,14 @@ import {
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
-import { Input } from "@lootlog/ui/components/input";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   useDocsControllerDeleteDocument,
@@ -35,6 +42,7 @@ import { GuildDocCreateDialog } from "./components/guild-doc-create-dialog";
 import { GuildDocTrashDialog } from "./components/guild-doc-trash-dialog";
 import { GuildDocsListSkeleton } from "./guild-docs-list-skeleton";
 import { useTranslation } from "react-i18next";
+import { SearchInput } from "@/components/ui/search-input";
 
 export const GuildDocsListPage = () => {
   const { t } = useTranslation();
@@ -54,10 +62,6 @@ export const GuildDocsListPage = () => {
   );
   const deleteDocument = useDocsControllerDeleteDocument();
 
-  if (documentsQuery.isLoading) {
-    return <GuildDocsListSkeleton />;
-  }
-
   const documents = documentsQuery.data?.items ?? [];
   const normalizedSearch = searchValue.trim().toLocaleLowerCase("pl");
   const filteredDocuments = normalizedSearch
@@ -74,14 +78,8 @@ export const GuildDocsListPage = () => {
   const canCreate = canWriteGuildDocs(permissions) && limit.canCreate;
   const canWrite = canWriteGuildDocs(permissions);
   const canManage = canManageGuildDocs(permissions);
-  const emptyTitle =
-    normalizedSearch && documents.length > 0
-      ? t("docs.list.emptySearchTitle")
-      : t("docs.list.emptyTitle");
-  const emptyDescription =
-    normalizedSearch && documents.length > 0
-      ? t("docs.list.emptySearchDescription")
-      : t("docs.list.emptyDescription");
+  const hasDocuments = documents.length > 0;
+  const hasFilteredDocuments = filteredDocuments.length > 0;
 
   const moveDocumentToTrash = async (
     document: GuildDocumentListResponseDtoItemsItem,
@@ -100,95 +98,134 @@ export const GuildDocsListPage = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 px-3 py-3">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="rounded-xl bg-primary/10 p-2.5">
-                  <FileText className="size-4 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold leading-tight">
-                    {t("docs.list.title")}
-                  </h2>
-                  <p className="text-xs leading-tight text-muted-foreground">
-                    {t("docs.list.subtitle")}
-                  </p>
-                </div>
-              </div>
+      <div className="px-3 pt-3">
+        <Card className="gap-2 border-border bg-card p-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <SearchInput
+              name="guild-doc-search"
+              aria-label={t("docs.list.searchLabel")}
+              value={searchValue}
+              onChange={(event) => setSearchValue(event.target.value)}
+              placeholder={t("docs.list.searchPlaceholder")}
+              className="h-9"
+              wrapperClassName="min-w-0 flex-1"
+              disabled={documentsQuery.isLoading}
+            />
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Badge variant={limit.canCreate ? "secondary" : "destructive"}>
-                  {t("docs.list.limit", {
-                    max: limit.max,
-                    used: limit.used,
-                  })}
-                </Badge>
-                {canWrite && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="w-full justify-center sm:w-auto"
-                    onClick={() => setTrashOpen(true)}
-                  >
-                    <Archive className="size-3.5" />
-                    {limit.trashed > 0
-                      ? t("docs.trash.openWithCount", {
-                          count: limit.trashed,
-                        })
-                      : t("docs.trash.open")}
-                  </Button>
-                )}
-                {canWrite && (
-                  <Button
-                    size="sm"
-                    className="w-full justify-center sm:w-auto"
-                    disabled={!limit.canCreate}
-                    onClick={() => setCreateOpen(true)}
-                  >
-                    <Plus className="size-3.5" />
-                    {limit.canCreate
-                      ? t("docs.list.create")
-                      : t("docs.list.limitReached")}
-                  </Button>
-                )}
-              </div>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className="ml-auto h-9 shrink-0 gap-1.5 rounded-md px-3 text-xs font-medium text-muted-foreground"
+                aria-label={t("docs.list.limit", {
+                  max: limit.max,
+                  used: limit.used,
+                })}
+                title={t("docs.list.limit", {
+                  max: limit.max,
+                  used: limit.used,
+                })}
+              >
+                <FileText className="size-3.5" />
+                {t("docs.list.limitShort", {
+                  max: limit.max,
+                  used: limit.used,
+                })}
+              </Badge>
+              {canWrite && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-9 shrink-0"
+                  onClick={() => setTrashOpen(true)}
+                >
+                  <Archive className="size-3.5" />
+                  {limit.trashed > 0
+                    ? t("docs.trash.openWithCount", {
+                        count: limit.trashed,
+                      })
+                    : t("docs.trash.open")}
+                </Button>
+              )}
+              {canWrite && (
+                <Button
+                  size="sm"
+                  className="h-9 shrink-0"
+                  disabled={!limit.canCreate}
+                  onClick={() => setCreateOpen(true)}
+                >
+                  <Plus className="size-3.5" />
+                  {limit.canCreate
+                    ? t("docs.list.create")
+                    : t("docs.list.limitReached")}
+                </Button>
+              )}
             </div>
+          </div>
+        </Card>
+      </div>
 
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                name="guild-doc-search"
-                aria-label={t("docs.list.searchLabel")}
-                value={searchValue}
-                onChange={(event) => setSearchValue(event.target.value)}
-                placeholder={t("docs.list.searchPlaceholder")}
-                className="pl-9"
-              />
-            </div>
-          </Card>
-
-          {documentsQuery.isError ? (
+      <div className="flex min-h-0 flex-1 flex-col pt-3">
+        {documentsQuery.isLoading ? (
+          <GuildDocsListSkeleton />
+        ) : documentsQuery.isError ? (
+          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
             <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12">
               <FileX2 className="size-12 text-muted-foreground opacity-50" />
               <p className="text-sm text-muted-foreground">
                 {t("docs.list.loadError")}
               </p>
             </Card>
-          ) : filteredDocuments.length === 0 ? (
-            <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12 text-center">
-              <FileText className="size-12 text-muted-foreground opacity-50" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium">{emptyTitle}</p>
-                <p className="text-xs text-muted-foreground">
-                  {emptyDescription}
-                </p>
-              </div>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
+          </div>
+        ) : !hasDocuments ? (
+          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+            <Empty className="min-h-56 w-full max-w-xl">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileText />
+                </EmptyMedia>
+                <EmptyTitle>{t("docs.list.emptyTitle")}</EmptyTitle>
+                <EmptyDescription>
+                  {t("docs.list.emptyDescription")}
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate && (
+                <EmptyContent>
+                  <Button size="sm" onClick={() => setCreateOpen(true)}>
+                    <Plus className="size-4" />
+                    {t("docs.list.create")}
+                  </Button>
+                </EmptyContent>
+              )}
+            </Empty>
+          </div>
+        ) : !hasFilteredDocuments ? (
+          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+            <Empty className="min-h-56 w-full max-w-xl">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <SearchX />
+                </EmptyMedia>
+                <EmptyTitle>{t("docs.list.emptySearchTitle")}</EmptyTitle>
+                <EmptyDescription>
+                  {t("docs.list.emptySearchDescription")}
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearchValue("")}
+                >
+                  {t("docs.list.clearSearch")}
+                </Button>
+              </EmptyContent>
+            </Empty>
+          </div>
+        ) : (
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="grid grid-cols-1 gap-3 px-3 pb-3 lg:grid-cols-2 xl:grid-cols-3">
               {filteredDocuments.map((document) => {
                 const editorName =
                   document.updatedBy.name ?? t("docs.list.unknownEditor");
@@ -253,9 +290,9 @@ export const GuildDocsListPage = () => {
                 );
               })}
             </div>
-          )}
-        </div>
-      </ScrollArea>
+          </ScrollArea>
+        )}
+      </div>
 
       <GuildDocCreateDialog
         canCreate={canCreate}

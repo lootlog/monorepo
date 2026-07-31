@@ -95,12 +95,12 @@ describe("EventWrappedService", () => {
         },
       },
       leaders: {
-        topHunter: null,
-        topScorer: null,
-        longestDuty: null,
-        topAfk: null,
-        mostFlexible: null,
-        topEfficiency: null,
+        topHunter: { winner: null, candidateCount: 0, tiedWinnerCount: 0 },
+        topScorer: { winner: null, candidateCount: 0, tiedWinnerCount: 0 },
+        longestDuty: { winner: null, candidateCount: 0, tiedWinnerCount: 0 },
+        topAfk: { winner: null, candidateCount: 0, tiedWinnerCount: 0 },
+        mostFlexible: { winner: null, candidateCount: 0, tiedWinnerCount: 0 },
+        topEfficiency: { winner: null, candidateCount: 0, tiedWinnerCount: 0 },
       },
       coverage: {
         totalWindowCount: 0,
@@ -295,17 +295,17 @@ describe("EventWrappedService", () => {
     expect(result.overview.totalKills).toBe(2);
     expect(result.overview.participantCount).toBe(2);
     expect(result.overview.rarityTotals.legendary).toBe(1);
-    expect(result.leaders.topHunter?.name).toBe("Ada");
-    expect(result.leaders.mostFlexible?.name).toBe("Ada");
-    expect(result.leaders.mostFlexible?.primaryValue).toBe(1);
-    expect(result.leaders.mostFlexible?.secondaryValue).toBe(1);
-    expect(result.leaders.topScorer?.primaryValue).toBe(12);
+    expect(result.leaders.topHunter.winner?.name).toBe("Ada");
+    expect(result.leaders.topHunter.candidateCount).toBe(2);
+    expect(result.leaders.mostFlexible.winner).toBeNull();
+    expect(result.leaders.mostFlexible.tiedWinnerCount).toBe(2);
+    expect(result.leaders.topScorer.winner?.primaryValue).toBe(12);
     expect(result.coverage.coveragePercentage).toBe(75);
     expect(result.loot.heroBreakdown[0]?.rarityTotals.heroic).toBe(1);
     expect(result.heroes[0]?.coveragePercentage).toBe(75);
     expect(mockRedisService.getOrSetJsonBestEffort).toHaveBeenCalledWith(
       expect.objectContaining({
-        key: expect.stringContaining("event-wrapped:guild-1:event-1:"),
+        key: expect.stringContaining("event-wrapped:v2:guild-1:event-1:"),
         ttlSeconds: 3600,
         factory: expect.any(Function),
       }),

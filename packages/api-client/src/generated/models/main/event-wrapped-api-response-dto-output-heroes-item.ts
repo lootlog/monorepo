@@ -20,6 +20,5 @@ export type EventWrappedApiResponseDtoOutputHeroesItem = {
   totalPoints: number;
   coveragePercentage: number;
   rarityTotals: EventWrappedApiResponseDtoOutputHeroesItemRarityTotals;
-  /** @nullable */
   topHunter: EventWrappedApiResponseDtoOutputHeroesItemTopHunter;
 };
