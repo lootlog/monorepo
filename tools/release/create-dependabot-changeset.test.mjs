@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  classifyCatalogDependencyUpdate,
   classifyChangedDependencyPaths,
   createDependabotChangeset,
   validateGitHubActionsDependencyUpdate,
@@ -124,22 +125,106 @@ test("creates an empty changeset for validated GitHub Actions updates", () => {
   });
 });
 
-test("classifies package manifests and GitHub Actions workflows", () => {
+test("classifies package manifests, the workspace catalog, and workflows", () => {
   assert.deepEqual(
     classifyChangedDependencyPaths({
       filenames: [
         "pnpm-lock.yaml",
         "apps/api/package.json",
         "package.json",
+        "pnpm-workspace.yaml",
         ".github/workflows/ci.yml",
         ".changeset/dependabot-pr-1225.md",
       ],
       pullRequestNumber: 1225,
     }),
     {
+      catalogPath: "pnpm-workspace.yaml",
       manifestPaths: ["apps/api/package.json", "package.json"],
       toolingPaths: [".github/workflows/ci.yml"],
     },
+  );
+});
+
+test("creates patch releases for runtime consumers of changed catalog entries", () => {
+  const catalogChanges = classifyCatalogDependencyUpdate({
+    after: [
+      "packages:",
+      '  - "apps/*"',
+      "catalog:",
+      '  "@hookform/resolvers": ^5.5.7',
+      '  "@swc/core": ^1.15.47',
+      "",
+    ].join("\n"),
+    before: [
+      "packages:",
+      '  - "apps/*"',
+      "catalog:",
+      '  "@hookform/resolvers": ^5.4.2',
+      '  "@swc/core": ^1.15.46',
+      "",
+    ].join("\n"),
+    workspaceManifests: [
+      {
+        dependencies: { "@hookform/resolvers": "catalog:" },
+        name: "@lootlog/web",
+      },
+      {
+        devDependencies: { "@swc/core": "catalog:" },
+        name: "@lootlog/gateway",
+      },
+    ],
+  });
+  const result = createDependabotChangeset({
+    catalogChanges,
+    changedManifests: [],
+    pullRequestNumber: 1237,
+  });
+
+  assert.deepEqual(catalogChanges, {
+    hasDevelopmentChanges: true,
+    runtimePackages: ["@lootlog/web"],
+  });
+  assert.match(result?.content ?? "", /"@lootlog\/web": patch/);
+  assert.doesNotMatch(result?.content ?? "", /"@lootlog\/gateway": patch/);
+});
+
+test("creates an empty changeset for development-only catalog updates", () => {
+  const catalogChanges = classifyCatalogDependencyUpdate({
+    after: ["catalog:", '  "@swc/core": ^1.15.47', ""].join("\n"),
+    before: ["catalog:", '  "@swc/core": ^1.15.46', ""].join("\n"),
+    workspaceManifests: [
+      {
+        devDependencies: { "@swc/core": "catalog:" },
+        name: "@lootlog/gateway",
+      },
+    ],
+  });
+  const result = createDependabotChangeset({
+    catalogChanges,
+    changedManifests: [],
+    pullRequestNumber: 1237,
+  });
+
+  assert.deepEqual(catalogChanges, {
+    hasDevelopmentChanges: true,
+    runtimePackages: [],
+  });
+  assert.match(
+    result?.content ?? "",
+    /Update development and tooling dependencies/,
+  );
+});
+
+test("rejects workspace changes outside catalog version entries", () => {
+  assert.throws(
+    () =>
+      classifyCatalogDependencyUpdate({
+        after: ["packages:", '  - "services/*"', "catalog:", ""].join("\n"),
+        before: ["packages:", '  - "apps/*"', "catalog:", ""].join("\n"),
+        workspaceManifests: [],
+      }),
+    /Cannot classify Dependabot changes/,
   );
 });
 

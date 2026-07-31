@@ -86,10 +86,8 @@ export const dispatchAutomatedPullRequestCi = async ({
 
   const automaticRunFound = await waitForAutomaticRun(1);
 
-  if (!automaticRunFound) {
-    throw new Error(
-      `The automatic pull_request run for ${headSha} did not appear before the CI dispatch timeout`,
-    );
+  if (automaticRunFound) {
+    return;
   }
 
   const dispatchResponse = await fetchImplementation(

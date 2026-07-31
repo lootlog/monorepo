@@ -219,7 +219,7 @@ jobs:
               ;;
           esac
 
-          pnpm --filter="$PACKAGE_NAME" build
+          pnpm exec turbo run build --filter="$PACKAGE_NAME"
           test -d "$ARTIFACT_PATH"
           archive="$RUNNER_TEMP/cloudflare-artifact.tar.gz"
           tar -C "$ARTIFACT_PATH" -czf "$archive" .
