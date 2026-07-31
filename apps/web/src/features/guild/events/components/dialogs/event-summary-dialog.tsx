@@ -234,31 +234,57 @@ export const EventSummaryDialog = ({
           ) : deck.mode === "sparse" ? (
             <WrappedSparseSummary eventName={eventName} facts={deck.facts} />
           ) : activeSlide ? (
-            <AnimatePresence initial={false} mode="wait" custom={direction}>
-              <motion.div
-                key={activeSlide.id}
-                custom={direction}
-                initial={
-                  prefersReducedMotion
-                    ? { opacity: 0 }
-                    : { opacity: 0, x: direction * 40 }
-                }
-                animate={{ opacity: 1, x: 0 }}
-                exit={
-                  prefersReducedMotion
-                    ? { opacity: 0 }
-                    : { opacity: 0, x: direction * -40 }
-                }
-                transition={{ duration: prefersReducedMotion ? 0.12 : 0.24 }}
-                className="h-full"
-              >
-                <WrappedSlideContent
-                  slide={activeSlide}
-                  eventName={eventName}
-                  world={data.event.world}
-                />
-              </motion.div>
-            </AnimatePresence>
+            <>
+              <AnimatePresence initial={false} mode="wait" custom={direction}>
+                <motion.div
+                  key={activeSlide.id}
+                  custom={direction}
+                  initial={
+                    prefersReducedMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, x: direction * 40 }
+                  }
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={
+                    prefersReducedMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, x: direction * -40 }
+                  }
+                  transition={{ duration: prefersReducedMotion ? 0.12 : 0.24 }}
+                  className="h-full"
+                >
+                  <WrappedSlideContent
+                    slide={activeSlide}
+                    eventName={eventName}
+                    world={data.event.world}
+                  />
+                </motion.div>
+              </AnimatePresence>
+              {activeIndex > 0 ? (
+                <button
+                  type="button"
+                  className="group absolute inset-y-0 left-0 z-10 flex w-16 items-center justify-start pl-3 text-muted-foreground outline-none sm:w-24 sm:pl-5"
+                  aria-label={t("events.summaryDialog.previous")}
+                  onClick={() => selectSlide(activeIndex - 1)}
+                >
+                  <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <ArrowLeft className="size-4" />
+                  </span>
+                </button>
+              ) : null}
+              {!isFinalSlide ? (
+                <button
+                  type="button"
+                  className="group absolute inset-y-0 right-0 z-10 flex w-16 items-center justify-end pr-3 text-muted-foreground outline-none sm:w-24 sm:pr-5"
+                  aria-label={t("events.summaryDialog.next")}
+                  onClick={() => selectSlide(activeIndex + 1)}
+                >
+                  <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <ArrowRight className="size-4" />
+                  </span>
+                </button>
+              ) : null}
+            </>
           ) : null}
           <p className="sr-only" aria-live="polite" aria-atomic="true">
             {activeSlideLabel}
