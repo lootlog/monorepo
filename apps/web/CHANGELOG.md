@@ -1,5 +1,17 @@
 # @lootlog/web
 
+## 1.3.0
+
+### Minor Changes
+
+- ed13484: Rebuild event wrapped as a verified, story-style presentation and expose leader evidence so ambiguous or inconsistent superlatives can be omitted.
+
+### Patch Changes
+
+- ed13484: Keep reservation, event, and document controls visible while browsing, and align their empty states with the shared list pattern.
+- Updated dependencies [ed13484]
+  - @lootlog/api-client@4.0.0
+
 ## 1.2.5
 
 ### Patch Changes
