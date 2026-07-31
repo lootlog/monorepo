@@ -396,7 +396,12 @@ jobs:
             version="$(jq -r '.version' <<< "$item")"
             artifact_path="$(jq -r '.artifactPath' <<< "$item")"
             config_path="$(jq -r '.configPath // empty' <<< "$item")"
-            artifact_directory="$RUNNER_TEMP/cloudflare-artifacts/cloudflare-$project-$version-$GITHUB_SHA"
+            artifact_name="cloudflare-$project-$version-$GITHUB_SHA"
+            artifact_directory="$(
+              node tools/release/resolve-cloudflare-artifact-directory.mjs \
+                "$RUNNER_TEMP/cloudflare-artifacts" \
+                "$artifact_name"
+            )"
 
             (
               cd "$artifact_directory"
