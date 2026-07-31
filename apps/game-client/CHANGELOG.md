@@ -1,5 +1,11 @@
 # @lootlog/game-client
 
+## 1.2.3
+
+### Patch Changes
+
+- 0a285b3: Rebuild immutable frontend artifacts with reliable Cloudflare promotion handling.
+
 ## 1.2.2
 
 ### Patch Changes
