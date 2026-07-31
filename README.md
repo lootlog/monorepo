@@ -335,6 +335,16 @@ Pull request CI validates changesets against the PR base commit.
 
 ### Automated Release Workflow
 
+```mermaid
+flowchart LR
+  PR[Feature PR] --> Main[main]
+  Main --> Dev[Dev images and GitOps]
+  Main --> VersionPR[chore: release packages]
+  VersionPR --> Release[Versioned release artifacts]
+  Release --> Approval[prod approval]
+  Approval --> Prod[Cloudflare and production GitOps]
+```
+
 1. Merge feature pull requests through the merge queue into `main`. Affected services deploy automatically to dev, but no release artifacts are created.
 2. Changesets creates or updates the `chore: release packages` version PR against `main`.
 3. Review and merge the version PR. Do not edit versions or generated changelogs manually.
@@ -342,9 +352,13 @@ Pull request CI validates changesets against the PR base commit.
 5. Artifacts are built before the `prod` approval. Review the workflow summary and apply any listed Prisma or Drizzle migrations manually.
 6. Approving the `prod` environment deploys the prepared Cloudflare artifacts first, then writes every released Docker image version to the infra repository in one commit. ArgoCD performs the container rollout.
 
+The version PR is the release gate: it batches pending changesets and separates continuous dev deployment from an intentional production release. CI does not create any other delivery PRs. Dependabot may open dependency PRs, and trusted automation adds their required changesets.
+
 Each released workspace owns its generated `CHANGELOG.md`. Use `pnpm changeset status --verbose` to preview the pending release plan. The `pnpm version` and `pnpm release` commands are reserved for release automation.
 
 Production images use both `prod-<semver>` and `sha-<release-commit>` tags and are never overwritten. To promote or roll back one service, run the **Promote an existing image to prod** workflow from `main` with the service and an existing semantic version. Rollbacks only change GitOps; they never rebuild an image.
+
+If an artifact matrix fails after versions have been created, use **Re-run failed jobs**. Do not rerun the entire workflow: successful immutable image jobs must not attempt to overwrite their existing tags.
 
 A successful deployment workflow means the GitOps change was accepted. ArgoCD remains the source of truth for the actual cluster rollout and health.
 
