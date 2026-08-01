@@ -4,6 +4,7 @@ import {
   DraggableWindowFrame,
   type DraggableWindowFrameProps,
 } from "./draggable-window-frame";
+import { PerformanceProfiler } from "@/lib/performance-monitoring/performance-profiler";
 
 export type DraggableWindowProps = Omit<
   DraggableWindowFrameProps,
@@ -21,10 +22,12 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   if (!shouldRender) return null;
 
   return (
-    <DraggableWindowFrame
-      {...windowProps}
-      animationPhase={phase}
-      onWindowAnimationEnd={onAnimationEnd}
-    />
+    <PerformanceProfiler id={`window.${windowProps.id}`}>
+      <DraggableWindowFrame
+        {...windowProps}
+        animationPhase={phase}
+        onWindowAnimationEnd={onAnimationEnd}
+      />
+    </PerformanceProfiler>
   );
 };

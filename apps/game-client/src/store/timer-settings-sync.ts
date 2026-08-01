@@ -3,9 +3,10 @@ import type {
   UpdateGuildTimerSettingsPayload,
 } from "@lootlog/types";
 import { useTimersStore } from "./timers.store";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
-let syncTimeoutId: NodeJS.Timeout | null = null;
-const guildSyncTimeouts: Map<string, NodeJS.Timeout> = new Map();
+let syncTimeoutId: number | null = null;
+const guildSyncTimeouts: Map<string, number> = new Map();
 let pendingGlobalPayload: UpdateTimerSettingsPayload = {};
 const pendingGuildPayloads: Map<string, UpdateGuildTimerSettingsPayload> =
   new Map();
@@ -65,25 +66,31 @@ export const debouncedSyncGlobalSettings = (
     clearTimeout(syncTimeoutId);
   }
 
-  syncTimeoutId = setTimeout(() => {
-    syncTimeoutId = null;
-    const payloadToSend = { ...pendingGlobalPayload };
-    pendingGlobalPayload = {};
+  syncTimeoutId = setMeasuredTimeout(
+    "timer-settings.global-sync",
+    () => {
+      syncTimeoutId = null;
+      const payloadToSend = { ...pendingGlobalPayload };
+      pendingGlobalPayload = {};
 
-    if (payloadToSend.syncEnabled === undefined) {
-      const { syncEnabled } = useTimersStore.getState();
-      if (!syncEnabled) {
+      if (payloadToSend.syncEnabled === undefined) {
+        const { syncEnabled } = useTimersStore.getState();
+        if (!syncEnabled) {
+          return;
+        }
+      }
+
+      if (!globalMutateFn) {
+        console.warn(
+          "[TimerSync] Global mutation not registered, skipping sync",
+        );
         return;
       }
-    }
 
-    if (!globalMutateFn) {
-      console.warn("[TimerSync] Global mutation not registered, skipping sync");
-      return;
-    }
-
-    globalMutateFn(payloadToSend);
-  }, SYNC_DEBOUNCE_MS);
+      globalMutateFn(payloadToSend);
+    },
+    SYNC_DEBOUNCE_MS,
+  );
 };
 
 export const debouncedSyncGuildSettings = (
@@ -98,20 +105,24 @@ export const debouncedSyncGuildSettings = (
     clearTimeout(existingTimeout);
   }
 
-  const timeoutId = setTimeout(() => {
-    pendingGuildPayloads.delete(guildId);
+  const timeoutId = setMeasuredTimeout(
+    "timer-settings.guild-sync",
+    () => {
+      pendingGuildPayloads.delete(guildId);
 
-    const { syncEnabled } = useTimersStore.getState();
-    if (!syncEnabled) {
+      const { syncEnabled } = useTimersStore.getState();
+      if (!syncEnabled) {
+        guildSyncTimeouts.delete(guildId);
+        return;
+      }
+
+      console.warn(
+        `[TimerSync] Guild mutation not registered for ${guildId}, skipping sync`,
+      );
       guildSyncTimeouts.delete(guildId);
-      return;
-    }
-
-    console.warn(
-      `[TimerSync] Guild mutation not registered for ${guildId}, skipping sync`,
-    );
-    guildSyncTimeouts.delete(guildId);
-  }, SYNC_DEBOUNCE_MS);
+    },
+    SYNC_DEBOUNCE_MS,
+  );
 
   guildSyncTimeouts.set(guildId, timeoutId);
 };

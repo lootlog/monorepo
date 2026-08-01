@@ -7,6 +7,7 @@ import {
 } from "@/features/chat/chat-input-editor.helpers";
 import { $getRoot, $getSelection, $isRangeSelection } from "lexical";
 import { useEffect, useRef, type FC } from "react";
+import { addMeasuredEventListener } from "@/lib/performance-monitoring/measured-callback";
 
 type ChatInputEditorPluginProps = {
   caretIndex: number;
@@ -116,14 +117,23 @@ export const ChatInputEditorPlugin: FC<ChatInputEditorPluginProps> = ({
       event.preventDefault();
       editor.update(deletePreviousWord);
     };
+    let removeRootKeyDown: () => void = () => undefined;
     const unregisterRootListener = editor.registerRootListener(
-      (rootElement, previousRootElement) => {
-        previousRootElement?.removeEventListener("keydown", handleKeyDown);
-        rootElement?.addEventListener("keydown", handleKeyDown);
+      (rootElement) => {
+        removeRootKeyDown();
+        removeRootKeyDown = rootElement
+          ? addMeasuredEventListener(
+              rootElement,
+              "keydown",
+              handleKeyDown,
+              "chat.input-editor.keydown",
+            )
+          : () => undefined;
       },
     );
 
     return () => {
+      removeRootKeyDown();
       unregisterRootListener();
     };
   }, [editor]);

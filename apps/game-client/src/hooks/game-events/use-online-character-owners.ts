@@ -9,6 +9,7 @@ import {
   requestServerPresence,
   type PlayerPresenceUpdatePayload,
 } from "@/lib/online-players-presence";
+import { measureLootlogCallback } from "@/lib/performance-monitoring/measured-callback";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
@@ -158,26 +159,30 @@ export function useOnlineCharacterOwners(): void {
   useEffect(() => {
     if (!isShiftPressed || !socket || !connected || !joined) return;
 
-    const handleOnlinePlayersPresenceUpdate = (
-      data: PlayerPresenceUpdatePayload,
-    ) => {
-      const normalizedPresence = normalizePresence(data);
+    const handleOnlinePlayersPresenceUpdate = measureLootlogCallback(
+      "socket.online-character-owners-update",
+      (data: PlayerPresenceUpdatePayload) => {
+        const normalizedPresence = normalizePresence(data);
 
-      if (
-        normalizedPresence.guildId !== selectedGuildIdRef.current ||
-        normalizedPresence.player?.world !== selectedWorldRef.current
-      ) {
-        return;
-      }
+        if (
+          normalizedPresence.guildId !== selectedGuildIdRef.current ||
+          normalizedPresence.player?.world !== selectedWorldRef.current
+        ) {
+          return;
+        }
 
-      const store = useOnlineCharacterOwnersStore.getState();
-      if (normalizedPresence.status === "offline") {
-        store.removePresence(normalizedPresence);
-        return;
-      }
+        const store = useOnlineCharacterOwnersStore.getState();
+        if (normalizedPresence.status === "offline") {
+          store.removePresence(normalizedPresence);
+          return;
+        }
 
-      store.upsertPresence(normalizedPresence, guildMembersByUserIdRef.current);
-    };
+        store.upsertPresence(
+          normalizedPresence,
+          guildMembersByUserIdRef.current,
+        );
+      },
+    );
 
     socket.on(
       GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,

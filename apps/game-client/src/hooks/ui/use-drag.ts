@@ -6,6 +6,11 @@ import {
   useState,
 } from "react";
 import { getRuntimeZoomFactor } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
+import {
+  addMeasuredEventListener,
+  requestMeasuredAnimationFrame,
+  setMeasuredTimeout,
+} from "@/lib/performance-monitoring/measured-callback";
 
 const getScale = () => {
   return getRuntimeZoomFactor() ?? window.visualViewport?.scale ?? 1;
@@ -122,24 +127,27 @@ export const useDrag = ({
     pendingPositionRef.current = nextPosition;
     if (positionFrameRef.current !== null) return;
 
-    positionFrameRef.current = window.requestAnimationFrame(() => {
-      positionFrameRef.current = null;
-      const pendingPosition = pendingPositionRef.current;
-      pendingPositionRef.current = null;
-      if (!pendingPosition) return;
+    positionFrameRef.current = requestMeasuredAnimationFrame(
+      "window-drag.position-frame",
+      () => {
+        positionFrameRef.current = null;
+        const pendingPosition = pendingPositionRef.current;
+        pendingPositionRef.current = null;
+        if (!pendingPosition) return;
 
-      if (isDraggingRef.current) {
-        const draggableElement = ref.current;
-        if (!draggableElement) return;
-        const dragOriginPosition = dragOriginPositionRef.current;
-        const translateX = pendingPosition.x - dragOriginPosition.x;
-        const translateY = pendingPosition.y - dragOriginPosition.y;
-        draggableElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0)`;
-        return;
-      }
+        if (isDraggingRef.current) {
+          const draggableElement = ref.current;
+          if (!draggableElement) return;
+          const dragOriginPosition = dragOriginPositionRef.current;
+          const translateX = pendingPosition.x - dragOriginPosition.x;
+          const translateY = pendingPosition.y - dragOriginPosition.y;
+          draggableElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0)`;
+          return;
+        }
 
-      setFinalPosition(pendingPosition);
-    });
+        setFinalPosition(pendingPosition);
+      },
+    );
   };
   const queuePositionRef = useRef(queuePosition);
 
@@ -254,32 +262,41 @@ export const useDrag = ({
       if (timeoutId !== undefined) {
         clearTimeout(timeoutId);
       }
-      timeoutId = window.setTimeout(() => {
-        if (isLockedRef.current) return;
-        const draggableElement = ref.current;
-        if (!draggableElement) return;
-        const { width, height } = draggableElement.getBoundingClientRect();
-        const previousPosition = finalPositionRef.current;
-        const x = Math.min(
-          Math.max(0, previousPosition.x),
-          window.innerWidth - width,
-        );
-        const y = Math.min(
-          Math.max(0, previousPosition.y),
-          window.innerHeight - height,
-        );
-        if (x === previousPosition.x && y === previousPosition.y) return;
+      timeoutId = setMeasuredTimeout(
+        "window-drag.resize",
+        () => {
+          if (isLockedRef.current) return;
+          const draggableElement = ref.current;
+          if (!draggableElement) return;
+          const { width, height } = draggableElement.getBoundingClientRect();
+          const previousPosition = finalPositionRef.current;
+          const x = Math.min(
+            Math.max(0, previousPosition.x),
+            window.innerWidth - width,
+          );
+          const y = Math.min(
+            Math.max(0, previousPosition.y),
+            window.innerHeight - height,
+          );
+          if (x === previousPosition.x && y === previousPosition.y) return;
 
-        const nextPosition = { x, y };
-        finalPositionRef.current = nextPosition;
-        setFinalPosition(nextPosition);
-        onDragStopRef.current(nextPosition);
-      }, 100);
+          const nextPosition = { x, y };
+          finalPositionRef.current = nextPosition;
+          setFinalPosition(nextPosition);
+          onDragStopRef.current(nextPosition);
+        },
+        100,
+      );
     };
 
-    window.addEventListener("resize", handleResize);
+    const removeResize = addMeasuredEventListener(
+      window,
+      "resize",
+      handleResize,
+      "window-drag.resize-listener",
+    );
     return () => {
-      window.removeEventListener("resize", handleResize);
+      removeResize();
       if (timeoutId !== undefined) {
         clearTimeout(timeoutId);
       }
@@ -332,24 +349,43 @@ export const useDrag = ({
       finishDragRef.current();
     };
 
-    document.addEventListener("pointermove", handlePointerMove, {
-      passive: false,
-    });
-    document.addEventListener("pointerup", handlePointerEnd);
-    document.addEventListener("pointercancel", handlePointerEnd);
-    document.addEventListener("pointerdown", handleGlobalPointerDown, true);
-    window.addEventListener("blur", handleWindowBlur);
+    const removeListeners = [
+      addMeasuredEventListener(
+        document,
+        "pointermove",
+        handlePointerMove as EventListener,
+        "window-drag.pointermove",
+        { passive: false },
+      ),
+      addMeasuredEventListener(
+        document,
+        "pointerup",
+        handlePointerEnd as EventListener,
+        "window-drag.pointerup",
+      ),
+      addMeasuredEventListener(
+        document,
+        "pointercancel",
+        handlePointerEnd as EventListener,
+        "window-drag.pointercancel",
+      ),
+      addMeasuredEventListener(
+        document,
+        "pointerdown",
+        handleGlobalPointerDown as EventListener,
+        "window-drag.global-pointerdown",
+        true,
+      ),
+      addMeasuredEventListener(
+        window,
+        "blur",
+        handleWindowBlur,
+        "window-drag.blur",
+      ),
+    ];
 
     return () => {
-      document.removeEventListener("pointermove", handlePointerMove);
-      document.removeEventListener("pointerup", handlePointerEnd);
-      document.removeEventListener("pointercancel", handlePointerEnd);
-      document.removeEventListener(
-        "pointerdown",
-        handleGlobalPointerDown,
-        true,
-      );
-      window.removeEventListener("blur", handleWindowBlur);
+      for (const removeListener of removeListeners) removeListener();
     };
   }, [isDragging, isLocked, ref]);
 

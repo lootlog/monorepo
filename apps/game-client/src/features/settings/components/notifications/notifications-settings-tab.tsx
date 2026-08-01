@@ -12,6 +12,7 @@ import { NpcType } from "@/api/npcs.api";
 import type { NotificationType } from "@lootlog/types";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 const SYNC_INDICATOR_DELAY_MS = 100;
 
@@ -37,9 +38,13 @@ export const NotificationsSettingsTab = () => {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
-      setVisibleStatus(syncStatus.status);
-    }, SYNC_INDICATOR_DELAY_MS);
+    const timeoutId = setMeasuredTimeout(
+      "settings.notifications.sync-status",
+      () => {
+        setVisibleStatus(syncStatus.status);
+      },
+      SYNC_INDICATOR_DELAY_MS,
+    );
 
     return () => {
       window.clearTimeout(timeoutId);

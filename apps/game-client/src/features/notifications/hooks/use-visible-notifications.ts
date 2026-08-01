@@ -6,6 +6,7 @@ import {
   type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useGameStore } from "@/store/game.store";
 import {
@@ -175,7 +176,8 @@ export const useVisibleNotifications = ({
     const nearestExpirationTimeMs = Math.min(
       ...scheduledExpirations.map((entry) => entry.expirationTimeMs),
     );
-    const timeoutId = window.setTimeout(
+    const timeoutId = setMeasuredTimeout(
+      "notifications.auto-hide",
       () => {
         const currentTimeMs = Date.now();
 

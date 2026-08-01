@@ -24,7 +24,7 @@ const {
   mockSendChatMessage: vi.fn(),
 }));
 
-vi.mock("@/lib/error-monitoring", () => ({
+vi.mock("@/lib/local-diagnostics", () => ({
   reportApiActionFailure: mockReportApiActionFailure,
 }));
 

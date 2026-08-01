@@ -7,6 +7,7 @@ import {
   useEffect,
   useRef,
 } from "react";
+import { addMeasuredEventListener } from "@/lib/performance-monitoring/measured-callback";
 
 type ScrollAreaOrientation = "vertical" | "horizontal" | "both";
 
@@ -58,8 +59,13 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
         viewport.scrollLeft = nextScrollLeft;
       };
 
-      viewport.addEventListener("wheel", handleWheel, { passive: false });
-      return () => viewport.removeEventListener("wheel", handleWheel);
+      return addMeasuredEventListener(
+        viewport,
+        "wheel",
+        handleWheel as EventListener,
+        "scroll-area.horizontal-wheel",
+        { passive: false },
+      );
     }, [orientation]);
 
     const overflowStyle: CSSProperties = {

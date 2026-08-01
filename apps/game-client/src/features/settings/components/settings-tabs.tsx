@@ -30,6 +30,11 @@ import {
 } from "@/features/settings/settings-search";
 import { useWindowsStore } from "@/store/windows.store";
 import {
+  addMeasuredEventListener,
+  requestMeasuredAnimationFrame,
+  setMeasuredTimeout,
+} from "@/lib/performance-monitoring/measured-callback";
+import {
   Activity,
   Bell,
   Clock,
@@ -119,8 +124,12 @@ export const SettingsTabs = () => {
       }
     };
 
-    window.addEventListener("keydown", handleShortcut);
-    return () => window.removeEventListener("keydown", handleShortcut);
+    return addMeasuredEventListener(
+      window,
+      "keydown",
+      handleShortcut,
+      "settings.search-shortcut",
+    );
   }, []);
 
   useEffect(() => {
@@ -140,24 +149,29 @@ export const SettingsTabs = () => {
     );
     setCompactPanelOpen(false);
 
-    window.setTimeout(() => {
-      const exactControl = document.getElementById(result.controlId);
-      const control =
-        exactControl?.closest<HTMLElement>("[data-settings-control]") ??
-        exactControl ??
-        document.getElementById(`settings-subsection-${result.subsectionId}`);
-      const collapsedSection = control?.closest("details");
-      if (collapsedSection) collapsedSection.open = true;
+    setMeasuredTimeout(
+      "settings.open-search-result",
+      () => {
+        const exactControl = document.getElementById(result.controlId);
+        const control =
+          exactControl?.closest<HTMLElement>("[data-settings-control]") ??
+          exactControl ??
+          document.getElementById(`settings-subsection-${result.subsectionId}`);
+        const collapsedSection = control?.closest("details");
+        if (collapsedSection) collapsedSection.open = true;
 
-      window.requestAnimationFrame(() => {
-        control?.scrollIntoView({ behavior: "smooth", block: "center" });
-        control?.setAttribute("data-settings-highlighted", "true");
-        window.setTimeout(
-          () => control?.removeAttribute("data-settings-highlighted"),
-          1800,
-        );
-      });
-    });
+        requestMeasuredAnimationFrame("settings.scroll-search-result", () => {
+          control?.scrollIntoView({ behavior: "smooth", block: "center" });
+          control?.setAttribute("data-settings-highlighted", "true");
+          setMeasuredTimeout(
+            "settings.clear-search-highlight",
+            () => control?.removeAttribute("data-settings-highlighted"),
+            1800,
+          );
+        });
+      },
+      0,
+    );
   };
 
   const handleSearchKeyDown = (
@@ -362,7 +376,11 @@ export const SettingsTabs = () => {
               aria-label={t("settings.search.ariaLabel")}
               onClick={() => {
                 setCompactPanelOpen(true);
-                window.setTimeout(() => searchInputRef.current?.focus());
+                setMeasuredTimeout(
+                  "settings.focus-compact-search",
+                  () => searchInputRef.current?.focus(),
+                  0,
+                );
               }}
               className="ll:flex ll:size-8 ll:items-center ll:justify-center ll:rounded-md ll:border ll:border-gray-500/40 ll:bg-transparent ll:text-gray-300 ll-custom-cursor-pointer"
             >

@@ -1,4 +1,5 @@
 import { storageKey } from "@/lib/storage-key";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 
 export const LOGS_STORAGE_KEY = storageKey("ll:logs:state");
@@ -158,79 +159,85 @@ const withRetentionLimits = (actions: LoggedAction[]): LoggedAction[] => {
   return retainedActions;
 };
 
-export const useLogsStore = create<LogsState>()((set) => ({
-  actions: [],
-  appendAction: ({ actionType, payload, details }) => {
-    const actionId = createLogId();
-    const action: LoggedAction = {
-      id: actionId,
-      createdAt: new Date().toISOString(),
-      actionType,
-      status: "success",
-      payload,
-      details,
-      requests: [],
-    };
+export const useLogsStore = create<LogsState>()(
+  performanceStoreMiddleware(
+    "logs",
+    (set) => ({
+      actions: [],
+      appendAction: ({ actionType, payload, details }) => {
+        const actionId = createLogId();
+        const action: LoggedAction = {
+          id: actionId,
+          createdAt: new Date().toISOString(),
+          actionType,
+          status: "success",
+          payload,
+          details,
+          requests: [],
+        };
 
-    set((state) => ({
-      actions: withRetentionLimits([...state.actions, action]),
-    }));
+        set((state) => ({
+          actions: withRetentionLimits([...state.actions, action]),
+        }));
 
-    return actionId;
-  },
-  updateAction: ({ actionId, status, details }) => {
-    set((state) => ({
-      actions: withRetentionLimits(
-        state.actions.map((action) => {
-          if (action.id !== actionId) {
-            return action;
-          }
+        return actionId;
+      },
+      updateAction: ({ actionId, status, details }) => {
+        set((state) => ({
+          actions: withRetentionLimits(
+            state.actions.map((action) => {
+              if (action.id !== actionId) {
+                return action;
+              }
 
-          return {
-            ...action,
-            status,
-            details: details ?? action.details,
-          };
-        }),
-      ),
-    }));
-  },
-  appendRequest: ({
-    actionId,
-    method,
-    endpoint,
-    payload,
-    response,
-    statusCode,
-    status,
-  }) => {
-    const request: LoggedApiRequest = {
-      id: createLogId(),
-      createdAt: new Date().toISOString(),
-      method,
-      endpoint,
-      payload,
-      response,
-      statusCode,
-      status,
-    };
+              return {
+                ...action,
+                status,
+                details: details ?? action.details,
+              };
+            }),
+          ),
+        }));
+      },
+      appendRequest: ({
+        actionId,
+        method,
+        endpoint,
+        payload,
+        response,
+        statusCode,
+        status,
+      }) => {
+        const request: LoggedApiRequest = {
+          id: createLogId(),
+          createdAt: new Date().toISOString(),
+          method,
+          endpoint,
+          payload,
+          response,
+          statusCode,
+          status,
+        };
 
-    set((state) => ({
-      actions: withRetentionLimits(
-        state.actions.map((action) => {
-          if (action.id !== actionId) {
-            return action;
-          }
+        set((state) => ({
+          actions: withRetentionLimits(
+            state.actions.map((action) => {
+              if (action.id !== actionId) {
+                return action;
+              }
 
-          return {
-            ...action,
-            requests: [...action.requests, request],
-          };
-        }),
-      ),
-    }));
-  },
-  clearActions: () => {
-    set({ actions: [] });
-  },
-}));
+              return {
+                ...action,
+                requests: [...action.requests, request],
+              };
+            }),
+          ),
+        }));
+      },
+      clearActions: () => {
+        set({ actions: [] });
+      },
+    }),
+    (state) => state.actions.length,
+  ),
+);

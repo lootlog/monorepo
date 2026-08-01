@@ -15,6 +15,10 @@ import {
   isSameMapPingPressIdentity,
   type MapPingPressIdentity,
 } from "@/features/map-pings/map-ping-interaction-controller";
+import {
+  addMeasuredEventListener,
+  setMeasuredTimeout,
+} from "@/lib/performance-monitoring/measured-callback";
 
 type HotkeyEvent = KeyboardEvent | MouseEvent;
 type UseHotkeysOptions = {
@@ -93,10 +97,14 @@ export const useHotkeys = ({
         alt: event.altKey,
         shift: event.shiftKey,
       };
-      handledMouseTimeoutRef.current = window.setTimeout(() => {
-        handledMouseRef.current = null;
-        handledMouseTimeoutRef.current = null;
-      }, 1_000);
+      handledMouseTimeoutRef.current = setMeasuredTimeout(
+        "hotkeys.handled-mouse-expiry",
+        () => {
+          handledMouseRef.current = null;
+          handledMouseTimeoutRef.current = null;
+        },
+        1_000,
+      );
     };
 
     const cancelActiveMapPing = () => {
@@ -231,20 +239,47 @@ export const useHotkeys = ({
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mouseup", handleMouseUp);
-    window.addEventListener("auxclick", suppressHandledMouseEvent);
-    window.addEventListener("blur", cancelActiveMapPing);
+    const removeListeners = [
+      addMeasuredEventListener(
+        window,
+        "keydown",
+        handleKeyDown as EventListener,
+        "hotkeys.keydown",
+      ),
+      addMeasuredEventListener(
+        window,
+        "keyup",
+        handleKeyUp as EventListener,
+        "hotkeys.keyup",
+      ),
+      addMeasuredEventListener(
+        window,
+        "mousedown",
+        handleMouseDown as EventListener,
+        "hotkeys.mousedown",
+      ),
+      addMeasuredEventListener(
+        window,
+        "mouseup",
+        handleMouseUp as EventListener,
+        "hotkeys.mouseup",
+      ),
+      addMeasuredEventListener(
+        window,
+        "auxclick",
+        suppressHandledMouseEvent as EventListener,
+        "hotkeys.auxclick",
+      ),
+      addMeasuredEventListener(
+        window,
+        "blur",
+        cancelActiveMapPing as EventListener,
+        "hotkeys.blur",
+      ),
+    ];
     return () => {
       cancelActiveMapPing();
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("auxclick", suppressHandledMouseEvent);
-      window.removeEventListener("blur", cancelActiveMapPing);
+      for (const removeListener of removeListeners) removeListener();
       if (handledMouseTimeoutRef.current !== null) {
         window.clearTimeout(handledMouseTimeoutRef.current);
         handledMouseTimeoutRef.current = null;

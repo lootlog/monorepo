@@ -1,4 +1,9 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PerformanceProfiler } from "@/lib/performance-monitoring/performance-profiler";
+import {
+  requestMeasuredAnimationFrame,
+  setMeasuredTimeout,
+} from "@/lib/performance-monitoring/measured-callback";
 import { SingleNotification } from "@/features/notifications/components/single-notification";
 import { useNotificationGuildMembers } from "@/features/notifications/hooks/use-notification-guild-members";
 import {
@@ -116,11 +121,18 @@ export const NotificationsList: FC<NotificationsListProps> = ({
     }
 
     let timeoutId: number | null = null;
-    const animationFrameId = requestAnimationFrame(() => {
-      timeoutId = window.setTimeout(() => {
-        setFullyRenderedAnimationCycle(latestNotificationAnimationCycle);
-      }, 0);
-    });
+    const animationFrameId = requestMeasuredAnimationFrame(
+      "notifications.bulk-render-frame",
+      () => {
+        timeoutId = setMeasuredTimeout(
+          "notifications.bulk-render-continuation",
+          () => {
+            setFullyRenderedAnimationCycle(latestNotificationAnimationCycle);
+          },
+          0,
+        );
+      },
+    );
 
     return () => {
       cancelAnimationFrame(animationFrameId);
@@ -187,16 +199,20 @@ export const NotificationsList: FC<NotificationsListProps> = ({
       nextIds.add(notificationId);
       return nextIds;
     });
-    const timeoutId = window.setTimeout(() => {
-      manualRemovalTimeoutsRef.current.delete(notificationId);
-      removeNotification(notificationId);
-      setManuallyLeavingNotificationIds((currentIds) => {
-        if (!currentIds.has(notificationId)) return currentIds;
-        const nextIds = new Set(currentIds);
-        nextIds.delete(notificationId);
-        return nextIds;
-      });
-    }, MANUAL_EXIT_ANIMATION_DURATION_MS);
+    const timeoutId = setMeasuredTimeout(
+      "notifications.manual-exit",
+      () => {
+        manualRemovalTimeoutsRef.current.delete(notificationId);
+        removeNotification(notificationId);
+        setManuallyLeavingNotificationIds((currentIds) => {
+          if (!currentIds.has(notificationId)) return currentIds;
+          const nextIds = new Set(currentIds);
+          nextIds.delete(notificationId);
+          return nextIds;
+        });
+      },
+      MANUAL_EXIT_ANIMATION_DURATION_MS,
+    );
     manualRemovalTimeoutsRef.current.set(notificationId, timeoutId);
   };
 
@@ -232,32 +248,34 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   };
 
   return (
-    <ScrollArea
-      ref={scrollViewportRef}
-      className="ll:h-full ll:max-h-[inherit] ll:w-full ll:box-border"
-    >
-      <div className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:pt-1">
-        {renderedNotifications.map((notification) => {
-          let animationClassName = "ll:w-full";
-          if (animationEffectsEnabled) {
-            animationClassName = manuallyLeavingNotificationIds.has(
-              notification.notificationId,
-            )
-              ? "ll:pointer-events-none ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-top-2 ll:duration-150"
-              : "ll:w-full ll:animate-in ll:fade-in-0 ll:slide-in-from-top-2 ll:duration-150";
-          }
+    <PerformanceProfiler id="list.notifications">
+      <ScrollArea
+        ref={scrollViewportRef}
+        className="ll:h-full ll:max-h-[inherit] ll:w-full ll:box-border"
+      >
+        <div className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:pt-1">
+          {renderedNotifications.map((notification) => {
+            let animationClassName = "ll:w-full";
+            if (animationEffectsEnabled) {
+              animationClassName = manuallyLeavingNotificationIds.has(
+                notification.notificationId,
+              )
+                ? "ll:pointer-events-none ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-top-2 ll:duration-150"
+                : "ll:w-full ll:animate-in ll:fade-in-0 ll:slide-in-from-top-2 ll:duration-150";
+            }
 
-          return (
-            <div
-              key={notification.listKey}
-              data-lootlog-notification-id={notification.notificationId}
-              className={animationClassName}
-            >
-              {getNotificationRow(notification)}
-            </div>
-          );
-        })}
-      </div>
-    </ScrollArea>
+            return (
+              <div
+                key={notification.listKey}
+                data-lootlog-notification-id={notification.notificationId}
+                className={animationClassName}
+              >
+                {getNotificationRow(notification)}
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    </PerformanceProfiler>
   );
 };

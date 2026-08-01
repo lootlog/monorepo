@@ -7,6 +7,7 @@ import {
   isWindowResizeSessionActive,
   registerWindowResizeSessionCancellation,
 } from "./window-resize-session";
+import { addMeasuredEventListener } from "@/lib/performance-monitoring/measured-callback";
 
 const getScale = () => {
   return getRuntimeZoomFactor() ?? window.visualViewport?.scale ?? 1;
@@ -117,9 +118,11 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       onResize({ width: newWidth, height: newHeight });
     };
 
+    let removeMouseMove: () => void = () => undefined;
+    let removeMouseUp: () => void = () => undefined;
     const cleanupMouseListeners = () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      removeMouseMove();
+      removeMouseUp();
     };
 
     const finishMouseResize = () => {
@@ -128,13 +131,21 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       cleanupMouseListeners();
     };
 
-    const handleMouseUp = () => {
-      finishMouseResize();
-    };
+    const handleMouseUp = () => finishMouseResize();
 
     registerWindowResizeSessionCancellation(finishMouseResize);
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    removeMouseMove = addMeasuredEventListener(
+      document,
+      "mousemove",
+      handleMouseMove,
+      "window-resize.mousemove",
+    );
+    removeMouseUp = addMeasuredEventListener(
+      document,
+      "mouseup",
+      handleMouseUp,
+      "window-resize.mouseup",
+    );
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -193,12 +204,9 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       onResize({ width: newWidth, height: newHeight });
     };
 
+    const removeTouchListeners: Array<() => void> = [];
     const cleanupTouchListeners = () => {
-      document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("touchend", handleTouchEnd);
-      document.removeEventListener("touchcancel", handleTouchEnd);
-      window.removeEventListener("touchend", handleTouchEnd);
-      window.removeEventListener("touchcancel", handleTouchEnd);
+      for (const removeListener of removeTouchListeners) removeListener();
     };
 
     const finishTouchResize = () => {
@@ -222,13 +230,39 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     };
 
     registerWindowResizeSessionCancellation(finishTouchResize);
-    document.addEventListener("touchmove", handleTouchMove, {
-      passive: false,
-    });
-    document.addEventListener("touchend", handleTouchEnd);
-    document.addEventListener("touchcancel", handleTouchEnd);
-    window.addEventListener("touchend", handleTouchEnd);
-    window.addEventListener("touchcancel", handleTouchEnd);
+    removeTouchListeners.push(
+      addMeasuredEventListener(
+        document,
+        "touchmove",
+        handleTouchMove,
+        "window-resize.touchmove",
+        { passive: false },
+      ),
+      addMeasuredEventListener(
+        document,
+        "touchend",
+        handleTouchEnd,
+        "window-resize.touchend",
+      ),
+      addMeasuredEventListener(
+        document,
+        "touchcancel",
+        handleTouchEnd,
+        "window-resize.touchcancel",
+      ),
+      addMeasuredEventListener(
+        window,
+        "touchend",
+        handleTouchEnd,
+        "window-resize.window-touchend",
+      ),
+      addMeasuredEventListener(
+        window,
+        "touchcancel",
+        handleTouchEnd,
+        "window-resize.window-touchcancel",
+      ),
+    );
   };
 
   return (

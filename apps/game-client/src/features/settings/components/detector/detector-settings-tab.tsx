@@ -14,6 +14,7 @@ import { useGameAccountPreferencesSyncStatus } from "@/hooks/use-game-account-pr
 import type { DetectorNpcType } from "@lootlog/types";
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 const SYNC_INDICATOR_DELAY_MS = 100;
 
@@ -54,9 +55,13 @@ export const DetectorSettingsTab = () => {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
-      setVisibleStatus(syncStatus.status);
-    }, SYNC_INDICATOR_DELAY_MS);
+    const timeoutId = setMeasuredTimeout(
+      "settings.detector.sync-status",
+      () => {
+        setVisibleStatus(syncStatus.status);
+      },
+      SYNC_INDICATOR_DELAY_MS,
+    );
 
     return () => {
       window.clearTimeout(timeoutId);

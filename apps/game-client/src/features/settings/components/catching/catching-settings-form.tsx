@@ -13,6 +13,7 @@ import {
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
 } from "@lootlog/api-client/react-query/main/user-lootlog-config";
 import { useGameStore } from "@/store/game.store";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 type CatchingSettingsFormProps = {
   characterId: string;
@@ -73,10 +74,14 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     reset({
       catchingGuildIds: nextCatchingGuildIds,
     });
-    const initializationTimeoutId = setTimeout(() => {
-      isResettingRef.current = false;
-      isInitializedRef.current = true;
-    }, 0);
+    const initializationTimeoutId = setMeasuredTimeout(
+      "settings.catching.initialize",
+      () => {
+        isResettingRef.current = false;
+        isInitializedRef.current = true;
+      },
+      0,
+    );
 
     return () => clearTimeout(initializationTimeoutId);
   }, [
@@ -88,7 +93,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   ]);
 
   useEffect(() => {
-    let debounceTimerId: ReturnType<typeof setTimeout> | null = null;
+    let debounceTimerId: number | null = null;
     const unsubscribe = subscribe({
       formState: { values: true },
       callback: ({ values }) => {
@@ -98,16 +103,20 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
           clearTimeout(debounceTimerId);
         }
 
-        debounceTimerId = setTimeout(() => {
-          const catchingGuildIds = (values.catchingGuildIds ?? []).filter(
-            (id): id is string => typeof id === "string",
-          );
+        debounceTimerId = setMeasuredTimeout(
+          "settings.catching.persist",
+          () => {
+            const catchingGuildIds = (values.catchingGuildIds ?? []).filter(
+              (id): id is string => typeof id === "string",
+            );
 
-          updateLootlogCharacterConfig({
-            characterId,
-            catchingGuildIds,
-          });
-        }, 500);
+            updateLootlogCharacterConfig({
+              characterId,
+              catchingGuildIds,
+            });
+          },
+          500,
+        );
       },
     });
 

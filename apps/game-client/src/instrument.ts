@@ -1,17 +1,3 @@
-import {
-  initializeErrorMonitoring,
-  triggerErrorMonitoringTest,
-} from "@/lib/error-monitoring";
+import { initializePerformanceMonitoring } from "@/lib/performance-monitoring/performance-monitor";
 
-initializeErrorMonitoring();
-
-if (import.meta.env.DEV) {
-  const handleSentryTest = () => {
-    triggerErrorMonitoringTest();
-  };
-
-  document.addEventListener("lootlog:sentry-test", handleSentryTest);
-  import.meta.hot?.dispose(() => {
-    document.removeEventListener("lootlog:sentry-test", handleSentryTest);
-  });
-}
+initializePerformanceMonitoring();

@@ -1,5 +1,6 @@
 import type { Other } from "@lootlog/margonem/others";
 import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem } from "@lootlog/api-client/models/main/user-lootlog-players-catching-guilds-response-dto-output-players-item-guilds-item";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
@@ -142,171 +143,176 @@ function withEntryRetention(
 }
 
 export const useCharacterTooltipCatchingGuildsStore =
-  create<CharacterTooltipCatchingGuildsState>()((set, get) => ({
-    activeOther: null,
-    activeTarget: null,
-    entriesByKey: {},
-    isShiftPressed: false,
-    clear: () => {
-      visibleEntryKeys.clear();
-      set({
+  create<CharacterTooltipCatchingGuildsState>()(
+    performanceStoreMiddleware(
+      "character-tooltip-catching-guilds",
+      (set, get) => ({
         activeOther: null,
         activeTarget: null,
         entriesByKey: {},
         isShiftPressed: false,
-      });
-    },
-    clearActiveOther: () =>
-      set((state) => {
-        if (!state.activeOther && !state.activeTarget) return state;
+        clear: () => {
+          visibleEntryKeys.clear();
+          set({
+            activeOther: null,
+            activeTarget: null,
+            entriesByKey: {},
+            isShiftPressed: false,
+          });
+        },
+        clearActiveOther: () =>
+          set((state) => {
+            if (!state.activeOther && !state.activeTarget) return state;
 
-        return { activeOther: null, activeTarget: null };
-      }),
-    getEntry: (key) => get().entriesByKey[key],
-    pruneEntries: (visibleKeys, now) => {
-      visibleEntryKeys.clear();
-      for (const key of visibleKeys) {
-        visibleEntryKeys.add(key);
-      }
-
-      set((state) => {
-        const touchedEntriesByKey = { ...state.entriesByKey };
-        for (const key of visibleEntryKeys) {
-          const entry = touchedEntriesByKey[key];
-          if (entry) {
-            touchedEntriesByKey[key] = { ...entry, lastAccessedAt: now };
+            return { activeOther: null, activeTarget: null };
+          }),
+        getEntry: (key) => get().entriesByKey[key],
+        pruneEntries: (visibleKeys, now) => {
+          visibleEntryKeys.clear();
+          for (const key of visibleKeys) {
+            visibleEntryKeys.add(key);
           }
-        }
 
-        return {
-          entriesByKey: withEntryRetention(
-            touchedEntriesByKey,
-            now,
-            state.activeTarget?.key,
-          ),
-        };
-      });
-    },
-    setActiveOther: (other) =>
-      set((state) => {
-        const activeTarget = getOtherCatchingGuildsTarget(other);
-        if (
-          state.activeOther === other &&
-          state.activeTarget?.key === activeTarget?.key
-        ) {
-          return state;
-        }
+          set((state) => {
+            const touchedEntriesByKey = { ...state.entriesByKey };
+            for (const key of visibleEntryKeys) {
+              const entry = touchedEntriesByKey[key];
+              if (entry) {
+                touchedEntriesByKey[key] = { ...entry, lastAccessedAt: now };
+              }
+            }
 
-        return { activeOther: other, activeTarget };
-      }),
-    setError: (target) =>
-      set((state) => {
-        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
-          return state;
-        }
+            return {
+              entriesByKey: withEntryRetention(
+                touchedEntriesByKey,
+                now,
+                state.activeTarget?.key,
+              ),
+            };
+          });
+        },
+        setActiveOther: (other) =>
+          set((state) => {
+            const activeTarget = getOtherCatchingGuildsTarget(other);
+            if (
+              state.activeOther === other &&
+              state.activeTarget?.key === activeTarget?.key
+            ) {
+              return state;
+            }
 
-        return {
-          entriesByKey: withEntryRetention(
-            {
-              ...state.entriesByKey,
-              [target.key]: {
-                guilds: [],
-                lastAccessedAt: Date.now(),
-                requestKey: target.requestKey,
-                status: "error",
+            return { activeOther: other, activeTarget };
+          }),
+        setError: (target) =>
+          set((state) => {
+            if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
+              return state;
+            }
+
+            return {
+              entriesByKey: withEntryRetention(
+                {
+                  ...state.entriesByKey,
+                  [target.key]: {
+                    guilds: [],
+                    lastAccessedAt: Date.now(),
+                    requestKey: target.requestKey,
+                    status: "error",
+                  },
+                },
+                Date.now(),
+                state.activeTarget?.key,
+              ),
+            };
+          }),
+        setIdle: (target) =>
+          set((state) => ({
+            entriesByKey: withEntryRetention(
+              {
+                ...state.entriesByKey,
+                [target.key]: {
+                  guilds: [],
+                  lastAccessedAt: Date.now(),
+                  requestKey: target.requestKey,
+                  status: "idle",
+                },
               },
-            },
-            Date.now(),
-            state.activeTarget?.key,
-          ),
-        };
-      }),
-    setIdle: (target) =>
-      set((state) => ({
-        entriesByKey: withEntryRetention(
-          {
-            ...state.entriesByKey,
-            [target.key]: {
-              guilds: [],
-              lastAccessedAt: Date.now(),
-              requestKey: target.requestKey,
-              status: "idle",
-            },
-          },
-          Date.now(),
-          state.activeTarget?.key,
-        ),
-      })),
-    setLoading: (target) =>
-      set((state) => {
-        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
-          return state;
-        }
+              Date.now(),
+              state.activeTarget?.key,
+            ),
+          })),
+        setLoading: (target) =>
+          set((state) => {
+            if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
+              return state;
+            }
 
-        return {
-          entriesByKey: withEntryRetention(
-            {
-              ...state.entriesByKey,
-              [target.key]: {
-                guilds: state.entriesByKey[target.key]?.guilds ?? [],
-                lastAccessedAt: Date.now(),
-                requestKey: target.requestKey,
-                status: "loading",
-              },
-            },
-            Date.now(),
-            state.activeTarget?.key,
-          ),
-        };
-      }),
-    setShiftPressed: (isShiftPressed) =>
-      set((state) => {
-        if (state.isShiftPressed === isShiftPressed) return state;
+            return {
+              entriesByKey: withEntryRetention(
+                {
+                  ...state.entriesByKey,
+                  [target.key]: {
+                    guilds: state.entriesByKey[target.key]?.guilds ?? [],
+                    lastAccessedAt: Date.now(),
+                    requestKey: target.requestKey,
+                    status: "loading",
+                  },
+                },
+                Date.now(),
+                state.activeTarget?.key,
+              ),
+            };
+          }),
+        setShiftPressed: (isShiftPressed) =>
+          set((state) => {
+            if (state.isShiftPressed === isShiftPressed) return state;
 
-        return { isShiftPressed };
-      }),
-    setSuccess: (target, guilds, fetchedAt) =>
-      set((state) => {
-        if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
-          return state;
-        }
+            return { isShiftPressed };
+          }),
+        setSuccess: (target, guilds, fetchedAt) =>
+          set((state) => {
+            if (!canApplyTargetEntry(state.entriesByKey[target.key], target)) {
+              return state;
+            }
 
-        return {
-          entriesByKey: withEntryRetention(
-            {
-              ...state.entriesByKey,
-              [target.key]: {
-                fetchedAt,
-                guilds,
-                lastAccessedAt: Date.now(),
-                requestKey: target.requestKey,
-                status: "success",
-              },
-            },
-            Date.now(),
-            state.activeTarget?.key,
-          ),
-        };
-      }),
-    setUnavailable: (key) =>
-      set((state) => {
-        if (state.entriesByKey[key]?.status === "unavailable") {
-          return state;
-        }
+            return {
+              entriesByKey: withEntryRetention(
+                {
+                  ...state.entriesByKey,
+                  [target.key]: {
+                    fetchedAt,
+                    guilds,
+                    lastAccessedAt: Date.now(),
+                    requestKey: target.requestKey,
+                    status: "success",
+                  },
+                },
+                Date.now(),
+                state.activeTarget?.key,
+              ),
+            };
+          }),
+        setUnavailable: (key) =>
+          set((state) => {
+            if (state.entriesByKey[key]?.status === "unavailable") {
+              return state;
+            }
 
-        return {
-          entriesByKey: withEntryRetention(
-            {
-              ...state.entriesByKey,
-              [key]: {
-                guilds: [],
-                lastAccessedAt: Date.now(),
-                status: "unavailable",
-              },
-            },
-            Date.now(),
-            state.activeTarget?.key,
-          ),
-        };
+            return {
+              entriesByKey: withEntryRetention(
+                {
+                  ...state.entriesByKey,
+                  [key]: {
+                    guilds: [],
+                    lastAccessedAt: Date.now(),
+                    status: "unavailable",
+                  },
+                },
+                Date.now(),
+                state.activeTarget?.key,
+              ),
+            };
+          }),
       }),
-  }));
+    ),
+  );

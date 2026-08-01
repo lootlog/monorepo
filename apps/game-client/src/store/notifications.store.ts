@@ -1,5 +1,6 @@
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 
 export type NotificationWithServers = Notification & {
@@ -253,165 +254,234 @@ const upsertNotificationBatch = (
 };
 
 export const useNotificationsStore = create<NotificationsState>()(
-  (set, get) => ({
-    notifications: [],
-    notificationAutoHideByListKey: {},
-    latestNotificationAnimationCycle: 0,
-    latestPresentationStartedEmpty: false,
-    presentNotifications: (presentations) =>
-      set((state) => {
-        if (presentations.length === 0) {
-          return state;
-        }
-
-        let notificationAutoHideByListKey = state.notificationAutoHideByListKey;
-        let hasAutoHideChanges = false;
-
-        const getWritableAutoHideState = () => {
-          if (!hasAutoHideChanges) {
-            notificationAutoHideByListKey = {
-              ...notificationAutoHideByListKey,
-            };
-            hasAutoHideChanges = true;
+  performanceStoreMiddleware(
+    "notifications",
+    (set, get) => ({
+      notifications: [],
+      notificationAutoHideByListKey: {},
+      latestNotificationAnimationCycle: 0,
+      latestPresentationStartedEmpty: false,
+      presentNotifications: (presentations) =>
+        set((state) => {
+          if (presentations.length === 0) {
+            return state;
           }
 
-          return notificationAutoHideByListKey;
-        };
+          let notificationAutoHideByListKey =
+            state.notificationAutoHideByListKey;
+          let hasAutoHideChanges = false;
 
-        let notifications = upsertNotificationBatch(
-          state.notifications,
-          presentations,
-          ({ autoHideDurationMs }, storedNotification, receivedAtMs) => {
-            if (autoHideDurationMs === undefined) {
-              return;
-            }
-
-            const writableAutoHideState = getWritableAutoHideState();
-
-            if (autoHideDurationMs <= 0) {
-              delete writableAutoHideState[storedNotification.listKey];
-              return;
-            }
-
-            writableAutoHideState[storedNotification.listKey] = {
-              deadlineMs: receivedAtMs + autoHideDurationMs,
-              pausedRemainingMs: null,
-              durationMs: autoHideDurationMs,
-            };
-          },
-        );
-
-        const evictedNotifications = notifications.slice(MAX_NOTIFICATIONS);
-        notifications = notifications.slice(0, MAX_NOTIFICATIONS);
-
-        if (evictedNotifications.length > 0) {
-          const writableAutoHideState = getWritableAutoHideState();
-          evictedNotifications.forEach((notification) => {
-            delete writableAutoHideState[notification.listKey];
-          });
-        }
-
-        return {
-          notifications,
-          notificationAutoHideByListKey,
-          latestNotificationAnimationCycle:
-            state.latestNotificationAnimationCycle + 1,
-          latestPresentationStartedEmpty: state.notifications.length === 0,
-        };
-      }),
-    clearNotifications: () =>
-      set((state) => {
-        if (
-          state.notifications.length === 0 &&
-          Object.keys(state.notificationAutoHideByListKey).length === 0
-        ) {
-          return state;
-        }
-
-        return {
-          notifications: [],
-          notificationAutoHideByListKey: {},
-        };
-      }),
-    removeNotifications: (ids) =>
-      set((state) => {
-        if (ids.length === 0) {
-          return state;
-        }
-
-        const idSet = new Set(ids);
-        const notificationsToRemove = state.notifications.filter(
-          (notification) => idSet.has(notification.notificationId),
-        );
-
-        if (notificationsToRemove.length === 0) {
-          return state;
-        }
-
-        const notificationAutoHideByListKey = {
-          ...state.notificationAutoHideByListKey,
-        };
-        notificationsToRemove.forEach((notification) => {
-          delete notificationAutoHideByListKey[notification.listKey];
-        });
-
-        return {
-          notifications: state.notifications.filter(
-            (notification) => !idSet.has(notification.notificationId),
-          ),
-          notificationAutoHideByListKey,
-        };
-      }),
-    removeNotification: (id) => get().removeNotifications([id]),
-    removeNotificationsByNpcIds: (npcIds, world) =>
-      set((state) => {
-        if (npcIds.length === 0) {
-          return state;
-        }
-
-        const npcIdSet = new Set(npcIds);
-        let notificationAutoHideByListKey = state.notificationAutoHideByListKey;
-        let removedAnyNotification = false;
-        const notifications = state.notifications.filter((notification) => {
-          if (isPartyGatheringNotification(notification)) {
-            return true;
-          }
-
-          const regularNotification = notification as NotificationWithServers;
-          const shouldRemove =
-            regularNotification.npc?.id !== undefined &&
-            npcIdSet.has(regularNotification.npc.id) &&
-            (world ? regularNotification.world === world : true);
-
-          if (shouldRemove) {
-            if (!removedAnyNotification) {
+          const getWritableAutoHideState = () => {
+            if (!hasAutoHideChanges) {
               notificationAutoHideByListKey = {
-                ...state.notificationAutoHideByListKey,
+                ...notificationAutoHideByListKey,
               };
+              hasAutoHideChanges = true;
             }
 
-            removedAnyNotification = true;
-            delete notificationAutoHideByListKey[notification.listKey];
-            return false;
+            return notificationAutoHideByListKey;
+          };
+
+          let notifications = upsertNotificationBatch(
+            state.notifications,
+            presentations,
+            ({ autoHideDurationMs }, storedNotification, receivedAtMs) => {
+              if (autoHideDurationMs === undefined) {
+                return;
+              }
+
+              const writableAutoHideState = getWritableAutoHideState();
+
+              if (autoHideDurationMs <= 0) {
+                delete writableAutoHideState[storedNotification.listKey];
+                return;
+              }
+
+              writableAutoHideState[storedNotification.listKey] = {
+                deadlineMs: receivedAtMs + autoHideDurationMs,
+                pausedRemainingMs: null,
+                durationMs: autoHideDurationMs,
+              };
+            },
+          );
+
+          const evictedNotifications = notifications.slice(MAX_NOTIFICATIONS);
+          notifications = notifications.slice(0, MAX_NOTIFICATIONS);
+
+          if (evictedNotifications.length > 0) {
+            const writableAutoHideState = getWritableAutoHideState();
+            evictedNotifications.forEach((notification) => {
+              delete writableAutoHideState[notification.listKey];
+            });
           }
 
-          return true;
-        });
+          return {
+            notifications,
+            notificationAutoHideByListKey,
+            latestNotificationAnimationCycle:
+              state.latestNotificationAnimationCycle + 1,
+            latestPresentationStartedEmpty: state.notifications.length === 0,
+          };
+        }),
+      clearNotifications: () =>
+        set((state) => {
+          if (
+            state.notifications.length === 0 &&
+            Object.keys(state.notificationAutoHideByListKey).length === 0
+          ) {
+            return state;
+          }
 
-        if (!removedAnyNotification) {
-          return state;
-        }
+          return {
+            notifications: [],
+            notificationAutoHideByListKey: {},
+          };
+        }),
+      removeNotifications: (ids) =>
+        set((state) => {
+          if (ids.length === 0) {
+            return state;
+          }
 
-        return {
-          notifications,
-          notificationAutoHideByListKey,
-        };
-      }),
-    removeNotificationByNpcId: (npcId, world) =>
-      get().removeNotificationsByNpcIds([npcId], world),
-    setNotificationAutoHide: (listKey, durationMs) =>
-      set((state) => {
-        if (durationMs <= 0) {
+          const idSet = new Set(ids);
+          const notificationsToRemove = state.notifications.filter(
+            (notification) => idSet.has(notification.notificationId),
+          );
+
+          if (notificationsToRemove.length === 0) {
+            return state;
+          }
+
+          const notificationAutoHideByListKey = {
+            ...state.notificationAutoHideByListKey,
+          };
+          notificationsToRemove.forEach((notification) => {
+            delete notificationAutoHideByListKey[notification.listKey];
+          });
+
+          return {
+            notifications: state.notifications.filter(
+              (notification) => !idSet.has(notification.notificationId),
+            ),
+            notificationAutoHideByListKey,
+          };
+        }),
+      removeNotification: (id) => get().removeNotifications([id]),
+      removeNotificationsByNpcIds: (npcIds, world) =>
+        set((state) => {
+          if (npcIds.length === 0) {
+            return state;
+          }
+
+          const npcIdSet = new Set(npcIds);
+          let notificationAutoHideByListKey =
+            state.notificationAutoHideByListKey;
+          let removedAnyNotification = false;
+          const notifications = state.notifications.filter((notification) => {
+            if (isPartyGatheringNotification(notification)) {
+              return true;
+            }
+
+            const regularNotification = notification as NotificationWithServers;
+            const shouldRemove =
+              regularNotification.npc?.id !== undefined &&
+              npcIdSet.has(regularNotification.npc.id) &&
+              (world ? regularNotification.world === world : true);
+
+            if (shouldRemove) {
+              if (!removedAnyNotification) {
+                notificationAutoHideByListKey = {
+                  ...state.notificationAutoHideByListKey,
+                };
+              }
+
+              removedAnyNotification = true;
+              delete notificationAutoHideByListKey[notification.listKey];
+              return false;
+            }
+
+            return true;
+          });
+
+          if (!removedAnyNotification) {
+            return state;
+          }
+
+          return {
+            notifications,
+            notificationAutoHideByListKey,
+          };
+        }),
+      removeNotificationByNpcId: (npcId, world) =>
+        get().removeNotificationsByNpcIds([npcId], world),
+      setNotificationAutoHide: (listKey, durationMs) =>
+        set((state) => {
+          if (durationMs <= 0) {
+            if (!(listKey in state.notificationAutoHideByListKey)) {
+              return state;
+            }
+
+            const notificationAutoHideByListKey = {
+              ...state.notificationAutoHideByListKey,
+            };
+            delete notificationAutoHideByListKey[listKey];
+            return { notificationAutoHideByListKey };
+          }
+
+          return {
+            notificationAutoHideByListKey: {
+              ...state.notificationAutoHideByListKey,
+              [listKey]: {
+                deadlineMs: Date.now() + durationMs,
+                pausedRemainingMs: null,
+                durationMs,
+              },
+            },
+          };
+        }),
+      pauseNotificationAutoHide: (listKey) =>
+        set((state) => {
+          const currentState = state.notificationAutoHideByListKey[listKey];
+
+          if (!currentState || currentState.deadlineMs === null) {
+            return state;
+          }
+
+          return {
+            notificationAutoHideByListKey: {
+              ...state.notificationAutoHideByListKey,
+              [listKey]: {
+                ...currentState,
+                deadlineMs: null,
+                pausedRemainingMs: Math.max(
+                  0,
+                  currentState.deadlineMs - Date.now(),
+                ),
+              },
+            },
+          };
+        }),
+      resumeNotificationAutoHide: (listKey) =>
+        set((state) => {
+          const currentState = state.notificationAutoHideByListKey[listKey];
+
+          if (!currentState || currentState.pausedRemainingMs === null) {
+            return state;
+          }
+
+          return {
+            notificationAutoHideByListKey: {
+              ...state.notificationAutoHideByListKey,
+              [listKey]: {
+                ...currentState,
+                deadlineMs: Date.now() + currentState.pausedRemainingMs,
+                pausedRemainingMs: null,
+              },
+            },
+          };
+        }),
+      clearNotificationAutoHide: (listKey) =>
+        set((state) => {
           if (!(listKey in state.notificationAutoHideByListKey)) {
             return state;
           }
@@ -420,73 +490,10 @@ export const useNotificationsStore = create<NotificationsState>()(
             ...state.notificationAutoHideByListKey,
           };
           delete notificationAutoHideByListKey[listKey];
+
           return { notificationAutoHideByListKey };
-        }
-
-        return {
-          notificationAutoHideByListKey: {
-            ...state.notificationAutoHideByListKey,
-            [listKey]: {
-              deadlineMs: Date.now() + durationMs,
-              pausedRemainingMs: null,
-              durationMs,
-            },
-          },
-        };
-      }),
-    pauseNotificationAutoHide: (listKey) =>
-      set((state) => {
-        const currentState = state.notificationAutoHideByListKey[listKey];
-
-        if (!currentState || currentState.deadlineMs === null) {
-          return state;
-        }
-
-        return {
-          notificationAutoHideByListKey: {
-            ...state.notificationAutoHideByListKey,
-            [listKey]: {
-              ...currentState,
-              deadlineMs: null,
-              pausedRemainingMs: Math.max(
-                0,
-                currentState.deadlineMs - Date.now(),
-              ),
-            },
-          },
-        };
-      }),
-    resumeNotificationAutoHide: (listKey) =>
-      set((state) => {
-        const currentState = state.notificationAutoHideByListKey[listKey];
-
-        if (!currentState || currentState.pausedRemainingMs === null) {
-          return state;
-        }
-
-        return {
-          notificationAutoHideByListKey: {
-            ...state.notificationAutoHideByListKey,
-            [listKey]: {
-              ...currentState,
-              deadlineMs: Date.now() + currentState.pausedRemainingMs,
-              pausedRemainingMs: null,
-            },
-          },
-        };
-      }),
-    clearNotificationAutoHide: (listKey) =>
-      set((state) => {
-        if (!(listKey in state.notificationAutoHideByListKey)) {
-          return state;
-        }
-
-        const notificationAutoHideByListKey = {
-          ...state.notificationAutoHideByListKey,
-        };
-        delete notificationAutoHideByListKey[listKey];
-
-        return { notificationAutoHideByListKey };
-      }),
-  }),
+        }),
+    }),
+    (state) => state.notifications.length,
+  ),
 );

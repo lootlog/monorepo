@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "env": ["$TURBO_EXTENDS$", "VITE_SENTRY_DSN"]
+      "env": ["$TURBO_EXTENDS$", "VITE_GAME_CLIENT_PERFORMANCE_MONITORING"]
     }
   }
 }

@@ -12,7 +12,7 @@ const { mockReportApiActionFailure } = vi.hoisted(() => ({
   mockReportApiActionFailure: vi.fn(),
 }));
 
-vi.mock("@/lib/error-monitoring", () => ({
+vi.mock("@/lib/local-diagnostics", () => ({
   reportApiActionFailure: mockReportApiActionFailure,
 }));
 

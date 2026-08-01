@@ -18,6 +18,12 @@ import { useShallow } from "zustand/react/shallow";
 import { WindowTitleBar } from "./window-title-bar";
 import { WindowResizeHandle } from "./window-resize-handle";
 import { cancelWindowResizeSession } from "./window-resize-session";
+import {
+  addMeasuredEventListener,
+  createMeasuredMutationObserver,
+  createMeasuredResizeObserver,
+  requestMeasuredAnimationFrame,
+} from "@/lib/performance-monitoring/measured-callback";
 
 export type DraggableWindowFrameProps = {
   children: React.ReactNode;
@@ -413,12 +419,17 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
       }
     };
 
-    windowBody.addEventListener("animationcancel", handleAnimationCancel);
+    const removeAnimationCancel = addMeasuredEventListener(
+      windowBody,
+      "animationcancel",
+      handleAnimationCancel as EventListener,
+      `window.${id}.animation-cancel`,
+    );
 
     return () => {
-      windowBody.removeEventListener("animationcancel", handleAnimationCancel);
+      removeAnimationCancel();
     };
-  }, [animationPhase, onWindowAnimationEnd]);
+  }, [animationPhase, id, onWindowAnimationEnd]);
 
   const getResolvedMaxContentHeight = useCallback(() => {
     const windowBody = windowBodyRef.current;
@@ -684,13 +695,19 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
         cancelAnimationFrame(animationFrameId);
       }
 
-      animationFrameId = requestAnimationFrame(() => {
-        animationFrameId = null;
-        updateAutoWidth();
-      });
+      animationFrameId = requestMeasuredAnimationFrame(
+        `window.${id}.auto-width-frame`,
+        () => {
+          animationFrameId = null;
+          updateAutoWidth();
+        },
+      );
     };
 
-    const resizeObserver = new ResizeObserver(scheduleAutoWidthUpdate);
+    const resizeObserver = createMeasuredResizeObserver(
+      `window.${id}.auto-width-resize`,
+      scheduleAutoWidthUpdate,
+    );
     const updateObservedContentElements = () => {
       const contentElement = contentRef.current;
 
@@ -720,18 +737,33 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
 
       observedContentElements = nextObservedContentElements;
     };
-    const mutationObserver = new MutationObserver(() => {
-      updateObservedContentElements();
-      scheduleAutoWidthUpdate();
-    });
+    const mutationObserver = createMeasuredMutationObserver(
+      `window.${id}.auto-width-mutation`,
+      () => {
+        updateObservedContentElements();
+        scheduleAutoWidthUpdate();
+      },
+    );
     const visualViewport = window.visualViewport;
 
     if (contentRef.current) {
       observeElementMutations(mutationObserver, contentRef.current);
     }
 
-    window.addEventListener("resize", scheduleAutoWidthUpdate);
-    visualViewport?.addEventListener("resize", scheduleAutoWidthUpdate);
+    const removeWindowResize = addMeasuredEventListener(
+      window,
+      "resize",
+      scheduleAutoWidthUpdate,
+      `window.${id}.auto-width-window-resize`,
+    );
+    const removeViewportResize = visualViewport
+      ? addMeasuredEventListener(
+          visualViewport,
+          "resize",
+          scheduleAutoWidthUpdate,
+          `window.${id}.auto-width-viewport-resize`,
+        )
+      : () => undefined;
     updateObservedContentElements();
     updateAutoWidth();
     scheduleAutoWidthUpdate();
@@ -740,12 +772,12 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
-      window.removeEventListener("resize", scheduleAutoWidthUpdate);
-      visualViewport?.removeEventListener("resize", scheduleAutoWidthUpdate);
+      removeWindowResize();
+      removeViewportResize();
       mutationObserver.disconnect();
       resizeObserver.disconnect();
     };
-  }, [effectiveHeight, isAutoWidthMode, maxWidth, minWidth, recalculate]);
+  }, [effectiveHeight, id, isAutoWidthMode, maxWidth, minWidth, recalculate]);
 
   useLayoutEffect(() => {
     if (!isMeasuredAutoHeightMode) {
@@ -757,13 +789,19 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
     let animationFrameId: number | null = null;
     let observedScrollAreaViewports: HTMLElement[] = [];
 
-    const resizeObserver = new ResizeObserver(() => {
-      scheduleAutoHeightUpdate();
-    });
-    const mutationObserver = new MutationObserver(() => {
-      updateObservedContentElements();
-      scheduleAutoHeightUpdate();
-    });
+    const resizeObserver = createMeasuredResizeObserver(
+      `window.${id}.auto-height-resize`,
+      () => {
+        scheduleAutoHeightUpdate();
+      },
+    );
+    const mutationObserver = createMeasuredMutationObserver(
+      `window.${id}.auto-height-mutation`,
+      () => {
+        updateObservedContentElements();
+        scheduleAutoHeightUpdate();
+      },
+    );
     let observedContentElements = new Set<HTMLElement>();
 
     const updateAutoHeight = () => {
@@ -823,10 +861,13 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
         cancelAnimationFrame(animationFrameId);
       }
 
-      animationFrameId = requestAnimationFrame(() => {
-        animationFrameId = null;
-        updateAutoHeight();
-      });
+      animationFrameId = requestMeasuredAnimationFrame(
+        `window.${id}.auto-height-frame`,
+        () => {
+          animationFrameId = null;
+          updateAutoHeight();
+        },
+      );
     };
 
     const updateObservedContentElements = () => {
@@ -884,6 +925,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
       resizeObserver.disconnect();
     };
   }, [
+    id,
     isMeasuredAutoHeightMode,
     localSize.height,
     localSize.width,

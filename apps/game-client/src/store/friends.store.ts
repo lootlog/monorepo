@@ -2,6 +2,7 @@ import type {
   RuntimeFriend,
   RuntimeStatus,
 } from "@/lib/margonem-runtime/runtime.types";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 
 type FriendsState = {
@@ -17,27 +18,33 @@ type FriendsState = {
   ) => void;
 };
 
-export const useFriendsStore = create<FriendsState>()((set, get) => ({
-  friends: [],
-  friendsMax: 0,
-  revision: 0,
-  status: "uninitialized",
-  clearFriends: () =>
-    set((state) => ({
+export const useFriendsStore = create<FriendsState>()(
+  performanceStoreMiddleware(
+    "friends",
+    (set, get) => ({
       friends: [],
       friendsMax: 0,
-      revision: state.revision + 1,
+      revision: 0,
       status: "uninitialized",
-    })),
-  isFriend: (characterId) =>
-    get().friends.some((friend) => friend.characterId === characterId),
-  replaceFriends: (friends, friendsMax) =>
-    set((state) => ({
-      friends: Object.freeze(
-        friends.map((friend) => Object.freeze({ ...friend })),
-      ),
-      friendsMax,
-      revision: state.revision + 1,
-      status: "ready",
-    })),
-}));
+      clearFriends: () =>
+        set((state) => ({
+          friends: [],
+          friendsMax: 0,
+          revision: state.revision + 1,
+          status: "uninitialized",
+        })),
+      isFriend: (characterId) =>
+        get().friends.some((friend) => friend.characterId === characterId),
+      replaceFriends: (friends, friendsMax) =>
+        set((state) => ({
+          friends: Object.freeze(
+            friends.map((friend) => Object.freeze({ ...friend })),
+          ),
+          friendsMax,
+          revision: state.revision + 1,
+          status: "ready",
+        })),
+    }),
+    (state) => state.friends.length,
+  ),
+);

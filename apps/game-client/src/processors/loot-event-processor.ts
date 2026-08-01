@@ -18,7 +18,7 @@ import {
   useDialogStore,
   type DialogNpcContextSource,
 } from "@/store/game-store/dialog.store";
-import { reportLootSkipped } from "@/lib/error-monitoring";
+import { reportLootSkipped } from "@/lib/local-diagnostics";
 import { useNpcsStore } from "@/store/npcs.store";
 import type {
   RuntimeGameSnapshot,

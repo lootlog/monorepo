@@ -6,6 +6,7 @@ import {
 } from "@/features/online-players/online-players-list.helpers";
 import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
 import { storageKey } from "@/lib/storage-key";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -89,37 +90,40 @@ export const migrateOnlinePlayersState = (
 };
 
 export const useOnlinePlayersStore = create<OnlinePlayersState>()(
-  persist(
-    (set) => ({
-      viewMode: DEFAULT_VIEW_MODE,
-      filtersVisible: DEFAULT_FILTERS_VISIBLE,
-      filtersByGuildId: {},
-      setViewMode: (viewMode) => set({ viewMode }),
-      toggleFiltersVisible: () =>
-        set((state) => ({ filtersVisible: !state.filtersVisible })),
-      setFilters: (guildId, filters) =>
-        set((state) => ({
-          filtersByGuildId: {
-            ...state.filtersByGuildId,
-            [guildId]: {
-              minLvl: filters.minLvl,
-              maxLvl: filters.maxLvl,
-              selectedProfession:
-                filters.selectedProfession ?? ALL_PROFESSIONS_VALUE,
+  performanceStoreMiddleware(
+    "online-players",
+    persist(
+      (set) => ({
+        viewMode: DEFAULT_VIEW_MODE,
+        filtersVisible: DEFAULT_FILTERS_VISIBLE,
+        filtersByGuildId: {},
+        setViewMode: (viewMode) => set({ viewMode }),
+        toggleFiltersVisible: () =>
+          set((state) => ({ filtersVisible: !state.filtersVisible })),
+        setFilters: (guildId, filters) =>
+          set((state) => ({
+            filtersByGuildId: {
+              ...state.filtersByGuildId,
+              [guildId]: {
+                minLvl: filters.minLvl,
+                maxLvl: filters.maxLvl,
+                selectedProfession:
+                  filters.selectedProfession ?? ALL_PROFESSIONS_VALUE,
+              },
             },
-          },
-        })),
-    }),
-    {
-      name: STORAGE_KEY,
-      partialize: (state) => ({
-        viewMode: state.viewMode,
-        filtersVisible: state.filtersVisible,
-        filtersByGuildId: state.filtersByGuildId,
+          })),
       }),
-      storage: createJSONStorage(() => localStorage),
-      version: 1,
-      migrate: migrateOnlinePlayersState,
-    },
+      {
+        name: STORAGE_KEY,
+        partialize: (state) => ({
+          viewMode: state.viewMode,
+          filtersVisible: state.filtersVisible,
+          filtersByGuildId: state.filtersByGuildId,
+        }),
+        storage: createJSONStorage(() => localStorage),
+        version: 1,
+        migrate: migrateOnlinePlayersState,
+      },
+    ),
   ),
 );

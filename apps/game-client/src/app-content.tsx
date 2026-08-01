@@ -32,6 +32,7 @@ import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-r
 import { useTimerSettingsMutationsRegistry } from "@/hooks/use-timer-settings-mutations-registry";
 import { useTimerSettingsSync } from "@/hooks/use-timer-settings-sync";
 import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-lootlog-guild";
+import { PerformanceProfiler } from "@/lib/performance-monitoring/performance-profiler";
 
 export const AppContent = () => {
   useGameEventHandlers();
@@ -65,26 +66,62 @@ export const AppContent = () => {
 
   return (
     <>
-      <AnimationEffectsRootClass />
-      <Timers />
-      <AddTimer />
-      <Settings />
-      <Chat />
-      <CommandWindow />
-      <OnlinePlayers />
-      <NpcDetector />
-      <Notifications />
-      <QuickAccess
-        hasActiveEventMode={Boolean(eventModeQuery.data?.events.length)}
-      />
-      <CatchingWhitelistWarning />
-      <BackendPreferencesWarning />
-      <Toaster />
-      <PartyFinder />
-      <CreatePartyGathering />
-      <MapPingWheel />
-      <EventMode query={eventModeQuery} />
-      {ConflictDialog}
+      <PerformanceProfiler id="feature.animation-effects">
+        <AnimationEffectsRootClass />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.timers">
+        <Timers />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.add-timer">
+        <AddTimer />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.settings">
+        <Settings />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.chat">
+        <Chat />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.command">
+        <CommandWindow />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.online-players">
+        <OnlinePlayers />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.npc-detector">
+        <NpcDetector />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.notifications">
+        <Notifications />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.quick-access">
+        <QuickAccess
+          hasActiveEventMode={Boolean(eventModeQuery.data?.events.length)}
+        />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.catching-whitelist-warning">
+        <CatchingWhitelistWarning />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.backend-preferences-warning">
+        <BackendPreferencesWarning />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.toaster">
+        <Toaster />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.party-finder">
+        <PartyFinder />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.create-party-gathering">
+        <CreatePartyGathering />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.map-ping-wheel">
+        <MapPingWheel />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.event-mode">
+        <EventMode query={eventModeQuery} />
+      </PerformanceProfiler>
+      <PerformanceProfiler id="feature.timer-conflict-dialog">
+        {ConflictDialog}
+      </PerformanceProfiler>
     </>
   );
 };

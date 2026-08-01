@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 export const useDebouncedCallback = <TArgs extends unknown[]>(
   callback: (...args: TArgs) => void,
   delay: number,
 ): ((...args: TArgs) => void) => {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timeoutRef = useRef<number | null>(null);
   const callbackRef = useRef(callback);
   const delayRef = useRef(delay);
 
@@ -30,8 +31,12 @@ export const useDebouncedCallback = <TArgs extends unknown[]>(
       clearTimeout(timeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(() => {
-      callbackRef.current(...args);
-    }, delayRef.current);
+    timeoutRef.current = setMeasuredTimeout(
+      "hook.debounced-callback",
+      () => {
+        callbackRef.current(...args);
+      },
+      delayRef.current,
+    );
   };
 };

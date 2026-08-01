@@ -13,6 +13,12 @@ import { useOthersStore } from "@/store/others.store";
 import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { refreshWhoIsHereRuntimeTooltip } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
+import {
+  addMeasuredEventListener,
+  createMeasuredMutationObserver,
+  requestMeasuredAnimationFrame,
+  setMeasuredInterval,
+} from "@/lib/performance-monitoring/measured-callback";
 
 const HIGHLIGHT_CLASS = "ll-who-is-here-lootlog-highlight";
 const STYLE_ELEMENT_ID = "ll-who-is-here-lootlog-style";
@@ -174,12 +180,18 @@ export function useWhoIsHereLootlogHighlight(): void {
     const scheduleMutationRefresh = () => {
       if (animationFrameId !== null) return;
 
-      animationFrameId = requestAnimationFrame(() => {
-        animationFrameId = null;
-        refreshRows();
-      });
+      animationFrameId = requestMeasuredAnimationFrame(
+        "who-is-here.mutation-refresh",
+        () => {
+          animationFrameId = null;
+          refreshRows();
+        },
+      );
     };
-    const observer = new MutationObserver(scheduleMutationRefresh);
+    const observer = createMeasuredMutationObserver(
+      "who-is-here.mutation-observer",
+      scheduleMutationRefresh,
+    );
     let discoveryIntervalId: number | null = null;
     const observeWhoIsHereRoot = () => {
       const whoIsHereRoot = document.querySelector<HTMLElement>(
@@ -194,15 +206,19 @@ export function useWhoIsHereLootlogHighlight(): void {
     };
 
     if (!observeWhoIsHereRoot()) {
-      discoveryIntervalId = window.setInterval(() => {
-        if (!observeWhoIsHereRoot()) {
-          return;
-        }
+      discoveryIntervalId = setMeasuredInterval(
+        "who-is-here.root-discovery",
+        () => {
+          if (!observeWhoIsHereRoot()) {
+            return;
+          }
 
-        window.clearInterval(discoveryIntervalId ?? undefined);
-        discoveryIntervalId = null;
-        scheduleMutationRefresh();
-      }, WHO_IS_HERE_DISCOVERY_INTERVAL_MS);
+          window.clearInterval(discoveryIntervalId ?? undefined);
+          discoveryIntervalId = null;
+          scheduleMutationRefresh();
+        },
+        WHO_IS_HERE_DISCOVERY_INTERVAL_MS,
+      );
     }
 
     return () => {
@@ -263,12 +279,22 @@ export function useWhoIsHereLootlogHighlight(): void {
       }
     };
 
-    document.addEventListener("mouseover", handleMouseOver);
-    document.addEventListener("mouseout", handleMouseOut);
+    const removeMouseOver = addMeasuredEventListener(
+      document,
+      "mouseover",
+      handleMouseOver as EventListener,
+      "who-is-here.mouseover",
+    );
+    const removeMouseOut = addMeasuredEventListener(
+      document,
+      "mouseout",
+      handleMouseOut as EventListener,
+      "who-is-here.mouseout",
+    );
 
     return () => {
-      document.removeEventListener("mouseover", handleMouseOver);
-      document.removeEventListener("mouseout", handleMouseOut);
+      removeMouseOver();
+      removeMouseOut();
     };
   }, []);
 

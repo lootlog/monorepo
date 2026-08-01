@@ -5,6 +5,7 @@ import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import type { AirTagUpdateEvent } from "@lootlog/types";
 import { airTagRuntime } from "./air-tag-runtime";
+import { measureLootlogCallback } from "@/lib/performance-monitoring/measured-callback";
 
 export const useAirTags = (): void => {
   const { data: accountPreferences } = useCurrentGameAccountPreferences();
@@ -22,12 +23,18 @@ export const useAirTags = (): void => {
     }
 
     const socket = getSocket();
-    const handleUpdate = (event: AirTagUpdateEvent) => {
-      airTagRuntime.handleUpdate(event);
-    };
-    const handlePermissionsUpdated = () => {
-      airTagRuntime.handlePermissionsUpdated();
-    };
+    const handleUpdate = measureLootlogCallback(
+      "socket.air-tags.update",
+      (event: AirTagUpdateEvent) => {
+        airTagRuntime.handleUpdate(event);
+      },
+    );
+    const handlePermissionsUpdated = measureLootlogCallback(
+      "socket.air-tags.permissions-updated",
+      () => {
+        airTagRuntime.handlePermissionsUpdated();
+      },
+    );
 
     socket.on(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);

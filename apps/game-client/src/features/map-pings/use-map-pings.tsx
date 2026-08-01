@@ -26,6 +26,11 @@ import {
   type MapPingSubmission,
 } from "./map-ping-interaction-controller";
 import { getMapPingPresentation } from "./map-ping-presentation";
+import {
+  addMeasuredEventListener,
+  measureLootlogCallback,
+  setMeasuredInterval,
+} from "@/lib/performance-monitoring/measured-callback";
 
 const ACK_TIMEOUT_MS = 1_500;
 const HINT_THROTTLE_MS = 2_000;
@@ -79,11 +84,15 @@ export const useMapPings = () => {
       return () => mapPingController.unregister();
     }
 
-    const retryInterval = window.setInterval(() => {
-      if (mapPingController.register()) {
-        window.clearInterval(retryInterval);
-      }
-    }, REGISTER_RETRY_MS);
+    const retryInterval = setMeasuredInterval(
+      "map-pings.register-retry",
+      () => {
+        if (mapPingController.register()) {
+          window.clearInterval(retryInterval);
+        }
+      },
+      REGISTER_RETRY_MS,
+    );
 
     return () => {
       window.clearInterval(retryInterval);
@@ -113,10 +122,15 @@ export const useMapPings = () => {
       };
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    const removeMouseMove = addMeasuredEventListener(
+      window,
+      "mousemove",
+      handleMouseMove as EventListener,
+      "map-pings.mousemove",
+    );
     return () => {
       pointerRef.current = null;
-      window.removeEventListener("mousemove", handleMouseMove);
+      removeMouseMove();
     };
   }, [enabled, gameInitialized, isNewInterface]);
 
@@ -141,27 +155,30 @@ export const useMapPings = () => {
       return;
     }
 
-    const handleMapPing = (event: MapPingEvent) => {
-      const tile = { x: event.x, y: event.y };
-      const game = useGameStore.getState().game;
-      if (
-        !game ||
-        !isMapPingType(event.type) ||
-        !areMapPingsEnabled() ||
-        event.world !== game.world ||
-        event.mapId !== game.map.id ||
-        !mapPingController.isTileValid(tile)
-      ) {
-        return;
-      }
+    const handleMapPing = measureLootlogCallback(
+      "socket.map-ping-receive",
+      (event: MapPingEvent) => {
+        const tile = { x: event.x, y: event.y };
+        const game = useGameStore.getState().game;
+        if (
+          !game ||
+          !isMapPingType(event.type) ||
+          !areMapPingsEnabled() ||
+          event.world !== game.world ||
+          event.mapId !== game.map.id ||
+          !mapPingController.isTileValid(tile)
+        ) {
+          return;
+        }
 
-      const presentation = getMapPingPresentation(event.type);
-      const typeLabel = t(presentation.translationKey);
-      if (mapPingController.addRemote(event, typeLabel)) {
-        const { key, ...soundProfile } = presentation.sound;
-        playSound("pings", key, soundProfile);
-      }
-    };
+        const presentation = getMapPingPresentation(event.type);
+        const typeLabel = t(presentation.translationKey);
+        if (mapPingController.addRemote(event, typeLabel)) {
+          const { key, ...soundProfile } = presentation.sound;
+          playSound("pings", key, soundProfile);
+        }
+      },
+    );
 
     socket.on(GatewayEvent.MAP_PING_RECEIVE, handleMapPing);
     return () => {

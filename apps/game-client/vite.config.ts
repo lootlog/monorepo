@@ -5,10 +5,8 @@ import path from "node:path";
 import monkey from "vite-plugin-monkey";
 import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
-import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { readFileSync } from "node:fs";
 
-const SENTRY_APPLICATION_KEY = "lootlog-game-client";
 const gameClientPackage = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf8"),
 ) as { version: string };
@@ -20,6 +18,9 @@ export default defineConfig(({ mode }) => {
     env.ANALYZE === "1" || process.env.ANALYZE === "1";
   const useFastLocalMinifier =
     env.FAST_BUILD === "1" || process.env.FAST_BUILD === "1";
+  const performanceMonitoringEnabled =
+    env.VITE_GAME_CLIENT_PERFORMANCE_MONITORING === "1" ||
+    process.env.VITE_GAME_CLIENT_PERFORMANCE_MONITORING === "1";
   const commitSha =
     env.VITE_COMMIT_SHA ||
     env.WORKERS_CI_COMMIT_SHA ||
@@ -40,6 +41,9 @@ export default defineConfig(({ mode }) => {
       ),
       "import.meta.env.VITE_GAME_CLIENT_VERSION":
         JSON.stringify(runtimeVersion),
+      "import.meta.env.VITE_GAME_CLIENT_PERFORMANCE_MONITORING": JSON.stringify(
+        performanceMonitoringEnabled ? "1" : "0",
+      ),
     },
     server: {
       host: "localhost",
@@ -51,6 +55,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: [
         { find: "@", replacement: path.resolve(__dirname, "./src") },
+        ...(performanceMonitoringEnabled
+          ? [{ find: "react-dom/client", replacement: "react-dom/profiling" }]
+          : []),
         {
           find: /^use-sync-external-store\/shim\/with-selector(\.js)?$/,
           replacement: path.resolve(
@@ -115,25 +122,6 @@ export default defineConfig(({ mode }) => {
             }),
           ]
         : []),
-      sentryVitePlugin({
-        applicationKey: SENTRY_APPLICATION_KEY,
-        bundleSizeOptimizations: {
-          excludeDebugStatements: true,
-          excludeReplayIframe: true,
-          excludeReplayShadowDom: true,
-          excludeTracing: true,
-        },
-        release: {
-          create: false,
-          inject: true,
-          name: runtimeVersion,
-        },
-        silent: true,
-        sourcemaps: {
-          disable: true,
-        },
-        telemetry: false,
-      }),
     ],
   };
 });

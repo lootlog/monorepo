@@ -1,4 +1,5 @@
 import { storageKey } from "@/lib/storage-key";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -15,24 +16,27 @@ export const createEventModeSelectionScope = (
 ) => `${margonemAccountId}:${normalizedWorld}`;
 
 export const useEventModeSelectionStore = create<EventModeSelectionState>()(
-  persist(
-    (set) => ({
-      selectedEventIdByScope: {},
-      setSelectedEventId: (scope, eventId) =>
-        set((state) => ({
-          selectedEventIdByScope: {
-            ...state.selectedEventIdByScope,
-            [scope]: eventId,
-          },
-        })),
-    }),
-    {
-      name: STORAGE_KEY,
-      storage: createJSONStorage(() => localStorage),
-      version: 1,
-      partialize: (state) => ({
-        selectedEventIdByScope: state.selectedEventIdByScope,
+  performanceStoreMiddleware(
+    "event-mode-selection",
+    persist(
+      (set) => ({
+        selectedEventIdByScope: {},
+        setSelectedEventId: (scope, eventId) =>
+          set((state) => ({
+            selectedEventIdByScope: {
+              ...state.selectedEventIdByScope,
+              [scope]: eventId,
+            },
+          })),
       }),
-    },
+      {
+        name: STORAGE_KEY,
+        storage: createJSONStorage(() => localStorage),
+        version: 1,
+        partialize: (state) => ({
+          selectedEventIdByScope: state.selectedEventIdByScope,
+        }),
+      },
+    ),
   ),
 );

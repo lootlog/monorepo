@@ -2,6 +2,7 @@ import type {
   RuntimePartyMember,
   RuntimeStatus,
 } from "@/lib/margonem-runtime/runtime.types";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 
 type PartyState = {
@@ -14,25 +15,33 @@ type PartyState = {
   setMembers: (members: readonly RuntimePartyMember[]) => void;
 };
 
-export const usePartyStore = create<PartyState>()((set, get) => ({
-  members: [],
-  revision: 0,
-  status: "uninitialized",
-  clearParty: () =>
-    set((state) => ({
+export const usePartyStore = create<PartyState>()(
+  performanceStoreMiddleware(
+    "party",
+    (set, get) => ({
       members: [],
-      revision: state.revision + 1,
+      revision: 0,
       status: "uninitialized",
-    })),
-  isMember: (characterId) =>
-    get().members.some((member) => member.characterId === String(characterId)),
-  replaceParty: (members) =>
-    set((state) => ({
-      members: Object.freeze(
-        members.map((member) => Object.freeze({ ...member })),
-      ),
-      revision: state.revision + 1,
-      status: "ready",
-    })),
-  setMembers: (members) => get().replaceParty(members),
-}));
+      clearParty: () =>
+        set((state) => ({
+          members: [],
+          revision: state.revision + 1,
+          status: "uninitialized",
+        })),
+      isMember: (characterId) =>
+        get().members.some(
+          (member) => member.characterId === String(characterId),
+        ),
+      replaceParty: (members) =>
+        set((state) => ({
+          members: Object.freeze(
+            members.map((member) => Object.freeze({ ...member })),
+          ),
+          revision: state.revision + 1,
+          status: "ready",
+        })),
+      setMembers: (members) => get().replaceParty(members),
+    }),
+    (state) => state.members.length,
+  ),
+);

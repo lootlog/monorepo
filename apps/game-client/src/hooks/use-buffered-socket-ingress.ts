@@ -1,6 +1,10 @@
 import type { GatewayEvent } from "@/config/gateway";
 import type { AppSocket } from "@/lib/socket";
 import { useEffect, useRef } from "react";
+import {
+  measureLootlogCallback,
+  queueMeasuredMicrotask,
+} from "@/lib/performance-monitoring/measured-callback";
 
 type SocketWithListeners = Pick<AppSocket, "on" | "off">;
 
@@ -126,27 +130,30 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
     const listenerGeneration = listenerGenerationRef.current + 1;
     listenerGenerationRef.current = listenerGeneration;
 
-    const handleEvent = (payload: TPayload) => {
-      if (pendingItemsRef.current.length >= maxPendingItems) {
-        pendingItemsRef.current.shift();
-      }
+    const handleEvent = measureLootlogCallback(
+      "socket.buffered-ingress",
+      (payload: TPayload) => {
+        if (pendingItemsRef.current.length >= maxPendingItems) {
+          pendingItemsRef.current.shift();
+        }
 
-      pendingItemsRef.current.push(payload);
+        pendingItemsRef.current.push(payload);
 
-      if (!isReadyRef.current || flushScheduledRef.current) {
-        return;
-      }
-
-      flushScheduledRef.current = true;
-      queueMicrotask(() => {
-        flushScheduledRef.current = false;
-        if (listenerGenerationRef.current !== listenerGeneration) {
+        if (!isReadyRef.current || flushScheduledRef.current) {
           return;
         }
 
-        flushPendingItemsRef.current();
-      });
-    };
+        flushScheduledRef.current = true;
+        queueMeasuredMicrotask("socket.buffered-ingress.flush", () => {
+          flushScheduledRef.current = false;
+          if (listenerGenerationRef.current !== listenerGeneration) {
+            return;
+          }
+
+          flushPendingItemsRef.current();
+        });
+      },
+    );
 
     socket.on(event as never, handleEvent as never);
 
@@ -172,42 +179,45 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
     const maxPendingCancels =
       cancelOptions.maxPendingCancels ?? DEFAULT_MAX_PENDING_CANCELS;
 
-    const handleCancelEvent = (payload: TCancelPayload) => {
-      const getCancelId = getCancelIdRef.current;
+    const handleCancelEvent = measureLootlogCallback(
+      "socket.buffered-ingress.cancel",
+      (payload: TCancelPayload) => {
+        const getCancelId = getCancelIdRef.current;
 
-      if (!getCancelId) {
-        return;
-      }
+        if (!getCancelId) {
+          return;
+        }
 
-      const cancelId = getCancelId(payload);
+        const cancelId = getCancelId(payload);
 
-      if (!isReadyRef.current) {
-        if (pendingCancelIdsRef.current.size >= maxPendingCancels) {
-          const oldestPendingCancelId = pendingCancelIdsRef.current
-            .values()
-            .next().value;
+        if (!isReadyRef.current) {
+          if (pendingCancelIdsRef.current.size >= maxPendingCancels) {
+            const oldestPendingCancelId = pendingCancelIdsRef.current
+              .values()
+              .next().value;
 
-          if (oldestPendingCancelId) {
-            pendingCancelIdsRef.current.delete(oldestPendingCancelId);
+            if (oldestPendingCancelId) {
+              pendingCancelIdsRef.current.delete(oldestPendingCancelId);
+            }
           }
+
+          pendingCancelIdsRef.current.add(cancelId);
+
+          const getPayloadId = getPayloadIdRef.current;
+
+          if (getPayloadId) {
+            pendingItemsRef.current = pendingItemsRef.current.filter(
+              (pendingItem) => getPayloadId(pendingItem) !== cancelId,
+            );
+          }
+
+          return;
         }
 
-        pendingCancelIdsRef.current.add(cancelId);
-
-        const getPayloadId = getPayloadIdRef.current;
-
-        if (getPayloadId) {
-          pendingItemsRef.current = pendingItemsRef.current.filter(
-            (pendingItem) => getPayloadId(pendingItem) !== cancelId,
-          );
-        }
-
-        return;
-      }
-
-      flushPendingItemsRef.current();
-      onCancelRef.current?.(payload);
-    };
+        flushPendingItemsRef.current();
+        onCancelRef.current?.(payload);
+      },
+    );
 
     socket.on(cancelOptions.cancelEvent as never, handleCancelEvent as never);
 

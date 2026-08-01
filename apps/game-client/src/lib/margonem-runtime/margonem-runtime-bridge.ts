@@ -1,5 +1,14 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { captureRuntimeObserverFailure } from "@/lib/error-monitoring";
+import { captureRuntimeObserverFailure } from "@/lib/local-diagnostics";
+import {
+  measurePerformance,
+  recordPerformance,
+  runWithPerformanceContext,
+} from "@/lib/performance-monitoring/performance-monitor";
+import {
+  queueMeasuredMicrotask,
+  setMeasuredTimeout,
+} from "@/lib/performance-monitoring/measured-callback";
 import { parseRuntimeFacts } from "./runtime-event-parser";
 import {
   createRuntimeAdapter,
@@ -50,6 +59,8 @@ export const MAX_QUEUED_RUNTIME_BYTES = 4 * 1024 * 1024;
 export const MAX_QUEUED_RUNTIME_FACTS = 10_000;
 const INSTALL_RETRY_DELAY_MS = 100;
 const MAX_INSTALL_RETRIES = 20;
+const PERFORMANCE_MONITORING_ENABLED =
+  import.meta.env.VITE_GAME_CLIENT_PERFORMANCE_MONITORING === "1";
 
 const EMPTY_INGRESS = Object.freeze({
   game: null,
@@ -62,6 +73,7 @@ export class MargonemRuntimeBridge {
   private readonly appliedHandlers = new Set<RuntimeEventHandler>();
   private readonly incomingHandlers = new Set<RuntimeEventHandler>();
   private readonly intentHandlers = new Set<RuntimeIntentHandler>();
+  private readonly observerNames = new WeakMap<Function, string>();
   private readonly adapter?: MargonemRuntimeAdapter;
   private resolvedAdapter: MargonemRuntimeAdapter | null = null;
   private readonly onFatalPipelineError?: () => void;
@@ -84,7 +96,7 @@ export class MargonemRuntimeBridge {
   private queuedBytes = 0;
   private queuedFacts = 0;
   private installRetryCount = 0;
-  private installRetryTimeout: ReturnType<typeof setTimeout> | null = null;
+  private installRetryTimeout: number | null = null;
   private failureReason: string | null = null;
   private inboundSeam: string | null = null;
   private ready = false;
@@ -121,14 +133,54 @@ export class MargonemRuntimeBridge {
 
     const { container, property, original: originalInbound } = inbound;
     const createEnvelope = this.createEnvelopeSafely.bind(this);
+    const getNextCorrelationId = () => `runtime-event-${this.sequence + 1}`;
     const receiveIncoming = this.receiveIncoming.bind(this);
     const emitApplied = (envelope: RuntimeEventEnvelope) => {
-      this.emit(this.appliedHandlers, envelope, "applied");
-      this.activeIntent = null;
+      if (!PERFORMANCE_MONITORING_ENABLED) {
+        this.emit(this.appliedHandlers, envelope, "applied");
+        this.activeIntent = null;
+        return;
+      }
+      runWithPerformanceContext(`runtime-event-${envelope.sequence}`, () => {
+        measurePerformance(
+          "runtime.applied",
+          "runtime-pipeline",
+          { factCount: envelope.facts.length },
+          () => this.emit(this.appliedHandlers, envelope, "applied"),
+        );
+        this.activeIntent = null;
+      });
     };
     const wrappedInbound: RuntimeFunction = function (...args) {
-      const envelope = createEnvelope(args[0]);
-      if (envelope) receiveIncoming(envelope);
+      if (!PERFORMANCE_MONITORING_ENABLED) {
+        const envelope = createEnvelope(args[0]);
+        if (envelope) receiveIncoming(envelope);
+        const result = Reflect.apply(originalInbound, this, args);
+        if (envelope) emitApplied(envelope);
+        return result;
+      }
+
+      const pendingCorrelationId = getNextCorrelationId();
+      const envelope = runWithPerformanceContext(pendingCorrelationId, () =>
+        measurePerformance(
+          "runtime.ingress.envelope",
+          "runtime-pipeline",
+          undefined,
+          () => createEnvelope(args[0]),
+        ),
+      );
+      if (envelope) {
+        runWithPerformanceContext(`runtime-event-${envelope.sequence}`, () =>
+          measurePerformance(
+            "runtime.incoming",
+            "runtime-pipeline",
+            { factCount: envelope.facts.length },
+            () => receiveIncoming(envelope),
+          ),
+        );
+      }
+
+      // The original Margonem handler is deliberately outside every Lootlog measurement.
       const result = Reflect.apply(originalInbound, this, args);
       if (envelope) emitApplied(envelope);
       return result;
@@ -162,7 +214,7 @@ export class MargonemRuntimeBridge {
       this.activeProcessor = processor;
       this.unsubscribeActiveProcessor = this.subscribeIncoming((envelope) => {
         processor(envelope);
-      });
+      }, "event-dispatcher");
     }
 
     const registration = Symbol("runtime-processor-registration");
@@ -213,22 +265,34 @@ export class MargonemRuntimeBridge {
     const queuedEvents = this.eventQueue.splice(0);
     this.queuedBytes = 0;
     this.queuedFacts = 0;
-    for (const envelope of queuedEvents) {
-      this.emit(this.incomingHandlers, envelope, "incoming");
-    }
+    measurePerformance(
+      "runtime.queue.drain",
+      "runtime-pipeline",
+      { eventCount: queuedEvents.length },
+      () => {
+        for (const envelope of queuedEvents) {
+          runWithPerformanceContext(`runtime-event-${envelope.sequence}`, () =>
+            this.emit(this.incomingHandlers, envelope, "incoming"),
+          );
+        }
+      },
+    );
   }
 
-  subscribeIncoming(handler: RuntimeEventHandler): () => void {
+  subscribeIncoming(handler: RuntimeEventHandler, name?: string): () => void {
+    this.observerNames.set(handler, name ?? handler.name ?? "anonymous");
     this.incomingHandlers.add(handler);
     return () => this.incomingHandlers.delete(handler);
   }
 
-  subscribeApplied(handler: RuntimeEventHandler): () => void {
+  subscribeApplied(handler: RuntimeEventHandler, name?: string): () => void {
+    this.observerNames.set(handler, name ?? handler.name ?? "anonymous");
     this.appliedHandlers.add(handler);
     return () => this.appliedHandlers.delete(handler);
   }
 
-  subscribeIntent(handler: RuntimeIntentHandler): () => void {
+  subscribeIntent(handler: RuntimeIntentHandler, name?: string): () => void {
+    this.observerNames.set(handler, name ?? handler.name ?? "anonymous");
     this.intentHandlers.add(handler);
     return () => this.intentHandlers.delete(handler);
   }
@@ -277,7 +341,11 @@ export class MargonemRuntimeBridge {
     const runtimeWindow = getRuntimeWindow();
     if (typeof runtimeWindow._g === "function") {
       const originalOutgoing = runtimeWindow._g;
-      const observeIntent = this.observeIntent.bind(this);
+      const observeIntent = (
+        PERFORMANCE_MONITORING_ENABLED
+          ? this.observeIntentMeasured
+          : this.observeIntent
+      ).bind(this);
       const wrappedOutgoing: RuntimeFunction = function (...args) {
         observeIntent(args[0]);
 
@@ -298,7 +366,11 @@ export class MargonemRuntimeBridge {
       for (const property of ["send", "send2"] as const) {
         const original = communication[property];
         if (typeof original !== "function") continue;
-        const observeIntent = this.observeIntent.bind(this);
+        const observeIntent = (
+          PERFORMANCE_MONITORING_ENABLED
+            ? this.observeIntentMeasured
+            : this.observeIntent
+        ).bind(this);
         const originalFunction = original as RuntimeFunction;
         const wrapper: RuntimeFunction = function (...args) {
           observeIntent(args[0]);
@@ -328,7 +400,12 @@ export class MargonemRuntimeBridge {
     this.activeIntent = intent;
     for (const handler of this.intentHandlers) {
       try {
-        handler(intent);
+        measurePerformance(
+          `runtime.observer.intent.${this.getObserverName(handler)}`,
+          "runtime-observer",
+          undefined,
+          () => handler(intent),
+        );
       } catch (error) {
         this.reportObserverFailure({
           error,
@@ -338,6 +415,19 @@ export class MargonemRuntimeBridge {
         continue;
       }
     }
+  }
+
+  private observeIntentMeasured(command: unknown): void {
+    if (!PERFORMANCE_MONITORING_ENABLED) {
+      this.observeIntent(command);
+      return;
+    }
+
+    runWithPerformanceContext(`runtime-event-${this.sequence + 1}`, () =>
+      measurePerformance("runtime.intent", "runtime-pipeline", undefined, () =>
+        this.observeIntent(command),
+      ),
+    );
   }
 
   private parseIntent(command: unknown): RuntimeIntent | null {
@@ -364,8 +454,22 @@ export class MargonemRuntimeBridge {
     let event: GameEvent;
     if (typeof payload === "string") {
       try {
-        event = JSON.parse(payload) as GameEvent;
+        event = PERFORMANCE_MONITORING_ENABLED
+          ? measurePerformance(
+              "runtime.ingress.parse",
+              "runtime-pipeline",
+              { payloadType: "string" },
+              () => JSON.parse(payload) as GameEvent,
+            )
+          : (JSON.parse(payload) as GameEvent);
       } catch {
+        if (PERFORMANCE_MONITORING_ENABLED) {
+          recordPerformance({
+            category: "runtime-pipeline",
+            data: { payloadType: "string" },
+            name: "runtime.ingress.parse-failure",
+          });
+        }
         return null;
       }
     } else if (payload && typeof payload === "object") {
@@ -423,8 +527,19 @@ export class MargonemRuntimeBridge {
     } catch {
       game = null;
     }
+    const facts = PERFORMANCE_MONITORING_ENABLED
+      ? measurePerformance(
+          "runtime.ingress.fact-parsing",
+          "runtime-pipeline",
+          undefined,
+          () => parseRuntimeFacts(event),
+        )
+      : parseRuntimeFacts(event);
+    if (PERFORMANCE_MONITORING_ENABLED) {
+      this.recordEnvelopeMetadata(event, facts);
+    }
     return Object.freeze({
-      facts: parseRuntimeFacts(event),
+      facts,
       ingress: Object.freeze({
         ...EMPTY_INGRESS,
         game,
@@ -464,12 +579,34 @@ export class MargonemRuntimeBridge {
       nextFacts > MAX_QUEUED_RUNTIME_FACTS
     ) {
       this.failureReason = "fatal:queue-overflow";
+      if (PERFORMANCE_MONITORING_ENABLED) {
+        recordPerformance({
+          category: "runtime-pipeline",
+          data: {
+            queueBytes: this.queuedBytes,
+            queueEvents: this.eventQueue.length,
+            queueFacts: this.queuedFacts,
+          },
+          name: "runtime.queue.overflow",
+        });
+      }
       this.onFatalPipelineError?.();
       return;
     }
     this.eventQueue.push(envelope);
     this.queuedBytes += rawBytes;
     this.queuedFacts = nextFacts;
+    if (PERFORMANCE_MONITORING_ENABLED) {
+      recordPerformance({
+        category: "runtime-pipeline",
+        data: {
+          queueBytes: this.queuedBytes,
+          queueEvents: this.eventQueue.length,
+          queueFacts: this.queuedFacts,
+        },
+        name: "runtime.queue.enqueue",
+      });
+    }
   }
 
   private estimateRawBytes(event: GameEvent | undefined): number {
@@ -489,10 +626,14 @@ export class MargonemRuntimeBridge {
       return;
     }
     this.installRetryCount += 1;
-    this.installRetryTimeout = setTimeout(() => {
-      this.installRetryTimeout = null;
-      this.install();
-    }, INSTALL_RETRY_DELAY_MS);
+    this.installRetryTimeout = setMeasuredTimeout(
+      "runtime.install-retry",
+      () => {
+        this.installRetryTimeout = null;
+        this.install();
+      },
+      INSTALL_RETRY_DELAY_MS,
+    );
   }
 
   private clearInstallRetry(): void {
@@ -550,7 +691,16 @@ export class MargonemRuntimeBridge {
   ): void {
     for (const handler of handlers) {
       try {
-        handler(envelope);
+        if (!PERFORMANCE_MONITORING_ENABLED) {
+          handler(envelope);
+          continue;
+        }
+        measurePerformance(
+          `runtime.observer.${phase}.${this.getObserverName(handler)}`,
+          "runtime-observer",
+          { factCount: envelope.facts.length },
+          () => handler(envelope),
+        );
       } catch (error) {
         this.reportObserverFailure({
           error,
@@ -559,6 +709,34 @@ export class MargonemRuntimeBridge {
         });
         continue;
       }
+    }
+  }
+
+  private getObserverName(handler: Function): string {
+    return this.observerNames.get(handler) ?? handler.name ?? "anonymous";
+  }
+
+  private recordEnvelopeMetadata(
+    event: GameEvent,
+    facts: RuntimeEventEnvelope["facts"],
+  ): void {
+    recordPerformance({
+      category: "runtime-facts",
+      data: {
+        factCount: facts.length,
+        npcDeletionCount: event.npcs_del?.length ?? 0,
+        npcUpsertCount: event.npcs?.length ?? 0,
+        otherCount: Object.keys(event.other ?? {}).length,
+        warriorCount: Object.keys(event.f?.w ?? {}).length,
+      },
+      name: "runtime.envelope.facts",
+    });
+    for (const fact of facts) {
+      recordPerformance({
+        category: "runtime-facts",
+        data: { factKind: fact.kind },
+        name: `runtime.fact.${fact.kind}`,
+      });
     }
   }
 
@@ -609,7 +787,7 @@ function scheduleActiveRuntimeTeardown(): void {
   const failedRuntime = runtimeWindow.__lootlogGameClientRuntime;
   if (!failedRuntime) return;
 
-  queueMicrotask(() => {
+  queueMeasuredMicrotask("runtime.fatal-teardown", () => {
     if (runtimeWindow.__lootlogGameClientRuntime === failedRuntime) {
       failedRuntime.dispose();
     }

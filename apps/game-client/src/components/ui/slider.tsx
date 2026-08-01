@@ -1,6 +1,7 @@
 import { Slider as BaseSlider } from "@base-ui/react/slider";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { addMeasuredEventListener } from "@/lib/performance-monitoring/measured-callback";
 
 interface SliderProps extends Omit<
   BaseSlider.Root.Props<number>,
@@ -85,13 +86,28 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
         pointerGesture.current = null;
         setDragging(false);
       };
-      window.addEventListener("pointermove", handlePointerMove);
-      window.addEventListener("pointerup", endDragging);
-      window.addEventListener("pointercancel", endDragging);
+      const removeListeners = [
+        addMeasuredEventListener(
+          window,
+          "pointermove",
+          handlePointerMove as EventListener,
+          "slider.pointermove",
+        ),
+        addMeasuredEventListener(
+          window,
+          "pointerup",
+          endDragging as EventListener,
+          "slider.pointerup",
+        ),
+        addMeasuredEventListener(
+          window,
+          "pointercancel",
+          endDragging as EventListener,
+          "slider.pointercancel",
+        ),
+      ];
       return () => {
-        window.removeEventListener("pointermove", handlePointerMove);
-        window.removeEventListener("pointerup", endDragging);
-        window.removeEventListener("pointercancel", endDragging);
+        for (const removeListener of removeListeners) removeListener();
       };
     }, []);
 

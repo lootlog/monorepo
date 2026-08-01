@@ -8,6 +8,7 @@
     "dev": "vite",
     "dev:local-prod": "pnpm run build:local-prod && node ./src/scripts/serve-local-build.mjs",
     "build": "tsc && vite build && node ./src/scripts/copy-entrypoint.mjs",
+    "build:performance": "VITE_GAME_CLIENT_PERFORMANCE_MONITORING=1 pnpm run build",
     "build:fast": "tsc && FAST_BUILD=1 vite build && node ./src/scripts/copy-entrypoint.mjs",
     "build:local-prod": "tsc && vite build --mode production-local && node ./src/scripts/generate-local-entrypoint.mjs --output ./dist/@lootlog/game-client-local.user.js --bundle-url http://127.0.0.1:4173/@lootlog/game-client.user.js",
     "preview": "vite preview",
@@ -30,7 +31,6 @@
     "@lootlog/margonem": "workspace:*",
     "@lootlog/socket-parser": "workspace:*",
     "@lootlog/types": "workspace:*",
-    "@sentry/react": "^10.68.0",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-query": "catalog:",
     "better-auth": "^1.6.25",
@@ -55,7 +55,6 @@
   },
   "devDependencies": {
     "@rolldown/plugin-babel": "^0.2.3",
-    "@sentry/vite-plugin": "^5.4.0",
     "@tailwindcss/postcss": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
     "@testing-library/jest-dom": "^7.0.0",

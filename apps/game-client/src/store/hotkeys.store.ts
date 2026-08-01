@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import i18n from "@/i18n/config";
 
 const STORAGE_KEY = storageKey("ll:hotkeys:state");
@@ -239,43 +240,46 @@ interface HotkeysState {
 }
 
 export const useHotkeysStore = create<HotkeysState>()(
-  persist(
-    (set, get) => ({
-      bindings: getDefaultBindings(),
-      setBinding: (action, binding) => {
-        const hasConflict = Object.entries(get().bindings).some(
-          ([otherAction, otherBinding]) =>
-            otherAction !== action && bindingsEqual(otherBinding, binding),
-        );
-        if (hasConflict) {
-          return false;
-        }
+  performanceStoreMiddleware(
+    "hotkeys",
+    persist(
+      (set, get) => ({
+        bindings: getDefaultBindings(),
+        setBinding: (action, binding) => {
+          const hasConflict = Object.entries(get().bindings).some(
+            ([otherAction, otherBinding]) =>
+              otherAction !== action && bindingsEqual(otherBinding, binding),
+          );
+          if (hasConflict) {
+            return false;
+          }
 
-        set((state) => ({
-          bindings: { ...state.bindings, [action]: binding },
-        }));
-        return true;
+          set((state) => ({
+            bindings: { ...state.bindings, [action]: binding },
+          }));
+          return true;
+        },
+        resetBinding: (action) => {
+          const config = HOTKEY_ACTIONS.find((c) => c.action === action);
+          if (!config) return;
+          set((state) => ({
+            bindings: {
+              ...state.bindings,
+              [action]: { ...config.defaultBinding },
+            },
+          }));
+        },
+        resetAll: () => set({ bindings: getDefaultBindings() }),
+      }),
+      {
+        name: STORAGE_KEY,
+        partialize: (state) => ({ bindings: state.bindings }),
+        storage: createJSONStorage(() => localStorage),
+        version: 4,
+        migrate: (persisted) =>
+          migrateHotkeysState(persisted) as unknown as HotkeysState,
       },
-      resetBinding: (action) => {
-        const config = HOTKEY_ACTIONS.find((c) => c.action === action);
-        if (!config) return;
-        set((state) => ({
-          bindings: {
-            ...state.bindings,
-            [action]: { ...config.defaultBinding },
-          },
-        }));
-      },
-      resetAll: () => set({ bindings: getDefaultBindings() }),
-    }),
-    {
-      name: STORAGE_KEY,
-      partialize: (state) => ({ bindings: state.bindings }),
-      storage: createJSONStorage(() => localStorage),
-      version: 4,
-      migrate: (persisted) =>
-        migrateHotkeysState(persisted) as unknown as HotkeysState,
-    },
+    ),
   ),
 );
 

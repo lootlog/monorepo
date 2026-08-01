@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setMeasuredInterval } from "@/lib/performance-monitoring/measured-callback";
 
 export const useEventModeClock = (enabled: boolean) => {
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -9,9 +10,13 @@ export const useEventModeClock = (enabled: boolean) => {
     }
 
     setNowMs(Date.now());
-    const intervalId = window.setInterval(() => {
-      setNowMs(Date.now());
-    }, 1_000);
+    const intervalId = setMeasuredInterval(
+      "event-mode.clock",
+      () => {
+        setNowMs(Date.now());
+      },
+      1_000,
+    );
 
     return () => {
       window.clearInterval(intervalId);

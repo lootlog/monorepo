@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setMeasuredInterval } from "@/lib/performance-monitoring/measured-callback";
 
 export const NPC_DETECTOR_CLOCK_INTERVAL_MS = 250;
 const subscribers = new Set<(currentTimeMs: number) => void>();
@@ -18,10 +19,14 @@ const startClock = () => {
     return;
   }
 
-  clockIntervalId = window.setInterval(() => {
-    const currentTimeMs = Date.now();
-    subscribers.forEach((subscriber) => subscriber(currentTimeMs));
-  }, NPC_DETECTOR_CLOCK_INTERVAL_MS);
+  clockIntervalId = setMeasuredInterval(
+    "npc-detector.clock",
+    () => {
+      const currentTimeMs = Date.now();
+      subscribers.forEach((subscriber) => subscriber(currentTimeMs));
+    },
+    NPC_DETECTOR_CLOCK_INTERVAL_MS,
+  );
 };
 
 const subscribeToNpcDetectorClock = (

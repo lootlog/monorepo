@@ -42,7 +42,7 @@ const {
   },
 }));
 
-vi.mock("@/lib/error-monitoring", () => ({
+vi.mock("@/lib/local-diagnostics", () => ({
   reportLootSkipped: mockReportLootSkipped,
 }));
 

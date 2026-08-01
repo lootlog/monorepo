@@ -9,7 +9,8 @@ import {
   reportApiActionFailure,
   type ApiActionMonitoringContext,
   type FailedApiRequestDiagnostic,
-} from "@/lib/error-monitoring";
+} from "@/lib/local-diagnostics";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 type RecordValue = Record<string, unknown>;
 
@@ -482,7 +483,7 @@ const delayRetry = (delayMs: number): Promise<void> => {
   }
 
   return new Promise((resolve) => {
-    window.setTimeout(resolve, delayMs);
+    setMeasuredTimeout("logs.retry-delay", resolve, delayMs);
   });
 };
 

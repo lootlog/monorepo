@@ -4,6 +4,7 @@ import type {
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
 } from "@lootlog/types";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 
 export type ReadyRoomCharacterIdentity = {
@@ -236,122 +237,124 @@ export function isReadyRoomExpired(
   );
 }
 
-export const usePartyFinderStore = create<PartyFinderState>((set) => ({
-  projections: {},
-  roomVersions: {},
-  readyRoomsSynchronized: false,
-  mergeProjection: (projection) =>
-    set((state) =>
-      mergeProjectionIntoState(
-        state.projections,
-        state.roomVersions,
-        projection,
-      ),
-    ),
-  mergeProjections: (incomingProjections) =>
-    set((state) =>
-      incomingProjections.reduce(
-        (currentState, projection) =>
-          mergeProjectionIntoState(
-            currentState.projections,
-            currentState.roomVersions,
-            projection,
-          ),
-        {
-          projections: state.projections,
-          roomVersions: pruneExpiredRoomTombstones(
-            state.roomVersions,
-            Date.now(),
-          ),
-        },
-      ),
-    ),
-  applyUpdate: (update) =>
-    set((state) => {
-      if (update.schemaVersion !== 3) return state;
-      if (update.type === "UPSERT") {
-        return mergeProjectionIntoState(
+export const usePartyFinderStore = create<PartyFinderState>(
+  performanceStoreMiddleware("party-finder", (set) => ({
+    projections: {},
+    roomVersions: {},
+    readyRoomsSynchronized: false,
+    mergeProjection: (projection) =>
+      set((state) =>
+        mergeProjectionIntoState(
           state.projections,
           state.roomVersions,
-          update.projection,
-        );
-      }
-      return removeProjectionFromState(
-        state.projections,
-        state.roomVersions,
-        update.notificationId,
-        update.revision,
-      );
-    }),
-  applyAuthoritativeSync: (incomingProjections, baseline) =>
-    set((state) => {
-      const validIncomingProjections =
-        incomingProjections.filter(isSchemaVersionThree);
-      const incomingIds = new Set(
-        validIncomingProjections.map(({ notificationId }) => notificationId),
-      );
-      let nextState = validIncomingProjections.reduce(
-        (currentState, projection) =>
-          mergeProjectionIntoState(
-            currentState.projections,
-            currentState.roomVersions,
-            projection,
-          ),
-        {
-          projections: Object.fromEntries(
-            Object.entries(state.projections).filter(([, projection]) =>
-              isSchemaVersionThree(projection),
+          projection,
+        ),
+      ),
+    mergeProjections: (incomingProjections) =>
+      set((state) =>
+        incomingProjections.reduce(
+          (currentState, projection) =>
+            mergeProjectionIntoState(
+              currentState.projections,
+              currentState.roomVersions,
+              projection,
             ),
-          ),
-          roomVersions: state.roomVersions,
-        },
-      );
-
-      for (const [notificationId, baselineVersion] of Object.entries(
-        baseline,
-      )) {
-        if (
-          baselineVersion.presence !== "PRESENT" ||
-          incomingIds.has(notificationId)
-        ) {
-          continue;
-        }
-        const currentVersion = nextState.roomVersions[notificationId];
-        if (
-          currentVersion?.revision === baselineVersion.revision &&
-          currentVersion.presence === "PRESENT"
-        ) {
-          nextState = removeProjectionFromState(
-            nextState.projections,
-            nextState.roomVersions,
-            notificationId,
-            baselineVersion.revision,
+          {
+            projections: state.projections,
+            roomVersions: pruneExpiredRoomTombstones(
+              state.roomVersions,
+              Date.now(),
+            ),
+          },
+        ),
+      ),
+    applyUpdate: (update) =>
+      set((state) => {
+        if (update.schemaVersion !== 3) return state;
+        if (update.type === "UPSERT") {
+          return mergeProjectionIntoState(
+            state.projections,
+            state.roomVersions,
+            update.projection,
           );
         }
-      }
-      return { ...nextState, readyRoomsSynchronized: true };
-    }),
-  setReadyRoomsSynchronized: (readyRoomsSynchronized) =>
-    set({ readyRoomsSynchronized }),
-  removeProjection: (notificationId) =>
-    set((state) => {
-      const revision =
-        state.roomVersions[notificationId]?.revision ??
-        state.projections[notificationId]?.revision;
-      if (revision === undefined) return state;
-      return removeProjectionFromState(
-        state.projections,
-        state.roomVersions,
-        notificationId,
-        revision,
-      );
-    }),
-  clearReadyRooms: () => {
-    readyRoomObservationSequence = 0;
-    set({
-      projections: {},
-      roomVersions: {},
-      readyRoomsSynchronized: false,
-    });
-  },
-}));
+        return removeProjectionFromState(
+          state.projections,
+          state.roomVersions,
+          update.notificationId,
+          update.revision,
+        );
+      }),
+    applyAuthoritativeSync: (incomingProjections, baseline) =>
+      set((state) => {
+        const validIncomingProjections =
+          incomingProjections.filter(isSchemaVersionThree);
+        const incomingIds = new Set(
+          validIncomingProjections.map(({ notificationId }) => notificationId),
+        );
+        let nextState = validIncomingProjections.reduce(
+          (currentState, projection) =>
+            mergeProjectionIntoState(
+              currentState.projections,
+              currentState.roomVersions,
+              projection,
+            ),
+          {
+            projections: Object.fromEntries(
+              Object.entries(state.projections).filter(([, projection]) =>
+                isSchemaVersionThree(projection),
+              ),
+            ),
+            roomVersions: state.roomVersions,
+          },
+        );
+
+        for (const [notificationId, baselineVersion] of Object.entries(
+          baseline,
+        )) {
+          if (
+            baselineVersion.presence !== "PRESENT" ||
+            incomingIds.has(notificationId)
+          ) {
+            continue;
+          }
+          const currentVersion = nextState.roomVersions[notificationId];
+          if (
+            currentVersion?.revision === baselineVersion.revision &&
+            currentVersion.presence === "PRESENT"
+          ) {
+            nextState = removeProjectionFromState(
+              nextState.projections,
+              nextState.roomVersions,
+              notificationId,
+              baselineVersion.revision,
+            );
+          }
+        }
+        return { ...nextState, readyRoomsSynchronized: true };
+      }),
+    setReadyRoomsSynchronized: (readyRoomsSynchronized) =>
+      set({ readyRoomsSynchronized }),
+    removeProjection: (notificationId) =>
+      set((state) => {
+        const revision =
+          state.roomVersions[notificationId]?.revision ??
+          state.projections[notificationId]?.revision;
+        if (revision === undefined) return state;
+        return removeProjectionFromState(
+          state.projections,
+          state.roomVersions,
+          notificationId,
+          revision,
+        );
+      }),
+    clearReadyRooms: () => {
+      readyRoomObservationSequence = 0;
+      set({
+        projections: {},
+        roomVersions: {},
+        readyRoomsSynchronized: false,
+      });
+    },
+  })),
+);

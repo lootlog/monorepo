@@ -1,4 +1,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PerformanceProfiler } from "@/lib/performance-monitoring/performance-profiler";
+import {
+  addMeasuredEventListener,
+  createMeasuredResizeObserver,
+  setMeasuredTimeout,
+} from "@/lib/performance-monitoring/measured-callback";
 import { NpcListItem } from "@/features/npc-detector/components/npc-list-item";
 import {
   type GameNpcWithLocation,
@@ -117,24 +123,36 @@ export const NpcsList: FC<NpcsListProps> = ({
     };
 
     updateViewport();
-    scrollViewport.addEventListener("scroll", updateViewport, {
-      passive: true,
-    });
+    const removeScroll = addMeasuredEventListener(
+      scrollViewport,
+      "scroll",
+      updateViewport,
+      "npc-detector.viewport-scroll",
+      { passive: true },
+    );
 
     const resizeObserver =
       typeof ResizeObserver === "undefined"
         ? null
-        : new ResizeObserver(updateViewport);
+        : createMeasuredResizeObserver(
+            "npc-detector.viewport-resize",
+            updateViewport,
+          );
     resizeObserver?.observe(scrollViewport);
 
-    if (!resizeObserver) {
-      window.addEventListener("resize", updateViewport);
-    }
+    const removeWindowResize = !resizeObserver
+      ? addMeasuredEventListener(
+          window,
+          "resize",
+          updateViewport,
+          "npc-detector.window-resize",
+        )
+      : () => undefined;
 
     return () => {
-      scrollViewport.removeEventListener("scroll", updateViewport);
+      removeScroll();
       resizeObserver?.disconnect();
-      window.removeEventListener("resize", updateViewport);
+      removeWindowResize();
     };
   }, []);
 
@@ -225,7 +243,8 @@ export const NpcsList: FC<NpcsListProps> = ({
     const nearestExpiryAt = Math.min(
       ...exitingNpcRows.map((row) => row.startedAt + NPC_ROW_EXIT_RETENTION_MS),
     );
-    const timeoutId = window.setTimeout(
+    const timeoutId = setMeasuredTimeout(
+      "npc-detector.row-exit",
       () => {
         const now = Date.now();
         setExitingNpcRows((currentRows) =>
@@ -316,39 +335,79 @@ export const NpcsList: FC<NpcsListProps> = ({
   );
 
   return (
-    <ScrollArea
-      ref={scrollViewportRef}
-      className="ll:w-full ll:box-border ll:h-full"
-    >
-      <div
-        ref={listContentRef}
-        className="ll:relative ll:w-full"
-        role="list"
-        style={{ height: renderedTotalHeight }}
+    <PerformanceProfiler id="list.npc-detector">
+      <ScrollArea
+        ref={scrollViewportRef}
+        className="ll:w-full ll:box-border ll:h-full"
       >
-        {visibleNpcs.map((npc, visibleIndex) => {
-          const npcIndex = startIndex + visibleIndex;
+        <div
+          ref={listContentRef}
+          className="ll:relative ll:w-full"
+          role="list"
+          style={{ height: renderedTotalHeight }}
+        >
+          {visibleNpcs.map((npc, visibleIndex) => {
+            const npcIndex = startIndex + visibleIndex;
 
-          return (
+            return (
+              <div
+                key={npc.id}
+                data-ll-npc-row-id={npc.id}
+                aria-posinset={npcIndex + 1}
+                aria-setsize={itemCount}
+                role="listitem"
+                className="ll-npc-list-row ll:absolute ll:left-0 ll:w-full"
+                style={{
+                  height: NPC_ROW_HEIGHT_PX,
+                  top: NPC_LIST_PADDING_TOP_PX + npcIndex * NPC_ROW_STRIDE_PX,
+                }}
+              >
+                <NpcListItem
+                  npcTypeColors={npcTypeColors}
+                  animationEffectsEnabled={animationEffectsEnabled}
+                  npc={npc}
+                  detectionAnimationCycle={
+                    activeDetectionAnimations[npc.id] ?? null
+                  }
+                  notificationCooldownCurrentTimeMs={currentTimeMs}
+                  notificationCooldownEndsAt={
+                    notificationDeadlineByNpcId.get(npc.id) ?? null
+                  }
+                  detectorSettings={detectorSettings}
+                  hasActivePartyGathering={hasActivePartyGathering}
+                  hasMultipleNpcs={hasMultipleNpcs}
+                  orchestration={orchestration}
+                  removeNpc={removeNpc}
+                  setNpcState={setNpcState}
+                  setOpen={setOpen}
+                />
+              </div>
+            );
+          })}
+          {exitingNpcRows.map(({ index, npc, startedAt }) => (
             <div
-              key={npc.id}
-              data-ll-npc-row-id={npc.id}
-              aria-posinset={npcIndex + 1}
-              aria-setsize={itemCount}
-              role="listitem"
-              className="ll-npc-list-row ll:absolute ll:left-0 ll:w-full"
+              key={`exiting-${npc.id}-${startedAt}`}
+              aria-hidden="true"
+              className="ll:pointer-events-none ll:absolute ll:left-0 ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-top-3 ll:zoom-out-95 ll:duration-200"
               style={{
                 height: NPC_ROW_HEIGHT_PX,
-                top: NPC_LIST_PADDING_TOP_PX + npcIndex * NPC_ROW_STRIDE_PX,
+                top: NPC_LIST_PADDING_TOP_PX + index * NPC_ROW_STRIDE_PX,
+              }}
+              onAnimationEnd={(event) => {
+                if (event.currentTarget !== event.target) return;
+                setExitingNpcRows((currentRows) =>
+                  currentRows.filter(
+                    (row) =>
+                      row.npc.id !== npc.id || row.startedAt !== startedAt,
+                  ),
+                );
               }}
             >
               <NpcListItem
                 npcTypeColors={npcTypeColors}
                 animationEffectsEnabled={animationEffectsEnabled}
                 npc={npc}
-                detectionAnimationCycle={
-                  activeDetectionAnimations[npc.id] ?? null
-                }
+                detectionAnimationCycle={null}
                 notificationCooldownCurrentTimeMs={currentTimeMs}
                 notificationCooldownEndsAt={
                   notificationDeadlineByNpcId.get(npc.id) ?? null
@@ -362,46 +421,9 @@ export const NpcsList: FC<NpcsListProps> = ({
                 setOpen={setOpen}
               />
             </div>
-          );
-        })}
-        {exitingNpcRows.map(({ index, npc, startedAt }) => (
-          <div
-            key={`exiting-${npc.id}-${startedAt}`}
-            aria-hidden="true"
-            className="ll:pointer-events-none ll:absolute ll:left-0 ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-top-3 ll:zoom-out-95 ll:duration-200"
-            style={{
-              height: NPC_ROW_HEIGHT_PX,
-              top: NPC_LIST_PADDING_TOP_PX + index * NPC_ROW_STRIDE_PX,
-            }}
-            onAnimationEnd={(event) => {
-              if (event.currentTarget !== event.target) return;
-              setExitingNpcRows((currentRows) =>
-                currentRows.filter(
-                  (row) => row.npc.id !== npc.id || row.startedAt !== startedAt,
-                ),
-              );
-            }}
-          >
-            <NpcListItem
-              npcTypeColors={npcTypeColors}
-              animationEffectsEnabled={animationEffectsEnabled}
-              npc={npc}
-              detectionAnimationCycle={null}
-              notificationCooldownCurrentTimeMs={currentTimeMs}
-              notificationCooldownEndsAt={
-                notificationDeadlineByNpcId.get(npc.id) ?? null
-              }
-              detectorSettings={detectorSettings}
-              hasActivePartyGathering={hasActivePartyGathering}
-              hasMultipleNpcs={hasMultipleNpcs}
-              orchestration={orchestration}
-              removeNpc={removeNpc}
-              setNpcState={setNpcState}
-              setOpen={setOpen}
-            />
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
+          ))}
+        </div>
+      </ScrollArea>
+    </PerformanceProfiler>
   );
 };

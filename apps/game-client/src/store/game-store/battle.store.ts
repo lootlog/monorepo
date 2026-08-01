@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { GameEvent, W } from "@lootlog/margonem/game-events";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 
 export const MAX_BATTLE_CAPTURE_EVENTS = 10_000;
 export const MAX_BATTLE_CAPTURE_BYTES = 5 * 1024 * 1024;
@@ -45,7 +46,7 @@ interface BattleActions {
 }
 
 export const useBattleStore = create<BattleState & BattleActions>(
-  (set, get) => {
+  performanceStoreMiddleware("game-battle", (set, get) => {
     let capturedBytes = 0;
     let capturedTurns: string[] = [];
     let captureOverflowed = false;
@@ -169,5 +170,5 @@ export const useBattleStore = create<BattleState & BattleActions>(
           return { battleWarriors: updatedWarriors };
         }),
     };
-  },
+  }),
 );

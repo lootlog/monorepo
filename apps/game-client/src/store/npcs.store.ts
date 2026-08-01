@@ -2,6 +2,7 @@ import type {
   RuntimeNpc,
   RuntimeStatus,
 } from "@/lib/margonem-runtime/runtime.types";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 
 export type NpcSnapshot = RuntimeNpc;
@@ -61,57 +62,59 @@ const indexNpcs = (npcs: readonly RuntimeNpc[]): NpcsById =>
     ) as Record<number, NpcSnapshot>,
   );
 
-export const useNpcsStore = create<NpcsState>()((set, get) => ({
-  mapEpoch: 0,
-  npcsById: {},
-  revision: 0,
-  status: "uninitialized",
-  applyNpcBatch: ({ removeIds = [], upserts = [] }) =>
-    set((state) => {
-      let nextNpcsById: Record<number, NpcSnapshot> | undefined;
-      const getMutableNpcs = () => {
-        nextNpcsById ??= { ...state.npcsById };
-        return nextNpcsById;
-      };
+export const useNpcsStore = create<NpcsState>()(
+  performanceStoreMiddleware("npcs", (set, get) => ({
+    mapEpoch: 0,
+    npcsById: {},
+    revision: 0,
+    status: "uninitialized",
+    applyNpcBatch: ({ removeIds = [], upserts = [] }) =>
+      set((state) => {
+        let nextNpcsById: Record<number, NpcSnapshot> | undefined;
+        const getMutableNpcs = () => {
+          nextNpcsById ??= { ...state.npcsById };
+          return nextNpcsById;
+        };
 
-      for (const id of removeIds) {
-        if ((nextNpcsById ?? state.npcsById)[id]) {
-          delete getMutableNpcs()[id];
-        }
-      }
-
-      for (const npc of upserts) {
-        const currentNpc = (nextNpcsById ?? state.npcsById)[npc.id];
-        if (currentNpc && areNpcSnapshotsEqual(currentNpc, npc)) {
-          continue;
+        for (const id of removeIds) {
+          if ((nextNpcsById ?? state.npcsById)[id]) {
+            delete getMutableNpcs()[id];
+          }
         }
 
-        getMutableNpcs()[npc.id] = createNpcSnapshot(npc);
-      }
+        for (const npc of upserts) {
+          const currentNpc = (nextNpcsById ?? state.npcsById)[npc.id];
+          if (currentNpc && areNpcSnapshotsEqual(currentNpc, npc)) {
+            continue;
+          }
 
-      if (!nextNpcsById && state.status === "ready") {
-        return state;
-      }
+          getMutableNpcs()[npc.id] = createNpcSnapshot(npc);
+        }
 
-      return {
-        npcsById: Object.freeze(nextNpcsById ?? { ...state.npcsById }),
+        if (!nextNpcsById && state.status === "ready") {
+          return state;
+        }
+
+        return {
+          npcsById: Object.freeze(nextNpcsById ?? { ...state.npcsById }),
+          revision: state.revision + 1,
+          status: "ready",
+        };
+      }),
+    clearNpcs: (mapChanged = false) =>
+      set((state) => ({
+        mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
+        npcsById: Object.freeze({}),
+        revision: state.revision + 1,
+        status: "uninitialized",
+      })),
+    getNpc: (id) => get().npcsById[id],
+    replaceNpcs: (npcs, mapChanged = false) =>
+      set((state) => ({
+        mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
+        npcsById: indexNpcs(npcs),
         revision: state.revision + 1,
         status: "ready",
-      };
-    }),
-  clearNpcs: (mapChanged = false) =>
-    set((state) => ({
-      mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
-      npcsById: Object.freeze({}),
-      revision: state.revision + 1,
-      status: "uninitialized",
-    })),
-  getNpc: (id) => get().npcsById[id],
-  replaceNpcs: (npcs, mapChanged = false) =>
-    set((state) => ({
-      mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
-      npcsById: indexNpcs(npcs),
-      revision: state.revision + 1,
-      status: "ready",
-    })),
-}));
+      })),
+  })),
+);

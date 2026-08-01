@@ -14,6 +14,10 @@ import {
   type MargonemRuntimeBridge,
 } from "./margonem-runtime-bridge";
 import { runtimeOtherHandles } from "./runtime-other-handles";
+import {
+  measurePerformance,
+  runWithPerformanceContext,
+} from "@/lib/performance-monitoring/performance-monitor";
 
 type Dependencies = {
   adapter: MargonemRuntimeAdapter;
@@ -32,46 +36,69 @@ export class RuntimeStateSynchronizer {
 
   install(): void {
     this.cleanup();
-    this.unsubscribe = this.bridge.subscribeApplied(this.reconcileAppliedEvent);
+    this.unsubscribe = this.bridge.subscribeApplied(
+      this.reconcileAppliedEvent,
+      "runtime-state-synchronizer",
+    );
     this.bootstrap();
   }
 
   bootstrap(): boolean {
-    try {
-      const snapshot = this.adapter.getStateSnapshot();
-      const otherHandles = this.adapter.getAllOtherHandles();
-      useGameStore.getState().replaceGame(snapshot.game);
-      useNpcsStore.getState().replaceNpcs(snapshot.npcs);
-      runtimeOtherHandles.replace(otherHandles);
-      useOthersStore.getState().replaceOthers(snapshot.others);
-      usePartyStore.getState().replaceParty(snapshot.party);
-      useFriendsStore.getState().replaceFriends(snapshot.friends, 0);
-      return true;
-    } catch {
-      useGameStore.getState().clearGame();
-      useNpcsStore.getState().clearNpcs();
-      usePartyStore.getState().clearParty();
-      useFriendsStore.getState().clearFriends();
-      runtimeOtherHandles.clear();
-      useOthersStore.getState().clearOthers();
-      return false;
-    }
+    return measurePerformance(
+      "runtime.sync.bootstrap",
+      "runtime-synchronizer",
+      undefined,
+      () => {
+        try {
+          const snapshot = this.adapter.getStateSnapshot();
+          const otherHandles = this.adapter.getAllOtherHandles();
+          this.measureDomain("game", "replace", () =>
+            useGameStore.getState().replaceGame(snapshot.game),
+          );
+          this.measureDomain("npcs", "replace", () =>
+            useNpcsStore.getState().replaceNpcs(snapshot.npcs),
+          );
+          this.measureDomain("other-handles", "replace", () =>
+            runtimeOtherHandles.replace(otherHandles),
+          );
+          this.measureDomain("others", "replace", () =>
+            useOthersStore.getState().replaceOthers(snapshot.others),
+          );
+          this.measureDomain("party", "replace", () =>
+            usePartyStore.getState().replaceParty(snapshot.party),
+          );
+          this.measureDomain("friends", "replace", () =>
+            useFriendsStore.getState().replaceFriends(snapshot.friends, 0),
+          );
+          return true;
+        } catch {
+          this.clearAllDomains();
+          return false;
+        }
+      },
+    );
   }
 
   cleanup(): void {
     this.unsubscribe?.();
     this.unsubscribe = null;
-    useGameStore.getState().clearGame();
-    useNpcsStore.getState().clearNpcs();
-    usePartyStore.getState().clearParty();
-    useFriendsStore.getState().clearFriends();
-    runtimeOtherHandles.clear();
-    useOthersStore.getState().clearOthers();
+    this.clearAllDomains();
   }
 
   private readonly reconcileAppliedEvent = (
     envelope: RuntimeEventEnvelope,
   ): void => {
+    runWithPerformanceContext(`runtime-event-${envelope.sequence}`, () =>
+      measurePerformance(
+        "runtime.sync.reconcile",
+        "runtime-synchronizer",
+        { factCount: envelope.facts?.length ?? 0 },
+        () => this.reconcileEnvelope(envelope),
+      ),
+    );
+  };
+
+  private reconcileEnvelope(envelope: RuntimeEventEnvelope): void {
     const event = envelope.raw;
     if (!event) return;
     const mapChanged = event.town !== undefined;
@@ -89,7 +116,9 @@ export class RuntimeStateSynchronizer {
           profession: null,
         }),
       );
-      usePartyStore.getState().replaceParty(members);
+      this.measureDomain("party", "event-replace", () =>
+        usePartyStore.getState().replaceParty(members),
+      );
     }
 
     if (event.friends !== undefined || event.friends_max !== undefined) {
@@ -107,9 +136,11 @@ export class RuntimeStateSynchronizer {
             }),
           )
         : current.friends;
-      useFriendsStore
-        .getState()
-        .replaceFriends(friends, event.friends_max ?? current.friendsMax);
+      this.measureDomain("friends", "event-replace", () =>
+        useFriendsStore
+          .getState()
+          .replaceFriends(friends, event.friends_max ?? current.friendsMax),
+      );
     }
 
     if (mapChanged) {
@@ -119,22 +150,40 @@ export class RuntimeStateSynchronizer {
         const others = this.adapter.getAllOthers();
         const otherHandles = this.adapter.getAllOtherHandles();
 
-        useGameStore.getState().replaceGame(game, true);
-        useNpcsStore.getState().replaceNpcs(npcs, true);
-        runtimeOtherHandles.replace(otherHandles);
-        useOthersStore.getState().replaceOthers(others, true);
+        this.measureDomain("game", "map-replace", () =>
+          useGameStore.getState().replaceGame(game, true),
+        );
+        this.measureDomain("npcs", "map-replace", () =>
+          useNpcsStore.getState().replaceNpcs(npcs, true),
+        );
+        this.measureDomain("other-handles", "map-replace", () =>
+          runtimeOtherHandles.replace(otherHandles),
+        );
+        this.measureDomain("others", "map-replace", () =>
+          useOthersStore.getState().replaceOthers(others, true),
+        );
       } catch {
-        useGameStore.getState().clearGame(true);
-        useNpcsStore.getState().clearNpcs(true);
-        runtimeOtherHandles.clear();
-        useOthersStore.getState().clearOthers(true);
+        this.measureDomain("game", "map-clear", () =>
+          useGameStore.getState().clearGame(true),
+        );
+        this.measureDomain("npcs", "map-clear", () =>
+          useNpcsStore.getState().clearNpcs(true),
+        );
+        this.measureDomain("other-handles", "map-clear", () =>
+          runtimeOtherHandles.clear(),
+        );
+        this.measureDomain("others", "map-clear", () =>
+          useOthersStore.getState().clearOthers(true),
+        );
       }
       return;
     }
 
     if (event.h !== undefined) {
       try {
-        useGameStore.getState().replaceGame(this.adapter.getGameSnapshot());
+        this.measureDomain("game", "hero-replace", () =>
+          useGameStore.getState().replaceGame(this.adapter.getGameSnapshot()),
+        );
       } catch {
         // Keep the last coherent snapshot when a partial hero update is unavailable.
       }
@@ -160,8 +209,12 @@ export class RuntimeStateSynchronizer {
           removeIds.push(otherId);
         }
       }
-      runtimeOtherHandles.applyBatch({ removeIds, upserts: handleUpserts });
-      useOthersStore.getState().applyBatch({ removeIds, upserts });
+      this.measureDomain("other-handles", "batch", () =>
+        runtimeOtherHandles.applyBatch({ removeIds, upserts: handleUpserts }),
+      );
+      this.measureDomain("others", "batch", () =>
+        useOthersStore.getState().applyBatch({ removeIds, upserts }),
+      );
     }
 
     const affectedIds = new Set<number>();
@@ -170,14 +223,51 @@ export class RuntimeStateSynchronizer {
     if (affectedIds.size === 0) return;
 
     const removeIds: number[] = [];
-    const upserts = [];
+    const upserts: NonNullable<ReturnType<MargonemRuntimeAdapter["getNpc"]>>[] =
+      [];
     for (const npcId of affectedIds) {
       const npc = this.adapter.getNpc(npcId);
       if (npc) upserts.push(npc);
       else removeIds.push(npcId);
     }
-    useNpcsStore.getState().applyNpcBatch({ removeIds, upserts });
-  };
+    this.measureDomain("npcs", "batch", () =>
+      useNpcsStore.getState().applyNpcBatch({ removeIds, upserts }),
+    );
+  }
+
+  private clearAllDomains(): void {
+    this.measureDomain("game", "clear", () =>
+      useGameStore.getState().clearGame(),
+    );
+    this.measureDomain("npcs", "clear", () =>
+      useNpcsStore.getState().clearNpcs(),
+    );
+    this.measureDomain("party", "clear", () =>
+      usePartyStore.getState().clearParty(),
+    );
+    this.measureDomain("friends", "clear", () =>
+      useFriendsStore.getState().clearFriends(),
+    );
+    this.measureDomain("other-handles", "clear", () =>
+      runtimeOtherHandles.clear(),
+    );
+    this.measureDomain("others", "clear", () =>
+      useOthersStore.getState().clearOthers(),
+    );
+  }
+
+  private measureDomain<Result>(
+    domain: string,
+    operation: string,
+    callback: () => Result,
+  ): Result {
+    return measurePerformance(
+      `runtime.sync.${domain}.${operation}`,
+      "runtime-synchronizer",
+      undefined,
+      callback,
+    );
+  }
 }
 
 export const runtimeStateSynchronizer = new RuntimeStateSynchronizer();

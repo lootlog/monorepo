@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { NpcSnapshot } from "@/store/npcs.store";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 
 export type DialogNpcContextSource =
   | "dialog-event"
@@ -21,9 +22,11 @@ interface DialogActions {
   setNpcContext: (context: DialogNpcContext) => void;
 }
 
-export const useDialogStore = create<DialogState & DialogActions>((set) => ({
-  npcContext: null,
+export const useDialogStore = create<DialogState & DialogActions>(
+  performanceStoreMiddleware("game-dialog", (set) => ({
+    npcContext: null,
 
-  clearNpcContext: () => set({ npcContext: null }),
-  setNpcContext: (npcContext) => set({ npcContext }),
-}));
+    clearNpcContext: () => set({ npcContext: null }),
+    setNpcContext: (npcContext) => set({ npcContext }),
+  })),
+);

@@ -27,6 +27,7 @@ import {
 } from "@/features/chat/components/chat-mention-suggestions";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
 import { CHAT_QUERY_GC_TIME_MS } from "@/features/chat/chat.constants";
+import { requestMeasuredAnimationFrame } from "@/lib/performance-monitoring/measured-callback";
 import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
 import {
   filterCommandSuggestions,
@@ -303,7 +304,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const focusEditorCaret = (nextCaretIndex: number) => {
     pendingFocusCaretRef.current = nextCaretIndex;
 
-    requestAnimationFrame(() => {
+    requestMeasuredAnimationFrame("chat.input.focus-caret", () => {
       if (isPending) {
         return;
       }
@@ -321,7 +322,7 @@ export const ChatInput: FC<ChatInputProps> = ({
 
     const nextCaretIndex = pendingFocusCaretRef.current;
 
-    requestAnimationFrame(() => {
+    requestMeasuredAnimationFrame("chat.input.restore-caret", () => {
       if (pendingFocusCaretRef.current !== nextCaretIndex) {
         return;
       }

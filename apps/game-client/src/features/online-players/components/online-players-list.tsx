@@ -27,6 +27,7 @@ import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { SearchX, ShieldX, UsersRound } from "lucide-react";
+import { PerformanceProfiler } from "@/lib/performance-monitoring/performance-profiler";
 
 type OnlinePlayersListProps = {
   viewMode: OnlinePlayersViewMode;
@@ -216,58 +217,60 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   }
 
   return (
-    <div className="ll:relative ll:h-full ll:w-full">
-      <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
-        <AsyncStatusIndicator
-          active={hasLoaded && Boolean(error)}
-          kind="error"
-          label={t("states.refreshError")}
-          onRetry={retry}
-          retryLabel={t("actions.retry", { ns: "common" })}
-        />
-        <AsyncStatusIndicator
-          active={!error && stale}
-          kind="warning"
-          label={t("states.offline")}
-        />
-        <AsyncStatusIndicator
-          active={!stale && !error && refreshing}
-          delay
-          kind="loading"
-          label={t("states.refreshing")}
-        />
-      </div>
-      <div className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden ll:pt-1">
-        {filtersVisible && (
-          <>
-            <div className="ll:flex ll:gap-1 ll:pb-1">
-              <GuildSwitcher />
-            </div>
-            {allowWorldSelection && <WorldSelector />}
-
-            <OnlinePlayersFilters
-              searchQuery={searchQuery}
-              filters={filters}
-              onSearchChange={(event) => setSearchQuery(event.target.value)}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
-              onProfessionChange={handleProfessionChange}
-            />
-          </>
-        )}
-        <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:box-border ll:mt-1">
-          <AsyncContent
-            error={!hasLoaded ? error : null}
-            errorLabel={t("states.loadError")}
-            isLoading={initialLoading}
-            loadingLabel={t("states.loading")}
+    <PerformanceProfiler id="list.online-players">
+      <div className="ll:relative ll:h-full ll:w-full">
+        <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
+          <AsyncStatusIndicator
+            active={hasLoaded && Boolean(error)}
+            kind="error"
+            label={t("states.refreshError")}
             onRetry={retry}
             retryLabel={t("actions.retry", { ns: "common" })}
-          >
-            {listContent}
-          </AsyncContent>
+          />
+          <AsyncStatusIndicator
+            active={!error && stale}
+            kind="warning"
+            label={t("states.offline")}
+          />
+          <AsyncStatusIndicator
+            active={!stale && !error && refreshing}
+            delay
+            kind="loading"
+            label={t("states.refreshing")}
+          />
+        </div>
+        <div className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden ll:pt-1">
+          {filtersVisible && (
+            <>
+              <div className="ll:flex ll:gap-1 ll:pb-1">
+                <GuildSwitcher />
+              </div>
+              {allowWorldSelection && <WorldSelector />}
+
+              <OnlinePlayersFilters
+                searchQuery={searchQuery}
+                filters={filters}
+                onSearchChange={(event) => setSearchQuery(event.target.value)}
+                onMinLvlChange={handleMinLvlChange}
+                onMaxLvlChange={handleMaxLvlChange}
+                onProfessionChange={handleProfessionChange}
+              />
+            </>
+          )}
+          <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:box-border ll:mt-1">
+            <AsyncContent
+              error={!hasLoaded ? error : null}
+              errorLabel={t("states.loadError")}
+              isLoading={initialLoading}
+              loadingLabel={t("states.loading")}
+              onRetry={retry}
+              retryLabel={t("actions.retry", { ns: "common" })}
+            >
+              {listContent}
+            </AsyncContent>
+          </div>
         </div>
       </div>
-    </div>
+    </PerformanceProfiler>
   );
 };

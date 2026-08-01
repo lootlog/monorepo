@@ -8,6 +8,7 @@ import {
   getMapPingPresentation,
   type MapPingSymbol,
 } from "./map-ping-presentation";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 const MAIN_MAP_CANVAS_ID = "GAME_CANVAS";
 const HANDHELD_MINI_MAP_CANVAS_CLASS = "handheld-mini-map-canvas";
@@ -459,7 +460,8 @@ export class MapPingController {
       nearestExpiryAt = Math.min(nearestExpiryAt, expiresAt);
     }
 
-    this.expiryTimeoutId = window.setTimeout(
+    this.expiryTimeoutId = setMeasuredTimeout(
+      "map-pings.expiry",
       () => {
         this.expiryTimeoutId = null;
         this.pruneExpired();

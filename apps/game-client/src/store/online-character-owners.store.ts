@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import type {
   PlayerPresence,
   PlayerPresenceResponse,
@@ -90,79 +91,82 @@ function withGuildMemberNames(
 }
 
 export const useOnlineCharacterOwnersStore =
-  create<OnlineCharacterOwnersState>()((set, get) => ({
-    ownersByCharacterKey: {},
-    status: "idle",
-    clearOwners: () => set({ ownersByCharacterKey: {}, status: "idle" }),
-    getOwner: (accountId, characterId) =>
-      get().ownersByCharacterKey[
-        getOnlineCharacterOwnerKey(accountId, characterId)
-      ],
-    removePresence: (presence) =>
-      set((state) => {
-        const player = presence.player;
-        if (!player?.accountId || !player.characterId) {
-          const ownersByCharacterKey = Object.fromEntries(
-            Object.entries(state.ownersByCharacterKey).filter(
-              ([, owner]) => owner?.userId !== presence.discordId,
-            ),
-          );
+  create<OnlineCharacterOwnersState>()(
+    performanceStoreMiddleware("online-character-owners", (set, get) => ({
+      ownersByCharacterKey: {},
+      status: "idle",
+      clearOwners: () => set({ ownersByCharacterKey: {}, status: "idle" }),
+      getOwner: (accountId, characterId) =>
+        get().ownersByCharacterKey[
+          getOnlineCharacterOwnerKey(accountId, characterId)
+        ],
+      removePresence: (presence) =>
+        set((state) => {
+          const player = presence.player;
+          if (!player?.accountId || !player.characterId) {
+            const ownersByCharacterKey = Object.fromEntries(
+              Object.entries(state.ownersByCharacterKey).filter(
+                ([, owner]) => owner?.userId !== presence.discordId,
+              ),
+            );
 
-          if (
-            Object.keys(ownersByCharacterKey).length ===
-            Object.keys(state.ownersByCharacterKey).length
-          ) {
-            return state;
+            if (
+              Object.keys(ownersByCharacterKey).length ===
+              Object.keys(state.ownersByCharacterKey).length
+            ) {
+              return state;
+            }
+
+            return { ownersByCharacterKey };
           }
 
+          const key = getOnlineCharacterOwnerKey(
+            player.accountId,
+            player.characterId,
+          );
+          if (!state.ownersByCharacterKey[key]) return state;
+
+          const { [key]: _removed, ...ownersByCharacterKey } =
+            state.ownersByCharacterKey;
           return { ownersByCharacterKey };
-        }
+        }),
+      setError: () => set({ ownersByCharacterKey: {}, status: "error" }),
+      setForbidden: () =>
+        set({ ownersByCharacterKey: {}, status: "forbidden" }),
+      setGuildMembers: (guildMembersByUserId) =>
+        set((state) => ({
+          ownersByCharacterKey: withGuildMemberNames(
+            state.ownersByCharacterKey,
+            guildMembersByUserId,
+          ),
+        })),
+      setPresenceResponse: (response, guildMembersByUserId) =>
+        set({
+          ownersByCharacterKey: Object.fromEntries(
+            Object.values(response)
+              .flat()
+              .map((presence) => toOwner(presence, guildMembersByUserId))
+              .filter((owner): owner is OnlineCharacterOwner => Boolean(owner))
+              .map((owner) => [
+                getOnlineCharacterOwnerKey(owner.accountId, owner.characterId),
+                owner,
+              ]),
+          ),
+          status: "success",
+        }),
+      setLoading: () => set({ status: "loading" }),
+      upsertPresence: (presence, guildMembersByUserId) =>
+        set((state) => {
+          const owner = toOwner(presence, guildMembersByUserId);
+          if (!owner) return state;
 
-        const key = getOnlineCharacterOwnerKey(
-          player.accountId,
-          player.characterId,
-        );
-        if (!state.ownersByCharacterKey[key]) return state;
-
-        const { [key]: _removed, ...ownersByCharacterKey } =
-          state.ownersByCharacterKey;
-        return { ownersByCharacterKey };
-      }),
-    setError: () => set({ ownersByCharacterKey: {}, status: "error" }),
-    setForbidden: () => set({ ownersByCharacterKey: {}, status: "forbidden" }),
-    setGuildMembers: (guildMembersByUserId) =>
-      set((state) => ({
-        ownersByCharacterKey: withGuildMemberNames(
-          state.ownersByCharacterKey,
-          guildMembersByUserId,
-        ),
-      })),
-    setPresenceResponse: (response, guildMembersByUserId) =>
-      set({
-        ownersByCharacterKey: Object.fromEntries(
-          Object.values(response)
-            .flat()
-            .map((presence) => toOwner(presence, guildMembersByUserId))
-            .filter((owner): owner is OnlineCharacterOwner => Boolean(owner))
-            .map((owner) => [
-              getOnlineCharacterOwnerKey(owner.accountId, owner.characterId),
-              owner,
-            ]),
-        ),
-        status: "success",
-      }),
-    setLoading: () => set({ status: "loading" }),
-    upsertPresence: (presence, guildMembersByUserId) =>
-      set((state) => {
-        const owner = toOwner(presence, guildMembersByUserId);
-        if (!owner) return state;
-
-        return {
-          ownersByCharacterKey: {
-            ...state.ownersByCharacterKey,
-            [getOnlineCharacterOwnerKey(owner.accountId, owner.characterId)]:
-              owner,
-          },
-        };
-      }),
-  }));
+          return {
+            ownersByCharacterKey: {
+              ...state.ownersByCharacterKey,
+              [getOnlineCharacterOwnerKey(owner.accountId, owner.characterId)]:
+                owner,
+            },
+          };
+        }),
+    })),
+  );

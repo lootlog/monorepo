@@ -17,6 +17,7 @@ import {
 } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
+import { measurePerformance } from "@/lib/performance-monitoring/performance-monitor";
 
 function getEntryCharacterId(targetKey: string): string {
   const separatorIndex = targetKey.lastIndexOf(":");
@@ -56,52 +57,58 @@ export function useOtherCatchingGuildGlow(): void {
   const selectedGuildId = useSelectedLootlogGuildId();
 
   useEffect(() => {
-    lootlogOtherGlowManager.install();
+    measurePerformance("glow.install", "glow", undefined, () =>
+      lootlogOtherGlowManager.install(),
+    );
 
     return () => {
-      lootlogOtherGlowManager.cleanup();
+      measurePerformance("glow.cleanup", "glow", undefined, () =>
+        lootlogOtherGlowManager.cleanup(),
+      );
     };
   }, []);
 
   useEffect(() => {
-    lootlogOtherGlowManager.setNativeGlowSuppressed(
-      isShiftPressed && isConcreteLootlogGuildId(selectedGuildId),
-    );
+    measurePerformance("glow.reconcile", "glow", undefined, () => {
+      lootlogOtherGlowManager.setNativeGlowSuppressed(
+        isShiftPressed && isConcreteLootlogGuildId(selectedGuildId),
+      );
 
-    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
-      lootlogOtherGlowManager.clear();
-      return;
-    }
+      if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
+        lootlogOtherGlowManager.clear();
+        return;
+      }
 
-    const visibleCharacterIds = new Set<string>();
+      const visibleCharacterIds = new Set<string>();
 
-    for (const characterId in othersById) {
-      const other = othersById[characterId];
-      const runtimeHandle = runtimeOtherHandles.get(characterId);
-      visibleCharacterIds.add(other.characterId);
-      if (!runtimeHandle) continue;
+      for (const characterId in othersById) {
+        const other = othersById[characterId];
+        const runtimeHandle = runtimeOtherHandles.get(characterId);
+        visibleCharacterIds.add(other.characterId);
+        if (!runtimeHandle) continue;
 
-      const target = getOtherCatchingGuildsTarget(other);
-      if (!target) {
+        const target = getOtherCatchingGuildsTarget(other);
+        if (!target) {
+          lootlogOtherGlowManager.setGlow(
+            runtimeHandle,
+            LOOTLOG_OTHER_GLOW_UNKNOWN,
+          );
+          continue;
+        }
+
         lootlogOtherGlowManager.setGlow(
           runtimeHandle,
-          LOOTLOG_OTHER_GLOW_UNKNOWN,
+          getLootlogOtherGlowColor(entriesByKey[target.key], selectedGuildId),
         );
-        continue;
       }
 
-      lootlogOtherGlowManager.setGlow(
-        runtimeHandle,
-        getLootlogOtherGlowColor(entriesByKey[target.key], selectedGuildId),
-      );
-    }
-
-    for (const targetKey of Object.keys(entriesByKey)) {
-      const entryCharacterId = getEntryCharacterId(targetKey);
-      if (entryCharacterId && !visibleCharacterIds.has(entryCharacterId)) {
-        lootlogOtherGlowManager.removeGlow(entryCharacterId);
+      for (const targetKey of Object.keys(entriesByKey)) {
+        const entryCharacterId = getEntryCharacterId(targetKey);
+        if (entryCharacterId && !visibleCharacterIds.has(entryCharacterId)) {
+          lootlogOtherGlowManager.removeGlow(entryCharacterId);
+        }
       }
-    }
+    });
   }, [
     entriesByKey,
     isShiftPressed,

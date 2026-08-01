@@ -1,4 +1,5 @@
 const CHAT_SCROLL_TO_MESSAGE_EVENT = "lootlog:chat-scroll-to-message";
+import { addMeasuredEventListener } from "@/lib/performance-monitoring/measured-callback";
 
 export type ChatScrollToMessageEvent = CustomEvent<{ messageId: string }>;
 
@@ -16,7 +17,10 @@ export const subscribeToChatScrollToMessage = (
   const eventListener = (event: Event) =>
     listener(event as ChatScrollToMessageEvent);
 
-  window.addEventListener(CHAT_SCROLL_TO_MESSAGE_EVENT, eventListener);
-  return () =>
-    window.removeEventListener(CHAT_SCROLL_TO_MESSAGE_EVENT, eventListener);
+  return addMeasuredEventListener(
+    window,
+    CHAT_SCROLL_TO_MESSAGE_EVENT,
+    eventListener,
+    "chat.scroll-to-message",
+  );
 };

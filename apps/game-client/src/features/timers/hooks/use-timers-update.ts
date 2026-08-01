@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setMeasuredInterval } from "@/lib/performance-monitoring/measured-callback";
 
 export const useTimersUpdate = (enabled = true) => {
   const [clockEpoch, setClockEpoch] = useState(Date.now);
@@ -11,9 +12,7 @@ export const useTimersUpdate = (enabled = true) => {
     };
 
     updateClock();
-    const interval = setInterval(() => {
-      updateClock();
-    }, 1000);
+    const interval = setMeasuredInterval("timers.clock", updateClock, 1_000);
     return () => {
       clearInterval(interval);
     };

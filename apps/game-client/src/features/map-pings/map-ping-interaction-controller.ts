@@ -1,5 +1,6 @@
 import type { MapPingType } from "@lootlog/types";
 import type { MapTile } from "./map-ping-controller";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 export const MAP_PING_HOLD_DELAY_MS = 300;
 export const MAP_PING_WHEEL_RADIUS_PX = 88;
@@ -38,7 +39,7 @@ type ViewportSize = {
   width: number;
 };
 
-type TimerHandle = ReturnType<typeof globalThis.setTimeout>;
+type TimerHandle = number;
 
 type ControllerDependencies = {
   clearTimer: (timer: TimerHandle) => void;
@@ -60,7 +61,8 @@ type InteractionState = {
 const defaultDependencies: ControllerDependencies = {
   clearTimer: (timer) => globalThis.clearTimeout(timer),
   getViewport: () => ({ height: window.innerHeight, width: window.innerWidth }),
-  setTimer: (callback, delayMs) => globalThis.setTimeout(callback, delayMs),
+  setTimer: (callback, delayMs) =>
+    setMeasuredTimeout("map-pings.hold-delay", callback, delayMs),
 };
 
 export const createMapPingPressIdentity = (

@@ -12,6 +12,7 @@ import {
   preloadSoundUrl,
 } from "@/lib/shared-audio-playback";
 import { useSettingsStore } from "@/store/settings.store";
+import { addMeasuredEventListener } from "@/lib/performance-monitoring/measured-callback";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
 type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
@@ -84,22 +85,33 @@ export const useSoundPlayback = () => {
       return;
     }
 
+    let removeKeyDown: () => void = () => undefined;
+    let removePointerDown: () => void = () => undefined;
     const handleFirstInteraction = () => {
       hasAudioInteraction = true;
-      window.removeEventListener("keydown", handleFirstInteraction);
-      window.removeEventListener("pointerdown", handleFirstInteraction);
+      removeKeyDown();
+      removePointerDown();
       preloadConfiguredSounds();
     };
 
-    window.addEventListener("keydown", handleFirstInteraction, { once: true });
-    window.addEventListener("pointerdown", handleFirstInteraction, {
-      once: true,
-      passive: true,
-    });
+    removeKeyDown = addMeasuredEventListener(
+      window,
+      "keydown",
+      handleFirstInteraction,
+      "sound-playback.first-keydown",
+      { once: true },
+    );
+    removePointerDown = addMeasuredEventListener(
+      window,
+      "pointerdown",
+      handleFirstInteraction,
+      "sound-playback.first-pointerdown",
+      { once: true, passive: true },
+    );
 
     return () => {
-      window.removeEventListener("keydown", handleFirstInteraction);
-      window.removeEventListener("pointerdown", handleFirstInteraction);
+      removeKeyDown();
+      removePointerDown();
     };
   }, [masterVolume, soundSettings, soundsMuted]);
 

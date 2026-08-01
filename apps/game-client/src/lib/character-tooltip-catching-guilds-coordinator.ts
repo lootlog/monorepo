@@ -6,6 +6,7 @@ import {
   type CharacterTooltipCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 export const CATCHING_GUILDS_BATCH_SIZE = 100;
 export const CATCHING_GUILDS_CACHE_TIME_MS = 60_000;
@@ -43,7 +44,11 @@ const defaultDependencies: CoordinatorDependencies = {
   retryDelayMs: CATCHING_GUILDS_RETRY_DELAY_MS,
   sleep: (delayMs) =>
     new Promise((resolve) => {
-      globalThis.setTimeout(resolve, delayMs);
+      setMeasuredTimeout(
+        "tooltip-catching-guilds.retry-delay",
+        resolve,
+        delayMs,
+      );
     }),
 };
 
@@ -326,7 +331,8 @@ export class CharacterTooltipCatchingGuildsCoordinator {
   ): Promise<UserLootlogPlayersCatchingGuildsResponseDtoOutput> {
     const abortController = new AbortController();
     this.activeAbortControllers.add(abortController);
-    const timeoutId = globalThis.setTimeout(
+    const timeoutId = setMeasuredTimeout(
+      "tooltip-catching-guilds.request-timeout",
       () => abortController.abort(),
       this.dependencies.requestTimeoutMs,
     );

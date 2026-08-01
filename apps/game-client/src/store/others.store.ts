@@ -7,6 +7,7 @@ import {
   replaceRuntimeOtherHandlesForCompatibility,
   upsertRuntimeOtherHandleForCompatibility,
 } from "@/lib/margonem-runtime/runtime-other-handles";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 
 type RuntimeOtherInput =
   | RuntimeOther
@@ -54,64 +55,66 @@ function normalizeOther(other: RuntimeOtherInput): RuntimeOther {
   });
 }
 
-export const useOthersStore = create<OthersState>()((set, get) => ({
-  mapEpoch: 0,
-  othersById: Object.freeze({}),
-  revision: 0,
-  status: "uninitialized",
-  applyBatch: ({ removeIds = [], upserts = {} }) =>
-    set((state) => {
-      const othersById = { ...state.othersById };
-      let changed = false;
+export const useOthersStore = create<OthersState>()(
+  performanceStoreMiddleware("others", (set, get) => ({
+    mapEpoch: 0,
+    othersById: Object.freeze({}),
+    revision: 0,
+    status: "uninitialized",
+    applyBatch: ({ removeIds = [], upserts = {} }) =>
+      set((state) => {
+        const othersById = { ...state.othersById };
+        let changed = false;
 
-      for (const id of removeIds) {
-        if (!(id in othersById)) continue;
-        delete othersById[id];
-        changed = true;
-      }
+        for (const id of removeIds) {
+          if (!(id in othersById)) continue;
+          delete othersById[id];
+          changed = true;
+        }
 
-      for (const [id, other] of Object.entries(upserts)) {
-        if (othersById[id] === other) continue;
-        othersById[id] = other;
-        changed = true;
-      }
+        for (const [id, other] of Object.entries(upserts)) {
+          if (othersById[id] === other) continue;
+          othersById[id] = other;
+          changed = true;
+        }
 
-      if (!changed && state.status === "ready") return state;
-      return {
-        othersById: Object.freeze(othersById),
+        if (!changed && state.status === "ready") return state;
+        return {
+          othersById: Object.freeze(othersById),
+          revision: state.revision + 1,
+          status: "ready",
+        };
+      }),
+    clearOthers: (mapChanged = false) =>
+      set((state) => ({
+        mapEpoch: state.mapEpoch + (mapChanged ? 1 : 0),
+        othersById: Object.freeze({}),
+        revision: state.revision + 1,
+        status: "uninitialized",
+      })),
+    getOther: (id) => get().othersById[id],
+    removeOther: (id) => get().applyBatch({ removeIds: [id] }),
+    replaceOthers: (othersById, mapChanged = false) =>
+      set((state) => ({
+        mapEpoch: state.mapEpoch + (mapChanged ? 1 : 0),
+        othersById: Object.freeze({ ...othersById }),
         revision: state.revision + 1,
         status: "ready",
-      };
-    }),
-  clearOthers: (mapChanged = false) =>
-    set((state) => ({
-      mapEpoch: state.mapEpoch + (mapChanged ? 1 : 0),
-      othersById: Object.freeze({}),
-      revision: state.revision + 1,
-      status: "uninitialized",
-    })),
-  getOther: (id) => get().othersById[id],
-  removeOther: (id) => get().applyBatch({ removeIds: [id] }),
-  replaceOthers: (othersById, mapChanged = false) =>
-    set((state) => ({
-      mapEpoch: state.mapEpoch + (mapChanged ? 1 : 0),
-      othersById: Object.freeze({ ...othersById }),
-      revision: state.revision + 1,
-      status: "ready",
-    })),
-  setMany: (othersById) => {
-    replaceRuntimeOtherHandlesForCompatibility(othersById);
-    get().replaceOthers(
-      Object.fromEntries(
-        Object.entries(othersById).map(([id, other]) => [
-          id,
-          normalizeOther(other),
-        ]),
-      ),
-    );
-  },
-  upsertOther: (id, other) => {
-    upsertRuntimeOtherHandleForCompatibility(id, other);
-    get().applyBatch({ upserts: { [id]: normalizeOther(other) } });
-  },
-}));
+      })),
+    setMany: (othersById) => {
+      replaceRuntimeOtherHandlesForCompatibility(othersById);
+      get().replaceOthers(
+        Object.fromEntries(
+          Object.entries(othersById).map(([id, other]) => [
+            id,
+            normalizeOther(other),
+          ]),
+        ),
+      );
+    },
+    upsertOther: (id, other) => {
+      upsertRuntimeOtherHandleForCompatibility(id, other);
+      get().applyBatch({ upserts: { [id]: normalizeOther(other) } });
+    },
+  })),
+);

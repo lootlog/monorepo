@@ -15,6 +15,7 @@ import {
   type StateStorage,
 } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
 
@@ -309,384 +310,391 @@ export const migrateWindowsState = (
 };
 
 export const useWindowsStore = create<WindowsState>()(
-  persist(
-    (set, get) => ({
-      "app-error": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: {
-          width: APP_ERROR_WINDOW_WIDTH,
-          height: APP_ERROR_WINDOW_DEFAULT_HEIGHT,
+  performanceStoreMiddleware(
+    "windows",
+    persist(
+      (set, get) => ({
+        "app-error": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: {
+            width: APP_ERROR_WINDOW_WIDTH,
+            height: APP_ERROR_WINDOW_DEFAULT_HEIGHT,
+          },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
         },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      settings: {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 760, height: 520 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-        state: {},
-      },
-      timers: {
-        open: true,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: DEFAULT_SIZE,
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      chat: {
-        open: true,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: DEFAULT_SIZE,
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-        autofocus: false,
-      },
-      command: {
-        open: false,
-        position: {
-          x: Math.round((window.innerWidth - 242) / 2),
-          y: Math.round((window.innerHeight - 240) / 2),
+        settings: {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 760, height: 520 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+          state: {},
         },
-        hasDefinedPosition: true,
-        size: { width: 242, height: 240 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-        autofocus: false,
-      },
-      "online-players": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 242, height: 240 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "add-timer": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 242, height: 300 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-        state: {},
-      },
-      "npc-detector": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 300, height: 300 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      notifications: {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 360, height: 300 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "create-notification": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 242, height: 300 },
-        opacity: DEFAULT_OPACITY,
-        state: { npcs: [] },
-        locked: false,
-      },
-      "quick-access": {
-        open: true,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: DEFAULT_QUICK_ACCESS_WIDTH, height: 56 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "timer-settings-conflict": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 420, height: 320 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "catching-whitelist-warning": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 400, height: 240 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "backend-preferences-warning": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 430, height: 250 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "party-finder": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: DEFAULT_SIZE,
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "create-party-gathering": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 280, height: 220 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "event-mode": createDefaultEventModeWindow(),
-      currentWindowFocus: undefined,
-      windowFocusHistory: [],
-      setCurrentWindowFocus: (key: WindowId) =>
-        set((state) => {
-          if (
-            state.currentWindowFocus === key &&
-            state.windowFocusHistory[0] === key
-          ) {
-            return state;
-          }
-
-          const newHistory = [
-            key,
-            ...state.windowFocusHistory.filter((id) => id !== key),
-          ];
-          return {
-            currentWindowFocus: key,
-            windowFocusHistory: newHistory,
-          };
-        }),
-      setOpen: <T = unknown>(key: WindowId, open: boolean, windowState?: T) => {
-        return set((state) => {
-          const currentWindow = state[key];
-          const hasWindowState = "state" in currentWindow;
-          let nextState: unknown = hasWindowState
-            ? currentWindow.state
-            : undefined;
-
-          if (windowState !== undefined) {
-            nextState = windowState;
-          }
-
-          let nextHistory = state.windowFocusHistory;
-
-          if (open) {
-            const isAlreadyFirst = state.windowFocusHistory[0] === key;
-
-            if (!isAlreadyFirst) {
-              nextHistory = [
-                key,
-                ...state.windowFocusHistory.filter((id) => id !== key),
-              ];
+        timers: {
+          open: true,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: DEFAULT_SIZE,
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        chat: {
+          open: true,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: DEFAULT_SIZE,
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+          autofocus: false,
+        },
+        command: {
+          open: false,
+          position: {
+            x: Math.round((window.innerWidth - 242) / 2),
+            y: Math.round((window.innerHeight - 240) / 2),
+          },
+          hasDefinedPosition: true,
+          size: { width: 242, height: 240 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+          autofocus: false,
+        },
+        "online-players": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 242, height: 240 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        "add-timer": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 242, height: 300 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+          state: {},
+        },
+        "npc-detector": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 300, height: 300 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        notifications: {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 360, height: 300 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        "create-notification": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 242, height: 300 },
+          opacity: DEFAULT_OPACITY,
+          state: { npcs: [] },
+          locked: false,
+        },
+        "quick-access": {
+          open: true,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: DEFAULT_QUICK_ACCESS_WIDTH, height: 56 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        "timer-settings-conflict": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 420, height: 320 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        "catching-whitelist-warning": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 400, height: 240 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        "backend-preferences-warning": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 430, height: 250 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        "party-finder": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: DEFAULT_SIZE,
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        "create-party-gathering": {
+          open: false,
+          position: DEFAULT_POSITION,
+          hasDefinedPosition: false,
+          size: { width: 280, height: 220 },
+          opacity: DEFAULT_OPACITY,
+          locked: false,
+        },
+        "event-mode": createDefaultEventModeWindow(),
+        currentWindowFocus: undefined,
+        windowFocusHistory: [],
+        setCurrentWindowFocus: (key: WindowId) =>
+          set((state) => {
+            if (
+              state.currentWindowFocus === key &&
+              state.windowFocusHistory[0] === key
+            ) {
+              return state;
             }
-          } else if (state.windowFocusHistory.includes(key)) {
-            nextHistory = state.windowFocusHistory.filter((id) => id !== key);
-          }
 
-          let nextCurrentWindowFocus = state.currentWindowFocus;
+            const newHistory = [
+              key,
+              ...state.windowFocusHistory.filter((id) => id !== key),
+            ];
+            return {
+              currentWindowFocus: key,
+              windowFocusHistory: newHistory,
+            };
+          }),
+        setOpen: <T = unknown>(
+          key: WindowId,
+          open: boolean,
+          windowState?: T,
+        ) => {
+          return set((state) => {
+            const currentWindow = state[key];
+            const hasWindowState = "state" in currentWindow;
+            let nextState: unknown = hasWindowState
+              ? currentWindow.state
+              : undefined;
 
-          if (open) {
-            nextCurrentWindowFocus = key;
-          } else if (state.currentWindowFocus === key) {
-            nextCurrentWindowFocus = undefined;
-          }
+            if (windowState !== undefined) {
+              nextState = windowState;
+            }
 
-          const hasSameWindowState =
-            nextState === undefined ||
-            (hasWindowState && Object.is(currentWindow.state, nextState));
+            let nextHistory = state.windowFocusHistory;
 
-          if (
-            currentWindow.open === open &&
-            hasSameWindowState &&
-            state.currentWindowFocus === nextCurrentWindowFocus &&
-            state.windowFocusHistory === nextHistory
-          ) {
-            return state;
-          }
+            if (open) {
+              const isAlreadyFirst = state.windowFocusHistory[0] === key;
 
-          let nextWindow: WindowsState[WindowId] = {
-            ...currentWindow,
-            open,
-          };
+              if (!isAlreadyFirst) {
+                nextHistory = [
+                  key,
+                  ...state.windowFocusHistory.filter((id) => id !== key),
+                ];
+              }
+            } else if (state.windowFocusHistory.includes(key)) {
+              nextHistory = state.windowFocusHistory.filter((id) => id !== key);
+            }
 
-          if (nextState !== undefined) {
-            nextWindow = {
+            let nextCurrentWindowFocus = state.currentWindowFocus;
+
+            if (open) {
+              nextCurrentWindowFocus = key;
+            } else if (state.currentWindowFocus === key) {
+              nextCurrentWindowFocus = undefined;
+            }
+
+            const hasSameWindowState =
+              nextState === undefined ||
+              (hasWindowState && Object.is(currentWindow.state, nextState));
+
+            if (
+              currentWindow.open === open &&
+              hasSameWindowState &&
+              state.currentWindowFocus === nextCurrentWindowFocus &&
+              state.windowFocusHistory === nextHistory
+            ) {
+              return state;
+            }
+
+            let nextWindow: WindowsState[WindowId] = {
               ...currentWindow,
               open,
-              state: nextState,
-            } as WindowsState[WindowId];
-          }
+            };
 
-          return {
-            [key]: nextWindow,
-            currentWindowFocus: nextCurrentWindowFocus,
-            windowFocusHistory: nextHistory,
-          };
-        });
-      },
-      setPosition: (key: WindowId, pos) =>
-        set((state) => {
-          const currentWindow = state[key];
-          if (
-            currentWindow.hasDefinedPosition &&
-            currentWindow.position.x === pos.x &&
-            currentWindow.position.y === pos.y
-          ) {
-            return state;
-          }
+            if (nextState !== undefined) {
+              nextWindow = {
+                ...currentWindow,
+                open,
+                state: nextState,
+              } as WindowsState[WindowId];
+            }
 
-          return {
-            [key]: {
-              ...currentWindow,
-              position: pos,
-              hasDefinedPosition: true,
-            },
-          };
-        }),
-      setSize: (key: WindowId, size) =>
-        set((state) => {
-          const currentSize = state[key].size;
+            return {
+              [key]: nextWindow,
+              currentWindowFocus: nextCurrentWindowFocus,
+              windowFocusHistory: nextHistory,
+            };
+          });
+        },
+        setPosition: (key: WindowId, pos) =>
+          set((state) => {
+            const currentWindow = state[key];
+            if (
+              currentWindow.hasDefinedPosition &&
+              currentWindow.position.x === pos.x &&
+              currentWindow.position.y === pos.y
+            ) {
+              return state;
+            }
 
-          if (
-            currentSize.width === size.width &&
-            currentSize.height === size.height
-          ) {
-            return state;
-          }
+            return {
+              [key]: {
+                ...currentWindow,
+                position: pos,
+                hasDefinedPosition: true,
+              },
+            };
+          }),
+        setSize: (key: WindowId, size) =>
+          set((state) => {
+            const currentSize = state[key].size;
 
-          return { [key]: { ...state[key], size } };
-        }),
-      setMaxContentHeight: (key: WindowId, height: number) =>
-        set((state) => {
-          const nextMaxContentHeight = sanitizeMaxContentHeight(height);
+            if (
+              currentSize.width === size.width &&
+              currentSize.height === size.height
+            ) {
+              return state;
+            }
 
-          if (nextMaxContentHeight === undefined) {
-            return state;
-          }
+            return { [key]: { ...state[key], size } };
+          }),
+        setMaxContentHeight: (key: WindowId, height: number) =>
+          set((state) => {
+            const nextMaxContentHeight = sanitizeMaxContentHeight(height);
 
-          if (state[key].maxContentHeight === nextMaxContentHeight) {
-            return state;
-          }
+            if (nextMaxContentHeight === undefined) {
+              return state;
+            }
 
-          return {
-            [key]: {
-              ...state[key],
-              maxContentHeight: nextMaxContentHeight,
-            },
-          };
-        }),
-      setOpacity: (key: WindowId, opacity: WindowOpacity) =>
-        set((state) =>
-          state[key].opacity === opacity
-            ? state
-            : { [key]: { ...state[key], opacity } },
-        ),
-      setLocked: (key: WindowId, locked: boolean) =>
-        set((state) =>
-          state[key].locked === locked
-            ? state
-            : { [key]: { ...state[key], locked } },
-        ),
-      setAutofocus: (key: WindowId, autofocus: boolean) =>
-        set((state) =>
-          state[key].autofocus === autofocus
-            ? state
-            : { [key]: { ...state[key], autofocus } },
-        ),
-      setSettingsActiveTab: (activeTab) =>
-        set((state) => {
-          const nextPath = resolveSettingsPath(activeTab);
-          if (
-            state.settings.state.activeTab === nextPath.domain &&
-            state.settings.state.activeSubsection === nextPath.subsection
-          ) {
-            return state;
-          }
+            if (state[key].maxContentHeight === nextMaxContentHeight) {
+              return state;
+            }
 
-          return {
+            return {
+              [key]: {
+                ...state[key],
+                maxContentHeight: nextMaxContentHeight,
+              },
+            };
+          }),
+        setOpacity: (key: WindowId, opacity: WindowOpacity) =>
+          set((state) =>
+            state[key].opacity === opacity
+              ? state
+              : { [key]: { ...state[key], opacity } },
+          ),
+        setLocked: (key: WindowId, locked: boolean) =>
+          set((state) =>
+            state[key].locked === locked
+              ? state
+              : { [key]: { ...state[key], locked } },
+          ),
+        setAutofocus: (key: WindowId, autofocus: boolean) =>
+          set((state) =>
+            state[key].autofocus === autofocus
+              ? state
+              : { [key]: { ...state[key], autofocus } },
+          ),
+        setSettingsActiveTab: (activeTab) =>
+          set((state) => {
+            const nextPath = resolveSettingsPath(activeTab);
+            if (
+              state.settings.state.activeTab === nextPath.domain &&
+              state.settings.state.activeSubsection === nextPath.subsection
+            ) {
+              return state;
+            }
+
+            return {
+              settings: {
+                ...state.settings,
+                state: {
+                  ...state.settings.state,
+                  activeTab: nextPath.domain,
+                  activeSubsection: nextPath.subsection,
+                },
+              },
+            };
+          }),
+        setSettingsPath: (activeTab, activeSubsection) =>
+          set((state) => ({
             settings: {
               ...state.settings,
               state: {
                 ...state.settings.state,
-                activeTab: nextPath.domain,
-                activeSubsection: nextPath.subsection,
+                activeTab,
+                activeSubsection,
               },
             },
-          };
-        }),
-      setSettingsPath: (activeTab, activeSubsection) =>
-        set((state) => ({
-          settings: {
-            ...state.settings,
-            state: {
-              ...state.settings.state,
-              activeTab,
-              activeSubsection,
-            },
-          },
-        })),
-      toggleOpen: (key: WindowId, autofocus?: boolean) => {
-        const curr = get()[key].open;
-        set((state) => {
-          const newHistory = !curr
-            ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
-            : state.windowFocusHistory.filter((id) => id !== key);
-          return {
-            [key]: {
-              ...state[key],
-              open: !curr,
-              autofocus,
-            },
-            currentWindowFocus: !curr ? key : undefined,
-            windowFocusHistory: newHistory,
-          };
-        });
-      },
-    }),
-    {
-      name: STORAGE_KEY,
-      partialize: (state) => ({
-        settings: state.settings,
-        timers: state.timers,
-        chat: state.chat,
-        command: state.command,
-        "online-players": state["online-players"],
-        "add-timer": state["add-timer"],
-        "npc-detector": state["npc-detector"],
-        notifications: state["notifications"],
-        "create-notification": {
-          size: state["create-notification"].size,
-          position: state["create-notification"].position,
-          opacity: state["create-notification"].opacity,
+          })),
+        toggleOpen: (key: WindowId, autofocus?: boolean) => {
+          const curr = get()[key].open;
+          set((state) => {
+            const newHistory = !curr
+              ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
+              : state.windowFocusHistory.filter((id) => id !== key);
+            return {
+              [key]: {
+                ...state[key],
+                open: !curr,
+                autofocus,
+              },
+              currentWindowFocus: !curr ? key : undefined,
+              windowFocusHistory: newHistory,
+            };
+          });
         },
-        "quick-access": state["quick-access"],
-        "timer-settings-conflict": state["timer-settings-conflict"],
-        "catching-whitelist-warning": state["catching-whitelist-warning"],
-        "backend-preferences-warning": state["backend-preferences-warning"],
-        "party-finder": state["party-finder"],
-        "create-party-gathering": state["create-party-gathering"],
-        "event-mode": state["event-mode"],
       }),
-      storage: createJSONStorage(() =>
-        createDeduplicatingStateStorage(localStorage),
-      ),
-      version: 12,
-      migrate: migrateWindowsState,
-    },
+      {
+        name: STORAGE_KEY,
+        partialize: (state) => ({
+          settings: state.settings,
+          timers: state.timers,
+          chat: state.chat,
+          command: state.command,
+          "online-players": state["online-players"],
+          "add-timer": state["add-timer"],
+          "npc-detector": state["npc-detector"],
+          notifications: state["notifications"],
+          "create-notification": {
+            size: state["create-notification"].size,
+            position: state["create-notification"].position,
+            opacity: state["create-notification"].opacity,
+          },
+          "quick-access": state["quick-access"],
+          "timer-settings-conflict": state["timer-settings-conflict"],
+          "catching-whitelist-warning": state["catching-whitelist-warning"],
+          "backend-preferences-warning": state["backend-preferences-warning"],
+          "party-finder": state["party-finder"],
+          "create-party-gathering": state["create-party-gathering"],
+          "event-mode": state["event-mode"],
+        }),
+        storage: createJSONStorage(() =>
+          createDeduplicatingStateStorage(localStorage),
+        ),
+        version: 12,
+        migrate: migrateWindowsState,
+      },
+    ),
   ),
 );

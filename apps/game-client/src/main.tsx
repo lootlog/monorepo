@@ -15,7 +15,8 @@ import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runt
 import {
   captureBootstrapError,
   getReactRootErrorHandlers,
-} from "@/lib/error-monitoring";
+} from "@/lib/local-diagnostics";
+import { PerformanceProfiler } from "@/lib/performance-monitoring/performance-profiler";
 
 const ROOT_Z_INDEX_BY_INTERFACE = {
   ni: 11,
@@ -155,7 +156,9 @@ export function bootstrapGameClient(): GameClientRuntime {
     teardownPublicApi = bootstrapPublicApi(queryClient);
     root.render(
       <React.StrictMode>
-        <App />
+        <PerformanceProfiler id="overlay-root">
+          <App />
+        </PerformanceProfiler>
       </React.StrictMode>,
     );
     runtime.state = "ready";

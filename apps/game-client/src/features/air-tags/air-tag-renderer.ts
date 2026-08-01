@@ -11,6 +11,7 @@ import {
   type AirTagTarget,
 } from "@lootlog/types";
 import { airTagReceiveController } from "./air-tag-receive-controller";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 export const AIR_TAG_TARGET_TTL_MS = 10_000;
 export const AIR_TAG_FADE_START_MS = 3_000;
@@ -242,7 +243,8 @@ export class AirTagRenderer {
         Math.min(earliestExpiryAt, target.observedAt + AIR_TAG_TARGET_TTL_MS),
       Number.POSITIVE_INFINITY,
     );
-    this.expiryTimeoutId = window.setTimeout(
+    this.expiryTimeoutId = setMeasuredTimeout(
+      "air-tags.expiry",
       () => {
         this.expiryTimeoutId = null;
         this.refreshDrawRegistration();

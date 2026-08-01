@@ -7,6 +7,7 @@ import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
+import { addMeasuredEventListener } from "@/lib/performance-monitoring/measured-callback";
 
 function refreshActiveOtherTooltip(): void {
   refreshActiveOtherCanvasTooltip();
@@ -67,14 +68,29 @@ export function useCharacterTooltipCatchingGuilds(): void {
       updateShiftPressed(false);
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("blur", handleWindowBlur);
+    const removeListeners = [
+      addMeasuredEventListener(
+        window,
+        "keydown",
+        handleKeyDown as EventListener,
+        "tooltip-catching-guilds.keydown",
+      ),
+      addMeasuredEventListener(
+        window,
+        "keyup",
+        handleKeyUp as EventListener,
+        "tooltip-catching-guilds.keyup",
+      ),
+      addMeasuredEventListener(
+        window,
+        "blur",
+        handleWindowBlur,
+        "tooltip-catching-guilds.blur",
+      ),
+    ];
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("blur", handleWindowBlur);
+      for (const removeListener of removeListeners) removeListener();
     };
   }, []);
 

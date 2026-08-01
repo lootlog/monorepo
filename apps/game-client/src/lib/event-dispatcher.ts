@@ -14,18 +14,69 @@ import type {
   RuntimeEventEnvelope,
   RuntimeFact,
 } from "@/lib/margonem-runtime/runtime.types";
+import {
+  measurePerformance,
+  recordPerformance,
+  runWithPerformanceContext,
+} from "@/lib/performance-monitoring/performance-monitor";
 
-function runSafe(name: string, handler: () => unknown): void {
+const PERFORMANCE_MONITORING_ENABLED =
+  import.meta.env.VITE_GAME_CLIENT_PERFORMANCE_MONITORING === "1";
+
+function runSafe(
+  name: string,
+  handler: () => unknown,
+  correlationId?: string,
+): void {
+  if (!PERFORMANCE_MONITORING_ENABLED) {
+    try {
+      const result = handler();
+      if (result instanceof Promise) {
+        void result.catch((error) => {
+          console.warn(
+            `[EventDispatcher] Failed to process ${name} handler:`,
+            error,
+          );
+        });
+      }
+    } catch (error) {
+      console.warn(
+        `[EventDispatcher] Failed to process ${name} handler:`,
+        error,
+      );
+    }
+    return;
+  }
+
+  const promiseStartedAt = performance.now();
   try {
-    const result = handler();
+    const result = measurePerformance(
+      `processor.${name}.sync`,
+      "processor",
+      undefined,
+      handler,
+    );
 
     if (result instanceof Promise) {
-      result.catch((error) => {
-        console.warn(
-          `[EventDispatcher] Failed to process ${name} handler:`,
-          error,
-        );
-      });
+      const recordPromiseLatency = (outcome: "fulfilled" | "rejected") => {
+        recordPerformance({
+          category: "processor-promise",
+          correlationId,
+          data: { outcome },
+          durationMs: performance.now() - promiseStartedAt,
+          name: `processor.${name}.promise-latency`,
+        });
+      };
+      void result.then(
+        () => recordPromiseLatency("fulfilled"),
+        (error) => {
+          recordPromiseLatency("rejected");
+          console.warn(
+            `[EventDispatcher] Failed to process ${name} handler:`,
+            error,
+          );
+        },
+      );
     }
   } catch (error) {
     console.warn(`[EventDispatcher] Failed to process ${name} handler:`, error);
@@ -49,56 +100,96 @@ export class EventDispatcher {
   };
 
   handleEnvelope = (envelope: RuntimeEventEnvelope): void => {
-    for (const fact of envelope.facts) this.handleFact(fact, envelope.ingress);
+    if (!PERFORMANCE_MONITORING_ENABLED) {
+      for (const fact of envelope.facts) {
+        this.handleFact(fact, envelope.ingress);
+      }
+      return;
+    }
+
+    const correlationId = `runtime-event-${envelope.sequence}`;
+    runWithPerformanceContext(correlationId, () =>
+      measurePerformance(
+        "event-dispatcher.envelope",
+        "event-dispatcher",
+        { factCount: envelope.facts.length },
+        () => {
+          for (const fact of envelope.facts) {
+            this.handleFact(fact, envelope.ingress, correlationId);
+          }
+        },
+      ),
+    );
   };
 
   private handleFact(
     fact: RuntimeFact,
     ingress?: RuntimeEventEnvelope["ingress"],
+    correlationId?: string,
   ): void {
     const event = fact.event;
     if (fact.kind === "chat") {
-      runSafe("chat", () => this.chat.handle(event));
+      runSafe("chat", () => this.chat.handle(event), correlationId);
     }
 
     if (fact.kind === "dialog") {
-      runSafe("dialog", () => this.dialog.handle(event, ingress));
+      runSafe(
+        "dialog",
+        () => this.dialog.handle(event, ingress),
+        correlationId,
+      );
     }
 
     if (fact.kind === "battle") {
-      runSafe("battle", () => this.battle.handle(event, ingress));
+      runSafe(
+        "battle",
+        () => this.battle.handle(event, ingress),
+        correlationId,
+      );
     }
 
     if (fact.kind === "map") {
-      runSafe("map-change", () => this.mapChange.handle(event));
+      runSafe("map-change", () => this.mapChange.handle(event), correlationId);
     }
 
     if (fact.kind === "npc-upsert") {
-      runSafe("npc-detection", () => this.npcsDetection.handle(event));
+      runSafe(
+        "npc-detection",
+        () => this.npcsDetection.handle(event),
+        correlationId,
+      );
     }
 
     if (fact.kind === "loot") {
       if (event.loot?.source === "fight") {
-        runSafe("loot-from-battle", () =>
-          this.loot.handleLootFromBattle(event, ingress),
+        runSafe(
+          "loot-from-battle",
+          () => this.loot.handleLootFromBattle(event, ingress),
+          correlationId,
         );
       } else if (event.loot?.source === "dialog") {
-        runSafe("dialog-loot", () =>
-          this.loot.handleDialogLoot(event, ingress),
+        runSafe(
+          "dialog-loot",
+          () => this.loot.handleDialogLoot(event, ingress),
+          correlationId,
         );
       }
     }
 
     if (fact.kind === "npc-delete") {
-      runSafe("npcs-delete", () => this.npcsDelete.handle(event, ingress));
+      runSafe(
+        "npcs-delete",
+        () => this.npcsDelete.handle(event, ingress),
+        correlationId,
+      );
     }
 
     if (fact.kind === "other") {
-      runSafe("other", () => this.other.handle(event));
+      runSafe("other", () => this.other.handle(event), correlationId);
     }
 
     if (fact.kind === "afk") {
-      runSafe("afk", () => this.afk.handle(event, ingress));
+      runSafe("afk", () => this.afk.handle(event, ingress), correlationId);
     }
   }
 

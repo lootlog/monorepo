@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 const DEFAULT_VISIBILITY_DELAY_MS = 200;
 
@@ -14,9 +15,13 @@ export const useDelayedVisibility = (
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
-      setVisible(true);
-    }, delayMs);
+    const timeoutId = setMeasuredTimeout(
+      "hook.delayed-visibility",
+      () => {
+        setVisible(true);
+      },
+      delayMs,
+    );
 
     return () => window.clearTimeout(timeoutId);
   }, [active, delayMs]);

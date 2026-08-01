@@ -9,6 +9,10 @@ import {
   getSocket,
   type PermissionsUpdatedPayload,
 } from "@/lib/socket";
+import {
+  addMeasuredEventListener,
+  measureLootlogCallback,
+} from "@/lib/performance-monitoring/measured-callback";
 import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
 import {
@@ -126,54 +130,64 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   }, [gameInitialized, connected, socket]);
 
   useEffect(() => {
-    const handleConnect = () => setConnected(true);
-    const handleDisconnect = () => setConnected(false);
-    const handleJoin = (data: {
-      status: "success" | "error";
-      code?: string;
-      message?: string;
-      guildsCount?: number;
-      guildIds?: string[];
-    }) => {
-      if (data.status === "error") {
-        return;
-      }
-
-      setJoined(true);
-      setJoinedGuilds(data.guildIds ?? []);
-
-      // Emit initial presence after successful join
-      // This ensures presence is sent even after browser refresh
-      // (when town change event is not fired)
-      const map = useGameStore.getState().game?.map;
-      if (!map) {
-        return;
-      }
-
-      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
-        mapId: map.id,
-        mapName: map.name,
-        isAfk: false,
-      });
-    };
-    const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
-      if (import.meta.env.DEV) {
-        console.warn("[Gateway] Rooms rebalanced:", data);
-      }
-
-      const updatedGuildIds = data.guilds?.map((guild) => guild.guild.id);
-
-      if (!updatedGuildIds) {
-        if (import.meta.env.DEV) {
-          console.warn("[Gateway] No guilds data in permissions update");
+    const handleConnect = measureLootlogCallback("socket.connect", () =>
+      setConnected(true),
+    );
+    const handleDisconnect = measureLootlogCallback("socket.disconnect", () =>
+      setConnected(false),
+    );
+    const handleJoin = measureLootlogCallback(
+      "socket.join",
+      (data: {
+        status: "success" | "error";
+        code?: string;
+        message?: string;
+        guildsCount?: number;
+        guildIds?: string[];
+      }) => {
+        if (data.status === "error") {
+          return;
         }
-        setJoinedGuilds([]);
-        setJoined(false);
-        return;
-      }
 
-      setJoinedGuilds(updatedGuildIds);
-    };
+        setJoined(true);
+        setJoinedGuilds(data.guildIds ?? []);
+
+        // Emit initial presence after successful join
+        // This ensures presence is sent even after browser refresh
+        // (when town change event is not fired)
+        const map = useGameStore.getState().game?.map;
+        if (!map) {
+          return;
+        }
+
+        socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
+          mapId: map.id,
+          mapName: map.name,
+          isAfk: false,
+        });
+      },
+    );
+    const handlePermissionsUpdated = measureLootlogCallback(
+      "socket.permissions-updated",
+      (data: PermissionsUpdatedPayload) => {
+        if (import.meta.env.DEV) {
+          console.warn("[Gateway] Rooms rebalanced:", data);
+        }
+
+        const updatedGuildIds = data.guilds?.map((guild) => guild.guild.id);
+
+        if (!updatedGuildIds) {
+          if (import.meta.env.DEV) {
+            console.warn("[Gateway] No guilds data in permissions update");
+          }
+          setJoinedGuilds([]);
+          setJoined(false);
+          return;
+        }
+
+        setJoinedGuilds(updatedGuildIds);
+      },
+    );
 
     socket.on(GatewayEvent.CONNECT, handleConnect);
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
@@ -192,9 +206,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     };
 
     updateSocketAuthentication(socket);
-    window.addEventListener(
+    const removeDevPermissionOverrideListener = addMeasuredEventListener(
+      window,
       DEV_PERMISSION_OVERRIDE_EVENT,
       handleDevPermissionOverrideChange,
+      "socket.dev-permission-override",
     );
     socket.connect();
 
@@ -203,10 +219,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-      window.removeEventListener(
-        DEV_PERMISSION_OVERRIDE_EVENT,
-        handleDevPermissionOverrideChange,
-      );
+      removeDevPermissionOverrideListener();
 
       socket.disconnect();
     };

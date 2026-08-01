@@ -3,6 +3,7 @@ import type { Timer } from "@/api/timers.api";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useTimersCache } from "@/hooks/api/use-timers-cache";
+import { measureLootlogCallback } from "@/lib/performance-monitoring/measured-callback";
 
 export const useTimersSocket = () => {
   const { socket, connected, joined } = useSocket();
@@ -21,13 +22,19 @@ export const useTimersSocket = () => {
       return;
     }
 
-    const onTimerCreate = (data: Timer) => {
-      handleTimerCreate(data);
-    };
+    const onTimerCreate = measureLootlogCallback(
+      "socket.timers-create",
+      (data: Timer) => {
+        handleTimerCreate(data);
+      },
+    );
 
-    const onTimerDelete = (data: Timer) => {
-      handleTimerDelete(data);
-    };
+    const onTimerDelete = measureLootlogCallback(
+      "socket.timers-delete",
+      (data: Timer) => {
+        handleTimerDelete(data);
+      },
+    );
 
     socket.on(GatewayEvent.TIMERS_CREATE, onTimerCreate);
     socket.on(GatewayEvent.TIMERS_DELETE, onTimerDelete);

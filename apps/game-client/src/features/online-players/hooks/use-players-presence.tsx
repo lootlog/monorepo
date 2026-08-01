@@ -11,6 +11,10 @@ import {
   type PlayerPresenceUpdatePayload,
 } from "@/lib/online-players-presence";
 import {
+  measureLootlogCallback,
+  requestMeasuredAnimationFrame,
+} from "@/lib/performance-monitoring/measured-callback";
+import {
   useEffect,
   useRef,
   useState,
@@ -141,31 +145,39 @@ export const usePlayersPresence = (
     if (!socket || !connected || !joined) return;
     const presenceUpdateController = presenceUpdateControllerRef.current;
 
-    const handleOnlinePlayersPresenceUpdate = (
-      data: PlayerPresenceUpdatePayload,
-    ) => {
-      const normalizedPresence = normalizePresence(data);
+    const handleOnlinePlayersPresenceUpdate = measureLootlogCallback(
+      "socket.online-players-presence-update",
+      (data: PlayerPresenceUpdatePayload) => {
+        const normalizedPresence = normalizePresence(data);
 
-      if (
-        normalizedPresence.guildId !== selectedGuildIdRef.current ||
-        normalizedPresence.player?.world !== worldRef.current
-      )
-        return;
+        if (
+          normalizedPresence.guildId !== selectedGuildIdRef.current ||
+          normalizedPresence.player?.world !== worldRef.current
+        )
+          return;
 
-      const presenceKey = `${normalizedPresence.discordId}:${getPresenceKey(normalizedPresence)}`;
-      presenceUpdateController.pendingUpdates.set(
-        presenceKey,
-        normalizedPresence,
-      );
-      if (presenceUpdateController.frame !== null) return;
+        const presenceKey = `${normalizedPresence.discordId}:${getPresenceKey(normalizedPresence)}`;
+        presenceUpdateController.pendingUpdates.set(
+          presenceKey,
+          normalizedPresence,
+        );
+        if (presenceUpdateController.frame !== null) return;
 
-      presenceUpdateController.frame = window.requestAnimationFrame(() => {
-        presenceUpdateController.frame = null;
-        const updates = [...presenceUpdateController.pendingUpdates.values()];
-        presenceUpdateController.pendingUpdates.clear();
-        setOnlinePlayers((previous) => applyPresenceUpdates(previous, updates));
-      });
-    };
+        presenceUpdateController.frame = requestMeasuredAnimationFrame(
+          "online-players.apply-presence-batch",
+          () => {
+            presenceUpdateController.frame = null;
+            const updates = [
+              ...presenceUpdateController.pendingUpdates.values(),
+            ];
+            presenceUpdateController.pendingUpdates.clear();
+            setOnlinePlayers((previous) =>
+              applyPresenceUpdates(previous, updates),
+            );
+          },
+        );
+      },
+    );
 
     socket.on(
       GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
@@ -188,9 +200,12 @@ export const usePlayersPresence = (
   useEffect(() => {
     if (!socket || !connected || !joined) return;
 
-    const handlePermissionsUpdated = () => {
-      setRequestVersion((version) => version + 1);
-    };
+    const handlePermissionsUpdated = measureLootlogCallback(
+      "socket.online-players-permissions-updated",
+      () => {
+        setRequestVersion((version) => version + 1);
+      },
+    );
 
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
 

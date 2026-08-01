@@ -33,6 +33,7 @@ import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestion
 import { NPC_NAMES } from "@/constants/margonem";
 import { useTranslation } from "react-i18next";
 import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 const SECONDS_IN_HOUR = 3600;
 const SECONDS_IN_MINUTE = 60;
@@ -234,7 +235,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   } | null>(null);
   const [selectedNpc, setSelectedNpc] =
     useState<SearchTimersNpcResponseDtoOutput | null>(null);
-  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const blurTimeoutRef = useRef<number | null>(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const currentGuildId = characterId ? guildIdByCharId[characterId] : undefined;
@@ -476,10 +477,14 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                     clearTimeout(blurTimeoutRef.current);
                   }
 
-                  blurTimeoutRef.current = setTimeout(() => {
-                    setShowSuggestions(false);
-                    blurTimeoutRef.current = null;
-                  }, 200);
+                  blurTimeoutRef.current = setMeasuredTimeout(
+                    "timers.add-form.hide-suggestions",
+                    () => {
+                      setShowSuggestions(false);
+                      blurTimeoutRef.current = null;
+                    },
+                    200,
+                  );
                 }}
               />
               <AutocompleteSuggestions<SearchTimersNpcResponseDtoOutput>

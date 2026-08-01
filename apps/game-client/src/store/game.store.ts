@@ -2,6 +2,7 @@ import type {
   RuntimeGameSnapshot,
   RuntimeStatus,
 } from "@/lib/margonem-runtime/runtime.types";
+import { performanceStoreMiddleware } from "@/lib/performance-monitoring/store-middleware";
 import { create } from "zustand";
 
 type GameState = {
@@ -13,33 +14,35 @@ type GameState = {
   replaceGame: (game: RuntimeGameSnapshot, mapChanged?: boolean) => void;
 };
 
-export const useGameStore = create<GameState>()((set) => ({
-  game: null,
-  mapEpoch: 0,
-  revision: 0,
-  status: "uninitialized",
-  clearGame: (mapChanged = false) =>
-    set((state) => ({
-      game: null,
-      mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
-      revision: state.revision + 1,
-      status: "uninitialized",
-    })),
-  replaceGame: (game, mapChanged = false) =>
-    set((state) => ({
-      game: Object.freeze({
-        hero: Object.freeze({
-          ...game.hero,
-          clan: game.hero.clan
-            ? Object.freeze({ ...game.hero.clan })
-            : undefined,
+export const useGameStore = create<GameState>()(
+  performanceStoreMiddleware("game", (set) => ({
+    game: null,
+    mapEpoch: 0,
+    revision: 0,
+    status: "uninitialized",
+    clearGame: (mapChanged = false) =>
+      set((state) => ({
+        game: null,
+        mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
+        revision: state.revision + 1,
+        status: "uninitialized",
+      })),
+    replaceGame: (game, mapChanged = false) =>
+      set((state) => ({
+        game: Object.freeze({
+          hero: Object.freeze({
+            ...game.hero,
+            clan: game.hero.clan
+              ? Object.freeze({ ...game.hero.clan })
+              : undefined,
+          }),
+          interface: game.interface,
+          map: Object.freeze({ ...game.map }),
+          world: game.world,
         }),
-        interface: game.interface,
-        map: Object.freeze({ ...game.map }),
-        world: game.world,
-      }),
-      mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
-      revision: state.revision + 1,
-      status: "ready",
-    })),
-}));
+        mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
+        revision: state.revision + 1,
+        status: "ready",
+      })),
+  })),
+);

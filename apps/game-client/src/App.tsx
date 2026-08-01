@@ -7,7 +7,7 @@ import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-bo
 import { AppContent } from "@/app-content";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { captureReactError } from "@/lib/error-monitoring";
+import { captureReactError } from "@/lib/local-diagnostics";
 
 function App() {
   return (

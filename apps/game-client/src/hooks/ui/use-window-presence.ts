@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSettingsStore } from "@/store/settings.store";
+import {
+  requestMeasuredAnimationFrame,
+  setMeasuredTimeout,
+} from "@/lib/performance-monitoring/measured-callback";
 
 const WINDOW_EXIT_RETENTION_MS = 180;
 const WINDOW_ENTRY_RETENTION_MS = 240;
@@ -34,9 +38,13 @@ export const useWindowPresence = (isOpen: boolean) => {
   useEffect(() => {
     if (isOpen || !animationEffectsEnabled || !retainedForExit) return;
 
-    const timeoutId = window.setTimeout(() => {
-      setRetainedForExit(false);
-    }, WINDOW_EXIT_RETENTION_MS);
+    const timeoutId = setMeasuredTimeout(
+      "window-presence.exit-retention",
+      () => {
+        setRetainedForExit(false);
+      },
+      WINDOW_EXIT_RETENTION_MS,
+    );
 
     return () => window.clearTimeout(timeoutId);
   }, [animationEffectsEnabled, isOpen, retainedForExit]);
@@ -75,9 +83,12 @@ export const useWindowPresence = (isOpen: boolean) => {
       return;
     }
 
-    const animationFrameId = window.requestAnimationFrame(() => {
-      setEntryAnimationStarted(true);
-    });
+    const animationFrameId = requestMeasuredAnimationFrame(
+      "window-presence.entry-frame",
+      () => {
+        setEntryAnimationStarted(true);
+      },
+    );
 
     return () => window.cancelAnimationFrame(animationFrameId);
   }, [
@@ -98,9 +109,13 @@ export const useWindowPresence = (isOpen: boolean) => {
   useEffect(() => {
     if (phase !== "enter") return;
 
-    const timeoutId = window.setTimeout(() => {
-      setEntryAnimationCompleted(true);
-    }, WINDOW_ENTRY_RETENTION_MS);
+    const timeoutId = setMeasuredTimeout(
+      "window-presence.entry-retention",
+      () => {
+        setEntryAnimationCompleted(true);
+      },
+      WINDOW_ENTRY_RETENTION_MS,
+    );
 
     return () => window.clearTimeout(timeoutId);
   }, [phase]);

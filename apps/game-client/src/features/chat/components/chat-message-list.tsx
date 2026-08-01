@@ -1,4 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PerformanceProfiler } from "@/lib/performance-monitoring/performance-profiler";
 import type { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import {
@@ -19,6 +20,11 @@ import { EmptyState } from "@/components/empty-state";
 import { MessageCircle } from "lucide-react";
 import { ChatMessage } from "./chat-message";
 import { ChatNpcMessage } from "./chat-npc-message";
+import {
+  addMeasuredEventListener,
+  createMeasuredResizeObserver,
+  requestMeasuredAnimationFrame,
+} from "@/lib/performance-monitoring/measured-callback";
 
 const CHAT_AUTOSCROLL_THRESHOLD_PX = 72;
 const CHAT_LIST_FALLBACK_HEIGHT_PX = 320;
@@ -205,10 +211,13 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       if (programmaticTargetExpiryFrameRef.current !== null) {
         cancelAnimationFrame(programmaticTargetExpiryFrameRef.current);
       }
-      programmaticTargetExpiryFrameRef.current = requestAnimationFrame(() => {
-        programmaticTargetExpiryFrameRef.current = null;
-        scrollController.expireProgrammaticTarget();
-      });
+      programmaticTargetExpiryFrameRef.current = requestMeasuredAnimationFrame(
+        "chat.message-list.programmatic-target-expiry",
+        () => {
+          programmaticTargetExpiryFrameRef.current = null;
+          scrollController.expireProgrammaticTarget();
+        },
+      );
     });
   }, [scrollController]);
 
@@ -248,30 +257,45 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       captureViewportAnchorRef.current();
     };
 
-    scrollViewport.addEventListener("scroll", updateScrollState, {
-      passive: true,
-    });
-    scrollViewport.addEventListener("wheel", handleWheel, { passive: true });
-    scrollViewport.addEventListener("touchstart", registerUserScrollIntent, {
-      passive: true,
-    });
-    scrollViewport.addEventListener("pointerdown", registerUserScrollIntent, {
-      passive: true,
-    });
-    scrollViewport.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      scrollViewport.removeEventListener("scroll", updateScrollState);
-      scrollViewport.removeEventListener("wheel", handleWheel);
-      scrollViewport.removeEventListener(
+    const removeListeners = [
+      addMeasuredEventListener(
+        scrollViewport,
+        "scroll",
+        updateScrollState,
+        "chat.message-list.scroll",
+        { passive: true },
+      ),
+      addMeasuredEventListener(
+        scrollViewport,
+        "wheel",
+        handleWheel,
+        "chat.message-list.wheel",
+        { passive: true },
+      ),
+      addMeasuredEventListener(
+        scrollViewport,
         "touchstart",
         registerUserScrollIntent,
-      );
-      scrollViewport.removeEventListener(
+        "chat.message-list.touchstart",
+        { passive: true },
+      ),
+      addMeasuredEventListener(
+        scrollViewport,
         "pointerdown",
         registerUserScrollIntent,
-      );
-      scrollViewport.removeEventListener("keydown", handleKeyDown);
+        "chat.message-list.pointerdown",
+        { passive: true },
+      ),
+      addMeasuredEventListener(
+        scrollViewport,
+        "keydown",
+        handleKeyDown,
+        "chat.message-list.keydown",
+      ),
+    ];
+
+    return () => {
+      for (const removeListener of removeListeners) removeListener();
     };
   }, [scrollController]);
 
@@ -279,18 +303,24 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
     const messageList = messageListRef.current;
     if (!messageList || typeof ResizeObserver === "undefined") return;
 
-    const resizeObserver = new ResizeObserver(() => {
-      if (resizeCorrectionFrameRef.current !== null) return;
+    const resizeObserver = createMeasuredResizeObserver(
+      "chat.message-list.resize",
+      () => {
+        if (resizeCorrectionFrameRef.current !== null) return;
 
-      resizeCorrectionFrameRef.current = requestAnimationFrame(() => {
-        resizeCorrectionFrameRef.current = null;
-        if (scrollController.shouldFollowNewMessages()) {
-          scrollToPhysicalBottomRef.current();
-        } else {
-          restoreViewportAnchorRef.current();
-        }
-      });
-    });
+        resizeCorrectionFrameRef.current = requestMeasuredAnimationFrame(
+          "chat.message-list.resize-correction",
+          () => {
+            resizeCorrectionFrameRef.current = null;
+            if (scrollController.shouldFollowNewMessages()) {
+              scrollToPhysicalBottomRef.current();
+            } else {
+              restoreViewportAnchorRef.current();
+            }
+          },
+        );
+      },
+    );
     resizeObserver.observe(messageList);
 
     return () => resizeObserver.disconnect();
@@ -314,15 +344,18 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       if (appearanceReflowFrameRef.current !== null) {
         cancelAnimationFrame(appearanceReflowFrameRef.current);
       }
-      appearanceReflowFrameRef.current = requestAnimationFrame(() => {
-        appearanceReflowFrameRef.current = null;
-        if (shouldFollowBottom) {
-          scrollController.requestFollowBottom();
-          scrollToPhysicalBottomRef.current();
-        } else {
-          restoreViewportAnchorRef.current();
-        }
-      });
+      appearanceReflowFrameRef.current = requestMeasuredAnimationFrame(
+        "chat.message-list.appearance-reflow",
+        () => {
+          appearanceReflowFrameRef.current = null;
+          if (shouldFollowBottom) {
+            scrollController.requestFollowBottom();
+            scrollToPhysicalBottomRef.current();
+          } else {
+            restoreViewportAnchorRef.current();
+          }
+        },
+      );
     } else if (isInitialLayout || ownMessageScrollRequested) {
       scrollController.requestFollowBottom();
       scrollToPhysicalBottomRef.current();
@@ -401,68 +434,70 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
   }
 
   return (
-    <ScrollArea
-      ref={scrollAreaRef}
-      className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400 ll:p-1"
-      viewportStyle={{ overflowAnchor: "none" }}
-    >
-      <div
-        aria-label={ariaLabel}
-        className="ll-chat-message-list ll:flex ll:w-full ll:min-w-0 ll:flex-col ll:overflow-x-hidden ll:rounded-lg"
-        data-ll-draggable="false"
-        ref={messageListRef}
-        role="list"
-        style={{
-          ...getChatDensityStyle(appearance.fontScalePercent),
-          gap: appearance.messageGapPx,
-          overflowAnchor: "none",
-        }}
+    <PerformanceProfiler id="list.chat-messages">
+      <ScrollArea
+        ref={scrollAreaRef}
+        className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400 ll:p-1"
+        viewportStyle={{ overflowAnchor: "none" }}
       >
-        {renderables.map((renderable, index) => (
-          <div
-            aria-posinset={index + 1}
-            aria-setsize={renderables.length}
-            data-chat-row-key={renderable.key}
-            key={renderable.key}
-            role="listitem"
-          >
-            {renderable.kind === "date-divider" ? (
-              <ChatDateDivider timestamp={renderable.timestamp} />
-            ) : renderable.kind === "npc-group" ? (
-              <ChatNpcMessage
-                appearance={appearance}
-                all={selectedGuildId === "all"}
-                count={renderable.count}
-                guildName={guildNamesById[renderable.message.guildId]}
-                member={
-                  membersByGuildId[renderable.message.guildId]?.[
-                    renderable.message.senderId
-                  ]
-                }
-                message={renderable.message}
-                npcTypeColors={npcTypeColors}
-              />
-            ) : (
-              <ChatMessage
-                appearance={appearance}
-                all={selectedGuildId === "all"}
-                guildName={guildNamesById[renderable.message.guildId]}
-                member={
-                  membersByGuildId[renderable.message.guildId]?.[
-                    renderable.message.senderId
-                  ]
-                }
-                mentionContext={
-                  mentionContextsByGuildId[renderable.message.guildId]
-                }
-                message={renderable.message}
-                npcTypeColors={npcTypeColors}
-                onReply={() => onReplyToMessage(renderable.message)}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
+        <div
+          aria-label={ariaLabel}
+          className="ll-chat-message-list ll:flex ll:w-full ll:min-w-0 ll:flex-col ll:overflow-x-hidden ll:rounded-lg"
+          data-ll-draggable="false"
+          ref={messageListRef}
+          role="list"
+          style={{
+            ...getChatDensityStyle(appearance.fontScalePercent),
+            gap: appearance.messageGapPx,
+            overflowAnchor: "none",
+          }}
+        >
+          {renderables.map((renderable, index) => (
+            <div
+              aria-posinset={index + 1}
+              aria-setsize={renderables.length}
+              data-chat-row-key={renderable.key}
+              key={renderable.key}
+              role="listitem"
+            >
+              {renderable.kind === "date-divider" ? (
+                <ChatDateDivider timestamp={renderable.timestamp} />
+              ) : renderable.kind === "npc-group" ? (
+                <ChatNpcMessage
+                  appearance={appearance}
+                  all={selectedGuildId === "all"}
+                  count={renderable.count}
+                  guildName={guildNamesById[renderable.message.guildId]}
+                  member={
+                    membersByGuildId[renderable.message.guildId]?.[
+                      renderable.message.senderId
+                    ]
+                  }
+                  message={renderable.message}
+                  npcTypeColors={npcTypeColors}
+                />
+              ) : (
+                <ChatMessage
+                  appearance={appearance}
+                  all={selectedGuildId === "all"}
+                  guildName={guildNamesById[renderable.message.guildId]}
+                  member={
+                    membersByGuildId[renderable.message.guildId]?.[
+                      renderable.message.senderId
+                    ]
+                  }
+                  mentionContext={
+                    mentionContextsByGuildId[renderable.message.guildId]
+                  }
+                  message={renderable.message}
+                  npcTypeColors={npcTypeColors}
+                  onReply={() => onReplyToMessage(renderable.message)}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </PerformanceProfiler>
   );
 };

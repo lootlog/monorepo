@@ -3,6 +3,11 @@ import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { Toggle, toggleVariants } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
+import {
+  createMeasuredMutationObserver,
+  createMeasuredResizeObserver,
+  requestMeasuredAnimationFrame,
+} from "@/lib/performance-monitoring/measured-callback";
 
 type ToggleGroupContextValue = VariantProps<typeof toggleVariants> & {
   type: "multiple" | "single";
@@ -93,12 +98,18 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
       if (animationFrame !== undefined) {
         cancelAnimationFrame(animationFrame);
       }
-      animationFrame = requestAnimationFrame(() => {
-        animationFrame = undefined;
-        updateToggleGroupIndicator(root);
-      });
+      animationFrame = requestMeasuredAnimationFrame(
+        "toggle-group.indicator-frame",
+        () => {
+          animationFrame = undefined;
+          updateToggleGroupIndicator(root);
+        },
+      );
     };
-    const resizeObserver = new ResizeObserver(scheduleIndicatorUpdate);
+    const resizeObserver = createMeasuredResizeObserver(
+      "toggle-group.indicator-resize",
+      scheduleIndicatorUpdate,
+    );
     const observeItems = () => {
       for (const item of root.querySelectorAll(
         '[data-slot="toggle-group-item"]',
@@ -106,10 +117,13 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
         resizeObserver.observe(item);
       }
     };
-    const mutationObserver = new MutationObserver(() => {
-      observeItems();
-      scheduleIndicatorUpdate();
-    });
+    const mutationObserver = createMeasuredMutationObserver(
+      "toggle-group.indicator-mutation",
+      () => {
+        observeItems();
+        scheduleIndicatorUpdate();
+      },
+    );
 
     resizeObserver.observe(root);
     observeItems();

@@ -13,6 +13,7 @@ import {
 } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
 import { inviteCharacterToParty } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 type InvitationIntent = {
   notificationId: string;
@@ -158,12 +159,16 @@ async function executeInvitationIntent(
 
   const abortController = new AbortController();
   activeAbortController = abortController;
-  let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+  let timeoutId: number | undefined;
   const timeout = new Promise<never>((_resolve, reject) => {
-    timeoutId = globalThis.setTimeout(() => {
-      abortController.abort();
-      reject(new Error("Ready Room invitation request timed out"));
-    }, READY_ROOM_INVITATION_TIMEOUT_MS);
+    timeoutId = setMeasuredTimeout(
+      "party-finder.invitation-timeout",
+      () => {
+        abortController.abort();
+        reject(new Error("Ready Room invitation request timed out"));
+      },
+      READY_ROOM_INVITATION_TIMEOUT_MS,
+    );
   });
   let response: Awaited<
     ReturnType<typeof partyReadyRoomControllerResolveInvitationTargets>

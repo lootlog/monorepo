@@ -16,6 +16,7 @@ import {
   PASTE_COMMAND,
 } from "lexical";
 import { useEffect, type FC } from "react";
+import { addMeasuredEventListener } from "@/lib/performance-monitoring/measured-callback";
 
 export const CHAT_INPUT_MAX_LENGTH = 120;
 
@@ -158,19 +159,35 @@ export const ChatInputConstraintsPlugin: FC = () => {
       });
     };
 
-    return editor.registerRootListener((rootElement, previousRootElement) => {
-      previousRootElement?.removeEventListener(
-        "keypress",
-        stopKeyPressPropagation,
-      );
-      previousRootElement?.removeEventListener(
-        "beforeinput",
-        handleBeforeInput,
-        true,
-      );
-      rootElement?.addEventListener("keypress", stopKeyPressPropagation);
-      rootElement?.addEventListener("beforeinput", handleBeforeInput, true);
-    });
+    let removeKeyPress: () => void = () => undefined;
+    let removeBeforeInput: () => void = () => undefined;
+    const unregisterRootListener = editor.registerRootListener(
+      (rootElement) => {
+        removeKeyPress();
+        removeBeforeInput();
+        if (!rootElement) return;
+
+        removeKeyPress = addMeasuredEventListener(
+          rootElement,
+          "keypress",
+          stopKeyPressPropagation,
+          "chat.input-constraints.keypress",
+        );
+        removeBeforeInput = addMeasuredEventListener(
+          rootElement,
+          "beforeinput",
+          handleBeforeInput,
+          "chat.input-constraints.beforeinput",
+          true,
+        );
+      },
+    );
+
+    return () => {
+      removeKeyPress();
+      removeBeforeInput();
+      unregisterRootListener();
+    };
   }, [editor]);
 
   return null;

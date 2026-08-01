@@ -2,6 +2,7 @@ import { GatewayEvent } from "@/config/gateway";
 import type { ChatMessage } from "@/api/chat.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
+import { measureLootlogCallback } from "@/lib/performance-monitoring/measured-callback";
 import { useSocket } from "@/contexts/socket-context";
 import {
   getGuildMembersSummaryQueryKey,
@@ -203,18 +204,21 @@ export const useChatMessagesListener = (
   useEffect(() => {
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
 
-    const onChatMessage = (data: ChatMessage) => {
-      handlerRef.current(data);
+    const onChatMessage = measureLootlogCallback(
+      "socket.chat.message",
+      (data: ChatMessage) => {
+        handlerRef.current(data);
 
-      if (
-        data.senderId !== sessionDiscordIdRef.current &&
-        data.characterData.nick !== runtimeGameRef.current?.hero.name
-      ) {
-        onRemoteMessageRef.current?.(data);
-      }
+        if (
+          data.senderId !== sessionDiscordIdRef.current &&
+          data.characterData.nick !== runtimeGameRef.current?.hero.name
+        ) {
+          onRemoteMessageRef.current?.(data);
+        }
 
-      void mentionNotificationRef.current(data);
-    };
+        void mentionNotificationRef.current(data);
+      },
+    );
 
     socket?.on(GatewayEvent.CHAT_MESSAGE, onChatMessage);
 
@@ -227,10 +231,11 @@ export const useChatMessagesListener = (
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE_DELETE) || !connected)
       return;
 
-    const onChatMessageDelete = (data: {
-      guildId: string;
-      messageId: string;
-    }) => deleteHandlerRef.current(data);
+    const onChatMessageDelete = measureLootlogCallback(
+      "socket.chat.message-delete",
+      (data: { guildId: string; messageId: string }) =>
+        deleteHandlerRef.current(data),
+    );
 
     socket?.on(GatewayEvent.CHAT_MESSAGE_DELETE, onChatMessageDelete);
 
@@ -243,11 +248,11 @@ export const useChatMessagesListener = (
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE_UPDATE) || !connected)
       return;
 
-    const onChatMessageUpdate = (data: {
-      guildId: string;
-      messageId: string;
-      message: string;
-    }) => updateHandlerRef.current(data);
+    const onChatMessageUpdate = measureLootlogCallback(
+      "socket.chat.message-update",
+      (data: { guildId: string; messageId: string; message: string }) =>
+        updateHandlerRef.current(data),
+    );
 
     socket?.on(GatewayEvent.CHAT_MESSAGE_UPDATE, onChatMessageUpdate);
 
@@ -260,8 +265,10 @@ export const useChatMessagesListener = (
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGES_CLEAR) || !connected)
       return;
 
-    const onChatMessagesClear = (data: { guildId: string }) =>
-      clearHandlerRef.current(data);
+    const onChatMessagesClear = measureLootlogCallback(
+      "socket.chat.messages-clear",
+      (data: { guildId: string }) => clearHandlerRef.current(data),
+    );
 
     socket?.on(GatewayEvent.CHAT_MESSAGES_CLEAR, onChatMessagesClear);
 

@@ -2,6 +2,7 @@ import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { useEffect } from "react";
 import { partyReadyRoomControllerGet } from "@lootlog/api-client/react-query/main/party-ready-room";
 import { usePartyFinderStore } from "@/store/party-finder.store";
+import { setMeasuredTimeout } from "@/lib/performance-monitoring/measured-callback";
 
 function hasHttpStatus(error: unknown, status: number): boolean {
   return (
@@ -28,7 +29,8 @@ export function usePartyReadyRoomExpiry(): void {
     const nextExpiry = Math.min(
       ...activeProjections.map(({ expiresAt }) => Date.parse(expiresAt)),
     );
-    const timeout = window.setTimeout(
+    const timeout = setMeasuredTimeout(
+      "party-finder.ready-room-expiry",
       () => {
         const expiredProjections = activeProjections.filter(
           ({ expiresAt }) => Date.parse(expiresAt) <= Date.now(),

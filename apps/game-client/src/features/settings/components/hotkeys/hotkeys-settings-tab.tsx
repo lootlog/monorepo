@@ -15,6 +15,7 @@ import {
 } from "@/store/hotkeys.store";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { addMeasuredEventListener } from "@/lib/performance-monitoring/measured-callback";
 
 const groupedActions = HOTKEY_ACTIONS.reduce<
   Record<HotkeyCategory, HotkeyActionConfig[]>
@@ -92,13 +93,23 @@ export const HotkeysSettingsTab = () => {
       });
     };
 
-    window.addEventListener("keydown", handleCapture, { capture: true });
-    window.addEventListener("mousedown", handleMouseCapture, { capture: true });
+    const removeKeyDown = addMeasuredEventListener(
+      window,
+      "keydown",
+      handleCapture,
+      "settings.hotkeys.keydown-capture",
+      { capture: true },
+    );
+    const removeMouseDown = addMeasuredEventListener(
+      window,
+      "mousedown",
+      handleMouseCapture,
+      "settings.hotkeys.mousedown-capture",
+      { capture: true },
+    );
     return () => {
-      window.removeEventListener("keydown", handleCapture, { capture: true });
-      window.removeEventListener("mousedown", handleMouseCapture, {
-        capture: true,
-      });
+      removeKeyDown();
+      removeMouseDown();
     };
   }, [capturingAction, setBinding, t]);
 

@@ -9,7 +9,7 @@ const runtimeMocks = vi.hoisted(() => ({
   renderError: new Error("App render failed"),
 }));
 
-vi.mock("@/lib/error-monitoring", () => ({
+vi.mock("@/lib/local-diagnostics", () => ({
   captureReactError: runtimeMocks.captureReactError,
 }));
 
