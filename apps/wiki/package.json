@@ -31,7 +31,7 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.47.0",
+    "@cloudflare/vite-plugin": "^1.49.0",
     "@tailwindcss/vite": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
@@ -41,6 +41,6 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:",
-    "wrangler": "^4.114.0"
+    "wrangler": "^4.116.0"
   }
 }
