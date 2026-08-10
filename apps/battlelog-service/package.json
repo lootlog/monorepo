@@ -60,7 +60,7 @@
     "@swc/cli": "catalog:",
     "@swc/core": "catalog:",
     "@types/node": "catalog:",
-    "@types/pg": "^8.20.0",
+    "@types/pg": "^8.20.4",
     "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "catalog:",
     "drizzle-kit": "1.0.0-beta.20",
