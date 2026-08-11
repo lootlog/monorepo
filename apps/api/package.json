@@ -50,7 +50,7 @@
     "dotenv": "^17.4.2",
     "fastify": "^5.10.0",
     "ioredis": "^5.11.1",
-    "js-yaml": "^5.2.2",
+    "js-yaml": "^5.2.3",
     "nest-winston": "catalog:",
     "nestjs-zod": "catalog:",
     "pg": "^8.22.0",

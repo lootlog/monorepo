@@ -57,7 +57,7 @@
     "@axiomhq/winston": "^1.8.0",
     "@lootlog/types": "workspace:*",
     "fastify": "^5.10.0",
-    "js-yaml": "^5.2.2",
+    "js-yaml": "^5.2.3",
     "nest-winston": "catalog:",
     "winston": "^3.19.0",
     "zod": "catalog:"
