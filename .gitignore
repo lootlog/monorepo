@@ -80,11 +80,6 @@ playground/**
 
 # Local planning and agent session documents
 /docs/*
-!/docs/superpowers/
-/docs/superpowers/*
-!/docs/superpowers/specs/
-/docs/superpowers/specs/*
-!/docs/superpowers/specs/2026-08-12-kill-detail-full-hd-layout-design.md
 **/.impeccable/direction-question.json
 **/.impeccable/questions/
 .superpowers/
