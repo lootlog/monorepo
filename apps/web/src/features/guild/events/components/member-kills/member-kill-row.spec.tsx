@@ -89,6 +89,12 @@ describe("MemberKillRow", () => {
     expect(
       screen.getByText("events.kills.pointsTooltip.manualAdjustment"),
     ).toBeTruthy();
+    expect(
+      screen
+        .getByText("events.kills.scoringBreakdown")
+        .closest("tr")
+        ?.getAttribute("data-state"),
+    ).toBe("expanded-detail");
   });
 });
 

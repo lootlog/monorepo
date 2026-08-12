@@ -53,7 +53,12 @@ export const SidebarNavItem = ({
       )}
       disabled={!available}
     >
-      <div className="flex items-center">
+      <div
+        className={cn(
+          "flex items-center",
+          isActive && "[&_svg]:text-primary-foreground",
+        )}
+      >
         {icon}
         {label}
       </div>

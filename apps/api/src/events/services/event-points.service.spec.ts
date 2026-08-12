@@ -87,6 +87,36 @@ describe("EventPointsService", () => {
     expect(service).toBeDefined();
   });
 
+  it("includes the highest role color in event ranking members", async () => {
+    mockPrismaService.event.findFirst.mockResolvedValue({ id: "event-1" });
+    mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
+
+    await service.getRanking("guild-1", "event-1");
+
+    expect(mockPrismaService.eventRanking.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({
+          member: {
+            select: {
+              id: true,
+              name: true,
+              roles: {
+                select: {
+                  position: true,
+                  color: true,
+                },
+                orderBy: {
+                  position: "desc",
+                },
+                take: 1,
+              },
+            },
+          },
+        }),
+      }),
+    );
+  });
+
   describe("calculateMemberPoints", () => {
     const getDefaultParams = () => ({
       scoringMode: "ADVANCED" as const,

@@ -5,8 +5,10 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { EventRankingEntryResponseDtoMemberRolesItem } from './event-ranking-entry-response-dto-member-roles-item';
 
 export type EventRankingEntryResponseDtoMember = {
   id: number;
   name: string;
+  roles: EventRankingEntryResponseDtoMemberRolesItem[];
 };

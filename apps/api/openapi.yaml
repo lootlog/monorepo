@@ -15489,9 +15489,23 @@ components:
               type: number
             name:
               type: string
+            roles:
+              type: array
+              items:
+                type: object
+                properties:
+                  position:
+                    type: number
+                  color:
+                    type: number
+                    nullable: true
+                required:
+                  - position
+                  - color
           required:
             - id
             - name
+            - roles
         editHistory:
           type: array
           items:

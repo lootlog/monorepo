@@ -135,6 +135,20 @@ describe("EventRankingTable", () => {
     expect(screen.getByText("3%")).toBeTruthy();
   });
 
+  it("uses the member role color and preserves the default color without one", () => {
+    renderRankingTable([
+      createRanking({
+        id: "ranking-colored",
+        memberId: 1,
+        roleColor: 0x25a7e8,
+      }),
+      createRanking({ id: "ranking-default", memberId: 2 }),
+    ]);
+
+    expect(screen.getByText("Member 1").style.color).toBe("#25A7E8");
+    expect(screen.getByText("Member 2").getAttribute("style")).toBeNull();
+  });
+
   it("keeps distinct medal treatments for the top three positions", () => {
     const { container } = renderRankingTable([
       createRanking({ id: "ranking-1", memberId: 1, totalPoints: 40 }),
@@ -333,6 +347,7 @@ function createRanking({
   id,
   memberId,
   pointsModified = true,
+  roleColor,
   totalPoints = 100,
 }: {
   avgAfkPercentage?: number;
@@ -340,6 +355,7 @@ function createRanking({
   id: string;
   memberId: number;
   pointsModified?: boolean;
+  roleColor?: number;
   totalPoints?: number;
 }): EventRanking {
   return {
@@ -357,6 +373,15 @@ function createRanking({
     member: {
       id: memberId,
       name: `Member ${memberId}`,
+      roles:
+        roleColor === undefined
+          ? []
+          : [
+              {
+                color: roleColor,
+                position: 1,
+              },
+            ],
     },
   };
 }
