@@ -43,7 +43,7 @@ The expanded detail row always spans the complete table width. Its existing resp
 
 ## Components and data flow
 
-The map timeline section passes timeline maps and the kill window into a dedicated table component. Column definitions derive display values from the existing normalized map diagnostics helper, ensuring the collapsed coverage percentage and expanded metrics use the same data. A responsive media-query hook controls TanStack's ID- and participants-column visibility; `row.getVisibleCells().length` therefore yields five columns at `md` and above and three below it.
+The map timeline section passes timeline maps, the kill window, and a `memberId`-keyed role-color lookup derived from the kill participants into a dedicated table component. Timeline assignments do not duplicate role data and the API contract remains unchanged. Assigned-member names use the same `getCustomRoleCssColor` helper and first-role color as the participants list; members without a custom role color retain the normal foreground text. Column definitions derive display values from the existing normalized map diagnostics helper, ensuring the collapsed coverage percentage and expanded metrics use the same data. A responsive media-query hook controls TanStack's ID- and participants-column visibility; `row.getVisibleCells().length` therefore yields five columns at `md` and above and three below it.
 
 The summary row and expanded detail are rendered by a focused row component in its own file. The existing expanded diagnostic components remain reusable and do not move back into one large component. No re-export-only files are introduced.
 
@@ -72,6 +72,7 @@ API contracts, routing, stored data, matching-loot behavior, and the normalizati
 
 - Test TanStack column definitions and stable desktop column order.
 - Test unique participant count and normalized coverage percentage in collapsed rows.
+- Test that assigned-member names receive the same first-role color as participant rows and fall back to normal foreground text when no custom role color exists.
 - Test explicit expansion and collapse, stable `mapId`-based expansion after a data refresh, multiple expanded maps, `aria-expanded`, `aria-controls`, `aria-labelledby`, and the responsive detail row `colSpan` (five at `md`, three below it).
 - Test that the detail divider does not gain extra top spacing when expanded.
 - Test the `< 768px` visibility rules for the visually clipped but accessible header, hidden ID and participants columns, participant metadata, 64 px coverage column without horizontal padding, and 44 px action column without inherited cell padding; verify the actual rendered widths of both compact columns, the wrapper's 8 px right padding, and the five-column layout at exactly 768 px.
