@@ -10,12 +10,13 @@ The map coverage panel keeps its current section header and legend. Its body use
 
 The desktop columns are:
 
-1. Map
-2. Participants
-3. Coverage
-4. Actions
+1. ID
+2. Map
+3. Participants
+4. Coverage
+5. Actions
 
-The map cell is the primary identity. It displays the truncated map name and a smaller monospace numeric map identifier. The participants cell displays a `Users` icon and the unique normalized participant count without avatars. The coverage cell is right-aligned, uses tabular numerals, and retains the existing semantic percentage colors. The actions cell contains the expansion control.
+The ID cell displays the numeric map identifier in a compact monospace style. The map cell is the primary identity and displays only the truncated map name. The participants cell displays a `Users` icon and the unique normalized participant count without avatars. The coverage cell is right-aligned, uses tabular numerals, and retains the existing semantic percentage colors. The actions cell contains the expansion control.
 
 The table does not add a separate status column. Status would duplicate information already communicated by the coverage value and its semantic color.
 
@@ -34,9 +35,9 @@ The divider under the summary row remains in the same position in both states. E
 
 ## Responsive behavior
 
-At the Tailwind `md` breakpoint and above (`>= 768px`) the table header is visible and all four columns keep stable widths. The map column receives remaining width; participants and coverage use compact fixed widths; actions remains the narrowest column.
+At the Tailwind `md` breakpoint and above (`>= 768px`) the table header is visible and all five columns keep stable widths. The ID column appears first with a compact fixed width. The map column receives remaining width; participants and coverage use compact fixed widths; actions remains the narrowest column.
 
-Below `md` (`< 768px`) the dedicated participants column is removed through TanStack column visibility, leaving a three-column grid. The map cell includes a secondary metadata line with the participant count. Coverage and the expansion action remain visible and right-aligned. Long map names truncate without pushing the percentage or action out of the viewport. The remaining three-column header stays in the DOM and accessibility tree but is visually clipped with the standard screen-reader-only technique rather than `display: none`; at `md` it returns to normal table-header rendering. At exactly 768 px, verification expects the four-column desktop layout.
+Below `md` (`< 768px`) the dedicated ID and participants columns are removed through TanStack column visibility, leaving a three-column grid. The map cell includes a secondary metadata line with the participant count but does not repeat the hidden ID. Coverage and the expansion action remain visible and right-aligned. Coverage uses a 64 px column without extra horizontal cell padding. Actions uses a 44 px column and keeps the same 44 × 44 px expansion control as the participant table. Long map names truncate without pushing the percentage or action out of the viewport. The remaining three-column header stays in the DOM and accessibility tree but is visually clipped with the standard screen-reader-only technique rather than `display: none`; at `md` it returns to normal table-header rendering. At exactly 768 px, verification expects the five-column desktop layout.
 
 The expanded detail row always spans the complete table width. Its existing responsive diagnostic layout remains unchanged. The table must not introduce horizontal page overflow at 360, 768, or 1440 px.
 
@@ -71,9 +72,9 @@ API contracts, routing, stored data, matching-loot behavior, and the normalizati
 
 - Test TanStack column definitions and stable desktop column order.
 - Test unique participant count and normalized coverage percentage in collapsed rows.
-- Test explicit expansion and collapse, stable `mapId`-based expansion after a data refresh, multiple expanded maps, `aria-expanded`, `aria-controls`, `aria-labelledby`, and the responsive detail row `colSpan` (four at `md`, three below it).
+- Test explicit expansion and collapse, stable `mapId`-based expansion after a data refresh, multiple expanded maps, `aria-expanded`, `aria-controls`, `aria-labelledby`, and the responsive detail row `colSpan` (five at `md`, three below it).
 - Test that the detail divider does not gain extra top spacing when expanded.
-- Test the `< 768px` visibility rules for the visually clipped but accessible header, hidden participants column, participant metadata, coverage, and action; test the four-column layout at exactly 768 px.
+- Test the `< 768px` visibility rules for the visually clipped but accessible header, hidden ID and participants columns, participant metadata, 64 px coverage column, and 44 px action column; test the five-column layout at exactly 768 px.
 - Retain the existing normalization, assignment grouping, full audit, invalid-window, and duplicate-key regression tests.
 - Run targeted Vitest tests, `@lootlog/web` lint, build, and format check.
 - Inspect the live page at 360, 768, and 1440 px for alignment, truncation, keyboard behavior, touch target size, horizontal overflow, and React console warnings.
