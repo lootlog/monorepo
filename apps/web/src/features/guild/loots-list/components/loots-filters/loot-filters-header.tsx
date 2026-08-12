@@ -119,7 +119,7 @@ export const LootFiltersHeader = ({
               <div
                 className={cn(
                   "flex min-w-0 items-center gap-2",
-                  isCompactLayout ? "contents" : "w-80 shrink-0",
+                  isCompactLayout ? "contents" : "w-[19.5rem] shrink-0",
                 )}
               >
                 <div

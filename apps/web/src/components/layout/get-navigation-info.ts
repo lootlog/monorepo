@@ -377,7 +377,7 @@ function resolveEventRoutes(
         { label: t("common.breadcrumbs.events"), path: routes.events },
         eventBreadcrumb,
         { label: findHeroName(), path: heroPath },
-        { label: killId, path: null },
+        { label: t("events.killDetail.title"), path: null },
       ],
       showBack: true,
       backPath: heroPath,

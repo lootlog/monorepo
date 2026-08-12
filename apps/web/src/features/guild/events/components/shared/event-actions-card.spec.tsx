@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EventActionsCard } from "./event-actions-card";
 
@@ -16,19 +16,25 @@ const renderEventActionsCard = ({
 }: {
   canManage: boolean;
   canDeleteEvent: boolean;
-}) =>
-  render(
+}) => {
+  const onDelete = vi.fn();
+  const onEdit = vi.fn();
+  const onToggleStatus = vi.fn();
+  const view = render(
     <EventActionsCard
       canManage={canManage}
       canDeleteEvent={canDeleteEvent}
       isActive
       isUpdatePending={false}
       isDeletePending={false}
-      onEdit={vi.fn()}
-      onToggleStatus={vi.fn()}
-      onDelete={vi.fn()}
+      onEdit={onEdit}
+      onToggleStatus={onToggleStatus}
+      onDelete={onDelete}
     />,
   );
+
+  return { ...view, onDelete, onEdit, onToggleStatus };
+};
 
 describe("EventActionsCard", () => {
   afterEach(cleanup);
@@ -43,11 +49,24 @@ describe("EventActionsCard", () => {
   });
 
   it("renders for a user who can manage the event", () => {
-    renderEventActionsCard({
+    const { onDelete, onEdit, onToggleStatus } = renderEventActionsCard({
       canManage: true,
-      canDeleteEvent: false,
+      canDeleteEvent: true,
     });
 
-    expect(screen.getByText("events.actionsCard.subtitle")).toBeTruthy();
+    const heading = screen.getByRole("heading", {
+      name: "events.actionsCard.subtitle",
+    });
+    expect(heading.closest("header")?.getAttribute("class")).toContain(
+      "min-h-12",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "events.editButton" }));
+    fireEvent.click(screen.getByRole("button", { name: "events.end" }));
+    fireEvent.click(screen.getByRole("button", { name: "events.delete" }));
+
+    expect(onEdit).toHaveBeenCalledOnce();
+    expect(onToggleStatus).toHaveBeenCalledOnce();
+    expect(onDelete).toHaveBeenCalledOnce();
   });
 });

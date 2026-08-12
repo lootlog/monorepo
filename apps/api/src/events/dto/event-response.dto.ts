@@ -132,6 +132,7 @@ export class EventsListResponseDto extends createZodDto(
 const EventRankingMemberResponseSchema = z.object({
   id: z.number(),
   name: z.string(),
+  roles: z.array(EventMemberRoleResponseSchema),
 });
 
 const RankingEditHistoryEntryResponseSchema = z.object({

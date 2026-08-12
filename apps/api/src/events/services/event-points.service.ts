@@ -106,6 +106,16 @@ export class EventPointsService {
               select: {
                 id: true,
                 name: true,
+                roles: {
+                  select: {
+                    position: true,
+                    color: true,
+                  },
+                  orderBy: {
+                    position: "desc",
+                  },
+                  take: 1,
+                },
               },
             },
           },

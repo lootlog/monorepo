@@ -58,8 +58,9 @@ describe("MemberKillRow", () => {
     expect(link.getAttribute("href")).toBe(
       "/guild-1/events/event-1/heroes/hero-1/kills/kill-1",
     );
+    expect(link.querySelector(".lucide-external-link")).toBeNull();
     expect(link.textContent).toBe("Zorin");
-    expect(link.querySelector("svg")).toBeTruthy();
+    expect(link.querySelector("svg")).toBeNull();
     expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
     expect(screen.getByText("1.5")).toBeTruthy();
     expect(screen.getByLabelText("events.points.modified")).toBeTruthy();
@@ -89,6 +90,12 @@ describe("MemberKillRow", () => {
     expect(
       screen.getByText("events.kills.pointsTooltip.manualAdjustment"),
     ).toBeTruthy();
+    expect(
+      screen
+        .getByText("events.kills.scoringBreakdown")
+        .closest("tr")
+        ?.getAttribute("data-state"),
+    ).toBe("expanded-detail");
   });
 });
 

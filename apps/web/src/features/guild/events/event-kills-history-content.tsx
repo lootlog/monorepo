@@ -6,19 +6,41 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import {
+  getEventsRankingControllerGetEventHeroStatsQueryKey,
   getShowEventOverviewQueryKey,
+  useEventsRankingControllerGetEventHeroStats,
   useShowEventOverview,
 } from "@lootlog/api-client/react-query/main/events";
+import type { EventHeroStatsResponseDto } from "@lootlog/api-client/models/main/event-hero-stats-response-dto";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventKillsFilter } from "./components/kills/event-kills-filter";
-import { EventKillsList } from "./components/kills/event-kills-list";
 import { EventKillsSummary } from "./components/kills/event-kills-summary";
+import { EventKillsTable } from "./components/kills/event-kills-table";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 
 type EventKillsHistoryContentProps = {
   guildId?: string;
   eventId?: string;
   initialHeroId?: string;
+};
+
+const getKillCount = (
+  heroStats: EventHeroStatsResponseDto[] | undefined,
+  selectedHeroId: string | undefined,
+) => {
+  if (!heroStats) return undefined;
+
+  if (selectedHeroId) {
+    return (
+      heroStats.find((heroStatistic) => heroStatistic.heroId === selectedHeroId)
+        ?.killCount ?? 0
+    );
+  }
+
+  return heroStats.reduce(
+    (totalKillCount, heroStatistic) => totalKillCount + heroStatistic.killCount,
+    0,
+  );
 };
 
 export const EventKillsHistoryContent = ({
@@ -29,6 +51,9 @@ export const EventKillsHistoryContent = ({
   const { t } = useTranslation();
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     initialHeroId,
+  );
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null,
   );
   const hasEventRouteParams = Boolean(guildId && eventId);
   const {
@@ -56,13 +81,32 @@ export const EventKillsHistoryContent = ({
     hasNextPage,
     isFetchingNextPage,
     isLoading: killsLoading,
-    error: killsError,
+    isError: killsHasError,
   } = useEventKillHistory({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
     heroId: selectedHeroId,
     limit: 20,
   });
+  const {
+    data: heroStats,
+    isError: heroStatsHasError,
+    isLoading: heroStatsLoading,
+  } = useEventsRankingControllerGetEventHeroStats(
+    {
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
+          guildId: guildId ?? "",
+          eventId: eventId ?? "",
+        }),
+      },
+    },
+  );
 
   if (eventLoading) {
     return (
@@ -89,6 +133,10 @@ export const EventKillsHistoryContent = ({
   const selectedHero = selectedHeroId
     ? heroes.find((hero) => hero.id === selectedHeroId)
     : undefined;
+  const killCount = getKillCount(
+    heroStatsHasError ? undefined : heroStats,
+    selectedHeroId,
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
@@ -97,11 +145,13 @@ export const EventKillsHistoryContent = ({
         eventId={eventId}
       />
 
-      <ScrollArea className="min-h-0 flex-1">
+      <ScrollArea ref={setScrollElement} className="min-h-0 flex-1">
         <div className="flex w-full min-w-0 max-w-full flex-col gap-3 px-3 py-3">
           <EventKillsSummary
             eventName={event.name}
             heroName={selectedHero?.npcName}
+            killCount={killCount}
+            isKillCountLoading={heroStatsLoading}
           />
 
           <EventKillsFilter
@@ -110,17 +160,14 @@ export const EventKillsHistoryContent = ({
             onSelectedHeroChange={setSelectedHeroId}
           />
 
-          {killsError && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {t("events.error")}
-            </div>
-          )}
-
-          <EventKillsList
+          <EventKillsTable
             kills={allKills}
             guildId={guildId ?? ""}
             eventId={eventId ?? ""}
+            scrollElement={scrollElement}
+            resetKey={selectedHeroId ?? "all"}
             isLoading={killsLoading}
+            hasError={killsHasError}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
             fetchNextPage={fetchNextPage}

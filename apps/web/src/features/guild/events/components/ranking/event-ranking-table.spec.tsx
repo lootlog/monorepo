@@ -113,6 +113,69 @@ describe("EventRankingTable", () => {
     ).toBe(true);
   });
 
+  it("renders the shared table without nested card styling in compact mode", () => {
+    const { container } = renderRankingTable(
+      [createRanking({ id: "ranking-1", memberId: 1 })],
+      { variant: "compact" },
+    );
+
+    const section = container.querySelector("section");
+    const headers = screen.getAllByRole("columnheader");
+    const pointsCell = container.querySelector("tbody td:last-child");
+
+    expect(headers).toHaveLength(4);
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.player" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.points" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.kills" }),
+    ).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
+    expect(section?.className).not.toContain("border-border");
+    expect(section?.className).not.toContain("rounded-2xl");
+    expect(pointsCell?.className).toContain("pr-4!");
+    expect(
+      screen.queryByRole("button", { name: "events.ranking.moreActions" }),
+    ).toBeNull();
+  });
+
+  it("shows kills only when the ranking widget is wide enough", () => {
+    const { container } = renderRankingTable(
+      [createRanking({ id: "ranking-1", memberId: 1 })],
+      { variant: "compact" },
+    );
+
+    const section = container.querySelector("section");
+    const killsHeader = screen.getByRole("columnheader", {
+      name: "events.ranking.kills",
+    });
+
+    expect(section?.className).toContain("@container/ranking");
+    expect(killsHeader.classList.contains("hidden")).toBe(true);
+    expect(killsHeader.classList.contains("@md/ranking:table-cell")).toBe(true);
+    expect(killsHeader.classList.contains("md:table-cell")).toBe(false);
+  });
+
+  it("uses compact typography until the ranking widget becomes wide", () => {
+    const { container } = renderRankingTable(
+      [createRanking({ id: "ranking-1", memberId: 1 })],
+      { variant: "compact" },
+    );
+
+    const memberName = screen.getByText("Member 1");
+    const pointsValue = container.querySelector(
+      "tbody td:last-child .font-bold",
+    );
+
+    expect(memberName.classList.contains("text-xs")).toBe(true);
+    expect(memberName.classList.contains("@md/ranking:text-sm")).toBe(true);
+    expect(pointsValue?.classList.contains("text-sm")).toBe(true);
+    expect(pointsValue?.classList.contains("@md/ranking:text-base")).toBe(true);
+  });
+
   it("keeps point sorting and formats non-zero AFK values", () => {
     renderRankingTable([
       createRanking({
@@ -133,6 +196,20 @@ describe("EventRankingTable", () => {
     expect(rankingRows[0]?.textContent).toContain("103.50");
     expect(rankingRows[1]?.textContent).toContain("Member 1");
     expect(screen.getByText("3%")).toBeTruthy();
+  });
+
+  it("uses the member role color and preserves the default color without one", () => {
+    renderRankingTable([
+      createRanking({
+        id: "ranking-colored",
+        memberId: 1,
+        roleColor: 0x25a7e8,
+      }),
+      createRanking({ id: "ranking-default", memberId: 2 }),
+    ]);
+
+    expect(screen.getByText("Member 1").style.color).toBe("#25A7E8");
+    expect(screen.getByText("Member 2").getAttribute("style")).toBeNull();
   });
 
   it("keeps distinct medal treatments for the top three positions", () => {
@@ -299,6 +376,7 @@ type RankingTableOptions = {
   currentMemberId?: number;
   eventId?: string;
   guildId?: string;
+  variant?: "default" | "compact";
 };
 
 function renderRankingTable(
@@ -322,6 +400,7 @@ function renderRankingTable(
         eventId={options.eventId ?? "event-1"}
         canEdit={options.canEdit ?? true}
         currentMemberId={options.currentMemberId}
+        variant={options.variant}
       />
     </QueryClientProvider>,
   );
@@ -333,6 +412,7 @@ function createRanking({
   id,
   memberId,
   pointsModified = true,
+  roleColor,
   totalPoints = 100,
 }: {
   avgAfkPercentage?: number;
@@ -340,6 +420,7 @@ function createRanking({
   id: string;
   memberId: number;
   pointsModified?: boolean;
+  roleColor?: number;
   totalPoints?: number;
 }): EventRanking {
   return {
@@ -357,6 +438,15 @@ function createRanking({
     member: {
       id: memberId,
       name: `Member ${memberId}`,
+      roles:
+        roleColor === undefined
+          ? []
+          : [
+              {
+                color: roleColor,
+                position: 1,
+              },
+            ],
     },
   };
 }

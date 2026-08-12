@@ -1,7 +1,7 @@
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ExternalLink, Info, Skull } from "lucide-react";
+import { ChevronDown, Info, Skull } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { TableCell, TableRow } from "@lootlog/ui/components/table";
 import {
@@ -137,12 +137,11 @@ export const MemberKillRow = ({
                 title={t("events.kills.openKillDetails", {
                   monsterName: kill.heroNpc.npcName,
                 })}
-                className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-md outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex max-w-full min-w-0 items-center rounded-md outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <span className="truncate font-semibold">
                   {kill.heroNpc.npcName}
                 </span>
-                <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
               </Link>
               <div className="mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums sm:hidden">
                 {formatDateTime(new Date(kill.killedAt))}
@@ -213,7 +212,7 @@ export const MemberKillRow = ({
       </TableRow>
 
       {isExpanded && (
-        <TableRow className="bg-muted/30 hover:bg-muted/30">
+        <TableRow data-state="expanded-detail">
           <TableCell colSpan={6} className="h-auto whitespace-normal px-4 py-3">
             {point ? (
               <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch">
