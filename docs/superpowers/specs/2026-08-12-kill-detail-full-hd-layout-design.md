@@ -26,11 +26,23 @@ The matching-loot section is intentionally first in the right column. Its headin
 
 ## Component composition
 
-- `KillDetailSummary` remains full width and unchanged.
+- `KillDetailSummary` remains full width.
 - A new responsive content grid contains two vertical stacks.
 - `KillParticipantsCard` and `KillMapsTimelineSection` form the primary analysis stack.
 - The existing matching-loot section moves above `MultipliersCard` in the secondary stack.
 - Existing queries, mutations, accordion state, permissions, routing, and data contracts remain unchanged.
+
+## Summary strip alignment
+
+The kill summary strip must use the same visual language as the member statistics summary strip:
+
+- the identity row uses the same spacing, typography hierarchy, and NPC/avatar footprint;
+- the metric strip uses the same muted background, label typography, value sizing, and responsive separators;
+- kill-specific metric labels remain sentence case and do not display decorative icons;
+- existing time tooltips and kill-specific values remain available;
+- the manual-close badge remains on the right side of the identity row and is shown only for manually closed kills.
+
+The two strips should stay separate components because their data and behavior differ. This is visual consistency, not a shared abstraction.
 
 ## States and accessibility
 
