@@ -1,16 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
-import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Permission } from "@lootlog/types";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
-import { Trophy, AlertCircle } from "lucide-react";
+import { EventRankingFilter } from "./components/ranking/event-ranking-filter";
+import { EventRankingSummary } from "./components/ranking/event-ranking-summary";
+import { AlertCircle } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getListEventRankingQueryKey,
@@ -18,6 +17,10 @@ import {
   useListEventRanking,
   useShowEventOverview,
 } from "@lootlog/api-client/react-query/main/events";
+import {
+  getMembersControllerGetMeQueryKey,
+  useMembersControllerGetMe,
+} from "@lootlog/api-client/react-query/main/members";
 
 export const EventRankingPage = () => {
   const { t } = useTranslation();
@@ -26,6 +29,18 @@ export const EventRankingPage = () => {
   const hasEventRouteParams = Boolean(guildId && eventId);
 
   const { data: permissions } = useGuildPermissions();
+  const { data: currentMember } = useMembersControllerGetMe(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        enabled: Boolean(guildId),
+        queryKey: getMembersControllerGetMeQueryKey({
+          guildId: guildId ?? "",
+        }),
+        staleTime: 30_000,
+      },
+    },
+  );
   const canEditPoints =
     permissions?.includes(Permission.OWNER) ||
     permissions?.includes(Permission.ADMIN);
@@ -111,48 +126,23 @@ export const EventRankingPage = () => {
     : rankings;
 
   return (
-    <ScrollArea className="h-full bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <EventParticipationConfirmationDialog
         guildId={guildId}
         eventId={eventId}
       />
-      <div className="flex flex-col gap-4 px-3 py-3">
-        <Card className="gap-4 border-border bg-card p-4">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="rounded-xl bg-primary/10 p-2">
-              <Trophy className="size-4 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {t("events.ranking.title")}
-              </p>
-              <h2 className="truncate text-base font-semibold">{event.name}</h2>
-              <p className="text-xs text-muted-foreground">
-                {effectiveSelectedHeroName ??
-                  t("events.kills.allHeroes", "Wszyscy herosi")}
-              </p>
-            </div>
-          </div>
-        </Card>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="flex w-full min-w-0 max-w-full flex-col gap-3 px-3 py-3">
+          <EventRankingSummary
+            eventName={event.name}
+            selectedHeroName={effectiveSelectedHeroName}
+          />
+          <EventRankingFilter
+            heroes={heroes}
+            selectedHeroName={effectiveSelectedHeroName}
+            onSelectedHeroChange={setSelectedHeroName}
+          />
 
-        {heroes.length > 0 && (
-          <Card className="gap-2 border-border bg-card p-2.5">
-            <Tabs
-              value={effectiveSelectedHeroName ?? heroes[0]?.npcName}
-              onValueChange={setSelectedHeroName}
-            >
-              <EventScrollableTabsList>
-                {heroes.map((hero) => (
-                  <TabsTrigger key={hero.id} value={hero.npcName}>
-                    {hero.npcName}
-                  </TabsTrigger>
-                ))}
-              </EventScrollableTabsList>
-            </Tabs>
-          </Card>
-        )}
-
-        <Card className="gap-3 border-border bg-card p-3">
           {rankingError && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {t(
@@ -161,14 +151,16 @@ export const EventRankingPage = () => {
               )}
             </div>
           )}
+
           <EventRankingTable
             rankings={filteredRankings}
             guildId={guildId}
             eventId={eventId}
             canEdit={canEditPoints}
+            currentMemberId={currentMember?.id}
           />
-        </Card>
-      </div>
-    </ScrollArea>
+        </div>
+      </ScrollArea>
+    </div>
   );
 };
