@@ -33,6 +33,8 @@ An expanded map renders a second `TableRow` immediately after its summary row. T
 
 The divider under the summary row remains in the same position in both states. Expanded content begins directly below it without an extra top gap. Multiple maps may remain expanded at the same time, matching the current accordion behavior.
 
+The full-gap audit toggle stays visually compact: at `md` and above it uses a 32 px control height with compact horizontal padding, so it reads as a secondary inline action rather than a dominant button. Below `md` it preserves a 44 px touch target. Expanding the full audit changes only the list contents and label; it does not increase the toggle height.
+
 ## Responsive behavior
 
 At the Tailwind `md` breakpoint and above (`>= 768px`) the table header is visible and all five columns keep stable widths. The ID column appears first with a compact fixed width. The map column receives remaining width; participants and coverage use compact fixed widths; actions remains the narrowest column.
@@ -76,6 +78,7 @@ API contracts, routing, stored data, matching-loot behavior, and the normalizati
 - Test explicit expansion and collapse, stable `mapId`-based expansion after a data refresh, multiple expanded maps, `aria-expanded`, `aria-controls`, `aria-labelledby`, and the responsive detail row `colSpan` (five at `md`, three below it).
 - Test that the detail divider does not gain extra top spacing when expanded.
 - Test the `< 768px` visibility rules for the visually clipped but accessible header, hidden ID and participants columns, participant metadata, 64 px coverage column without horizontal padding, and 44 px action column without inherited cell padding; verify the actual rendered widths of both compact columns, the wrapper's 8 px right padding, and the five-column layout at exactly 768 px.
+- Test that the full-gap audit toggle is 32 px high at `md` and above, retains a 44 px touch target below `md`, and keeps the same height in both collapsed and expanded states.
 - Retain the existing normalization, assignment grouping, full audit, invalid-window, and duplicate-key regression tests.
 - Run targeted Vitest tests, `@lootlog/web` lint, build, and format check.
 - Inspect the live page at 360, 768, and 1440 px for alignment, truncation, keyboard behavior, touch target size, horizontal overflow, and React console warnings.
