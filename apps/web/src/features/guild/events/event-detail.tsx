@@ -16,8 +16,6 @@ import { EventRankingPreview } from "./components/ranking/event-ranking-preview"
 import {
   Trophy,
   AlertCircle,
-  Swords,
-  Plus,
   Clock,
   CalendarDays,
   BookText,
@@ -38,7 +36,7 @@ import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
-import { HeroCard } from "./components/heroes/hero-card";
+import { EventHeroesTable } from "./components/heroes/event-heroes-table";
 import { EventActionsCard } from "./components/shared/event-actions-card";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 import {
@@ -329,7 +327,7 @@ export const EventDetail = () => {
   if (isLoading || isMapsLoading) {
     return (
       <div className="flex flex-col h-full min-h-0 bg-background">
-        <div className="px-3 py-3 flex flex-col gap-4">
+        <div className="px-3 py-3 flex flex-col gap-3">
           <Card className="gap-4 border-border bg-card p-4">
             <div className="flex items-center gap-3">
               <Skeleton className="h-10 w-10 rounded-xl" />
@@ -343,8 +341,8 @@ export const EventDetail = () => {
               </div>
             </div>
           </Card>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 space-y-4">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <div className="space-y-3 lg:col-span-2">
               <Card className="p-3 bg-card  border-border gap-2">
                 <Skeleton className="h-5 w-32 mb-3" />
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -362,7 +360,7 @@ export const EventDetail = () => {
                 ))}
               </Card>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <Card className="p-3 bg-card  border-border gap-2">
                 <Skeleton className="h-5 w-24 mb-3" />
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -535,7 +533,7 @@ export const EventDetail = () => {
       )}
 
       <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
+        <div className="px-3 py-3 flex flex-col gap-3">
           <Card className="gap-0 overflow-hidden border-border bg-card p-0">
             <div className="flex items-start gap-3 p-4">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -669,79 +667,47 @@ export const EventDetail = () => {
               {rankingError && <p>{t("events.ranking.error")}</p>}
             </div>
           )}
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
-            <div className="min-w-0 space-y-4">
-              <Card className="h-fit gap-3 border-border bg-card p-3">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-yellow-500/10 p-2">
-                      <Swords className="size-4 text-yellow-500" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        {t("events.heroes.subtitle")}
-                      </p>
-                      <h2 className="text-base font-semibold">
-                        {t("events.heroes.title")}
-                      </h2>
-                    </div>
-                  </div>
-                  {canManage && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-center sm:w-auto"
-                      onClick={() => {
-                        setSelectedHero(null);
-                        setHeroDialogOpen(true);
-                      }}
-                    >
-                      <Plus className="mr-2 size-4" />
-                      {t("events.heroes.addButton")}
-                    </Button>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {heroes.map((hero) => (
-                    <HeroCard
-                      key={hero.id}
-                      hero={hero}
-                      timer={findEventHeroTimer(heroTimers, {
-                        heroNpcId: hero.npcId,
-                        heroName: hero.npcName,
-                      })}
-                      stats={heroStats?.find(
-                        (s) => hero.npcId !== null && s.npcId === hero.npcId,
-                      )}
-                      guildId={guildId ?? ""}
-                      eventId={eventId ?? ""}
-                      canManage={canManage ?? false}
-                      onEditHero={handleEditHero}
-                      onManageMaps={handleManageMaps}
-                      onDeleteHero={handleDeleteHero}
-                      t={t}
-                    />
-                  ))}
-                  {heroes.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
-                      <Swords className="w-8 h-8 mb-2 opacity-50" />
-                      <p className="text-sm">{t("events.heroes.empty")}</p>
-                    </div>
-                  )}
-                </div>
-              </Card>
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+            <div className="contents xl:block xl:min-w-0 xl:space-y-3">
+              <div className="order-1 xl:order-none">
+                <EventHeroesTable
+                  rows={heroes.map((hero) => ({
+                    hero,
+                    timer: findEventHeroTimer(heroTimers, {
+                      heroNpcId: hero.npcId,
+                      heroName: hero.npcName,
+                    }),
+                    stats: heroStats?.find(
+                      (statistic) =>
+                        hero.npcId !== null && statistic.npcId === hero.npcId,
+                    ),
+                  }))}
+                  guildId={guildId ?? ""}
+                  eventId={eventId ?? ""}
+                  canManage={canManage ?? false}
+                  onAddHero={() => {
+                    setSelectedHero(null);
+                    setHeroDialogOpen(true);
+                  }}
+                  onEditHero={handleEditHero}
+                  onManageMaps={handleManageMaps}
+                  onDeleteHero={handleDeleteHero}
+                />
+              </div>
 
-              <EventHeroLoots
-                guildId={guildId ?? ""}
-                heroNpcNames={heroes.map((h) => h.npcName)}
-                heroNpcs={heroes}
-                showHeroTabs
-                world={event.world}
-                limit={10}
-              />
+              <div className="order-4 xl:order-none">
+                <EventHeroLoots
+                  guildId={guildId ?? ""}
+                  heroNpcNames={heroes.map((h) => h.npcName)}
+                  heroNpcs={heroes}
+                  showHeroTabs
+                  world={event.world}
+                  limit={5}
+                />
+              </div>
             </div>
 
-            <div className="min-w-0 space-y-4">
+            <div className="contents xl:block xl:min-w-0 xl:space-y-3">
               <div className="hidden xl:block">
                 <EventActionsCard
                   canManage={canManage ?? false}
@@ -755,22 +721,25 @@ export const EventDetail = () => {
                 />
               </div>
 
-              <EventRankingPreview
-                rankings={rankings}
-                heroNpcs={heroes}
-                guildId={guildId ?? ""}
-                eventId={eventId ?? ""}
-                limit={5}
-              />
+              <div className="order-2 xl:order-none">
+                <EventRankingPreview
+                  rankings={rankings}
+                  heroNpcs={heroes}
+                  guildId={guildId ?? ""}
+                  eventId={eventId ?? ""}
+                  limit={5}
+                />
+              </div>
 
-              <RecentKillsPreview
-                guildId={guildId ?? ""}
-                eventId={eventId ?? ""}
-                heroNpcs={heroes}
-                showHeroTabs
-                limit={5}
-                showHeroName
-              />
+              <div className="order-3 xl:order-none">
+                <RecentKillsPreview
+                  guildId={guildId ?? ""}
+                  eventId={eventId ?? ""}
+                  heroNpcs={heroes}
+                  showHeroTabs
+                  limit={5}
+                />
+              </div>
             </div>
           </div>
         </div>

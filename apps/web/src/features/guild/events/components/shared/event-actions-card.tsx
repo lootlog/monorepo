@@ -37,21 +37,14 @@ export const EventActionsCard = ({
 
   return (
     <Card className="gap-0 overflow-hidden border-border bg-card p-0">
-      <div className="flex items-center gap-3 p-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Settings2 className="size-4 text-primary" />
-        </div>
-        <h3 className="text-sm font-semibold">
+      <header className="flex min-h-12 items-center border-b border-border/70 px-3 py-2">
+        <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
+          <Settings2 className="size-4 shrink-0 text-primary" />
           {t("events.actionsCard.subtitle")}
         </h3>
-      </div>
+      </header>
 
-      <div
-        className={cn(
-          "grid gap-1 border-t border-border bg-muted/20 p-1.5",
-          actionGridClassName,
-        )}
-      >
+      <div className={cn("grid gap-1 bg-muted/20 p-1.5", actionGridClassName)}>
         <Button
           size="sm"
           variant="ghost"

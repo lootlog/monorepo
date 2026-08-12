@@ -76,7 +76,7 @@ describe("KillParticipantRow", () => {
     });
   });
 
-  it("renders one member link with a decorative external-link icon", () => {
+  it("renders one member link without a decorative external-link icon", () => {
     render(
       <KillParticipantRow
         participant={createParticipant()}
@@ -91,12 +91,7 @@ describe("KillParticipantRow", () => {
     const memberLink = screen.getByRole("link", { name: "Tester" });
 
     expect(screen.getAllByRole("link")).toHaveLength(1);
-    expect(memberLink.querySelector(".lucide-external-link")).toBeTruthy();
-    expect(
-      memberLink
-        .querySelector(".lucide-external-link")
-        ?.getAttribute("aria-hidden"),
-    ).toBe("true");
+    expect(memberLink.querySelector(".lucide-external-link")).toBeNull();
   });
 
   it("shows the manual adjustment indicator only for a non-zero adjustment", () => {

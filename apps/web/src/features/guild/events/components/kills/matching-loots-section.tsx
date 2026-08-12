@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Frown, Package } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import type { Loot } from "@/lib/loots/loot-types";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
@@ -33,17 +32,15 @@ export const MatchingLootsSection = ({
             {t("events.killDetail.matchingLoots")}
           </span>
         </h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="h-8 shrink-0 px-2 text-xs text-muted-foreground"
+        <Link
+          to="/$guildId"
+          params={{ guildId }}
+          search={{ npcs: npcName }}
+          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
         >
-          <Link to="/$guildId" params={{ guildId }} search={{ npcs: npcName }}>
-            {t("events.loots.showAll")}
-            <ChevronRight className="size-3.5" />
-          </Link>
-        </Button>
+          {t("events.loots.showAll")}
+          <ChevronRight className="size-3.5" />
+        </Link>
       </header>
 
       {isLoading ? (

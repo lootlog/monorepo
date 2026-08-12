@@ -57,7 +57,7 @@ const getColumnClassName = (columnId: string) => {
   }
 
   if (columnId === "kills") {
-    return "hidden w-20 text-right md:table-cell";
+    return "hidden w-20 text-right @md/ranking:table-cell";
   }
 
   if (columnId === "time") {
@@ -164,7 +164,7 @@ export const EventRankingTable = ({
 
         return (
           <span
-            className="block min-w-0 truncate text-sm font-semibold"
+            className="block min-w-0 truncate text-xs font-semibold @md/ranking:text-sm"
             style={roleCssColor ? { color: roleCssColor } : undefined}
           >
             {memberLabel}
@@ -314,7 +314,7 @@ export const EventRankingTable = ({
   return (
     <section
       className={cn(
-        "w-full min-w-0 overflow-hidden",
+        "@container/ranking w-full min-w-0 overflow-hidden",
         variant === "default" && "rounded-2xl border border-border bg-card",
       )}
     >

@@ -71,11 +71,14 @@ describe("MatchingLootsSection", () => {
     expect(screen.queryByText("2")).toBeNull();
     expect(screen.getByTestId("loot-1").dataset.variant).toBe("embedded");
     expect(screen.getByTestId("loot-2").dataset.variant).toBe("embedded");
-    expect(
-      screen
-        .getByRole("link", { name: "events.loots.showAll" })
-        .getAttribute("href"),
-    ).toBe("/guild-one?npcs=Potulny Berserker");
+    const showAllLink = screen.getByRole("link", {
+      name: "events.loots.showAll",
+    });
+    expect(showAllLink.getAttribute("href")).toBe(
+      "/guild-one?npcs=Potulny Berserker",
+    );
+    expect(showAllLink.getAttribute("class")).toContain("hover:text-primary");
+    expect(showAllLink.getAttribute("class")).not.toContain("hover:bg-");
   });
 
   it("keeps loading and empty states inside the shared card", () => {

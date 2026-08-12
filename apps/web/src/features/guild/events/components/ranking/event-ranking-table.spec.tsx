@@ -142,6 +142,40 @@ describe("EventRankingTable", () => {
     ).toBeNull();
   });
 
+  it("shows kills only when the ranking widget is wide enough", () => {
+    const { container } = renderRankingTable(
+      [createRanking({ id: "ranking-1", memberId: 1 })],
+      { variant: "compact" },
+    );
+
+    const section = container.querySelector("section");
+    const killsHeader = screen.getByRole("columnheader", {
+      name: "events.ranking.kills",
+    });
+
+    expect(section?.className).toContain("@container/ranking");
+    expect(killsHeader.classList.contains("hidden")).toBe(true);
+    expect(killsHeader.classList.contains("@md/ranking:table-cell")).toBe(true);
+    expect(killsHeader.classList.contains("md:table-cell")).toBe(false);
+  });
+
+  it("uses compact typography until the ranking widget becomes wide", () => {
+    const { container } = renderRankingTable(
+      [createRanking({ id: "ranking-1", memberId: 1 })],
+      { variant: "compact" },
+    );
+
+    const memberName = screen.getByText("Member 1");
+    const pointsValue = container.querySelector(
+      "tbody td:last-child .font-bold",
+    );
+
+    expect(memberName.classList.contains("text-xs")).toBe(true);
+    expect(memberName.classList.contains("@md/ranking:text-sm")).toBe(true);
+    expect(pointsValue?.classList.contains("text-sm")).toBe(true);
+    expect(pointsValue?.classList.contains("@md/ranking:text-base")).toBe(true);
+  });
+
   it("keeps point sorting and formats non-zero AFK values", () => {
     renderRankingTable([
       createRanking({

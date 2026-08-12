@@ -87,6 +87,8 @@ describe("EventHeroLoots", () => {
     expect(action.getAttribute("href")).toBe(
       "/guild-one?npcs=Potulny Berserker",
     );
+    expect(action.getAttribute("class")).toContain("hover:text-primary");
+    expect(action.getAttribute("class")).not.toContain("hover:bg-");
     expect(screen.getByTestId("loot-loot-1").dataset.variant).toBe("embedded");
     expect(screen.getByTestId("loot-loot-2").dataset.variant).toBe("embedded");
     expect(screen.getByTestId("loot-details-dialog")).toBeTruthy();

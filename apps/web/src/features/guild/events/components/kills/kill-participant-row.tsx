@@ -12,7 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { ChevronDown, ExternalLink, Info, MapPin, Pencil } from "lucide-react";
+import { ChevronDown, Info, MapPin, Pencil } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
@@ -171,14 +171,10 @@ export const KillParticipantRow = ({
               <Link
                 to="/$guildId/events/$eventId/members/$memberId"
                 params={memberLinkParams}
-                className="inline-flex w-fit max-w-full min-w-0 items-center gap-1 rounded-sm text-sm font-semibold outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/60"
+                className="inline-flex w-fit max-w-full min-w-0 items-center rounded-sm text-sm font-semibold outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/60"
                 style={roleCssColor ? { color: roleCssColor } : undefined}
               >
                 <span className="truncate">{participant.member.name}</span>
-                <ExternalLink
-                  aria-hidden="true"
-                  className="size-3.5 shrink-0 text-muted-foreground"
-                />
               </Link>
             ) : (
               <span

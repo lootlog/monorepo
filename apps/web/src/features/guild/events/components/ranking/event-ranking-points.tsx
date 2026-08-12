@@ -30,10 +30,10 @@ export const EventRankingPoints = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const pointsValue = (
     <>
-      <span className="font-bold text-primary tabular-nums md:text-base">
+      <span className="text-sm font-bold text-primary tabular-nums @md/ranking:text-base">
         {formatPoints(ranking.totalPoints)}
       </span>
-      <span className="text-[10px] font-medium text-primary/75 md:text-xs">
+      <span className="text-[10px] font-medium text-primary/75 @md/ranking:text-xs">
         {t("events.common.pointsShort", "pkt")}
       </span>
     </>

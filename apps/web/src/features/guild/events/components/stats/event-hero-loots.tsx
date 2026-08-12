@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
-import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { Package, Frown, ChevronRight } from "lucide-react";
 import { useEventLoots } from "../../hooks/queries/use-event-loots";
@@ -54,23 +53,17 @@ export const EventHeroLoots = ({
             <Package className="size-4 shrink-0 text-primary" />
             <span className="truncate">{t("events.loots.title")}</span>
           </h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="h-8 shrink-0 px-2 text-xs text-muted-foreground"
+          <Link
+            to="/$guildId"
+            params={{ guildId }}
+            search={{
+              npcs: activeHeroName ?? heroNpcNames.join(","),
+            }}
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
           >
-            <Link
-              to="/$guildId"
-              params={{ guildId }}
-              search={{
-                npcs: activeHeroName ?? heroNpcNames.join(","),
-              }}
-            >
-              {t("events.loots.showAll")}
-              <ChevronRight className="size-3.5" />
-            </Link>
-          </Button>
+            {t("events.loots.showAll")}
+            <ChevronRight className="size-3.5" />
+          </Link>
         </header>
 
         {showHeroTabs && heroNpcs && heroNpcs.length > 1 && (
