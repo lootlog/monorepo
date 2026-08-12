@@ -42,9 +42,9 @@ The value comes from the existing event hero statistics endpoint rather than the
 - With a hero selected, use the `killCount` entry whose `heroId` matches the selected hero.
 - A missing selected-hero entry resolves to zero after the statistics query succeeds.
 
-`EventKillsHistoryContent` owns the statistics query and the context-aware derived count. `EventKillsSummary` receives `killCount` and `isKillCountLoading`; it does not fetch data itself.
+`EventKillsHistoryContent` owns the statistics query and the context-aware derived count. `EventKillsSummary` receives `killCount?: number` and `isKillCountLoading`; it does not fetch data itself. A numeric value, including zero, means the query succeeded. `undefined` means the statistics value is unavailable after a query failure.
 
-While statistics load, the value uses a stable skeleton matching the final number footprint. A statistics-query failure displays an em dash in the metric and does not block the event summary, filters, history table, or infinite scrolling.
+While statistics load, the value uses a stable skeleton matching the final number footprint. A statistics-query failure displays an em dash with a translated screen-reader label in the metric and does not block the event summary, filters, history table, or infinite scrolling.
 
 ## Table Architecture
 
@@ -115,7 +115,7 @@ The exact breakpoint classes follow the existing member table patterns rather th
 5. When the sentinel enters the scroll viewport, the table calls the existing `fetchNextPage` function.
 6. A monster or action link navigates to the existing hero kill-detail route.
 
-No new API call, cache shape, or global state is introduced.
+The summary adds one query to an existing event hero statistics endpoint. No new endpoint, API contract, cache shape, or global state is introduced.
 
 ## Loading, Empty, Error, and End States
 
@@ -150,6 +150,7 @@ Component tests cover:
 - Responsive visibility classes on optional columns.
 - All-heroes kill-count summation and selected-hero lookup.
 - Kill-count loading skeleton, successful value, zero value, and non-blocking unavailable state.
+- Content-level wiring of the statistics query to the current event and derivation changes after selecting a hero without changing the statistics query key.
 
 Existing event kill history content and filter tests are updated only where the table integration changes observable behavior.
 
