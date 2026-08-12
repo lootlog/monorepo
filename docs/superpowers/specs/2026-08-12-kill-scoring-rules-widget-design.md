@@ -30,18 +30,18 @@ All rules appear exactly once. There is no disclosure, toggle, collapsed state, 
 
 From the `sm` breakpoint upward, the parameter strip uses three equal columns with vertical separators. Below `sm`, it uses two columns: point cap and minimum tracking share the first row, while timezone spans both columns in the second row.
 
-Rule rows keep the action aligned to the right while names and conditions use the remaining width. Long names and conditions wrap naturally, actions do not shrink, and the card never introduces horizontal scrolling. Mobile rows retain a compact readable rhythm and do not hide essential content.
+Rule rows keep the action aligned to the right while names and conditions use the remaining width. Long names and conditions wrap naturally. When a primary line cannot fit at 360 px, the action moves below the name and remains right-aligned rather than forcing horizontal overflow. Mobile rows retain a compact readable rhythm and do not hide essential content.
 
 ## Component boundaries
 
-`MultipliersCard` remains the public component consumed by the kill detail page and keeps its current props and data contract. `ScoringConfigurationStrip` renders the metadata. A single substantive rule-list component renders all rule rows and owns applied/disabled presentation. Shared display helpers remain non-component utilities.
+`MultipliersCard` remains the public component consumed by the kill detail page and keeps its current props and data contract. `ScoringConfigurationStrip` renders the metadata in `scoring-configuration-strip.tsx`. A single substantive `ScoringRulesList` component renders all rule rows and owns applied/disabled presentation in `scoring-rules-list.tsx`. Shared display helpers remain non-component utilities in `scoring-rule-display.ts`.
 
 The obsolete disclosure component and separate applied-rule component are removed rather than retained as wrappers. No re-export-only file is introduced. All visible copy uses the event i18n namespace.
 
 ## Accessibility
 
 - The section retains a semantic heading.
-- Every rule and its condition/action relationship remains readable without interaction.
+- The rules use explicit list semantics. Every list item exposes the rule name first, followed by its condition and action in a stable accessible reading order; the implementation must not leave a definition list without term elements after removing the visible “IF” and “THEN” labels.
 - Applied and disabled states are conveyed by translated text in addition to color.
 - The Sync Cyan marker is decorative and not the sole indication that a rule applied.
 - Static scoring states remain readable without relying on icons.
@@ -53,6 +53,7 @@ The obsolete disclosure component and separate applied-rule component are remove
 - Verify a disabled highlighted rule has only the disabled presentation.
 - Verify active, non-applied rules have no status label.
 - Assert conditions and actions remain present without “IF” and “THEN” labels and the member total is not duplicated.
+- Assert each rule is exposed as one list item and that its accessible text order is name, condition, then action.
 - Cover advanced rules with no applied IDs, advanced mode with no rules, and simple mode, including header-count and parameter-strip behavior.
 - Run the targeted Vitest suite, `@lootlog/web` lint, build, and format checks.
 - Inspect the widget in the running application at mobile and desktop widths for density, wrapping, contrast, and console warnings.
