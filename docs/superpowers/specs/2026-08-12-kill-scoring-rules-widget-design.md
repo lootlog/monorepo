@@ -35,7 +35,7 @@ The disclosure is collapsed on initial render. Opening and closing it does not m
 ## Static states
 
 - In simple scoring mode, the card shows the shared header without right-side count and one compact explanation of simple scoring. It does not render advanced-rule metadata or a disclosure.
-- In advanced mode with no configured rules, the card shows a zero rule count in the shared header and one compact empty state. It does not render a disclosure.
+- In advanced mode with no configured rules, the card shows a zero rule count in the shared header, keeps the parameter strip visible, and renders one compact empty state below it. It does not render a disclosure.
 - In advanced mode with rules but no applied rule IDs, the metadata strip and full-rule disclosure remain available; the contextual member section is omitted.
 - Disabled rules never appear in the applied contextual list, even if their IDs occur in `highlightedRuleIds`. They remain visible with disabled status in the complete ledger.
 
@@ -59,14 +59,14 @@ All new labels and empty-state copy use the event i18n namespace. No Polish or E
 - The full-rule control exposes its state and controlled region to assistive technology.
 - Status is conveyed by translated text in addition to color.
 - Keyboard users can toggle the complete ledger with the standard button interaction.
-- The contextual empty state and static scoring states remain readable without relying on icons.
+- Static scoring states remain readable without relying on icons.
 
 ## Verification
 
 - Update component tests to prove that only enabled highlighted rules appear in the default member-context list and that its copy is scoped to the current member rather than the whole kill.
 - Verify that disabled highlighted IDs do not appear as applied, while disabled rules remain present in the expanded complete ledger.
 - Verify the full ledger is initially absent, can be opened and closed, and exposes correct accessibility attributes.
-- Cover advanced rules with no applied IDs, advanced mode with no rules, and simple mode, including their exact header-count behavior.
+- Cover advanced rules with no applied IDs, advanced mode with no rules, and simple mode, including their exact header-count behavior and the parameter strip remaining visible for an empty advanced configuration.
 - Assert the parameter strip values and the expanded-detail surface contract.
 - Run the targeted Vitest suite, `@lootlog/web` lint, build, and format checks.
 - Inspect the widget in the running application at mobile and desktop widths for density, wrapping, focus visibility, touch target size, and console warnings.
