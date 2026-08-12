@@ -1,260 +1,80 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { Trophy, Pencil, PenLine, History, ArrowRight } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getCoreRowModel,
+  useReactTable,
+  type Cell,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import { Trophy } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
-import type { EventRanking } from "../../types/api";
-import { cn } from "@lootlog/ui/lib/utils";
-import { Button } from "@lootlog/ui/components/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@lootlog/ui/components/popover";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useUpdateRankingPoints } from "@lootlog/api-client/react-query/main/events";
+import { Badge } from "@lootlog/ui/components/badge";
+import { Table } from "@lootlog/ui/components/table";
+import { cn } from "@lootlog/ui/lib/utils";
+import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import type { EventRanking } from "../../types/api";
 import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranking-queries";
-import { formatPoints, formatSignedPoints } from "../../utils/format-points";
-import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
+import { formatDurationHuman } from "../../utils/format-duration";
+import { EventRankingActions } from "./event-ranking-actions";
+import { EventRankingPoints } from "./event-ranking-points";
 
-interface EventRankingTableProps {
+type EventRankingTableProps = {
   rankings: EventRanking[];
   guildId?: string;
   eventId?: string;
   canEdit?: boolean;
-}
+  currentMemberId?: number;
+};
 
-interface RankingRowProps {
-  ranking: EventRanking;
-  position: number;
-  canEdit?: boolean;
-  onEditPoints?: (
-    rankingId: string,
-    pointsDelta: number,
-    comment?: string,
-  ) => Promise<void>;
-  isEditPending?: boolean;
-  guildId?: string;
-  eventId?: string;
-}
+const LINK_COLUMN_IDS = new Set(["position", "member", "kills", "time", "afk"]);
 
-const RankingRow = ({
-  ranking,
-  position,
-  canEdit,
-  onEditPoints,
-  isEditPending,
-  guildId,
-  eventId,
-}: RankingRowProps) => {
-  const { t } = useTranslation();
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+const PRIMARY_LINK_COLUMN_ID = "member";
 
-  const isTop3 = position <= 3;
-  const memberLabel =
-    ranking.member?.name ||
-    t("events.ranking.memberFallback", {
-      memberId: ranking.memberId,
-    });
+const RIGHT_ALIGNED_COLUMN_IDS = new Set(["kills", "time", "afk", "points"]);
 
-  const handleEditClick = () => {
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDialogSubmit = async ({
-    pointsDelta,
-    comment,
-  }: {
-    pointsDelta: number;
-    comment?: string;
-  }) => {
-    if (onEditPoints) {
-      await onEditPoints(ranking.id, pointsDelta, comment);
-    }
-  };
-
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-3 p-2 rounded-lg transition-colors",
-        isTop3 ? "bg-primary/5" : "hover:bg-muted/50",
-      )}
-    >
-      <div
-        className={cn(
-          "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0",
-          position === 1 && "bg-yellow-500 text-yellow-950",
-          position === 2 && "bg-gray-300 text-gray-800",
-          position === 3 && "bg-amber-700 text-amber-100",
-          position > 3 && "bg-muted text-muted-foreground",
-        )}
-      >
-        {position}
-      </div>
-
-      <div className="flex-1 min-w-0">
-        {guildId && eventId ? (
-          <Link
-            to="/$guildId/events/$eventId/members/$memberId"
-            params={{
-              guildId,
-              eventId,
-              memberId: String(ranking.memberId),
-            }}
-            className="font-medium truncate hover:underline"
-          >
-            {memberLabel}
-          </Link>
-        ) : (
-          <p className="font-medium truncate">{memberLabel}</p>
-        )}
-        <p className="text-xs text-muted-foreground">
-          {t("events.ranking.killCount", { count: ranking.totalKills })}
-        </p>
-      </div>
-
-      <div className="text-right shrink-0 flex items-center gap-1">
-        <div className="flex items-center gap-1">
-          {ranking.pointsModified && canEdit && (
-            <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-6 w-6"
-                  aria-label={t("events.points.history")}
-                >
-                  <PenLine className="h-3 w-3 text-amber-500" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 overflow-hidden p-0" align="end">
-                <div className="max-h-[70vh] overflow-hidden">
-                  <div className="border-b p-3">
-                    <div className="flex items-center gap-2">
-                      <History className="h-4 w-4 text-muted-foreground" />
-                      <h4 className="text-sm font-medium">
-                        {t("events.points.history")}
-                      </h4>
-                    </div>
-                  </div>
-                  <ScrollArea className="h-60">
-                    {ranking.editHistory.length > 0 ? (
-                      <div className="space-y-2 p-2">
-                        {ranking.editHistory.map((entry) => (
-                          <div
-                            key={entry.id}
-                            className="rounded-md bg-muted/50 p-2 text-sm"
-                          >
-                            <div className="mb-1 flex items-center gap-2 text-muted-foreground">
-                              <span className="text-xs">
-                                {format(
-                                  new Date(entry.editedAt),
-                                  "d MMM yyyy, HH:mm",
-                                  { locale: pl },
-                                )}
-                              </span>
-                              <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                                {entry.editType === "RANKING"
-                                  ? t("events.points.historyTypeRanking")
-                                  : t("events.points.historyTypeKill")}
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {t("events.points.historyEditedBy", {
-                                editorName:
-                                  entry.editedByName ??
-                                  t("events.points.historyEditorUnknown"),
-                              })}
-                            </p>
-                            <div className="flex items-center gap-2 font-medium">
-                              <span className="text-red-500">
-                                {formatPoints(entry.previousPoints)}
-                              </span>
-                              <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-green-500">
-                                {formatPoints(entry.newPoints)}
-                              </span>
-                              <span className="rounded bg-background/80 px-1.5 py-0.5 text-xs text-primary">
-                                {formatSignedPoints(entry.deltaPoints)}
-                              </span>
-                            </div>
-                            {entry.comment && (
-                              <p className="mt-2 whitespace-pre-wrap break-words rounded-md bg-background px-2 py-1.5 text-xs text-muted-foreground">
-                                {entry.comment}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-4 text-center text-sm text-muted-foreground">
-                        {t("events.points.noHistory")}
-                      </div>
-                    )}
-                  </ScrollArea>
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-          {ranking.pointsModified && !canEdit && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <PenLine className="h-3 w-3 text-amber-500" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t("events.points.modified")}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <p className="font-bold text-primary">
-            {t("events.ranking.pointCount", {
-              count: ranking.totalPoints,
-            })}
-          </p>
-        </div>
-        {canEdit && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6"
-                onClick={handleEditClick}
-                disabled={isEditPending}
-              >
-                <Pencil className="h-3 w-3 text-muted-foreground" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{t("events.points.edit")}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-      <ManualPointsEditDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        title={t("events.points.rankingDialogTitle", {
-          memberName: memberLabel,
-        })}
-        description={t("events.points.rankingDialogDescription", {
-          heroNpcName: ranking.heroNpcName,
-        })}
-        currentPoints={ranking.totalPoints}
-        isPending={isEditPending}
-        onSubmit={handleDialogSubmit}
-      />
-    </div>
+const getPositionClassName = (position: number) =>
+  cn(
+    "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums",
+    position === 1 && "bg-yellow-500 text-yellow-950",
+    position === 2 && "bg-gray-300 text-gray-800",
+    position === 3 && "bg-amber-700 text-amber-100",
+    position > 3 && "bg-muted text-muted-foreground",
   );
+
+const getColumnClassName = (columnId: string) => {
+  if (columnId === "position") {
+    return "w-12";
+  }
+
+  if (columnId === "member") {
+    return "min-w-0";
+  }
+
+  if (columnId === "kills") {
+    return "hidden w-20 text-right md:table-cell";
+  }
+
+  if (columnId === "time") {
+    return "hidden w-28 text-right lg:table-cell";
+  }
+
+  if (columnId === "afk") {
+    return "hidden w-20 text-right xl:table-cell";
+  }
+
+  if (columnId === "points") {
+    return "w-28 text-right md:w-36";
+  }
+
+  if (columnId === "actions") {
+    return "w-12 text-right";
+  }
+
+  return "";
 };
 
 export const EventRankingTable = ({
@@ -262,6 +82,7 @@ export const EventRankingTable = ({
   guildId,
   eventId,
   canEdit = false,
+  currentMemberId,
 }: EventRankingTableProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -301,33 +122,218 @@ export const EventRankingTable = ({
     }
   };
 
+  const sortedRankings = [...rankings].sort(
+    (leftRanking, rightRanking) =>
+      rightRanking.totalPoints - leftRanking.totalPoints,
+  );
+
+  const columns: ColumnDef<EventRanking>[] = [
+    {
+      id: "position",
+      header: () => (
+        <span
+          aria-label={t("events.ranking.position")}
+          title={t("events.ranking.position")}
+        >
+          #
+        </span>
+      ),
+      cell: ({ row }) => (
+        <span className={getPositionClassName(row.index + 1)}>
+          {row.index + 1}
+        </span>
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "member",
+      header: t("events.ranking.player"),
+      cell: ({ row }) => {
+        const ranking = row.original;
+        const memberLabel =
+          ranking.member?.name ??
+          t("events.ranking.memberFallback", {
+            memberId: ranking.memberId,
+          });
+
+        return (
+          <span className="block min-w-0 truncate text-sm font-semibold">
+            {memberLabel}
+          </span>
+        );
+      },
+      enableSorting: false,
+    },
+    {
+      accessorKey: "totalKills",
+      id: "kills",
+      header: t("events.ranking.kills"),
+      cell: ({ row }) => (
+        <span className="block text-right text-sm tabular-nums">
+          {row.original.totalKills}
+        </span>
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: "totalTimeSeconds",
+      id: "time",
+      header: t("events.ranking.time"),
+      cell: ({ row }) => (
+        <span className="block text-right text-sm tabular-nums">
+          {formatDurationHuman(row.original.totalTimeSeconds)}
+        </span>
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: "avgAfkPercentage",
+      id: "afk",
+      header: t("events.ranking.afk"),
+      cell: ({ row }) => {
+        const afkPercentage = Math.round(row.original.avgAfkPercentage);
+
+        if (afkPercentage === 0) {
+          return (
+            <span className="block text-right text-muted-foreground">—</span>
+          );
+        }
+
+        return (
+          <span className="flex justify-end">
+            <Badge
+              variant="secondary"
+              className="px-1.5 py-0 text-[11px] tabular-nums"
+            >
+              {afkPercentage}%
+            </Badge>
+          </span>
+        );
+      },
+      enableSorting: false,
+    },
+    {
+      accessorKey: "totalPoints",
+      id: "points",
+      header: () => (
+        <span className="block text-right">{t("events.ranking.points")}</span>
+      ),
+      cell: ({ row }) => (
+        <EventRankingPoints ranking={row.original} canViewHistory={canEdit} />
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      header: () => (
+        <span className="sr-only">{t("events.ranking.actions")}</span>
+      ),
+      cell: ({ row }) => (
+        <EventRankingActions
+          ranking={row.original}
+          canEdit={canEdit}
+          onEditPoints={handleEditPoints}
+          isEditPending={updateRankingPoints.isPending}
+        />
+      ),
+      enableSorting: false,
+    },
+  ];
+
+  const table = useReactTable({
+    data: sortedRankings,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  const renderRankingLinkCell = (
+    cell: Cell<EventRanking, unknown>,
+    content: ReactNode,
+  ) => {
+    if (!LINK_COLUMN_IDS.has(cell.column.id) || !guildId || !eventId) {
+      return content;
+    }
+
+    const ranking = cell.row.original;
+    const memberLabel =
+      ranking.member?.name ??
+      t("events.ranking.memberFallback", {
+        memberId: ranking.memberId,
+      });
+    const isPrimaryLink = cell.column.id === PRIMARY_LINK_COLUMN_ID;
+
+    return (
+      <Link
+        to="/$guildId/events/$eventId/members/$memberId"
+        params={{
+          guildId,
+          eventId,
+          memberId: String(ranking.memberId),
+        }}
+        aria-label={
+          isPrimaryLink
+            ? t("events.ranking.openMemberStats", { memberName: memberLabel })
+            : undefined
+        }
+        tabIndex={isPrimaryLink ? 0 : -1}
+        className={cn(
+          "flex min-h-12 w-full min-w-0 items-center px-2 text-inherit outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+          cell.column.id === "position" && "pl-4",
+          RIGHT_ALIGNED_COLUMN_IDS.has(cell.column.id) && "justify-end",
+        )}
+      >
+        {content}
+      </Link>
+    );
+  };
+
   if (rankings.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
-        <Trophy className="w-8 h-8 mb-2 opacity-50" />
+      <div className="flex min-h-48 flex-col items-center justify-center text-muted-foreground">
+        <Trophy className="mb-2 size-6 opacity-50" />
         <p className="text-sm">{t("events.ranking.noRanking")}</p>
       </div>
     );
   }
 
-  const sortedRankings = [...rankings].sort(
-    (a, b) => b.totalPoints - a.totalPoints,
-  );
-
   return (
-    <div className="space-y-2">
-      {sortedRankings.map((ranking, index) => (
-        <RankingRow
-          key={ranking.id}
-          ranking={ranking}
-          position={index + 1}
-          canEdit={canEdit}
-          onEditPoints={handleEditPoints}
-          isEditPending={updateRankingPoints.isPending}
-          guildId={guildId}
-          eventId={eventId}
+    <section className="w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-card">
+      <Table className="w-full table-fixed">
+        <TanStackTableHeader
+          table={table}
+          className="bg-secondary/25"
+          rowClassName="border-border/80"
+          headClassName={(header) =>
+            cn(
+              "h-9 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
+              header.column.id === "position" && "pl-4",
+              getColumnClassName(header.column.id),
+            )
+          }
         />
-      ))}
-    </div>
+        <TanStackTableBody
+          table={table}
+          rowClassName={(row) =>
+            cn(
+              "group h-12 border-border/70 hover:bg-muted/20",
+              row.index < 3 && "bg-primary/[0.025]",
+              row.original.memberId === currentMemberId &&
+                "bg-primary/10 hover:bg-primary/15",
+            )
+          }
+          cellClassName={(cell) =>
+            cn(
+              "h-12 overflow-hidden p-0! align-middle",
+              getColumnClassName(cell.column.id),
+            )
+          }
+          getRowProps={(row) => ({
+            "aria-selected":
+              row.original.memberId === currentMemberId || undefined,
+          })}
+          renderCellContent={renderRankingLinkCell}
+        />
+      </Table>
+    </section>
   );
 };
