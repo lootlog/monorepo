@@ -45,6 +45,25 @@ The kill summary strip must use the same visual language as the member statistic
 
 The two strips should stay separate components because their data and behavior differ. This is visual consistency, not a shared abstraction.
 
+The secondary maximum-respawn-window value uses the concise Polish copy “{{duration}} przed max” when the kill was resolved before the maximum window. Overdue copy remains unchanged.
+
+## Scoring rules ledger
+
+The scoring-rules card is always expanded and cannot be collapsed. Its header contains only the calculator icon and the “Scoring rules” title; the mode, rule count, point cap, and disclosure chevron are removed because the same information is available in the card body or the page summary.
+
+Advanced scoring rules render as a compact ledger in configuration order:
+
+- every rule is one full-width row separated by a quiet divider;
+- the rule name is the primary label;
+- applied rules receive a subtle semantic-success background and an explicit localized “Applied” status;
+- disabled rules receive an explicit localized disabled status;
+- the condition and result are visually separated and labeled with localized “If” and “Then” labels instead of being presented as one low-contrast sentence;
+- long conditions and translated content wrap naturally without horizontal scrolling in the Full HD side rail or on mobile.
+
+The footer presents the hard point cap, timezone, and minimum tracking percentage as three aligned definition-list metrics. Simple mode and the no-rules state remain concise text states inside the same always-open panel. Existing scoring data, rule formatting helpers, highlighting inputs, and ordering remain unchanged.
+
+Verification covers the absence of disclosure controls, immediate visibility of rules, applied and disabled statuses, simple and empty states, long content, keyboard semantics, and responsive rendering in the single-column and Full HD side-rail layouts.
+
 ## States and accessibility
 
 - Loading, error, empty participant, empty loot, and manual-close states keep their current behavior.
