@@ -13,7 +13,28 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
+  Link: ({
+    children,
+    params,
+    "aria-label": ariaLabel,
+    className,
+    tabIndex,
+  }: {
+    children?: ReactNode;
+    params: Record<string, string>;
+    "aria-label"?: string;
+    className?: string;
+    tabIndex?: number;
+  }) => (
+    <a
+      href={`/${params.guildId}/events/${params.eventId}/members/${params.memberId}`}
+      aria-label={ariaLabel}
+      className={className}
+      tabIndex={tabIndex}
+    >
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("react-i18next", () => ({
@@ -55,12 +76,149 @@ describe("EventRankingTable", () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
+  it("presents a semantic leaderboard and links its data cells", () => {
+    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
+
+    expect(screen.getByRole("table")).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.player" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.kills" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.time" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.afk" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.points" }),
+    ).toBeTruthy();
+    expect(screen.getByText("1m")).toBeTruthy();
+    expect(screen.getByText("—")).toBeTruthy();
+
+    const primaryLink = screen.getByRole("link", {
+      name: "events.ranking.openMemberStats",
+    });
+    expect(primaryLink.getAttribute("href")).toBe(
+      "/guild-1/events/event-1/members/1",
+    );
+    expect(primaryLink.tabIndex).toBe(0);
+    expect(
+      screen
+        .getAllByRole("link")
+        .filter((link) => link !== primaryLink)
+        .every((link) => link.tabIndex === -1),
+    ).toBe(true);
+  });
+
+  it("keeps point sorting and formats non-zero AFK values", () => {
+    renderRankingTable([
+      createRanking({
+        avgAfkPercentage: 2.6,
+        id: "ranking-low",
+        memberId: 1,
+        totalPoints: 50,
+      }),
+      createRanking({
+        id: "ranking-high",
+        memberId: 2,
+        totalPoints: 103.5,
+      }),
+    ]);
+
+    const rankingRows = screen.getAllByRole("row").slice(1);
+    expect(rankingRows[0]?.textContent).toContain("Member 2");
+    expect(rankingRows[0]?.textContent).toContain("103.50");
+    expect(rankingRows[1]?.textContent).toContain("Member 1");
+    expect(screen.getByText("3%")).toBeTruthy();
+  });
+
+  it("keeps distinct medal treatments for the top three positions", () => {
+    const { container } = renderRankingTable([
+      createRanking({ id: "ranking-1", memberId: 1, totalPoints: 40 }),
+      createRanking({ id: "ranking-2", memberId: 2, totalPoints: 30 }),
+      createRanking({ id: "ranking-3", memberId: 3, totalPoints: 20 }),
+      createRanking({ id: "ranking-4", memberId: 4, totalPoints: 10 }),
+    ]);
+
+    const positionBadges = container.querySelectorAll(
+      "tbody tr td:first-child span",
+    );
+
+    expect(positionBadges[0]?.className).toContain("bg-yellow-500");
+    expect(positionBadges[0]?.className).toContain("rounded-full");
+    expect(positionBadges[0]?.className).toContain("shrink-0");
+    expect(positionBadges[1]?.className).toContain("bg-gray-300");
+    expect(positionBadges[2]?.className).toContain("bg-amber-700");
+    expect(positionBadges[3]?.className).toContain("bg-muted");
+  });
+
+  it("right-aligns every numeric data cell", () => {
+    const { container } = renderRankingTable([
+      createRanking({ avgAfkPercentage: 3, id: "ranking-1", memberId: 1 }),
+    ]);
+
+    const linkedNumericCells = container.querySelectorAll(
+      "tbody tr td:nth-child(3) a, tbody tr td:nth-child(4) a, tbody tr td:nth-child(5) a",
+    );
+    const pointsCell = container.querySelector("tbody tr td:nth-child(6)");
+
+    expect(linkedNumericCells).toHaveLength(3);
+    expect(
+      [...linkedNumericCells].every((cell) =>
+        cell.className.includes("justify-end"),
+      ),
+    ).toBe(true);
+    expect(pointsCell?.className).toContain("text-right");
+  });
+
+  it("highlights the current guild member", () => {
+    const { container } = renderRankingTable(
+      [
+        createRanking({ id: "ranking-1", memberId: 1 }),
+        createRanking({ id: "ranking-2", memberId: 2 }),
+      ],
+      { currentMemberId: 2 },
+    );
+
+    const highlightedRows = container.querySelectorAll(
+      '[aria-selected="true"]',
+    );
+
+    expect(highlightedRows).toHaveLength(1);
+    expect(highlightedRows[0]?.textContent).toContain("Member 2");
+  });
+
+  it("marks manually modified points next to their value", () => {
+    renderRankingTable(
+      [createRanking({ id: "ranking-1", memberId: 1, pointsModified: true })],
+      { canEdit: false },
+    );
+
+    expect(screen.getByLabelText("events.points.modified")).toBeTruthy();
+  });
+
   it("exposes the edit history action with an accessible name", () => {
     renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
 
     expect(
       screen.getByRole("button", { name: "events.points.history" }),
     ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "events.ranking.moreActions" }),
+    ).toBeTruthy();
+  });
+
+  it("keeps mobile actions outside the member link", () => {
+    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
+
+    const mobileActions = screen.getByRole("button", {
+      name: "events.ranking.moreActions",
+    });
+
+    expect(mobileActions.closest("a")).toBeNull();
   });
 
   it("renders the embedded history without another request", async () => {
@@ -138,6 +296,7 @@ describe("EventRankingTable", () => {
 
 type RankingTableOptions = {
   canEdit?: boolean;
+  currentMemberId?: number;
   eventId?: string;
   guildId?: string;
 };
@@ -162,31 +321,36 @@ function renderRankingTable(
         guildId={options.guildId ?? "guild-1"}
         eventId={options.eventId ?? "event-1"}
         canEdit={options.canEdit ?? true}
+        currentMemberId={options.currentMemberId}
       />
     </QueryClientProvider>,
   );
 }
 
 function createRanking({
+  avgAfkPercentage = 0,
   editHistory = [],
   id,
   memberId,
   pointsModified = true,
+  totalPoints = 100,
 }: {
+  avgAfkPercentage?: number;
   editHistory?: EventRanking["editHistory"];
   id: string;
   memberId: number;
   pointsModified?: boolean;
+  totalPoints?: number;
 }): EventRanking {
   return {
     id,
     eventId: "event-1",
     memberId,
     heroNpcName: "Mushita",
-    totalPoints: 100,
+    totalPoints,
     totalKills: 2,
     totalTimeSeconds: 60,
-    avgAfkPercentage: 0,
+    avgAfkPercentage,
     editHistory,
     pointsModified,
     updatedAt: "2026-07-28T12:00:00.000Z",
