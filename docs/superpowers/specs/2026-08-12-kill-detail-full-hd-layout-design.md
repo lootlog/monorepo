@@ -17,6 +17,14 @@ Keep the current full-width summary strip. Below it, restore the earlier analyti
 
 The matching-loot section is intentionally first in the right column. Its heading and the beginning of its content must be visible near the top of the page without scrolling through map coverage. The loot list is not capped or internally scrolled. With multiple tall loot cards, the always-visible scoring panel may naturally continue below the initial viewport.
 
+## Embedded matching loot card
+
+The matching-loot section is one panel with a shared header, body, border, and corner radius. Individual loot entries must not introduce nested cards inside that panel.
+
+The existing `LootsListItem` component gains an explicit embedded presentation variant through a prop and a render branch in the same exported component. No second loot-item component is introduced, and no additional component may be declared in the `LootsListItem` file. In this variant it keeps the same loot data, actions, player and item tiles, filtering behavior, and details interaction, but omits its own `Card` surface, outer radius, shadow, and elevation hover. The ordinary loot stream continues to use the current standalone card presentation. Legendary rarity remains visible through a subtle full-row rarity tint or inset edge accent; it must not recreate a bordered or elevated nested-card surface.
+
+Embedded entries use the parent panel's horizontal padding and quiet row separators. Multiple matched loots remain visually distinct without looking like stacked cards. Loading skeletons and the no-loot state render inside the same outer panel and header structure without swapping to a different surface. This is a presentation extension of `LootsListItem`, not a second loot-item component and not a class-name override contract. If implementation requires any newly extracted UI component, it must live in its own file.
+
 ## Responsive behavior
 
 - Activate the two-column layout at the `2xl` breakpoint, where the application shell leaves enough content width for a useful right rail. Widths below 1536 px retain the compact single-column layout.
@@ -30,6 +38,7 @@ The matching-loot section is intentionally first in the right column. Its headin
 - A new responsive content grid contains two vertical stacks.
 - `KillParticipantsCard` and `KillMapsTimelineSection` form the primary analysis stack.
 - The existing matching-loot section moves above `MultipliersCard` in the secondary stack.
+- `MatchingLootsSection` owns the shared card surface and renders `LootsListItem` in its embedded variant.
 - Existing queries, mutations, accordion state, permissions, routing, and data contracts remain unchanged.
 
 ## Summary strip alignment
@@ -80,6 +89,8 @@ Verification covers the absence of focusable disclosure controls, immediate visi
 - Confirm the two-column layout at 1536 and 1920 px.
 - Confirm early and overdue secondary timing appears only below the respawn-time value and never below the maximum-window value.
 - Confirm each participant member link is one keyboard-focusable link containing a visible, decorative 14 px `ExternalLink` icon at mobile and desktop widths.
+- Confirm matching loots render inside one shared card with no nested card surfaces, while the ordinary loot list retains standalone loot cards.
+- Confirm one, multiple, loading, and empty matching-loot states preserve the shared panel structure and separators.
 - At Full HD, the matching-loot heading and the beginning of its content must be visible alongside participants without scrolling through map coverage. The scoring panel may follow a tall loot list below the initial viewport.
 - Expand a participant and a map, then check the always-visible scoring ledger to confirm that neither column causes horizontal overflow.
 - Run targeted Vitest tests, lint, build, and format checks for `@lootlog/web`.
