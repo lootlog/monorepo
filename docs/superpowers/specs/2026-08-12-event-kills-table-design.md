@@ -26,7 +26,25 @@ The page keeps its existing vertical composition inside one scroll area:
 3. The kill-history table, which owns initial, pagination, empty, and error states for the kill-history query.
 4. A bordered, rounded table container containing the kill history and its infinite-loading row.
 
-The summary strip remains event-oriented. It does not introduce aggregate statistics because the current event history response does not provide a reliable aggregate summary and adding a new query is not required for the requested redesign.
+The summary strip remains event-oriented and only presents aggregate values supplied by a complete event-level source, never counts derived from the currently loaded history pages.
+
+## Header Kill Count Metric
+
+The summary strip includes one exact metric in a bordered lower segment:
+
+- **Kills**: the complete number of kills for the current page context.
+
+The metric follows the visual structure of the member statistics summary: a quiet label above a bold tabular value. With only one metric, the lower segment remains a single-cell grid. The implementation does not add a generic metric framework, but the grid can accept additional explicit cells if more event statistics are requested later.
+
+The value comes from the existing event hero statistics endpoint rather than the paginated history rows:
+
+- With the all-heroes filter selected, sum `killCount` across all returned hero statistics.
+- With a hero selected, use the `killCount` entry whose `heroId` matches the selected hero.
+- A missing selected-hero entry resolves to zero after the statistics query succeeds.
+
+`EventKillsHistoryContent` owns the statistics query and the context-aware derived count. `EventKillsSummary` receives `killCount` and `isKillCountLoading`; it does not fetch data itself.
+
+While statistics load, the value uses a stable skeleton matching the final number footprint. A statistics-query failure displays an em dash in the metric and does not block the event summary, filters, history table, or infinite scrolling.
 
 ## Table Architecture
 
@@ -130,6 +148,8 @@ Component tests cover:
 - `IntersectionObserver` requesting the next page only when allowed and disconnecting during cleanup.
 - Scroll reset after the hero filter key changes.
 - Responsive visibility classes on optional columns.
+- All-heroes kill-count summation and selected-hero lookup.
+- Kill-count loading skeleton, successful value, zero value, and non-blocking unavailable state.
 
 Existing event kill history content and filter tests are updated only where the table integration changes observable behavior.
 
