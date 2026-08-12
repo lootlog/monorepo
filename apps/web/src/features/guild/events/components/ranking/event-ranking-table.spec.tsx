@@ -113,6 +113,35 @@ describe("EventRankingTable", () => {
     ).toBe(true);
   });
 
+  it("renders the shared table without nested card styling in compact mode", () => {
+    const { container } = renderRankingTable(
+      [createRanking({ id: "ranking-1", memberId: 1 })],
+      { variant: "compact" },
+    );
+
+    const section = container.querySelector("section");
+    const headers = screen.getAllByRole("columnheader");
+    const pointsCell = container.querySelector("tbody td:last-child");
+
+    expect(headers).toHaveLength(4);
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.player" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.points" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "events.ranking.kills" }),
+    ).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
+    expect(section?.className).not.toContain("border-border");
+    expect(section?.className).not.toContain("rounded-2xl");
+    expect(pointsCell?.className).toContain("pr-4!");
+    expect(
+      screen.queryByRole("button", { name: "events.ranking.moreActions" }),
+    ).toBeNull();
+  });
+
   it("keeps point sorting and formats non-zero AFK values", () => {
     renderRankingTable([
       createRanking({
@@ -313,6 +342,7 @@ type RankingTableOptions = {
   currentMemberId?: number;
   eventId?: string;
   guildId?: string;
+  variant?: "default" | "compact";
 };
 
 function renderRankingTable(
@@ -336,6 +366,7 @@ function renderRankingTable(
         eventId={options.eventId ?? "event-1"}
         canEdit={options.canEdit ?? true}
         currentMemberId={options.currentMemberId}
+        variant={options.variant}
       />
     </QueryClientProvider>,
   );

@@ -29,6 +29,7 @@ type EventRankingTableProps = {
   eventId?: string;
   canEdit?: boolean;
   currentMemberId?: number;
+  variant?: "default" | "compact";
 };
 
 const LINK_COLUMN_IDS = new Set(["position", "member", "kills", "time", "afk"]);
@@ -84,6 +85,7 @@ export const EventRankingTable = ({
   eventId,
   canEdit = false,
   currentMemberId,
+  variant = "default",
 }: EventRankingTableProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -128,7 +130,7 @@ export const EventRankingTable = ({
       rightRanking.totalPoints - leftRanking.totalPoints,
   );
 
-  const columns: ColumnDef<EventRanking>[] = [
+  const allColumns: ColumnDef<EventRanking>[] = [
     {
       id: "position",
       header: () => (
@@ -246,6 +248,12 @@ export const EventRankingTable = ({
       enableSorting: false,
     },
   ];
+  const columns =
+    variant === "compact"
+      ? allColumns.filter((column) =>
+          ["position", "member", "kills", "points"].includes(column.id ?? ""),
+        )
+      : allColumns;
 
   const table = useReactTable({
     data: sortedRankings,
@@ -304,7 +312,12 @@ export const EventRankingTable = ({
   }
 
   return (
-    <section className="w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-card">
+    <section
+      className={cn(
+        "w-full min-w-0 overflow-hidden",
+        variant === "default" && "rounded-2xl border border-border bg-card",
+      )}
+    >
       <Table className="w-full table-fixed">
         <TanStackTableHeader
           table={table}
@@ -332,6 +345,7 @@ export const EventRankingTable = ({
             cn(
               "h-12 overflow-hidden p-0! align-middle",
               getColumnClassName(cell.column.id),
+              variant === "compact" && cell.column.id === "points" && "pr-4!",
             )
           }
           getRowProps={(row) => ({

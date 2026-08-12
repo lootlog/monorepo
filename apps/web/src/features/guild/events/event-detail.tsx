@@ -737,7 +737,7 @@ export const EventDetail = () => {
                 heroNpcs={heroes}
                 showHeroTabs
                 world={event.world}
-                limit={5}
+                limit={10}
               />
             </div>
 
