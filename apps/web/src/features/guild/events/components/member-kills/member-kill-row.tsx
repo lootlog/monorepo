@@ -213,7 +213,7 @@ export const MemberKillRow = ({
       </TableRow>
 
       {isExpanded && (
-        <TableRow className="bg-muted/30 hover:bg-muted/30">
+        <TableRow data-state="expanded-detail">
           <TableCell colSpan={6} className="h-auto whitespace-normal px-4 py-3">
             {point ? (
               <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch">

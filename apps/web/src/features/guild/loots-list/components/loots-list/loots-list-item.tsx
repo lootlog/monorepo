@@ -26,6 +26,7 @@ import { useLootsFilters } from "@/hooks/use-loots-filters";
 type Props = {
   loot: Loot;
   isNew?: boolean;
+  variant?: "card" | "embedded";
 };
 
 type ItemsByPlayer = Record<string, Item[]>;
@@ -284,7 +285,7 @@ const LootFooter = ({
   </div>
 );
 
-export const LootsListItem = ({ loot, isNew }: Props) => {
+export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   const { openLootDetails } = useSelectedLoot();
   const { filters, setFilters } = useLootsFilters();
   const date = timestampToDate(loot.createdAt);
@@ -310,50 +311,66 @@ export const LootsListItem = ({ loot, isNew }: Props) => {
     }
   }
 
+  const lootContent = (
+    <>
+      <LootHeader
+        npcs={loot.npcs}
+        commentsCount={loot.commentsCount}
+        onOpenDetails={() => openLootDetails(loot.id)}
+      />
+      <LootContent
+        sortedPlayers={sortedPlayers}
+        itemsByPlayer={itemsByPlayer}
+        unassignedItems={unassignedItems}
+        watchContext={watchContext}
+        onShowPlayerLoots={(playerName) =>
+          setFilters({ players: [playerName] })
+        }
+        selectedPlayerNames={filters.players}
+        selectedItemNames={filters.itemNames}
+      />
+      <LootFooter
+        location={loot.location}
+        date={date}
+        playersCount={loot.players.length}
+        itemsCount={loot.items.length}
+      />
+    </>
+  );
+
   return (
     <motion.div
+      data-testid="loot-list-item"
+      data-presentation={variant}
       initial={initialAnimation}
       animate={animate}
       transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         "h-full",
-        isRukiaTheme &&
+        variant === "embedded" &&
+          "group relative flex flex-col gap-0 px-4 pt-2 pb-1 transition-colors hover:bg-muted/20",
+        variant === "embedded" && hasLegendaryItem && "bg-red-500/5",
+        variant === "card" &&
+          isRukiaTheme &&
           "rounded-xl hover:shadow-[inset_0_0_8px_1px_rgba(200,230,255,0.4),0_0_10px_2px_rgba(180,220,255,0.25)] transition-shadow duration-300",
       )}
     >
-      <Card
-        className={cn(
-          "group relative px-4 pt-2 pb-1 h-full flex flex-col gap-0",
-          "bg-card border-border overflow-visible",
-          "hover:bg-card hover:border-primary/30 hover:shadow-md transition-[background-color,border-color,box-shadow] duration-200",
-          isNew && "border-primary/70 ring-1 ring-primary/40 shadow-lg",
-          hasLegendaryItem &&
-            "border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.25)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] hover:border-red-500/100",
-        )}
-      >
-        <LootHeader
-          npcs={loot.npcs}
-          commentsCount={loot.commentsCount}
-          onOpenDetails={() => openLootDetails(loot.id)}
-        />
-        <LootContent
-          sortedPlayers={sortedPlayers}
-          itemsByPlayer={itemsByPlayer}
-          unassignedItems={unassignedItems}
-          watchContext={watchContext}
-          onShowPlayerLoots={(playerName) =>
-            setFilters({ players: [playerName] })
-          }
-          selectedPlayerNames={filters.players}
-          selectedItemNames={filters.itemNames}
-        />
-        <LootFooter
-          location={loot.location}
-          date={date}
-          playersCount={loot.players.length}
-          itemsCount={loot.items.length}
-        />
-      </Card>
+      {variant === "embedded" ? (
+        lootContent
+      ) : (
+        <Card
+          className={cn(
+            "group relative px-4 pt-2 pb-1 h-full flex flex-col gap-0",
+            "bg-card border-border overflow-visible",
+            "hover:bg-card hover:border-primary/30 hover:shadow-md transition-[background-color,border-color,box-shadow] duration-200",
+            isNew && "border-primary/70 ring-1 ring-primary/40 shadow-lg",
+            hasLegendaryItem &&
+              "border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.25)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] hover:border-red-500/100",
+          )}
+        >
+          {lootContent}
+        </Card>
+      )}
     </motion.div>
   );
 };

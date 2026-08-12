@@ -170,7 +170,8 @@ export function ExpandableDataTable<TData, TValue>({
                         <motion.tr
                           key={`${row.id}-expanded`}
                           layout
-                          className="hover:bg-secondary border-b bg-secondary transition-colors"
+                          data-state="expanded-detail"
+                          className="border-b transition-colors"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}

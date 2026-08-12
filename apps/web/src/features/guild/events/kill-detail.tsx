@@ -1,123 +1,124 @@
+import { differenceInSeconds } from "date-fns";
+import { Link, useParams } from "@tanstack/react-router";
+import { AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useParams, Link } from "@tanstack/react-router";
-import { Card } from "@lootlog/ui/components/card";
+import { Permission } from "@lootlog/types";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Skull, AlertCircle, Frown, Hand, Package } from "lucide-react";
-import { format, differenceInSeconds } from "date-fns";
-import { pl } from "date-fns/locale";
-import { Permission } from "@lootlog/types";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { useSession } from "@/hooks/auth/use-session";
+import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
+import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
+import { KillDetailSummary } from "./components/kills/kill-detail-summary";
+import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
+import { KillParticipantsCard } from "./components/kills/kill-participants-card";
+import { MatchingLootsSection } from "./components/kills/matching-loots-section";
+import { MultipliersCard } from "./components/stats/multipliers-card";
 import { useKillDetail } from "./hooks/queries/use-kill-detail";
 import { useMatchingLoots } from "./hooks/queries/use-matching-loots";
-import { KillParticipantsCard } from "./components/kills/kill-participants-card";
-import { MultipliersCard } from "./components/stats/multipliers-card";
-import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
-import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
-import { NpcTile } from "@/components/tiles/npc-tile";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { useSession } from "@/hooks/auth/use-session";
-import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 import { formatDurationHuman } from "./utils/format-duration";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
-import { KillDetailStatsCard } from "./components/kills/kill-detail-stats-card";
-import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 
 const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
   const minDate = new Date(minSpawn);
   const maxDate = new Date(maxSpawn);
-  const diffSeconds = Math.max(0, differenceInSeconds(maxDate, minDate));
-  return formatDurationHuman(diffSeconds);
+  const differenceSeconds = Math.max(0, differenceInSeconds(maxDate, minDate));
+  return formatDurationHuman(differenceSeconds);
 };
 
 export const KillDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
   const { data: session } = useSession();
-
   const { data: permissions } = useGuildPermissions();
   const canEditPoints =
-    permissions?.includes(Permission.OWNER) ||
-    permissions?.includes(Permission.ADMIN);
-
+    Boolean(permissions?.includes(Permission.OWNER)) ||
+    Boolean(permissions?.includes(Permission.ADMIN));
   const { data, isLoading, error } = useKillDetail({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
     heroId: heroId ?? "",
     killId: killId ?? "",
   });
-
   const { data: matchingLoots, isLoading: isLootsLoading } = useMatchingLoots({
     guildId: guildId ?? "",
     world: data?.kill.heroNpc.event.world ?? "",
     killedAt: data?.kill.killedAt ?? "",
     npcName: data?.kill.heroNpc.npcName ?? "",
-    enabled: !!data,
+    enabled: Boolean(data),
   });
-
   const loots = matchingLoots ?? [];
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 px-3 py-3">
-        <Card className="gap-4 border-border bg-card p-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
-            <div className="space-y-1.5">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-24" />
+      <div className="flex flex-col gap-3 px-3 py-3">
+        <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex items-center gap-3 p-3">
+            <Skeleton className="size-10 shrink-0 rounded-lg" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-48 max-w-full" />
+              <Skeleton className="h-3 w-32" />
             </div>
           </div>
-        </Card>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
-            <Card className="border-border bg-card p-4">
-              <Skeleton className="mb-3 h-5 w-32" />
-              <div className="space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 rounded-lg" />
-                ))}
-              </div>
-            </Card>
+          <div className="grid grid-cols-2 border-t border-border/70 sm:grid-cols-3 xl:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} className="m-3 h-8 rounded-md" />
+            ))}
           </div>
-          <div className="space-y-4">
-            <Card className="border-border bg-card p-4">
-              <Skeleton className="mb-3 h-5 w-24" />
-              <div className="space-y-2">
-                <Skeleton className="h-8 rounded-md" />
-                <Skeleton className="h-8 rounded-md" />
-                <Skeleton className="h-8 rounded-md" />
-              </div>
-            </Card>
-          </div>
-        </div>
+        </section>
+        {Array.from({ length: 2 }).map((_, sectionIndex) => (
+          <section
+            key={sectionIndex}
+            className="overflow-hidden rounded-2xl border border-border bg-card p-3"
+          >
+            <Skeleton className="mb-3 h-4 w-36" />
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, rowIndex) => (
+                <Skeleton key={rowIndex} className="h-11 rounded-md" />
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <AlertCircle className="w-12 h-12 text-destructive" />
-        <p className="text-muted-foreground">
+      <div className="flex h-64 flex-col items-center justify-center gap-4 px-4 text-center">
+        <AlertCircle className="size-10 text-destructive" />
+        <p className="text-sm text-muted-foreground">
           {t("events.killDetail.notFound")}
         </p>
-        <Link
-          to="/$guildId/events/$eventId/heroes/$heroId"
-          params={{
-            guildId: guildId ?? "",
-            eventId: eventId ?? "",
-            heroId: heroId ?? "",
-          }}
-        >
-          <Button variant="outline">{t("events.common.backToHero")}</Button>
-        </Link>
+        <Button variant="outline" asChild>
+          <Link
+            to="/$guildId/events/$eventId/heroes/$heroId"
+            params={{
+              guildId: guildId ?? "",
+              eventId: eventId ?? "",
+              heroId: heroId ?? "",
+            }}
+          >
+            {t("events.common.backToHero")}
+          </Link>
+        </Button>
       </div>
     );
   }
 
   const { kill, eventConfig } = data;
   const participants = kill.points ?? [];
+  const memberRoleColors = new Map<number, string>();
+  for (const participant of participants) {
+    const roleColor = getCustomRoleCssColor(
+      participant.member.roles?.[0]?.color,
+    );
+    if (roleColor) {
+      memberRoleColors.set(participant.member.id, roleColor);
+    }
+  }
   const currentDiscordId = session?.user?.discordId;
   const highlightedRuleIds = Array.from(
     new Set(
@@ -168,71 +169,38 @@ export const KillDetail = () => {
         )
       : null;
   const fasterThanMaxText =
-    typeof fasterThanMaxSeconds === "number"
+    typeof fasterThanMaxSeconds === "number" && fasterThanMaxSeconds > 0
       ? formatDurationHuman(fasterThanMaxSeconds)
       : null;
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <EventParticipationConfirmationDialog
         guildId={guildId}
         eventId={eventId}
       />
 
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              {kill.heroNpc.npcIcon ? (
-                <NpcTile
-                  npc={{
-                    id: kill.heroNpc.npcId ?? 0,
-                    name: kill.heroNpc.npcName,
-                    icon: kill.heroNpc.npcIcon,
-                  }}
-                />
-              ) : (
-                <div className="rounded-xl bg-red-500/10 p-2">
-                  <Skull className="size-4 text-red-500" />
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  {t("events.killDetail.title")}
-                </p>
-                <h2 className="truncate text-base font-semibold leading-tight">
-                  {kill.heroNpc.npcName}
-                </h2>
-                <p className="text-xs text-muted-foreground leading-tight">
-                  {format(new Date(kill.killedAt), "d MMMM yyyy, HH:mm:ss", {
-                    locale: pl,
-                  })}
-                </p>
-              </div>
-            </div>
-          </Card>
+      <ScrollArea className="min-h-0 min-w-0 max-w-full flex-1 [&>[data-radix-scroll-area-viewport]>div]:!block [&>[data-radix-scroll-area-viewport]>div]:!w-full">
+        <main className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-hidden px-3 py-3">
+          <KillDetailSummary
+            kill={kill}
+            eventConfig={eventConfig}
+            participantsCount={participants.length}
+            lootCount={loots.length}
+            respawnDurationText={respawnDurationText}
+            windowDurationText={windowDurationText}
+            fasterThanMaxText={fasterThanMaxText}
+            respawnComparedToMaxPercentage={respawnComparedToMaxPercentage}
+          />
 
-          {kill.isManualClose && (
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-              <Hand className="w-5 h-5 text-yellow-600 shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-yellow-600">
-                  {t(
-                    "events.killDetail.manualCloseTitle",
-                    "Ręczne zamknięcie okna",
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t(
-                    "events.killDetail.manualCloseDescription",
-                    "Okno respawnu zostało ręcznie zamknięte - heros mógł nie zostać zabity",
-                  )}
-                </p>
-              </div>
-            </div>
-          )}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 space-y-4">
+          <div
+            data-testid="kill-detail-content-grid"
+            className="grid min-w-0 items-start gap-3 2xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]"
+          >
+            <div
+              data-testid="kill-detail-primary-column"
+              className="flex min-w-0 flex-col gap-3"
+            >
               <KillParticipantsCard
                 participants={participants}
                 guildId={guildId}
@@ -247,19 +215,20 @@ export const KillDetail = () => {
                 killId={killId ?? ""}
                 minSpawnTimeAtKill={kill.minSpawnTimeAtKill}
                 killedAt={kill.killedAt}
+                memberRoleColors={memberRoleColors}
                 t={t}
               />
             </div>
 
-            <div className="space-y-4">
-              <KillDetailStatsCard
-                kill={kill}
-                participantsCount={participants.length}
-                lootCount={loots.length}
-                respawnDurationText={respawnDurationText}
-                windowDurationText={windowDurationText}
-                fasterThanMaxText={fasterThanMaxText}
-                respawnComparedToMaxPercentage={respawnComparedToMaxPercentage}
+            <aside
+              data-testid="kill-detail-secondary-column"
+              className="flex min-w-0 flex-col gap-3"
+            >
+              <MatchingLootsSection
+                loots={loots}
+                isLoading={isLootsLoading}
+                guildId={guildId ?? ""}
+                npcName={kill.heroNpc.npcName}
               />
 
               <MultipliersCard
@@ -267,35 +236,9 @@ export const KillDetail = () => {
                 highlightedRuleIds={highlightedRuleIds}
                 t={t}
               />
-
-              <Card className="p-3 bg-card  border-border gap-2">
-                <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-                  <Package className="w-4 h-4" />
-                  {t("events.killDetail.matchingLoots")}
-                </h3>
-
-                {isLootsLoading ? (
-                  <div className="space-y-2 py-2">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-12 rounded-lg" />
-                    ))}
-                  </div>
-                ) : loots.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
-                    <Frown className="w-8 h-8 mb-2 opacity-50" />
-                    <p className="text-sm">{t("events.killDetail.noLoots")}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {loots.map((loot) => (
-                      <LootsListItem key={loot.id} loot={loot} />
-                    ))}
-                  </div>
-                )}
-              </Card>
-            </div>
+            </aside>
           </div>
-        </div>
+        </main>
       </ScrollArea>
     </div>
   );
