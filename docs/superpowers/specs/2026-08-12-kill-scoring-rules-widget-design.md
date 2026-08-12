@@ -6,16 +6,16 @@ Make the scoring-rules section on the event kill detail page as compact and anal
 
 ## Information hierarchy
 
-The card keeps the shared section shell used across the kill detail page: a rounded bordered panel with a 48 px header, calculator icon, title, and a muted rule count aligned to the right. The header itself is not a disclosure control.
+The card keeps the shared section shell used across the kill detail page: a rounded bordered panel with a 48 px header, calculator icon, title, and a muted rule count aligned to the right. In advanced mode the count includes every configured rule, including disabled rules, and remains visible as zero when the configuration is empty. Simple mode omits the count. The header itself is not a disclosure control.
 
 The default body has two layers:
 
 1. A compact three-cell parameter strip showing the hard point cap, the minimum tracking percentage required for bonuses, and the scoring timezone.
-2. A contextual list containing only enabled rules whose IDs occur in `highlightedRuleIds`, labelled as rules applied to this kill.
+2. A contextual list containing only enabled rules whose IDs occur in `highlightedRuleIds`, labelled as rules applied to the current member’s result.
 
-This replaces the current default view that lists every configured rule. Applied rules remain visible without interaction because they explain the result being inspected. Each applied entry shows its name and formatted action as the primary row; its formatted condition is supporting text. The presentation is a flat divided list, not a collection of nested cards.
+This replaces the current default view that lists every configured rule. `highlightedRuleIds` is currently derived from the logged-in user’s participant record, so the copy must not describe it as a union of rules applied to the whole kill. Applied rules remain visible without interaction because they explain that member’s result. Each applied entry shows its name and formatted action as the primary row; its formatted condition is supporting text. The presentation is a flat divided list, not a collection of nested cards.
 
-If no rule ID was applied, the contextual area renders one concise muted empty state instead of an empty list. This state must not imply that no points were awarded, because base scoring may be represented elsewhere in the participant breakdown.
+If no rule ID is available, the contextual area is omitted rather than claiming that no rules were applied. This covers both a current participant with no matched rule IDs and a viewer who is not a participant. The metadata strip and full-rule disclosure remain available.
 
 ## Full-rule disclosure
 
@@ -34,14 +34,14 @@ The disclosure is collapsed on initial render. Opening and closing it does not m
 
 ## Static states
 
-- In simple scoring mode, the card shows the shared header and one compact explanation of simple scoring. It does not render advanced-rule metadata or a disclosure.
-- In advanced mode with no configured rules, the card shows the shared header and one compact empty state. It does not render a disclosure.
-- In advanced mode with rules but no applied rule IDs, the metadata strip, contextual empty state, and full-rule disclosure remain available.
+- In simple scoring mode, the card shows the shared header without right-side count and one compact explanation of simple scoring. It does not render advanced-rule metadata or a disclosure.
+- In advanced mode with no configured rules, the card shows a zero rule count in the shared header and one compact empty state. It does not render a disclosure.
+- In advanced mode with rules but no applied rule IDs, the metadata strip and full-rule disclosure remain available; the contextual member section is omitted.
 - Disabled rules never appear in the applied contextual list, even if their IDs occur in `highlightedRuleIds`. They remain visible with disabled status in the complete ledger.
 
 ## Responsive behavior
 
-On medium and larger widths, the parameter strip uses three equal columns with vertical separators. On narrow screens it stacks or uses the existing responsive grid behavior without horizontal overflow. Rule names, conditions, and actions wrap naturally; no essential content is truncated.
+From the `sm` breakpoint upward, the parameter strip uses three equal columns with vertical separators. Below `sm`, it uses two columns: point cap and minimum tracking share the first row, while timezone spans both columns in the second row. Horizontal and vertical separators follow that grid and the strip never overflows. Rule names, conditions, and actions wrap naturally; no essential content is truncated.
 
 The disclosure control keeps at least a 44 px touch target on mobile while remaining visually compact on desktop. Focus, hover, and expanded states use existing `@lootlog/ui` button and disclosure patterns.
 
@@ -63,10 +63,10 @@ All new labels and empty-state copy use the event i18n namespace. No Polish or E
 
 ## Verification
 
-- Update component tests to prove that only enabled highlighted rules appear in the default contextual list.
+- Update component tests to prove that only enabled highlighted rules appear in the default member-context list and that its copy is scoped to the current member rather than the whole kill.
 - Verify that disabled highlighted IDs do not appear as applied, while disabled rules remain present in the expanded complete ledger.
 - Verify the full ledger is initially absent, can be opened and closed, and exposes correct accessibility attributes.
-- Cover advanced rules with no applied IDs, advanced mode with no rules, and simple mode.
+- Cover advanced rules with no applied IDs, advanced mode with no rules, and simple mode, including their exact header-count behavior.
 - Assert the parameter strip values and the expanded-detail surface contract.
 - Run the targeted Vitest suite, `@lootlog/web` lint, build, and format checks.
 - Inspect the widget in the running application at mobile and desktop widths for density, wrapping, focus visibility, touch target size, and console warnings.
