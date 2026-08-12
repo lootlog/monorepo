@@ -59,8 +59,9 @@ The maps and kills cells show the same values currently displayed in the hero ca
 ### Responsive Behavior
 
 - Desktop: show all five columns.
-- Medium widths: hide Maps and Kills as dedicated columns and place ID, map count, and kill count in a muted secondary line inside the Hero cell.
-- Mobile: keep Hero, Timer, and Actions visible. Preserve the hero status badge where space allows; it may move into the secondary line or hide visually at the narrowest width if the translated status remains available elsewhere in the row.
+- Maps and Kills use `hidden lg:table-cell`, so they are dedicated columns from the Tailwind `lg` viewport breakpoint upward.
+- The Hero cell always shows the NPC ID in a muted secondary line. Below `lg`, that same line additionally shows map count and kill count using `lg:hidden` spans, so hiding the dedicated columns never removes their values.
+- Mobile keeps Hero, Timer, and Actions visible. The translated hero status badge must remain visibly rendered at every width; it may wrap or move to the secondary line below `sm`, but it must not be replaced only by screen-reader text.
 - Keep rows dense and separated by table borders rather than nested card outlines.
 - Avoid horizontal page overflow and preserve a usable action hit target.
 
@@ -72,7 +73,14 @@ Introduce focused table modules under the event heroes feature:
 - a table module owns the TanStack instance, Lootlog UI table markup, responsive column classes, and empty state;
 - the existing `HeroCard` is removed if it has no remaining callers. Do not keep a re-export or compatibility wrapper.
 
-The table interface receives prepared hero rows with their matching timer and stats plus the existing callbacks. Matching API responses to heroes remains in `EventDetail`, where those datasets are already available. No new request or global state is introduced.
+The table interface receives prepared hero rows with their matching timer and stats plus the existing callbacks. Matching API responses to heroes remains in `EventDetail`, where those datasets are already available:
+
+- timer matching continues to call `findEventHeroTimer(heroTimers, { heroNpcId: hero.npcId, heroName: hero.npcName })` for every hero;
+- stats matching continues to use the current NPC comparison: `hero.npcId !== null && statistic.npcId === hero.npcId`;
+- the matched stats provide profession and kill count exactly as they do for `HeroCard` today;
+- no matching switches to `heroId` and no new fallback key is introduced.
+
+No new request or global state is introduced.
 
 Each file contains at most one React component, in line with repository rules.
 
@@ -82,7 +90,7 @@ Each file contains at most one React component, in line with repository rules.
 - Clicking hero identity navigates to the existing hero-detail route.
 - Clicking the timer or action menu must not trigger hero navigation.
 - Add, edit, map management, and delete flows call the same existing handlers.
-- Members without management permission do not see the Add button or Actions column controls.
+- Members without management permission do not see the Add button. The entire Actions column, including its header and cells, is omitted from the TanStack column definitions for those members; the table does not retain empty action cells.
 - Missing stats continue to resolve map and kill values to their current safe fallbacks.
 
 ## States and Error Handling
