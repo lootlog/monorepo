@@ -13,16 +13,16 @@ Keep the current full-width summary strip. Below it, restore the earlier analyti
   2. Map coverage
 - Right column, approximately one third of the available width:
   1. Matching loots
-  2. Scoring rules, collapsed by default
+  2. Scoring rules, always visible
 
-The matching-loot section is intentionally first in the right column. Its heading and the beginning of its content must be visible near the top of the page without scrolling through map coverage. The loot list is not capped or internally scrolled. With multiple tall loot cards, the collapsed scoring summary may naturally continue below the initial viewport.
+The matching-loot section is intentionally first in the right column. Its heading and the beginning of its content must be visible near the top of the page without scrolling through map coverage. The loot list is not capped or internally scrolled. With multiple tall loot cards, the always-visible scoring panel may naturally continue below the initial viewport.
 
 ## Responsive behavior
 
 - Activate the two-column layout at the `2xl` breakpoint, where the application shell leaves enough content width for a useful right rail. Widths below 1536 px retain the compact single-column layout.
 - Use a resilient grid such as `minmax(0, 2fr) minmax(20rem, 1fr)` so long participant and map names truncate instead of forcing horizontal overflow.
 - Below `2xl`, use this explicit single-column order: summary, participants, map coverage, matching loots, scoring rules. Preserve the existing mobile participant treatment.
-- Do not introduce a sticky right rail. Matching loot is available immediately at the top of the rail, while normal document scrolling remains predictable for tall loot cards and expanded scoring rules.
+- Do not introduce a sticky right rail. Matching loot is available immediately at the top of the rail, while normal document scrolling remains predictable for tall loot cards and the scoring ledger.
 
 ## Component composition
 
@@ -45,7 +45,7 @@ The kill summary strip must use the same visual language as the member statistic
 
 The two strips should stay separate components because their data and behavior differ. This is visual consistency, not a shared abstraction.
 
-The secondary maximum-respawn-window value uses the concise Polish copy “{{duration}} przed max” when the kill was resolved before the maximum window. Overdue copy remains unchanged.
+The secondary maximum-respawn-window value uses a localized i18n message with `duration` interpolation, rendered in Polish as “{{duration}} przed max”, when the kill was resolved before the maximum window. Overdue copy remains unchanged.
 
 ## Scoring rules ledger
 
@@ -57,12 +57,13 @@ Advanced scoring rules render as a compact ledger in configuration order:
 - the rule name is the primary label;
 - applied rules receive a subtle semantic-success background and an explicit localized “Applied” status;
 - disabled rules receive an explicit localized disabled status;
+- disabled state takes precedence when a disabled rule ID is also present in `highlightedRuleIds`; such a row is presented as disabled, not applied;
 - the condition and result are visually separated and labeled with localized “If” and “Then” labels instead of being presented as one low-contrast sentence;
 - long conditions and translated content wrap naturally without horizontal scrolling in the Full HD side rail or on mobile.
 
-The footer presents the hard point cap, timezone, and minimum tracking percentage as three aligned definition-list metrics. Simple mode and the no-rules state remain concise text states inside the same always-open panel. Existing scoring data, rule formatting helpers, highlighting inputs, and ordering remain unchanged.
+The footer presents the hard point cap, timezone, and minimum tracking percentage as definition-list metrics. It uses three columns when the available width supports them and a single stacked column at 360 px; labels and values wrap without truncation in the Full HD rail and on mobile. Simple mode and the no-rules state remain concise text states inside the same always-open panel. Existing scoring data, rule formatting helpers, highlighting inputs, and ordering remain unchanged.
 
-Verification covers the absence of disclosure controls, immediate visibility of rules, applied and disabled statuses, simple and empty states, long content, keyboard semantics, and responsive rendering in the single-column and Full HD side-rail layouts.
+Verification covers the absence of focusable disclosure controls, immediate visibility and logical reading order of rules, accessible applied and disabled statuses, semantic definition-list markup, simple and empty states, long content, and responsive rendering in the single-column and Full HD side-rail layouts.
 
 ## States and accessibility
 
@@ -75,6 +76,6 @@ Verification covers the absence of disclosure controls, immediate visibility of 
 
 - Confirm the single-column layout at 360, 768, and 1440 px.
 - Confirm the two-column layout at 1536 and 1920 px.
-- At Full HD, the matching-loot heading and the beginning of its content must be visible alongside participants without scrolling through map coverage. The scoring summary may follow a tall loot list below the initial viewport.
-- Expand a participant, a map, and scoring rules to check that neither column causes horizontal overflow.
+- At Full HD, the matching-loot heading and the beginning of its content must be visible alongside participants without scrolling through map coverage. The scoring panel may follow a tall loot list below the initial viewport.
+- Expand a participant and a map, then check the always-visible scoring ledger to confirm that neither column causes horizontal overflow.
 - Run targeted Vitest tests, lint, build, and format checks for `@lootlog/web`.
