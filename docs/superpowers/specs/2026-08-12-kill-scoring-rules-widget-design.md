@@ -24,7 +24,7 @@ When the event has configured advanced rules, a full-width disclosure row below 
 The complete ledger opens inside the same card. It uses the shared light expanded-detail surface (`bg-muted/40`) and separators, without introducing another border, rounded card, or card nesting. Every configured rule appears once and retains the existing information:
 
 - resolved rule name;
-- enabled, disabled, or applied status;
+- applied or disabled status when either state is true; active rules that did not apply remain visually neutral and receive no invented status label;
 - formatted conditions joined with the translated conjunction;
 - formatted scoring action.
 
