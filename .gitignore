@@ -80,6 +80,10 @@ playground/**
 
 # Local planning and agent session documents
 /docs/*
+!/docs/superpowers/
+/docs/superpowers/*
+!/docs/superpowers/specs/
+!/docs/superpowers/specs/*.md
 **/.impeccable/direction-question.json
 **/.impeccable/questions/
 .superpowers/
