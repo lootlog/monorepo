@@ -373,6 +373,14 @@
     "actions": "Akcje herosa",
     "edit": "Edytuj herosa",
     "manageMaps": "Mapy",
+    "columns": {
+      "hero": "Heros",
+      "maps": "Mapy",
+      "kills": "Bicia",
+      "timer": "Timer",
+      "actions": "Akcje",
+      "idValue": "ID: {{id}}"
+    },
     "addDescription": "Dodaj nowego herosa do eventu",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
     "idHint": "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
@@ -424,6 +432,8 @@
     "trackingCoverageShort": "Tracking",
     "manualCloseShort": "Status",
     "manualCloseLabel": "Ręczne",
+    "killCount": "Bicia",
+    "statsUnavailable": "Statystyka liczby bić jest niedostępna",
     "breakdownBase": "base",
     "breakdownGroup": "grupa",
     "breakdownNight": "noc",
@@ -478,7 +488,6 @@
       "capReduction": "Redukcja przez limit 2.0",
       "total": "Łącznie"
     },
-    "loadMore": "Załaduj więcej",
     "loading": "Ładowanie...",
     "endOfList": "To wszystkie bicia",
     "manualClose": "Ręczne zamknięcie okna",

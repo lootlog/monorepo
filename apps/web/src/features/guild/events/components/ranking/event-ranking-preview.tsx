@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronRight } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import type { EventRanking, EventHeroNpc } from "../../types/api";
 import { Card } from "@lootlog/ui/components/card";
@@ -64,20 +63,14 @@ export const EventRankingPreview = ({
           <span className="truncate">{t("events.ranking.title")}</span>
         </h2>
         {rankings.length > 0 ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="h-8 shrink-0 px-2 text-xs text-muted-foreground"
+          <Link
+            to="/$guildId/events/$eventId/ranking"
+            params={{ guildId, eventId }}
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
           >
-            <Link
-              to="/$guildId/events/$eventId/ranking"
-              params={{ guildId, eventId }}
-            >
-              {t("events.ranking.viewAll")}
-              <ChevronRight className="size-3.5" />
-            </Link>
-          </Button>
+            {t("events.ranking.viewAll")}
+            <ChevronRight className="size-3.5" />
+          </Link>
         ) : null}
       </header>
 
