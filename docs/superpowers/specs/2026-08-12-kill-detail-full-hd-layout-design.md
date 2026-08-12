@@ -36,11 +36,12 @@ The matching-loot section is intentionally first in the right column. Its headin
 
 The kill summary strip must use the same visual language as the member statistics summary strip:
 
-- the identity row uses the same spacing, typography hierarchy, and NPC/avatar footprint;
+- the identity row uses the same spacing, typography hierarchy, and 40×40 px NPC/avatar footprint;
 - the metric strip uses the same muted background, label typography, value sizing, and responsive separators;
+- the metric strip uses three columns by default and six columns from the `md` breakpoint, matching the member strip;
 - kill-specific metric labels remain sentence case and do not display decorative icons;
-- existing time tooltips and kill-specific values remain available;
-- the manual-close badge remains on the right side of the identity row and is shown only for manually closed kills.
+- existing time tooltips and kill-specific values remain available through focusable triggers with accessible labels, not hover alone;
+- the manual-close badge remains on the right side of the identity row, is shown only for manually closed kills, and retains its accessible name and tooltip when its visible text is hidden on mobile.
 
 The two strips should stay separate components because their data and behavior differ. This is visual consistency, not a shared abstraction.
 
