@@ -23,7 +23,7 @@ The page keeps its existing vertical composition inside one scroll area:
 
 1. A compact summary strip showing the history label, event name, and either the selected hero or the all-heroes label.
 2. The existing horizontally scrollable hero filter when the event has more than one hero.
-3. An inline query error state when kill history loading fails.
+3. The kill-history table, which owns initial, pagination, empty, and error states for the kill-history query.
 4. A bordered, rounded table container containing the kill history and its infinite-loading row.
 
 The summary strip remains event-oriented. It does not introduce aggregate statistics because the current event history response does not provide a reliable aggregate summary and adding a new query is not required for the requested redesign.
@@ -38,7 +38,7 @@ Inputs:
 
 - `kills`: flattened event kill history rows.
 - `guildId` and `eventId`: route context for kill-detail links.
-- `scrollElement`: the element used as the `IntersectionObserver` root.
+- `scrollElement`: the nullable element used as the `IntersectionObserver` root. The table can render before the ref resolves, but it does not create an observer until the element is available.
 - `resetKey`: the selected hero ID or the all-heroes key.
 - Loading, error, next-page, and fetch-next-page state from the existing query.
 
@@ -51,6 +51,8 @@ Responsibilities:
 - Reset the scroll container to the top when `resetKey` changes.
 - Observe the sentinel with `IntersectionObserver`, using the page scroll element as its root, and request the next page before the user reaches the end.
 - Disconnect the observer during cleanup and avoid observing while a request is already in progress.
+- Remove the existing Load More button. The redesigned table has no manual pagination control; subsequent pages load only through the observer sentinel.
+- Preserve already loaded rows when a subsequent page fails, show the translated error state in the sentinel row, and disable observation while the pagination error is active so it cannot create a retry loop.
 
 ### Column definitions
 
@@ -62,12 +64,12 @@ The table contains these columns:
 4. **Participants**: number of point entries associated with the kill.
 5. **Actions**: an accessible detail link represented by the existing icon language.
 
-Column definitions use TanStack accessors and cell renderers. They do not duplicate fetching, filtering, or derived server state.
+Column definitions are produced by a `createEventKillsColumns` factory. The factory receives `guildId`, `eventId`, and the translation function so route parameters, translated headers, manual-close text, and accessible labels are explicit dependencies. It uses TanStack accessors and cell renderers without duplicating fetching, filtering, or derived server state.
 
 ### Component boundaries
 
-- `EventKillsHistoryContent` continues to own queries, selected hero state, and flattened pages. It additionally captures the scroll element and passes it to the table.
-- `EventKillsTable` owns table rendering, loading states, and infinite pagination.
+- `EventKillsHistoryContent` continues to own queries, selected hero state, flattened pages, event overview loading, and event overview errors. It additionally captures the scroll element and passes it to the table. It does not render kill-history query errors separately.
+- `EventKillsTable` owns kill-history table rendering, initial loading, initial error, pagination error, empty, end-of-list, and infinite-pagination states.
 - Column definitions live in a dedicated module so their formatting and routing behavior can be tested without growing the table component.
 - Existing formatting utilities and `NpcTile` are reused.
 - The current card-specific `EventKillRow` is removed after its tests and imports are migrated; no re-export wrapper is retained.
@@ -77,8 +79,9 @@ Column definitions use TanStack accessors and cell renderers. They do not duplic
 The desktop table follows the density of the member kill history table.
 
 - Monster and action columns are always visible.
-- Date remains visible on small screens when space permits.
-- Respawn time and participant count hide at narrower breakpoints and become visible as horizontal space increases.
+- Date is hidden at the base breakpoint and becomes a table cell from `sm` upward.
+- Participant count is hidden below `lg` and becomes a table cell from `lg` upward.
+- Respawn time is hidden below `xl` and becomes a table cell from `xl` upward.
 - Numeric values use tabular figures and right alignment.
 - The table container clips overflow and does not create horizontal page scrolling.
 - Row targets and detail links remain keyboard accessible.
@@ -100,9 +103,11 @@ No new API call, cache shape, or global state is introduced.
 
 - Initial loading renders a table-shaped skeleton with a header and several row placeholders.
 - An empty successful result renders the existing translated no-kills message and icon treatment.
-- A query error renders the existing translated event error message in the page flow; the table does not render stale rows as a successful state.
+- An initial query error with no loaded rows renders the existing translated event error message in place of the table body.
+- A subsequent-page error preserves loaded rows, renders the existing translated event error message in the sentinel row, and disables the observer until query state changes.
 - Pagination loading is shown inside the sentinel row.
 - When no next page exists, the sentinel row displays the translated end-of-list message.
+- The table never renders a Load More button or another manual next-page control.
 - Event overview loading and event-not-found behavior remain unchanged.
 
 ## Accessibility
