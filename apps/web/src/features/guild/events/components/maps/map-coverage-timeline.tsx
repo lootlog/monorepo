@@ -4,6 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import type { TFunction } from "i18next";
 import { formatTime } from "../../utils/format-date";
 import { formatDurationFromMs } from "../../utils/format-duration";
 import { calculateTimelineSegments } from "../../utils/timeline-segments";
@@ -13,12 +14,14 @@ interface MapCoverageTimelineProps {
   startTime: Date;
   endTime: Date;
   gaps: MapGap[];
+  t: TFunction;
 }
 
 export const MapCoverageTimeline = ({
   startTime,
   endTime,
   gaps,
+  t,
 }: MapCoverageTimelineProps) => {
   const segments = calculateTimelineSegments(startTime, endTime, gaps);
 
@@ -30,8 +33,10 @@ export const MapCoverageTimeline = ({
 
   return (
     <div className="relative h-3 w-full rounded-full bg-muted overflow-hidden">
-      {segments.map((segment, index) => (
-        <Tooltip key={index}>
+      {segments.map((segment) => (
+        <Tooltip
+          key={`${segment.type}-${segment.startTime.toISOString()}-${segment.endTime.toISOString()}`}
+        >
           <TooltipTrigger asChild>
             <div
               className={cn(
@@ -50,10 +55,10 @@ export const MapCoverageTimeline = ({
             <div className="flex flex-col gap-0.5">
               <span className="font-medium">
                 {segment.type === "COVERED"
-                  ? "Pokryte"
+                  ? t("events.killDetail.mapCoverage.covered")
                   : segment.type === "UNCOVERED"
-                    ? "Nieobstawione"
-                    : "Nieprzypisane"}
+                    ? t("events.killDetail.mapCoverage.uncovered")
+                    : t("events.killDetail.mapCoverage.unassigned")}
               </span>
               <span className="text-muted-foreground">
                 {formatTime(segment.startTime)} - {formatTime(segment.endTime)}

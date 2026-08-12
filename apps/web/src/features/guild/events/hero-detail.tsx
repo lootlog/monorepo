@@ -564,7 +564,7 @@ export const HeroDetail = () => {
       />
 
       <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
+        <div className="px-3 py-3 flex flex-col gap-3">
           <Card className="gap-4 border-border bg-card p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -632,8 +632,8 @@ export const HeroDetail = () => {
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 space-y-4">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <div className="space-y-3 lg:col-span-2">
               {uniqueMembers.length > 0 && (
                 <Card className="p-3 bg-card  border-border gap-2">
                   <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
@@ -718,7 +718,7 @@ export const HeroDetail = () => {
               </Card>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <EventRankingPreview
                 rankings={rankings.filter(
                   (r) => r.heroNpcName === hero.npcName,
@@ -734,7 +734,6 @@ export const HeroDetail = () => {
                 eventId={eventId ?? ""}
                 heroId={heroId ?? ""}
                 limit={5}
-                showHeroName
               />
 
               <EventHeroLoots
