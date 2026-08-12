@@ -45,7 +45,9 @@ The kill summary strip must use the same visual language as the member statistic
 
 The two strips should stay separate components because their data and behavior differ. This is visual consistency, not a shared abstraction.
 
-The secondary maximum-respawn-window value uses a localized i18n message with `duration` interpolation, rendered in Polish as “{{duration}} przed max”, when the kill was resolved before the maximum window. Overdue copy remains unchanged.
+When the kill was resolved before the maximum window, the respawn-time metric displays a localized secondary i18n message with `duration` interpolation, rendered in Polish as “{{duration}} przed max”. The maximum-respawn-window metric contains only its primary duration. Overdue copy remains secondary information in the respawn-time metric as well.
+
+Participant names that link to member details include the same 14 px `ExternalLink` icon used by the member kill-history links. The name and icon form one focusable link, retain role coloring and existing accessible link behavior, and remain visible without increasing row height on mobile.
 
 ## Scoring rules ledger
 
