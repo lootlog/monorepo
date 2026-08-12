@@ -47,7 +47,7 @@ The two strips should stay separate components because their data and behavior d
 
 When the kill was resolved before the maximum window, the respawn-time metric displays a localized secondary i18n message with `duration` interpolation, rendered in Polish as “{{duration}} przed max”. The maximum-respawn-window metric contains only its primary duration. Overdue copy remains secondary information in the respawn-time metric as well.
 
-Participant names that link to member details include the same 14 px `ExternalLink` icon used by the member kill-history links. The name and icon form one focusable link, retain role coloring and existing accessible link behavior, and remain visible without increasing row height on mobile.
+Participant names that link to member details include the same 14 px `ExternalLink` icon used by the member kill-history links. The name and icon form one focusable link, retain role coloring and existing accessible link behavior, and remain visible without increasing row height on mobile. The icon is decorative (`aria-hidden`) and non-shrinking, while long member names truncate; the member name remains the link's accessible name.
 
 ## Scoring rules ledger
 
@@ -78,6 +78,8 @@ Verification covers the absence of focusable disclosure controls, immediate visi
 
 - Confirm the single-column layout at 360, 768, and 1440 px.
 - Confirm the two-column layout at 1536 and 1920 px.
+- Confirm early and overdue secondary timing appears only below the respawn-time value and never below the maximum-window value.
+- Confirm each participant member link is one keyboard-focusable link containing a visible, decorative 14 px `ExternalLink` icon at mobile and desktop widths.
 - At Full HD, the matching-loot heading and the beginning of its content must be visible alongside participants without scrolling through map coverage. The scoring panel may follow a tall loot list below the initial viewport.
 - Expand a participant and a map, then check the always-visible scoring ledger to confirm that neither column causes horizontal overflow.
 - Run targeted Vitest tests, lint, build, and format checks for `@lootlog/web`.
