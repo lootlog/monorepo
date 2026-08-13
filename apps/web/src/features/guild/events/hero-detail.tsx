@@ -38,6 +38,7 @@ import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import { NpcTile } from "@/components/tiles";
 import { HeroTimerCountdown } from "./components/heroes/hero-timer-countdown";
+import { HeroDetailResponsiveLayout } from "./components/heroes/hero-detail-responsive-layout";
 import { MemberBadge } from "./components/shared/member-badge";
 import { getMapStatus } from "./components/maps/map-card";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -666,28 +667,9 @@ export const HeroDetail = () => {
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <div className="space-y-3 lg:col-span-2">
-              {uniqueMembers.length > 0 && (
-                <Card className="gap-0 overflow-hidden border-border bg-card p-0">
-                  <header className="flex min-h-12 items-center gap-2 border-b border-border/70 px-3 py-2">
-                    <Users className="size-4 shrink-0 text-primary" />
-                    <h2 className="truncate text-sm font-semibold">
-                      {t("events.participants.title")}
-                    </h2>
-                    <span className="shrink-0 text-sm text-muted-foreground">
-                      ({uniqueMembers.length})
-                    </span>
-                  </header>
-                  <div className="grid grid-cols-1 gap-px bg-border/70 sm:grid-cols-2">
-                    {uniqueMembers.map((member) => (
-                      <MemberBadge key={member.id} member={member} />
-                    ))}
-                  </div>
-                </Card>
-              )}
-
-              <Card className="gap-0 overflow-hidden border-border bg-card p-0">
+          <HeroDetailResponsiveLayout
+            maps={
+              <Card className="@container/maps gap-0 overflow-hidden border-border bg-card p-0">
                 <header className="flex min-h-12 min-w-0 items-center gap-2 border-b border-border/70 px-3 py-2">
                   <MapPin className="size-4 shrink-0 text-primary" />
                   <h2 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
@@ -715,13 +697,13 @@ export const HeroDetail = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-9 px-2.5 lg:px-3"
+                              className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
                               onClick={handleClearAllAssignments}
                               disabled={uniqueMembers.length === 0}
                               aria-label={t("events.maps.clearAll")}
                             >
                               <Eraser className="size-4" />
-                              <span className="hidden lg:inline">
+                              <span className="hidden @2xl/maps:inline">
                                 {t("events.maps.clearAll")}
                               </span>
                             </Button>
@@ -736,12 +718,12 @@ export const HeroDetail = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 px-2.5 lg:px-3"
+                            className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
                             onClick={() => setMapManageOpen(true)}
                             aria-label={t("events.maps.manage")}
                           >
                             <Plus className="size-4" />
-                            <span className="hidden lg:inline">
+                            <span className="hidden @2xl/maps:inline">
                               {t("events.maps.manage")}
                             </span>
                           </Button>
@@ -769,34 +751,60 @@ export const HeroDetail = () => {
                   vertical
                 />
               </Card>
-            </div>
+            }
+            participants={
+              uniqueMembers.length > 0 ? (
+                <Card className="@container/participants gap-0 overflow-hidden border-border bg-card p-0">
+                  <header className="flex min-h-12 items-center gap-2 border-b border-border/70 px-3 py-2">
+                    <Users className="size-4 shrink-0 text-primary" />
+                    <h2 className="truncate text-sm font-semibold">
+                      {t("events.participants.title")}
+                    </h2>
+                    <span className="shrink-0 text-sm text-muted-foreground">
+                      ({uniqueMembers.length})
+                    </span>
+                  </header>
+                  <div className="-mb-px -mr-px grid grid-cols-1 bg-card @sm/participants:grid-cols-2 @lg/participants:grid-cols-3 @2xl/participants:grid-cols-4">
+                    {uniqueMembers.map((member) => (
+                      <MemberBadge
+                        key={member.id}
+                        member={member}
+                        guildId={guildId ?? ""}
+                        eventId={eventId ?? ""}
+                      />
+                    ))}
+                  </div>
+                </Card>
+              ) : null
+            }
+            sidebar={
+              <>
+                <EventRankingPreview
+                  rankings={rankings.filter(
+                    (r) => r.heroNpcName === hero.npcName,
+                  )}
+                  heroNpcs={[hero]}
+                  guildId={guildId ?? ""}
+                  eventId={eventId ?? ""}
+                  limit={5}
+                />
 
-            <div className="space-y-3">
-              <EventRankingPreview
-                rankings={rankings.filter(
-                  (r) => r.heroNpcName === hero.npcName,
-                )}
-                heroNpcs={[hero]}
-                guildId={guildId ?? ""}
-                eventId={eventId ?? ""}
-                limit={5}
-              />
+                <RecentKillsPreview
+                  guildId={guildId ?? ""}
+                  eventId={eventId ?? ""}
+                  heroId={heroId ?? ""}
+                  limit={5}
+                />
 
-              <RecentKillsPreview
-                guildId={guildId ?? ""}
-                eventId={eventId ?? ""}
-                heroId={heroId ?? ""}
-                limit={5}
-              />
-
-              <EventHeroLoots
-                guildId={guildId ?? ""}
-                heroNpcNames={[hero.npcName]}
-                world={event.world}
-                limit={3}
-              />
-            </div>
-          </div>
+                <EventHeroLoots
+                  guildId={guildId ?? ""}
+                  heroNpcNames={[hero.npcName]}
+                  world={event.world}
+                  limit={3}
+                />
+              </>
+            }
+          />
         </div>
       </ScrollArea>
       <MapManageDialog

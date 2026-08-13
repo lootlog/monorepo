@@ -78,14 +78,12 @@ describe("MultipliersCard", () => {
     expect(items).toHaveLength(3);
     expect(items[0]?.textContent).toContain("Applied rule");
     expect(items[0]?.textContent).toContain("events.scoring.always");
-    expect(items[0]?.textContent).toContain(
-      "events.scoring.actionType.SET_BASE",
-    );
+    expect(within(items[0] as HTMLElement).getByText("[1]")).toBeTruthy();
+    expect(within(items[1] as HTMLElement).getByText("[+0.25]")).toBeTruthy();
+    expect(within(items[2] as HTMLElement).getByText("[+0.5]")).toBeTruthy();
     expect(
       items[0]?.textContent?.indexOf("events.scoring.always"),
-    ).toBeLessThan(
-      items[0]?.textContent?.indexOf("events.scoring.actionType.SET_BASE") ?? 0,
-    );
+    ).toBeLessThan(items[0]?.textContent?.indexOf("[1]") ?? 0);
     expect(items[0]?.textContent).toContain(
       "events.killDetail.multipliers.appliedStatus",
     );

@@ -195,7 +195,7 @@ export const MapCard = ({
         )}
         onDoubleClick={handleRowDoubleClick}
       >
-        <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2">
+        <div className="col-start-1 row-start-1 flex h-5 min-w-0 items-center gap-2">
           {hasPlayersToShow ? (
             <button
               type="button"
@@ -235,7 +235,10 @@ export const MapCard = ({
           />
         </div>
 
-        <div className="col-start-1 row-start-2 mt-1 flex min-w-0 items-center gap-2">
+        <div
+          className="col-start-1 row-start-2 mt-1 flex h-5 min-w-0 items-center gap-2"
+          data-map-assignment-row
+        >
           {memberCount > 0 ? (
             <>
               <div className="flex shrink-0 -space-x-1.5">
