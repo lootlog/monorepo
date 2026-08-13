@@ -1,5 +1,11 @@
 # @lootlog/api
 
+## 4.0.1
+
+### Patch Changes
+
+- d782374: Display event ranking member names using their highest role color.
+
 ## 4.0.0
 
 ### Major Changes

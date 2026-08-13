@@ -1,5 +1,11 @@
 # @lootlog/ui
 
+## 2.0.2
+
+### Patch Changes
+
+- d782374: Standardize expanded table detail rows on a shared, brighter muted surface across Lootlog tables.
+
 ## 2.0.1
 
 ### Patch Changes

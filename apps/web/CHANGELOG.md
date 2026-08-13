@@ -1,5 +1,28 @@
 # @lootlog/web
 
+## 1.3.1
+
+### Patch Changes
+
+- d782374: Keep sidebar navigation icons legible when their item is active by applying the active foreground color.
+- 5b97659: Present event kill history, recent kills, and event heroes in responsive data tables with compact overview headers, exact context-aware kill counts, and automatic infinite scrolling where appropriate.
+- d782374: Standardize expanded table detail rows on a shared, brighter muted surface across Lootlog tables.
+- 846a786: Align the event overview loot and ranking widgets with their full-detail list and table presentations.
+- 88fb9ae: Hide event hero status badges on small screens to keep hero rows compact.
+- d782374: Improve guild breadcrumbs by collapsing long ancestor paths responsively, preserving the current page context on narrow screens, and replacing raw kill identifiers with a meaningful detail label.
+- d782374: Display event ranking member names using their highest role color.
+- 2fea6f3: Improve responsive event hero layouts, map assignment stability, and compact ranking readability.
+- 88fb9ae: Improve the recent event kills preview by placing the kill date below the monster name and hiding the participants column.
+- d782374: Polish event kill details into a compact analytical view, present normalized map coverage in a responsive analytical table, show scoring rules in an always-visible compact list, add direct hero-loot navigation, and fix duplicate timeline assignment keys.
+- 2fea6f3: Shorten scoring action labels in kill details to bracketed point values.
+- 88fb9ae: Redesign the event hero detail view with compact headers, a responsive participant roster, flat map assignment rows, double-click assignment controls, isolated coverage timers, and collapsible map groups. Prevent the ranking preview from entering an update loop when sibling content changes.
+- da827a6: Improve event member statistics, event rankings, and event kill history with denser full-width summaries, filter-driven context, responsive operational rows, clearer history layouts, and stable list initialization after client-side navigation.
+- 7172750: Align the loot list toolbar divider with the gap between the loot results and desktop filters, and refine event participant link hover styling.
+- Updated dependencies [d782374]
+- Updated dependencies [d782374]
+  - @lootlog/ui@2.0.2
+  - @lootlog/api-client@4.0.1
+
 ## 1.3.0
 
 ### Minor Changes

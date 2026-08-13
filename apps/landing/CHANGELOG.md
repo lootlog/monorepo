@@ -1,5 +1,12 @@
 # @lootlog/landing
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [d782374]
+  - @lootlog/ui@2.0.2
+
 ## 1.0.4
 
 ### Patch Changes
