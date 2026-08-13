@@ -3,8 +3,10 @@ import { useTranslation } from "react-i18next";
 import { Clock } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
-import type { WindowStatus } from "../../hooks/use-window-status";
-import { isWindowActive } from "../../hooks/use-window-status";
+import {
+  isWindowActive,
+  type WindowStatus,
+} from "../../hooks/use-window-status";
 import {
   getCoverageClockSecond,
   subscribeToCoverageClock,

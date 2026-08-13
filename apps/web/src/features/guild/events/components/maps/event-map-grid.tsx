@@ -127,10 +127,10 @@ const LocationSection = ({
         data-map-location-content={title}
         className={cn(
           "divide-y divide-border/70",
-          !isExpanded && "hidden",
           vertical
             ? "flex flex-col"
             : "grid grid-cols-1 sm:grid-cols-2 sm:[&>*:nth-child(odd)]:border-r sm:[&>*:nth-child(odd)]:border-border/70",
+          !isExpanded && "hidden",
         )}
       >
         {maps.map((map) => {

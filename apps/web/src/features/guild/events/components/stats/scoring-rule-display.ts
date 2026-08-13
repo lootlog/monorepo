@@ -10,10 +10,14 @@ export const getScoringRuleAction = (
   t: TFunction,
 ) => {
   if (action.type === "SET_BASE") {
-    return `[${action.points}]`;
+    return t("events.scoring.actionSummary.basePoints", {
+      points: action.points,
+    });
   }
   if (action.type === "ADD_BONUS") {
-    return `[+${action.points}]`;
+    return t("events.scoring.actionSummary.bonusPoints", {
+      points: action.points,
+    });
   }
   return formatScoringAction(action, t);
 };

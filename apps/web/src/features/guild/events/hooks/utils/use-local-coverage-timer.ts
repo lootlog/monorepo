@@ -55,12 +55,13 @@ export const useLocalCoverageTimer = (
   const ignoredGapIdRef = useRef<string | null>(null);
 
   const statusGapType = getGapTypeFromStatus(status);
-  const gapType =
-    statusGapType ??
-    (status === "ASSIGNED_UNKNOWN" ? (activeGap?.gapType ?? null) : null);
   const activeGapId = activeGap?.id ?? null;
   const activeGapType = activeGap?.gapType ?? null;
   const activeGapStartedAt = activeGap?.startedAt ?? null;
+  const fallbackGapType =
+    activeGapId !== ignoredGapIdRef.current ? activeGapType : null;
+  const gapType =
+    statusGapType ?? (status === "ASSIGNED_UNKNOWN" ? fallbackGapType : null);
 
   useEffect(() => {
     const prevGapType = prevGapTypeRef.current;
