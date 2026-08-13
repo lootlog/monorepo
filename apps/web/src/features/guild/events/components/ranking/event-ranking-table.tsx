@@ -256,6 +256,7 @@ export const EventRankingTable = ({
       : allColumns;
 
   const table = useReactTable({
+    autoResetPageIndex: false,
     data: sortedRankings,
     columns,
     getCoreRowModel: getCoreRowModel(),
