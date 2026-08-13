@@ -51,12 +51,19 @@ describe("EventMapGrid location sections", () => {
 
     fireEvent.click(locationToggle);
 
+    const collapsedContent = mapRow.closest("[data-map-location-content]");
     expect(mapRow.isConnected).toBe(true);
-    expect(mapRow.closest("[hidden]")).not.toBeNull();
+    expect(collapsedContent).not.toBeNull();
+    expect(collapsedContent?.hasAttribute("hidden")).toBe(true);
+    expect(collapsedContent?.className).toContain("hidden");
+    expect(collapsedContent?.className.split(" ")).not.toContain("flex");
 
     fireEvent.click(locationToggle);
 
     expect(screen.getByText("Moczary Rybiego Oka")).toBe(mapRow);
     expect(mapRow.closest("[hidden]")).toBeNull();
+    expect(
+      mapRow.closest("[data-map-location-content]")?.className.split(" "),
+    ).toContain("flex");
   });
 });

@@ -101,6 +101,30 @@ describe("useLocalCoverageTimer", () => {
     expect(result.current.formattedDuration).toBe("00:05:00");
   });
 
+  it("ignores a stale backend gap when presence becomes unavailable", () => {
+    const staleGap = createGap(
+      "gap-stale",
+      "UNCOVERED",
+      "2026-08-12T12:05:00.000Z",
+    );
+    const { result, rerender } = renderHook(
+      ({ status }: { status: MapStatus }) =>
+        useLocalCoverageTimer(status, staleGap),
+      {
+        initialProps: { status: "ASSIGNED_ABSENT" as MapStatus },
+      },
+    );
+
+    expect(result.current.formattedDuration).toBe("00:05:00");
+
+    rerender({ status: "ASSIGNED_PRESENT" });
+    expect(result.current.formattedDuration).toBeNull();
+
+    rerender({ status: "ASSIGNED_UNKNOWN" });
+    expect(result.current.gapType).toBeNull();
+    expect(result.current.formattedDuration).toBeNull();
+  });
+
   it("does not retry rendering when the clock advances between reads", () => {
     let currentTime = new Date("2026-08-12T12:10:00.000Z").getTime();
     vi.spyOn(Date, "now").mockImplementation(() => {

@@ -150,10 +150,6 @@ export const MapCard = ({
 
   const hasPlayersToShow = playersOnMap.length > 0;
   const manageActionLabel = t("events.maps.manageShort");
-  const assignActionLabel =
-    !isAssignmentEnabled && countdownTime
-      ? countdownTime
-      : t("events.maps.assignSelf");
   let assignmentTooltipContent = t("events.maps.assignSelf");
   if (!isAssignmentEnabled) {
     if (assignmentDisabledMessage) {
@@ -355,7 +351,7 @@ export const MapCard = ({
                     className="size-9"
                     onClick={() => onSelfAssignClick?.(map.id)}
                     disabled={!isAssignmentEnabled}
-                    aria-label={assignActionLabel}
+                    aria-label={t("events.maps.assignSelf")}
                   >
                     <UserPlus className="size-4" />
                   </Button>
