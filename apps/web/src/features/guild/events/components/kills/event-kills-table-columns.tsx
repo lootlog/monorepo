@@ -11,6 +11,7 @@ import { formatDurationHuman } from "../../utils/format-duration";
 type CreateEventKillsTableColumnsOptions = {
   eventId: string;
   guildId: string;
+  isPreview: boolean;
   t: TFunction;
 };
 
@@ -29,6 +30,7 @@ const getKillDetailParams = (
 export const createEventKillsTableColumns = ({
   eventId,
   guildId,
+  isPreview,
   t,
 }: CreateEventKillsTableColumnsOptions): ColumnDef<HeroKill>[] => [
   {
@@ -66,7 +68,11 @@ export const createEventKillsTableColumns = ({
                 {kill.heroNpc.npcName}
               </span>
             </Link>
-            <div className="mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums sm:hidden">
+            <div
+              className={`mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums ${
+                isPreview ? "" : "sm:hidden"
+              }`}
+            >
               {formatDateTime(new Date(kill.killedAt))}
             </div>
           </div>

@@ -77,22 +77,24 @@ const LocationSection = ({
         (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
       ).length
     : 0;
+  const handleExpandedChange = () => {
+    setIsExpanded((currentExpanded) => !currentExpanded);
+  };
 
   return (
     <div
+      data-map-location={title}
       className={cn(
-        "rounded-lg border",
-        isUngrouped
-          ? "border-dashed border-muted-foreground/30"
-          : "border-border",
+        "border-b border-border/70 last:border-b-0",
+        isUngrouped && "text-muted-foreground",
       )}
     >
       <button
         type="button"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleExpandedChange}
+        aria-expanded={isExpanded}
         className={cn(
-          "w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-left transition-colors",
-          "hover:bg-muted/50",
+          "flex min-h-10 w-full cursor-pointer items-center gap-2 bg-muted/20 px-3 text-left text-sm font-medium transition-colors hover:bg-muted/40",
           isUngrouped && "text-muted-foreground",
         )}
       >
@@ -120,41 +122,42 @@ const LocationSection = ({
           )}
         </span>
       </button>
-      {isExpanded && (
-        <div
-          className={cn(
-            "p-2 pt-0",
-            vertical
-              ? "flex flex-col gap-2"
-              : "grid grid-cols-1 sm:grid-cols-2 gap-2",
-          )}
-        >
-          {maps.map((map) => {
-            const status = getMapStatus(map, presenceData);
-            const style = STATUS_STYLES[status];
+      <div
+        hidden={!isExpanded}
+        data-map-location-content={title}
+        className={cn(
+          "divide-y divide-border/70",
+          vertical
+            ? "flex flex-col"
+            : "grid grid-cols-1 sm:grid-cols-2 sm:[&>*:nth-child(odd)]:border-r sm:[&>*:nth-child(odd)]:border-border/70",
+          !isExpanded && "hidden",
+        )}
+      >
+        {maps.map((map) => {
+          const status = getMapStatus(map, presenceData);
+          const style = STATUS_STYLES[status];
 
-            return (
-              <MapCard
-                key={map.id}
-                map={map}
-                status={status}
-                style={style}
-                canManage={canManage}
-                currentMemberId={currentMemberId}
-                presenceData={presenceData}
-                assignmentDisabled={assignmentDisabled}
-                assignmentEnabledAt={assignmentEnabledAt}
-                assignmentDisabledMessage={assignmentDisabledMessage}
-                onSelfAssignClick={onSelfAssignClick}
-                onSelfUnassignClick={onSelfUnassignClick}
-                onManageClick={onManageClick}
-                windowStatus={windowStatus}
-                activeGap={activeGapsMap?.get(map.id)}
-              />
-            );
-          })}
-        </div>
-      )}
+          return (
+            <MapCard
+              key={map.id}
+              map={map}
+              status={status}
+              style={style}
+              canManage={canManage}
+              currentMemberId={currentMemberId}
+              presenceData={presenceData}
+              assignmentDisabled={assignmentDisabled}
+              assignmentEnabledAt={assignmentEnabledAt}
+              assignmentDisabledMessage={assignmentDisabledMessage}
+              onSelfAssignClick={onSelfAssignClick}
+              onSelfUnassignClick={onSelfUnassignClick}
+              onManageClick={onManageClick}
+              windowStatus={windowStatus}
+              activeGap={activeGapsMap?.get(map.id)}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -199,8 +202,8 @@ export const EventMapGrid = ({
       <div
         className={
           vertical
-            ? "flex flex-col gap-2"
-            : "grid grid-cols-1 sm:grid-cols-2 gap-2"
+            ? "flex flex-col divide-y divide-border/70"
+            : "grid grid-cols-1 divide-y divide-border/70 sm:grid-cols-2 sm:[&>*:nth-child(odd)]:border-r sm:[&>*:nth-child(odd)]:border-border/70"
         }
       >
         {maps.map((map) => {
@@ -232,7 +235,7 @@ export const EventMapGrid = ({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col">
       {locations.map((location) => (
         <LocationSection
           key={location.id}

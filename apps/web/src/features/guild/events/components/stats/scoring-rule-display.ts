@@ -1,6 +1,26 @@
 import type { TFunction } from "i18next";
-import type { EventScoringRule } from "@lootlog/scoring";
-import { formatScoringCondition } from "../../utils/scoring-rule-labels";
+import type { EventScoringAction, EventScoringRule } from "@lootlog/scoring";
+import {
+  formatScoringAction,
+  formatScoringCondition,
+} from "../../utils/scoring-rule-labels";
+
+export const getScoringRuleAction = (
+  action: EventScoringAction,
+  t: TFunction,
+) => {
+  if (action.type === "SET_BASE") {
+    return t("events.scoring.actionSummary.basePoints", {
+      points: action.points,
+    });
+  }
+  if (action.type === "ADD_BONUS") {
+    return t("events.scoring.actionSummary.bonusPoints", {
+      points: action.points,
+    });
+  }
+  return formatScoringAction(action, t);
+};
 
 export const getScoringRuleName = (rule: EventScoringRule, t: TFunction) => {
   if (rule.name) return rule.name;

@@ -689,6 +689,10 @@
       "ADD_BONUS": "Dodaj bonus",
       "ZERO_BASE": "Zeruj punkty"
     },
+    "actionSummary": {
+      "basePoints": "[{{points}}]",
+      "bonusPoints": "[+{{points}}]"
+    },
     "factor": {
       "trackingDurationPercentage": "% respawnu obstawionego",
       "trackingDurationSeconds": "Czas na mapie (sek.)",

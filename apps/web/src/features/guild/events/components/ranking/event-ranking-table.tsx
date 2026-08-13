@@ -47,7 +47,10 @@ const getPositionClassName = (position: number) =>
     position > 3 && "bg-muted text-muted-foreground",
   );
 
-const getColumnClassName = (columnId: string) => {
+const getColumnClassName = (
+  columnId: string,
+  variant: EventRankingTableProps["variant"],
+) => {
   if (columnId === "position") {
     return "w-12";
   }
@@ -69,6 +72,9 @@ const getColumnClassName = (columnId: string) => {
   }
 
   if (columnId === "points") {
+    if (variant === "compact") {
+      return "w-20 text-right @md/ranking:w-28";
+    }
     return "w-28 text-right md:w-36";
   }
 
@@ -256,6 +262,7 @@ export const EventRankingTable = ({
       : allColumns;
 
   const table = useReactTable({
+    autoResetPageIndex: false,
     data: sortedRankings,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -327,7 +334,7 @@ export const EventRankingTable = ({
             cn(
               "h-9 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
               header.column.id === "position" && "pl-4",
-              getColumnClassName(header.column.id),
+              getColumnClassName(header.column.id, variant),
             )
           }
         />
@@ -344,8 +351,8 @@ export const EventRankingTable = ({
           cellClassName={(cell) =>
             cn(
               "h-12 overflow-hidden p-0! align-middle",
-              getColumnClassName(cell.column.id),
-              variant === "compact" && cell.column.id === "points" && "pr-4!",
+              getColumnClassName(cell.column.id, variant),
+              variant === "compact" && cell.column.id === "points" && "pr-3!",
             )
           }
           getRowProps={(row) => ({

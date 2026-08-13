@@ -4,6 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { EventMapGrid } from "./components/maps/event-map-grid";
 import {
   Swords,
@@ -33,6 +38,7 @@ import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import { NpcTile } from "@/components/tiles";
 import { HeroTimerCountdown } from "./components/heroes/hero-timer-countdown";
+import { HeroDetailResponsiveLayout } from "./components/heroes/hero-detail-responsive-layout";
 import { MemberBadge } from "./components/shared/member-badge";
 import { getMapStatus } from "./components/maps/map-card";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -99,6 +105,17 @@ const getWindowStatusConfig = (
         className: "bg-muted text-muted-foreground border-border",
       };
   }
+};
+
+const getMapCoverageCountClassName = (
+  canShowCoverageCount: boolean,
+  coveredMapsCount: number,
+  totalMapsCount: number,
+) => {
+  if (!canShowCoverageCount) return "text-muted-foreground";
+  if (coveredMapsCount === totalMapsCount) return "text-green-500";
+  if (coveredMapsCount > 0) return "text-yellow-500";
+  return "text-destructive";
 };
 
 export const HeroDetail = () => {
@@ -565,141 +582,159 @@ export const HeroDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-3">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex min-w-0 flex-1 items-center gap-3">
-                {hero.npcIcon ? (
-                  <NpcTile
-                    npc={{
-                      id: hero.npcId ?? undefined,
-                      name: hero.npcName,
-                      icon: hero.npcIcon,
-                    }}
-                  />
-                ) : (
-                  <div className="rounded-xl bg-yellow-500/10 p-2">
-                    <Swords className="size-4 text-yellow-500" />
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                    {event.name}
-                  </p>
-                  <h2 className="text-base font-semibold leading-tight break-words">
-                    {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
-                  </h2>
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <HeroTimerCountdown timer={heroTimer} />
-                    {windowStatus !== "NONE" && (
+          <Card className="gap-0 overflow-hidden border-border bg-card p-0">
+            <div className="flex min-w-0 items-center gap-3 p-3 md:px-4">
+              {hero.npcIcon ? (
+                <NpcTile
+                  className="flex w-10 shrink-0 items-center justify-center"
+                  npc={{
+                    id: hero.npcId ?? undefined,
+                    name: hero.npcName,
+                    icon: hero.npcIcon,
+                  }}
+                />
+              ) : (
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-yellow-500/10 ring-1 ring-border/70">
+                  <Swords className="size-4 text-yellow-500" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11px] font-medium leading-none text-muted-foreground">
+                  {event.name}
+                </p>
+                <h1 className="mt-1 truncate text-base font-semibold leading-none">
+                  {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
+                </h1>
+                <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs leading-none text-muted-foreground">
+                  <HeroTimerCountdown timer={heroTimer} />
+                  {windowStatus !== "NONE" && (
+                    <>
+                      <span aria-hidden="true">·</span>
                       <Badge
                         variant="outline"
                         className={cn(
-                          "text-xs",
+                          "h-5 shrink-0 px-1.5 text-[11px]",
                           getWindowStatusConfig(windowStatus, t).className,
                         )}
                       >
                         {getWindowStatusConfig(windowStatus, t).label}
                       </Badge>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
               {canManage && (
-                <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-                  {heroTimer ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full justify-center sm:w-auto"
-                      onClick={() => setCloseWindowOpen(true)}
+                      className="h-9 shrink-0 px-2.5 lg:px-3"
+                      aria-label={t(
+                        heroTimer
+                          ? "events.respawn.closeWindow"
+                          : "events.respawn.openWindow",
+                      )}
+                      onClick={() =>
+                        heroTimer
+                          ? setCloseWindowOpen(true)
+                          : setOpenWindowOpen(true)
+                      }
                     >
-                      <X className="w-4 h-4 mr-2" />
-                      {t("events.respawn.closeWindow")}
+                      {heroTimer ? (
+                        <X className="size-4" />
+                      ) : (
+                        <Timer className="size-4" />
+                      )}
+                      <span className="hidden lg:inline">
+                        {t(
+                          heroTimer
+                            ? "events.respawn.closeWindow"
+                            : "events.respawn.openWindow",
+                        )}
+                      </span>
                     </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-center sm:w-auto"
-                      onClick={() => setOpenWindowOpen(true)}
-                    >
-                      <Timer className="w-4 h-4 mr-2" />
-                      {t("events.respawn.openWindow")}
-                    </Button>
-                  )}
-                </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t(
+                      heroTimer
+                        ? "events.respawn.closeWindow"
+                        : "events.respawn.openWindow",
+                    )}
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <div className="space-y-3 lg:col-span-2">
-              {uniqueMembers.length > 0 && (
-                <Card className="p-3 bg-card  border-border gap-2">
-                  <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    {t("events.participants.title")}{" "}
-                    <span className="text-muted-foreground">
-                      ({uniqueMembers.length})
-                    </span>
-                  </h2>
-                  <div className="flex flex-wrap gap-2">
-                    {uniqueMembers.map((member) => (
-                      <MemberBadge key={member.id} member={member} />
-                    ))}
-                  </div>
-                </Card>
-              )}
-
-              <Card className="p-3 bg-card  border-border gap-2">
-                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-base font-semibold flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    {t("events.maps.title")}
-                    <span className="font-normal">
-                      {canShowCoverageCount ? (
-                        <span
-                          className={cn(
-                            coveredMapsCount === totalMapsCount
-                              ? "text-green-500"
-                              : coveredMapsCount > 0
-                                ? "text-yellow-500"
-                                : "text-destructive",
-                          )}
-                        >
-                          ({coveredMapsCount}/{totalMapsCount})
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          ({totalMapsCount})
-                        </span>
+          <HeroDetailResponsiveLayout
+            maps={
+              <Card className="@container/maps gap-0 overflow-hidden border-border bg-card p-0">
+                <header className="flex min-h-12 min-w-0 items-center gap-2 border-b border-border/70 px-3 py-2">
+                  <MapPin className="size-4 shrink-0 text-primary" />
+                  <h2 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
+                    <span className="truncate">{t("events.maps.title")}</span>
+                    <span
+                      className={cn(
+                        "shrink-0 font-normal",
+                        getMapCoverageCountClassName(
+                          canShowCoverageCount,
+                          coveredMapsCount,
+                          totalMapsCount,
+                        ),
                       )}
+                    >
+                      {canShowCoverageCount
+                        ? `(${coveredMapsCount}/${totalMapsCount})`
+                        : `(${totalMapsCount})`}
                     </span>
                   </h2>
                   {canManage && (
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-center sm:w-auto"
-                        onClick={handleClearAllAssignments}
-                        disabled={uniqueMembers.length === 0}
-                      >
-                        <Eraser className="w-4 h-4 mr-2" />
-                        {t("events.maps.clearAll")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-center sm:w-auto"
-                        onClick={() => setMapManageOpen(true)}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        {t("events.maps.manage")}
-                      </Button>
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
+                              onClick={handleClearAllAssignments}
+                              disabled={uniqueMembers.length === 0}
+                              aria-label={t("events.maps.clearAll")}
+                            >
+                              <Eraser className="size-4" />
+                              <span className="hidden @2xl/maps:inline">
+                                {t("events.maps.clearAll")}
+                              </span>
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {t("events.maps.clearAll")}
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
+                            onClick={() => setMapManageOpen(true)}
+                            aria-label={t("events.maps.manage")}
+                          >
+                            <Plus className="size-4" />
+                            <span className="hidden @2xl/maps:inline">
+                              {t("events.maps.manage")}
+                            </span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {t("events.maps.manage")}
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   )}
-                </div>
+                </header>
                 <EventMapGrid
                   locations={hero.locations ?? []}
                   maps={hero.maps ?? []}
@@ -716,34 +751,60 @@ export const HeroDetail = () => {
                   vertical
                 />
               </Card>
-            </div>
+            }
+            participants={
+              uniqueMembers.length > 0 ? (
+                <Card className="@container/participants gap-0 overflow-hidden border-border bg-card p-0">
+                  <header className="flex min-h-12 items-center gap-2 border-b border-border/70 px-3 py-2">
+                    <Users className="size-4 shrink-0 text-primary" />
+                    <h2 className="truncate text-sm font-semibold">
+                      {t("events.participants.title")}
+                    </h2>
+                    <span className="shrink-0 text-sm text-muted-foreground">
+                      ({uniqueMembers.length})
+                    </span>
+                  </header>
+                  <div className="-mb-px -mr-px grid grid-cols-1 bg-card @sm/participants:grid-cols-2 @lg/participants:grid-cols-3 @2xl/participants:grid-cols-4">
+                    {uniqueMembers.map((member) => (
+                      <MemberBadge
+                        key={member.id}
+                        member={member}
+                        guildId={guildId ?? ""}
+                        eventId={eventId ?? ""}
+                      />
+                    ))}
+                  </div>
+                </Card>
+              ) : null
+            }
+            sidebar={
+              <>
+                <EventRankingPreview
+                  rankings={rankings.filter(
+                    (r) => r.heroNpcName === hero.npcName,
+                  )}
+                  heroNpcs={[hero]}
+                  guildId={guildId ?? ""}
+                  eventId={eventId ?? ""}
+                  limit={5}
+                />
 
-            <div className="space-y-3">
-              <EventRankingPreview
-                rankings={rankings.filter(
-                  (r) => r.heroNpcName === hero.npcName,
-                )}
-                heroNpcs={[hero]}
-                guildId={guildId ?? ""}
-                eventId={eventId ?? ""}
-                limit={5}
-              />
+                <RecentKillsPreview
+                  guildId={guildId ?? ""}
+                  eventId={eventId ?? ""}
+                  heroId={heroId ?? ""}
+                  limit={5}
+                />
 
-              <RecentKillsPreview
-                guildId={guildId ?? ""}
-                eventId={eventId ?? ""}
-                heroId={heroId ?? ""}
-                limit={5}
-              />
-
-              <EventHeroLoots
-                guildId={guildId ?? ""}
-                heroNpcNames={[hero.npcName]}
-                world={event.world}
-                limit={3}
-              />
-            </div>
-          </div>
+                <EventHeroLoots
+                  guildId={guildId ?? ""}
+                  heroNpcNames={[hero.npcName]}
+                  world={event.world}
+                  limit={3}
+                />
+              </>
+            }
+          />
         </div>
       </ScrollArea>
       <MapManageDialog
