@@ -134,7 +134,19 @@ describe("MapCard interactions", () => {
     const assignmentRow = screen.getByText("Wild").parentElement;
 
     expect(assignmentRow?.className).toContain("row-start-2");
+    expect(assignmentRow?.className).toContain("h-5");
     expect(assignmentRow?.className).not.toContain("lg:row-start-1");
+  });
+
+  it("reserves the same assignment row height before a member is assigned", () => {
+    renderMapCard();
+
+    const assignmentRow = screen
+      .getByText("events.maps.gap.unassigned")
+      .closest("[data-map-assignment-row]");
+
+    expect(assignmentRow?.className).toContain("h-5");
+    expect(assignmentRow?.className).toContain("row-start-2");
   });
 
   it("renders the timer in the same row as the map identity", () => {

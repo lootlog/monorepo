@@ -1,8 +1,8 @@
 import type { TFunction } from "i18next";
 import type { EventScoringRule } from "@lootlog/scoring";
 import { cn } from "@/utils/cn";
-import { formatScoringAction } from "../../utils/scoring-rule-labels";
 import {
+  getScoringRuleAction,
   getScoringRuleCondition,
   getScoringRuleName,
 } from "./scoring-rule-display";
@@ -60,7 +60,7 @@ export const ScoringRulesList = ({
               isDisabled && "text-muted-foreground",
             )}
           >
-            {formatScoringAction(rule.action, t)}
+            {getScoringRuleAction(rule.action, t)}
           </span>
         </li>
       );
