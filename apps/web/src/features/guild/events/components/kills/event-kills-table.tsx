@@ -41,12 +41,16 @@ type EventKillsTableProps =
   | EventKillsTableHistoryProps
   | EventKillsTablePreviewProps;
 
-const getColumnClassName = (columnId: string) => {
+const getColumnClassName = (columnId: string, isPreview: boolean) => {
   if (columnId === "monster") {
     return "min-w-0";
   }
 
   if (columnId === "date") {
+    if (isPreview) {
+      return "hidden w-0";
+    }
+
     return "hidden w-0 sm:table-cell sm:w-28 lg:w-36";
   }
 
@@ -55,6 +59,10 @@ const getColumnClassName = (columnId: string) => {
   }
 
   if (columnId === "participants") {
+    if (isPreview) {
+      return "hidden w-0";
+    }
+
     return "hidden w-0 text-right lg:table-cell lg:w-28";
   }
 
@@ -79,7 +87,12 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
   const isFetchingNextPage = historyProps?.isFetchingNextPage ?? false;
   const resetKey = historyProps?.resetKey;
   const scrollElement = historyProps?.scrollElement ?? null;
-  const columns = createEventKillsTableColumns({ eventId, guildId, t });
+  const columns = createEventKillsTableColumns({
+    eventId,
+    guildId,
+    isPreview,
+    t,
+  });
   const table = useReactTable({
     columns,
     data: kills,
@@ -185,7 +198,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
           headClassName={(header) =>
             cn(
               "h-9 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
-              getColumnClassName(header.column.id),
+              getColumnClassName(header.column.id, isPreview),
             )
           }
         />
@@ -195,7 +208,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
           cellClassName={(cell) =>
             cn(
               "h-11 overflow-hidden p-2 align-middle",
-              getColumnClassName(cell.column.id),
+              getColumnClassName(cell.column.id, isPreview),
             )
           }
         />

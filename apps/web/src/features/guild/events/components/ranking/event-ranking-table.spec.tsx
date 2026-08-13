@@ -1,7 +1,13 @@
 // @vitest-environment happy-dom
 
-import type { ReactNode } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { Profiler, type ReactNode } from "react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configureApiClients } from "@lootlog/api-client/transport";
@@ -74,6 +80,27 @@ describe("EventRankingTable", () => {
     ]);
 
     expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it("does not enter an update loop after an external rerender", async () => {
+    const ranking = createRanking({ id: "ranking-1", memberId: 1 });
+    const queryClient = new QueryClient();
+    let commitCount = 0;
+    const createRankingTable = () => (
+      <QueryClientProvider client={queryClient}>
+        <Profiler id="ranking" onRender={() => (commitCount += 1)}>
+          <EventRankingTable rankings={[ranking]} variant="compact" />
+        </Profiler>
+      </QueryClientProvider>
+    );
+    const { rerender } = render(createRankingTable());
+    await act(() => Promise.resolve());
+    const commitsAfterMount = commitCount;
+
+    rerender(createRankingTable());
+    await act(() => Promise.resolve());
+
+    expect(commitCount - commitsAfterMount).toBeLessThanOrEqual(2);
   });
 
   it("presents a semantic leaderboard and links its data cells", () => {
