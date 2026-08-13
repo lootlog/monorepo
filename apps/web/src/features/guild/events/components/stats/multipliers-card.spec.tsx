@@ -6,7 +6,17 @@ import type { EventScoringRules } from "@lootlog/scoring";
 import { afterEach, describe, expect, it } from "vitest";
 import { MultipliersCard } from "./multipliers-card";
 
-const t = ((key: string) => key) as TFunction;
+const t = ((key: string, options?: { points?: number }) => {
+  if (key === "events.scoring.actionSummary.basePoints") {
+    return `[${options?.points}]`;
+  }
+
+  if (key === "events.scoring.actionSummary.bonusPoints") {
+    return `[+${options?.points}]`;
+  }
+
+  return key;
+}) as TFunction;
 
 const scoringRules: EventScoringRules = {
   version: 1,
@@ -77,14 +87,13 @@ describe("MultipliersCard", () => {
     const items = within(list).getAllByRole("listitem");
     expect(items).toHaveLength(3);
     expect(items[0]?.textContent).toContain("Applied rule");
-    expect(items[0]?.textContent).toContain("events.scoring.always");
-    expect(items[0]?.textContent).toContain(
-      "events.scoring.actionType.SET_BASE",
-    );
-    expect(
-      items[0]?.textContent?.indexOf("events.scoring.always"),
-    ).toBeLessThan(
-      items[0]?.textContent?.indexOf("events.scoring.actionType.SET_BASE") ?? 0,
+    expect(within(items[0] as HTMLElement).getByText("[1]")).toBeTruthy();
+    expect(within(items[1] as HTMLElement).getByText("[+0.25]")).toBeTruthy();
+    expect(within(items[2] as HTMLElement).getByText("[+0.5]")).toBeTruthy();
+    const firstItemText = items[0]?.textContent ?? "";
+    expect(firstItemText).toContain("events.scoring.always");
+    expect(firstItemText.indexOf("events.scoring.always")).toBeLessThan(
+      firstItemText.indexOf("[1]"),
     );
     expect(items[0]?.textContent).toContain(
       "events.killDetail.multipliers.appliedStatus",

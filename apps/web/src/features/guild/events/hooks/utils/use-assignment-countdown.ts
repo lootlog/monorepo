@@ -52,7 +52,9 @@ export const useAssignmentCountdown = (
 
     const interval = setInterval(updateCountdown, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [assignmentDisabled, assignmentEnabledAt]);
 
   return {

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatDurationPadded } from "../../utils/format-duration";
+import type { CoverageGap } from "../queries/use-map-coverage-timer";
 
 export type CoverageGapType = "UNASSIGNED" | "UNCOVERED";
 
@@ -17,62 +18,91 @@ const getGapTypeFromStatus = (status: MapStatus): CoverageGapType | null => {
   return "UNCOVERED";
 };
 
+const secondTickListeners = new Set<(currentSecond: number) => void>();
+let secondTickInterval: ReturnType<typeof setInterval> | null = null;
+
+export const getCoverageClockSecond = () => Math.floor(Date.now() / 1000);
+export const subscribeToCoverageClock = (
+  listener: (currentSecond: number) => void,
+) => {
+  secondTickListeners.add(listener);
+
+  if (secondTickInterval === null) {
+    secondTickInterval = setInterval(() => {
+      const currentSecond = getCoverageClockSecond();
+      [...secondTickListeners].forEach((currentListener) =>
+        currentListener(currentSecond),
+      );
+    }, 1000);
+  }
+
+  return () => {
+    secondTickListeners.delete(listener);
+
+    if (secondTickListeners.size === 0 && secondTickInterval !== null) {
+      clearInterval(secondTickInterval);
+      secondTickInterval = null;
+    }
+  };
+};
+
 export const useLocalCoverageTimer = (
   status: MapStatus,
-  initialStartedAt?: Date | null,
+  activeGap?: Pick<CoverageGap, "gapType" | "id" | "startedAt"> | null,
 ) => {
   const [startTime, setStartTime] = useState<number | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const prevGapTypeRef = useRef<CoverageGapType | null>(null);
-  const initializedRef = useRef(false);
-  const usedBackendValueRef = useRef(false);
+  const ignoredGapIdRef = useRef<string | null>(null);
 
-  const gapType = getGapTypeFromStatus(status);
+  const statusGapType = getGapTypeFromStatus(status);
+  const activeGapId = activeGap?.id ?? null;
+  const activeGapType = activeGap?.gapType ?? null;
+  const activeGapStartedAt = activeGap?.startedAt ?? null;
+  const fallbackGapType =
+    activeGapId !== ignoredGapIdRef.current ? activeGapType : null;
+  const gapType =
+    statusGapType ?? (status === "ASSIGNED_UNKNOWN" ? fallbackGapType : null);
 
   useEffect(() => {
     const prevGapType = prevGapTypeRef.current;
     prevGapTypeRef.current = gapType;
 
     if (gapType === null) {
-      setStartTime(null);
-      setElapsedSeconds(0);
-      initializedRef.current = false;
-      usedBackendValueRef.current = false;
-    } else if (gapType !== prevGapType && prevGapType !== null) {
-      setStartTime(Date.now());
-      setElapsedSeconds(0);
-      usedBackendValueRef.current = true;
-    } else if (!initializedRef.current) {
-      initializedRef.current = true;
-      if (initialStartedAt) {
-        setStartTime(initialStartedAt.getTime());
-        usedBackendValueRef.current = true;
-      } else {
-        setStartTime(Date.now());
+      if (activeGapId) {
+        ignoredGapIdRef.current = activeGapId;
       }
-    } else if (initialStartedAt && !usedBackendValueRef.current) {
-      setStartTime(initialStartedAt.getTime());
-      usedBackendValueRef.current = true;
+      setStartTime(null);
+      return;
     }
-  }, [gapType, initialStartedAt]);
 
-  useEffect(() => {
-    if (startTime === null) return;
+    const hasCurrentBackendGap =
+      activeGapId !== null &&
+      activeGapId !== ignoredGapIdRef.current &&
+      activeGapType === gapType &&
+      activeGapStartedAt !== null;
 
-    const updateElapsed = () => {
-      setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
-    };
+    if (hasCurrentBackendGap) {
+      const backendStartTime = Date.parse(activeGapStartedAt);
+      if (!Number.isNaN(backendStartTime)) {
+        setStartTime(backendStartTime);
+        return;
+      }
+    }
 
-    updateElapsed();
+    if (prevGapType === null || prevGapType !== gapType) {
+      setStartTime(Date.now());
+    }
+  }, [activeGapId, activeGapStartedAt, activeGapType, gapType]);
 
-    const interval = setInterval(updateElapsed, 1000);
-
-    return () => clearInterval(interval);
-  }, [startTime]);
+  const elapsedSeconds =
+    startTime === null
+      ? 0
+      : Math.max(0, getCoverageClockSecond() - Math.floor(startTime / 1000));
 
   return {
     gapType,
     elapsedSeconds,
     formattedDuration: gapType ? formatDurationPadded(elapsedSeconds) : null,
+    startTime,
   };
 };
