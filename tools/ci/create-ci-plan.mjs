@@ -11,6 +11,25 @@ const deployableServices = new Set([
   "search",
 ]);
 
+const cloudflareDevelopmentTargets = new Map([
+  [
+    "@lootlog/landing",
+    {
+      artifactPath: "apps/landing/out",
+      packageName: "@lootlog/landing",
+      project: "lootlog-landing",
+    },
+  ],
+  [
+    "@lootlog/web",
+    {
+      artifactPath: "apps/web/dist",
+      packageName: "@lootlog/web",
+      project: "lootlog-web-monorepo",
+    },
+  ],
+]);
+
 const apiClientProducers = new Set([
   "@lootlog/activity",
   "@lootlog/api",
@@ -51,8 +70,15 @@ export function createCiPlan({
         const service = packageName.slice("@lootlog/".length);
         return deployableServices.has(service) ? [service] : [];
       });
+  const cloudflareTargets = versionPullRequest
+    ? []
+    : packages.flatMap((packageName) => {
+        const target = cloudflareDevelopmentTargets.get(packageName);
+        return target ? [target] : [];
+      });
 
   return {
+    cloudflareTargets,
     dockerServices,
     packages,
     runApiClientCheck: packages.some((packageName) =>
