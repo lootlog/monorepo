@@ -10,6 +10,7 @@ test("plans quality and Docker checks for an affected service", () => {
       associatedPullRequestHeads: [],
     }),
     {
+      cloudflareTargets: [],
       dockerServices: ["api"],
       packages: ["@lootlog/api"],
       runApiClientCheck: true,
@@ -31,6 +32,13 @@ test("uses the affected package graph and removes root and duplicate entries", (
       associatedPullRequestHeads: [],
     }),
     {
+      cloudflareTargets: [
+        {
+          artifactPath: "apps/web/dist",
+          packageName: "@lootlog/web",
+          project: "lootlog-web-monorepo",
+        },
+      ],
       dockerServices: [],
       packages: ["@lootlog/game-client", "@lootlog/ui", "@lootlog/web"],
       runApiClientCheck: false,
@@ -46,6 +54,7 @@ test("skips Docker checks for a Changesets version PR, including merge groups", 
       associatedPullRequestHeads: ["changeset-release/main"],
     }),
     {
+      cloudflareTargets: [],
       dockerServices: [],
       packages: ["@lootlog/api", "@lootlog/auth"],
       runApiClientCheck: true,
@@ -71,4 +80,25 @@ test("runs the API client check when any OpenAPI producer is affected", () => {
       true,
     );
   }
+});
+
+test("plans development Pages deployments for affected frontend applications", () => {
+  assert.deepEqual(
+    createCiPlan({
+      affectedPackages: ["@lootlog/web", "@lootlog/landing", "@lootlog/ui"],
+      associatedPullRequestHeads: [],
+    }).cloudflareTargets,
+    [
+      {
+        artifactPath: "apps/landing/out",
+        packageName: "@lootlog/landing",
+        project: "lootlog-landing",
+      },
+      {
+        artifactPath: "apps/web/dist",
+        packageName: "@lootlog/web",
+        project: "lootlog-web-monorepo",
+      },
+    ],
+  );
 });
