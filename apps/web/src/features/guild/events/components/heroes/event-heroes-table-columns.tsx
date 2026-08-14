@@ -179,17 +179,19 @@ export const createEventHeroesTableColumns = ({
         return (
           <div className="flex justify-end">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-9 shrink-0 text-muted-foreground"
-                  aria-label={t("events.heroes.actions")}
-                  title={t("events.heroes.actions")}
-                >
-                  <MoreVertical className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 shrink-0 text-muted-foreground"
+                    aria-label={t("events.heroes.actions")}
+                    title={t("events.heroes.actions")}
+                  >
+                    <MoreVertical className="size-4" />
+                  </Button>
+                }
+              />
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEditHero(hero)}>
                   <Pencil className="size-4" />

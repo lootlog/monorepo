@@ -153,11 +153,13 @@ export const playerVsPlayerColumns: ColumnDef<PlayerVsPlayerBattle>[] = [
       return (
         <div className="flex min-w-0 justify-end">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
-                {getRelativeTime(row.original.createdAt)}
-              </span>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
+                  {getRelativeTime(row.original.createdAt)}
+                </span>
+              }
+            />
             <TooltipContent>{exactTime}</TooltipContent>
           </Tooltip>
         </div>

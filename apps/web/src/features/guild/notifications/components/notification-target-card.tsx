@@ -144,62 +144,68 @@ export const NotificationTargetCard = ({
         </div>
         <div className="flex gap-1">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                aria-label={t("settings.notifications.actions.edit")}
-                disabled={isActionDisabled}
-                onClick={() => onEdit(target)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  aria-label={t("settings.notifications.actions.edit")}
+                  disabled={isActionDisabled}
+                  onClick={() => onEdit(target)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              }
+            />
             <TooltipContent>
               {t("settings.notifications.actions.edit")}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">
-                <ConfirmDeleteDialog
-                  disabled={isActionDisabled}
-                  onConfirm={handleDelete}
-                  title={t("settings.notifications.deleteTargetDialog.title")}
-                  description={
-                    orphanedRuleCount > 0
-                      ? t(
-                          "settings.notifications.deleteTargetDialog.descriptionWithOrphanedRules",
-                          {
-                            name: getGuildNotificationTargetLabel(target),
-                            count: orphanedRuleCount,
-                          },
-                        )
-                      : t(
-                          "settings.notifications.deleteTargetDialog.description",
-                          {
-                            name: getGuildNotificationTargetLabel(target),
-                          },
-                        )
-                  }
-                  confirmButtonLabel={t(
-                    "settings.notifications.actions.delete",
-                  )}
-                  cancelButtonLabel={t("settings.notifications.actions.cancel")}
-                  trigger={
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="destructive"
-                      aria-label={t("settings.notifications.actions.delete")}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-              </span>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <span className="inline-flex">
+                  <ConfirmDeleteDialog
+                    disabled={isActionDisabled}
+                    onConfirm={handleDelete}
+                    title={t("settings.notifications.deleteTargetDialog.title")}
+                    description={
+                      orphanedRuleCount > 0
+                        ? t(
+                            "settings.notifications.deleteTargetDialog.descriptionWithOrphanedRules",
+                            {
+                              name: getGuildNotificationTargetLabel(target),
+                              count: orphanedRuleCount,
+                            },
+                          )
+                        : t(
+                            "settings.notifications.deleteTargetDialog.description",
+                            {
+                              name: getGuildNotificationTargetLabel(target),
+                            },
+                          )
+                    }
+                    confirmButtonLabel={t(
+                      "settings.notifications.actions.delete",
+                    )}
+                    cancelButtonLabel={t(
+                      "settings.notifications.actions.cancel",
+                    )}
+                    trigger={
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        aria-label={t("settings.notifications.actions.delete")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                </span>
+              }
+            />
             <TooltipContent>
               {t("settings.notifications.actions.delete")}
             </TooltipContent>

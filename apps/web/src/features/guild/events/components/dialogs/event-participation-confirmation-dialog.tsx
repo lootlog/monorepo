@@ -197,11 +197,17 @@ const EventParticipationConfirmationDialogContent = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="sm:max-w-xl p-5"
-        onInteractOutside={(event) => event.preventDefault()}
-      >
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen, eventDetails) => {
+        if (!nextOpen && eventDetails.reason === "outside-press") {
+          eventDetails.cancel();
+          return;
+        }
+        handleOpenChange(nextOpen);
+      }}
+    >
+      <DialogContent className="sm:max-w-xl p-5">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="size-4 text-primary" />

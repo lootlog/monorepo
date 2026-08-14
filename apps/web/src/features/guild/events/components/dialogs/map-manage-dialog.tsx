@@ -548,21 +548,23 @@ export const MapManageDialog = ({
                 <div className="flex flex-wrap gap-1.5">
                   {templates.map((template) => (
                     <Popover key={template.id}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs gap-1.5"
-                          disabled={addMap.isPending}
-                        >
-                          <FileText className="size-3" />
-                          {template.name}
-                          <span className="text-muted-foreground">
-                            ({template.maps.length})
-                          </span>
-                          <Plus className="size-3 ml-0.5" />
-                        </Button>
-                      </PopoverTrigger>
+                      <PopoverTrigger
+                        render={
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1.5"
+                            disabled={addMap.isPending}
+                          >
+                            <FileText className="size-3" />
+                            {template.name}
+                            <span className="text-muted-foreground">
+                              ({template.maps.length})
+                            </span>
+                            <Plus className="size-3 ml-0.5" />
+                          </Button>
+                        }
+                      />
                       <PopoverContent className="w-48 p-2" align="start">
                         <div className="space-y-1">
                           <p className="text-xs font-medium text-muted-foreground mb-2">
@@ -629,6 +631,16 @@ export const MapManageDialog = ({
                     onValueChange={(v) =>
                       setSelectedLocationId(v === "none" ? null : v)
                     }
+                    items={[
+                      {
+                        value: "none",
+                        label: <>{t("events.locations.noLocation")}</>,
+                      },
+                      ...hero.locations.map((loc) => ({
+                        value: loc.id,
+                        label: <>{loc.name}</>,
+                      })),
+                    ]}
                   >
                     <SelectTrigger className="h-7 text-xs w-[180px]">
                       <SelectValue />

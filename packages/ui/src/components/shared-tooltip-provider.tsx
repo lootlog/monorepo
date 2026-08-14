@@ -210,16 +210,17 @@ function SharedTooltipRoot({
           );
         }
       }}
-      delayDuration={0}
-      disableHoverableContent
+      disableHoverablePopup
     >
-      <TooltipTrigger asChild>
-        <span
-          aria-hidden="true"
-          className="pointer-events-none fixed block"
-          style={proxyTriggerStyle}
-        />
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <span
+            aria-hidden="true"
+            className="pointer-events-none fixed block"
+            style={proxyTriggerStyle}
+          />
+        }
+      />
       <TooltipContent
         className={cn("pointer-events-none", tooltipState.contentClassName)}
       >

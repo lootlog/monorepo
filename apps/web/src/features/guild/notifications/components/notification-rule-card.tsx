@@ -313,23 +313,25 @@ export const NotificationRuleCard = ({
         </div>
         <div className="flex gap-1">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="secondary"
-                aria-label={t("settings.notifications.actions.testNow")}
-                disabled={
-                  isActionDisabled ||
-                  !rule.enabled ||
-                  !hasTestableTargets ||
-                  rule.testTrigger.remaining === 0
-                }
-                onClick={handleTriggerTest}
-              >
-                <FlaskConical className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="secondary"
+                  aria-label={t("settings.notifications.actions.testNow")}
+                  disabled={
+                    isActionDisabled ||
+                    !rule.enabled ||
+                    !hasTestableTargets ||
+                    rule.testTrigger.remaining === 0
+                  }
+                  onClick={handleTriggerTest}
+                >
+                  <FlaskConical className="h-4 w-4" />
+                </Button>
+              }
+            />
             <TooltipContent>
               <p>{t("settings.notifications.actions.testNow")}</p>
               <p className="text-muted-foreground">
@@ -342,82 +344,94 @@ export const NotificationRuleCard = ({
             </TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                aria-label={t("settings.notifications.actions.rebuildPending")}
-                disabled={isActionDisabled || !rule.enabled}
-                onClick={handleRebuildJobs}
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  aria-label={t(
+                    "settings.notifications.actions.rebuildPending",
+                  )}
+                  disabled={isActionDisabled || !rule.enabled}
+                  onClick={handleRebuildJobs}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              }
+            />
             <TooltipContent>
               {t("settings.notifications.actions.rebuildPending")}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                aria-label={t("settings.notifications.actions.edit")}
-                disabled={isActionDisabled}
-                asChild
-              >
-                <Link
-                  to={ROUTES.guild.notifications.rule(
-                    guildId ?? "",
-                    String(rule.id),
-                  )}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Link>
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  aria-label={t("settings.notifications.actions.edit")}
+                  disabled={isActionDisabled}
+
+                  render={
+                    <Link
+                      to={ROUTES.guild.notifications.rule(
+                        guildId ?? "",
+                        String(rule.id),
+                      )}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                  }
+                  nativeButton={false}
+                />
+              }
+            />
             <TooltipContent>
               {t("settings.notifications.actions.edit")}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">
-                <ConfirmDeleteDialog
-                  disabled={isActionDisabled}
-                  onConfirm={handleDelete}
-                  title={t("settings.notifications.deleteRuleDialog.title")}
-                  description={t(
-                    "settings.notifications.deleteRuleDialog.description",
-                    {
-                      name:
-                        rule.name ??
-                        t(
-                          getNotificationTriggerTranslationKey(
-                            rule.triggerType,
+            <TooltipTrigger
+              render={
+                <span className="inline-flex">
+                  <ConfirmDeleteDialog
+                    disabled={isActionDisabled}
+                    onConfirm={handleDelete}
+                    title={t("settings.notifications.deleteRuleDialog.title")}
+                    description={t(
+                      "settings.notifications.deleteRuleDialog.description",
+                      {
+                        name:
+                          rule.name ??
+                          t(
+                            getNotificationTriggerTranslationKey(
+                              rule.triggerType,
+                            ),
                           ),
-                        ),
-                    },
-                  )}
-                  confirmButtonLabel={t(
-                    "settings.notifications.actions.delete",
-                  )}
-                  cancelButtonLabel={t("settings.notifications.actions.cancel")}
-                  trigger={
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="destructive"
-                      aria-label={t("settings.notifications.actions.delete")}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-              </span>
-            </TooltipTrigger>
+                      },
+                    )}
+                    confirmButtonLabel={t(
+                      "settings.notifications.actions.delete",
+                    )}
+                    cancelButtonLabel={t(
+                      "settings.notifications.actions.cancel",
+                    )}
+                    trigger={
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        aria-label={t("settings.notifications.actions.delete")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                </span>
+              }
+            />
             <TooltipContent>
               {t("settings.notifications.actions.delete")}
             </TooltipContent>

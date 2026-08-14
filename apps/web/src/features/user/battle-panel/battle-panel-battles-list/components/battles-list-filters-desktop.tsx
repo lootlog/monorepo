@@ -121,27 +121,29 @@ export const BattlesListFiltersDesktop = ({
       />
 
       <Popover open={characterOpen} onOpenChange={onCharacterOpenChange}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-controls={characterListId}
-            aria-expanded={characterOpen}
-            className="w-[180px] justify-between h-10"
-          >
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span className="text-sm">
-                {filters.characterId && filters.characterId.length > 0
-                  ? t("battlePanel.filters.selectedCount", {
-                      count: filters.characterId.length,
-                    })
-                  : t("battlePanel.filters.character")}
-              </span>
-            </div>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-controls={characterListId}
+              aria-expanded={characterOpen}
+              className="w-[180px] justify-between h-10"
+            >
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                <span className="text-sm">
+                  {filters.characterId && filters.characterId.length > 0
+                    ? t("battlePanel.filters.selectedCount", {
+                        count: filters.characterId.length,
+                      })
+                    : t("battlePanel.filters.character")}
+                </span>
+              </div>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          }
+        />
         <PopoverContent className="w-[180px] p-0">
           <Command>
             <CommandInput

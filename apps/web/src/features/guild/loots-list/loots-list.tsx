@@ -60,7 +60,6 @@ export const LootsListPage: React.FC = () => {
         <Drawer
           open={isMobileFiltersOpen}
           onOpenChange={setIsMobileFiltersOpen}
-          shouldScaleBackground={false}
         >
           <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden p-0">
             <DrawerHeader className="shrink-0 border-b px-4 py-3">

@@ -41,31 +41,33 @@ export const BattleTableActionsMenu = ({
       onKeyDown={stopBattleTableKeyboardAction}
     >
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            aria-label={t("battlePanel.actions.more")}
-            variant="ghost"
-            size="icon"
-            className="size-7 md:size-8"
-            disabled={disabled}
-          >
-            <MoreHorizontal className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              aria-label={t("battlePanel.actions.more")}
+              variant="ghost"
+              size="icon"
+              className="size-7 md:size-8"
+              disabled={disabled}
+            >
+              <MoreHorizontal className="size-4" />
+            </Button>
+          }
+        />
         <DropdownMenuContent align="end" className="w-48">
           {battle.public ? (
             <>
-              <DropdownMenuItem onSelect={() => onCopyLink(battle.id)}>
+              <DropdownMenuItem onClick={() => onCopyLink(battle.id)}>
                 <Copy className="size-4" />
                 {t("battlePanel.actions.copyLink")}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onUnshare(battle.id)}>
+              <DropdownMenuItem onClick={() => onUnshare(battle.id)}>
                 <Lock className="size-4" />
                 {t("battlePanel.actions.hide")}
               </DropdownMenuItem>
             </>
           ) : (
-            <DropdownMenuItem onSelect={() => onShare(battle.id)}>
+            <DropdownMenuItem onClick={() => onShare(battle.id)}>
               <Share2 className="size-4" />
               {t("battlePanel.actions.share")}
             </DropdownMenuItem>
@@ -73,7 +75,7 @@ export const BattleTableActionsMenu = ({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
-            onSelect={() => onDelete(battle)}
+            onClick={() => onDelete(battle)}
           >
             <Trash2 className="size-4" />
             {t("battlePanel.actions.delete")}

@@ -110,9 +110,9 @@ export function ConfirmDeleteDialog({
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
       {triggerTooltip ? (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">{triggerElement}</span>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={<span className="inline-flex">{triggerElement}</span>}
+          />
           <TooltipContent side={triggerTooltipSide}>
             {triggerTooltip}
           </TooltipContent>

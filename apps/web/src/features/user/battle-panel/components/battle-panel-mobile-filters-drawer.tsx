@@ -24,11 +24,7 @@ export const BattlePanelMobileFiltersDrawer = ({
   title,
 }: BattlePanelMobileFiltersDrawerProps) => {
   return (
-    <Drawer
-      open={open}
-      onOpenChange={onOpenChange}
-      shouldScaleBackground={false}
-    >
+    <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="flex h-[85vh] max-h-[85vh] flex-col overflow-hidden p-0">
         <DrawerHeader className="shrink-0 border-b px-4 py-3">
           <DrawerTitle>{title}</DrawerTitle>

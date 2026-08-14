@@ -70,14 +70,16 @@ export const DevPermissionOverridePanel = ({ guildId }: Props) => {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <button
-          className="w-full rounded-md border border-border/70 bg-background/80 px-2 py-1.5 text-left text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-          type="button"
-        >
-          {t("common.devPermissionOverride.trigger")}
-        </button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <button
+            className="w-full rounded-md border border-border/70 bg-background/80 px-2 py-1.5 text-left text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+            type="button"
+          >
+            {t("common.devPermissionOverride.trigger")}
+          </button>
+        }
+      />
 
       <PopoverContent
         align="start"

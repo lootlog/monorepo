@@ -116,11 +116,13 @@ export function RecentOpponentBattlesList({
                     </span>
                   ) : null}
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="block whitespace-normal break-words text-right text-[11px] leading-snug text-muted-foreground">
-                        {relativeTime}
-                      </span>
-                    </TooltipTrigger>
+                    <TooltipTrigger
+                      render={
+                        <span className="block whitespace-normal break-words text-right text-[11px] leading-snug text-muted-foreground">
+                          {relativeTime}
+                        </span>
+                      }
+                    />
                     <TooltipContent>{exactTime}</TooltipContent>
                   </Tooltip>
                 </div>

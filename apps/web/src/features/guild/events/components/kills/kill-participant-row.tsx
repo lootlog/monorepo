@@ -217,15 +217,17 @@ export const KillParticipantRow = ({
         <div className="flex items-center justify-end gap-1">
           {hasManualAdjustment ? (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <span
-                  className="inline-flex size-6 shrink-0 items-center justify-center text-amber-400"
-                  tabIndex={0}
-                  aria-label={t("events.points.modified")}
-                >
-                  <Info className="size-3.5" />
-                </span>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <span
+                    className="inline-flex size-6 shrink-0 items-center justify-center text-amber-400"
+                    tabIndex={0}
+                    aria-label={t("events.points.modified")}
+                  >
+                    <Info className="size-3.5" />
+                  </span>
+                }
+              />
               <TooltipContent>
                 <p>{t("events.points.modified")}</p>
               </TooltipContent>
@@ -239,19 +241,21 @@ export const KillParticipantRow = ({
         <div className="flex items-center justify-end gap-0 lg:gap-0.5">
           {canEdit ? (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="size-11 text-muted-foreground lg:size-9"
-                  onClick={() => setIsEditDialogOpen(true)}
-                  disabled={isEditPending}
-                  aria-label={t("events.points.edit")}
-                >
-                  <Pencil className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-11 text-muted-foreground lg:size-9"
+                    onClick={() => setIsEditDialogOpen(true)}
+                    disabled={isEditPending}
+                    aria-label={t("events.points.edit")}
+                  >
+                    <Pencil className="size-3.5" />
+                  </Button>
+                }
+              />
               <TooltipContent>
                 <p>{t("events.points.edit")}</p>
               </TooltipContent>

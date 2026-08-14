@@ -31,16 +31,18 @@ export const MobileFiltersDrawer = ({
   const iconClassName = trigger === "floating" ? "h-5 w-5" : "h-4 w-4";
 
   return (
-    <Drawer shouldScaleBackground={false}>
-      <DrawerTrigger asChild>
-        <Button
-          variant={trigger === "inline" ? "outline" : undefined}
-          size="icon"
-          className={triggerClassName}
-        >
-          <Filter className={iconClassName} />
-        </Button>
-      </DrawerTrigger>
+    <Drawer>
+      <DrawerTrigger
+        render={
+          <Button
+            variant={trigger === "inline" ? "outline" : undefined}
+            size="icon"
+            className={triggerClassName}
+          >
+            <Filter className={iconClassName} />
+          </Button>
+        }
+      />
       <DrawerContent className="flex max-h-[85vh] flex-col p-4">
         <DrawerHeader className="mb-4 shrink-0">
           <DrawerTitle>{title}</DrawerTitle>
@@ -49,11 +51,13 @@ export const MobileFiltersDrawer = ({
           <div className="space-y-4 pr-2">{children}</div>
         </ScrollArea>
         <div className="mt-6 shrink-0">
-          <DrawerClose asChild>
-            <Button variant="outline" className="w-full">
-              {closeLabel}
-            </Button>
-          </DrawerClose>
+          <DrawerClose
+            render={
+              <Button variant="outline" className="w-full">
+                {closeLabel}
+              </Button>
+            }
+          />
         </div>
       </DrawerContent>
     </Drawer>

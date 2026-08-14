@@ -37,20 +37,22 @@ export const MapCoverageTimeline = ({
         <Tooltip
           key={`${segment.type}-${segment.startTime.toISOString()}-${segment.endTime.toISOString()}`}
         >
-          <TooltipTrigger asChild>
-            <div
-              className={cn(
-                "absolute h-full cursor-pointer transition-opacity hover:opacity-80",
-                segment.type === "COVERED" && "bg-green-500",
-                segment.type === "UNCOVERED" && "bg-yellow-500",
-                segment.type === "UNASSIGNED" && "bg-destructive",
-              )}
-              style={{
-                left: `${segment.startPercent}%`,
-                width: `${Math.max(segment.widthPercent, 0.5)}%`,
-              }}
-            />
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div
+                className={cn(
+                  "absolute h-full cursor-pointer transition-opacity hover:opacity-80",
+                  segment.type === "COVERED" && "bg-green-500",
+                  segment.type === "UNCOVERED" && "bg-yellow-500",
+                  segment.type === "UNASSIGNED" && "bg-destructive",
+                )}
+                style={{
+                  left: `${segment.startPercent}%`,
+                  width: `${Math.max(segment.widthPercent, 0.5)}%`,
+                }}
+              />
+            }
+          />
           <TooltipContent side="top" className="text-xs">
             <div className="flex flex-col gap-0.5">
               <span className="font-medium">

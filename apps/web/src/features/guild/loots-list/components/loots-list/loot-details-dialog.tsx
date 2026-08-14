@@ -164,7 +164,7 @@ export const LootDetailsDialog: FC = () => {
       <DialogContent
         className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-hidden rounded-2xl border-border bg-background p-0 sm:max-w-[36rem]"
         aria-describedby={undefined}
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        initialFocus={false}
       >
         {renderContent()}
       </DialogContent>

@@ -17,15 +17,17 @@ export const GuildNavCreate: FC = () => {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          className="size-11 0"
-          variant="secondary"
-          onClick={() => dispatch({ type: "OPEN" })}
-        >
-          <PlusCircleIcon />
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            className="size-11 0"
+            variant="secondary"
+            onClick={() => dispatch({ type: "OPEN" })}
+          >
+            <PlusCircleIcon />
+          </Button>
+        }
+      />
       <TooltipContent side="right">
         {t("ui.tooltips.createLootlog")}
       </TooltipContent>

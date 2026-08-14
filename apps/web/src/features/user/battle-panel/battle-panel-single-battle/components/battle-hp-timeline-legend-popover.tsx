@@ -46,18 +46,22 @@ export function BattleHpTimelineLegendPopover({
   return (
     <Popover>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <Button
-              aria-label={openLabel}
-              variant="ghost"
-              size="icon"
-              className="size-8"
-            >
-              <CircleHelp className="size-3.5" />
-            </Button>
-          </PopoverTrigger>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <PopoverTrigger
+              render={
+                <Button
+                  aria-label={openLabel}
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                >
+                  <CircleHelp className="size-3.5" />
+                </Button>
+              }
+            />
+          }
+        />
         <TooltipContent>{openLabel}</TooltipContent>
       </Tooltip>
       <PopoverContent align="end" className="w-72 p-0 sm:w-80">

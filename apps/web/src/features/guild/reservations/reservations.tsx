@@ -182,35 +182,39 @@ export const Reservations: React.FC = () => {
 
             <div className="flex items-center gap-1">
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => setViewMode("list")}
-                    variant={viewMode === "list" ? "default" : "ghost"}
-                    size="icon"
-                    aria-label={t("reservations.view.list")}
-                    aria-pressed={viewMode === "list"}
-                    className="h-8 w-8"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      onClick={() => setViewMode("list")}
+                      variant={viewMode === "list" ? "default" : "ghost"}
+                      size="icon"
+                      aria-label={t("reservations.view.list")}
+                      aria-pressed={viewMode === "list"}
+                      className="h-8 w-8"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  }
+                />
                 <TooltipContent side="bottom">
                   <p>{t("reservations.view.list")}</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => setViewMode("grid")}
-                    variant={viewMode === "grid" ? "default" : "ghost"}
-                    size="icon"
-                    aria-label={t("reservations.view.grid")}
-                    aria-pressed={viewMode === "grid"}
-                    className="h-8 w-8"
-                  >
-                    <Grid2X2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      onClick={() => setViewMode("grid")}
+                      variant={viewMode === "grid" ? "default" : "ghost"}
+                      size="icon"
+                      aria-label={t("reservations.view.grid")}
+                      aria-pressed={viewMode === "grid"}
+                      className="h-8 w-8"
+                    >
+                      <Grid2X2 className="h-4 w-4" />
+                    </Button>
+                  }
+                />
                 <TooltipContent side="bottom">
                   <p>{t("reservations.view.grid")}</p>
                 </TooltipContent>

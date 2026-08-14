@@ -169,12 +169,18 @@ export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
             ))}
           </div>
         )}
-        <Button asChild variant="outline" size="sm" className="mt-auto w-full">
-          <Link to="/@me/kills">
-            {t("kills.home.topKilledNpcs.viewAll")}
-            <ChevronRight className="ml-2 size-4" />
-          </Link>
-        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-auto w-full"
+          render={
+            <Link to="/@me/kills">
+              {t("kills.home.topKilledNpcs.viewAll")}
+              <ChevronRight className="ml-2 size-4" />
+            </Link>
+          }
+          nativeButton={false}
+        />
       </CardContent>
     </Card>
   );

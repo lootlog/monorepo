@@ -157,23 +157,25 @@ export function BattleDamageTags({
 
         return (
           <Tooltip key={tag.key}>
-            <TooltipTrigger asChild>
-              <Badge
-                {...restBadgeProps}
-                data-battle-table-action={battleTableAction ? "" : undefined}
-                tabIndex={badgeTabIndex ?? 0}
-                role="img"
-                aria-label={tagLabel}
-                variant="outline"
-                className={cn(
-                  "inline-flex size-5 min-w-5 items-center justify-center rounded-full p-0 shadow-none",
-                  tag.badgeClassName,
-                  badgeClassName,
-                )}
-              >
-                <Icon className="size-3" aria-hidden="true" />
-              </Badge>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Badge
+                  {...restBadgeProps}
+                  data-battle-table-action={battleTableAction ? "" : undefined}
+                  tabIndex={badgeTabIndex ?? 0}
+                  role="img"
+                  aria-label={tagLabel}
+                  variant="outline"
+                  className={cn(
+                    "inline-flex size-5 min-w-5 items-center justify-center rounded-full p-0 shadow-none",
+                    tag.badgeClassName,
+                    badgeClassName,
+                  )}
+                >
+                  <Icon className="size-3" aria-hidden="true" />
+                </Badge>
+              }
+            />
             <TooltipContent>{tagLabel}</TooltipContent>
           </Tooltip>
         );

@@ -102,13 +102,11 @@ export const StatsCustomizationModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       {compactTrigger ? (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-          </TooltipTrigger>
+          <TooltipTrigger render={<DialogTrigger render={triggerButton} />} />
           <TooltipContent>{triggerLabel}</TooltipContent>
         </Tooltip>
       ) : (
-        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+        <DialogTrigger render={triggerButton} />
       )}
       <DialogContent className="max-sm:w-screen max-sm:h-dvh max-sm:max-w-none max-sm:rounded-none sm:max-w-2xl sm:h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0 py-4">

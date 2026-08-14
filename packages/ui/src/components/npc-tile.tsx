@@ -2,6 +2,7 @@ import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -79,13 +80,15 @@ export const NpcTile: FC<NpcTileProps> = ({
   }
 
   return (
-    <Tooltip delayDuration={100}>
-      <TooltipTrigger asChild>
-        <div className={tileClassName}>{npcImage}</div>
-      </TooltipTrigger>
-      <TooltipContent className="border-border/50 bg-popover/95 backdrop-blur-md">
-        {tooltipContent}
-      </TooltipContent>
-    </Tooltip>
+    <TooltipProvider delay={100}>
+      <Tooltip>
+        <TooltipTrigger render={<div className={tileClassName} />}>
+          {npcImage}
+        </TooltipTrigger>
+        <TooltipContent className="border-border/50 bg-popover/95 backdrop-blur-md">
+          {tooltipContent}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };

@@ -190,7 +190,7 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
                   className="flex min-h-7 min-w-0 items-center gap-1"
                 >
                   {activeCategories.length > 0 ? (
-                    <TooltipProvider delayDuration={100}>
+                    <TooltipProvider delay={100}>
                       {activeCategories.map((category) => {
                         const activePermissions = category.permissions.filter(
                           (permission) => role.permissions.includes(permission),
@@ -230,19 +230,21 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
                 onClick={(event) => event.stopPropagation()}
               >
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      aria-label={t("settings.roles.actions.more")}
-                    >
-                      <MoreHorizontal className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        aria-label={t("settings.roles.actions.more")}
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    }
+                  />
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onSelect={() => openRoleDetails(role)}>
+                    <DropdownMenuItem onClick={() => openRoleDetails(role)}>
                       <CheckCircle2 className="size-4" />
                       {t("settings.roles.actions.viewDetails")}
                     </DropdownMenuItem>

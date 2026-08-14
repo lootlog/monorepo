@@ -69,27 +69,32 @@ export const WarriorSearchFilter = ({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-controls={resultsListId}
-          aria-expanded={open}
-          className={cn("flex-1 min-w-[200px] justify-between h-10", className)}
-        >
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
-            <span className="text-sm">
-              {selectedWarriors.length > 0
-                ? t("ui.warriorSearch.selectedCount", {
-                    count: selectedWarriors.length,
-                  })
-                : (placeholder ?? t("ui.warriorSearch.defaultPlaceholder"))}
-            </span>
-          </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-controls={resultsListId}
+            aria-expanded={open}
+            className={cn(
+              "flex-1 min-w-[200px] justify-between h-10",
+              className,
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              <span className="text-sm">
+                {selectedWarriors.length > 0
+                  ? t("ui.warriorSearch.selectedCount", {
+                      count: selectedWarriors.length,
+                    })
+                  : (placeholder ?? t("ui.warriorSearch.defaultPlaceholder"))}
+              </span>
+            </div>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        }
+      />
       <PopoverContent className="w-[300px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput

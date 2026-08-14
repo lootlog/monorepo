@@ -51,23 +51,27 @@ export function HeroSection() {
             <Button
               size="lg"
               className="h-14 rounded-xl bg-[#f7f8f2] px-6 text-base font-bold text-[#07111f] shadow-[8px_12px_28px_rgba(0,0,0,0.24)] transition-[background-color,transform] hover:bg-white motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
-              asChild
-            >
-              <a href={ADDON_URL} target="_blank" rel="noopener noreferrer">
-                <Download className="size-4" />
-                {t("landing.hero.installAddon")}
-              </a>
-            </Button>
+
+              render={
+                <a href={ADDON_URL} target="_blank" rel="noopener noreferrer">
+                  <Download className="size-4" />
+                  {t("landing.hero.installAddon")}
+                </a>
+              }
+              nativeButton={false}
+            />
             <Button
               size="lg"
               className="h-14 rounded-xl bg-[#3157f6] px-6 text-base font-bold text-white shadow-[8px_12px_28px_rgba(0,0,0,0.2)] transition-[background-color,transform] hover:bg-[#4168ff] motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#35d3e4] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
-              asChild
-            >
-              <a href={links.dashboard}>
-                {t("landing.hero.openDashboard")}
-                <ArrowUpRight className="size-4" />
-              </a>
-            </Button>
+
+              render={
+                <a href={links.dashboard}>
+                  {t("landing.hero.openDashboard")}
+                  <ArrowUpRight className="size-4" />
+                </a>
+              }
+              nativeButton={false}
+            />
           </div>
 
           <p className="mt-5 text-sm leading-6 text-[#91a4bf] sm:mt-6">

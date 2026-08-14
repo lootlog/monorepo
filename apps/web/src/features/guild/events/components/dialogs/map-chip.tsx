@@ -34,10 +34,19 @@ export const MapChip = ({
       </span>
 
       {locations.length > 0 && (
-        <Select
+        <Select<string>
           open={showSelect}
           onOpenChange={setShowSelect}
-          onValueChange={(v) => onLocationChange(v === "none" ? null : v)}
+          onValueChange={(value) =>
+            onLocationChange(value === "none" ? null : value)
+          }
+          items={[
+            { value: "none", label: <>{t("events.locations.noLocation")}</> },
+            ...locations.map((loc) => ({
+              value: loc.id,
+              label: <>{loc.name}</>,
+            })),
+          ]}
         >
           <SelectTrigger className="h-4 w-4 p-0 border-0 bg-transparent hover:bg-primary/20 rounded">
             <GripVertical className="size-2.5 text-primary/60" />

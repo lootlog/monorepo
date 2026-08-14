@@ -576,26 +576,28 @@ export const GuildDocEditorToolbar = () => {
 
           return (
             <Tooltip key={control.label}>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className={cn(
-                    "relative h-8 w-8 border border-transparent text-muted-foreground transition-colors",
-                    "hover:bg-muted hover:text-foreground",
-                    isActive &&
-                      "border-primary/70 bg-primary/25 text-primary shadow-sm ring-1 ring-primary/30 hover:bg-primary/30 hover:text-primary after:absolute after:bottom-1 after:left-1/2 after:h-0.5 after:w-4 after:-translate-x-1/2 after:rounded-full after:bg-primary",
-                  )}
-                  aria-label={control.label}
-                  aria-pressed={
-                    control.active === undefined ? undefined : control.active
-                  }
-                  onClick={control.action}
-                >
-                  <Icon className="size-4" />
-                </Button>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className={cn(
+                      "relative h-8 w-8 border border-transparent text-muted-foreground transition-colors",
+                      "hover:bg-muted hover:text-foreground",
+                      isActive &&
+                        "border-primary/70 bg-primary/25 text-primary shadow-sm ring-1 ring-primary/30 hover:bg-primary/30 hover:text-primary after:absolute after:bottom-1 after:left-1/2 after:h-0.5 after:w-4 after:-translate-x-1/2 after:rounded-full after:bg-primary",
+                    )}
+                    aria-label={control.label}
+                    aria-pressed={
+                      control.active === undefined ? undefined : control.active
+                    }
+                    onClick={control.action}
+                  >
+                    <Icon className="size-4" />
+                  </Button>
+                }
+              />
               <TooltipContent side="bottom">
                 <p>{control.label}</p>
               </TooltipContent>

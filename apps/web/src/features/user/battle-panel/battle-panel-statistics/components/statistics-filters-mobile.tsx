@@ -81,15 +81,17 @@ export const StatisticsFiltersMobile = ({
   ];
 
   return (
-    <Drawer shouldScaleBackground={false}>
-      <DrawerTrigger asChild>
-        <Button className="w-full justify-between">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <span>{t("battlePanel.filters.title")}</span>
-          </div>
-        </Button>
-      </DrawerTrigger>
+    <Drawer>
+      <DrawerTrigger
+        render={
+          <Button className="w-full justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <span>{t("battlePanel.filters.title")}</span>
+            </div>
+          </Button>
+        }
+      />
       <DrawerContent className="flex max-h-[85vh] flex-col p-4">
         <DrawerHeader className="mb-4 shrink-0">
           <DrawerTitle>{t("battlePanel.filters.statisticsTitle")}</DrawerTitle>
@@ -101,8 +103,24 @@ export const StatisticsFiltersMobile = ({
               <Select
                 value={characterId}
                 onValueChange={(value) =>
-                  onCharacterChange(value === "all" ? undefined : value)
+                  onCharacterChange(
+                    value === null || value === "all" ? undefined : value,
+                  )
                 }
+                items={[
+                  {
+                    value: null,
+                    label: <>{t("battlePanel.filters.selectCharacter")}</>,
+                  },
+                  ...characters.map((char) => ({
+                    value: char.id,
+                    label: (
+                      <>
+                        {char.name} ({char.world})
+                      </>
+                    ),
+                  })),
+                ]}
               >
                 <SelectTrigger className="w-full">
                   <div className="flex items-center gap-2">
@@ -124,7 +142,18 @@ export const StatisticsFiltersMobile = ({
 
             <div className="space-y-2">
               <Label>{t("battlePanel.filters.period")}</Label>
-              <Select value={period} onValueChange={onPeriodChange}>
+              <Select
+                value={period}
+                onValueChange={(value) => {
+                  if (value !== null) onPeriodChange(value);
+                }}
+                items={[
+                  ...periodOptions.map((option) => ({
+                    value: option.value,
+                    label: <>{option.label}</>,
+                  })),
+                ]}
+              >
                 <SelectTrigger className="w-full">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
@@ -213,11 +242,13 @@ export const StatisticsFiltersMobile = ({
           </div>
         </ScrollArea>
         <div className="mt-6 shrink-0">
-          <DrawerClose asChild>
-            <Button variant="outline" className="w-full">
-              {t("battlePanel.actions.close")}
-            </Button>
-          </DrawerClose>
+          <DrawerClose
+            render={
+              <Button variant="outline" className="w-full">
+                {t("battlePanel.actions.close")}
+              </Button>
+            }
+          />
         </div>
       </DrawerContent>
     </Drawer>
