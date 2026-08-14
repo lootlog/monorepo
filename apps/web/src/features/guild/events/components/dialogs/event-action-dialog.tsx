@@ -79,7 +79,7 @@ const EventActionDialogSimple = ({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
-              e.preventDefault();
+              e.preventBaseUIHandler();
               void handleConfirm();
             }}
             disabled={isPending}
@@ -170,7 +170,7 @@ const EventActionDialogWithConfirmation = ({
                 : undefined
             }
             onClick={(e) => {
-              e.preventDefault();
+              e.preventBaseUIHandler();
               void handleConfirm();
             }}
           >

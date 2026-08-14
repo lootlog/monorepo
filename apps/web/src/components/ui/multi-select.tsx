@@ -290,7 +290,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                 "group flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-border bg-background px-2.5 py-1.5 text-left text-sm text-foreground outline-none transition-[background-color,border-color,box-shadow]",
                 "hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground",
                 "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-                "data-[state=open]:border-ring data-[state=open]:bg-foreground/[0.04] data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-ring",
+                "data-popup-open:border-ring data-popup-open:bg-foreground/[0.04] data-popup-open:ring-2 data-popup-open:ring-inset data-popup-open:ring-ring",
                 "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
                 className,
               )}
@@ -356,7 +356,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                     />
                     <ChevronDown
                       aria-hidden="true"
-                      className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                      className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-popup-open:rotate-180 motion-reduce:transition-none"
                     />
                   </div>
                 </>
@@ -367,7 +367,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                   </span>
                   <ChevronDown
                     aria-hidden="true"
-                    className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                    className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-popup-open:rotate-180 motion-reduce:transition-none"
                   />
                 </>
               )}

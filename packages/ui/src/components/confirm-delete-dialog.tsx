@@ -144,7 +144,7 @@ export function ConfirmDeleteDialog({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
-              e.preventDefault();
+              e.preventBaseUIHandler();
               void handleConfirm();
             }}
             disabled={isConfirmDisabled}

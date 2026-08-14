@@ -334,7 +334,7 @@ export const GuildDocsListPage = () => {
               disabled={deleteDocument.isPending || !documentPendingTrash}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={(event) => {
-                event.preventDefault();
+                event.preventBaseUIHandler();
 
                 if (documentPendingTrash) {
                   void moveDocumentToTrash(documentPendingTrash);

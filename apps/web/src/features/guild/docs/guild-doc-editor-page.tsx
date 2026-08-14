@@ -369,7 +369,7 @@ export const GuildDocEditorPage = () => {
                 disabled={deleteDocument.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={(event) => {
-                  event.preventDefault();
+                  event.preventBaseUIHandler();
                   void moveDocumentToTrash();
                 }}
               >

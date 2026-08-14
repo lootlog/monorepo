@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogTitle,
@@ -57,6 +58,50 @@ describe("Base UI overlays", () => {
     await waitFor(() =>
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
     );
+  });
+
+  it("closes an alert dialog with its confirm action", async () => {
+    render(
+      <AlertDialog>
+        <AlertDialogTrigger>Open confirmation</AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogTitle>Confirmation title</AlertDialogTitle>
+          <AlertDialogAction>Confirm action</AlertDialogAction>
+        </AlertDialogContent>
+      </AlertDialog>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open confirmation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm action" }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("keeps an alert dialog open when its confirm handler prevents Base UI", () => {
+    render(
+      <AlertDialog>
+        <AlertDialogTrigger>Open persistent confirmation</AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogTitle>Persistent confirmation title</AlertDialogTitle>
+          <AlertDialogAction onClick={(event) => event.preventBaseUIHandler()}>
+            Keep open
+          </AlertDialogAction>
+        </AlertDialogContent>
+      </AlertDialog>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open persistent confirmation" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Keep open" }));
+
+    expect(
+      screen.getByRole("alertdialog", {
+        name: "Persistent confirmation title",
+      }),
+    ).toBeVisible();
   });
 
   it("opens a sheet and closes it with Escape", () => {
