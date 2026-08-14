@@ -110,7 +110,7 @@ export const RoleSettingsDetailPage = () => {
           </div>
           <div className="flex min-h-8 shrink-0 flex-wrap items-center gap-1 pl-12 sm:pl-0">
             {activeCategories.length > 0 ? (
-              <TooltipProvider delayDuration={100}>
+              <TooltipProvider delay={100}>
                 {activeCategories.map((category) => {
                   const activePermissions = category.permissions.filter(
                     (permission) => role.permissions.includes(permission),

@@ -329,25 +329,27 @@ export function OneVsOneStatsTable({
                 />
                 {compact ? (
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setHideZeros(!hideZeros)}
-                        aria-label={
-                          hideZeros
-                            ? t("battlePanel.single.statistics.showAll")
-                            : t("battlePanel.single.statistics.hideZeros")
-                        }
-                        className="size-8"
-                      >
-                        {hideZeros ? (
-                          <Eye className="h-4 w-4" />
-                        ) : (
-                          <EyeOff className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setHideZeros(!hideZeros)}
+                          aria-label={
+                            hideZeros
+                              ? t("battlePanel.single.statistics.showAll")
+                              : t("battlePanel.single.statistics.hideZeros")
+                          }
+                          className="size-8"
+                        >
+                          {hideZeros ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )}
+                        </Button>
+                      }
+                    />
                     <TooltipContent>
                       {hideZeros
                         ? t("battlePanel.single.statistics.showAll")

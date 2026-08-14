@@ -9,6 +9,7 @@ import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -227,15 +228,17 @@ export const ItemTile: FC<ItemTileProps> = ({
   }
 
   return (
-    <Tooltip delayDuration={100}>
-      <TooltipTrigger asChild>
-        <button className={triggerClassName} type="button">
+    <TooltipProvider delay={100}>
+      <Tooltip>
+        <TooltipTrigger
+          render={<button className={triggerClassName} type="button" />}
+        >
           {itemImage}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent className={tooltipBorderClassName}>
-        {tooltipContent}
-      </TooltipContent>
-    </Tooltip>
+        </TooltipTrigger>
+        <TooltipContent className={tooltipBorderClassName}>
+          {tooltipContent}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };

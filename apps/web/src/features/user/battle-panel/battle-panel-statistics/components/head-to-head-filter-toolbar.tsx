@@ -111,12 +111,14 @@ export const HeadToHeadFilterToolbar = ({
         width="w-[170px]"
       />
       <Popover>
-        <PopoverTrigger asChild>
-          <Button type="button" variant="outline" className="h-10 gap-2">
-            <SlidersHorizontal className="size-4" aria-hidden="true" />
-            {moreLabel}
-          </Button>
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={
+            <Button type="button" variant="outline" className="h-10 gap-2">
+              <SlidersHorizontal className="size-4" aria-hidden="true" />
+              {moreLabel}
+            </Button>
+          }
+        />
         <PopoverContent align="end" className="w-[300px] p-4">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">

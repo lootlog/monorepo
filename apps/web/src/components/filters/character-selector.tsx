@@ -43,21 +43,23 @@ export function CharacterSelector({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size={size}
-          className={cn("gap-2", className)}
-        >
-          <User className="h-4 w-4" />
-          {selectedCharacter
-            ? `${selectedCharacter.name} (${selectedCharacter.world})`
-            : allowAllCharacters
-              ? t("ui.characterSelector.allCharacters")
-              : t("ui.characterSelector.selectCharacter")}
-          <ChevronsUpDown className="h-4 w-4 opacity-50" />
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            size={size}
+            className={cn("gap-2", className)}
+          >
+            <User className="h-4 w-4" />
+            {selectedCharacter
+              ? `${selectedCharacter.name} (${selectedCharacter.world})`
+              : allowAllCharacters
+                ? t("ui.characterSelector.allCharacters")
+                : t("ui.characterSelector.selectCharacter")}
+            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+          </Button>
+        }
+      />
       <PopoverContent className="w-[250px] p-0">
         <Command>
           <CommandInput

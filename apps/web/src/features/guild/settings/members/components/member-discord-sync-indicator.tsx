@@ -45,19 +45,21 @@ export const MemberDiscordSyncIndicator: FC<
   const Icon = iconByTone[presentation.tone];
 
   return (
-    <TooltipProvider delayDuration={100}>
+    <TooltipProvider delay={100}>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            className={cn(
-              "p-1.5 rounded-md transition-colors",
-              indicatorToneClassNames[presentation.tone],
-            )}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <Icon className="size-4" />
-          </div>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <div
+              className={cn(
+                "p-1.5 rounded-md transition-colors",
+                indicatorToneClassNames[presentation.tone],
+              )}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Icon className="size-4" />
+            </div>
+          }
+        />
         <TooltipContent side="top" className="max-w-xs">
           <div className="space-y-1">
             <p className="text-sm font-semibold">

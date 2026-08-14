@@ -255,35 +255,39 @@ export const GuildDocEditorPage = () => {
               {canWrite && (
                 <div className="flex flex-wrap items-center gap-2">
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        aria-label={t("docs.editor.history")}
-                        onClick={() => setHistoryOpen(true)}
-                      >
-                        <History className="size-4" />
-                      </Button>
-                    </TooltipTrigger>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          aria-label={t("docs.editor.history")}
+                          onClick={() => setHistoryOpen(true)}
+                        >
+                          <History className="size-4" />
+                        </Button>
+                      }
+                    />
                     <TooltipContent side="bottom">
                       {t("docs.editor.history")}
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        aria-label={t("docs.trash.move")}
-                        className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        disabled={deleteDocument.isPending}
-                        onClick={() => setTrashConfirmOpen(true)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </TooltipTrigger>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          aria-label={t("docs.trash.move")}
+                          className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          disabled={deleteDocument.isPending}
+                          onClick={() => setTrashConfirmOpen(true)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                    />
                     <TooltipContent side="bottom">
                       {t("docs.trash.move")}
                     </TooltipContent>

@@ -92,18 +92,22 @@ export const KillDetail = () => {
         <p className="text-sm text-muted-foreground">
           {t("events.killDetail.notFound")}
         </p>
-        <Button variant="outline" asChild>
-          <Link
-            to="/$guildId/events/$eventId/heroes/$heroId"
-            params={{
-              guildId: guildId ?? "",
-              eventId: eventId ?? "",
-              heroId: heroId ?? "",
-            }}
-          >
-            {t("events.common.backToHero")}
-          </Link>
-        </Button>
+        <Button
+          variant="outline"
+          render={
+            <Link
+              to="/$guildId/events/$eventId/heroes/$heroId"
+              params={{
+                guildId: guildId ?? "",
+                eventId: eventId ?? "",
+                heroId: heroId ?? "",
+              }}
+            >
+              {t("events.common.backToHero")}
+            </Link>
+          }
+          nativeButton={false}
+        />
       </div>
     );
   }

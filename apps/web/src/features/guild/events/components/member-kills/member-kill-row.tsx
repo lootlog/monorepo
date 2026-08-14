@@ -164,15 +164,17 @@ export const MemberKillRow = ({
           <div className="flex items-center justify-end gap-1">
             {hasManualPointsAdjustment && (
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="inline-flex size-6 shrink-0 items-center justify-center text-amber-400"
-                    tabIndex={0}
-                    aria-label={t("events.points.modified")}
-                  >
-                    <Info className="size-3.5" />
-                  </span>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <span
+                      className="inline-flex size-6 shrink-0 items-center justify-center text-amber-400"
+                      tabIndex={0}
+                      aria-label={t("events.points.modified")}
+                    >
+                      <Info className="size-3.5" />
+                    </span>
+                  }
+                />
                 <TooltipContent>
                   <p>{t("events.points.modified")}</p>
                 </TooltipContent>

@@ -31,7 +31,7 @@ type Props = {
 };
 
 export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
-  const [isOpen, setIsOpen] = useState("");
+  const [openItems, setOpenItems] = useState<string[]>([]);
   const guildId = useGuildId();
   const { data: members } = useMembersControllerGetGuildMemberReferences(
     { guildId: guildId ?? "" },
@@ -87,7 +87,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
 
   const handleCardClick = () => {
     if (hasAdditionalData) {
-      setIsOpen(isOpen === "details" ? "" : "details");
+      setOpenItems(openItems.includes("details") ? [] : ["details"]);
     }
   };
 
@@ -122,7 +122,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
               {hasAdditionalData && (
                 <ChevronDown
                   className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
-                    isOpen === "details" ? "rotate-180" : ""
+                    openItems.includes("details") ? "rotate-180" : ""
                   }`}
                 />
               )}
@@ -221,11 +221,9 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
 
           {hasAdditionalData && (
             <Accordion
-              type="single"
-              collapsible
               className="w-full"
-              value={isOpen}
-              onValueChange={setIsOpen}
+              value={openItems}
+              onValueChange={setOpenItems}
             >
               <AccordionItem value="details" className="border-none">
                 <AccordionContent>

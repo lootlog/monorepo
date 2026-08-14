@@ -96,16 +96,18 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
       {showCollapsible && (
         <Collapsible open={open} onOpenChange={setOpen}>
           <CollapsibleContent>{hiddenItems.map(renderItem)}</CollapsibleContent>
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="ghost"
-              className="my-2 w-full cursor-pointer text-muted-foreground hover:text-foreground"
-            >
-              {open
-                ? t("loots.details.showLess")
-                : t("loots.details.showMore", { count: hiddenItems.length })}
-            </Button>
-          </CollapsibleTrigger>
+          <CollapsibleTrigger
+            render={
+              <Button
+                variant="ghost"
+                className="my-2 w-full cursor-pointer text-muted-foreground hover:text-foreground"
+              >
+                {open
+                  ? t("loots.details.showLess")
+                  : t("loots.details.showMore", { count: hiddenItems.length })}
+              </Button>
+            }
+          />
         </Collapsible>
       )}
     </div>

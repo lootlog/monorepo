@@ -53,6 +53,12 @@ export const ScoringConditionBoolean = ({
               <Select
                 value={field.value as string}
                 onValueChange={field.onChange}
+                items={[
+                  ...EVENT_SCORING_BOOLEAN_FACTORS.map((factor) => ({
+                    value: factor,
+                    label: <>{getScoringFactorLabel(factor, t)}</>,
+                  })),
+                ]}
               >
                 <SelectTrigger size="sm" className="h-8 text-[12px]">
                   <SelectValue />
@@ -66,9 +72,11 @@ export const ScoringConditionBoolean = ({
                 </SelectContent>
               </Select>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="size-3.5 text-muted-foreground/30 shrink-0 cursor-help" />
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <HelpCircle className="size-3.5 text-muted-foreground/30 shrink-0 cursor-help" />
+                  }
+                />
                 <TooltipContent side="top" className="max-w-[220px]">
                   <p className="text-xs">
                     {getScoringFactorDescription(
@@ -95,6 +103,16 @@ export const ScoringConditionBoolean = ({
             <Select
               value={String(field.value)}
               onValueChange={(v) => field.onChange(v === "true")}
+              items={[
+                {
+                  value: "true",
+                  label: <>{t("events.scoring.booleanValue.true")}</>,
+                },
+                {
+                  value: "false",
+                  label: <>{t("events.scoring.booleanValue.false")}</>,
+                },
+              ]}
             >
               <SelectTrigger size="sm" className="h-8 text-[12px]">
                 <SelectValue />

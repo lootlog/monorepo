@@ -71,57 +71,62 @@ export const ScoringRuleCard = ({
         )}
       >
         {/* Collapsed header / trigger */}
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className={cn(
-              "flex w-full items-center gap-2.5 p-3 text-left transition-colors cursor-pointer",
-              "hover:bg-muted/30",
-            )}
-          >
-            <GripVertical className="size-3.5 text-muted-foreground/40 shrink-0" />
+        <CollapsibleTrigger
+          render={
+            <button
+              type="button"
+              className={cn(
+                "flex w-full items-center gap-2.5 p-3 text-left transition-colors cursor-pointer",
+                "hover:bg-muted/30",
+              )}
+            >
+              <GripVertical className="size-3.5 text-muted-foreground/40 shrink-0" />
 
-            <span className="flex items-center justify-center size-5 rounded-md bg-muted/60 text-[10px] font-mono font-bold text-muted-foreground shrink-0">
-              {ruleIndex + 1}
-            </span>
+              <span className="flex items-center justify-center size-5 rounded-md bg-muted/60 text-[10px] font-mono font-bold text-muted-foreground shrink-0">
+                {ruleIndex + 1}
+              </span>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium truncate">
-                  {rule?.name || t("events.scoring.unnamedRule")}
-                </p>
-                {!open && conditionCount > 1 && (
-                  <span className="text-[10px] text-muted-foreground/60 shrink-0">
-                    {conditionCount}{" "}
-                    {t("events.scoring.conditionsCount", "war.")}
-                  </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium truncate">
+                    {rule?.name || t("events.scoring.unnamedRule")}
+                  </p>
+                  {!open && conditionCount > 1 && (
+                    <span className="text-[10px] text-muted-foreground/60 shrink-0">
+                      {conditionCount}{" "}
+                      {t("events.scoring.conditionsCount", "war.")}
+                    </span>
+                  )}
+                </div>
+                {!open && rule && (
+                  <div className="mt-0.5">
+                    <ScoringRuleSummary rule={rule} />
+                  </div>
                 )}
               </div>
-              {!open && rule && (
-                <div className="mt-0.5">
-                  <ScoringRuleSummary rule={rule} />
-                </div>
-              )}
-            </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              {!isEnabled && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                  {t("events.scoring.ruleDisabledSuffix")}
-                </Badge>
-              )}
-              <ChevronDown
-                className={cn(
-                  "size-4 text-muted-foreground transition-transform duration-200",
-                  open && "rotate-180",
+              <div className="flex items-center gap-1.5 shrink-0">
+                {!isEnabled && (
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] px-1.5 py-0"
+                  >
+                    {t("events.scoring.ruleDisabledSuffix")}
+                  </Badge>
                 )}
-              />
-            </div>
-          </button>
-        </CollapsibleTrigger>
+                <ChevronDown
+                  className={cn(
+                    "size-4 text-muted-foreground transition-transform duration-200",
+                    open && "rotate-180",
+                  )}
+                />
+              </div>
+            </button>
+          }
+        />
 
         {/* Expanded editor */}
-        <CollapsibleContent forceMount className={cn(!open && "hidden")}>
+        <CollapsibleContent keepMounted className={cn(!open && "hidden")}>
           <div className="border-t border-border/60">
             {/* Rule name & enabled toggle */}
             <div className="px-3 pt-3 pb-2">
@@ -165,9 +170,11 @@ export const ScoringRuleCard = ({
                   {t("events.scoring.ifLabel")}
                 </span>
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="size-3 text-blue-400/50 cursor-help" />
-                  </TooltipTrigger>
+                  <TooltipTrigger
+                    render={
+                      <Info className="size-3 text-blue-400/50 cursor-help" />
+                    }
+                  />
                   <TooltipContent>
                     <p>{t("events.scoring.conditionAndHint")}</p>
                   </TooltipContent>

@@ -50,17 +50,21 @@ export const KillParticipantsList = ({
           const mapNamesLabel = formatMapNamesFromMapData(participant.mapData);
           return (
             <Tooltip key={participant.id}>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/50 text-xs">
-                  <Avatar className="w-4 h-4">
-                    <AvatarImage src={participant.member.avatar ?? undefined} />
-                    <AvatarFallback className="text-[8px]">
-                      {participant.member.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium">{participant.points}</span>
-                </div>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/50 text-xs">
+                    <Avatar className="w-4 h-4">
+                      <AvatarImage
+                        src={participant.member.avatar ?? undefined}
+                      />
+                      <AvatarFallback className="text-[8px]">
+                        {participant.member.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{participant.points}</span>
+                  </div>
+                }
+              />
               <TooltipContent>
                 <p className="font-medium">{participant.member.name}</p>
                 <p className="text-xs text-muted-foreground">
@@ -114,14 +118,16 @@ export const KillParticipantsList = ({
 
             <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>
-                      {formatDurationHuman(participant.timeOnMapSeconds)}
-                    </span>
-                  </div>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>
+                        {formatDurationHuman(participant.timeOnMapSeconds)}
+                      </span>
+                    </div>
+                  }
+                />
                 <TooltipContent>
                   <p>{t("events.kills.timeOnMap")}</p>
                 </TooltipContent>
@@ -129,11 +135,13 @@ export const KillParticipantsList = ({
 
               {participant.afkPercentage > 0 && (
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-amber-500">
-                      {Math.round(participant.afkPercentage)}% AFK
-                    </span>
-                  </TooltipTrigger>
+                  <TooltipTrigger
+                    render={
+                      <span className="text-amber-500">
+                        {Math.round(participant.afkPercentage)}% AFK
+                      </span>
+                    }
+                  />
                   <TooltipContent>
                     <p>{t("events.kills.afkPercentage")}</p>
                   </TooltipContent>
@@ -144,11 +152,13 @@ export const KillParticipantsList = ({
             <div className="text-right shrink-0">
               <p className="font-bold text-primary">{participant.points}</p>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <p className="text-xs text-muted-foreground cursor-help">
-                    {participant.basePoints} + {bonusPoints}
-                  </p>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <p className="text-xs text-muted-foreground cursor-help">
+                      {participant.basePoints} + {bonusPoints}
+                    </p>
+                  }
+                />
                 <TooltipContent>
                   <p>{`base: ${participant.basePoints}, bonus: ${bonusPoints}`}</p>
                 </TooltipContent>

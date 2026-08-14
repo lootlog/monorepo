@@ -43,11 +43,13 @@ export const BattlePanelH2hCard = ({
       <div className="flex items-start justify-between gap-3">
         <BattleResultStatus result={record.lastBattleResult} showLabel />
         <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="text-right text-xs font-medium text-muted-foreground">
-              {getRelativeTime(record.lastBattleDate)}
-            </span>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <span className="text-right text-xs font-medium text-muted-foreground">
+                {getRelativeTime(record.lastBattleDate)}
+              </span>
+            }
+          />
           <TooltipContent>{exactTime}</TooltipContent>
         </Tooltip>
       </div>

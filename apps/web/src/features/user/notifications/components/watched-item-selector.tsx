@@ -87,57 +87,59 @@ export const WatchedItemSelector = ({
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-controls={resultsListId}
-          aria-expanded={open}
-          disabled={disabled}
-          className="justify-between gap-2"
-        >
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            {selectedItem ? (
-              <ItemImage
-                icon={selectedItem.icon}
-                rarity={
-                  (selectedItem.rarity as ItemRarity | null) ??
-                  ItemRarity.COMMON
-                }
-              />
-            ) : (
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
-            <span
-              className={cn(
-                "truncate",
-                !selectedItem && "text-muted-foreground",
-              )}
-            >
-              {disabled ? disabledMessage : displayLabel}
-            </span>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            {selectedItem ? (
-              <span
-                role="button"
-                tabIndex={0}
-                onMouseDown={handleClear}
-                onClick={(event) => event.stopPropagation()}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    handleClear(event);
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-controls={resultsListId}
+            aria-expanded={open}
+            disabled={disabled}
+            className="justify-between gap-2"
+          >
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              {selectedItem ? (
+                <ItemImage
+                  icon={selectedItem.icon}
+                  rarity={
+                    (selectedItem.rarity as ItemRarity | null) ??
+                    ItemRarity.COMMON
                   }
-                }}
-                className="flex items-center justify-center"
+                />
+              ) : (
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+              )}
+              <span
+                className={cn(
+                  "truncate",
+                  !selectedItem && "text-muted-foreground",
+                )}
               >
-                <X className="h-4 w-4 cursor-pointer text-muted-foreground transition-colors hover:text-foreground" />
+                {disabled ? disabledMessage : displayLabel}
               </span>
-            ) : null}
-            <ChevronsUpDown className="h-4 w-4 opacity-50" />
-          </div>
-        </Button>
-      </PopoverTrigger>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              {selectedItem ? (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onMouseDown={handleClear}
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      handleClear(event);
+                    }
+                  }}
+                  className="flex items-center justify-center"
+                >
+                  <X className="h-4 w-4 cursor-pointer text-muted-foreground transition-colors hover:text-foreground" />
+                </span>
+              ) : null}
+              <ChevronsUpDown className="h-4 w-4 opacity-50" />
+            </div>
+          </Button>
+        }
+      />
       <PopoverContent className="w-[360px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInputRaw

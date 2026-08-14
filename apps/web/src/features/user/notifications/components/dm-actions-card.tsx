@@ -181,22 +181,25 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
         {hasActiveDm ? (
           <>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    disabled={
-                      isDmActionPending || dmTarget?.testTrigger.remaining === 0
-                    }
-                    onClick={handleTriggerDmTest}
-                  >
-                    <FlaskConical className="size-4" />
-                    {t("settings.userNotifications.dm.test")}
-                  </Button>
-                </span>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      disabled={
+                        isDmActionPending ||
+                        dmTarget?.testTrigger.remaining === 0
+                      }
+                      onClick={handleTriggerDmTest}
+                    >
+                      <FlaskConical className="size-4" />
+                      {t("settings.userNotifications.dm.test")}
+                    </Button>
+                  </span>
+                }
+              />
               <TooltipContent>
                 <p>
                   {t("settings.userNotifications.dm.testUsage", {
@@ -220,17 +223,19 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
               </TooltipContent>
             </Tooltip>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  disabled={isDmActionPending}
-                  onClick={handleDisableDm}
-                >
-                  <BellOff className="size-4" />
-                  {t("settings.userNotifications.dm.deactivate")}
-                </Button>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={isDmActionPending}
+                    onClick={handleDisableDm}
+                  >
+                    <BellOff className="size-4" />
+                    {t("settings.userNotifications.dm.deactivate")}
+                  </Button>
+                }
+              />
               <TooltipContent>
                 {t("settings.userNotifications.dm.deactivateHint")}
               </TooltipContent>

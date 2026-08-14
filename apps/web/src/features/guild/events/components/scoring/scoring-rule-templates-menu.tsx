@@ -21,12 +21,14 @@ export const ScoringRuleTemplatesMenu = ({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
-          <LayoutTemplate className="size-3.5 mr-1.5" />
-          {t("events.scoring.template.menuLabel")}
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button type="button" variant="outline" size="sm">
+            <LayoutTemplate className="size-3.5 mr-1.5" />
+            {t("events.scoring.template.menuLabel")}
+          </Button>
+        }
+      />
       <DropdownMenuContent align="start" className="w-72">
         {SCORING_RULE_TEMPLATES.map((template) => (
           <DropdownMenuItem

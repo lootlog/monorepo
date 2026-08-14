@@ -86,21 +86,23 @@ export function BattleResultStatus({
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          role="img"
-          aria-label={resultLabel}
-          className={cn(
-            "inline-flex min-h-6 items-center justify-center gap-1 rounded-md border px-1.5 text-xs font-semibold leading-none",
-            !showLabel && "size-6 min-w-6 p-0",
-            resultConfig.className,
-            className,
-          )}
-        >
-          <ResultIcon className="size-3.5" aria-hidden="true" />
-          {showLabel && <span>{resultLabel}</span>}
-        </span>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <span
+            role="img"
+            aria-label={resultLabel}
+            className={cn(
+              "inline-flex min-h-6 items-center justify-center gap-1 rounded-md border px-1.5 text-xs font-semibold leading-none",
+              !showLabel && "size-6 min-w-6 p-0",
+              resultConfig.className,
+              className,
+            )}
+          >
+            <ResultIcon className="size-3.5" aria-hidden="true" />
+            {showLabel && <span>{resultLabel}</span>}
+          </span>
+        }
+      />
       <TooltipContent>{resultLabel}</TooltipContent>
     </Tooltip>
   );

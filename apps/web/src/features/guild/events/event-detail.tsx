@@ -559,17 +559,19 @@ export const EventDetail = () => {
                   </span>
 
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                      >
-                        <Clock className="size-3.5" />
-                        {t("events.header.assignmentTimeoutValue", {
-                          minutes: event.assignmentTimeoutMinutes ?? 5,
-                        })}
-                      </button>
-                    </TooltipTrigger>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                        >
+                          <Clock className="size-3.5" />
+                          {t("events.header.assignmentTimeoutValue", {
+                            minutes: event.assignmentTimeoutMinutes ?? 5,
+                          })}
+                        </button>
+                      }
+                    />
                     <TooltipContent>
                       <p>{t("events.header.assignmentTimeoutTooltip")}</p>
                     </TooltipContent>
@@ -582,51 +584,57 @@ export const EventDetail = () => {
                 </div>
               </div>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    aria-label={pinActionLabel}
-                    aria-pressed={eventIsPinned}
-                    disabled={!eventId || isPinLoading}
-                    className={cn(
-                      "h-9 shrink-0 gap-2 px-3",
-                      eventIsPinned
-                        ? "border-yellow-500/35 bg-yellow-500/10 text-yellow-500 hover:border-yellow-500/50 hover:bg-yellow-500/15 hover:text-yellow-500"
-                        : "border-primary/30 bg-primary/5 text-primary hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
-                    )}
-                    onClick={() => {
-                      if (eventId) {
-                        togglePin(eventId);
-                      }
-                    }}
-                  >
-                    <Star
-                      className={cn("size-4", eventIsPinned && "fill-current")}
-                    />
-                    <span className="hidden sm:inline">{pinActionLabel}</span>
-                  </Button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      aria-label={pinActionLabel}
+                      aria-pressed={eventIsPinned}
+                      disabled={!eventId || isPinLoading}
+                      className={cn(
+                        "h-9 shrink-0 gap-2 px-3",
+                        eventIsPinned
+                          ? "border-yellow-500/35 bg-yellow-500/10 text-yellow-500 hover:border-yellow-500/50 hover:bg-yellow-500/15 hover:text-yellow-500"
+                          : "border-primary/30 bg-primary/5 text-primary hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
+                      )}
+                      onClick={() => {
+                        if (eventId) {
+                          togglePin(eventId);
+                        }
+                      }}
+                    >
+                      <Star
+                        className={cn(
+                          "size-4",
+                          eventIsPinned && "fill-current",
+                        )}
+                      />
+                      <span className="hidden sm:inline">{pinActionLabel}</span>
+                    </Button>
+                  }
+                />
                 <TooltipContent>{pinActionLabel}</TooltipContent>
               </Tooltip>
             </div>
 
             <div className="grid gap-1 border-t border-border bg-muted/20 p-1.5 sm:grid-cols-3">
               <Button
-                asChild
                 size="sm"
                 variant="ghost"
                 className="w-full min-w-0 justify-center text-muted-foreground hover:text-foreground"
-              >
-                <Link
-                  to="/$guildId/events/$eventId/coordination"
-                  params={{ guildId: guildId ?? "", eventId: eventId ?? "" }}
-                >
-                  <Crosshair className="size-3.5" />
-                  {t("events.coordination.trigger")}
-                </Link>
-              </Button>
+                render={
+                  <Link
+                    to="/$guildId/events/$eventId/coordination"
+                    params={{ guildId: guildId ?? "", eventId: eventId ?? "" }}
+                  >
+                    <Crosshair className="size-3.5" />
+                    {t("events.coordination.trigger")}
+                  </Link>
+                }
+                nativeButton={false}
+              />
               <Button
                 size="sm"
                 variant="ghost"

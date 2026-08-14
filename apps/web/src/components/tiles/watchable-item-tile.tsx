@@ -197,44 +197,46 @@ export const WatchableItemTile = ({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <span
-          className={cn(
-            "relative inline-flex rounded-lg transition-[opacity,filter] duration-200",
-            hasItemFilter && !isItemSelected && "opacity-35 grayscale-[0.45]",
-          )}
-          tabIndex={0}
-          role="button"
-        >
-          <ItemTile
-            item={item}
-            color={color}
-            shareIndex={shareIndex}
-            shareNickname={shareNickname}
-          />
-          {hasItemFilter && isItemSelected ? (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute -left-1 -top-1 z-10 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-background"
-            >
-              <Check className="size-2.5" />
-            </span>
-          ) : null}
-          {isWatchedInScope ? (
-            <span
-              aria-hidden="true"
-              title={t("settings.userNotifications.quickAdd.indicatorLabel")}
-              className="pointer-events-none absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-emerald-500 text-background shadow-sm ring-2 ring-background"
-            >
-              <Bell className="size-2.5" />
-            </span>
-          ) : null}
-        </span>
-      </ContextMenuTrigger>
+      <ContextMenuTrigger
+        render={
+          <span
+            className={cn(
+              "relative inline-flex rounded-lg transition-[opacity,filter] duration-200",
+              hasItemFilter && !isItemSelected && "opacity-35 grayscale-[0.45]",
+            )}
+            tabIndex={0}
+            role="button"
+          >
+            <ItemTile
+              item={item}
+              color={color}
+              shareIndex={shareIndex}
+              shareNickname={shareNickname}
+            />
+            {hasItemFilter && isItemSelected ? (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute -left-1 -top-1 z-10 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-background"
+              >
+                <Check className="size-2.5" />
+              </span>
+            ) : null}
+            {isWatchedInScope ? (
+              <span
+                aria-hidden="true"
+                title={t("settings.userNotifications.quickAdd.indicatorLabel")}
+                className="pointer-events-none absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-emerald-500 text-background shadow-sm ring-2 ring-background"
+              >
+                <Bell className="size-2.5" />
+              </span>
+            ) : null}
+          </span>
+        }
+      />
       <ContextMenuContent className="min-w-[15rem]">
         <ContextMenuItem
           className="gap-2"
-          onSelect={() => {
+          onClick={() => {
             void handleCopyItemId();
           }}
         >
@@ -244,7 +246,7 @@ export const WatchableItemTile = ({
         <ContextMenuItem
           className="gap-2"
           disabled={!effectiveGuildId}
-          onSelect={showLootsWithItem}
+          onClick={showLootsWithItem}
         >
           <ListFilter className="h-4 w-4 text-primary" />
           {t("loots.list.itemActions.showLoots")}
@@ -262,7 +264,7 @@ export const WatchableItemTile = ({
               {t("settings.userNotifications.quickAdd.loadError")}
             </ContextMenuItem>
             <ContextMenuSeparator />
-            <ContextMenuItem onSelect={openNotifications}>
+            <ContextMenuItem onClick={openNotifications}>
               {t("settings.userNotifications.quickAdd.openNotifications")}
             </ContextMenuItem>
           </>
@@ -273,7 +275,7 @@ export const WatchableItemTile = ({
               {t("settings.userNotifications.quickAdd.dmRequired")}
             </ContextMenuItem>
             <ContextMenuSeparator />
-            <ContextMenuItem onSelect={openNotifications}>
+            <ContextMenuItem onClick={openNotifications}>
               {t("settings.userNotifications.quickAdd.configureDm")}
             </ContextMenuItem>
           </>
@@ -282,7 +284,7 @@ export const WatchableItemTile = ({
           <>
             <ContextMenuItem
               className="gap-2"
-              onSelect={() => {
+              onClick={() => {
                 void handleRemove();
               }}
             >
@@ -290,7 +292,7 @@ export const WatchableItemTile = ({
               {t("settings.userNotifications.quickAdd.remove")}
             </ContextMenuItem>
             <ContextMenuSeparator />
-            <ContextMenuItem onSelect={openNotifications}>
+            <ContextMenuItem onClick={openNotifications}>
               {t("settings.userNotifications.quickAdd.openNotifications")}
             </ContextMenuItem>
           </>
@@ -304,14 +306,14 @@ export const WatchableItemTile = ({
                 })}
               </ContextMenuItem>
               <ContextMenuSeparator />
-              <ContextMenuItem onSelect={openNotifications}>
+              <ContextMenuItem onClick={openNotifications}>
                 {t("settings.userNotifications.quickAdd.openNotifications")}
               </ContextMenuItem>
             </>
           ) : (
             <ContextMenuItem
               className="gap-2"
-              onSelect={() => {
+              onClick={() => {
                 void handleQuickAdd();
               }}
             >

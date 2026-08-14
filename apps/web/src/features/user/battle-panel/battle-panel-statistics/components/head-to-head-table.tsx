@@ -221,16 +221,21 @@ export function HeadToHeadTable({
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
         <div className="mt-auto flex justify-end pt-4">
-          <Button asChild variant="outline" size="sm">
-            <Link
-              to={ROUTES.user.battlePanel.h2h}
-              search={search}
-              onClick={(event) => event.stopPropagation()}
-            >
-              {t("battlePanel.statistics.directMatchups.link")}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            render={
+              <Link
+                to={ROUTES.user.battlePanel.h2h}
+                search={search}
+                onClick={(event) => event.stopPropagation()}
+              >
+                {t("battlePanel.statistics.directMatchups.link")}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            }
+            nativeButton={false}
+          />
         </div>
       </div>
     </StatCard>

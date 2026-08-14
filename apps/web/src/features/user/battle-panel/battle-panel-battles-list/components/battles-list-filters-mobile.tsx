@@ -106,20 +106,22 @@ export const BattlesListFiltersMobile = ({
   ];
 
   return (
-    <Drawer shouldScaleBackground={false}>
-      <DrawerTrigger asChild>
-        <Button className="w-full justify-between">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <span>{t("battlePanel.filters.title")}</span>
-          </div>
-          {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-2">
-              {activeFiltersCount}
-            </Badge>
-          )}
-        </Button>
-      </DrawerTrigger>
+    <Drawer>
+      <DrawerTrigger
+        render={
+          <Button className="w-full justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <span>{t("battlePanel.filters.title")}</span>
+            </div>
+            {activeFiltersCount > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {activeFiltersCount}
+              </Badge>
+            )}
+          </Button>
+        }
+      />
       <DrawerContent className="flex max-h-[85vh] flex-col p-4">
         <DrawerHeader className="mb-4 shrink-0">
           <DrawerTitle>{t("battlePanel.filters.battlesTitle")}</DrawerTitle>
@@ -142,30 +144,30 @@ export const BattlesListFiltersMobile = ({
                 onOpenChange={onWorldOpenChange}
                 modal={false}
               >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-controls={worldListId}
-                    aria-expanded={worldOpen}
-                    className="w-full justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      <span className="text-sm">
-                        {filters.world
-                          ? capitalizeFirstLetter(filters.world)
-                          : t("battlePanel.filters.allWorlds")}
-                      </span>
-                    </div>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-controls={worldListId}
+                      aria-expanded={worldOpen}
+                      className="w-full justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        <span className="text-sm">
+                          {filters.world
+                            ? capitalizeFirstLetter(filters.world)
+                            : t("battlePanel.filters.allWorlds")}
+                        </span>
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  }
+                />
                 <PopoverContent
-                  className="w-[var(--radix-popover-trigger-width)] p-0"
-                  onOpenAutoFocus={(event) => {
-                    event.preventDefault();
-                  }}
+                  className="w-[var(--anchor-width)] p-0"
+                  initialFocus={false}
                 >
                   <Command>
                     <CommandInput
@@ -209,28 +211,30 @@ export const BattlesListFiltersMobile = ({
                 onOpenChange={onResultOpenChange}
                 modal={false}
               >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-controls={resultListId}
-                    aria-expanded={resultOpen}
-                    className="w-full justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Medal className="h-4 w-4" />
-                      <span className="text-sm">
-                        {filters.result && filters.result.length > 0
-                          ? t("battlePanel.filters.selectedCount", {
-                              count: filters.result.length,
-                            })
-                          : t("battlePanel.filters.allResults")}
-                      </span>
-                    </div>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                <PopoverTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-controls={resultListId}
+                      aria-expanded={resultOpen}
+                      className="w-full justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Medal className="h-4 w-4" />
+                        <span className="text-sm">
+                          {filters.result && filters.result.length > 0
+                            ? t("battlePanel.filters.selectedCount", {
+                                count: filters.result.length,
+                              })
+                            : t("battlePanel.filters.allResults")}
+                        </span>
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  }
+                />
+                <PopoverContent className="w-[var(--anchor-width)] p-0">
                   <Command>
                     <CommandList id={resultListId}>
                       <CommandEmpty>
@@ -268,28 +272,30 @@ export const BattlesListFiltersMobile = ({
                 onOpenChange={onCharacterOpenChange}
                 modal={false}
               >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-controls={characterListId}
-                    aria-expanded={characterOpen}
-                    className="w-full justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span className="text-sm">
-                        {filters.characterId && filters.characterId.length > 0
-                          ? t("battlePanel.filters.selectedCount", {
-                              count: filters.characterId.length,
-                            })
-                          : t("battlePanel.filters.allCharacters")}
-                      </span>
-                    </div>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                <PopoverTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-controls={characterListId}
+                      aria-expanded={characterOpen}
+                      className="w-full justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span className="text-sm">
+                          {filters.characterId && filters.characterId.length > 0
+                            ? t("battlePanel.filters.selectedCount", {
+                                count: filters.characterId.length,
+                              })
+                            : t("battlePanel.filters.allCharacters")}
+                        </span>
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  }
+                />
+                <PopoverContent className="w-[var(--anchor-width)] p-0">
                   <Command>
                     <CommandInput
                       placeholder={t(
@@ -338,28 +344,30 @@ export const BattlesListFiltersMobile = ({
                 onOpenChange={onTypeOpenChange}
                 modal={false}
               >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-controls={typeListId}
-                    aria-expanded={typeOpen}
-                    className="w-full justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span className="text-sm">
-                        {filters.type && filters.type.length > 0
-                          ? t("battlePanel.filters.selectedCount", {
-                              count: filters.type.length,
-                            })
-                          : t("battlePanel.filters.allTypes")}
-                      </span>
-                    </div>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                <PopoverTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-controls={typeListId}
+                      aria-expanded={typeOpen}
+                      className="w-full justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span className="text-sm">
+                          {filters.type && filters.type.length > 0
+                            ? t("battlePanel.filters.selectedCount", {
+                                count: filters.type.length,
+                              })
+                            : t("battlePanel.filters.allTypes")}
+                        </span>
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  }
+                />
+                <PopoverContent className="w-[var(--anchor-width)] p-0">
                   <Command>
                     <CommandList id={typeListId}>
                       <CommandEmpty>
@@ -423,11 +431,13 @@ export const BattlesListFiltersMobile = ({
           </div>
         </ScrollArea>
         <div className="mt-6 shrink-0">
-          <DrawerClose asChild>
-            <Button variant="outline" className="w-full">
-              {t("battlePanel.actions.close")}
-            </Button>
-          </DrawerClose>
+          <DrawerClose
+            render={
+              <Button variant="outline" className="w-full">
+                {t("battlePanel.actions.close")}
+              </Button>
+            }
+          />
         </div>
       </DrawerContent>
     </Drawer>

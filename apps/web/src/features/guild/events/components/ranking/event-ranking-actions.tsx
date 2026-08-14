@@ -60,18 +60,20 @@ export const EventRankingActions = ({
       <div className="flex justify-end">
         <div className="hidden items-center lg:flex">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="size-8 text-muted-foreground hover:text-foreground"
-                onClick={() => setIsEditDialogOpen(true)}
-                disabled={isEditPending}
-                aria-label={t("events.points.edit")}
-              >
-                <Pencil className="size-3.5" />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsEditDialogOpen(true)}
+                  disabled={isEditPending}
+                  aria-label={t("events.points.edit")}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+              }
+            />
             <TooltipContent>
               <p>{t("events.points.edit")}</p>
             </TooltipContent>
@@ -79,19 +81,21 @@ export const EventRankingActions = ({
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="size-11 text-muted-foreground lg:hidden"
-              disabled={isEditPending}
-              aria-label={t("events.ranking.moreActions")}
-            >
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-11 text-muted-foreground lg:hidden"
+                disabled={isEditPending}
+                aria-label={t("events.ranking.moreActions")}
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            }
+          />
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>
+            <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
               <Pencil className="size-4" />
               {t("events.points.edit")}
             </DropdownMenuItem>

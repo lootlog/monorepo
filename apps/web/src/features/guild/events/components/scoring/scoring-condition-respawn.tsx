@@ -80,6 +80,12 @@ export const ScoringConditionRespawn = ({
               <Select
                 value={field.value as string}
                 onValueChange={field.onChange}
+                items={[
+                  ...EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => ({
+                    value: operator,
+                    label: <>{operator}</>,
+                  })),
+                ]}
               >
                 <SelectTrigger size="sm" className="h-8 text-[12px] font-mono">
                   <SelectValue />

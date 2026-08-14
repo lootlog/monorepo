@@ -84,7 +84,6 @@ export const ActivityLogs: FC = () => {
         <Drawer
           open={isMobileFiltersOpen}
           onOpenChange={setIsMobileFiltersOpen}
-          shouldScaleBackground={false}
         >
           <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
             <DrawerHeader className="border-b px-4 py-3 shrink-0">

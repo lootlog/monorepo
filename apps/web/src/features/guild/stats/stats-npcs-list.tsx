@@ -118,7 +118,8 @@ export const StatsNpcsList: React.FC = () => {
     }
   };
 
-  const handleNpcTypeChange = (value: string) => {
+  const handleNpcTypeChange = (value: string | null) => {
+    if (value === null) return;
     setNpcType(value as NpcType | "ALL");
     setCursor(0);
   };
@@ -223,6 +224,13 @@ export const StatsNpcsList: React.FC = () => {
                 <Select
                   value={settings.npcType ?? "ALL"}
                   onValueChange={handleNpcTypeChange}
+                  items={[
+                    { value: "ALL", label: <>{t("kills.filters.allTypes")}</> },
+                    ...TRACKABLE_NPC_TYPES.map((type) => ({
+                      value: type,
+                      label: <>{t(`npcType.${type}`)}</>,
+                    })),
+                  ]}
                 >
                   <SelectTrigger className="w-[140px]">
                     <SelectValue />

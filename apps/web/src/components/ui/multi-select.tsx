@@ -276,108 +276,109 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
         onOpenChange={handlePopoverStateChange}
         modal={modalPopover}
       >
-        <PopoverTrigger asChild>
-          <div
-            ref={ref}
-            {...props}
-            role="combobox"
-            aria-expanded={isPopoverOpen}
-            aria-disabled={disabled}
-            tabIndex={disabled ? -1 : (props.tabIndex ?? 0)}
-            onKeyDown={handleTriggerKeyDown}
-            className={cn(
-              "group flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-border bg-background px-2.5 py-1.5 text-left text-sm text-foreground outline-none transition-[background-color,border-color,box-shadow]",
-              "hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground",
-              "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-              "data-[state=open]:border-ring data-[state=open]:bg-foreground/[0.04] data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-ring",
-              "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
-              className,
-            )}
-          >
-            {selectedValues.length > 0 ? (
-              <>
-                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-                  {selectedValues.slice(0, maxCount).map((value) => {
-                    const currentOption = options.find(
-                      (option) => option.value === value,
-                    );
-                    const cachedOption = optionCacheRef.current.get(value);
-                    const label =
-                      currentOption?.label ?? cachedOption?.label ?? value;
+        <PopoverTrigger
+          render={
+            <div
+              ref={ref}
+              {...props}
+              role="combobox"
+              aria-expanded={isPopoverOpen}
+              aria-disabled={disabled}
+              tabIndex={disabled ? -1 : (props.tabIndex ?? 0)}
+              onKeyDown={handleTriggerKeyDown}
+              className={cn(
+                "group flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-border bg-background px-2.5 py-1.5 text-left text-sm text-foreground outline-none transition-[background-color,border-color,box-shadow]",
+                "hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground",
+                "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                "data-[state=open]:border-ring data-[state=open]:bg-foreground/[0.04] data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-ring",
+                "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
+                className,
+              )}
+            >
+              {selectedValues.length > 0 ? (
+                <>
+                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+                    {selectedValues.slice(0, maxCount).map((value) => {
+                      const currentOption = options.find(
+                        (option) => option.value === value,
+                      );
+                      const cachedOption = optionCacheRef.current.get(value);
+                      const label =
+                        currentOption?.label ?? cachedOption?.label ?? value;
 
-                    return (
-                      <button
-                        type="button"
-                        key={value}
-                        aria-label={t("common.removeOption", { label })}
-                        className={multiSelectVariants({ variant })}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          toggleOption(value, true);
-                        }}
+                      return (
+                        <button
+                          type="button"
+                          key={value}
+                          aria-label={t("common.removeOption", { label })}
+                          className={multiSelectVariants({ variant })}
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleOption(value, true);
+                          }}
+                        >
+                          <span className="max-w-28 truncate">{label}</span>
+                          <XIcon
+                            aria-hidden="true"
+                            className="size-3.5 shrink-0 opacity-60"
+                          />
+                        </button>
+                      );
+                    })}
+                    {selectedValues.length > maxCount ? (
+                      <span
+                        className={cn(
+                          multiSelectVariants({ variant }),
+                          "border-border bg-transparent text-muted-foreground",
+                        )}
                       >
-                        <span className="max-w-28 truncate">{label}</span>
-                        <XIcon
-                          aria-hidden="true"
-                          className="size-3.5 shrink-0 opacity-60"
-                        />
-                      </button>
-                    );
-                  })}
-                  {selectedValues.length > maxCount ? (
-                    <span
-                      className={cn(
-                        multiSelectVariants({ variant }),
-                        "border-border bg-transparent text-muted-foreground",
-                      )}
+                        +{selectedValues.length - maxCount}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 items-center self-stretch">
+                    <button
+                      type="button"
+                      aria-label={t("common.clear")}
+                      className="flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleClear();
+                      }}
                     >
-                      +{selectedValues.length - maxCount}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="flex shrink-0 items-center self-stretch">
-                  <button
-                    type="button"
-                    aria-label={t("common.clear")}
-                    className="flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onPointerDown={(event) => event.stopPropagation()}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleClear();
-                    }}
-                  >
-                    <XIcon aria-hidden="true" className="size-4" />
-                  </button>
-                  <Separator
-                    orientation="vertical"
-                    className="mx-1 h-5 bg-border/80"
-                  />
+                      <XIcon aria-hidden="true" className="size-4" />
+                    </button>
+                    <Separator
+                      orientation="vertical"
+                      className="mx-1 h-5 bg-border/80"
+                    />
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                    {resolvedPlaceholder}
+                  </span>
                   <ChevronDown
                     aria-hidden="true"
                     className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
                   />
-                </div>
-              </>
-            ) : (
-              <>
-                <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                  {resolvedPlaceholder}
-                </span>
-                <ChevronDown
-                  aria-hidden="true"
-                  className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
-                />
-              </>
-            )}
-          </div>
-        </PopoverTrigger>
+                </>
+              )}
+            </div>
+          }
+        />
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] min-w-64 max-w-[min(24rem,calc(100vw-2rem))] rounded-xl border-border bg-popover p-1 shadow-xl"
+          className="w-[var(--anchor-width)] min-w-64 max-w-[min(24rem,calc(100vw-2rem))] rounded-xl border-border bg-popover p-1 shadow-xl"
           align="start"
           sideOffset={6}
           onWheel={(event) => event.stopPropagation()}
-          onEscapeKeyDown={() => setIsPopoverOpen(false)}
         >
           <Command
             className="rounded-lg bg-transparent"

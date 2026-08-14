@@ -48,38 +48,40 @@ export const UserMenu = () => {
       )}
       {user && !isPending && (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="group flex h-full w-full cursor-pointer items-center gap-2.5 pl-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[state=open]:bg-sidebar-accent/45"
-            >
-              <div className="relative shrink-0">
-                <Avatar className="size-8 rounded-full ring-1 ring-sidebar-border transition-[box-shadow] group-hover:ring-primary/45">
-                  <AvatarImage src={user.image ?? undefined} />
-                  <AvatarFallback>
-                    <User2 className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-                <span className="text-[11px] font-medium leading-none text-sidebar-foreground/55">
-                  {t("layout.userMenu.account")}
+          <DropdownMenuTrigger
+            render={
+              <button
+                type="button"
+                className="group flex h-full w-full cursor-pointer items-center gap-2.5 pl-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[state=open]:bg-sidebar-accent/45"
+              >
+                <div className="relative shrink-0">
+                  <Avatar className="size-8 rounded-full ring-1 ring-sidebar-border transition-[box-shadow] group-hover:ring-primary/45">
+                    <AvatarImage src={user.image ?? undefined} />
+                    <AvatarFallback>
+                      <User2 className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+                  <span className="text-[11px] font-medium leading-none text-sidebar-foreground/55">
+                    {t("layout.userMenu.account")}
+                  </span>
+                  <span className="max-w-full truncate text-sm font-bold leading-none">
+                    {user.name}
+                  </span>
+                </div>
+                <span className="flex h-8 w-12 shrink-0 items-center justify-center border-l border-sidebar-border text-sidebar-foreground/55 transition-colors group-hover:text-sidebar-foreground">
+                  <ChevronUp className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
                 </span>
-                <span className="max-w-full truncate text-sm font-bold leading-none">
-                  {user.name}
-                </span>
-              </div>
-              <span className="flex h-8 w-12 shrink-0 items-center justify-center border-l border-sidebar-border text-sidebar-foreground/55 transition-colors group-hover:text-sidebar-foreground">
-                <ChevronUp className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
-              </span>
-            </button>
-          </DropdownMenuTrigger>
+              </button>
+            }
+          />
           <DropdownMenuContent
             align="start"
             alignOffset={8}
             side="top"
             sideOffset={10}
-            className="w-[calc(var(--radix-dropdown-menu-trigger-width)-1rem)] min-w-64 overflow-hidden rounded-xl border-border bg-popover p-0 shadow-[0_14px_34px_-18px_rgba(0,0,0,0.65)]"
+            className="w-[calc(var(--anchor-width)-1rem)] min-w-64 overflow-hidden rounded-xl border-border bg-popover p-0 shadow-[0_14px_34px_-18px_rgba(0,0,0,0.65)]"
           >
             <div className="px-3 py-2.5">
               <div className="flex items-center gap-3">
@@ -104,14 +106,14 @@ export const UserMenu = () => {
             <DropdownMenuSeparator className="m-0" />
             <div className="p-1.5">
               <DropdownMenuItem
-                onSelect={handleOpenAccountSettings}
+                onClick={handleOpenAccountSettings}
                 className="rounded-lg px-2.5 py-2"
               >
                 <Settings className="size-4" />
                 <span>{t("layout.navigation.settings")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={logout}
+                onClick={logout}
                 className="rounded-lg px-2.5 py-2"
               >
                 <LogOut className="size-4" />

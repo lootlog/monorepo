@@ -162,11 +162,13 @@ export const headToHeadLastBattleColumn: ColumnDef<HeadToHeadRecord> = {
     return (
       <div className="flex min-w-0 justify-end">
         <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
-              {getRelativeTime(row.original.lastBattleDate)}
-            </span>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
+                {getRelativeTime(row.original.lastBattleDate)}
+              </span>
+            }
+          />
           <TooltipContent>{exactTime}</TooltipContent>
         </Tooltip>
       </div>
