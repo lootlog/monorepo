@@ -102,24 +102,26 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
     >
       {isShortReservation ? (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex h-full items-center gap-2 w-full p-1">
-              <Avatar className="pointer-events-none size-5 shrink-0">
-                <AvatarImage src={avatarUrl} alt={memberName} />
-                <AvatarFallback>{fallbackInitial}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="font-semibold leading-tight truncate text-[10px]">
-                  {memberName}
-                </span>
-                {!isVeryShortReservation && (
-                  <span className="text-[9px] text-muted-foreground truncate opacity-80">
-                    {displayStartLabel} - {displayEndLabel}
+          <TooltipTrigger
+            render={
+              <div className="flex h-full items-center gap-2 w-full p-1">
+                <Avatar className="pointer-events-none size-5 shrink-0">
+                  <AvatarImage src={avatarUrl} alt={memberName} />
+                  <AvatarFallback>{fallbackInitial}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="font-semibold leading-tight truncate text-[10px]">
+                    {memberName}
                   </span>
-                )}
+                  {!isVeryShortReservation && (
+                    <span className="text-[9px] text-muted-foreground truncate opacity-80">
+                      {displayStartLabel} - {displayEndLabel}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          </TooltipTrigger>
+            }
+          />
           <TooltipContent
             side="top"
             sideOffset={12}
@@ -148,12 +150,14 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
 
             {hasComment && trimmedComment && (
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <MessageSquareText
-                    className="h-3 w-3 shrink-0 opacity-80"
-                    aria-hidden="true"
-                  />
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <MessageSquareText
+                      className="h-3 w-3 shrink-0 opacity-80"
+                      aria-hidden="true"
+                    />
+                  }
+                />
                 <TooltipContent
                   side="top"
                   align="end"
@@ -188,13 +192,13 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
   if (showContextMenu) {
     return (
       <ContextMenu>
-        <ContextMenuTrigger asChild>{segmentElement}</ContextMenuTrigger>
+        <ContextMenuTrigger render={segmentElement} />
         <ContextMenuContent className="min-w-[12rem]">
           {canCancelReservation && (
             <ContextMenuItem
               className="group gap-2 data-[highlighted]:bg-muted data-[highlighted]:text-foreground"
               disabled={isDeleting}
-              onSelect={() => {
+              onClick={() => {
                 onDeleteReservation(segment.reservation.id, "cancel");
               }}
             >
@@ -209,7 +213,7 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
             <ContextMenuItem
               className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
               disabled={isDeleting}
-              onSelect={() => {
+              onClick={() => {
                 onDeleteReservation(segment.reservation.id, "remove");
               }}
             >

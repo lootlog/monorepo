@@ -140,12 +140,14 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
                       field.value && "bg-primary/5",
                     )}
                   >
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
+                    <FormControl
+                      render={
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      }
+                    />
                     <div className="flex items-center gap-2 flex-1">
                       <div className={cn("p-1 rounded", rarity.bgColor)}>
                         <rarity.icon className={cn("size-3", rarity.color)} />

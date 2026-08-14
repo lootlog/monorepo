@@ -181,6 +181,18 @@ const ConditionRow = ({
                     { shouldDirty: true, shouldValidate: true },
                   );
                 }}
+                items={[
+                  ...EVENT_SCORING_CONDITION_TYPES.map(
+                    (conditionTypeOption) => ({
+                      value: conditionTypeOption,
+                      label: (
+                        <>
+                          {getScoringConditionTypeLabel(conditionTypeOption, t)}
+                        </>
+                      ),
+                    }),
+                  ),
+                ]}
               >
                 <SelectTrigger
                   size="sm"

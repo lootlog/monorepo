@@ -625,36 +625,38 @@ export const HeroDetail = () => {
               </div>
               {canManage && (
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9 shrink-0 px-2.5 lg:px-3"
-                      aria-label={t(
-                        heroTimer
-                          ? "events.respawn.closeWindow"
-                          : "events.respawn.openWindow",
-                      )}
-                      onClick={() =>
-                        heroTimer
-                          ? setCloseWindowOpen(true)
-                          : setOpenWindowOpen(true)
-                      }
-                    >
-                      {heroTimer ? (
-                        <X className="size-4" />
-                      ) : (
-                        <Timer className="size-4" />
-                      )}
-                      <span className="hidden lg:inline">
-                        {t(
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 shrink-0 px-2.5 lg:px-3"
+                        aria-label={t(
                           heroTimer
                             ? "events.respawn.closeWindow"
                             : "events.respawn.openWindow",
                         )}
-                      </span>
-                    </Button>
-                  </TooltipTrigger>
+                        onClick={() =>
+                          heroTimer
+                            ? setCloseWindowOpen(true)
+                            : setOpenWindowOpen(true)
+                        }
+                      >
+                        {heroTimer ? (
+                          <X className="size-4" />
+                        ) : (
+                          <Timer className="size-4" />
+                        )}
+                        <span className="hidden lg:inline">
+                          {t(
+                            heroTimer
+                              ? "events.respawn.closeWindow"
+                              : "events.respawn.openWindow",
+                          )}
+                        </span>
+                      </Button>
+                    }
+                  />
                   <TooltipContent>
                     {t(
                       heroTimer
@@ -692,42 +694,46 @@ export const HeroDetail = () => {
                   {canManage && (
                     <div className="ml-auto flex shrink-0 items-center gap-1.5">
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="inline-flex">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
-                              onClick={handleClearAllAssignments}
-                              disabled={uniqueMembers.length === 0}
-                              aria-label={t("events.maps.clearAll")}
-                            >
-                              <Eraser className="size-4" />
-                              <span className="hidden @2xl/maps:inline">
-                                {t("events.maps.clearAll")}
-                              </span>
-                            </Button>
-                          </span>
-                        </TooltipTrigger>
+                        <TooltipTrigger
+                          render={
+                            <span className="inline-flex">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
+                                onClick={handleClearAllAssignments}
+                                disabled={uniqueMembers.length === 0}
+                                aria-label={t("events.maps.clearAll")}
+                              >
+                                <Eraser className="size-4" />
+                                <span className="hidden @2xl/maps:inline">
+                                  {t("events.maps.clearAll")}
+                                </span>
+                              </Button>
+                            </span>
+                          }
+                        />
                         <TooltipContent>
                           {t("events.maps.clearAll")}
                         </TooltipContent>
                       </Tooltip>
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
-                            onClick={() => setMapManageOpen(true)}
-                            aria-label={t("events.maps.manage")}
-                          >
-                            <Plus className="size-4" />
-                            <span className="hidden @2xl/maps:inline">
-                              {t("events.maps.manage")}
-                            </span>
-                          </Button>
-                        </TooltipTrigger>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
+                              onClick={() => setMapManageOpen(true)}
+                              aria-label={t("events.maps.manage")}
+                            >
+                              <Plus className="size-4" />
+                              <span className="hidden @2xl/maps:inline">
+                                {t("events.maps.manage")}
+                              </span>
+                            </Button>
+                          }
+                        />
                         <TooltipContent>
                           {t("events.maps.manage")}
                         </TooltipContent>

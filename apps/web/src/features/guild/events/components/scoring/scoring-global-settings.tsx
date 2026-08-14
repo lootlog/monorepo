@@ -32,9 +32,11 @@ export const ScoringGlobalSettings = ({
             {t("events.scoring.hardCapPoints")}
           </Label>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <HelpCircle className="size-3 text-muted-foreground/30 cursor-help" />
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <HelpCircle className="size-3 text-muted-foreground/30 cursor-help" />
+              }
+            />
             <TooltipContent>
               <p className="text-xs">
                 {t("events.scoring.summary.cap", { points: "X" })}

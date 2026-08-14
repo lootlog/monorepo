@@ -68,22 +68,24 @@ const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          tabIndex={0}
-          className={cn(
-            "flex items-center gap-1.5 px-2 py-1 rounded-md text-sm font-medium",
-            isWaiting
-              ? "bg-amber-500/10 text-amber-500"
-              : "bg-green-500/10 text-green-500",
-          )}
-        >
-          <Clock className="w-4 h-4" />
-          <span className="font-mono">
-            {parseMsToTime(countdownState.timeLeftMilliseconds)}
-          </span>
-        </div>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <div
+            tabIndex={0}
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded-md text-sm font-medium",
+              isWaiting
+                ? "bg-amber-500/10 text-amber-500"
+                : "bg-green-500/10 text-green-500",
+            )}
+          >
+            <Clock className="w-4 h-4" />
+            <span className="font-mono">
+              {parseMsToTime(countdownState.timeLeftMilliseconds)}
+            </span>
+          </div>
+        }
+      />
       <TooltipContent>
         <div className="text-sm space-y-1">
           <p>

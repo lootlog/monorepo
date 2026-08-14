@@ -138,15 +138,17 @@ export const GeneralForm = () => {
                   name="vanityUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormControl>
-                        <Input
-                          placeholder={t(
-                            "settings.general.vanityUrl.placeholder",
-                          )}
-                          className="h-9 max-w-xs"
-                          {...field}
-                        />
-                      </FormControl>
+                      <FormControl
+                        render={
+                          <Input
+                            placeholder={t(
+                              "settings.general.vanityUrl.placeholder",
+                            )}
+                            className="h-9 max-w-xs"
+                            {...field}
+                          />
+                        }
+                      />
                       <FormDescription className="text-xs mt-2">
                         {t("settings.general.vanityUrl.example")}{" "}
                         <span className="text-foreground font-medium">

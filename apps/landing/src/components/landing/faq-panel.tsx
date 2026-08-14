@@ -16,9 +16,7 @@ export function FaqPanel() {
   return (
     <div className="w-full">
       <Accordion
-        type="single"
-        collapsible
-        defaultValue="item-0"
+        defaultValue={["item-0"]}
         className="w-full border-t border-[#31425b]"
       >
         {faqKeys.map((key, index) => (

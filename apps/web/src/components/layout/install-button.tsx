@@ -17,15 +17,17 @@ export const InstallButton: FC = () => {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          className="size-11"
-          onClick={() => dispatch({ type: "OPEN" })}
-        >
-          <Blocks color="#3E8667" className="!size-6" />
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            className="size-11"
+            onClick={() => dispatch({ type: "OPEN" })}
+          >
+            <Blocks color="#3E8667" className="!size-6" />
+          </Button>
+        }
+      />
       <TooltipContent side="right">
         {t("ui.tooltips.installAddon")}
       </TooltipContent>

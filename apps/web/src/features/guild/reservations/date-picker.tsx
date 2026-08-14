@@ -141,61 +141,62 @@ export const DatePicker: FC<DatePickerProps> = ({
       <div className="flex flex-col gap-1 w-full">
         {label && <span className="text-xs font-semibold px-3">{label}</span>}
         <div className="relative" data-picker-root>
-          <PopoverTrigger asChild>
-            <div
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setOpen(!open);
-                }
-              }}
-              className="w-full text-left flex h-9 items-center rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-            >
-              <span
-                className={`truncate text-sm ${date ? "text-foreground" : "text-muted-foreground"}`}
+          <PopoverTrigger
+            render={
+              <div
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setOpen(!open);
+                  }
+                }}
+                className="w-full text-left flex h-9 items-center rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               >
-                {date
-                  ? display
-                  : placeholder || t("reservations.datePicker.placeholder")}
-              </span>
-              <div className="ml-auto flex items-center gap-1">
-                {date && onClear && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClear();
-                    }}
-                    className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                    title={t("reservations.datePicker.clear")}
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </button>
-                )}
-                <svg
-                  className="h-4 w-4 shrink-0 opacity-50"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
+                <span
+                  className={`truncate text-sm ${date ? "text-foreground" : "text-muted-foreground"}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 9l4 4 4-4"
-                  />
-                </svg>
+                  {date
+                    ? display
+                    : placeholder || t("reservations.datePicker.placeholder")}
+                </span>
+                <div className="ml-auto flex items-center gap-1">
+                  {date && onClear && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onClear();
+                      }}
+                      className="p-0.5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                      title={t("reservations.datePicker.clear")}
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </button>
+                  )}
+                  <svg
+                    className="h-4 w-4 shrink-0 opacity-50"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 9l4 4 4-4"
+                    />
+                  </svg>
+                </div>
               </div>
-            </div>
-          </PopoverTrigger>
+            }
+          />
 
           <PopoverContent
             align="start"
             sideOffset={8}
             collisionPadding={16}
-            avoidCollisions
             onClick={(e) => e.stopPropagation()}
             className="z-[100] w-80 p-3"
           >

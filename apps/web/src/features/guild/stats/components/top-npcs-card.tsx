@@ -117,6 +117,12 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
         <Select
           value={selectedNpcType}
           onValueChange={(value) => setSelectedNpcType(value as NpcType)}
+          items={[
+            ...TRACKABLE_NPC_TYPES.map((type) => ({
+              value: type,
+              label: <>{t(`npcType.${type}`)}</>,
+            })),
+          ]}
         >
           <SelectTrigger className="w-[120px] h-8">
             <SelectValue />

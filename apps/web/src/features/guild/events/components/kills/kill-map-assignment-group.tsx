@@ -72,21 +72,23 @@ export const KillMapAssignmentGroup = ({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <button
-          type="button"
-          className="flex min-h-11 w-full items-center gap-2 rounded-lg px-1 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label={t(
-            "events.killDetail.mapCoverage.assignmentPeriodsAccessible",
-            {
-              member: assignment.memberName,
-              count: assignment.periods.length,
-            },
-          )}
-        >
-          {rowContent}
-        </button>
-      </CollapsibleTrigger>
+      <CollapsibleTrigger
+        render={
+          <button
+            type="button"
+            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-1 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={t(
+              "events.killDetail.mapCoverage.assignmentPeriodsAccessible",
+              {
+                member: assignment.memberName,
+                count: assignment.periods.length,
+              },
+            )}
+          >
+            {rowContent}
+          </button>
+        }
+      />
       <CollapsibleContent>
         <div className="ml-8 border-l border-border/60 pl-3">
           {assignment.periods.map((period) => (

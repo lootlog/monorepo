@@ -257,7 +257,8 @@ export const BattlesTable = ({
           onKeyDown={stopBattleTableKeyboardAction}
         >
           <Checkbox
-            checked={headerCheckboxState}
+            checked={headerCheckboxState === true}
+            indeterminate={headerCheckboxState === "indeterminate"}
             aria-label={t("battlePanel.bulk.selectRows")}
             className="size-5"
             onClick={stopBattleTableAction}
@@ -357,11 +358,13 @@ export const BattlesTable = ({
         return (
           <div className="flex min-w-0 items-center md:min-w-[104px]">
             <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
-                  {getRelativeTime(battle.createdAt)}
-                </span>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
+                    {getRelativeTime(battle.createdAt)}
+                  </span>
+                }
+              />
               <TooltipContent>{exactTime}</TooltipContent>
             </Tooltip>
           </div>

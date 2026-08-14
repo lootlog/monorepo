@@ -263,15 +263,17 @@ export const MapTemplateFormDialog = ({
                       <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         {t("settings.mapTemplates.templateName")}
                       </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder={t(
-                            "settings.mapTemplates.templateNamePlaceholder",
-                          )}
-                          className="h-9 text-sm"
-                        />
-                      </FormControl>
+                      <FormControl
+                        render={
+                          <Input
+                            {...field}
+                            placeholder={t(
+                              "settings.mapTemplates.templateNamePlaceholder",
+                            )}
+                            className="h-9 text-sm"
+                          />
+                        }
+                      />
                       <FormMessage />
                     </FormItem>
                   )}

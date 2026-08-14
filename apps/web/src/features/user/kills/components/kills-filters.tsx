@@ -61,11 +61,13 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
     ? Object.keys(data.overview.killsByWorld).sort()
     : [];
 
-  const handleWorldChange = (value: string) => {
+  const handleWorldChange = (value: string | null) => {
+    if (value === null) return;
     onWorldChange(value === "all" ? undefined : value);
   };
 
-  const handleNpcTypeChange = (value: string) => {
+  const handleNpcTypeChange = (value: string | null) => {
+    if (value === null) return;
     onNpcTypeChange(value === "all" ? undefined : [value as NpcType]);
   };
 
@@ -93,6 +95,14 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
         <Select
           value={filters.world ?? "all"}
           onValueChange={handleWorldChange}
+          items={[
+            { value: null, label: <>{t("kills.home.filters.allWorlds")}</> },
+            { value: "all", label: <>{t("kills.home.filters.allWorlds")}</> },
+            ...worlds.map((world) => ({
+              value: world,
+              label: <>{world.charAt(0).toUpperCase() + world.slice(1)}</>,
+            })),
+          ]}
         >
           <SelectTrigger className="h-9 w-full min-w-0 md:w-[170px]">
             <div className="flex items-center gap-2">
@@ -115,6 +125,14 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
         <Select
           value={filters.npcTypes?.[0] ?? "all"}
           onValueChange={handleNpcTypeChange}
+          items={[
+            { value: null, label: <>{t("kills.filters.allTypes")}</> },
+            { value: "all", label: <>{t("kills.filters.allTypes")}</> },
+            ...TRACKABLE_NPC_TYPES.map((type) => ({
+              value: type,
+              label: <>{t(`npcType.${type}`)}</>,
+            })),
+          ]}
         >
           <SelectTrigger className="h-9 w-full min-w-0 md:w-[140px]">
             <SelectValue placeholder={t("kills.filters.allTypes")} />

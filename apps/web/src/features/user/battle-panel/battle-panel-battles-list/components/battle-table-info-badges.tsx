@@ -94,23 +94,25 @@ export const BattleTableInfoBadges = ({
       <span className={BATTLE_INFO_TAG_CLASS_NAME}>{visibilityLabel}</span>
       {userWarrior?.ph !== 0 && userWarrior?.ph !== undefined && (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge
-              onClick={handlePhBadgeClick}
-              onKeyDown={(event) =>
-                handleFilterBadgeKeyDown(event, () => onPhClick?.())
-              }
-              role="button"
-              tabIndex={0}
-              variant="outline"
-              className={cn(
-                BATTLE_INFO_TAG_CLASS_NAME,
-                BATTLE_INFO_TAG_ACTION_CLASS_NAME,
-              )}
-            >
-              {t("battlePanel.bulk.honorPointsShort")}
-            </Badge>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Badge
+                onClick={handlePhBadgeClick}
+                onKeyDown={(event) =>
+                  handleFilterBadgeKeyDown(event, () => onPhClick?.())
+                }
+                role="button"
+                tabIndex={0}
+                variant="outline"
+                className={cn(
+                  BATTLE_INFO_TAG_CLASS_NAME,
+                  BATTLE_INFO_TAG_ACTION_CLASS_NAME,
+                )}
+              >
+                {t("battlePanel.bulk.honorPointsShort")}
+              </Badge>
+            }
+          />
           <TooltipContent>
             {t("battlePanel.filters.honorPoints")}
           </TooltipContent>
@@ -118,24 +120,26 @@ export const BattleTableInfoBadges = ({
       )}
       {battle.matchmaking && (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge
-              onClick={handleMatchmakingBadgeClick}
-              onKeyDown={(event) =>
-                handleFilterBadgeKeyDown(event, () => onMatchmakingClick?.())
-              }
-              role="button"
-              tabIndex={0}
-              variant="outline"
-              className={cn(
-                BATTLE_INFO_TAG_CLASS_NAME,
-                BATTLE_INFO_TAG_ACTION_CLASS_NAME,
-                "border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20",
-              )}
-            >
-              {t("battlePanel.filters.matchmaking")}
-            </Badge>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Badge
+                onClick={handleMatchmakingBadgeClick}
+                onKeyDown={(event) =>
+                  handleFilterBadgeKeyDown(event, () => onMatchmakingClick?.())
+                }
+                role="button"
+                tabIndex={0}
+                variant="outline"
+                className={cn(
+                  BATTLE_INFO_TAG_CLASS_NAME,
+                  BATTLE_INFO_TAG_ACTION_CLASS_NAME,
+                  "border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20",
+                )}
+              >
+                {t("battlePanel.filters.matchmaking")}
+              </Badge>
+            }
+          />
           <TooltipContent>
             {t("battlePanel.filters.matchmaking")}
           </TooltipContent>

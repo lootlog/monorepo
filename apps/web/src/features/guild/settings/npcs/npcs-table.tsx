@@ -161,23 +161,27 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
                   className="flex min-h-7 min-w-0 items-center gap-1"
                 >
                   {enabledRarities.length > 0 ? (
-                    <TooltipProvider delayDuration={100}>
+                    <TooltipProvider delay={100}>
                       {enabledRarities.map((rarity) => {
                         const Icon = rarity.icon;
 
                         return (
                           <Tooltip key={rarity.key}>
-                            <TooltipTrigger asChild>
-                              <span
-                                className={cn(
-                                  "inline-flex size-7 items-center justify-center rounded-md",
-                                  rarity.bgColor,
-                                )}
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                <Icon className={cn("size-4", rarity.color)} />
-                              </span>
-                            </TooltipTrigger>
+                            <TooltipTrigger
+                              render={
+                                <span
+                                  className={cn(
+                                    "inline-flex size-7 items-center justify-center rounded-md",
+                                    rarity.bgColor,
+                                  )}
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <Icon
+                                    className={cn("size-4", rarity.color)}
+                                  />
+                                </span>
+                              }
+                            />
                             <TooltipContent side="top">
                               <p className="text-sm font-semibold">
                                 {t(`itemRarity.${rarity.key}`)}
@@ -200,19 +204,21 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
                 onClick={(event) => event.stopPropagation()}
               >
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      aria-label={t("settings.npcs.actions.more")}
-                    >
-                      <MoreHorizontal className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        aria-label={t("settings.npcs.actions.more")}
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    }
+                  />
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onSelect={() => openNpcDetails(npc)}>
+                    <DropdownMenuItem onClick={() => openNpcDetails(npc)}>
                       <CheckCircle2 className="size-4" />
                       {t("settings.npcs.actions.viewDetails")}
                     </DropdownMenuItem>

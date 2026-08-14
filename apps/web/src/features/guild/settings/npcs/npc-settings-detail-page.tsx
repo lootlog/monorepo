@@ -92,22 +92,24 @@ export const NpcSettingsDetailPage = () => {
           </div>
           <div className="flex min-h-8 shrink-0 flex-wrap items-center gap-1 pl-12 sm:pl-0">
             {enabledRarities.length > 0 ? (
-              <TooltipProvider delayDuration={100}>
+              <TooltipProvider delay={100}>
                 {enabledRarities.map((rarity) => {
                   const Icon = rarity.icon;
 
                   return (
                     <Tooltip key={rarity.key}>
-                      <TooltipTrigger asChild>
-                        <span
-                          className={cn(
-                            "inline-flex size-8 items-center justify-center rounded-md",
-                            rarity.bgColor,
-                          )}
-                        >
-                          <Icon className={cn("size-4", rarity.color)} />
-                        </span>
-                      </TooltipTrigger>
+                      <TooltipTrigger
+                        render={
+                          <span
+                            className={cn(
+                              "inline-flex size-8 items-center justify-center rounded-md",
+                              rarity.bgColor,
+                            )}
+                          >
+                            <Icon className={cn("size-4", rarity.color)} />
+                          </span>
+                        }
+                      />
                       <TooltipContent side="bottom">
                         <p className="text-sm font-semibold">
                           {t(`itemRarity.${rarity.key}`)}

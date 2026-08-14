@@ -116,69 +116,79 @@ export const BattlePanelSingleBattleActions: FC<
       {battle.public ? (
         <>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                aria-label={t("battlePanel.actions.copyLink")}
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleCopyClick}
-                disabled={isBusy}
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={t("battlePanel.actions.copyLink")}
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleCopyClick}
+                  disabled={isBusy}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              }
+            />
             <TooltipContent>{t("battlePanel.actions.copyLink")}</TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                aria-label={t("battlePanel.actions.hide")}
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleUnshareClick}
-                disabled={isBusy}
-              >
-                <Lock className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={t("battlePanel.actions.hide")}
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleUnshareClick}
+                  disabled={isBusy}
+                >
+                  <Lock className="h-3.5 w-3.5" />
+                </Button>
+              }
+            />
             <TooltipContent>{t("battlePanel.actions.hide")}</TooltipContent>
           </Tooltip>
         </>
       ) : (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              aria-label={t("battlePanel.actions.share")}
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleShareClick}
-              disabled={isBusy}
-            >
-              <Share2 className="h-3.5 w-3.5" />
-            </Button>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Button
+                aria-label={t("battlePanel.actions.share")}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleShareClick}
+                disabled={isBusy}
+              >
+                <Share2 className="h-3.5 w-3.5" />
+              </Button>
+            }
+          />
           <TooltipContent>{t("battlePanel.actions.share")}</TooltipContent>
         </Tooltip>
       )}
 
       <AlertDialog>
         <Tooltip>
-          <TooltipTrigger asChild>
-            <AlertDialogTrigger asChild>
-              <Button
-                aria-label={t("battlePanel.actions.delete")}
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
-                disabled={isBusy}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </AlertDialogTrigger>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    aria-label={t("battlePanel.actions.delete")}
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    disabled={isBusy}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                }
+              />
+            }
+          />
           <TooltipContent>{t("battlePanel.actions.delete")}</TooltipContent>
         </Tooltip>
         <AlertDialogContent>
@@ -192,15 +202,17 @@ export const BattlePanelSingleBattleActions: FC<
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteClick}
-                disabled={isBusy}
-              >
-                {t("battlePanel.dialogs.deleteBattle.confirm")}
-              </Button>
-            </AlertDialogAction>
+            <AlertDialogAction
+              render={
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteClick}
+                  disabled={isBusy}
+                >
+                  {t("battlePanel.dialogs.deleteBattle.confirm")}
+                </Button>
+              }
+            />
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

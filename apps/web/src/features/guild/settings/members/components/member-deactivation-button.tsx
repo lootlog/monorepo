@@ -69,19 +69,21 @@ export const MemberDeactivationButton = ({
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          size="sm"
-          variant="destructive"
-          className={cn(className)}
-          disabled={!member.active || deactivateMemberMutation.isPending}
-        >
-          <UserX className="size-4" />
-          {deactivateMemberMutation.isPending
-            ? t("settings.members.deactivatePending")
-            : t("settings.members.deactivate")}
-        </Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        render={
+          <Button
+            size="sm"
+            variant="destructive"
+            className={cn(className)}
+            disabled={!member.active || deactivateMemberMutation.isPending}
+          >
+            <UserX className="size-4" />
+            {deactivateMemberMutation.isPending
+              ? t("settings.members.deactivatePending")
+              : t("settings.members.deactivate")}
+          </Button>
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>

@@ -50,50 +50,58 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
         )}
       >
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-2 cursor-help whitespace-nowrap">
-              <Calendar size="14" />
-              {battle && format(battle.createdAt, "dd.MM.yyyy HH:mm")}
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="flex items-center gap-2 cursor-help whitespace-nowrap">
+                <Calendar size="14" />
+                {battle && format(battle.createdAt, "dd.MM.yyyy HH:mm")}
+              </div>
+            }
+          />
           <TooltipContent side="top" sideOffset={8}>
             <p>{t("battleUi.metadata.startTime")}</p>
           </TooltipContent>
         </Tooltip>
 
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
-              <Clock size="14" />
-              {formatSeconds(battle.duration)}
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
+                <Clock size="14" />
+                {formatSeconds(battle.duration)}
+              </div>
+            }
+          />
           <TooltipContent side="top" sideOffset={8}>
             <p>{t("battleUi.metadata.duration")}</p>
           </TooltipContent>
         </Tooltip>
 
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
-              <Users size="14" />
-              {battle.type}
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
+                <Users size="14" />
+                {battle.type}
+              </div>
+            }
+          />
           <TooltipContent side="top" sideOffset={8}>
             <p>{t("battleUi.metadata.battleType")}</p>
           </TooltipContent>
         </Tooltip>
 
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
-              {battle.public ? <Unlock size="14" /> : <Lock size="14" />}
-              {battle.public
-                ? t("battleUi.metadata.public")
-                : t("battleUi.metadata.private")}
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
+                {battle.public ? <Unlock size="14" /> : <Lock size="14" />}
+                {battle.public
+                  ? t("battleUi.metadata.public")
+                  : t("battleUi.metadata.private")}
+              </div>
+            }
+          />
           <TooltipContent side="top" sideOffset={8}>
             <p>
               {battle.public
@@ -104,11 +112,13 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
         </Tooltip>
 
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
-              <Earth size={14} /> {capitalizeFirstLetter(battle.world)}
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
+                <Earth size={14} /> {capitalizeFirstLetter(battle.world)}
+              </div>
+            }
+          />
           <TooltipContent side="top" sideOffset={8}>
             <p>{t("battleUi.metadata.world")}</p>
           </TooltipContent>
@@ -116,14 +126,16 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
 
         {warrior?.ph !== 0 && warrior?.ph !== undefined && (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
-                <Award size={14} />{" "}
-                {t("battleUi.metadata.honorPointsLabel", {
-                  value: warrior?.ph,
-                })}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
+                  <Award size={14} />{" "}
+                  {t("battleUi.metadata.honorPointsLabel", {
+                    value: warrior?.ph,
+                  })}
+                </div>
+              }
+            />
             <TooltipContent side="top" sideOffset={8}>
               <p>{t("battleUi.metadata.honorPointsTooltip")}</p>
             </TooltipContent>
@@ -132,11 +144,13 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
 
         {battle.hasFlee && (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
-                <EmergencyExitIcon size={14} /> {t("battleUi.metadata.flee")}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
+                  <EmergencyExitIcon size={14} /> {t("battleUi.metadata.flee")}
+                </div>
+              }
+            />
             <TooltipContent side="top" sideOffset={8}>
               <p>{t("battleUi.metadata.fleeTooltip")}</p>
             </TooltipContent>
@@ -145,16 +159,18 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
 
         {battle.matchmaking && (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className={cn(
-                  "flex items-center gap-1 cursor-help whitespace-nowrap",
-                  BATTLE_TEXT_COLORS.metric.secondary,
-                )}
-              >
-                <Swords size={14} /> {t("battleUi.metadata.matchmaking")}
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <div
+                  className={cn(
+                    "flex items-center gap-1 cursor-help whitespace-nowrap",
+                    BATTLE_TEXT_COLORS.metric.secondary,
+                  )}
+                >
+                  <Swords size={14} /> {t("battleUi.metadata.matchmaking")}
+                </div>
+              }
+            />
             <TooltipContent side="top" sideOffset={8}>
               <p>{t("battleUi.metadata.matchmakingTooltip")}</p>
             </TooltipContent>

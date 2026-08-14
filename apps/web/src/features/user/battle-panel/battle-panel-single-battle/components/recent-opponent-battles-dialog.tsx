@@ -37,18 +37,22 @@ export function RecentOpponentBattlesDialog({
   return (
     <Dialog>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button
-              aria-label={t("battlePanel.single.recentOpponent.openDialog")}
-              variant="ghost"
-              size="icon"
-              className={cn("h-8 w-8", className)}
-            >
-              <History className="h-3.5 w-3.5" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <DialogTrigger
+              render={
+                <Button
+                  aria-label={t("battlePanel.single.recentOpponent.openDialog")}
+                  variant="ghost"
+                  size="icon"
+                  className={cn("h-8 w-8", className)}
+                >
+                  <History className="h-3.5 w-3.5" />
+                </Button>
+              }
+            />
+          }
+        />
         <TooltipContent>
           {t("battlePanel.single.recentOpponent.openDialog")}
         </TooltipContent>

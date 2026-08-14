@@ -54,7 +54,16 @@ export const ScoringActionEditor = ({
           control={control}
           name={`scoringRules.rules.${ruleIndex}.action.type`}
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              items={[
+                ...EVENT_SCORING_ACTION_TYPES.map((actionTypeOption) => ({
+                  value: actionTypeOption,
+                  label: <>{getScoringActionTypeLabel(actionTypeOption, t)}</>,
+                })),
+              ]}
+            >
               <SelectTrigger size="sm" className="h-8 text-[12px]">
                 <SelectValue />
               </SelectTrigger>

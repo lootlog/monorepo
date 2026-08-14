@@ -85,53 +85,57 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="relative mb-2 flex w-full items-center justify-center">
-                {isActive && !isRukiaTheme && (
-                  <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]" />
-                )}
-                <Link
-                  to={`/${guild.vanityUrl ?? guild.id}` as string}
-                  draggable={false}
-                  className="group/guild-item isolate block relative"
-                  onClick={handleClick}
-                  style={{ pointerEvents: isDragging ? "none" : "auto" }}
-                >
-                  <ThemeCircularFrame isActive={isActive}>
-                    {avatarElement}
-                  </ThemeCircularFrame>
-                  {isHidden ? (
-                    <EyeOff
-                      aria-hidden
-                      className="pointer-events-none absolute -bottom-1 -right-1 z-20 size-4 rounded-full border border-sidebar-border bg-sidebar p-0.5 text-muted-foreground"
-                    />
-                  ) : null}
-                  {unreadLootsCount > 0 && !isActive && (
-                    <Badge className="absolute -right-2 -top-2 z-20 h-5 min-w-5 justify-center px-1.5 text-[10px] leading-none shadow-md">
-                      {unreadLootsCount > 99
-                        ? t("layout.guildsSelector.unreadLootsOverflow")
-                        : unreadLootsCount}
-                    </Badge>
-                  )}
-                </Link>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="font-medium">
-              <div>{guild.name}</div>
-              {isHidden ? (
-                <div className="text-xs font-normal text-muted-foreground">
-                  {t("settings.servers.hiddenInGameClient")}
-                </div>
-              ) : null}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </ContextMenuTrigger>
+      <ContextMenuTrigger
+        render={
+          <div>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <div className="relative mb-2 flex w-full items-center justify-center">
+                    {isActive && !isRukiaTheme && (
+                      <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]" />
+                    )}
+                    <Link
+                      to={`/${guild.vanityUrl ?? guild.id}` as string}
+                      draggable={false}
+                      className="group/guild-item isolate block relative"
+                      onClick={handleClick}
+                      style={{ pointerEvents: isDragging ? "none" : "auto" }}
+                    >
+                      <ThemeCircularFrame isActive={isActive}>
+                        {avatarElement}
+                      </ThemeCircularFrame>
+                      {isHidden ? (
+                        <EyeOff
+                          aria-hidden
+                          className="pointer-events-none absolute -bottom-1 -right-1 z-20 size-4 rounded-full border border-sidebar-border bg-sidebar p-0.5 text-muted-foreground"
+                        />
+                      ) : null}
+                      {unreadLootsCount > 0 && !isActive && (
+                        <Badge className="absolute -right-2 -top-2 z-20 h-5 min-w-5 justify-center px-1.5 text-[10px] leading-none shadow-md">
+                          {unreadLootsCount > 99
+                            ? t("layout.guildsSelector.unreadLootsOverflow")
+                            : unreadLootsCount}
+                        </Badge>
+                      )}
+                    </Link>
+                  </div>
+                }
+              />
+              <TooltipContent side="right" className="font-medium">
+                <div>{guild.name}</div>
+                {isHidden ? (
+                  <div className="text-xs font-normal text-muted-foreground">
+                    {t("settings.servers.hiddenInGameClient")}
+                  </div>
+                ) : null}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        }
+      />
       <ContextMenuContent>
-        <ContextMenuItem onSelect={onToggleHidden}>
+        <ContextMenuItem onClick={onToggleHidden}>
           {isHidden ? (
             <Eye className="mr-2 size-4" />
           ) : (

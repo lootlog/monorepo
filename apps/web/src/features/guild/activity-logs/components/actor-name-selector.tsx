@@ -71,41 +71,45 @@ export function ActorNameSelector({
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-controls={suggestionsListId}
-          aria-expanded={open}
-          className={cn("justify-between gap-2", className)}
-        >
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className={cn("truncate", !value && "text-muted-foreground")}>
-              {value ? truncatedValue : displayValue}
-            </span>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            {value && (
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-controls={suggestionsListId}
+            aria-expanded={open}
+            className={cn("justify-between gap-2", className)}
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span
-                role="button"
-                tabIndex={0}
-                onMouseDown={handleClear}
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    handleClear(e);
-                  }
-                }}
-                className="flex items-center justify-center"
+                className={cn("truncate", !value && "text-muted-foreground")}
               >
-                <X className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
+                {value ? truncatedValue : displayValue}
               </span>
-            )}
-            <ChevronsUpDown className="h-4 w-4 opacity-50" />
-          </div>
-        </Button>
-      </PopoverTrigger>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {value && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onMouseDown={handleClear}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      handleClear(e);
+                    }
+                  }}
+                  className="flex items-center justify-center"
+                >
+                  <X className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
+                </span>
+              )}
+              <ChevronsUpDown className="h-4 w-4 opacity-50" />
+            </div>
+          </Button>
+        }
+      />
       <PopoverContent className="w-[250px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInputRaw

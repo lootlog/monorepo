@@ -259,16 +259,32 @@ export const NotificationTargetDialog = ({
                       disabled={
                         isLoadingChannels || availableChannels.length === 0
                       }
+                      items={[
+                        {
+                          value: null,
+                          label: (
+                            <>
+                              {t("settings.notifications.placeholders.channel")}
+                            </>
+                          ),
+                        },
+                        ...availableChannels.map((channel) => ({
+                          value: channel.channelId,
+                          label: <>{channel.name}</>,
+                        })),
+                      ]}
                     >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={t(
-                              "settings.notifications.placeholders.channel",
-                            )}
-                          />
-                        </SelectTrigger>
-                      </FormControl>
+                      <FormControl
+                        render={
+                          <SelectTrigger className="w-full">
+                            <SelectValue
+                              placeholder={t(
+                                "settings.notifications.placeholders.channel",
+                              )}
+                            />
+                          </SelectTrigger>
+                        }
+                      />
                       <SelectContent>
                         {availableChannels.map((channel) => (
                           <SelectItem
@@ -305,14 +321,16 @@ export const NotificationTargetDialog = ({
                   <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                     {t("settings.notifications.fields.displayName")}
                   </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder={t(
-                        "settings.notifications.placeholders.displayName",
-                      )}
-                    />
-                  </FormControl>
+                  <FormControl
+                    render={
+                      <Input
+                        {...field}
+                        placeholder={t(
+                          "settings.notifications.placeholders.displayName",
+                        )}
+                      />
+                    }
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -333,12 +351,14 @@ export const NotificationTargetDialog = ({
                           {t("settings.notifications.fields.activeDescription")}
                         </p>
                       </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
+                      <FormControl
+                        render={
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        }
+                      />
                     </div>
                     {!field.value && target?.active ? (
                       <p className="text-xs text-amber-500">

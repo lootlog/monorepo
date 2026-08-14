@@ -61,18 +61,22 @@ export function BattleHpTimelineDialog({
   return (
     <Dialog>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button
-              aria-label={openLabel}
-              variant="ghost"
-              size="icon"
-              className="size-8"
-            >
-              <Maximize2 className="size-3.5" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <DialogTrigger
+              render={
+                <Button
+                  aria-label={openLabel}
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                >
+                  <Maximize2 className="size-3.5" />
+                </Button>
+              }
+            />
+          }
+        />
         <TooltipContent>{openLabel}</TooltipContent>
       </Tooltip>
       <DialogContent className="flex h-[88dvh] max-h-[900px] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[calc(100vw-2rem)] xl:max-w-[1500px] max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:rounded-none">

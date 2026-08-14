@@ -97,33 +97,37 @@ export function BattleHpTimelineChart({
         </div>
         <div className="flex items-center gap-2">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                aria-label={visibilityLabel}
-                aria-pressed={isChartHidden}
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                onClick={toggleChartHidden}
-              >
-                <VisibilityIcon className="size-3.5" />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={visibilityLabel}
+                  aria-pressed={isChartHidden}
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={toggleChartHidden}
+                >
+                  <VisibilityIcon className="size-3.5" />
+                </Button>
+              }
+            />
             <TooltipContent>{visibilityLabel}</TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                aria-label={heightLabel}
-                aria-pressed={isExpanded}
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                onClick={toggleHeightMode}
-              >
-                <HeightIcon className="size-3.5" />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={heightLabel}
+                  aria-pressed={isExpanded}
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={toggleHeightMode}
+                >
+                  <HeightIcon className="size-3.5" />
+                </Button>
+              }
+            />
             <TooltipContent>{heightLabel}</TooltipContent>
           </Tooltip>
           <BattleHpTimelineLegendPopover
