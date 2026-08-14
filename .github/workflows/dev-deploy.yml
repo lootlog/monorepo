@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
+      cloudflare-targets: ${{ steps.plan.outputs.cloudflare_targets }}
       docker-services: ${{ steps.plan.outputs.docker_services }}
       version-pull-request: ${{ steps.plan.outputs.version_pull_request }}
     steps:
@@ -73,8 +74,11 @@ jobs:
               "$pull_request_heads"
           )"
 
-          echo "docker_services=$(jq -c '.dockerServices' <<< "$plan")" >> "$GITHUB_OUTPUT"
-          echo "version_pull_request=$(jq -r '.versionPullRequest' <<< "$plan")" >> "$GITHUB_OUTPUT"
+          {
+            echo "cloudflare_targets=$(jq -c '.cloudflareTargets' <<< "$plan")"
+            echo "docker_services=$(jq -c '.dockerServices' <<< "$plan")"
+            echo "version_pull_request=$(jq -r '.versionPullRequest' <<< "$plan")"
+          } >> "$GITHUB_OUTPUT"
 
           {
             echo "## Development deployment plan"
@@ -83,6 +87,110 @@ jobs:
             jq . <<< "$plan"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-cloudflare:
+    name: Deploy ${{ matrix.project }} to development
+    needs: plan
+    if: needs.plan.outputs.cloudflare-targets != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: dev
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.cloudflare-targets) }}
+    steps:
+      - name: Checkout main commit
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Load Cloudflare preview variables
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PACKAGE_NAME: ${{ matrix.packageName }}
+          PROJECT: ${{ matrix.project }}
+        run: |
+          settings="$(
+            curl --fail-with-body --silent --show-error \
+              --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT"
+          )"
+
+          case "$PACKAGE_NAME" in
+            @lootlog/landing)
+              keys=(
+                NEXT_PUBLIC_ADDON_URL
+                NEXT_PUBLIC_AUTH_SERVICE_URL
+              )
+              ;;
+            @lootlog/web)
+              keys=(
+                VITE_ACTIVITY_API_URL
+                VITE_ADDON_INSTALL_URL
+                VITE_API_URL
+                VITE_AUTH_SERVICE_URL
+                VITE_BATTLELOG_API_URL
+                VITE_BATTLELOG_PUBLIC_URL
+                VITE_DISCORD_BOT_PERMISSIONS
+                VITE_DISCORD_CLIENT_ID
+                VITE_GATEWAY_URL
+                VITE_SEARCH_API_URL
+              )
+              ;;
+            *)
+              echo "::error::Unsupported Cloudflare package: $PACKAGE_NAME"
+              exit 1
+              ;;
+          esac
+
+          for key in "${keys[@]}"; do
+            value="$(
+              jq --exit-status --raw-output \
+                --arg key "$key" \
+                '.result.deployment_configs.preview.env_vars[$key] | select(.type == "plain_text") | .value' \
+                <<< "$settings"
+            )"
+            if [[ "$value" == *$'\n'* ]]; then
+              echo "::error::Cloudflare variable $key contains a newline."
+              exit 1
+            fi
+            echo "$key=$value" >> "$GITHUB_ENV"
+          done
+
+      - name: Build development artifact
+        env:
+          ARTIFACT_PATH: ${{ matrix.artifactPath }}
+          PACKAGE_NAME: ${{ matrix.packageName }}
+        run: |
+          pnpm exec turbo run build --filter="$PACKAGE_NAME"
+          test -d "$ARTIFACT_PATH"
+
+      - name: Deploy development artifact
+        env:
+          ARTIFACT_PATH: ${{ matrix.artifactPath }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PACKAGE_NAME: ${{ matrix.packageName }}
+          PROJECT: ${{ matrix.project }}
+        run: |
+          pnpm exec wrangler pages deploy "$ARTIFACT_PATH" \
+            --project-name "$PROJECT" \
+            --branch develop \
+            --commit-hash "$GITHUB_SHA" \
+            --commit-message "Deploy $PACKAGE_NAME to development" \
+            --commit-dirty=false
 
   build-images:
     name: Build and push ${{ matrix.service }}
