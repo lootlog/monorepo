@@ -107,24 +107,26 @@ export function FilterPopover<T extends string = string>({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          disabled={disabled}
-          className={cn(
-            width,
-            "h-10 justify-between focus-visible:ring-inset focus-visible:ring-offset-0 data-[state=open]:border-ring data-[state=open]:ring-2 data-[state=open]:ring-inset data-[state=open]:ring-ring",
-            triggerClassName,
-          )}
-        >
-          <div className="flex items-center gap-2">
-            {Icon && <Icon className="h-4 w-4" />}
-            <span className="text-sm truncate">{getLabel()}</span>
-          </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={disabled}
+            className={cn(
+              width,
+              "h-10 justify-between focus-visible:ring-inset focus-visible:ring-offset-0 data-popup-open:border-ring data-popup-open:ring-2 data-popup-open:ring-inset data-popup-open:ring-ring",
+              triggerClassName,
+            )}
+          />
+        }
+      >
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="h-4 w-4" />}
+          <span className="text-sm truncate">{getLabel()}</span>
+        </div>
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </PopoverTrigger>
       <PopoverContent
         className={cn(

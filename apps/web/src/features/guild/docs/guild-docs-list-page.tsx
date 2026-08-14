@@ -259,18 +259,19 @@ export const GuildDocsListPage = () => {
                     </p>
                     <div className="mt-1 flex gap-2">
                       <Button
-                        asChild
                         size="sm"
                         variant="secondary"
                         className="min-w-0 flex-1 justify-center"
-                      >
-                        <Link
-                          to="/$guildId/docs/$docId"
-                          params={{ guildId, docId: document.id }}
-                        >
-                          {t("docs.list.open")}
-                        </Link>
-                      </Button>
+                        render={
+                          <Link
+                            to="/$guildId/docs/$docId"
+                            params={{ guildId, docId: document.id }}
+                          >
+                            {t("docs.list.open")}
+                          </Link>
+                        }
+                        nativeButton={false}
+                      />
                       {canWrite && (
                         <Button
                           type="button"
@@ -333,7 +334,7 @@ export const GuildDocsListPage = () => {
               disabled={deleteDocument.isPending || !documentPendingTrash}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={(event) => {
-                event.preventDefault();
+                event.preventBaseUIHandler();
 
                 if (documentPendingTrash) {
                   void moveDocumentToTrash(documentPendingTrash);

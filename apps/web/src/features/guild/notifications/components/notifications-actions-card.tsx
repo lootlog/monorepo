@@ -39,11 +39,15 @@ export const NotificationsActionsCard = ({
           {t("settings.notifications.actions.addTarget")}
         </Button>
         {hasRequiredPermissions && !isRuleLimitReached ? (
-          <Button size="sm" asChild>
-            <Link to={ROUTES.guild.notifications.create(guildId ?? "")}>
-              {t("settings.notifications.actions.addRule")}
-            </Link>
-          </Button>
+          <Button
+            size="sm"
+            render={
+              <Link to={ROUTES.guild.notifications.create(guildId ?? "")}>
+                {t("settings.notifications.actions.addRule")}
+              </Link>
+            }
+            nativeButton={false}
+          />
         ) : (
           <Button size="sm" disabled>
             {t("settings.notifications.actions.addRule")}

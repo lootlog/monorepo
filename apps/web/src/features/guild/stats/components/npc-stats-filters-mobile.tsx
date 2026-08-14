@@ -82,7 +82,19 @@ export const NpcStatsFiltersMobile = ({
 
       <div className="space-y-2">
         <Label>{t("kills.filters.npcType")}</Label>
-        <Select value={npcType ?? "ALL"} onValueChange={onNpcTypeChange}>
+        <Select
+          value={npcType ?? "ALL"}
+          onValueChange={(value) => {
+            if (value !== null) onNpcTypeChange(value);
+          }}
+          items={[
+            { value: "ALL", label: <>{t("kills.filters.allTypes")}</> },
+            ...TRACKABLE_NPC_TYPES.map((type) => ({
+              value: type,
+              label: <>{t(`npcType.${type}`)}</>,
+            })),
+          ]}
+        >
           <SelectTrigger className="w-full">
             <div className="flex items-center gap-2">
               <Sword className="h-4 w-4" />

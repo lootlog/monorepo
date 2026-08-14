@@ -12,6 +12,7 @@ import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -119,16 +120,18 @@ export const PlayerTile: FC<PlayerTileProps> = ({
 
   if (!sharedTooltip) {
     playerTrigger = (
-      <Tooltip delayDuration={100}>
-        <TooltipTrigger asChild>{triggerElement}</TooltipTrigger>
-        <TooltipContent className="border-border/50 bg-popover/95">
-          <PlayerTooltipContent
-            name={name}
-            lvl={lvl ?? undefined}
-            prof={prof ?? undefined}
-          />
-        </TooltipContent>
-      </Tooltip>
+      <TooltipProvider delay={100}>
+        <Tooltip>
+          <TooltipTrigger render={triggerElement} />
+          <TooltipContent className="border-border/50 bg-popover/95">
+            <PlayerTooltipContent
+              name={name}
+              lvl={lvl ?? undefined}
+              prof={prof ?? undefined}
+            />
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 
@@ -138,24 +141,26 @@ export const PlayerTile: FC<PlayerTileProps> = ({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <span
-          className={cn(
-            "inline-flex cursor-context-menu rounded-lg outline-none",
-            !highlighted &&
-              "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          )}
-          tabIndex={0}
-          aria-label={t("loots.list.playerActions.label", { name })}
-          onClick={(event) => event.stopPropagation()}
-        >
-          {playerTrigger}
-        </span>
-      </ContextMenuTrigger>
+      <ContextMenuTrigger
+        render={
+          <span
+            className={cn(
+              "inline-flex cursor-context-menu rounded-lg outline-none",
+              !highlighted &&
+                "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            )}
+            tabIndex={0}
+            aria-label={t("loots.list.playerActions.label", { name })}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {playerTrigger}
+          </span>
+        }
+      />
       <ContextMenuContent className="min-w-56 rounded-xl border-border bg-popover p-1.5 shadow-xl">
         <ContextMenuItem
           className="h-9 cursor-pointer gap-2 rounded-lg px-2.5"
-          onSelect={onShowLoots}
+          onClick={onShowLoots}
         >
           <ListFilter className="size-4 text-primary" />
           {t("loots.list.playerActions.showLoots")}
@@ -163,7 +168,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
         <ContextMenuItem
           className="h-9 cursor-pointer gap-2 rounded-lg px-2.5"
           disabled={!profileUrl}
-          onSelect={() => {
+          onClick={() => {
             if (profileUrl) {
               window.open(profileUrl, "_blank", "noopener,noreferrer");
             }

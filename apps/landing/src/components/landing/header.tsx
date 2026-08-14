@@ -109,16 +109,20 @@ export function LandingHeader() {
               size="sm"
               variant="outline"
               className="h-11 rounded-xl border-[#3b4d67] bg-transparent px-3 font-bold text-[#e6edf7] transition-[background-color,transform] hover:bg-[#14233a] hover:text-white motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f] md:hidden"
-              asChild
-            >
-              <a href={links.dashboard}>
-                <span className="sm:hidden">{t("landing.header.lootlog")}</span>
-                <span className="hidden sm:inline">
-                  {t("landing.header.goToLootlog")}
-                </span>
-                <ArrowUpRight className="size-3.5" />
-              </a>
-            </Button>
+
+              render={
+                <a href={links.dashboard}>
+                  <span className="sm:hidden">
+                    {t("landing.header.lootlog")}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {t("landing.header.goToLootlog")}
+                  </span>
+                  <ArrowUpRight className="size-3.5" />
+                </a>
+              }
+              nativeButton={false}
+            />
           ) : (
             <Button
               size="sm"
@@ -144,31 +148,35 @@ export function LandingHeader() {
             size="sm"
             variant="outline"
             className="h-11 rounded-xl border-[#ff665b]/35 bg-[#ff665b]/10 px-3 font-bold text-[#ff9a92] transition-[background-color,color,transform] hover:border-[#ff665b]/55 hover:bg-[#ff665b]/20 hover:text-[#ffc1bc] motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#ff665b] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
-            asChild
-          >
-            <a
-              href={links.support}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={t("landing.header.support")}
-            >
-              <Heart className="size-4 fill-current" />
-              <span className="hidden sm:inline">
-                {t("landing.header.support")}
-              </span>
-            </a>
-          </Button>
+
+            render={
+              <a
+                href={links.support}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t("landing.header.support")}
+              >
+                <Heart className="size-4 fill-current" />
+                <span className="hidden sm:inline">
+                  {t("landing.header.support")}
+                </span>
+              </a>
+            }
+            nativeButton={false}
+          />
 
           <Button
             size="sm"
             className="hidden h-11 rounded-xl bg-[#c8f135] px-4 font-bold text-[#07111f] shadow-none transition-[background-color,transform] hover:bg-[#d8ff5a] motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#35d3e4] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f] md:inline-flex"
-            asChild
-          >
-            <a href={links.dashboard}>
-              {t("landing.header.goToLootlog")}
-              <ArrowUpRight className="size-4" />
-            </a>
-          </Button>
+
+            render={
+              <a href={links.dashboard}>
+                {t("landing.header.goToLootlog")}
+                <ArrowUpRight className="size-4" />
+              </a>
+            }
+            nativeButton={false}
+          />
         </div>
       </div>
 

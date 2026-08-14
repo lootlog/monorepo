@@ -166,16 +166,18 @@ export const MembersTable = ({
                           : "settings.members.webActivity.onlineSources.game";
 
                       return (
-                        <TooltipProvider key={source} delayDuration={100}>
+                        <TooltipProvider key={source} delay={100}>
                           <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span
-                                className="inline-flex size-5 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-500"
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                <Icon className="size-3.5" />
-                              </span>
-                            </TooltipTrigger>
+                            <TooltipTrigger
+                              render={
+                                <span
+                                  className="inline-flex size-5 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-500"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <Icon className="size-3.5" />
+                                </span>
+                              }
+                            />
                             <TooltipContent side="top">
                               <p className="text-sm font-semibold">
                                 {t(labelKey)}
@@ -186,16 +188,18 @@ export const MembersTable = ({
                       );
                     })}
                     {isGamePresenceVerified && (
-                      <TooltipProvider delayDuration={100}>
+                      <TooltipProvider delay={100}>
                         <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span
-                              className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <BadgeCheck className="size-3.5" />
-                            </span>
-                          </TooltipTrigger>
+                          <TooltipTrigger
+                            render={
+                              <span
+                                className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <BadgeCheck className="size-3.5" />
+                              </span>
+                            }
+                          />
                           <TooltipContent side="top">
                             <p className="text-sm font-semibold">
                               {t(
@@ -390,18 +394,20 @@ export const MembersTable = ({
                                 : "settings.members.webActivity.onlineSources.game";
 
                             return (
-                              <TooltipProvider key={source} delayDuration={100}>
+                              <TooltipProvider key={source} delay={100}>
                                 <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span
-                                      className="inline-flex size-5 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-500"
-                                      onClick={(event) =>
-                                        event.stopPropagation()
-                                      }
-                                    >
-                                      <Icon className="size-3.5" />
-                                    </span>
-                                  </TooltipTrigger>
+                                  <TooltipTrigger
+                                    render={
+                                      <span
+                                        className="inline-flex size-5 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-500"
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
+                                      >
+                                        <Icon className="size-3.5" />
+                                      </span>
+                                    }
+                                  />
                                   <TooltipContent side="top">
                                     <p className="text-sm font-semibold">
                                       {t(labelKey)}
@@ -412,16 +418,20 @@ export const MembersTable = ({
                             );
                           })}
                           {isGamePresenceVerified && (
-                            <TooltipProvider delayDuration={100}>
+                            <TooltipProvider delay={100}>
                               <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span
-                                    className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
-                                    onClick={(event) => event.stopPropagation()}
-                                  >
-                                    <BadgeCheck className="size-3.5" />
-                                  </span>
-                                </TooltipTrigger>
+                                <TooltipTrigger
+                                  render={
+                                    <span
+                                      className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
+                                      onClick={(event) =>
+                                        event.stopPropagation()
+                                      }
+                                    >
+                                      <BadgeCheck className="size-3.5" />
+                                    </span>
+                                  }
+                                />
                                 <TooltipContent side="top">
                                   <p className="text-sm font-semibold">
                                     {t(
@@ -438,16 +448,18 @@ export const MembersTable = ({
                     <div className="flex min-h-7 flex-wrap items-center gap-1">
                       <MemberDiscordSyncIndicator member={member} />
                       {member.userId === guildOwnerId && (
-                        <TooltipProvider delayDuration={100}>
+                        <TooltipProvider delay={100}>
                           <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span
-                                className="inline-flex rounded-md bg-amber-500/10 p-1.5 text-amber-400 transition-colors"
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                <Crown className="size-4" />
-                              </span>
-                            </TooltipTrigger>
+                            <TooltipTrigger
+                              render={
+                                <span
+                                  className="inline-flex rounded-md bg-amber-500/10 p-1.5 text-amber-400 transition-colors"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <Crown className="size-4" />
+                                </span>
+                              }
+                            />
                             <TooltipContent side="top">
                               <p className="text-sm font-semibold">
                                 {t("settings.members.owner")}
@@ -456,7 +468,7 @@ export const MembersTable = ({
                           </Tooltip>
                         </TooltipProvider>
                       )}
-                      <TooltipProvider delayDuration={100}>
+                      <TooltipProvider delay={100}>
                         {activePermissionCategories.map((category) => {
                           const activePermissions = category.permissions.filter(
                             (permission) =>
@@ -535,21 +547,21 @@ export const MembersTable = ({
                 onClick={(event) => event.stopPropagation()}
               >
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      aria-label={t("settings.members.actions.more")}
-                    >
-                      <MoreHorizontal className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        aria-label={t("settings.members.actions.more")}
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    }
+                  />
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem
-                      onSelect={() => openMemberDetails(member)}
-                    >
+                    <DropdownMenuItem onClick={() => openMemberDetails(member)}>
                       <CheckCircle2 className="size-4" />
                       {t("settings.members.actions.viewDetails")}
                     </DropdownMenuItem>

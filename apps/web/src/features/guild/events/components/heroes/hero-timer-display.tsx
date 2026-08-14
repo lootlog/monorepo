@@ -94,22 +94,24 @@ const HeroTimerDisplayContent = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 text-[11px] font-medium whitespace-nowrap",
-            isOverdue
-              ? "text-orange-500"
-              : isClose
-                ? "text-orange-400"
-                : "text-green-400",
-            className,
-          )}
-        >
-          <Clock className="w-3 h-3" />
-          {displayTime}
-        </span>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 text-[11px] font-medium whitespace-nowrap",
+              isOverdue
+                ? "text-orange-500"
+                : isClose
+                  ? "text-orange-400"
+                  : "text-green-400",
+              className,
+            )}
+          >
+            <Clock className="w-3 h-3" />
+            {displayTime}
+          </span>
+        }
+      />
       <TooltipContent>
         <p className="text-sm">
           {label}:{" "}

@@ -126,37 +126,41 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <span>
-          <Button
-            className={cn("justify-center", className)}
-            size="sm"
-            variant={variant}
-            disabled={
-              isPending ||
-              !canRefresh ||
-              member.refreshQueued ||
-              !canTriggerRefresh
-            }
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!guildId) {
-                return;
+      <TooltipTrigger
+        render={
+          <span>
+            <Button
+              className={cn("justify-center", className)}
+              size="sm"
+              variant={variant}
+              disabled={
+                isPending ||
+                !canRefresh ||
+                member.refreshQueued ||
+                !canTriggerRefresh
               }
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!guildId) {
+                  return;
+                }
 
-              refreshMember({
-                pathParams: {
-                  guildId,
-                  discordId: member.userId,
-                },
-              });
-            }}
-          >
-            <RefreshCcw className={cn("size-4", isPending && "animate-spin")} />
-            {t("settings.members.refreshPermissions")}
-          </Button>
-        </span>
-      </TooltipTrigger>
+                refreshMember({
+                  pathParams: {
+                    guildId,
+                    discordId: member.userId,
+                  },
+                });
+              }}
+            >
+              <RefreshCcw
+                className={cn("size-4", isPending && "animate-spin")}
+              />
+              {t("settings.members.refreshPermissions")}
+            </Button>
+          </span>
+        }
+      />
       <TooltipContent>{tooltipText}</TooltipContent>
     </Tooltip>
   );

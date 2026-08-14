@@ -71,11 +71,13 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
                 </Button>
               )}
               <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={isPending}>
-                    {t("battleUi.overviewHeader.delete")}
-                  </Button>
-                </AlertDialogTrigger>
+                <AlertDialogTrigger
+                  render={
+                    <Button variant="destructive" disabled={isPending}>
+                      {t("battleUi.overviewHeader.delete")}
+                    </Button>
+                  }
+                />
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
@@ -89,11 +91,13 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
                     <AlertDialogCancel>
                       {t("battleUi.overviewHeader.cancel")}
                     </AlertDialogCancel>
-                    <AlertDialogAction asChild>
-                      <Button variant="destructive" onClick={onDeleteClick}>
-                        {t("battleUi.overviewHeader.deleteBattle")}
-                      </Button>
-                    </AlertDialogAction>
+                    <AlertDialogAction
+                      render={
+                        <Button variant="destructive" onClick={onDeleteClick}>
+                          {t("battleUi.overviewHeader.deleteBattle")}
+                        </Button>
+                      }
+                    />
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>

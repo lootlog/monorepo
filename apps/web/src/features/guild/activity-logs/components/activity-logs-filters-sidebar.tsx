@@ -185,7 +185,7 @@ export const ActivityLogsFiltersSidebar: FC<
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
               <Accordion
-                type="multiple"
+                multiple
                 defaultValue={["general", "type", "source", "date"]}
                 className="space-y-4"
               >

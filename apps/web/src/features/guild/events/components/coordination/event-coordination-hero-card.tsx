@@ -114,19 +114,25 @@ export const EventCoordinationHeroCard = ({
         </div>
 
         <div className="flex flex-wrap gap-2 lg:justify-end">
-          <Button asChild size="sm" variant="outline" className="shrink-0">
-            <Link
-              to="/$guildId/events/$eventId/heroes/$heroId"
-              params={{
-                guildId,
-                eventId,
-                heroId: hero.heroId,
-              }}
-            >
-              <ArrowRight className="size-3.5" />
-              {t("events.coordination.actions.openMaps")}
-            </Link>
-          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            render={
+              <Link
+                to="/$guildId/events/$eventId/heroes/$heroId"
+                params={{
+                  guildId,
+                  eventId,
+                  heroId: hero.heroId,
+                }}
+              >
+                <ArrowRight className="size-3.5" />
+                {t("events.coordination.actions.openMaps")}
+              </Link>
+            }
+            nativeButton={false}
+          />
 
           {canWrite && targetGap && (
             <Button

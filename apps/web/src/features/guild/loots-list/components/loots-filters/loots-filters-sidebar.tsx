@@ -439,7 +439,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                   </div>
                 </div>
 
-                <Accordion type="multiple" defaultValue={initiallyOpenSections}>
+                <Accordion multiple defaultValue={initiallyOpenSections}>
                   <AccordionItem
                     value="npc"
                     className="border-b border-border/70 px-3 sm:px-4"

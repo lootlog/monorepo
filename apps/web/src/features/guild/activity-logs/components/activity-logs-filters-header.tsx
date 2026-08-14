@@ -49,8 +49,22 @@ export const ActivityLogsFiltersHeader = ({
             <Select
               value={selectedWorld || undefined}
               onValueChange={(value) =>
-                onWorldChange(value !== "all" ? value : "")
+                onWorldChange(value !== null && value !== "all" ? value : "")
               }
+              items={[
+                {
+                  value: null,
+                  label: <>{t("activityLogs.filters.allWorlds")}</>,
+                },
+                {
+                  value: "all",
+                  label: <>{t("activityLogs.filters.allWorlds")}</>,
+                },
+                ...worldOptions.map((option) => ({
+                  value: option.value,
+                  label: <>{capitalizeFirstLetter(option.label)}</>,
+                })),
+              ]}
             >
               <SelectTrigger className="h-9 w-48">
                 <SelectValue

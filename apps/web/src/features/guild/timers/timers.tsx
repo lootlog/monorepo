@@ -103,31 +103,35 @@ export const Timers = () => {
             {isMobile && <WorldSwitcher />}
             <div className="flex items-center gap-1">
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => setViewMode("list")}
-                    variant={viewMode === "list" ? "default" : "ghost"}
-                    size="icon"
-                    className="h-8 w-8"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      onClick={() => setViewMode("list")}
+                      variant={viewMode === "list" ? "default" : "ghost"}
+                      size="icon"
+                      className="h-8 w-8"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  }
+                />
                 <TooltipContent side="bottom">
                   <p>{t("timers.view.list")}</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => setViewMode("grid")}
-                    variant={viewMode === "grid" ? "default" : "ghost"}
-                    size="icon"
-                    className="h-8 w-8"
-                  >
-                    <Grid2X2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      onClick={() => setViewMode("grid")}
+                      variant={viewMode === "grid" ? "default" : "ghost"}
+                      size="icon"
+                      className="h-8 w-8"
+                    >
+                      <Grid2X2 className="h-4 w-4" />
+                    </Button>
+                  }
+                />
                 <TooltipContent side="bottom">
                   <p>{t("timers.view.grid")}</p>
                 </TooltipContent>

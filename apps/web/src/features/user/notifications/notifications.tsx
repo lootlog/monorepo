@@ -99,15 +99,17 @@ export const UserNotifications = () => {
               description={t("settings.userNotifications.description")}
               actions={
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setIsInfoDialogOpen(true)}
-                    >
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setIsInfoDialogOpen(true)}
+                      >
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
                   <TooltipContent>
                     {t("settings.userNotifications.infoDialog.title")}
                   </TooltipContent>

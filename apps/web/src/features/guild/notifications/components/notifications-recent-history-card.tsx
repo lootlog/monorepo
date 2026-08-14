@@ -99,13 +99,19 @@ export const NotificationsRecentHistoryCard = ({
               </div>
             </Card>
           ))}
-          <Button size="sm" variant="outline" className="w-full" asChild>
-            <Link to={ROUTES.guild.notifications.history(guildId ?? "")}>
-              {t("settings.notifications.actions.showAllHistory", {
-                count: historyJobs.length,
-              })}
-            </Link>
-          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full"
+            render={
+              <Link to={ROUTES.guild.notifications.history(guildId ?? "")}>
+                {t("settings.notifications.actions.showAllHistory", {
+                  count: historyJobs.length,
+                })}
+              </Link>
+            }
+            nativeButton={false}
+          />
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-border/80 bg-background p-6 text-sm text-muted-foreground">

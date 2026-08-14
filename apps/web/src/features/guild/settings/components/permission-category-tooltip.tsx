@@ -27,14 +27,19 @@ export const PermissionCategoryTooltip = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          className={cn("p-1.5 rounded-md transition-colors", category.bgColor)}
-          onClick={onClick}
-        >
-          <IconComponent className={cn("size-4", category.color)} />
-        </div>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <div
+            className={cn(
+              "p-1.5 rounded-md transition-colors",
+              category.bgColor,
+            )}
+            onClick={onClick}
+          >
+            <IconComponent className={cn("size-4", category.color)} />
+          </div>
+        }
+      />
       <TooltipContent side={side} className="max-w-xs">
         <div className="space-y-1">
           <p className="font-semibold text-sm">{category.name}</p>

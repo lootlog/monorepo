@@ -63,6 +63,12 @@ export const ScoringConditionNumeric = ({
               <Select
                 value={field.value as string}
                 onValueChange={field.onChange}
+                items={[
+                  ...EVENT_SCORING_NUMERIC_FACTORS.map((factor) => ({
+                    value: factor,
+                    label: <>{getScoringFactorLabel(factor, t)}</>,
+                  })),
+                ]}
               >
                 <SelectTrigger size="sm" className="h-8 text-[12px]">
                   <SelectValue />
@@ -76,9 +82,11 @@ export const ScoringConditionNumeric = ({
                 </SelectContent>
               </Select>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="size-3.5 text-muted-foreground/30 shrink-0 cursor-help" />
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <HelpCircle className="size-3.5 text-muted-foreground/30 shrink-0 cursor-help" />
+                  }
+                />
                 <TooltipContent side="top" className="max-w-[220px]">
                   <p className="text-xs">
                     {getScoringFactorDescription(
@@ -105,6 +113,12 @@ export const ScoringConditionNumeric = ({
             <Select
               value={field.value as string}
               onValueChange={field.onChange}
+              items={[
+                ...EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => ({
+                  value: operator,
+                  label: <>{operator}</>,
+                })),
+              ]}
             >
               <SelectTrigger size="sm" className="h-8 text-[12px] font-mono">
                 <SelectValue />

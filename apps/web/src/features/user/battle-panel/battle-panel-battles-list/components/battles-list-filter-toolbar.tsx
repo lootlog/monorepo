@@ -171,24 +171,26 @@ export const BattlesListFilterToolbar = ({
       />
 
       <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-controls={characterListId}
-            aria-expanded={characterOpen}
-            className="h-10 w-[160px] justify-between"
-          >
-            <div className="flex min-w-0 items-center gap-2">
-              <User className="size-4 shrink-0" aria-hidden="true" />
-              <span className="truncate text-sm">{characterLabel}</span>
-            </div>
-            <ChevronsUpDown
-              className="ml-2 size-4 shrink-0 opacity-50"
-              aria-hidden="true"
-            />
-          </Button>
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-controls={characterListId}
+              aria-expanded={characterOpen}
+              className="h-10 w-[160px] justify-between"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <User className="size-4 shrink-0" aria-hidden="true" />
+                <span className="truncate text-sm">{characterLabel}</span>
+              </div>
+              <ChevronsUpDown
+                className="ml-2 size-4 shrink-0 opacity-50"
+                aria-hidden="true"
+              />
+            </Button>
+          }
+        />
         <PopoverContent className="w-[280px] p-0">
           <Command>
             <CommandInput
@@ -250,12 +252,14 @@ export const BattlesListFilterToolbar = ({
       />
 
       <Popover>
-        <PopoverTrigger asChild>
-          <Button type="button" variant="outline" className="h-10 gap-2">
-            <SlidersHorizontal className="size-4" aria-hidden="true" />
-            {moreLabel}
-          </Button>
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={
+            <Button type="button" variant="outline" className="h-10 gap-2">
+              <SlidersHorizontal className="size-4" aria-hidden="true" />
+              {moreLabel}
+            </Button>
+          }
+        />
         <PopoverContent align="end" className="w-[300px] p-4">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">

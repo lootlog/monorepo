@@ -137,55 +137,63 @@ export const LootFiltersHeader = ({
                   )}
                 >
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div
-                        onMouseEnter={() => setHoveredButton("list")}
-                        onMouseLeave={() => setHoveredButton(null)}
-                      >
-                        <ThemeInteractiveFrame
-                          isHovered={hoveredButton === "list"}
-                          isActive={viewMode === "list"}
+                    <TooltipTrigger
+                      render={
+                        <div
+                          onMouseEnter={() => setHoveredButton("list")}
+                          onMouseLeave={() => setHoveredButton(null)}
                         >
-                          <Button
-                            onClick={() => setViewMode("list")}
-                            variant={viewMode === "list" ? "default" : "ghost"}
-                            size="icon"
-                            aria-label={t("loots.header.listView")}
-                            aria-pressed={viewMode === "list"}
-                            className="h-8 w-8"
+                          <ThemeInteractiveFrame
+                            isHovered={hoveredButton === "list"}
+                            isActive={viewMode === "list"}
                           >
-                            <List className="h-4 w-4" />
-                          </Button>
-                        </ThemeInteractiveFrame>
-                      </div>
-                    </TooltipTrigger>
+                            <Button
+                              onClick={() => setViewMode("list")}
+                              variant={
+                                viewMode === "list" ? "default" : "ghost"
+                              }
+                              size="icon"
+                              aria-label={t("loots.header.listView")}
+                              aria-pressed={viewMode === "list"}
+                              className="h-8 w-8"
+                            >
+                              <List className="h-4 w-4" />
+                            </Button>
+                          </ThemeInteractiveFrame>
+                        </div>
+                      }
+                    />
                     <TooltipContent side="bottom">
                       <p>{t("loots.header.listView")}</p>
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div
-                        onMouseEnter={() => setHoveredButton("grid")}
-                        onMouseLeave={() => setHoveredButton(null)}
-                      >
-                        <ThemeInteractiveFrame
-                          isHovered={hoveredButton === "grid"}
-                          isActive={viewMode === "grid"}
+                    <TooltipTrigger
+                      render={
+                        <div
+                          onMouseEnter={() => setHoveredButton("grid")}
+                          onMouseLeave={() => setHoveredButton(null)}
                         >
-                          <Button
-                            onClick={() => setViewMode("grid")}
-                            variant={viewMode === "grid" ? "default" : "ghost"}
-                            size="icon"
-                            aria-label={t("loots.header.gridView")}
-                            aria-pressed={viewMode === "grid"}
-                            className="h-8 w-8"
+                          <ThemeInteractiveFrame
+                            isHovered={hoveredButton === "grid"}
+                            isActive={viewMode === "grid"}
                           >
-                            <Grid2X2 className="h-4 w-4" />
-                          </Button>
-                        </ThemeInteractiveFrame>
-                      </div>
-                    </TooltipTrigger>
+                            <Button
+                              onClick={() => setViewMode("grid")}
+                              variant={
+                                viewMode === "grid" ? "default" : "ghost"
+                              }
+                              size="icon"
+                              aria-label={t("loots.header.gridView")}
+                              aria-pressed={viewMode === "grid"}
+                              className="h-8 w-8"
+                            >
+                              <Grid2X2 className="h-4 w-4" />
+                            </Button>
+                          </ThemeInteractiveFrame>
+                        </div>
+                      }
+                    />
                     <TooltipContent side="bottom">
                       <p>{t("loots.header.gridView")}</p>
                     </TooltipContent>

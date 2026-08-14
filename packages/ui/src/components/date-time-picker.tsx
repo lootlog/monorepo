@@ -90,31 +90,33 @@ export function DateTimePicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            "justify-start text-left font-normal",
-            !selectedDate && "text-muted-foreground",
-            className,
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {selectedDate ? (
-            format(selectedDate, "PPP HH:mm", { locale })
-          ) : (
-            <span>{placeholder}</span>
-          )}
-          {selectedDate && (
-            <div
-              onMouseDown={handleClear}
-              onClick={(e) => e.stopPropagation()}
-              className="ml-auto flex items-center justify-center"
-            >
-              <X className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
-            </div>
-          )}
-        </Button>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            className={cn(
+              "justify-start text-left font-normal",
+              !selectedDate && "text-muted-foreground",
+              className,
+            )}
+          />
+        }
+      >
+        <CalendarIcon className="mr-2 h-4 w-4" />
+        {selectedDate ? (
+          format(selectedDate, "PPP HH:mm", { locale })
+        ) : (
+          <span>{placeholder}</span>
+        )}
+        {selectedDate && (
+          <div
+            onMouseDown={handleClear}
+            onClick={(e) => e.stopPropagation()}
+            className="ml-auto flex items-center justify-center"
+          >
+            <X className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
+          </div>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar

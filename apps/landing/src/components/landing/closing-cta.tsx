@@ -41,24 +41,28 @@ export function ClosingCta() {
             <Button
               size="lg"
               className="h-14 rounded-xl bg-[#07111f] px-6 text-base font-bold text-white shadow-[8px_12px_28px_rgba(67,19,15,0.2)] transition-[background-color,transform] hover:bg-[#10233f] motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#ff665b]"
-              asChild
-            >
-              <a href={ADDON_URL} target="_blank" rel="noopener noreferrer">
-                <Download className="size-4" />
-                {t("landing.closingCta.install")}
-              </a>
-            </Button>
+
+              render={
+                <a href={ADDON_URL} target="_blank" rel="noopener noreferrer">
+                  <Download className="size-4" />
+                  {t("landing.closingCta.install")}
+                </a>
+              }
+              nativeButton={false}
+            />
             <Button
               size="lg"
               variant="outline"
               className="h-14 rounded-xl border-2 border-[#07111f] bg-transparent px-6 text-base font-bold text-[#07111f] transition-[background-color,color,transform] hover:bg-[#07111f] hover:text-white motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#ff665b]"
-              asChild
-            >
-              <a href={links.docs}>
-                {t("landing.closingCta.guide")}
-                <ArrowUpRight className="size-4" />
-              </a>
-            </Button>
+
+              render={
+                <a href={links.docs}>
+                  {t("landing.closingCta.guide")}
+                  <ArrowUpRight className="size-4" />
+                </a>
+              }
+              nativeButton={false}
+            />
           </div>
         </div>
       </div>

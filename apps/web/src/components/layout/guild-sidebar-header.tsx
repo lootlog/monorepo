@@ -158,26 +158,28 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
         </AnimatePresence>
       </div>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <span tabIndex={0}>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label={canTriggerRefreshText}
-              className="size-8 border-primary/30 bg-primary/10 text-primary shadow-sm hover:border-primary/60 hover:bg-primary/15 disabled:border-border disabled:bg-muted/40 disabled:text-muted-foreground disabled:opacity-100"
-              onClick={handleRefreshPermissions}
-              disabled={!canTriggerRefresh || refreshMember.isPending}
-            >
-              <RefreshCcw
-                aria-hidden="true"
-                className={cn(
-                  "size-4",
-                  refreshMember.isPending && "animate-spin text-primary",
-                )}
-              />
-            </Button>
-          </span>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <span tabIndex={0}>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label={canTriggerRefreshText}
+                className="size-8 border-primary/30 bg-primary/10 text-primary shadow-sm hover:border-primary/60 hover:bg-primary/15 disabled:border-border disabled:bg-muted/40 disabled:text-muted-foreground disabled:opacity-100"
+                onClick={handleRefreshPermissions}
+                disabled={!canTriggerRefresh || refreshMember.isPending}
+              >
+                <RefreshCcw
+                  aria-hidden="true"
+                  className={cn(
+                    "size-4",
+                    refreshMember.isPending && "animate-spin text-primary",
+                  )}
+                />
+              </Button>
+            </span>
+          }
+        />
         <TooltipContent className="z-50 mt-4">
           {canTriggerRefreshText}
         </TooltipContent>

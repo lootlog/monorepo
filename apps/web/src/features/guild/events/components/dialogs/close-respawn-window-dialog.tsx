@@ -140,12 +140,14 @@ export const CloseRespawnWindowDialog = ({
                 name="createNewWindow"
                 render={({ field }) => (
                   <FormItem className="flex items-center gap-2 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
+                    <FormControl
+                      render={
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      }
+                    />
                     <FormLabel className="cursor-pointer text-sm font-normal">
                       {t("events.respawn.createNewWindow")}
                     </FormLabel>
@@ -163,13 +165,15 @@ export const CloseRespawnWindowDialog = ({
                         <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           {t("events.respawn.minSpawnTime")}
                         </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="datetime-local"
-                            className="h-9 text-sm"
-                            {...field}
-                          />
-                        </FormControl>
+                        <FormControl
+                          render={
+                            <Input
+                              type="datetime-local"
+                              className="h-9 text-sm"
+                              {...field}
+                            />
+                          }
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -183,13 +187,15 @@ export const CloseRespawnWindowDialog = ({
                         <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           {t("events.respawn.maxSpawnTime")}
                         </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="datetime-local"
-                            className="h-9 text-sm"
-                            {...field}
-                          />
-                        </FormControl>
+                        <FormControl
+                          render={
+                            <Input
+                              type="datetime-local"
+                              className="h-9 text-sm"
+                              {...field}
+                            />
+                          }
+                        />
                         <FormMessage />
                       </FormItem>
                     )}

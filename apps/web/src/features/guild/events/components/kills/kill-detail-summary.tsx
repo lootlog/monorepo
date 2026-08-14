@@ -112,18 +112,20 @@ export const KillDetailSummary = ({
         </div>
         {kill.isManualClose ? (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 text-xs font-medium text-amber-500"
-                tabIndex={0}
-                aria-label={t("events.killDetail.manualCloseTitle")}
-              >
-                <Hand className="size-3.5" />
-                <span className="hidden sm:inline">
-                  {t("events.kills.manualCloseLabel")}
+            <TooltipTrigger
+              render={
+                <span
+                  className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 text-xs font-medium text-amber-500"
+                  tabIndex={0}
+                  aria-label={t("events.killDetail.manualCloseTitle")}
+                >
+                  <Hand className="size-3.5" />
+                  <span className="hidden sm:inline">
+                    {t("events.kills.manualCloseLabel")}
+                  </span>
                 </span>
-              </span>
-            </TooltipTrigger>
+              }
+            />
             <TooltipContent className="max-w-72">
               <p className="font-medium">
                 {t("events.killDetail.manualCloseTitle")}
@@ -154,34 +156,36 @@ export const KillDetailSummary = ({
           </dd>
         </div>
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div
-              className="min-w-0 cursor-help border-l border-border/70 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-              tabIndex={0}
-              aria-label={respawnMetricLabel}
-            >
-              <dt className="truncate text-[11px] leading-tight text-muted-foreground">
-                {t("events.killDetail.respawnTime")}
-              </dt>
-              <dd className="mt-0.5 flex min-w-0 items-baseline gap-1.5 whitespace-nowrap leading-none tabular-nums">
-                <span className="min-w-0 truncate text-base font-semibold">
-                  {respawnDurationText}
-                </span>
-                {respawnDeltaText ? (
-                  <span
-                    aria-hidden="true"
-                    className={
-                      overdueDurationText
-                        ? "shrink-0 text-[10px] font-medium text-amber-500"
-                        : "shrink-0 text-[10px] font-medium text-muted-foreground"
-                    }
-                  >
-                    {respawnDeltaText}
+          <TooltipTrigger
+            render={
+              <div
+                className="min-w-0 cursor-help border-l border-border/70 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                tabIndex={0}
+                aria-label={respawnMetricLabel}
+              >
+                <dt className="truncate text-[11px] leading-tight text-muted-foreground">
+                  {t("events.killDetail.respawnTime")}
+                </dt>
+                <dd className="mt-0.5 flex min-w-0 items-baseline gap-1.5 whitespace-nowrap leading-none tabular-nums">
+                  <span className="min-w-0 truncate text-base font-semibold">
+                    {respawnDurationText}
                   </span>
-                ) : null}
-              </dd>
-            </div>
-          </TooltipTrigger>
+                  {respawnDeltaText ? (
+                    <span
+                      aria-hidden="true"
+                      className={
+                        overdueDurationText
+                          ? "shrink-0 text-[10px] font-medium text-amber-500"
+                          : "shrink-0 text-[10px] font-medium text-muted-foreground"
+                      }
+                    >
+                      {respawnDeltaText}
+                    </span>
+                  ) : null}
+                </dd>
+              </div>
+            }
+          />
           <TooltipContent>
             <p className="font-medium">
               {t("events.killDetail.respawnTimeDescription")}
@@ -195,20 +199,22 @@ export const KillDetailSummary = ({
           </TooltipContent>
         </Tooltip>
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div
-              className="min-w-0 cursor-help border-t border-border/70 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:border-l md:border-t-0"
-              tabIndex={0}
-              aria-label={`${t("events.killDetail.respawnWindowTime")}: ${windowDurationText}`}
-            >
-              <dt className="truncate text-[11px] leading-tight text-muted-foreground">
-                {t("events.killDetail.respawnWindowTime")}
-              </dt>
-              <dd className="mt-1 truncate text-base font-semibold leading-none tabular-nums">
-                {windowDurationText}
-              </dd>
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div
+                className="min-w-0 cursor-help border-t border-border/70 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:border-l md:border-t-0"
+                tabIndex={0}
+                aria-label={`${t("events.killDetail.respawnWindowTime")}: ${windowDurationText}`}
+              >
+                <dt className="truncate text-[11px] leading-tight text-muted-foreground">
+                  {t("events.killDetail.respawnWindowTime")}
+                </dt>
+                <dd className="mt-1 truncate text-base font-semibold leading-none tabular-nums">
+                  {windowDurationText}
+                </dd>
+              </div>
+            }
+          />
           <TooltipContent>
             <p className="font-medium">
               {t("events.killDetail.respawnWindowTimeDescription")}

@@ -208,7 +208,8 @@ export function AbyssHub() {
     });
   };
 
-  const handleSeasonChange = (seasonId: string) => {
+  const handleSeasonChange = (seasonId: string | null) => {
+    if (seasonId === null) return;
     const nextSeason = seasons.find((season) => season.id === seasonId);
     if (!nextSeason) {
       return;
@@ -305,6 +306,26 @@ export function AbyssHub() {
                 value={selectedSeason?.id ?? NO_SEASON_VALUE}
                 onValueChange={handleSeasonChange}
                 disabled={isLoadingSeasons || seasons.length === 0}
+                items={[
+                  {
+                    value: null,
+                    label: <>{t("battlePanel.abyss.selectSeason")}</>,
+                  },
+                  {
+                    value: NO_SEASON_VALUE,
+                    label: <>{t("battlePanel.abyss.noSeason")}</>,
+                  },
+                  ...seasons.map((season, index) => ({
+                    value: season.id,
+                    label: (
+                      <>
+                        {index === 0
+                          ? t("battlePanel.abyss.latestSeason")
+                          : getAbyssSeasonRangeLabel(season)}
+                      </>
+                    ),
+                  })),
+                ]}
               >
                 <SelectTrigger
                   size="lg"
@@ -343,18 +364,19 @@ export function AbyssHub() {
               </div>
 
               <Button
-                asChild
                 variant="outline"
                 className="h-10 w-full min-w-0 lg:w-auto"
-              >
-                <Link
-                  to={ROUTES.user.battlePanel.matchmakingH2h}
-                  search={h2hSearch}
-                >
-                  <List className="size-4" />
-                  {t("battlePanel.abyss.openH2h")}
-                </Link>
-              </Button>
+                render={
+                  <Link
+                    to={ROUTES.user.battlePanel.matchmakingH2h}
+                    search={h2hSearch}
+                  >
+                    <List className="size-4" />
+                    {t("battlePanel.abyss.openH2h")}
+                  </Link>
+                }
+                nativeButton={false}
+              />
             </div>
           </SectionHeader>
 

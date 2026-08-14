@@ -55,15 +55,17 @@ export const BattleTableDeleteDialogs = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                variant="destructive"
-                onClick={onBulkDelete}
-                disabled={isDeletePending}
-              >
-                {t("battlePanel.bulk.deleteDialog.confirm")}
-              </Button>
-            </AlertDialogAction>
+            <AlertDialogAction
+              render={
+                <Button
+                  variant="destructive"
+                  onClick={onBulkDelete}
+                  disabled={isDeletePending}
+                >
+                  {t("battlePanel.bulk.deleteDialog.confirm")}
+                </Button>
+              }
+            />
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -83,15 +85,17 @@ export const BattleTableDeleteDialogs = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                variant="destructive"
-                onClick={onSingleDelete}
-                disabled={isDeletePending}
-              >
-                {t("battlePanel.dialogs.deleteBattle.confirm")}
-              </Button>
-            </AlertDialogAction>
+            <AlertDialogAction
+              render={
+                <Button
+                  variant="destructive"
+                  onClick={onSingleDelete}
+                  disabled={isDeletePending}
+                >
+                  {t("battlePanel.dialogs.deleteBattle.confirm")}
+                </Button>
+              }
+            />
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -305,16 +305,18 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                 name="lvlRangeFrom"
                 render={({ field }) => (
                   <FormItem className="flex-1 max-w-[100px]">
-                    <FormControl>
-                      <Input
-                        placeholder={DEFAULT_LVL_RANGE_FROM}
-                        type="number"
-                        max={500}
-                        min={0}
-                        className="h-9"
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormControl
+                      render={
+                        <Input
+                          placeholder={DEFAULT_LVL_RANGE_FROM}
+                          type="number"
+                          max={500}
+                          min={0}
+                          className="h-9"
+                          {...field}
+                        />
+                      }
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -325,16 +327,18 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                 name="lvlRangeTo"
                 render={({ field }) => (
                   <FormItem className="flex-1 max-w-[100px]">
-                    <FormControl>
-                      <Input
-                        placeholder={DEFAULT_LVL_RANGE_TO}
-                        type="number"
-                        max={500}
-                        min={0}
-                        className="h-9"
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormControl
+                      render={
+                        <Input
+                          placeholder={DEFAULT_LVL_RANGE_TO}
+                          type="number"
+                          max={500}
+                          min={0}
+                          className="h-9"
+                          {...field}
+                        />
+                      }
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -345,7 +349,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
 
         <div className="space-y-3 pt-3">
           <Accordion
-            type="multiple"
+            multiple
             defaultValue={PERMISSION_GROUPS.map((g) => g.groupKey)}
             className="space-y-3"
           >
@@ -400,12 +404,14 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                                   field.value && "bg-primary/5",
                                 )}
                               >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={!!field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
+                                <FormControl
+                                  render={
+                                    <Checkbox
+                                      checked={!!field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  }
+                                />
                                 <div className="space-y-0.5 leading-none flex-1">
                                   <FormLabel className="text-sm font-medium cursor-pointer after:absolute after:inset-0">
                                     {t(`permissions.${perm}`)}

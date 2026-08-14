@@ -5,8 +5,8 @@ import { pl } from "date-fns/locale";
 import { ArrowRight, History, Info } from "lucide-react";
 import {
   Popover,
-  PopoverAnchor,
   PopoverContent,
+  PopoverTrigger,
 } from "@lootlog/ui/components/popover";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -50,16 +50,18 @@ export const EventRankingPoints = ({
   if (!canViewHistory) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className="flex items-center justify-end gap-1 text-sm"
-            tabIndex={0}
-            aria-label={t("events.points.modified")}
-          >
-            <Info className="size-3.5 shrink-0 text-amber-400" />
-            {pointsValue}
-          </span>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <span
+              className="flex items-center justify-end gap-1 text-sm"
+              tabIndex={0}
+              aria-label={t("events.points.modified")}
+            >
+              <Info className="size-3.5 shrink-0 text-amber-400" />
+              {pointsValue}
+            </span>
+          }
+        />
         <TooltipContent>
           <p>{t("events.points.modified")}</p>
         </TooltipContent>
@@ -70,19 +72,22 @@ export const EventRankingPoints = ({
   return (
     <Popover open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
       <Tooltip>
-        <PopoverAnchor asChild>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={() => setIsHistoryOpen(true)}
-              aria-label={t("events.points.history")}
-              className="ml-auto flex min-h-9 items-center justify-end gap-1 rounded-md px-1 text-sm outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Info className="size-3.5 shrink-0 text-amber-400" />
-              {pointsValue}
-            </button>
-          </TooltipTrigger>
-        </PopoverAnchor>
+        <PopoverTrigger
+          render={
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  aria-label={t("events.points.history")}
+                  className="ml-auto flex min-h-9 items-center justify-end gap-1 rounded-md px-1 text-sm outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              }
+            />
+          }
+        >
+          <Info className="size-3.5 shrink-0 text-amber-400" />
+          {pointsValue}
+        </PopoverTrigger>
         <TooltipContent>
           <p>{t("events.points.history")}</p>
         </TooltipContent>

@@ -304,20 +304,22 @@ export const MapCard = ({
         >
           {canManage && (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="size-9"
-                    onClick={() => onManageClick?.(map.id)}
-                    disabled={!isAssignmentEnabled}
-                    aria-label={manageActionLabel}
-                  >
-                    <Users className="size-4" />
-                  </Button>
-                </span>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <span className="inline-flex">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-9"
+                      onClick={() => onManageClick?.(map.id)}
+                      disabled={!isAssignmentEnabled}
+                      aria-label={manageActionLabel}
+                    >
+                      <Users className="size-4" />
+                    </Button>
+                  </span>
+                }
+              />
               <TooltipContent>
                 {isAssignmentEnabled
                   ? manageActionLabel
@@ -328,35 +330,39 @@ export const MapCard = ({
 
           {isAssignedToMe ? (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => onSelfUnassignClick?.(map.id)}
-                  aria-label={t("events.maps.unassignSelf")}
-                >
-                  <X className="size-4" />
-                </Button>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => onSelfUnassignClick?.(map.id)}
+                    aria-label={t("events.maps.unassignSelf")}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                }
+              />
               <TooltipContent>{t("events.maps.unassignSelf")}</TooltipContent>
             </Tooltip>
           ) : (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="size-9"
-                    onClick={() => onSelfAssignClick?.(map.id)}
-                    disabled={!isAssignmentEnabled}
-                    aria-label={t("events.maps.assignSelf")}
-                  >
-                    <UserPlus className="size-4" />
-                  </Button>
-                </span>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <span className="inline-flex">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-9"
+                      onClick={() => onSelfAssignClick?.(map.id)}
+                      disabled={!isAssignmentEnabled}
+                      aria-label={t("events.maps.assignSelf")}
+                    >
+                      <UserPlus className="size-4" />
+                    </Button>
+                  </span>
+                }
+              />
               <TooltipContent>{assignmentTooltipContent}</TooltipContent>
             </Tooltip>
           )}

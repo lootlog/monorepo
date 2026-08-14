@@ -42,22 +42,24 @@ export const UserNavItem = () => {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="relative h-10 flex items-center justify-center">
-          {isActive && !isRukiaTheme && (
-            <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]" />
-          )}
-          <Link
-            to={ROUTES.user.dashboard}
-            className="block"
-            onClick={handleClick}
-          >
-            <ThemeCircularFrame isActive={isActive}>
-              {avatarElement}
-            </ThemeCircularFrame>
-          </Link>
-        </div>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <div className="relative h-10 flex items-center justify-center">
+            {isActive && !isRukiaTheme && (
+              <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]" />
+            )}
+            <Link
+              to={ROUTES.user.dashboard}
+              className="block"
+              onClick={handleClick}
+            >
+              <ThemeCircularFrame isActive={isActive}>
+                {avatarElement}
+              </ThemeCircularFrame>
+            </Link>
+          </div>
+        }
+      />
       <TooltipContent side="right">{data?.user.name}</TooltipContent>
     </Tooltip>
   );

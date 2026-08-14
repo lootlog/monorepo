@@ -110,13 +110,15 @@ export const StatsCardSettingsCard = ({
             name="publicStatsCardEnabled"
             render={({ field }) => (
               <FormItem>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    aria-label={t("settings.general.statsCard.toggleLabel")}
-                  />
-                </FormControl>
+                <FormControl
+                  render={
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-label={t("settings.general.statsCard.toggleLabel")}
+                    />
+                  }
+                />
               </FormItem>
             )}
           />

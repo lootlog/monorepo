@@ -488,7 +488,18 @@ function ItemsRoute() {
               </Label>
               <Label className="grid gap-2">
                 <span>{t("filters.sort")}</span>
-                <Select value={sortValue} onValueChange={setSortValue}>
+                <Select
+                  value={sortValue}
+                  onValueChange={(value) => {
+                    if (value !== null) setSortValue(value);
+                  }}
+                  items={[
+                    ...sortOptions.map((sortOption) => ({
+                      value: sortOption,
+                      label: <>{t(`filters.sortOptions.${sortOption}`)}</>,
+                    })),
+                  ]}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>

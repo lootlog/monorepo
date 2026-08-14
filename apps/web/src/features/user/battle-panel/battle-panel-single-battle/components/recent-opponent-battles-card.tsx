@@ -57,29 +57,35 @@ export function RecentOpponentBattlesCard({
           </div>
         </div>
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="size-8 shrink-0"
-            >
-              <Link
-                aria-label={t("battlePanel.single.recentOpponent.viewAllAria", {
-                  opponent: context.opponentName,
-                })}
-                to={
-                  ROUTES.user.battlePanel.playerVsPlayer(
-                    context.characterId,
-                    context.opponentId,
-                  ) as string
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 shrink-0"
+                render={
+                  <Link
+                    aria-label={t(
+                      "battlePanel.single.recentOpponent.viewAllAria",
+                      {
+                        opponent: context.opponentName,
+                      },
+                    )}
+                    to={
+                      ROUTES.user.battlePanel.playerVsPlayer(
+                        context.characterId,
+                        context.opponentId,
+                      ) as string
+                    }
+                    search={{ period: "all" }}
+                  >
+                    <ArrowUpRight className="size-3.5" />
+                  </Link>
                 }
-                search={{ period: "all" }}
-              >
-                <ArrowUpRight className="size-3.5" />
-              </Link>
-            </Button>
-          </TooltipTrigger>
+                nativeButton={false}
+              />
+            }
+          />
           <TooltipContent>
             {t("battlePanel.single.recentOpponent.viewAllAria", {
               opponent: context.opponentName,
