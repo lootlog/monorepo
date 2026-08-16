@@ -1,66 +1,151 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutationState, useQueryClient } from "@tanstack/react-query";
 import {
-  getEventsSettingsControllerGetSettingsQueryKey,
-  useEventsSettingsControllerGetSettings,
-  useEventsSettingsControllerUpdateSettings,
-} from "@lootlog/api-client/react-query/main/event-settings";
-import type { EventSettingsResponseDto } from "@lootlog/api-client/models/main/event-settings-response-dto";
+  getListPinnedEventsQueryKey,
+  useListPinnedEvents,
+  usePinEvent,
+  useUnpinEvent,
+} from "@lootlog/api-client/react-query/main/events";
+import type { PinnedEventResponseDto } from "@lootlog/api-client/models/main/pinned-event-response-dto";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import {
+  addPinnedEvent,
+  removePinnedEvent,
+  restorePinnedEvent,
+} from "./event-pin-cache";
+
+type PinMutationVariables = {
+  pathParams: {
+    eventId: string;
+    guildId: string;
+  };
+};
 
 export const useToggleEventPin = (guildId: string) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { data: settings } = useEventsSettingsControllerGetSettings({
-    guildId,
-  });
-  const settingsQueryKey = getEventsSettingsControllerGetSettingsQueryKey({
-    guildId,
-  });
-  const updateSettings = useEventsSettingsControllerUpdateSettings({
-    mutation: {
-      onMutate: async ({ data }) => {
-        await queryClient.cancelQueries({
-          queryKey: settingsQueryKey,
-        });
-
-        const previous =
-          queryClient.getQueryData<EventSettingsResponseDto>(settingsQueryKey);
-
-        queryClient.setQueryData(
-          settingsQueryKey,
-          (old: EventSettingsResponseDto | undefined) => ({
-            ...old,
-            pinnedEvents: data.pinnedEvents,
-          }),
-        );
-
-        return { previous };
+  const pinnedEventsQueryKey = getListPinnedEventsQueryKey({ guildId });
+  const { data: pinnedEvents = [] } = useListPinnedEvents(
+    { guildId },
+    {
+      query: {
+        enabled: Boolean(guildId),
+        queryKey: pinnedEventsQueryKey,
+        refetchInterval: 60_000,
       },
-      onError: (_error, _payload, context) => {
-        if (context?.previous) {
-          queryClient.setQueryData(settingsQueryKey, context.previous);
-        }
+    },
+  );
+
+  const pinEvent = usePinEvent({
+    mutation: {
+      onMutate: async ({ pathParams }) => {
+        await queryClient.cancelQueries({ queryKey: pinnedEventsQueryKey });
+        return { eventId: pathParams.eventId };
+      },
+      onSuccess: (pinnedEvent) => {
+        queryClient.setQueryData<PinnedEventResponseDto[]>(
+          pinnedEventsQueryKey,
+          (currentPinnedEvents = []) =>
+            addPinnedEvent(currentPinnedEvents, pinnedEvent),
+        );
+      },
+      onError: (_error, { pathParams }) => {
+        queryClient.setQueryData<PinnedEventResponseDto[]>(
+          pinnedEventsQueryKey,
+          (currentPinnedEvents = []) =>
+            removePinnedEvent(currentPinnedEvents, pathParams.eventId)
+              .pinnedEvents,
+        );
+        toast.error(t("events.pinError"));
       },
       onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: settingsQueryKey,
-        });
+        queryClient.invalidateQueries({ queryKey: pinnedEventsQueryKey });
       },
     },
   });
 
-  const togglePin = (eventId: string) => {
-    const current = settings?.pinnedEvents ?? [];
-    const isPinned = current.includes(eventId);
-    const next = isPinned
-      ? current.filter((id) => id !== eventId)
-      : [eventId, ...current];
-    updateSettings.mutate({
-      pathParams: { guildId },
-      data: { pinnedEvents: next },
-    });
-  };
+  const unpinEvent = useUnpinEvent({
+    mutation: {
+      onMutate: async ({ pathParams }) => {
+        await queryClient.cancelQueries({ queryKey: pinnedEventsQueryKey });
+        const currentPinnedEvents =
+          queryClient.getQueryData<PinnedEventResponseDto[]>(
+            pinnedEventsQueryKey,
+          ) ?? [];
+        const removal = removePinnedEvent(
+          currentPinnedEvents,
+          pathParams.eventId,
+        );
+
+        queryClient.setQueryData<PinnedEventResponseDto[]>(
+          pinnedEventsQueryKey,
+          removal.pinnedEvents,
+        );
+
+        return removal;
+      },
+      onError: (_error, _variables, context) => {
+        const removedPinnedEvent = context?.removedPinnedEvent;
+        if (removedPinnedEvent) {
+          queryClient.setQueryData<PinnedEventResponseDto[]>(
+            pinnedEventsQueryKey,
+            (currentPinnedEvents = []) =>
+              restorePinnedEvent(
+                currentPinnedEvents,
+                removedPinnedEvent,
+                context.removedIndex,
+              ),
+          );
+        }
+        toast.error(t("events.unpinError"));
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: pinnedEventsQueryKey });
+      },
+    },
+  });
+
+  const pendingPinPaths = useMutationState({
+    filters: { mutationKey: ["pinEvent"], status: "pending" },
+    select: (mutation) =>
+      (mutation.state.variables as PinMutationVariables | undefined)
+        ?.pathParams,
+  });
+  const pendingUnpinPaths = useMutationState({
+    filters: { mutationKey: ["unpinEvent"], status: "pending" },
+    select: (mutation) =>
+      (mutation.state.variables as PinMutationVariables | undefined)
+        ?.pathParams,
+  });
 
   const isPinned = (eventId: string) =>
-    (settings?.pinnedEvents ?? []).includes(eventId);
+    pinnedEvents.some(({ event }) => event.id === eventId);
+  const isPending = (eventId: string) =>
+    [...pendingPinPaths, ...pendingUnpinPaths].some(
+      (pathParams) =>
+        pathParams?.guildId === guildId && pathParams.eventId === eventId,
+    );
 
-  return { togglePin, isPinned, isLoading: updateSettings.isPending };
+  const togglePin = (event: PinnedEventResponseDto["event"]) => {
+    if (isPending(event.id)) {
+      return;
+    }
+
+    if (isPinned(event.id)) {
+      unpinEvent.mutate({ pathParams: { guildId, eventId: event.id } });
+      return;
+    }
+
+    queryClient.setQueryData<PinnedEventResponseDto[]>(
+      pinnedEventsQueryKey,
+      (currentPinnedEvents = []) =>
+        addPinnedEvent(currentPinnedEvents, {
+          event,
+          pinnedAt: new Date().toISOString(),
+        }),
+    );
+    pinEvent.mutate({ pathParams: { guildId, eventId: event.id } });
+  };
+
+  return { togglePin, isPinned, isPending };
 };

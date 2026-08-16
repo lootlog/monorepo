@@ -94,23 +94,6 @@ export class EventModeService {
     private readonly timersService: TimersService,
   ) {}
 
-  private getPinnedEventIdsFromOverrides(overrides: unknown): string[] {
-    if (
-      typeof overrides !== "object" ||
-      overrides === null ||
-      Array.isArray(overrides)
-    ) {
-      return [];
-    }
-
-    const pinnedEvents = (overrides as Record<string, unknown>).pinnedEvents;
-    return Array.isArray(pinnedEvents)
-      ? pinnedEvents.filter(
-          (eventId): eventId is string => typeof eventId === "string",
-        )
-      : [];
-  }
-
   async getEventMode(options: GetEventModeOptions) {
     const generatedAt = new Date();
     const normalizedWorld = options.world.trim().toLowerCase();
@@ -121,26 +104,45 @@ export class EventModeService {
     }
 
     const guildIds = guildContexts.map((context) => context.guild.id);
-    const settings = await this.prisma.userSettingDocument.findMany({
+    const pinnedEventRecords = await this.prisma.userPinnedEvent.findMany({
       where: {
         userId: options.userId,
-        domain: "events",
-        scopeType: "GUILD",
-        scopeId: { in: guildIds },
+        event: {
+          guildId: { in: guildIds },
+          world: normalizedWorld,
+          AND: [
+            {
+              OR: [{ startsAt: null }, { startsAt: { lte: generatedAt } }],
+            },
+            {
+              OR: [{ endsAt: null }, { endsAt: { gt: generatedAt } }],
+            },
+          ],
+        },
       },
       select: {
-        scopeId: true,
-        overrides: true,
+        eventId: true,
+        event: {
+          select: { guildId: true },
+        },
       },
     });
-    const pinnedSettings = settings
-      .map((setting) => ({
-        guildId: setting.scopeId,
-        pinnedEvents: Array.from(
-          new Set(this.getPinnedEventIdsFromOverrides(setting.overrides)),
-        ),
-      }))
-      .filter((setting) => setting.pinnedEvents.length > 0);
+
+    const pinnedEventIdsByGuild = new Map<string, string[]>();
+    for (const pinnedEventRecord of pinnedEventRecords) {
+      const guildPinnedEventIds =
+        pinnedEventIdsByGuild.get(pinnedEventRecord.event.guildId) ?? [];
+      guildPinnedEventIds.push(pinnedEventRecord.eventId);
+      pinnedEventIdsByGuild.set(
+        pinnedEventRecord.event.guildId,
+        guildPinnedEventIds,
+      );
+    }
+
+    const pinnedSettings = Array.from(
+      pinnedEventIdsByGuild,
+      ([guildId, pinnedEvents]) => ({ guildId, pinnedEvents }),
+    );
 
     if (pinnedSettings.length === 0) {
       return { generatedAt, events: [] };

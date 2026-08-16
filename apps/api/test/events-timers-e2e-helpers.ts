@@ -99,6 +99,7 @@ export async function createGuildFixture(
       name: overrides.name ?? "E2E Guild",
       icon: overrides.icon ?? null,
       ownerId: overrides.ownerId ?? "e2e-owner",
+      vanityUrl: overrides.vanityUrl ?? null,
     },
   });
 }
@@ -152,6 +153,8 @@ export async function createEventFixture(
     mapId?: number;
     mapName?: string;
     participationConfirmationMinutes?: number;
+    startsAt?: Date | null;
+    endsAt?: Date | null;
   },
 ): Promise<{
   event: Event;
@@ -166,6 +169,8 @@ export async function createEventFixture(
       basePointsPerKill: 1,
       participationConfirmationMinutes:
         params.participationConfirmationMinutes ?? 0,
+      startsAt: params.startsAt,
+      endsAt: params.endsAt,
     },
   });
   const hero = await prisma.eventHeroNpc.create({

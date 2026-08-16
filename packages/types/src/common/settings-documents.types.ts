@@ -18,7 +18,6 @@ export const SETTINGS_DOMAINS = [
   "notifications",
   "sounds",
   "controls",
-  "events",
 ] as const;
 
 export type SettingsDomain = (typeof SETTINGS_DOMAINS)[number];
@@ -290,13 +289,6 @@ export const SETTINGS_CATALOG = {
     migrations: [],
     fields: {
       hotkeys: field({}, userScopes, isRecord),
-    },
-  },
-  events: {
-    schemaVersion: 1,
-    migrations: [],
-    fields: {
-      pinnedEvents: field([], guildScopes, isStringArray),
     },
   },
 } as const satisfies Record<SettingsDomain, SettingsDomainDefinition>;

@@ -8,39 +8,39 @@ datasource db {
 }
 
 model Guild {
-  id                String             @id
-  name              String
-  icon              String?
-  ownerId           String
-  vanityUrl         String?            @unique
-  notificationRuleLimit Int            @default(20)
-  publicStatsCardEnabled Boolean       @default(false)
-  reservationMaxDurationMinutes Int    @default(180)
-  reservationMinDurationMinutes Int    @default(30)
-  reservationTimeGranularityMinutes Int @default(15)
-  reservationMaxAdvanceDays Int         @default(7)
-  reservationActiveLimitPerSpot Int     @default(3)
-  documentLimit     Int                @default(50)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  roles             Role[]
-  members           Member[]
-  timers            Timer[]
-  timerHistoryEntries TimerHistoryEntry[]
-  lootSubmissions   LootSubmission[]
-  active            Boolean            @default(true)
-  reservations      Reservation[]
-  events            Event[]
-  mapTemplates      MapTemplate[]
-  npcKillStats      NpcKillStats[]
-  npcKillStatsBuckets NpcKillStatsBucket[]
-  guildKillSummary  GuildKillSummary[]
-  guildKillSummaryBuckets GuildKillSummaryBucket[]
-  notificationRules NotificationRule[]
-  discordChannelSnapshots DiscordGuildChannelSnapshot[]
-  discordSyncState  DiscordGuildSyncState?
-  documents         GuildDocument[]
-  documentHistory   GuildDocumentHistory[]
+  id                                String                        @id
+  name                              String
+  icon                              String?
+  ownerId                           String
+  vanityUrl                         String?                       @unique
+  notificationRuleLimit             Int                           @default(20)
+  publicStatsCardEnabled            Boolean                       @default(false)
+  reservationMaxDurationMinutes     Int                           @default(180)
+  reservationMinDurationMinutes     Int                           @default(30)
+  reservationTimeGranularityMinutes Int                           @default(15)
+  reservationMaxAdvanceDays         Int                           @default(7)
+  reservationActiveLimitPerSpot     Int                           @default(3)
+  documentLimit                     Int                           @default(50)
+  createdAt                         DateTime                      @default(now())
+  updatedAt                         DateTime                      @updatedAt
+  roles                             Role[]
+  members                           Member[]
+  timers                            Timer[]
+  timerHistoryEntries               TimerHistoryEntry[]
+  lootSubmissions                   LootSubmission[]
+  active                            Boolean                       @default(true)
+  reservations                      Reservation[]
+  events                            Event[]
+  mapTemplates                      MapTemplate[]
+  npcKillStats                      NpcKillStats[]
+  npcKillStatsBuckets               NpcKillStatsBucket[]
+  guildKillSummary                  GuildKillSummary[]
+  guildKillSummaryBuckets           GuildKillSummaryBucket[]
+  notificationRules                 NotificationRule[]
+  discordChannelSnapshots           DiscordGuildChannelSnapshot[]
+  discordSyncState                  DiscordGuildSyncState?
+  documents                         GuildDocument[]
+  documentHistory                   GuildDocumentHistory[]
 
   @@index([vanityUrl])
 }
@@ -263,35 +263,35 @@ model Role {
 }
 
 model Member {
-  id                Int                @id @default(autoincrement())
-  userId            String
-  guildId           String
-  type              MemberType         @default(USER)
-  name              String
-  avatar            String?
-  banner            String?
-  active            Boolean            @default(true)
-  globalUserId      String?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  lastDiscordSyncAt DateTime?
-  lastDiscordAttemptAt DateTime?
-  lastDiscordStatus String?
-  guild                    Guild                      @relation(fields: [guildId], references: [id])
-  roles                    Role[]
-  timers                   Timer[]
-  timerHistoryEntries      TimerHistoryEntry[]
-  restoredTimerHistoryEntries TimerHistoryEntry[] @relation("TimerHistoryRestoredTimerMember")
-  lootSubmissions          LootSubmission[]
-  comments                 LootComment[]
-  assignedEventMaps        EventMap[]
-  eventPresenceLogs        EventPresenceLog[]
-  eventKillPoints          EventKillPoint[]
-  eventRankings            EventRanking[]
-  detectedKills            EventHeroKill[]            @relation("KillDetectedBy")
-  mapAssignmentHistory     EventMapAssignmentHistory[]
-  npcKillStats             NpcKillStats[]
-  npcKillStatsBuckets      NpcKillStatsBucket[]
+  id                          Int                         @id @default(autoincrement())
+  userId                      String
+  guildId                     String
+  type                        MemberType                  @default(USER)
+  name                        String
+  avatar                      String?
+  banner                      String?
+  active                      Boolean                     @default(true)
+  globalUserId                String?
+  createdAt                   DateTime                    @default(now())
+  updatedAt                   DateTime                    @updatedAt
+  lastDiscordSyncAt           DateTime?
+  lastDiscordAttemptAt        DateTime?
+  lastDiscordStatus           String?
+  guild                       Guild                       @relation(fields: [guildId], references: [id])
+  roles                       Role[]
+  timers                      Timer[]
+  timerHistoryEntries         TimerHistoryEntry[]
+  restoredTimerHistoryEntries TimerHistoryEntry[]         @relation("TimerHistoryRestoredTimerMember")
+  lootSubmissions             LootSubmission[]
+  comments                    LootComment[]
+  assignedEventMaps           EventMap[]
+  eventPresenceLogs           EventPresenceLog[]
+  eventKillPoints             EventKillPoint[]
+  eventRankings               EventRanking[]
+  detectedKills               EventHeroKill[]             @relation("KillDetectedBy")
+  mapAssignmentHistory        EventMapAssignmentHistory[]
+  npcKillStats                NpcKillStats[]
+  npcKillStatsBuckets         NpcKillStatsBucket[]
 
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
@@ -300,24 +300,24 @@ model Member {
 }
 
 model Timer {
-  createdById             Int
-  guildId                 String
-  npcId                   Int
-  timerKey                String
-  world                   String
-  minSpawnTime            DateTime
-  maxSpawnTime            DateTime
-  latestRespBaseSeconds   Int      @default(0)
-  latestRespawnRandomness Int      @default(0)
-  tempId                  String?
-  wasReset                Boolean  @default(false)
-  npc                     Json
-  windowOpenedAt          DateTime?
+  createdById              Int
+  guildId                  String
+  npcId                    Int
+  timerKey                 String
+  world                    String
+  minSpawnTime             DateTime
+  maxSpawnTime             DateTime
+  latestRespBaseSeconds    Int       @default(0)
+  latestRespawnRandomness  Int       @default(0)
+  tempId                   String?
+  wasReset                 Boolean   @default(false)
+  npc                      Json
+  windowOpenedAt           DateTime?
   actorCharacterSnapshotId Int?
-  actorCharacterLvl       Int?
-  deletedAt               DateTime?
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  actorCharacterLvl        Int?
+  deletedAt                DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   member         Member          @relation(fields: [createdById], references: [id])
   guild          Guild           @relation(fields: [guildId], references: [id])
@@ -400,9 +400,9 @@ model PlayerSnapshot {
   icon         String?
   createdAt    DateTime    @default(now())
 
-  lootPlayers           LootPlayer[]
-  timerActorCharacters  Timer[]             @relation("TimerActorCharacter")
-  timerHistoryEntries   TimerHistoryEntry[]
+  lootPlayers                 LootPlayer[]
+  timerActorCharacters        Timer[]             @relation("TimerActorCharacter")
+  timerHistoryEntries         TimerHistoryEntry[]
   restoredTimerHistoryEntries TimerHistoryEntry[] @relation("TimerHistoryRestoredTimerActorCharacter")
 
   @@unique([world, accountId, characterId, snapshotHash])
@@ -412,26 +412,26 @@ model PlayerSnapshot {
 }
 
 model TimerHistoryEntry {
-  id                       Int                @id @default(autoincrement())
-  guildId                  String
-  world                    String
-  timerKey                 String
-  npcId                    Int
-  npc                      Json
-  action                   TimerHistoryAction
-  actorMemberId            Int
-  actorCharacterSnapshotId Int?
-  actorCharacterLvl        Int?
-  minSpawnTime             DateTime?
-  maxSpawnTime             DateTime?
-  latestRespBaseSeconds    Int?
-  latestRespawnRandomness  Int?
-  wasReset                 Boolean?
-  windowOpenedAt           DateTime?
-  timerCreatedById         Int?
+  id                            Int                @id @default(autoincrement())
+  guildId                       String
+  world                         String
+  timerKey                      String
+  npcId                         Int
+  npc                           Json
+  action                        TimerHistoryAction
+  actorMemberId                 Int
+  actorCharacterSnapshotId      Int?
+  actorCharacterLvl             Int?
+  minSpawnTime                  DateTime?
+  maxSpawnTime                  DateTime?
+  latestRespBaseSeconds         Int?
+  latestRespawnRandomness       Int?
+  wasReset                      Boolean?
+  windowOpenedAt                DateTime?
+  timerCreatedById              Int?
   timerActorCharacterSnapshotId Int?
-  timerActorCharacterLvl   Int?
-  createdAt                DateTime           @default(now())
+  timerActorCharacterLvl        Int?
+  createdAt                     DateTime           @default(now())
 
   guild               Guild           @relation(fields: [guildId], references: [id])
   actorMember         Member          @relation(fields: [actorMemberId], references: [id])
@@ -590,10 +590,10 @@ model UserSettingDocument {
   domain        String
   scopeType     SettingsScopeType
   scopeId       String
-  overrides     Json               @default("{}")
-  schemaVersion Int                @default(1)
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  overrides     Json              @default("{}")
+  schemaVersion Int               @default(1)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@unique([userId, domain, scopeType, scopeId])
   @@index([userId, domain])
@@ -613,7 +613,7 @@ model UserGameAccountSettings {
 }
 
 model NotificationTarget {
-  id                Int             @id @default(autoincrement())
+  id                Int                    @id @default(autoincrement())
   ownerType         NotificationOwnerType
   ownerId           String
   provider          NotificationProvider
@@ -622,13 +622,13 @@ model NotificationTarget {
   displayName       String?
   guildName         String?
   metadata          Json?
-  active            Boolean         @default(true)
-  canSend           Boolean         @default(true)
+  active            Boolean                @default(true)
+  canSend           Boolean                @default(true)
   lastSyncedAt      DateTime?
   lastDeliveryAt    DateTime?
   lastDeliveryError String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
 
   rules NotificationRuleTarget[]
   jobs  NotificationJob[]
@@ -638,43 +638,43 @@ model NotificationTarget {
 }
 
 model NotificationRule {
-  id                  Int              @id @default(autoincrement())
-  ownerType           NotificationOwnerType
-  ownerId             String
-  triggerType         NotificationTriggerType
-  guildId             String?
-  world               String?
-  name                String?
-  filters             Json?
-  contentTemplate     String?
-  scheduleStrategy    NotificationScheduleStrategy?
-  scheduleAnchor      NotificationScheduleAnchor?
+  id                    Int                               @id @default(autoincrement())
+  ownerType             NotificationOwnerType
+  ownerId               String
+  triggerType           NotificationTriggerType
+  guildId               String?
+  world                 String?
+  name                  String?
+  filters               Json?
+  contentTemplate       String?
+  scheduleStrategy      NotificationScheduleStrategy?
+  scheduleAnchor        NotificationScheduleAnchor?
   scheduleOffsetMinutes Int?
-  scheduledAt         DateTime?
-  scheduleIntervalType NotificationScheduleIntervalType?
+  scheduledAt           DateTime?
+  scheduleIntervalType  NotificationScheduleIntervalType?
   scheduleIntervalValue Int?
-  scheduleWeekday     Int?
-  scheduleTimeOfDay   String?
-  scheduledUntil      DateTime?
-  scheduleTimezone    String?
-  enabled             Boolean          @default(true)
-  dedupeWindowSeconds Int              @default(0)
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  scheduleWeekday       Int?
+  scheduleTimeOfDay     String?
+  scheduledUntil        DateTime?
+  scheduleTimezone      String?
+  enabled               Boolean                           @default(true)
+  dedupeWindowSeconds   Int                               @default(0)
+  createdAt             DateTime                          @default(now())
+  updatedAt             DateTime                          @updatedAt
 
-  guild              Guild?                  @relation(fields: [guildId], references: [id])
-  targets            NotificationRuleTarget[]
-  jobs               NotificationJob[]
-  watchedItems  WatchedItem[]
+  guild        Guild?                   @relation(fields: [guildId], references: [id])
+  targets      NotificationRuleTarget[]
+  jobs         NotificationJob[]
+  watchedItems WatchedItem[]
 
   @@index([ownerType, ownerId, enabled])
   @@index([guildId, world, triggerType, enabled])
 }
 
 model NotificationRuleTarget {
-  ruleId     Int
-  targetId   Int
-  createdAt  DateTime @default(now())
+  ruleId    Int
+  targetId  Int
+  createdAt DateTime @default(now())
 
   rule   NotificationRule   @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   target NotificationTarget @relation(fields: [targetId], references: [id], onDelete: Cascade)
@@ -684,26 +684,26 @@ model NotificationRuleTarget {
 }
 
 model NotificationJob {
-  id               String         @id
-  ruleId           Int
-  targetId         Int
-  ownerType        NotificationOwnerType
-  ownerId          String
-  jobKind          NotificationJobKind
-  scheduledFor     DateTime
-  status           NotificationJobStatus @default(PENDING)
-  idempotencyKey   String         @unique
-  sourceEntityType String?
-  sourceEntityId   String?
-  sourceEventId    String?
-  payloadSnapshot  Json
-  attemptCount     Int            @default(0)
-  lastError        String?
-  blockedReason    String?
+  id                String                @id
+  ruleId            Int
+  targetId          Int
+  ownerType         NotificationOwnerType
+  ownerId           String
+  jobKind           NotificationJobKind
+  scheduledFor      DateTime
+  status            NotificationJobStatus @default(PENDING)
+  idempotencyKey    String                @unique
+  sourceEntityType  String?
+  sourceEntityId    String?
+  sourceEventId     String?
+  payloadSnapshot   Json
+  attemptCount      Int                   @default(0)
+  lastError         String?
+  blockedReason     String?
   providerMessageId String?
-  processedAt      DateTime?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  processedAt       DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
   rule   NotificationRule   @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   target NotificationTarget @relation(fields: [targetId], references: [id], onDelete: Cascade)
@@ -715,15 +715,15 @@ model NotificationJob {
 }
 
 model WatchedItem {
-  id          Int      @id @default(autoincrement())
-  userId      String
-  itemId      Int
-  itemName    String
-  world       String
-  enabled     Boolean  @default(true)
+  id                 Int      @id @default(autoincrement())
+  userId             String
+  itemId             Int
+  itemName           String
+  world              String
+  enabled            Boolean  @default(true)
   notificationRuleId Int?     @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   notificationRule NotificationRule? @relation(fields: [notificationRuleId], references: [id], onDelete: SetNull)
 
@@ -733,23 +733,23 @@ model WatchedItem {
 }
 
 model DiscordGuildChannelSnapshot {
-  id           Int      @id @default(autoincrement())
-  guildId      String
-  channelId    String
-  name         String
-  channelType  String
-  parentId     String?
-  position     Int
-  active       Boolean  @default(true)
-  canView      Boolean  @default(true)
-  canSend      Boolean  @default(true)
-  hasRequiredPermissions Boolean @default(false)
+  id                     Int      @id @default(autoincrement())
+  guildId                String
+  channelId              String
+  name                   String
+  channelType            String
+  parentId               String?
+  position               Int
+  active                 Boolean  @default(true)
+  canView                Boolean  @default(true)
+  canSend                Boolean  @default(true)
+  hasRequiredPermissions Boolean  @default(false)
   requiredPermissions    String[] @default([])
   grantedPermissions     String[] @default([])
   missingPermissions     String[] @default([])
-  lastSyncedAt DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  lastSyncedAt           DateTime
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
 
@@ -758,19 +758,19 @@ model DiscordGuildChannelSnapshot {
 }
 
 model DiscordGuildSyncState {
-  guildId                String                  @id
-  status                 DiscordGuildSyncStatus  @default(STALE)
-  hasRequiredPermissions Boolean                 @default(false)
-  requiredPermissions    String[]                @default([])
-  grantedPermissions     String[]                @default([])
-  missingPermissions     String[]                @default([])
-  channelCount           Int                     @default(0)
-  selectableChannelCount Int                     @default(0)
+  guildId                String                 @id
+  status                 DiscordGuildSyncStatus @default(STALE)
+  hasRequiredPermissions Boolean                @default(false)
+  requiredPermissions    String[]               @default([])
+  grantedPermissions     String[]               @default([])
+  missingPermissions     String[]               @default([])
+  channelCount           Int                    @default(0)
+  selectableChannelCount Int                    @default(0)
   lastAttemptAt          DateTime?
   lastSuccessAt          DateTime?
   lastError              String?
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
 
   guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
 }
@@ -792,22 +792,22 @@ model MemberRefreshJob {
 }
 
 model UserTimerSettings {
-  id                      Int      @id @default(autoincrement())
-  userId                  String   @unique
-  generalConfig           Json
-  displayConfig           Json
-  customColors            Json
-  timersColors            Json
-  alwaysVisibleExpiredTimers Json @default("{}")
-  defaultColorNames       Json
-  overriddenDefaultColors Json
-  hiddenDefaultColors     Json
-  timerFiltersEnabled     Boolean  @default(true)
-  colorFiltersEnabled     Boolean  @default(false)
-  timersSortOrder         String   @default("asc")
-  syncEnabled             Boolean  @default(true)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                         Int      @id @default(autoincrement())
+  userId                     String   @unique
+  generalConfig              Json
+  displayConfig              Json
+  customColors               Json
+  timersColors               Json
+  alwaysVisibleExpiredTimers Json     @default("{}")
+  defaultColorNames          Json
+  overriddenDefaultColors    Json
+  hiddenDefaultColors        Json
+  timerFiltersEnabled        Boolean  @default(true)
+  colorFiltersEnabled        Boolean  @default(false)
+  timersSortOrder            String   @default("asc")
+  syncEnabled                Boolean  @default(true)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 
   @@index([userId])
 }
@@ -818,19 +818,6 @@ model UserGuildTimerSettings {
   guildId      String
   hiddenTimers String[] @default([])
   pinnedTimers String[] @default([])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@unique([userId, guildId])
-  @@index([userId])
-  @@index([guildId])
-}
-
-model UserGuildEventSettings {
-  id           Int      @id @default(autoincrement())
-  userId       String
-  guildId      String
-  pinnedEvents String[] @default([])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -874,12 +861,26 @@ model Event {
   scoringRules                     Json?
   rulebookMarkdown                 String?
 
-  guild    Guild          @relation(fields: [guildId], references: [id])
+  guild    Guild             @relation(fields: [guildId], references: [id])
   heroNpcs EventHeroNpc[]
   rankings EventRanking[]
+  pinnedBy UserPinnedEvent[]
 
   @@index([guildId, startsAt, endsAt])
   @@index([world])
+}
+
+model UserPinnedEvent {
+  id       Int      @id @default(autoincrement())
+  userId   String
+  eventId  String
+  pinnedAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([userId, pinnedAt(sort: Desc)])
+  @@index([eventId])
 }
 
 model EventMapLocation {
@@ -921,7 +922,7 @@ model EventMap {
 
 enum CoverageGapType {
   UNASSIGNED // No member is assigned to the map
-  UNCOVERED  // Members assigned but no one is present on the map
+  UNCOVERED // Members assigned but no one is present on the map
 }
 
 enum EventScoringMode {
@@ -1022,23 +1023,23 @@ model EventHeroKill {
 }
 
 model EventKillPoint {
-  id                      String   @id @default(cuid())
-  killId                  String
-  memberId                Int
-  basePoints              Float
-  points                  Float
-  manualAdjustmentPoints  Float    @default(0)
-  trackingDurationSeconds     Int?
-  trackingDurationPercentage  Float?
-  confirmationDeadlineAt      DateTime?
-  confirmedAt                 DateTime?
+  id                                String    @id @default(cuid())
+  killId                            String
+  memberId                          Int
+  basePoints                        Float
+  points                            Float
+  manualAdjustmentPoints            Float     @default(0)
+  trackingDurationSeconds           Int?
+  trackingDurationPercentage        Float?
+  confirmationDeadlineAt            DateTime?
+  confirmedAt                       DateTime?
   confirmationExpiredAcknowledgedAt DateTime?
-  timeOnMapSeconds        Int
-  afkPercentage           Float
-  wasPresent              Boolean
-  bonusBreakdown          Json?
-  mapPresenceData         Json?
-  createdAt               DateTime @default(now())
+  timeOnMapSeconds                  Int
+  afkPercentage                     Float
+  wasPresent                        Boolean
+  bonusBreakdown                    Json?
+  mapPresenceData                   Json?
+  createdAt                         DateTime  @default(now())
 
   kill   EventHeroKill @relation(fields: [killId], references: [id], onDelete: Cascade)
   member Member        @relation(fields: [memberId], references: [id])
@@ -1054,15 +1055,15 @@ model EventRanking {
   memberId               Int
   heroNpcName            String
   totalPoints            Float    @default(0)
-  manualAdjustmentPoints Float @default(0)
+  manualAdjustmentPoints Float    @default(0)
   totalKills             Int      @default(0)
   totalTimeSeconds       Int      @default(0)
   avgAfkPercentage       Float    @default(0)
   pointsModified         Boolean  @default(false)
   updatedAt              DateTime @updatedAt
 
-  event       Event                     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  member      Member                    @relation(fields: [memberId], references: [id])
+  event       Event                    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member      Member                   @relation(fields: [memberId], references: [id])
   editHistory EventPointsEditHistory[]
 
   @@unique([eventId, memberId, heroNpcName])
@@ -1098,7 +1099,7 @@ model EventRespawnWindowSummary {
   windowClosedAt DateTime
   minSpawnTime   DateTime
   maxSpawnTime   DateTime
-  wasManualClose Boolean @default(false)
+  wasManualClose Boolean  @default(false)
 
   totalWindowSeconds     Int
   totalCoverageSeconds   Int

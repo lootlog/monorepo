@@ -17,5 +17,4 @@ export const PatchSettingsDocumentsDtoOperationsItemDomain = {
   notifications: 'notifications',
   sounds: 'sounds',
   controls: 'controls',
-  events: 'events',
 } as const;
