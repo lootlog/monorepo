@@ -10,9 +10,29 @@ vi.mock("react-i18next", () => ({
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("MultiSelect", () => {
+  it("renders its custom popover trigger without native button warnings", () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    render(
+      <MultiSelect
+        onClose={() => {}}
+        onValueChange={() => {}}
+        options={[]}
+        value={[]}
+      />,
+    );
+
+    expect(consoleError.mock.calls.flat().join(" ")).not.toContain(
+      "expected a native <button>",
+    );
+  });
+
   it("distinguishes an untouched search from an empty result", () => {
     render(
       <MultiSelect
