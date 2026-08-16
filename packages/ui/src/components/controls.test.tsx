@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
 import { RadioGroup, RadioGroupItem } from "./radio-group";
+import { Separator } from "./separator";
 import { Switch } from "./switch";
 
 describe("Base UI controls", () => {
@@ -73,4 +74,19 @@ describe("Base UI controls", () => {
 
     expect(handleValueChange).toHaveBeenCalledWith("dark", expect.any(Object));
   });
+
+  it.each([
+    ["horizontal", "data-[orientation=horizontal]:h-px"],
+    ["vertical", "data-[orientation=vertical]:w-px"],
+  ] as const)(
+    "styles a %s separator using Base UI's orientation attribute",
+    (orientation, orientationClassName) => {
+      const { container } = render(<Separator orientation={orientation} />);
+      const separator = container.firstElementChild;
+
+      expect(separator).toHaveAttribute("role", "separator");
+      expect(separator).toHaveAttribute("data-orientation", orientation);
+      expect(separator).toHaveClass(orientationClassName);
+    },
+  );
 });

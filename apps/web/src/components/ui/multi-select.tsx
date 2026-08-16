@@ -277,6 +277,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
         modal={modalPopover}
       >
         <PopoverTrigger
+          nativeButton={false}
           render={
             <div
               ref={ref}
