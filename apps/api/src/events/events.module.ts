@@ -29,14 +29,13 @@ import { EventReadCacheService } from "./services/event-read-cache.service";
 import { EventRespawnService } from "./services/event-respawn.service";
 import { EventSummaryService } from "./services/event-summary.service";
 import { EventWrappedService } from "./services/event-wrapped.service";
-import { EventSettingsService } from "./services/event-settings.service";
 import { EventCoordinationService } from "./services/event-coordination.service";
-import { EventsSettingsController } from "./events-settings.controller";
+import { EventsPinsController } from "./events-pins.controller";
 import { TimersModule } from "src/timers/timers.module";
 import { GuildsModule } from "src/guilds/guilds.module";
 import { EventModeController } from "./event-mode.controller";
 import { EventModeService } from "./services/event-mode.service";
-import { SettingsDocumentsModule } from "src/settings-documents/settings-documents.module";
+import { PinnedEventsService } from "./services/pinned-events.service";
 
 @Module({
   imports: [
@@ -53,7 +52,6 @@ import { SettingsDocumentsModule } from "src/settings-documents/settings-documen
     RedlockModule,
     TimersModule,
     GuildsModule,
-    SettingsDocumentsModule,
   ],
   providers: [
     EventsService,
@@ -69,9 +67,9 @@ import { SettingsDocumentsModule } from "src/settings-documents/settings-documen
     EventRespawnService,
     EventSummaryService,
     EventWrappedService,
-    EventSettingsService,
     EventCoordinationService,
     EventModeService,
+    PinnedEventsService,
 
     EventsQueueHandler,
     EventHeroKillProcessor,
@@ -81,7 +79,7 @@ import { SettingsDocumentsModule } from "src/settings-documents/settings-documen
     EventsAssignmentController,
     EventsRankingController,
     EventsMonitoringController,
-    EventsSettingsController,
+    EventsPinsController,
     EventModeController,
   ],
   exports: [EventsService],

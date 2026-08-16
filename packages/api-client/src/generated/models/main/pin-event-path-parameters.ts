@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface UpdateEventSettingsDto {
-  pinnedEvents?: string[];
-}
+export type PinEventPathParameters = {
+ guildId: string,
+    eventId: string,
+ }

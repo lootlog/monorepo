@@ -70,7 +70,7 @@ describe("UsersService", () => {
     userGuildTimerSettings: {
       deleteMany: mockFn(),
     },
-    userGuildEventSettings: {
+    userPinnedEvent: {
       deleteMany: mockFn(),
     },
   };
@@ -120,7 +120,7 @@ describe("UsersService", () => {
       count: 2,
     });
     mockTx.userGuildTimerSettings.deleteMany.mockResolvedValue({ count: 1 });
-    mockTx.userGuildEventSettings.deleteMany.mockResolvedValue({ count: 1 });
+    mockTx.userPinnedEvent.deleteMany.mockResolvedValue({ count: 1 });
 
     mockAuthService.invalidateIdpTokenCache.mockResolvedValue(undefined);
     mockMembersService.notifyMembersRemoved.mockResolvedValue(undefined);
@@ -1089,7 +1089,7 @@ describe("UsersService", () => {
     expect(mockTx.userGuildTimerSettings.deleteMany).toHaveBeenCalledWith({
       where: { userId: "auth-user-current" },
     });
-    expect(mockTx.userGuildEventSettings.deleteMany).toHaveBeenCalledWith({
+    expect(mockTx.userPinnedEvent.deleteMany).toHaveBeenCalledWith({
       where: { userId: "auth-user-current" },
     });
 

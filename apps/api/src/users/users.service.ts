@@ -200,7 +200,7 @@ export class UsersService {
       await tx.userGuildTimerSettings.deleteMany({
         where: { userId: authUserId },
       });
-      await tx.userGuildEventSettings.deleteMany({
+      await tx.userPinnedEvent.deleteMany({
         where: { userId: authUserId },
       });
 
