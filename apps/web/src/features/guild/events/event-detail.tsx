@@ -79,14 +79,11 @@ export const EventDetail = () => {
   const {
     togglePin,
     isPinned,
-    isLoading: isPinLoading,
+    isPending: isPinPending,
   } = useToggleEventPin(guildId ?? "");
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const hasEventRouteParams = Boolean(guildId && eventId);
   const eventIsPinned = eventId ? isPinned(eventId) : false;
-  const pinActionLabel = t(
-    eventIsPinned ? "events.unpinEvent" : "events.pinEvent",
-  );
 
   const {
     data: event,
@@ -278,6 +275,12 @@ export const EventDetail = () => {
       ? getEventStatusAtTimestamp(event, currentTimestamp)
       : "ended";
   const isEventActive = eventStatus === "active";
+  let pinActionLabel = t("events.pinEvent");
+  if (!isEventActive) {
+    pinActionLabel = t("events.pinUnavailable");
+  } else if (eventIsPinned) {
+    pinActionLabel = t("events.unpinEvent");
+  }
   const eventStatusLabel =
     eventStatus === "upcoming"
       ? t("events.upcoming")
@@ -591,8 +594,11 @@ export const EventDetail = () => {
                       size="sm"
                       variant="outline"
                       aria-label={pinActionLabel}
+                      title={pinActionLabel}
                       aria-pressed={eventIsPinned}
-                      disabled={!eventId || isPinLoading}
+                      disabled={
+                        !eventId || !isEventActive || isPinPending(eventId)
+                      }
                       className={cn(
                         "h-9 shrink-0 gap-2 px-3",
                         eventIsPinned
@@ -601,7 +607,7 @@ export const EventDetail = () => {
                       )}
                       onClick={() => {
                         if (eventId) {
-                          togglePin(eventId);
+                          togglePin(event);
                         }
                       }}
                     >

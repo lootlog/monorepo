@@ -174,7 +174,6 @@ export const GuildsSidebarNav: FC = () => {
       beforeItems={
         canViewEvents ? (
           <GuildPinnedEventsSection
-            activeEvents={activeEvents ?? []}
             guildId={guildId ?? ""}
             onNavigate={handleItemClick}
           />

@@ -323,6 +323,10 @@ import type {
 } from '../../../models/main/list-pending-participation-confirmations-path-parameters';
 
 import type {
+  ListPinnedEventsPathParameters
+} from '../../../models/main/list-pinned-events-path-parameters';
+
+import type {
   NullableCoverageGapResponseDto
 } from '../../../models/main/nullable-coverage-gap-response-dto';
 
@@ -333,6 +337,14 @@ import type {
 import type {
   PendingParticipationConfirmationsResponseDto
 } from '../../../models/main/pending-participation-confirmations-response-dto';
+
+import type {
+  PinEventPathParameters
+} from '../../../models/main/pin-event-path-parameters';
+
+import type {
+  PinnedEventResponseDto
+} from '../../../models/main/pinned-event-response-dto';
 
 import type {
   RecalculateEventPointsPathParameters
@@ -357,6 +369,10 @@ import type {
 import type {
   SuccessResponseDtoOutput
 } from '../../../models/main/success-response-dto-output';
+
+import type {
+  UnpinEventPathParameters
+} from '../../../models/main/unpin-event-path-parameters';
 
 import type {
   UpdateEventDto
@@ -5376,4 +5392,286 @@ export const useEventsMonitoringControllerOpenRespawnWindow = <TError = ErrorTyp
         TContext
       > => {
       return useMutation(getEventsMonitoringControllerOpenRespawnWindowMutationOptions(options), queryClient);
+    }
+    export const getListPinnedEventsUrl = ({ guildId }: ListPinnedEventsPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/pinned-events`
+}
+
+/**
+ * @summary List active pinned events
+ */
+export const listPinnedEvents = async ({ guildId }: ListPinnedEventsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<PinnedEventResponseDto[]> => {
+
+  return mainFetch<PinnedEventResponseDto[]>(getListPinnedEventsUrl({ guildId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPinnedEventsQueryKey = ({ guildId }: ListPinnedEventsPathParameters,) => {
+    return [
+    `/guilds/${guildId}/pinned-events`
+    ] as const;
+    }
+
+
+export const getListPinnedEventsQueryOptions = <TData = Awaited<ReturnType<typeof listPinnedEvents>>, TError = ErrorType<unknown>>({ guildId }: ListPinnedEventsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPinnedEvents>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPinnedEventsQueryKey({ guildId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPinnedEvents>>> = ({ signal }) => listPinnedEvents({ guildId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPinnedEvents>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPinnedEventsQueryResult = NonNullable<Awaited<ReturnType<typeof listPinnedEvents>>>
+export type ListPinnedEventsQueryError = ErrorType<unknown>
+
+
+export function useListPinnedEvents<TData = Awaited<ReturnType<typeof listPinnedEvents>>, TError = ErrorType<unknown>>(
+ pathParams: ListPinnedEventsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPinnedEvents>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPinnedEvents>>,
+          TError,
+          Awaited<ReturnType<typeof listPinnedEvents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPinnedEvents<TData = Awaited<ReturnType<typeof listPinnedEvents>>, TError = ErrorType<unknown>>(
+ pathParams: ListPinnedEventsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPinnedEvents>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPinnedEvents>>,
+          TError,
+          Awaited<ReturnType<typeof listPinnedEvents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPinnedEvents<TData = Awaited<ReturnType<typeof listPinnedEvents>>, TError = ErrorType<unknown>>(
+ pathParams: ListPinnedEventsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPinnedEvents>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List active pinned events
+ */
+
+export function useListPinnedEvents<TData = Awaited<ReturnType<typeof listPinnedEvents>>, TError = ErrorType<unknown>>(
+ { guildId }: ListPinnedEventsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPinnedEvents>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPinnedEventsQueryOptions({ guildId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List active pinned events
+ */
+export const prefetchListPinnedEventsQuery = async <TData = Awaited<ReturnType<typeof listPinnedEvents>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, { guildId }: ListPinnedEventsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPinnedEvents>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getListPinnedEventsQueryOptions({ guildId },options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary List active pinned events
+ */
+export const invalidateListPinnedEvents = async (
+ queryClient: QueryClient, { guildId }: ListPinnedEventsPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getListPinnedEventsQueryKey({ guildId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List active pinned events
+ */
+export const useSetListPinnedEventsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: ListPinnedEventsPathParameters,updater: Awaited<ReturnType<typeof listPinnedEvents>> | undefined | ((old: Awaited<ReturnType<typeof listPinnedEvents>> | undefined) => Awaited<ReturnType<typeof listPinnedEvents>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listPinnedEvents>>>({ queryKey: getListPinnedEventsQueryKey({ guildId }) }, updater);
+  };
+}
+
+/**
+ * @summary List active pinned events
+ */
+export const useGetListPinnedEventsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: ListPinnedEventsPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof listPinnedEvents>>>(getListPinnedEventsQueryKey({ guildId }));
+}
+
+
+export const getPinEventUrl = ({ guildId, eventId }: PinEventPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/events/${eventId}/pin`
+}
+
+/**
+ * @summary Pin an active event
+ */
+export const pinEvent = async ({ guildId, eventId }: PinEventPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<PinnedEventResponseDto> => {
+
+  return mainFetch<PinnedEventResponseDto>(getPinEventUrl({ guildId, eventId }),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+
+
+
+export const getPinEventMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinEvent>>, TError,{pathParams: PinEventPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof pinEvent>>, TError,{pathParams: PinEventPathParameters}, TContext> => {
+
+const mutationKey = ['pinEvent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof pinEvent>>, {pathParams: PinEventPathParameters}> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  pinEvent(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PinEventMutationResult = NonNullable<Awaited<ReturnType<typeof pinEvent>>>
+
+    export type PinEventMutationError = ErrorType<void>
+
+    /**
+ * @summary Pin an active event
+ */
+export const usePinEvent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinEvent>>, TError,{pathParams: PinEventPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof pinEvent>>,
+        TError,
+        {pathParams: PinEventPathParameters},
+        TContext
+      > => {
+      return useMutation(getPinEventMutationOptions(options), queryClient);
+    }
+    export const getUnpinEventUrl = ({ guildId, eventId }: UnpinEventPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/events/${eventId}/pin`
+}
+
+/**
+ * @summary Unpin an event
+ */
+export const unpinEvent = async ({ guildId, eventId }: UnpinEventPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getUnpinEventUrl({ guildId, eventId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getUnpinEventMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpinEvent>>, TError,{pathParams: UnpinEventPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unpinEvent>>, TError,{pathParams: UnpinEventPathParameters}, TContext> => {
+
+const mutationKey = ['unpinEvent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unpinEvent>>, {pathParams: UnpinEventPathParameters}> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  unpinEvent(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnpinEventMutationResult = NonNullable<Awaited<ReturnType<typeof unpinEvent>>>
+
+    export type UnpinEventMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Unpin an event
+ */
+export const useUnpinEvent = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpinEvent>>, TError,{pathParams: UnpinEventPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof unpinEvent>>,
+        TError,
+        {pathParams: UnpinEventPathParameters},
+        TContext
+      > => {
+      return useMutation(getUnpinEventMutationOptions(options), queryClient);
     }

@@ -302,6 +302,10 @@ import type {
 } from '../../../models/main/list-pending-participation-confirmations-path-parameters';
 
 import type {
+  ListPinnedEventsPathParameters
+} from '../../../models/main/list-pinned-events-path-parameters';
+
+import type {
   NullableCoverageGapResponseDto
 } from '../../../models/main/nullable-coverage-gap-response-dto';
 
@@ -312,6 +316,14 @@ import type {
 import type {
   PendingParticipationConfirmationsResponseDto
 } from '../../../models/main/pending-participation-confirmations-response-dto';
+
+import type {
+  PinEventPathParameters
+} from '../../../models/main/pin-event-path-parameters';
+
+import type {
+  PinnedEventResponseDto
+} from '../../../models/main/pinned-event-response-dto';
 
 import type {
   RecalculateEventPointsPathParameters
@@ -336,6 +348,10 @@ import type {
 import type {
   SuccessResponseDtoOutput
 } from '../../../models/main/success-response-dto-output';
+
+import type {
+  UnpinEventPathParameters
+} from '../../../models/main/unpin-event-path-parameters';
 
 import type {
   UpdateEventDto
@@ -1535,5 +1551,74 @@ export const eventsMonitoringControllerOpenRespawnWindow = async ({ guildId, eve
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(openRespawnWindowDto)
+  }
+);}
+
+
+export const getListPinnedEventsUrl = ({ guildId }: ListPinnedEventsPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/pinned-events`
+}
+
+/**
+ * @summary List active pinned events
+ */
+export const listPinnedEvents = async ({ guildId }: ListPinnedEventsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<PinnedEventResponseDto[]> => {
+
+  return mainFetch<PinnedEventResponseDto[]>(getListPinnedEventsUrl({ guildId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+export const getPinEventUrl = ({ guildId, eventId }: PinEventPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/events/${eventId}/pin`
+}
+
+/**
+ * @summary Pin an active event
+ */
+export const pinEvent = async ({ guildId, eventId }: PinEventPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<PinnedEventResponseDto> => {
+
+  return mainFetch<PinnedEventResponseDto>(getPinEventUrl({ guildId, eventId }),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+export const getUnpinEventUrl = ({ guildId, eventId }: UnpinEventPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/events/${eventId}/pin`
+}
+
+/**
+ * @summary Unpin an event
+ */
+export const unpinEvent = async ({ guildId, eventId }: UnpinEventPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getUnpinEventUrl({ guildId, eventId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
   }
 );}

@@ -44,7 +44,7 @@ const EventLocationResponseSchema = z.object({
   maps: z.array(EventMapResponseSchema),
 });
 
-const EventListItemResponseSchema = z.object({
+export const EventListItemResponseSchema = z.object({
   id: z.string(),
   guildId: z.string(),
   name: z.string(),

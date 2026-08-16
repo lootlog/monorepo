@@ -51,12 +51,12 @@ describe("SettingsDocumentsService", () => {
 
     await expect(
       service.getPreferences("user-1", {
-        domains: ["events"],
+        domains: ["timers"],
         guildId: "guild-1",
       }),
     ).resolves.toEqual({
       domains: {
-        events: expect.any(Object),
+        timers: expect.any(Object),
       },
     });
   });
@@ -70,7 +70,7 @@ describe("SettingsDocumentsService", () => {
 
     await expect(
       service.getPreferences("user-1", {
-        domains: ["events"],
+        domains: ["timers"],
         guildId: "guild-1",
       }),
     ).rejects.toThrow("Guild settings are not accessible");

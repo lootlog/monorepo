@@ -307,6 +307,7 @@ export type EventWhereInput = {
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
   heroNpcs?: Prisma.EventHeroNpcListRelationFilter
   rankings?: Prisma.EventRankingListRelationFilter
+  pinnedBy?: Prisma.UserPinnedEventListRelationFilter
 }
 
 export type EventOrderByWithRelationInput = {
@@ -328,6 +329,7 @@ export type EventOrderByWithRelationInput = {
   guild?: Prisma.GuildOrderByWithRelationInput
   heroNpcs?: Prisma.EventHeroNpcOrderByRelationAggregateInput
   rankings?: Prisma.EventRankingOrderByRelationAggregateInput
+  pinnedBy?: Prisma.UserPinnedEventOrderByRelationAggregateInput
 }
 
 export type EventWhereUniqueInput = Prisma.AtLeast<{
@@ -352,6 +354,7 @@ export type EventWhereUniqueInput = Prisma.AtLeast<{
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
   heroNpcs?: Prisma.EventHeroNpcListRelationFilter
   rankings?: Prisma.EventRankingListRelationFilter
+  pinnedBy?: Prisma.UserPinnedEventListRelationFilter
 }, "id">
 
 export type EventOrderByWithAggregationInput = {
@@ -416,6 +419,7 @@ export type EventCreateInput = {
   guild: Prisma.GuildCreateNestedOneWithoutEventsInput
   heroNpcs?: Prisma.EventHeroNpcCreateNestedManyWithoutEventInput
   rankings?: Prisma.EventRankingCreateNestedManyWithoutEventInput
+  pinnedBy?: Prisma.UserPinnedEventCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateInput = {
@@ -436,6 +440,7 @@ export type EventUncheckedCreateInput = {
   rulebookMarkdown?: string | null
   heroNpcs?: Prisma.EventHeroNpcUncheckedCreateNestedManyWithoutEventInput
   rankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutEventInput
+  pinnedBy?: Prisma.UserPinnedEventUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventUpdateInput = {
@@ -456,6 +461,7 @@ export type EventUpdateInput = {
   guild?: Prisma.GuildUpdateOneRequiredWithoutEventsNestedInput
   heroNpcs?: Prisma.EventHeroNpcUpdateManyWithoutEventNestedInput
   rankings?: Prisma.EventRankingUpdateManyWithoutEventNestedInput
+  pinnedBy?: Prisma.UserPinnedEventUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateInput = {
@@ -476,6 +482,7 @@ export type EventUncheckedUpdateInput = {
   rulebookMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   heroNpcs?: Prisma.EventHeroNpcUncheckedUpdateManyWithoutEventNestedInput
   rankings?: Prisma.EventRankingUncheckedUpdateManyWithoutEventNestedInput
+  pinnedBy?: Prisma.UserPinnedEventUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateManyInput = {
@@ -658,6 +665,20 @@ export type EnumEventScoringModeFieldUpdateOperationsInput = {
   set?: $Enums.EventScoringMode
 }
 
+export type EventCreateNestedOneWithoutPinnedByInput = {
+  create?: Prisma.XOR<Prisma.EventCreateWithoutPinnedByInput, Prisma.EventUncheckedCreateWithoutPinnedByInput>
+  connectOrCreate?: Prisma.EventCreateOrConnectWithoutPinnedByInput
+  connect?: Prisma.EventWhereUniqueInput
+}
+
+export type EventUpdateOneRequiredWithoutPinnedByNestedInput = {
+  create?: Prisma.XOR<Prisma.EventCreateWithoutPinnedByInput, Prisma.EventUncheckedCreateWithoutPinnedByInput>
+  connectOrCreate?: Prisma.EventCreateOrConnectWithoutPinnedByInput
+  upsert?: Prisma.EventUpsertWithoutPinnedByInput
+  connect?: Prisma.EventWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EventUpdateToOneWithWhereWithoutPinnedByInput, Prisma.EventUpdateWithoutPinnedByInput>, Prisma.EventUncheckedUpdateWithoutPinnedByInput>
+}
+
 export type EventCreateNestedOneWithoutHeroNpcsInput = {
   create?: Prisma.XOR<Prisma.EventCreateWithoutHeroNpcsInput, Prisma.EventUncheckedCreateWithoutHeroNpcsInput>
   connectOrCreate?: Prisma.EventCreateOrConnectWithoutHeroNpcsInput
@@ -703,6 +724,7 @@ export type EventCreateWithoutGuildInput = {
   rulebookMarkdown?: string | null
   heroNpcs?: Prisma.EventHeroNpcCreateNestedManyWithoutEventInput
   rankings?: Prisma.EventRankingCreateNestedManyWithoutEventInput
+  pinnedBy?: Prisma.UserPinnedEventCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutGuildInput = {
@@ -722,6 +744,7 @@ export type EventUncheckedCreateWithoutGuildInput = {
   rulebookMarkdown?: string | null
   heroNpcs?: Prisma.EventHeroNpcUncheckedCreateNestedManyWithoutEventInput
   rankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutEventInput
+  pinnedBy?: Prisma.UserPinnedEventUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutGuildInput = {
@@ -771,6 +794,102 @@ export type EventScalarWhereInput = {
   rulebookMarkdown?: Prisma.StringNullableFilter<"Event"> | string | null
 }
 
+export type EventCreateWithoutPinnedByInput = {
+  id?: string
+  name: string
+  world: string
+  startsAt?: Date | string | null
+  endsAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  basePointsPerKill?: number
+  assignmentTimeoutMinutes?: number
+  participationConfirmationMinutes?: number
+  mapAssignmentCap?: number | null
+  scoringMode?: $Enums.EventScoringMode
+  scoringRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  rulebookMarkdown?: string | null
+  guild: Prisma.GuildCreateNestedOneWithoutEventsInput
+  heroNpcs?: Prisma.EventHeroNpcCreateNestedManyWithoutEventInput
+  rankings?: Prisma.EventRankingCreateNestedManyWithoutEventInput
+}
+
+export type EventUncheckedCreateWithoutPinnedByInput = {
+  id?: string
+  guildId: string
+  name: string
+  world: string
+  startsAt?: Date | string | null
+  endsAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  basePointsPerKill?: number
+  assignmentTimeoutMinutes?: number
+  participationConfirmationMinutes?: number
+  mapAssignmentCap?: number | null
+  scoringMode?: $Enums.EventScoringMode
+  scoringRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  rulebookMarkdown?: string | null
+  heroNpcs?: Prisma.EventHeroNpcUncheckedCreateNestedManyWithoutEventInput
+  rankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutEventInput
+}
+
+export type EventCreateOrConnectWithoutPinnedByInput = {
+  where: Prisma.EventWhereUniqueInput
+  create: Prisma.XOR<Prisma.EventCreateWithoutPinnedByInput, Prisma.EventUncheckedCreateWithoutPinnedByInput>
+}
+
+export type EventUpsertWithoutPinnedByInput = {
+  update: Prisma.XOR<Prisma.EventUpdateWithoutPinnedByInput, Prisma.EventUncheckedUpdateWithoutPinnedByInput>
+  create: Prisma.XOR<Prisma.EventCreateWithoutPinnedByInput, Prisma.EventUncheckedCreateWithoutPinnedByInput>
+  where?: Prisma.EventWhereInput
+}
+
+export type EventUpdateToOneWithWhereWithoutPinnedByInput = {
+  where?: Prisma.EventWhereInput
+  data: Prisma.XOR<Prisma.EventUpdateWithoutPinnedByInput, Prisma.EventUncheckedUpdateWithoutPinnedByInput>
+}
+
+export type EventUpdateWithoutPinnedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  basePointsPerKill?: Prisma.IntFieldUpdateOperationsInput | number
+  assignmentTimeoutMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  participationConfirmationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  mapAssignmentCap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scoringMode?: Prisma.EnumEventScoringModeFieldUpdateOperationsInput | $Enums.EventScoringMode
+  scoringRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  rulebookMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guild?: Prisma.GuildUpdateOneRequiredWithoutEventsNestedInput
+  heroNpcs?: Prisma.EventHeroNpcUpdateManyWithoutEventNestedInput
+  rankings?: Prisma.EventRankingUpdateManyWithoutEventNestedInput
+}
+
+export type EventUncheckedUpdateWithoutPinnedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  world?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  basePointsPerKill?: Prisma.IntFieldUpdateOperationsInput | number
+  assignmentTimeoutMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  participationConfirmationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  mapAssignmentCap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scoringMode?: Prisma.EnumEventScoringModeFieldUpdateOperationsInput | $Enums.EventScoringMode
+  scoringRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  rulebookMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  heroNpcs?: Prisma.EventHeroNpcUncheckedUpdateManyWithoutEventNestedInput
+  rankings?: Prisma.EventRankingUncheckedUpdateManyWithoutEventNestedInput
+}
+
 export type EventCreateWithoutHeroNpcsInput = {
   id?: string
   name: string
@@ -788,6 +907,7 @@ export type EventCreateWithoutHeroNpcsInput = {
   rulebookMarkdown?: string | null
   guild: Prisma.GuildCreateNestedOneWithoutEventsInput
   rankings?: Prisma.EventRankingCreateNestedManyWithoutEventInput
+  pinnedBy?: Prisma.UserPinnedEventCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutHeroNpcsInput = {
@@ -807,6 +927,7 @@ export type EventUncheckedCreateWithoutHeroNpcsInput = {
   scoringRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rulebookMarkdown?: string | null
   rankings?: Prisma.EventRankingUncheckedCreateNestedManyWithoutEventInput
+  pinnedBy?: Prisma.UserPinnedEventUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutHeroNpcsInput = {
@@ -842,6 +963,7 @@ export type EventUpdateWithoutHeroNpcsInput = {
   rulebookMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   guild?: Prisma.GuildUpdateOneRequiredWithoutEventsNestedInput
   rankings?: Prisma.EventRankingUpdateManyWithoutEventNestedInput
+  pinnedBy?: Prisma.UserPinnedEventUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutHeroNpcsInput = {
@@ -861,6 +983,7 @@ export type EventUncheckedUpdateWithoutHeroNpcsInput = {
   scoringRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rulebookMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   rankings?: Prisma.EventRankingUncheckedUpdateManyWithoutEventNestedInput
+  pinnedBy?: Prisma.UserPinnedEventUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateWithoutRankingsInput = {
@@ -880,6 +1003,7 @@ export type EventCreateWithoutRankingsInput = {
   rulebookMarkdown?: string | null
   guild: Prisma.GuildCreateNestedOneWithoutEventsInput
   heroNpcs?: Prisma.EventHeroNpcCreateNestedManyWithoutEventInput
+  pinnedBy?: Prisma.UserPinnedEventCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutRankingsInput = {
@@ -899,6 +1023,7 @@ export type EventUncheckedCreateWithoutRankingsInput = {
   scoringRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rulebookMarkdown?: string | null
   heroNpcs?: Prisma.EventHeroNpcUncheckedCreateNestedManyWithoutEventInput
+  pinnedBy?: Prisma.UserPinnedEventUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutRankingsInput = {
@@ -934,6 +1059,7 @@ export type EventUpdateWithoutRankingsInput = {
   rulebookMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   guild?: Prisma.GuildUpdateOneRequiredWithoutEventsNestedInput
   heroNpcs?: Prisma.EventHeroNpcUpdateManyWithoutEventNestedInput
+  pinnedBy?: Prisma.UserPinnedEventUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutRankingsInput = {
@@ -953,6 +1079,7 @@ export type EventUncheckedUpdateWithoutRankingsInput = {
   scoringRules?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rulebookMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   heroNpcs?: Prisma.EventHeroNpcUncheckedUpdateManyWithoutEventNestedInput
+  pinnedBy?: Prisma.UserPinnedEventUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateManyGuildInput = {
@@ -989,6 +1116,7 @@ export type EventUpdateWithoutGuildInput = {
   rulebookMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   heroNpcs?: Prisma.EventHeroNpcUpdateManyWithoutEventNestedInput
   rankings?: Prisma.EventRankingUpdateManyWithoutEventNestedInput
+  pinnedBy?: Prisma.UserPinnedEventUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutGuildInput = {
@@ -1008,6 +1136,7 @@ export type EventUncheckedUpdateWithoutGuildInput = {
   rulebookMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   heroNpcs?: Prisma.EventHeroNpcUncheckedUpdateManyWithoutEventNestedInput
   rankings?: Prisma.EventRankingUncheckedUpdateManyWithoutEventNestedInput
+  pinnedBy?: Prisma.UserPinnedEventUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateManyWithoutGuildInput = {
@@ -1035,11 +1164,13 @@ export type EventUncheckedUpdateManyWithoutGuildInput = {
 export type EventCountOutputType = {
   heroNpcs: number
   rankings: number
+  pinnedBy: number
 }
 
 export type EventCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   heroNpcs?: boolean | EventCountOutputTypeCountHeroNpcsArgs
   rankings?: boolean | EventCountOutputTypeCountRankingsArgs
+  pinnedBy?: boolean | EventCountOutputTypeCountPinnedByArgs
 }
 
 /**
@@ -1066,6 +1197,13 @@ export type EventCountOutputTypeCountRankingsArgs<ExtArgs extends runtime.Types.
   where?: Prisma.EventRankingWhereInput
 }
 
+/**
+ * EventCountOutputType without action
+ */
+export type EventCountOutputTypeCountPinnedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserPinnedEventWhereInput
+}
+
 
 export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1086,6 +1224,7 @@ export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
   heroNpcs?: boolean | Prisma.Event$heroNpcsArgs<ExtArgs>
   rankings?: boolean | Prisma.Event$rankingsArgs<ExtArgs>
+  pinnedBy?: boolean | Prisma.Event$pinnedByArgs<ExtArgs>
   _count?: boolean | Prisma.EventCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["event"]>
 
@@ -1150,6 +1289,7 @@ export type EventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
   heroNpcs?: boolean | Prisma.Event$heroNpcsArgs<ExtArgs>
   rankings?: boolean | Prisma.Event$rankingsArgs<ExtArgs>
+  pinnedBy?: boolean | Prisma.Event$pinnedByArgs<ExtArgs>
   _count?: boolean | Prisma.EventCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EventIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1165,6 +1305,7 @@ export type $EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     guild: Prisma.$GuildPayload<ExtArgs>
     heroNpcs: Prisma.$EventHeroNpcPayload<ExtArgs>[]
     rankings: Prisma.$EventRankingPayload<ExtArgs>[]
+    pinnedBy: Prisma.$UserPinnedEventPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1579,6 +1720,7 @@ export interface Prisma__EventClient<T, Null = never, ExtArgs extends runtime.Ty
   guild<T extends Prisma.GuildDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GuildDefaultArgs<ExtArgs>>): Prisma.Prisma__GuildClient<runtime.Types.Result.GetResult<Prisma.$GuildPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   heroNpcs<T extends Prisma.Event$heroNpcsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$heroNpcsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventHeroNpcPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   rankings<T extends Prisma.Event$rankingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$rankingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventRankingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  pinnedBy<T extends Prisma.Event$pinnedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$pinnedByArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPinnedEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2069,6 +2211,30 @@ export type Event$rankingsArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.EventRankingScalarFieldEnum | Prisma.EventRankingScalarFieldEnum[]
+}
+
+/**
+ * Event.pinnedBy
+ */
+export type Event$pinnedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserPinnedEvent
+   */
+  select?: Prisma.UserPinnedEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserPinnedEvent
+   */
+  omit?: Prisma.UserPinnedEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserPinnedEventInclude<ExtArgs> | null
+  where?: Prisma.UserPinnedEventWhereInput
+  orderBy?: Prisma.UserPinnedEventOrderByWithRelationInput | Prisma.UserPinnedEventOrderByWithRelationInput[]
+  cursor?: Prisma.UserPinnedEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserPinnedEventScalarFieldEnum | Prisma.UserPinnedEventScalarFieldEnum[]
 }
 
 /**
