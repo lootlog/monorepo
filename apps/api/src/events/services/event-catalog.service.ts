@@ -33,6 +33,7 @@ import {
   attachComputedEventActive,
   buildActiveEventWhere,
   compareEventsByActivityAndStart,
+  isEventActiveAt,
 } from "../utils/event-activity.util";
 
 interface TimerNpcData {
@@ -378,9 +379,24 @@ export class EventCatalogService {
     }
 
     const referenceTime = new Date();
+    const currentEventIsActive = isEventActiveAt(event, referenceTime);
+    const updatedEventIsActive = isEventActiveAt(
+      {
+        startsAt: newStartDate,
+        endsAt: newEndDate,
+        createdAt: event.createdAt,
+      },
+      referenceTime,
+    );
 
     const updatedEvent = await this.prisma.$transaction(
       async (transactionClient) => {
+        if (!currentEventIsActive || !updatedEventIsActive) {
+          await transactionClient.userPinnedEvent.deleteMany({
+            where: { eventId },
+          });
+        }
+
         if (heroNpcs) {
           await transactionClient.eventHeroNpc.deleteMany({
             where: { eventId },

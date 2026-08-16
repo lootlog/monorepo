@@ -10,7 +10,7 @@ function getEventEffectiveStartDate(event: EventActivityWindow): Date {
   return event.startsAt ?? event.createdAt;
 }
 
-function isEventActiveAt(
+export function isEventActiveAt(
   event: EventActivityWindow,
   referenceTime: Date,
 ): boolean {

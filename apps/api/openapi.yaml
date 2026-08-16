@@ -5098,59 +5098,80 @@ paths:
       summary: Open hero respawn window
       tags:
         - events
-  /guilds/{guildId}/event-settings:
+  /guilds/{guildId}/pinned-events:
     get:
-      description: Retrieve user event settings for a specific guild
-      operationId: EventsSettingsController_getSettings
+      operationId: listPinnedEvents
       parameters:
         - name: guildId
-          required: true
           in: path
-          description: Guild ID
+          required: true
           schema:
-            example: guild_123
             type: string
       responses:
         "200":
-          description: Guild event settings
+          description: Active events pinned by the current user
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventSettingsResponseDto"
+                type: array
+                items:
+                  $ref: "#/components/schemas/PinnedEventResponseDto"
       security:
         - bearer: []
-      summary: Get guild event settings
+      summary: List active pinned events
       tags:
-        - event-settings
-    patch:
-      description: Update user event settings for a specific guild
-      operationId: EventsSettingsController_updateSettings
+        - events
+  /guilds/{guildId}/events/{eventId}/pin:
+    put:
+      operationId: pinEvent
       parameters:
-        - name: guildId
+        - name: eventId
           required: true
           in: path
-          description: Guild ID
           schema:
-            example: guild_123
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateEventSettingsDto"
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
-          description: Updated guild event settings
+          description: Pinned event
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventSettingsResponseDto"
+                $ref: "#/components/schemas/PinnedEventResponseDto"
+        "404":
+          description: Event not found
+        "409":
+          description: Event is not active
       security:
         - bearer: []
-      summary: Update guild event settings
+      summary: Pin an active event
       tags:
-        - event-settings
+        - events
+    delete:
+      operationId: unpinEvent
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Event unpinned
+      security:
+        - bearer: []
+      summary: Unpin an event
+      tags:
+        - events
   /users/@me/event-mode:
     get:
       description: Get active pinned events, assignments, and the next respawn for the authenticated user
@@ -9045,7 +9066,6 @@ components:
                   - notifications
                   - sounds
                   - controls
-                  - events
               scope:
                 type: object
                 properties:
@@ -16692,38 +16712,82 @@ components:
       required:
         - minSpawnTime
         - maxSpawnTime
-    EventSettingsResponseDto:
+    PinnedEventResponseDto:
       type: object
       properties:
-        userId:
-          type: string
-        guildId:
-          type: string
-        pinnedEvents:
-          type: array
-          items:
-            type: string
-        createdAt:
+        pinnedAt:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        updatedAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        event:
+          type: object
+          properties:
+            id:
+              type: string
+            guildId:
+              type: string
+            name:
+              type: string
+            world:
+              type: string
+            active:
+              type: boolean
+            startsAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            endsAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              nullable: true
+            createdAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            updatedAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            heroNpcs:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  npcId:
+                    type: number
+                    nullable: true
+                  npcName:
+                    type: string
+                  npcIcon:
+                    type: string
+                    nullable: true
+                  npcLvl:
+                    type: number
+                    nullable: true
+                required:
+                  - id
+                  - npcId
+                  - npcName
+                  - npcIcon
+                  - npcLvl
+          required:
+            - id
+            - guildId
+            - name
+            - world
+            - active
+            - startsAt
+            - endsAt
+            - createdAt
+            - updatedAt
+            - heroNpcs
       required:
-        - userId
-        - guildId
-        - pinnedEvents
-        - createdAt
-        - updatedAt
-    UpdateEventSettingsDto:
-      type: object
-      properties:
-        pinnedEvents:
-          type: array
-          items:
-            type: string
+        - pinnedAt
+        - event
     EventModeResponseDto:
       type: object
       properties:

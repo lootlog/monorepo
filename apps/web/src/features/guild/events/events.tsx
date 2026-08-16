@@ -100,7 +100,11 @@ export const Events = () => {
       },
     },
   });
-  const { togglePin, isPinned } = useToggleEventPin(guildId ?? "");
+  const {
+    togglePin,
+    isPinned,
+    isPending: isPinPending,
+  } = useToggleEventPin(guildId ?? "");
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -283,6 +287,12 @@ export const Events = () => {
                       : "secondary";
                 const formattedWorld =
                   event.world.charAt(0).toUpperCase() + event.world.slice(1);
+                let pinActionLabel = t("events.pinEvent");
+                if (!event.active) {
+                  pinActionLabel = t("events.pinUnavailable");
+                } else if (isPinned(event.id)) {
+                  pinActionLabel = t("events.unpinEvent");
+                }
 
                 return (
                   <Card
@@ -370,17 +380,10 @@ export const Events = () => {
                         variant="ghost"
                         size="icon"
                         className="size-8"
-                        title={
-                          isPinned(event.id)
-                            ? t("events.unpinEvent")
-                            : t("events.pinEvent")
-                        }
-                        aria-label={
-                          isPinned(event.id)
-                            ? t("events.unpinEvent")
-                            : t("events.pinEvent")
-                        }
-                        onClick={() => togglePin(event.id)}
+                        title={pinActionLabel}
+                        aria-label={pinActionLabel}
+                        disabled={!event.active || isPinPending(event.id)}
+                        onClick={() => togglePin(event)}
                       >
                         <Star
                           className={cn(

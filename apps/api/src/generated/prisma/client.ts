@@ -195,11 +195,6 @@ export type UserTimerSettings = Prisma.UserTimerSettingsModel
  */
 export type UserGuildTimerSettings = Prisma.UserGuildTimerSettingsModel
 /**
- * Model UserGuildEventSettings
- * 
- */
-export type UserGuildEventSettings = Prisma.UserGuildEventSettingsModel
-/**
  * Model UserSoundSettings
  * 
  */
@@ -209,6 +204,11 @@ export type UserSoundSettings = Prisma.UserSoundSettingsModel
  * 
  */
 export type Event = Prisma.EventModel
+/**
+ * Model UserPinnedEvent
+ * 
+ */
+export type UserPinnedEvent = Prisma.UserPinnedEventModel
 /**
  * Model EventMapLocation
  * 

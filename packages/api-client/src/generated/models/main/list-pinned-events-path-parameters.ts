@@ -6,6 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export type EventsSettingsControllerGetSettingsPathParameters = {
+export type ListPinnedEventsPathParameters = {
  guildId: string,
  }

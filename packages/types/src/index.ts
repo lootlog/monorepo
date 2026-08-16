@@ -10,7 +10,6 @@ export * from "./common/npc-appearance-colors.js";
 export * from "./common/npc-routing.types.js";
 export * from "./common/discord-auth-scopes.js";
 export * from "./common/discord.js";
-export * from "./common/event-settings.types.js";
 export * from "./common/notifications.types.js";
 export * from "./common/map-ping.types.js";
 export * from "./common/air-tag.types.js";

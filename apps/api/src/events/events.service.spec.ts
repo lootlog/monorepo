@@ -54,6 +54,9 @@ describe("EventsService", () => {
       delete: mockFn(),
       aggregate: mockFn(),
     },
+    userPinnedEvent: {
+      deleteMany: mockFn(),
+    },
     $transaction: mockFn(),
     $queryRaw: mockFn(),
   };
@@ -585,6 +588,43 @@ describe("EventsService", () => {
             endsAt: newEndsAt,
           }),
         }),
+      );
+    });
+
+    it("removes pins when an active event is ended", async () => {
+      const endedAt = new Date(Date.now() - 1);
+      mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(mockPrismaService),
+      );
+      mockPrismaService.event.update.mockResolvedValue({
+        ...existingEvent,
+        endsAt: endedAt,
+      });
+
+      await service.updateEvent(guildId, eventId, {
+        endsAt: endedAt.toISOString(),
+      });
+
+      expect(mockPrismaService.userPinnedEvent.deleteMany).toHaveBeenCalledWith(
+        { where: { eventId } },
+      );
+    });
+
+    it("removes stale pins before an inactive event is resumed", async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue({
+        ...existingEvent,
+        endsAt: new Date(Date.now() - 60_000),
+      });
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(mockPrismaService),
+      );
+      mockPrismaService.event.update.mockResolvedValue(existingEvent);
+
+      await service.updateEvent(guildId, eventId, { endsAt: null });
+
+      expect(mockPrismaService.userPinnedEvent.deleteMany).toHaveBeenCalledWith(
+        { where: { eventId } },
       );
     });
 

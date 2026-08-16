@@ -9,7 +9,6 @@ const SettingsDomainSchema = z.enum([
   "notifications",
   "sounds",
   "controls",
-  "events",
 ]);
 
 const SettingsScopeSchema = z

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type EventsSettingsControllerUpdateSettingsPathParameters = {
+export type UnpinEventPathParameters = {
  guildId: string,
+    eventId: string,
  }
