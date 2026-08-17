@@ -1,8 +1,4 @@
 import { GatewayEvent } from "@/config/gateway";
-import {
-  DEV_PERMISSION_OVERRIDE_EVENT,
-  getSerializedDevPermissionOverride,
-} from "@/lib/dev-permission-override";
 import { requestMargonemAccountProof } from "@/lib/margonem-account-proof";
 import {
   type AppSocket,
@@ -32,13 +28,6 @@ const SocketContext = createContext<SocketContextValue>({
   joined: false,
   joinedGuilds: [],
 });
-
-const updateSocketAuthentication = (socket: AppSocket) => {
-  socket.auth = {
-    ...(typeof socket.auth === "object" ? socket.auth : {}),
-    devPermissionOverride: getSerializedDevPermissionOverride(),
-  };
-};
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const socket = getSocket();
@@ -179,23 +168,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-    const handleDevPermissionOverrideChange = () => {
-      updateSocketAuthentication(socket);
-      setJoined(false);
-      setJoinedGuilds([]);
-
-      if (socket.connected) {
-        socket.disconnect();
-      }
-
-      socket.connect();
-    };
-
-    updateSocketAuthentication(socket);
-    window.addEventListener(
-      DEV_PERMISSION_OVERRIDE_EVENT,
-      handleDevPermissionOverrideChange,
-    );
     socket.connect();
 
     return () => {
@@ -203,11 +175,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-      window.removeEventListener(
-        DEV_PERMISSION_OVERRIDE_EVENT,
-        handleDevPermissionOverrideChange,
-      );
-
       socket.disconnect();
     };
   }, [socket]);

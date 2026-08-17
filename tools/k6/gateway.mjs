@@ -55,9 +55,6 @@ function runConnection(index) {
   return new Promise((resolveConnection) => {
     const startedAt = performance.now();
     const socket = io(config.url, {
-      auth: {
-        devPermissionOverride: config.devPermissionOverride,
-      },
       extraHeaders: buildHeaders(),
       parser: msgpackParser,
       path: config.path,
@@ -201,7 +198,6 @@ function buildConfig(cliArgs, secrets) {
     authHeader: tokenHeader,
     connections: numberValue(cliArgs.connections, "K6_GATEWAY_CONNECTIONS", 1),
     cookieHeader: authCookie,
-    devPermissionOverride: getDevPermissionOverride(secrets),
     durationMs: durationMs(
       cliArgs.duration || process.env.K6_GATEWAY_DURATION || "30s",
     ),
@@ -226,43 +222,6 @@ function buildConfig(cliArgs, secrets) {
     url: cliArgs.url || process.env.K6_GATEWAY_URL || "http://localhost",
     world: cliArgs.world || process.env.K6_WORLD || "classic",
   };
-}
-
-function getDevPermissionOverride(secrets) {
-  const explicitOverride =
-    secrets.DEV_PERMISSION_OVERRIDE ||
-    process.env.K6_DEV_PERMISSION_OVERRIDE ||
-    "";
-  if (explicitOverride) {
-    return explicitOverride;
-  }
-
-  const rawPermissions = process.env.K6_DEV_PERMISSIONS || "";
-  const permissions = rawPermissions
-    .split(",")
-    .map((permission) => permission.trim())
-    .filter(Boolean);
-
-  if (
-    permissions.length === 0 &&
-    !["1", "true", "yes", "on"].includes(
-      (process.env.K6_DEV_PERMISSION_OVERRIDE_ENABLED || "").toLowerCase(),
-    )
-  ) {
-    return "";
-  }
-
-  const payload = {
-    enabled: true,
-    permissions: permissions.length > 0 ? permissions : ["OWNER"],
-  };
-
-  if (process.env.K6_DEV_PERMISSION_GUILD_ID || process.env.K6_GUILD_ID) {
-    payload.guildId =
-      process.env.K6_DEV_PERMISSION_GUILD_ID || process.env.K6_GUILD_ID;
-  }
-
-  return Buffer.from(JSON.stringify(payload)).toString("base64url");
 }
 
 function readSecrets(filePath) {

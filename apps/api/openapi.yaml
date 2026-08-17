@@ -62,12 +62,7 @@ paths:
     get:
       description: Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status
       operationId: UsersController_getCurrentUserGuilds
-      parameters:
-        - name: x-lootlog-dev-permission-override
-          required: true
-          in: header
-          schema:
-            type: string
+      parameters: []
       responses:
         "200":
           description: Current user guilds with Lootlog access metadata
@@ -86,12 +81,7 @@ paths:
     get:
       description: Retrieve the authenticated user's Lootlog guilds where cached member data indicates access
       operationId: UsersController_getCurrentUserAccessibleGuilds
-      parameters:
-        - name: x-lootlog-dev-permission-override
-          required: true
-          in: header
-          schema:
-            type: string
+      parameters: []
       responses:
         "200":
           description: Accessible current user guilds with Lootlog access metadata
@@ -502,11 +492,6 @@ paths:
           description: Legacy source selector kept for backward compatibility
           schema:
             type: string
-        - name: x-lootlog-dev-permission-override
-          required: true
-          in: header
-          schema:
-            type: string
       responses:
         "200":
           description: List of user guilds
@@ -526,12 +511,7 @@ paths:
       deprecated: true
       description: Legacy endpoint for listing the authenticated user's accessible guilds with role metadata. Prefer /users/@me/guilds for new integrations.
       operationId: GuildsController_getUserGuildsWithPermissions
-      parameters:
-        - name: x-lootlog-dev-permission-override
-          required: true
-          in: header
-          schema:
-            type: string
+      parameters: []
       responses:
         "200":
           description: List of user guilds with permissions
@@ -772,11 +752,6 @@ paths:
           required: true
           in: query
           description: User ID
-          schema:
-            type: string
-        - name: x-lootlog-dev-permission-override
-          required: true
-          in: header
           schema:
             type: string
       responses:
@@ -5182,11 +5157,6 @@ paths:
           in: query
           schema:
             minLength: 1
-            type: string
-        - name: x-lootlog-dev-permission-override
-          required: true
-          in: header
-          schema:
             type: string
       responses:
         "200":

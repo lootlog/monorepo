@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   Patch,
   Post,
   Query,
@@ -32,10 +31,6 @@ import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";
 import { GuildResponseDto } from "src/shared/dto/guild-response.dto";
-import {
-  DEV_PERMISSION_OVERRIDE_HEADER,
-  parseDevPermissionOverrideHeader,
-} from "src/shared/permissions/dev-permission-override";
 
 @ApiTags("guilds")
 @ApiBearerAuth()
@@ -66,20 +61,8 @@ export class GuildsController {
     @DiscordId() discordId: string,
     @UserId() userId: string,
     @Query("source") source?: string,
-    @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ) {
-    const guildPermissionOptions = {
-      devPermissionOverride: parseDevPermissionOverrideHeader(
-        devPermissionOverride,
-      ),
-    };
-
-    return this.guildsService.getUserGuilds(
-      discordId,
-      userId,
-      source,
-      guildPermissionOptions,
-    );
+    return this.guildsService.getUserGuilds(discordId, userId, source);
   }
 
   @Get("/@me/permissions")
@@ -97,19 +80,8 @@ export class GuildsController {
   getUserGuildsWithPermissions(
     @DiscordId() discordId: string,
     @UserId() userId: string,
-    @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ): Promise<UserGuildPermissionsDto[]> {
-    const guildPermissionOptions = {
-      devPermissionOverride: parseDevPermissionOverrideHeader(
-        devPermissionOverride,
-      ),
-    };
-
-    return this.guildsService.getUserGuildsWithPermissions(
-      discordId,
-      userId,
-      guildPermissionOptions,
-    );
+    return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
   }
 
   @Get("/@me/manageable")

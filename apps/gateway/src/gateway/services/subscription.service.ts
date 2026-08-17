@@ -74,7 +74,6 @@ export class SubscriptionService {
       const guilds = await this.guildsService.getUserGuilds({
         discordId,
         userId,
-        devPermissionOverride: client.data.devPermissionOverride,
       });
 
       if (guilds.length === 0) {

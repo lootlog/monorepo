@@ -16,10 +16,6 @@ const socketMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("socket.io-client", () => ({ io: socketMocks.io }));
-vi.mock("@/lib/dev-permission-override", () => ({
-  getSerializedDevPermissionOverride: () => undefined,
-}));
-
 import { disposeSocket, getSocket } from "./socket";
 
 describe("socket lifecycle", () => {

@@ -44,11 +44,6 @@ import {
   UserGuildAccessResolver,
   type GuildRefreshCandidate,
 } from "./user-guild-access-resolver.service";
-import {
-  createDevPermissionOverrideRole,
-  getDevPermissionOverrideForGuild,
-  type ApiDevPermissionOverride,
-} from "src/shared/permissions/dev-permission-override";
 
 export type CurrentUserGuildAccessSummary = Pick<
   Guild,
@@ -87,10 +82,6 @@ const DEFAULT_RESERVATION_SETTINGS = {
   reservationActiveLimitPerSpot: 3,
 } as const;
 
-type GuildPermissionOptions = {
-  devPermissionOverride?: ApiDevPermissionOverride;
-};
-
 @Injectable()
 export class GuildsService {
   private readonly staleAfterMs: number;
@@ -109,25 +100,9 @@ export class GuildsService {
     this.staleAfterMs = discordBotConfig.channelSnapshotStaleSeconds * 1000;
   }
 
-  async getUserGuilds(
-    discordId: string,
-    userId: string,
-    source?: string,
-    options: GuildPermissionOptions = {},
-  ) {
+  async getUserGuilds(discordId: string, userId: string, source?: string) {
     if (source === "game") {
-      if (!options.devPermissionOverride) {
-        return this.getCurrentUserAccessibleGuildPlainEntries(
-          discordId,
-          userId,
-        );
-      }
-
-      return this.getCurrentUserAccessibleGuildPlainEntries(
-        discordId,
-        userId,
-        options,
-      );
+      return this.getCurrentUserAccessibleGuildPlainEntries(discordId, userId);
     }
 
     const guildCandidates =
@@ -143,7 +118,6 @@ export class GuildsService {
   async getCurrentUserGuildAccessSummaries(
     discordId: string,
     userId: string,
-    options: GuildPermissionOptions = {},
   ): Promise<CurrentUserGuildAccessSummary[]> {
     const requiredPermissions = [Permission.LOOTLOG_ACCESS];
     let guildCandidates: GuildRefreshCandidate[];
@@ -161,7 +135,6 @@ export class GuildsService {
           userId,
           requiredPermissions,
           error,
-          devPermissionOverride: options.devPermissionOverride,
         });
       }
 
@@ -190,7 +163,6 @@ export class GuildsService {
         guilds: guildCandidates.map((candidate) => candidate.guild),
         members,
         requiredPermissions,
-        devPermissionOverride: options.devPermissionOverride,
       }),
     );
   }
@@ -200,15 +172,8 @@ export class GuildsService {
     userId: string;
     requiredPermissions: Permission[];
     error: unknown;
-    devPermissionOverride?: ApiDevPermissionOverride;
   }): Promise<CurrentUserGuildAccessSummary[]> {
-    const {
-      discordId,
-      userId,
-      requiredPermissions,
-      error,
-      devPermissionOverride,
-    } = options;
+    const { discordId, userId, requiredPermissions, error } = options;
     this.logger.warn({
       message:
         "Discord guild list unavailable, returning stale local guild access summaries",
@@ -220,7 +185,6 @@ export class GuildsService {
     const guilds = await this.getGuildsForRequiredPermissions(
       discordId,
       requiredPermissions,
-      { devPermissionOverride },
     );
 
     if (guilds.length === 0) {
@@ -236,7 +200,6 @@ export class GuildsService {
       guilds,
       members,
       requiredPermissions,
-      devPermissionOverride,
     })
       .filter((guild) => guild.hasLootlogAccess)
       .map((guild) => ({
@@ -250,47 +213,43 @@ export class GuildsService {
   async getCurrentUserAccessibleGuilds(
     discordId: string,
     userId: string,
-    options: GuildPermissionOptions = {},
   ): Promise<CurrentUserGuildAccessSummary[]> {
     const cacheKey = this.getCurrentUserAccessibleGuildsCacheKey(
       discordId,
       userId,
     );
 
-    if (!options.devPermissionOverride) {
-      const cached =
-        await this.redisService.getJson<CurrentUserGuildAccessSummary[]>(
-          cacheKey,
-        );
+    const cached =
+      await this.redisService.getJson<CurrentUserGuildAccessSummary[]>(
+        cacheKey,
+      );
 
-      if (cached !== null) {
-        this.logger.debug({
-          message: "Cache hit for current user accessible guilds",
-          cacheKey,
-          discordId,
-          userId,
-        });
-        this.queueStaleAccessibleGuildSummaryRefreshes({
-          discordId,
-          userId,
-          guilds: cached,
-        });
-        return cached;
-      }
-
+    if (cached !== null) {
       this.logger.debug({
-        message: "Cache miss for current user accessible guilds",
+        message: "Cache hit for current user accessible guilds",
         cacheKey,
         discordId,
         userId,
       });
+      this.queueStaleAccessibleGuildSummaryRefreshes({
+        discordId,
+        userId,
+        guilds: cached,
+      });
+      return cached;
     }
+
+    this.logger.debug({
+      message: "Cache miss for current user accessible guilds",
+      cacheKey,
+      discordId,
+      userId,
+    });
 
     const requiredPermissions = [Permission.LOOTLOG_ACCESS];
     const guilds = await this.getGuildsForRequiredPermissions(
       discordId,
       requiredPermissions,
-      options,
     );
 
     if (guilds.length === 0) {
@@ -315,17 +274,14 @@ export class GuildsService {
         guilds,
         members,
         requiredPermissions,
-        devPermissionOverride: options.devPermissionOverride,
       }).filter((guild) => guild.hasLootlogAccess),
     );
 
-    if (!options.devPermissionOverride) {
-      await this.redisService.setJson(
-        cacheKey,
-        result,
-        CURRENT_USER_ACCESSIBLE_GUILDS_CACHE_TTL_SECONDS,
-      );
-    }
+    await this.redisService.setJson(
+      cacheKey,
+      result,
+      CURRENT_USER_ACCESSIBLE_GUILDS_CACHE_TTL_SECONDS,
+    );
 
     return result;
   }
@@ -532,33 +488,7 @@ export class GuildsService {
   async getGuildsForRequiredPermissions(
     discordId: string,
     requiredPermissions: Permission[],
-    options: GuildPermissionOptions = {},
   ) {
-    const override = options.devPermissionOverride;
-
-    if (override?.guildId) {
-      const guild = await this.prisma.guild.findFirst({
-        where: {
-          active: true,
-          id: override.guildId,
-        },
-      });
-
-      if (!guild) {
-        return [];
-      }
-
-      const hasDevPermissions = this.devOverrideHasRequiredPermissions(
-        override,
-        guild.id,
-        requiredPermissions,
-      );
-      const hasOwnerBypass =
-        guild.ownerId === discordId && !override.disableOwnerBypass;
-
-      return hasDevPermissions || hasOwnerBypass ? [guild] : [];
-    }
-
     const guilds = await this.prisma.guild.findMany({
       where: {
         active: true,
@@ -589,11 +519,7 @@ export class GuildsService {
     return guilds;
   }
 
-  async getMultipleGuildsPermissions(
-    discordId: string,
-    guildIds: string[],
-    options: GuildPermissionOptions = {},
-  ) {
+  async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
     const [guilds, members] = await Promise.all([
       this.prisma.guild.findMany({
         where: { id: { in: guildIds }, active: true },
@@ -613,21 +539,9 @@ export class GuildsService {
 
     const result = guilds.map((guild) => {
       const member = memberMap.get(guild.id);
-      const override = getDevPermissionOverrideForGuild(
-        options.devPermissionOverride,
-        guild.id,
-      );
 
-      if (!member && !override) {
+      if (!member) {
         return { guild, permissions: [], roles: [] };
-      }
-
-      if (override) {
-        return {
-          guild,
-          permissions: override.permissions,
-          roles: [createDevPermissionOverrideRole(override, guild.id)],
-        };
       }
 
       const isOwner = discordId === guild.ownerId;
@@ -643,18 +557,13 @@ export class GuildsService {
     return result;
   }
 
-  async getUserGuildsWithPermissions(
-    discordId: string,
-    userId?: string,
-    options: GuildPermissionOptions = {},
-  ) {
+  async getUserGuildsWithPermissions(discordId: string, userId?: string) {
     const requiredPermissions = [Permission.LOOTLOG_ACCESS];
-    const devPermissionOverride = options.devPermissionOverride;
     const cacheKey = userId
       ? `user:${userId}:discord:${discordId}:guild-permissions`
       : null;
 
-    if (cacheKey && !devPermissionOverride) {
+    if (cacheKey) {
       const cached =
         await this.redisService.getJson<UserGuildPermissionsDto[]>(cacheKey);
 
@@ -680,7 +589,6 @@ export class GuildsService {
       await this.getGuildsForRequiredPermissions(
         discordId,
         requiredPermissions,
-        options,
       ),
     );
     const guilds = guildCandidates.map((candidate) => candidate.guild);
@@ -699,10 +607,9 @@ export class GuildsService {
       guilds,
       members,
       requiredPermissions,
-      options,
     );
 
-    if (cacheKey && !devPermissionOverride) {
+    if (cacheKey) {
       await this.redisService.setJson(
         cacheKey,
         result,
@@ -872,7 +779,6 @@ export class GuildsService {
       }>;
     }>,
     requiredPermissions: Permission[],
-    options: GuildPermissionOptions = {},
   ) {
     const memberMap = new Map(
       members.map((member) => [member.guildId, member]),
@@ -882,29 +788,7 @@ export class GuildsService {
     return guilds
       .map((guild) => {
         const member = memberMap.get(guild.id);
-        const override = getDevPermissionOverrideForGuild(
-          options.devPermissionOverride,
-          guild.id,
-        );
-        const isOwner =
-          guild.ownerId === discordId && !override?.disableOwnerBypass;
-
-        if (override) {
-          if (
-            !this.devOverrideHasRequiredPermissions(
-              override,
-              guild.id,
-              requiredPermissions,
-            )
-          ) {
-            return null;
-          }
-
-          return {
-            guild: { id: guild.id, ownerId: guild.ownerId },
-            roles: [createDevPermissionOverrideRole(override, guild.id)],
-          };
-        }
+        const isOwner = guild.ownerId === discordId;
 
         if (isOwner) {
           return {
@@ -993,35 +877,18 @@ export class GuildsService {
     guilds: Guild[];
     members: GuildPermissionMember[];
     requiredPermissions: Permission[];
-    devPermissionOverride?: ApiDevPermissionOverride;
   }): CurrentUserGuildAccessSummary[] {
-    const {
-      discordId,
-      guilds,
-      members,
-      requiredPermissions,
-      devPermissionOverride,
-    } = options;
+    const { discordId, guilds, members, requiredPermissions } = options;
     const memberByGuildId = new Map(
       members.map((member) => [member.guildId, member] as const),
     );
 
     return guilds.map((guild) => {
       const member = memberByGuildId.get(guild.id);
-      const override = getDevPermissionOverrideForGuild(
-        devPermissionOverride,
-        guild.id,
-      );
-      const isOwner =
-        guild.ownerId === discordId && !override?.disableOwnerBypass;
-      const hasLootlogAccess = override
-        ? this.devOverrideHasRequiredPermissions(
-            override,
-            guild.id,
-            requiredPermissions,
-          )
-        : isOwner ||
-          this.memberHasRequiredPermissions(member, requiredPermissions);
+      const isOwner = guild.ownerId === discordId;
+      const hasLootlogAccess =
+        isOwner ||
+        this.memberHasRequiredPermissions(member, requiredPermissions);
 
       return {
         id: guild.id,
@@ -1042,28 +909,8 @@ export class GuildsService {
   private async getCurrentUserAccessibleGuildPlainEntries(
     discordId: string,
     userId: string,
-    options: GuildPermissionOptions = {},
   ) {
-    if (!options.devPermissionOverride) {
-      const guilds = await this.getCurrentUserAccessibleGuilds(
-        discordId,
-        userId,
-      );
-
-      return guilds.map(
-        ({
-          hasLootlogAccess: _hasLootlogAccess,
-          isAccessDataStale: _isAccessDataStale,
-          ...guild
-        }) => guild,
-      );
-    }
-
-    const guilds = await this.getCurrentUserAccessibleGuilds(
-      discordId,
-      userId,
-      options,
-    );
+    const guilds = await this.getCurrentUserAccessibleGuilds(discordId, userId);
 
     return guilds.map(
       ({
@@ -1079,21 +926,6 @@ export class GuildsService {
     userId: string,
   ): string {
     return `user:${userId}:discord:${discordId}:accessible-guilds`;
-  }
-
-  private devOverrideHasRequiredPermissions(
-    override: ApiDevPermissionOverride,
-    guildId: string,
-    requiredPermissions: Permission[],
-  ) {
-    if (!getDevPermissionOverrideForGuild(override, guildId)) {
-      return false;
-    }
-
-    const permissionSet = new Set(override.permissions);
-    return requiredPermissions.some((permission) =>
-      permissionSet.has(permission),
-    );
   }
 
   private queueStaleAccessibleGuildSummaryRefreshes(options: {

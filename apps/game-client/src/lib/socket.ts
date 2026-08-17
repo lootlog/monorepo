@@ -7,7 +7,6 @@ import type { ChatMessage } from "@/api/chat.api";
 import type { Timer } from "@/api/timers.api";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import { io, type Socket } from "socket.io-client";
-import { getSerializedDevPermissionOverride } from "@/lib/dev-permission-override";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { msgpackParser } from "@lootlog/socket-parser";
 import type { PartyGatheringSession } from "@/types/party-gathering";
@@ -167,9 +166,6 @@ export const getSocket = (): AppSocket => {
       withCredentials: true,
       autoConnect: false,
       parser: msgpackParser,
-      auth: {
-        devPermissionOverride: getSerializedDevPermissionOverride(),
-      },
     }) as AppSocket;
   }
 

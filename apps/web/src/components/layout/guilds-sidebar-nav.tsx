@@ -24,7 +24,6 @@ import {
   useListEvents,
 } from "@lootlog/api-client/react-query/main/events";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { DevPermissionOverridePanel } from "@/components/dev/dev-permission-override-panel";
 import { canReadGuildDocs } from "@/features/guild/docs/docs-permissions";
 
 export const GuildsSidebarNav: FC = () => {
@@ -179,7 +178,6 @@ export const GuildsSidebarNav: FC = () => {
           />
         ) : undefined
       }
-      footer={<DevPermissionOverridePanel guildId={guildId} />}
       onItemClick={handleItemClick}
     />
   );
