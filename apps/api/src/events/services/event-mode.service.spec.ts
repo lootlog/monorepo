@@ -258,28 +258,16 @@ describe("EventModeService", () => {
     });
   });
 
-  it("preserves administrative access and forwards development overrides", async () => {
+  it("preserves administrative access", async () => {
     mockGuildsService.getUserGuildsWithPermissions.mockResolvedValue([
       createGuildContext({ permissions: [Permission.ADMIN] }),
     ]);
     mockPrisma.userPinnedEvent.findMany.mockResolvedValue([]);
-    const devPermissionOverride = {
-      enabled: true,
-      permissions: [Permission.ADMIN],
-    };
-
-    await service.getEventMode(
-      createOptions({
-        devPermissionOverride,
-      }),
-    );
+    await service.getEventMode(createOptions());
 
     expect(mockGuildsService.getUserGuildsWithPermissions).toHaveBeenCalledWith(
       "discord-1",
       "user-1",
-      {
-        devPermissionOverride,
-      },
     );
     expect(mockPrisma.userPinnedEvent.findMany).toHaveBeenCalled();
   });

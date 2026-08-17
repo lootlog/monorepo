@@ -1,7 +1,6 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { DEV_PERMISSION_OVERRIDE_HEADER } from "@lootlog/types";
 import type {
   UserGuildData,
   GetUserGuildsOptions,
@@ -32,16 +31,10 @@ export class GuildsService {
   }
 
   async getUserGuilds(options: GetUserGuildsOptions): Promise<UserGuildData[]> {
-    const { discordId, userId, devPermissionOverride } = options;
+    const { discordId, userId } = options;
     const startTime = Date.now();
     const cacheKey = getUserGuildsCacheKey(discordId, userId);
-    const dedupeKey = devPermissionOverride
-      ? `${discordId}:${userId}:${devPermissionOverride}`
-      : `${discordId}:${userId}`;
-
-    if (devPermissionOverride) {
-      return this.fetchFromHttpWithRetry(options);
-    }
+    const dedupeKey = `${discordId}:${userId}`;
 
     if (this.pendingRequests.has(dedupeKey)) {
       return this.pendingRequests.get(dedupeKey)!;
@@ -100,17 +93,13 @@ export class GuildsService {
     options: GetUserGuildsOptions,
     retryCount = 0,
   ): Promise<UserGuildData[]> {
-    const { discordId, userId, devPermissionOverride } = options;
-    const headers = devPermissionOverride
-      ? { [DEV_PERMISSION_OVERRIDE_HEADER]: devPermissionOverride }
-      : undefined;
+    const { discordId, userId } = options;
 
     try {
       const url = `${this.apiUrl}/internal/guilds/user-permissions`;
       const response = await firstValueFrom(
         this.httpService.get<UserGuildData[]>(url, {
           params: { discordId, userId },
-          headers,
           timeout: REQUEST_TIMEOUT,
         }),
       );

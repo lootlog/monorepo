@@ -1,7 +1,6 @@
 import { GATEWAY_SOCKET_PATH, GATEWAY_URL } from "@/config/gateway";
 import { io } from "socket.io-client";
 import { msgpackParser } from "@lootlog/socket-parser";
-import { getSerializedDevPermissionOverride } from "@/lib/dev-permission-override";
 
 export const socket = io(GATEWAY_URL, {
   transports: ["websocket"],
@@ -13,7 +12,4 @@ export const socket = io(GATEWAY_URL, {
   withCredentials: true,
   autoConnect: false,
   parser: msgpackParser,
-  auth: {
-    devPermissionOverride: getSerializedDevPermissionOverride(),
-  },
 });

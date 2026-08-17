@@ -9,23 +9,7 @@ import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  getUsersControllerGetCurrentUserGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/api-client/react-query/main/users";
-import { queryClient } from "@/lib/query-client";
-import {
-  DEV_PERMISSION_OVERRIDE_EVENT,
-  getSerializedDevPermissionOverride,
-} from "@/lib/dev-permission-override";
-import {
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  getGuildsControllerGetUserGuildsWithPermissionsQueryKey,
-} from "@lootlog/api-client/react-query/main/guilds";
-import { getMembersControllerGetMeQueryKey } from "@lootlog/api-client/react-query/main/members";
-import { getAuthControllerGetScopesQueryKey } from "@lootlog/api-client/react-query/auth/auth";
-import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
+import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
 
 export type GatewayProviderValue = {
   connected: boolean;
@@ -86,49 +70,6 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
       socket.emit(GatewayEvent.JOIN, {});
     }
   });
-  const reconnectWithDevPermissionOverride = useEffectEvent(() => {
-    socket.auth = {
-      ...(typeof socket.auth === "object" ? socket.auth : {}),
-      devPermissionOverride: getSerializedDevPermissionOverride(),
-    };
-    setJoined(false);
-    void queryClient.invalidateQueries({
-      queryKey: sessionQueryOptions.queryKey,
-    });
-    void queryClient.invalidateQueries({
-      queryKey: getAuthControllerGetScopesQueryKey(),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: getUsersControllerGetCurrentUserGuildsQueryKey(),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: getGuildsControllerGetUserGuildsWithPermissionsQueryKey(),
-    });
-
-    const scopedGuildIds = new Set(
-      [routeGuildId, currentGuildId].filter(
-        (guildId): guildId is string => typeof guildId === "string",
-      ),
-    );
-
-    for (const guildId of scopedGuildIds) {
-      void queryClient.invalidateQueries({
-        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: getMembersControllerGetMeQueryKey({ guildId }),
-      });
-    }
-
-    if (socket.connected) {
-      socket.disconnect();
-    }
-
-    socket.connect();
-  });
   const handleLootCreate = useEffectEvent(
     (payload: LootCreateGatewayPayload) => {
       if (payload.guildId === currentGuildId) {
@@ -154,16 +95,8 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.LOOTS_CREATE, handleLootCreate);
-    window.addEventListener(
-      DEV_PERMISSION_OVERRIDE_EVENT,
-      reconnectWithDevPermissionOverride,
-    );
 
     if (!socket.connected) {
-      socket.auth = {
-        ...(typeof socket.auth === "object" ? socket.auth : {}),
-        devPermissionOverride: getSerializedDevPermissionOverride(),
-      };
       socket.connect();
     }
 
@@ -172,10 +105,6 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.LOOTS_CREATE, handleLootCreate);
-      window.removeEventListener(
-        DEV_PERMISSION_OVERRIDE_EVENT,
-        reconnectWithDevPermissionOverride,
-      );
     };
   }, []);
 

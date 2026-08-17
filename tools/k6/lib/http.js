@@ -1,8 +1,6 @@
 import { check } from "k6";
 import http from "k6/http";
 
-const DEV_PERMISSION_OVERRIDE_HEADER = "X-Lootlog-Dev-Permission-Override";
-
 export function apiRequest(
   config,
   service,
@@ -124,10 +122,6 @@ export function buildRequestParams(config, service, endpoint, options = {}) {
 
   if (config.auth.cookie) {
     headers.Cookie = config.auth.cookie;
-  }
-
-  if (config.devPermissionOverride && service === "api") {
-    headers[DEV_PERMISSION_OVERRIDE_HEADER] = config.devPermissionOverride;
   }
 
   return {

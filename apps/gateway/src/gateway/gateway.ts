@@ -64,11 +64,9 @@ export class Gateway {
     const identity = await this.gatewayAuthService.verifyConnectionIdentity(
       client.request,
     );
-    const { platform, devPermissionOverride } =
-      this.connectionService.getConnectionMetadata(
-        client.request,
-        client.handshake?.auth,
-      );
+    const { platform } = this.connectionService.getConnectionMetadata(
+      client.request,
+    );
 
     const validation = this.connectionService.validateConnection(
       identity?.discordId ?? null,
@@ -83,7 +81,6 @@ export class Gateway {
       identity!.userId,
       client.id,
       platform,
-      devPermissionOverride,
     );
 
     client.on(GatewayEvent.DISCONNECTING, async () => {
