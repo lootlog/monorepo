@@ -46,7 +46,7 @@ jobs:
 
       - name: Create version PR or publish releases
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           publish: pnpm release
           version: pnpm run version
