@@ -1,5 +1,3 @@
-import encoding from "k6/encoding";
-
 export const HTTP_SERVICES = ["api", "auth", "search", "battlelog", "activity"];
 
 const SERVICE_ALIASES = {
@@ -66,7 +64,6 @@ export function buildRuntimeConfig(secrets) {
       token: authToken,
     },
     baseUrls: getBaseUrls(),
-    devPermissionOverride: buildDevPermissionOverride(),
     enableWrites,
     features: {
       enableIdpToken: boolEnv("K6_ENABLE_IDP_TOKEN", false),
@@ -224,41 +221,4 @@ function scenarioStringEnv(name, fallback) {
 
 function scenarioNumberEnv(name, fallback) {
   return numberEnv(`LOOTLOG_K6_${name}`, fallback);
-}
-
-function buildDevPermissionOverride() {
-  const explicitOverride = stringEnv("K6_DEV_PERMISSION_OVERRIDE", "");
-  if (explicitOverride) {
-    return explicitOverride;
-  }
-
-  const permissions = listEnv("K6_DEV_PERMISSIONS");
-  if (
-    permissions.length === 0 &&
-    !boolEnv("K6_DEV_PERMISSION_OVERRIDE_ENABLED", false)
-  ) {
-    return "";
-  }
-
-  const override = {
-    enabled: true,
-    permissions: permissions.length > 0 ? permissions : ["OWNER"],
-  };
-  const guildId = stringEnv(
-    "K6_DEV_PERMISSION_GUILD_ID",
-    stringEnv("K6_GUILD_ID", ""),
-  );
-
-  if (guildId) {
-    override.guildId = guildId;
-  }
-
-  return encoding.b64encode(JSON.stringify(override), "rawurl");
-}
-
-function listEnv(name) {
-  return stringEnv(name, "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
 }

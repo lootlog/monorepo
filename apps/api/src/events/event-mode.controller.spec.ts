@@ -43,7 +43,6 @@ describe("EventModeController", () => {
       userId: "user-1",
       discordId: "discord-1",
       world: "Tempest",
-      devPermissionOverride: undefined,
     });
   });
 

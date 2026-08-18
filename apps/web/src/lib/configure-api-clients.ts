@@ -12,19 +12,12 @@ import {
   SEARCH_API_URL,
 } from "@/config/api";
 import { authClient } from "@/lib/auth-client";
-import { applyDevPermissionOverrideHeader } from "@/lib/dev-permission-override";
 
 type ApiErrorData = {
   requiresReauth?: boolean;
 };
 
 let reauthenticationPromise: Promise<void> | null = null;
-
-const getHeaders = (): Headers => {
-  const headers = new Headers();
-  applyDevPermissionOverrideHeader(headers);
-  return headers;
-};
 
 const requiresReauthentication = (error: ApiError<unknown>): boolean => {
   if (typeof error.data !== "object" || error.data === null) {
@@ -74,7 +67,6 @@ export const configureWebApiClients = (): (() => void) => {
   const mainBaseUrl = API_URL ?? window.location.origin;
   const sharedConfiguration = {
     credentials: "include" as const,
-    getHeaders,
     onError: handleError,
   };
 

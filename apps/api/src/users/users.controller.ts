@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  Headers,
   Param,
   Patch,
   UseGuards,
@@ -25,10 +24,6 @@ import { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-a
 import { UserCurrentGuildResponseDto } from "src/users/dto/user-current-guild-response.dto";
 import { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
 import { UsersService } from "src/users/users.service";
-import {
-  DEV_PERMISSION_OVERRIDE_HEADER,
-  parseDevPermissionOverrideHeader,
-} from "src/shared/permissions/dev-permission-override";
 
 @ApiTags("users")
 @ApiBearerAuth()
@@ -84,22 +79,11 @@ export class UsersController {
     description: "Current user guilds with Lootlog access metadata",
     type: [UserCurrentGuildResponseDto],
   })
-  async getCurrentUserGuilds(
+  getCurrentUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
-    @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ) {
-    const parsedDevPermissionOverride = parseDevPermissionOverrideHeader(
-      devPermissionOverride,
-    );
-
-    if (!parsedDevPermissionOverride) {
-      return this.usersService.getCurrentUserGuilds(discordId, userId);
-    }
-
-    return this.usersService.getCurrentUserGuilds(discordId, userId, {
-      devPermissionOverride: parsedDevPermissionOverride,
-    });
+    return this.usersService.getCurrentUserGuilds(discordId, userId);
   }
 
   @Get("/@me/guilds/accessible")
@@ -113,25 +97,11 @@ export class UsersController {
     description: "Accessible current user guilds with Lootlog access metadata",
     type: [UserCurrentGuildResponseDto],
   })
-  async getCurrentUserAccessibleGuilds(
+  getCurrentUserAccessibleGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
-    @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ) {
-    const parsedDevPermissionOverride = parseDevPermissionOverrideHeader(
-      devPermissionOverride,
-    );
-
-    if (!parsedDevPermissionOverride) {
-      return this.usersService.getCurrentUserAccessibleGuilds(
-        discordId,
-        userId,
-      );
-    }
-
-    return this.usersService.getCurrentUserAccessibleGuilds(discordId, userId, {
-      devPermissionOverride: parsedDevPermissionOverride,
-    });
+    return this.usersService.getCurrentUserAccessibleGuilds(discordId, userId);
   }
 
   @Patch("/@me/preferences")
