@@ -47,17 +47,12 @@ import {
   GuildsService,
   type CurrentUserGuildAccessSummary,
 } from "src/guilds/guilds.service";
-import type { ApiDevPermissionOverride } from "src/shared/permissions/dev-permission-override";
 import type { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-account-preferences.dto";
 import type { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
 
 type DeleteAccountParams = {
   authUserId: string;
   discordId: string;
-};
-
-type UserGuildPermissionOptions = {
-  devPermissionOverride?: ApiDevPermissionOverride;
 };
 
 const GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID = "__global-notification-mutes__";
@@ -124,42 +119,18 @@ export class UsersService {
     );
   }
 
-  async getCurrentUserGuilds(
+  getCurrentUserGuilds(
     discordId: string,
     userId: string,
-    options: UserGuildPermissionOptions = {},
   ): Promise<CurrentUserGuildAccessSummary[]> {
-    if (!options.devPermissionOverride) {
-      return this.guildsService.getCurrentUserGuildAccessSummaries(
-        discordId,
-        userId,
-      );
-    }
-
     return this.guildsService.getCurrentUserGuildAccessSummaries(
       discordId,
       userId,
-      options,
     );
   }
 
-  async getCurrentUserAccessibleGuilds(
-    discordId: string,
-    userId: string,
-    options: UserGuildPermissionOptions = {},
-  ) {
-    if (!options.devPermissionOverride) {
-      return this.guildsService.getCurrentUserAccessibleGuilds(
-        discordId,
-        userId,
-      );
-    }
-
-    return this.guildsService.getCurrentUserAccessibleGuilds(
-      discordId,
-      userId,
-      options,
-    );
+  getCurrentUserAccessibleGuilds(discordId: string, userId: string) {
+    return this.guildsService.getCurrentUserAccessibleGuilds(discordId, userId);
   }
 
   async deleteAccount({ authUserId, discordId }: DeleteAccountParams) {

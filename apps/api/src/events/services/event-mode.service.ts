@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { Permission } from "src/generated/prisma/client";
-import type { ApiDevPermissionOverride } from "src/shared/permissions/dev-permission-override";
 import { PermissionResolver } from "src/shared/permissions/permission-resolver";
 import { filterHeroesByLevel } from "src/shared/utils/can-view-event-hero";
 import {
@@ -19,7 +18,6 @@ interface GetEventModeOptions {
   userId: string;
   discordId: string;
   world: string;
-  devPermissionOverride?: ApiDevPermissionOverride;
 }
 
 interface EventModeGuildContext {
@@ -252,7 +250,6 @@ export class EventModeService {
     const guildAccess = await this.guildsService.getUserGuildsWithPermissions(
       options.discordId,
       options.userId,
-      { devPermissionOverride: options.devPermissionOverride },
     );
 
     return guildAccess.flatMap((context) => {

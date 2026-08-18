@@ -1,11 +1,7 @@
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
-import { Controller, Get, Headers, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import {
-  DEV_PERMISSION_OVERRIDE_HEADER,
-  parseDevPermissionOverrideHeader,
-} from "src/shared/permissions/dev-permission-override";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { EventModeQueryDto } from "./dto/event-mode-query.dto";
 import { EventModeResponseDto } from "./dto/event-mode-response.dto";
@@ -33,15 +29,11 @@ export class EventModeController {
     @UserId() userId: string,
     @DiscordId() discordId: string,
     @Query() query: EventModeQueryDto,
-    @Headers(DEV_PERMISSION_OVERRIDE_HEADER) devPermissionOverride?: string,
   ) {
     return this.eventModeService.getEventMode({
       userId,
       discordId,
       world: query.world,
-      devPermissionOverride: parseDevPermissionOverrideHeader(
-        devPermissionOverride,
-      ),
     });
   }
 }

@@ -63,11 +63,8 @@ Useful environment variables:
 - `K6_GUILD_ID`, `K6_WORLD`, `K6_BATTLE_ID`, `K6_EVENT_ID`, `K6_LOOT_ID`,
   `K6_DOC_ID`, `K6_ACTIVITY_ID`, `K6_BATTLE_CHARACTER_ID`,
   `K6_BATTLE_OPPONENT_ID`: optional fixtures for deeper routes
-- `K6_DEV_PERMISSION_OVERRIDE_ENABLED=true`: emit a dev permission override
-- `K6_DEV_PERMISSIONS=OWNER`: permissions used in generated dev override
-
-Use `LOOTLOG_K6_*` for scenario execution tuning. Native k6 variables such as
-`K6_DURATION`, `K6_VUS`, and `K6_ITERATIONS` override the script's scenarios.
+  Use `LOOTLOG_K6_*` for scenario execution tuning. Native k6 variables such as
+  `K6_DURATION`, `K6_VUS`, and `K6_ITERATIONS` override the script's scenarios.
 
 Dev is read-only by default. `K6_ENABLE_WRITES=true` is blocked when
 `K6_ENV=dev`.
