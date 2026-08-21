@@ -1,32 +1,28 @@
 ---
 name: context7
 description: |
-  Fetch up-to-date library documentation via Context7 API. Use PROACTIVELY when:
+  Fetch up-to-date library documentation via Context7 API. Use proactively when:
   (1) Working with ANY external library (React, Next.js, Supabase, etc.)
   (2) User asks about library APIs, patterns, or best practices
   (3) Implementing features that rely on third-party packages
   (4) Debugging library-specific issues
   (5) Need current documentation beyond training data cutoff
   (6) AND MOST IMPORTANTLY, when you are installing dependencies, libraries, or frameworks you should ALWAYS check the docs to see what the latest versions are. Do not rely on outdated knowledge.
-  Always prefer this over guessing library APIs or using outdated knowledge.
+  Prefer current primary documentation over guessing library APIs or using outdated knowledge.
 ---
 
 # Context7 Documentation Fetcher
 
 Retrieve current library documentation via Context7 API.
 
-IMPORTANT: `CONTEXT7_API_KEY` IS STORED IN THE .env FILE IN THE SKILL FOLDER THAT THE CONTEXT7 SKILL IS INSTALLED IN. SEARCH FOR IT THERE. .env FILES ARE HIDDEN FILES.
-
-Example:
-~/.agents/skills/context7/.env
-~/.claude/skills/context7/.env
+The bundled script loads its configuration. Never open, print, copy, or search for API keys or other secret values. If the script reports missing configuration, report that fact without inspecting secret files.
 
 ## Workflow
 
 ### 1. Search for the library
 
 ```bash
-python3 ~/.codex/skills/context7/scripts/context7.py search "<library-name>"
+python3 .agents/skills/context7/scripts/context7.py search "<library-name>"
 ```
 
 Example:
@@ -40,7 +36,7 @@ Returns library metadata including the `id` field needed for step 2.
 ### 2. Fetch documentation context
 
 ```bash
-python3 ~/.codex/skills/context7/scripts/context7.py context "<library-id>" "<query>"
+python3 .agents/skills/context7/scripts/context7.py context "<library-id>" "<query>"
 ```
 
 Example:
@@ -65,7 +61,7 @@ Options:
 
 ## When to Use
 
-- Before implementing any library-dependent feature
+- Before implementing version-sensitive library behavior
 - When unsure about current API signatures
-- For library version-specific behavior
+- For library version-specific behavior, using primary sources where available
 - To verify best practices and patterns

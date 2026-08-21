@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unslop"
+  short_description: "Remove AI tells from writing"
+  default_prompt: "Use $unslop to rewrite this text in a natural, specific voice."
