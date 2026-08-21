@@ -1,4 +1,4 @@
-import type { Metadata } from "next/dist/lib/metadata/types/metadata-interface";
+import type { Metadata } from "next";
 import type { JSX } from "react";
 import { PolicyLayout } from "@/src/components/policy-layout";
 import TermsOfServiceContent from "@/src/content/terms-of-service.mdx";
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TermsOfService(): JSX.Element {
   return (
-    <PolicyLayout lastUpdated={new Date().toLocaleDateString("pl-PL")}>
+    <PolicyLayout lastUpdated="21.08.2026">
       <TermsOfServiceContent />
     </PolicyLayout>
   );

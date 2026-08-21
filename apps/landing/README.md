@@ -1,12 +1,18 @@
 # @lootlog/landing
 
-Next.js landing page and documentation site for Lootlog.
+Static Next.js product site for Lootlog.
 
-## Overview
+## Responsibilities
 
-- Serves the marketing homepage, legal pages, and MDX-backed documentation under `src/app/docs`.
-- Uses `fumadocs` for docs rendering and `@lootlog/ui` for shared presentation primitives.
-- Builds as a static export via Next.js configuration in `next.config.ts`.
+- Product introduction and installation paths.
+- Links to the authenticated app, user documentation, GitHub, Discord, and
+  support.
+- Privacy policy and terms of service.
+- Approved product screenshots and evidence-backed public claims.
+
+User documentation lives in `apps/docs` and is published separately at
+`docs.lootlog.pl`. Read `PRODUCT.md` in this directory before changing landing
+copy.
 
 ## Development
 
@@ -16,16 +22,15 @@ Run commands from the monorepo root:
 pnpm --filter @lootlog/landing dev
 ```
 
-The dev server runs on port `3003`.
+The development server uses port `3003`.
 
-## Key Scripts
+## Checks
 
-- `pnpm --filter @lootlog/landing build`
-- `pnpm --filter @lootlog/landing start`
-- `pnpm --filter @lootlog/landing lint`
-- `pnpm --filter @lootlog/landing typecheck`
+```bash
+pnpm --filter @lootlog/landing build
+pnpm --filter @lootlog/landing lint
+pnpm --filter @lootlog/landing typecheck
+```
 
-## Notes
-
-- `next.config.ts` enables static export and MDX page extensions.
-- The app imports shared UI from `@lootlog/ui` instead of duplicating component code.
+The app builds as a static export. Published content changes require a
+Changeset.
