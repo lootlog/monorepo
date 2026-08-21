@@ -5,6 +5,28 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
+const releaseNeutralWorkspaceMetadata = new Set([
+  "AGENTS.md",
+  "PRODUCT.md",
+  "README.md",
+]);
+
+function hasReleaseAffectingChange(changedFiles, workspacePath) {
+  const workspacePrefix = `${workspacePath}/`;
+
+  return changedFiles.some((changedFile) => {
+    if (changedFile === workspacePath) {
+      return true;
+    }
+    if (!changedFile.startsWith(workspacePrefix)) {
+      return false;
+    }
+
+    const workspaceRelativePath = changedFile.slice(workspacePrefix.length);
+    return !releaseNeutralWorkspaceMetadata.has(workspaceRelativePath);
+  });
+}
+
 export function findUncoveredWorkspaces({
   changedFiles,
   changesetFiles,
@@ -35,12 +57,7 @@ export function findUncoveredWorkspaces({
   const releasedPackages = new Set(releases.map(({ name }) => name));
 
   return workspaces
-    .filter(({ path }) =>
-      changedFiles.some(
-        (changedFile) =>
-          changedFile === path || changedFile.startsWith(`${path}/`),
-      ),
-    )
+    .filter(({ path }) => hasReleaseAffectingChange(changedFiles, path))
     .filter(({ name }) => !releasedPackages.has(name))
     .map(({ name }) => name)
     .sort();

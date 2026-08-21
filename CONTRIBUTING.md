@@ -1,203 +1,114 @@
 # Contributing to Lootlog
 
-First off, thank you for considering contributing to Lootlog! It's people like you that make Lootlog such a great tool for the Margonem community.
+Lootlog accepts bug fixes, documentation improvements, performance work, and
+features that fit the product direction. Read these documents before proposing a
+large change:
 
-## Code of Conduct
+- [`PRODUCT.md`](PRODUCT.md)
+- [`CONTEXT.md`](CONTEXT.md)
+- [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- [`SECURITY.md`](SECURITY.md)
+- the closest `AGENTS.md` to the code you will change
 
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+The [Code of Conduct](CODE_OF_CONDUCT.md) applies to every project space.
 
-## How Can I Contribute?
+## Report problems
 
-### Reporting Bugs
+Search existing issues before opening a new one. A useful bug report includes:
 
-Before creating bug reports, please check the existing issues as you might find out that you don't need to create one. When you are creating a bug report, please include as many details as possible:
+- a specific title;
+- reproduction steps;
+- observed and expected behavior;
+- app and client versions;
+- browser, installation method, Margonem interface, and OS when relevant;
+- screenshots or recordings that do not expose private Organization data.
 
-- **Use a clear and descriptive title** for the issue
-- **Describe the exact steps which reproduce the problem**
-- **Provide specific examples to demonstrate the steps**
-- **Describe the behavior you observed after following the steps**
-- **Explain which behavior you expected to see instead and why**
-- **Include screenshots or animated GIFs** if applicable
-- **Include your environment details** (OS, Node version, browser version)
+Report vulnerabilities privately through the process in
+[`SECURITY.md`](SECURITY.md). Do not open a public security issue.
 
-### Suggesting Enhancements
+## Propose changes
 
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion, please include:
+A large feature proposal should state:
 
-- **Use a clear and descriptive title**
-- **Provide a step-by-step description of the suggested enhancement**
-- **Provide specific examples to demonstrate the steps**
-- **Describe the current behavior** and **explain which behavior you expected to see instead**
-- **Explain why this enhancement would be useful**
+- the user problem;
+- the affected product pillar;
+- whether it is core, supporting, experimental, or deprecated;
+- expected usage and success measure;
+- performance, security, data, infrastructure-cost, and migration impact;
+- why an existing feature or external tool does not already solve the problem.
 
-### Pull Requests
+The project owner decides product direction and roadmap. Merging an experiment
+does not guarantee permanent public support.
 
-- Fill in the pull request template
-- Confirm that you have the right to submit your contribution under this project's MIT License
-- Follow the code style guidelines (Oxlint, Oxfmt)
-- Include tests when adding new features
-- Update documentation when necessary
-- End all files with a newline
+## Local setup
 
-## Development Setup
+Requirements:
 
-### Prerequisites
-
-- Node.js >= 20
-- pnpm >= 11.17.0
-- Docker & Docker Compose
-
-### Initial Setup
+- Node.js 24 or newer
+- pnpm 11.17.0
+- Docker with Docker Compose
 
 ```bash
-# Clone the repository
-git clone https://github.com/lootlog/lootlog.git
-cd lootlog
-
-# Install dependencies
-pnpm i
-
-# Generate environment variables
+git clone https://github.com/lootlog/monorepo.git
+cd monorepo
+pnpm install
 pnpm env:generate
-
-# Start infrastructure
 docker compose up -d
-
-# Run database migrations
 pnpm api:migrate:dev
+pnpm activity:migrate:dev
 pnpm auth:migrate:dev
 pnpm battlelog:migrate:dev
-
-# Start development servers
 pnpm dev
 ```
 
-### Project Structure
+The app is normally already running in the maintainer environment. Agents must
+not start another copy unless asked.
 
-This is a Turborepo monorepo with the following structure:
+## Make a change
 
-```
-apps/
-  activity/             - NestJS activity tracking service
-  admin/                - Admin panel
-  api/                  - Main NestJS backend
-  auth/                 - Hono authentication service
-  battlelog-service/    - NestJS battle statistics service
-  gateway/              - Socket.IO gateway
-  discord-bot/          - Discord bot
-  notifications/        - Notifications service
-  search/               - Hono search service (Meilisearch)
-  web/                  - React 19 dashboard
-  game-client/          - React 19 in-game companion
-  landing/              - Next.js 16 marketing site
+- Follow the closest `AGENTS.md` and effective Oxlint configuration.
+- Use Oxfmt rather than hand-formatting generated style changes.
+- Add or update tests for behavior changes.
+- Update the canonical document before copying facts into a public guide.
+- Preserve protected contracts or include an explicit migration.
+- Do not bypass hooks with `--no-verify`.
 
-packages/
-  ui/                   - Shared UI components
-  types/                - Shared TypeScript types
-  api-helpers/          - JWT/JWKS utilities
-  cli/                  - Environment configuration CLI
-  instrumentation/      - Shared observability helpers
-  nest-shared/          - Shared NestJS decorators and guards
-  socket-parser/        - Shared socket parsing logic
-  typescript-config/    - Shared TypeScript configuration
-```
-
-### Common Commands
+Common checks:
 
 ```bash
-# Development
-pnpm dev                    # Start all services
-pnpm build                  # Build all services
-pnpm lint                   # Lint all code
-pnpm format                 # Format code with Oxfmt
-pnpm format:check           # Check formatting without writing files
-pnpm test                   # Run all tests
-
-# Database operations
-pnpm api:migrate:dev        # Run API migrations
-pnpm api:generate           # Generate Prisma client
-pnpm api:studio             # Open Prisma Studio
-
-# Working on specific apps
-cd apps/api
-pnpm dev                    # Run only API service
-pnpm test                   # Run API tests
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:e2e
+pnpm format:check
 ```
 
-### Code Style Guidelines
+Use the narrowest relevant workspace checks while developing. Run every gate
+required by the affected workspace before handoff.
 
-- We use Oxlint and Oxfmt for code quality and formatting
-- Run `pnpm lint` before committing
-- Run `pnpm format` to auto-format code
-- Run `pnpm format:check` when you want a CI-style formatting check
-- Use descriptive variable names
-- Add comments only when necessary
-- Avoid magic numbers and strings - create constants
+## Changesets
 
-### Database Changes
+Add a Changeset when a workspace change affects runtime behavior, user-facing
+behavior, a public contract, build output, or dependencies.
 
-When modifying database schemas:
+- Use `patch` for fixes and compatible improvements.
+- Use `minor` for backward-compatible features.
+- Use `major` for breaking consumer-facing changes.
+- Include every directly affected workspace.
+- Write the summary in English.
 
-```bash
-# For API service
-# 1. Edit apps/api/prisma/schema.prisma
-# 2. Create migration
-pnpm api:migrate:dev
-# 3. Regenerate client
-pnpm api:generate
+Tests, non-published documentation, and non-release configuration do not require
+an empty Changeset. Published docs and landing content affect build output and
+require a normal Changeset.
 
-# For Battlelog service
-# 1. Edit apps/battlelog-service/prisma/schema.prisma
-# 2. Create migration
-pnpm battlelog:migrate:dev
-# 3. Regenerate client
-pnpm battlelog:generate
-```
+Never edit package versions or generated changelogs manually.
 
-### Testing
+## Pull requests
 
-- Write tests for new features
-- Ensure all tests pass before submitting PR
-- Backend tests use Vitest
-- Frontend tests use Vitest
-
-### Commit Messages
-
-We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
-
-```
-feat: add new timer notification system
-fix: resolve memory leak in socket connections
-docs: update API documentation
-refactor: simplify guild member validation
-test: add tests for loot distribution
-chore: update dependencies
-```
-
-### Working with RabbitMQ Events
-
-When adding inter-service communication:
-
-1. Define event types in `packages/types`
-2. Publish events from source service
-3. Subscribe to events in target service
-4. Test event flow end-to-end
-
-### Adding New Services
-
-1. Create new directory in `apps/`
-2. Add `package.json` with proper scripts
-3. Update root `pnpm-workspace.yaml` if needed
-4. Add service configuration to `turbo.json`
-5. Update docker-compose.yml if infrastructure is needed
-6. Document service in main README.md
-
-## Getting Help
-
-- Check the [CLAUDE.md](CLAUDE.md) file for detailed architecture info
-- Open a GitHub issue for bugs or feature requests
-- Review existing issues and pull requests
-
-## Recognition
-
-Contributors will be recognized in the README.md file. Thank you for your contributions!
+- Use an English Conventional Commit title.
+- Complete the pull request template.
+- Link the issue, RFC, or ADR when one exists.
+- List automated checks and manual scenarios.
+- Describe data, security, performance, rollout, and rollback risks.
+- Include screenshots or recordings for visible UI changes.
+- Confirm that you can submit the contribution under the MIT License.
