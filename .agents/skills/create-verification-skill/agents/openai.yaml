@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create verification skill"
+  short_description: "Create a real-app verification workflow"
+  default_prompt: "Use $create-verification-skill to create a verification skill for this application."
