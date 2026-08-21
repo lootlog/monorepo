@@ -1,130 +1,204 @@
-# Polityka Prywatności
+# Polityka prywatności
 
-## 1. Informacje Ogólne
+## 1. Zakres dokumentu
 
-Niniejsza Polityka Prywatności określa zasady przetwarzania danych osobowych w ramach:
+Polityka opisuje przetwarzanie danych w hostowanej usłudze Lootlog, w tym:
 
-- Aplikacji webowej lootlog.pl
-- Bota Discord służącego do synchronizacji danych
-- Dodatku do gry Margonem
+- serwisie lootlog.pl i panelu webowym;
+- kliencie działającym na stronach Margonem;
+- bocie oraz integracjach Discord;
+- dokumentacji, wiki i usługach technicznych potrzebnych do działania produktu.
 
-> **Uwaga:** Lootlog.pl to projekt hobbystyczny tworzony z pasji do gry Margonem. Nie jest to przedsięwzięcie komercyjne, a wszystkie usługi są świadczone bezpłatnie dla społeczności graczy. Polityka ta została opracowana w celu zapewnienia transparentności i zgodności z przepisami RODO.
+Lootlog jest niezależnym projektem społecznościowym rozwijanym jako open source.
+Nie jest oficjalną usługą Discord ani Garmory sp. z o.o.
 
-## 2. Administrator Danych
+## 2. Administrator danych i kontakt
 
-Administratorem danych osobowych jest właściciel projektu hobbystycznego lootlog.pl. W sprawach dotyczących ochrony danych osobowych można kontaktować się poprzez:
+Administratorem danych osobowych hostowanej usługi Lootlog jest Kamil Wronka.
+W sprawach dotyczących prywatności i realizacji praw można skontaktować się:
 
-- Discord: [https://discord.gg/mPcczaeYMu](https://discord.gg/mPcczaeYMu)
-- GitHub: [https://github.com/lootlog/monorepo](https://github.com/lootlog/monorepo)
+- e-mail: `kamilwronka7@gmail.com`;
+- Discord: [społeczność Lootlog](https://discord.gg/mPcczaeYMu);
+- GitHub: [lootlog/monorepo](https://github.com/lootlog/monorepo).
 
-## 3. Przetwarzane Dane
+Nie należy publikować danych osobowych ani zgłoszeń bezpieczeństwa w publicznym
+issue. Podatności należy zgłaszać zgodnie z
+[polityką bezpieczeństwa](https://github.com/lootlog/monorepo/security/policy).
 
-### 3.1 Jakie dane zbieramy
+## 3. Kategorie danych
 
-- Dane z autoryzacji Discord (ID użytkownika, nick, avatar, adres email)
-- Informacje o postaci w grze Margonem (nick, serwer, poziom)
-- Dane o przynależności do gildii/klanu
-- Zebrane łupy z gry (przedmioty, lokalizacja, czas)
-- Timery respawnu potworów
-- Adres IP w celach bezpieczeństwa i analitycznych
-- Dane techniczne (przeglądarka, system operacyjny)
-- ID serwera Discord (w celu konfiguracji powiadomień)
-- Podstawowe informacje o profilu Discord (nick, avatar, email - jeśli udostępnione)
+W zależności od używanych funkcji Lootlog przetwarza:
 
-Dane zbierane są wyłącznie od użytkownika oraz z usług Discord i Margonem, na podstawie wyrażonej zgody.
+### Konto i Discord
 
-## 4. Cel i Podstawa Przetwarzania Danych
+- wewnętrzny identyfikator użytkownika;
+- identyfikator, nazwę, avatar i adres e-mail konta Discord, jeżeli Discord je
+  udostępni;
+- sesje, tokeny techniczne i informacje potrzebne do uwierzytelnienia;
+- serwery Discord, członkostwo i role potrzebne do wyświetlenia organizacji
+  Lootloga oraz wyliczenia dostępu.
 
-- Świadczenie usług aplikacji (śledzenie łupów, timery)
-- Autoryzacja i uwierzytelnianie użytkowników poprzez Discord
-- Zarządzanie kontami użytkowników
-- Analiza statystyk i optymalizacja usługi
-- Zapewnienie bezpieczeństwa platformy
-- Synchronizacja danych między aplikacją a serwerem Discord
-- Wysyłanie powiadomień o timerach respawnu
-- Powiązanie konta Discord z kontem lootlog.pl
-- Zarządzanie uprawnieniami w gildii/klanie
+### Margonem i rozgrywka
 
-Przetwarzanie danych odbywa się na podstawie zgody użytkownika (art. 6 ust. 1 lit. a RODO) oraz prawnie uzasadnionego interesu administratora w zakresie zapewnienia bezpieczeństwa i funkcjonalności usługi (art. 6 ust. 1 lit. f RODO).
+- konta, postacie, światy, klany, poziomy i profesje;
+- łupy, zabicia, walki, timery, NPC, mapy i czas zdarzeń;
+- presence, w tym postać, świat, stan AFK oraz dokładną mapę, jeśli użytkownik
+  udostępnia tę informację organizacji;
+- podpisane potwierdzenie konta Margonem, jeśli usługa Margonem je udostępni.
 
-## 5. Bot Discord – Ograniczenia
+### Organizacja i treści użytkowników
 
-Bot Discord służy wyłącznie jako narzędzie synchronizacji danych między bazą danych lootlog.pl a serwerem Discord. Bot nie przetwarza treści wiadomości prywatnych, nie przechowuje historii rozmów i nie analizuje aktywności użytkowników poza funkcjami związanymi z lootlog.pl.
+- konfigurację organizacji, role i polityki dostępu;
+- chat, komentarze, powiadomienia, rezerwacje, eventy, przydziały i dokumenty;
+- historię zmian oraz dane potrzebne do rozliczenia działań organizacji.
 
-## 6. Udostępnianie Danych
+### Dane techniczne
 
-Dane osobowe nie są sprzedawane ani udostępniane podmiotom trzecim, z wyjątkiem:
+- adres IP, user-agent, wersję aplikacji, metodę instalacji i identyfikatory
+  sesji;
+- błędy, opóźnienia synchronizacji, próby ponowienia i metryki niezawodności;
+- zagregowane dane wydajności klienta i wystąpienia trybu ograniczonego;
+- ustawienia cookie, local storage i preferencje interfejsu.
 
-- Danych niezbędnych do funkcjonowania usług (np. Discord API)
-- Podmiotów świadczących usługi hostingowe (np. Vercel)
-- Sytuacji wymaganych prawem
-- Ochrony praw i bezpieczeństwa użytkowników
+Lootlog nie wykorzystuje treści chatu, prywatnych walk ani dokładnej lokalizacji
+do analityki produktowej.
 
-Dostawcy usług mogą mieć siedzibę poza Europejskim Obszarem Gospodarczym. W takim przypadku dane są przekazywane wyłącznie w oparciu o odpowiednie mechanizmy zgodności, np. standardowe klauzule umowne.
+## 4. Źródła danych
 
-## 7. Okres Przechowywania
+Dane pochodzą:
 
-- Dane konta: do momentu usunięcia konta przez użytkownika
-- Dane o łupach: przez czas niezbędny do świadczenia usługi
-- Logi bezpieczeństwa: maksymalnie 12 miesięcy
-- Dane analityczne: w formie zanonimizowanej
+- bezpośrednio od użytkownika;
+- z klienta Lootlog działającego podczas gry;
+- z Discorda po autoryzacji użytkownika lub instalacji bota;
+- z Margonem w zakresie udostępnionym stronie gry i obsługiwanym przez klienta;
+- z działania serwisów technicznych Lootloga.
 
-## 8. Prawa Użytkownika
+## 5. Cele i podstawy przetwarzania
 
-Użytkownik ma prawo do:
+Dane są przetwarzane, zależnie od celu, aby:
 
-- Dostępu do swoich danych osobowych
-- Sprostowania nieprawidłowych danych
-- Usunięcia danych (prawo do bycia zapomnianym)
-- Ograniczenia przetwarzania
-- Przenoszenia danych
-- Wniesienia sprzeciwu wobec przetwarzania
-- Cofnięcia zgody w dowolnym momencie
+- utworzyć konto, utrzymać sesję i świadczyć wybrane funkcje Lootloga;
+- synchronizować wspólne dane organizacji zgodnie z jej politykami dostępu;
+- zapisywać i prezentować dane rozgrywki wybrane przez użytkownika;
+- dostarczać chat, powiadomienia, eventy, rezerwacje i pozostałe funkcje
+  koordynacji;
+- chronić użytkowników i usługę, zapobiegać nadużyciom oraz diagnozować błędy;
+- mierzyć niezawodność, koszt i użycie produktu;
+- realizować obowiązki prawne oraz uzasadnione roszczenia.
 
-Użytkownik ma także prawo złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych (PUODO) w przypadku naruszenia przepisów o ochronie danych osobowych.
+Podstawą przetwarzania może być wykonanie umowy o świadczenie usługi (art. 6
+ust. 1 lit. b RODO), prawnie uzasadniony interes administratora związany z
+bezpieczeństwem i utrzymaniem usługi (art. 6 ust. 1 lit. f RODO), zgoda w
+zakresie opcjonalnej analityki lub podobnych mechanizmów (art. 6 ust. 1 lit. a
+RODO) albo obowiązek prawny (art. 6 ust. 1 lit. c RODO).
 
-## 9. Bezpieczeństwo
+Wycofanie zgody nie wpływa na zgodność wcześniejszego przetwarzania z prawem.
 
-Stosujemy odpowiednie środki techniczne i organizacyjne w celu ochrony danych osobowych przed nieuprawnionym dostępem, utratą, zniszczeniem lub ujawnieniem. Dane są przechowywane na bezpiecznych serwerach z zastosowaniem szyfrowania. Jako projekt hobbystyczny, staramy się zapewnić najlepsze możliwe standardy bezpieczeństwa w ramach dostępnych nam zasobów.
+## 6. Widoczność w organizacji
 
-## 10. Pliki Cookie i Local Storage
+Organizacja Lootloga odpowiada jednemu serwerowi Discord. Dane przekazane do
+organizacji mogą być widoczne dla innych członków zgodnie z rolami Discord i
+politykami dostępu skonfigurowanymi w Lootlogu.
 
-Aplikacja wykorzystuje pliki cookie i Local Storage w celu:
+Użytkownik wybiera, do których organizacji wysyła dane postaci i presence.
+Dokładna lokalizacja podlega osobnemu dostępowi. Publiczna walka staje się
+publiczna dopiero po jawnej zmianie widoczności i może zostać ponownie ukryta.
 
-- Utrzymania sesji logowania
-- Zapamiętywania preferencji użytkownika
-- Przechowywania ustawień interfejsu (motywy, layouty)
-- Cache'owania danych w celu poprawy wydajności
-- Analizy ruchu na stronie
-- Zapewnienia bezpieczeństwa
+Jeśli administrator świadomie skieruje powiadomienie lub komunikat na kanał
+Discord, widoczność wiadomości po dostarczeniu kontrolują uprawnienia tego
+kanału w Discordzie.
 
-Local Storage przechowuje dane lokalnie w przeglądarce użytkownika i nie są one automatycznie wysyłane na serwer. Użytkownik może wyczyścić te dane w ustawieniach przeglądarki.
+## 7. Odbiorcy i dostawcy
 
-Jeśli korzystamy z narzędzi analitycznych (np. Google Analytics), są one skonfigurowane tak, by nie identyfikować użytkownika bez jego zgody.
+Dane mogą być przekazywane:
 
-## 11. Zautomatyzowane podejmowanie decyzji i profilowanie
+- członkom właściwej organizacji zgodnie z polityką dostępu;
+- Discordowi i Margonem w zakresie potrzebnym do wybranej integracji;
+- dostawcom hostingu, baz danych, storage, kolejek, cache, obserwowalności,
+  poczty i ochrony infrastruktury;
+- organom publicznym, jeśli wymaga tego prawo;
+- podmiotom potrzebnym do ochrony praw użytkowników lub administratora.
 
-Nie stosujemy profilowania ani zautomatyzowanego podejmowania decyzji w oparciu o dane osobowe użytkownika.
+Dostawcy przetwarzają dane na podstawie właściwych umów i tylko w zakresie
+potrzebnym do świadczenia ich usługi. Jeżeli dane trafiają poza Europejski
+Obszar Gospodarczy, stosowane są mechanizmy wymagane przez RODO, odpowiednie do
+danego dostawcy i transferu.
 
-## 12. Zmiana administratora
+Lootlog nie sprzedaje danych osobowych.
 
-W przypadku zmiany administratora projektu lootlog.pl, wszelkie dane osobowe zostaną przekazane nowemu administratorowi z zachowaniem obowiązujących przepisów RODO, a użytkownicy zostaną o tym poinformowani.
+## 8. Retencja i usuwanie
 
-## 13. Wersje dokumentu
+Okres przechowywania zależy od rodzaju danych, celu i wybranego planu:
 
-Poprzednie wersje niniejszej polityki prywatności są dostępne na GitHub: [Zobacz historię zmian](<https://github.com/lootlog/monorepo/commits/main/apps/web/src/app/(public)/privacy-policy.tsx>)
+- konto i jego ustawienia są przechowywane do usunięcia konta lub zakończenia
+  świadczenia usługi, z zastrzeżeniem obowiązków prawnych i bezpieczeństwa;
+- dane presence są efemeryczne i wygasają po utracie aktualnego połączenia lub
+  potwierdzenia świeżości;
+- logi bezpieczeństwa są przechowywane nie dłużej niż 12 miesięcy, chyba że są
+  potrzebne do wyjaśnienia incydentu lub roszczenia;
+- telemetry techniczne są agregowane i przechowywane przez ograniczony okres;
+- prywatne walki i inne dane osobiste podlegają ustawieniom konta oraz zasadom
+  retencji danego planu;
+- łupy, eventy, rankingi, activity i inne rekordy świadomie przekazane do
+  organizacji mogą pozostać w jej historii po odejściu użytkownika, z
+  ograniczeniem lub usunięciem zbędnych danych osobowych;
+- ciężkie rekordy mogą przejść do archiwum, a po podanym okresie zostać
+  zagregowane albo trwale usunięte.
 
-## 14. Zmiany Polityki
+Przed pierwszym nieodwracalnym usunięciem wynikającym z retencji użytkownik
+powinien otrzymać informację i możliwość eksportu danych, które podlegają
+eksportowi. Dokładne okresy właściwe dla planu lub kategorii danych są
+publikowane przed ich zastosowaniem.
 
-Zastrzegamy sobie prawo do wprowadzania zmian w niniejszej Polityce Prywatności. O wszelkich istotnych zmianach użytkownicy zostaną poinformowani poprzez aplikację lub Discord.
+## 9. Prawa użytkownika
 
-## 15. Kontakt
+W granicach wynikających z RODO użytkownik może żądać:
 
-W przypadku pytań dotyczących przetwarzania danych osobowych lub chęci skorzystania ze swoich praw, prosimy o kontakt poprzez:
+- dostępu do danych i ich kopii;
+- sprostowania danych;
+- usunięcia danych;
+- ograniczenia przetwarzania;
+- przeniesienia danych;
+- wniesienia sprzeciwu;
+- wycofania zgody.
 
-- Serwer Discord: [https://discord.gg/mPcczaeYMu](https://discord.gg/mPcczaeYMu)
-- GitHub Issues: [https://github.com/lootlog/monorepo/issues](https://github.com/lootlog/monorepo/issues)
+Usunięcie konta nie musi usuwać faktów należących do wspólnej historii
+organizacji, jeżeli istnieje podstawa do ich dalszego przechowywania. W takim
+przypadku Lootlog ogranicza lub usuwa powiązanie z osobą w zakresie, w jakim jest
+to możliwe i zgodne z celem rekordu.
 
----
+Użytkownik może złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych.
 
-Ta polityka prywatności jest zgodna z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 (RODO).
+## 10. Cookie i pamięć przeglądarki
+
+Lootlog używa cookie i pamięci przeglądarki do utrzymania sesji, bezpieczeństwa,
+preferencji, cache oraz ustawień klienta. Mechanizmy opcjonalnej analityki są
+uruchamiane zgodnie z wyborem użytkownika, jeśli wymagana jest zgoda.
+
+Usunięcie danych lokalnych może wylogować użytkownika albo zresetować ustawienia
+interfejsu i klienta.
+
+## 11. Profilowanie i decyzje automatyczne
+
+Lootlog nie podejmuje wobec użytkownika decyzji wywołujących skutki prawne na
+podstawie wyłącznie zautomatyzowanego przetwarzania. Rankingi i statystyki
+opisują dane produktu i nie są takim rozstrzygnięciem.
+
+## 12. Bezpieczeństwo
+
+Lootlog stosuje kontrolę dostępu, izolację organizacji, szyfrowane połączenia,
+ochronę sekretów, logowanie zdarzeń bezpieczeństwa i aktualizacje zależności.
+Żadna usługa internetowa nie daje gwarancji całkowitego wyeliminowania ryzyka.
+
+Podatności można zgłaszać prywatnie przez
+[GitHub Security Advisories](https://github.com/lootlog/monorepo/security/advisories/new).
+
+## 13. Zmiany polityki
+
+Istotne zmiany polityki są komunikowane w aplikacji, dokumentacji lub na
+Discordzie. Historia dokumentu jest dostępna w
+[repozytorium](https://github.com/lootlog/monorepo/commits/main/apps/landing/src/content/privacy-policy.mdx).
+
+Przed uruchomieniem płatnych planów dokument zostanie zaktualizowany do
+konkretnych zasad płatności, retencji i dostawców oraz poddany profesjonalnemu
+przeglądowi prawnemu.

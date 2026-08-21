@@ -80,6 +80,9 @@ playground/**
 
 # Local planning and agent session documents
 /docs/*
+!/docs/adr/
+!/docs/adr/**
+!/docs/product-evidence.md
 **/.impeccable/direction-question.json
 **/.impeccable/questions/
 .superpowers/

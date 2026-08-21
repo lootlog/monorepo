@@ -1,148 +1,171 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+Security rules in this document apply to every Lootlog service and product
+surface. Read `PRODUCT.md`, `CONTEXT.md`, and `ARCHITECTURE.md` for the domain and
+system boundaries these rules protect.
 
-We release patches for security vulnerabilities. Currently supported versions:
+## Supported versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
+Security fixes target the current production release and the next release from
+`main`. Older self-hosted revisions are not maintained as supported security
+branches unless a published advisory says otherwise.
 
-## Reporting a Vulnerability
+## Report a vulnerability
 
-The Lootlog team takes security bugs seriously. We appreciate your efforts to responsibly disclose your findings.
+Use [GitHub private vulnerability reporting](https://github.com/lootlog/monorepo/security/advisories/new)
+as the preferred channel. If GitHub reporting is unavailable, email
+`kamilwronka7@gmail.com`.
 
-### Where to Report
+Do not open a public issue, post exploit details on Discord, or test against
+data or accounts you do not control.
 
-If you discover a security vulnerability, please report it by emailing:
+Include:
 
-**kamilwronka7@gmail.com**
+- the affected URL, service, workspace, version, or commit;
+- reproduction steps and required configuration;
+- observed and expected behavior;
+- the security impact and affected data boundary;
+- a minimal proof of concept when safe to provide;
+- whether the issue is already public or under active exploitation.
 
-### What to Include
+Reports are handled privately while the issue is reproduced, scoped, fixed,
+and prepared for coordinated disclosure. Response and remediation times are
+best effort and depend on impact and maintainer availability. Credit is given
+with the reporter's consent.
 
-To help us triage and fix the issue as quickly as possible, please include:
+## Organization isolation
 
-- Type of issue (e.g., SQL injection, XSS, authentication bypass, etc.)
-- Full paths of source file(s) related to the manifestation of the issue
-- The location of the affected source code (tag/branch/commit or direct URL)
-- Any special configuration required to reproduce the issue
-- Step-by-step instructions to reproduce the issue
-- Proof-of-concept or exploit code (if possible)
-- Impact of the issue, including how an attacker might exploit it
+One persisted `Guild` represents the Discord guild that anchors one Lootlog
+Organization. The Organization is the top-level tenant boundary.
 
-### What to Expect
+Apply Organization scope to:
 
-- **Initial Response**: You will receive an acknowledgment within 48 hours
-- **Status Updates**: We will keep you informed about the progress of the fix
-- **Disclosure Timeline**: We aim to address critical vulnerabilities within 7 days
-- **Credit**: We will credit you for the discovery (unless you prefer to remain anonymous)
+- record, aggregate, history, comment, and search queries;
+- cache, idempotency, object-storage, and job keys;
+- RabbitMQ events and consumers;
+- Socket.IO subscriptions, rooms, fetches, and per-event delivery;
+- notification matching, previews, histories, and external destinations;
+- exports, public links, telemetry, and audit records.
 
-### Security Update Process
+Do not assume that possession of a record identifier proves access. Resolve
+membership, visibility, and the requested action for every path, including
+derived data.
 
-1. Security vulnerability is received and assigned to a handler
-2. The problem is confirmed and affected versions are identified
-3. Code is audited to find similar potential problems
-4. Fixes are prepared for all supported versions
-5. Patches are released and security advisory is published
+## Identity and authorization
 
-## Security Best Practices for Contributors
+- Discord is the only supported sign-in provider.
+- Keep the internal Lootlog user identifier separate from `discordId` in new
+  domain contracts.
+- Verify sessions, JWTs, and JWKS according to the auth service contract.
+- Treat provider tokens, session cookies, bearer tokens, API credentials, and
+  recovery material as secrets.
+- Discord supplies Organization membership and role membership. Lootlog Access
+  policies map from current Discord roles.
+- Do not add persistent per-user permission overrides.
+- During a Discord outage, stale authorization must be visible and bounded.
+  High-risk administration requires fresh verification.
 
-When contributing to Lootlog, please follow these security guidelines:
+`OWNER` is the recovery authority. Administrative capability does not
+automatically grant visibility into every strategic record. A mutation on an
+existing resource requires source visibility plus the action permission.
 
-### Authentication & Authorization
+The same visibility decision must cover lists, details, aggregates, search,
+history, comments, socket delivery, and notifications. A count, title, NPC name,
+or existence check can leak protected data even when the base record is hidden.
 
-- Never commit credentials, API keys, or secrets to the repository
-- Use environment variables for sensitive configuration
-- Implement proper JWT validation in all protected endpoints
-- Follow the principle of least privilege for user permissions
+## Presence and real-time features
 
-### Database Security
+- Authenticate and authorize a socket before joining rooms.
+- Rebalance rooms after membership or access-policy changes.
+- Validate every inbound payload and rate-limit abusive event sources.
+- Separate basic online state from precise location access.
+- Publish Presence only to explicitly selected Organizations using a safe
+  default.
+- Treat a Margonem-signed proof as a trust signal, not a required availability
+  dependency. Distinguish verified and authenticated self-reported Presence.
+- Use bounded freshness semantics. Stale Presence must expire and must not be
+  presented as current.
+- Event access does not grant Presence or location access.
 
-- Use parameterized queries (Prisma ORM handles this automatically)
-- Never construct SQL queries with string concatenation
-- Validate and sanitize all user inputs
-- Use proper database access controls
+Room membership is defense in depth, not the only authorization check. Preserve
+per-event checks when a room can contain users with different resource scopes.
 
-### API Security
+## Game-client boundary
 
-- Validate all incoming request data with DTOs and validation pipes
-- Implement rate limiting on public endpoints
-- Use CORS properly to restrict origins
-- Set appropriate security headers (helmet middleware)
-- Never expose internal error details to clients in production
+The Game client observes Margonem without playing for the user. Preserve inbound
+and outbound data, arguments, references, callbacks, `this`, exceptions, return
+values, and request counts at the runtime boundary.
 
-### Dependencies
+Keep Margonem globals behind the approved bridge and adapters. Isolate
+observers so one failure cannot affect another observer or the game. Do not add
+movement, combat, target-selection, or decision automation.
 
-- Keep dependencies up to date
-- Review dependency updates for security advisories
-- Use `pnpm audit` to check for known vulnerabilities
-- Dependabot is configured to alert about vulnerable dependencies
+Lootlog is an unofficial community project. Do not claim official Garmory
+approval or guaranteed safety from sanctions.
 
-### Environment Variables
+## Data handling
 
-- Never commit `.env` files to the repository
-- Use `.env.example` to document required environment variables
-- Use strong random values for secrets and encryption keys
-- Use `pnpm env:generate` to create secure defaults
+- Collect the minimum data required for the documented product purpose.
+- Do not use chat content, private battles, or precise location for product
+  analytics.
+- Pseudonymize product and performance telemetry where practical and limit its
+  retention.
+- Keep personal data, Organization records, public records, and operational
+  telemetry in explicit categories.
+- Deletion and export must preserve applicable Organization history without
+  falsely claiming that shared records are still personal private data.
+- Archive and retention jobs must preserve tenant scope and record irreversible
+  deletion.
+- Public battle links and public API data require explicit public visibility.
 
-### Discord Bot Security
+Secrets belong in environment or secret-management systems. Never commit `.env`
+files, provider tokens, webhook URLs, private vulnerability reports, testimonial
+consents, or raw product evidence containing personal data.
 
-- Validate all Discord webhook signatures
-- Implement proper permission checks for bot commands
-- Rate limit bot interactions
-- Never expose bot tokens or webhook URLs
+## API and input security
 
-### Frontend Security
+- Validate untrusted input at every external boundary.
+- Use parameterized queries and ORM query builders; never concatenate untrusted
+  SQL.
+- Apply pagination, time bounds, and rate limits to public and bulk endpoints.
+- Return safe error details in production and keep sensitive context in
+  protected logs.
+- Restrict CORS and trusted origins to the intended clients.
+- Use security headers and an explicit content security policy on web surfaces.
+- Sanitize user-generated content before rendering it.
+- Validate generated API clients against their OpenAPI sources.
 
-- Sanitize user-generated content before rendering
-- Use Content Security Policy headers
-- Validate all API responses
-- Store JWT tokens securely (httpOnly cookies preferred over localStorage)
+Future public API credentials require explicit scopes, rotation, revocation,
+last-used metadata, audit history, and per-key and per-Organization limits. A
+credential cannot exceed the data access of its owner or service account.
 
-## Known Security Considerations
+## Service and event security
 
-### Multi-Tenant Architecture
+Each service writes only its owned data. Cross-service calls use authenticated
+APIs or versioned events. Internal endpoints require an explicit network and
+authentication boundary; an `/internal` path alone is not protection.
 
-Lootlog uses a guild-based multi-tenant model. Contributors must ensure:
+Consumers tolerate redelivery without duplicating durable effects. Do not put
+secrets or unnecessary personal data in queue payloads, logs, cache keys, or
+metrics labels.
 
-- Users can only access their own guild data
-- Guild IDs are validated on every request
-- Cross-guild data leakage is prevented
+## Dependencies and verification
 
-### Real-Time Features
+- Review dependency security alerts and Dependabot updates.
+- Use Oxlint, Oxfmt, TypeScript, Vitest, contract tests, and relevant end-to-end
+  tests.
+- Run characterization tests and replay benchmarks for game-runtime changes.
+- Add authorization tests for allowed and denied Organization, policy, and
+  resource-scope cases.
+- Test reconnect, stale-state, permission-rebalance, replay, and duplicate-event
+  paths for real-time changes.
+- Do not bypass hooks or reduce security expectations to make CI pass.
 
-Socket.IO connections require:
+Use `pnpm audit` as one signal, not proof that the application is secure.
 
-- Proper authentication before establishing connection
-- Room-based access control
-- Rate limiting on event emissions
-- Validation of all incoming messages
+## Disclosure
 
-### External Integrations
-
-- Discord OAuth tokens are stored securely
-- Margonem game client integration follows game ToS
-- External API calls are properly rate-limited
-
-## Security Tools
-
-We use the following tools to maintain security:
-
-- **Dependabot**: Automatic dependency vulnerability scanning
-- **ESLint**: Static code analysis for security patterns
-- **Prisma**: ORM with built-in SQL injection prevention
-- **Better-Auth**: Secure authentication library
-- **JWT + JWKS**: Secure token-based authentication
-- **Helmet**: Security headers for Express/Fastify
-
-## Disclosure Policy
-
-- Security issues are fixed privately
-- Public disclosure happens after a patch is available
-- Security advisories are published on GitHub
-- Critical vulnerabilities are announced to users via Discord/email
-
-## Questions?
-
-If you have any questions about this security policy, please contact:
-kamilwronka7@gmail.com
+Fix validated issues privately. Publish an advisory after a patch or effective
+mitigation is available, and coordinate timing with the reporter when possible.
+Notify affected users through the appropriate product or community channel when
+the impact requires action.

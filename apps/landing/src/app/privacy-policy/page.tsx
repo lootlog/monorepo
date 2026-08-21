@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicy(): JSX.Element {
   return (
-    <PolicyLayout lastUpdated={new Date().toLocaleDateString("pl-PL")}>
+    <PolicyLayout lastUpdated="21.08.2026">
       <PrivacyPolicyContent />
     </PolicyLayout>
   );

@@ -5,7 +5,8 @@ NestJS-based authentication service for Lootlog.
 ## Overview
 
 - Wraps Better Auth for session handling, JWT issuance, JWKS exposure, and provider integrations.
-- Supports Discord OAuth and email/password auth as configured in `src/auth/better-auth.ts`.
+- Supports Discord OAuth as the only product sign-in method configured in
+  `src/auth/better-auth.ts`.
 - Exposes service-specific routes under `/auth/*` and delegates Better Auth handlers under `/idp/*` through Nest/Fastify.
 
 ## Routes

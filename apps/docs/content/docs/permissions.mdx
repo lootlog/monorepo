@@ -1,19 +1,20 @@
 ---
 title: Role i uprawnienia
-description: Kontroluj dostęp członków klanu za pomocą ról opartych na kanonicznych uprawnieniach Lootlog.
+description: Kontroluj dostęp członków organizacji za pomocą ról i uprawnień Lootlog.
 ---
 
-Uprawnienia są przypisywane do ról, a role do członków. Członek mający kilka
-ról otrzymuje sumę ich uprawnień.
+Organizacja Lootloga odpowiada serwerowi Discord. Uprawnienia Lootloga są
+przypisywane do ról członków. Członek mający kilka ról otrzymuje sumę ich
+uprawnień.
 
 ## Poziomy nadrzędne
 
-| Uprawnienie      | Znaczenie                                   |
-| ---------------- | ------------------------------------------- |
-| `OWNER`          | Właściciel klanu i najwyższy poziom dostępu |
-| `ADMIN`          | Administracja klanem i konfiguracją         |
-| `LOOTLOG_MANAGE` | Zarządzanie danymi Lootlog                  |
-| `LOOTLOG_ACCESS` | Podstawowy dostęp do strefy klanu           |
+| Uprawnienie      | Znaczenie                                         |
+| ---------------- | ------------------------------------------------- |
+| `OWNER`          | Właściciel organizacji i najwyższy poziom dostępu |
+| `ADMIN`          | Administracja organizacją i konfiguracją          |
+| `LOOTLOG_MANAGE` | Zarządzanie danymi Lootlog                        |
+| `LOOTLOG_ACCESS` | Podstawowy dostęp do strefy klanu                 |
 
 <Callout type="warning" title="Zasada najmniejszego dostępu">
   Nie nadawaj `ADMIN` lub `LOOTLOG_MANAGE` tylko po to, aby odblokować jeden

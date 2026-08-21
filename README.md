@@ -1,424 +1,152 @@
 # Lootlog
 
-<div align="center">
+Lootlog connects an in-game Margonem client with a shared web workspace. The
+client captures supported gameplay events and provides live tools; the web app
+turns those events into durable records, analysis, and organization
+coordination.
 
-**Full-stack microservices application for Margonem clan management**
+Lootlog is open source under MIT. It is an unofficial community project and
+does not automate character movement, combat, or player decisions.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
-[![pnpm](https://img.shields.io/badge/pnpm-11.17.0-orange)](https://pnpm.io/)
+## Product and engineering context
 
-[Features](#features) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Documentation](#documentation) • [Contributing](CONTRIBUTING.md)
+- [Product direction](PRODUCT.md)
+- [Domain language](CONTEXT.md)
+- [Architecture](ARCHITECTURE.md)
+- [Architecture decisions](docs/adr/README.md)
+- [Security policy](SECURITY.md)
+- [Design system](DESIGN.md)
+- [Contributor guide](CONTRIBUTING.md)
+- [User documentation](https://docs.lootlog.pl)
 
-</div>
+## Product surfaces
 
----
+- **Game client:** Tampermonkey userscript embedded in supported Margonem pages.
+- **Web:** authenticated personal and organization workspace.
+- **Landing:** product introduction and legal pages.
+- **Docs:** supported user guide.
+- **Wiki:** public item, NPC, and player knowledge.
+- **Discord bot:** organization installation, membership synchronization,
+  notifications, and commands.
+- **Developer:** future developer portal; not yet a supported public API product.
 
-## About
+The core workflows are live awareness and communication, automatic durable
+records, and coordination with review.
 
-Lootlog is a comprehensive platform for **Margonem** clans that provides:
+## Repository layout
 
-- **Clan Loot Tracking** - Track, manage, and distribute clan loot efficiently
-- **Battle Statistics** - Detailed battle logs and warrior performance analytics
-- **Discord Integration** - Synchronizes clan data between Discord server and database
-- **In-Game Client** - React-based companion overlay for the game
-- **Real-Time Updates** - WebSocket-powered live notifications and events
-- **Search System** - Fast full-text search powered by Meilisearch
+```text
+apps/
+├── activity/            Activity and audit service
+├── api/                 Organization, loot, timer, chat, and coordination API
+├── auth/                Discord authentication and session service
+├── battlelog-service/   Battle ingestion, storage, and statistics
+├── developer/           Future developer portal
+├── discord-bot/         Discord integration
+├── docs/                User documentation
+├── game-client/         In-game React client and Margonem runtime bridge
+├── gateway/             Socket.IO presence and real-time fan-out
+├── landing/             Public product site and legal pages
+├── search/              Meilisearch-backed public search API
+├── web/                 Authenticated React web app
+└── wiki/                Public Margonem knowledge app
 
-## Features
+packages/
+├── api-client/          OpenAPI-generated clients and transport
+├── api-helpers/         Shared authentication and permission helpers
+├── battle-processor/    Battle normalization and processing
+├── cli/                 Environment and maintenance commands
+├── datetime/            Shared date and time utilities
+├── instrumentation/     Observability setup
+├── margonem/            Margonem domain types and helpers
+├── nest-shared/         Shared NestJS modules and guards
+├── scoring/             Event and ranking scoring
+├── socket-parser/       Shared socket parsing
+├── types/               Shared contracts
+├── typescript-config/   Shared TypeScript configuration
+└── ui/                  Shared UI components and styles
+```
 
-### Clan Management
+See [ARCHITECTURE.md](ARCHITECTURE.md) for ownership, data flow, service
+boundaries, deployment, and known gaps.
 
-- Multi-clan support with role-based permissions
-- Loot tracking with item database integration
-- Boss timer tracking and notifications
-- NPC/location management
-- Member activity tracking
+## Technology
 
-### Battle System
+- pnpm workspaces and Turborepo
+- TypeScript, React 19, Vite, Next.js, and TanStack Router/Query
+- NestJS with Fastify and Better Auth
+- PostgreSQL, TimescaleDB, Prisma, Drizzle, and R2
+- RabbitMQ, Redis, Socket.IO, and Meilisearch
+- Oxlint, Oxfmt, Vitest, and GitHub Actions
 
-- Comprehensive battle logging
-- Warrior statistics and leaderboards
-- Character performance analytics
-- Historical battle data
+## Local setup
 
-### Discord Bot
+Requirements:
 
-- Discord server data synchronization
-- Clan member role management
-- Discord to database integration
-- Slash commands for server management
-
-### Developer Experience
-
-- Turborepo monorepo with hot reload
-- CLI tool for environment setup with smart defaults
-- Docker Compose for one-command infrastructure
-- Comprehensive TypeScript types shared across services
-- Automated database migrations
-
-## Tech Stack
-
-### Backend
-
-- **NestJS** (Fastify) - API, Battlelog, Discord Bot, Gateway
-- **Hono** - Auth, Search services
-- **Prisma** - ORM for API and Battlelog databases
-- **Kysely** - Type-safe SQL for Auth database
-- **Better-Auth** - Modern authentication with Discord OAuth
-- **RabbitMQ** - Message queue for inter-service communication
-- **Socket.IO** - Real-time WebSocket connections
-
-### Frontend
-
-- **React 19** - Web dashboard and game client
-- **Next.js 16** - Marketing landing page
-- **TanStack Router/Query** - Type-safe routing and data fetching
-- **Radix UI** - Accessible component primitives
-- **Tailwind CSS** - Utility-first styling
-
-### Infrastructure
-
-- **PostgreSQL 17** - Three separate databases (Users, Lootlog, Battlelog)
-- **Redis** - Caching and session storage
-- **Meilisearch** - Full-text search engine
-- **Docker Compose** - Local development orchestration
-- **Turborepo** - Monorepo build system
-
-### DevOps
-
-- **GitHub Actions** - CI/CD pipelines
-- **Dependabot** - Automated dependency updates
-- **Oxlint + Oxfmt** - Code quality and formatting
-- **Vitest** - Testing framework
-
-## Quick Start
-
-### Prerequisites
-
-- **Node.js** >= 20
-- **pnpm** >= 11.17.0
-- **Docker** and **Docker Compose**
-- **Git**
-
-### Installation
+- Node.js 24 or newer
+- pnpm 11.17.0
+- Docker with Docker Compose
 
 ```bash
-# Clone the repository
-git clone https://github.com/lootlog/lootlog.git
-cd lootlog
-
-# Install dependencies
-pnpm i
-
-# Generate environment variables with smart defaults
+git clone https://github.com/lootlog/monorepo.git
+cd monorepo
+pnpm install
 pnpm env:generate
-
-# Start infrastructure services (PostgreSQL, RabbitMQ, Redis, Meilisearch)
 docker compose up -d
-
-# Run database migrations
 pnpm api:migrate:dev
+pnpm activity:migrate:dev
 pnpm auth:migrate:dev
 pnpm battlelog:migrate:dev
-
-# Start all services in development mode
 pnpm dev
 ```
 
-Your services will be available at:
+`docker-compose.yml` starts local infrastructure: four PostgreSQL-compatible
+databases, RabbitMQ, Redis, Meilisearch, and Traefik. It is not a supported
+production deployment.
 
-- **Web Dashboard**: http://localhost:5173
-- **Game Client**: http://localhost:5174
-- **Landing Page**: http://localhost:3000
-- **API**: http://localhost:3030
-- **Auth Service**: http://localhost:3031
-- **Gateway**: http://localhost:3032
-
-### Docker Services
-
-The following infrastructure services will be running:
-
-- **PostgreSQL (Users)**: localhost:5432
-- **PostgreSQL (Lootlog)**: localhost:5433
-- **PostgreSQL (Battlelog)**: localhost:5434
-- **RabbitMQ**: localhost:5672 (Management UI: http://localhost:15672)
-- **Redis**: localhost:6379
-- **Meilisearch**: localhost:7700
-
-## Configuration
-
-### Environment Variables
-
-The project includes a CLI tool for easy environment setup:
+## Common commands
 
 ```bash
-# Interactive mode - prompts for each value
-pnpm env:generate --interactive
-
-# Auto-generate with secure defaults (recommended)
-pnpm env:generate
-
-# Skip existing files
-pnpm env:generate --skip-existing
-
-# Force overwrite all files
-pnpm env:generate --force
-```
-
-The CLI generates secure random values for:
-
-- Database passwords
-- JWT secrets
-- Redis passwords
-- RabbitMQ credentials
-
-You'll need to manually configure:
-
-- Discord bot token and client credentials
-- Discord webhook URLs
-- External API keys
-
-All `.env.example` files are included as templates.
-
-### Database Configuration
-
-The project uses three separate PostgreSQL databases:
-
-1. **lootlog-users-db** (port 5432)
-   - Managed by: Auth service
-   - ORM: Kysely + Better-Auth
-   - Purpose: User accounts, sessions, Discord profiles
-
-2. **lootlog-db** (port 5433)
-   - Managed by: API service
-   - ORM: Prisma
-   - Purpose: Guilds, loots, timers, NPCs
-   - Schema: `apps/api/prisma/schema.prisma`
-
-3. **battle-log-db** (port 5434)
-   - Managed by: Battlelog service
-   - ORM: Prisma
-   - Purpose: Battle data, warrior stats
-   - Schema: `apps/battlelog-service/prisma/schema.prisma`
-
-## Architecture
-
-### Monorepo Structure
-
-```
-apps/
-├── activity/               - NestJS activity tracking service
-├── admin/                  - Admin panel
-├── api/                    - Main NestJS backend (guilds, loots, timers)
-├── auth/                   - Hono authentication service (Better-Auth)
-├── battlelog-service/      - NestJS battle statistics service
-├── gateway/                - Socket.IO gateway for real-time events
-├── discord-bot/            - Discord bot (NestJS + necord)
-├── notifications/          - Notifications service
-├── search/                 - Hono search service (Meilisearch)
-├── web/                    - React 19 dashboard (Vite)
-├── game-client/            - React 19 in-game companion
-└── landing/                - Next.js 16 marketing site
-
-packages/
-├── ui/                     - Shared Radix UI + Tailwind components
-├── types/                  - Shared TypeScript types
-├── api-helpers/            - JWT/JWKS authentication utilities
-├── cli/                    - Environment configuration CLI
-├── instrumentation/        - Shared observability helpers
-├── nest-shared/            - Shared NestJS decorators and guards
-├── socket-parser/          - Shared socket parsing logic
-└── typescript-config/      - Shared TypeScript configuration
-```
-
-### Inter-Service Communication
-
-**Authentication Flow**
-
-1. User authenticates via Auth service (Discord OAuth or email/password)
-2. Auth returns JWT with user claims
-3. Other services validate JWT using JWKS from `packages/api-helpers`
-4. Clients include `Authorization: Bearer <token>` header
-
-**Event-Driven Communication (RabbitMQ)**
-
-- Discord Bot publishes server data → API syncs to database
-- API publishes new loot → Search service indexes in Meilisearch
-- Member changes → Gateway broadcasts via Socket.IO
-
-**Real-Time Updates (Socket.IO)**
-
-- Live timer updates
-- New loot notifications
-- Battle event streaming
-
-## Common Commands
-
-### Development
-
-```bash
-pnpm dev                    # Start all services with hot reload
-pnpm build                  # Build all services
-pnpm lint                   # Lint all code
-pnpm format                 # Format code with Oxfmt
-pnpm format:check           # Check formatting without writing files
-pnpm test                   # Run all tests
-```
-
-### Database Operations
-
-```bash
-# API service (Lootlog DB)
-pnpm api:migrate:dev        # Create and apply migration
-pnpm api:generate           # Regenerate Prisma client
-pnpm api:studio             # Open Prisma Studio
-
-# Battlelog service (Battle Log DB)
-pnpm battlelog:migrate:dev  # Create and apply migration
-pnpm battlelog:generate     # Regenerate Prisma client
-pnpm battlelog:studio       # Open Prisma Studio
-
-# Auth service (Users DB)
-pnpm auth:migrate:dev       # Apply auth migrations in development
-pnpm auth:migrate:prod      # Apply auth migrations in production
-```
-
-### Infrastructure
-
-```bash
-docker compose up -d        # Start all infrastructure services
-docker compose down         # Stop all services
-docker compose logs -f      # Follow logs
-docker compose ps           # Check status
-```
-
-### Working on Specific Services
-
-```bash
-# Run only specific service
-cd apps/api
-pnpm dev                    # Runs nest start --watch
-
-cd apps/web
-pnpm dev                    # Runs vite
-
-cd apps/auth
-pnpm dev                    # Runs Hono dev server
-```
-
-## Version Management with Changesets
-
-This project uses [Changesets](https://github.com/changesets/changesets) to manage independent versions, changelogs, Git tags, and GitHub Releases for every app and package in the monorepo.
-
-All workspace packages are private. Releases document deployable versions in GitHub; nothing is published to npm.
-
-### Contributor Workflow
-
-```bash
+pnpm dev
+pnpm build
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:e2e
+pnpm format
+pnpm format:check
 pnpm changeset
 ```
 
-Select every directly affected workspace, choose the SemVer bump, and write a clear English summary. Use:
+Workspace-specific commands are documented in each app or package README.
 
-- **Patch** for fixes and compatible internal improvements.
-- **Minor** for backwards-compatible features.
-- **Major** for breaking consumer-facing changes.
+## Releases and production
 
-Changesets automatically add patch releases for runtime dependents of changed internal packages. If files inside a workspace change but the change does not require a release, create an explicit empty changeset:
+Changesets version private workspaces and create immutable release artifacts.
+Merging an ordinary feature pull request may deploy development environments
+but does not create a production release.
 
-```bash
-pnpm changeset --empty
-```
+The Changesets version pull request is the release gate. Its merge creates tags,
+GitHub Releases, container images, and Cloudflare artifacts. Production
+promotion requires environment approval. Container services deploy through
+GitOps and ArgoCD; Cloudflare apps deploy the checksummed artifacts produced by
+the release. Rollbacks reuse existing artifacts.
 
-Pull request CI validates changesets against the PR base commit.
+Do not use `docker-compose.prod.yml` as production documentation. Self-hosting
+is community-supported until the project ships a tested distribution.
 
-### Automated Release Workflow
+## Contributing and security
 
-```mermaid
-flowchart LR
-  PR[Feature PR] --> Main[main]
-  Main --> Dev[Dev images and GitOps]
-  Main --> VersionPR[chore: release packages]
-  VersionPR --> Release[Versioned release artifacts]
-  Release --> Approval[prod approval]
-  Approval --> Prod[Cloudflare and production GitOps]
-```
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and the applicable `AGENTS.md` before
+changing code. Report vulnerabilities privately through
+[GitHub Security Advisories](https://github.com/lootlog/monorepo/security/advisories/new)
+or use the fallback contact in [SECURITY.md](SECURITY.md). Do not open public
+issues for suspected vulnerabilities.
 
-1. Merge feature pull requests through the merge queue into `main`. Affected services deploy automatically to dev, but no release artifacts are created.
-2. Changesets creates or updates the `chore: release packages` version PR against `main`.
-3. Review and merge the version PR. Do not edit versions or generated changelogs manually.
-4. The merge creates package tags such as `@lootlog/api@1.0.1`, GitHub Releases, immutable Docker images, and checksummed Cloudflare artifacts for released applications. It does not deploy dev.
-5. Artifacts are built before the `prod` approval. Review the workflow summary and apply any listed Prisma or Drizzle migrations manually.
-6. Approving the `prod` environment deploys the prepared Cloudflare artifacts first, then writes every released Docker image version to the infra repository in one commit. ArgoCD performs the container rollout.
-
-The version PR is the release gate: it batches pending changesets and separates continuous dev deployment from an intentional production release. CI does not create any other delivery PRs. Dependabot may open dependency PRs, and trusted automation adds their required changesets.
-
-Each released workspace owns its generated `CHANGELOG.md`. Use `pnpm changeset status --verbose` to preview the pending release plan. The `pnpm version` and `pnpm release` commands are reserved for release automation.
-
-Production images use both `prod-<semver>` and `sha-<release-commit>` tags and are never overwritten. To promote or roll back one service, run the **Promote an existing image to prod** workflow from `main` with the service and an existing semantic version. Rollbacks only change GitOps; they never rebuild an image.
-
-Cloudflare frontends use the same changeset, version PR, immutable artifact, and `prod` approval flow as backend services. They are not handled by the Docker image promotion workflow. A frontend production deployment always uses the checksummed artifact built by its release run; if no valid artifact exists, publish a new patch release instead of rebuilding an existing version.
-
-If an artifact matrix fails after versions have been created, use **Re-run failed jobs**. Do not rerun the entire workflow: successful immutable image jobs must not attempt to overwrite their existing tags.
-
-A successful deployment workflow means the GitOps change was accepted. ArgoCD remains the source of truth for the actual cluster rollout and health.
-
-Production GitOps jobs currently read `INFRA_REPO_PUSH_TOKEN` from repository secrets so existing dev deployments continue to work. A `prod` environment secret with the same name will automatically take precedence when a dedicated production credential is provisioned; do not remove the repository secret until dev has its own credential.
-
-## Documentation
-
-- **[CLAUDE.md](CLAUDE.md)** - Detailed architecture and development guide
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project
-- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** - Community guidelines
-- **[SECURITY.md](SECURITY.md)** - Security policy and reporting
-
-## Project Status
-
-Lootlog is actively developed and used by multiple Margonem clans. We welcome contributions!
-
-### Roadmap
-
-- [ ] Clan statistics
-
-## Contributing
-
-We welcome contributions from the community! Please read our [Contributing Guidelines](CONTRIBUTING.md) to get started.
-
-### Ways to Contribute
-
-- Report bugs and suggest features via [GitHub Issues](https://github.com/lootlog/lootlog/issues)
-- Submit pull requests for bug fixes or new features
-- Improve documentation
-- Help with translations
-- Spread the word about Lootlog
-
-## Community
-
-- **Discord**: [Join our community](https://discord.gg/lootlog)
-- **Website**: [https://lootlog.pl](https://lootlog.pl)
-- **Issues**: [GitHub Issues](https://github.com/lootlog/lootlog/issues)
-
-## Security
-
-If you discover a security vulnerability, please email **kamilwronka7@gmail.com**. See [SECURITY.md](SECURITY.md) for details.
+General issues belong in the
+[Lootlog monorepo issue tracker](https://github.com/lootlog/monorepo/issues).
 
 ## License
 
-This project and all apps and packages in this monorepo are licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Built for the **Margonem** gaming community
-- Powered by amazing open-source projects
-- Thanks to all contributors who help improve Lootlog
-
----
-
-<div align="center">
-
-**Made with ❤️ for the Margonem community**
-
-[⬆ Back to Top](#lootlog)
-
-</div>
+Code in this repository is licensed under the [MIT License](LICENSE). Margonem
+artwork and game assets remain the property of Garmory sp. z o.o.

@@ -27,6 +27,25 @@ test("reports a changed workspace that is missing from the release plan", () => 
   assert.deepEqual(uncoveredWorkspaces, ["@lootlog/api"]);
 });
 
+test("ignores workspace metadata documents that do not affect a release", () => {
+  const uncoveredWorkspaces = findUncoveredWorkspaces({
+    changedFiles: [
+      "apps/api/AGENTS.md",
+      "apps/auth/README.md",
+      "apps/web/PRODUCT.md",
+    ],
+    changesetFiles: [],
+    releases: [],
+    workspaces: [
+      { name: "@lootlog/api", path: "apps/api" },
+      { name: "@lootlog/auth", path: "apps/auth" },
+      { name: "@lootlog/web", path: "apps/web" },
+    ],
+  });
+
+  assert.deepEqual(uncoveredWorkspaces, []);
+});
+
 test("accepts changed workspaces when the pull request contains an empty changeset", () => {
   const uncoveredWorkspaces = findUncoveredWorkspaces({
     changedFiles: ["apps/api/src/main.ts"],
