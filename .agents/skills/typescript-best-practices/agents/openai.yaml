@@ -1,0 +1,4 @@
+interface:
+  display_name: "TypeScript best practices"
+  short_description: "Apply project TypeScript discipline"
+  default_prompt: "Use $typescript-best-practices while reviewing or editing this TypeScript code."

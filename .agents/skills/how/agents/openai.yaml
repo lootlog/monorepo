@@ -1,0 +1,4 @@
+interface:
+  display_name: "How"
+  short_description: "Trace and explain a subsystem"
+  default_prompt: "Use $how to explain how this subsystem works from entry point to effects."
