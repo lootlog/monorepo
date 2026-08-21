@@ -60,12 +60,28 @@ export const canViewStrategicNpc = (
 ): boolean =>
   evaluateNpcAccess({ context, resource, visibilityPermissions }).visible;
 
+export const canActOnStrategicNpc = (
+  context: NpcAccessContext,
+  resource: NpcResource,
+  visibilityPermissions: NpcVisibilityPermissions,
+  actionPermission: string,
+): boolean =>
+  evaluateNpcAccess({
+    context,
+    resource,
+    visibilityPermissions,
+    actionPermission,
+  }).allowed;
+
 const getVisibleRoles = (
   context: NpcAccessContext,
   visibilityPermissions: NpcVisibilityPermissions,
+  actionPermission?: string,
 ) =>
-  context.roles.filter((role) =>
-    role.permissions.includes(visibilityPermissions.base),
+  context.roles.filter(
+    (role) =>
+      role.permissions.includes(visibilityPermissions.base) &&
+      (!actionPermission || role.permissions.includes(actionPermission)),
   );
 
 const getExcludedNpcTypes = (
@@ -88,37 +104,40 @@ const getExcludedNpcTypes = (
 export const buildNpcSnapshotVisibilityWhere = (
   context: NpcAccessContext,
   visibilityPermissions: NpcVisibilityPermissions,
+  actionPermission?: string,
 ): Prisma.NpcSnapshotWhereInput | null => {
   if (context.isOwner) {
     return null;
   }
 
-  const roleConditions = getVisibleRoles(context, visibilityPermissions).map(
-    (role): Prisma.NpcSnapshotWhereInput => {
-      const levelRange = role.npc?.levelRange ?? {
-        from: DEFAULT_LEVEL_RANGE_FROM,
-        to: DEFAULT_LEVEL_RANGE_TO,
-      };
-      const excludedTypes = getExcludedNpcTypes(
-        role.permissions,
-        visibilityPermissions,
-      );
-      const conditions: Prisma.NpcSnapshotWhereInput[] = [
-        {
-          lvl: {
-            gte: levelRange.from,
-            lte: levelRange.to,
-          },
+  const roleConditions = getVisibleRoles(
+    context,
+    visibilityPermissions,
+    actionPermission,
+  ).map((role): Prisma.NpcSnapshotWhereInput => {
+    const levelRange = role.npc?.levelRange ?? {
+      from: DEFAULT_LEVEL_RANGE_FROM,
+      to: DEFAULT_LEVEL_RANGE_TO,
+    };
+    const excludedTypes = getExcludedNpcTypes(
+      role.permissions,
+      visibilityPermissions,
+    );
+    const conditions: Prisma.NpcSnapshotWhereInput[] = [
+      {
+        lvl: {
+          gte: levelRange.from,
+          lte: levelRange.to,
         },
-      ];
+      },
+    ];
 
-      if (excludedTypes.length > 0) {
-        conditions.push({ type: { notIn: excludedTypes } });
-      }
+    if (excludedTypes.length > 0) {
+      conditions.push({ type: { notIn: excludedTypes } });
+    }
 
-      return { AND: conditions };
-    },
-  );
+    return { AND: conditions };
+  });
 
   return { OR: roleConditions };
 };

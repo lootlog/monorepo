@@ -897,7 +897,7 @@ export const useTimersControllerResetTimer = <TError = ErrorType<void>,
       return useMutation(getTimersControllerResetTimerMutationOptions(options), queryClient);
     }
     export const getTimersControllerDeleteTimerUrl = ({ guildId, timerIdentifier }: TimersControllerDeleteTimerPathParameters,
-    params?: TimersControllerDeleteTimerParams,) => {
+    params: TimersControllerDeleteTimerParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -917,7 +917,7 @@ export const useTimersControllerResetTimer = <TError = ErrorType<void>,
  * @summary Delete timer
  */
 export const timersControllerDeleteTimer = async ({ guildId, timerIdentifier }: TimersControllerDeleteTimerPathParameters,
-    params?: TimersControllerDeleteTimerParams, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+    params: TimersControllerDeleteTimerParams, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
   return mainFetch<void>(getTimersControllerDeleteTimerUrl({ guildId, timerIdentifier },params),
   {
@@ -933,8 +933,8 @@ export const timersControllerDeleteTimer = async ({ guildId, timerIdentifier }: 
 
 
 export const getTimersControllerDeleteTimerMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,{pathParams: TimersControllerDeleteTimerPathParameters;params?: TimersControllerDeleteTimerParams}, TContext>, request?: SecondParameter<typeof mainFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,{pathParams: TimersControllerDeleteTimerPathParameters;params?: TimersControllerDeleteTimerParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,{pathParams: TimersControllerDeleteTimerPathParameters;params: TimersControllerDeleteTimerParams}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,{pathParams: TimersControllerDeleteTimerPathParameters;params: TimersControllerDeleteTimerParams}, TContext> => {
 
 const mutationKey = ['timersControllerDeleteTimer'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -946,7 +946,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, {pathParams: TimersControllerDeleteTimerPathParameters;params?: TimersControllerDeleteTimerParams}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, {pathParams: TimersControllerDeleteTimerPathParameters;params: TimersControllerDeleteTimerParams}> = (props) => {
           const {pathParams,params} = props ?? {};
 
           return  timersControllerDeleteTimer(pathParams,params,requestOptions)
@@ -967,11 +967,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Delete timer
  */
 export const useTimersControllerDeleteTimer = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,{pathParams: TimersControllerDeleteTimerPathParameters;params?: TimersControllerDeleteTimerParams}, TContext>, request?: SecondParameter<typeof mainFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,{pathParams: TimersControllerDeleteTimerPathParameters;params: TimersControllerDeleteTimerParams}, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof timersControllerDeleteTimer>>,
         TError,
-        {pathParams: TimersControllerDeleteTimerPathParameters;params?: TimersControllerDeleteTimerParams},
+        {pathParams: TimersControllerDeleteTimerPathParameters;params: TimersControllerDeleteTimerParams},
         TContext
       > => {
       return useMutation(getTimersControllerDeleteTimerMutationOptions(options), queryClient);

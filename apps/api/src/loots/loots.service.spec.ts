@@ -985,7 +985,21 @@ describe("LootsService", () => {
   });
 
   describe("deleteLoot", () => {
-    const options = { guildId: "guild1", lootId: 1 };
+    const options = {
+      guild: mockGuild,
+      viewerDiscordId: "viewer123",
+      roles: [
+        {
+          permissions: [
+            Permission.LOOTLOG_LOOTS_READ,
+            Permission.LOOTLOG_MANAGE,
+          ],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 500,
+        } as Role,
+      ],
+      lootId: 1,
+    };
 
     it("should delete loot submissions when loot exists", async () => {
       const mockLoot = { id: 1 };
@@ -994,10 +1008,10 @@ describe("LootsService", () => {
       await service.deleteLoot(options);
 
       expect(prismaService.lootSubmission.deleteMany).toHaveBeenCalledWith({
-        where: { lootId: options.lootId, guildId: options.guildId },
+        where: { lootId: options.lootId, guildId: options.guild.id },
       });
       expect(lootStatsService.invalidateCache).toHaveBeenCalledWith([
-        options.guildId,
+        options.guild.id,
       ]);
     });
 
@@ -1008,13 +1022,46 @@ describe("LootsService", () => {
         new ForbiddenException(ErrorKey.CANT_DELETE_LOOT),
       );
     });
+
+    it("requires manage permission on the role that can see the loot", async () => {
+      prismaService.loot.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.deleteLoot({
+          ...options,
+          roles: [
+            {
+              permissions: [Permission.LOOTLOG_LOOTS_READ],
+              lvlRangeFrom: 1,
+              lvlRangeTo: 500,
+            } as Role,
+            {
+              permissions: [Permission.LOOTLOG_MANAGE],
+              lvlRangeFrom: 1,
+              lvlRangeTo: 500,
+            } as Role,
+          ],
+        }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(prismaService.lootSubmission.deleteMany).not.toHaveBeenCalled();
+    });
   });
 
   describe("createComment", () => {
     const options = {
       discordId: "discord123",
       userId: "user123",
-      guildId: "guild1",
+      guild: mockGuild,
+      roles: [
+        {
+          permissions: [
+            Permission.LOOTLOG_LOOTS_READ,
+            Permission.LOOTLOG_LOOTS_WRITE,
+          ],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 500,
+        } as Role,
+      ],
       lootId: 1,
       body: { content: "Test comment" } as CreateCommentDto,
     };
@@ -1037,6 +1084,29 @@ describe("LootsService", () => {
       await expect(service.createComment(options)).rejects.toThrow(
         new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT),
       );
+    });
+
+    it("requires write permission on the role that can see the loot", async () => {
+      prismaService.loot.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.createComment({
+          ...options,
+          roles: [
+            {
+              permissions: [Permission.LOOTLOG_LOOTS_READ],
+              lvlRangeFrom: 1,
+              lvlRangeTo: 500,
+            } as Role,
+            {
+              permissions: [Permission.LOOTLOG_LOOTS_WRITE],
+              lvlRangeFrom: 1,
+              lvlRangeTo: 500,
+            } as Role,
+          ],
+        }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(prismaService.lootComment.create).not.toHaveBeenCalled();
     });
   });
 

@@ -5,6 +5,8 @@ import { TimersController } from "./timers.controller";
 import { TimersService } from "./timers.service";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { Permission } from "src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
 
 describe("TimersController", () => {
   let controller: TimersController;
@@ -67,5 +69,14 @@ describe("TimersController", () => {
       "user-1",
       payload,
     );
+  });
+
+  it("uses the dedicated timer delete permission", () => {
+    expect(
+      Reflect.getMetadata(
+        PERMISSIONS_KEY,
+        TimersController.prototype.deleteTimer,
+      ),
+    ).toEqual([Permission.LOOTLOG_TIMERS_DELETE]);
   });
 });

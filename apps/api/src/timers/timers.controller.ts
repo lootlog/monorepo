@@ -98,7 +98,12 @@ export class TimersController {
     summary: "Get guild timers",
     description: "Retrieve timers for a specific guild",
   })
-  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "guildId",
+    description: "Guild ID",
+    example: "guild_123",
+    type: String,
+  })
   @ApiQuery({
     name: "world",
     description: "World name filter",
@@ -137,7 +142,12 @@ export class TimersController {
     description:
       "Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration",
   })
-  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "guildId",
+    description: "Guild ID",
+    example: "guild_123",
+    type: String,
+  })
   @ApiQuery({
     name: "search",
     description: "NPC name search term",
@@ -202,7 +212,12 @@ export class TimersController {
     summary: "Reset timer",
     description: "Reset a timer for a specific NPC in a guild",
   })
-  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "guildId",
+    description: "Guild ID",
+    example: "guild_123",
+    type: String,
+  })
   @ApiParam({
     name: "timerIdentifier",
     description: "Timer key or legacy NPC ID when unambiguous",
@@ -220,50 +235,59 @@ export class TimersController {
   @ApiResponse({ status: 404, description: "Timer not found" })
   resetTimer(
     @DiscordId() discordId: string,
-    @Param("guildId") guildId: string,
+    @GuildData() guild: Guild,
+    @MemberRoles() roles: Role[],
     @Param("timerIdentifier") timerIdentifier: string,
     @Body() data: ResetTimerDto,
   ) {
     return this.timersService.resetTimer(
       discordId,
-      guildId,
+      guild,
+      roles,
       timerIdentifier,
       data,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_TIMERS_DELETE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/timers/:timerIdentifier")
   @ApiOperation({
     summary: "Delete timer",
     description: "Delete a timer for a specific NPC in a guild",
   })
-  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "guildId",
+    description: "Guild ID",
+    example: "guild_123",
+    type: String,
+  })
   @ApiParam({
     name: "timerIdentifier",
     description: "Timer key or legacy NPC ID when unambiguous",
     example: "12345:test boss",
   })
-  @ApiQuery({ name: "world", description: "World name", required: false })
+  @ApiQuery({ name: "world", description: "World name", required: true })
   @ApiResponse({
     status: 200,
     description: "Timer deleted successfully",
   })
   @ApiResponse({
     status: 403,
-    description: "Forbidden - manage permission required",
+    description: "Forbidden - timer delete permission required",
   })
   @ApiResponse({ status: 404, description: "Timer not found" })
   deleteTimer(
     @DiscordId() discordId: string,
+    @GuildData() guild: Guild,
+    @MemberRoles() roles: Role[],
     @Query("world") world: string,
-    @Param("guildId") guildId: string,
     @Param("timerIdentifier") timerIdentifier: string,
   ) {
     return this.timersService.deleteTimer(
       discordId,
-      guildId,
+      guild,
+      roles,
       timerIdentifier,
       world,
     );
@@ -276,7 +300,12 @@ export class TimersController {
     summary: "Get timer action history",
     description: "Retrieve latest action history entries for a guild timer",
   })
-  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "guildId",
+    description: "Guild ID",
+    example: "guild_123",
+    type: String,
+  })
   @ApiParam({
     name: "timerIdentifier",
     description: "Timer key or legacy NPC ID when unambiguous",
@@ -311,7 +340,12 @@ export class TimersController {
     summary: "Restore timer from history",
     description: "Restore a deleted timer from a timer history entry",
   })
-  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "guildId",
+    description: "Guild ID",
+    example: "guild_123",
+    type: String,
+  })
   @ApiParam({
     name: "historyEntryId",
     description: "Timer history entry ID",
@@ -324,12 +358,14 @@ export class TimersController {
   })
   restoreTimerFromHistory(
     @DiscordId() discordId: string,
-    @Param("guildId") guildId: string,
+    @GuildData() guild: Guild,
+    @MemberRoles() roles: Role[],
     @Param("historyEntryId") historyEntryId: string,
   ) {
     return this.timersService.restoreTimerFromHistory(
       discordId,
-      guildId,
+      guild,
+      roles,
       Number.parseInt(historyEntryId, 10),
     );
   }
@@ -341,7 +377,12 @@ export class TimersController {
     summary: "Create manual timer",
     description: "Manually create a timer for a guild",
   })
-  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
+  @ApiParam({
+    name: "guildId",
+    description: "Guild ID",
+    example: "guild_123",
+    type: String,
+  })
   @ZodResponse({
     status: 201,
     description: "Manual timer created successfully",

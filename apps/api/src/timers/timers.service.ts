@@ -35,6 +35,7 @@ import { RoutingKey } from "src/enum/routing-key.enum";
 import {
   buildNpcJsonVisibilitySqlCondition,
   buildNpcJsonVisibilityWhere,
+  canActOnStrategicNpc,
   canViewStrategicNpc,
   createStrategicAccessContext,
   TIMER_VISIBILITY_PERMISSIONS,
@@ -1877,6 +1878,43 @@ export class TimersService implements OnModuleInit {
     });
   }
 
+  private assertCanActOnTimer(
+    guild: Guild,
+    viewerDiscordId: string,
+    roles: Role[],
+    timer: Pick<Timer, "guildId" | "world" | "npcId" | "npc">,
+    actionPermission: Permission,
+  ) {
+    const npc = parseNpc(timer.npc);
+    const accessContext = createStrategicAccessContext({
+      organizationId: guild.id,
+      ownerId: guild.ownerId,
+      viewerDiscordId,
+      roles,
+    });
+    const allowed =
+      npc &&
+      canActOnStrategicNpc(
+        accessContext,
+        {
+          organizationId: timer.guildId,
+          world: timer.world,
+          npc: {
+            id: timer.npcId,
+            type: npc.type,
+            group: null,
+            level: npc.lvl,
+          },
+        },
+        TIMER_VISIBILITY_PERMISSIONS,
+        actionPermission,
+      );
+
+    if (!allowed) {
+      throw new ForbiddenException();
+    }
+  }
+
   async getAllTimers(
     discordId: string,
     userId: string,
@@ -2051,9 +2089,11 @@ export class TimersService implements OnModuleInit {
 
   async restoreTimerFromHistory(
     discordId: string,
-    guildId: string,
+    guild: Guild,
+    roles: Role[],
     historyEntryId: number,
   ) {
+    const guildId = guild.id;
     const entry = await this.prisma.timerHistoryEntry.findUnique({
       where: { id: historyEntryId },
       include: {
@@ -2069,6 +2109,14 @@ export class TimersService implements OnModuleInit {
         message: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
       });
     }
+
+    this.assertCanActOnTimer(
+      guild,
+      discordId,
+      roles,
+      entry,
+      Permission.LOOTLOG_TIMERS_WRITE,
+    );
 
     if (
       entry.action !== TimerHistoryAction.DELETE ||
@@ -2159,10 +2207,12 @@ export class TimersService implements OnModuleInit {
 
   async resetTimer(
     discordId: string,
-    guildId: string,
+    guild: Guild,
+    roles: Role[],
     timerIdentifier: string,
     data: ResetTimerDto,
   ) {
+    const guildId = guild.id;
     const now = new Date();
     const resolvedTimer = await this.findTimerByIdentifier(
       guildId,
@@ -2173,6 +2223,14 @@ export class TimersService implements OnModuleInit {
     if (!resolvedTimer) {
       throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
     }
+
+    this.assertCanActOnTimer(
+      guild,
+      discordId,
+      roles,
+      resolvedTimer,
+      Permission.LOOTLOG_TIMERS_RESET,
+    );
 
     const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
       guildId,
@@ -2285,16 +2343,12 @@ export class TimersService implements OnModuleInit {
 
   async deleteTimer(
     discordId: string,
-    guildId: string,
+    guild: Guild,
+    roles: Role[],
     timerIdentifier: string,
-    world?: string,
+    world: string,
   ) {
-    if (!world) {
-      world = timerIdentifier;
-      timerIdentifier = guildId;
-      guildId = discordId;
-      discordId = "";
-    }
+    const guildId = guild.id;
 
     const resolvedTimer = await this.findTimerByIdentifier(
       guildId,
@@ -2305,6 +2359,14 @@ export class TimersService implements OnModuleInit {
     if (!resolvedTimer) {
       throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
     }
+
+    this.assertCanActOnTimer(
+      guild,
+      discordId,
+      roles,
+      resolvedTimer,
+      Permission.LOOTLOG_TIMERS_DELETE,
+    );
 
     const eventHero = await this.eventTimerHooks.findActiveEventHeroByNpc(
       guildId,

@@ -431,6 +431,7 @@ describe("LootsController", () => {
         discordId,
         lootId,
         body,
+        [mockRole],
         mockGuild,
       );
 
@@ -438,7 +439,8 @@ describe("LootsController", () => {
         discordId,
         lootId,
         body,
-        guildId: mockGuild.id,
+        guild: mockGuild,
+        roles: [mockRole],
       });
       expect(result).toEqual(mockComment);
     });
@@ -450,10 +452,12 @@ describe("LootsController", () => {
     it("should delete a loot", async () => {
       service.deleteLoot.mockResolvedValue(undefined);
 
-      await controller.deleteLoot(lootId, mockGuild);
+      await controller.deleteLoot(lootId, "viewer123", [mockRole], mockGuild);
 
       expect(service.deleteLoot).toHaveBeenCalledWith({
-        guildId: mockGuild.id,
+        guild: mockGuild,
+        viewerDiscordId: "viewer123",
+        roles: [mockRole],
         lootId,
       });
     });

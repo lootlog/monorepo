@@ -200,7 +200,7 @@ export const useTimerActions = (
         guildId,
         timerIdentifier: timerKey,
       },
-      world ? { world } : undefined,
+      { world },
     ).then(
       () => {
         showRuntimeMessage(

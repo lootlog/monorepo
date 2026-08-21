@@ -10,5 +10,5 @@ export type TimersControllerDeleteTimerParams = {
 /**
  * World name
  */
-world?: string;
+world: string;
 };

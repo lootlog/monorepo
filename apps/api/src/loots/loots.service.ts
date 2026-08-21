@@ -684,40 +684,64 @@ export class LootsService implements OnModuleInit {
     });
   }
 
-  async deleteLoot(options: { guildId: string; lootId: number }) {
-    const { guildId, lootId } = options;
+  async deleteLoot(options: {
+    guild: Guild;
+    viewerDiscordId: string;
+    roles: Role[];
+    lootId: number;
+  }) {
+    const { guild, viewerDiscordId, roles, lootId } = options;
+    const allowed = await this.lootQueryService.canViewLootById(
+      guild,
+      viewerDiscordId,
+      roles,
+      lootId,
+      Permission.LOOTLOG_MANAGE,
+    );
 
-    const loot = await this.prisma.loot.findFirst({
-      where: {
-        id: lootId,
-        lootSubmissions: { some: { guildId } },
-      },
-    });
-
-    if (!loot) {
+    if (!allowed) {
       throw new ForbiddenException(ErrorKey.CANT_DELETE_LOOT);
     }
 
     await this.prisma.lootSubmission.deleteMany({
       where: {
         lootId,
-        guildId,
+        guildId: guild.id,
       },
     });
     await Promise.all([
-      this.invalidateLootsListCache([guildId]),
-      this.invalidateLootStatsCaches([guildId]),
+      this.invalidateLootsListCache([guild.id]),
+      this.invalidateLootStatsCaches([guild.id]),
     ]);
   }
 
   async createComment(options: {
     discordId: string;
-    guildId: string;
+    guild: Guild;
+    roles: Role[];
     lootId: number;
     body: CreateCommentDto;
   }) {
-    const comment = await this.lootCommentService.createComment(options);
-    await this.invalidateLootsListCache([options.guildId]);
+    const { discordId, guild, roles, lootId, body } = options;
+    const allowed = await this.lootQueryService.canViewLootById(
+      guild,
+      discordId,
+      roles,
+      lootId,
+      Permission.LOOTLOG_LOOTS_WRITE,
+    );
+
+    if (!allowed) {
+      throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
+    }
+
+    const comment = await this.lootCommentService.createComment({
+      discordId,
+      guildId: guild.id,
+      lootId,
+      body,
+    });
+    await this.invalidateLootsListCache([guild.id]);
     return comment;
   }
 

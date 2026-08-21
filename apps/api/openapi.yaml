@@ -932,6 +932,7 @@ paths:
           description: Guild ID
           schema:
             example: guild_123
+            type: string
       responses:
         "200":
           description: List of guild timers
@@ -953,13 +954,6 @@ paths:
       description: Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration
       operationId: TimersController_searchNpcsWithTimerData
       parameters:
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            example: guild_123
-            type: string
         - name: search
           required: true
           in: query
@@ -983,6 +977,13 @@ paths:
             maximum: 50
             default: 10
             type: number
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+            type: string
       responses:
         "200":
           description: List of NPCs with timer metadata
@@ -1031,19 +1032,19 @@ paths:
       description: Reset a timer for a specific NPC in a guild
       operationId: TimersController_resetTimer
       parameters:
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            example: guild_123
-            type: string
         - name: timerIdentifier
           required: true
           in: path
           description: Timer key or legacy NPC ID when unambiguous
           schema:
             example: 12345:test boss
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
             type: string
       requestBody:
         required: true
@@ -1073,17 +1074,10 @@ paths:
       operationId: TimersController_deleteTimer
       parameters:
         - name: world
-          required: false
+          required: true
           in: query
           description: World name
           schema:
-            type: string
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            example: guild_123
             type: string
         - name: timerIdentifier
           required: true
@@ -1092,11 +1086,18 @@ paths:
           schema:
             example: 12345:test boss
             type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+            type: string
       responses:
         "200":
           description: Timer deleted successfully
         "403":
-          description: Forbidden - manage permission required
+          description: Forbidden - timer delete permission required
         "404":
           description: Timer not found
       security:
@@ -1115,13 +1116,6 @@ paths:
           description: World name
           schema:
             type: string
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            example: guild_123
-            type: string
         - name: timerIdentifier
           required: true
           in: path
@@ -1134,6 +1128,13 @@ paths:
           in: query
           description: Result limit
           schema: {}
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
+            type: string
       responses:
         "200":
           description: List of timer history entries
@@ -1153,19 +1154,19 @@ paths:
       description: Restore a deleted timer from a timer history entry
       operationId: TimersController_restoreTimerFromHistory
       parameters:
-        - name: guildId
-          required: true
-          in: path
-          description: Guild ID
-          schema:
-            example: guild_123
-            type: string
         - name: historyEntryId
           required: true
           in: path
           description: Timer history entry ID
           schema:
             example: 123
+            type: string
+        - name: guildId
+          required: true
+          in: path
+          description: Guild ID
+          schema:
+            example: guild_123
             type: string
       responses:
         "201":
@@ -1913,7 +1914,7 @@ paths:
         "200":
           description: Loot deleted successfully
         "403":
-          description: Forbidden - admin or manage permission required
+          description: Forbidden - loot manage permission required
         "404":
           description: Loot not found
       security:

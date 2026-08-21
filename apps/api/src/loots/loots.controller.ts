@@ -303,17 +303,19 @@ export class LootsController {
     @DiscordId() discordId: string,
     @Param("lootId", new ParseIntPipe()) lootId: number,
     @Body() body: CreateCommentDto,
+    @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
     return this.lootsService.createComment({
       discordId,
       lootId,
       body,
-      guildId: guild.id,
+      guild,
+      roles,
     });
   }
 
-  @Permissions(Permission.ADMIN, Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete("/guilds/:guildId/loots/:lootId")
   @ApiOperation({
@@ -328,15 +330,19 @@ export class LootsController {
   })
   @ApiResponse({
     status: 403,
-    description: "Forbidden - admin or manage permission required",
+    description: "Forbidden - loot manage permission required",
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
   deleteLoot(
     @Param("lootId", new ParseIntPipe()) lootId: number,
+    @DiscordId() viewerDiscordId: string,
+    @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
     return this.lootsService.deleteLoot({
-      guildId: guild.id,
+      guild,
+      viewerDiscordId,
+      roles,
       lootId,
     });
   }

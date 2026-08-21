@@ -5,6 +5,7 @@ import {
   NpcType,
   Profession,
   type Guild,
+  type Permission,
   type Prisma,
   type Role,
 } from "src/generated/prisma/client";
@@ -329,17 +330,30 @@ export class LootQueryService {
     viewerDiscordId: string,
     roles: Role[],
     lootId: number,
+    actionPermission?: Permission,
   ): Promise<boolean> {
-    const baseWhere = this.buildBaseWhereCondition(
-      guild,
+    const accessContext = createStrategicAccessContext({
+      organizationId: guild.id,
+      ownerId: guild.ownerId,
       viewerDiscordId,
       roles,
-      { cursor: null },
+    });
+    const npcSnapshotVisibilityWhere = buildNpcSnapshotVisibilityWhere(
+      accessContext,
+      LOOT_VISIBILITY_PERMISSIONS,
+      actionPermission,
     );
     const loot = await this.prisma.loot.findFirst({
       where: {
-        ...baseWhere,
         id: lootId,
+        lootSubmissions: { some: { guildId: guild.id } },
+        ...(npcSnapshotVisibilityWhere
+          ? {
+              lootNpcs: {
+                some: { npcSnapshot: npcSnapshotVisibilityWhere },
+              },
+            }
+          : null),
       },
       select: { id: true },
     });

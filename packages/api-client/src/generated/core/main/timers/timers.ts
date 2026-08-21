@@ -265,7 +265,7 @@ export const timersControllerResetTimer = async ({ guildId, timerIdentifier }: T
 
 
 export const getTimersControllerDeleteTimerUrl = ({ guildId, timerIdentifier }: TimersControllerDeleteTimerPathParameters,
-    params?: TimersControllerDeleteTimerParams,) => {
+    params: TimersControllerDeleteTimerParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -285,7 +285,7 @@ export const getTimersControllerDeleteTimerUrl = ({ guildId, timerIdentifier }: 
  * @summary Delete timer
  */
 export const timersControllerDeleteTimer = async ({ guildId, timerIdentifier }: TimersControllerDeleteTimerPathParameters,
-    params?: TimersControllerDeleteTimerParams, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+    params: TimersControllerDeleteTimerParams, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
   return mainFetch<void>(getTimersControllerDeleteTimerUrl({ guildId, timerIdentifier },params),
   {

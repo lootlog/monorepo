@@ -4,7 +4,11 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { TimersService } from "./timers.service";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
-import { BadRequestException, ConflictException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from "@nestjs/common";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
@@ -23,10 +27,28 @@ import {
   Permission,
   Profession,
   TimerHistoryAction,
+  type Guild,
+  type Role,
 } from "src/generated/prisma/client";
 
 describe("TimersService", () => {
   let service: TimersService;
+  const mutationGuild = {
+    id: "guild1",
+    ownerId: "owner123",
+  } as Guild;
+  const mutationRoles = [
+    {
+      permissions: [
+        Permission.LOOTLOG_TIMERS_READ,
+        Permission.LOOTLOG_TIMERS_RESET,
+        Permission.LOOTLOG_TIMERS_DELETE,
+        Permission.LOOTLOG_TIMERS_WRITE,
+      ],
+      lvlRangeFrom: 1,
+      lvlRangeTo: 500,
+    } as Role,
+  ];
 
   const mockPrismaService = {
     timer: {
@@ -43,6 +65,7 @@ describe("TimersService", () => {
     },
     timerHistoryEntry: {
       create: mockFn(),
+      findUnique: mockFn(),
       findMany: mockFn(),
       deleteMany: mockFn(),
     },
@@ -161,6 +184,7 @@ describe("TimersService", () => {
     mockPrismaService.timer.findUnique.mockResolvedValue(null);
     mockPrismaService.playerSnapshot.upsert.mockResolvedValue(null);
     mockPrismaService.timerHistoryEntry.create.mockResolvedValue({});
+    mockPrismaService.timerHistoryEntry.findUnique.mockResolvedValue(null);
     mockPrismaService.timerHistoryEntry.findMany.mockResolvedValue([]);
     mockPrismaService.timerHistoryEntry.deleteMany.mockResolvedValue({
       count: 0,
@@ -1088,9 +1112,15 @@ describe("TimersService", () => {
       ]);
       mockPrismaService.timer.update.mockResolvedValue(mockTimer);
 
-      await service.resetTimer("discord123", "guild1", "123", {
-        world: "test-world",
-      });
+      await service.resetTimer(
+        "discord123",
+        mutationGuild,
+        mutationRoles,
+        "123",
+        {
+          world: "test-world",
+        },
+      );
 
       expect(mockRedisService.deleteByPattern).toHaveBeenCalledWith(
         "timer:list:guild1:*",
@@ -1132,17 +1162,23 @@ describe("TimersService", () => {
         actorCharacterLvl: 300,
       });
 
-      await service.resetTimer("discord123", "guild1", "123", {
-        world: "test-world",
-        actorCharacter: {
-          accountId: "200",
-          characterId: "100",
-          name: "Hero One",
-          prof: "b",
-          icon: "hero.gif",
-          lvl: 300,
+      await service.resetTimer(
+        "discord123",
+        mutationGuild,
+        mutationRoles,
+        "123",
+        {
+          world: "test-world",
+          actorCharacter: {
+            accountId: "200",
+            characterId: "100",
+            name: "Hero One",
+            prof: "b",
+            icon: "hero.gif",
+            lvl: 300,
+          },
         },
-      });
+      );
 
       expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1172,9 +1208,15 @@ describe("TimersService", () => {
       ]);
       mockPrismaService.timer.update.mockResolvedValue(mockTimer);
 
-      await service.resetTimer("discord123", "guild1", "123", {
-        world: "test-world",
-      });
+      await service.resetTimer(
+        "discord123",
+        mutationGuild,
+        mutationRoles,
+        "123",
+        {
+          world: "test-world",
+        },
+      );
 
       expect(mockPrismaService.timer.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1208,9 +1250,15 @@ describe("TimersService", () => {
       mockPrismaService.timer.findUnique.mockResolvedValue(manualTimer);
       mockPrismaService.timer.update.mockResolvedValue(manualTimer);
 
-      await service.resetTimer("discord123", "guild1", "123", {
-        world: "test-world",
-      });
+      await service.resetTimer(
+        "discord123",
+        mutationGuild,
+        mutationRoles,
+        "123",
+        {
+          world: "test-world",
+        },
+      );
 
       expect(mockPrismaService.timerHistoryEntry.create).not.toHaveBeenCalled();
     });
@@ -1223,7 +1271,7 @@ describe("TimersService", () => {
       });
 
       await expect(
-        service.resetTimer("discord123", "guild1", "123", {
+        service.resetTimer("discord123", mutationGuild, mutationRoles, "123", {
           world: "test-world",
         }),
       ).rejects.toMatchObject({
@@ -1243,7 +1291,7 @@ describe("TimersService", () => {
       });
 
       await expect(
-        service.resetTimer("discord123", "guild1", "123", {
+        service.resetTimer("discord123", mutationGuild, mutationRoles, "123", {
           world: "test-world",
         }),
       ).rejects.toMatchObject({
@@ -1255,6 +1303,29 @@ describe("TimersService", () => {
       expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
     });
 
+    it("requires reset permission on the role that can see the timer", async () => {
+      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      const splitRoles = [
+        {
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 500,
+        } as Role,
+        {
+          permissions: [Permission.LOOTLOG_TIMERS_RESET],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 500,
+        } as Role,
+      ];
+
+      await expect(
+        service.resetTimer("discord123", mutationGuild, splitRoles, "123", {
+          world: "test-world",
+        }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockRedlock.acquire).not.toHaveBeenCalled();
+    });
+
     it("should invalidate cache when timer is deleted", async () => {
       mockRedisService.deleteByPattern.mockResolvedValue(1);
       mockEventTimerHooksService.findActiveEventHeroByNpc.mockResolvedValue(
@@ -1263,7 +1334,13 @@ describe("TimersService", () => {
       mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
       mockPrismaService.timer.update.mockResolvedValue(mockTimer);
 
-      await service.deleteTimer("guild1", "123", "test-world");
+      await service.deleteTimer(
+        "discord123",
+        mutationGuild,
+        mutationRoles,
+        "123",
+        "test-world",
+      );
 
       expect(mockRedisService.deleteByPattern).toHaveBeenCalledWith(
         "timer:list:guild1:*",
@@ -1277,7 +1354,13 @@ describe("TimersService", () => {
       mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
       mockPrismaService.timer.update.mockResolvedValue(mockTimer);
 
-      await service.deleteTimer("guild1", "123", "test-world");
+      await service.deleteTimer(
+        "discord123",
+        mutationGuild,
+        mutationRoles,
+        "123",
+        "test-world",
+      );
 
       expect(mockPrismaService.timer.update).toHaveBeenCalledWith({
         where: {
@@ -1307,7 +1390,13 @@ describe("TimersService", () => {
       mockPrismaService.timer.findMany.mockResolvedValue([manualTimer]);
       mockPrismaService.timer.delete.mockResolvedValue(manualTimer);
 
-      await service.deleteTimer("guild1", "123", "test-world");
+      await service.deleteTimer(
+        "discord123",
+        mutationGuild,
+        mutationRoles,
+        "123",
+        "test-world",
+      );
 
       expect(mockPrismaService.timerHistoryEntry.create).not.toHaveBeenCalled();
       expect(mockPrismaService.timer.delete).toHaveBeenCalledWith({
@@ -1329,7 +1418,13 @@ describe("TimersService", () => {
       });
 
       await expect(
-        service.deleteTimer("guild1", "123", "test-world"),
+        service.deleteTimer(
+          "discord123",
+          mutationGuild,
+          mutationRoles,
+          "123",
+          "test-world",
+        ),
       ).rejects.toMatchObject({
         response: { message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE },
       });
@@ -1346,13 +1441,66 @@ describe("TimersService", () => {
       });
 
       await expect(
-        service.deleteTimer("guild1", "123", "test-world"),
+        service.deleteTimer(
+          "discord123",
+          mutationGuild,
+          mutationRoles,
+          "123",
+          "test-world",
+        ),
       ).rejects.toMatchObject({
         response: { message: ErrorKey.EVENT_TIMER_MUST_USE_EVENT_CLOSE },
       });
 
       expect(mockPrismaService.timer.delete).not.toHaveBeenCalled();
       expect(mockRedisService.deleteByPattern).not.toHaveBeenCalled();
+    });
+
+    it("requires delete permission on the role that can see the timer", async () => {
+      mockPrismaService.timer.findMany.mockResolvedValue([mockTimer]);
+      const splitRoles = [
+        {
+          permissions: [Permission.LOOTLOG_TIMERS_READ],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 500,
+        } as Role,
+        {
+          permissions: [Permission.LOOTLOG_TIMERS_DELETE],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 500,
+        } as Role,
+      ];
+
+      await expect(
+        service.deleteTimer(
+          "discord123",
+          mutationGuild,
+          splitRoles,
+          "123",
+          "test-world",
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrismaService.timer.update).not.toHaveBeenCalled();
+    });
+
+    it("requires write permission and visibility before restoring history", async () => {
+      mockPrismaService.timerHistoryEntry.findUnique.mockResolvedValue({
+        id: 1,
+        guildId: "guild1",
+        world: "test-world",
+        npcId: mockTimer.npcId,
+        npc: mockTimer.npc,
+      });
+
+      await expect(
+        service.restoreTimerFromHistory(
+          "discord123",
+          mutationGuild,
+          [{ ...mutationRoles[0], lvlRangeFrom: 101 } as Role],
+          1,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
     });
   });
 

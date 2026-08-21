@@ -234,7 +234,7 @@ export async function fetchTimers(world: string): Promise<Timer[]> {
 export type DeleteTimerOptions = {
   timerKey: string;
   guildId: string;
-  world?: string;
+  world: string;
 };
 
 export async function deleteTimer({
@@ -255,7 +255,7 @@ export async function deleteTimer({
     execute: () =>
       timersControllerDeleteTimer(
         { guildId, timerIdentifier: timerKey },
-        world ? { world } : undefined,
+        { world },
       ),
   });
 }

@@ -7,5 +7,5 @@
  */
 
 export type TimersControllerGetTimersPathParameters = {
- guildId: unknown,
+ guildId: string,
  }

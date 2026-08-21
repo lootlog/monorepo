@@ -81,6 +81,26 @@ describe("strategic access policy adapter", () => {
     });
   });
 
+  it("keeps an action permission on the same matching role", () => {
+    const context = createStrategicAccessContext({
+      organizationId: "guild-1",
+      ownerId: "owner",
+      viewerDiscordId: "member",
+      roles: [
+        createRole({ permissions: [Permission.LOOTLOG_LOOTS_READ] }),
+        createRole({ permissions: [Permission.LOOTLOG_MANAGE] }),
+      ],
+    });
+
+    expect(
+      buildNpcSnapshotVisibilityWhere(
+        context,
+        LOOT_VISIBILITY_PERMISSIONS,
+        Permission.LOOTLOG_MANAGE,
+      ),
+    ).toEqual({ OR: [] });
+  });
+
   it("parameterizes level ranges in the raw SQL condition", () => {
     const context = createStrategicAccessContext({
       organizationId: "guild-1",
