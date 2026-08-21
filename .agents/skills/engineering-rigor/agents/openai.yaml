@@ -1,0 +1,4 @@
+interface:
+  display_name: "Engineering rigor"
+  short_description: "Design small changes and prove them"
+  default_prompt: "Use $engineering-rigor to implement this change with focused verification."
