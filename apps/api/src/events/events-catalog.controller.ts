@@ -34,6 +34,7 @@ import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
+import { DiscordId } from "@lootlog/nest-shared/decorators";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 
@@ -196,6 +197,7 @@ export class EventsCatalogController {
   })
   @ApiResponse({ status: 404, description: "Event not found" })
   getWrapped(
+    @DiscordId() viewerDiscordId: string,
     @GuildData() guildData: Guild,
     @Param("eventId") eventId: string,
     @MemberRoles() roles: Role[] = [],
@@ -203,6 +205,7 @@ export class EventsCatalogController {
   ) {
     return this.eventsService.getWrapped(
       guildData,
+      viewerDiscordId,
       eventId,
       permissions,
       roles,

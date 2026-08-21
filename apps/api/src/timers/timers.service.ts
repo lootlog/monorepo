@@ -32,8 +32,14 @@ import { DEFAULT_RESPAWN_RANDOMNESS } from "src/timers/constants/respawn";
 import type { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
 import { generateUniqueIntId } from "src/shared/utils/generate-unique-int-id";
 import { RoutingKey } from "src/enum/routing-key.enum";
-import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
-import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
+import {
+  buildNpcJsonVisibilitySqlCondition,
+  buildNpcJsonVisibilityWhere,
+  canViewStrategicNpc,
+  createStrategicAccessContext,
+  TIMER_VISIBILITY_PERMISSIONS,
+} from "src/shared/permissions/strategic-access-policy";
+import type { NpcAccessContext } from "@lootlog/api-helpers/permissions";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
@@ -1798,13 +1804,18 @@ export class TimersService implements OnModuleInit {
 
   async getTimers(
     userId: string,
+    viewerDiscordId: string,
     { world }: GetTimersDto,
     guild: Guild,
-    permissions: Permission[],
     roles: Role[],
   ) {
     const now = new Date();
-    const administrativeUser = isAdministrativeUser(permissions);
+    const accessContext = createStrategicAccessContext({
+      organizationId: guild.id,
+      ownerId: guild.ownerId,
+      viewerDiscordId,
+      roles,
+    });
     const alwaysVisibleExpiredTimerKeys =
       await this.getAlwaysVisibleExpiredTimerKeys(userId, world);
     const cacheKey = this.getTimersCacheKey(guild.id, userId, world);
@@ -1813,11 +1824,9 @@ export class TimersService implements OnModuleInit {
 
     if (cached !== null) {
       this.logger.log({ level: "debug", message: `Cache hit for ${cacheKey}` });
-      return this.filterTimersByPermissions(
-        cached,
-        administrativeUser,
-        roles,
-      ).map((timer) => this.mapTimerResponse(timer));
+      return this.filterTimersByPermissions(cached, accessContext).map(
+        (timer) => this.mapTimerResponse(timer),
+      );
     }
 
     this.logger.log({ level: "debug", message: `Cache miss for ${cacheKey}` });
@@ -1838,22 +1847,33 @@ export class TimersService implements OnModuleInit {
         }),
     });
 
-    return this.filterTimersByPermissions(
-      timers,
-      administrativeUser,
-      roles,
-    ).map((timer) => this.mapTimerResponse(timer));
+    return this.filterTimersByPermissions(timers, accessContext).map((timer) =>
+      this.mapTimerResponse(timer),
+    );
   }
 
   private filterTimersByPermissions(
     timers: TimerWithOptionalMember[],
-    administrativeUser: boolean,
-    roles: Role[],
+    accessContext: NpcAccessContext,
   ): TimerWithOptionalMember[] {
-    if (administrativeUser) return timers;
     return timers.filter((timer) => {
       const npc = parseNpc(timer.npc);
-      return canViewNpcTimer(npc, roles);
+      if (!npc) return false;
+
+      return canViewStrategicNpc(
+        accessContext,
+        {
+          organizationId: timer.guildId,
+          world: timer.world,
+          npc: {
+            id: timer.npcId,
+            type: npc.type,
+            group: null,
+            level: npc.lvl,
+          },
+        },
+        TIMER_VISIBILITY_PERMISSIONS,
+      );
     });
   }
 
@@ -1899,29 +1919,32 @@ export class TimersService implements OnModuleInit {
         (p) => p.guild.id === guild.id,
       );
 
-      const permissions = guildPermissionsAndRoles?.permissions ?? [];
       const roles = guildPermissionsAndRoles?.roles ?? [];
-      const administrativeUser = isAdministrativeUser(permissions);
       const guildTimers = timersByGuild[guild.id] ?? [];
-
-      return this.filterTimersByPermissions(
-        guildTimers,
-        administrativeUser,
+      const accessContext = createStrategicAccessContext({
+        organizationId: guild.id,
+        ownerId: guild.ownerId,
+        viewerDiscordId: discordId,
         roles,
-      ).map((timer) => this.mapTimerResponse(timer));
+      });
+
+      return this.filterTimersByPermissions(guildTimers, accessContext).map(
+        (timer) => this.mapTimerResponse(timer),
+      );
     });
   }
 
   async getTimerHistory(
-    guildId: string,
+    guild: Guild,
     world: string,
     timerIdentifier: string,
     options: {
       limit?: number;
-      permissions: Permission[];
+      viewerDiscordId: string;
       roles: Role[];
     },
   ) {
+    const guildId = guild.id;
     const limit =
       options.limit && options.limit > 0 ? Math.min(options.limit, 20) : 5;
     const resolvedTimer = await this.findTimerByIdentifier(
@@ -1930,13 +1953,23 @@ export class TimersService implements OnModuleInit {
       timerIdentifier,
     );
     const timerKey = resolvedTimer?.timerKey ?? timerIdentifier;
-    const administrativeUser = isAdministrativeUser(options.permissions);
+    const accessContext = createStrategicAccessContext({
+      organizationId: guildId,
+      ownerId: guild.ownerId,
+      viewerDiscordId: options.viewerDiscordId,
+      roles: options.roles,
+    });
+    const visibilityWhere = buildNpcJsonVisibilityWhere(
+      accessContext,
+      TIMER_VISIBILITY_PERMISSIONS,
+    );
 
     const entries = await this.prisma.timerHistoryEntry.findMany({
       where: {
         guildId,
         world,
         timerKey,
+        ...visibilityWhere,
       },
       orderBy: { createdAt: "desc" },
       take: limit,
@@ -1949,15 +1982,7 @@ export class TimersService implements OnModuleInit {
       },
     });
 
-    return entries
-      .filter((entry) => {
-        if (administrativeUser) {
-          return true;
-        }
-
-        return canViewNpcTimer(parseNpc(entry.npc), options.roles);
-      })
-      .map((entry) => this.mapTimerHistoryResponse(entry));
+    return entries.map((entry) => this.mapTimerHistoryResponse(entry));
   }
 
   async getRecentTimerHistory(
@@ -1977,46 +2002,51 @@ export class TimersService implements OnModuleInit {
       throw new ForbiddenException();
     }
 
-    const hasGuildAccess = guilds.some((guild) => guild.id === guildId);
+    const guild = guilds.find(
+      (candidateGuild) => candidateGuild.id === guildId,
+    );
 
-    if (!hasGuildAccess) {
+    if (!guild) {
       throw new ForbiddenException();
     }
 
-    const [entries, [guildPermissionsAndRoles]] = await Promise.all([
-      this.prisma.timerHistoryEntry.findMany({
-        where: {
-          guildId,
-          world,
-        },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        include: {
-          guild: {
-            select: { name: true },
-          },
-          actorMember: true,
-          actorCharacter: true,
-          timerCreatedBy: true,
-          timerActorCharacter: true,
-        },
-      }),
-      this.guildsService.getMultipleGuildsPermissions(discordId, [guildId]),
-    ]);
+    const [guildPermissionsAndRoles] =
+      await this.guildsService.getMultipleGuildsPermissions(discordId, [
+        guildId,
+      ]);
 
-    const permissions = guildPermissionsAndRoles?.permissions ?? [];
     const roles = guildPermissionsAndRoles?.roles ?? [];
-    const administrativeUser = isAdministrativeUser(permissions);
+    const accessContext = createStrategicAccessContext({
+      organizationId: guildId,
+      ownerId: guild.ownerId,
+      viewerDiscordId: discordId,
+      roles,
+    });
+    const visibilityWhere = buildNpcJsonVisibilityWhere(
+      accessContext,
+      TIMER_VISIBILITY_PERMISSIONS,
+    );
 
-    return entries
-      .filter((entry) => {
-        if (administrativeUser) {
-          return true;
-        }
+    const entries = await this.prisma.timerHistoryEntry.findMany({
+      where: {
+        guildId,
+        world,
+        ...visibilityWhere,
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: {
+        guild: {
+          select: { name: true },
+        },
+        actorMember: true,
+        actorCharacter: true,
+        timerCreatedBy: true,
+        timerActorCharacter: true,
+      },
+    });
 
-        return canViewNpcTimer(parseNpc(entry.npc), roles);
-      })
-      .map((entry) => this.mapTimerHistoryResponse(entry));
+    return entries.map((entry) => this.mapTimerHistoryResponse(entry));
   }
 
   async restoreTimerFromHistory(
@@ -2371,14 +2401,30 @@ export class TimersService implements OnModuleInit {
   }
 
   async searchNpcsWithTimerData(
-    guildId: string,
+    guild: Guild,
+    viewerDiscordId: string,
+    roles: Role[],
     world: string,
     search: string,
     limit = 10,
   ) {
     const limitNum = Number(limit) || 10;
     const manualTimerType = String(TIMER_TYPES.CUSTOM_MANUAL);
-    const timers = await this.prisma.$queryRaw<Timer[]>`
+    const accessContext = createStrategicAccessContext({
+      organizationId: guild.id,
+      ownerId: guild.ownerId,
+      viewerDiscordId,
+      roles,
+    });
+    const visibilityCondition = buildNpcJsonVisibilitySqlCondition(
+      accessContext,
+      TIMER_VISIBILITY_PERMISSIONS,
+      "t",
+      5,
+    );
+    const limitParameterIndex = 5 + visibilityCondition.params.length;
+    const timers = await this.prisma.$queryRawUnsafe<Timer[]>(
+      `
       SELECT DISTINCT ON (t."timerKey")
         t."npc",
         t."npcId",
@@ -2386,14 +2432,22 @@ export class TimersService implements OnModuleInit {
         t."latestRespBaseSeconds",
         t."latestRespawnRandomness"
       FROM "Timer" t
-      WHERE t."guildId" = ${guildId}
-        AND t."world" = ${world}
+      WHERE t."guildId" = $1
+        AND t."world" = $2
         AND t."deletedAt" IS NULL
-        AND t."npc"->>'name' ILIKE ${"%" + search + "%"}
-        AND COALESCE(t."npc"->>'margonemType', '0') != ${manualTimerType}
+        AND t."npc"->>'name' ILIKE $3
+        AND COALESCE(t."npc"->>'margonemType', '0') != $4
+        ${visibilityCondition.sql}
       ORDER BY t."timerKey", t."updatedAt" DESC
-      LIMIT ${limitNum}
-    `;
+      LIMIT $${limitParameterIndex}
+    `,
+      guild.id,
+      world,
+      `%${search}%`,
+      manualTimerType,
+      ...visibilityCondition.params,
+      limitNum,
+    );
 
     return timers
       .map((timer) => {

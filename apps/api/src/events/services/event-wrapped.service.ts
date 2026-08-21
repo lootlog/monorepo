@@ -116,6 +116,7 @@ export class EventWrappedService {
 
   getWrapped(
     guild: Guild,
+    viewerDiscordId: string,
     eventId: string,
     permissions: Permission[],
     roles: Role[],
@@ -123,7 +124,11 @@ export class EventWrappedService {
     const cacheKey = getEventWrappedCacheKey(
       guild.id,
       eventId,
-      this.buildVisibilityCacheScope(permissions, roles),
+      this.buildVisibilityCacheScope(
+        guild.ownerId === viewerDiscordId,
+        permissions,
+        roles,
+      ),
     );
 
     return this.redis.getOrSetJsonBestEffort({
@@ -132,12 +137,19 @@ export class EventWrappedService {
       onError: (error) =>
         this.logger.warn("Event wrapped cache unavailable", error),
       factory: () =>
-        this.getWrappedUncached(guild, eventId, permissions, roles),
+        this.getWrappedUncached(
+          guild,
+          viewerDiscordId,
+          eventId,
+          permissions,
+          roles,
+        ),
     });
   }
 
   private async getWrappedUncached(
     guild: Guild,
+    viewerDiscordId: string,
     eventId: string,
     permissions: Permission[],
     roles: Role[],
@@ -238,7 +250,7 @@ export class EventWrappedService {
         }) as Promise<AssignmentRow[]>,
         this.getEventLoots({
           guild,
-          permissions,
+          viewerDiscordId,
           roles,
           world: event.world,
           heroNames: event.heroNpcs.map((hero) => hero.npcName),
@@ -424,8 +436,13 @@ export class EventWrappedService {
     return response;
   }
 
-  private buildVisibilityCacheScope(permissions: Permission[], roles: Role[]) {
+  private buildVisibilityCacheScope(
+    isOwner: boolean,
+    permissions: Permission[],
+    roles: Role[],
+  ) {
     const visibilityScope = {
+      isOwner,
       permissions: [...permissions].sort(),
       roles: roles
         .map((role) => ({
@@ -465,7 +482,7 @@ export class EventWrappedService {
 
   private getEventLoots(params: {
     guild: Guild;
-    permissions: Permission[];
+    viewerDiscordId: string;
     roles: Role[];
     world: string;
     heroNames: string[];
@@ -482,7 +499,7 @@ export class EventWrappedService {
     ): Promise<LootQueryResult[]> => {
       const batch = await this.lootsService.fetchLootsByGuildId(
         params.guild,
-        params.permissions,
+        params.viewerDiscordId,
         params.roles,
         {
           limit: 100,

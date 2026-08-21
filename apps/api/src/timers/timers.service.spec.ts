@@ -51,6 +51,7 @@ describe("TimersService", () => {
     },
     $transaction: mockFn(),
     $queryRaw: mockFn(),
+    $queryRawUnsafe: mockFn(),
   };
 
   const mockAmqpConnection = {
@@ -1410,7 +1411,7 @@ describe("TimersService", () => {
 
     it("returns actor character data from the timers API", async () => {
       mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
-        { id: "guild1" },
+        { id: "guild1", ownerId: "discord123" },
       ]);
       mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
         {
@@ -1442,7 +1443,7 @@ describe("TimersService", () => {
 
     it("filters active timers by default", async () => {
       mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
-        { id: "guild1" },
+        { id: "guild1", ownerId: "discord123" },
       ]);
       mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
         {
@@ -1549,7 +1550,7 @@ describe("TimersService", () => {
       const deletedAt = new Date("2026-05-03T08:15:00.000Z");
 
       mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
-        { id: "guild1" },
+        { id: "guild1", ownerId: "discord123" },
       ]);
       mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
         {
@@ -1587,9 +1588,9 @@ describe("TimersService", () => {
 
       const result = await service.getTimers(
         "user123",
+        "discord123",
         { world: "test-world" },
-        { id: "guild1" } as never,
-        [Permission.OWNER],
+        { id: "guild1", ownerId: "discord123" } as never,
         [],
       );
 
@@ -1606,6 +1607,26 @@ describe("TimersService", () => {
       });
       expect(mockPrismaService.timer.findMany).not.toHaveBeenCalled();
       expect(mockRedisService.getOrSetJson).not.toHaveBeenCalled();
+    });
+
+    it("does not let administrators bypass timer NPC visibility", async () => {
+      mockRedisService.getJson.mockResolvedValue([timer]);
+
+      const result = await service.getTimers(
+        "user123",
+        "administrator123",
+        { world: "test-world" },
+        { id: "guild1", ownerId: "owner123" } as never,
+        [
+          {
+            permissions: [Permission.ADMIN],
+            lvlRangeFrom: 1,
+            lvlRangeTo: 500,
+          },
+        ] as never,
+      );
+
+      expect(result).toEqual([]);
     });
 
     it("returns guild name in timer history responses", async () => {
@@ -1637,11 +1658,11 @@ describe("TimersService", () => {
       ]);
 
       const result = await service.getTimerHistory(
-        "guild1",
+        { id: "guild1", ownerId: "discord123" } as never,
         "test-world",
         timer.timerKey,
         {
-          permissions: [Permission.OWNER],
+          viewerDiscordId: "discord123",
           roles: [],
         },
       );
@@ -1654,7 +1675,7 @@ describe("TimersService", () => {
 
     it("returns recent history for the requested accessible guild only", async () => {
       mockGuildsService.getGuildsForRequiredPermissions.mockResolvedValue([
-        { id: "guild1" },
+        { id: "guild1", ownerId: "discord123" },
         { id: "guild2" },
       ]);
       mockGuildsService.getMultipleGuildsPermissions.mockResolvedValue([
@@ -1887,18 +1908,20 @@ describe("TimersService", () => {
     ];
 
     it("should search NPCs with timer data", async () => {
-      mockPrismaService.$queryRaw = mockFn<
+      mockPrismaService.$queryRawUnsafe = mockFn<
         () => Promise<unknown>
       >().mockResolvedValue(mockTimersQueryResult);
 
       const result = await service.searchNpcsWithTimerData(
-        "guild1",
+        { id: "guild1", ownerId: "discord123" } as never,
+        "discord123",
+        [],
         "test-world",
         "Test",
         10,
       );
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+      expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalled();
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         npcId: 123,
@@ -1916,10 +1939,12 @@ describe("TimersService", () => {
     });
 
     it("should handle empty search results", async () => {
-      mockPrismaService.$queryRaw = mockFn().mockResolvedValue([]);
+      mockPrismaService.$queryRawUnsafe = mockFn().mockResolvedValue([]);
 
       const result = await service.searchNpcsWithTimerData(
-        "guild1",
+        { id: "guild1", ownerId: "discord123" } as never,
+        "discord123",
+        [],
         "test-world",
         "NonExistentNPC",
         10,
@@ -1938,11 +1963,13 @@ describe("TimersService", () => {
         },
       ];
 
-      mockPrismaService.$queryRaw =
+      mockPrismaService.$queryRawUnsafe =
         mockFn().mockResolvedValue(invalidTimerData);
 
       const result = await service.searchNpcsWithTimerData(
-        "guild1",
+        { id: "guild1", ownerId: "discord123" } as never,
+        "discord123",
+        [],
         "test-world",
         "Invalid",
         10,
@@ -1952,13 +1979,46 @@ describe("TimersService", () => {
     });
 
     it("should use default limit when not provided", async () => {
-      mockPrismaService.$queryRaw = mockFn<
+      mockPrismaService.$queryRawUnsafe = mockFn<
         () => Promise<unknown>
       >().mockResolvedValue(mockTimersQueryResult);
 
-      await service.searchNpcsWithTimerData("guild1", "test-world", "Test");
+      await service.searchNpcsWithTimerData(
+        { id: "guild1", ownerId: "discord123" } as never,
+        "discord123",
+        [],
+        "test-world",
+        "Test",
+      );
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+      expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalled();
+    });
+
+    it("pushes denied administrator visibility into NPC search SQL", async () => {
+      mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+
+      await service.searchNpcsWithTimerData(
+        { id: "guild1", ownerId: "owner123" } as never,
+        "administrator123",
+        [
+          {
+            permissions: [Permission.ADMIN],
+            lvlRangeFrom: 1,
+            lvlRangeTo: 500,
+          },
+        ] as never,
+        "test-world",
+        "Test",
+      );
+
+      expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledWith(
+        expect.stringContaining("AND FALSE"),
+        "guild1",
+        "test-world",
+        "%Test%",
+        "999",
+        10,
+      );
     });
   });
 

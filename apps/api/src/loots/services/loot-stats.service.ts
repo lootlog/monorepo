@@ -1,7 +1,18 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { NpcType, type ItemRarity } from "src/generated/prisma/client";
+import {
+  NpcType,
+  type Guild,
+  type ItemRarity,
+  type Role,
+} from "src/generated/prisma/client";
+import type { NpcAccessContext } from "@lootlog/api-helpers/permissions";
+import {
+  buildNpcVisibilitySqlCondition,
+  createStrategicAccessContext,
+  LOOT_VISIBILITY_PERMISSIONS,
+} from "src/shared/permissions/strategic-access-policy";
 import type {
   Period,
   LootStatsResponse,
@@ -42,14 +53,23 @@ export class LootStatsService {
   }
 
   async getLootStats(
-    guildId: string,
+    guild: Guild,
+    viewerDiscordId: string,
+    roles: Role[],
     period: Period = "7d",
     world?: string,
     npcTypes?: string[],
     excludeColossus?: boolean,
   ): Promise<LootStatsResponse> {
+    const accessContext = createStrategicAccessContext({
+      organizationId: guild.id,
+      ownerId: guild.ownerId,
+      viewerDiscordId,
+      roles,
+    });
     const cacheKey = this.buildCacheKey(
-      guildId,
+      guild.id,
+      accessContext,
       period,
       world,
       npcTypes,
@@ -84,21 +104,24 @@ export class LootStatsService {
           topItems,
         ] = await Promise.all([
           this.getOverview(
-            guildId,
+            guild.id,
+            accessContext,
             dateFrom,
             world,
             npcTypeFilter,
             excludeColossus,
           ),
           this.getByRarity(
-            guildId,
+            guild.id,
+            accessContext,
             dateFrom,
             world,
             npcTypeFilter,
             excludeColossus,
           ),
           this.getTimeline(
-            guildId,
+            guild.id,
+            accessContext,
             dateFrom,
             period,
             world,
@@ -106,21 +129,24 @@ export class LootStatsService {
             excludeColossus,
           ),
           this.getTopNpcs(
-            guildId,
+            guild.id,
+            accessContext,
             dateFrom,
             world,
             npcTypeFilter,
             excludeColossus,
           ),
           this.getTopContributors(
-            guildId,
+            guild.id,
+            accessContext,
             dateFrom,
             world,
             npcTypeFilter,
             excludeColossus,
           ),
           this.getTopLegendaryItems(
-            guildId,
+            guild.id,
+            accessContext,
             dateFrom,
             world,
             npcTypeFilter,
@@ -142,12 +168,27 @@ export class LootStatsService {
 
   private buildCacheKey(
     guildId: string,
+    accessContext: NpcAccessContext,
     period: Period,
     world?: string,
     npcTypes?: string[],
     excludeColossus?: boolean,
   ): string {
-    const parts = ["loot-stats", guildId, period];
+    const visibilityScope = Buffer.from(
+      JSON.stringify({
+        isOwner: accessContext.isOwner,
+        roles: accessContext.roles
+          .map((role) => ({
+            permissions: [...role.permissions].sort(),
+            npc: role.npc,
+            worlds: role.worlds ? [...role.worlds].sort() : undefined,
+          }))
+          .sort((leftRole, rightRole) =>
+            JSON.stringify(leftRole).localeCompare(JSON.stringify(rightRole)),
+          ),
+      }),
+    ).toString("base64url");
+    const parts = ["loot-stats", guildId, visibilityScope, period];
     if (world) parts.push(world);
     if (npcTypes?.length) parts.push(npcTypes.sort().join(","));
     if (excludeColossus) parts.push("no-colossus");
@@ -159,6 +200,7 @@ export class LootStatsService {
     world?: string,
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
+    requiresNpcVisibility = false,
   ) {
     const dateParamIndex = this.getDateFilterParamIndex();
     const worldParamIndex = this.getWorldFilterParamIndex(dateFrom);
@@ -176,7 +218,11 @@ export class LootStatsService {
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
       : "";
-    const needsNpcFilter = !!(npcTypes?.length || excludeColossus);
+    const needsNpcFilter = !!(
+      npcTypes?.length ||
+      excludeColossus ||
+      requiresNpcVisibility
+    );
 
     return {
       dateCondition,
@@ -226,6 +272,20 @@ export class LootStatsService {
     return params;
   }
 
+  private appendVisibilityCondition(
+    params: (string | Date | string[] | number)[],
+    accessContext: NpcAccessContext,
+  ): string {
+    const visibilityCondition = buildNpcVisibilitySqlCondition(
+      accessContext,
+      LOOT_VISIBILITY_PERMISSIONS,
+      "ns",
+      params.length + 1,
+    );
+    params.push(...visibilityCondition.params);
+    return visibilityCondition.sql;
+  }
+
   private getDateFromPeriod(period: Period): Date | null {
     if (period === "all") return null;
 
@@ -246,6 +306,7 @@ export class LootStatsService {
 
   private async getOverview(
     guildId: string,
+    accessContext: NpcAccessContext,
     dateFrom: Date | null,
     world?: string,
     npcTypes?: NpcType[],
@@ -257,8 +318,18 @@ export class LootStatsService {
       npcTypeCondition,
       excludeColossusCondition,
       needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    } = this.buildFilterConditions(
+      dateFrom,
+      world,
+      npcTypes,
+      excludeColossus,
+      !accessContext.isOwner,
+    );
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
+    const visibilityCondition = this.appendVisibilityCondition(
+      params,
+      accessContext,
+    );
 
     const result = await this.prisma.$queryRawUnsafe<
       Array<{
@@ -283,6 +354,7 @@ export class LootStatsService {
           ${worldCondition}
           ${npcTypeCondition}
           ${excludeColossusCondition}
+          ${visibilityCondition}
         )
         SELECT
           COUNT(DISTINCT l.id) as total_loots,
@@ -327,6 +399,7 @@ export class LootStatsService {
 
   private async getByRarity(
     guildId: string,
+    accessContext: NpcAccessContext,
     dateFrom: Date | null,
     world?: string,
     npcTypes?: NpcType[],
@@ -338,8 +411,18 @@ export class LootStatsService {
       npcTypeCondition,
       excludeColossusCondition,
       needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    } = this.buildFilterConditions(
+      dateFrom,
+      world,
+      npcTypes,
+      excludeColossus,
+      !accessContext.isOwner,
+    );
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
+    const visibilityCondition = this.appendVisibilityCondition(
+      params,
+      accessContext,
+    );
 
     const result = await this.prisma.$queryRawUnsafe<
       Array<{
@@ -361,6 +444,7 @@ export class LootStatsService {
           ${worldCondition}
           ${npcTypeCondition}
           ${excludeColossusCondition}
+          ${visibilityCondition}
         )
         SELECT
           isnap.rarity,
@@ -405,6 +489,7 @@ export class LootStatsService {
 
   private async getTimeline(
     guildId: string,
+    accessContext: NpcAccessContext,
     dateFrom: Date | null,
     period: Period,
     world?: string,
@@ -417,9 +502,19 @@ export class LootStatsService {
       npcTypeCondition,
       excludeColossusCondition,
       needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    } = this.buildFilterConditions(
+      dateFrom,
+      world,
+      npcTypes,
+      excludeColossus,
+      !accessContext.isOwner,
+    );
     const truncUnit = this.getTimelineTruncUnit(period);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
+    const visibilityCondition = this.appendVisibilityCondition(
+      params,
+      accessContext,
+    );
 
     const result = await this.prisma.$queryRawUnsafe<
       Array<{
@@ -442,6 +537,7 @@ export class LootStatsService {
           ${worldCondition}
           ${npcTypeCondition}
           ${excludeColossusCondition}
+          ${visibilityCondition}
         )
         SELECT
           date_trunc('${truncUnit}', vl."createdAt") as date,
@@ -520,6 +616,7 @@ export class LootStatsService {
 
   private async getTopNpcs(
     guildId: string,
+    accessContext: NpcAccessContext,
     dateFrom: Date | null,
     world?: string,
     npcTypes?: NpcType[],
@@ -534,6 +631,10 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params: (string | Date | string[] | number)[] =
       this.buildFilterParams(guildId, dateFrom, world, npcTypes);
+    const visibilityCondition = this.appendVisibilityCondition(
+      params,
+      accessContext,
+    );
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
@@ -582,6 +683,7 @@ export class LootStatsService {
         ${worldCondition}
         ${npcTypeCondition}
         ${excludeColossusCondition}
+        ${visibilityCondition}
       )
       SELECT
         rn."npcId" as npc_id,
@@ -621,6 +723,7 @@ export class LootStatsService {
 
   private async getTopContributors(
     guildId: string,
+    accessContext: NpcAccessContext,
     dateFrom: Date | null,
     world?: string,
     npcTypes?: NpcType[],
@@ -633,9 +736,19 @@ export class LootStatsService {
       npcTypeCondition,
       excludeColossusCondition,
       needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    } = this.buildFilterConditions(
+      dateFrom,
+      world,
+      npcTypes,
+      excludeColossus,
+      !accessContext.isOwner,
+    );
     const params: (string | Date | string[] | number)[] =
       this.buildFilterParams(guildId, dateFrom, world, npcTypes);
+    const visibilityCondition = this.appendVisibilityCondition(
+      params,
+      accessContext,
+    );
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
@@ -666,6 +779,7 @@ export class LootStatsService {
           ${worldCondition}
           ${npcTypeCondition}
           ${excludeColossusCondition}
+          ${visibilityCondition}
         )
         SELECT
           m.id as member_id,
@@ -731,6 +845,7 @@ export class LootStatsService {
 
   private async getTopLegendaryItems(
     guildId: string,
+    accessContext: NpcAccessContext,
     dateFrom: Date | null,
     world?: string,
     npcTypes?: NpcType[],
@@ -745,6 +860,10 @@ export class LootStatsService {
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
     const params: (string | Date | string[] | number)[] =
       this.buildFilterParams(guildId, dateFrom, world, npcTypes);
+    const visibilityCondition = this.appendVisibilityCondition(
+      params,
+      accessContext,
+    );
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
@@ -787,6 +906,7 @@ export class LootStatsService {
         ${worldCondition}
         ${npcTypeCondition}
         ${excludeColossusCondition}
+        ${visibilityCondition}
       )
       SELECT
         isnap."itemId" as item_id,

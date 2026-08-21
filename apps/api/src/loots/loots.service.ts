@@ -229,12 +229,12 @@ export class LootsService implements OnModuleInit {
 
   private getLootsListCacheKey(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     params: FetchLootsParamsDto,
   ) {
     const visibilityScope = {
-      permissions: [...permissions].sort(),
+      isOwner: guild.ownerId === viewerDiscordId,
       roles: roles
         .map((role) => ({
           id: role.id,
@@ -660,8 +660,28 @@ export class LootsService implements OnModuleInit {
     }
   }
 
-  getComments(options: { guildId: string; lootId: number }) {
-    return this.lootCommentService.getComments(options);
+  async getComments(options: {
+    guild: Guild;
+    viewerDiscordId: string;
+    roles: Role[];
+    lootId: number;
+  }) {
+    const { guild, viewerDiscordId, roles, lootId } = options;
+    const visible = await this.lootQueryService.canViewLootById(
+      guild,
+      viewerDiscordId,
+      roles,
+      lootId,
+    );
+
+    if (!visible) {
+      throw new ForbiddenException();
+    }
+
+    return this.lootCommentService.getComments({
+      guildId: guild.id,
+      lootId,
+    });
   }
 
   async deleteLoot(options: { guildId: string; lootId: number }) {
@@ -824,7 +844,7 @@ export class LootsService implements OnModuleInit {
 
   async fetchLootsByGuildId(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     params: FetchLootsParamsDto,
   ) {
@@ -832,14 +852,14 @@ export class LootsService implements OnModuleInit {
       const loots = await this.redisService.getOrSetJsonBestEffort<
         CachedLootQueryResult[]
       >({
-        key: this.getLootsListCacheKey(guild, permissions, roles, params),
+        key: this.getLootsListCacheKey(guild, viewerDiscordId, roles, params),
         ttlSeconds: LOOTS_LIST_CACHE_TTL_SECONDS,
         onError: (error) =>
           this.logger.warn("Loots list cache unavailable", { error }),
         factory: () =>
           this.lootQueryService.fetchLootsByGuildId(
             guild,
-            permissions,
+            viewerDiscordId,
             roles,
             params,
           ),
@@ -850,7 +870,7 @@ export class LootsService implements OnModuleInit {
 
     return this.lootQueryService.fetchLootsByGuildId(
       guild,
-      permissions,
+      viewerDiscordId,
       roles,
       params,
     );
@@ -858,13 +878,13 @@ export class LootsService implements OnModuleInit {
 
   countLootsByGuildId(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     params: FetchLootsParamsDto,
   ) {
     return this.lootQueryService.countLootsByGuildId(
       guild,
-      permissions,
+      viewerDiscordId,
       roles,
       params,
     );
@@ -872,13 +892,13 @@ export class LootsService implements OnModuleInit {
 
   fetchLootById(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     lootId: number,
   ) {
     return this.lootQueryService.fetchLootById(
       guild,
-      permissions,
+      viewerDiscordId,
       roles,
       lootId,
     );
@@ -886,13 +906,13 @@ export class LootsService implements OnModuleInit {
 
   resolveLootItemByHid(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     options: { hid: string; world?: string },
   ) {
     return this.lootQueryService.resolveLootItemByHid(
       guild,
-      permissions,
+      viewerDiscordId,
       roles,
       options,
     );

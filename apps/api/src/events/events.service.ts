@@ -86,11 +86,18 @@ export class EventsService {
 
   getWrapped(
     guild: Guild,
+    viewerDiscordId: string,
     eventId: string,
     permissions: Permission[],
     roles: Role[],
   ): Promise<EventWrappedResponseDto> {
-    return this.wrappedService.getWrapped(guild, eventId, permissions, roles);
+    return this.wrappedService.getWrapped(
+      guild,
+      viewerDiscordId,
+      eventId,
+      permissions,
+      roles,
+    );
   }
 
   updateEvent(guildId: string, eventId: string, data: UpdateEventDto) {

@@ -126,7 +126,13 @@ describe("EventWrappedService", () => {
     };
     mockRedisService.getOrSetJsonBestEffort.mockResolvedValue(cachedResponse);
 
-    const result = await service.getWrapped(guild, "event-1", [], []);
+    const result = await service.getWrapped(
+      guild,
+      "viewer-1",
+      "event-1",
+      [],
+      [],
+    );
 
     expect(result).toEqual(cachedResponse);
     expect(mockPrismaService.event.findFirst).not.toHaveBeenCalled();
@@ -289,7 +295,13 @@ describe("EventWrappedService", () => {
       },
     ]);
 
-    const result = await service.getWrapped(guild, "event-1", [], []);
+    const result = await service.getWrapped(
+      guild,
+      "viewer-1",
+      "event-1",
+      [],
+      [],
+    );
 
     expect(result.event.name).toBe("Gwiazda");
     expect(result.overview.totalKills).toBe(2);

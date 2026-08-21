@@ -3,7 +3,6 @@ import { PrismaService } from "src/db/prisma.service";
 import {
   ItemRarity,
   NpcType,
-  Permission,
   Profession,
   type Guild,
   type Prisma,
@@ -15,7 +14,11 @@ import type { LootNpcDto } from "src/loots/dto/loot-npc.dto";
 import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 import { LootShareResponseSchema } from "src/shared/dto/loot-response.dto";
 import { DEFAULT_PAGE_LIMIT } from "../config/pagination";
-import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
+import {
+  buildNpcSnapshotVisibilityWhere,
+  createStrategicAccessContext,
+  LOOT_VISIBILITY_PERMISSIONS,
+} from "src/shared/permissions/strategic-access-policy";
 import {
   getProfByShortname,
   getShortnameByProf,
@@ -54,7 +57,7 @@ export class LootQueryService {
 
   async fetchLootsByGuildId(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     {
       cursor = null,
@@ -84,26 +87,31 @@ export class LootQueryService {
       return [];
     }
 
-    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
-      npcTypes,
-      npcs,
-      players,
-      rarities,
-      professions,
-      npcLevelMin,
-      npcLevelMax,
-      itemLevelMin,
-      itemLevelMax,
-      playerLevelMin,
-      playerLevelMax,
-      search,
-      world,
-      hid,
-      itemSnapshotIds,
-      cursor,
-      createdAtMin,
-      createdAtMax,
-    });
+    const baseWhere = this.buildBaseWhereCondition(
+      guild,
+      viewerDiscordId,
+      roles,
+      {
+        npcTypes,
+        npcs,
+        players,
+        rarities,
+        professions,
+        npcLevelMin,
+        npcLevelMax,
+        itemLevelMin,
+        itemLevelMax,
+        playerLevelMin,
+        playerLevelMax,
+        search,
+        world,
+        hid,
+        itemSnapshotIds,
+        cursor,
+        createdAtMin,
+        createdAtMax,
+      },
+    );
 
     const lootsWithRelations = await this.prisma.loot.findMany({
       where: baseWhere,
@@ -173,7 +181,7 @@ export class LootQueryService {
 
   async countLootsByGuildId(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     {
       npcTypes = [],
@@ -201,26 +209,31 @@ export class LootQueryService {
       return 0;
     }
 
-    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
-      npcTypes,
-      npcs,
-      players,
-      rarities,
-      professions,
-      npcLevelMin,
-      npcLevelMax,
-      itemLevelMin,
-      itemLevelMax,
-      playerLevelMin,
-      playerLevelMax,
-      search,
-      world,
-      hid,
-      itemSnapshotIds,
-      cursor: null,
-      createdAtMin,
-      createdAtMax,
-    });
+    const baseWhere = this.buildBaseWhereCondition(
+      guild,
+      viewerDiscordId,
+      roles,
+      {
+        npcTypes,
+        npcs,
+        players,
+        rarities,
+        professions,
+        npcLevelMin,
+        npcLevelMax,
+        itemLevelMin,
+        itemLevelMax,
+        playerLevelMin,
+        playerLevelMax,
+        search,
+        world,
+        hid,
+        itemSnapshotIds,
+        cursor: null,
+        createdAtMin,
+        createdAtMax,
+      },
+    );
 
     return this.prisma.loot.count({
       where: baseWhere,
@@ -229,13 +242,18 @@ export class LootQueryService {
 
   async fetchLootById(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     lootId: number,
   ): Promise<LootQueryResult | null> {
-    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
-      cursor: null,
-    });
+    const baseWhere = this.buildBaseWhereCondition(
+      guild,
+      viewerDiscordId,
+      roles,
+      {
+        cursor: null,
+      },
+    );
 
     const loot = await this.prisma.loot.findFirst({
       where: {
@@ -306,9 +324,32 @@ export class LootQueryService {
     };
   }
 
+  async canViewLootById(
+    guild: Guild,
+    viewerDiscordId: string,
+    roles: Role[],
+    lootId: number,
+  ): Promise<boolean> {
+    const baseWhere = this.buildBaseWhereCondition(
+      guild,
+      viewerDiscordId,
+      roles,
+      { cursor: null },
+    );
+    const loot = await this.prisma.loot.findFirst({
+      where: {
+        ...baseWhere,
+        id: lootId,
+      },
+      select: { id: true },
+    });
+
+    return loot !== null;
+  }
+
   async resolveLootItemByHid(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     options: { hid: string; world?: string },
   ): Promise<LootItemDto | null> {
@@ -318,11 +359,16 @@ export class LootQueryService {
       return null;
     }
 
-    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
-      cursor: null,
-      hid,
-      world: options.world,
-    });
+    const baseWhere = this.buildBaseWhereCondition(
+      guild,
+      viewerDiscordId,
+      roles,
+      {
+        cursor: null,
+        hid,
+        world: options.world,
+      },
+    );
 
     const loot = await this.prisma.loot.findFirst({
       where: baseWhere,
@@ -369,7 +415,7 @@ export class LootQueryService {
 
   private buildBaseWhereCondition(
     guild: Guild,
-    permissions: Permission[],
+    viewerDiscordId: string,
     roles: Role[],
     {
       npcTypes = [],
@@ -411,15 +457,25 @@ export class LootQueryService {
       createdAtMax?: string;
     },
   ): Prisma.LootWhereInput {
-    const filteredRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
+    const accessContext = createStrategicAccessContext({
+      organizationId: guild.id,
+      ownerId: guild.ownerId,
+      viewerDiscordId,
+      roles,
+    });
+    const npcSnapshotVisibilityWhere = buildNpcSnapshotVisibilityWhere(
+      accessContext,
+      LOOT_VISIBILITY_PERMISSIONS,
     );
-    const administrativeUser = isAdministrativeUser(permissions);
-
-    const levelRangesCondition = this.buildLevelRangesCondition(
-      filteredRoles,
-      administrativeUser,
-    );
+    const visibilityCondition = npcSnapshotVisibilityWhere
+      ? {
+          lootNpcs: {
+            some: {
+              npcSnapshot: npcSnapshotVisibilityWhere,
+            },
+          },
+        }
+      : null;
     const playersCondition = this.buildPlayersCondition(players);
     const npcsCondition = this.buildNpcsCondition(npcs);
     const npcTypesCondition = this.buildNpcTypesCondition(npcTypes);
@@ -470,7 +526,7 @@ export class LootQueryService {
       npcLevelsCondition,
       itemLevelsCondition,
       playerLevelsCondition,
-      levelRangesCondition,
+      visibilityCondition,
       searchCondition,
       hidCondition,
       itemSnapshotIdsCondition,
@@ -486,86 +542,6 @@ export class LootQueryService {
 
   private parseLootShare(lootShare: Prisma.JsonValue) {
     return LootShareResponseSchema.parse(lootShare);
-  }
-
-  private buildLevelRangesCondition(
-    filteredRoles: Role[],
-    administrativeUser: boolean,
-  ): Prisma.LootWhereInput | null {
-    if (filteredRoles.length === 0 || administrativeUser) {
-      return null;
-    }
-
-    const npcVisibilityPerRole: Prisma.NpcSnapshotWhereInput[] = [];
-
-    for (const role of filteredRoles) {
-      const roleCondition = this.buildRoleVisibilityCondition(role);
-      if (roleCondition) {
-        npcVisibilityPerRole.push(roleCondition);
-      }
-    }
-
-    if (npcVisibilityPerRole.length === 0) {
-      return null;
-    }
-
-    return {
-      lootNpcs: {
-        some: {
-          npcSnapshot: {
-            OR: npcVisibilityPerRole,
-          },
-        },
-      },
-    };
-  }
-
-  private buildRoleVisibilityCondition(
-    role: Role,
-  ): Prisma.NpcSnapshotWhereInput | null {
-    const hasReadTitans = role.permissions?.includes(
-      Permission.LOOTLOG_LOOTS_TITANS_READ,
-    );
-    const hasReadHeroes = role.permissions?.includes(
-      Permission.LOOTLOG_LOOTS_HEROES_READ,
-    );
-
-    const lvlFrom = Number(role.lvlRangeFrom ?? 0);
-    const lvlTo = Number(role.lvlRangeTo ?? 500);
-
-    const npcConstraints: Prisma.NpcSnapshotWhereInput[] = [];
-
-    npcConstraints.push({
-      OR: [{ lvl: { gte: lvlFrom } }, ...(lvlFrom <= 0 ? [{ lvl: null }] : [])],
-    });
-
-    npcConstraints.push({
-      OR: [{ lvl: { lte: lvlTo } }, ...(lvlTo >= 0 ? [{ lvl: null }] : [])],
-    });
-
-    if (!hasReadTitans) {
-      npcConstraints.push({
-        type: {
-          not: NpcType.TITAN,
-        },
-      });
-    }
-
-    if (!hasReadHeroes) {
-      npcConstraints.push({
-        type: {
-          notIn: [NpcType.HERO, NpcType.EVENT_HERO],
-        },
-      });
-    }
-
-    if (npcConstraints.length === 0) {
-      return null;
-    }
-
-    return {
-      AND: npcConstraints,
-    };
   }
 
   private buildPlayersCondition(

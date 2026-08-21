@@ -23,6 +23,7 @@ import { LootsService } from "./loots.service";
 import { LootStatsService } from "./services/loot-stats.service";
 
 describe("LootsController", () => {
+  const viewerDiscordId = "viewer123";
   let controller: LootsController;
   let service: {
     createLoot: Mock;
@@ -184,7 +185,7 @@ describe("LootsController", () => {
       );
 
       expect(fetchLootsParamTypes[3]).toBe(FetchLootsParamsDto);
-      expect(getLootStatsParamTypes[1]).toBe(LootStatsQueryDto);
+      expect(getLootStatsParamTypes[3]).toBe(LootStatsQueryDto);
       expect(createLootParamTypes[2]).toBe(CreateLootDto);
       expect(createCommentParamTypes[2]).toBe(CreateCommentDto);
       expect(resolveLootItemParamTypes[3]).toBe(ResolveLootItemParamsDto);
@@ -278,7 +279,7 @@ describe("LootsController", () => {
       service.fetchLootsByGuildId.mockResolvedValue(mockLoots);
 
       const result = await controller.fetchLootsByGuildId(
-        [Permission.LOOTLOG_LOOTS_READ],
+        viewerDiscordId,
         [mockRole],
         mockGuild,
         params,
@@ -286,7 +287,7 @@ describe("LootsController", () => {
 
       expect(service.fetchLootsByGuildId).toHaveBeenCalledWith(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        viewerDiscordId,
         [mockRole],
         params,
       );
@@ -297,7 +298,7 @@ describe("LootsController", () => {
       service.fetchLootsByGuildId.mockResolvedValue([]);
 
       const result = await controller.fetchLootsByGuildId(
-        [Permission.LOOTLOG_LOOTS_READ],
+        viewerDiscordId,
         [mockRole],
         mockGuild,
         params,
@@ -325,7 +326,7 @@ describe("LootsController", () => {
       service.resolveLootItemByHid.mockResolvedValue(mockItem);
 
       const result = await controller.resolveLootItemByHid(
-        [Permission.LOOTLOG_LOOTS_READ],
+        viewerDiscordId,
         [mockRole],
         mockGuild,
         query,
@@ -333,7 +334,7 @@ describe("LootsController", () => {
 
       expect(service.resolveLootItemByHid).toHaveBeenCalledWith(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        viewerDiscordId,
         [mockRole],
         query,
       );
@@ -354,14 +355,14 @@ describe("LootsController", () => {
 
       const result = await controller.fetchLootById(
         lootId,
-        [Permission.LOOTLOG_LOOTS_READ],
+        viewerDiscordId,
         [mockRole],
         mockGuild,
       );
 
       expect(service.fetchLootById).toHaveBeenCalledWith(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        viewerDiscordId,
         [mockRole],
         lootId,
       );
@@ -392,11 +393,18 @@ describe("LootsController", () => {
       ];
       service.getComments.mockResolvedValue(mockComments as never);
 
-      const result = await controller.getComments(lootId, mockGuild);
+      const result = await controller.getComments(
+        lootId,
+        viewerDiscordId,
+        [mockRole],
+        mockGuild,
+      );
 
       expect(service.getComments).toHaveBeenCalledWith({
         lootId,
-        guildId: mockGuild.id,
+        guild: mockGuild,
+        viewerDiscordId,
+        roles: [mockRole],
       });
       expect(result).toEqual(mockComments);
     });

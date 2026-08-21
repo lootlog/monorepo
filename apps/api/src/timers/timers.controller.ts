@@ -21,7 +21,6 @@ import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
 import { type Guild, Permission, type Role } from "src/generated/prisma/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { TimerResponseDto } from "src/shared/dto/timer-response.dto";
 import { AuthGuard } from "@lootlog/nest-shared";
@@ -117,15 +116,15 @@ export class TimersController {
   getTimers(
     @Query("world") world: string,
     @UserId() userId: string,
-    @MemberPermissions() permissions: Permission[],
+    @DiscordId() viewerDiscordId: string,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
     return this.timersService.getTimers(
       userId,
+      viewerDiscordId,
       { world },
       guild,
-      permissions,
       roles,
     );
   }
@@ -160,11 +159,15 @@ export class TimersController {
     description: "Forbidden - insufficient permissions",
   })
   searchNpcsWithTimerData(
-    @Param("guildId") guildId: string,
+    @DiscordId() viewerDiscordId: string,
+    @MemberRoles() roles: Role[],
+    @GuildData() guild: Guild,
     @Query() query: SearchTimersNpcsDto,
   ) {
     return this.timersService.searchNpcsWithTimerData(
-      guildId,
+      guild,
+      viewerDiscordId,
+      roles,
       query.world,
       query.search,
       query.limit,
@@ -289,14 +292,14 @@ export class TimersController {
   getTimerHistory(
     @Query("world") world: string,
     @Query("limit") limit: string | undefined,
-    @Param("guildId") guildId: string,
     @Param("timerIdentifier") timerIdentifier: string,
-    @MemberPermissions() permissions: Permission[],
+    @DiscordId() viewerDiscordId: string,
     @MemberRoles() roles: Role[],
+    @GuildData() guild: Guild,
   ) {
-    return this.timersService.getTimerHistory(guildId, world, timerIdentifier, {
+    return this.timersService.getTimerHistory(guild, world, timerIdentifier, {
       limit: limit ? Number.parseInt(limit, 10) : undefined,
-      permissions,
+      viewerDiscordId,
       roles,
     });
   }

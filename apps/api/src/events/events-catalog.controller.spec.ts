@@ -79,6 +79,7 @@ describe("EventsCatalogController", () => {
     const roles = [{ id: "role-1" }];
 
     controller.getWrapped(
+      "viewer-1",
       guild as never,
       "event-1",
       roles as never,
@@ -87,6 +88,7 @@ describe("EventsCatalogController", () => {
 
     expect(mockEventsService.getWrapped).toHaveBeenCalledWith(
       guild,
+      "viewer-1",
       "event-1",
       permissions,
       roles,

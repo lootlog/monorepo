@@ -33,7 +33,6 @@ import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
 import { LootsService } from "src/loots/loots.service";
 import { LootStatsService } from "src/loots/services/loot-stats.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { CountResponseDto } from "src/shared/dto/common-response.dto";
 import { LootCommentResponseDto } from "src/shared/dto/loot-comment-response.dto";
@@ -75,14 +74,14 @@ export class LootsController {
     description: "Forbidden - insufficient permissions",
   })
   fetchLootsByGuildId(
-    @MemberPermissions() permissions: Permission[],
+    @DiscordId() viewerDiscordId: string,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
     @Query() query: FetchLootsParamsDto,
   ) {
     return this.lootsService.fetchLootsByGuildId(
       guild,
-      permissions,
+      viewerDiscordId,
       roles,
       query,
     );
@@ -107,9 +106,16 @@ export class LootsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
-  getLootStats(@GuildData() guild: Guild, @Query() query: LootStatsQueryDto) {
+  getLootStats(
+    @DiscordId() viewerDiscordId: string,
+    @MemberRoles() roles: Role[],
+    @GuildData() guild: Guild,
+    @Query() query: LootStatsQueryDto,
+  ) {
     return this.lootStatsService.getLootStats(
-      guild.id,
+      guild,
+      viewerDiscordId,
+      roles,
       query.period ?? "7d",
       query.world,
       query.npcTypes ? query.npcTypes.split(",") : undefined,
@@ -136,14 +142,14 @@ export class LootsController {
     description: "Forbidden - insufficient permissions",
   })
   async countLootsByGuildId(
-    @MemberPermissions() permissions: Permission[],
+    @DiscordId() viewerDiscordId: string,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
     @Query() query: FetchLootsParamsDto,
   ) {
     const count = await this.lootsService.countLootsByGuildId(
       guild,
-      permissions,
+      viewerDiscordId,
       roles,
       {
         ...query,
@@ -174,15 +180,20 @@ export class LootsController {
     description: "Forbidden - insufficient permissions",
   })
   resolveLootItemByHid(
-    @MemberPermissions() permissions: Permission[],
+    @DiscordId() viewerDiscordId: string,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
     @Query() query: ResolveLootItemParamsDto,
   ) {
-    return this.lootsService.resolveLootItemByHid(guild, permissions, roles, {
-      hid: query.hid,
-      world: query.world,
-    });
+    return this.lootsService.resolveLootItemByHid(
+      guild,
+      viewerDiscordId,
+      roles,
+      {
+        hid: query.hid,
+        world: query.world,
+      },
+    );
   }
 
   @Permissions(Permission.LOOTLOG_LOOTS_READ)
@@ -206,11 +217,16 @@ export class LootsController {
   @ApiResponse({ status: 404, description: "Loot not found" })
   fetchLootById(
     @Param("lootId", new ParseIntPipe()) lootId: number,
-    @MemberPermissions() permissions: Permission[],
+    @DiscordId() viewerDiscordId: string,
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
-    return this.lootsService.fetchLootById(guild, permissions, roles, lootId);
+    return this.lootsService.fetchLootById(
+      guild,
+      viewerDiscordId,
+      roles,
+      lootId,
+    );
   }
 
   @Post("/loots")
@@ -252,11 +268,15 @@ export class LootsController {
   @ApiResponse({ status: 404, description: "Loot not found" })
   getComments(
     @Param("lootId", new ParseIntPipe()) lootId: number,
+    @DiscordId() viewerDiscordId: string,
+    @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
     return this.lootsService.getComments({
       lootId,
-      guildId: guild.id,
+      guild,
+      viewerDiscordId,
+      roles,
     });
   }
 

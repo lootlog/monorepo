@@ -930,7 +930,9 @@ describe("LootsService", () => {
 
   describe("getComments", () => {
     const options = {
-      guildId: "guild1",
+      guild: mockGuild,
+      viewerDiscordId: "viewer123",
+      roles: [] as Role[],
       lootId: 1,
     };
 
@@ -947,12 +949,13 @@ describe("LootsService", () => {
           },
         },
       ];
+      prismaService.loot.findFirst.mockResolvedValue({ id: options.lootId });
       prismaService.lootComment.findMany.mockResolvedValue(mockComments);
 
       const result = await service.getComments(options);
 
       expect(prismaService.lootComment.findMany).toHaveBeenCalledWith({
-        where: { guildId: options.guildId, lootId: options.lootId },
+        where: { guildId: options.guild.id, lootId: options.lootId },
         orderBy: { createdAt: "desc" },
         include: {
           member: {
@@ -969,6 +972,15 @@ describe("LootsService", () => {
         },
       });
       expect(result).toEqual(mockComments);
+    });
+
+    it("does not return comments when the loot is hidden", async () => {
+      prismaService.loot.findFirst.mockResolvedValue(null);
+
+      await expect(service.getComments(options)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(prismaService.lootComment.findMany).not.toHaveBeenCalled();
     });
   });
 
@@ -1342,7 +1354,7 @@ describe("LootsService", () => {
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
-        [],
+        "viewer123",
         [],
         params,
       );
@@ -1376,7 +1388,7 @@ describe("LootsService", () => {
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
-        [],
+        "viewer123",
         [],
         params,
       );
@@ -1393,7 +1405,7 @@ describe("LootsService", () => {
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
-        [],
+        "viewer123",
         [],
         params,
       );
@@ -1405,7 +1417,7 @@ describe("LootsService", () => {
     it("should apply ranged loot filters to the Prisma query", async () => {
       prismaService.loot.findMany.mockResolvedValue([]);
 
-      await service.fetchLootsByGuildId(mockGuild, [], [], {
+      await service.fetchLootsByGuildId(mockGuild, "viewer123", [], {
         ...params,
         npcLevelMin: 10,
         npcLevelMax: 20,
@@ -1470,7 +1482,7 @@ describe("LootsService", () => {
     it("should apply item profession filters to the Prisma query", async () => {
       prismaService.loot.findMany.mockResolvedValue([]);
 
-      await service.fetchLootsByGuildId(mockGuild, [], [], {
+      await service.fetchLootsByGuildId(mockGuild, "viewer123", [], {
         ...params,
         professions: [Profession.HUNTER, Profession.TRACKER, "INVALID"],
       });
@@ -1517,7 +1529,7 @@ describe("LootsService", () => {
     it("should ignore invalid item profession filters", async () => {
       prismaService.loot.findMany.mockResolvedValue([]);
 
-      await service.fetchLootsByGuildId(mockGuild, [], [], {
+      await service.fetchLootsByGuildId(mockGuild, "viewer123", [], {
         ...params,
         professions: ["INVALID"],
       });
@@ -1544,7 +1556,7 @@ describe("LootsService", () => {
     it("should use item profession filters when counting loots", async () => {
       prismaService.loot.count.mockResolvedValue(0);
 
-      await service.countLootsByGuildId(mockGuild, [], [], {
+      await service.countLootsByGuildId(mockGuild, "viewer123", [], {
         ...params,
         professions: [Profession.HUNTER],
       });
@@ -1617,7 +1629,7 @@ describe("LootsService", () => {
 
       const result = await service.resolveLootItemByHid(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        "viewer123",
         [role],
         { hid: "abc123", world: "testworld" },
       );
@@ -1647,14 +1659,7 @@ describe("LootsService", () => {
                         expect.objectContaining({
                           AND: expect.arrayContaining([
                             {
-                              OR: expect.arrayContaining([
-                                { lvl: { gte: 10 } },
-                              ]),
-                            },
-                            {
-                              OR: expect.arrayContaining([
-                                { lvl: { lte: 60 } },
-                              ]),
+                              lvl: { gte: 10, lte: 60 },
                             },
                           ]),
                         }),
@@ -1689,7 +1694,7 @@ describe("LootsService", () => {
     it("should return null when HID is blank", async () => {
       const result = await service.resolveLootItemByHid(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        "viewer123",
         [role],
         { hid: "   ", world: "testworld" },
       );
@@ -1735,7 +1740,7 @@ describe("LootsService", () => {
 
       const result = await service.fetchLootById(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        "viewer123",
         [role],
         lootId,
       );
@@ -1758,23 +1763,15 @@ describe("LootsService", () => {
                         expect.objectContaining({
                           AND: expect.arrayContaining([
                             {
-                              OR: expect.arrayContaining([
-                                { lvl: { gte: 10 } },
-                              ]),
-                            },
-                            {
-                              OR: expect.arrayContaining([
-                                { lvl: { lte: 60 } },
-                              ]),
+                              lvl: { gte: 10, lte: 60 },
                             },
                             {
                               type: {
-                                not: NpcType.TITAN,
-                              },
-                            },
-                            {
-                              type: {
-                                notIn: [NpcType.HERO, NpcType.EVENT_HERO],
+                                notIn: [
+                                  NpcType.TITAN,
+                                  NpcType.HERO,
+                                  NpcType.EVENT_HERO,
+                                ],
                               },
                             },
                           ]),
@@ -1800,13 +1797,44 @@ describe("LootsService", () => {
 
       const result = await service.fetchLootById(
         mockGuild,
-        [Permission.LOOTLOG_LOOTS_READ],
+        "viewer123",
         [role],
         lootId,
       );
 
       expect(result).toBeNull();
       expect(prismaService.lootComment.count).not.toHaveBeenCalled();
+    });
+
+    it("does not let administrators bypass loot NPC visibility", async () => {
+      prismaService.loot.findFirst.mockResolvedValue(null);
+      const administratorRole = {
+        ...role,
+        permissions: [Permission.ADMIN],
+      };
+
+      await service.fetchLootById(
+        mockGuild,
+        "administrator123",
+        [administratorRole],
+        lootId,
+      );
+
+      expect(prismaService.loot.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              {
+                lootNpcs: {
+                  some: {
+                    npcSnapshot: { OR: [] },
+                  },
+                },
+              },
+            ]),
+          }),
+        }),
+      );
     });
   });
 });
