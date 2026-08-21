@@ -1,11 +1,11 @@
 blank_issues_enabled: true
 contact_links:
   - name: Security Vulnerability
-    url: https://github.com/lootlog/lootlog/security/advisories/new
+    url: https://github.com/lootlog/monorepo/security/advisories/new
     about: Please report security vulnerabilities through our security policy
   - name: Discord Community
     url: https://discord.gg/lootlog
     about: Join our Discord server for general questions and community support
   - name: Documentation
-    url: https://lootlog.pl/docs
-    about: Check our documentation for guides and API references
+    url: https://docs.lootlog.pl
+    about: Check the supported user documentation

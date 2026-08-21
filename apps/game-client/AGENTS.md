@@ -1,5 +1,9 @@
 # Game client runtime rules
 
+Read the root `PRODUCT.md`, `ARCHITECTURE.md`, and `SECURITY.md` before changing
+this app. Read `PRODUCT.md` in this directory for the Game client's surface
+boundary.
+
 Before changing the runtime bridge, NI/SI adapters, synchronizers, event
 processors, projections, or runtime/domain stores, read
 [`docs/runtime-integration.md`](docs/runtime-integration.md).
@@ -23,7 +27,15 @@ processors, projections, or runtime/domain stores, read
   contracts that were not approved for change.
 - Preserve dialog/fight loot payloads and request counts, battle DTO ordering,
   `submissionId`, battle hashes, kill hashes, and dialog-context consumption.
-- Run the same replay benchmark before and after runtime changes. A throughput
-  regression above 10% or an algorithmic regression blocks completion.
-- Before handing off, run targeted runtime/processor tests, the complete test
-  suite, TypeScript typecheck, and `pnpm --filter @lootlog/game-client lint`.
+- Keep ordinary play responsive. Closed windows must not retain expensive
+  rendering, subscriptions, scans, or derived work. A visible performance
+  regression blocks completion even when behavior is correct.
+- For runtime, adapter, processor, projection, or domain-store changes, run the
+  same replay benchmark before and after. A throughput regression above 10% or
+  an algorithmic regression blocks completion. Also run targeted
+  runtime/processor tests, the complete app test suite, TypeScript typecheck,
+  and `pnpm --filter @lootlog/game-client lint`.
+- For isolated UI or copy changes, run focused tests, TypeScript typecheck, and
+  lint. CI remains responsible for the complete suite before merge.
+- Measure rendering work when a UI change can affect game performance even if
+  it does not touch the runtime bridge.

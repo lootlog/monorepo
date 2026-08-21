@@ -142,32 +142,15 @@
     "q1": "Gdzie znajdę analizę walk?",
     "a1": "Po zainstalowaniu dodatku obsługiwane logi walk trafiają do Panelu Gracza, gdzie możesz przeglądać przebieg i statystyki starć.",
     "q2": "Czy dostanę bana?",
-    "a2": "Lootlog nie steruje postacią, nie wykonuje ruchów i nie ingeruje w silnik gry. Ostateczne decyzje dotyczące zgodności dodatków należą jednak do administracji Margonem.",
+    "a2": "Lootlog nie porusza postacią, nie wybiera działań bojowych i nie gra za użytkownika. Jest nieoficjalnym projektem społecznościowym, a ostateczne decyzje dotyczące dodatków należą do administracji Margonem.",
     "q3": "Ile kosztuje Lootlog?",
     "a3": "Nic. Lootlog jest darmowy i rozwijany jako projekt open source.",
     "q4": "Jak synchronizują się timery?",
-    "a4": "Gdy gracz w klanie zabije obsługiwanego przeciwnika, Lootlog aktualizuje timer i udostępnia odliczanie pozostałym członkom klanu.",
+    "a4": "Gdy członek organizacji zabije obsługiwanego przeciwnika, Lootlog aktualizuje timer i udostępnia odliczanie uprawnionym osobom na tym samym serwerze Discord.",
     "q5": "Czy Lootlog działa na wielu postaciach i światach?",
     "a5": "Tak. Dane z różnych postaci i światów są dostępne z jednego konta połączonego z Discordem.",
     "q6": "Gdzie zgłosić błąd lub pomysł?",
     "a6": "Napisz na Discordzie Lootloga albo utwórz zgłoszenie na GitHubie. Przyjmujemy też pull requesty."
-  },
-  "testimonials": {
-    "kamil": {
-      "name": "Kamil",
-      "role": "Lider Klanu",
-      "quote": "To gówno wytwarza jakąś magiczną barierę wokół mojego pokoju, nie mogę się oderwać od Margonem."
-    },
-    "anna": {
-      "name": "Anna",
-      "role": "Taktyk",
-      "quote": "Analiza walk pokazała, że mag wymaga nerfa, a łowca jest zbyt słaby."
-    },
-    "marek": {
-      "name": "Marek",
-      "role": "PvP Gracz",
-      "quote": "Wszystko działa jak należy, ale fajnie by było, gdybyście dodali dźwięki powiadomień."
-    }
   },
   "featuresPanel": {
     "title": "Aktywne Moduły",
@@ -335,9 +318,6 @@
     "lastUpdated": "Data ostatniej aktualizacji: {{date}}"
   },
   "page": {
-    "opinionsLabel": "Opinie",
-    "opinionsTitle": "Co mówią gracze?",
-    "opinionsSubtitle": "Głos graczy, którzy korzystają z Lootloga podczas codziennej gry.",
     "faqLabel": "FAQ",
     "faqTitle": "Najważniejsze pytania przed instalacją.",
     "faqDescription": "Instalacja, bezpieczeństwo, timery, konta i rozwój projektu — bez ogólników."

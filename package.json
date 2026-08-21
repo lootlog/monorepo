@@ -17,13 +17,13 @@
   ],
   "homepage": "https://lootlog.pl",
   "bugs": {
-    "url": "https://github.com/lootlog/lootlog/issues"
+    "url": "https://github.com/lootlog/monorepo/issues"
   },
   "license": "MIT",
   "author": "Kamil <kamilwronka7@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lootlog/lootlog.git"
+    "url": "https://github.com/lootlog/monorepo.git"
   },
   "scripts": {
     "dev": "turbo run dev --concurrency 15",
