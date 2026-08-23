@@ -50,12 +50,13 @@ describe("useTimerRemovalBoundary", () => {
     const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
     let renderCount = 0;
 
-    renderHook(() => {
+    const { result } = renderHook(() => {
       renderCount += 1;
-      useTimerRemovalBoundary([createTimer()], 30_000, true);
+      return useTimerRemovalBoundary([createTimer()], 30_000, true);
     });
 
     expect(renderCount).toBe(1);
+    expect(result.current).toBe(NOW);
     expect(setIntervalSpy).not.toHaveBeenCalled();
 
     act(() => {
@@ -67,6 +68,7 @@ describe("useTimerRemovalBoundary", () => {
       vi.advanceTimersByTime(1);
     });
     expect(renderCount).toBe(2);
+    expect(result.current).toBe(NOW + 35_000);
     expect(vi.getTimerCount()).toBe(0);
   });
 
