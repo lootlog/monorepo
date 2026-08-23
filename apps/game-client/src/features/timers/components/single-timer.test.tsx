@@ -86,6 +86,18 @@ vi.mock("./timer-tooltip", () => ({
   },
 }));
 
+vi.mock("./timer-live-tile", () => ({
+  TimerLiveTile: (props: { label: string; timer: TimerWithTimeLeft }) => {
+    tileSpy(props);
+    return (
+      <div data-testid="tile">
+        <span>{props.label}</span>
+        <span>{`time:${props.timer.maxTimeLeft}`}</span>
+      </div>
+    );
+  },
+}));
+
 vi.mock("@lootlog/api-client/react-query/main/guilds", () => ({
   getGuildsControllerGetGuildPermissionsQueryKey: ({
     guildId,
@@ -174,15 +186,13 @@ describe("SingleTimer", () => {
 
     mockUseTimerDisplay.mockReturnValue({
       isPending: false,
-      isMinSpawnTime: false,
-      hasPassedRedThreshold: false,
       selectedColor: "red",
       customColor: undefined,
       overriddenColor: undefined,
       resetIndicator: "[R] ",
       shortname: "[H]",
       npcDetails: "(120w)",
-      timeLeft: 10_000,
+      countdownMode: "max",
       displayConfig: {
         fontSize: 11,
         singleTimerDisplayMode: "row",
@@ -252,8 +262,6 @@ describe("SingleTimer", () => {
     };
     mockUseTimerDisplay.mockReturnValue({
       isPending: true,
-      isMinSpawnTime: true,
-      hasPassedRedThreshold: false,
       selectedColor: "red",
       customColor: {
         id: "custom-1",
@@ -265,7 +273,7 @@ describe("SingleTimer", () => {
       resetIndicator: "",
       shortname: "[T]",
       npcDetails: "",
-      timeLeft: -500,
+      countdownMode: "min",
       displayConfig: {
         fontSize: 13,
         singleTimerDisplayMode: "column",
@@ -300,6 +308,6 @@ describe("SingleTimer", () => {
         timersGrouping: true,
       }),
     );
-    expect(screen.getByText("time:-500")).toBeVisible();
+    expect(screen.getByText("time:10000")).toBeVisible();
   });
 });

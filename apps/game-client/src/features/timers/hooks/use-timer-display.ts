@@ -1,7 +1,7 @@
 import { NPC_NAMES } from "@/constants/margonem";
 import type { Timer } from "@/api/timers.api";
 import { useTimersStore } from "@/store/timers.store";
-import { calculateTimeLeft, getTimerColorConfig } from "../utils/timer-helpers";
+import { getTimerColorConfig } from "../utils/timer-helpers";
 import { useShallow } from "zustand/react/shallow";
 
 const MANUAL_TIMER_MARGONEM_TYPE = 999;
@@ -26,11 +26,7 @@ const getTimerShortname = (timer: Timer, showType: boolean) => {
   return `[${typeShortname ?? "M"}]`;
 };
 
-export const useTimerDisplay = (
-  timer: Timer,
-  minTimeLeft: number,
-  maxTimeLeft: number,
-) => {
+export const useTimerDisplay = (timer: Timer) => {
   const {
     selectedColor,
     customColor,
@@ -55,9 +51,6 @@ export const useTimerDisplay = (
   );
 
   const isPending = timer.isPending ?? false;
-  const isMinSpawnTime = minTimeLeft < 0;
-  const hasPassedRedThreshold = maxTimeLeft < 0;
-
   const resetIndicator = timer.wasReset ? "[R] " : "";
 
   const shortname = getTimerShortname(timer, displayConfig.showType);
@@ -67,24 +60,15 @@ export const useTimerDisplay = (
       ? ` (${timer.npc.lvl}${timer.npc.prof.charAt(0).toLowerCase()})`
       : "";
 
-  const timeLeft = calculateTimeLeft(
-    minTimeLeft,
-    maxTimeLeft,
-    countdownMode,
-    isMinSpawnTime,
-  );
-
   return {
     isPending,
-    isMinSpawnTime,
-    hasPassedRedThreshold,
     selectedColor,
     customColor,
     overriddenColor,
     resetIndicator,
     shortname,
     npcDetails,
-    timeLeft,
     displayConfig,
+    countdownMode,
   };
 };
