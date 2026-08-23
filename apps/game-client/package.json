@@ -30,7 +30,6 @@
     "@lootlog/margonem": "workspace:*",
     "@lootlog/socket-parser": "workspace:*",
     "@lootlog/types": "workspace:*",
-    "@sentry/react": "^10.68.0",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-query": "catalog:",
     "better-auth": "^1.6.25",
@@ -55,7 +54,6 @@
   },
   "devDependencies": {
     "@rolldown/plugin-babel": "^0.2.3",
-    "@sentry/vite-plugin": "^5.4.0",
     "@tailwindcss/postcss": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
     "@testing-library/jest-dom": "^7.0.0",

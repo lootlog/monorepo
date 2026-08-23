@@ -7,7 +7,6 @@ import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-bo
 import { AppContent } from "@/app-content";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { captureReactError } from "@/lib/error-monitoring";
 
 function App() {
   return (
@@ -17,8 +16,7 @@ function App() {
           <SocketProvider>
             <ErrorBoundary
               FallbackComponent={AppErrorBoundaryFallback}
-              onError={(error, errorInfo) => {
-                captureReactError(error, errorInfo);
+              onError={(error) => {
                 disposeSoundPlayback();
                 console.warn("[ErrorBoundary]", error);
               }}
