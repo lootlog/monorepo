@@ -39,12 +39,13 @@ export class RuntimeEventPipeline {
   private readonly onProcessingError?: Dependencies["onProcessingError"];
   private readonly projection: Dependencies["projection"];
   private readonly schedule: Dependencies["schedule"];
-  private readonly queue: RuntimeEventEnvelope[] = [];
+  private readonly queue: Array<RuntimeEventEnvelope | undefined> = [];
   private readonly processorRegistrations = new Set<symbol>();
   private readonly projectedHandlers = new Set<RuntimeEventHandler>();
   private activeProcessor: RuntimeEventHandler | null = null;
   private overflowed = false;
   private pendingFacts = 0;
+  private queueHead = 0;
   private ready = false;
   private scheduledWork: ScheduledWork | null = null;
   private unsubscribeApplied: (() => void) | null = null;
@@ -96,7 +97,7 @@ export class RuntimeEventPipeline {
       this.cancel(this.scheduledWork);
       this.scheduledWork = null;
     }
-    while (this.ready && this.queue.length > 0) this.processNext();
+    while (this.ready && this.getPendingEventCount() > 0) this.processNext();
   }
 
   cleanup(): void {
@@ -105,6 +106,7 @@ export class RuntimeEventPipeline {
     if (this.scheduledWork !== null) this.cancel(this.scheduledWork);
     this.scheduledWork = null;
     this.queue.length = 0;
+    this.queueHead = 0;
     this.pendingFacts = 0;
     this.overflowed = false;
     this.ready = false;
@@ -114,15 +116,17 @@ export class RuntimeEventPipeline {
   }
 
   private readonly enqueue = (envelope: RuntimeEventEnvelope): void => {
+    if (this.overflowed) return;
+
     const nextFacts = this.pendingFacts + envelope.facts.length;
     if (
-      this.queue.length >= MAX_PENDING_EVENTS ||
+      this.getPendingEventCount() >= MAX_PENDING_EVENTS ||
       nextFacts > MAX_PENDING_FACTS
     ) {
-      if (this.overflowed) return;
       this.overflowed = true;
       this.ready = false;
       this.queue.length = 0;
+      this.queueHead = 0;
       this.pendingFacts = 0;
       if (this.scheduledWork !== null) this.cancel(this.scheduledWork);
       this.scheduledWork = null;
@@ -136,7 +140,9 @@ export class RuntimeEventPipeline {
   };
 
   private scheduleDrain(): void {
-    if (this.scheduledWork !== null || this.queue.length === 0) return;
+    if (this.scheduledWork !== null || this.getPendingEventCount() === 0) {
+      return;
+    }
     this.scheduledWork = this.schedule(this.drainQueue);
   }
 
@@ -144,31 +150,56 @@ export class RuntimeEventPipeline {
     this.scheduledWork = null;
     if (!this.ready) return;
 
-    while (this.queue.length > 0) this.processNext();
+    const eventsToProcess = this.getPendingEventCount();
+    for (let index = 0; index < eventsToProcess && this.ready; index += 1) {
+      this.processNext();
+    }
+    if (this.ready && this.getPendingEventCount() > 0) this.scheduleDrain();
   };
 
   private processNext(): void {
-    const envelope = this.queue.shift();
+    const envelope = this.queue[this.queueHead];
     if (!envelope) return;
+    this.queue[this.queueHead] = undefined;
+    this.queueHead += 1;
+    if (this.queueHead === this.queue.length) {
+      this.queue.length = 0;
+      this.queueHead = 0;
+    }
     this.pendingFacts -= envelope.facts.length;
 
+    let projectedEnvelope: RuntimeEventEnvelope;
     try {
-      const projectedEnvelope = this.projection.captureIngress(envelope);
+      projectedEnvelope = this.projection.captureIngress(envelope);
       this.projection.apply(projectedEnvelope);
-      try {
-        this.activeProcessor?.(projectedEnvelope);
-      } catch (error) {
-        this.onProcessingError?.(error);
-      }
-      for (const handler of this.projectedHandlers) {
-        try {
-          handler(projectedEnvelope);
-        } catch (error) {
-          this.onProcessingError?.(error);
-        }
-      }
     } catch (error) {
+      this.reportProcessingError(error);
+      return;
+    }
+
+    try {
+      this.activeProcessor?.(projectedEnvelope);
+    } catch (error) {
+      this.reportProcessingError(error);
+    }
+    for (const handler of this.projectedHandlers) {
+      try {
+        handler(projectedEnvelope);
+      } catch (error) {
+        this.reportProcessingError(error);
+      }
+    }
+  }
+
+  private getPendingEventCount(): number {
+    return this.queue.length - this.queueHead;
+  }
+
+  private reportProcessingError(error: unknown): void {
+    try {
       this.onProcessingError?.(error);
+    } catch {
+      // Diagnostics must never interrupt the runtime event queue.
     }
   }
 }

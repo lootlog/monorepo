@@ -22,7 +22,8 @@ class RuntimeOtherHandleRegistry {
       delete getWritableHandlesById()[id];
     }
     for (const [id, handle] of Object.entries(batch.upserts ?? {})) {
-      if (this.handlesById[id] === handle) continue;
+      const currentHandle = (writableHandlesById ?? this.handlesById)[id];
+      if (currentHandle === handle) continue;
       getWritableHandlesById()[id] = handle;
     }
 

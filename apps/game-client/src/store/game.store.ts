@@ -50,6 +50,20 @@ function areGameSnapshotsEqual(
   );
 }
 
+function freezeGameSnapshot(game: RuntimeGameSnapshot): RuntimeGameSnapshot {
+  let clan: RuntimeGameSnapshot["hero"]["clan"];
+  if (game.hero.clan) {
+    clan = Object.freeze({ ...game.hero.clan });
+  }
+
+  return Object.freeze({
+    hero: Object.freeze({ ...game.hero, clan }),
+    interface: game.interface,
+    map: Object.freeze({ ...game.map }),
+    world: game.world,
+  });
+}
+
 export const useGameStore = create<GameState>()((set) => ({
   game: null,
   mapEpoch: 0,
@@ -71,21 +85,13 @@ export const useGameStore = create<GameState>()((set) => ({
         return state;
       }
 
+      let storedGame = state.game;
+      if (!gameUnchanged || !storedGame) {
+        storedGame = freezeGameSnapshot(game);
+      }
+
       return {
-        game:
-          gameUnchanged && state.game
-            ? state.game
-            : Object.freeze({
-                hero: Object.freeze({
-                  ...game.hero,
-                  clan: game.hero.clan
-                    ? Object.freeze({ ...game.hero.clan })
-                    : undefined,
-                }),
-                interface: game.interface,
-                map: Object.freeze({ ...game.map }),
-                world: game.world,
-              }),
+        game: storedGame,
         mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
         revision: state.revision + 1,
         status: "ready",

@@ -89,11 +89,15 @@ metadata are seeded once, matching Margonem's per-map cache behavior.
 | SI      | Crowded mixed replay |  31,704 ops/s | 0.0315 ms | 0.0312 ms | 0.0326 ms |                   0 |
 
 Hero movement remains intentionally observable and produces a game-store
-update and React commit. Movement-only `other` packets and the settled crowded
-replay produce zero store updates and zero commits. Compared with the old
-full-pipeline baseline, all throughput changes stay within the 10% regression
-budget; the crowded replay improves by about 7% while eliminating repeated
-snapshot and participant reads.
+update and React commit. Movement-only `other` packets produce zero store
+updates and zero commits. Every crowded replay packet deliberately contains
+overlapping NPC deletions and upserts, so it produces exactly one batched NPC
+store publication, while game and others stores remain unchanged and the
+test React root does not commit. The JSONL output records these publications
+separately as `npcsStoreUpdates` and includes them in `storeUpdates`. Compared
+with the old full-pipeline baseline, all throughput changes stay within the 10%
+regression budget; the crowded replay improves by about 7% while eliminating
+repeated snapshot and participant reads.
 
 Use the matching interface and scenario as the comparison point. Median p50 or
 throughput worse by more than 10% blocks the change unless the fixture itself

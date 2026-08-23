@@ -614,6 +614,33 @@ describe("LootEventProcessor", () => {
     );
   });
 
+  it("uses the pre-event ingress NPC after projection removes it from the store", async () => {
+    setDialogNpcContext(501);
+    const ingressNpc = createRuntimeNpc(501, "Kliknięty NPC");
+    const game = useGameStore.getState().game;
+    expect(game).not.toBeNull();
+    mockGetLoot.mockReturnValue([{ id: 7, name: "Łup" }]);
+    mockCreateLoot.mockResolvedValue({ id: 321 });
+
+    processor.handleDialogLoot(createDialogLootEvent([501]), {
+      game,
+      intent: null,
+      npcsById: { 501: ingressNpc },
+      othersById: {},
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(useNpcsStore.getState().getNpc(501)).toBeUndefined();
+    expect(mockCreateLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npcs: [expect.objectContaining({ id: 501, name: "Kliknięty NPC" })],
+      }),
+      expect.any(Object),
+    );
+  });
+
   it("falls back to the canonical npc store when the context has no snapshot", async () => {
     setDialogNpcContext(777);
     mockGetLoot.mockReturnValue([{ id: 7 }]);

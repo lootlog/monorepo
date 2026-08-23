@@ -178,6 +178,32 @@ describe("RuntimeStateProjection", () => {
     expect(adapter.getNpc).not.toHaveBeenCalled();
   });
 
+  it("uses the hero level for NPC templates with a zero elastic factor", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+
+    projection.apply(
+      createEnvelope({
+        icons: [{ icon: "elastic.gif", id: 92 }],
+        npc_tpls: [
+          {
+            elasticLevelFactor: 0,
+            id: 702,
+            level: 250,
+            nick: "Elastic npc",
+            prof: "m",
+            type: 2,
+            warrior_type: 95,
+          },
+        ],
+        npcs: [{ icon: { id: 92 }, id: 503, tpl: 702, x: 4, y: 5 }],
+      } as unknown as GameEvent),
+    );
+
+    expect(useNpcsStore.getState().getNpc(503)?.level).toBe(300);
+  });
+
   it("publishes identity only for CREATE and ignores movement packets", () => {
     const adapter = createAdapter();
     const handle = { d: { account: 22, id: 11 } };
@@ -242,6 +268,18 @@ describe("RuntimeStateProjection", () => {
     expect(captured.ingress.npcsById[501]).toEqual(npc);
     expect(useNpcsStore.getState().getNpc(501)).toBeUndefined();
     expect(adapter.getGameSnapshot).not.toHaveBeenCalled();
+    expect(adapter.getNpc).not.toHaveBeenCalled();
+  });
+
+  it("captures the dialog NPC before applying the same packet", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    const envelope = createEnvelope({ d: ["dialog", "npc", "501"] });
+
+    const captured = projection.captureIngress(envelope);
+
+    expect(captured.ingress.npcsById[501]).toEqual(npc);
     expect(adapter.getNpc).not.toHaveBeenCalled();
   });
 
