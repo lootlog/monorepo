@@ -1,5 +1,20 @@
 # @lootlog/game-client
 
+## 1.2.7
+
+### Patch Changes
+
+- 99eb992: Keep the shared timer clock inside live countdown tiles and schedule list removal at the next expiry boundary so one-second ticks no longer repeat list-wide timer work.
+- 3c0bfe1: Remove Sentry error monitoring from the game client and its release build.
+- 370ca83: Project Margonem events into Lootlog stores after the game handler returns, defer processors through a bounded FIFO queue, and stop inactive player and timer integrations from producing unnecessary work.
+- 5231a08: Keep always-visible expired timers ordered at the bottom after the configured removal delay while preserving boundary-only timer list updates.
+- a98536a: Batch chat cache ingress once per organization and frame, keep the first NPC report stable while counting matching reports, render incoming messages without moving the history viewport, and prevent content resizes from snapping an explicit upward scroll back to the bottom.
+- 4ae5fe2: Remove the development permission override UI, transport contract, and server-side permission substitution so all clients use the standard guild permission model.
+- Updated dependencies [321b96a]
+- Updated dependencies [4ae5fe2]
+  - @lootlog/api-client@5.0.0
+  - @lootlog/types@3.0.0
+
 ## 1.2.6
 
 ### Patch Changes
