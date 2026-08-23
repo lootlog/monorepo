@@ -43,6 +43,7 @@ type AppliedNpcEntry = Readonly<{
 }>;
 
 type NpcTemplate = Readonly<{
+  elasticLevelFactor?: number;
   id: number;
   level?: number;
   nick: string;
@@ -137,6 +138,17 @@ function normalizeParty(event: NonNullable<GameEvent["party"]>) {
       });
     }),
   );
+}
+
+function resolveNpcLevel(
+  entry: AppliedNpcEntry,
+  template: NpcTemplate | undefined,
+  heroLevel: number | undefined,
+): number | undefined {
+  const explicitLevel = entry.lvl ?? entry.level;
+  if (explicitLevel !== undefined) return explicitLevel;
+  if (template?.elasticLevelFactor === 0) return heroLevel;
+  return template?.level;
 }
 
 export class RuntimeStateProjection {
@@ -295,9 +307,10 @@ export class RuntimeStateProjection {
   private applyNpcs(event: GameEvent, mapChanged: boolean): void {
     const removeIds = (event.npcs_del ?? []).map((npc) => npc.id);
     const upserts: RuntimeNpc[] = [];
+    const heroLevel = useGameStore.getState().game?.hero.level;
 
     for (const rawNpc of event.npcs ?? []) {
-      const npc = this.composeNpc(rawNpc as AppliedNpcEntry);
+      const npc = this.composeNpc(rawNpc as AppliedNpcEntry, heroLevel);
       if (npc) upserts.push(npc);
     }
 
@@ -308,7 +321,10 @@ export class RuntimeStateProjection {
     useNpcsStore.getState().applyNpcBatch({ removeIds, upserts });
   }
 
-  private composeNpc(entry: AppliedNpcEntry): RuntimeNpc | undefined {
+  private composeNpc(
+    entry: AppliedNpcEntry,
+    heroLevel: number | undefined,
+  ): RuntimeNpc | undefined {
     const templateId = entry.tpl ?? 0;
     const template = this.npcTemplates.get(templateId);
     const icon =
@@ -318,7 +334,7 @@ export class RuntimeStateProjection {
     const name = entry.nick ?? template?.nick;
     const profession = entry.prof ?? template?.prof;
     const type = entry.type ?? template?.type;
-    const level = entry.lvl ?? entry.level ?? template?.level;
+    const level = resolveNpcLevel(entry, template, heroLevel);
     const weight = entry.wt ?? entry.warrior_type ?? template?.warrior_type;
 
     if (

@@ -109,4 +109,16 @@ describe("useOthersStore", () => {
     expect(publish).toHaveBeenCalledOnce();
     unsubscribe();
   });
+
+  it("keeps an entity that is removed and upserted in the same batch", () => {
+    const other = createOther("other");
+    useOthersStore.getState().setMany({ 1: other });
+
+    useOthersStore.getState().applyBatch({
+      removeIds: ["1"],
+      upserts: { 1: other },
+    });
+
+    expect(useOthersStore.getState().getOther("1")).toBe(other);
+  });
 });

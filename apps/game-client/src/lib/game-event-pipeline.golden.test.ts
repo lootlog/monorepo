@@ -295,9 +295,17 @@ function resetPipelineState(): void {
 }
 
 function dispatchRuntimeEvent(payload: GameEvent | string): unknown {
-  const result = pipelineWindow.successData?.(payload);
+  return dispatchRuntimeEvents([payload])[0];
+}
+
+function dispatchRuntimeEvents(
+  payloads: readonly (GameEvent | string)[],
+): unknown[] {
+  const results = payloads.map((payload) =>
+    pipelineWindow.successData?.(payload),
+  );
   runtimeEventPipeline.flush();
-  return result;
+  return results;
 }
 
 function replayAndSnapshot(payload: GameEvent | string) {
@@ -433,8 +441,7 @@ describe("game event pipeline golden replay", () => {
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
 
-    dispatchRuntimeEvent(finalFightEvent);
-    dispatchRuntimeEvent(fightLootEvent);
+    dispatchRuntimeEvents([finalFightEvent, fightLootEvent]);
 
     expect(api.createLoot).toHaveBeenCalledOnce();
     expect(api.createLoot).toHaveBeenCalledWith(
@@ -544,8 +551,7 @@ describe("game event pipeline golden replay", () => {
           ...fragmentaryFinalFightEvent,
         } as GameEvent);
       } else {
-        dispatchRuntimeEvent(fragmentaryFinalFightEvent);
-        dispatchRuntimeEvent(fightLootEvent);
+        dispatchRuntimeEvents([fragmentaryFinalFightEvent, fightLootEvent]);
       }
 
       expect(api.createLoot).toHaveBeenCalledOnce();
@@ -593,6 +599,50 @@ describe("game event pipeline golden replay", () => {
       secondDispatcher.cleanup();
     },
   );
+
+  it("submits dialog loot after projection removes the talked NPC", () => {
+    resetPipelineState();
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn(() => "game-result");
+    margonemRuntimeBridge.setupProxies();
+    dispatcher.register();
+    const talkedNpc = Object.freeze({
+      icon: "npc.gif",
+      id: 501,
+      level: 300,
+      name: "Talked NPC",
+      profession: "m",
+      templateId: 701,
+      type: 2,
+      weight: 85,
+      x: 1,
+      y: 2,
+    });
+    useNpcsStore.getState().replaceNpcs([talkedNpc]);
+    useDialogStore.getState().setNpcContext({
+      npc: null,
+      npcId: 501,
+      source: "talk-request",
+    });
+
+    dispatchRuntimeEvent({
+      item: fightLootEvent.item,
+      loot: { source: "dialog", states: { "loot-1": 1 } },
+      npcs_del: [{ id: 501 }],
+    } as unknown as GameEvent);
+
+    expect(useNpcsStore.getState().getNpc(501)).toBeUndefined();
+    expect(api.createLoot).toHaveBeenCalledOnce();
+    expect(api.createLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npcs: [expect.objectContaining({ id: 501, name: "Talked NPC" })],
+        source: "DIALOG",
+      }),
+      expect.objectContaining({ source: "dialog" }),
+    );
+
+    dispatcher.cleanup();
+  });
 
   it("submits one complete battle when dispatcher registrations overlap and a compact replay follows", async () => {
     resetPipelineState();

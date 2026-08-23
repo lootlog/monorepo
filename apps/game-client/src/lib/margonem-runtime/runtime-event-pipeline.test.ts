@@ -109,6 +109,115 @@ describe("RuntimeEventPipeline", () => {
     expect(processor).toHaveBeenCalledOnce();
   });
 
+  it("drops the whole buffer after overflowing before initialization", () => {
+    let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
+    const processor = vi.fn();
+    const onOverflow = vi.fn();
+    const pipeline = new RuntimeEventPipeline({
+      bridge: {
+        subscribeApplied: (handler) => {
+          applied = handler;
+          return vi.fn();
+        },
+      },
+      onOverflow,
+      projection: {
+        apply: vi.fn(),
+        captureIngress: (envelope) => envelope,
+      },
+    });
+    pipeline.acquireProcessor(processor);
+    pipeline.install();
+
+    for (let sequence = 1; sequence <= 1_001; sequence += 1) {
+      applied?.(createEnvelope(sequence));
+    }
+    applied?.(createEnvelope(1_002));
+    pipeline.setReady(true);
+    pipeline.flush();
+
+    expect(onOverflow).toHaveBeenCalledOnce();
+    expect(processor).not.toHaveBeenCalled();
+  });
+
+  it("continues after the processing error reporter throws", () => {
+    let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
+    const projected = vi.fn();
+    const processor = vi.fn((envelope: RuntimeEventEnvelope) => {
+      if (envelope.sequence === 1) {
+        throw new Error("processor failed");
+      }
+    });
+    const onProcessingError = vi.fn(() => {
+      throw new Error("reporter failed");
+    });
+    const pipeline = new RuntimeEventPipeline({
+      bridge: {
+        subscribeApplied: (handler) => {
+          applied = handler;
+          return vi.fn();
+        },
+      },
+      onProcessingError,
+      projection: {
+        apply: vi.fn(),
+        captureIngress: (envelope) => envelope,
+      },
+    });
+    pipeline.acquireProcessor(processor);
+    pipeline.subscribeProjected(projected);
+    pipeline.install();
+    pipeline.setReady(true);
+
+    applied?.(createEnvelope(1));
+    applied?.(createEnvelope(2));
+
+    expect(() => pipeline.flush()).not.toThrow();
+    expect(processor).toHaveBeenCalledTimes(2);
+    expect(projected).toHaveBeenCalledTimes(2);
+    expect(onProcessingError).toHaveBeenCalledOnce();
+  });
+
+  it("defers events enqueued while the current drain task is running", () => {
+    const scheduled: Array<() => void> = [];
+    let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
+    const processor = vi.fn((envelope: RuntimeEventEnvelope) => {
+      if (envelope.sequence === 1) {
+        applied?.(createEnvelope(2));
+      }
+    });
+    const pipeline = new RuntimeEventPipeline({
+      bridge: {
+        subscribeApplied: (handler) => {
+          applied = handler;
+          return vi.fn();
+        },
+      },
+      projection: {
+        apply: vi.fn(),
+        captureIngress: (envelope) => envelope,
+      },
+      schedule: (callback) => {
+        scheduled.push(callback);
+        return scheduled.length;
+      },
+      cancel: vi.fn(),
+    });
+    pipeline.acquireProcessor(processor);
+    pipeline.install();
+    pipeline.setReady(true);
+    applied?.(createEnvelope(1));
+
+    scheduled[0]?.();
+
+    expect(processor).toHaveBeenCalledOnce();
+    expect(scheduled).toHaveLength(2);
+
+    scheduled[1]?.();
+
+    expect(processor).toHaveBeenCalledTimes(2);
+  });
+
   it("shares one processor across overlapping registrations", () => {
     let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
     const firstProcessor = vi.fn();

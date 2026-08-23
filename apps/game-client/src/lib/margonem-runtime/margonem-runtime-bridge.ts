@@ -108,16 +108,18 @@ export class MargonemRuntimeBridge {
     const initializeGame = this.initializeGameSafely.bind(this);
     const createEnvelope = this.createEnvelopeSafely.bind(this);
     const captureIntent = () => this.activeIntent;
-    const emitApplied = (envelope: RuntimeEventEnvelope) => {
-      this.emit(this.appliedHandlers, envelope, "applied");
+    const clearIntent = () => {
       this.activeIntent = null;
     };
+    const emitApplied = (envelope: RuntimeEventEnvelope) =>
+      this.emit(this.appliedHandlers, envelope, "applied");
     const wrappedInbound: RuntimeFunction = function (...args) {
       initializeGame();
       const intent = captureIntent();
       const result = Reflect.apply(originalInbound, this, args);
       initializeGame();
       const envelope = createEnvelope(args[0], intent);
+      clearIntent();
       if (envelope) emitApplied(envelope);
       return result;
     };

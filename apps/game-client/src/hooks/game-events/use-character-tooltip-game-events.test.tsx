@@ -25,11 +25,16 @@ const mocks = vi.hoisted(() => {
 
   return {
     patchOtherCharacterTooltips,
+    selectedGuildId: "guild-1" as string | null,
     state,
     subscribeProjected,
     unsubscribe,
   };
 });
+
+vi.mock("@/hooks/use-selected-lootlog-guild", () => ({
+  useSelectedLootlogGuildId: () => mocks.selectedGuildId,
+}));
 
 vi.mock("@/lib/margonem-runtime/runtime-event-pipeline", () => ({
   runtimeEventPipeline: {
@@ -104,6 +109,7 @@ function createTownEvent(): GameEvent {
 
 describe("useCharacterTooltipGameEvents", () => {
   beforeEach(() => {
+    mocks.selectedGuildId = "guild-1";
     mocks.state.afterGameEventHandler = null;
     mocks.unsubscribe.mockReset();
     mocks.subscribeProjected.mockClear();
@@ -216,6 +222,39 @@ describe("useCharacterTooltipGameEvents", () => {
           is_blessed: 0,
           lvl: 300,
           nick: "inactive",
+          oplvl: 0,
+          prof: "w",
+          relation: 0,
+          rights: 0,
+          stasis: 0,
+          stasis_incoming_seconds: 0,
+          x: 1,
+          y: 2,
+        },
+      },
+    });
+
+    expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
+  });
+
+  it("does not scan or patch others without a concrete guild", () => {
+    const other = createRuntimeOther("inactive-guild");
+    setRuntimeOthers({ 1: other });
+    mocks.selectedGuildId = "all";
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    renderHook(() => useCharacterTooltipGameEvents());
+
+    mocks.state.afterGameEventHandler?.({
+      other: {
+        1: {
+          account: 1,
+          action: "CREATE",
+          attr: 0,
+          dir: 0,
+          icon: "inactive-guild.gif",
+          is_blessed: 0,
+          lvl: 300,
+          nick: "inactive-guild",
           oplvl: 0,
           prof: "w",
           relation: 0,

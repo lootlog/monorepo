@@ -19,4 +19,16 @@ describe("runtimeOtherHandles", () => {
 
     expect(runtimeOtherHandles.getAll()).toBe(handles);
   });
+
+  it("keeps a handle that is removed and upserted in the same batch", () => {
+    const handle = { d: { id: "1" } } as Other;
+    runtimeOtherHandles.applyBatch({ upserts: { 1: handle } });
+
+    runtimeOtherHandles.applyBatch({
+      removeIds: ["1"],
+      upserts: { 1: handle },
+    });
+
+    expect(runtimeOtherHandles.get("1")).toBe(handle);
+  });
 });

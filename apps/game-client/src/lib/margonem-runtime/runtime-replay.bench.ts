@@ -6,6 +6,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterAll, bench, describe } from "vitest";
 import { EventDispatcher } from "@/lib/event-dispatcher";
 import { useGameStore } from "@/store/game.store";
+import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 import type { RuntimeInterface } from "./runtime.types";
 import {
@@ -193,9 +194,11 @@ type FullReplayHarness = {
   dispatch: (payload: GameEvent | string) => unknown;
   getMetrics: () => {
     commits: number;
+    dispatches: number;
     gameStoreUpdates: number;
     gameSnapshotReads: number;
     npcReads: number;
+    npcsStoreUpdates: number;
     otherReads: number;
     othersStoreUpdates: number;
   };
@@ -324,7 +327,9 @@ function createFullReplayHarness(
     ]),
   );
   let gameSnapshotReads = 0;
+  let dispatches = 0;
   let npcReads = 0;
+  let npcsStoreUpdates = 0;
   let otherReads = 0;
   let gameStoreUpdates = 0;
   let othersStoreUpdates = 0;
@@ -440,10 +445,15 @@ function createFullReplayHarness(
   const unsubscribeOthersStore = useOthersStore.subscribe(() => {
     othersStoreUpdates += 1;
   });
+  const unsubscribeNpcsStore = useNpcsStore.subscribe(() => {
+    npcsStoreUpdates += 1;
+  });
   const resetMetrics = () => {
     commits = 0;
+    dispatches = 0;
     gameSnapshotReads = 0;
     npcReads = 0;
+    npcsStoreUpdates = 0;
     gameStoreUpdates = 0;
     otherReads = 0;
     othersStoreUpdates = 0;
@@ -462,6 +472,7 @@ function createFullReplayHarness(
     bridge,
     cleanup: () => {
       unsubscribeGameStore();
+      unsubscribeNpcsStore();
       unsubscribeOthersStore();
       flushSync(() => root.unmount());
       container.remove();
@@ -477,6 +488,7 @@ function createFullReplayHarness(
       reactEnvironment.IS_REACT_ACT_ENVIRONMENT = previousReactActEnvironment;
     },
     dispatch: (payload) => {
+      dispatches += 1;
       let effectivePayload = payload;
       if (payload === heroMovementEvent) {
         effectivePayload = useAlternateHeroPosition
@@ -490,8 +502,10 @@ function createFullReplayHarness(
     },
     getMetrics: () => ({
       commits,
+      dispatches,
       gameSnapshotReads,
       npcReads,
+      npcsStoreUpdates,
       gameStoreUpdates,
       otherReads,
       othersStoreUpdates,
@@ -529,8 +543,10 @@ for (const runtimeInterface of ["ni", "si"] as const) {
               runtimeReplayMetricsFile,
               `${JSON.stringify({
                 commits: metrics.commits,
+                dispatches: metrics.dispatches,
                 gameSnapshotReads: metrics.gameSnapshotReads,
                 npcReads: metrics.npcReads,
+                npcsStoreUpdates: metrics.npcsStoreUpdates,
                 otherReads: metrics.otherReads,
                 p50Ms: latency.p50,
                 p95Ms: latency.p95,
@@ -538,7 +554,9 @@ for (const runtimeInterface of ["ni", "si"] as const) {
                 samples: task.result.samples.length,
                 scenario: task.name,
                 storeUpdates:
-                  metrics.gameStoreUpdates + metrics.othersStoreUpdates,
+                  metrics.gameStoreUpdates +
+                  metrics.npcsStoreUpdates +
+                  metrics.othersStoreUpdates,
               })}\n`,
               "utf8",
             );
@@ -550,6 +568,7 @@ for (const runtimeInterface of ["ni", "si"] as const) {
             metrics.npcReads !== 0 ||
             metrics.otherReads !== 0 ||
             metrics.gameStoreUpdates !== 0 ||
+            metrics.npcsStoreUpdates !== 0 ||
             metrics.othersStoreUpdates !== 0 ||
             metrics.commits !== 0)
         ) {
@@ -561,10 +580,14 @@ for (const runtimeInterface of ["ni", "si"] as const) {
           task.name.startsWith("crowded battle") &&
           (metrics.gameSnapshotReads !== 0 ||
             metrics.npcReads !== 0 ||
-            metrics.otherReads !== 0)
+            metrics.otherReads !== 0 ||
+            metrics.gameStoreUpdates !== 0 ||
+            metrics.othersStoreUpdates !== 0 ||
+            metrics.npcsStoreUpdates !== metrics.dispatches ||
+            metrics.commits !== 0)
         ) {
           throw new Error(
-            `${runtimeInterface.toUpperCase()} crowded replay read Margonem domain state`,
+            `${runtimeInterface.toUpperCase()} crowded replay violated its runtime work budget`,
           );
         }
 

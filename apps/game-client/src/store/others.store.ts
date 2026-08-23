@@ -109,7 +109,7 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
       }
 
       for (const [id, other] of Object.entries(upserts)) {
-        const currentOther = state.othersById[id];
+        const currentOther = (writableOthersById ?? state.othersById)[id];
         if (
           currentOther === other ||
           (currentOther && areRuntimeOthersEqual(currentOther, other))

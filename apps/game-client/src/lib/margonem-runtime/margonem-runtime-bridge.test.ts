@@ -313,6 +313,43 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 
+  it("preserves a new talk intent observed while applied handlers run", () => {
+    runtimeWindow.successData = vi.fn();
+    testRuntimeWindow._g = vi.fn();
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const applied = vi.fn();
+    bridge.subscribeApplied((envelope) => {
+      applied(envelope);
+      if (envelope.sequence === 1) testRuntimeWindow._g?.("talk&id=502");
+    });
+
+    bridge.install();
+    testRuntimeWindow._g("talk&id=501");
+    runtimeWindow.successData?.({ h: {} });
+    runtimeWindow.successData?.({ h: {} });
+
+    expect(applied.mock.calls[0]?.[0].ingress.intent?.npcId).toBe(501);
+    expect(applied.mock.calls[1]?.[0].ingress.intent?.npcId).toBe(502);
+    bridge.cleanup();
+  });
+
+  it("consumes a talk intent after a successful packet that cannot be observed", () => {
+    runtimeWindow.successData = vi.fn(() => "margonem-result");
+    testRuntimeWindow._g = vi.fn();
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    const applied = vi.fn();
+    bridge.subscribeApplied(applied);
+
+    bridge.install();
+    testRuntimeWindow._g("talk&id=501");
+    runtimeWindow.successData?.("not-json");
+    runtimeWindow.successData?.({ h: {} });
+
+    expect(applied).toHaveBeenCalledOnce();
+    expect(applied.mock.calls[0]?.[0].ingress.intent).toBeNull();
+    bridge.cleanup();
+  });
+
   it("uses NI parseJSON and does not emit applied when Margonem throws", () => {
     const failure = new Error("game failed");
     const parseJSON = vi.fn(() => {

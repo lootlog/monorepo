@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { runtimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipeline";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { patchOtherCharacterTooltips } from "@/lib/margonem-tooltips/patcher";
+import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
+import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import type { OtherEntry } from "@lootlog/margonem/game-events";
 import type { Other } from "@lootlog/margonem/others";
 
@@ -14,12 +16,14 @@ export function useCharacterTooltipGameEvents(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
+  const selectedGuildId = useSelectedLootlogGuildId();
+  const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
 
   useEffect(() => {
-    if (!isShiftPressed) return;
+    if (!active) return;
 
     patchOtherCharacterTooltips(Object.values(runtimeOtherHandles.getAll()));
-  }, [isShiftPressed]);
+  }, [active]);
 
   useEffect(() => {
     return runtimeEventPipeline.subscribeProjected((envelope) => {
@@ -30,9 +34,7 @@ export function useCharacterTooltipGameEvents(): void {
         useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
       }
 
-      if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
-        return;
-      }
+      if (!active) return;
 
       if (!event.other) return;
       const changedOthers: Other[] = [];
@@ -50,5 +52,5 @@ export function useCharacterTooltipGameEvents(): void {
         patchOtherCharacterTooltips(changedOthers);
       }
     });
-  }, []);
+  }, [active]);
 }
