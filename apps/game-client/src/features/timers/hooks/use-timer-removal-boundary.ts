@@ -32,14 +32,18 @@ export const useTimerRemovalBoundary = (
   timers: Timer[],
   removeTimerAfterMs: number,
   enabled: boolean,
-  renderEpoch = Date.now(),
+  initialEpoch = Date.now(),
 ) => {
-  const [refreshVersion, refreshTimers] = useReducer(
-    (version: number) => version + 1,
-    0,
+  const [timerCalculationEpoch, refreshTimers] = useReducer(
+    () => Date.now(),
+    initialEpoch,
   );
   const nextBoundary = enabled
-    ? getNextTimerRemovalBoundary(timers, removeTimerAfterMs, renderEpoch)
+    ? getNextTimerRemovalBoundary(
+        timers,
+        removeTimerAfterMs,
+        timerCalculationEpoch,
+      )
     : undefined;
 
   useEffect(() => {
@@ -53,5 +57,7 @@ export const useTimerRemovalBoundary = (
     );
 
     return () => window.clearTimeout(timeoutId);
-  }, [nextBoundary, refreshVersion]);
+  }, [nextBoundary, timerCalculationEpoch]);
+
+  return timerCalculationEpoch;
 };
