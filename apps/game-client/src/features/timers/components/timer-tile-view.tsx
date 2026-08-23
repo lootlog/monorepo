@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import type { FC } from "react";
 
-type TimerTileViewProps = {
+export type TimerTileViewProps = {
   color?: keyof typeof TIMERS_COLORS | string;
   customBorderColor?: string;
   customBackgroundColor?: string;

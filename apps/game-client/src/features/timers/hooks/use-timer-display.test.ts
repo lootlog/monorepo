@@ -72,13 +72,11 @@ describe("useTimerDisplay", () => {
 
   it("builds display data for a regular timer with a custom color", () => {
     const { result } = renderHook(() =>
-      useTimerDisplay(createTimer({ wasReset: true }), 5_000, 15_000),
+      useTimerDisplay(createTimer({ wasReset: true })),
     );
 
     expect(result.current).toMatchObject({
       isPending: false,
-      isMinSpawnTime: false,
-      hasPassedRedThreshold: false,
       selectedColor: "custom-red",
       customColor: {
         id: "custom-red",
@@ -89,7 +87,7 @@ describe("useTimerDisplay", () => {
       overriddenColor: undefined,
       resetIndicator: "[R] ",
       npcDetails: " (120w)",
-      timeLeft: 5_000,
+      countdownMode: "min",
     });
     expect(result.current.shortname).toMatch(/^\[.*\]$/);
   });
@@ -104,8 +102,6 @@ describe("useTimerDisplay", () => {
             margonemType: 999,
           },
         }),
-        5_000,
-        15_000,
       ),
     );
 
@@ -122,8 +118,6 @@ describe("useTimerDisplay", () => {
             margonemType: "999" as never,
           },
         }),
-        5_000,
-        15_000,
       ),
     );
 
@@ -139,15 +133,13 @@ describe("useTimerDisplay", () => {
             type: NpcType.ELITE2,
           },
         }),
-        5_000,
-        15_000,
       ),
     );
 
     expect(result.current.shortname).toBe("[E2]");
   });
 
-  it("falls back to the max countdown when the min spawn time already passed and resolves overridden colors", () => {
+  it("resolves pending state and overridden colors without clock data", () => {
     const { result } = renderHook(() =>
       useTimerDisplay(
         createTimer({
@@ -157,22 +149,18 @@ describe("useTimerDisplay", () => {
           },
           isPending: true,
         }),
-        -1_000,
-        -100,
       ),
     );
 
     expect(result.current).toMatchObject({
       isPending: true,
-      isMinSpawnTime: true,
-      hasPassedRedThreshold: true,
       selectedColor: "white",
       customColor: undefined,
       overriddenColor: {
         borderColor: "#111",
         backgroundColor: "#333",
       },
-      timeLeft: -100,
+      countdownMode: "min",
     });
   });
 
@@ -181,7 +169,7 @@ describe("useTimerDisplay", () => {
 
     renderHook(() => {
       renderCount += 1;
-      return useTimerDisplay(createTimer(), 5_000, 15_000);
+      return useTimerDisplay(createTimer());
     });
 
     act(() => {

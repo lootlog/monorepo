@@ -6,7 +6,6 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 const mockUseTimers = vi.fn();
 const mockUseTimersSocket = vi.fn();
-const mockUseTimersUpdate = vi.fn();
 const mockUseTimersFiltering = vi.fn();
 const mockCalculateColorStatistics = vi.fn();
 const mockCheckFiltersActive = vi.fn();
@@ -100,10 +99,6 @@ vi.mock("@/store/timers.store", () => ({
 
 vi.mock("@/features/timers/hooks/use-timers-socket", () => ({
   useTimersSocket: () => mockUseTimersSocket(),
-}));
-
-vi.mock("@/features/timers/hooks/use-timers-update", () => ({
-  useTimersUpdate: (...args: unknown[]) => mockUseTimersUpdate(...args),
 }));
 
 vi.mock("@/features/timers/hooks/use-timers-filtering", () => ({
@@ -200,7 +195,6 @@ describe("Timers", () => {
     });
     mockUseTimers.mockReset();
     mockUseTimersSocket.mockReset();
-    mockUseTimersUpdate.mockReset();
     mockUseTimersFiltering.mockReset();
     mockCalculateColorStatistics.mockReset();
     mockCheckFiltersActive.mockReset();
@@ -293,7 +287,6 @@ describe("Timers", () => {
       | { calculatedTimers: unknown[] }
       | undefined;
     expect(filteringInput?.calculatedTimers).toHaveLength(1);
-    expect(mockUseTimersUpdate).toHaveBeenCalledWith(true);
     expect(mockUseTimersFiltering).toHaveBeenCalledWith(
       expect.objectContaining({
         guildId: "guild-1",
@@ -416,7 +409,6 @@ describe("Timers", () => {
     expect(screen.getByTestId("under-bag")).toBeInTheDocument();
     expect(screen.getByText("TimersUnderBagActions")).toBeInTheDocument();
     expect(screen.queryByTestId("draggable-window")).not.toBeInTheDocument();
-    expect(mockUseTimersUpdate).toHaveBeenCalledWith(true);
     expect(timersContentSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         isUnderBag: true,
@@ -442,7 +434,6 @@ describe("Timers", () => {
 
     render(<Timers />);
 
-    expect(mockUseTimersUpdate).toHaveBeenCalledWith(false);
     expect(timersContentSpy).toHaveBeenCalledWith(
       expect.objectContaining({ sortedTimers: [] }),
     );
@@ -455,7 +446,6 @@ describe("Timers", () => {
 
     expect(mockUseTimersSocket).toHaveBeenCalledOnce();
     expect(mockUseTimers).not.toHaveBeenCalled();
-    expect(mockUseTimersUpdate).not.toHaveBeenCalled();
     expect(timersContentSpy).not.toHaveBeenCalled();
   });
 });

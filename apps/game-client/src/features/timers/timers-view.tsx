@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Timer } from "@/api/timers.api";
@@ -7,7 +7,7 @@ import { TimersActions } from "@/features/timers/components/timers-actions";
 import { TimersContent } from "@/features/timers/components/timers-content";
 import { TimersUnderBagActions } from "@/features/timers/components/timers-under-bag-actions";
 import { useTimersFiltering } from "@/features/timers/hooks/use-timers-filtering";
-import { useTimersUpdate } from "@/features/timers/hooks/use-timers-update";
+import { useTimerRemovalBoundary } from "@/features/timers/hooks/use-timer-removal-boundary";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { calculateColorStatistics } from "@/features/timers/utils/color-statistics";
 import { checkFiltersActive } from "@/features/timers/utils/filters-utils";
@@ -129,10 +129,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const timersRefreshError = Boolean(timersError) && hasTimersResponse;
   const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
-  const [timerClockEnabled, setTimerClockEnabled] = useState(
-    !isUnderBag && isOpen,
-  );
-  const timerClockEpoch = useTimersUpdate(timerClockEnabled);
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
   const filters = timersFilters[settingsKey] ?? DEFAULT_TIMERS_FILTERS;
   const hiddenTimersForSettings = hiddenTimers[settingsKey] ?? [];
@@ -144,8 +140,15 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const mergedTimers = generalConfig.timersGrouping
     ? mergeTimers(deduplicatedTimers)
     : normalizeUngroupedTimers(deduplicatedTimers);
+  const timerCalculationEpoch = Date.now();
+  useTimerRemovalBoundary(
+    mergedTimers,
+    generalConfig.removeTimerAfterMs,
+    isUnderBag || isOpen,
+    timerCalculationEpoch,
+  );
   const activeTimers = filterTimersByExpiredVisibility(
-    calculateTimeLeft(mergedTimers, timerClockEpoch),
+    calculateTimeLeft(mergedTimers, timerCalculationEpoch),
     generalConfig.removeTimerAfterMs,
     alwaysVisibleExpiredTimers,
   );
@@ -172,10 +175,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     expiredTimersAtBottom: true,
     removeTimerAfterMs: generalConfig.removeTimerAfterMs,
   });
-  const shouldEnableTimerClock = isUnderBag ? visibleTimers.length > 0 : isOpen;
-  useEffect(() => {
-    setTimerClockEnabled(shouldEnableTimerClock);
-  }, [shouldEnableTimerClock]);
   const sortedTimers = visibleTimers;
   const colorStatistics = calculateColorStatistics(
     timersColors as Record<string, string>,
