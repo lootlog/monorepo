@@ -245,8 +245,6 @@ export const getChatRenderableMessages = (
     }
 
     existingGroup.count += 1;
-    existingGroup.message = message;
-    existingGroup.sortTimestamp = timestamp;
   }
 
   renderables.sort((firstRenderable, secondRenderable) => {

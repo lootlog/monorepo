@@ -48,7 +48,7 @@ describe("chat scroll controller", () => {
     controller.registerUserScrollIntent({
       clientHeight: 300,
       scrollHeight: 1_300,
-      scrollTop: 927,
+      scrollTop: 928,
     });
     controller.observe({
       clientHeight: 300,
@@ -89,7 +89,7 @@ describe("chat scroll controller", () => {
     controller.registerUserScrollIntent({
       clientHeight: 300,
       scrollHeight: 1_300,
-      scrollTop: 512,
+      scrollTop: 1_000,
     });
     controller.observe({
       clientHeight: 300,
@@ -99,6 +99,27 @@ describe("chat scroll controller", () => {
 
     expect(controller.getMode()).toBe("reading-history");
     expect(scrollCommands).toEqual([{ behavior: "auto", top: 1_000 }]);
+  });
+
+  it("keeps following when explicit input moves toward the physical bottom", () => {
+    const controller = createChatScrollController({
+      applyScroll: () => undefined,
+      nearBottomThreshold: 72,
+    });
+    controller.completeInitialization();
+    controller.registerUserScrollIntent({
+      clientHeight: 300,
+      scrollHeight: 1_300,
+      scrollTop: 900,
+    });
+
+    controller.observe({
+      clientHeight: 300,
+      scrollHeight: 1_300,
+      scrollTop: 950,
+    });
+
+    expect(controller.shouldFollowNewMessages()).toBe(true);
   });
 
   it("preserves a history position without changing it into an animated scroll", () => {
@@ -111,7 +132,7 @@ describe("chat scroll controller", () => {
     controller.registerUserScrollIntent({
       clientHeight: 300,
       scrollHeight: 1_300,
-      scrollTop: 700,
+      scrollTop: 1_000,
     });
     controller.observe({
       clientHeight: 300,
@@ -153,7 +174,7 @@ describe("chat scroll controller", () => {
     controller.registerUserScrollIntent({
       clientHeight: 300,
       scrollHeight: 1_300,
-      scrollTop: 800,
+      scrollTop: 990,
     });
     controller.observe({
       clientHeight: 300,
