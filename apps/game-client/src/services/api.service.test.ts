@@ -10,23 +10,13 @@ import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
 import { LOOT_CREATE_DEBUG_PREFIX } from "@/lib/loot-create-debug";
 import { useSettingsStore } from "@/store/settings.store";
 
-const {
-  mockPost,
-  mockPatch,
-  mockReportApiActionFailure,
-  mockSendNotification,
-  mockSendChatMessage,
-} = vi.hoisted(() => ({
-  mockPost: vi.fn(),
-  mockPatch: vi.fn(),
-  mockReportApiActionFailure: vi.fn(),
-  mockSendNotification: vi.fn(),
-  mockSendChatMessage: vi.fn(),
-}));
-
-vi.mock("@/lib/error-monitoring", () => ({
-  reportApiActionFailure: mockReportApiActionFailure,
-}));
+const { mockPost, mockPatch, mockSendNotification, mockSendChatMessage } =
+  vi.hoisted(() => ({
+    mockPost: vi.fn(),
+    mockPatch: vi.fn(),
+    mockSendNotification: vi.fn(),
+    mockSendChatMessage: vi.fn(),
+  }));
 
 vi.mock("@lootlog/api-client/transport", () => ({
   createApiClient: () => ({
@@ -217,24 +207,6 @@ describe("api.service logging", () => {
       error: apiError,
       stage: "http-error",
     });
-    expect(mockReportApiActionFailure).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionType: "create_loot",
-        monitoringContext: {
-          attemptId: "attempt-dialog-1",
-          feature: "loot",
-          itemCount: 1,
-          lootSource: "dialog",
-          mapName: "Karka-han",
-          npcCount: 0,
-          npcIds: [],
-          npcTypes: [],
-          playerCount: 0,
-          world: "pandora",
-        },
-        status: "error",
-      }),
-    );
   });
 
   it("logs every createLoot retry with the same correlation context", async () => {
@@ -303,7 +275,7 @@ describe("api.service logging", () => {
     }
   });
 
-  it("reports an updateLoot failure without the distribution message", async () => {
+  it("logs an updateLoot failure in the local action history", async () => {
     const apiError = {
       message: "Request failed",
       status: 500,
@@ -315,20 +287,18 @@ describe("api.service logging", () => {
       updateLoot({ id: 77, msg: "Podział łupów: Tester" }),
     ).rejects.toBe(apiError);
 
-    expect(mockReportApiActionFailure).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionType: "update_loot",
-        monitoringContext: {
-          feature: "loot",
-          lootId: 77,
-        },
-        status: "error",
-      }),
-    );
-    const [reportedFailure] = mockReportApiActionFailure.mock.calls;
-    expect(reportedFailure?.[0]).not.toHaveProperty(
-      "monitoringContext.message",
-    );
+    expect(useLogsStore.getState().actions[0]).toMatchObject({
+      actionType: "update_loot",
+      status: "error",
+      requests: [
+        expect.objectContaining({
+          endpoint: "/loots/77",
+          method: "PATCH",
+          status: "error",
+          statusCode: 500,
+        }),
+      ],
+    });
   });
 
   it("logs createNotification action and returns created notification", async () => {
