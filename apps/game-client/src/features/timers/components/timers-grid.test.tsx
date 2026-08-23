@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
 const singleTimerSpy = vi.fn();
@@ -88,10 +88,15 @@ const createTimer = (name: string, guildId = "guild-1"): TimerWithTimeLeft =>
 
 describe("TimersGrid", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     singleTimerSpy.mockReset();
     permissionQueryOptionsSpy.mockClear();
     useQueriesSpy.mockClear();
     mockGuilds = [{ id: "guild-1", name: "Alpha" }];
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("passes guild metadata and hidden-state flags to each timer tile", () => {
@@ -156,5 +161,30 @@ describe("TimersGrid", () => {
         guildPermissions: ["LOOTLOG_TIMERS_RESET"],
       }),
     );
+  });
+
+  it("does not repeat permission queries or static tile work on clock ticks", () => {
+    render(
+      <TimersGrid
+        timers={Array.from({ length: 20 }, (_, index) =>
+          createTimer(`Timer ${index}`),
+        )}
+        settingsKey="guild-1"
+        hiddenTimers={[]}
+        minColumnWidth={120}
+      />,
+    );
+
+    expect(permissionQueryOptionsSpy).toHaveBeenCalledOnce();
+    expect(useQueriesSpy).toHaveBeenCalledOnce();
+    expect(singleTimerSpy).toHaveBeenCalledTimes(20);
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(permissionQueryOptionsSpy).toHaveBeenCalledOnce();
+    expect(useQueriesSpy).toHaveBeenCalledOnce();
+    expect(singleTimerSpy).toHaveBeenCalledTimes(20);
   });
 });
