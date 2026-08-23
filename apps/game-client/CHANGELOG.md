@@ -1,5 +1,11 @@
 # @lootlog/game-client
 
+## 1.2.8
+
+### Patch Changes
+
+- 66edca7: Correct mine dialog NPC levels for loot visibility and backfill existing NPC snapshots.
+
 ## 1.2.7
 
 ### Patch Changes

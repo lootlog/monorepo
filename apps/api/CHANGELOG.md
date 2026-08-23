@@ -1,5 +1,11 @@
 # @lootlog/api
 
+## 5.0.1
+
+### Patch Changes
+
+- 66edca7: Correct mine dialog NPC levels for loot visibility and backfill existing NPC snapshots.
+
 ## 5.0.0
 
 ### Major Changes
