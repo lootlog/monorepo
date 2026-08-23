@@ -1,5 +1,12 @@
 # @lootlog/types
 
+## 3.0.0
+
+### Major Changes
+
+- 321b96a: Replace event pin settings with dedicated, permission-aware event pin resources that support vanity guild URLs and concurrent updates safely.
+- 4ae5fe2: Remove the development permission override UI, transport contract, and server-side permission substitution so all clients use the standard guild permission model.
+
 ## 2.0.2
 
 ### Patch Changes
