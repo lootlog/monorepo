@@ -43,6 +43,12 @@ export const createChatScrollController = ({
   let mode: ChatScrollMode = "initializing";
   let programmaticTarget: number | null = null;
   let userScrollIntentPending = false;
+  let userScrollIntentStartTop: number | null = null;
+
+  const clearUserScrollIntent = () => {
+    userScrollIntentPending = false;
+    userScrollIntentStartTop = null;
+  };
 
   const scroll = (
     snapshot: ChatScrollSnapshot,
@@ -71,6 +77,10 @@ export const createChatScrollController = ({
       const distanceFromBottom =
         snapshot.scrollHeight - (snapshot.scrollTop + snapshot.clientHeight);
       let missedProgrammaticTarget = false;
+      const userScrolledTowardHistory =
+        userScrollIntentPending &&
+        userScrollIntentStartTop !== null &&
+        snapshot.scrollTop < userScrollIntentStartTop;
 
       if (programmaticTarget !== null) {
         const reachedProgrammaticTarget =
@@ -82,7 +92,7 @@ export const createChatScrollController = ({
           mode = "reading-history";
         }
         if (reachedProgrammaticTarget) {
-          userScrollIntentPending = false;
+          clearUserScrollIntent();
           return;
         }
       }
@@ -91,21 +101,27 @@ export const createChatScrollController = ({
         if (distanceFromBottom <= 2) {
           mode = "following-bottom";
         }
-        userScrollIntentPending = false;
+        clearUserScrollIntent();
         return;
       }
 
       if (
         mode === "following-bottom" &&
-        (userScrollIntentPending || missedProgrammaticTarget) &&
-        distanceFromBottom > nearBottomThreshold
+        ((userScrolledTowardHistory && distanceFromBottom > 2) ||
+          (missedProgrammaticTarget &&
+            distanceFromBottom > nearBottomThreshold))
       ) {
         mode = "reading-history";
-        userScrollIntentPending = false;
+        clearUserScrollIntent();
         return;
       }
-      userScrollIntentPending =
-        userScrollIntentPending && distanceFromBottom > 2;
+      if (
+        userScrollIntentPending &&
+        userScrollIntentStartTop !== null &&
+        snapshot.scrollTop >= userScrollIntentStartTop
+      ) {
+        clearUserScrollIntent();
+      }
     },
     pinToBottom: (snapshot) => {
       const maximumScrollTop = getMaximumScrollTop(snapshot);
@@ -119,8 +135,9 @@ export const createChatScrollController = ({
     preservePosition: (snapshot, top) => {
       scroll(snapshot, "auto", top);
     },
-    registerUserScrollIntent: (_snapshot) => {
+    registerUserScrollIntent: (snapshot) => {
       userScrollIntentPending = true;
+      userScrollIntentStartTop = snapshot.scrollTop;
       programmaticTarget = null;
     },
     requestFollowBottom: () => {

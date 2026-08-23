@@ -282,13 +282,13 @@ describe("chat helpers", () => {
       {
         kind: "date-divider",
         key: "date-divider:2026-01-01",
-        timestamp: "2026-01-01T10:00:30.000Z",
+        timestamp: "2026-01-01T10:00:00.000Z",
       },
       {
         kind: "npc-group",
         key: "npc-group:npc-1",
         count: 2,
-        message: secondNpcMessage,
+        message: firstNpcMessage,
       },
       {
         kind: "npc-group",
@@ -362,19 +362,19 @@ describe("chat helpers", () => {
       {
         kind: "date-divider",
         key: "date-divider:2026-01-01",
-        timestamp: "2026-01-01T10:00:10.000Z",
+        timestamp: "2026-01-01T10:00:00.000Z",
       },
       {
         kind: "npc-group",
         key: "npc-group:npc-a-1",
         count: 2,
-        message: expect.objectContaining({ id: "npc-a-2" }),
+        message: expect.objectContaining({ id: "npc-a-1" }),
       },
       {
         kind: "npc-group",
         key: "npc-group:npc-b-1",
         count: 2,
-        message: expect.objectContaining({ id: "npc-b-2" }),
+        message: expect.objectContaining({ id: "npc-b-1" }),
       },
     ]);
   });
@@ -488,13 +488,60 @@ describe("chat helpers", () => {
       {
         kind: "date-divider",
         key: "date-divider:2026-01-01",
-        timestamp: "2026-01-01T10:00:10.000Z",
+        timestamp: "2026-01-01T10:00:00.000Z",
       },
       {
         kind: "npc-group",
         key: "npc-group:npc-a-1",
         count: 3,
-        message: expect.objectContaining({ id: "npc-a-3" }),
+        message: expect.objectContaining({ id: "npc-a-1", senderId: "user-1" }),
+      },
+    ]);
+  });
+
+  it("keeps the first report stable while counting a fifteen-message NPC burst", () => {
+    const firstMessage = makeChatMessage({
+      id: "npc-0",
+      senderId: "sender-0",
+      message: "",
+      timestamp: "2026-01-01T10:00:00.000Z",
+      type: MessageType.NPC,
+      npc: {
+        id: 10,
+        name: "Hydra",
+        icon: "npc.png",
+        x: 1,
+        y: 2,
+        hpp: 100,
+        location: "Cave",
+        lvl: 50,
+        prof: "m",
+        type: 1,
+        wt: 100,
+      },
+    });
+    const messages = Array.from({ length: 15 }, (_, index) => ({
+      ...firstMessage,
+      id: `npc-${index}`,
+      senderId: `sender-${index % 4}`,
+      timestamp: new Date(
+        new Date(firstMessage.timestamp).getTime() + index * 1_000,
+      ).toISOString(),
+    }));
+
+    const renderables = getChatRenderableMessages(messages);
+
+    expect(renderables).toEqual([
+      {
+        kind: "date-divider",
+        key: "date-divider:2026-01-01",
+        timestamp: firstMessage.timestamp,
+      },
+      {
+        kind: "npc-group",
+        key: "npc-group:npc-0",
+        count: 15,
+        message: firstMessage,
       },
     ]);
   });

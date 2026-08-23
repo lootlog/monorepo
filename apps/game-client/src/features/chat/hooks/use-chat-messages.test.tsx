@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useChatMessagesListener } from "./use-chat-messages";
 import { useGameStore } from "@/store/game.store";
@@ -66,7 +66,26 @@ vi.mock("@/lib/game", () => ({
 }));
 
 describe("useChatMessagesListener", () => {
+  let frameCallbacks: Map<number, FrameRequestCallback>;
+
   beforeEach(() => {
+    frameCallbacks = new Map();
+    let nextFrameId = 1;
+    vi.stubGlobal(
+      "requestAnimationFrame",
+      vi.fn((callback: FrameRequestCallback) => {
+        const frameId = nextFrameId;
+        nextFrameId += 1;
+        frameCallbacks.set(frameId, callback);
+        return frameId;
+      }),
+    );
+    vi.stubGlobal(
+      "cancelAnimationFrame",
+      vi.fn((frameId: number) => {
+        frameCallbacks.delete(frameId);
+      }),
+    );
     mocks.handlers.clear();
     mocks.presentNotifications.mockReset();
     mocks.sessionDiscordId = "current-discord";
@@ -97,6 +116,27 @@ describe("useChatMessagesListener", () => {
       map: { id: 1, name: "Map", visibility: 30 },
       world: "pandora",
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const flushAnimationFrame = () => {
+    const callbacks = [...frameCallbacks.values()];
+    frameCallbacks.clear();
+    for (const callback of callbacks) {
+      callback(0);
+    }
+  };
+
+  const createMessage = (id: string, guildId = "guild-1") => ({
+    id,
+    guildId,
+    senderId: `sender-${id}`,
+    message: `Message ${id}`,
+    timestamp: "2026-04-22T10:00:00.000Z",
+    characterData: { nick: `Sender ${id}` },
   });
 
   it("refetches active chat histories after the socket reconnects", () => {
@@ -246,5 +286,176 @@ describe("useChatMessagesListener", () => {
     });
 
     expect(renderCount).toBe(renderCountBeforeMovement);
+  });
+
+  it("publishes a fifteen-message burst to one guild cache once per frame", () => {
+    const onRemoteMessage = vi.fn();
+    renderHook(() => useChatMessagesListener({ onRemoteMessage }));
+    const handler = mocks.handlers.get(GatewayEvent.CHAT_MESSAGE);
+
+    for (let index = 0; index < 15; index += 1) {
+      handler?.(createMessage(String(index)) as never);
+    }
+
+    expect(mocks.queryClient.setQueryData).not.toHaveBeenCalled();
+    expect(onRemoteMessage).not.toHaveBeenCalled();
+
+    act(() => flushAnimationFrame());
+
+    expect(mocks.queryClient.setQueryData).toHaveBeenCalledOnce();
+    expect(onRemoteMessage).toHaveBeenCalledTimes(15);
+    const updater = mocks.queryClient.setQueryData.mock.calls[0]?.[1] as (
+      messages: unknown[] | undefined,
+    ) => Array<{ id: string }>;
+    expect(updater([]).map((message) => message.id)).toEqual(
+      Array.from({ length: 15 }, (_, index) => String(index)),
+    );
+  });
+
+  it("folds create, update, delete, and clear operations in receive order", () => {
+    renderHook(() => useChatMessagesListener());
+
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.(
+      createMessage("created") as never,
+    );
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE_UPDATE)?.({
+      guildId: "guild-1",
+      messageId: "created",
+      message: "Edited",
+    } as never);
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE_DELETE)?.({
+      guildId: "guild-1",
+      messageId: "created",
+    } as never);
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGES_CLEAR)?.({
+      guildId: "guild-1",
+    } as never);
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.(
+      createMessage("after-clear") as never,
+    );
+
+    act(() => flushAnimationFrame());
+
+    expect(mocks.queryClient.setQueryData).toHaveBeenCalledOnce();
+    const updater = mocks.queryClient.setQueryData.mock.calls[0]?.[1] as (
+      messages: unknown[] | undefined,
+    ) => Array<{ id: string }>;
+    expect(updater([createMessage("existing")])).toEqual([
+      createMessage("after-clear"),
+    ]);
+  });
+
+  it("publishes each organization at most once in the same frame", () => {
+    renderHook(() => useChatMessagesListener());
+    const handler = mocks.handlers.get(GatewayEvent.CHAT_MESSAGE);
+
+    handler?.(createMessage("guild-1-a", "guild-1") as never);
+    handler?.(createMessage("guild-2-a", "guild-2") as never);
+    handler?.(createMessage("guild-1-b", "guild-1") as never);
+    handler?.(createMessage("guild-2-b", "guild-2") as never);
+
+    act(() => flushAnimationFrame());
+
+    expect(mocks.queryClient.setQueryData).toHaveBeenCalledTimes(2);
+    expect(
+      mocks.queryClient.setQueryData.mock.calls.map((call) => call[0]),
+    ).toEqual([
+      ["/guilds/guild-1/chat-messages"],
+      ["/guilds/guild-2/chat-messages"],
+    ]);
+  });
+
+  it("flushes through the safety timeout when animation frames are paused", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "requestAnimationFrame",
+      vi.fn((callback: FrameRequestCallback) => {
+        frameCallbacks.set(1, callback);
+        return 1;
+      }),
+    );
+    vi.stubGlobal(
+      "cancelAnimationFrame",
+      vi.fn((frameId: number) => {
+        frameCallbacks.delete(frameId);
+      }),
+    );
+    const { unmount } = renderHook(() => useChatMessagesListener());
+    const handler = mocks.handlers.get(GatewayEvent.CHAT_MESSAGE);
+    handler?.(createMessage("background") as never);
+
+    act(() => {
+      vi.advanceTimersByTime(49);
+    });
+    expect(mocks.queryClient.setQueryData).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(mocks.queryClient.setQueryData).toHaveBeenCalledOnce();
+
+    unmount();
+    vi.useRealTimers();
+  });
+
+  it("flushes accepted operations during ordinary cleanup", () => {
+    const { unmount } = renderHook(() => useChatMessagesListener());
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.(
+      createMessage("before-unmount") as never,
+    );
+
+    expect(mocks.queryClient.setQueryData).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(mocks.queryClient.setQueryData).toHaveBeenCalledOnce();
+  });
+
+  it("discards pending operations before removing caches on account loss", () => {
+    const { rerender } = renderHook(() => useChatMessagesListener());
+    mocks.queryClient.removeQueries.mockClear();
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.(
+      createMessage("old-account") as never,
+    );
+
+    mocks.sessionDiscordId = undefined;
+    rerender();
+    act(() => flushAnimationFrame());
+
+    expect(mocks.queryClient.removeQueries).toHaveBeenCalledOnce();
+    expect(mocks.queryClient.setQueryData).not.toHaveBeenCalled();
+  });
+
+  it("drops pending operations for a guild before removing its cache", () => {
+    mocks.socketState.joinedGuilds = ["guild-1", "guild-2"];
+    const { rerender } = renderHook(() => useChatMessagesListener());
+    const handler = mocks.handlers.get(GatewayEvent.CHAT_MESSAGE);
+    handler?.(createMessage("kept", "guild-1") as never);
+    handler?.(createMessage("dropped", "guild-2") as never);
+
+    mocks.socketState.joinedGuilds = ["guild-1"];
+    rerender();
+    act(() => flushAnimationFrame());
+
+    expect(mocks.queryClient.setQueryData).toHaveBeenCalledOnce();
+    expect(mocks.queryClient.setQueryData.mock.calls[0]?.[0]).toEqual([
+      "/guilds/guild-1/chat-messages",
+    ]);
+  });
+
+  it("keeps accepted messages across a socket reconnect", () => {
+    const { rerender } = renderHook(() => useChatMessagesListener());
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.(
+      createMessage("during-reconnect") as never,
+    );
+
+    mocks.socketState.connected = false;
+    rerender();
+    mocks.socketState.connected = true;
+    rerender();
+    act(() => flushAnimationFrame());
+
+    expect(mocks.queryClient.setQueryData).toHaveBeenCalledOnce();
+    expect(mocks.queryClient.invalidateQueries).toHaveBeenCalledOnce();
   });
 });
