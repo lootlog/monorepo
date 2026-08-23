@@ -1,7 +1,7 @@
 import { GatewayEvent } from "@/config/gateway";
 import type { ChatMessage } from "@/api/chat.api";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSocket } from "@/contexts/socket-context";
 import {
   getGuildMembersSummaryQueryKey,
@@ -11,11 +11,6 @@ import {
   getMembersControllerGetMeQueryKey,
   membersControllerGetMe,
 } from "@lootlog/api-client/react-query/main/members";
-import {
-  removeChatMessage,
-  updateChatMessage,
-  upsertChatMessage,
-} from "@/features/chat/chat.helpers";
 import { useNotificationPresenter } from "@/features/notifications/hooks/use-notification-presenter";
 import {
   getChatMentionNotificationId,
@@ -30,8 +25,8 @@ import {
   invalidateChatMessagesQueries,
   removeAllChatMessagesQueries,
   removeChatMessagesQueriesOutsideGuilds,
-  updateChatMessagesCache,
 } from "@/features/chat/chat-query-cache.helpers";
+import { createChatCacheBatcher } from "@/features/chat/chat-cache-batcher";
 
 type UseChatMessagesListenerOptions = {
   onRemoteMessage?: (data: ChatMessage) => void;
@@ -45,6 +40,9 @@ export const useChatMessagesListener = (
   const { connected, joined, joinedGuilds, socket } = useSocket();
   const { data: sessionData } = useSession();
   const { presentNotifications } = useNotificationPresenter();
+  const [chatCacheBatcher] = useState(() =>
+    createChatCacheBatcher(queryClient),
+  );
   const runtimeAccountId = useGameStore(
     (state) => state.game?.hero.accountId ?? "",
   );
@@ -60,6 +58,12 @@ export const useChatMessagesListener = (
   const wasConnectedRef = useRef(connected);
   const accountCacheIdentity = `${sessionData?.user?.discordId ?? ""}\u0000${runtimeAccountId}`;
   const previousAccountCacheIdentityRef = useRef(accountCacheIdentity);
+  useEffect(
+    () => () => {
+      chatCacheBatcher.flush();
+    },
+    [chatCacheBatcher],
+  );
   useEffect(() => {
     sessionDiscordIdRef.current = sessionData?.user?.discordId;
     runtimeIdentityRef.current = {
@@ -86,20 +90,24 @@ export const useChatMessagesListener = (
 
   useEffect(() => {
     if (previousAccountCacheIdentityRef.current !== accountCacheIdentity) {
+      chatCacheBatcher.discardAll();
       removeAllChatMessagesQueries(queryClient);
       previousAccountCacheIdentityRef.current = accountCacheIdentity;
     }
-  }, [accountCacheIdentity, queryClient]);
+  }, [accountCacheIdentity, chatCacheBatcher, queryClient]);
 
   useEffect(() => {
     if (!joined) {
       return;
     }
 
+    chatCacheBatcher.discardOutsideGuilds(joinedGuilds);
     removeChatMessagesQueriesOutsideGuilds(queryClient, joinedGuilds);
-  }, [joined, joinedGuilds, queryClient]);
+  }, [chatCacheBatcher, joined, joinedGuilds, queryClient]);
 
-  const handlerRef = useRef<(data: ChatMessage) => void>(() => undefined);
+  const handlerRef = useRef<
+    (data: ChatMessage, afterFlush?: () => void) => void
+  >(() => undefined);
   const mentionNotificationRef = useRef<
     (data: ChatMessage) => void | Promise<void>
   >(() => undefined);
@@ -114,13 +122,8 @@ export const useChatMessagesListener = (
   );
 
   useEffect(() => {
-    handlerRef.current = (data) => {
-      updateChatMessagesCache({
-        guildId: data.guildId,
-        queryClient,
-        updater: (old: ChatMessage[] | undefined) =>
-          upsertChatMessage(old, data),
-      });
+    handlerRef.current = (data, afterFlush) => {
+      chatCacheBatcher.enqueue({ kind: "create", message: data }, afterFlush);
 
       if (!options?.prefetchMembers) {
         return;
@@ -194,42 +197,44 @@ export const useChatMessagesListener = (
       }
     };
     deleteHandlerRef.current = (data) => {
-      updateChatMessagesCache({
+      chatCacheBatcher.enqueue({
         guildId: data.guildId,
-        queryClient,
-        updater: (old: ChatMessage[] | undefined) =>
-          old ? removeChatMessage(old, data.messageId) : old,
+        kind: "delete",
+        messageId: data.messageId,
       });
     };
     updateHandlerRef.current = (data) => {
-      updateChatMessagesCache({
+      chatCacheBatcher.enqueue({
         guildId: data.guildId,
-        queryClient,
-        updater: (old: ChatMessage[] | undefined) =>
-          old ? updateChatMessage(old, data.messageId, data.message) : old,
+        kind: "update",
+        message: data.message,
+        messageId: data.messageId,
       });
     };
     clearHandlerRef.current = (data) => {
-      updateChatMessagesCache({
+      chatCacheBatcher.enqueue({
         guildId: data.guildId,
-        queryClient,
-        updater: [],
+        kind: "clear",
       });
     };
-  }, [options?.prefetchMembers, presentNotifications, queryClient]);
+  }, [
+    chatCacheBatcher,
+    options?.prefetchMembers,
+    presentNotifications,
+    queryClient,
+  ]);
 
   useEffect(() => {
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
 
     const onChatMessage = (data: ChatMessage) => {
-      handlerRef.current(data);
-
-      if (
+      const isRemoteMessage =
         data.senderId !== sessionDiscordIdRef.current &&
-        data.characterData.nick !== runtimeIdentityRef.current.heroName
-      ) {
-        onRemoteMessageRef.current?.(data);
-      }
+        data.characterData.nick !== runtimeIdentityRef.current.heroName;
+      handlerRef.current(
+        data,
+        isRemoteMessage ? () => onRemoteMessageRef.current?.(data) : undefined,
+      );
 
       void mentionNotificationRef.current(data);
     };

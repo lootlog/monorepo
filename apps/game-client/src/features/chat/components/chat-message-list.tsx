@@ -10,10 +10,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
 import { getChatDensityStyle } from "../chat-density";
 import { createChatScrollController } from "../chat-scroll-controller";
 import { subscribeToChatScrollToMessage } from "../chat-scroll-to-message";
-import {
-  getChatRenderableMessagesSignature,
-  type ChatRenderableMessage,
-} from "../chat.helpers";
+import type { ChatRenderableMessage } from "../chat.helpers";
 import { ChatDateDivider } from "./chat-date-divider";
 import { EmptyState } from "@/components/empty-state";
 import { MessageCircle } from "lucide-react";
@@ -46,31 +43,18 @@ type ChatViewportAnchor = {
   rowKey: string;
 };
 
-const refreshDisplayedChatRenderables = (
-  displayedRenderables: ChatRenderableMessage[],
-  latestRenderables: ChatRenderableMessage[],
-) => {
-  const latestRenderablesByKey = new Map(
-    latestRenderables.map((renderable) => [renderable.key, renderable]),
-  );
-
-  return displayedRenderables.map(
-    (renderable) => latestRenderablesByKey.get(renderable.key) ?? renderable,
-  );
-};
-
 export const ChatMessageList: FC<ChatMessageListProps> = ({
   appearance = CHAT_APPEARANCE_READABLE_PRESET,
   npcTypeColors,
   ariaLabel,
   emptyStateTitle,
   guildNamesById,
-  hasRenderableMessages: latestHasRenderableMessages,
+  hasRenderableMessages,
   membersByGuildId,
   mentionContextsByGuildId,
   onReplyToMessage,
-  renderSignature: latestRenderSignature,
-  renderables: latestRenderables,
+  renderSignature,
+  renderables,
   scrollToBottomRequest = 0,
   selectedGuildId,
 }) => {
@@ -98,49 +82,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       nearBottomThreshold: CHAT_AUTOSCROLL_THRESHOLD_PX,
     }),
   );
-  const [displayedMessages, setDisplayedMessages] = useState({
-    hasRenderableMessages: latestHasRenderableMessages,
-    renderSignature: latestRenderSignature,
-    renderables: latestRenderables,
-  });
-  const { hasRenderableMessages, renderSignature, renderables } =
-    displayedMessages;
   const hasRenderedRows = renderables.length > 0;
-
-  useEffect(() => {
-    const ownMessageScrollRequested =
-      scrollToBottomRequest !== previousScrollToBottomRequestRef.current;
-    const shouldUseLatestMessages =
-      scrollController.getMode() !== "reading-history" ||
-      ownMessageScrollRequested;
-
-    setDisplayedMessages((currentMessages) => {
-      if (shouldUseLatestMessages) {
-        return {
-          hasRenderableMessages: latestHasRenderableMessages,
-          renderSignature: latestRenderSignature,
-          renderables: latestRenderables,
-        };
-      }
-
-      const refreshedRenderables = refreshDisplayedChatRenderables(
-        currentMessages.renderables,
-        latestRenderables,
-      );
-      return {
-        ...currentMessages,
-        renderSignature:
-          getChatRenderableMessagesSignature(refreshedRenderables),
-        renderables: refreshedRenderables,
-      };
-    });
-  }, [
-    latestHasRenderableMessages,
-    latestRenderSignature,
-    latestRenderables,
-    scrollController,
-    scrollToBottomRequest,
-  ]);
 
   getScrollSnapshotRef.current = () => {
     const scrollViewport = scrollAreaRef.current;
@@ -217,18 +159,26 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
     if (!scrollViewport) return;
 
     const updateScrollState = () => {
-      scrollController.observe(getScrollSnapshotRef.current());
+      const snapshot = getScrollSnapshotRef.current();
+      scrollController.observe(snapshot);
       if (scrollController.getMode() === "reading-history") {
         captureViewportAnchorRef.current();
       }
     };
     const registerUserScrollIntent = () => {
-      scrollController.registerUserScrollIntent(getScrollSnapshotRef.current());
+      const snapshot = getScrollSnapshotRef.current();
+      scrollController.registerUserScrollIntent(snapshot);
     };
     const handleWheel = (event: WheelEvent) => {
       if (event.deltaY === 0) return;
       registerUserScrollIntent();
       captureViewportAnchorRef.current();
+    };
+    const handleTouchStart = () => {
+      registerUserScrollIntent();
+    };
+    const handlePointerDown = () => {
+      registerUserScrollIntent();
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -252,10 +202,10 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       passive: true,
     });
     scrollViewport.addEventListener("wheel", handleWheel, { passive: true });
-    scrollViewport.addEventListener("touchstart", registerUserScrollIntent, {
+    scrollViewport.addEventListener("touchstart", handleTouchStart, {
       passive: true,
     });
-    scrollViewport.addEventListener("pointerdown", registerUserScrollIntent, {
+    scrollViewport.addEventListener("pointerdown", handlePointerDown, {
       passive: true,
     });
     scrollViewport.addEventListener("keydown", handleKeyDown);
@@ -263,14 +213,8 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
     return () => {
       scrollViewport.removeEventListener("scroll", updateScrollState);
       scrollViewport.removeEventListener("wheel", handleWheel);
-      scrollViewport.removeEventListener(
-        "touchstart",
-        registerUserScrollIntent,
-      );
-      scrollViewport.removeEventListener(
-        "pointerdown",
-        registerUserScrollIntent,
-      );
+      scrollViewport.removeEventListener("touchstart", handleTouchStart);
+      scrollViewport.removeEventListener("pointerdown", handlePointerDown);
       scrollViewport.removeEventListener("keydown", handleKeyDown);
     };
   }, [scrollController]);
@@ -284,7 +228,9 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
 
       resizeCorrectionFrameRef.current = requestAnimationFrame(() => {
         resizeCorrectionFrameRef.current = null;
-        if (scrollController.shouldFollowNewMessages()) {
+        const shouldFollowNewMessages =
+          scrollController.shouldFollowNewMessages();
+        if (shouldFollowNewMessages) {
           scrollToPhysicalBottomRef.current();
         } else {
           restoreViewportAnchorRef.current();

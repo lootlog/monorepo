@@ -386,6 +386,26 @@ describe("ChatMessageList", () => {
     );
   });
 
+  it("does not snap a small explicit upward scroll to the bottom when content resizes", () => {
+    renderMessageList(createRenderables(120));
+    const viewport = screen.getByTestId("chat-scroll-viewport");
+    const userScrollTop = viewport.scrollHeight - viewport.clientHeight - 3;
+
+    fireEvent.wheel(viewport, { deltaY: -3 });
+    viewport.scrollTop = userScrollTop;
+    fireEvent.scroll(viewport);
+    scrollRequests.length = 0;
+
+    triggerMessageListResize();
+    flushAnimationFrames(2);
+
+    expect(viewport.scrollTop).toBe(userScrollTop);
+    expect(scrollRequests.at(-1)).toMatchObject({
+      behavior: "auto",
+      top: userScrollTop,
+    });
+  });
+
   it("reflows appearance at the bottom without starting a scroll animation", () => {
     const renderables = createRenderables(120);
     const readableAppearance: ChatAppearanceSettings = {
@@ -525,7 +545,7 @@ describe("ChatMessageList", () => {
       (viewport: HTMLElement) => fireEvent.pointerDown(viewport),
     ],
   ])(
-    "keeps history frozen after %s input moves beyond 72 px",
+    "renders new messages without moving after %s input moves beyond 72 px",
     (_inputMethod, registerIntent) => {
       const initialRenderables = createRenderables(120);
       const { rerender } = renderMessageList(initialRenderables);
@@ -541,26 +561,25 @@ describe("ChatMessageList", () => {
       rerender(createMessageListElement(createRenderables(121)));
 
       expect(viewport.scrollTop).toBe(historyScrollTop);
-      expect(screen.queryByTestId("message-120")).not.toBeInTheDocument();
+      expect(screen.getByTestId("message-120")).toBeInTheDocument();
       expect(scrollRequests).toHaveLength(0);
     },
   );
 
-  it("continues following inside the 72 px bottom zone", () => {
+  it("renders new messages without moving after explicit upward movement inside the 72 px bottom zone", () => {
     const initialRenderables = createRenderables(120);
     const { rerender } = renderMessageList(initialRenderables);
     const viewport = screen.getByTestId("chat-scroll-viewport");
+    const historyScrollTop = viewport.scrollHeight - viewport.clientHeight - 72;
 
     fireEvent.wheel(viewport, { deltaY: -72 });
-    viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight - 72;
+    viewport.scrollTop = historyScrollTop;
     fireEvent.scroll(viewport);
 
     rerender(createMessageListElement(createRenderables(121)));
 
     expect(screen.getByTestId("message-120")).toBeInTheDocument();
-    expect(viewport.scrollTop).toBe(
-      viewport.scrollHeight - viewport.clientHeight,
-    );
+    expect(viewport.scrollTop).toBe(historyScrollTop);
   });
 
   it("shows updates to an existing party gathering while reading history", () => {
@@ -609,7 +628,7 @@ describe("ChatMessageList", () => {
     expect(viewport.scrollTop).toBe(0);
   });
 
-  it("freezes the rendered snapshot when the bounded history evicts an entry", () => {
+  it("preserves the anchor while bounded history replaces its oldest entry", () => {
     const initialRenderables = createRenderables(500);
     const { rerender } = renderMessageList(initialRenderables);
     const viewport = screen.getByTestId("chat-scroll-viewport");
@@ -617,16 +636,21 @@ describe("ChatMessageList", () => {
     viewport.scrollTop = 5_000;
     fireEvent.scroll(viewport);
     const anchoredKey = getFirstVisibleRow()?.dataset.chatRowKey;
+    const anchoredOffset = getFirstVisibleRow()?.getBoundingClientRect().top;
     expect(anchoredKey).toBeDefined();
 
     rerender(createMessageListElement(createRenderables(501).slice(1)));
+    triggerMessageListResize();
+    flushAnimationFrames(2);
 
-    expect(
-      screen
-        .getAllByRole("listitem")
-        .some((row) => row.dataset.chatRowKey === anchoredKey),
-    ).toBe(true);
-    expect(screen.queryByTestId("message-500")).not.toBeInTheDocument();
+    const anchoredRow = screen
+      .getAllByRole("listitem")
+      .find((row) => row.dataset.chatRowKey === anchoredKey);
+    expect(anchoredRow?.getBoundingClientRect().top).toBeCloseTo(
+      anchoredOffset ?? 0,
+    );
+    expect(screen.queryByTestId("message-0")).not.toBeInTheDocument();
+    expect(screen.getByTestId("message-500")).toBeInTheDocument();
   });
 
   it("follows consecutive messages at the bottom without smooth animation", () => {
