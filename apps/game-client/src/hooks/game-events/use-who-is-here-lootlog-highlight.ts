@@ -20,6 +20,11 @@ const WHO_IS_HERE_ROOT_SELECTOR = ".whoishere-window";
 const WHO_IS_HERE_ROW_SELECTOR = ".whoishere-window .one-other[data-id]";
 const WHO_IS_HERE_COLOR_PROPERTY = "--ll-who-is-here-lootlog-color";
 const WHO_IS_HERE_DISCOVERY_INTERVAL_MS = 250;
+const EMPTY_ENTRIES_BY_KEY: Readonly<Record<string, never>> = Object.freeze({});
+const EMPTY_OTHERS_BY_ID: Readonly<Record<string, RuntimeOther>> =
+  Object.freeze({});
+const EMPTY_OWNERS_BY_CHARACTER_KEY: Readonly<Record<string, never>> =
+  Object.freeze({});
 
 const observeWhoIsHereMutations = (
   observer: MutationObserver,
@@ -115,29 +120,31 @@ function isMovingInsideRow(
 
 export function useWhoIsHereLootlogHighlight(): void {
   const hoveredRowRef = useRef<HTMLElement | null>(null);
-  const entriesByKey = useCharacterTooltipCatchingGuildsStore(
-    (state) => state.entriesByKey,
-  );
+  const wasActiveRef = useRef(false);
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
-  const activeTarget = useCharacterTooltipCatchingGuildsStore(
-    (state) => state.activeTarget,
-  );
-  const othersById = useOthersStore((state) => state.othersById);
-  const ownersByCharacterKey = useOnlineCharacterOwnersStore(
-    (state) => state.ownersByCharacterKey,
-  );
   const selectedGuildId = useSelectedLootlogGuildId();
+  const activeGuildId = isConcreteLootlogGuildId(selectedGuildId)
+    ? selectedGuildId
+    : null;
+  const active = isShiftPressed && activeGuildId !== null;
+  const entriesByKey = useCharacterTooltipCatchingGuildsStore((state) =>
+    active ? state.entriesByKey : EMPTY_ENTRIES_BY_KEY,
+  );
+  const activeTarget = useCharacterTooltipCatchingGuildsStore((state) =>
+    active ? state.activeTarget : null,
+  );
+  const othersById = useOthersStore((state) =>
+    active ? state.othersById : EMPTY_OTHERS_BY_ID,
+  );
+  const ownersByCharacterKey = useOnlineCharacterOwnersStore((state) =>
+    active ? state.ownersByCharacterKey : EMPTY_OWNERS_BY_CHARACTER_KEY,
+  );
   const refreshRows = useEffectEvent(() => {
-    const rows = getWhoIsHereRows();
+    if (activeGuildId === null) return;
 
-    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
-      for (const row of rows) {
-        clearRowHighlight(row);
-      }
-      return;
-    }
+    const rows = getWhoIsHereRows();
 
     for (const row of rows) {
       const other = getRowOther(row, othersById);
@@ -149,7 +156,7 @@ export function useWhoIsHereLootlogHighlight(): void {
         continue;
       }
 
-      setRowHighlight(row, getLootlogOtherGlowColor(entry, selectedGuildId));
+      setRowHighlight(row, getLootlogOtherGlowColor(entry, activeGuildId));
     }
   });
 
@@ -159,16 +166,19 @@ export function useWhoIsHereLootlogHighlight(): void {
     return () => {
       cleanupStyle();
 
-      for (const row of getWhoIsHereRows()) {
-        clearRowHighlight(row);
+      if (wasActiveRef.current) {
+        for (const row of getWhoIsHereRows()) {
+          clearRowHighlight(row);
+        }
       }
     };
   }, []);
 
   useEffect(() => {
-    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
+    if (!active) {
       return () => undefined;
     }
+    wasActiveRef.current = true;
 
     let animationFrameId: number | null = null;
     const scheduleMutationRefresh = () => {
@@ -215,18 +225,17 @@ export function useWhoIsHereLootlogHighlight(): void {
       }
 
       observer.disconnect();
+
+      for (const row of getWhoIsHereRows()) {
+        clearRowHighlight(row);
+      }
     };
-  }, [isShiftPressed, selectedGuildId]);
+  }, [active]);
 
   useEffect(() => {
+    if (!active) return;
     refreshRows();
-  }, [
-    entriesByKey,
-    isShiftPressed,
-    othersById,
-    ownersByCharacterKey,
-    selectedGuildId,
-  ]);
+  }, [active, entriesByKey, othersById, ownersByCharacterKey]);
 
   useEffect(() => {
     const handleMouseOver = (event: MouseEvent) => {
@@ -276,7 +285,10 @@ export function useWhoIsHereLootlogHighlight(): void {
     const hoveredRow = hoveredRowRef.current;
     if (!hoveredRow) return;
 
-    const other = getRowOther(hoveredRow, othersById);
+    const currentOthersById = active
+      ? othersById
+      : useOthersStore.getState().othersById;
+    const other = getRowOther(hoveredRow, currentOthersById);
     if (!other) return;
 
     if (isShiftPressed) {
@@ -293,10 +305,10 @@ export function useWhoIsHereLootlogHighlight(): void {
     ) {
       useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
     }
-  }, [isShiftPressed, othersById]);
+  }, [active, isShiftPressed, othersById]);
 
   useEffect(() => {
-    if (!isShiftPressed || !activeTarget) return;
+    if (!active || !activeTarget) return;
 
     const row = document.querySelector<HTMLElement>(
       `${WHO_IS_HERE_ROW_SELECTOR}[data-id="${getEscapedSelectorValue(
@@ -316,5 +328,5 @@ export function useWhoIsHereLootlogHighlight(): void {
     }
 
     refreshWhoIsHereTooltip(row, other);
-  }, [activeTarget, entriesByKey, isShiftPressed, othersById]);
+  }, [active, activeTarget, entriesByKey, othersById]);
 }

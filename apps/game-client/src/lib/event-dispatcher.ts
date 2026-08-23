@@ -1,5 +1,8 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
+import {
+  runtimeEventPipeline,
+  type RuntimeEventPipeline,
+} from "@/lib/margonem-runtime/runtime-event-pipeline";
 import { BattleEventProcessor } from "@/processors/battle-event-processor";
 import { LootEventProcessor } from "@/processors/loot-event-processor";
 import { ChatEventProcessor } from "@/processors/chat-event-processor";
@@ -43,6 +46,16 @@ export class EventDispatcher {
   private afk = new AfkProcessor();
   private other = new OtherEventProcessor();
   private releaseProcessor: (() => boolean) | null = null;
+  private readonly pipeline: Pick<RuntimeEventPipeline, "acquireProcessor">;
+
+  constructor(
+    pipeline: Pick<
+      RuntimeEventPipeline,
+      "acquireProcessor"
+    > = runtimeEventPipeline,
+  ) {
+    this.pipeline = pipeline;
+  }
 
   handleEvent = (event: GameEvent): void => {
     for (const fact of parseRuntimeFacts(event)) this.handleFact(fact);
@@ -108,9 +121,7 @@ export class EventDispatcher {
 
   register(): void {
     this.releaseProcessor?.();
-    this.releaseProcessor = margonemRuntimeBridge.acquireProcessor(
-      this.handleEnvelope,
-    );
+    this.releaseProcessor = this.pipeline.acquireProcessor(this.handleEnvelope);
   }
 
   cleanup(): void {

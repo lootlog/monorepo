@@ -1,5 +1,4 @@
 import type { Other } from "@lootlog/margonem/others";
-import { useOthersStore } from "@/store/others.store";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { characterTooltipTransforms } from "./registry";
@@ -23,6 +22,7 @@ let cleanupCurrentInstallation: (() => void) | null = null;
 let originalCanvasTipHide: OriginalCanvasTipHide | null = null;
 let originalCanvasTipShow: OriginalCanvasTipShow | null = null;
 let lastOtherCanvasTipEvent: unknown = null;
+let lastOtherCanvasTipObject: Other | null = null;
 const patchedCharacters = new Set<MargonemTooltipCharacter>();
 const patchedOtherPrototypes = new Set<MargonemTooltipCharacter>();
 
@@ -168,13 +168,17 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
   canvasTip.show = (event, object) => {
     if (isOtherCanvasObject(object)) {
       lastOtherCanvasTipEvent = event;
-      useCharacterTooltipCatchingGuildsStore.getState().setActiveOther(object);
+      lastOtherCanvasTipObject = object;
 
       if (useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+        useCharacterTooltipCatchingGuildsStore
+          .getState()
+          .setActiveOther(object);
         patchOtherCharacterTooltip(object);
       }
     } else {
       lastOtherCanvasTipEvent = null;
+      lastOtherCanvasTipObject = null;
       useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
     }
 
@@ -183,6 +187,7 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
 
   canvasTip.hide = (event) => {
     lastOtherCanvasTipEvent = null;
+    lastOtherCanvasTipObject = null;
     useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
     return originalCanvasTipHide?.call(canvasTip, event);
   };
@@ -200,26 +205,8 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
     originalCanvasTipShow = null;
     originalCanvasTipHide = null;
     lastOtherCanvasTipEvent = null;
+    lastOtherCanvasTipObject = null;
   };
-}
-
-export function refreshCharacterTooltips(): void {
-  prunePatchedCharacters();
-  const hero = getRuntimeHeroTooltipOwner();
-
-  if (hero) {
-    if (patchCreateStrTip(hero, "hero")) {
-      patchedCharacters.add(hero);
-    }
-
-    if (patchedCreateStrTip.has(hero)) {
-      refreshCharacterTooltip(hero);
-    }
-  }
-
-  for (const other of Object.values(runtimeOtherHandles.getAll())) {
-    refreshCharacterTooltip(other);
-  }
 }
 
 export function patchOtherCharacterTooltip(other: Other): void {
@@ -235,9 +222,16 @@ export function patchOtherCharacterTooltip(other: Other): void {
 }
 
 export function refreshActiveOtherCanvasTooltip(): void {
-  const activeOther =
-    useCharacterTooltipCatchingGuildsStore.getState().activeOther;
+  const state = useCharacterTooltipCatchingGuildsStore.getState();
+  if (!state.isShiftPressed) {
+    state.clearActiveOther();
+    return;
+  }
+
+  const activeOther = state.activeOther ?? lastOtherCanvasTipObject;
   if (!activeOther) return;
+
+  state.setActiveOther(activeOther);
 
   patchOtherCharacterTooltip(activeOther);
 
@@ -265,19 +259,12 @@ export function installCharacterTooltipTransforms(): () => void {
     return () => undefined;
   }
   const cleanupCanvasTip = canvasTip ? patchCanvasTip(canvasTip) : null;
-  const unsubscribeOthersStore = useOthersStore.subscribe(
-    prunePatchedCharacters,
-  );
-
   if (hero && patchCreateStrTip(hero, "hero")) {
     patchedCharacters.add(hero);
     refreshCharacterTooltip(hero);
   }
 
-  patchOtherCharacterTooltips(Object.values(runtimeOtherHandles.getAll()));
-
   cleanupCurrentInstallation = () => {
-    unsubscribeOthersStore();
     cleanupCanvasTip?.();
 
     for (const character of patchedCharacters) {

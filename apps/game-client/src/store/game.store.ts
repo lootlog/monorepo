@@ -13,6 +13,43 @@ type GameState = {
   replaceGame: (game: RuntimeGameSnapshot, mapChanged?: boolean) => void;
 };
 
+function areClansEqual(
+  current: RuntimeGameSnapshot["hero"]["clan"],
+  incoming: RuntimeGameSnapshot["hero"]["clan"],
+): boolean {
+  if (current === incoming) return true;
+  if (!current || !incoming) return false;
+  return (
+    current.id === incoming.id &&
+    current.name === incoming.name &&
+    current.rank === incoming.rank
+  );
+}
+
+function areGameSnapshotsEqual(
+  current: RuntimeGameSnapshot,
+  incoming: RuntimeGameSnapshot,
+): boolean {
+  return (
+    current.interface === incoming.interface &&
+    current.world === incoming.world &&
+    current.map.id === incoming.map.id &&
+    current.map.name === incoming.map.name &&
+    current.map.visibility === incoming.map.visibility &&
+    current.hero.accountId === incoming.hero.accountId &&
+    current.hero.characterId === incoming.hero.characterId &&
+    current.hero.currentHp === incoming.hero.currentHp &&
+    current.hero.icon === incoming.hero.icon &&
+    current.hero.level === incoming.hero.level &&
+    current.hero.maxHp === incoming.hero.maxHp &&
+    current.hero.name === incoming.hero.name &&
+    current.hero.profession === incoming.hero.profession &&
+    current.hero.x === incoming.hero.x &&
+    current.hero.y === incoming.hero.y &&
+    areClansEqual(current.hero.clan, incoming.hero.clan)
+  );
+}
+
 export const useGameStore = create<GameState>()((set) => ({
   game: null,
   mapEpoch: 0,
@@ -26,20 +63,32 @@ export const useGameStore = create<GameState>()((set) => ({
       status: "uninitialized",
     })),
   replaceGame: (game, mapChanged = false) =>
-    set((state) => ({
-      game: Object.freeze({
-        hero: Object.freeze({
-          ...game.hero,
-          clan: game.hero.clan
-            ? Object.freeze({ ...game.hero.clan })
-            : undefined,
-        }),
-        interface: game.interface,
-        map: Object.freeze({ ...game.map }),
-        world: game.world,
-      }),
-      mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
-      revision: state.revision + 1,
-      status: "ready",
-    })),
+    set((state) => {
+      const gameUnchanged = Boolean(
+        state.game && areGameSnapshotsEqual(state.game, game),
+      );
+      if (!mapChanged && state.status === "ready" && gameUnchanged) {
+        return state;
+      }
+
+      return {
+        game:
+          gameUnchanged && state.game
+            ? state.game
+            : Object.freeze({
+                hero: Object.freeze({
+                  ...game.hero,
+                  clan: game.hero.clan
+                    ? Object.freeze({ ...game.hero.clan })
+                    : undefined,
+                }),
+                interface: game.interface,
+                map: Object.freeze({ ...game.map }),
+                world: game.world,
+              }),
+        mapEpoch: mapChanged ? state.mapEpoch + 1 : state.mapEpoch,
+        revision: state.revision + 1,
+        status: "ready",
+      };
+    }),
 }));

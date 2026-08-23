@@ -434,6 +434,53 @@ describe("useOtherCatchingGuildGlow", () => {
     expect(lootlogOtherGlowManager.getNativeGlowSuppressed()).toBe(false);
   });
 
+  it("installs the NI drawable wrapper only while glow mode is active", () => {
+    useSettingsStore.setState({
+      guildIdByCharId: {
+        "101": "guild-blue",
+      },
+    });
+    const engineOthers = (
+      testRuntimeWindow.Engine as {
+        others: { getDrawableList: () => unknown[] };
+      }
+    ).others;
+    const originalGetDrawableList = engineOthers.getDrawableList;
+
+    const { unmount } = renderHook(() => useOtherCatchingGuildGlow());
+
+    expect(engineOthers.getDrawableList).toBe(originalGetDrawableList);
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    });
+    expect(engineOthers.getDrawableList).not.toBe(originalGetDrawableList);
+
+    act(() => {
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
+    });
+    expect(engineOthers.getDrawableList).toBe(originalGetDrawableList);
+    unmount();
+  });
+
+  it("does not rerender for other or presence updates while inactive", () => {
+    let renderCount = 0;
+    const { unmount } = renderHook(() => {
+      renderCount += 1;
+      useOtherCatchingGuildGlow();
+    });
+    const renderCountBeforeUpdates = renderCount;
+    const other = createOther("1");
+
+    act(() => {
+      useOthersStore.getState().setMany({ "1": other });
+      setOnlineOwners({ "1": other });
+    });
+
+    expect(renderCount).toBe(renderCountBeforeUpdates);
+    unmount();
+  });
+
   it("does not run or suppress native glow when all Discords are selected", () => {
     const other = createOther("1");
     useOthersStore.getState().setMany({ "1": other });

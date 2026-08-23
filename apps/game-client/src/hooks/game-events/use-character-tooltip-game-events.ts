@@ -1,41 +1,44 @@
 import { useEffect } from "react";
-import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
+import { runtimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipeline";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { patchOtherCharacterTooltips } from "@/lib/margonem-tooltips/patcher";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
-import { useGlobalStore } from "@/store/global.store";
 import type { OtherEntry } from "@lootlog/margonem/game-events";
 import type { Other } from "@lootlog/margonem/others";
 
-function isDeletedOther(entry: OtherEntry): boolean {
-  return "del" in entry && entry.del === 1;
+function createsOther(entry: OtherEntry): boolean {
+  return "action" in entry && entry.action === "CREATE";
 }
 
 export function useCharacterTooltipGameEvents(): void {
-  const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
+  const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
+    (state) => state.isShiftPressed,
+  );
 
   useEffect(() => {
-    if (!gameInitialized) return;
+    if (!isShiftPressed) return;
 
     patchOtherCharacterTooltips(Object.values(runtimeOtherHandles.getAll()));
-  }, [gameInitialized]);
+  }, [isShiftPressed]);
 
   useEffect(() => {
-    return margonemRuntimeBridge.subscribeApplied((envelope) => {
+    return runtimeEventPipeline.subscribeProjected((envelope) => {
       const event = envelope.raw;
       if (!event) return;
-      const changedOthers: Other[] = [];
 
       if (event.town) {
         useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
       }
 
+      if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+        return;
+      }
+
       if (!event.other) return;
+      const changedOthers: Other[] = [];
 
       for (const [id, entry] of Object.entries(event.other)) {
-        if (isDeletedOther(entry)) {
-          continue;
-        }
+        if (!createsOther(entry)) continue;
 
         const runtimeOther = runtimeOtherHandles.get(id);
         if (!runtimeOther) continue;
@@ -43,7 +46,9 @@ export function useCharacterTooltipGameEvents(): void {
         changedOthers.push(runtimeOther);
       }
 
-      patchOtherCharacterTooltips(changedOthers);
+      if (changedOthers.length > 0) {
+        patchOtherCharacterTooltips(changedOthers);
+      }
     });
   }, []);
 }
