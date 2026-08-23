@@ -7,30 +7,29 @@ Lootlog. It shields features from NI/SI implementation details and preserves
 Margonem's behavior exactly. Observing a request or response must never mutate,
 replace, delay, suppress, or supplement it.
 
-The bridge has three streams:
+The bridge has two streams:
 
 1. `intent` describes a supported outgoing user action. The first intent is
    `talk`, containing the clicked NPC ID and the best snapshot available at the
    time of the request.
-2. `incoming` describes a server response before Margonem applies it. Processors
-   use it when pre-event state or exact packet ordering matters.
-3. `applied` describes the same envelope after the original Margonem handler
-   returns successfully. Domain state is reconciled only on this stream.
+2. `applied` describes a response after the original Margonem handler returns
+   successfully. The bridge does not parse or route ordinary packets before
+   Margonem.
 
-Incoming observers are additive, but the domain event processor has shared
-ownership. Overlapping client registrations keep one full-envelope processor
-active until the final registration is released. This prevents duplicate
-backend effects without filtering, coalescing, or modifying inbound packets.
+`RuntimeEventPipeline` owns the bounded FIFO queue, store projection, and the
+single shared domain processor. Overlapping client registrations keep one
+processor active until the final registration is released. Applied observers
+only enqueue work; projection and processors run in a later macrotask after the
+Margonem call has returned.
 
 `applied` is not emitted when the original handler throws. The original `this`,
 argument objects, callbacks, exception, and return value are preserved.
 Every observer is isolated from every other observer and from Margonem. An
-`intent`, `incoming`, or `applied` subscriber may throw without preventing later
-subscribers or changing the original call. Envelope and outgoing-observation
-failures are isolated in the same way. Observer diagnostics include phase and
-sequence; failures in the diagnostic reporter are also ignored. A successfully
-handled inbound packet consumes the active intent even if an `applied` observer
-fails. A packet rejected by Margonem does not consume it.
+`intent` or `applied` subscriber may throw without preventing later subscribers
+or changing the original call. Envelope and outgoing-observation failures are
+isolated in the same way. A successfully handled packet consumes the active
+intent even if an `applied` observer fails. A packet rejected by Margonem does
+not consume it.
 
 ## Runtime adapters
 
@@ -57,7 +56,8 @@ skipped.
 
 ## Envelopes and facts
 
-Each payload is parsed once and assigned a monotonically increasing sequence:
+After Margonem returns, each payload is parsed once and assigned a monotonically
+increasing sequence:
 
 ```ts
 type RuntimeEventEnvelope = {
@@ -73,18 +73,22 @@ Facts provide stable routing for chat, dialog, battle, map, NPC changes, loot,
 other players, AFK, friends, and party. Raw packets exist only during dispatch
 and diagnostics; they are never stored in a domain store or persisted.
 
-Ingress snapshots are deliberately sparse. They contain the game identity/map,
-the active intent, NPCs named by dialog or `npcs_del`, and other players named by
-battle warriors. Never copy the complete NPC or player collection per event.
+When the queued packet is processed, `RuntimeStateProjection.captureIngress()`
+adds a deliberately sparse pre-event view from Lootlog stores. It contains the
+game identity/map only for consumers that require it, the captured intent, NPCs
+named by dialog or `npcs_del`, and other players named by battle warriors. Never
+copy the complete NPC or player collection per event.
 
 ## Sources of truth
 
 Use this order:
 
 1. An `intent` identifies the user's action.
-2. Domain stores represent the current post-application world.
-3. `incoming` facts identify the change in the current packet.
-4. The ingress snapshot represents state immediately before that packet.
+2. The initial adapter snapshot seeds Lootlog after late installation.
+3. Domain stores represent the current projected world.
+4. Applied facts identify the change in the current packet.
+5. The ingress snapshot represents Lootlog store state immediately before that
+   packet is projected.
 
 Domain stores contain immutable Lootlog models, never Margonem runtime models:
 
@@ -103,21 +107,28 @@ projections. They must not be treated as a mirror of the game world.
 
 ## Lifecycle
 
-- `RuntimeStateSynchronizer.bootstrap()` reads one complete snapshot through the
-  active adapter. This is allowed at startup and after confirmed game init.
-- `reconcileAppliedEvent()` updates only domains and IDs touched by an applied
-  event. A `town` event stages complete game, NPC, other, and handle snapshots
-  before committing them. If any read fails, all four map-scoped domains are
-  cleared together. Both success and failure advance each map epoch exactly
-  once; party and friends are unaffected.
+- `RuntimeStateProjection.bootstrap()` reads one complete snapshot through the
+  active adapter. This is the only normal full-domain read and solves late
+  userscript installation after Margonem's initial packets.
+- The projection then reduces `h`, `town`, `other`, `party`, `friends`,
+  `npc_tpls`, `icons`, `npcs`, and `npcs_del` directly into domain stores.
+  `town` clears map-scoped projections and advances their epochs without a
+  second full Margonem scan.
+- NPC templates and icons are cached from events. NI commonly enriches the same
+  `npcs` entries while applying them. If neither the packet nor the cache can
+  compose an NPC, a single-ID adapter lookup is the compatibility fallback.
+- Other-player identity comes from `CREATE`; movement packets do not publish
+  identity state. The direct Margonem handle lookup on `CREATE` is retained only
+  in the private tooltip/renderer integration registry.
 - `bootstrapProjection()` rebuilds derived feature state from ready domain
   stores. It does not read runtime globals and must not poll for readiness.
 
-The bridge queues early incoming envelopes until `setReady(true)`. The queue is
-bounded by event count, raw byte estimate, and fact count. Queue overflow tears
-down processing instead of producing a partial history. Cleanup restores a hook
-only if our wrapper is still installed and clears subscriptions, queues,
-intents, synchronizers, and process context.
+The pipeline buffers applied envelopes until bootstrap succeeds. Its queue is
+bounded by event and fact counts. One scheduled macrotask drains all pending
+FIFO work. Events appended while that task is processing are drained in the
+same pass. Queue overflow tears down processing instead of producing a partial
+history. Cleanup restores a hook only if our wrapper is still installed and
+clears subscriptions, queued work, intents, projections, and process context.
 
 ## Loot and battle contracts
 
@@ -134,14 +145,21 @@ change is explicitly approved.
 
 ## Performance invariants
 
+- Let Margonem finish before parsing or dispatching an ordinary payload.
 - Parse and normalize a payload once.
-- Never scan all NPCs or others outside bootstrap and `town` reconciliation.
+- Never scan all NPCs or others outside bootstrap.
 - Ordinary events cost O(number of touched IDs).
 - Commit at most once per touched domain store per event.
 - Do not `structuredClone` packets or the world on the hot path.
 - Do not add readiness polling.
 - Do not cause store publications from projection hooks.
-- Keep the queue bounded by count, bytes, and envelope cost.
+- Keep the queue bounded by event and fact count.
+- Preserve references for semantically identical game, NPC, other, party, and
+  friend data so Zustand selectors do not wake React consumers.
+- Subscribe components to the smallest identity fields they use. Position or HP
+  changes must not render chat, event mode, or identity-only consumers.
+- Inactive Shift integrations must not scan runtime handles or the DOM, wrap the
+  renderer, subscribe to broad collections, or write presentation state.
 
 Use the same replay fixtures, warm-up, iteration count, and machine for before
 and after benchmarks. A median throughput regression above 10%, or any
@@ -161,11 +179,12 @@ non-fatal; inbound interception is required.
 When adding a fact, intent, adapter capability, or domain store:
 
 1. Add characterization tests before changing the production path.
-2. Normalize IDs and data in the adapter/parser exactly once.
+2. Normalize IDs and data in the event projection exactly once.
 3. Keep runtime globals and object handles inside runtime integration modules.
    UI/render/action capabilities belong in an explicit adapter, not a feature.
 4. Add only referenced entities to ingress.
-5. Reconcile the domain on `applied` with one batched publication.
+5. Reconcile the domain from the queued `applied` envelope with one batched
+   publication.
 6. Rebuild feature projections from stores, never runtime globals.
 7. Test object and string packets, wrapper transparency, cleanup, and failure.
 8. Run loot/battle golden tests and compare API call counts and hashes.

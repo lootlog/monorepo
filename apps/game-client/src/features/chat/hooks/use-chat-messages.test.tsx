@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useChatMessagesListener } from "./use-chat-messages";
@@ -226,5 +226,25 @@ describe("useChatMessagesListener", () => {
         },
       ]);
     });
+  });
+
+  it("does not rerender when only the hero coordinates change", () => {
+    let renderCount = 0;
+    renderHook(() => {
+      renderCount += 1;
+      useChatMessagesListener();
+    });
+    const renderCountBeforeMovement = renderCount;
+    const game = useGameStore.getState().game;
+    if (!game) throw new Error("Expected game fixture");
+
+    act(() => {
+      useGameStore.getState().replaceGame({
+        ...game,
+        hero: { ...game.hero, x: game.hero.x + 1 },
+      });
+    });
+
+    expect(renderCount).toBe(renderCountBeforeMovement);
   });
 });

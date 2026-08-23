@@ -15,7 +15,7 @@ export function parseRuntimeFacts(event: GameEvent): readonly RuntimeFact[] {
   add("loot", event.item !== undefined && event.loot !== undefined);
   add("npc-delete", event.npcs_del !== undefined);
   add("other", event.other !== undefined);
-  add("afk", event.h !== undefined);
+  add("afk", event.h?.stasis !== undefined);
   add(
     "friends",
     event.friends !== undefined || event.friends_max !== undefined,

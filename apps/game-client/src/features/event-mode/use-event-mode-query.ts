@@ -34,12 +34,13 @@ export const useEventModeQuery = ({ active }: UseEventModeQueryOptions) => {
     (state) => state.gameState.gameInitialized,
   );
   const authenticatedLootlogUserId = sessionData?.user?.id ?? "";
-  const runtimeGame = useGameStore((state) => state.game);
-  const margonemAccountId = gameInitialized
-    ? (runtimeGame?.hero.accountId ?? "")
-    : "";
+  const runtimeAccountId = useGameStore(
+    (state) => state.game?.hero.accountId ?? "",
+  );
+  const runtimeWorld = useGameStore((state) => state.game?.world ?? "");
+  const margonemAccountId = gameInitialized ? runtimeAccountId : "";
   const normalizedWorld = gameInitialized
-    ? (runtimeGame?.world.trim().toLowerCase() ?? "")
+    ? runtimeWorld.trim().toLowerCase()
     : "";
   const enabled = Boolean(
     active &&

@@ -59,6 +59,21 @@ describe("useTimersUpdate", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  it("shares one interval across multiple visible timer presentations", () => {
+    const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
+    const firstClock = renderHook(() => useTimersUpdate());
+    const secondClock = renderHook(() => useTimersUpdate());
+
+    expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(1);
+
+    firstClock.unmount();
+    expect(vi.getTimerCount()).toBe(1);
+
+    secondClock.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("does not create background work while no timer is visible", () => {
     const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
     let renderCount = 0;

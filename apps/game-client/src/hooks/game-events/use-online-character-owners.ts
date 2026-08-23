@@ -69,17 +69,20 @@ export function useOnlineCharacterOwners(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
-  const worldByGuildId = useSettingsStore((state) => state.worldByGuildId);
   const selectedGuildId = useSelectedLootlogGuildId();
-  const selectedWorld = isConcreteLootlogGuildId(selectedGuildId)
-    ? (worldByGuildId[selectedGuildId] ?? getCurrentWorld())
+  const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+  const selectedWorldSetting = useSettingsStore((state) =>
+    active ? state.worldByGuildId[selectedGuildId] : undefined,
+  );
+  const selectedWorld = active
+    ? (selectedWorldSetting ?? getCurrentWorld())
     : undefined;
   const { connected, joined, socket } = useSocket();
   const { data: guildMembersByUserId } = useGuildMembersSummary(
     { guildId: selectedGuildId ?? "" },
     {
       query: {
-        enabled: isShiftPressed && isConcreteLootlogGuildId(selectedGuildId),
+        enabled: active,
         select: mapGuildMembersByUserId,
       },
     },
@@ -93,10 +96,11 @@ export function useOnlineCharacterOwners(): void {
 
   useEffect(() => {
     guildMembersByUserIdRef.current = guildMembersByUserId;
+    if (!active) return;
     useOnlineCharacterOwnersStore
       .getState()
       .setGuildMembers(guildMembersByUserId);
-  }, [guildMembersByUserId]);
+  }, [active, guildMembersByUserId]);
 
   useEffect(() => {
     selectedGuildIdRef.current = selectedGuildId;
@@ -107,7 +111,7 @@ export function useOnlineCharacterOwners(): void {
     if (
       !joined ||
       !connected ||
-      !isShiftPressed ||
+      !active ||
       !socket ||
       !selectedGuildId ||
       selectedGuildId === "all" ||
@@ -138,14 +142,7 @@ export function useOnlineCharacterOwners(): void {
       socket,
       world: selectedWorld,
     });
-  }, [
-    connected,
-    isShiftPressed,
-    joined,
-    selectedGuildId,
-    selectedWorld,
-    socket,
-  ]);
+  }, [connected, active, joined, selectedGuildId, selectedWorld, socket]);
 
   useEffect(
     () => () => {
@@ -156,7 +153,7 @@ export function useOnlineCharacterOwners(): void {
   );
 
   useEffect(() => {
-    if (!isShiftPressed || !socket || !connected || !joined) return;
+    if (!active || !socket || !connected || !joined) return;
 
     const handleOnlinePlayersPresenceUpdate = (
       data: PlayerPresenceUpdatePayload,
@@ -190,5 +187,5 @@ export function useOnlineCharacterOwners(): void {
         handleOnlinePlayersPresenceUpdate,
       );
     };
-  }, [connected, isShiftPressed, joined, socket]);
+  }, [active, connected, joined, socket]);
 }

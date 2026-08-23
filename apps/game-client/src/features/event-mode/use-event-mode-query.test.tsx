@@ -207,6 +207,32 @@ describe("useEventModeQuery", () => {
     expect(mocks.getEventMode).toHaveBeenCalledTimes(2);
     expect(renderCount).toBe(renderCountAfterInitialFetch);
   });
+
+  it("does not rerender when only the hero coordinates change", async () => {
+    let renderCount = 0;
+    const { result } = renderHook(
+      () => {
+        renderCount += 1;
+        return useEventModeQuery({ active: true });
+      },
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+    await waitFor(() => expect(result.current.data).toEqual({ events: [] }));
+    const renderCountBeforeMovement = renderCount;
+    const game = useGameStore.getState().game;
+    if (!game) throw new Error("Expected game fixture");
+
+    act(() => {
+      useGameStore.getState().replaceGame({
+        ...game,
+        hero: { ...game.hero, x: game.hero.x + 1 },
+      });
+    });
+
+    expect(renderCount).toBe(renderCountBeforeMovement);
+  });
 });
 
 function createWrapper(queryClient: QueryClient) {

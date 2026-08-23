@@ -12,11 +12,24 @@ import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {
   getOtherCatchingGuildsTarget,
   getCharacterTooltipCatchingGuildsCharacterKey,
+  type CharacterTooltipCatchingGuildsEntry,
   type CharacterTooltipCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
 } from "@/store/character-tooltip-catching-guilds.store";
-import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
+import {
+  type OnlineCharacterOwner,
+  useOnlineCharacterOwnersStore,
+} from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
+
+const EMPTY_ENTRIES_BY_KEY: Readonly<
+  Record<string, CharacterTooltipCatchingGuildsEntry | undefined>
+> = Object.freeze({});
+const EMPTY_OTHERS_BY_ID: Readonly<Record<string, RuntimeOther>> =
+  Object.freeze({});
+const EMPTY_OWNERS_BY_CHARACTER_KEY: Readonly<
+  Record<string, OnlineCharacterOwner | undefined>
+> = Object.freeze({});
 
 function getEntryCharacterId(targetKey: string): string {
   const separatorIndex = targetKey.lastIndexOf(":");
@@ -43,32 +56,35 @@ function getVisibleCatchingGuildTargets(
 }
 
 export function useOtherCatchingGuildGlow(): void {
-  const entriesByKey = useCharacterTooltipCatchingGuildsStore(
-    (state) => state.entriesByKey,
-  );
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
-  const othersById = useOthersStore((state) => state.othersById);
-  const ownersByCharacterKey = useOnlineCharacterOwnersStore(
-    (state) => state.ownersByCharacterKey,
-  );
   const selectedGuildId = useSelectedLootlogGuildId();
+  const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+  const entriesByKey = useCharacterTooltipCatchingGuildsStore((state) =>
+    active ? state.entriesByKey : EMPTY_ENTRIES_BY_KEY,
+  );
+  const othersById = useOthersStore((state) =>
+    active ? state.othersById : EMPTY_OTHERS_BY_ID,
+  );
+  const ownersByCharacterKey = useOnlineCharacterOwnersStore((state) =>
+    active ? state.ownersByCharacterKey : EMPTY_OWNERS_BY_CHARACTER_KEY,
+  );
 
   useEffect(() => {
+    if (!active) return;
+
     lootlogOtherGlowManager.install();
 
     return () => {
       lootlogOtherGlowManager.cleanup();
     };
-  }, []);
+  }, [active]);
 
   useEffect(() => {
-    lootlogOtherGlowManager.setNativeGlowSuppressed(
-      isShiftPressed && isConcreteLootlogGuildId(selectedGuildId),
-    );
+    lootlogOtherGlowManager.setNativeGlowSuppressed(active);
 
-    if (!isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
+    if (!active) {
       lootlogOtherGlowManager.clear();
       return;
     }
@@ -102,41 +118,33 @@ export function useOtherCatchingGuildGlow(): void {
         lootlogOtherGlowManager.removeGlow(entryCharacterId);
       }
     }
-  }, [
-    entriesByKey,
-    isShiftPressed,
-    othersById,
-    ownersByCharacterKey,
-    selectedGuildId,
-  ]);
+  }, [entriesByKey, active, othersById, ownersByCharacterKey, selectedGuildId]);
 
   useEffect(() => {
-    const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+    if (!active) {
+      characterTooltipCatchingGuildsCoordinator.sync([], false);
+      return;
+    }
 
-    if (active) {
-      for (const other of Object.values(othersById)) {
-        if (getOtherCatchingGuildsTarget(other)) continue;
+    for (const other of Object.values(othersById)) {
+      if (getOtherCatchingGuildsTarget(other)) continue;
 
-        const accountId = other.accountId;
-        const characterId = other.characterId;
-        if (!accountId || !characterId) continue;
+      const accountId = other.accountId;
+      const characterId = other.characterId;
+      if (!accountId || !characterId) continue;
 
-        useCharacterTooltipCatchingGuildsStore
-          .getState()
-          .setUnavailable(
-            getCharacterTooltipCatchingGuildsCharacterKey(
-              accountId,
-              characterId,
-            ),
-          );
-      }
+      useCharacterTooltipCatchingGuildsStore
+        .getState()
+        .setUnavailable(
+          getCharacterTooltipCatchingGuildsCharacterKey(accountId, characterId),
+        );
     }
 
     characterTooltipCatchingGuildsCoordinator.sync(
       getVisibleCatchingGuildTargets(othersById),
       active,
     );
-  }, [isShiftPressed, othersById, ownersByCharacterKey, selectedGuildId]);
+  }, [active, othersById, ownersByCharacterKey]);
 
   useEffect(
     () => () => {

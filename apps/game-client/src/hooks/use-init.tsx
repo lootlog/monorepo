@@ -3,7 +3,8 @@ import { useGlobalStore } from "@/store/global.store";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { useEffect, useRef } from "react";
 import { installCharacterTooltipTransforms } from "@/lib/margonem-tooltips/patcher";
-import { runtimeStateSynchronizer } from "@/lib/margonem-runtime/runtime-state-synchronizer";
+import { runtimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipeline";
+import { runtimeStateProjection } from "@/lib/margonem-runtime/runtime-state-projection";
 import { runtimeInteractionCoordinator } from "@/lib/margonem-runtime/runtime-interaction-coordinator";
 import { isMargonemRuntimeReady } from "@/lib/margonem-runtime/runtime-adapter";
 
@@ -23,21 +24,20 @@ export const useInit = () => {
         return false;
       }
 
-      initialized.current = true;
+      if (!runtimeStateProjection.bootstrap()) return false;
 
+      initialized.current = true;
       setGameState({
         gameInitialized: true,
       });
 
-      runtimeStateSynchronizer.bootstrap();
-      margonemRuntimeBridge.bootstrap();
-      margonemRuntimeBridge.setReady(true);
+      runtimeEventPipeline.setReady(true);
       cleanupTooltipTransforms.current = installCharacterTooltipTransforms();
 
       return true;
     };
 
-    runtimeStateSynchronizer.install();
+    runtimeEventPipeline.install();
     runtimeInteractionCoordinator.install();
     margonemRuntimeBridge.setupProxies();
 
@@ -48,12 +48,15 @@ export const useInit = () => {
 
       return false;
     });
+    checkAndInitialize();
 
     return () => {
+      initialized.current = false;
       cleanupTooltipTransforms.current?.();
       cleanupTooltipTransforms.current = null;
       runtimeInteractionCoordinator.cleanup();
-      runtimeStateSynchronizer.cleanup();
+      runtimeEventPipeline.cleanup();
+      runtimeStateProjection.cleanup();
       margonemRuntimeBridge.cleanup();
     };
   }, [setGameState]);
