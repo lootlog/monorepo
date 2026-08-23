@@ -515,6 +515,66 @@ describe("LootEventProcessor", () => {
     expect(useLootStore.getState().lastLootId).toBe(321);
   });
 
+  it("uses the configured level for a known mine npc", async () => {
+    setDialogNpcContext(279097, {
+      ...createRuntimeNpc(279097, "Zamrożony czarodziej"),
+      level: 0,
+    });
+    mockGetLoot.mockReturnValue([
+      { id: 7, name: "Fiolka magicznego pyłu", stat: "lvl=1;rarity=unique" },
+    ]);
+    mockCreateLoot.mockResolvedValue({ id: 321 });
+
+    processor.handleDialogLoot(createDialogLootEvent([279097]));
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
+    expect(mockCreateLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npcs: [
+          expect.objectContaining({
+            id: 279097,
+            lvl: 300,
+            name: "Zamrożony czarodziej",
+          }),
+        ],
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("preserves level zero for an unknown dialog npc", async () => {
+    setDialogNpcContext(501, {
+      ...createRuntimeNpc(501, "Nieznany dialog"),
+      level: 0,
+    });
+    mockGetLoot.mockReturnValue([
+      { id: 7, name: "Nagroda", stat: "lvl=300;rarity=unique" },
+    ]);
+    mockCreateLoot.mockResolvedValue({ id: 321 });
+
+    processor.handleDialogLoot(createDialogLootEvent([501]));
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
+    expect(mockCreateLoot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npcs: [
+          expect.objectContaining({
+            id: 501,
+            lvl: 0,
+            name: "Nieznany dialog",
+          }),
+        ],
+      }),
+      expect.any(Object),
+    );
+  });
+
   it("attributes dialog loot to the talked npc instead of unrelated npcs_del entries", async () => {
     setDialogNpcContext(501);
     mockGetLoot.mockReturnValue([{ id: 7, name: "Łup" }]);
