@@ -140,12 +140,10 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const mergedTimers = generalConfig.timersGrouping
     ? mergeTimers(deduplicatedTimers)
     : normalizeUngroupedTimers(deduplicatedTimers);
-  const timerCalculationEpoch = Date.now();
-  useTimerRemovalBoundary(
+  const timerCalculationEpoch = useTimerRemovalBoundary(
     mergedTimers,
     generalConfig.removeTimerAfterMs,
     isUnderBag || isOpen,
-    timerCalculationEpoch,
   );
   const activeTimers = filterTimersByExpiredVisibility(
     calculateTimeLeft(mergedTimers, timerCalculationEpoch),
