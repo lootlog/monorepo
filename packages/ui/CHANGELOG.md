@@ -1,5 +1,15 @@
 # @lootlog/ui
 
+## 3.0.0
+
+### Major Changes
+
+- da456cf: Migrate the shared UI primitives and their consumers from Radix UI and Vaul to Base UI while preserving the existing visual design.
+
+### Patch Changes
+
+- eaecbd3: Fix separator dimensions by matching Base UI's orientation data attribute.
+
 ## 2.0.2
 
 ### Patch Changes

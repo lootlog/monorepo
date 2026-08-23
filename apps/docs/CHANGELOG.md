@@ -1,5 +1,11 @@
 # @lootlog/docs
 
+## 1.0.4
+
+### Patch Changes
+
+- 419ba43: Clarify the relationship between Lootlog organizations, Discord servers, and Margonem clans in the user guide.
+
 ## 1.0.3
 
 ### Patch Changes

@@ -1,5 +1,24 @@
 # @lootlog/web
 
+## 1.4.0
+
+### Minor Changes
+
+- 321b96a: Replace event pin settings with dedicated, permission-aware event pin resources that support vanity guild URLs and concurrent updates safely.
+
+### Patch Changes
+
+- da456cf: Migrate the shared UI primitives and their consumers from Radix UI and Vaul to Base UI while preserving the existing visual design.
+- ca77e38: Fix MultiSelect popover triggers that render as non-button elements.
+- 4ae5fe2: Remove the development permission override UI, transport contract, and server-side permission substitution so all clients use the standard guild permission model.
+- Updated dependencies [321b96a]
+- Updated dependencies [da456cf]
+- Updated dependencies [eaecbd3]
+- Updated dependencies [4ae5fe2]
+  - @lootlog/api-client@5.0.0
+  - @lootlog/types@3.0.0
+  - @lootlog/ui@3.0.0
+
 ## 1.3.1
 
 ### Patch Changes

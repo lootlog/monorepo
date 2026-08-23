@@ -1,5 +1,13 @@
 # @lootlog/nest-shared
 
+## 1.0.6
+
+### Patch Changes
+
+- Updated dependencies [321b96a]
+- Updated dependencies [4ae5fe2]
+  - @lootlog/types@3.0.0
+
 ## 1.0.5
 
 ### Patch Changes

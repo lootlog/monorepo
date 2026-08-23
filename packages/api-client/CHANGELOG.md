@@ -1,5 +1,11 @@
 # @lootlog/api-client
 
+## 5.0.0
+
+### Major Changes
+
+- 321b96a: Replace event pin settings with dedicated, permission-aware event pin resources that support vanity guild URLs and concurrent updates safely.
+
 ## 4.0.1
 
 ### Patch Changes

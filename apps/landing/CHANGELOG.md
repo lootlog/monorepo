@@ -1,5 +1,15 @@
 # @lootlog/landing
 
+## 1.0.6
+
+### Patch Changes
+
+- da456cf: Migrate the shared UI primitives and their consumers from Radix UI and Vaul to Base UI while preserving the existing visual design.
+- 419ba43: Align the public product, privacy, terms, and trust copy with Lootlog's canonical product model.
+- Updated dependencies [da456cf]
+- Updated dependencies [eaecbd3]
+  - @lootlog/ui@3.0.0
+
 ## 1.0.5
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @lootlog/wiki
 
+## 0.1.5
+
+### Patch Changes
+
+- da456cf: Migrate the shared UI primitives and their consumers from Radix UI and Vaul to Base UI while preserving the existing visual design.
+- Updated dependencies [321b96a]
+- Updated dependencies [da456cf]
+- Updated dependencies [eaecbd3]
+  - @lootlog/api-client@5.0.0
+  - @lootlog/ui@3.0.0
+
 ## 0.1.4
 
 ### Patch Changes
