@@ -10,41 +10,31 @@ import type * as ApiModule from "@/api";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
 
-const {
-  mockCreateLoot,
-  mockGetLoot,
-  mockGetBattleParticipants,
-  mockGame,
-  mockReportLootSkipped,
-} = vi.hoisted(() => ({
-  mockCreateLoot: vi.fn(),
-  mockGetLoot: vi.fn(),
-  mockGetBattleParticipants: vi.fn(),
-  mockReportLootSkipped: vi.fn(),
-  mockGame: {
-    hero: {
-      id: 101,
-      account: 202,
-      nick: "Tester",
-      lvl: 230,
-      prof: "w",
-      img: "hero.gif",
-      warrior_stats: {
-        hp: 500,
-        maxhp: 1000,
+const { mockCreateLoot, mockGetLoot, mockGetBattleParticipants, mockGame } =
+  vi.hoisted(() => ({
+    mockCreateLoot: vi.fn(),
+    mockGetLoot: vi.fn(),
+    mockGetBattleParticipants: vi.fn(),
+    mockGame: {
+      hero: {
+        id: 101,
+        account: 202,
+        nick: "Tester",
+        lvl: 230,
+        prof: "w",
+        img: "hero.gif",
+        warrior_stats: {
+          hp: 500,
+          maxhp: 1000,
+        },
       },
+      map: {
+        name: "Ithan",
+      },
+      getWorldName: vi.fn(() => "pandora"),
+      getNpc: vi.fn(),
     },
-    map: {
-      name: "Ithan",
-    },
-    getWorldName: vi.fn(() => "pandora"),
-    getNpc: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/error-monitoring", () => ({
-  reportLootSkipped: mockReportLootSkipped,
-}));
+  }));
 
 vi.mock("@/api", async (importOriginal) => {
   const originalModule = await importOriginal<typeof ApiModule>();
@@ -213,15 +203,6 @@ describe("LootEventProcessor", () => {
       source: "fight",
       stage: "skipped",
     });
-    expect(mockReportLootSkipped).toHaveBeenCalledWith({
-      attemptId: "00000000-0000-4000-8000-000000000002",
-      battleWarriorCount: 0,
-      hasFightData: true,
-      mapName: "Ithan",
-      reason: "missing-battle-warriors",
-      source: "fight",
-      world: "pandora",
-    });
   });
 
   it("creates loot from battle and stores returned loot id", async () => {
@@ -348,16 +329,6 @@ describe("LootEventProcessor", () => {
       source: "fight",
       stage: "skipped",
     });
-    expect(mockReportLootSkipped).toHaveBeenCalledWith({
-      attemptId: "00000000-0000-4000-8000-000000000003",
-      battleWarriorCount: 1,
-      hasFightData: true,
-      mapName: "Ithan",
-      parsedLootCount: 0,
-      reason: "empty-parsed-loots",
-      source: "fight",
-      world: "pandora",
-    });
   });
 
   it("logs when battle fight data is missing", () => {
@@ -384,15 +355,6 @@ describe("LootEventProcessor", () => {
       reason: "missing-fight-data",
       source: "fight",
       stage: "skipped",
-    });
-    expect(mockReportLootSkipped).toHaveBeenCalledWith({
-      attemptId: "00000000-0000-4000-8000-000000000004",
-      battleWarriorCount: 1,
-      hasFightData: false,
-      mapName: "Ithan",
-      reason: "missing-fight-data",
-      source: "fight",
-      world: "pandora",
     });
   });
 
@@ -461,15 +423,6 @@ describe("LootEventProcessor", () => {
       reason: "missing-dialog-npc-context",
       source: "dialog",
       stage: "skipped",
-    });
-    expect(mockReportLootSkipped).toHaveBeenCalledWith({
-      attemptId: "00000000-0000-4000-8000-000000000007",
-      eventNpcDelIds: [],
-      mapName: "Ithan",
-      reason: "missing-dialog-npc-context",
-      requestedNpcIds: [],
-      source: "dialog",
-      world: "pandora",
     });
   });
 
@@ -704,16 +657,6 @@ describe("LootEventProcessor", () => {
       source: "dialog",
       stage: "skipped",
     });
-    expect(mockReportLootSkipped).toHaveBeenCalledWith({
-      attemptId: "00000000-0000-4000-8000-000000000008",
-      eventNpcDelIds: [],
-      mapName: "Ithan",
-      reason: "missing-dialog-npc-snapshot",
-      requestedNpcIds: [777],
-      resolvedNpcCount: 0,
-      source: "dialog",
-      world: "pandora",
-    });
   });
 
   it("logs event npc ids when the tracked npc snapshot cannot be resolved", () => {
@@ -740,16 +683,6 @@ describe("LootEventProcessor", () => {
       source: "dialog",
       stage: "skipped",
     });
-    expect(mockReportLootSkipped).toHaveBeenCalledWith({
-      attemptId: "00000000-0000-4000-8000-000000000009",
-      eventNpcDelIds: [501],
-      mapName: "Ithan",
-      reason: "missing-dialog-npc-snapshot",
-      requestedNpcIds: [501],
-      resolvedNpcCount: 0,
-      source: "dialog",
-      world: "pandora",
-    });
   });
 
   it("logs when parsed dialog loot is empty", () => {
@@ -774,16 +707,6 @@ describe("LootEventProcessor", () => {
       resolutionSource: "talk-request",
       source: "dialog",
       stage: "skipped",
-    });
-    expect(mockReportLootSkipped).toHaveBeenCalledWith({
-      attemptId: "00000000-0000-4000-8000-000000000010",
-      eventNpcDelIds: [501],
-      mapName: "Ithan",
-      parsedLootCount: 0,
-      reason: "empty-parsed-loots",
-      requestedNpcIds: [501],
-      source: "dialog",
-      world: "pandora",
     });
   });
 

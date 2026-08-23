@@ -4,13 +4,8 @@ import { beforeEach, expect, it, vi } from "vitest";
 import App from "./App";
 
 const runtimeMocks = vi.hoisted(() => ({
-  captureReactError: vi.fn(),
   disposeSoundPlayback: vi.fn(),
   renderError: new Error("App render failed"),
-}));
-
-vi.mock("@/lib/error-monitoring", () => ({
-  captureReactError: runtimeMocks.captureReactError,
 }));
 
 vi.mock("@/lib/sound-playback", () => ({
@@ -53,12 +48,12 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
-it("reports errors caught by the application error boundary", () => {
+it("cleans up sound playback when the application error boundary catches an error", () => {
   render(<App />);
 
   expect(runtimeMocks.disposeSoundPlayback).toHaveBeenCalledTimes(1);
-  expect(runtimeMocks.captureReactError).toHaveBeenCalledWith(
+  expect(console.warn).toHaveBeenCalledWith(
+    "[ErrorBoundary]",
     runtimeMocks.renderError,
-    expect.objectContaining({ componentStack: expect.any(String) }),
   );
 });
