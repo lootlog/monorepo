@@ -11,6 +11,7 @@ import {
 } from "@lootlog/api-client/react-query/main/guilds";
 import { useQueries } from "@tanstack/react-query";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
+import { TimerClockProvider } from "./timer-clock-provider";
 
 type TimersGridProps = {
   timers: TimerWithTimeLeft[];
@@ -60,28 +61,28 @@ export const TimersGrid: FC<TimersGridProps> = ({
   const hiddenTimerNames = new Set(hiddenTimers);
 
   return (
-    <span
-      className="ll:grid ll:gap-0.5 ll:box-border ll:w-full"
-      style={{
-        gridTemplateColumns: `repeat(auto-fit, minmax(${minColumnWidth}px, 1fr))`,
-      }}
-    >
-      {timers.map((timer) => {
-        const isHidden = hiddenTimerNames.has(timer.npc.name);
-        return (
-          <SingleTimer
-            key={`${timer.timerKey}-${timer.guildId}`}
-            guildIds={guildIds}
-            guildNamesById={guildNamesById}
-            guildPermissions={guildPermissionsById[timer.guildId] ?? []}
-            timer={timer}
-            maxTimeLeft={timer.maxTimeLeft}
-            minTimeLeft={timer.minTimeLeft}
-            settingsKey={settingsKey}
-            isHidden={isHidden}
-          />
-        );
-      })}
-    </span>
+    <TimerClockProvider>
+      <span
+        className="ll:grid ll:gap-0.5 ll:box-border ll:w-full"
+        style={{
+          gridTemplateColumns: `repeat(auto-fit, minmax(${minColumnWidth}px, 1fr))`,
+        }}
+      >
+        {timers.map((timer) => {
+          const isHidden = hiddenTimerNames.has(timer.npc.name);
+          return (
+            <SingleTimer
+              key={`${timer.timerKey}-${timer.guildId}`}
+              guildIds={guildIds}
+              guildNamesById={guildNamesById}
+              guildPermissions={guildPermissionsById[timer.guildId] ?? []}
+              timer={timer}
+              settingsKey={settingsKey}
+              isHidden={isHidden}
+            />
+          );
+        })}
+      </span>
+    </TimerClockProvider>
   );
 };

@@ -11,14 +11,13 @@ import {
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "@/lib/utils";
 import { useTimersStore } from "@/store/timers.store";
-import { parseMsToTime } from "@/utils/parse-ms-to-time";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { useTimerActions } from "../hooks/use-timer-actions";
 import { useTimerDisplay } from "../hooks/use-timer-display";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
-import { TimerTileView } from "./timer-tile-view";
+import { TimerLiveTile } from "./timer-live-tile";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { useGameStore } from "@/store/game.store";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
@@ -31,8 +30,6 @@ type SingleTimerProps = {
   guildPermissions: GuildsControllerGetGuildPermissions200Item[];
   timer: TimerWithTimeLeft;
   settingsKey: string;
-  minTimeLeft?: number;
-  maxTimeLeft?: number;
   isHidden?: boolean;
 };
 
@@ -41,8 +38,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   guildNamesById,
   guildPermissions,
   timer,
-  minTimeLeft = 0,
-  maxTimeLeft = 0,
   settingsKey,
   isHidden = false,
 }) => {
@@ -89,17 +84,15 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   const {
     isPending,
-    isMinSpawnTime,
-    hasPassedRedThreshold,
     selectedColor,
     customColor,
     overriddenColor,
     resetIndicator,
     shortname,
     npcDetails,
-    timeLeft,
     displayConfig,
-  } = useTimerDisplay(timer, minTimeLeft, maxTimeLeft);
+    countdownMode,
+  } = useTimerDisplay(timer);
 
   return (
     <Tooltip>
@@ -116,7 +109,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                   <Loader2 className="ll:h-3 ll:w-3 ll:animate-spin ll:text-orange-500" />
                 </div>
               )}
-              <TimerTileView
+              <TimerLiveTile
                 id={timer.npc.id.toString()}
                 color={
                   customColor || overriddenColor ? undefined : selectedColor
@@ -130,11 +123,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 }
                 displayMode={displayConfig.singleTimerDisplayMode}
                 fontSize={displayConfig.fontSize}
-                hasPassedRedThreshold={hasPassedRedThreshold}
-                isMinSpawnTime={isMinSpawnTime}
                 isPending={isPending}
                 label={`${resetIndicator}${shortname} ${timer.npc.name} ${npcDetails}`}
-                timeLabel={parseMsToTime(timeLeft)}
+                countdownMode={countdownMode}
+                timer={timer}
               />
             </div>
           </ContextMenuTrigger>

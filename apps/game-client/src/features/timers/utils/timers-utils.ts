@@ -139,24 +139,32 @@ export const calculateTimeLeft = (
   now = Date.now(),
 ): TimerWithTimeLeft[] => {
   return timers.map((timer) => {
-    const deletedAt = timer.deletedAt ? getTimerEpoch(timer.deletedAt) : null;
-
-    if (deletedAt !== null) {
-      const deletedTimeLeft = deletedAt - now;
-
-      return {
-        ...timer,
-        maxTimeLeft: deletedTimeLeft,
-        minTimeLeft: deletedTimeLeft,
-      };
-    }
-
     return {
       ...timer,
-      maxTimeLeft: getTimerEpoch(timer.maxSpawnTime) - now,
-      minTimeLeft: getTimerEpoch(timer.minSpawnTime) - now,
+      ...getTimerTimeLeft(timer, now),
     };
   });
+};
+
+export const getTimerTimeLeft = (
+  timer: Timer,
+  now = Date.now(),
+): Pick<TimerWithTimeLeft, "maxTimeLeft" | "minTimeLeft"> => {
+  const deletedAt = timer.deletedAt ? getTimerEpoch(timer.deletedAt) : null;
+
+  if (deletedAt !== null) {
+    const deletedTimeLeft = deletedAt - now;
+
+    return {
+      maxTimeLeft: deletedTimeLeft,
+      minTimeLeft: deletedTimeLeft,
+    };
+  }
+
+  return {
+    maxTimeLeft: getTimerEpoch(timer.maxSpawnTime) - now,
+    minTimeLeft: getTimerEpoch(timer.minSpawnTime) - now,
+  };
 };
 
 export const filterTimersByRemovalTime = (

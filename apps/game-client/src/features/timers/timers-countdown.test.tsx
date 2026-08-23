@@ -13,6 +13,7 @@ beforeEach(() =>
 );
 
 const testState = vi.hoisted(() => ({
+  contentRenderSpy: vi.fn(),
   timers: [] as Timer[],
 }));
 
@@ -87,11 +88,14 @@ vi.mock("@/features/timers/components/timers-under-bag-actions", () => ({
 }));
 
 vi.mock("@/features/timers/components/timers-content", () => ({
-  TimersContent: ({ sortedTimers }: { sortedTimers: TimerWithTimeLeft[] }) => (
-    <output data-testid="timer-countdown">
-      {sortedTimers[0]?.maxTimeLeft ?? "missing"}
-    </output>
-  ),
+  TimersContent: ({ sortedTimers }: { sortedTimers: TimerWithTimeLeft[] }) => {
+    testState.contentRenderSpy();
+    return (
+      <output data-testid="timer-countdown">
+        {sortedTimers[0]?.maxTimeLeft ?? "missing"}
+      </output>
+    );
+  },
 }));
 
 import { TimersView } from "./timers-view";
@@ -124,6 +128,7 @@ describe("visible timer countdown", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
+    testState.contentRenderSpy.mockReset();
     testState.timers = [createVisibleTimer()];
   });
 
@@ -131,16 +136,25 @@ describe("visible timer countdown", () => {
     vi.useRealTimers();
   });
 
-  it("updates an under-bag timer after every one-second clock tick", () => {
+  it("updates the structural list only at the timer removal boundary", () => {
     render(<TimersView isOpen isUnderBag />);
 
     expect(screen.getByTestId("timer-countdown")).toHaveTextContent("5000");
+    expect(testState.contentRenderSpy).toHaveBeenCalledOnce();
 
     act(() => {
       vi.advanceTimersByTime(1_000);
     });
 
-    expect(screen.getByTestId("timer-countdown")).toHaveTextContent("4000");
+    expect(screen.getByTestId("timer-countdown")).toHaveTextContent("5000");
+    expect(testState.contentRenderSpy).toHaveBeenCalledOnce();
+
+    act(() => {
+      vi.advanceTimersByTime(34_000);
+    });
+
+    expect(screen.getByTestId("timer-countdown")).toHaveTextContent("missing");
+    expect(testState.contentRenderSpy).toHaveBeenCalledTimes(2);
   });
 
   it("does not keep a clock running when under-bag has no visible timer", () => {
