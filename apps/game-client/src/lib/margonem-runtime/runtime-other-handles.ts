@@ -11,10 +11,25 @@ class RuntimeOtherHandleRegistry {
     removeIds?: readonly string[];
     upserts?: Readonly<Record<string, Other>>;
   }): void {
-    const next = { ...this.handlesById };
-    for (const id of batch.removeIds ?? []) delete next[id];
-    Object.assign(next, batch.upserts);
-    this.handlesById = Object.freeze(next);
+    let writableHandlesById: Record<string, Other> | null = null;
+    const getWritableHandlesById = () => {
+      writableHandlesById ??= { ...this.handlesById };
+      return writableHandlesById;
+    };
+
+    for (const id of batch.removeIds ?? []) {
+      if (!(id in this.handlesById)) continue;
+      delete getWritableHandlesById()[id];
+    }
+    for (const [id, handle] of Object.entries(batch.upserts ?? {})) {
+      const currentHandle = (writableHandlesById ?? this.handlesById)[id];
+      if (currentHandle === handle) continue;
+      getWritableHandlesById()[id] = handle;
+    }
+
+    if (writableHandlesById) {
+      this.handlesById = Object.freeze(writableHandlesById);
+    }
   }
 
   get(id: string): Other | undefined {

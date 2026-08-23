@@ -14,13 +14,13 @@ const mocks = vi.hoisted(() => ({
   npcsDetectionHandle: vi.fn(),
   npcsInitialDetectionHandle: vi.fn(),
   otherHandle: vi.fn(),
-  runtimeBridge: {
+  runtimePipeline: {
     acquireProcessor: vi.fn(() => vi.fn(() => true)),
   },
 }));
 
-vi.mock("@/lib/margonem-runtime/margonem-runtime-bridge", () => ({
-  margonemRuntimeBridge: mocks.runtimeBridge,
+vi.mock("@/lib/margonem-runtime/runtime-event-pipeline", () => ({
+  runtimeEventPipeline: mocks.runtimePipeline,
 }));
 
 vi.mock("@/processors/afk-processor", () => ({
@@ -235,7 +235,7 @@ describe("EventDispatcher", () => {
     ["npc deletion", { npcs_del: [] }, ["npcsDelete"]],
     ["map change", { town: { id: 1 } }, ["mapChange"]],
     ["other players", { other: {} }, ["other"]],
-    ["hero status", { h: {} }, ["afk"]],
+    ["hero AFK status", { h: { stasis: 1 } }, ["afk"]],
     ["friends", { friends: [] }, []],
     ["friends capacity", { friends_max: 50 }, []],
     ["party", { party: {} }, []],
@@ -246,7 +246,7 @@ describe("EventDispatcher", () => {
         d: {},
         f: { m: ["turn"] },
         friends: [],
-        h: {},
+        h: { stasis: 0 },
         item: {},
         loot: { source: "fight" },
         npcs: [],

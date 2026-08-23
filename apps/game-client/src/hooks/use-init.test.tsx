@@ -1,16 +1,17 @@
 import { renderHook } from "@testing-library/react";
+import { StrictMode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockSetGameState = vi.fn();
 const mockSetupProxies = vi.fn();
 const mockSetGameInitCallback = vi.fn();
 const mockCleanup = vi.fn();
-const mockSetReady = vi.fn();
-const mockBridgeBootstrap = vi.fn();
 const mockGetInitializeState = vi.fn();
-const mockNpcSynchronizerInstall = vi.fn();
-const mockNpcSynchronizerHydrate = vi.fn();
-const mockNpcSynchronizerCleanup = vi.fn();
+const mockPipelineInstall = vi.fn();
+const mockPipelineSetReady = vi.fn();
+const mockPipelineCleanup = vi.fn();
+const mockProjectionBootstrap = vi.fn();
+const mockProjectionCleanup = vi.fn();
 const mockInteractionInstall = vi.fn();
 const mockInteractionCleanup = vi.fn();
 
@@ -33,8 +34,6 @@ vi.mock("@/lib/margonem-runtime/margonem-runtime-bridge", () => ({
       mockSetGameInitCallback(callback);
     },
     cleanup: (...args: unknown[]) => mockCleanup(...args),
-    setReady: (...args: unknown[]) => mockSetReady(...args),
-    bootstrap: (...args: unknown[]) => mockBridgeBootstrap(...args),
   },
 }));
 
@@ -43,11 +42,18 @@ vi.mock("@/lib/margonem-runtime/runtime-adapter", () => ({
     mockGetInitializeState(...args),
 }));
 
-vi.mock("@/lib/margonem-runtime/runtime-state-synchronizer", () => ({
-  runtimeStateSynchronizer: {
-    install: (...args: unknown[]) => mockNpcSynchronizerInstall(...args),
-    bootstrap: (...args: unknown[]) => mockNpcSynchronizerHydrate(...args),
-    cleanup: (...args: unknown[]) => mockNpcSynchronizerCleanup(...args),
+vi.mock("@/lib/margonem-runtime/runtime-event-pipeline", () => ({
+  runtimeEventPipeline: {
+    install: (...args: unknown[]) => mockPipelineInstall(...args),
+    setReady: (...args: unknown[]) => mockPipelineSetReady(...args),
+    cleanup: (...args: unknown[]) => mockPipelineCleanup(...args),
+  },
+}));
+
+vi.mock("@/lib/margonem-runtime/runtime-state-projection", () => ({
+  runtimeStateProjection: {
+    bootstrap: (...args: unknown[]) => mockProjectionBootstrap(...args),
+    cleanup: (...args: unknown[]) => mockProjectionCleanup(...args),
   },
 }));
 
@@ -67,12 +73,13 @@ describe("useInit", () => {
     mockSetupProxies.mockReset();
     mockSetGameInitCallback.mockReset();
     mockCleanup.mockReset();
-    mockSetReady.mockReset();
-    mockBridgeBootstrap.mockReset();
     mockGetInitializeState.mockReset();
-    mockNpcSynchronizerInstall.mockReset();
-    mockNpcSynchronizerHydrate.mockReset();
-    mockNpcSynchronizerCleanup.mockReset();
+    mockPipelineInstall.mockReset();
+    mockPipelineSetReady.mockReset();
+    mockPipelineCleanup.mockReset();
+    mockProjectionBootstrap.mockReset();
+    mockProjectionBootstrap.mockReturnValue(true);
+    mockProjectionCleanup.mockReset();
     mockInteractionInstall.mockReset();
     mockInteractionCleanup.mockReset();
   });
@@ -82,13 +89,14 @@ describe("useInit", () => {
 
     expect(mockSetupProxies).toHaveBeenCalledTimes(1);
     expect(mockSetGameInitCallback).toHaveBeenCalledTimes(1);
-    expect(mockNpcSynchronizerInstall).toHaveBeenCalledTimes(1);
+    expect(mockPipelineInstall).toHaveBeenCalledTimes(1);
     expect(mockInteractionInstall).toHaveBeenCalledTimes(1);
 
     unmount();
 
     expect(mockCleanup).toHaveBeenCalledTimes(1);
-    expect(mockNpcSynchronizerCleanup).toHaveBeenCalledTimes(1);
+    expect(mockPipelineCleanup).toHaveBeenCalledTimes(1);
+    expect(mockProjectionCleanup).toHaveBeenCalledTimes(1);
     expect(mockInteractionCleanup).toHaveBeenCalledTimes(1);
   });
 
@@ -99,7 +107,7 @@ describe("useInit", () => {
     expect(capturedGameInitCallback).not.toBeNull();
     expect(capturedGameInitCallback?.()).toBe(false);
     expect(mockSetGameState).not.toHaveBeenCalled();
-    expect(mockSetReady).not.toHaveBeenCalled();
+    expect(mockPipelineSetReady).not.toHaveBeenCalled();
   });
 
   it("initializes the game only once", () => {
@@ -107,14 +115,35 @@ describe("useInit", () => {
     renderHook(() => useInit());
 
     expect(capturedGameInitCallback).not.toBeNull();
-    expect(capturedGameInitCallback?.()).toBe(true);
     expect(capturedGameInitCallback?.()).toBe(false);
     expect(mockSetGameState).toHaveBeenCalledTimes(1);
     expect(mockSetGameState).toHaveBeenCalledWith({
       gameInitialized: true,
     });
-    expect(mockSetReady).toHaveBeenCalledTimes(1);
-    expect(mockSetReady).toHaveBeenCalledWith(true);
-    expect(mockNpcSynchronizerHydrate).toHaveBeenCalledTimes(1);
+    expect(mockPipelineSetReady).toHaveBeenCalledTimes(1);
+    expect(mockPipelineSetReady).toHaveBeenCalledWith(true);
+    expect(mockProjectionBootstrap).toHaveBeenCalledTimes(1);
+  });
+
+  it("reinitializes the runtime after the StrictMode cleanup cycle", () => {
+    mockGetInitializeState.mockReturnValue(true);
+
+    renderHook(() => useInit(), { wrapper: StrictMode });
+
+    expect(mockProjectionCleanup).toHaveBeenCalledOnce();
+    expect(mockProjectionBootstrap).toHaveBeenCalledTimes(2);
+    expect(mockPipelineSetReady).toHaveBeenCalledTimes(2);
+    expect(mockSetGameState).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the pipeline paused when the initial snapshot fails", () => {
+    mockGetInitializeState.mockReturnValue(true);
+    mockProjectionBootstrap.mockReturnValue(false);
+
+    renderHook(() => useInit());
+
+    expect(mockProjectionBootstrap).toHaveBeenCalledOnce();
+    expect(mockSetGameState).not.toHaveBeenCalled();
+    expect(mockPipelineSetReady).not.toHaveBeenCalled();
   });
 });

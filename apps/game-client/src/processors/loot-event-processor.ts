@@ -109,7 +109,9 @@ export class LootEventProcessor {
 
     const { npcContext } = dialogStore;
     const npc =
-      npcContext.npc ?? useNpcsStore.getState().getNpc(npcContext.npcId);
+      npcContext.npc ??
+      ingress?.npcsById[npcContext.npcId] ??
+      useNpcsStore.getState().getNpc(npcContext.npcId);
     const resolutionSource: DialogNpcContextSource = npcContext.npc
       ? npcContext.source
       : "fallback-lookup";

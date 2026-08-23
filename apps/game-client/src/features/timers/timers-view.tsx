@@ -129,7 +129,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const timersRefreshError = Boolean(timersError) && hasTimersResponse;
   const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
-  const [timerClockEnabled, setTimerClockEnabled] = useState(!isUnderBag);
+  const [timerClockEnabled, setTimerClockEnabled] = useState(
+    !isUnderBag && isOpen,
+  );
   const timerClockEpoch = useTimersUpdate(timerClockEnabled);
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
   const filters = timersFilters[settingsKey] ?? DEFAULT_TIMERS_FILTERS;
@@ -170,7 +172,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     expiredTimersAtBottom: true,
     removeTimerAfterMs: generalConfig.removeTimerAfterMs,
   });
-  const shouldEnableTimerClock = !isUnderBag || visibleTimers.length > 0;
+  const shouldEnableTimerClock = isUnderBag ? visibleTimers.length > 0 : isOpen;
   useEffect(() => {
     setTimerClockEnabled(shouldEnableTimerClock);
   }, [shouldEnableTimerClock]);

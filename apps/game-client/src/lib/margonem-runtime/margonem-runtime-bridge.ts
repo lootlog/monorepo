@@ -35,19 +35,12 @@ type BridgeOptions = {
 
 export type RuntimeBridgeHealth = Readonly<{
   adapter: RuntimeInterface | "unknown";
-  queueBytes: number;
-  queueEvents: number;
-  queueFacts: number;
-  ready: boolean;
   reason: string | null;
   seam: string | null;
   sequence: number;
   status: "installing" | "ready" | "fatal";
 }>;
 
-export const MAX_QUEUED_RUNTIME_EVENTS = 1_000;
-export const MAX_QUEUED_RUNTIME_BYTES = 4 * 1024 * 1024;
-export const MAX_QUEUED_RUNTIME_FACTS = 10_000;
 const INSTALL_RETRY_DELAY_MS = 100;
 const MAX_INSTALL_RETRIES = 20;
 
@@ -60,14 +53,12 @@ const EMPTY_INGRESS = Object.freeze({
 
 export class MargonemRuntimeBridge {
   private readonly appliedHandlers = new Set<RuntimeEventHandler>();
-  private readonly incomingHandlers = new Set<RuntimeEventHandler>();
   private readonly intentHandlers = new Set<RuntimeIntentHandler>();
   private readonly adapter?: MargonemRuntimeAdapter;
   private resolvedAdapter: MargonemRuntimeAdapter | null = null;
   private readonly onFatalPipelineError?: () => void;
   private readonly onObserverError?: (failure: RuntimeObserverFailure) => void;
   private readonly runtimeInterface?: RuntimeInterface;
-  private readonly eventQueue: RuntimeEventEnvelope[] = [];
   private inboundContainer: RuntimeFunctionContainer | null = null;
   private inboundProperty: string | null = null;
   private originalInbound: RuntimeFunction | null = null;
@@ -81,19 +72,13 @@ export class MargonemRuntimeBridge {
     wrapper: RuntimeFunction;
   }> = [];
   private sequence = 0;
-  private queuedBytes = 0;
-  private queuedFacts = 0;
   private installRetryCount = 0;
   private installRetryTimeout: ReturnType<typeof setTimeout> | null = null;
   private failureReason: string | null = null;
   private inboundSeam: string | null = null;
-  private ready = false;
   private activeIntent: RuntimeIntent | null = null;
   private gameInitCallback: (() => boolean) | null = null;
   private gameInitCallbackExecuted = false;
-  private activeProcessor: RuntimeEventHandler | null = null;
-  private unsubscribeActiveProcessor: (() => void) | null = null;
-  private readonly processorRegistrations = new Set<symbol>();
 
   constructor(options: BridgeOptions = {}) {
     this.adapter = options.adapter;
@@ -120,16 +105,21 @@ export class MargonemRuntimeBridge {
     this.inboundSeam = `${runtimeInterface}:${inbound.property}`;
 
     const { container, property, original: originalInbound } = inbound;
+    const initializeGame = this.initializeGameSafely.bind(this);
     const createEnvelope = this.createEnvelopeSafely.bind(this);
-    const receiveIncoming = this.receiveIncoming.bind(this);
-    const emitApplied = (envelope: RuntimeEventEnvelope) => {
-      this.emit(this.appliedHandlers, envelope, "applied");
+    const captureIntent = () => this.activeIntent;
+    const clearIntent = () => {
       this.activeIntent = null;
     };
+    const emitApplied = (envelope: RuntimeEventEnvelope) =>
+      this.emit(this.appliedHandlers, envelope, "applied");
     const wrappedInbound: RuntimeFunction = function (...args) {
-      const envelope = createEnvelope(args[0]);
-      if (envelope) receiveIncoming(envelope);
+      initializeGame();
+      const intent = captureIntent();
       const result = Reflect.apply(originalInbound, this, args);
+      initializeGame();
+      const envelope = createEnvelope(args[0], intent);
+      clearIntent();
       if (envelope) emitApplied(envelope);
       return result;
     };
@@ -142,56 +132,8 @@ export class MargonemRuntimeBridge {
     return container[property] === wrappedInbound;
   }
 
-  bootstrap(): boolean {
-    if (
-      this.wrappedInbound &&
-      this.inboundContainer?.[this.inboundProperty ?? ""] ===
-        this.wrappedInbound
-    ) {
-      return true;
-    }
-    return this.install();
-  }
-
   setupProxies(): boolean {
     return this.install();
-  }
-
-  acquireProcessor(processor: RuntimeEventHandler): () => boolean {
-    if (!this.activeProcessor) {
-      this.activeProcessor = processor;
-      this.unsubscribeActiveProcessor = this.subscribeIncoming((envelope) => {
-        processor(envelope);
-      });
-    }
-
-    const registration = Symbol("runtime-processor-registration");
-    this.processorRegistrations.add(registration);
-    let released = false;
-
-    return () => {
-      if (released) return false;
-
-      released = true;
-      if (!this.processorRegistrations.delete(registration)) return false;
-      if (this.processorRegistrations.size > 0) return false;
-
-      this.removeProcessor();
-      return true;
-    };
-  }
-
-  private removeProcessor(): void {
-    this.unsubscribeActiveProcessor?.();
-    this.unsubscribeActiveProcessor = null;
-    this.activeProcessor = null;
-    this.processorRegistrations.clear();
-  }
-
-  subscribeAfterGameEvent(handler: (event: GameEvent) => void): () => void {
-    return this.subscribeApplied((envelope) => {
-      if (envelope.raw) handler(envelope.raw);
-    });
   }
 
   setGameInitCallback(callback: () => boolean): void {
@@ -201,26 +143,10 @@ export class MargonemRuntimeBridge {
 
   triggerManualEvent(event: GameEvent): boolean {
     if (!import.meta.env.DEV) return false;
-    const envelope = this.createEnvelope(event);
+    const envelope = this.createEnvelope(event, this.activeIntent);
     if (!envelope) return false;
-    this.emit(this.incomingHandlers, envelope, "incoming");
+    this.emit(this.appliedHandlers, envelope, "applied");
     return true;
-  }
-
-  setReady(ready = true): void {
-    this.ready = ready;
-    if (!ready || this.eventQueue.length === 0) return;
-    const queuedEvents = this.eventQueue.splice(0);
-    this.queuedBytes = 0;
-    this.queuedFacts = 0;
-    for (const envelope of queuedEvents) {
-      this.emit(this.incomingHandlers, envelope, "incoming");
-    }
-  }
-
-  subscribeIncoming(handler: RuntimeEventHandler): () => void {
-    this.incomingHandlers.add(handler);
-    return () => this.incomingHandlers.delete(handler);
   }
 
   subscribeApplied(handler: RuntimeEventHandler): () => void {
@@ -240,10 +166,6 @@ export class MargonemRuntimeBridge {
     return Object.freeze({
       adapter:
         this.runtimeInterface ?? this.resolvedAdapter?.interface ?? "unknown",
-      queueBytes: this.queuedBytes,
-      queueEvents: this.eventQueue.length,
-      queueFacts: this.queuedFacts,
-      ready: this.ready,
       reason: this.failureReason,
       seam: this.inboundSeam,
       sequence: this.sequence,
@@ -252,17 +174,11 @@ export class MargonemRuntimeBridge {
   }
 
   cleanup(): void {
-    this.removeProcessor();
     this.detachInbound();
     this.detachOutgoing();
-    this.incomingHandlers.clear();
     this.appliedHandlers.clear();
     this.intentHandlers.clear();
-    this.ready = false;
     this.sequence = 0;
-    this.eventQueue.length = 0;
-    this.queuedBytes = 0;
-    this.queuedFacts = 0;
     this.clearInstallRetry();
     this.activeIntent = null;
     this.gameInitCallback = null;
@@ -357,10 +273,10 @@ export class MargonemRuntimeBridge {
     return Object.freeze({ npc, npcId, type: "talk" });
   }
 
-  private createEnvelope(payload: unknown): RuntimeEventEnvelope | null {
-    if (this.gameInitCallback && !this.gameInitCallbackExecuted) {
-      this.gameInitCallbackExecuted = this.gameInitCallback();
-    }
+  private createEnvelope(
+    payload: unknown,
+    intent: RuntimeIntent | null,
+  ): RuntimeEventEnvelope | null {
     let event: GameEvent;
     if (typeof payload === "string") {
       try {
@@ -375,62 +291,12 @@ export class MargonemRuntimeBridge {
     }
 
     this.sequence += 1;
-    const adapter = this.adapter ?? this.getAdapter();
-    const npcIds = new Set<number>();
-    for (const deletion of event.npcs_del ?? []) npcIds.add(deletion.id);
-    const dialogNpcId = Number(
-      Array.isArray(event.d) ? event.d[2] : Number.NaN,
-    );
-    if (Number.isSafeInteger(dialogNpcId) && dialogNpcId > 0) {
-      npcIds.add(dialogNpcId);
-    }
-    const npcsById: Record<
-      number,
-      NonNullable<ReturnType<MargonemRuntimeAdapter["getNpc"]>>
-    > = {};
-    const otherIds = new Set<string>();
-    for (const warriorId of Object.keys(event.f?.w ?? {})) {
-      const numericId = Number(warriorId);
-      if (numericId > 0) otherIds.add(warriorId);
-    }
-    const othersById: Record<
-      string,
-      NonNullable<ReturnType<MargonemRuntimeAdapter["getOther"]>>
-    > = {};
-    if (adapter) {
-      for (const npcId of npcIds) {
-        try {
-          const npc = adapter.getNpc(npcId);
-          if (npc) npcsById[npcId] = npc;
-        } catch {
-          continue;
-        }
-      }
-    }
-    if (adapter) {
-      for (const otherId of otherIds) {
-        try {
-          const other = adapter.getOther(otherId);
-          if (other) othersById[otherId] = other;
-        } catch {
-          continue;
-        }
-      }
-    }
-    let game = null;
-    try {
-      game = adapter?.getGameSnapshot() ?? null;
-    } catch {
-      game = null;
-    }
+    const facts = parseRuntimeFacts(event);
     return Object.freeze({
-      facts: parseRuntimeFacts(event),
+      facts,
       ingress: Object.freeze({
         ...EMPTY_INGRESS,
-        game,
-        intent: this.activeIntent,
-        npcsById: Object.freeze(npcsById),
-        othersById: Object.freeze(othersById),
+        intent,
       }),
       observedAt: Date.now(),
       raw: event,
@@ -438,46 +304,32 @@ export class MargonemRuntimeBridge {
     });
   }
 
-  private createEnvelopeSafely(payload: unknown): RuntimeEventEnvelope | null {
+  private createEnvelopeSafely(
+    payload: unknown,
+    intent: RuntimeIntent | null,
+  ): RuntimeEventEnvelope | null {
     try {
-      return this.createEnvelope(payload);
+      return this.createEnvelope(payload, intent);
     } catch (error) {
       this.reportObserverFailure({
         error,
-        phase: "incoming",
+        phase: "applied",
         sequence: this.sequence,
       });
       return null;
     }
   }
 
-  private receiveIncoming(envelope: RuntimeEventEnvelope): void {
-    if (this.ready) {
-      this.emit(this.incomingHandlers, envelope, "incoming");
-      return;
-    }
-    const rawBytes = this.estimateRawBytes(envelope.raw);
-    const nextFacts = this.queuedFacts + envelope.facts.length;
-    if (
-      this.eventQueue.length >= MAX_QUEUED_RUNTIME_EVENTS ||
-      this.queuedBytes + rawBytes > MAX_QUEUED_RUNTIME_BYTES ||
-      nextFacts > MAX_QUEUED_RUNTIME_FACTS
-    ) {
-      this.failureReason = "fatal:queue-overflow";
-      this.onFatalPipelineError?.();
-      return;
-    }
-    this.eventQueue.push(envelope);
-    this.queuedBytes += rawBytes;
-    this.queuedFacts = nextFacts;
-  }
-
-  private estimateRawBytes(event: GameEvent | undefined): number {
-    if (!event) return 0;
+  private initializeGameSafely(): void {
+    if (!this.gameInitCallback || this.gameInitCallbackExecuted) return;
     try {
-      return JSON.stringify(event).length * 2;
-    } catch {
-      return 0;
+      this.gameInitCallbackExecuted = this.gameInitCallback();
+    } catch (error) {
+      this.reportObserverFailure({
+        error,
+        phase: "initialization",
+        sequence: this.sequence,
+      });
     }
   }
 
@@ -546,7 +398,7 @@ export class MargonemRuntimeBridge {
   private emit(
     handlers: ReadonlySet<RuntimeEventHandler>,
     envelope: RuntimeEventEnvelope,
-    phase: "applied" | "incoming",
+    phase: "applied",
   ): void {
     for (const handler of handlers) {
       try {

@@ -152,4 +152,13 @@ describe("visible timer countdown", () => {
     expect(setIntervalSpy).not.toHaveBeenCalled();
     expect(vi.getTimerCount()).toBe(0);
   });
+
+  it("does not keep a clock running while the SI timer window is closed", () => {
+    const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
+
+    render(<TimersView isOpen={false} isUnderBag={false} />);
+
+    expect(setIntervalSpy).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
 });
