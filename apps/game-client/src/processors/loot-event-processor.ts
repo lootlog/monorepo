@@ -25,6 +25,7 @@ import type {
   RuntimeNpc,
 } from "@/lib/margonem-runtime/runtime.types";
 import { useGameStore } from "@/store/game.store";
+import { resolveDialogLootNpcLevel } from "@/utils/game/resolve-dialog-loot-npc-level";
 
 export class LootEventProcessor {
   handleLootFromBattle(
@@ -216,7 +217,10 @@ export class LootEventProcessor {
         hpp: 0,
         type: npcData.type,
         wt: npcData.weight,
-        lvl: npcData.level,
+        lvl: resolveDialogLootNpcLevel({
+          npcName: npcData.name,
+          npcLevel: npcData.level,
+        }),
         location: mapName,
       },
     ];
