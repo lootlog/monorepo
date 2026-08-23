@@ -84,6 +84,17 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     });
   };
 
+  const handleSelectOnlyNpcType = (
+    event: React.MouseEvent<HTMLDivElement>,
+    npcType: NpcType,
+  ) => {
+    event.preventDefault();
+    setTimersFilters(filtersKey, {
+      ...filters,
+      selectedNpcTypes: [npcType],
+    });
+  };
+
   const handleToggleColor = (colorId: string) => {
     setTimersFilters(filtersKey, {
       ...filters,
@@ -136,6 +147,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                 key={type}
                 role="button"
                 onClick={() => handleToggleNpcType(type)}
+                onContextMenu={(event) => handleSelectOnlyNpcType(event, type)}
                 className={cn(
                   "ll:flex ll:items-center ll:justify-center ll:gap-2 ll:hover:bg-gray-400/50 ll:px-1 ll:py-0.5 ll:box-border ll:text-white ll:text-xs",
                   {

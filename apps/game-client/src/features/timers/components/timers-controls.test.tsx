@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -188,6 +188,29 @@ describe("timers controls", () => {
         selectedColors: ["red", "custom-1"],
       }),
     );
+  });
+
+  it("selects only the right-clicked npc type", () => {
+    timersStoreState.timersFilters["guild-1"].selectedNpcTypes = [
+      NpcType.ELITE2,
+      NpcType.ELITE3,
+      NpcType.HERO,
+      NpcType.TITAN,
+    ];
+
+    render(<TimersFilters filtersKey="guild-1" />);
+
+    const elite2Button = screen.getByRole("button", { name: "E2" });
+    const contextMenuEvent = createEvent.contextMenu(elite2Button);
+    fireEvent(elite2Button, contextMenuEvent);
+
+    expect(contextMenuEvent.defaultPrevented).toBe(true);
+    expect(mockSetTimersFilters).toHaveBeenCalledWith("guild-1", {
+      minLvl: 10,
+      maxLvl: 200,
+      selectedNpcTypes: [NpcType.ELITE2],
+      selectedColors: ["red"],
+    });
   });
 
   it("dispatches toolbar actions for regular and under-bag controls", async () => {
