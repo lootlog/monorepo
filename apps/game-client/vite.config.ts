@@ -5,10 +5,8 @@ import path from "node:path";
 import monkey from "vite-plugin-monkey";
 import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
-import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { readFileSync } from "node:fs";
 
-const SENTRY_APPLICATION_KEY = "lootlog-game-client";
 const gameClientPackage = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf8"),
 ) as { version: string };
@@ -115,25 +113,6 @@ export default defineConfig(({ mode }) => {
             }),
           ]
         : []),
-      sentryVitePlugin({
-        applicationKey: SENTRY_APPLICATION_KEY,
-        bundleSizeOptimizations: {
-          excludeDebugStatements: true,
-          excludeReplayIframe: true,
-          excludeReplayShadowDom: true,
-          excludeTracing: true,
-        },
-        release: {
-          create: false,
-          inject: true,
-          name: runtimeVersion,
-        },
-        silent: true,
-        sourcemaps: {
-          disable: true,
-        },
-        telemetry: false,
-      }),
     ],
   };
 });

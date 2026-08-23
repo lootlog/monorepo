@@ -1,5 +1,4 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { captureRuntimeObserverFailure } from "@/lib/error-monitoring";
 import { parseRuntimeFacts } from "./runtime-event-parser";
 import {
   createRuntimeAdapter,
@@ -470,5 +469,9 @@ function scheduleActiveRuntimeTeardown(): void {
 
 export const margonemRuntimeBridge = new MargonemRuntimeBridge({
   onFatalPipelineError: scheduleActiveRuntimeTeardown,
-  onObserverError: captureRuntimeObserverFailure,
+  onObserverError: ({ error, phase }) => {
+    if (import.meta.env.DEV) {
+      console.warn(`[MargonemRuntimeBridge] ${phase} observer failed:`, error);
+    }
+  },
 });

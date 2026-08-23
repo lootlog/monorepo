@@ -4,30 +4,20 @@ const runtimeMocks = vi.hoisted(() => {
   const render = vi.fn();
   const unmount = vi.fn();
   const teardownPublicApi = vi.fn();
-  const triggerErrorMonitoringTest = vi.fn(() => true);
   const clearQueryClient = vi.fn();
   const disposeSoundPlayback = vi.fn();
   const disposeSocket = vi.fn();
-  const captureBootstrapError = vi.fn();
-  const initializeErrorMonitoring = vi.fn();
-  const onRecoverableError = vi.fn();
-  const onUncaughtError = vi.fn();
   const resetTransientRuntimeState = vi.fn();
 
   return {
     bootstrapPublicApi: vi.fn(() => teardownPublicApi),
-    captureBootstrapError,
     clearQueryClient,
     createRoot: vi.fn(() => ({ render, unmount })),
     disposeSoundPlayback,
     disposeSocket,
-    initializeErrorMonitoring,
-    onRecoverableError,
-    onUncaughtError,
     resetTransientRuntimeState,
     render,
     teardownPublicApi,
-    triggerErrorMonitoringTest,
     unmount,
   };
 });
@@ -74,16 +64,6 @@ vi.mock("@/lib/runtime-state", () => ({
   resetTransientRuntimeState: runtimeMocks.resetTransientRuntimeState,
 }));
 
-vi.mock("@/lib/error-monitoring", () => ({
-  captureBootstrapError: runtimeMocks.captureBootstrapError,
-  getReactRootErrorHandlers: () => ({
-    onRecoverableError: runtimeMocks.onRecoverableError,
-    onUncaughtError: runtimeMocks.onUncaughtError,
-  }),
-  initializeErrorMonitoring: runtimeMocks.initializeErrorMonitoring,
-  triggerErrorMonitoringTest: runtimeMocks.triggerErrorMonitoringTest,
-}));
-
 describe("getLootlogRootZIndex", () => {
   afterEach(() => {
     (window as RuntimeWindow).__lootlogGameClientRuntime?.dispose();
@@ -94,10 +74,8 @@ describe("getLootlogRootZIndex", () => {
     runtimeMocks.bootstrapPublicApi.mockClear();
     runtimeMocks.clearQueryClient.mockClear();
     runtimeMocks.createRoot.mockClear();
-    runtimeMocks.captureBootstrapError.mockClear();
     runtimeMocks.disposeSoundPlayback.mockClear();
     runtimeMocks.disposeSocket.mockClear();
-    runtimeMocks.initializeErrorMonitoring.mockClear();
     runtimeMocks.resetTransientRuntimeState.mockClear();
     runtimeMocks.render.mockClear();
     runtimeMocks.teardownPublicApi.mockClear();
@@ -158,10 +136,6 @@ describe("getLootlogRootZIndex", () => {
     expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(1);
     expect(runtimeMocks.createRoot).toHaveBeenCalledWith(
       expect.any(HTMLDivElement),
-      {
-        onRecoverableError: runtimeMocks.onRecoverableError,
-        onUncaughtError: runtimeMocks.onUncaughtError,
-      },
     );
     expect(runtimeMocks.render).toHaveBeenCalledTimes(1);
     expect(runtimeMocks.bootstrapPublicApi).toHaveBeenCalledTimes(1);
@@ -212,8 +186,6 @@ describe("getLootlogRootZIndex", () => {
     await expect(loadMain()).rejects.toThrow(error);
 
     expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.initializeErrorMonitoring).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.captureBootstrapError).toHaveBeenCalledWith(error);
     expect(runtimeMocks.unmount).toHaveBeenCalledTimes(1);
     expect(document.getElementById("lootlog-root")).toBeNull();
     expect(

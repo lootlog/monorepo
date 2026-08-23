@@ -94,18 +94,6 @@ export async function createLoot(
         throw error;
       }
     },
-    monitoringContext: {
-      attemptId: debugContext.attemptId,
-      feature: "loot",
-      itemCount: options.loots.length,
-      lootSource: debugContext.source,
-      mapName: options.location,
-      npcCount: options.npcs.length,
-      npcIds: options.npcs.map((npc) => npc.id),
-      npcTypes: [...new Set(options.npcs.map((npc) => npc.type))],
-      playerCount: options.players.length,
-      world: options.world,
-    },
     retry: GAME_EVENT_RETRY_OPTIONS,
   });
 
@@ -132,9 +120,5 @@ export async function updateLoot({
       payload: rest,
     },
     execute: () => client.patch(`/loots/${id}`, rest),
-    monitoringContext: {
-      feature: "loot",
-      lootId: id,
-    },
   });
 }

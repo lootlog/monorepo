@@ -8,14 +8,6 @@ import {
 } from "@/lib/logs/log-actions";
 import { useLogsStore } from "@/store/logs.store";
 
-const { mockReportApiActionFailure } = vi.hoisted(() => ({
-  mockReportApiActionFailure: vi.fn(),
-}));
-
-vi.mock("@/lib/error-monitoring", () => ({
-  reportApiActionFailure: mockReportApiActionFailure,
-}));
-
 const retry = {
   maxAttempts: 3,
   retryableStatuses: [408, 425, 429, 500, 502, 503, 504],
@@ -73,10 +65,9 @@ describe("log actions retry", () => {
         response: { ok: true },
       }),
     ]);
-    expect(mockReportApiActionFailure).not.toHaveBeenCalled();
   });
 
-  it("reports one warning for a partially failed multi-request action", async () => {
+  it("logs a partially failed multi-request action", async () => {
     const action = startLoggedAction({
       actionType: "send_chat_message",
       payload: { guildCount: 2 },
@@ -101,22 +92,21 @@ describe("log actions retry", () => {
     });
     action.complete({ status: "partial" });
 
-    expect(mockReportApiActionFailure).toHaveBeenCalledTimes(1);
-    expect(mockReportApiActionFailure).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionType: "send_chat_message",
-        requestAttemptCount: 2,
-        failedRequests: [
-          {
-            endpoint: "/guilds/123/chat-messages",
-            error,
-            method: "POST",
-            statusCode: 503,
-          },
-        ],
-        status: "partial",
-      }),
-    );
+    expect(useLogsStore.getState().actions[0]).toMatchObject({
+      actionType: "send_chat_message",
+      status: "partial",
+      requests: [
+        expect.objectContaining({
+          endpoint: "/guilds/123/chat-messages",
+          status: "error",
+          statusCode: 503,
+        }),
+        expect.objectContaining({
+          endpoint: "/guilds/456/chat-messages",
+          status: "success",
+        }),
+      ],
+    });
   });
 
   it("retries transient HTTP statuses", async () => {
@@ -172,22 +162,17 @@ describe("log actions retry", () => {
     });
 
     expect(execute).toHaveBeenCalledTimes(1);
-    expect(useLogsStore.getState().actions[0].requests).toHaveLength(1);
-    expect(mockReportApiActionFailure).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionType: "create_kill",
-        requestAttemptCount: 1,
-        failedRequests: [
-          {
-            endpoint: "/kills",
-            error: expect.objectContaining({ message: "Bad request" }),
-            method: "POST",
-            statusCode: 400,
-          },
-        ],
-        status: "error",
-      }),
-    );
+    expect(useLogsStore.getState().actions[0]).toMatchObject({
+      actionType: "create_kill",
+      status: "error",
+      requests: [
+        expect.objectContaining({
+          endpoint: "/kills",
+          status: "error",
+          statusCode: 400,
+        }),
+      ],
+    });
   });
 });
 
