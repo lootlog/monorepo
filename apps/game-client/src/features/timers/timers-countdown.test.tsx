@@ -13,6 +13,7 @@ beforeEach(() =>
 );
 
 const testState = vi.hoisted(() => ({
+  alwaysVisibleExpiredTimers: {} as Record<string, string[]>,
   contentRenderSpy: vi.fn(),
   timers: [] as Timer[],
 }));
@@ -39,7 +40,7 @@ vi.mock("@/store/timers.store", () => ({
   useTimersStore: () => ({
     hiddenTimers: {},
     pinnedTimers: {},
-    alwaysVisibleExpiredTimers: {},
+    alwaysVisibleExpiredTimers: testState.alwaysVisibleExpiredTimers,
     generalConfig: {
       removeTimerAfterMs: 30_000,
       timersGrouping: false,
@@ -91,9 +92,14 @@ vi.mock("@/features/timers/components/timers-content", () => ({
   TimersContent: ({ sortedTimers }: { sortedTimers: TimerWithTimeLeft[] }) => {
     testState.contentRenderSpy();
     return (
-      <output data-testid="timer-countdown">
-        {sortedTimers[0]?.maxTimeLeft ?? "missing"}
-      </output>
+      <>
+        <output data-testid="timer-countdown">
+          {sortedTimers[0]?.maxTimeLeft ?? "missing"}
+        </output>
+        <output data-testid="timer-order">
+          {sortedTimers.map((timer) => timer.timerKey).join(",")}
+        </output>
+      </>
     );
   },
 }));
@@ -124,10 +130,24 @@ const createVisibleTimer = (): Timer => ({
   } as never,
 });
 
+const createLaterTimer = (): Timer => ({
+  ...createVisibleTimer(),
+  timerKey: "timer-2",
+  npcId: 11,
+  minSpawnTime: new Date(NOW.getTime() + 59_000).toISOString(),
+  maxSpawnTime: new Date(NOW.getTime() + 60_000).toISOString(),
+  npc: {
+    ...createVisibleTimer().npc,
+    id: 11,
+    name: "Mushita",
+  },
+});
+
 describe("visible timer countdown", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
+    testState.alwaysVisibleExpiredTimers = {};
     testState.contentRenderSpy.mockReset();
     testState.timers = [createVisibleTimer()];
   });
@@ -155,6 +175,25 @@ describe("visible timer countdown", () => {
 
     expect(screen.getByTestId("timer-countdown")).toHaveTextContent("missing");
     expect(testState.contentRenderSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("moves an always-visible expired timer below active timers at the removal boundary", () => {
+    testState.alwaysVisibleExpiredTimers = { gefion: ["timer-1"] };
+    testState.timers = [createVisibleTimer(), createLaterTimer()];
+
+    render(<TimersView isOpen isUnderBag />);
+
+    expect(screen.getByTestId("timer-order")).toHaveTextContent(
+      "timer-1,timer-2",
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(35_000);
+    });
+
+    expect(screen.getByTestId("timer-order")).toHaveTextContent(
+      "timer-2,timer-1",
+    );
   });
 
   it("does not keep a clock running when under-bag has no visible timer", () => {
