@@ -62,6 +62,36 @@ describe("useOthersStore", () => {
     expect(useOthersStore.getState().othersById).toBe(firstState);
   });
 
+  it("preserves state and entity references for a semantically equal other", () => {
+    const first = createOther("other");
+    const semanticallyEqual = createOther("other");
+
+    useOthersStore.getState().upsertOther("1", first);
+    const firstState = useOthersStore.getState().othersById;
+
+    useOthersStore.getState().upsertOther("1", semanticallyEqual);
+
+    expect(useOthersStore.getState().othersById).toBe(firstState);
+    expect(useOthersStore.getState().getOther("1")).toBe(first);
+  });
+
+  it("preserves collection and entity references when replacing equal others", () => {
+    const first = createOther("other");
+    useOthersStore.getState().replaceOthers({ 1: first });
+    const othersById = useOthersStore.getState().othersById;
+    const revision = useOthersStore.getState().revision;
+    const publish = vi.fn();
+    const unsubscribe = useOthersStore.subscribe(publish);
+
+    useOthersStore.getState().replaceOthers({ 1: createOther("other") });
+
+    expect(useOthersStore.getState().othersById).toBe(othersById);
+    expect(useOthersStore.getState().getOther("1")).toBe(first);
+    expect(useOthersStore.getState().revision).toBe(revision);
+    expect(publish).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
   it("applies mixed changes in one store publication", () => {
     const removed = createOther("removed");
     const updated = createOther("updated");

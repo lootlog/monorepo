@@ -14,13 +14,15 @@ const getCharacterListQueryKey = (
 ) => ["characters-v2", accountId, world, languageVersion] as const;
 
 export const useCharacterList = () => {
-  const game = useGameStore((state) => state.game);
-  const accountId = Number(game?.hero.accountId ?? 0);
-  const world = game?.world;
+  const accountId = useGameStore((state) =>
+    Number(state.game?.hero.accountId ?? 0),
+  );
+  const world = useGameStore((state) => state.game?.world);
+  const gameReady = useGameStore((state) => state.game !== null);
   const languageVersion = getLanguageVersion(window.location.href);
 
   const query = useQuery({
-    enabled: game !== null,
+    enabled: gameReady,
     queryKey: getCharacterListQueryKey(accountId, world, languageVersion),
     queryFn: () =>
       fetchCharacterList({

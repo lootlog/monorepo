@@ -130,6 +130,6 @@ export type RuntimeIntentHandler = (intent: RuntimeIntent) => void;
 
 export type RuntimeObserverFailure = Readonly<{
   error: unknown;
-  phase: "applied" | "incoming" | "intent";
+  phase: "applied" | "initialization" | "intent";
   sequence: number;
 }>;

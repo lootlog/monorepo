@@ -247,6 +247,23 @@ describe("useWhoIsHereLootlogHighlight", () => {
     unmount();
   });
 
+  it("does not rerender for other or presence updates while inactive", () => {
+    let renderCount = 0;
+    const { unmount } = renderHook(() => {
+      renderCount += 1;
+      useWhoIsHereLootlogHighlight();
+    });
+    const renderCountBeforeOtherUpdate = renderCount;
+
+    act(() => {
+      useOthersStore.getState().setMany({ "617": createOther() });
+      setOnlineOwner();
+    });
+
+    expect(renderCount).toBe(renderCountBeforeOtherUpdate);
+    unmount();
+  });
+
   it("observes the whoIsHere window instead of the document body when active", () => {
     appendWhoIsHereRow();
     setRuntime(createOther());

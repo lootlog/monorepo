@@ -17,7 +17,7 @@ describe("MargonemRuntimeBridge", () => {
     testRuntimeWindow.Engine = originalEngine;
   });
 
-  it("observes an incoming event before Margonem and an applied event afterwards without changing the call", () => {
+  it("observes an event only after Margonem returns without changing the call", () => {
     const order: string[] = [];
     const event = Object.freeze({ h: { stasis: 1 } }) as GameEvent;
     const callback = vi.fn();
@@ -30,23 +30,47 @@ describe("MargonemRuntimeBridge", () => {
     });
     runtimeWindow.successData = original;
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
-    bridge.subscribeIncoming(() => order.push("incoming"));
     bridge.subscribeApplied(() => order.push("applied"));
 
     expect(bridge.install()).toBe(true);
     expect(bridge.getHealth()).toEqual(
       expect.objectContaining({ seam: "si:successData", status: "ready" }),
     );
-    bridge.setReady(true);
     const result = runtimeWindow.successData?.call(receiver, event, callback);
 
     expect(result).toBe("unchanged-result");
-    expect(order).toEqual(["incoming", "margonem", "applied"]);
+    expect(order).toEqual(["margonem", "applied"]);
     expect(original).toHaveBeenCalledWith(event, callback);
     bridge.cleanup();
   });
 
-  it("delivers distinct incoming packets that share an event id", () => {
+  it("runs the one-time initialization callback before the first Margonem event", () => {
+    const order: string[] = [];
+    runtimeWindow.successData = vi.fn(() => {
+      order.push("margonem");
+    });
+    const bridge = new MargonemRuntimeBridge({ interface: "si" });
+    bridge.setGameInitCallback(() => {
+      order.push("bootstrap");
+      return true;
+    });
+    bridge.subscribeApplied(() => order.push("applied"));
+    bridge.install();
+
+    runtimeWindow.successData?.({ h: {} });
+    runtimeWindow.successData?.({ h: {} });
+
+    expect(order).toEqual([
+      "bootstrap",
+      "margonem",
+      "applied",
+      "margonem",
+      "applied",
+    ]);
+    bridge.cleanup();
+  });
+
+  it("delivers distinct applied packets that share an event id", () => {
     const firstEvent = Object.freeze({
       ev: 1_785_091_976.123,
       f: { m: ["turn-1"] },
@@ -58,21 +82,18 @@ describe("MargonemRuntimeBridge", () => {
     const original = vi.fn(() => "margonem-result");
     runtimeWindow.successData = original;
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
-    const incoming = vi.fn();
     const applied = vi.fn();
-    bridge.subscribeIncoming(incoming);
     bridge.subscribeApplied(applied);
 
     bridge.install();
-    bridge.setReady(true);
     runtimeWindow.successData?.(firstEvent);
     runtimeWindow.successData?.(secondEvent);
 
-    expect(incoming).toHaveBeenNthCalledWith(
+    expect(applied).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({ raw: firstEvent }),
     );
-    expect(incoming).toHaveBeenNthCalledWith(
+    expect(applied).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({ raw: secondEvent }),
     );
@@ -84,25 +105,24 @@ describe("MargonemRuntimeBridge", () => {
   it("keeps distinct event ids and events without ids", () => {
     runtimeWindow.successData = vi.fn();
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
-    const incoming = vi.fn();
-    bridge.subscribeIncoming(incoming);
+    const applied = vi.fn();
+    bridge.subscribeApplied(applied);
 
     bridge.install();
-    bridge.setReady(true);
     runtimeWindow.successData?.({ ev: 1, f: { m: ["first"] } });
     runtimeWindow.successData?.({ ev: 2, f: { m: ["second"] } });
     runtimeWindow.successData?.({ f: { m: ["without-id"] } });
     runtimeWindow.successData?.({ f: { m: ["without-id"] } });
 
-    expect(incoming).toHaveBeenCalledTimes(4);
+    expect(applied).toHaveBeenCalledTimes(4);
     bridge.cleanup();
   });
 
-  it("queues distinct incoming packets that share an event id", () => {
+  it("observes every applied packet without owning a work queue", () => {
     runtimeWindow.successData = vi.fn();
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
-    const incoming = vi.fn();
-    bridge.subscribeIncoming(incoming);
+    const applied = vi.fn();
+    bridge.subscribeApplied(applied);
 
     bridge.install();
     const firstEvent = { ev: 10, f: { m: ["first"] } };
@@ -110,47 +130,15 @@ describe("MargonemRuntimeBridge", () => {
     runtimeWindow.successData?.(firstEvent);
     runtimeWindow.successData?.(secondEvent);
 
-    expect(bridge.getHealth().queueEvents).toBe(2);
-    bridge.setReady(true);
-    expect(incoming).toHaveBeenCalledTimes(2);
-    expect(incoming).toHaveBeenNthCalledWith(
+    expect(applied).toHaveBeenCalledTimes(2);
+    expect(applied).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({ raw: firstEvent }),
     );
-    expect(incoming).toHaveBeenNthCalledWith(
+    expect(applied).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({ raw: secondEvent }),
     );
-    bridge.cleanup();
-  });
-
-  it("shares one processor across overlapping registrations without filtering packets", () => {
-    runtimeWindow.successData = vi.fn();
-    const bridge = new MargonemRuntimeBridge({ interface: "si" });
-    const firstProcessor = vi.fn();
-    const secondProcessor = vi.fn();
-    const observer = vi.fn();
-    const releaseFirstProcessor = bridge.acquireProcessor(firstProcessor);
-    const releaseSecondProcessor = bridge.acquireProcessor(secondProcessor);
-    bridge.subscribeIncoming(observer);
-
-    bridge.install();
-    bridge.setReady(true);
-    runtimeWindow.successData?.({ ev: 10, f: { m: ["first"] } });
-    runtimeWindow.successData?.({ ev: 10, f: { m: ["second"] } });
-
-    expect(firstProcessor).toHaveBeenCalledTimes(2);
-    expect(secondProcessor).not.toHaveBeenCalled();
-    expect(observer).toHaveBeenCalledTimes(2);
-
-    expect(releaseFirstProcessor()).toBe(false);
-    runtimeWindow.successData?.({ f: { m: ["third"] } });
-    expect(firstProcessor).toHaveBeenCalledTimes(3);
-
-    expect(releaseSecondProcessor()).toBe(true);
-    runtimeWindow.successData?.({ f: { m: ["fourth"] } });
-    expect(firstProcessor).toHaveBeenCalledTimes(3);
-    expect(observer).toHaveBeenCalledTimes(4);
     bridge.cleanup();
   });
 
@@ -167,8 +155,6 @@ describe("MargonemRuntimeBridge", () => {
     bridge.subscribeApplied(laterObserver);
 
     bridge.install();
-    bridge.setReady(true);
-
     expect(() => runtimeWindow.successData?.(event)).not.toThrow();
     expect(runtimeWindow.successData?.(event)).toBe("margonem-result");
     expect(laterObserver).toHaveBeenCalledTimes(2);
@@ -191,8 +177,6 @@ describe("MargonemRuntimeBridge", () => {
     });
 
     bridge.install();
-    bridge.setReady(true);
-
     expect(runtimeWindow.successData?.(event)).toBe("margonem-result");
     expect(onObserverError).toHaveBeenCalledWith({
       error: observerFailure,
@@ -202,7 +186,7 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 
-  it("calls Margonem unchanged when creating an incoming envelope fails", () => {
+  it("calls Margonem unchanged when creating an applied envelope fails", () => {
     const envelopeFailure = new Error("event access failed");
     const event = new Proxy(
       {},
@@ -228,13 +212,12 @@ describe("MargonemRuntimeBridge", () => {
     });
 
     bridge.install();
-    bridge.setReady(true);
     const result = runtimeWindow.successData?.call(receiver, event, callback);
 
     expect(result).toBe("margonem-result");
     expect(onObserverError).toHaveBeenCalledWith({
       error: envelopeFailure,
-      phase: "incoming",
+      phase: "applied",
       sequence: 1,
     });
     bridge.cleanup();
@@ -310,24 +293,23 @@ describe("MargonemRuntimeBridge", () => {
     runtimeWindow.successData = vi.fn();
     testRuntimeWindow._g = vi.fn();
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
-    const incoming = vi.fn();
-    bridge.subscribeIncoming(incoming);
+    const applied = vi.fn();
+    bridge.subscribeApplied(applied);
     bridge.subscribeApplied(() => {
       throw new Error("applied observer failed");
     });
 
     bridge.install();
-    bridge.setReady(true);
     testRuntimeWindow._g("talk&id=501");
     runtimeWindow.successData?.({ h: {} });
     runtimeWindow.successData?.({ h: {} });
 
-    expect(incoming.mock.calls[0]?.[0].ingress.intent).toEqual({
+    expect(applied.mock.calls[0]?.[0].ingress.intent).toEqual({
       npc: null,
       npcId: 501,
       type: "talk",
     });
-    expect(incoming.mock.calls[1]?.[0].ingress.intent).toBeNull();
+    expect(applied.mock.calls[1]?.[0].ingress.intent).toBeNull();
     bridge.cleanup();
   });
 
@@ -341,24 +323,42 @@ describe("MargonemRuntimeBridge", () => {
       communication: { parseJSON, successData },
     };
     const bridge = new MargonemRuntimeBridge({ interface: "ni" });
-    const incoming = vi.fn(() => {
-      throw new Error("incoming observer failed");
-    });
-    const laterIncoming = vi.fn();
     const applied = vi.fn();
-    bridge.subscribeIncoming(incoming);
-    bridge.subscribeIncoming(laterIncoming);
     bridge.subscribeApplied(applied);
     bridge.install();
-    bridge.setReady(true);
 
     const installedParseJson = testRuntimeWindow.Engine?.communication
       ?.parseJSON as (event: GameEvent) => unknown;
     expect(() => installedParseJson({ h: {} })).toThrow(failure);
-    expect(incoming).toHaveBeenCalledOnce();
-    expect(laterIncoming).toHaveBeenCalledOnce();
     expect(applied).not.toHaveBeenCalled();
     expect(successData).not.toHaveBeenCalled();
+    bridge.cleanup();
+  });
+
+  it("preserves NI parseJSON arguments, receiver, and return value", () => {
+    const event = Object.freeze({ h: { x: 4, y: 5 } }) as GameEvent;
+    const callback = vi.fn();
+    const receiver = { communication: true };
+    const result = Object.freeze({ ok: true });
+    const parseJSON = vi.fn(function (this: unknown, ...args: unknown[]) {
+      expect(this).toBe(receiver);
+      expect(args).toEqual([event, callback]);
+      return result;
+    });
+    testRuntimeWindow.Engine = {
+      communication: { parseJSON },
+    };
+    const bridge = new MargonemRuntimeBridge({ interface: "ni" });
+    const applied = vi.fn();
+    bridge.subscribeApplied(applied);
+    bridge.install();
+
+    const installedParseJson = testRuntimeWindow.Engine?.communication
+      ?.parseJSON as (this: unknown, ...args: unknown[]) => unknown;
+    expect(installedParseJson.call(receiver, event, callback)).toBe(result);
+    expect(applied).toHaveBeenCalledWith(
+      expect.objectContaining({ raw: event }),
+    );
     bridge.cleanup();
   });
 
@@ -384,23 +384,16 @@ describe("MargonemRuntimeBridge", () => {
     expect(testRuntimeWindow._g).toBe(foreignOutgoing);
   });
 
-  it("captures only referenced ingress entities and keeps queued snapshots historical", () => {
-    const firstNpc = Object.freeze({ id: 7, name: "Before" });
-    const getNpc = vi.fn<() => Readonly<{ id: number; name: string }>>(
-      () => firstNpc,
-    );
-    const getOther = vi.fn((id: string) =>
-      Object.freeze({ accountId: id, characterId: id }),
-    );
+  it("never reads Margonem domain state while receiving an event", () => {
     const adapter = {
-      getGameSnapshot: vi.fn(() => null),
-      getNpc,
-      getOther,
+      getGameSnapshot: vi.fn(),
+      getNpc: vi.fn(),
+      getOther: vi.fn(),
     } as unknown as MargonemRuntimeAdapter;
     runtimeWindow.successData = vi.fn();
     const bridge = new MargonemRuntimeBridge({ adapter, interface: "si" });
-    const incoming = vi.fn();
-    bridge.subscribeIncoming(incoming);
+    const applied = vi.fn();
+    bridge.subscribeApplied(applied);
     bridge.install();
 
     runtimeWindow.successData?.({
@@ -408,13 +401,46 @@ describe("MargonemRuntimeBridge", () => {
       npcs: Array.from({ length: 120 }, (_, id) => ({ id })),
       npcs_del: [{ id: 7 }],
     } as unknown as GameEvent);
-    getNpc.mockReturnValue(Object.freeze({ id: 7, name: "After" }));
-    bridge.setReady(true);
 
-    expect(getNpc).toHaveBeenCalledTimes(1);
-    expect(getOther).toHaveBeenCalledTimes(1);
-    expect(getOther).toHaveBeenCalledWith("11");
-    expect(incoming.mock.calls[0]?.[0].ingress.npcsById[7]).toBe(firstNpc);
+    expect(adapter.getGameSnapshot).not.toHaveBeenCalled();
+    expect(adapter.getNpc).not.toHaveBeenCalled();
+    expect(adapter.getOther).not.toHaveBeenCalled();
+    expect(applied.mock.calls[0]?.[0].ingress).toEqual({
+      game: null,
+      intent: null,
+      npcsById: {},
+      othersById: {},
+    });
+    bridge.cleanup();
+  });
+
+  it("does not read a game snapshot for AFK, deletion, or loot facts", () => {
+    const adapter = {
+      getGameSnapshot: vi.fn(),
+      getNpc: vi.fn(() => undefined),
+      getOther: vi.fn(() => undefined),
+    } as unknown as MargonemRuntimeAdapter;
+    runtimeWindow.successData = vi.fn();
+    const bridge = new MargonemRuntimeBridge({ adapter, interface: "si" });
+    const applied = vi.fn();
+    bridge.subscribeApplied(applied);
+    bridge.install();
+
+    runtimeWindow.successData?.({ h: { x: 5, y: 6 } } as GameEvent);
+    expect(adapter.getGameSnapshot).not.toHaveBeenCalled();
+    expect(applied.mock.calls[0]?.[0].ingress.game).toBeNull();
+
+    runtimeWindow.successData?.({ h: { stasis: 1 } } as GameEvent);
+    runtimeWindow.successData?.({ npcs_del: [{ id: 7 }] } as GameEvent);
+    runtimeWindow.successData?.({
+      item: {},
+      loot: { source: "dialog" },
+    } as unknown as GameEvent);
+
+    expect(adapter.getGameSnapshot).not.toHaveBeenCalled();
+    expect(applied.mock.calls[1]?.[0].ingress.game).toBeNull();
+    expect(applied.mock.calls[2]?.[0].ingress.game).toBeNull();
+    expect(applied.mock.calls[3]?.[0].ingress.game).toBeNull();
     bridge.cleanup();
   });
 });

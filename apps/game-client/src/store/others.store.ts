@@ -54,6 +54,42 @@ function normalizeOther(other: RuntimeOtherInput): RuntimeOther {
   });
 }
 
+function areRuntimeOthersEqual(
+  current: RuntimeOther,
+  incoming: RuntimeOther,
+): boolean {
+  return (
+    current.accountId === incoming.accountId &&
+    current.characterId === incoming.characterId &&
+    current.icon === incoming.icon &&
+    current.level === incoming.level &&
+    current.name === incoming.name &&
+    current.profession === incoming.profession
+  );
+}
+
+function reconcileOthersById(
+  current: OthersById,
+  incoming: OthersById,
+): OthersById {
+  const incomingEntries = Object.entries(incoming);
+  const reconciled: Record<string, RuntimeOther> = {};
+  let changed = Object.keys(current).length !== incomingEntries.length;
+
+  for (const [id, other] of incomingEntries) {
+    const currentOther = current[id];
+    if (currentOther && areRuntimeOthersEqual(currentOther, other)) {
+      reconciled[id] = currentOther;
+      continue;
+    }
+
+    reconciled[id] = other;
+    changed = true;
+  }
+
+  return changed ? Object.freeze(reconciled) : current;
+}
+
 export const useOthersStore = create<OthersState>()((set, get) => ({
   mapEpoch: 0,
   othersById: Object.freeze({}),
@@ -61,24 +97,33 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
   status: "uninitialized",
   applyBatch: ({ removeIds = [], upserts = {} }) =>
     set((state) => {
-      const othersById = { ...state.othersById };
-      let changed = false;
+      let writableOthersById: Record<string, RuntimeOther> | null = null;
+      const getWritableOthersById = () => {
+        writableOthersById ??= { ...state.othersById };
+        return writableOthersById;
+      };
 
       for (const id of removeIds) {
-        if (!(id in othersById)) continue;
-        delete othersById[id];
-        changed = true;
+        if (!(id in state.othersById)) continue;
+        delete getWritableOthersById()[id];
       }
 
       for (const [id, other] of Object.entries(upserts)) {
-        if (othersById[id] === other) continue;
-        othersById[id] = other;
-        changed = true;
+        const currentOther = state.othersById[id];
+        if (
+          currentOther === other ||
+          (currentOther && areRuntimeOthersEqual(currentOther, other))
+        ) {
+          continue;
+        }
+        getWritableOthersById()[id] = other;
       }
 
-      if (!changed && state.status === "ready") return state;
+      if (!writableOthersById && state.status === "ready") return state;
       return {
-        othersById: Object.freeze(othersById),
+        othersById: Object.freeze(
+          writableOthersById ?? { ...state.othersById },
+        ),
         revision: state.revision + 1,
         status: "ready",
       };
@@ -93,12 +138,26 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
   getOther: (id) => get().othersById[id],
   removeOther: (id) => get().applyBatch({ removeIds: [id] }),
   replaceOthers: (othersById, mapChanged = false) =>
-    set((state) => ({
-      mapEpoch: state.mapEpoch + (mapChanged ? 1 : 0),
-      othersById: Object.freeze({ ...othersById }),
-      revision: state.revision + 1,
-      status: "ready",
-    })),
+    set((state) => {
+      const reconciledOthersById = reconcileOthersById(
+        state.othersById,
+        othersById,
+      );
+      if (
+        !mapChanged &&
+        state.status === "ready" &&
+        reconciledOthersById === state.othersById
+      ) {
+        return state;
+      }
+
+      return {
+        mapEpoch: state.mapEpoch + (mapChanged ? 1 : 0),
+        othersById: reconciledOthersById,
+        revision: state.revision + 1,
+        status: "ready",
+      };
+    }),
   setMany: (othersById) => {
     replaceRuntimeOtherHandlesForCompatibility(othersById);
     get().replaceOthers(

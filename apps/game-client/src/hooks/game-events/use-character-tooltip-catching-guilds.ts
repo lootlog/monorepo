@@ -8,6 +8,8 @@ import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 
+const EMPTY_OWNERS_BY_CHARACTER_KEY = Object.freeze({});
+
 function refreshActiveOtherTooltip(): void {
   refreshActiveOtherCanvasTooltip();
 }
@@ -21,22 +23,23 @@ function refreshActiveOtherTooltipIfCurrent(key: string): void {
 }
 
 export function useCharacterTooltipCatchingGuilds(): void {
-  const activeOther = useCharacterTooltipCatchingGuildsStore(
-    (state) => state.activeOther,
-  );
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
-  const activeTarget = useCharacterTooltipCatchingGuildsStore(
-    (state) => state.activeTarget,
+  const selectedGuildId = useSelectedLootlogGuildId();
+  const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+  const activeOther = useCharacterTooltipCatchingGuildsStore((state) =>
+    active ? state.activeOther : null,
+  );
+  const activeTarget = useCharacterTooltipCatchingGuildsStore((state) =>
+    active ? state.activeTarget : null,
   );
   const activeEntry = useCharacterTooltipCatchingGuildsStore((state) =>
     activeTarget ? state.entriesByKey[activeTarget.key] : undefined,
   );
-  const ownersByCharacterKey = useOnlineCharacterOwnersStore(
-    (state) => state.ownersByCharacterKey,
+  const ownersByCharacterKey = useOnlineCharacterOwnersStore((state) =>
+    active ? state.ownersByCharacterKey : EMPTY_OWNERS_BY_CHARACTER_KEY,
   );
-  const selectedGuildId = useSelectedLootlogGuildId();
 
   useEffect(() => {
     return characterTooltipTransforms.register(
@@ -79,12 +82,12 @@ export function useCharacterTooltipCatchingGuilds(): void {
   }, []);
 
   useEffect(() => {
-    if (!activeOther) return;
+    if (!active || !activeOther) return;
 
     useCharacterTooltipCatchingGuildsStore
       .getState()
       .setActiveOther(activeOther);
-  }, [activeOther, ownersByCharacterKey]);
+  }, [active, activeOther, ownersByCharacterKey]);
 
   useEffect(() => {
     if (

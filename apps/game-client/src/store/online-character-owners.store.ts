@@ -93,7 +93,16 @@ export const useOnlineCharacterOwnersStore =
   create<OnlineCharacterOwnersState>()((set, get) => ({
     ownersByCharacterKey: {},
     status: "idle",
-    clearOwners: () => set({ ownersByCharacterKey: {}, status: "idle" }),
+    clearOwners: () =>
+      set((state) => {
+        if (
+          state.status === "idle" &&
+          Object.keys(state.ownersByCharacterKey).length === 0
+        ) {
+          return state;
+        }
+        return { ownersByCharacterKey: {}, status: "idle" };
+      }),
     getOwner: (accountId, characterId) =>
       get().ownersByCharacterKey[
         getOnlineCharacterOwnerKey(accountId, characterId)

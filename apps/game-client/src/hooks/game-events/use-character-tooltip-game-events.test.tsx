@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => {
   } = {
     afterGameEventHandler: null,
   };
-  const subscribeApplied = vi.fn(
+  const subscribeProjected = vi.fn(
     (handler: (envelope: { raw: GameEvent }) => void) => {
       state.afterGameEventHandler = (event) => handler({ raw: event });
       return unsubscribe;
@@ -26,14 +26,14 @@ const mocks = vi.hoisted(() => {
   return {
     patchOtherCharacterTooltips,
     state,
-    subscribeApplied,
+    subscribeProjected,
     unsubscribe,
   };
 });
 
-vi.mock("@/lib/margonem-runtime/margonem-runtime-bridge", () => ({
-  margonemRuntimeBridge: {
-    subscribeApplied: mocks.subscribeApplied,
+vi.mock("@/lib/margonem-runtime/runtime-event-pipeline", () => ({
+  runtimeEventPipeline: {
+    subscribeProjected: mocks.subscribeProjected,
   },
 }));
 
@@ -106,7 +106,7 @@ describe("useCharacterTooltipGameEvents", () => {
   beforeEach(() => {
     mocks.state.afterGameEventHandler = null;
     mocks.unsubscribe.mockReset();
-    mocks.subscribeApplied.mockClear();
+    mocks.subscribeProjected.mockClear();
     mocks.patchOtherCharacterTooltips.mockClear();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useGlobalStore.getState().setGameState({ gameInitialized: false });
@@ -119,7 +119,7 @@ describe("useCharacterTooltipGameEvents", () => {
     });
   });
 
-  it("loads and patches current others once after game initialization", () => {
+  it("scans current runtime handles only after Shift becomes active", () => {
     const first = createRuntimeOther("first");
     const second = createRuntimeOther("second");
     const check = setRuntimeOthers({ 1: first, 2: second });
@@ -129,7 +129,7 @@ describe("useCharacterTooltipGameEvents", () => {
     expect(check).not.toHaveBeenCalled();
 
     act(() => {
-      useGlobalStore.getState().setGameState({ gameInitialized: true });
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     });
     rerender();
     rerender();
@@ -146,7 +146,9 @@ describe("useCharacterTooltipGameEvents", () => {
     const untouched = createRuntimeOther("untouched");
     setRuntimeOthers({ 1: first, 2: untouched });
 
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     renderHook(() => useCharacterTooltipGameEvents());
+    mocks.patchOtherCharacterTooltips.mockClear();
 
     mocks.state.afterGameEventHandler?.({
       other: {
@@ -176,7 +178,7 @@ describe("useCharacterTooltipGameEvents", () => {
     expect(mocks.patchOtherCharacterTooltips).toHaveBeenCalledWith([first]);
   });
 
-  it("patches only movement/update ids present in the payload", () => {
+  it("does not rebuild tooltips for movement-only updates", () => {
     const first = createRuntimeOther("first");
     const second = createRuntimeOther("second");
     setRuntimeOthers({ 1: first, 2: second });
@@ -195,7 +197,38 @@ describe("useCharacterTooltipGameEvents", () => {
 
     expect(useOthersStore.getState().getOther("2")?.name).toBe("second");
     expect(useOthersStore.getState().getOther("1")?.name).toBe("first");
-    expect(mocks.patchOtherCharacterTooltips).toHaveBeenCalledWith([second]);
+    expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
+  });
+
+  it("does not patch a newly created other while Shift is inactive", () => {
+    const other = createRuntimeOther("inactive");
+    setRuntimeOthers({ 1: other });
+    renderHook(() => useCharacterTooltipGameEvents());
+
+    mocks.state.afterGameEventHandler?.({
+      other: {
+        1: {
+          account: 1,
+          action: "CREATE",
+          attr: 0,
+          dir: 0,
+          icon: "inactive.gif",
+          is_blessed: 0,
+          lvl: 300,
+          nick: "inactive",
+          oplvl: 0,
+          prof: "w",
+          relation: 0,
+          rights: 0,
+          stasis: 0,
+          stasis_incoming_seconds: 0,
+          x: 1,
+          y: 2,
+        },
+      },
+    });
+
+    expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
   });
 
   it("does not patch deleted others", () => {
@@ -214,7 +247,7 @@ describe("useCharacterTooltipGameEvents", () => {
     });
 
     expect(useOthersStore.getState().getOther("1")?.name).toBe("first");
-    expect(mocks.patchOtherCharacterTooltips).toHaveBeenCalledWith([]);
+    expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
   });
 
   it("ignores events without other payloads", () => {
@@ -225,7 +258,7 @@ describe("useCharacterTooltipGameEvents", () => {
     expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
   });
 
-  it("leaves domain synchronization to RuntimeStateSynchronizer", () => {
+  it("leaves domain synchronization to RuntimeStateProjection", () => {
     const oldOther = createRuntimeOther("old");
     useOthersStore.getState().setMany({ old: oldOther });
 
@@ -237,13 +270,15 @@ describe("useCharacterTooltipGameEvents", () => {
     expect(mocks.patchOtherCharacterTooltips).not.toHaveBeenCalled();
   });
 
-  it("patches post-town handles supplied by RuntimeStateSynchronizer", () => {
+  it("patches post-town handles supplied by RuntimeStateProjection while active", () => {
     const oldOther = createRuntimeOther("old");
     const newOther = createRuntimeOther("new");
     useOthersStore.getState().setMany({ old: oldOther });
     setRuntimeOthers({ new: newOther });
 
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     renderHook(() => useCharacterTooltipGameEvents());
+    mocks.patchOtherCharacterTooltips.mockClear();
 
     mocks.state.afterGameEventHandler?.({
       ...createTownEvent(),

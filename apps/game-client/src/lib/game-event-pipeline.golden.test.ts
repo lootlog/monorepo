@@ -9,10 +9,9 @@ import { useGlobalStore } from "@/store/global.store";
 import { usePartyStore } from "@/store/party.store";
 import { EventDispatcher } from "./event-dispatcher";
 import { margonemRuntimeBridge } from "./margonem-runtime/margonem-runtime-bridge";
+import { runtimeEventPipeline } from "./margonem-runtime/runtime-event-pipeline";
 import type * as ApiModule from "@/api";
 import { useGameStore } from "@/store/game.store";
-import type { MargonemRuntimeAdapter } from "./margonem-runtime/runtime-adapter";
-import { RuntimeStateSynchronizer } from "./margonem-runtime/runtime-state-synchronizer";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 
@@ -238,6 +237,7 @@ const compactKeuktaEvent = {
 } as GameEvent;
 
 function resetPipelineState(): void {
+  runtimeEventPipeline.cleanup();
   margonemRuntimeBridge.cleanup();
   api.createBattle.mockClear();
   api.createKill.mockClear();
@@ -262,7 +262,16 @@ function resetPipelineState(): void {
   });
   useLootStore.setState({ lastLootId: null });
   useNpcsStore.getState().clearNpcs();
-  useOthersStore.getState().clearOthers();
+  useOthersStore.getState().replaceOthers({
+    "111": Object.freeze({
+      accountId: "222",
+      characterId: "111",
+      icon: "warrior.gif",
+      level: 300,
+      name: "Warrior",
+      profession: "w",
+    }),
+  });
   useGameStore.getState().replaceGame({
     hero: {
       accountId: "67890",
@@ -281,6 +290,14 @@ function resetPipelineState(): void {
     world: "pandora",
   });
   usePartyStore.setState({ members: [] });
+  runtimeEventPipeline.install();
+  runtimeEventPipeline.setReady(true);
+}
+
+function dispatchRuntimeEvent(payload: GameEvent | string): unknown {
+  const result = pipelineWindow.successData?.(payload);
+  runtimeEventPipeline.flush();
+  return result;
 }
 
 function replayAndSnapshot(payload: GameEvent | string) {
@@ -288,44 +305,9 @@ function replayAndSnapshot(payload: GameEvent | string) {
   const dispatcher = new EventDispatcher();
   pipelineWindow.successData = vi.fn(() => "game-result");
   margonemRuntimeBridge.setupProxies();
-  const other = Object.freeze({
-    accountId: "222",
-    characterId: "111",
-    icon: "warrior.gif",
-    level: 300,
-    name: "Warrior",
-    profession: "w",
-  });
-  const runtimeGame = useGameStore.getState().game;
-  if (!runtimeGame) throw new Error("Expected golden runtime game snapshot");
-  const adapter = {
-    getAllNpcs: () => [],
-    getAllOtherHandles: () => ({}),
-    getAllOthers: () => ({ 111: other }),
-    getGameSnapshot: () => runtimeGame,
-    getNpc: () => undefined,
-    getOther: (id: string) => (id === "111" ? other : undefined),
-    getOtherHandle: () => undefined,
-    getParty: () => [],
-    getStateSnapshot: () => ({
-      friends: [],
-      game: runtimeGame,
-      npcs: [],
-      others: { 111: other },
-      party: [],
-    }),
-    interface: "si",
-    isReady: () => true,
-  } as MargonemRuntimeAdapter;
-  const synchronizer = new RuntimeStateSynchronizer({
-    adapter,
-    bridge: margonemRuntimeBridge,
-  });
-  synchronizer.install();
   dispatcher.register();
-  margonemRuntimeBridge.setReady(true);
 
-  const result = pipelineWindow.successData?.(payload);
+  const result = dispatchRuntimeEvent(payload);
   const battleState = useBattleStore.getState();
   const snapshot = {
     battle: {
@@ -348,12 +330,13 @@ function replayAndSnapshot(payload: GameEvent | string) {
   };
 
   dispatcher.cleanup();
-  synchronizer.cleanup();
+  runtimeEventPipeline.cleanup();
   return snapshot;
 }
 
 describe("game event pipeline golden replay", () => {
   afterEach(() => {
+    runtimeEventPipeline.cleanup();
     margonemRuntimeBridge.cleanup();
     pipelineWindow.successData = originalSuccessData;
     useBattlePanelStore.setState({ isBattleCollectionEnabled: false });
@@ -420,14 +403,13 @@ describe("game event pipeline golden replay", () => {
     pipelineWindow.successData = vi.fn(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
-    margonemRuntimeBridge.setReady(true);
     const finalFightLootEvent = {
       ...finalFightEvent,
       ...fightLootEvent,
       f: finalFightEvent.f,
     } as GameEvent;
 
-    pipelineWindow.successData?.(finalFightLootEvent);
+    dispatchRuntimeEvent(finalFightLootEvent);
 
     expect(api.createLoot).toHaveBeenCalledOnce();
     expect(api.createLoot).toHaveBeenCalledWith(
@@ -450,10 +432,9 @@ describe("game event pipeline golden replay", () => {
     pipelineWindow.successData = vi.fn(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
-    margonemRuntimeBridge.setReady(true);
 
-    pipelineWindow.successData?.(finalFightEvent);
-    pipelineWindow.successData?.(fightLootEvent);
+    dispatchRuntimeEvent(finalFightEvent);
+    dispatchRuntimeEvent(fightLootEvent);
 
     expect(api.createLoot).toHaveBeenCalledOnce();
     expect(api.createLoot).toHaveBeenCalledWith(
@@ -492,9 +473,8 @@ describe("game event pipeline golden replay", () => {
       margonemRuntimeBridge.setupProxies();
       firstDispatcher.register();
       secondDispatcher.register();
-      margonemRuntimeBridge.setReady(true);
 
-      pipelineWindow.successData?.({
+      dispatchRuntimeEvent({
         f: {
           init: "1",
           w: {
@@ -559,13 +539,13 @@ describe("game event pipeline golden replay", () => {
       } as unknown as GameEvent;
 
       if (lootTiming === "same packet") {
-        pipelineWindow.successData?.({
+        dispatchRuntimeEvent({
           ...fightLootEvent,
           ...fragmentaryFinalFightEvent,
         } as GameEvent);
       } else {
-        pipelineWindow.successData?.(fragmentaryFinalFightEvent);
-        pipelineWindow.successData?.(fightLootEvent);
+        dispatchRuntimeEvent(fragmentaryFinalFightEvent);
+        dispatchRuntimeEvent(fightLootEvent);
       }
 
       expect(api.createLoot).toHaveBeenCalledOnce();
@@ -622,12 +602,11 @@ describe("game event pipeline golden replay", () => {
     margonemRuntimeBridge.setupProxies();
     firstDispatcher.register();
     secondDispatcher.register();
-    margonemRuntimeBridge.setReady(true);
 
     for (const event of keuktaIncrementalEvents) {
-      pipelineWindow.successData?.(event);
+      dispatchRuntimeEvent(event);
     }
-    pipelineWindow.successData?.(compactKeuktaEvent);
+    dispatchRuntimeEvent(compactKeuktaEvent);
 
     await vi.waitFor(() => expect(api.createBattle).toHaveBeenCalledOnce());
     const submittedBattle = api.createBattle.mock.calls[0]?.[0] as
@@ -672,14 +651,13 @@ describe("game event pipeline golden replay", () => {
     pipelineWindow.successData = vi.fn(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
-    margonemRuntimeBridge.setReady(true);
 
     for (const event of keuktaIncrementalEvents) {
-      pipelineWindow.successData?.(event);
+      dispatchRuntimeEvent(event);
     }
     await vi.waitFor(() => expect(api.createBattle).toHaveBeenCalledOnce());
     dateNow.mockReturnValue(Date.parse("2026-07-26T18:53:07.001Z"));
-    pipelineWindow.successData?.({
+    dispatchRuntimeEvent({
       ...compactKeuktaEvent,
       ev: 1_785_091_986.4,
     });
