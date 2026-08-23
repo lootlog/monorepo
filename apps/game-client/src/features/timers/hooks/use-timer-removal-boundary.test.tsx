@@ -70,6 +70,32 @@ describe("useTimerRemovalBoundary", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  it("refreshes immediately when the removal boundary passes before the effect", () => {
+    const removalBoundary = NOW + 35_000;
+    let initialRenderCompleted = false;
+    let renderCount = 0;
+    const dateNowSpy = vi
+      .spyOn(Date, "now")
+      .mockImplementation(() =>
+        initialRenderCompleted ? removalBoundary + 1 : removalBoundary - 1,
+      );
+
+    renderHook(() => {
+      renderCount += 1;
+      useTimerRemovalBoundary([createTimer()], 30_000, true);
+      initialRenderCompleted = true;
+    });
+
+    expect(renderCount).toBe(1);
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(renderCount).toBe(2);
+    dateNowSpy.mockRestore();
+  });
+
   it("does not schedule work for an empty or closed presentation", () => {
     const empty = renderHook(() => useTimerRemovalBoundary([], 30_000, true));
     const closed = renderHook(() =>
