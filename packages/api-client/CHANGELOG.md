@@ -1,5 +1,12 @@
 # @lootlog/api-client
 
+## 5.0.1
+
+### Patch Changes
+
+- 3a87411: Remove the in-game Event Mode widget, its persisted client state, and its
+  dedicated backend API.
+
 ## 5.0.0
 
 ### Major Changes

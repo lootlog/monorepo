@@ -1,5 +1,12 @@
 # @lootlog/wiki
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [3a87411]
+  - @lootlog/api-client@5.0.1
+
 ## 0.1.5
 
 ### Patch Changes
