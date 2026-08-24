@@ -84,6 +84,9 @@ packageExtensions:
   "@nestjs/cli@^11.0.24":
     dependencies:
       typescript-legacy: "npm:typescript@6.0.3"
+  "@nestjs/swagger@^11.4.6":
+    dependencies:
+      typescript-legacy: "npm:typescript@6.0.3"
   "@hookform/resolvers":
     peerDependencies:
       zod: "*"
@@ -92,4 +95,5 @@ syncInjectedDepsAfterScripts:
 verifyDepsBeforeRun: false
 patchedDependencies:
   "@nestjs/cli": patches/@nestjs__cli.patch
+  "@nestjs/swagger": patches/@nestjs__swagger.patch
   next@16.2.11: patches/next@16.2.11.patch

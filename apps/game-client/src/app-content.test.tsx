@@ -9,12 +9,6 @@ const mapPingHotkeyHandlers = vi.hoisted(() => ({
 const useHotkeys = vi.hoisted(() => vi.fn());
 const useAirTags = vi.hoisted(() => vi.fn());
 const useSelectedLootlogGuildInitialization = vi.hoisted(() => vi.fn());
-const eventModeQuery = vi.hoisted(() => ({
-  data: {
-    generatedAt: "2026-07-13T12:00:00.000Z",
-    events: [{ id: "event-1" }],
-  },
-}));
 
 vi.mock("@/features/map-pings/use-map-pings", () => ({
   useMapPings: () => mapPingHotkeyHandlers,
@@ -26,17 +20,6 @@ vi.mock("@/hooks/use-selected-lootlog-guild", () => ({
 }));
 vi.mock("@/features/map-pings/map-ping-wheel", () => ({
   MapPingWheel: () => <div data-testid="map-ping-wheel" />,
-}));
-vi.mock("@/features/event-mode/event-mode", () => ({
-  EventMode: ({ query }: { query: typeof eventModeQuery }) => (
-    <div
-      data-has-query={String(query === eventModeQuery)}
-      data-testid="event-mode"
-    />
-  ),
-}));
-vi.mock("@/features/event-mode/use-event-mode-query", () => ({
-  useEventModeQuery: () => eventModeQuery,
 }));
 
 vi.mock("@/store/global.store", () => ({
@@ -80,12 +63,7 @@ vi.mock("@/features/party-finder/party-finder", () => ({
   PartyFinder: () => null,
 }));
 vi.mock("@/features/quick-access/quick-access", () => ({
-  QuickAccess: ({ hasActiveEventMode }: { hasActiveEventMode: boolean }) => (
-    <div
-      data-has-active-event-mode={String(hasActiveEventMode)}
-      data-testid="quick-access"
-    />
-  ),
+  QuickAccess: () => <div data-testid="quick-access" />,
 }));
 vi.mock("@/features/settings/settings", () => ({ Settings: () => null }));
 vi.mock("@/features/timers/add-timer", () => ({ AddTimer: () => null }));
@@ -125,13 +103,6 @@ describe("AppContent map ping integration", () => {
     expect(useAirTags).toHaveBeenCalledOnce();
     expect(useSelectedLootlogGuildInitialization).toHaveBeenCalledOnce();
     expect(screen.getByTestId("map-ping-wheel")).toBeInTheDocument();
-    expect(screen.getByTestId("event-mode")).toHaveAttribute(
-      "data-has-query",
-      "true",
-    );
-    expect(screen.getByTestId("quick-access")).toHaveAttribute(
-      "data-has-active-event-mode",
-      "true",
-    );
+    expect(screen.getByTestId("quick-access")).toBeInTheDocument();
   });
 });

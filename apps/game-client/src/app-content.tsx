@@ -6,8 +6,6 @@ import { Chat } from "@/features/chat/chat";
 import { CommandWindow } from "@/features/command/command";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { MapPingWheel } from "@/features/map-pings/map-ping-wheel";
-import { EventMode } from "@/features/event-mode/event-mode";
-import { useEventModeQuery } from "@/features/event-mode/use-event-mode-query";
 import { Notifications } from "@/features/notifications/notifications";
 import { NpcDetector } from "@/features/npc-detector/npc-detector";
 import { OnlinePlayers } from "@/features/online-players/online-players";
@@ -19,7 +17,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
 import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handlers";
 import { useGlobalStore } from "@/store/global.store";
-import { useWindowsStore } from "@/store/windows.store";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
 import { useMapPings } from "@/features/map-pings/use-map-pings";
@@ -49,12 +46,6 @@ export const AppContent = () => {
   usePartyReadyRoomObserver();
 
   const { ConflictDialog } = useTimerSettingsSync();
-  const isEventModePresentationVisible = useWindowsStore(
-    (state) => state["event-mode"].open || state["quick-access"].open,
-  );
-  const eventModeQuery = useEventModeQuery({
-    active: isEventModePresentationVisible,
-  });
   const gameInitialized = useGlobalStore((state) =>
     Boolean(state.gameState.gameInitialized),
   );
@@ -74,16 +65,13 @@ export const AppContent = () => {
       <OnlinePlayers />
       <NpcDetector />
       <Notifications />
-      <QuickAccess
-        hasActiveEventMode={Boolean(eventModeQuery.data?.events.length)}
-      />
+      <QuickAccess />
       <CatchingWhitelistWarning />
       <BackendPreferencesWarning />
       <Toaster />
       <PartyFinder />
       <CreatePartyGathering />
       <MapPingWheel />
-      <EventMode query={eventModeQuery} />
       {ConflictDialog}
     </>
   );

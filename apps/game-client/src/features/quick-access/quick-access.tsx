@@ -8,7 +8,6 @@ import { GuildListPopover } from "@/features/quick-access/components/guild-list-
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
-  CalendarClock,
   MessagesSquare,
   Settings,
   Swords,
@@ -18,11 +17,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-interface QuickAccessProps {
-  hasActiveEventMode: boolean;
-}
-
-export const QuickAccess = ({ hasActiveEventMode }: QuickAccessProps) => {
+export const QuickAccess = () => {
   const { t } = useTranslation("quickAccess");
   const hasActiveReadyRoom = usePartyFinderStore((state) =>
     Object.values(state.projections).some(
@@ -80,13 +75,6 @@ export const QuickAccess = ({ hasActiveEventMode }: QuickAccessProps) => {
         orientation="horizontal"
       >
         <div className="ll:flex ll:w-max ll:gap-1 ll:px-1 ll:py-1">
-          {hasActiveEventMode ? (
-            <QuickAccessButton
-              id="event-mode"
-              title={t("buttons.eventMode")}
-              icon=<CalendarClock size="16" className="ll:text-amber-400" />
-            />
-          ) : null}
           {hasActiveReadyRoom ? (
             <QuickAccessButton
               id="party-finder"

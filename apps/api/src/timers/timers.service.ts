@@ -95,23 +95,6 @@ type TimerWithOptionalMember = Timer & {
   actorCharacter?: PlayerSnapshot | null;
 };
 
-export interface EventHeroTimerLookup {
-  guildId: string;
-  world: string;
-  npcId: number | null;
-  npcName: string;
-}
-
-export interface EventHeroTimerLookupResult {
-  guildId: string;
-  npcId: number;
-  timerKey: string;
-  world: string;
-  minSpawnTime: Date;
-  maxSpawnTime: Date;
-  npc: unknown;
-}
-
 type TimerActorCharacterInput = {
   accountId: string;
   characterId: string;
@@ -1187,91 +1170,6 @@ export class TimersService implements OnModuleInit {
     const uniqueTimers = new Map<string, (typeof timers)[number]>();
     for (const timer of timers) {
       uniqueTimers.set(timer.timerKey, timer);
-    }
-
-    return Array.from(uniqueTimers.values());
-  }
-
-  async getTimersForEventHeroLookups(
-    lookups: EventHeroTimerLookup[],
-  ): Promise<EventHeroTimerLookupResult[]> {
-    if (lookups.length === 0) {
-      return [];
-    }
-
-    const uniqueLookups = Array.from(
-      new Map(
-        lookups.map((lookup) => [
-          JSON.stringify([
-            lookup.guildId,
-            lookup.world,
-            lookup.npcId,
-            lookup.npcName,
-          ]),
-          lookup,
-        ]),
-      ).values(),
-    );
-    const keyedLookups = uniqueLookups.filter(
-      (lookup): lookup is EventHeroTimerLookup & { npcId: number } =>
-        lookup.npcId !== null,
-    );
-    const nameLookups = uniqueLookups.filter((lookup) => lookup.npcId === null);
-
-    const [timersByKey, timersByName] = await Promise.all([
-      keyedLookups.length > 0
-        ? this.prisma.timer.findMany({
-            where: {
-              OR: keyedLookups.map((lookup) => ({
-                guildId: lookup.guildId,
-                world: lookup.world,
-                timerKey: buildTimerKey(lookup.npcId, lookup.npcName),
-              })),
-            },
-            select: {
-              guildId: true,
-              npcId: true,
-              timerKey: true,
-              world: true,
-              minSpawnTime: true,
-              maxSpawnTime: true,
-              npc: true,
-            },
-          })
-        : Promise.resolve([]),
-      nameLookups.length > 0
-        ? this.prisma.$queryRaw<EventHeroTimerLookupResult[]>(
-            Prisma.sql`
-              SELECT
-                t."guildId",
-                t."npcId",
-                t."timerKey",
-                t."world",
-                t."minSpawnTime",
-                t."maxSpawnTime",
-                t."npc"
-              FROM "Timer" t
-              WHERE ${Prisma.join(
-                nameLookups.map(
-                  (lookup) => Prisma.sql`(
-                    t."guildId" = ${lookup.guildId}
-                    AND t."world" = ${lookup.world}
-                    AND t."npc"->>'name' = ${lookup.npcName}
-                  )`,
-                ),
-                " OR ",
-              )}
-            `,
-          )
-        : Promise.resolve([]),
-    ]);
-
-    const uniqueTimers = new Map<string, EventHeroTimerLookupResult>();
-    for (const timer of [...timersByKey, ...timersByName]) {
-      uniqueTimers.set(
-        JSON.stringify([timer.guildId, timer.world, timer.timerKey]),
-        timer,
-      );
     }
 
     return Array.from(uniqueTimers.values());

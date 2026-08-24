@@ -157,7 +157,7 @@ change is explicitly approved.
 - Preserve references for semantically identical game, NPC, other, party, and
   friend data so Zustand selectors do not wake React consumers.
 - Subscribe components to the smallest identity fields they use. Position or HP
-  changes must not render chat, event mode, or identity-only consumers.
+  changes must not render chat or identity-only consumers.
 - Inactive Shift integrations must not scan runtime handles or the DOM, wrap the
   renderer, subscribe to broad collections, or write presentation state.
 
