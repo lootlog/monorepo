@@ -1,5 +1,13 @@
 # @lootlog/api
 
+## 5.0.2
+
+### Patch Changes
+
+- 3a87411: Remove the in-game Event Mode widget, its persisted client state, and its
+  dedicated backend API.
+- 921b7fe: Run the Nest Swagger compiler plugin against the TypeScript 6 compatibility API so SWC metadata generation continues to work when the workspace uses TypeScript 7.
+
 ## 5.0.1
 
 ### Patch Changes
