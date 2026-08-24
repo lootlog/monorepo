@@ -1,5 +1,12 @@
 # @lootlog/web
 
+## 1.4.1
+
+### Patch Changes
+
+- Updated dependencies [3a87411]
+  - @lootlog/api-client@5.0.1
+
 ## 1.4.0
 
 ### Minor Changes

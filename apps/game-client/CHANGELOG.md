@@ -1,5 +1,15 @@
 # @lootlog/game-client
 
+## 1.2.9
+
+### Patch Changes
+
+- 3a87411: Remove the in-game Event Mode widget, its persisted client state, and its
+  dedicated backend API.
+- 2d1444b: Allow selecting a single timer NPC type by right-clicking its filter.
+- Updated dependencies [3a87411]
+  - @lootlog/api-client@5.0.1
+
 ## 1.2.8
 
 ### Patch Changes

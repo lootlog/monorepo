@@ -1,5 +1,11 @@
 # @lootlog/activity
 
+## 0.0.8
+
+### Patch Changes
+
+- 921b7fe: Run the Nest Swagger compiler plugin against the TypeScript 6 compatibility API so SWC metadata generation continues to work when the workspace uses TypeScript 7.
+
 ## 0.0.7
 
 ### Patch Changes
