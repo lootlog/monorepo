@@ -1,12 +1,19 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import type { PartyReadyRoomProjection } from "@lootlog/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { QuickAccessButtonProps } from "@/features/quick-access/components/quick-access-button";
+import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { QuickAccess } from "./quick-access";
 
 vi.mock("@/features/quick-access/components/quick-access-button", () => ({
-  QuickAccessButton: ({ id, title }: { id: string; title: string }) => (
+  QuickAccessButton: ({ id, title }: QuickAccessButtonProps) => (
     <button
-      onClick={() => useWindowsStore.getState().toggleOpen(id as "event-mode")}
+      onClick={() => {
+        if (id !== "lootlog-app") {
+          useWindowsStore.getState().toggleOpen(id);
+        }
+      }}
       type="button"
     >
       {title}
@@ -18,8 +25,32 @@ vi.mock("@/features/quick-access/components/guild-list-popover", () => ({
   GuildListPopover: () => <button type="button">Guild list</button>,
 }));
 
+const activeReadyRoom: PartyReadyRoomProjection = {
+  schemaVersion: 3,
+  notificationId: "room-1",
+  organizerDiscordId: "organizer",
+  organizerCharacter: {
+    accountId: "account-1",
+    characterId: "character-1",
+    icon: "organizer.gif",
+    lvl: 200,
+    nick: "Organizer",
+    prof: "w",
+  },
+  guildIds: ["guild-1"],
+  world: "Fobos",
+  status: "ACTIVE",
+  revision: 1,
+  createdAt: "2026-07-13T10:00:00.000Z",
+  updatedAt: "2026-07-13T10:01:00.000Z",
+  expiresAt: "2026-07-13T10:30:00.000Z",
+  viewer: "PARTICIPANT",
+  participants: {},
+};
+
 describe("QuickAccess", () => {
   beforeEach(() => {
+    usePartyFinderStore.getState().clearReadyRooms();
     useWindowsStore.setState((state) => ({
       ...state,
       "quick-access": {
@@ -32,7 +63,7 @@ describe("QuickAccess", () => {
   });
 
   it("renders when quick access is open", () => {
-    render(<QuickAccess hasActiveEventMode={false} />);
+    render(<QuickAccess />);
 
     expect(screen.getByText("Lootlog")).toBeInTheDocument();
     expect(screen.getByText("Timery")).toBeInTheDocument();
@@ -62,28 +93,16 @@ describe("QuickAccess", () => {
       },
     }));
 
-    render(<QuickAccess hasActiveEventMode={false} />);
+    render(<QuickAccess />);
 
     expect(screen.queryByText("Lootlog")).not.toBeInTheDocument();
   });
 
-  it("shows Event Mode only for an active event and reopens its window", () => {
-    useWindowsStore.getState().setOpen("event-mode", false);
-    const { rerender } = render(<QuickAccess hasActiveEventMode={false} />);
-
-    expect(screen.queryByText("Tryb wydarzenia")).not.toBeInTheDocument();
-
-    rerender(<QuickAccess hasActiveEventMode />);
-    fireEvent.click(screen.getByRole("button", { name: "Tryb wydarzenia" }));
-
-    expect(useWindowsStore.getState()["event-mode"].open).toBe(true);
-  });
-
-  it("keeps the user-defined size when a conditional button appears", () => {
+  it("keeps the user-defined size when an active Ready Room appears", () => {
     useWindowsStore
       .getState()
       .setSize("quick-access", { width: 340, height: 84 });
-    const { rerender } = render(<QuickAccess hasActiveEventMode={false} />);
+    const { rerender } = render(<QuickAccess />);
     const quickAccessWindow = document.querySelector<HTMLElement>(
       '[data-ll-draggable-window="quick-access"]',
     );
@@ -91,8 +110,12 @@ describe("QuickAccess", () => {
     expect(quickAccessWindow?.style.width).toBe("340px");
     expect(quickAccessWindow?.style.height).toBe("84px");
 
-    rerender(<QuickAccess hasActiveEventMode />);
+    usePartyFinderStore.setState({
+      projections: { [activeReadyRoom.notificationId]: activeReadyRoom },
+    });
+    rerender(<QuickAccess />);
 
+    expect(screen.getByText("Aktywne zbieranie grupy")).toBeInTheDocument();
     expect(quickAccessWindow?.style.width).toBe("340px");
     expect(quickAccessWindow?.style.height).toBe("84px");
   });

@@ -32,8 +32,8 @@ selected state with Lootlog services without playing on the user's behalf.
 
 ## Feature status
 
-Timers, NPC information, chat, notifications, presence, capture, and event-mode
-coordination are core. Party finder, ready rooms, air tags, and the Chrome
+Timers, NPC information, chat, notifications, presence, and capture are core.
+Party finder, ready rooms, air tags, and the Chrome
 extension before parity are experimental until product evidence promotes or
 retires them.
 

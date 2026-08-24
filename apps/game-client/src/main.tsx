@@ -10,6 +10,7 @@ import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { disposeSocket } from "@/lib/socket";
 import { resetTransientRuntimeState } from "@/lib/runtime-state";
 import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
+import { migrateRetiredLocalStorage } from "@/lib/storage-migrations";
 
 const ROOT_Z_INDEX_BY_INTERFACE = {
   ni: 11,
@@ -71,6 +72,8 @@ function createRootElement(): HTMLDivElement {
 }
 
 export function bootstrapGameClient(): GameClientRuntime {
+  migrateRetiredLocalStorage();
+
   const runtimeWindow = window as RuntimeWindow;
   const activeRuntime = runtimeWindow.__lootlogGameClientRuntime;
 

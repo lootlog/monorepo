@@ -32,9 +32,6 @@ import { EventWrappedService } from "./services/event-wrapped.service";
 import { EventCoordinationService } from "./services/event-coordination.service";
 import { EventsPinsController } from "./events-pins.controller";
 import { TimersModule } from "src/timers/timers.module";
-import { GuildsModule } from "src/guilds/guilds.module";
-import { EventModeController } from "./event-mode.controller";
-import { EventModeService } from "./services/event-mode.service";
 import { PinnedEventsService } from "./services/pinned-events.service";
 
 @Module({
@@ -51,7 +48,6 @@ import { PinnedEventsService } from "./services/pinned-events.service";
     RedisModule,
     RedlockModule,
     TimersModule,
-    GuildsModule,
   ],
   providers: [
     EventsService,
@@ -68,7 +64,6 @@ import { PinnedEventsService } from "./services/pinned-events.service";
     EventSummaryService,
     EventWrappedService,
     EventCoordinationService,
-    EventModeService,
     PinnedEventsService,
 
     EventsQueueHandler,
@@ -80,7 +75,6 @@ import { PinnedEventsService } from "./services/pinned-events.service";
     EventsRankingController,
     EventsMonitoringController,
     EventsPinsController,
-    EventModeController,
   ],
   exports: [EventsService],
 })

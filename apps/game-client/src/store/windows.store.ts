@@ -61,8 +61,7 @@ export type WindowId =
   | "catching-whitelist-warning"
   | "backend-preferences-warning"
   | "party-finder"
-  | "create-party-gathering"
-  | "event-mode";
+  | "create-party-gathering";
 
 interface WindowPositionState {
   x: number;
@@ -104,7 +103,6 @@ interface WindowsState {
   "backend-preferences-warning": WindowData;
   "party-finder": WindowData;
   "create-party-gathering": WindowData;
-  "event-mode": WindowData;
   currentWindowFocus?: WindowId;
   windowFocusHistory: WindowId[];
   setCurrentWindowFocus: (key: WindowId) => void;
@@ -127,15 +125,6 @@ const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 const DEFAULT_QUICK_ACCESS_WIDTH = 250;
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
-
-const createDefaultEventModeWindow = (): WindowData => ({
-  open: true,
-  position: DEFAULT_POSITION,
-  hasDefinedPosition: false,
-  size: { width: 290, height: 132 },
-  opacity: DEFAULT_OPACITY,
-  locked: false,
-});
 
 const sanitizeMaxContentHeight = (height: number) => {
   if (!Number.isFinite(height)) {
@@ -257,10 +246,6 @@ export const migrateWindowsState = (
     state["online-players"] = windowState;
   }
 
-  if (version < 9 && !state["event-mode"]) {
-    state["event-mode"] = createDefaultEventModeWindow();
-  }
-
   if (version < 10) {
     state.currentWindowFocus = undefined;
     state.windowFocusHistory = [];
@@ -303,6 +288,10 @@ export const migrateWindowsState = (
         activeSubsection: nextPath.subsection,
       },
     };
+  }
+
+  if (version < 13) {
+    delete state["event-mode"];
   }
 
   return state as unknown as WindowsState;
@@ -450,7 +439,6 @@ export const useWindowsStore = create<WindowsState>()(
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
-      "event-mode": createDefaultEventModeWindow(),
       currentWindowFocus: undefined,
       windowFocusHistory: [],
       setCurrentWindowFocus: (key: WindowId) =>
@@ -680,12 +668,11 @@ export const useWindowsStore = create<WindowsState>()(
         "backend-preferences-warning": state["backend-preferences-warning"],
         "party-finder": state["party-finder"],
         "create-party-gathering": state["create-party-gathering"],
-        "event-mode": state["event-mode"],
       }),
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 12,
+      version: 13,
       migrate: migrateWindowsState,
     },
   ),

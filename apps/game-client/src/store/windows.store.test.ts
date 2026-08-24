@@ -423,7 +423,7 @@ describe("migrateWindowsState", () => {
     expect(migrated.windowFocusHistory).toEqual([]);
   });
 
-  it("adds the Event Mode window to older persisted state", () => {
+  it("removes the retired Event Mode window from persisted state", () => {
     const migrated = migrateWindowsState(
       {
         chat: {
@@ -434,19 +434,20 @@ describe("migrateWindowsState", () => {
           opacity: 3,
           locked: true,
         },
+        "event-mode": {
+          open: true,
+          position: { x: 30, y: 40 },
+          hasDefinedPosition: true,
+          size: { width: 290, height: 132 },
+          opacity: 4,
+          locked: false,
+        },
         windowFocusHistory: ["chat"],
       },
-      8,
+      12,
     );
 
-    expect(migrated["event-mode"]).toEqual({
-      open: true,
-      position: { x: 0, y: 0 },
-      hasDefinedPosition: false,
-      size: { width: 290, height: 132 },
-      opacity: 4,
-      locked: false,
-    });
+    expect(migrated).not.toHaveProperty("event-mode");
     expect(migrated.chat.position).toEqual({ x: 10, y: 20 });
   });
 });
