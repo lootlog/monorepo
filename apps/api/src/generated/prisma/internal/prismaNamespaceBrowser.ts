@@ -213,7 +213,8 @@ export const LootScalarFieldEnum = {
   location: 'location',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  lootShare: 'lootShare'
+  lootShare: 'lootShare',
+  lootShareSource: 'lootShareSource'
 } as const
 
 export type LootScalarFieldEnum = (typeof LootScalarFieldEnum)[keyof typeof LootScalarFieldEnum]

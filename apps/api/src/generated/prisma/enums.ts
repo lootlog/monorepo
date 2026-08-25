@@ -140,6 +140,15 @@ export const LootSource = {
 export type LootSource = (typeof LootSource)[keyof typeof LootSource]
 
 
+export const LootShareSource = {
+  NONE: 'NONE',
+  ITEM_OWNER: 'ITEM_OWNER',
+  CHAT_MESSAGE: 'CHAT_MESSAGE'
+} as const
+
+export type LootShareSource = (typeof LootShareSource)[keyof typeof LootShareSource]
+
+
 export const TimerHistoryAction = {
   CREATE: 'CREATE',
   RESET: 'RESET',

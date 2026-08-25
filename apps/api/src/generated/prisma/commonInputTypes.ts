@@ -277,6 +277,13 @@ export type EnumLootSourceFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumLootSourceFilter<$PrismaModel> | $Enums.LootSource
 }
 
+export type EnumLootShareSourceFilter<$PrismaModel = never> = {
+  equals?: $Enums.LootShareSource | Prisma.EnumLootShareSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.LootShareSource[] | Prisma.ListEnumLootShareSourceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.LootShareSource[] | Prisma.ListEnumLootShareSourceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumLootShareSourceFilter<$PrismaModel> | $Enums.LootShareSource
+}
+
 export type EnumLootSourceWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.LootSource | Prisma.EnumLootSourceFieldRefInput<$PrismaModel>
   in?: $Enums.LootSource[] | Prisma.ListEnumLootSourceFieldRefInput<$PrismaModel>
@@ -285,6 +292,16 @@ export type EnumLootSourceWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumLootSourceFilter<$PrismaModel>
   _max?: Prisma.NestedEnumLootSourceFilter<$PrismaModel>
+}
+
+export type EnumLootShareSourceWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.LootShareSource | Prisma.EnumLootShareSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.LootShareSource[] | Prisma.ListEnumLootShareSourceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.LootShareSource[] | Prisma.ListEnumLootShareSourceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumLootShareSourceWithAggregatesFilter<$PrismaModel> | $Enums.LootShareSource
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumLootShareSourceFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumLootShareSourceFilter<$PrismaModel>
 }
 
 export type EnumItemRarityNullableFilter<$PrismaModel = never> = {
@@ -1011,6 +1028,13 @@ export type NestedEnumLootSourceFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumLootSourceFilter<$PrismaModel> | $Enums.LootSource
 }
 
+export type NestedEnumLootShareSourceFilter<$PrismaModel = never> = {
+  equals?: $Enums.LootShareSource | Prisma.EnumLootShareSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.LootShareSource[] | Prisma.ListEnumLootShareSourceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.LootShareSource[] | Prisma.ListEnumLootShareSourceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumLootShareSourceFilter<$PrismaModel> | $Enums.LootShareSource
+}
+
 export type NestedEnumLootSourceWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.LootSource | Prisma.EnumLootSourceFieldRefInput<$PrismaModel>
   in?: $Enums.LootSource[] | Prisma.ListEnumLootSourceFieldRefInput<$PrismaModel>
@@ -1019,6 +1043,16 @@ export type NestedEnumLootSourceWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumLootSourceFilter<$PrismaModel>
   _max?: Prisma.NestedEnumLootSourceFilter<$PrismaModel>
+}
+
+export type NestedEnumLootShareSourceWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.LootShareSource | Prisma.EnumLootShareSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.LootShareSource[] | Prisma.ListEnumLootShareSourceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.LootShareSource[] | Prisma.ListEnumLootShareSourceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumLootShareSourceWithAggregatesFilter<$PrismaModel> | $Enums.LootShareSource
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumLootShareSourceFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumLootShareSourceFilter<$PrismaModel>
 }
 
 export type NestedEnumItemRarityNullableFilter<$PrismaModel = never> = {

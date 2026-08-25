@@ -452,20 +452,19 @@ describe("LootsController", () => {
   });
 
   describe("updateLoot", () => {
-    const discordId = "discord123";
+    const userId = "user123";
     const lootId = 1;
     const body: UpdateLootDto = {
       msg: 'Test Player otrzymał ITEM#abc123:"Test Item"',
     };
 
     it("should update a loot", async () => {
-      const mockLootShare = { "1123": ["abc123"] };
-      service.updateLoot.mockResolvedValue(mockLootShare);
+      service.updateLoot.mockResolvedValue({});
 
-      const result = await controller.updateLoot(discordId, body, lootId);
+      const result = await controller.updateLoot(userId, body, lootId);
 
-      expect(service.updateLoot).toHaveBeenCalledWith(discordId, lootId, body);
-      expect(result).toEqual(mockLootShare);
+      expect(service.updateLoot).toHaveBeenCalledWith(userId, lootId, body);
+      expect(result).toEqual({});
     });
   });
 });

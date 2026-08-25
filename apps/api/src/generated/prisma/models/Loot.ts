@@ -42,6 +42,7 @@ export type LootMinAggregateOutputType = {
   location: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  lootShareSource: $Enums.LootShareSource | null
 }
 
 export type LootMaxAggregateOutputType = {
@@ -52,6 +53,7 @@ export type LootMaxAggregateOutputType = {
   location: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  lootShareSource: $Enums.LootShareSource | null
 }
 
 export type LootCountAggregateOutputType = {
@@ -63,6 +65,7 @@ export type LootCountAggregateOutputType = {
   createdAt: number
   updatedAt: number
   lootShare: number
+  lootShareSource: number
   _all: number
 }
 
@@ -83,6 +86,7 @@ export type LootMinAggregateInputType = {
   location?: true
   createdAt?: true
   updatedAt?: true
+  lootShareSource?: true
 }
 
 export type LootMaxAggregateInputType = {
@@ -93,6 +97,7 @@ export type LootMaxAggregateInputType = {
   location?: true
   createdAt?: true
   updatedAt?: true
+  lootShareSource?: true
 }
 
 export type LootCountAggregateInputType = {
@@ -104,6 +109,7 @@ export type LootCountAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   lootShare?: true
+  lootShareSource?: true
   _all?: true
 }
 
@@ -202,6 +208,7 @@ export type LootGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   lootShare: runtime.JsonValue
+  lootShareSource: $Enums.LootShareSource
   _count: LootCountAggregateOutputType | null
   _avg: LootAvgAggregateOutputType | null
   _sum: LootSumAggregateOutputType | null
@@ -236,6 +243,7 @@ export type LootWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Loot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Loot"> | Date | string
   lootShare?: Prisma.JsonFilter<"Loot">
+  lootShareSource?: Prisma.EnumLootShareSourceFilter<"Loot"> | $Enums.LootShareSource
   lootItems?: Prisma.LootItemListRelationFilter
   lootNpcs?: Prisma.LootNpcListRelationFilter
   lootPlayers?: Prisma.LootPlayerListRelationFilter
@@ -252,6 +260,7 @@ export type LootOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   lootShare?: Prisma.SortOrder
+  lootShareSource?: Prisma.SortOrder
   lootItems?: Prisma.LootItemOrderByRelationAggregateInput
   lootNpcs?: Prisma.LootNpcOrderByRelationAggregateInput
   lootPlayers?: Prisma.LootPlayerOrderByRelationAggregateInput
@@ -271,6 +280,7 @@ export type LootWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Loot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Loot"> | Date | string
   lootShare?: Prisma.JsonFilter<"Loot">
+  lootShareSource?: Prisma.EnumLootShareSourceFilter<"Loot"> | $Enums.LootShareSource
   lootItems?: Prisma.LootItemListRelationFilter
   lootNpcs?: Prisma.LootNpcListRelationFilter
   lootPlayers?: Prisma.LootPlayerListRelationFilter
@@ -287,6 +297,7 @@ export type LootOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   lootShare?: Prisma.SortOrder
+  lootShareSource?: Prisma.SortOrder
   _count?: Prisma.LootCountOrderByAggregateInput
   _avg?: Prisma.LootAvgOrderByAggregateInput
   _max?: Prisma.LootMaxOrderByAggregateInput
@@ -306,6 +317,7 @@ export type LootScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Loot"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Loot"> | Date | string
   lootShare?: Prisma.JsonWithAggregatesFilter<"Loot">
+  lootShareSource?: Prisma.EnumLootShareSourceWithAggregatesFilter<"Loot"> | $Enums.LootShareSource
 }
 
 export type LootCreateInput = {
@@ -316,6 +328,7 @@ export type LootCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
@@ -332,6 +345,7 @@ export type LootUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
@@ -347,6 +361,7 @@ export type LootUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
@@ -363,6 +378,7 @@ export type LootUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
@@ -379,6 +395,7 @@ export type LootCreateManyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
 }
 
 export type LootUpdateManyMutationInput = {
@@ -389,6 +406,7 @@ export type LootUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
 }
 
 export type LootUncheckedUpdateManyInput = {
@@ -400,6 +418,7 @@ export type LootUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
 }
 
 export type LootCountOrderByAggregateInput = {
@@ -411,6 +430,7 @@ export type LootCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   lootShare?: Prisma.SortOrder
+  lootShareSource?: Prisma.SortOrder
 }
 
 export type LootAvgOrderByAggregateInput = {
@@ -425,6 +445,7 @@ export type LootMaxOrderByAggregateInput = {
   location?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  lootShareSource?: Prisma.SortOrder
 }
 
 export type LootMinOrderByAggregateInput = {
@@ -435,6 +456,7 @@ export type LootMinOrderByAggregateInput = {
   location?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  lootShareSource?: Prisma.SortOrder
 }
 
 export type LootSumOrderByAggregateInput = {
@@ -448,6 +470,10 @@ export type LootScalarRelationFilter = {
 
 export type EnumLootSourceFieldUpdateOperationsInput = {
   set?: $Enums.LootSource
+}
+
+export type EnumLootShareSourceFieldUpdateOperationsInput = {
+  set?: $Enums.LootShareSource
 }
 
 export type LootCreateNestedOneWithoutLootItemsInput = {
@@ -528,6 +554,7 @@ export type LootCreateWithoutLootItemsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutLootInput
@@ -543,6 +570,7 @@ export type LootUncheckedCreateWithoutLootItemsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutLootInput
@@ -573,6 +601,7 @@ export type LootUpdateWithoutLootItemsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutLootNestedInput
@@ -588,6 +617,7 @@ export type LootUncheckedUpdateWithoutLootItemsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutLootNestedInput
@@ -602,6 +632,7 @@ export type LootCreateWithoutLootPlayersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutLootInput
@@ -617,6 +648,7 @@ export type LootUncheckedCreateWithoutLootPlayersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutLootInput
@@ -647,6 +679,7 @@ export type LootUpdateWithoutLootPlayersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutLootNestedInput
@@ -662,6 +695,7 @@ export type LootUncheckedUpdateWithoutLootPlayersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutLootNestedInput
@@ -676,6 +710,7 @@ export type LootCreateWithoutLootNpcsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
   lootSubmissions?: Prisma.LootSubmissionCreateNestedManyWithoutLootInput
@@ -691,6 +726,7 @@ export type LootUncheckedCreateWithoutLootNpcsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedCreateNestedManyWithoutLootInput
@@ -721,6 +757,7 @@ export type LootUpdateWithoutLootNpcsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
   lootSubmissions?: Prisma.LootSubmissionUpdateManyWithoutLootNestedInput
@@ -736,6 +773,7 @@ export type LootUncheckedUpdateWithoutLootNpcsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
   lootSubmissions?: Prisma.LootSubmissionUncheckedUpdateManyWithoutLootNestedInput
@@ -750,6 +788,7 @@ export type LootCreateWithoutLootSubmissionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
@@ -765,6 +804,7 @@ export type LootUncheckedCreateWithoutLootSubmissionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
@@ -795,6 +835,7 @@ export type LootUpdateWithoutLootSubmissionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
@@ -810,6 +851,7 @@ export type LootUncheckedUpdateWithoutLootSubmissionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
@@ -824,6 +866,7 @@ export type LootCreateWithoutCommentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerCreateNestedManyWithoutLootInput
@@ -839,6 +882,7 @@ export type LootUncheckedCreateWithoutCommentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedCreateNestedManyWithoutLootInput
   lootNpcs?: Prisma.LootNpcUncheckedCreateNestedManyWithoutLootInput
   lootPlayers?: Prisma.LootPlayerUncheckedCreateNestedManyWithoutLootInput
@@ -869,6 +913,7 @@ export type LootUpdateWithoutCommentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUpdateManyWithoutLootNestedInput
@@ -884,6 +929,7 @@ export type LootUncheckedUpdateWithoutCommentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lootShare?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lootShareSource?: Prisma.EnumLootShareSourceFieldUpdateOperationsInput | $Enums.LootShareSource
   lootItems?: Prisma.LootItemUncheckedUpdateManyWithoutLootNestedInput
   lootNpcs?: Prisma.LootNpcUncheckedUpdateManyWithoutLootNestedInput
   lootPlayers?: Prisma.LootPlayerUncheckedUpdateManyWithoutLootNestedInput
@@ -966,6 +1012,7 @@ export type LootSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updatedAt?: boolean
   lootShare?: boolean
+  lootShareSource?: boolean
   lootItems?: boolean | Prisma.Loot$lootItemsArgs<ExtArgs>
   lootNpcs?: boolean | Prisma.Loot$lootNpcsArgs<ExtArgs>
   lootPlayers?: boolean | Prisma.Loot$lootPlayersArgs<ExtArgs>
@@ -983,6 +1030,7 @@ export type LootSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   createdAt?: boolean
   updatedAt?: boolean
   lootShare?: boolean
+  lootShareSource?: boolean
 }, ExtArgs["result"]["loot"]>
 
 export type LootSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -994,6 +1042,7 @@ export type LootSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   createdAt?: boolean
   updatedAt?: boolean
   lootShare?: boolean
+  lootShareSource?: boolean
 }, ExtArgs["result"]["loot"]>
 
 export type LootSelectScalar = {
@@ -1005,9 +1054,10 @@ export type LootSelectScalar = {
   createdAt?: boolean
   updatedAt?: boolean
   lootShare?: boolean
+  lootShareSource?: boolean
 }
 
-export type LootOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uniqueId" | "world" | "source" | "location" | "createdAt" | "updatedAt" | "lootShare", ExtArgs["result"]["loot"]>
+export type LootOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uniqueId" | "world" | "source" | "location" | "createdAt" | "updatedAt" | "lootShare" | "lootShareSource", ExtArgs["result"]["loot"]>
 export type LootInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lootItems?: boolean | Prisma.Loot$lootItemsArgs<ExtArgs>
   lootNpcs?: boolean | Prisma.Loot$lootNpcsArgs<ExtArgs>
@@ -1037,6 +1087,7 @@ export type $LootPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     createdAt: Date
     updatedAt: Date
     lootShare: runtime.JsonValue
+    lootShareSource: $Enums.LootShareSource
   }, ExtArgs["result"]["loot"]>
   composites: {}
 }
@@ -1473,6 +1524,7 @@ export interface LootFieldRefs {
   readonly createdAt: Prisma.FieldRef<"Loot", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Loot", 'DateTime'>
   readonly lootShare: Prisma.FieldRef<"Loot", 'Json'>
+  readonly lootShareSource: Prisma.FieldRef<"Loot", 'LootShareSource'>
 }
     
 
