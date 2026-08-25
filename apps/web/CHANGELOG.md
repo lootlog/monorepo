@@ -1,5 +1,11 @@
 # @lootlog/web
 
+## 1.4.2
+
+### Patch Changes
+
+- 0dcba2c: Hide native scrollbars behind the custom Base UI scrollbars on Windows.
+
 ## 1.4.1
 
 ### Patch Changes

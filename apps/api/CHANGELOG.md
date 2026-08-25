@@ -1,5 +1,11 @@
 # @lootlog/api
 
+## 5.0.3
+
+### Patch Changes
+
+- 5f8f6bf: Make loot-share updates idempotent, allow chat-confirmed allocations to replace inferred item ownership, and initialize validated standard-colossus shares during loot creation.
+
 ## 5.0.2
 
 ### Patch Changes
