@@ -22,6 +22,7 @@ import {
   NpcType,
   Permission,
   type Guild,
+  type Prisma,
   type Role,
 } from "src/generated/prisma/client";
 import { GuildsService } from "src/guilds/guilds.service";
@@ -45,6 +46,10 @@ import type {
   CreateLootSubmittedGuild,
 } from "src/loots/dto/loot-response.dto";
 import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
+import {
+  LootShareResponseSchema,
+  type LootShare,
+} from "src/shared/dto/loot-response.dto";
 
 type LootSubmissionData = {
   guildId: string;
@@ -350,6 +355,70 @@ export class LootsService implements OnModuleInit {
     };
   }
 
+  private getAuthorizedLootUpdateWhere(
+    discordId: string,
+    lootId: number,
+  ): Prisma.LootWhereInput {
+    return {
+      id: lootId,
+      lootSubmissions: { some: { member: { userId: discordId } } },
+    };
+  }
+
+  private parseStoredLootShare(value: unknown): LootShare {
+    return LootShareResponseSchema.parse(value);
+  }
+
+  private async getInitialLootShare(
+    body: CreateLootDto,
+    primaryNpc: CreateLootDto["npcs"][number],
+    primaryNpcType: NpcType,
+  ): Promise<LootShare> {
+    if (primaryNpcType !== NpcType.COLOSSUS) {
+      return {};
+    }
+
+    const ambiguousNpcVariant = await this.prisma.npcSnapshot.findFirst({
+      where: {
+        name: primaryNpc.name,
+        OR: [{ type: { not: NpcType.COLOSSUS } }, { type: null }],
+      },
+      select: { id: true },
+    });
+
+    if (ambiguousNpcVariant) {
+      return {};
+    }
+
+    return (
+      this.lootMappingService.mapLootShareFromItemOwners(
+        body.loots,
+        body.players,
+      ) ?? {}
+    );
+  }
+
+  private async getLootShareAfterConcurrentUpdate(
+    discordId: string,
+    lootId: number,
+  ): Promise<LootShare> {
+    const loot = await this.prisma.loot.findFirst({
+      where: this.getAuthorizedLootUpdateWhere(discordId, lootId),
+      select: { lootShare: true },
+    });
+
+    if (!loot) {
+      throw new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT);
+    }
+
+    const lootShare = this.parseStoredLootShare(loot.lootShare);
+    if (Object.keys(lootShare).length === 0) {
+      throw new ServiceUnavailableException("Failed to persist loot share");
+    }
+
+    return lootShare;
+  }
+
   async createLoot(discordId: string, _userId: string, body: CreateLootDto) {
     const uniqueId = this.lootMappingService.createUniqueLootId(
       body.loots,
@@ -561,7 +630,11 @@ export class LootsService implements OnModuleInit {
       const lootNpcs = this.lootMappingService.mapLootNpcsToConnectOrCreate(
         body.npcs,
       );
-      const share = {};
+      const share = await this.getInitialLootShare(
+        body,
+        npcData.highest,
+        highestWtNpcType,
+      );
 
       const loot = await this.prisma.loot.create({
         data: {
@@ -702,14 +775,12 @@ export class LootsService implements OnModuleInit {
   }
 
   async updateLoot(discordId: string, lootId: number, data: UpdateLootDto) {
+    const authorizedLootWhere = this.getAuthorizedLootUpdateWhere(
+      discordId,
+      lootId,
+    );
     const loot = await this.prisma.loot.findFirst({
-      where: {
-        id: lootId,
-        lootSubmissions: { some: { member: { userId: discordId } } },
-        lootShare: {
-          equals: {},
-        },
-      },
+      where: authorizedLootWhere,
       include: {
         lootItems: {
           include: {
@@ -737,6 +808,11 @@ export class LootsService implements OnModuleInit {
 
     if (!loot) {
       throw new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT);
+    }
+
+    const existingLootShare = this.parseStoredLootShare(loot.lootShare);
+    if (Object.keys(existingLootShare).length > 0) {
+      return existingLootShare;
     }
 
     const lootShare = this.lootMappingService.getLootShareFromMsg(data.msg);
@@ -789,12 +865,19 @@ export class LootsService implements OnModuleInit {
       });
     }
 
-    await this.prisma.loot.update({
-      where: { id: lootId },
+    const updateResult = await this.prisma.loot.updateMany({
+      where: {
+        ...authorizedLootWhere,
+        lootShare: { equals: {} },
+      },
       data: {
         lootShare: mappedLootShare,
       },
     });
+
+    if (updateResult.count === 0) {
+      return this.getLootShareAfterConcurrentUpdate(discordId, lootId);
+    }
 
     const socketNpc = this.getSocketNpcPayloadFromLootNpcs(loot.lootNpcs);
     const uniqueGuildSubmissions = this.getUniqueGuildSubmissions(

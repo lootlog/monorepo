@@ -180,6 +180,52 @@ export class LootMappingService {
     });
   }
 
+  mapLootShareFromItemOwners(
+    loots: CreateLootDto["loots"],
+    players: CreateLootDto["players"],
+  ): Record<string, string[]> | null {
+    if (loots.length === 0 || loots.length !== players.length) {
+      return null;
+    }
+
+    const mappedPlayers = this.mapPlayers(players);
+    const playerShareIdByCharacterId = new Map<number, string>();
+    const shareIds = new Set<string>();
+
+    for (const [index, player] of players.entries()) {
+      const shareId = mappedPlayers[index]?.id;
+      if (
+        shareId === undefined ||
+        playerShareIdByCharacterId.has(player.id) ||
+        shareIds.has(shareId)
+      ) {
+        return null;
+      }
+
+      playerShareIdByCharacterId.set(player.id, shareId);
+      shareIds.add(shareId);
+    }
+
+    const assignedCharacterIds = new Set<number>();
+    const lootShare: Record<string, string[]> = {};
+
+    for (const loot of loots) {
+      if (loot.own === undefined || assignedCharacterIds.has(loot.own)) {
+        return null;
+      }
+
+      const shareId = playerShareIdByCharacterId.get(loot.own);
+      if (shareId === undefined) {
+        return null;
+      }
+
+      assignedCharacterIds.add(loot.own);
+      lootShare[shareId] = [loot.hid];
+    }
+
+    return assignedCharacterIds.size === players.length ? lootShare : null;
+  }
+
   getLootShareFromMsg(msg: string) {
     const share: Record<string, string[]> = {};
     let match: RegExpExecArray | null;
