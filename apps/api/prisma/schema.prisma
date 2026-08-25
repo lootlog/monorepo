@@ -155,6 +155,12 @@ enum LootSource {
   FIGHT
 }
 
+enum LootShareSource {
+  NONE
+  ITEM_OWNER
+  CHAT_MESSAGE
+}
+
 enum TimerHistoryAction {
   CREATE
   RESET
@@ -349,6 +355,7 @@ model Loot {
   lootSubmissions LootSubmission[]
   comments        LootComment[]
   lootShare       Json             @default("{}")
+  lootShareSource LootShareSource  @default(NONE)
 
   @@index([createdAt])
   @@index([world, createdAt])
