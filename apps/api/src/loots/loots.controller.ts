@@ -334,10 +334,10 @@ export class LootsController {
   })
   @ApiResponse({ status: 404, description: "Loot not found" })
   updateLoot(
-    @DiscordId() discordId: string,
+    @UserId() userId: string,
     @Body() body: UpdateLootDto,
     @Param("id", new ParseIntPipe()) lootId: number,
   ) {
-    return this.lootsService.updateLoot(discordId, lootId, body);
+    return this.lootsService.updateLoot(userId, lootId, body);
   }
 }

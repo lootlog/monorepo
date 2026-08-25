@@ -4595,7 +4595,8 @@ export const LootScalarFieldEnum = {
   location: 'location',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  lootShare: 'lootShare'
+  lootShare: 'lootShare',
+  lootShareSource: 'lootShareSource'
 } as const
 
 export type LootScalarFieldEnum = (typeof LootScalarFieldEnum)[keyof typeof LootScalarFieldEnum]
@@ -5547,6 +5548,20 @@ export type ListEnumLootSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$P
 
 
 /**
+ * Reference to a field of type 'LootShareSource'
+ */
+export type EnumLootShareSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LootShareSource'>
+
+
+
+/**
+ * Reference to a field of type 'LootShareSource[]'
+ */
+export type ListEnumLootShareSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LootShareSource[]'>
+
+
+
+/**
  * Reference to a field of type 'ItemRarity'
  */
 export type EnumItemRarityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ItemRarity'>
@@ -6106,4 +6121,3 @@ export type PrismaAction =
  * `PrismaClient` proxy available in interactive transactions.
  */
 export type TransactionClient = Omit<DefaultPrismaClient, runtime.ITXClientDenyList>
-

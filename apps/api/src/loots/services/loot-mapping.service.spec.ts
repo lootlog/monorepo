@@ -1,6 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { LootMappingService } from "./loot-mapping.service";
 import { ItemRarity, Profession } from "src/generated/prisma/client";
+import type { CreateLootDto } from "../dto/create-loot.dto";
 
 describe("LootMappingService", () => {
   let service: LootMappingService;
@@ -216,6 +217,76 @@ describe("LootMappingService", () => {
         Player1: ["abc123"],
         Player2: ["def456"],
       });
+    });
+  });
+
+  describe("mapLootShareFromItemOwners", () => {
+    const createLootItem = (
+      hid: string,
+      own?: number,
+    ): CreateLootDto["loots"][number] => ({
+      id: 1,
+      hid,
+      name: `Item ${hid}`,
+      icon: "item.png",
+      pr: 1,
+      prc: "unique",
+      stat: "lvl=50;rarity=UNIQUE",
+      cl: 1,
+      own,
+    });
+    const createPlayer = (
+      id: number,
+      accountId: number,
+    ): CreateLootDto["players"][number] => ({
+      id,
+      accountId,
+      name: `Player ${id}`,
+      lvl: 50,
+      prof: "w",
+      icon: "player.png",
+    });
+
+    it("maps a complete one-to-one item ownership assignment", () => {
+      const result = service.mapLootShareFromItemOwners(
+        [createLootItem("item-1", 11), createLootItem("item-2", 22)],
+        [createPlayer(11, 101), createPlayer(22, 202)],
+      );
+
+      expect(result).toEqual({
+        "11101": ["item-1"],
+        "22202": ["item-2"],
+      });
+    });
+
+    it.each([
+      {
+        name: "an item has no owner",
+        loots: [createLootItem("item-1", 11), createLootItem("item-2")],
+        players: [createPlayer(11, 101), createPlayer(22, 202)],
+      },
+      {
+        name: "an owner does not match a player",
+        loots: [createLootItem("item-1", 11), createLootItem("item-2", 999)],
+        players: [createPlayer(11, 101), createPlayer(22, 202)],
+      },
+      {
+        name: "two items point to the same owner",
+        loots: [createLootItem("item-1", 11), createLootItem("item-2", 11)],
+        players: [createPlayer(11, 101), createPlayer(22, 202)],
+      },
+      {
+        name: "player ids are duplicated",
+        loots: [createLootItem("item-1", 11), createLootItem("item-2", 22)],
+        players: [createPlayer(11, 101), createPlayer(11, 202)],
+      },
+      {
+        name: "the item and player counts differ",
+        loots: [createLootItem("item-1", 11)],
+        players: [createPlayer(11, 101), createPlayer(22, 202)],
+      },
+    ])("rejects the assignment when $name", ({ loots, players }) => {
+      expect(service.mapLootShareFromItemOwners(loots, players)).toBeNull();
     });
   });
 });

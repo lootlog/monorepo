@@ -47,9 +47,13 @@ describe("LootsService", () => {
       findUnique: Mock;
       create: Mock;
       update: Mock;
+      updateMany: Mock;
       findFirst: Mock;
       findMany: Mock;
       count: Mock;
+    };
+    npcSnapshot: {
+      findFirst: Mock;
     };
     lootSubmission: {
       createMany: Mock;
@@ -166,9 +170,13 @@ describe("LootsService", () => {
         findUnique: mockFn(),
         create: mockFn(),
         update: mockFn(),
+        updateMany: mockFn().mockResolvedValue({ count: 1 }),
         findFirst: mockFn(),
         findMany: mockFn(),
         count: mockFn(),
+      },
+      npcSnapshot: {
+        findFirst: mockFn(),
       },
       lootSubmission: {
         createMany: mockFn(),
@@ -395,6 +403,178 @@ describe("LootsService", () => {
         },
       );
       expect(result).toEqual(expectedSuccessResponse);
+    });
+
+    it("should create loot share from item owners for a standard colossus", async () => {
+      const standardColossusDto: CreateLootDto = {
+        ...mockCreateLootDto,
+        npcs: [
+          {
+            id: 173_890,
+            name: "Wernoradzki Drakolisz",
+            location: "Katakumby Antycznego Gniewu",
+            lvl: 279,
+            prof: "b",
+            wt: 90,
+            icon: "kol/kolos-drakolisz.gif",
+            type: 2,
+          },
+        ],
+      };
+      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
+        {
+          id: "guild1",
+          npcs: [
+            {
+              npcType: NpcType.COLOSSUS,
+              allowedRarities: [ItemRarity.UNIQUE],
+            },
+          ],
+        },
+      ]);
+      prismaService.loot.findUnique.mockResolvedValue(null);
+      prismaService.npcSnapshot.findFirst.mockResolvedValue(null);
+      prismaService.loot.create.mockResolvedValue({ id: 1 });
+
+      await service.createLoot(discordId, userId, standardColossusDto);
+
+      expect(prismaService.npcSnapshot.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: "Wernoradzki Drakolisz",
+          OR: [{ type: { not: NpcType.COLOSSUS } }, { type: null }],
+        },
+        select: { id: true },
+      });
+      expect(prismaService.loot.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          lootShare: { "1123": ["item1"] },
+          lootShareSource: "ITEM_OWNER",
+        }),
+      });
+    });
+
+    it("should leave loot share empty for an event-promoted colossus", async () => {
+      const eventColossusDto: CreateLootDto = {
+        ...mockCreateLootDto,
+        npcs: [
+          {
+            id: 198_261,
+            name: "Młody Smok",
+            location: "Test Location",
+            lvl: 268,
+            prof: "w",
+            wt: 91,
+            icon: "her/smokbarb.gif",
+            type: 2,
+          },
+        ],
+      };
+      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
+        {
+          id: "guild1",
+          npcs: [
+            {
+              npcType: NpcType.COLOSSUS,
+              allowedRarities: [ItemRarity.UNIQUE],
+            },
+          ],
+        },
+      ]);
+      prismaService.loot.findUnique.mockResolvedValue(null);
+      prismaService.npcSnapshot.findFirst.mockResolvedValue({ id: 114_998 });
+      prismaService.loot.create.mockResolvedValue({ id: 1 });
+
+      await service.createLoot(discordId, userId, eventColossusDto);
+
+      expect(prismaService.loot.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          lootShare: {},
+          lootShareSource: "NONE",
+        }),
+      });
+    });
+
+    it("should leave loot share empty for a non-colossus", async () => {
+      const heroDto: CreateLootDto = {
+        ...mockCreateLootDto,
+        npcs: [
+          {
+            id: 114_998,
+            name: "Młody Smok",
+            location: "Test Location",
+            lvl: 268,
+            prof: "w",
+            wt: 81,
+            icon: "her/smokbarb.gif",
+            type: 2,
+          },
+        ],
+      };
+      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
+        {
+          id: "guild1",
+          npcs: [
+            {
+              npcType: NpcType.HERO,
+              allowedRarities: [ItemRarity.UNIQUE],
+            },
+          ],
+        },
+      ]);
+      prismaService.loot.findUnique.mockResolvedValue(null);
+      prismaService.loot.create.mockResolvedValue({ id: 1 });
+
+      await service.createLoot(discordId, userId, heroDto);
+
+      expect(prismaService.npcSnapshot.findFirst).not.toHaveBeenCalled();
+      expect(prismaService.loot.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          lootShare: {},
+          lootShareSource: "NONE",
+        }),
+      });
+    });
+
+    it("should leave colossus loot share empty when item owners are ambiguous", async () => {
+      const ambiguousColossusDto: CreateLootDto = {
+        ...mockCreateLootDto,
+        loots: [{ ...mockCreateLootDto.loots[0], own: 999 }],
+        npcs: [
+          {
+            id: 173_890,
+            name: "Wernoradzki Drakolisz",
+            location: "Katakumby Antycznego Gniewu",
+            lvl: 279,
+            prof: "b",
+            wt: 90,
+            icon: "kol/kolos-drakolisz.gif",
+            type: 2,
+          },
+        ],
+      };
+      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
+        {
+          id: "guild1",
+          npcs: [
+            {
+              npcType: NpcType.COLOSSUS,
+              allowedRarities: [ItemRarity.UNIQUE],
+            },
+          ],
+        },
+      ]);
+      prismaService.loot.findUnique.mockResolvedValue(null);
+      prismaService.npcSnapshot.findFirst.mockResolvedValue(null);
+      prismaService.loot.create.mockResolvedValue({ id: 1 });
+
+      await service.createLoot(discordId, userId, ambiguousColossusDto);
+
+      expect(prismaService.loot.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          lootShare: {},
+          lootShareSource: "NONE",
+        }),
+      });
     });
 
     it("should return a retryable error when loot lock contention outlasts the wait", async () => {
@@ -1029,16 +1209,17 @@ describe("LootsService", () => {
   });
 
   describe("updateLoot", () => {
-    const discordId = "discord123";
+    const actorUserId = "user123";
     const lootId = 1;
     const updateData: UpdateLootDto = {
       msg: 'Test Player otrzymał ITEM#abc123:"Test Item"',
     };
 
-    it("should update loot share when valid", async () => {
+    it("should confirm an inferred item-owner share from a valid chat message", async () => {
       const mockLoot = {
         id: 1,
-        lootShare: {},
+        lootShare: { "1123": ["abc123"] },
+        lootShareSource: "ITEM_OWNER",
         lootPlayers: [
           {
             id: 1,
@@ -1088,18 +1269,24 @@ describe("LootsService", () => {
         ],
         lootSubmissions: [{ guildId: "guild1" }],
       };
-      const mockUpdatedLoot = { lootShare: { "1123": ["abc123"] } };
-
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
-      prismaService.loot.update.mockResolvedValue(mockUpdatedLoot);
 
-      const result = await service.updateLoot(discordId, lootId, updateData);
+      const result = await service.updateLoot(actorUserId, lootId, updateData);
 
-      expect(prismaService.loot.update).toHaveBeenCalledWith({
-        where: { id: lootId },
-        data: { lootShare: { "1123": ["abc123"] } },
+      expect(prismaService.loot.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: lootId,
+          lootSubmissions: {
+            some: { member: { globalUserId: actorUserId } },
+          },
+          lootShareSource: { not: "CHAT_MESSAGE" },
+        },
+        data: {
+          lootShare: { "1123": ["abc123"] },
+          lootShareSource: "CHAT_MESSAGE",
+        },
       });
-      expect(result).toEqual({ "1123": ["abc123"] });
+      expect(result).toEqual({});
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
         "guilds.loots.share.update",
@@ -1115,6 +1302,123 @@ describe("LootsService", () => {
           },
         },
       );
+    });
+
+    it("should return an existing loot share without side effects", async () => {
+      const existingLootShare = { "1123": ["abc123"] };
+      prismaService.loot.findFirst.mockResolvedValue({
+        id: lootId,
+        lootShare: existingLootShare,
+        lootShareSource: "CHAT_MESSAGE",
+      });
+
+      const result = await service.updateLoot(actorUserId, lootId, {
+        msg: "this message should not be parsed",
+      });
+
+      expect(result).toEqual({});
+      expect(prismaService.loot.findFirst.mock.calls[0]?.[0]?.where).toEqual({
+        id: lootId,
+        lootSubmissions: {
+          some: { member: { globalUserId: actorUserId } },
+        },
+      });
+      expect(prismaService.loot.updateMany).not.toHaveBeenCalled();
+      expect(_redisService.deleteByPattern).not.toHaveBeenCalled();
+      expect(amqpConnection.publish).not.toHaveBeenCalled();
+    });
+
+    it("should return the winning loot share after losing a concurrent update", async () => {
+      const emptyShareLoot = {
+        id: lootId,
+        lootShare: {},
+        lootShareSource: "NONE",
+        lootPlayers: [
+          {
+            lvl: 50,
+            playerSnapshot: {
+              characterId: 1,
+              accountId: 123,
+              name: "Test Player",
+              prof: Profession.WARRIOR,
+              icon: "player.png",
+            },
+          },
+        ],
+        lootItems: [
+          {
+            hid: "abc123",
+            itemSnapshot: {
+              itemId: 1,
+              name: "Test Item",
+              icon: "item.png",
+              statRaw: "lvl=50;rarity=UNIQUE",
+              lvl: 50,
+              rarity: ItemRarity.UNIQUE,
+              itemType: "WEAPON",
+            },
+          },
+        ],
+        lootNpcs: [],
+        lootSubmissions: [{ guildId: "guild1" }],
+      };
+      prismaService.loot.findFirst
+        .mockResolvedValueOnce(emptyShareLoot)
+        .mockResolvedValueOnce({ lootShareSource: "CHAT_MESSAGE" });
+      prismaService.loot.updateMany.mockResolvedValue({ count: 0 });
+
+      const result = await service.updateLoot(actorUserId, lootId, updateData);
+
+      expect(result).toEqual({});
+      expect(_redisService.deleteByPattern).not.toHaveBeenCalled();
+      expect(amqpConnection.publish).not.toHaveBeenCalled();
+    });
+
+    it("should return a retryable error when a lost update still has an empty share", async () => {
+      const emptyShareLoot = {
+        id: lootId,
+        lootShare: {},
+        lootShareSource: "NONE",
+        lootPlayers: [
+          {
+            lvl: 50,
+            playerSnapshot: {
+              characterId: 1,
+              accountId: 123,
+              name: "Test Player",
+              prof: Profession.WARRIOR,
+              icon: "player.png",
+            },
+          },
+        ],
+        lootItems: [
+          {
+            hid: "abc123",
+            itemSnapshot: {
+              itemId: 1,
+              name: "Test Item",
+              icon: "item.png",
+              statRaw: "lvl=50;rarity=UNIQUE",
+              lvl: 50,
+              rarity: ItemRarity.UNIQUE,
+              itemType: "WEAPON",
+            },
+          },
+        ],
+        lootNpcs: [],
+        lootSubmissions: [{ guildId: "guild1" }],
+      };
+      prismaService.loot.findFirst
+        .mockResolvedValueOnce(emptyShareLoot)
+        .mockResolvedValueOnce({ lootShareSource: "NONE" });
+      prismaService.loot.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.updateLoot(actorUserId, lootId, updateData),
+      ).rejects.toThrow(ServiceUnavailableException);
+
+      expect(_redisService.deleteByPattern).not.toHaveBeenCalled();
+      expect(amqpConnection.publish).not.toHaveBeenCalled();
     });
 
     it("should publish loot share update once per guild", async () => {
@@ -1172,11 +1476,8 @@ describe("LootsService", () => {
       };
 
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
-      prismaService.loot.update.mockResolvedValue({
-        lootShare: { "1123": ["abc123"] },
-      });
 
-      await service.updateLoot(discordId, lootId, updateData);
+      await service.updateLoot(actorUserId, lootId, updateData);
 
       expect(amqpConnection.publish).toHaveBeenCalledTimes(1);
       expect(amqpConnection.publish).toHaveBeenCalledWith(
@@ -1252,11 +1553,8 @@ describe("LootsService", () => {
       };
 
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
-      prismaService.loot.update.mockResolvedValue({
-        lootShare: { "1123": ["abc123"] },
-      });
 
-      await service.updateLoot(discordId, lootId, updateData);
+      await service.updateLoot(actorUserId, lootId, updateData);
 
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
@@ -1276,7 +1574,7 @@ describe("LootsService", () => {
       prismaService.loot.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.updateLoot(discordId, lootId, updateData),
+        service.updateLoot(actorUserId, lootId, updateData),
       ).rejects.toThrow(new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT));
     });
 
@@ -1292,7 +1590,7 @@ describe("LootsService", () => {
       const invalidUpdateData = { msg: "Invalid message" };
 
       await expect(
-        service.updateLoot(discordId, lootId, invalidUpdateData),
+        service.updateLoot(actorUserId, lootId, invalidUpdateData),
       ).rejects.toThrow(new BadRequestException(ErrorKey.MISSING_LOOT_SHARE));
     });
   });
