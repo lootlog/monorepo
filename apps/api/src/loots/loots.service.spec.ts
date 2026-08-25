@@ -448,6 +448,7 @@ describe("LootsService", () => {
       expect(prismaService.loot.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           lootShare: { "1123": ["item1"] },
+          lootShareSource: "ITEM_OWNER",
         }),
       });
     });
@@ -486,7 +487,10 @@ describe("LootsService", () => {
       await service.createLoot(discordId, userId, eventColossusDto);
 
       expect(prismaService.loot.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ lootShare: {} }),
+        data: expect.objectContaining({
+          lootShare: {},
+          lootShareSource: "NONE",
+        }),
       });
     });
 
@@ -524,7 +528,10 @@ describe("LootsService", () => {
 
       expect(prismaService.npcSnapshot.findFirst).not.toHaveBeenCalled();
       expect(prismaService.loot.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ lootShare: {} }),
+        data: expect.objectContaining({
+          lootShare: {},
+          lootShareSource: "NONE",
+        }),
       });
     });
 
@@ -563,7 +570,10 @@ describe("LootsService", () => {
       await service.createLoot(discordId, userId, ambiguousColossusDto);
 
       expect(prismaService.loot.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ lootShare: {} }),
+        data: expect.objectContaining({
+          lootShare: {},
+          lootShareSource: "NONE",
+        }),
       });
     });
 
@@ -1199,16 +1209,17 @@ describe("LootsService", () => {
   });
 
   describe("updateLoot", () => {
-    const discordId = "discord123";
+    const actorUserId = "user123";
     const lootId = 1;
     const updateData: UpdateLootDto = {
       msg: 'Test Player otrzymał ITEM#abc123:"Test Item"',
     };
 
-    it("should update loot share when valid", async () => {
+    it("should confirm an inferred item-owner share from a valid chat message", async () => {
       const mockLoot = {
         id: 1,
-        lootShare: {},
+        lootShare: { "1123": ["abc123"] },
+        lootShareSource: "ITEM_OWNER",
         lootPlayers: [
           {
             id: 1,
@@ -1260,17 +1271,22 @@ describe("LootsService", () => {
       };
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
 
-      const result = await service.updateLoot(discordId, lootId, updateData);
+      const result = await service.updateLoot(actorUserId, lootId, updateData);
 
       expect(prismaService.loot.updateMany).toHaveBeenCalledWith({
         where: {
           id: lootId,
-          lootSubmissions: { some: { member: { userId: discordId } } },
-          lootShare: { equals: {} },
+          lootSubmissions: {
+            some: { member: { globalUserId: actorUserId } },
+          },
+          lootShareSource: { not: "CHAT_MESSAGE" },
         },
-        data: { lootShare: { "1123": ["abc123"] } },
+        data: {
+          lootShare: { "1123": ["abc123"] },
+          lootShareSource: "CHAT_MESSAGE",
+        },
       });
-      expect(result).toEqual({ "1123": ["abc123"] });
+      expect(result).toEqual({});
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
         "guilds.loots.share.update",
@@ -1293,16 +1309,19 @@ describe("LootsService", () => {
       prismaService.loot.findFirst.mockResolvedValue({
         id: lootId,
         lootShare: existingLootShare,
+        lootShareSource: "CHAT_MESSAGE",
       });
 
-      const result = await service.updateLoot(discordId, lootId, {
+      const result = await service.updateLoot(actorUserId, lootId, {
         msg: "this message should not be parsed",
       });
 
-      expect(result).toEqual(existingLootShare);
+      expect(result).toEqual({});
       expect(prismaService.loot.findFirst.mock.calls[0]?.[0]?.where).toEqual({
         id: lootId,
-        lootSubmissions: { some: { member: { userId: discordId } } },
+        lootSubmissions: {
+          some: { member: { globalUserId: actorUserId } },
+        },
       });
       expect(prismaService.loot.updateMany).not.toHaveBeenCalled();
       expect(_redisService.deleteByPattern).not.toHaveBeenCalled();
@@ -1313,6 +1332,7 @@ describe("LootsService", () => {
       const emptyShareLoot = {
         id: lootId,
         lootShare: {},
+        lootShareSource: "NONE",
         lootPlayers: [
           {
             lvl: 50,
@@ -1342,15 +1362,14 @@ describe("LootsService", () => {
         lootNpcs: [],
         lootSubmissions: [{ guildId: "guild1" }],
       };
-      const winningLootShare = { "1123": ["abc123"] };
       prismaService.loot.findFirst
         .mockResolvedValueOnce(emptyShareLoot)
-        .mockResolvedValueOnce({ lootShare: winningLootShare });
+        .mockResolvedValueOnce({ lootShareSource: "CHAT_MESSAGE" });
       prismaService.loot.updateMany.mockResolvedValue({ count: 0 });
 
-      const result = await service.updateLoot(discordId, lootId, updateData);
+      const result = await service.updateLoot(actorUserId, lootId, updateData);
 
-      expect(result).toEqual(winningLootShare);
+      expect(result).toEqual({});
       expect(_redisService.deleteByPattern).not.toHaveBeenCalled();
       expect(amqpConnection.publish).not.toHaveBeenCalled();
     });
@@ -1359,6 +1378,7 @@ describe("LootsService", () => {
       const emptyShareLoot = {
         id: lootId,
         lootShare: {},
+        lootShareSource: "NONE",
         lootPlayers: [
           {
             lvl: 50,
@@ -1390,11 +1410,11 @@ describe("LootsService", () => {
       };
       prismaService.loot.findFirst
         .mockResolvedValueOnce(emptyShareLoot)
-        .mockResolvedValueOnce({ lootShare: {} });
+        .mockResolvedValueOnce({ lootShareSource: "NONE" });
       prismaService.loot.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
-        service.updateLoot(discordId, lootId, updateData),
+        service.updateLoot(actorUserId, lootId, updateData),
       ).rejects.toThrow(ServiceUnavailableException);
 
       expect(_redisService.deleteByPattern).not.toHaveBeenCalled();
@@ -1457,7 +1477,7 @@ describe("LootsService", () => {
 
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
 
-      await service.updateLoot(discordId, lootId, updateData);
+      await service.updateLoot(actorUserId, lootId, updateData);
 
       expect(amqpConnection.publish).toHaveBeenCalledTimes(1);
       expect(amqpConnection.publish).toHaveBeenCalledWith(
@@ -1534,7 +1554,7 @@ describe("LootsService", () => {
 
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
 
-      await service.updateLoot(discordId, lootId, updateData);
+      await service.updateLoot(actorUserId, lootId, updateData);
 
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
@@ -1554,7 +1574,7 @@ describe("LootsService", () => {
       prismaService.loot.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.updateLoot(discordId, lootId, updateData),
+        service.updateLoot(actorUserId, lootId, updateData),
       ).rejects.toThrow(new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT));
     });
 
@@ -1570,7 +1590,7 @@ describe("LootsService", () => {
       const invalidUpdateData = { msg: "Invalid message" };
 
       await expect(
-        service.updateLoot(discordId, lootId, invalidUpdateData),
+        service.updateLoot(actorUserId, lootId, invalidUpdateData),
       ).rejects.toThrow(new BadRequestException(ErrorKey.MISSING_LOOT_SHARE));
     });
   });

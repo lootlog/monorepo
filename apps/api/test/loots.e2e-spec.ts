@@ -5,6 +5,7 @@ import { PrismaService } from "../src/db/prisma.service";
 import { createTestLootPayload, TEST_GUILDS, TEST_USERS } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
 import {
+  LootShareSource,
   Permission,
   NpcType,
   ItemRarity,
@@ -564,11 +565,12 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
       const persistedLoot = await prisma.loot.findUniqueOrThrow({
         where: { id: response.body.id },
-        select: { lootShare: true },
+        select: { lootShare: true, lootShareSource: true },
       });
       expect(persistedLoot.lootShare).toEqual({
         "300112345": ["standard-colossus-item"],
       });
+      expect(persistedLoot.lootShareSource).toBe(LootShareSource.ITEM_OWNER);
     });
 
     it("should keep loot share empty for a same-name non-colossus variant", async () => {
@@ -620,14 +622,15 @@ describe("Loots E2E Tests (Whitelist)", () => {
 
       const persistedLoot = await prisma.loot.findUniqueOrThrow({
         where: { id: response.body.id },
-        select: { lootShare: true },
+        select: { lootShare: true, lootShareSource: true },
       });
       expect(persistedLoot.lootShare).toEqual({});
+      expect(persistedLoot.lootShareSource).toBe(LootShareSource.NONE);
     });
   });
 
   describe("PATCH /loots/:id", () => {
-    it("should return the existing loot share for a repeated update", async () => {
+    it("should acknowledge a repeated update without returning the stored share", async () => {
       await createLootWriter(NpcType.HERO);
       const createResponse = await request(app.getHttpServer())
         .post("/loots")
@@ -670,13 +673,118 @@ describe("Loots E2E Tests (Whitelist)", () => {
         .send({ msg: "already handled" })
         .expect(200);
 
-      expect(firstResponse.body).toEqual(expectedLootShare);
-      expect(secondResponse.body).toEqual(expectedLootShare);
+      expect(firstResponse.body).toEqual({});
+      expect(secondResponse.body).toEqual({});
       const persistedLoot = await prisma.loot.findUniqueOrThrow({
         where: { id: createResponse.body.id },
-        select: { lootShare: true },
+        select: { lootShare: true, lootShareSource: true },
       });
       expect(persistedLoot.lootShare).toEqual(expectedLootShare);
+      expect(persistedLoot.lootShareSource).toBe(LootShareSource.CHAT_MESSAGE);
+    });
+
+    it("should replace an inferred owner share with the chat allocation", async () => {
+      await createLootWriter(NpcType.COLOSSUS);
+      const createResponse = await request(app.getHttpServer())
+        .post("/loots")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(
+          createTestLootPayload({
+            loots: [
+              {
+                hid: "aa11",
+                name: "First Item",
+                icon: "first-item.gif",
+                pr: 3,
+                prc: "unique",
+                stat: "lvl=100;rarity=UNIQUE",
+                id: 1001,
+                cl: 16,
+                own: 3001,
+              },
+              {
+                hid: "bb22",
+                name: "Second Item",
+                icon: "second-item.gif",
+                pr: 3,
+                prc: "unique",
+                stat: "lvl=100;rarity=UNIQUE",
+                id: 1002,
+                cl: 16,
+                own: 3002,
+              },
+            ],
+            npcs: [
+              {
+                id: 930_001,
+                name: "E2E Inferred Colossus",
+                location: "Test Location",
+                lvl: 200,
+                prof: "w",
+                wt: 90,
+                icon: "kol/e2e-inferred.gif",
+                type: 2,
+              },
+            ],
+            players: [
+              {
+                id: 3001,
+                accountId: 12_345,
+                name: "First Player",
+                lvl: 100,
+                prof: "w",
+                icon: "first-player.gif",
+              },
+              {
+                id: 3002,
+                accountId: 23_456,
+                name: "Second Player",
+                lvl: 100,
+                prof: "m",
+                icon: "second-player.gif",
+              },
+            ],
+          }),
+        )
+        .expect(201);
+
+      const inferredLoot = await prisma.loot.findUniqueOrThrow({
+        where: { id: createResponse.body.id },
+        select: { lootShare: true, lootShareSource: true },
+      });
+      expect(inferredLoot).toEqual({
+        lootShare: {
+          "300112345": ["aa11"],
+          "300223456": ["bb22"],
+        },
+        lootShareSource: LootShareSource.ITEM_OWNER,
+      });
+
+      const updateResponse = await request(app.getHttpServer())
+        .patch(`/loots/${createResponse.body.id}`)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send({
+          msg: [
+            'First Player otrzymał ITEM#bb22:"Second Item"',
+            'Second Player otrzymał ITEM#aa11:"First Item"',
+          ].join("\n"),
+        })
+        .expect(200);
+      expect(updateResponse.body).toEqual({});
+
+      const confirmedLoot = await prisma.loot.findUniqueOrThrow({
+        where: { id: createResponse.body.id },
+        select: { lootShare: true, lootShareSource: true },
+      });
+      expect(confirmedLoot).toEqual({
+        lootShare: {
+          "300112345": ["bb22"],
+          "300223456": ["aa11"],
+        },
+        lootShareSource: LootShareSource.CHAT_MESSAGE,
+      });
     });
   });
 });
