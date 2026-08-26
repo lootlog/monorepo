@@ -9,4 +9,11 @@ export type ReservationSegment = {
   segmentStart: Date;
   segmentEnd: Date;
   isReservationStart: boolean;
+  lane: number;
+  laneCount: number;
+};
+
+export type ReservationRange = {
+  startsAt: Date;
+  endsAt: Date;
 };

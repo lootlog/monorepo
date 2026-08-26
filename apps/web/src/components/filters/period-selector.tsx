@@ -10,6 +10,7 @@ interface PeriodSelectorProps {
   value: Period;
   onValueChange: (period: Period) => void;
   excludePeriods?: Period[];
+  allLabel?: string;
   placeholder?: string;
   width?: string;
   className?: string;
@@ -19,6 +20,7 @@ export function PeriodSelector({
   value,
   onValueChange,
   excludePeriods = [],
+  allLabel,
   placeholder,
   width = "w-[200px]",
   className,
@@ -32,7 +34,10 @@ export function PeriodSelector({
     { value: "30d" as const, label: t("common.periodOptions.30d") },
     { value: "90d" as const, label: t("common.periodOptions.90d") },
     { value: "180d" as const, label: t("common.periodOptions.180d") },
-    { value: "all" as const, label: t("common.periodOptions.all") },
+    {
+      value: "all" as const,
+      label: allLabel ?? t("common.periodOptions.all"),
+    },
   ];
   const availablePeriods = allPeriods.filter(
     (period) => !excludePeriods.includes(period.value),

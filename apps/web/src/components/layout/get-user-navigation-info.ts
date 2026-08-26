@@ -29,6 +29,20 @@ export function getUserNavigationInfo({
     };
   }
 
+  if (normalizedPath === ROUTES.user.reservations) {
+    return {
+      breadcrumbs: [
+        {
+          label: t("layout.navigation.dashboard"),
+          path: ROUTES.user.dashboard,
+        },
+        { label: t("layout.navigation.myReservations"), path: null },
+      ],
+      showBack: true,
+      backPath: ROUTES.user.dashboard,
+    };
+  }
+
   if (normalizedPath === ROUTES.user.battlePanel.base) {
     return {
       breadcrumbs: [{ label: t("layout.navigation.battlePanel"), path: null }],

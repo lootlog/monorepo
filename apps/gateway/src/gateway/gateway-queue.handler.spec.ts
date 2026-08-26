@@ -8,6 +8,7 @@ describe("GatewayQueueHandler", () => {
     rebalanceUserSocketRooms: vi.fn(),
     handleGuildsLootCreate: vi.fn(),
     handleGuildsLootShareUpdate: vi.fn(),
+    handleGuildsReservationChangedV2: vi.fn(),
     handlePartyReadyRoomUpdate: vi.fn(),
   };
 
@@ -30,6 +31,9 @@ describe("GatewayQueueHandler", () => {
     mockGatewayService.rebalanceUserSocketRooms.mockResolvedValue(undefined);
     mockGatewayService.handleGuildsLootCreate.mockResolvedValue(undefined);
     mockGatewayService.handleGuildsLootShareUpdate.mockResolvedValue(undefined);
+    mockGatewayService.handleGuildsReservationChangedV2.mockResolvedValue(
+      undefined,
+    );
     mockGatewayService.handlePartyReadyRoomUpdate.mockResolvedValue(undefined);
     mockRetryService.getRetryCount.mockReturnValue(1);
   });
@@ -123,6 +127,28 @@ describe("GatewayQueueHandler", () => {
     expect(mockGatewayService.handleGuildsLootShareUpdate).toHaveBeenCalledWith(
       payload,
     );
+  });
+
+  it("lets retry handling bound malformed reservation v2 messages before parsing", async () => {
+    const malformedPayload = { version: 2, sourceGuildId: "guild-1" };
+    mockRetryService.handleRetryLogic.mockResolvedValue(false);
+
+    await expect(
+      handler.handleGuildsReservationChangedV2(
+        malformedPayload,
+        message as never,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(mockRetryService.handleRetryLogic).toHaveBeenCalledWith(
+      malformedPayload,
+      message.properties.headers,
+      RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_DLQ,
+      "invalid reservation v2 change",
+    );
+    expect(
+      mockGatewayService.handleGuildsReservationChangedV2,
+    ).not.toHaveBeenCalled();
   });
 
   it("logs loot create messages sent to DLQ", () => {

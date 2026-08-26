@@ -4,6 +4,21 @@
     "list": "Widok listy",
     "grid": "Widok siatki"
   },
+  "filters": {
+    "label": "Filtry expowisk",
+    "all": "Wszystkie",
+    "available": "Wolne teraz",
+    "pinned": "Przypięte",
+    "partners": "Rezerwacje partnerów",
+    "partnersCompact": "Partnerzy"
+  },
+  "pin": {
+    "error": "Nie udało się zmienić przypięcia expowiska."
+  },
+  "error": {
+    "title": "Nie udało się pobrać expowisk",
+    "description": "Sprawdź połączenie i spróbuj ponownie."
+  },
   "card": {
     "activeCount_one": "{{count}} zapis",
     "activeCount_few": "{{count}} zapisy",
@@ -13,17 +28,25 @@
     "next": "Najbliższa rezerwacja",
     "none": "Brak rezerwacji",
     "noneDescription": "Kliknij, aby wybrać termin",
-    "open": "Otwórz rezerwacje: {{name}}"
+    "open": "Otwórz rezerwacje: {{name}}",
+    "freeNow": "Wolne teraz",
+    "freeUntil": "Wolne do {{time}}",
+    "level": "Poziom {{level}}",
+    "partnerBadge": "Partner",
+    "pin": "Przypnij expowisko {{name}}",
+    "unpin": "Odepnij expowisko {{name}}"
   },
   "empty": {
     "title": "Nie znaleziono expowisk",
     "description": "Brak dostępnych expowisk do wyświetlenia.",
     "searchDescription": "Spróbuj zmienić wyszukiwaną frazę.",
-    "clearSearch": "Wyczyść wyszukiwanie"
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "clearFilters": "Wyczyść filtry"
   },
   "datePicker": {
     "placeholder": "Wybierz datę i godzinę",
     "clear": "Wyczyść datę",
+    "time": "Godzina",
     "weekdays": {
       "monday": "Pn",
       "tuesday": "Wt",
@@ -36,11 +59,17 @@
   },
   "schedule": {
     "header": {
+      "actions": "Akcje kalendarza rezerwacji",
       "addReservation": "Dodaj rezerwację",
+      "findNearestSlot": "Znajdź najbliższy wolny termin",
+      "findingNearestSlot": "Szukanie wolnego terminu",
       "info": "Zasady rezerwacji",
       "settings": "Ustawienia rezerwacji",
       "previousWeek": "Poprzedni tydzień",
       "nextWeek": "Następny tydzień",
+      "previousDay": "Poprzedni dzień",
+      "nextDay": "Następny dzień",
+      "today": "Dzisiaj",
       "weekLabel": "Tydzień {{week}} ({{year}}, {{month}})"
     },
     "infoDialog": {
@@ -62,7 +91,7 @@
         },
         "granularity": {
           "title": "Krok siatki",
-          "description": "Zaznaczanie na kalendarzu dopasowuje zakres do tego kroku. W formularzu można wpisać dokładną minutę, np. 12:33."
+          "description": "Początek i koniec rezerwacji muszą być dopasowane do tego kroku."
         },
         "maxAdvance": {
           "title": "Maksymalne wyprzedzenie",
@@ -95,11 +124,30 @@
       "endDate": "Data zakończenia",
       "endDatePlaceholder": "Wybierz koniec rezerwacji",
       "comment": "Komentarz (opcjonalnie)",
-      "commentPlaceholder": "Dodaj krótki komentarz do rezerwacji"
+      "commentPlaceholder": "Dodaj krótki komentarz do rezerwacji",
+      "reminder": "Przypomnienie w DM",
+      "dmRequired": "Przypomnienia wymagają aktywnego celu DM.",
+      "configureDm": "Skonfiguruj powiadomienia"
+    },
+    "block": {
+      "open": "{{name}}, {{time}}, organizacja {{organization}}. Otwórz szczegóły rezerwacji.",
+      "partner": "Rezerwacja organizacji partnerskiej: {{organization}}"
+    },
+    "mobile": {
+      "addAt": "Dodaj rezerwację o {{time}}"
+    },
+    "error": {
+      "title": "Nie udało się pobrać kalendarza",
+      "description": "Spróbuj ponownie za chwilę. Twoje istniejące rezerwacje są bezpieczne."
+    },
+    "nearestFreeSlot": {
+      "unavailable": "Nie znaleziono wolnego terminu w dozwolonym okresie.",
+      "error": "Nie udało się sprawdzić wolnych terminów. Spróbuj ponownie."
     },
     "validation": {
       "timeRangeRequired": "Wybierz zakres czasowy rezerwacji.",
       "endAfterStart": "Data zakończenia musi być późniejsza niż rozpoczęcia.",
+      "invalidTimeGrid": "Początek i koniec muszą wypadać co {{minutes}} minut.",
       "reservationTypeMissing": "Nie udało się ustalić rodzaju rezerwacji.",
       "userMissing": "Brak informacji o użytkowniku.",
       "startTooOld": "Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.",
@@ -109,7 +157,69 @@
     },
     "toasts": {
       "created": "Rezerwacja została utworzona.",
+      "updated": "Rezerwacja została zaktualizowana.",
       "createError": "Nie udało się utworzyć rezerwacji."
     }
+  },
+  "reminders": {
+    "none": "Bez przypomnienia",
+    "0": "W momencie rozpoczęcia",
+    "5": "5 minut wcześniej",
+    "15": "15 minut wcześniej",
+    "30": "30 minut wcześniej"
+  },
+  "details": {
+    "title": "Szczegóły rezerwacji",
+    "description": "Szczegóły zapisu na {{spot}}",
+    "time": "Termin",
+    "reminder": "Przypomnienie",
+    "comment": "Komentarz",
+    "cancel": "Anuluj rezerwację",
+    "remove": "Usuń rezerwację",
+    "cancelled": "Rezerwacja została anulowana."
+  },
+  "my": {
+    "title": "Moje zapisy",
+    "description": "Nadchodzące rezerwacje oraz historia z ostatnich 30 dni.",
+    "cardDescription": "Pięć najbliższych terminów",
+    "showAll": "Pokaż wszystkie",
+    "tabsLabel": "Zakres rezerwacji",
+    "upcoming": "Nadchodzące",
+    "history": "Historia 30 dni",
+    "emptyUpcoming": "Nie masz nadchodzących rezerwacji",
+    "emptyHistory": "Brak rezerwacji w ostatnich 30 dniach",
+    "emptyDescription": "Nowe zapisy pojawią się tutaj automatycznie.",
+    "cancel": "Anuluj rezerwację na {{spot}}",
+    "edit": "Edytuj rezerwację na {{spot}}",
+    "editDialogTitle": "Edytuj rezerwację",
+    "open": "Otwórz rezerwację na {{spot}}"
+  },
+  "sharing": {
+    "standaloneTitle": "Współdzielenie rezerwacji",
+    "invitationTitle": "Współdzielenie kalendarzy rezerwacji",
+    "invitationDescription": "Organizacja {{organization}} zaprasza do wzajemnego udostępnienia kalendarzy.",
+    "loadingTitle": "Sprawdzamy zaproszenie",
+    "loadingDescription": "Pobieramy organizację i dostępne opcje połączenia.",
+    "targetOrganizationLabel": "Połącz z organizacją",
+    "selectOrganization": "Wybierz organizację docelową",
+    "noEligibleOrganizations": "Nie administrujesz żadną inną organizacją, którą można połączyć.",
+    "accept": "Połącz kalendarze",
+    "connecting": "Łączenie kalendarzy...",
+    "acceptedTitle": "Kalendarze zostały połączone",
+    "acceptedDescription": "Obie organizacje widzą teraz swoje rezerwacje i nowe kolizje są sprawdzane wspólnie.",
+    "openSettings": "Otwórz ustawienia rezerwacji",
+    "invalidTitle": "Zaproszenie jest niedostępne",
+    "invalidDescription": "Link wygasł, został wycofany albo użyto go wcześniej."
+  },
+  "errors": {
+    "RESERVATION_OVERLAP": "Ten termin koliduje z rezerwacją Twojej organizacji lub partnera.",
+    "ACTIVE_LIMIT_REACHED": "Osiągnięto limit aktywnych rezerwacji na tym expowisku.",
+    "INVALID_TIME_GRID": "Początek i koniec muszą pasować do kroku kalendarza.",
+    "DM_TARGET_REQUIRED": "Najpierw skonfiguruj aktywny cel powiadomień DM.",
+    "REMINDER_TIME_ELAPSED": "Wybrany czas przypomnienia już minął.",
+    "INVITATION_EXPIRED": "Zaproszenie wygasło, zostało wycofane lub już go użyto.",
+    "RESERVATION_SHARE_EXISTS": "Te organizacje już współdzielą rezerwacje.",
+    "RESERVATION_SHARE_WITH_SELF": "Nie można współdzielić rezerwacji z tą samą organizacją.",
+    "unknown": "Nie udało się wykonać operacji. Spróbuj ponownie."
   }
 }

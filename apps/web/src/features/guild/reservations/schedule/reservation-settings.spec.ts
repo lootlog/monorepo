@@ -3,6 +3,7 @@ import {
   clampReservationEndDate,
   getDurationMinutes,
   getReservationSettings,
+  isReservationStartSelectable,
   snapMinutesToStep,
   validateReservationDateRange,
 } from "./reservation-settings";
@@ -85,7 +86,7 @@ describe("reservation settings helpers", () => {
     ).toBe("maxAdvance");
   });
 
-  it("accepts dates outside the configured grid step", () => {
+  it("rejects dates outside the configured grid step", () => {
     expect(
       validateReservationDateRange({
         fromDate: new Date(2026, 0, 1, 12, 33),
@@ -93,7 +94,7 @@ describe("reservation settings helpers", () => {
         settings,
         now,
       }),
-    ).toBeNull();
+    ).toBe("invalidTimeGrid");
   });
 
   it("rejects a reservation starting before the past tolerance", () => {
@@ -105,6 +106,25 @@ describe("reservation settings helpers", () => {
         now,
       }),
     ).toBe("startTooOld");
+  });
+
+  it("allows an unchanged past start while editing an active reservation", () => {
+    expect(
+      validateReservationDateRange({
+        fromDate: new Date(2026, 0, 1, 10, 45),
+        toDate: new Date(2026, 0, 1, 13, 0),
+        settings,
+        now,
+        allowPastStart: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("does not allow opening the form for a grid selection in the past", () => {
+    expect(
+      isReservationStartSelectable(new Date(2026, 0, 1, 11, 59), now),
+    ).toBe(false);
+    expect(isReservationStartSelectable(now, now)).toBe(true);
   });
 
   it("clamps dragged range to the configured maximum duration", () => {

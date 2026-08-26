@@ -28,21 +28,31 @@ export type AggregateReservation = {
 
 export type ReservationAvgAggregateOutputType = {
   id: number | null
+  reminderMinutesBefore: number | null
 }
 
 export type ReservationSumAggregateOutputType = {
   id: number | null
+  reminderMinutesBefore: number | null
 }
 
 export type ReservationMinAggregateOutputType = {
   id: number | null
   guildId: string | null
-  reservationId: string | null
-  createdDate: Date | null
-  fromDate: Date | null
-  toDate: Date | null
-  createdBy: string | null
+  spotId: string | null
+  spotName: string | null
+  startsAt: Date | null
+  endsAt: Date | null
+  createdByUserId: string | null
+  authorDisplayName: string | null
+  authorAvatarUrl: string | null
+  reminderMinutesBefore: number | null
   comment: string | null
+  legacyReservationId: string | null
+  legacyCreatedDate: Date | null
+  legacyFromDate: Date | null
+  legacyToDate: Date | null
+  legacyCreatedByDiscordId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -50,12 +60,20 @@ export type ReservationMinAggregateOutputType = {
 export type ReservationMaxAggregateOutputType = {
   id: number | null
   guildId: string | null
-  reservationId: string | null
-  createdDate: Date | null
-  fromDate: Date | null
-  toDate: Date | null
-  createdBy: string | null
+  spotId: string | null
+  spotName: string | null
+  startsAt: Date | null
+  endsAt: Date | null
+  createdByUserId: string | null
+  authorDisplayName: string | null
+  authorAvatarUrl: string | null
+  reminderMinutesBefore: number | null
   comment: string | null
+  legacyReservationId: string | null
+  legacyCreatedDate: Date | null
+  legacyFromDate: Date | null
+  legacyToDate: Date | null
+  legacyCreatedByDiscordId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -63,12 +81,20 @@ export type ReservationMaxAggregateOutputType = {
 export type ReservationCountAggregateOutputType = {
   id: number
   guildId: number
-  reservationId: number
-  createdDate: number
-  fromDate: number
-  toDate: number
-  createdBy: number
+  spotId: number
+  spotName: number
+  startsAt: number
+  endsAt: number
+  createdByUserId: number
+  authorDisplayName: number
+  authorAvatarUrl: number
+  reminderMinutesBefore: number
   comment: number
+  legacyReservationId: number
+  legacyCreatedDate: number
+  legacyFromDate: number
+  legacyToDate: number
+  legacyCreatedByDiscordId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -77,21 +103,31 @@ export type ReservationCountAggregateOutputType = {
 
 export type ReservationAvgAggregateInputType = {
   id?: true
+  reminderMinutesBefore?: true
 }
 
 export type ReservationSumAggregateInputType = {
   id?: true
+  reminderMinutesBefore?: true
 }
 
 export type ReservationMinAggregateInputType = {
   id?: true
   guildId?: true
-  reservationId?: true
-  createdDate?: true
-  fromDate?: true
-  toDate?: true
-  createdBy?: true
+  spotId?: true
+  spotName?: true
+  startsAt?: true
+  endsAt?: true
+  createdByUserId?: true
+  authorDisplayName?: true
+  authorAvatarUrl?: true
+  reminderMinutesBefore?: true
   comment?: true
+  legacyReservationId?: true
+  legacyCreatedDate?: true
+  legacyFromDate?: true
+  legacyToDate?: true
+  legacyCreatedByDiscordId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -99,12 +135,20 @@ export type ReservationMinAggregateInputType = {
 export type ReservationMaxAggregateInputType = {
   id?: true
   guildId?: true
-  reservationId?: true
-  createdDate?: true
-  fromDate?: true
-  toDate?: true
-  createdBy?: true
+  spotId?: true
+  spotName?: true
+  startsAt?: true
+  endsAt?: true
+  createdByUserId?: true
+  authorDisplayName?: true
+  authorAvatarUrl?: true
+  reminderMinutesBefore?: true
   comment?: true
+  legacyReservationId?: true
+  legacyCreatedDate?: true
+  legacyFromDate?: true
+  legacyToDate?: true
+  legacyCreatedByDiscordId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -112,12 +156,20 @@ export type ReservationMaxAggregateInputType = {
 export type ReservationCountAggregateInputType = {
   id?: true
   guildId?: true
-  reservationId?: true
-  createdDate?: true
-  fromDate?: true
-  toDate?: true
-  createdBy?: true
+  spotId?: true
+  spotName?: true
+  startsAt?: true
+  endsAt?: true
+  createdByUserId?: true
+  authorDisplayName?: true
+  authorAvatarUrl?: true
+  reminderMinutesBefore?: true
   comment?: true
+  legacyReservationId?: true
+  legacyCreatedDate?: true
+  legacyFromDate?: true
+  legacyToDate?: true
+  legacyCreatedByDiscordId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -212,12 +264,20 @@ export type ReservationGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type ReservationGroupByOutputType = {
   id: number
   guildId: string
-  reservationId: string
-  createdDate: Date
-  fromDate: Date
-  toDate: Date
-  createdBy: string
+  spotId: string
+  spotName: string
+  startsAt: Date
+  endsAt: Date
+  createdByUserId: string | null
+  authorDisplayName: string
+  authorAvatarUrl: string | null
+  reminderMinutesBefore: number | null
   comment: string | null
+  legacyReservationId: string | null
+  legacyCreatedDate: Date | null
+  legacyFromDate: Date | null
+  legacyToDate: Date | null
+  legacyCreatedByDiscordId: string | null
   createdAt: Date
   updatedAt: Date
   _count: ReservationCountAggregateOutputType | null
@@ -248,12 +308,20 @@ export type ReservationWhereInput = {
   NOT?: Prisma.ReservationWhereInput | Prisma.ReservationWhereInput[]
   id?: Prisma.IntFilter<"Reservation"> | number
   guildId?: Prisma.StringFilter<"Reservation"> | string
-  reservationId?: Prisma.StringFilter<"Reservation"> | string
-  createdDate?: Prisma.DateTimeFilter<"Reservation"> | Date | string
-  fromDate?: Prisma.DateTimeFilter<"Reservation"> | Date | string
-  toDate?: Prisma.DateTimeFilter<"Reservation"> | Date | string
-  createdBy?: Prisma.StringFilter<"Reservation"> | string
+  spotId?: Prisma.StringFilter<"Reservation"> | string
+  spotName?: Prisma.StringFilter<"Reservation"> | string
+  startsAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
+  endsAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
+  createdByUserId?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  authorDisplayName?: Prisma.StringFilter<"Reservation"> | string
+  authorAvatarUrl?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  reminderMinutesBefore?: Prisma.IntNullableFilter<"Reservation"> | number | null
   comment?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  legacyReservationId?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  legacyCreatedDate?: Prisma.DateTimeNullableFilter<"Reservation"> | Date | string | null
+  legacyFromDate?: Prisma.DateTimeNullableFilter<"Reservation"> | Date | string | null
+  legacyToDate?: Prisma.DateTimeNullableFilter<"Reservation"> | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.StringNullableFilter<"Reservation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
@@ -262,12 +330,20 @@ export type ReservationWhereInput = {
 export type ReservationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
-  reservationId?: Prisma.SortOrder
-  createdDate?: Prisma.SortOrder
-  fromDate?: Prisma.SortOrder
-  toDate?: Prisma.SortOrder
-  createdBy?: Prisma.SortOrder
+  spotId?: Prisma.SortOrder
+  spotName?: Prisma.SortOrder
+  startsAt?: Prisma.SortOrder
+  endsAt?: Prisma.SortOrder
+  createdByUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  authorDisplayName?: Prisma.SortOrder
+  authorAvatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  reminderMinutesBefore?: Prisma.SortOrderInput | Prisma.SortOrder
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyReservationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyCreatedDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyFromDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyToDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyCreatedByDiscordId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   guild?: Prisma.GuildOrderByWithRelationInput
@@ -279,12 +355,20 @@ export type ReservationWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ReservationWhereInput[]
   NOT?: Prisma.ReservationWhereInput | Prisma.ReservationWhereInput[]
   guildId?: Prisma.StringFilter<"Reservation"> | string
-  reservationId?: Prisma.StringFilter<"Reservation"> | string
-  createdDate?: Prisma.DateTimeFilter<"Reservation"> | Date | string
-  fromDate?: Prisma.DateTimeFilter<"Reservation"> | Date | string
-  toDate?: Prisma.DateTimeFilter<"Reservation"> | Date | string
-  createdBy?: Prisma.StringFilter<"Reservation"> | string
+  spotId?: Prisma.StringFilter<"Reservation"> | string
+  spotName?: Prisma.StringFilter<"Reservation"> | string
+  startsAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
+  endsAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
+  createdByUserId?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  authorDisplayName?: Prisma.StringFilter<"Reservation"> | string
+  authorAvatarUrl?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  reminderMinutesBefore?: Prisma.IntNullableFilter<"Reservation"> | number | null
   comment?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  legacyReservationId?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  legacyCreatedDate?: Prisma.DateTimeNullableFilter<"Reservation"> | Date | string | null
+  legacyFromDate?: Prisma.DateTimeNullableFilter<"Reservation"> | Date | string | null
+  legacyToDate?: Prisma.DateTimeNullableFilter<"Reservation"> | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.StringNullableFilter<"Reservation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
@@ -293,12 +377,20 @@ export type ReservationWhereUniqueInput = Prisma.AtLeast<{
 export type ReservationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
-  reservationId?: Prisma.SortOrder
-  createdDate?: Prisma.SortOrder
-  fromDate?: Prisma.SortOrder
-  toDate?: Prisma.SortOrder
-  createdBy?: Prisma.SortOrder
+  spotId?: Prisma.SortOrder
+  spotName?: Prisma.SortOrder
+  startsAt?: Prisma.SortOrder
+  endsAt?: Prisma.SortOrder
+  createdByUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  authorDisplayName?: Prisma.SortOrder
+  authorAvatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  reminderMinutesBefore?: Prisma.SortOrderInput | Prisma.SortOrder
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyReservationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyCreatedDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyFromDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyToDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  legacyCreatedByDiscordId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ReservationCountOrderByAggregateInput
@@ -314,23 +406,39 @@ export type ReservationScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ReservationScalarWhereWithAggregatesInput | Prisma.ReservationScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Reservation"> | number
   guildId?: Prisma.StringWithAggregatesFilter<"Reservation"> | string
-  reservationId?: Prisma.StringWithAggregatesFilter<"Reservation"> | string
-  createdDate?: Prisma.DateTimeWithAggregatesFilter<"Reservation"> | Date | string
-  fromDate?: Prisma.DateTimeWithAggregatesFilter<"Reservation"> | Date | string
-  toDate?: Prisma.DateTimeWithAggregatesFilter<"Reservation"> | Date | string
-  createdBy?: Prisma.StringWithAggregatesFilter<"Reservation"> | string
+  spotId?: Prisma.StringWithAggregatesFilter<"Reservation"> | string
+  spotName?: Prisma.StringWithAggregatesFilter<"Reservation"> | string
+  startsAt?: Prisma.DateTimeWithAggregatesFilter<"Reservation"> | Date | string
+  endsAt?: Prisma.DateTimeWithAggregatesFilter<"Reservation"> | Date | string
+  createdByUserId?: Prisma.StringNullableWithAggregatesFilter<"Reservation"> | string | null
+  authorDisplayName?: Prisma.StringWithAggregatesFilter<"Reservation"> | string
+  authorAvatarUrl?: Prisma.StringNullableWithAggregatesFilter<"Reservation"> | string | null
+  reminderMinutesBefore?: Prisma.IntNullableWithAggregatesFilter<"Reservation"> | number | null
   comment?: Prisma.StringNullableWithAggregatesFilter<"Reservation"> | string | null
+  legacyReservationId?: Prisma.StringNullableWithAggregatesFilter<"Reservation"> | string | null
+  legacyCreatedDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Reservation"> | Date | string | null
+  legacyFromDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Reservation"> | Date | string | null
+  legacyToDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Reservation"> | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.StringNullableWithAggregatesFilter<"Reservation"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Reservation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Reservation"> | Date | string
 }
 
 export type ReservationCreateInput = {
-  reservationId: string
-  createdDate: Date | string
-  fromDate: Date | string
-  toDate: Date | string
-  createdBy: string
+  spotId: string
+  spotName: string
+  startsAt: Date | string
+  endsAt: Date | string
+  createdByUserId?: string | null
+  authorDisplayName: string
+  authorAvatarUrl?: string | null
+  reminderMinutesBefore?: number | null
   comment?: string | null
+  legacyReservationId?: string | null
+  legacyCreatedDate?: Date | string | null
+  legacyFromDate?: Date | string | null
+  legacyToDate?: Date | string | null
+  legacyCreatedByDiscordId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutReservationsInput
@@ -339,23 +447,39 @@ export type ReservationCreateInput = {
 export type ReservationUncheckedCreateInput = {
   id?: number
   guildId: string
-  reservationId: string
-  createdDate: Date | string
-  fromDate: Date | string
-  toDate: Date | string
-  createdBy: string
+  spotId: string
+  spotName: string
+  startsAt: Date | string
+  endsAt: Date | string
+  createdByUserId?: string | null
+  authorDisplayName: string
+  authorAvatarUrl?: string | null
+  reminderMinutesBefore?: number | null
   comment?: string | null
+  legacyReservationId?: string | null
+  legacyCreatedDate?: Date | string | null
+  legacyFromDate?: Date | string | null
+  legacyToDate?: Date | string | null
+  legacyCreatedByDiscordId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type ReservationUpdateInput = {
-  reservationId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  fromDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  toDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  spotId?: Prisma.StringFieldUpdateOperationsInput | string
+  spotName?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorDisplayName?: Prisma.StringFieldUpdateOperationsInput | string
+  authorAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reminderMinutesBefore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyReservationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyCreatedDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyFromDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyToDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutReservationsNestedInput
@@ -364,12 +488,20 @@ export type ReservationUpdateInput = {
 export type ReservationUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  reservationId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  fromDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  toDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  spotId?: Prisma.StringFieldUpdateOperationsInput | string
+  spotName?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorDisplayName?: Prisma.StringFieldUpdateOperationsInput | string
+  authorAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reminderMinutesBefore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyReservationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyCreatedDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyFromDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyToDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -377,23 +509,39 @@ export type ReservationUncheckedUpdateInput = {
 export type ReservationCreateManyInput = {
   id?: number
   guildId: string
-  reservationId: string
-  createdDate: Date | string
-  fromDate: Date | string
-  toDate: Date | string
-  createdBy: string
+  spotId: string
+  spotName: string
+  startsAt: Date | string
+  endsAt: Date | string
+  createdByUserId?: string | null
+  authorDisplayName: string
+  authorAvatarUrl?: string | null
+  reminderMinutesBefore?: number | null
   comment?: string | null
+  legacyReservationId?: string | null
+  legacyCreatedDate?: Date | string | null
+  legacyFromDate?: Date | string | null
+  legacyToDate?: Date | string | null
+  legacyCreatedByDiscordId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type ReservationUpdateManyMutationInput = {
-  reservationId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  fromDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  toDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  spotId?: Prisma.StringFieldUpdateOperationsInput | string
+  spotName?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorDisplayName?: Prisma.StringFieldUpdateOperationsInput | string
+  authorAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reminderMinutesBefore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyReservationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyCreatedDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyFromDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyToDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -401,12 +549,20 @@ export type ReservationUpdateManyMutationInput = {
 export type ReservationUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  reservationId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  fromDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  toDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  spotId?: Prisma.StringFieldUpdateOperationsInput | string
+  spotName?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorDisplayName?: Prisma.StringFieldUpdateOperationsInput | string
+  authorAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reminderMinutesBefore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyReservationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyCreatedDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyFromDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyToDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -424,29 +580,46 @@ export type ReservationOrderByRelationAggregateInput = {
 export type ReservationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
-  reservationId?: Prisma.SortOrder
-  createdDate?: Prisma.SortOrder
-  fromDate?: Prisma.SortOrder
-  toDate?: Prisma.SortOrder
-  createdBy?: Prisma.SortOrder
+  spotId?: Prisma.SortOrder
+  spotName?: Prisma.SortOrder
+  startsAt?: Prisma.SortOrder
+  endsAt?: Prisma.SortOrder
+  createdByUserId?: Prisma.SortOrder
+  authorDisplayName?: Prisma.SortOrder
+  authorAvatarUrl?: Prisma.SortOrder
+  reminderMinutesBefore?: Prisma.SortOrder
   comment?: Prisma.SortOrder
+  legacyReservationId?: Prisma.SortOrder
+  legacyCreatedDate?: Prisma.SortOrder
+  legacyFromDate?: Prisma.SortOrder
+  legacyToDate?: Prisma.SortOrder
+  legacyCreatedByDiscordId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type ReservationAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  reminderMinutesBefore?: Prisma.SortOrder
 }
 
 export type ReservationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
-  reservationId?: Prisma.SortOrder
-  createdDate?: Prisma.SortOrder
-  fromDate?: Prisma.SortOrder
-  toDate?: Prisma.SortOrder
-  createdBy?: Prisma.SortOrder
+  spotId?: Prisma.SortOrder
+  spotName?: Prisma.SortOrder
+  startsAt?: Prisma.SortOrder
+  endsAt?: Prisma.SortOrder
+  createdByUserId?: Prisma.SortOrder
+  authorDisplayName?: Prisma.SortOrder
+  authorAvatarUrl?: Prisma.SortOrder
+  reminderMinutesBefore?: Prisma.SortOrder
   comment?: Prisma.SortOrder
+  legacyReservationId?: Prisma.SortOrder
+  legacyCreatedDate?: Prisma.SortOrder
+  legacyFromDate?: Prisma.SortOrder
+  legacyToDate?: Prisma.SortOrder
+  legacyCreatedByDiscordId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -454,18 +627,27 @@ export type ReservationMaxOrderByAggregateInput = {
 export type ReservationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
-  reservationId?: Prisma.SortOrder
-  createdDate?: Prisma.SortOrder
-  fromDate?: Prisma.SortOrder
-  toDate?: Prisma.SortOrder
-  createdBy?: Prisma.SortOrder
+  spotId?: Prisma.SortOrder
+  spotName?: Prisma.SortOrder
+  startsAt?: Prisma.SortOrder
+  endsAt?: Prisma.SortOrder
+  createdByUserId?: Prisma.SortOrder
+  authorDisplayName?: Prisma.SortOrder
+  authorAvatarUrl?: Prisma.SortOrder
+  reminderMinutesBefore?: Prisma.SortOrder
   comment?: Prisma.SortOrder
+  legacyReservationId?: Prisma.SortOrder
+  legacyCreatedDate?: Prisma.SortOrder
+  legacyFromDate?: Prisma.SortOrder
+  legacyToDate?: Prisma.SortOrder
+  legacyCreatedByDiscordId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type ReservationSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  reminderMinutesBefore?: Prisma.SortOrder
 }
 
 export type ReservationCreateNestedManyWithoutGuildInput = {
@@ -511,24 +693,40 @@ export type ReservationUncheckedUpdateManyWithoutGuildNestedInput = {
 }
 
 export type ReservationCreateWithoutGuildInput = {
-  reservationId: string
-  createdDate: Date | string
-  fromDate: Date | string
-  toDate: Date | string
-  createdBy: string
+  spotId: string
+  spotName: string
+  startsAt: Date | string
+  endsAt: Date | string
+  createdByUserId?: string | null
+  authorDisplayName: string
+  authorAvatarUrl?: string | null
+  reminderMinutesBefore?: number | null
   comment?: string | null
+  legacyReservationId?: string | null
+  legacyCreatedDate?: Date | string | null
+  legacyFromDate?: Date | string | null
+  legacyToDate?: Date | string | null
+  legacyCreatedByDiscordId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type ReservationUncheckedCreateWithoutGuildInput = {
   id?: number
-  reservationId: string
-  createdDate: Date | string
-  fromDate: Date | string
-  toDate: Date | string
-  createdBy: string
+  spotId: string
+  spotName: string
+  startsAt: Date | string
+  endsAt: Date | string
+  createdByUserId?: string | null
+  authorDisplayName: string
+  authorAvatarUrl?: string | null
+  reminderMinutesBefore?: number | null
   comment?: string | null
+  legacyReservationId?: string | null
+  legacyCreatedDate?: Date | string | null
+  legacyFromDate?: Date | string | null
+  legacyToDate?: Date | string | null
+  legacyCreatedByDiscordId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -565,59 +763,99 @@ export type ReservationScalarWhereInput = {
   NOT?: Prisma.ReservationScalarWhereInput | Prisma.ReservationScalarWhereInput[]
   id?: Prisma.IntFilter<"Reservation"> | number
   guildId?: Prisma.StringFilter<"Reservation"> | string
-  reservationId?: Prisma.StringFilter<"Reservation"> | string
-  createdDate?: Prisma.DateTimeFilter<"Reservation"> | Date | string
-  fromDate?: Prisma.DateTimeFilter<"Reservation"> | Date | string
-  toDate?: Prisma.DateTimeFilter<"Reservation"> | Date | string
-  createdBy?: Prisma.StringFilter<"Reservation"> | string
+  spotId?: Prisma.StringFilter<"Reservation"> | string
+  spotName?: Prisma.StringFilter<"Reservation"> | string
+  startsAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
+  endsAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
+  createdByUserId?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  authorDisplayName?: Prisma.StringFilter<"Reservation"> | string
+  authorAvatarUrl?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  reminderMinutesBefore?: Prisma.IntNullableFilter<"Reservation"> | number | null
   comment?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  legacyReservationId?: Prisma.StringNullableFilter<"Reservation"> | string | null
+  legacyCreatedDate?: Prisma.DateTimeNullableFilter<"Reservation"> | Date | string | null
+  legacyFromDate?: Prisma.DateTimeNullableFilter<"Reservation"> | Date | string | null
+  legacyToDate?: Prisma.DateTimeNullableFilter<"Reservation"> | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.StringNullableFilter<"Reservation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Reservation"> | Date | string
 }
 
 export type ReservationCreateManyGuildInput = {
   id?: number
-  reservationId: string
-  createdDate: Date | string
-  fromDate: Date | string
-  toDate: Date | string
-  createdBy: string
+  spotId: string
+  spotName: string
+  startsAt: Date | string
+  endsAt: Date | string
+  createdByUserId?: string | null
+  authorDisplayName: string
+  authorAvatarUrl?: string | null
+  reminderMinutesBefore?: number | null
   comment?: string | null
+  legacyReservationId?: string | null
+  legacyCreatedDate?: Date | string | null
+  legacyFromDate?: Date | string | null
+  legacyToDate?: Date | string | null
+  legacyCreatedByDiscordId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type ReservationUpdateWithoutGuildInput = {
-  reservationId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  fromDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  toDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  spotId?: Prisma.StringFieldUpdateOperationsInput | string
+  spotName?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorDisplayName?: Prisma.StringFieldUpdateOperationsInput | string
+  authorAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reminderMinutesBefore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyReservationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyCreatedDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyFromDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyToDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ReservationUncheckedUpdateWithoutGuildInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  reservationId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  fromDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  toDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  spotId?: Prisma.StringFieldUpdateOperationsInput | string
+  spotName?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorDisplayName?: Prisma.StringFieldUpdateOperationsInput | string
+  authorAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reminderMinutesBefore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyReservationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyCreatedDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyFromDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyToDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ReservationUncheckedUpdateManyWithoutGuildInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  reservationId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  fromDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  toDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  spotId?: Prisma.StringFieldUpdateOperationsInput | string
+  spotName?: Prisma.StringFieldUpdateOperationsInput | string
+  startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorDisplayName?: Prisma.StringFieldUpdateOperationsInput | string
+  authorAvatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reminderMinutesBefore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyReservationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  legacyCreatedDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyFromDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyToDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legacyCreatedByDiscordId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -627,12 +865,20 @@ export type ReservationUncheckedUpdateManyWithoutGuildInput = {
 export type ReservationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   guildId?: boolean
-  reservationId?: boolean
-  createdDate?: boolean
-  fromDate?: boolean
-  toDate?: boolean
-  createdBy?: boolean
+  spotId?: boolean
+  spotName?: boolean
+  startsAt?: boolean
+  endsAt?: boolean
+  createdByUserId?: boolean
+  authorDisplayName?: boolean
+  authorAvatarUrl?: boolean
+  reminderMinutesBefore?: boolean
   comment?: boolean
+  legacyReservationId?: boolean
+  legacyCreatedDate?: boolean
+  legacyFromDate?: boolean
+  legacyToDate?: boolean
+  legacyCreatedByDiscordId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
@@ -641,12 +887,20 @@ export type ReservationSelect<ExtArgs extends runtime.Types.Extensions.InternalA
 export type ReservationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   guildId?: boolean
-  reservationId?: boolean
-  createdDate?: boolean
-  fromDate?: boolean
-  toDate?: boolean
-  createdBy?: boolean
+  spotId?: boolean
+  spotName?: boolean
+  startsAt?: boolean
+  endsAt?: boolean
+  createdByUserId?: boolean
+  authorDisplayName?: boolean
+  authorAvatarUrl?: boolean
+  reminderMinutesBefore?: boolean
   comment?: boolean
+  legacyReservationId?: boolean
+  legacyCreatedDate?: boolean
+  legacyFromDate?: boolean
+  legacyToDate?: boolean
+  legacyCreatedByDiscordId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
@@ -655,12 +909,20 @@ export type ReservationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
 export type ReservationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   guildId?: boolean
-  reservationId?: boolean
-  createdDate?: boolean
-  fromDate?: boolean
-  toDate?: boolean
-  createdBy?: boolean
+  spotId?: boolean
+  spotName?: boolean
+  startsAt?: boolean
+  endsAt?: boolean
+  createdByUserId?: boolean
+  authorDisplayName?: boolean
+  authorAvatarUrl?: boolean
+  reminderMinutesBefore?: boolean
   comment?: boolean
+  legacyReservationId?: boolean
+  legacyCreatedDate?: boolean
+  legacyFromDate?: boolean
+  legacyToDate?: boolean
+  legacyCreatedByDiscordId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
@@ -669,17 +931,25 @@ export type ReservationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type ReservationSelectScalar = {
   id?: boolean
   guildId?: boolean
-  reservationId?: boolean
-  createdDate?: boolean
-  fromDate?: boolean
-  toDate?: boolean
-  createdBy?: boolean
+  spotId?: boolean
+  spotName?: boolean
+  startsAt?: boolean
+  endsAt?: boolean
+  createdByUserId?: boolean
+  authorDisplayName?: boolean
+  authorAvatarUrl?: boolean
+  reminderMinutesBefore?: boolean
   comment?: boolean
+  legacyReservationId?: boolean
+  legacyCreatedDate?: boolean
+  legacyFromDate?: boolean
+  legacyToDate?: boolean
+  legacyCreatedByDiscordId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ReservationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "reservationId" | "createdDate" | "fromDate" | "toDate" | "createdBy" | "comment" | "createdAt" | "updatedAt", ExtArgs["result"]["reservation"]>
+export type ReservationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "spotId" | "spotName" | "startsAt" | "endsAt" | "createdByUserId" | "authorDisplayName" | "authorAvatarUrl" | "reminderMinutesBefore" | "comment" | "legacyReservationId" | "legacyCreatedDate" | "legacyFromDate" | "legacyToDate" | "legacyCreatedByDiscordId" | "createdAt" | "updatedAt", ExtArgs["result"]["reservation"]>
 export type ReservationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
@@ -698,12 +968,20 @@ export type $ReservationPayload<ExtArgs extends runtime.Types.Extensions.Interna
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     guildId: string
-    reservationId: string
-    createdDate: Date
-    fromDate: Date
-    toDate: Date
-    createdBy: string
+    spotId: string
+    spotName: string
+    startsAt: Date
+    endsAt: Date
+    createdByUserId: string | null
+    authorDisplayName: string
+    authorAvatarUrl: string | null
+    reminderMinutesBefore: number | null
     comment: string | null
+    legacyReservationId: string | null
+    legacyCreatedDate: Date | null
+    legacyFromDate: Date | null
+    legacyToDate: Date | null
+    legacyCreatedByDiscordId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["reservation"]>
@@ -1132,12 +1410,20 @@ export interface Prisma__ReservationClient<T, Null = never, ExtArgs extends runt
 export interface ReservationFieldRefs {
   readonly id: Prisma.FieldRef<"Reservation", 'Int'>
   readonly guildId: Prisma.FieldRef<"Reservation", 'String'>
-  readonly reservationId: Prisma.FieldRef<"Reservation", 'String'>
-  readonly createdDate: Prisma.FieldRef<"Reservation", 'DateTime'>
-  readonly fromDate: Prisma.FieldRef<"Reservation", 'DateTime'>
-  readonly toDate: Prisma.FieldRef<"Reservation", 'DateTime'>
-  readonly createdBy: Prisma.FieldRef<"Reservation", 'String'>
+  readonly spotId: Prisma.FieldRef<"Reservation", 'String'>
+  readonly spotName: Prisma.FieldRef<"Reservation", 'String'>
+  readonly startsAt: Prisma.FieldRef<"Reservation", 'DateTime'>
+  readonly endsAt: Prisma.FieldRef<"Reservation", 'DateTime'>
+  readonly createdByUserId: Prisma.FieldRef<"Reservation", 'String'>
+  readonly authorDisplayName: Prisma.FieldRef<"Reservation", 'String'>
+  readonly authorAvatarUrl: Prisma.FieldRef<"Reservation", 'String'>
+  readonly reminderMinutesBefore: Prisma.FieldRef<"Reservation", 'Int'>
   readonly comment: Prisma.FieldRef<"Reservation", 'String'>
+  readonly legacyReservationId: Prisma.FieldRef<"Reservation", 'String'>
+  readonly legacyCreatedDate: Prisma.FieldRef<"Reservation", 'DateTime'>
+  readonly legacyFromDate: Prisma.FieldRef<"Reservation", 'DateTime'>
+  readonly legacyToDate: Prisma.FieldRef<"Reservation", 'DateTime'>
+  readonly legacyCreatedByDiscordId: Prisma.FieldRef<"Reservation", 'String'>
   readonly createdAt: Prisma.FieldRef<"Reservation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Reservation", 'DateTime'>
 }

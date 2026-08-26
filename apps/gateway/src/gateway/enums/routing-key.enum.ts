@@ -22,6 +22,9 @@ export enum RoutingKey {
   GUILDS_RESERVATIONS_DELETE = "guilds.reservations.delete",
   GUILDS_RESERVATIONS_DELETE_DLQ = "guilds.reservations.delete.dlq",
   GUILDS_RESERVATIONS_DELETE_RETRY = "guilds.reservations.delete.retry",
+  GUILDS_RESERVATIONS_CHANGED_V2 = "guilds.reservations.v2.changed",
+  GUILDS_RESERVATIONS_CHANGED_V2_DLQ = "guilds.reservations.v2.changed.dlq",
+  GUILDS_RESERVATIONS_CHANGED_V2_RETRY = "guilds.reservations.v2.changed.retry",
 
   GUILDS_SEND_MESSAGE = "guilds.send.message",
   GUILDS_SEND_MESSAGE_DLQ = "guilds.send.message.dlq",
