@@ -31,3 +31,16 @@ const ReservationDeleteEventSchema = z.object({
 export class ReservationDeleteEventDto extends createZodDto(
   ReservationDeleteEventSchema,
 ) {}
+
+const ReservationChangedEventV2Schema = z.object({
+  version: z.literal(2),
+  action: z.enum(["created", "updated", "deleted", "sharing-changed"]),
+  sourceGuildId: z.string(),
+  audienceGuildIds: z.array(z.string()).min(1),
+  reservationId: z.number().int().nullable(),
+  spotId: z.string().nullable(),
+});
+
+export class ReservationChangedEventV2Dto extends createZodDto(
+  ReservationChangedEventV2Schema,
+) {}

@@ -12,6 +12,7 @@ import type {
 } from "src/gateway/dto/loot-event.dto";
 import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
 import type {
+  ReservationChangedEventV2Dto,
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
 } from "src/gateway/dto/reservation-event.dto";
@@ -194,6 +195,15 @@ export class GatewayService {
     this.gateway.server
       .to(eventsRoom)
       .emit(GatewayEvent.RESERVATIONS_DELETE, data);
+  }
+
+  handleGuildsReservationChangedV2(data: ReservationChangedEventV2Dto) {
+    for (const guildId of new Set(data.audienceGuildIds)) {
+      const eventsRoom = buildRoomName(guildId, "events");
+      this.gateway.server
+        .to(eventsRoom)
+        .emit(GatewayEvent.RESERVATIONS_CHANGED, data);
+    }
   }
 
   handleGuildMessageSend(data: SendMessageDto) {

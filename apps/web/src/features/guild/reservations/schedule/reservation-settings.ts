@@ -19,6 +19,7 @@ export type ReservationSettings = {
 export type ReservationRangeValidationError =
   | "timeRangeRequired"
   | "endAfterStart"
+  | "invalidTimeGrid"
   | "startTooOld"
   | "minimumDuration"
   | "maximumDuration"
@@ -29,6 +30,7 @@ type ReservationRangeValidationOptions = {
   toDate: Date | undefined;
   settings: ReservationSettings;
   now?: Date;
+  allowPastStart?: boolean;
 };
 
 type ClampReservationEndDateOptions = {
@@ -90,6 +92,11 @@ export const getDurationMinutes = (fromDate: Date, toDate: Date) =>
 export const getReservationEarliestStartDate = (now = new Date()) =>
   new Date(now.getTime() - START_PAST_TOLERANCE_MS);
 
+export const isReservationStartSelectable = (
+  startsAt: Date,
+  now = new Date(),
+) => startsAt >= now;
+
 export const getReservationLatestStartDate = (
   settings: ReservationSettings,
   now = new Date(),
@@ -113,6 +120,7 @@ export const validateReservationDateRange = ({
   toDate,
   settings,
   now = new Date(),
+  allowPastStart = false,
 }: ReservationRangeValidationOptions): ReservationRangeValidationError | null => {
   if (!fromDate || !toDate) {
     return "timeRangeRequired";
@@ -122,7 +130,15 @@ export const validateReservationDateRange = ({
     return "endAfterStart";
   }
 
-  if (fromDate < getReservationEarliestStartDate(now)) {
+  const isOnGrid = (date: Date) =>
+    date.getMinutes() % settings.reservationTimeGranularityMinutes === 0 &&
+    date.getSeconds() === 0 &&
+    date.getMilliseconds() === 0;
+  if (!isOnGrid(fromDate) || !isOnGrid(toDate)) {
+    return "invalidTimeGrid";
+  }
+
+  if (!allowPastStart && fromDate < getReservationEarliestStartDate(now)) {
     return "startTooOld";
   }
 

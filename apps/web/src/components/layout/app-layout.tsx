@@ -1,8 +1,9 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type CSSProperties } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { GuildShell } from "@/components/layout/guild-shell";
 import { GuildSidebarNavPlaceholder } from "@/components/layout/guild-sidebar-nav-placeholder";
 import { GuildsSidebarNav } from "@/components/layout/guilds-sidebar-nav";
+import { StandaloneShell } from "@/components/layout/standalone-shell";
 import { UserShell } from "@/components/layout/user-shell";
 import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 import { Toaster } from "@lootlog/ui/components/sonner";
@@ -37,6 +38,9 @@ export const AppLayout = () => {
   });
   const isUserRoute =
     location.pathname === "/@me" || location.pathname.startsWith("/@me/");
+  const isStandaloneRoute = location.pathname.startsWith(
+    "/reservation-sharing/invitations/",
+  );
   const hasResolvedGuildRoute =
     guildRouteMatch?.status === "success" &&
     guildRouteMatch.loaderData !== undefined;
@@ -44,7 +48,7 @@ export const AppLayout = () => {
   const showGuildNav =
     !isUserRoute && guildRouteMatch?.loaderData !== undefined;
 
-  const sidebarNavigation = isUserRoute ? (
+  const sidebarNavigation = isStandaloneRoute ? null : isUserRoute ? (
     <UserSidebarNav />
   ) : showGuildNav ? (
     <GuildsSidebarNav />
@@ -62,9 +66,22 @@ export const AppLayout = () => {
       </Suspense>
       <div className="h-full min-h-0 flex-1">
         <div className="flex h-full max-h-full flex-row overflow-hidden">
-          <SidebarProvider>
-            <AppSidebar navigation={sidebarNavigation} />
-            {isUserRoute ? (
+          <SidebarProvider
+            style={
+              isStandaloneRoute
+                ? ({ "--sidebar-width": "4rem" } as CSSProperties)
+                : undefined
+            }
+          >
+            <AppSidebar
+              compact={isStandaloneRoute}
+              navigation={sidebarNavigation}
+            />
+            {isStandaloneRoute ? (
+              <StandaloneShell>
+                <Outlet />
+              </StandaloneShell>
+            ) : isUserRoute ? (
               <UserShell>
                 <Outlet />
               </UserShell>

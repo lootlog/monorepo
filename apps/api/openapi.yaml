@@ -2279,41 +2279,80 @@ paths:
       summary: Delete chat message
       tags:
         - chat
-  /guilds/{guildId}/reservations:
+  /guilds/{guildId}/reservation-spots:
     get:
-      description: Retrieve reservations for a guild
-      operationId: ReservationsController_getReservations
+      operationId: listReservationSpots
       parameters:
         - name: guildId
-          required: true
           in: path
-          description: Guild ID
+          required: true
           schema:
-            example: guild_123
+            type: string
       responses:
         "200":
-          description: List of reservations
+          description: ""
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ReservationsResponseDto"
-        "403":
-          description: Forbidden - insufficient permissions
+                $ref: "#/components/schemas/ReservationSpotsResponseDto"
       security:
         - bearer: []
-      summary: Get reservations
+      summary: List reservation spots with current availability
+      tags:
+        - reservations
+  /guilds/{guildId}/reservation-spots/{spotId}/reservations:
+    get:
+      operationId: listSpotReservations
+      parameters:
+        - name: spotId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: from
+          required: true
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            type: string
+        - name: to
+          required: true
+          in: query
+          schema:
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            type: string
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationWindowResponseDto"
+      security:
+        - bearer: []
+      summary: List reservations for one spot and time window
       tags:
         - reservations
     post:
-      description: Create a new reservation to a guild
-      operationId: ReservationsController_createReservation
+      operationId: createReservation
       parameters:
-        - name: guildId
+        - name: spotId
           required: true
           in: path
-          description: Guild ID
           schema:
-            example: guild_123
+            type: string
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2322,29 +2361,24 @@ paths:
               $ref: "#/components/schemas/CreateReservationDto"
       responses:
         "201":
-          description: Reservation created successfully
+          description: ""
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationResponseDto"
-        "403":
-          description: Forbidden - insufficient permissions
       security:
         - bearer: []
-      summary: Create reservation
+      summary: Create a reservation owned by the authenticated user
       tags:
         - reservations
-  /guilds/{guildId}/reservations/{reservationRecordId}:
+  /guilds/{guildId}/reservations/{reservationId}:
     delete:
-      description: Deletes a reservation the user owns or can moderate
-      operationId: ReservationsController_deleteReservation
+      operationId: deleteReservation
       parameters:
-        - name: reservationRecordId
+        - name: reservationId
           required: true
           in: path
-          description: Reservation record identifier
           schema:
-            example: 123
             type: number
         - name: guildId
           in: path
@@ -2352,21 +2386,59 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: Reservation deleted successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ReservationResponseDto"
+        "204":
+          description: Reservation deleted
       security:
         - bearer: []
-      summary: Delete reservation
+      summary: Cancel an owned or locally moderated reservation
       tags:
         - reservations
-  /guilds/{guildId}/reservations/cards:
+  /guilds/{guildId}/reservation-spot-pins/{spotId}:
+    put:
+      operationId: pinReservationSpot
+      parameters:
+        - name: spotId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Spot pinned
+      security:
+        - bearer: []
+      summary: Pin a reservation spot for the current user
+      tags:
+        - reservations
+    delete:
+      operationId: unpinReservationSpot
+      parameters:
+        - name: spotId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Spot unpinned
+      security:
+        - bearer: []
+      summary: Unpin a reservation spot for the current user
+      tags:
+        - reservations
+  /guilds/{guildId}/reservation-shares:
     get:
-      description: Retrieve reservations cards
-      operationId: ReservationsController_getReservationsCards
+      operationId: listReservationShares
       parameters:
         - name: guildId
           in: path
@@ -2375,279 +2447,196 @@ paths:
             type: string
       responses:
         "200":
-          description: List of reservations cards
+          description: ""
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ReservationsCardsResponseDto_Output"
-        "403":
-          description: Forbidden - insufficient permissions
+                $ref: "#/components/schemas/ReservationSharesResponseDto"
       security:
         - bearer: []
-      summary: Get reservations cards
+      summary: List reservation calendar partners and pending invitations
+      tags:
+        - reservation-sharing
+  /guilds/{guildId}/reservation-share-invitations:
+    post:
+      operationId: createReservationShareInvitation
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateReservationShareInvitationResponseDto"
+      security:
+        - bearer: []
+      summary: Create a single-use reservation sharing invitation
+      tags:
+        - reservation-sharing
+  /guilds/{guildId}/reservation-share-invitations/{invitationId}:
+    delete:
+      operationId: revokeReservationShareInvitation
+      parameters:
+        - name: invitationId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Invitation revoked
+      security:
+        - bearer: []
+      summary: Revoke a pending reservation sharing invitation
+      tags:
+        - reservation-sharing
+  /guilds/{guildId}/reservation-shares/{shareId}:
+    delete:
+      operationId: revokeReservationShare
+      parameters:
+        - name: shareId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Reservation share revoked
+      security:
+        - bearer: []
+      summary: Stop sharing reservation calendars
+      tags:
+        - reservation-sharing
+  /reservation-share-invitations/{token}:
+    get:
+      operationId: previewReservationShareInvitation
+      parameters:
+        - name: token
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationShareInvitationPreviewResponseDto"
+      security:
+        - bearer: []
+      summary: Preview a reservation sharing invitation
+      tags:
+        - reservation-sharing
+    post:
+      operationId: acceptReservationShareInvitation
+      parameters:
+        - name: token
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptReservationShareInvitationDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptReservationShareInvitationResponseDto"
+      security:
+        - bearer: []
+      summary: Accept a reservation sharing invitation
+      tags:
+        - reservation-sharing
+  /users/@me/reservations:
+    get:
+      operationId: listMyReservations
+      parameters:
+        - name: status
+          required: false
+          in: query
+          schema:
+            default: upcoming
+            type: string
+            enum:
+              - upcoming
+              - past
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyReservationsResponseDto"
+      security:
+        - bearer: []
+      summary: List the current user's reservations
       tags:
         - reservations
-  /messaging:
-    post:
-      description: Send a notification to the user
-      operationId: MessagingController_sendNotification
-      parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateNotificationDto"
-      responses:
-        "201":
-          description: Notification sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationResponseDto_Output"
-      security:
-        - bearer: []
-      summary: Send notification
-      tags:
-        - messaging
-  /messaging/{notificationId}/volunteer:
-    post:
-      description: Send a volunteer request to the notification creator
-      operationId: MessagingController_volunteer
+  /users/@me/reservations/{reservationId}:
+    patch:
+      operationId: updateMyReservation
       parameters:
-        - name: notificationId
+        - name: reservationId
           required: true
           in: path
           schema:
-            type: string
+            type: number
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateVolunteerDto"
-      responses:
-        "201":
-          description: Volunteer request sent successfully
-      security:
-        - bearer: []
-      summary: Volunteer for NPC notification
-      tags:
-        - messaging
-  /messaging/party-gathering:
-    post:
-      operationId: PartyReadyRoomController_create
-      parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreatePartyGatheringDto"
-      responses:
-        "201":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
-      security:
-        - bearer: []
-      summary: Create a party gathering Ready Room
-      tags:
-        - party-ready-room
-    get:
-      operationId: PartyReadyRoomController_list
-      parameters: []
+              $ref: "#/components/schemas/UpdateReservationDto"
       responses:
         "200":
           description: ""
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+                $ref: "#/components/schemas/ReservationResponseDto"
       security:
         - bearer: []
+      summary: Update one of the current user's reservations
       tags:
-        - party-ready-room
-  /messaging/party-gathering/{notificationId}:
-    get:
-      operationId: PartyReadyRoomController_get
-      parameters:
-        - name: notificationId
-          required: true
-          in: path
-          schema:
-            type: string
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
-      security:
-        - bearer: []
-      tags:
-        - party-ready-room
-  /messaging/party-gathering/{notificationId}/applications:
-    post:
-      operationId: PartyReadyRoomController_apply
-      parameters:
-        - name: notificationId
-          required: true
-          in: path
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PartyReadyRoomApplicationDto"
-      responses:
-        "201":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
-      security:
-        - bearer: []
-      tags:
-        - party-ready-room
-  /messaging/party-gathering/{notificationId}/applications/me:
+        - reservations
     delete:
-      operationId: PartyReadyRoomController_withdraw
+      operationId: deleteMyReservation
       parameters:
-        - name: notificationId
+        - name: reservationId
           required: true
           in: path
           schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PartyReadyRoomParticipantIdentityDto"
+            type: number
       responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+        "204":
+          description: Reservation deleted
       security:
         - bearer: []
+      summary: Cancel one of the current user's reservations
       tags:
-        - party-ready-room
-  /messaging/party-gathering/{notificationId}/participants:
-    delete:
-      operationId: PartyReadyRoomController_remove
-      parameters:
-        - name: notificationId
-          required: true
-          in: path
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PartyReadyRoomParticipantActionDto"
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
-      security:
-        - bearer: []
-      tags:
-        - party-ready-room
-  /messaging/party-gathering/{notificationId}/invitations/targets:
-    post:
-      operationId: PartyReadyRoomController_resolveInvitationTargets
-      parameters:
-        - name: notificationId
-          required: true
-          in: path
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PartyReadyRoomResolveInvitationTargetsDto"
-      responses:
-        "201":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PartyReadyRoomInvitationTargetsDto_Output"
-      security:
-        - bearer: []
-      tags:
-        - party-ready-room
-  /messaging/party-gathering/{notificationId}/party-observation:
-    post:
-      operationId: PartyReadyRoomController_observeParty
-      parameters:
-        - name: notificationId
-          required: true
-          in: path
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PartyReadyRoomObservationDto"
-      responses:
-        "201":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
-      security:
-        - bearer: []
-      tags:
-        - party-ready-room
-  /messaging/party-gathering/{notificationId}/cancel:
-    post:
-      operationId: PartyReadyRoomController_cancel
-      parameters:
-        - name: notificationId
-          required: true
-          in: path
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PartyReadyRoomExpectedRevisionDto"
-      responses:
-        "201":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
-      security:
-        - bearer: []
-      tags:
-        - party-ready-room
+        - reservations
   /guilds/{guildId}/notifications/targets:
     get:
       description: Retrieve configured notification targets for a guild
@@ -3339,6 +3328,267 @@ paths:
       summary: Delete watched item
       tags:
         - notifications
+  /messaging:
+    post:
+      description: Send a notification to the user
+      operationId: MessagingController_sendNotification
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNotificationDto"
+      responses:
+        "201":
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Send notification
+      tags:
+        - messaging
+  /messaging/{notificationId}/volunteer:
+    post:
+      description: Send a volunteer request to the notification creator
+      operationId: MessagingController_volunteer
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVolunteerDto"
+      responses:
+        "201":
+          description: Volunteer request sent successfully
+      security:
+        - bearer: []
+      summary: Volunteer for NPC notification
+      tags:
+        - messaging
+  /messaging/party-gathering:
+    post:
+      operationId: PartyReadyRoomController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePartyGatheringDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+      security:
+        - bearer: []
+      summary: Create a party gathering Ready Room
+      tags:
+        - party-ready-room
+    get:
+      operationId: PartyReadyRoomController_list
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}:
+    get:
+      operationId: PartyReadyRoomController_get
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/applications:
+    post:
+      operationId: PartyReadyRoomController_apply
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomApplicationDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/applications/me:
+    delete:
+      operationId: PartyReadyRoomController_withdraw
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomParticipantIdentityDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/participants:
+    delete:
+      operationId: PartyReadyRoomController_remove
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomParticipantActionDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/invitations/targets:
+    post:
+      operationId: PartyReadyRoomController_resolveInvitationTargets
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomResolveInvitationTargetsDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomInvitationTargetsDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/party-observation:
+    post:
+      operationId: PartyReadyRoomController_observeParty
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomObservationDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
+  /messaging/party-gathering/{notificationId}/cancel:
+    post:
+      operationId: PartyReadyRoomController_cancel
+      parameters:
+        - name: notificationId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyReadyRoomExpectedRevisionDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+      security:
+        - bearer: []
+      tags:
+        - party-ready-room
   /sound-settings:
     get:
       description: Retrieve user sound settings
@@ -10192,74 +10442,471 @@ components:
           type: boolean
       required:
         - success
-    ReservationsResponseDto:
+    ReservationSpotsResponseDto:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          name:
+            type: string
+          level:
+            type: integer
+            minimum: -9007199254740991
+            maximum: 9007199254740991
+          images:
+            type: array
+            items:
+              type: string
+          maps:
+            type: array
+            items:
+              type: string
+          isPinned:
+            type: boolean
+          isAvailableNow:
+            type: boolean
+          availableUntil:
+            type: string
+            format: date-time
+            pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            nullable: true
+          activeReservationCount:
+            type: integer
+            minimum: 0
+            maximum: 9007199254740991
+          hasPartnerReservations:
+            type: boolean
+          currentReservation:
+            type: object
+            properties:
+              id:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              spotId:
+                type: string
+              spotName:
+                type: string
+              startsAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              endsAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              comment:
+                type: string
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              author:
+                type: object
+                properties:
+                  displayName:
+                    type: string
+                  avatarUrl:
+                    type: string
+                    nullable: true
+                required:
+                  - displayName
+                  - avatarUrl
+              sourceOrganization:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  iconUrl:
+                    type: string
+                    nullable: true
+                  isCurrent:
+                    type: boolean
+                  calendarPath:
+                    type: string
+                    pattern: ^\/.*
+                required:
+                  - name
+                  - iconUrl
+                  - isCurrent
+                  - calendarPath
+              isMine:
+                type: boolean
+              canEdit:
+                type: boolean
+              canCancel:
+                type: boolean
+              editingConstraints:
+                type: object
+                properties:
+                  reservationMaxDurationMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationMinDurationMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationTimeGranularityMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationMaxAdvanceDays:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                required:
+                  - reservationMaxDurationMinutes
+                  - reservationMinDurationMinutes
+                  - reservationTimeGranularityMinutes
+                  - reservationMaxAdvanceDays
+                nullable: true
+              reminderMinutesBefore:
+                anyOf:
+                  - type: number
+                    enum:
+                      - 0
+                  - type: number
+                    enum:
+                      - 5
+                  - type: number
+                    enum:
+                      - 15
+                  - type: number
+                    enum:
+                      - 30
+                nullable: true
+            required:
+              - id
+              - spotId
+              - spotName
+              - startsAt
+              - endsAt
+              - comment
+              - createdAt
+              - author
+              - sourceOrganization
+              - isMine
+              - canEdit
+              - canCancel
+              - editingConstraints
+              - reminderMinutesBefore
+            nullable: true
+          nextReservation:
+            type: object
+            properties:
+              id:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              spotId:
+                type: string
+              spotName:
+                type: string
+              startsAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              endsAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              comment:
+                type: string
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              author:
+                type: object
+                properties:
+                  displayName:
+                    type: string
+                  avatarUrl:
+                    type: string
+                    nullable: true
+                required:
+                  - displayName
+                  - avatarUrl
+              sourceOrganization:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  iconUrl:
+                    type: string
+                    nullable: true
+                  isCurrent:
+                    type: boolean
+                  calendarPath:
+                    type: string
+                    pattern: ^\/.*
+                required:
+                  - name
+                  - iconUrl
+                  - isCurrent
+                  - calendarPath
+              isMine:
+                type: boolean
+              canEdit:
+                type: boolean
+              canCancel:
+                type: boolean
+              editingConstraints:
+                type: object
+                properties:
+                  reservationMaxDurationMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationMinDurationMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationTimeGranularityMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationMaxAdvanceDays:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                required:
+                  - reservationMaxDurationMinutes
+                  - reservationMinDurationMinutes
+                  - reservationTimeGranularityMinutes
+                  - reservationMaxAdvanceDays
+                nullable: true
+              reminderMinutesBefore:
+                anyOf:
+                  - type: number
+                    enum:
+                      - 0
+                  - type: number
+                    enum:
+                      - 5
+                  - type: number
+                    enum:
+                      - 15
+                  - type: number
+                    enum:
+                      - 30
+                nullable: true
+            required:
+              - id
+              - spotId
+              - spotName
+              - startsAt
+              - endsAt
+              - comment
+              - createdAt
+              - author
+              - sourceOrganization
+              - isMine
+              - canEdit
+              - canCancel
+              - editingConstraints
+              - reminderMinutesBefore
+            nullable: true
+        required:
+          - id
+          - name
+          - level
+          - images
+          - maps
+          - isPinned
+          - isAvailableNow
+          - availableUntil
+          - activeReservationCount
+          - hasPartnerReservations
+          - currentReservation
+          - nextReservation
+    ReservationWindowResponseDto:
       type: object
-      additionalProperties:
-        type: array
+      properties:
         items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              spotId:
+                type: string
+              spotName:
+                type: string
+              startsAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              endsAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              comment:
+                type: string
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              author:
+                type: object
+                properties:
+                  displayName:
+                    type: string
+                  avatarUrl:
+                    type: string
+                    nullable: true
+                required:
+                  - displayName
+                  - avatarUrl
+              sourceOrganization:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  iconUrl:
+                    type: string
+                    nullable: true
+                  isCurrent:
+                    type: boolean
+                  calendarPath:
+                    type: string
+                    pattern: ^\/.*
+                required:
+                  - name
+                  - iconUrl
+                  - isCurrent
+                  - calendarPath
+              isMine:
+                type: boolean
+              canEdit:
+                type: boolean
+              canCancel:
+                type: boolean
+              editingConstraints:
+                type: object
+                properties:
+                  reservationMaxDurationMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationMinDurationMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationTimeGranularityMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationMaxAdvanceDays:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                required:
+                  - reservationMaxDurationMinutes
+                  - reservationMinDurationMinutes
+                  - reservationTimeGranularityMinutes
+                  - reservationMaxAdvanceDays
+                nullable: true
+              reminderMinutesBefore:
+                anyOf:
+                  - type: number
+                    enum:
+                      - 0
+                  - type: number
+                    enum:
+                      - 5
+                  - type: number
+                    enum:
+                      - 15
+                  - type: number
+                    enum:
+                      - 30
+                nullable: true
+            required:
+              - id
+              - spotId
+              - spotName
+              - startsAt
+              - endsAt
+              - comment
+              - createdAt
+              - author
+              - sourceOrganization
+              - isMine
+              - canEdit
+              - canCancel
+              - editingConstraints
+              - reminderMinutesBefore
+        window:
           type: object
           properties:
-            id:
-              type: integer
-              minimum: -9007199254740991
-              maximum: 9007199254740991
-            reservationId:
-              type: string
-            createdDate:
+            from:
               type: string
               format: date-time
               pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            fromDate:
+            to:
               type: string
               format: date-time
               pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            toDate:
-              type: string
-              format: date-time
-              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            createdBy:
-              type: string
-            comment:
-              type: string
-              nullable: true
           required:
-            - id
-            - reservationId
-            - createdDate
-            - fromDate
-            - toDate
-            - createdBy
-            - comment
+            - from
+            - to
+      required:
+        - items
+        - window
     CreateReservationDto:
       type: object
       properties:
-        reservationId:
-          type: string
-          minLength: 1
-        createdDate:
+        startsAt:
           type: string
           format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        fromDate:
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        endsAt:
           type: string
           format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        toDate:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        createdBy:
-          type: string
-          minLength: 1
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
         comment:
           type: string
           maxLength: 128
+        reminderMinutesBefore:
+          anyOf:
+            - type: number
+              enum:
+                - 0
+            - type: number
+              enum:
+                - 5
+            - type: number
+              enum:
+                - 15
+            - type: number
+              enum:
+                - 30
+          nullable: true
       required:
-        - reservationId
-        - createdDate
-        - fromDate
-        - toDate
-        - createdBy
+        - startsAt
+        - endsAt
     ReservationResponseDto:
       type: object
       properties:
@@ -10267,797 +10914,418 @@ components:
           type: integer
           minimum: -9007199254740991
           maximum: 9007199254740991
-        reservationId:
+        spotId:
           type: string
-        createdDate:
+        spotName:
           type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        fromDate:
+        startsAt:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        toDate:
+        endsAt:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        createdBy:
-          type: string
         comment:
           type: string
           nullable: true
-      required:
-        - id
-        - reservationId
-        - createdDate
-        - fromDate
-        - toDate
-        - createdBy
-        - comment
-    ReservationsCardsResponseDto_Output:
-      type: object
-      additionalProperties:
-        type: array
-        items:
-          type: object
-          properties:
-            lvl:
-              type: integer
-              minimum: -9007199254740991
-              maximum: 9007199254740991
-            images:
-              type: array
-              items:
-                type: string
-            maps:
-              type: array
-              items:
-                type: string
-          required:
-            - lvl
-            - images
-            - maps
-    CreateNotificationDto:
-      type: object
-      properties:
-        message:
-          type: string
-          maxLength: 500
-        npc:
-          type: object
-          properties:
-            id:
-              type: number
-            name:
-              type: string
-              minLength: 1
-            location:
-              type: string
-              minLength: 1
-            lvl:
-              type: number
-            prof:
-              type: string
-            wt:
-              type: number
-            hpp:
-              type: number
-            x:
-              type: number
-            "y":
-              type: number
-            icon:
-              type: string
-              minLength: 1
-            type:
-              type: number
-          required:
-            - id
-            - name
-            - location
-            - lvl
-            - wt
-            - icon
-            - type
-        guildIds:
-          minItems: 1
-          maxItems: 10
-          type: array
-          items:
-            type: string
-            maxLength: 50
-        world:
-          type: string
-          minLength: 1
-          maxLength: 50
-        isGatheringParty:
-          type: boolean
-        character:
-          type: object
-          properties:
-            lvl:
-              type: number
-            nick:
-              type: string
-              minLength: 1
-              maxLength: 255
-            accountId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            characterId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            prof:
-              type: string
-              minLength: 1
-              maxLength: 100
-            icon:
-              type: string
-              minLength: 1
-              maxLength: 2048
-            clan:
-              type: object
-              properties:
-                id:
-                  type: number
-                name:
-                  type: string
-                  maxLength: 255
-          required:
-            - lvl
-            - nick
-            - accountId
-            - characterId
-            - prof
-            - icon
-      required:
-        - guildIds
-        - world
-    NotificationResponseDto_Output:
-      type: object
-      properties:
-        notificationId:
-          type: string
-          minLength: 1
-        guildIds:
-          type: array
-          items:
-            type: string
-            minLength: 1
-      required:
-        - notificationId
-        - guildIds
-    CreateVolunteerDto:
-      type: object
-      properties:
-        world:
-          type: string
-          minLength: 1
-          maxLength: 50
-        targetDiscordId:
-          type: string
-          minLength: 1
-          maxLength: 20
-        character:
-          type: object
-          properties:
-            lvl:
-              type: number
-            nick:
-              type: string
-              minLength: 1
-              maxLength: 255
-            accountId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            characterId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            prof:
-              type: string
-              minLength: 1
-              maxLength: 100
-            icon:
-              type: string
-              minLength: 1
-              maxLength: 2048
-            clan:
-              type: object
-              properties:
-                id:
-                  type: number
-                name:
-                  type: string
-                  maxLength: 255
-          required:
-            - lvl
-            - nick
-            - accountId
-            - characterId
-            - prof
-            - icon
-      required:
-        - world
-        - targetDiscordId
-        - character
-    CreatePartyGatheringDto:
-      type: object
-      properties:
-        guildIds:
-          minItems: 1
-          maxItems: 10
-          type: array
-          items:
-            type: string
-            maxLength: 50
-        world:
-          type: string
-          minLength: 1
-          maxLength: 50
-        character:
-          type: object
-          properties:
-            lvl:
-              type: number
-            nick:
-              type: string
-              minLength: 1
-              maxLength: 255
-            accountId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            characterId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            prof:
-              type: string
-              minLength: 1
-              maxLength: 100
-            icon:
-              type: string
-              minLength: 1
-              maxLength: 2048
-            clan:
-              type: object
-              properties:
-                id:
-                  type: number
-                name:
-                  type: string
-                  maxLength: 255
-          required:
-            - lvl
-            - nick
-            - accountId
-            - characterId
-            - prof
-            - icon
-        description:
-          type: string
-          maxLength: 200
-        minLvl:
-          type: number
-          minimum: 1
-          maximum: 500
-        maxLvl:
-          type: number
-          minimum: 1
-          maximum: 500
-      required:
-        - guildIds
-        - world
-        - character
-    PartyReadyRoomProjectionDto_Output:
-      type: object
-      properties:
-        schemaVersion:
-          type: number
-          enum:
-            - 3
-        notificationId:
-          type: string
-        organizerDiscordId:
-          type: string
-        organizerCharacter:
-          type: object
-          properties:
-            lvl:
-              type: number
-            nick:
-              type: string
-              minLength: 1
-              maxLength: 255
-            accountId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            characterId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            prof:
-              type: string
-              minLength: 1
-              maxLength: 100
-            icon:
-              type: string
-              minLength: 1
-              maxLength: 2048
-            clan:
-              type: object
-              properties:
-                id:
-                  type: number
-                name:
-                  type: string
-                  maxLength: 255
-          required:
-            - lvl
-            - nick
-            - accountId
-            - characterId
-            - prof
-            - icon
-        guildIds:
-          type: array
-          items:
-            type: string
-        world:
-          type: string
-        description:
-          type: string
-        minLvl:
-          type: number
-        maxLvl:
-          type: number
-        status:
-          type: string
-          enum:
-            - ACTIVE
-        revision:
-          type: integer
-          minimum: 1
-          maximum: 9007199254740991
         createdAt:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        updatedAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        expiresAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        viewer:
-          type: string
-          enum:
-            - ORGANIZER
-            - PARTICIPANT
-        participants:
+        author:
           type: object
-          additionalProperties:
+          properties:
+            displayName:
+              type: string
+            avatarUrl:
+              type: string
+              nullable: true
+          required:
+            - displayName
+            - avatarUrl
+        sourceOrganization:
+          type: object
+          properties:
+            name:
+              type: string
+            iconUrl:
+              type: string
+              nullable: true
+            isCurrent:
+              type: boolean
+            calendarPath:
+              type: string
+              pattern: ^\/.*
+          required:
+            - name
+            - iconUrl
+            - isCurrent
+            - calendarPath
+        isMine:
+          type: boolean
+        canEdit:
+          type: boolean
+        canCancel:
+          type: boolean
+        editingConstraints:
+          type: object
+          properties:
+            reservationMaxDurationMinutes:
+              type: integer
+              exclusiveMinimum: true
+              maximum: 9007199254740991
+              minimum: 0
+            reservationMinDurationMinutes:
+              type: integer
+              exclusiveMinimum: true
+              maximum: 9007199254740991
+              minimum: 0
+            reservationTimeGranularityMinutes:
+              type: integer
+              exclusiveMinimum: true
+              maximum: 9007199254740991
+              minimum: 0
+            reservationMaxAdvanceDays:
+              type: integer
+              exclusiveMinimum: true
+              maximum: 9007199254740991
+              minimum: 0
+          required:
+            - reservationMaxDurationMinutes
+            - reservationMinDurationMinutes
+            - reservationTimeGranularityMinutes
+            - reservationMaxAdvanceDays
+          nullable: true
+        reminderMinutesBefore:
+          anyOf:
+            - type: number
+              enum:
+                - 0
+            - type: number
+              enum:
+                - 5
+            - type: number
+              enum:
+                - 15
+            - type: number
+              enum:
+                - 30
+          nullable: true
+      required:
+        - id
+        - spotId
+        - spotName
+        - startsAt
+        - endsAt
+        - comment
+        - createdAt
+        - author
+        - sourceOrganization
+        - isMine
+        - canEdit
+        - canCancel
+        - editingConstraints
+        - reminderMinutesBefore
+    ReservationSharesResponseDto:
+      type: object
+      properties:
+        shares:
+          type: array
+          items:
             type: object
             properties:
-              participantId:
+              id:
                 type: string
-              discordId:
-                type: string
-              character:
+              partner:
                 type: object
                 properties:
-                  lvl:
-                    type: number
-                  nick:
+                  name:
                     type: string
-                    minLength: 1
-                    maxLength: 255
-                  accountId:
+                  iconUrl:
                     type: string
-                    minLength: 1
-                    maxLength: 255
-                  characterId:
-                    type: string
-                    minLength: 1
-                    maxLength: 255
-                  prof:
-                    type: string
-                    minLength: 1
-                    maxLength: 100
-                  icon:
-                    type: string
-                    minLength: 1
-                    maxLength: 2048
-                  clan:
-                    type: object
-                    properties:
-                      id:
-                        type: number
-                      name:
-                        type: string
-                        maxLength: 255
+                    nullable: true
                 required:
-                  - lvl
-                  - nick
-                  - accountId
-                  - characterId
-                  - prof
-                  - icon
-              partyPresence:
-                type: string
-                enum:
-                  - OUTSIDE
-                  - IN_PARTY
+                  - name
+                  - iconUrl
               createdAt:
                 type: string
                 format: date-time
                 pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-              updatedAt:
-                type: string
-                format: date-time
-                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
             required:
-              - participantId
-              - discordId
-              - character
-              - partyPresence
+              - id
+              - partner
               - createdAt
-              - updatedAt
-        ownedParticipantIds:
-          type: array
-          items:
-            type: string
-      required:
-        - schemaVersion
-        - notificationId
-        - organizerDiscordId
-        - organizerCharacter
-        - guildIds
-        - world
-        - status
-        - revision
-        - createdAt
-        - updatedAt
-        - expiresAt
-        - viewer
-        - participants
-    PartyReadyRoomApplicationDto:
-      type: object
-      properties:
-        world:
-          type: string
-          minLength: 1
-          maxLength: 50
-        character:
-          type: object
-          properties:
-            lvl:
-              type: number
-            nick:
-              type: string
-              minLength: 1
-              maxLength: 255
-            accountId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            characterId:
-              type: string
-              minLength: 1
-              maxLength: 255
-            prof:
-              type: string
-              minLength: 1
-              maxLength: 100
-            icon:
-              type: string
-              minLength: 1
-              maxLength: 2048
-            clan:
-              type: object
-              properties:
-                id:
-                  type: number
-                name:
-                  type: string
-                  maxLength: 255
-          required:
-            - lvl
-            - nick
-            - accountId
-            - characterId
-            - prof
-            - icon
-      required:
-        - world
-        - character
-    PartyReadyRoomParticipantIdentityDto:
-      type: object
-      properties:
-        participantId:
-          type: string
-          minLength: 1
-          maxLength: 100
-      required:
-        - participantId
-    PartyReadyRoomClientUpdateDto_Output:
-      type: object
-      properties:
-        schemaVersion:
-          type: number
-          enum:
-            - 3
-        type:
-          type: string
-          enum:
-            - UPSERT
-            - REMOVE
-        projection:
-          type: object
-          properties:
-            schemaVersion:
-              type: number
-              enum:
-                - 3
-            notificationId:
-              type: string
-            organizerDiscordId:
-              type: string
-            organizerCharacter:
-              type: object
-              properties:
-                lvl:
-                  type: number
-                nick:
-                  type: string
-                  minLength: 1
-                  maxLength: 255
-                accountId:
-                  type: string
-                  minLength: 1
-                  maxLength: 255
-                characterId:
-                  type: string
-                  minLength: 1
-                  maxLength: 255
-                prof:
-                  type: string
-                  minLength: 1
-                  maxLength: 100
-                icon:
-                  type: string
-                  minLength: 1
-                  maxLength: 2048
-                clan:
-                  type: object
-                  properties:
-                    id:
-                      type: number
-                    name:
-                      type: string
-                      maxLength: 255
-              required:
-                - lvl
-                - nick
-                - accountId
-                - characterId
-                - prof
-                - icon
-            guildIds:
-              type: array
-              items:
-                type: string
-            world:
-              type: string
-            description:
-              type: string
-            minLvl:
-              type: number
-            maxLvl:
-              type: number
-            status:
-              type: string
-              enum:
-                - ACTIVE
-            revision:
-              type: integer
-              minimum: 1
-              maximum: 9007199254740991
-            createdAt:
-              type: string
-              format: date-time
-              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            updatedAt:
-              type: string
-              format: date-time
-              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            expiresAt:
-              type: string
-              format: date-time
-              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            viewer:
-              type: string
-              enum:
-                - ORGANIZER
-                - PARTICIPANT
-            participants:
-              type: object
-              additionalProperties:
-                type: object
-                properties:
-                  participantId:
-                    type: string
-                  discordId:
-                    type: string
-                  character:
-                    type: object
-                    properties:
-                      lvl:
-                        type: number
-                      nick:
-                        type: string
-                        minLength: 1
-                        maxLength: 255
-                      accountId:
-                        type: string
-                        minLength: 1
-                        maxLength: 255
-                      characterId:
-                        type: string
-                        minLength: 1
-                        maxLength: 255
-                      prof:
-                        type: string
-                        minLength: 1
-                        maxLength: 100
-                      icon:
-                        type: string
-                        minLength: 1
-                        maxLength: 2048
-                      clan:
-                        type: object
-                        properties:
-                          id:
-                            type: number
-                          name:
-                            type: string
-                            maxLength: 255
-                    required:
-                      - lvl
-                      - nick
-                      - accountId
-                      - characterId
-                      - prof
-                      - icon
-                  partyPresence:
-                    type: string
-                    enum:
-                      - OUTSIDE
-                      - IN_PARTY
-                  createdAt:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                  updatedAt:
-                    type: string
-                    format: date-time
-                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                required:
-                  - participantId
-                  - discordId
-                  - character
-                  - partyPresence
-                  - createdAt
-                  - updatedAt
-            ownedParticipantIds:
-              type: array
-              items:
-                type: string
-          required:
-            - schemaVersion
-            - notificationId
-            - organizerDiscordId
-            - organizerCharacter
-            - guildIds
-            - world
-            - status
-            - revision
-            - createdAt
-            - updatedAt
-            - expiresAt
-            - viewer
-            - participants
-        notificationId:
-          type: string
-        revision:
-          type: integer
-          minimum: 1
-          maximum: 9007199254740991
-      required:
-        - schemaVersion
-        - type
-    PartyReadyRoomParticipantActionDto:
-      type: object
-      properties:
-        expectedRevision:
-          type: integer
-          minimum: 1
-          maximum: 9007199254740991
-        participantId:
-          type: string
-          minLength: 1
-          maxLength: 100
-      required:
-        - expectedRevision
-        - participantId
-    PartyReadyRoomResolveInvitationTargetsDto:
-      type: object
-      properties:
-        participantIds:
-          minItems: 1
-          maxItems: 100
-          type: array
-          items:
-            type: string
-            minLength: 1
-            maxLength: 100
-      required:
-        - participantIds
-    PartyReadyRoomInvitationTargetsDto_Output:
-      type: object
-      properties:
-        targets:
+        pendingInvitations:
           type: array
           items:
             type: object
             properties:
-              participantId:
+              id:
                 type: string
-              characterId:
+              expiresAt:
                 type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
             required:
-              - participantId
-              - characterId
+              - id
+              - expiresAt
+              - createdAt
       required:
-        - targets
-    PartyReadyRoomObservationDto:
+        - shares
+        - pendingInvitations
+    CreateReservationShareInvitationResponseDto:
       type: object
       properties:
-        memberCharacterIds:
-          maxItems: 20
+        id:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        inviteUrl:
+          type: string
+          format: uri
+      required:
+        - id
+        - expiresAt
+        - createdAt
+        - inviteUrl
+    ReservationShareInvitationPreviewResponseDto:
+      type: object
+      properties:
+        sourceOrganization:
+          type: object
+          properties:
+            name:
+              type: string
+            iconUrl:
+              type: string
+              nullable: true
+          required:
+            - name
+            - iconUrl
+        expiresAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        eligibleTargetOrganizations:
           type: array
           items:
-            type: string
-            minLength: 1
-            maxLength: 255
-        organizerAccountId:
-          type: string
-          minLength: 1
-          maxLength: 255
-        organizerCharacterId:
-          type: string
-          minLength: 1
-          maxLength: 255
+            type: object
+            properties:
+              name:
+                type: string
+              iconUrl:
+                type: string
+                nullable: true
+              id:
+                type: string
+            required:
+              - name
+              - iconUrl
+              - id
       required:
-        - memberCharacterIds
-        - organizerAccountId
-        - organizerCharacterId
-    PartyReadyRoomExpectedRevisionDto:
+        - sourceOrganization
+        - expiresAt
+        - eligibleTargetOrganizations
+    AcceptReservationShareInvitationDto:
       type: object
       properties:
-        expectedRevision:
-          type: integer
-          minimum: 1
-          maximum: 9007199254740991
+        targetGuildId:
+          type: string
+          minLength: 1
       required:
-        - expectedRevision
+        - targetGuildId
+    AcceptReservationShareInvitationResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        partner:
+          type: object
+          properties:
+            name:
+              type: string
+            iconUrl:
+              type: string
+              nullable: true
+          required:
+            - name
+            - iconUrl
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - partner
+        - createdAt
+    MyReservationsResponseDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              spotId:
+                type: string
+              spotName:
+                type: string
+              startsAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              endsAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              comment:
+                type: string
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              author:
+                type: object
+                properties:
+                  displayName:
+                    type: string
+                  avatarUrl:
+                    type: string
+                    nullable: true
+                required:
+                  - displayName
+                  - avatarUrl
+              sourceOrganization:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  iconUrl:
+                    type: string
+                    nullable: true
+                  isCurrent:
+                    type: boolean
+                  calendarPath:
+                    type: string
+                    pattern: ^\/.*
+                required:
+                  - name
+                  - iconUrl
+                  - isCurrent
+                  - calendarPath
+              isMine:
+                type: boolean
+              canEdit:
+                type: boolean
+              canCancel:
+                type: boolean
+              editingConstraints:
+                type: object
+                properties:
+                  reservationMaxDurationMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationMinDurationMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationTimeGranularityMinutes:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                  reservationMaxAdvanceDays:
+                    type: integer
+                    exclusiveMinimum: true
+                    maximum: 9007199254740991
+                    minimum: 0
+                required:
+                  - reservationMaxDurationMinutes
+                  - reservationMinDurationMinutes
+                  - reservationTimeGranularityMinutes
+                  - reservationMaxAdvanceDays
+                nullable: true
+              reminderMinutesBefore:
+                anyOf:
+                  - type: number
+                    enum:
+                      - 0
+                  - type: number
+                    enum:
+                      - 5
+                  - type: number
+                    enum:
+                      - 15
+                  - type: number
+                    enum:
+                      - 30
+                nullable: true
+            required:
+              - id
+              - spotId
+              - spotName
+              - startsAt
+              - endsAt
+              - comment
+              - createdAt
+              - author
+              - sourceOrganization
+              - isMine
+              - canEdit
+              - canCancel
+              - editingConstraints
+              - reminderMinutesBefore
+      required:
+        - items
+    UpdateReservationDto:
+      type: object
+      properties:
+        startsAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        endsAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        comment:
+          type: string
+          maxLength: 128
+          nullable: true
+        reminderMinutesBefore:
+          anyOf:
+            - type: number
+              enum:
+                - 0
+            - type: number
+              enum:
+                - 5
+            - type: number
+              enum:
+                - 15
+            - type: number
+              enum:
+                - 30
+          nullable: true
     NotificationTargetResponseDto__schema0:
       anyOf:
         - type: string
@@ -13445,6 +13713,747 @@ components:
         - itemName
         - world
         - guildId
+    CreateNotificationDto:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 500
+        npc:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+              minLength: 1
+            location:
+              type: string
+              minLength: 1
+            lvl:
+              type: number
+            prof:
+              type: string
+            wt:
+              type: number
+            hpp:
+              type: number
+            x:
+              type: number
+            "y":
+              type: number
+            icon:
+              type: string
+              minLength: 1
+            type:
+              type: number
+          required:
+            - id
+            - name
+            - location
+            - lvl
+            - wt
+            - icon
+            - type
+        guildIds:
+          minItems: 1
+          maxItems: 10
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        world:
+          type: string
+          minLength: 1
+          maxLength: 50
+        isGatheringParty:
+          type: boolean
+        character:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
+      required:
+        - guildIds
+        - world
+    NotificationResponseDto_Output:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          minLength: 1
+        guildIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+      required:
+        - notificationId
+        - guildIds
+    CreateVolunteerDto:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+          maxLength: 50
+        targetDiscordId:
+          type: string
+          minLength: 1
+          maxLength: 20
+        character:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
+      required:
+        - world
+        - targetDiscordId
+        - character
+    CreatePartyGatheringDto:
+      type: object
+      properties:
+        guildIds:
+          minItems: 1
+          maxItems: 10
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        world:
+          type: string
+          minLength: 1
+          maxLength: 50
+        character:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
+        description:
+          type: string
+          maxLength: 200
+        minLvl:
+          type: number
+          minimum: 1
+          maximum: 500
+        maxLvl:
+          type: number
+          minimum: 1
+          maximum: 500
+      required:
+        - guildIds
+        - world
+        - character
+    PartyReadyRoomProjectionDto_Output:
+      type: object
+      properties:
+        schemaVersion:
+          type: number
+          enum:
+            - 3
+        notificationId:
+          type: string
+        organizerDiscordId:
+          type: string
+        organizerCharacter:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
+        guildIds:
+          type: array
+          items:
+            type: string
+        world:
+          type: string
+        description:
+          type: string
+        minLvl:
+          type: number
+        maxLvl:
+          type: number
+        status:
+          type: string
+          enum:
+            - ACTIVE
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        expiresAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        viewer:
+          type: string
+          enum:
+            - ORGANIZER
+            - PARTICIPANT
+        participants:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              participantId:
+                type: string
+              discordId:
+                type: string
+              character:
+                type: object
+                properties:
+                  lvl:
+                    type: number
+                  nick:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  accountId:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  characterId:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  prof:
+                    type: string
+                    minLength: 1
+                    maxLength: 100
+                  icon:
+                    type: string
+                    minLength: 1
+                    maxLength: 2048
+                  clan:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      name:
+                        type: string
+                        maxLength: 255
+                required:
+                  - lvl
+                  - nick
+                  - accountId
+                  - characterId
+                  - prof
+                  - icon
+              partyPresence:
+                type: string
+                enum:
+                  - OUTSIDE
+                  - IN_PARTY
+              createdAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - participantId
+              - discordId
+              - character
+              - partyPresence
+              - createdAt
+              - updatedAt
+        ownedParticipantIds:
+          type: array
+          items:
+            type: string
+      required:
+        - schemaVersion
+        - notificationId
+        - organizerDiscordId
+        - organizerCharacter
+        - guildIds
+        - world
+        - status
+        - revision
+        - createdAt
+        - updatedAt
+        - expiresAt
+        - viewer
+        - participants
+    PartyReadyRoomApplicationDto:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+          maxLength: 50
+        character:
+          type: object
+          properties:
+            lvl:
+              type: number
+            nick:
+              type: string
+              minLength: 1
+              maxLength: 255
+            accountId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            characterId:
+              type: string
+              minLength: 1
+              maxLength: 255
+            prof:
+              type: string
+              minLength: 1
+              maxLength: 100
+            icon:
+              type: string
+              minLength: 1
+              maxLength: 2048
+            clan:
+              type: object
+              properties:
+                id:
+                  type: number
+                name:
+                  type: string
+                  maxLength: 255
+          required:
+            - lvl
+            - nick
+            - accountId
+            - characterId
+            - prof
+            - icon
+      required:
+        - world
+        - character
+    PartyReadyRoomParticipantIdentityDto:
+      type: object
+      properties:
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - participantId
+    PartyReadyRoomClientUpdateDto_Output:
+      type: object
+      properties:
+        schemaVersion:
+          type: number
+          enum:
+            - 3
+        type:
+          type: string
+          enum:
+            - UPSERT
+            - REMOVE
+        projection:
+          type: object
+          properties:
+            schemaVersion:
+              type: number
+              enum:
+                - 3
+            notificationId:
+              type: string
+            organizerDiscordId:
+              type: string
+            organizerCharacter:
+              type: object
+              properties:
+                lvl:
+                  type: number
+                nick:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                accountId:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                characterId:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                prof:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                icon:
+                  type: string
+                  minLength: 1
+                  maxLength: 2048
+                clan:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    name:
+                      type: string
+                      maxLength: 255
+              required:
+                - lvl
+                - nick
+                - accountId
+                - characterId
+                - prof
+                - icon
+            guildIds:
+              type: array
+              items:
+                type: string
+            world:
+              type: string
+            description:
+              type: string
+            minLvl:
+              type: number
+            maxLvl:
+              type: number
+            status:
+              type: string
+              enum:
+                - ACTIVE
+            revision:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+            createdAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            updatedAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            expiresAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            viewer:
+              type: string
+              enum:
+                - ORGANIZER
+                - PARTICIPANT
+            participants:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  participantId:
+                    type: string
+                  discordId:
+                    type: string
+                  character:
+                    type: object
+                    properties:
+                      lvl:
+                        type: number
+                      nick:
+                        type: string
+                        minLength: 1
+                        maxLength: 255
+                      accountId:
+                        type: string
+                        minLength: 1
+                        maxLength: 255
+                      characterId:
+                        type: string
+                        minLength: 1
+                        maxLength: 255
+                      prof:
+                        type: string
+                        minLength: 1
+                        maxLength: 100
+                      icon:
+                        type: string
+                        minLength: 1
+                        maxLength: 2048
+                      clan:
+                        type: object
+                        properties:
+                          id:
+                            type: number
+                          name:
+                            type: string
+                            maxLength: 255
+                    required:
+                      - lvl
+                      - nick
+                      - accountId
+                      - characterId
+                      - prof
+                      - icon
+                  partyPresence:
+                    type: string
+                    enum:
+                      - OUTSIDE
+                      - IN_PARTY
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - participantId
+                  - discordId
+                  - character
+                  - partyPresence
+                  - createdAt
+                  - updatedAt
+            ownedParticipantIds:
+              type: array
+              items:
+                type: string
+          required:
+            - schemaVersion
+            - notificationId
+            - organizerDiscordId
+            - organizerCharacter
+            - guildIds
+            - world
+            - status
+            - revision
+            - createdAt
+            - updatedAt
+            - expiresAt
+            - viewer
+            - participants
+        notificationId:
+          type: string
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+      required:
+        - schemaVersion
+        - type
+    PartyReadyRoomParticipantActionDto:
+      type: object
+      properties:
+        expectedRevision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - expectedRevision
+        - participantId
+    PartyReadyRoomResolveInvitationTargetsDto:
+      type: object
+      properties:
+        participantIds:
+          minItems: 1
+          maxItems: 100
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+      required:
+        - participantIds
+    PartyReadyRoomInvitationTargetsDto_Output:
+      type: object
+      properties:
+        targets:
+          type: array
+          items:
+            type: object
+            properties:
+              participantId:
+                type: string
+              characterId:
+                type: string
+            required:
+              - participantId
+              - characterId
+      required:
+        - targets
+    PartyReadyRoomObservationDto:
+      type: object
+      properties:
+        memberCharacterIds:
+          maxItems: 20
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 255
+        organizerAccountId:
+          type: string
+          minLength: 1
+          maxLength: 255
+        organizerCharacterId:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+        - memberCharacterIds
+        - organizerAccountId
+        - organizerCharacterId
+    PartyReadyRoomExpectedRevisionDto:
+      type: object
+      properties:
+        expectedRevision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+      required:
+        - expectedRevision
     SoundSettingsResponseDto__schema0:
       anyOf:
         - type: string

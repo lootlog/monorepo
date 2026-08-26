@@ -10,50 +10,81 @@ import type {
 } from '../../../models/main/create-reservation-dto';
 
 import type {
+  CreateReservationPathParameters
+} from '../../../models/main/create-reservation-path-parameters';
+
+import type {
+  DeleteMyReservationPathParameters
+} from '../../../models/main/delete-my-reservation-path-parameters';
+
+import type {
+  DeleteReservationPathParameters
+} from '../../../models/main/delete-reservation-path-parameters';
+
+import type {
+  ListMyReservationsParams
+} from '../../../models/main/list-my-reservations-params';
+
+import type {
+  ListReservationSpotsPathParameters
+} from '../../../models/main/list-reservation-spots-path-parameters';
+
+import type {
+  ListSpotReservationsParams
+} from '../../../models/main/list-spot-reservations-params';
+
+import type {
+  ListSpotReservationsPathParameters
+} from '../../../models/main/list-spot-reservations-path-parameters';
+
+import type {
+  MyReservationsResponseDto
+} from '../../../models/main/my-reservations-response-dto';
+
+import type {
+  PinReservationSpotPathParameters
+} from '../../../models/main/pin-reservation-spot-path-parameters';
+
+import type {
   ReservationResponseDto
 } from '../../../models/main/reservation-response-dto';
 
 import type {
-  ReservationsControllerCreateReservationPathParameters
-} from '../../../models/main/reservations-controller-create-reservation-path-parameters';
+  ReservationSpotsResponseDto
+} from '../../../models/main/reservation-spots-response-dto';
 
 import type {
-  ReservationsControllerDeleteReservationPathParameters
-} from '../../../models/main/reservations-controller-delete-reservation-path-parameters';
+  ReservationWindowResponseDto
+} from '../../../models/main/reservation-window-response-dto';
 
 import type {
-  ReservationsControllerGetReservationsCardsPathParameters
-} from '../../../models/main/reservations-controller-get-reservations-cards-path-parameters';
+  UnpinReservationSpotPathParameters
+} from '../../../models/main/unpin-reservation-spot-path-parameters';
 
 import type {
-  ReservationsControllerGetReservationsPathParameters
-} from '../../../models/main/reservations-controller-get-reservations-path-parameters';
+  UpdateMyReservationPathParameters
+} from '../../../models/main/update-my-reservation-path-parameters';
 
 import type {
-  ReservationsResponseDto
-} from '../../../models/main/reservations-response-dto';
-
-import type {
-  ReservationsCardsResponseDtoOutput
-} from '../../../models/main/reservations-cards-response-dto-output';
+  UpdateReservationDto
+} from '../../../models/main/update-reservation-dto';
 
 import { mainFetch } from '../../../../mutators';
 
-export const getReservationsControllerGetReservationsUrl = ({ guildId }: ReservationsControllerGetReservationsPathParameters,) => {
+export const getListReservationSpotsUrl = ({ guildId }: ListReservationSpotsPathParameters,) => {
 
 
 
 
-  return `/guilds/${guildId}/reservations`
+  return `/guilds/${guildId}/reservation-spots`
 }
 
 /**
- * Retrieve reservations for a guild
- * @summary Get reservations
+ * @summary List reservation spots with current availability
  */
-export const reservationsControllerGetReservations = async ({ guildId }: ReservationsControllerGetReservationsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationsResponseDto> => {
+export const listReservationSpots = async ({ guildId }: ListReservationSpotsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationSpotsResponseDto> => {
 
-  return mainFetch<ReservationsResponseDto>(getReservationsControllerGetReservationsUrl({ guildId }),
+  return mainFetch<ReservationSpotsResponseDto>(getListReservationSpotsUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -63,22 +94,53 @@ export const reservationsControllerGetReservations = async ({ guildId }: Reserva
 );}
 
 
-export const getReservationsControllerCreateReservationUrl = ({ guildId }: ReservationsControllerCreateReservationPathParameters,) => {
+export const getListSpotReservationsUrl = ({ guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/guilds/${guildId}/reservations`
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/reservation-spots/${spotId}/reservations?${stringifiedParams}` : `/guilds/${guildId}/reservation-spots/${spotId}/reservations`
 }
 
 /**
- * Create a new reservation to a guild
- * @summary Create reservation
+ * @summary List reservations for one spot and time window
  */
-export const reservationsControllerCreateReservation = async ({ guildId }: ReservationsControllerCreateReservationPathParameters,
+export const listSpotReservations = async ({ guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationWindowResponseDto> => {
+
+  return mainFetch<ReservationWindowResponseDto>(getListSpotReservationsUrl({ guildId, spotId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+export const getCreateReservationUrl = ({ guildId, spotId }: CreateReservationPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/reservation-spots/${spotId}/reservations`
+}
+
+/**
+ * @summary Create a reservation owned by the authenticated user
+ */
+export const createReservation = async ({ guildId, spotId }: CreateReservationPathParameters,
     createReservationDto: CreateReservationDto, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationResponseDto> => {
 
-  return mainFetch<ReservationResponseDto>(getReservationsControllerCreateReservationUrl({ guildId }),
+  return mainFetch<ReservationResponseDto>(getCreateReservationUrl({ guildId, spotId }),
   {
     ...options,
     method: 'POST',
@@ -88,21 +150,20 @@ export const reservationsControllerCreateReservation = async ({ guildId }: Reser
 );}
 
 
-export const getReservationsControllerDeleteReservationUrl = ({ guildId, reservationRecordId }: ReservationsControllerDeleteReservationPathParameters,) => {
+export const getDeleteReservationUrl = ({ guildId, reservationId }: DeleteReservationPathParameters,) => {
 
 
 
 
-  return `/guilds/${guildId}/reservations/${reservationRecordId}`
+  return `/guilds/${guildId}/reservations/${reservationId}`
 }
 
 /**
- * Deletes a reservation the user owns or can moderate
- * @summary Delete reservation
+ * @summary Cancel an owned or locally moderated reservation
  */
-export const reservationsControllerDeleteReservation = async ({ guildId, reservationRecordId }: ReservationsControllerDeleteReservationPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationResponseDto> => {
+export const deleteReservation = async ({ guildId, reservationId }: DeleteReservationPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
-  return mainFetch<ReservationResponseDto>(getReservationsControllerDeleteReservationUrl({ guildId, reservationRecordId }),
+  return mainFetch<void>(getDeleteReservationUrl({ guildId, reservationId }),
   {
     ...options,
     method: 'DELETE'
@@ -112,24 +173,123 @@ export const reservationsControllerDeleteReservation = async ({ guildId, reserva
 );}
 
 
-export const getReservationsControllerGetReservationsCardsUrl = ({ guildId }: ReservationsControllerGetReservationsCardsPathParameters,) => {
+export const getPinReservationSpotUrl = ({ guildId, spotId }: PinReservationSpotPathParameters,) => {
 
 
 
 
-  return `/guilds/${guildId}/reservations/cards`
+  return `/guilds/${guildId}/reservation-spot-pins/${spotId}`
 }
 
 /**
- * Retrieve reservations cards
- * @summary Get reservations cards
+ * @summary Pin a reservation spot for the current user
  */
-export const reservationsControllerGetReservationsCards = async ({ guildId }: ReservationsControllerGetReservationsCardsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationsCardsResponseDtoOutput> => {
+export const pinReservationSpot = async ({ guildId, spotId }: PinReservationSpotPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
-  return mainFetch<ReservationsCardsResponseDtoOutput>(getReservationsControllerGetReservationsCardsUrl({ guildId }),
+  return mainFetch<void>(getPinReservationSpotUrl({ guildId, spotId }),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+export const getUnpinReservationSpotUrl = ({ guildId, spotId }: UnpinReservationSpotPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/reservation-spot-pins/${spotId}`
+}
+
+/**
+ * @summary Unpin a reservation spot for the current user
+ */
+export const unpinReservationSpot = async ({ guildId, spotId }: UnpinReservationSpotPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getUnpinReservationSpotUrl({ guildId, spotId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+export const getListMyReservationsUrl = (params?: ListMyReservationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/users/@me/reservations?${stringifiedParams}` : `/users/@me/reservations`
+}
+
+/**
+ * @summary List the current user's reservations
+ */
+export const listMyReservations = async (params?: ListMyReservationsParams, options?: Parameters<typeof mainFetch>[1]): Promise<MyReservationsResponseDto> => {
+
+  return mainFetch<MyReservationsResponseDto>(getListMyReservationsUrl(params),
   {
     ...options,
     method: 'GET'
+
+
+  }
+);}
+
+
+export const getUpdateMyReservationUrl = ({ reservationId }: UpdateMyReservationPathParameters,) => {
+
+
+
+
+  return `/users/@me/reservations/${reservationId}`
+}
+
+/**
+ * @summary Update one of the current user's reservations
+ */
+export const updateMyReservation = async ({ reservationId }: UpdateMyReservationPathParameters,
+    updateReservationDto: UpdateReservationDto, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationResponseDto> => {
+
+  return mainFetch<ReservationResponseDto>(getUpdateMyReservationUrl({ reservationId }),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateReservationDto)
+  }
+);}
+
+
+export const getDeleteMyReservationUrl = ({ reservationId }: DeleteMyReservationPathParameters,) => {
+
+
+
+
+  return `/users/@me/reservations/${reservationId}`
+}
+
+/**
+ * @summary Cancel one of the current user's reservations
+ */
+export const deleteMyReservation = async ({ reservationId }: DeleteMyReservationPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getDeleteMyReservationUrl({ reservationId }),
+  {
+    ...options,
+    method: 'DELETE'
 
 
   }

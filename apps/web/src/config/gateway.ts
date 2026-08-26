@@ -21,6 +21,7 @@ export enum GatewayEvent {
   TIMERS_DELETE = "timers-delete",
   RESERVATIONS_CREATE = "reservations-create",
   RESERVATIONS_DELETE = "reservations-delete",
+  RESERVATIONS_CHANGED = "reservations-changed",
   NOTIFICATION = "notifications-send",
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
 

@@ -28,6 +28,7 @@ import { Route as AuthenticatedAtmeIndexRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAtmeBattlePanelRouteImport } from './routes/_authenticated/@me/battle-panel'
 import { Route as AuthenticatedAtmeKillsRouteImport } from './routes/_authenticated/@me/kills'
 import { Route as AuthenticatedAtmeNotificationsRouteImport } from './routes/_authenticated/@me/notifications'
+import { Route as AuthenticatedAtmeReservationsRouteImport } from './routes/_authenticated/@me/reservations'
 import { Route as AuthenticatedAtmeSettingsRouteImport } from './routes/_authenticated/@me/settings'
 import { Route as AuthenticatedGuildIdDocsIndexRouteImport } from './routes/_authenticated/$guildId/docs/index'
 import { Route as AuthenticatedGuildIdDocsDocIdRouteImport } from './routes/_authenticated/$guildId/docs/$docId'
@@ -56,6 +57,7 @@ import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedAtmeSettingsAccountRouteImport } from './routes/_authenticated/@me/settings/account'
 import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
 import { Route as AuthenticatedAtmeSettingsServersRouteImport } from './routes/_authenticated/@me/settings/servers'
+import { Route as AuthenticatedReservationSharingInvitationsTokenRouteImport } from './routes/_authenticated/reservation-sharing/invitations/$token'
 import { Route as AuthenticatedGuildIdEventsEventIdIndexRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_/index'
 import { Route as AuthenticatedGuildIdEventsEventIdCoordinationRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.coordination'
 import { Route as AuthenticatedGuildIdEventsEventIdEditRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit'
@@ -184,6 +186,12 @@ const AuthenticatedAtmeNotificationsRoute =
   AuthenticatedAtmeNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
+    getParentRoute: () => AuthenticatedAtmeRoute,
+  } as any)
+const AuthenticatedAtmeReservationsRoute =
+  AuthenticatedAtmeReservationsRouteImport.update({
+    id: '/reservations',
+    path: '/reservations',
     getParentRoute: () => AuthenticatedAtmeRoute,
   } as any)
 const AuthenticatedAtmeSettingsRoute =
@@ -354,6 +362,12 @@ const AuthenticatedAtmeSettingsServersRoute =
     path: '/servers',
     getParentRoute: () => AuthenticatedAtmeSettingsRoute,
   } as any)
+const AuthenticatedReservationSharingInvitationsTokenRoute =
+  AuthenticatedReservationSharingInvitationsTokenRouteImport.update({
+    id: '/reservation-sharing/invitations/$token',
+    path: '/reservation-sharing/invitations/$token',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedGuildIdEventsEventIdIndexRoute =
   AuthenticatedGuildIdEventsEventIdIndexRouteImport.update({
     id: '/',
@@ -519,6 +533,7 @@ export interface FileRoutesByFullPath {
   '/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelRouteWithChildren
   '/@me/kills': typeof AuthenticatedAtmeKillsRoute
   '/@me/notifications': typeof AuthenticatedAtmeNotificationsRoute
+  '/@me/reservations': typeof AuthenticatedAtmeReservationsRoute
   '/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
   '/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/@me/': typeof AuthenticatedAtmeIndexRoute
@@ -542,6 +557,7 @@ export interface FileRoutesByFullPath {
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/@me/settings/servers': typeof AuthenticatedAtmeSettingsServersRoute
+  '/reservation-sharing/invitations/$token': typeof AuthenticatedReservationSharingInvitationsTokenRoute
   '/$guildId/docs/': typeof AuthenticatedGuildIdDocsIndexRoute
   '/$guildId/notifications/': typeof AuthenticatedGuildIdNotificationsIndexRoute
   '/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
@@ -584,6 +600,7 @@ export interface FileRoutesByTo {
   '/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
   '/@me/kills': typeof AuthenticatedAtmeKillsRoute
   '/@me/notifications': typeof AuthenticatedAtmeNotificationsRoute
+  '/@me/reservations': typeof AuthenticatedAtmeReservationsRoute
   '/$guildId': typeof AuthenticatedGuildIdIndexRoute
   '/@me': typeof AuthenticatedAtmeIndexRoute
   '/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
@@ -605,6 +622,7 @@ export interface FileRoutesByTo {
   '/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/@me/settings/servers': typeof AuthenticatedAtmeSettingsServersRoute
+  '/reservation-sharing/invitations/$token': typeof AuthenticatedReservationSharingInvitationsTokenRoute
   '/$guildId/docs': typeof AuthenticatedGuildIdDocsIndexRoute
   '/$guildId/notifications': typeof AuthenticatedGuildIdNotificationsIndexRoute
   '/$guildId/reservations': typeof AuthenticatedGuildIdReservationsIndexRoute
@@ -655,6 +673,7 @@ export interface FileRoutesById {
   '/_authenticated/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelRouteWithChildren
   '/_authenticated/@me/kills': typeof AuthenticatedAtmeKillsRoute
   '/_authenticated/@me/notifications': typeof AuthenticatedAtmeNotificationsRoute
+  '/_authenticated/@me/reservations': typeof AuthenticatedAtmeReservationsRoute
   '/_authenticated/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
   '/_authenticated/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/_authenticated/@me/': typeof AuthenticatedAtmeIndexRoute
@@ -678,6 +697,7 @@ export interface FileRoutesById {
   '/_authenticated/@me/settings/account': typeof AuthenticatedAtmeSettingsAccountRoute
   '/_authenticated/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/_authenticated/@me/settings/servers': typeof AuthenticatedAtmeSettingsServersRoute
+  '/_authenticated/reservation-sharing/invitations/$token': typeof AuthenticatedReservationSharingInvitationsTokenRoute
   '/_authenticated/$guildId/docs/': typeof AuthenticatedGuildIdDocsIndexRoute
   '/_authenticated/$guildId/notifications/': typeof AuthenticatedGuildIdNotificationsIndexRoute
   '/_authenticated/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
@@ -730,6 +750,7 @@ export interface FileRouteTypes {
     | '/@me/battle-panel'
     | '/@me/kills'
     | '/@me/notifications'
+    | '/@me/reservations'
     | '/@me/settings'
     | '/$guildId/'
     | '/@me/'
@@ -753,6 +774,7 @@ export interface FileRouteTypes {
     | '/@me/settings/account'
     | '/@me/settings/appearance'
     | '/@me/settings/servers'
+    | '/reservation-sharing/invitations/$token'
     | '/$guildId/docs/'
     | '/$guildId/notifications/'
     | '/$guildId/reservations/'
@@ -795,6 +817,7 @@ export interface FileRouteTypes {
     | '/$guildId/timers'
     | '/@me/kills'
     | '/@me/notifications'
+    | '/@me/reservations'
     | '/$guildId'
     | '/@me'
     | '/$guildId/docs/$docId'
@@ -816,6 +839,7 @@ export interface FileRouteTypes {
     | '/@me/settings/account'
     | '/@me/settings/appearance'
     | '/@me/settings/servers'
+    | '/reservation-sharing/invitations/$token'
     | '/$guildId/docs'
     | '/$guildId/notifications'
     | '/$guildId/reservations'
@@ -865,6 +889,7 @@ export interface FileRouteTypes {
     | '/_authenticated/@me/battle-panel'
     | '/_authenticated/@me/kills'
     | '/_authenticated/@me/notifications'
+    | '/_authenticated/@me/reservations'
     | '/_authenticated/@me/settings'
     | '/_authenticated/$guildId/'
     | '/_authenticated/@me/'
@@ -888,6 +913,7 @@ export interface FileRouteTypes {
     | '/_authenticated/@me/settings/account'
     | '/_authenticated/@me/settings/appearance'
     | '/_authenticated/@me/settings/servers'
+    | '/_authenticated/reservation-sharing/invitations/$token'
     | '/_authenticated/$guildId/docs/'
     | '/_authenticated/$guildId/notifications/'
     | '/_authenticated/$guildId/reservations/'
@@ -1061,6 +1087,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/@me/notifications'
       preLoaderRoute: typeof AuthenticatedAtmeNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/@me/reservations': {
+      id: '/_authenticated/@me/reservations'
+      path: '/reservations'
+      fullPath: '/@me/reservations'
+      preLoaderRoute: typeof AuthenticatedAtmeReservationsRouteImport
       parentRoute: typeof AuthenticatedAtmeRoute
     }
     '/_authenticated/@me/settings': {
@@ -1258,6 +1291,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@me/settings/servers'
       preLoaderRoute: typeof AuthenticatedAtmeSettingsServersRouteImport
       parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    }
+    '/_authenticated/reservation-sharing/invitations/$token': {
+      id: '/_authenticated/reservation-sharing/invitations/$token'
+      path: '/reservation-sharing/invitations/$token'
+      fullPath: '/reservation-sharing/invitations/$token'
+      preLoaderRoute: typeof AuthenticatedReservationSharingInvitationsTokenRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/': {
       id: '/_authenticated/$guildId/events_/$eventId_/'
@@ -1719,6 +1759,7 @@ interface AuthenticatedAtmeRouteChildren {
   AuthenticatedAtmeBattlePanelRoute: typeof AuthenticatedAtmeBattlePanelRouteWithChildren
   AuthenticatedAtmeKillsRoute: typeof AuthenticatedAtmeKillsRoute
   AuthenticatedAtmeNotificationsRoute: typeof AuthenticatedAtmeNotificationsRoute
+  AuthenticatedAtmeReservationsRoute: typeof AuthenticatedAtmeReservationsRoute
   AuthenticatedAtmeSettingsRoute: typeof AuthenticatedAtmeSettingsRouteWithChildren
   AuthenticatedAtmeIndexRoute: typeof AuthenticatedAtmeIndexRoute
 }
@@ -1728,6 +1769,7 @@ const AuthenticatedAtmeRouteChildren: AuthenticatedAtmeRouteChildren = {
     AuthenticatedAtmeBattlePanelRouteWithChildren,
   AuthenticatedAtmeKillsRoute: AuthenticatedAtmeKillsRoute,
   AuthenticatedAtmeNotificationsRoute: AuthenticatedAtmeNotificationsRoute,
+  AuthenticatedAtmeReservationsRoute: AuthenticatedAtmeReservationsRoute,
   AuthenticatedAtmeSettingsRoute: AuthenticatedAtmeSettingsRouteWithChildren,
   AuthenticatedAtmeIndexRoute: AuthenticatedAtmeIndexRoute,
 }
@@ -1738,11 +1780,14 @@ const AuthenticatedAtmeRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedGuildIdRoute: typeof AuthenticatedGuildIdRouteWithChildren
   AuthenticatedAtmeRoute: typeof AuthenticatedAtmeRouteWithChildren
+  AuthenticatedReservationSharingInvitationsTokenRoute: typeof AuthenticatedReservationSharingInvitationsTokenRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedGuildIdRoute: AuthenticatedGuildIdRouteWithChildren,
   AuthenticatedAtmeRoute: AuthenticatedAtmeRouteWithChildren,
+  AuthenticatedReservationSharingInvitationsTokenRoute:
+    AuthenticatedReservationSharingInvitationsTokenRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

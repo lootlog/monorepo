@@ -9,6 +9,7 @@ export enum RoutingKey {
 
   GUILDS_RESERVATIONS_CREATE = "guilds.reservations.create",
   GUILDS_RESERVATIONS_DELETE = "guilds.reservations.delete",
+  GUILDS_RESERVATIONS_CHANGED_V2 = "guilds.reservations.v2.changed",
 
   GUILDS_NOTIFICATIONS_SEND = "guilds.notifications.send",
   GUILDS_NOTIFICATIONS_VOLUNTEER = "guilds.notifications.volunteer",
