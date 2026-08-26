@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { ReservationEventsPublisher } from "./reservation-events.publisher";
@@ -91,5 +92,38 @@ describe("ReservationEventsPublisher", () => {
         spotId: "potepione-zamczysko",
       },
     );
+  });
+
+  it("does not report a durable reservation mutation as failed when publishing fails", async () => {
+    const logError = vi
+      .spyOn(Logger.prototype, "error")
+      .mockImplementation(() => undefined);
+    const publish = vi
+      .fn<
+        (
+          exchange: string,
+          routingKey: string,
+          payload: unknown,
+        ) => Promise<void>
+      >()
+      .mockRejectedValue(new Error("RabbitMQ unavailable"));
+    const publisher = new ReservationEventsPublisher({ publish } as never);
+
+    await expect(
+      publisher.created({
+        sourceGuildId: "guild-source",
+        audienceGuildIds: ["guild-source"],
+        reservation: {
+          id: 42,
+          guildId: "guild-source",
+          spotId: "potepione-zamczysko",
+          startsAt: new Date("2026-08-26T12:00:00.000Z"),
+          endsAt: new Date("2026-08-26T13:00:00.000Z"),
+          createdAt: new Date("2026-08-26T11:00:00.000Z"),
+        } as never,
+        actorDiscordId: "legacy-discord-id",
+      }),
+    ).resolves.toBeUndefined();
+    expect(logError).toHaveBeenCalledTimes(2);
   });
 });

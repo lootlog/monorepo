@@ -31,6 +31,7 @@ export interface ReservationResponseDto {
   isMine: boolean;
   canEdit: boolean;
   canCancel: boolean;
+  /** @nullable */
   editingConstraints: ReservationResponseDtoEditingConstraints;
   reminderMinutesBefore: typeof ReservationResponseDtoReminderMinutesBefore[keyof typeof ReservationResponseDtoReminderMinutesBefore] | null;
 }

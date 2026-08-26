@@ -91,6 +91,17 @@ export const rabbitmqConfig: RabbitMQConfig = {
         deadLetterRoutingKey: RoutingKey.GUILDS_RESERVATIONS_DELETE,
       },
     },
+    {
+      name: Queue.GUILDS_RESERVATIONS_CHANGED_V2_RETRY,
+      exchange: RETRY_EXCHANGE_NAME,
+      routingKey: RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_RETRY,
+      options: {
+        durable: true,
+        messageTtl: DEFAULT_TTL,
+        deadLetterExchange: DEFAULT_EXCHANGE_NAME,
+        deadLetterRoutingKey: RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2,
+      },
+    },
     // Message retry queues
     {
       name: Queue.GUILDS_SEND_MESSAGE_RETRY,

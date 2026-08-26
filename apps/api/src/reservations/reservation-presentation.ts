@@ -50,6 +50,7 @@ export function presentReservation(
     reservation.createdByUserId === viewer.userId ||
     reservation.legacyCreatedByDiscordId === viewer.discordId;
   const sourceIsCurrent = reservation.guildId === viewer.guildId;
+  const canEdit = isMine && (sourceIsCurrent || viewer.guildId === null);
 
   return {
     id: reservation.id,
@@ -70,17 +71,21 @@ export function presentReservation(
       calendarPath: `/${reservation.guild.vanityUrl ?? reservation.guild.id}/reservations/${reservation.spotId}`,
     },
     isMine,
-    canEdit: isMine,
+    canEdit,
     canCancel: isMine || (sourceIsCurrent && viewer.canModerateCurrentGuild),
-    editingConstraints: {
-      reservationMaxDurationMinutes:
-        reservation.guild.reservationMaxDurationMinutes,
-      reservationMinDurationMinutes:
-        reservation.guild.reservationMinDurationMinutes,
-      reservationTimeGranularityMinutes:
-        reservation.guild.reservationTimeGranularityMinutes,
-      reservationMaxAdvanceDays: reservation.guild.reservationMaxAdvanceDays,
-    },
+    editingConstraints:
+      sourceIsCurrent || canEdit
+        ? {
+            reservationMaxDurationMinutes:
+              reservation.guild.reservationMaxDurationMinutes,
+            reservationMinDurationMinutes:
+              reservation.guild.reservationMinDurationMinutes,
+            reservationTimeGranularityMinutes:
+              reservation.guild.reservationTimeGranularityMinutes,
+            reservationMaxAdvanceDays:
+              reservation.guild.reservationMaxAdvanceDays,
+          }
+        : null,
     reminderMinutesBefore: isMine
       ? presentReminderMinutes(reservation.reminderMinutesBefore)
       : null,

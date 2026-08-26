@@ -35,7 +35,7 @@ export const ReservationResponseSchema = z.object({
   isMine: z.boolean(),
   canEdit: z.boolean(),
   canCancel: z.boolean(),
-  editingConstraints: ReservationEditingConstraintsSchema,
+  editingConstraints: ReservationEditingConstraintsSchema.nullable(),
   reminderMinutesBefore: reservationReminderMinutesSchema.nullable(),
 });
 
