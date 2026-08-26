@@ -2,7 +2,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
 import { ReservationsSettingsForm } from "./reservations-settings-form";
-import { ReservationsSettingsHeader } from "./reservations-header";
+import { ReservationSharingSettings } from "./reservation-sharing-settings";
 
 export const ReservationsSettings = () => {
   const guildId = useGuildId();
@@ -11,10 +11,12 @@ export const ReservationsSettings = () => {
   });
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <ReservationsSettingsHeader />
-      <ScrollArea className="flex-1 min-h-0 bg-background">
-        {guild && <ReservationsSettingsForm guild={guild} />}
+    <div className="flex h-full min-h-0 flex-col">
+      <ScrollArea className="min-h-0 flex-1 bg-background">
+        <div className="w-full space-y-4 px-3 pb-24">
+          {guild && <ReservationsSettingsForm guild={guild} />}
+          <ReservationSharingSettings />
+        </div>
       </ScrollArea>
     </div>
   );

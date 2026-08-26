@@ -38,7 +38,7 @@ export class ReservationsCleanupService {
     try {
       const { count } = await this.prisma.reservation.deleteMany({
         where: {
-          toDate: { lt: cutoffDate },
+          endsAt: { lt: cutoffDate },
         },
       });
 
@@ -66,7 +66,7 @@ export class ReservationsCleanupService {
 
     const { count } = await this.prisma.reservation.deleteMany({
       where: {
-        toDate: { lt: cutoffDate },
+        endsAt: { lt: cutoffDate },
       },
     });
 

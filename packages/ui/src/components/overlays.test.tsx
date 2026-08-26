@@ -39,6 +39,31 @@ describe("Base UI overlays", () => {
     );
   });
 
+  it("keeps dialog exit styles applied until Base UI unmounts the portal", () => {
+    render(
+      <Dialog defaultOpen>
+        <DialogContent>
+          <DialogTitle>Animated dialog</DialogTitle>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]');
+    const popup = screen.getByRole("dialog", { name: "Animated dialog" });
+
+    expect(overlay).toHaveClass(
+      "transition-opacity",
+      "data-ending-style:opacity-0",
+    );
+    expect(popup).toHaveClass(
+      "transition-[scale,opacity]",
+      "data-ending-style:opacity-0",
+      "data-ending-style:scale-95",
+    );
+    expect(overlay).not.toHaveClass("data-closed:animate-out");
+    expect(popup).not.toHaveClass("data-closed:animate-out");
+  });
+
   it("opens an alert dialog and closes it with its cancel action", async () => {
     render(
       <AlertDialog>

@@ -1,79 +1,119 @@
 import { describe, expect, it } from "vitest";
-
 import { getReservationSegments } from "./get-reservation-segments";
 import type { NormalizedReservation } from "./normalize-reservation";
 
-const createReservation = ({
+const createReservation = (
+  id: number,
+  startsAt: Date,
+  endsAt: Date,
+  organization = "Lootlog",
+): NormalizedReservation => ({
   id,
-  fromDate,
-  toDate,
-}: {
-  id: number;
-  fromDate: Date;
-  toDate: Date;
-}): NormalizedReservation => ({
-  id,
-  reservationId: `reservation-${id}`,
-  createdBy: "user-id",
+  spotId: "spot",
+  spotName: "Expowisko",
+  startsAt,
+  endsAt,
+  createdAt: new Date(2026, 0, 1, 12),
   comment: null,
-  createdDate: new Date(2026, 0, 1, 12, 0),
-  fromDate,
-  toDate,
+  author: { displayName: `Gracz ${id}`, avatarUrl: null },
+  sourceOrganization: {
+    name: organization,
+    iconUrl: null,
+    isCurrent: organization === "Lootlog",
+    calendarPath: "/lootlog/reservations/spot",
+  },
+  isMine: id === 1,
+  canEdit: id === 1,
+  canCancel: id === 1,
+  editingConstraints: {
+    reservationMaxDurationMinutes: 180,
+    reservationMinDurationMinutes: 30,
+    reservationTimeGranularityMinutes: 15,
+    reservationMaxAdvanceDays: 7,
+  },
+  reminderMinutesBefore: null,
 });
 
 describe("getReservationSegments", () => {
   it("splits multi-day reservations into visible day segments", () => {
-    const weekStart = new Date(2026, 0, 5, 0, 0);
+    const weekStart = new Date(2026, 0, 5);
+    const segments = getReservationSegments(
+      [createReservation(1, new Date(2026, 0, 5, 22), new Date(2026, 0, 7, 2))],
+      weekStart,
+    );
+
+    expect(
+      segments.map(
+        ({ dayIdx, startHour, durationHours, isReservationStart }) => ({
+          dayIdx,
+          startHour,
+          durationHours,
+          isReservationStart,
+        }),
+      ),
+    ).toEqual([
+      { dayIdx: 0, startHour: 22, durationHours: 2, isReservationStart: true },
+      { dayIdx: 1, startHour: 0, durationHours: 24, isReservationStart: false },
+      { dayIdx: 2, startHour: 0, durationHours: 2, isReservationStart: false },
+    ]);
+  });
+
+  it("assigns parallel lanes to overlapping partner reservations", () => {
+    const weekStart = new Date(2026, 0, 5);
     const segments = getReservationSegments(
       [
-        createReservation({
-          id: 1,
-          fromDate: new Date(2026, 0, 5, 22, 0),
-          toDate: new Date(2026, 0, 7, 2, 0),
-        }),
+        createReservation(
+          1,
+          new Date(2026, 0, 5, 10),
+          new Date(2026, 0, 5, 12),
+        ),
+        createReservation(
+          2,
+          new Date(2026, 0, 5, 10, 30),
+          new Date(2026, 0, 5, 11, 30),
+          "Partner",
+        ),
       ],
       weekStart,
     );
 
     expect(
-      segments.map((segment) => ({
-        dayIdx: segment.dayIdx,
-        startHour: segment.startHour,
-        durationHours: segment.durationHours,
-        isReservationStart: segment.isReservationStart,
-      })),
+      segments.map(({ lane, laneCount }) => ({ lane, laneCount })),
     ).toEqual([
-      { dayIdx: 0, startHour: 22, durationHours: 2, isReservationStart: true },
-      {
-        dayIdx: 1,
-        startHour: 0,
-        durationHours: 24,
-        isReservationStart: false,
-      },
-      { dayIdx: 2, startHour: 0, durationHours: 2, isReservationStart: false },
+      { lane: 0, laneCount: 2 },
+      { lane: 1, laneCount: 2 },
     ]);
   });
 
-  it("ignores reservations that do not overlap the selected week", () => {
-    const weekStart = new Date(2026, 0, 5, 0, 0);
-    const weekEnd = new Date(2026, 0, 12, 0, 0);
+  it("ignores reservations outside the selected week", () => {
+    const weekStart = new Date(2026, 0, 5);
+    expect(
+      getReservationSegments(
+        [createReservation(1, new Date(2026, 0, 4, 20), new Date(2026, 0, 5))],
+        weekStart,
+      ),
+    ).toEqual([]);
+  });
 
+  it("includes adjacent days when the calendar requests swipe previews", () => {
+    const weekStart = new Date(2026, 0, 5);
     const segments = getReservationSegments(
       [
-        createReservation({
-          id: 1,
-          fromDate: new Date(2026, 0, 4, 20, 0),
-          toDate: new Date(weekStart),
-        }),
-        createReservation({
-          id: 2,
-          fromDate: new Date(weekEnd),
-          toDate: new Date(2026, 0, 12, 2, 0),
-        }),
+        createReservation(
+          1,
+          new Date(2026, 0, 4, 20),
+          new Date(2026, 0, 4, 21),
+        ),
+        createReservation(
+          2,
+          new Date(2026, 0, 12, 8),
+          new Date(2026, 0, 12, 9),
+        ),
       ],
       weekStart,
+      1,
     );
 
-    expect(segments).toEqual([]);
+    expect(segments.map(({ dayIdx }) => dayIdx)).toEqual([-1, 7]);
   });
 });

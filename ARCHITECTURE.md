@@ -108,6 +108,27 @@ one atomic release.
 Events describe facts owned by their producer. Consumers update their own
 state. They do not use events as permission to mutate another domain's tables.
 
+## Reservation calendars
+
+API is the sole writer for reservation records, personal spot pins, reminder
+jobs, and reservation calendar partnerships. Reservation writes derive the
+author from the authenticated internal user, normalize time to UTC, validate
+the Organization's time policy, and check collisions inside a serializable
+transaction. Reads are bounded by an explicit window; retention is handled by
+scheduled cleanup rather than a read-side mutation or full-calendar cache.
+
+An active calendar partnership extends visibility and collision checks to one
+direct partner while keeping source ownership and moderation unchanged. It is
+reciprocal and non-transitive. The detailed disclosure and revocation contract
+is recorded in [ADR 0001](docs/adr/0001-direct-reciprocal-reservation-sharing.md).
+
+Reservation reminders reuse the notification domain. A reservation stores an
+offset, not a Discord identifier. The notification boundary resolves an active
+DM target and creates an idempotent scheduled job. Reservation deletion cancels
+pending jobs. API publishes a PII-free versioned invalidation with an explicit
+audience list; gateway fans it out to each authorized Organization room while
+the legacy event remains accepted during the coordinated rollout.
+
 ## Real-time delivery and presence
 
 Gateway authenticates sockets before joining feature rooms. Room membership and

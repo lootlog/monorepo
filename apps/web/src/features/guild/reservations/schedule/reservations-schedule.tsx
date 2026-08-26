@@ -1,301 +1,302 @@
+import { useEffect, useRef, useState } from "react";
+import { addDays, differenceInCalendarDays, startOfWeek } from "date-fns";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-
-import { TooltipProvider } from "@lootlog/ui/components/tooltip";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { Permission } from "@lootlog/types";
 import {
-  getReservationsCacheSnapshot,
-  removeReservationFromReservationsCache,
-  reservationsCacheQueryKey,
-  reservationsQueryOptions,
-  restoreReservationsCacheSnapshot,
-  type ReservationsCacheMutationContext,
-} from "../reservations-api";
-import { useSession } from "@/hooks/auth/use-session";
-import { useIsOwner } from "@/hooks/context/use-is-owner";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGateway } from "@/hooks/utils/use-gateway";
+  getListReservationSpotsQueryKey,
+  getListSpotReservationsQueryKey,
+  getListSpotReservationsQueryOptions,
+  useDeleteReservation,
+  useListSpotReservations,
+} from "@lootlog/api-client/react-query/main/reservations";
+import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@lootlog/ui/components/empty";
+import { CalendarX2 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { GatewayEvent } from "@/config/gateway";
 import { ROUTES } from "@/config/routes";
-import { toast } from "sonner";
-import { reservationSlug } from "../reservation-slug";
-import { Permission } from "@lootlog/types";
-
-import { ScheduleHeader } from "./schedule-header";
-import { ScheduleGrid } from "./schedule-grid";
-import { CreateReservationDialog } from "./create-reservation-dialog";
-import { useScheduleNavigation } from "./use-schedule-navigation";
-import { getReservationSegments } from "./get-reservation-segments";
-import { getApiErrorMessage } from "@/features/guild/events/utils/get-api-error-message";
-import { normalizeReservation } from "./normalize-reservation";
-import {
-  invalidateReservationsControllerGetReservations,
-  useReservationsControllerDeleteReservation,
-  useReservationsControllerGetReservations,
-} from "@lootlog/api-client/react-query/main/reservations";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { useMembersControllerGetGuildMemberReferences } from "@lootlog/api-client/react-query/main/members";
-import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-reference-response-dto-output";
-import { useGuildsControllerGetGuildById } from "@lootlog/api-client/react-query/main/guilds";
-import { getReservationSettings } from "./reservation-settings";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useIsOwner } from "@/hooks/context/use-is-owner";
+import { useGateway } from "@/hooks/utils/use-gateway";
+import { getReservationErrorMessage } from "../get-reservation-error-message";
+import { DesktopWeekSchedule } from "./desktop-week-schedule";
+import {
+  findNearestFreeReservationRange,
+  getNearestFreeReservationSearchWindow,
+} from "./find-nearest-free-reservation-range";
+import { getReservationSegments } from "./get-reservation-segments";
+import { MobileDaySchedule } from "./mobile-day-schedule";
+import { normalizeReservation } from "./normalize-reservation";
+import { ReservationDetails } from "./reservation-details";
+import { ReservationFormDialog } from "./reservation-form-dialog";
+import {
+  ceilDateToReservationStep,
+  getReservationSettings,
+  isReservationStartSelectable,
+} from "./reservation-settings";
+import { ScheduleHeader } from "./schedule-header";
+import type { ReservationRange } from "./types";
+import { useCompactScheduleLayout } from "./use-compact-schedule-layout";
 
-export const ReservationsSchedule: React.FC = () => {
-  const { reservationId } = useParams({
+type ReservationChangedPayload = {
+  spotId?: string;
+};
+
+export function ReservationsSchedule() {
+  const { reservationId: spotId } = useParams({
     from: "/_authenticated/$guildId/reservations/$reservationId",
   });
-  const { data: session } = useSession();
+  const { t } = useTranslation();
+  const guildId = useGuildId() ?? "";
+  const { containerRef, isCompact } = useCompactScheduleLayout();
   const isOwner = useIsOwner();
-  const guildId = useGuildId();
-  const { data: members } = useMembersControllerGetGuildMemberReferences(
-    {
-      guildId: guildId ?? "",
-    },
-    {
-      includeInactive: true,
-    },
-  );
   const { data: permissions } = useGuildPermissions();
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
-  const { data: guild } = useGuildsControllerGetGuildById({
-    guildId: guildId ?? "",
-  });
-  const reservationSettings = getReservationSettings(guild);
-
-  const { data: reservations } = useReservationsControllerGetReservations(
-    { guildId: guildId ?? "" },
+  const findingNearestFreeSlotRef = useRef(false);
+  const [date, setDate] = useState(() => new Date());
+  const [createRange, setCreateRange] = useState<ReservationRange | null>(null);
+  const [isFindingNearestFreeSlot, setIsFindingNearestFreeSlot] =
+    useState(false);
+  const [selectedReservationId, setSelectedReservationId] = useState<
+    number | null
+  >(null);
+  const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 7);
+  const swipePreviewStart = addDays(weekStart, -1);
+  const swipePreviewEnd = addDays(weekEnd, 1);
+  const dayIndex = differenceInCalendarDays(date, weekStart);
+  const guildQuery = useGuildsControllerGetGuildById({ guildId });
+  const settings = getReservationSettings(guildQuery.data);
+  const reservationsQuery = useListSpotReservations(
+    { guildId, spotId },
+    {
+      from: swipePreviewStart.toISOString(),
+      to: swipePreviewEnd.toISOString(),
+    },
     {
       query: {
-        ...reservationsQueryOptions(guildId ?? ""),
+        enabled: Boolean(guildId && spotId),
+        placeholderData: keepPreviousData,
+        staleTime: 15_000,
       },
     },
   );
-  const deleteReservationMutation = useReservationsControllerDeleteReservation<
-    unknown,
-    ReservationsCacheMutationContext
-  >({
-    mutation: {
-      onMutate: async (variables) => {
-        if (!guildId) {
-          return {
-            previousReservations: undefined,
-          };
-        }
-
-        await queryClient.cancelQueries({
-          queryKey: reservationsCacheQueryKey(guildId),
-        });
-
-        const previousReservations = getReservationsCacheSnapshot(
-          queryClient,
-          guildId,
-        );
-
-        removeReservationFromReservationsCache(
-          queryClient,
-          guildId,
-          variables.pathParams.reservationRecordId,
-        );
-
-        return {
-          previousReservations,
-        };
-      },
-      onSuccess: async (reservation) => {
-        if (!guildId) {
-          return;
-        }
-
-        removeReservationFromReservationsCache(
-          queryClient,
-          guildId,
-          reservation.id,
-        );
-
-        await invalidateReservationsControllerGetReservations(queryClient, {
-          guildId,
-        });
-      },
-      onError: (_error, _variables, mutationContext) => {
-        if (!guildId) {
-          return;
-        }
-
-        restoreReservationsCacheSnapshot(
-          queryClient,
-          guildId,
-          mutationContext?.previousReservations,
-        );
-      },
-    },
-  });
-  const deleteReservation = deleteReservationMutation.mutateAsync;
-  const isDeleting = deleteReservationMutation.isPending;
-
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const currentUserId = session?.user?.discordId;
-
-  const {
-    currentYear,
-    currentWeek,
-    weekStart,
-    monthName,
-    handlePrevWeek,
-    handleNextWeek,
-  } = useScheduleNavigation();
-
-  const canModerateReservations =
-    isOwner ||
-    Boolean(
-      permissions?.includes(Permission.LOOTLOG_MANAGE) ||
-      permissions?.includes(Permission.ADMIN),
-    );
-
+  const reservations = (reservationsQuery.data?.items ?? []).map(
+    normalizeReservation,
+  );
+  const segments = getReservationSegments(reservations, weekStart, 1);
+  const selectedReservation =
+    reservations.find(({ id }) => id === selectedReservationId) ?? null;
   const canManageReservationSettings =
     isOwner ||
     Boolean(
       permissions?.includes(Permission.OWNER) ||
       permissions?.includes(Permission.ADMIN),
     );
-
-  const reservationSettingsHref = guildId
-    ? ROUTES.guild.settings.reservationsSettings(guildId)
-    : undefined;
-
-  const normalizedReservationId = reservationId
-    ? reservationSlug(reservationId)
-    : undefined;
-
-  const RESERVATION_NAME_BY_SLUG: Record<string, string> = Object.keys(
-    reservations ?? {},
-  ).reduce<Record<string, string>>((acc, name) => {
-    acc[reservationSlug(name)] = name;
-    return acc;
-  }, {});
-
-  const reservationKey = normalizedReservationId
-    ? (RESERVATION_NAME_BY_SLUG[normalizedReservationId] ??
-      Object.keys(reservations ?? {}).find(
-        (name) => reservationSlug(name) === normalizedReservationId,
-      ) ??
-      Object.keys(reservations ?? {}).find(
-        (name) => name.toLowerCase() === reservationId?.toLowerCase(),
-      ))
-    : undefined;
-
-  const createReservationKey =
-    reservationKey ?? normalizedReservationId ?? reservationId ?? "";
-
-  const selectedReservations = reservationKey
-    ? (reservations?.[reservationKey] ?? [])
-    : [];
-
-  const normalizedReservations = selectedReservations.map(normalizeReservation);
-
-  const segments = getReservationSegments(normalizedReservations, weekStart);
-
-  type ReservationGatewayPayload = {
-    guildId: string;
-    reservation: {
-      reservationId: string;
-    };
-  };
+  const cancelMutation = useDeleteReservation({
+    mutation: {
+      onSuccess: async (_data, variables) => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: getListReservationSpotsQueryKey({ guildId }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: getListSpotReservationsQueryKey({ guildId, spotId }),
+          }),
+        ]);
+        if (selectedReservationId === variables.pathParams.reservationId) {
+          setSelectedReservationId(null);
+        }
+        toast.success(t("reservations.details.cancelled"));
+      },
+      onError: (error) => toast.error(getReservationErrorMessage(error, t)),
+    },
+  });
+  const cancellingReservationId = cancelMutation.isPending
+    ? (cancelMutation.variables?.pathParams.reservationId ?? null)
+    : null;
 
   useEffect(() => {
-    if (!guildId || !connected) {
-      return;
-    }
+    if (!connected || !guildId) return;
+    const refresh = (payload: ReservationChangedPayload) => {
+      if (payload.spotId && payload.spotId !== spotId) return;
+      void Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getListReservationSpotsQueryKey({ guildId }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getListSpotReservationsQueryKey({ guildId, spotId }),
+        }),
+      ]);
+    };
+    socket.on(GatewayEvent.RESERVATIONS_CHANGED, refresh);
+    socket.on(GatewayEvent.RESERVATIONS_CREATE, refresh);
+    socket.on(GatewayEvent.RESERVATIONS_DELETE, refresh);
+    return () => {
+      socket.off(GatewayEvent.RESERVATIONS_CHANGED, refresh);
+      socket.off(GatewayEvent.RESERVATIONS_CREATE, refresh);
+      socket.off(GatewayEvent.RESERVATIONS_DELETE, refresh);
+    };
+  }, [connected, guildId, queryClient, socket, spotId]);
 
-    const handleReservationEvent = (payload: ReservationGatewayPayload) => {
-      if (payload.guildId !== guildId) {
+  const openDefaultRange = () => {
+    const startsAt = ceilDateToReservationStep(new Date(), settings);
+    setCreateRange({
+      startsAt,
+      endsAt: new Date(
+        startsAt.getTime() + settings.reservationMinDurationMinutes * 60_000,
+      ),
+    });
+  };
+
+  const findNearestFreeSlot = async () => {
+    if (findingNearestFreeSlotRef.current) return;
+    findingNearestFreeSlotRef.current = true;
+    setIsFindingNearestFreeSlot(true);
+    const now = new Date();
+    const searchWindow = getNearestFreeReservationSearchWindow({
+      now,
+      settings,
+    });
+
+    try {
+      const result = await queryClient.fetchQuery(
+        getListSpotReservationsQueryOptions(
+          { guildId, spotId },
+          {
+            from: searchWindow.from.toISOString(),
+            to: searchWindow.to.toISOString(),
+          },
+        ),
+      );
+      const nearestRange = findNearestFreeReservationRange({
+        intervals: result.items.map(({ endsAt, startsAt }) => ({
+          endsAt: new Date(endsAt),
+          startsAt: new Date(startsAt),
+        })),
+        now,
+        settings,
+      });
+
+      if (!nearestRange) {
+        toast.info(t("reservations.schedule.nearestFreeSlot.unavailable"));
         return;
       }
 
-      void queryClient.invalidateQueries({
-        queryKey: reservationsCacheQueryKey(guildId),
-      });
-    };
-
-    socket.on(GatewayEvent.RESERVATIONS_CREATE, handleReservationEvent);
-    socket.on(GatewayEvent.RESERVATIONS_DELETE, handleReservationEvent);
-
-    return () => {
-      socket.off(GatewayEvent.RESERVATIONS_CREATE, handleReservationEvent);
-      socket.off(GatewayEvent.RESERVATIONS_DELETE, handleReservationEvent);
-    };
-  }, [connected, guildId, queryClient, socket]);
-
-  const handleDeleteReservation = async (
-    reservationRecordId: number,
-    action: "cancel" | "remove",
-  ) => {
-    const successMessage =
-      action === "cancel"
-        ? "Rezerwacja została anulowana."
-        : "Rezerwacja została usunięta.";
-    const fallbackMessage =
-      action === "cancel"
-        ? "Nie udało się anulować rezerwacji."
-        : "Nie udało się usunąć rezerwacji.";
-
-    if (!guildId) {
-      toast.error(fallbackMessage, { position: "bottom-right" });
-      return;
-    }
-
-    try {
-      await deleteReservation({
-        pathParams: { guildId, reservationRecordId },
-      });
-      toast.success(successMessage, { position: "bottom-right" });
-    } catch (error) {
-      toast.error(getApiErrorMessage(error) ?? fallbackMessage, {
-        position: "bottom-right",
-      });
+      setDate(nearestRange.startsAt);
+      setCreateRange(nearestRange);
+    } catch {
+      toast.error(t("reservations.schedule.nearestFreeSlot.error"));
+    } finally {
+      findingNearestFreeSlotRef.current = false;
+      setIsFindingNearestFreeSlot(false);
     }
   };
 
-  const membersByUserId = new Map<string, GuildMember>(
-    members?.map((member) => [member.userId, member]) ?? [],
-  );
+  const openSelectedRange = (range: ReservationRange) => {
+    if (!isReservationStartSelectable(range.startsAt)) return;
+    setCreateRange(range);
+  };
 
   return (
-    <TooltipProvider>
-      <div className="flex flex-col h-full min-h-0 max-h-full overflow-hidden">
-        <ScheduleHeader
-          currentWeek={currentWeek}
-          currentYear={currentYear}
-          monthName={monthName}
-          settings={reservationSettings}
-          settingsHref={reservationSettingsHref}
-          canManageReservationSettings={canManageReservationSettings}
-          onPrevWeek={handlePrevWeek}
-          onNextWeek={handleNextWeek}
-          onAddReservation={() => setIsCreateDialogOpen(true)}
-        />
+    <div
+      ref={containerRef}
+      className="relative flex h-full min-h-0 flex-col overflow-hidden bg-background"
+    >
+      <ScheduleHeader
+        date={date}
+        isCompact={isCompact}
+        settings={settings}
+        settingsHref={
+          guildId
+            ? ROUTES.guild.settings.reservationsSettings(guildId)
+            : undefined
+        }
+        canManageReservationSettings={canManageReservationSettings}
+        isFindingNearestFreeSlot={isFindingNearestFreeSlot}
+        onPrevious={() =>
+          setDate((current) => addDays(current, isCompact ? -1 : -7))
+        }
+        onNext={() => setDate((current) => addDays(current, isCompact ? 1 : 7))}
+        onToday={() => setDate(new Date())}
+        onFindNearestFreeSlot={() => void findNearestFreeSlot()}
+        onAddReservation={openDefaultRange}
+      />
 
-        <CreateReservationDialog
-          open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-          reservationKey={createReservationKey}
-          currentUserId={currentUserId}
-          settings={reservationSettings}
-        />
-
-        <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden bg-transparent">
-          <ScheduleGrid
-            weekStart={weekStart}
-            segments={segments}
-            membersByUserId={membersByUserId}
-            currentUserId={currentUserId}
-            canModerateReservations={canModerateReservations}
-            isDeleting={isDeleting}
-            onDeleteReservation={handleDeleteReservation}
-            reservationKey={createReservationKey}
-            settings={reservationSettings}
-          />
+      {reservationsQuery.isPending ? (
+        <div className="flex flex-1 items-center justify-center" role="status">
+          <Spinner />
+          <span className="sr-only">{t("common.loading")}</span>
         </div>
-      </div>
-    </TooltipProvider>
+      ) : reservationsQuery.isError ? (
+        <Empty className="m-auto max-w-lg">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CalendarX2 />
+            </EmptyMedia>
+            <EmptyTitle>{t("reservations.schedule.error.title")}</EmptyTitle>
+            <EmptyDescription>
+              {t("reservations.schedule.error.description")}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : isCompact ? (
+        <MobileDaySchedule
+          date={date}
+          dayIndex={dayIndex}
+          segments={segments}
+          defaultDurationMinutes={settings.reservationMinDurationMinutes}
+          minuteStep={settings.reservationTimeGranularityMinutes}
+          onDaySwipe={(direction) =>
+            setDate((current) => addDays(current, direction))
+          }
+          onRangeSelect={openSelectedRange}
+          onReservationSelect={setSelectedReservationId}
+          onReservationCancel={(reservationId) =>
+            cancelMutation.mutate({ pathParams: { guildId, reservationId } })
+          }
+          cancellingReservationId={cancellingReservationId}
+        />
+      ) : (
+        <DesktopWeekSchedule
+          weekStart={weekStart}
+          segments={segments}
+          minuteStep={settings.reservationTimeGranularityMinutes}
+          onRangeSelect={openSelectedRange}
+          onReservationSelect={setSelectedReservationId}
+          onReservationCancel={(reservationId) =>
+            cancelMutation.mutate({ pathParams: { guildId, reservationId } })
+          }
+          cancellingReservationId={cancellingReservationId}
+        />
+      )}
+
+      <ReservationFormDialog
+        open={createRange !== null}
+        onOpenChange={(open) => !open && setCreateRange(null)}
+        guildId={guildId}
+        spotId={spotId}
+        settings={settings}
+        initialStartsAt={createRange?.startsAt}
+        initialEndsAt={createRange?.endsAt}
+      />
+      <ReservationDetails
+        reservation={selectedReservation}
+        guildId={guildId}
+        spotId={spotId}
+        onOpenChange={(open) => !open && setSelectedReservationId(null)}
+      />
+    </div>
   );
-};
+}

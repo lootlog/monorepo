@@ -68,6 +68,9 @@ export const ModelName = {
   LootlogConfigNpc: 'LootlogConfigNpc',
   LootlogConfig: 'LootlogConfig',
   Reservation: 'Reservation',
+  ReservationShare: 'ReservationShare',
+  ReservationShareInvitation: 'ReservationShareInvitation',
+  UserPinnedReservationSpot: 'UserPinnedReservationSpot',
   UserCharactersLootlogSettings: 'UserCharactersLootlogSettings',
   UserSettings: 'UserSettings',
   UserSettingDocument: 'UserSettingDocument',
@@ -373,17 +376,67 @@ export type LootlogConfigScalarFieldEnum = (typeof LootlogConfigScalarFieldEnum)
 export const ReservationScalarFieldEnum = {
   id: 'id',
   guildId: 'guildId',
-  reservationId: 'reservationId',
-  createdDate: 'createdDate',
-  fromDate: 'fromDate',
-  toDate: 'toDate',
-  createdBy: 'createdBy',
+  spotId: 'spotId',
+  spotName: 'spotName',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  createdByUserId: 'createdByUserId',
+  authorDisplayName: 'authorDisplayName',
+  authorAvatarUrl: 'authorAvatarUrl',
+  reminderMinutesBefore: 'reminderMinutesBefore',
   comment: 'comment',
+  legacyReservationId: 'legacyReservationId',
+  legacyCreatedDate: 'legacyCreatedDate',
+  legacyFromDate: 'legacyFromDate',
+  legacyToDate: 'legacyToDate',
+  legacyCreatedByDiscordId: 'legacyCreatedByDiscordId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type ReservationScalarFieldEnum = (typeof ReservationScalarFieldEnum)[keyof typeof ReservationScalarFieldEnum]
+
+
+export const ReservationShareScalarFieldEnum = {
+  id: 'id',
+  firstGuildId: 'firstGuildId',
+  secondGuildId: 'secondGuildId',
+  createdByUserId: 'createdByUserId',
+  acceptedByUserId: 'acceptedByUserId',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReservationShareScalarFieldEnum = (typeof ReservationShareScalarFieldEnum)[keyof typeof ReservationShareScalarFieldEnum]
+
+
+export const ReservationShareInvitationScalarFieldEnum = {
+  id: 'id',
+  sourceGuildId: 'sourceGuildId',
+  tokenHash: 'tokenHash',
+  createdByUserId: 'createdByUserId',
+  expiresAt: 'expiresAt',
+  acceptedAt: 'acceptedAt',
+  acceptedByUserId: 'acceptedByUserId',
+  targetGuildId: 'targetGuildId',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReservationShareInvitationScalarFieldEnum = (typeof ReservationShareInvitationScalarFieldEnum)[keyof typeof ReservationShareInvitationScalarFieldEnum]
+
+
+export const UserPinnedReservationSpotScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  guildId: 'guildId',
+  spotId: 'spotId',
+  pinnedAt: 'pinnedAt'
+} as const
+
+export type UserPinnedReservationSpotScalarFieldEnum = (typeof UserPinnedReservationSpotScalarFieldEnum)[keyof typeof UserPinnedReservationSpotScalarFieldEnum]
 
 
 export const UserCharactersLootlogSettingsScalarFieldEnum = {

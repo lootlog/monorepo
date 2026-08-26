@@ -98,256 +98,235 @@ export const ReservationsSettingsForm = ({
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full mx-auto pb-24"
-      >
-        <div className="p-3">
-          <Card className="bg-card  border-border p-0 gap-0">
-            <div className="p-3">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <TimerReset className="size-4 text-primary" />
-                </div>
-                <div>
-                  <FormLabel className="text-sm font-semibold">
-                    {t("settings.reservations.duration.title")}
-                  </FormLabel>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.reservations.duration.description")}
-                  </p>
-                </div>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+        <Card className="gap-0 overflow-hidden border-border bg-card p-0">
+          <section className="p-4">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <TimerReset className="size-4 text-primary" />
               </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="reservationMinDurationMinutes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("settings.reservations.fields.minDuration.label")}
-                      </FormLabel>
-                      <FormControl
-                        render={
-                          <Input
-                            type="number"
-                            min={5}
-                            max={240}
-                            step={5}
-                            {...field}
-                            onChange={(event) =>
-                              field.onChange(event.target.valueAsNumber)
-                            }
-                          />
-                        }
-                      />
-                      <FormDescription>
-                        {t(
-                          "settings.reservations.fields.minDuration.description",
-                        )}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="reservationMaxDurationMinutes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("settings.reservations.fields.maxDuration.label")}
-                      </FormLabel>
-                      <FormControl
-                        render={
-                          <Input
-                            type="number"
-                            min={30}
-                            max={720}
-                            step={5}
-                            {...field}
-                            onChange={(event) =>
-                              field.onChange(event.target.valueAsNumber)
-                            }
-                          />
-                        }
-                      />
-                      <FormDescription>
-                        {t(
-                          "settings.reservations.fields.maxDuration.description",
-                        )}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="min-w-0">
+                <FormLabel className="text-sm font-semibold">
+                  {t("settings.reservations.duration.title")}
+                </FormLabel>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("settings.reservations.duration.description")}
+                </p>
               </div>
             </div>
-          </Card>
-        </div>
 
-        <div className="px-3 pb-3">
-          <Card className="bg-card  border-border p-0 gap-0">
-            <div className="p-3">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Clock className="size-4 text-blue-500" />
-                </div>
-                <div>
-                  <FormLabel className="text-sm font-semibold">
-                    {t("settings.reservations.schedule.title")}
-                  </FormLabel>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.reservations.schedule.description")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="reservationTimeGranularityMinutes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("settings.reservations.fields.granularity.label")}
-                      </FormLabel>
-                      <Select
-                        value={String(field.value)}
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        items={[
-                          ...RESERVATION_GRANULARITY_OPTIONS.map((value) => ({
-                            value: String(value),
-                            label: (
-                              <>
-                                {t(
-                                  "settings.reservations.fields.granularity.option",
-                                  { minutes: value },
-                                )}
-                              </>
-                            ),
-                          })),
-                        ]}
-                      >
-                        <FormControl
-                          render={
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="reservationMinDurationMinutes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.reservations.fields.minDuration.label")}
+                    </FormLabel>
+                    <FormControl
+                      render={
+                        <Input
+                          type="number"
+                          min={5}
+                          max={240}
+                          step={5}
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(event.target.valueAsNumber)
                           }
                         />
-                        <SelectContent>
-                          {RESERVATION_GRANULARITY_OPTIONS.map((value) => (
-                            <SelectItem key={value} value={String(value)}>
-                              {t(
-                                "settings.reservations.fields.granularity.option",
-                                { minutes: value },
-                              )}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        {t(
-                          "settings.reservations.fields.granularity.description",
-                        )}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      }
+                    />
+                    <FormDescription>
+                      {t(
+                        "settings.reservations.fields.minDuration.description",
+                      )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="reservationMaxAdvanceDays"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("settings.reservations.fields.maxAdvance.label")}
-                      </FormLabel>
-                      <FormControl
-                        render={
-                          <Input
-                            type="number"
-                            min={1}
-                            max={30}
-                            step={1}
-                            {...field}
-                            onChange={(event) =>
-                              field.onChange(event.target.valueAsNumber)
-                            }
-                          />
-                        }
-                      />
-                      <FormDescription>
-                        {t(
-                          "settings.reservations.fields.maxAdvance.description",
-                        )}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="reservationMaxDurationMinutes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.reservations.fields.maxDuration.label")}
+                    </FormLabel>
+                    <FormControl
+                      render={
+                        <Input
+                          type="number"
+                          min={30}
+                          max={720}
+                          step={5}
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(event.target.valueAsNumber)
+                          }
+                        />
+                      }
+                    />
+                    <FormDescription>
+                      {t(
+                        "settings.reservations.fields.maxDuration.description",
+                      )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </section>
+
+          <section className="border-t border-border p-4">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <Clock className="size-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <FormLabel className="text-sm font-semibold">
+                  {t("settings.reservations.schedule.title")}
+                </FormLabel>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("settings.reservations.schedule.description")}
+                </p>
               </div>
             </div>
-          </Card>
-        </div>
 
-        <div className="px-3 pb-3">
-          <Card className="bg-card  border-border p-0 gap-0">
-            <div className="p-3">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <ListChecks className="size-4 text-amber-500" />
-                </div>
-                <div>
-                  <FormLabel className="text-sm font-semibold">
-                    {t("settings.reservations.limits.title")}
-                  </FormLabel>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.reservations.limits.description")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="max-w-md">
-                <FormField
-                  control={form.control}
-                  name="reservationActiveLimitPerSpot"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("settings.reservations.fields.activeLimit.label")}
-                      </FormLabel>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="reservationTimeGranularityMinutes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.reservations.fields.granularity.label")}
+                    </FormLabel>
+                    <Select
+                      value={String(field.value)}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      items={RESERVATION_GRANULARITY_OPTIONS.map((value) => ({
+                        value: String(value),
+                        label: t(
+                          "settings.reservations.fields.granularity.option",
+                          { minutes: value },
+                        ),
+                      }))}
+                    >
                       <FormControl
                         render={
-                          <Input
-                            type="number"
-                            min={1}
-                            max={10}
-                            step={1}
-                            {...field}
-                            onChange={(event) =>
-                              field.onChange(event.target.valueAsNumber)
-                            }
-                          />
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                         }
                       />
-                      <FormDescription>
-                        {t(
-                          "settings.reservations.fields.activeLimit.description",
-                        )}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <SelectContent>
+                        {RESERVATION_GRANULARITY_OPTIONS.map((value) => (
+                          <SelectItem key={value} value={String(value)}>
+                            {t(
+                              "settings.reservations.fields.granularity.option",
+                              { minutes: value },
+                            )}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      {t(
+                        "settings.reservations.fields.granularity.description",
+                      )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="reservationMaxAdvanceDays"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.reservations.fields.maxAdvance.label")}
+                    </FormLabel>
+                    <FormControl
+                      render={
+                        <Input
+                          type="number"
+                          min={1}
+                          max={30}
+                          step={1}
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(event.target.valueAsNumber)
+                          }
+                        />
+                      }
+                    />
+                    <FormDescription>
+                      {t("settings.reservations.fields.maxAdvance.description")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </section>
+
+          <section className="border-t border-border p-4">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <ListChecks className="size-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <FormLabel className="text-sm font-semibold">
+                  {t("settings.reservations.limits.title")}
+                </FormLabel>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("settings.reservations.limits.description")}
+                </p>
               </div>
             </div>
-          </Card>
-        </div>
+
+            <div className="max-w-md">
+              <FormField
+                control={form.control}
+                name="reservationActiveLimitPerSpot"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.reservations.fields.activeLimit.label")}
+                    </FormLabel>
+                    <FormControl
+                      render={
+                        <Input
+                          type="number"
+                          min={1}
+                          max={10}
+                          step={1}
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(event.target.valueAsNumber)
+                          }
+                        />
+                      }
+                    />
+                    <FormDescription>
+                      {t(
+                        "settings.reservations.fields.activeLimit.description",
+                      )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </section>
+        </Card>
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}

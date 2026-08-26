@@ -140,8 +140,6 @@
     }
   },
   "reservations": {
-    "title": "Ustawienia rezerwacji",
-    "description": "Zarządzaj zasadami zapisywania się na expowiska",
     "toasts": {
       "updateSuccess": "Zaktualizowano konfigurację rezerwacji",
       "updateError": "Nie udało się zaktualizować konfiguracji rezerwacji"
@@ -169,7 +167,7 @@
       },
       "granularity": {
         "label": "Krok siatki kalendarza",
-        "description": "Krok używany przy zaznaczaniu zakresu na kalendarzu. Dokładną minutę można wpisać podczas tworzenia rezerwacji.",
+        "description": "Początek i koniec każdego zapisu muszą pasować do tego kroku kalendarza.",
         "option": "Co {{minutes}} min"
       },
       "maxAdvance": {
@@ -183,6 +181,30 @@
     },
     "validation": {
       "minGreaterThanMax": "Minimalna długość nie może być większa niż maksymalna."
+    },
+    "sharing": {
+      "title": "Współdzielone rezerwacje",
+      "description": "Połącz kalendarze dwóch organizacji. Relacja jest wzajemna, bezpośrednia i nie przechodzi na kolejnych partnerów.",
+      "createInvite": "Utwórz zaproszenie",
+      "inviteReady": "Jednorazowe zaproszenie jest gotowe",
+      "inviteLink": "Link zaproszenia",
+      "copy": "Kopiuj link zaproszenia",
+      "copied": "Skopiowano link zaproszenia.",
+      "copyError": "Nie udało się skopiować linku. Skopiuj go ręcznie.",
+      "singleUseNotice": "Link jest ważny przez 7 dni i znika po pierwszym użyciu. Po zamknięciu tej strony nie będzie można go ponownie odczytać.",
+      "partners": "Połączone organizacje",
+      "pending": "Oczekujące zaproszenia",
+      "pendingInvite": "Niewykorzystane zaproszenie",
+      "expires": "Wygasa {{date}}",
+      "revoke": "Wycofaj",
+      "loadError": "Nie udało się pobrać współdzielonych rezerwacji",
+      "loadErrorDescription": "Spróbuj ponownie, aby odświeżyć partnerów i oczekujące zaproszenia.",
+      "noPartners": "Nie połączono jeszcze żadnej organizacji.",
+      "noPending": "Brak oczekujących zaproszeń.",
+      "disconnect": "Odłącz",
+      "disconnectTitle": "Odłączyć współdzielone kalendarze?",
+      "disconnectDescription": "Rezerwacje organizacji {{name}} natychmiast przestaną być widoczne. Żadne wpisy ani przypomnienia nie zostaną usunięte.",
+      "disconnectOrganization": "Odłącz organizację {{name}}"
     }
   },
   "members": {

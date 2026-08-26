@@ -17,6 +17,7 @@ import { ActivityService } from "./services/activity.service";
 import { PresenceService } from "./services/presence.service";
 import type {
   ReservationCreateEventDto,
+  ReservationChangedEventV2Dto,
   ReservationDeleteEventDto,
 } from "./dto/reservation-event.dto";
 import type { ChatMessageEnvelopeDto } from "./dto/chat-message-envelope.dto";
@@ -532,6 +533,32 @@ describe("GatewayService", () => {
         GatewayEvent.RESERVATIONS_DELETE,
         payload,
       );
+    });
+  });
+
+  describe("handleGuildsReservationChangedV2", () => {
+    it("emits a PII-free invalidation to every unique audience room", () => {
+      const payload: ReservationChangedEventV2Dto = {
+        version: 2,
+        action: "updated",
+        sourceGuildId: "guild-source",
+        audienceGuildIds: ["guild-source", "guild-partner", "guild-partner"],
+        reservationId: 44,
+        spotId: "potepione-zamczysko",
+      };
+
+      service.handleGuildsReservationChangedV2(payload);
+
+      expect(mockServer.to).toHaveBeenCalledTimes(2);
+      expect(mockServer.to).toHaveBeenNthCalledWith(1, "guild-source:events");
+      expect(mockServer.to).toHaveBeenNthCalledWith(2, "guild-partner:events");
+      expect(mockServer.emit).toHaveBeenCalledTimes(2);
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        GatewayEvent.RESERVATIONS_CHANGED,
+        payload,
+      );
+      expect(payload).not.toHaveProperty("author");
+      expect(payload).not.toHaveProperty("comment");
     });
   });
 

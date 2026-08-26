@@ -1,38 +1,19 @@
 import { useState } from "react";
+import { useLocalStorage } from "usehooks-ts";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Grid2X2, List, SearchX } from "lucide-react";
-import { ReservationCard } from "./reservation-card";
-import { reservationSlug } from "./reservation-slug";
+import { Grid2X2, List, SearchX, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import type { ReservationSpotsResponseDto } from "@lootlog/api-client/models/main/reservation-spots-response-dto";
 import {
-  reservationsCardsQueryOptions,
-  reservationsQueryOptions,
-} from "./reservations-api";
-import {
-  useReservationsControllerGetReservations,
-  useReservationsControllerGetReservationsCards,
+  getListReservationSpotsQueryKey,
+  useListReservationSpots,
+  usePinReservationSpot,
+  useUnpinReservationSpot,
 } from "@lootlog/api-client/react-query/main/reservations";
-import type { ReservationsCardsResponseDtoOutputItem } from "@lootlog/api-client/models/main/reservations-cards-response-dto-output-item";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { useViewMode } from "@/hooks/use-view-mode";
-import { ReservationCardSkeleton } from "./reservation-card-skeleton";
-import { useTranslation } from "react-i18next";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getGuildsControllerGetGuildByIdQueryKey,
-  useGuildsControllerGetGuildById,
-} from "@lootlog/api-client/react-query/main/guilds";
-import {
-  getMembersControllerGetGuildMemberReferencesQueryKey,
-  useMembersControllerGetGuildMemberReferences,
-} from "@lootlog/api-client/react-query/main/members";
-import { SearchInput } from "@/components/ui/search-input";
 import {
   Empty,
   EmptyContent,
@@ -41,208 +22,171 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { SearchInput } from "@/components/ui/search-input";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useViewMode } from "@/hooks/use-view-mode";
+import { ReservationCard } from "./reservation-card";
+import { ReservationCardSkeleton } from "./reservation-card-skeleton";
+import {
+  ReservationFilters,
+  type ReservationFilter,
+} from "./reservation-filters";
+import {
+  getVisibleReservationSpots,
+  setReservationSpotPinned,
+} from "./reservation-spots";
 
-type ReservationCardEntries = Array<
-  [string, ReservationsCardsResponseDtoOutputItem[]]
->;
+type PinMutationContext = { previous?: ReservationSpotsResponseDto };
 
-const getReservationLookupKey = (
-  name: string,
-  slug: string,
-  reservations: Record<string, unknown>,
-) => {
-  if (slug in reservations) {
-    return slug;
-  }
-
-  if (name in reservations) {
-    return name;
-  }
-
-  return name.toLowerCase();
-};
-
-export const Reservations: React.FC = () => {
+export function Reservations() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const guildId = useGuildId();
-  const hasGuildId = Boolean(guildId);
-  const { data: guild } = useGuildsControllerGetGuildById(
-    {
-      guildId: guildId ?? "",
-    },
-    {
-      query: {
-        enabled: hasGuildId,
-        queryKey: getGuildsControllerGetGuildByIdQueryKey({
-          guildId: guildId ?? "",
-        }),
-      },
-    },
-  );
-
+  const guildId = useGuildId() ?? "";
   const [searchValue, setSearchValue] = useState("");
+  const [filter, setFilter] = useLocalStorage<ReservationFilter>(
+    "reservations-filter",
+    "all",
+  );
   const { viewMode, setViewMode } = useViewMode("reservations-view-mode");
-
-  const { data: reservations } = useReservationsControllerGetReservations(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        ...reservationsQueryOptions(guildId ?? ""),
-      },
-    },
+  const spotsQuery = useListReservationSpots(
+    { guildId },
+    { query: { enabled: Boolean(guildId), staleTime: 30_000 } },
   );
-  const { data: reservationsCards } =
-    useReservationsControllerGetReservationsCards(
-      { guildId: guildId ?? "" },
-      {
-        query: {
-          ...reservationsCardsQueryOptions(guildId ?? ""),
-        },
-      },
+  const spotsQueryKey = getListReservationSpotsQueryKey({ guildId });
+
+  const updatePinnedState = (spotId: string, isPinned: boolean) => {
+    queryClient.setQueryData<ReservationSpotsResponseDto>(
+      spotsQueryKey,
+      (current) => setReservationSpotPinned(current, spotId, isPinned),
     );
-  const { data: members } = useMembersControllerGetGuildMemberReferences(
-    { guildId: guildId ?? "" },
-    {
-      includeInactive: true,
-    },
-    {
-      query: {
-        enabled: hasGuildId,
-        queryKey: getMembersControllerGetGuildMemberReferencesQueryKey(
-          { guildId: guildId ?? "" },
-          { includeInactive: true },
-        ),
-      },
-    },
-  );
-
-  const normalizedSearch = searchValue.trim().toLowerCase();
-  const reservationCardEntries = Object.entries(
-    reservationsCards ?? {},
-  ) as ReservationCardEntries;
-  const filteredCards = normalizedSearch
-    ? reservationCardEntries.filter(([name]) =>
-        name.toLowerCase().includes(normalizedSearch),
-      )
-    : reservationCardEntries;
-
-  const isLoading = !guild || !reservations || !reservationsCards;
-  const guildPath = guild?.vanityUrl ?? guild?.id;
-
-  const handleReservationClick = (slug: string) => {
-    if (!guildPath) {
-      return;
-    }
-
-    navigate({
-      to: `/${guildPath}/reservations/${slug}`,
-    });
   };
 
-  const sortedCards = isLoading
-    ? []
-    : filteredCards
-        .flatMap(([name, items]) =>
-          items.map((item, idx) => {
-            const slug = reservationSlug(name);
-            const normalizedKey = getReservationLookupKey(
-              name,
-              slug,
-              reservations,
-            );
-            const reservationsForCard =
-              reservations[normalizedKey] ?? reservations[slug] ?? [];
+  const pinMutation = usePinReservationSpot<unknown, PinMutationContext>({
+    mutation: {
+      onMutate: async ({ pathParams }) => {
+        await queryClient.cancelQueries({ queryKey: spotsQueryKey });
+        const previous =
+          queryClient.getQueryData<ReservationSpotsResponseDto>(spotsQueryKey);
+        updatePinnedState(pathParams.spotId, true);
+        return { previous };
+      },
+      onError: (_error, _variables, context) => {
+        queryClient.setQueryData(spotsQueryKey, context?.previous);
+        toast.error(t("reservations.pin.error"));
+      },
+      onSettled: () =>
+        queryClient.invalidateQueries({ queryKey: spotsQueryKey }),
+    },
+  });
+  const unpinMutation = useUnpinReservationSpot<unknown, PinMutationContext>({
+    mutation: {
+      onMutate: async ({ pathParams }) => {
+        await queryClient.cancelQueries({ queryKey: spotsQueryKey });
+        const previous =
+          queryClient.getQueryData<ReservationSpotsResponseDto>(spotsQueryKey);
+        updatePinnedState(pathParams.spotId, false);
+        return { previous };
+      },
+      onError: (_error, _variables, context) => {
+        queryClient.setQueryData(spotsQueryKey, context?.previous);
+        toast.error(t("reservations.pin.error"));
+      },
+      onSettled: () =>
+        queryClient.invalidateQueries({ queryKey: spotsQueryKey }),
+    },
+  });
 
-            return {
-              name,
-              idx,
-              slug,
-              item,
-              reservationsForCard,
-              lvl: item.lvl ?? 0,
-            };
-          }),
-        )
-        .sort((a, b) => b.lvl - a.lvl);
+  const normalizedSearch = searchValue.trim();
+  const sortedSpots = getVisibleReservationSpots(
+    spotsQuery.data ?? [],
+    searchValue,
+    filter,
+  );
+
+  const handlePinChange = (spotId: string, isPinned: boolean) => {
+    const mutation = isPinned ? pinMutation : unpinMutation;
+    mutation.mutate({ pathParams: { guildId, spotId } });
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="px-3 pt-3">
-        <Card className="gap-2 border-border bg-card p-2">
-          <div className="flex items-center gap-2">
-            <SearchInput
-              value={searchValue}
-              onChange={(event) => setSearchValue(event.target.value)}
-              placeholder={t("reservations.searchPlaceholder")}
-              className="h-9"
-              wrapperClassName="min-w-0 flex-1"
-              disabled={isLoading}
-            />
-
-            <div className="flex items-center gap-1">
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      onClick={() => setViewMode("list")}
-                      variant={viewMode === "list" ? "default" : "ghost"}
-                      size="icon"
-                      aria-label={t("reservations.view.list")}
-                      aria-pressed={viewMode === "list"}
-                      className="h-8 w-8"
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-                <TooltipContent side="bottom">
-                  <p>{t("reservations.view.list")}</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      onClick={() => setViewMode("grid")}
-                      variant={viewMode === "grid" ? "default" : "ghost"}
-                      size="icon"
-                      aria-label={t("reservations.view.grid")}
-                      aria-pressed={viewMode === "grid"}
-                      className="h-8 w-8"
-                    >
-                      <Grid2X2 className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-                <TooltipContent side="bottom">
-                  <p>{t("reservations.view.grid")}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+      <div className="space-y-2 px-3 pt-3">
+        <Card className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-border bg-card p-2 xl:grid-cols-[minmax(14rem,1fr)_auto_auto]">
+          <SearchInput
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            placeholder={t("reservations.searchPlaceholder")}
+            className="h-9"
+            wrapperClassName="min-w-0"
+            disabled={spotsQuery.isPending}
+          />
+          <ReservationFilters
+            value={filter}
+            onChange={setFilter}
+            className="col-span-2 row-start-2 xl:col-span-1 xl:col-start-2 xl:row-start-1"
+          />
+          <div className="col-start-2 row-start-1 flex items-center gap-1 xl:col-start-3">
+            <Button
+              onClick={() => setViewMode("list")}
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="icon"
+              className="size-8"
+              aria-label={t("reservations.view.list")}
+              aria-pressed={viewMode === "list"}
+            >
+              <List />
+            </Button>
+            <Button
+              onClick={() => setViewMode("grid")}
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="icon"
+              className="size-8"
+              aria-label={t("reservations.view.grid")}
+              aria-pressed={viewMode === "grid"}
+            >
+              <Grid2X2 />
+            </Button>
           </div>
         </Card>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
-        {isLoading ? (
+        {spotsQuery.isPending ? (
           <ScrollArea className="min-h-0 flex-1">
-            <div className="px-3 pb-3">
-              <div
-                className={
-                  viewMode === "grid"
-                    ? "grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-                    : "flex flex-col gap-3"
-                }
-              >
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <ReservationCardSkeleton key={i} viewMode={viewMode} />
-                ))}
-              </div>
+            <div className="grid grid-cols-1 gap-3 px-3 pb-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <ReservationCardSkeleton key={index} viewMode={viewMode} />
+              ))}
             </div>
           </ScrollArea>
-        ) : sortedCards.length === 0 ? (
-          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+        ) : spotsQuery.isError ? (
+          <div className="flex flex-1 items-center justify-center px-3 pb-3">
+            <Empty className="min-h-56 w-full max-w-xl">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <TriangleAlert />
+                </EmptyMedia>
+                <EmptyTitle>{t("reservations.error.title")}</EmptyTitle>
+                <EmptyDescription>
+                  {t("reservations.error.description")}
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => spotsQuery.refetch()}
+                >
+                  {t("common.actions.retry")}
+                </Button>
+              </EmptyContent>
+            </Empty>
+          </div>
+        ) : sortedSpots.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center px-3 pb-3">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -255,15 +199,18 @@ export const Reservations: React.FC = () => {
                     : t("reservations.empty.description")}
                 </EmptyDescription>
               </EmptyHeader>
-              {normalizedSearch && (
+              {(normalizedSearch || filter !== "all") && (
                 <EmptyContent>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setSearchValue("")}
+                    onClick={() => {
+                      setSearchValue("");
+                      setFilter("all");
+                    }}
                   >
-                    {t("reservations.empty.clearSearch")}
+                    {t("reservations.empty.clearFilters")}
                   </Button>
                 </EmptyContent>
               )}
@@ -271,33 +218,29 @@ export const Reservations: React.FC = () => {
           </div>
         ) : (
           <ScrollArea className="min-h-0 flex-1">
-            <div className="px-3 pb-3">
-              <div
-                className={
-                  viewMode === "grid"
-                    ? "grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-                    : "flex flex-col gap-3"
-                }
-              >
-                {sortedCards.map(
-                  ({ name, idx, slug, item, reservationsForCard }) => (
-                    <ReservationCard
-                      key={`${name}-${idx}`}
-                      name={name}
-                      title={name}
-                      images={item.images}
-                      reservations={reservationsForCard}
-                      members={members}
-                      viewMode={viewMode}
-                      onClick={() => handleReservationClick(slug)}
-                    />
-                  ),
-                )}
-              </div>
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 gap-3 px-3 pb-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                  : "flex flex-col gap-3 px-3 pb-3"
+              }
+            >
+              {sortedSpots.map((spot) => (
+                <ReservationCard
+                  key={spot.id}
+                  spot={spot}
+                  viewMode={viewMode}
+                  pinPending={pinMutation.isPending || unpinMutation.isPending}
+                  onPinChange={(isPinned) => handlePinChange(spot.id, isPinned)}
+                  onOpen={() =>
+                    navigate({ to: `/${guildId}/reservations/${spot.id}` })
+                  }
+                />
+              ))}
             </div>
           </ScrollArea>
         )}
       </div>
     </div>
   );
-};
+}

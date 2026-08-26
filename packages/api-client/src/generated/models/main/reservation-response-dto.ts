@@ -5,6 +5,10 @@
  * The Lootlog API documentation
  * OpenAPI spec version: 1.0
  */
+import type { ReservationResponseDtoAuthor } from './reservation-response-dto-author';
+import type { ReservationResponseDtoEditingConstraints } from './reservation-response-dto-editing-constraints';
+import type { ReservationResponseDtoReminderMinutesBefore } from './reservation-response-dto-reminder-minutes-before';
+import type { ReservationResponseDtoSourceOrganization } from './reservation-response-dto-source-organization';
 
 export interface ReservationResponseDto {
   /**
@@ -12,14 +16,21 @@ export interface ReservationResponseDto {
      * @maximum 9007199254740991
      */
   id: number;
-  reservationId: string;
+  spotId: string;
+  spotName: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdDate: string;
+  startsAt: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  fromDate: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  toDate: string;
-  createdBy: string;
+  endsAt: string;
   /** @nullable */
   comment: string | null;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  author: ReservationResponseDtoAuthor;
+  sourceOrganization: ReservationResponseDtoSourceOrganization;
+  isMine: boolean;
+  canEdit: boolean;
+  canCancel: boolean;
+  editingConstraints: ReservationResponseDtoEditingConstraints;
+  reminderMinutesBefore: typeof ReservationResponseDtoReminderMinutesBefore[keyof typeof ReservationResponseDtoReminderMinutesBefore] | null;
 }

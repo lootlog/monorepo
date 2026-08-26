@@ -30,6 +30,11 @@ model Guild {
   lootSubmissions                   LootSubmission[]
   active                            Boolean                       @default(true)
   reservations                      Reservation[]
+  reservationShareInvitations       ReservationShareInvitation[]  @relation("ReservationShareInvitationSourceGuild")
+  acceptedReservationInvitations    ReservationShareInvitation[]  @relation("ReservationShareInvitationTargetGuild")
+  reservationSharesAsFirst          ReservationShare[]            @relation("ReservationShareFirstGuild")
+  reservationSharesAsSecond         ReservationShare[]            @relation("ReservationShareSecondGuild")
+  pinnedReservationSpots            UserPinnedReservationSpot[]
   events                            Event[]
   mapTemplates                      MapTemplate[]
   npcKillStats                      NpcKillStats[]
@@ -550,21 +555,82 @@ model LootlogConfig {
 }
 
 model Reservation {
-  id            Int      @id @default(autoincrement())
-  guildId       String
-  reservationId String
-  createdDate   DateTime
-  fromDate      DateTime
-  toDate        DateTime
-  createdBy     String
-  comment       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                       Int       @id @default(autoincrement())
+  guildId                  String
+  spotId                   String
+  spotName                 String
+  startsAt                 DateTime
+  endsAt                   DateTime
+  createdByUserId          String?
+  authorDisplayName        String
+  authorAvatarUrl          String?
+  reminderMinutesBefore    Int?
+  comment                  String?
+  legacyReservationId      String?   @map("reservationId")
+  legacyCreatedDate        DateTime? @map("createdDate")
+  legacyFromDate           DateTime? @map("fromDate")
+  legacyToDate             DateTime? @map("toDate")
+  legacyCreatedByDiscordId String?   @map("createdBy")
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   guild Guild @relation(fields: [guildId], references: [id])
 
-  @@index([guildId, reservationId])
-  @@index([guildId, toDate])
+  @@index([guildId, spotId, startsAt, endsAt])
+  @@index([guildId, endsAt])
+  @@index([createdByUserId, endsAt])
+}
+
+model ReservationShare {
+  id               String    @id @default(uuid())
+  firstGuildId     String
+  secondGuildId    String
+  createdByUserId  String
+  acceptedByUserId String
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  firstGuild  Guild @relation("ReservationShareFirstGuild", fields: [firstGuildId], references: [id])
+  secondGuild Guild @relation("ReservationShareSecondGuild", fields: [secondGuildId], references: [id])
+
+  @@unique([firstGuildId, secondGuildId])
+  @@index([firstGuildId, revokedAt])
+  @@index([secondGuildId, revokedAt])
+}
+
+model ReservationShareInvitation {
+  id               String    @id @default(uuid())
+  sourceGuildId    String
+  tokenHash        String    @unique
+  createdByUserId  String
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  acceptedByUserId String?
+  targetGuildId    String?
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  sourceGuild Guild  @relation("ReservationShareInvitationSourceGuild", fields: [sourceGuildId], references: [id])
+  targetGuild Guild? @relation("ReservationShareInvitationTargetGuild", fields: [targetGuildId], references: [id])
+
+  @@index([sourceGuildId, createdAt])
+  @@index([targetGuildId])
+  @@index([expiresAt])
+}
+
+model UserPinnedReservationSpot {
+  id       Int      @id @default(autoincrement())
+  userId   String
+  guildId  String
+  spotId   String
+  pinnedAt DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id])
+
+  @@unique([userId, guildId, spotId])
+  @@index([userId, guildId, pinnedAt(sort: Desc)])
 }
 
 model UserCharactersLootlogSettings {

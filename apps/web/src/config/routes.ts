@@ -7,6 +7,7 @@ const ROUTES = {
   user: {
     base: USER_BASE,
     dashboard: USER_BASE,
+    reservations: `${USER_BASE}/reservations`,
     battlePanel: {
       base: `${USER_BASE}/battle-panel`,
       statistics: `${USER_BASE}/battle-panel/statistics`,
@@ -88,6 +89,7 @@ const ROUTE_SEGMENTS = {
     battlePanel: "/battle-panel",
     settings: "/settings",
     notifications: "/notifications",
+    reservations: "/reservations",
     appearance: "/appearance",
     account: "/account",
     servers: "/servers",

@@ -1,27 +1,30 @@
 import { Permission } from "src/generated/prisma/client";
 import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
+import { CreateReservationDto } from "./dto/create-reservation.dto";
 import { ReservationsController } from "./reservations.controller";
 
 describe("ReservationsController", () => {
-  const mockReservationsService = {
-    getReservations: vi.fn(),
+  const reservationsService = {
+    listSpots: vi.fn(),
+    listWindow: vi.fn(),
     createReservation: vi.fn(),
     deleteReservation: vi.fn(),
-    getReservationsCards: vi.fn(),
+    pinSpot: vi.fn(),
+    unpinSpot: vi.fn(),
   };
 
   let controller: ReservationsController;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    controller = new ReservationsController(mockReservationsService as never);
+    controller = new ReservationsController(reservationsService as never);
   });
 
-  it("declares permissions metadata for reservation endpoints", () => {
+  it("declares read and write permissions on the new resources", () => {
     expect(
       Reflect.getMetadata(
         PERMISSIONS_KEY,
-        ReservationsController.prototype.getReservations,
+        ReservationsController.prototype.listReservationSpots,
       ),
     ).toEqual([Permission.LOOTLOG_RESERVATIONS_READ]);
     expect(
@@ -32,23 +35,46 @@ describe("ReservationsController", () => {
     ).toEqual([Permission.LOOTLOG_RESERVATIONS_WRITE]);
   });
 
-  it("passes owner status and member permissions to reservation deletion", () => {
-    controller.deleteReservation(
-      123,
-      { id: "guild-1", ownerId: "discord-owner" } as never,
-      "discord-owner",
+  it("derives the author from authenticated request context", () => {
+    controller.createReservation(
+      { id: "guild-1", ownerId: "owner" } as never,
+      "user-1",
+      "discord-1",
       {
-        guild: { ownerId: "discord-owner" },
+        guild: { ownerId: "owner" },
         permissions: [Permission.LOOTLOG_RESERVATIONS_WRITE],
       } as never,
+      "potepione-zamczysko",
+      {
+        startsAt: "2026-08-26T12:00:00.000Z",
+        endsAt: "2026-08-26T13:00:00.000Z",
+      },
     );
 
-    expect(mockReservationsService.deleteReservation).toHaveBeenCalledWith({
-      guildId: "guild-1",
-      reservationRecordId: 123,
-      actorDiscordId: "discord-owner",
-      actorIsOwner: true,
-      permissions: [Permission.LOOTLOG_RESERVATIONS_WRITE],
+    expect(reservationsService.createReservation).toHaveBeenCalledWith({
+      context: {
+        guildId: "guild-1",
+        userId: "user-1",
+        discordId: "discord-1",
+        actorIsOwner: false,
+        permissions: [Permission.LOOTLOG_RESERVATIONS_WRITE],
+      },
+      spotId: "potepione-zamczysko",
+      data: {
+        startsAt: "2026-08-26T12:00:00.000Z",
+        endsAt: "2026-08-26T13:00:00.000Z",
+      },
     });
+  });
+
+  it("rejects client-supplied author metadata", () => {
+    const result = CreateReservationDto.schema.safeParse({
+      startsAt: "2026-08-26T12:00:00.000Z",
+      endsAt: "2026-08-26T13:00:00.000Z",
+      createdBy: "another-user",
+      createdDate: "2026-01-01T00:00:00.000Z",
+    });
+
+    expect(result.success).toBe(false);
   });
 });
