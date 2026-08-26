@@ -28,6 +28,7 @@ import {
   ruleTestWithoutWorld,
 } from "src/notifications/constants/notification-messages.constant";
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
+import { formatDiscordRelativeTimestamp } from "src/notifications/utils/discord-timestamp.util";
 
 @Injectable()
 export class NotificationContentService {
@@ -287,7 +288,7 @@ export class NotificationContentService {
   }
 
   formatNotificationDate(date: Date) {
-    return `<t:${Math.floor(date.getTime() / 1000)}:R>`;
+    return formatDiscordRelativeTimestamp(date);
   }
 
   private buildTimerNotificationMessage(params: {

@@ -17,6 +17,11 @@ export const getReservationValidationMessage = (
     case "endAfterStart": {
       return t("reservations.schedule.validation.endAfterStart");
     }
+    case "invalidTimeGrid": {
+      return t("reservations.schedule.validation.invalidTimeGrid", {
+        minutes: settings.reservationTimeGranularityMinutes,
+      });
+    }
     case "startTooOld": {
       return t("reservations.schedule.validation.startTooOld");
     }

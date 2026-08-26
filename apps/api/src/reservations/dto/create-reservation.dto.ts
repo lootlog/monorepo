@@ -1,14 +1,21 @@
-import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
-const CreateReservationSchema = z.object({
-  reservationId: z.string().min(1),
-  createdDate: z.string().datetime(),
-  fromDate: z.string().datetime(),
-  toDate: z.string().datetime(),
-  createdBy: z.string().min(1),
-  comment: z.string().max(128).optional(),
-});
+export const reservationReminderMinutesSchema = z.union([
+  z.literal(0),
+  z.literal(5),
+  z.literal(15),
+  z.literal(30),
+]);
+
+const CreateReservationSchema = z
+  .object({
+    startsAt: z.string().datetime({ offset: true }),
+    endsAt: z.string().datetime({ offset: true }),
+    comment: z.string().trim().max(128).optional(),
+    reminderMinutesBefore: reservationReminderMinutesSchema.nullish(),
+  })
+  .strict();
 
 export class CreateReservationDto extends createZodDto(
   CreateReservationSchema,

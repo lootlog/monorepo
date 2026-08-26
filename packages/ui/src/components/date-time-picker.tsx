@@ -23,9 +23,41 @@ export interface DateTimePickerProps {
   className?: string;
   disabled?: Matcher | Matcher[];
   locale?: Locale;
+  min?: Date;
+  max?: Date;
+  minuteStep?: number;
+  timeLabel?: string;
+  clearLabel?: string;
+  required?: boolean;
 }
 
 const getCurrentTimeValue = () => format(new Date(), "HH:mm");
+
+const getDisabledDays = (
+  disabled: Matcher | Matcher[] | undefined,
+  min: Date | undefined,
+  max: Date | undefined,
+): Matcher | Matcher[] | undefined => {
+  const rangeMatchers: Matcher[] = [];
+
+  if (min) {
+    const minDay = new Date(min);
+    minDay.setHours(0, 0, 0, 0);
+    rangeMatchers.push({ before: minDay });
+  }
+
+  if (max) {
+    const maxDay = new Date(max);
+    maxDay.setHours(23, 59, 59, 999);
+    rangeMatchers.push({ after: maxDay });
+  }
+
+  if (disabled) {
+    rangeMatchers.push(...(Array.isArray(disabled) ? disabled : [disabled]));
+  }
+
+  return rangeMatchers.length > 0 ? rangeMatchers : undefined;
+};
 
 export function DateTimePicker({
   value,
@@ -34,6 +66,12 @@ export function DateTimePicker({
   className,
   disabled,
   locale = pl,
+  min,
+  max,
+  minuteStep = 1,
+  timeLabel = "Czas",
+  clearLabel = "Wyczyść datę i czas",
+  required = false,
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
@@ -79,64 +117,83 @@ export function DateTimePicker({
     }
   };
 
-  const handleClear = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleClear = () => {
     setSelectedDate(undefined);
     setTimeValue(getCurrentTimeValue());
     onChange?.(undefined);
     setOpen(false);
   };
 
+  const disabledDays = getDisabledDays(disabled, min, max);
+
+  const selectedDay = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+  const minTime =
+    min && selectedDay === format(min, "yyyy-MM-dd")
+      ? format(min, "HH:mm")
+      : undefined;
+  const maxTime =
+    max && selectedDay === format(max, "yyyy-MM-dd")
+      ? format(max, "HH:mm")
+      : undefined;
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="outline"
-            className={cn(
-              "justify-start text-left font-normal",
-              !selectedDate && "text-muted-foreground",
-              className,
-            )}
+    <div className="flex min-w-0 items-center gap-1">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              className={cn(
+                "min-w-0 flex-1 justify-start text-left font-normal",
+                !selectedDate && "text-muted-foreground",
+                className,
+              )}
+            />
+          }
+        >
+          <CalendarIcon data-icon="inline-start" />
+          <span className="truncate">
+            {selectedDate
+              ? format(selectedDate, "PPP HH:mm", { locale })
+              : placeholder}
+          </span>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleDateSelect}
+            autoFocus
+            disabled={disabledDays}
+            locale={locale}
           />
-        }
-      >
-        <CalendarIcon className="mr-2 h-4 w-4" />
-        {selectedDate ? (
-          format(selectedDate, "PPP HH:mm", { locale })
-        ) : (
-          <span>{placeholder}</span>
-        )}
-        {selectedDate && (
-          <div
-            onMouseDown={handleClear}
-            onClick={(e) => e.stopPropagation()}
-            className="ml-auto flex items-center justify-center"
-          >
-            <X className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
+          <div className="flex flex-col gap-2 border-t p-3">
+            <Label className="text-xs text-muted-foreground">{timeLabel}</Label>
+            <Input
+              type="time"
+              value={timeValue}
+              onChange={handleTimeChange}
+              className="w-full"
+              min={minTime}
+              max={maxTime}
+              step={minuteStep * 60}
+              required={required}
+            />
           </div>
-        )}
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={handleDateSelect}
-          autoFocus
-          disabled={disabled}
-          locale={locale}
-        />
-        <div className="border-t p-3 space-y-2">
-          <Label className="text-xs text-muted-foreground">Czas</Label>
-          <Input
-            type="time"
-            value={timeValue}
-            onChange={handleTimeChange}
-            className="w-full"
-          />
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+      {selectedDate && !required && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          aria-label={clearLabel}
+          onClick={handleClear}
+        >
+          <X />
+        </Button>
+      )}
+    </div>
   );
 }

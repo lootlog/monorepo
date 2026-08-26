@@ -17,9 +17,10 @@ import type {
   LootShareUpdateEventDto,
 } from "src/gateway/dto/loot-event.dto";
 import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
-import type {
-  ReservationCreateEventDto,
-  ReservationDeleteEventDto,
+import {
+  ReservationChangedEventV2Dto,
+  type ReservationCreateEventDto,
+  type ReservationDeleteEventDto,
 } from "src/gateway/dto/reservation-event.dto";
 import type { SendMessageDto } from "src/gateway/dto/send-message.dto";
 import type { SendNotificationDto } from "src/gateway/dto/send-notification.dto";
@@ -224,6 +225,31 @@ export class GatewayQueueHandler {
       RoutingKey.GUILDS_RESERVATIONS_DELETE_DLQ,
       `reservation delete: ${data.guildId}`,
       () => this.gatewayService.handleGuildsReservationDelete(data),
+    );
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2,
+    queue: Queue.GUILDS_RESERVATIONS_CHANGED_V2,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: RETRY_EXCHANGE_NAME,
+      deadLetterRoutingKey: RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_RETRY,
+    },
+  })
+  async handleGuildsReservationChangedV2(
+    rawData: unknown,
+    amqpMsg: AmqpMessage,
+  ) {
+    const data = ReservationChangedEventV2Dto.schema.parse(rawData);
+    await this.handleWithRetry(
+      data,
+      amqpMsg,
+      RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_DLQ,
+      `reservation v2 change: ${data.sourceGuildId}`,
+      () => this.gatewayService.handleGuildsReservationChangedV2(data),
     );
   }
 
@@ -508,6 +534,16 @@ export class GatewayQueueHandler {
     amqpMsg: AmqpMessage,
   ) {
     this.logDeadLetterMessage("Reservation Delete", data, amqpMsg);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEAD_LETTER_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_DLQ,
+    queue: Queue.GUILDS_RESERVATIONS_CHANGED_V2_DLQ,
+    queueOptions: { durable: true },
+  })
+  handleReservationChangedV2DLQ(rawData: unknown, amqpMsg: AmqpMessage) {
+    this.logDeadLetterMessage("Reservation V2 Change", rawData, amqpMsg);
   }
 
   @RabbitSubscribe({

@@ -50,6 +50,14 @@
   },
   "playerStats": {
     "title": "Twoje statystyki bić",
+    "description": "Podsumowanie według typu przeciwnika i świata",
+    "dashboardDescription": "Podsumowanie bić według okresu, świata i przeciwników",
+    "filtersLabel": "Filtry statystyk bić",
+    "sectionsLabel": "Widok statystyk bić",
+    "summarySection": "Podsumowanie",
+    "monstersSection": "Potwory",
+    "allPeriod": "Cały okres",
+    "loadError": "Nie udało się wczytać podsumowania bić.",
     "killsByWorld": "Bicia według świata",
     "characters": "Postaci",
     "noData": "Brak danych o biciach dla Twoich postaci",
@@ -64,6 +72,7 @@
     },
     "topKilledNpcs": {
       "title": "Najczęściej bite potwory",
+      "loadError": "Nie udało się wczytać rankingu potworów.",
       "noData": "Brak danych o zabitych potworach",
       "filteredNoData": "Brak potworów pasujących do wybranych filtrów",
       "killCount": "x{{count}}",

@@ -31,32 +31,64 @@ import type {
 } from '../../../models/main/create-reservation-dto';
 
 import type {
+  CreateReservationPathParameters
+} from '../../../models/main/create-reservation-path-parameters';
+
+import type {
+  DeleteMyReservationPathParameters
+} from '../../../models/main/delete-my-reservation-path-parameters';
+
+import type {
+  DeleteReservationPathParameters
+} from '../../../models/main/delete-reservation-path-parameters';
+
+import type {
+  ListMyReservationsParams
+} from '../../../models/main/list-my-reservations-params';
+
+import type {
+  ListReservationSpotsPathParameters
+} from '../../../models/main/list-reservation-spots-path-parameters';
+
+import type {
+  ListSpotReservationsParams
+} from '../../../models/main/list-spot-reservations-params';
+
+import type {
+  ListSpotReservationsPathParameters
+} from '../../../models/main/list-spot-reservations-path-parameters';
+
+import type {
+  MyReservationsResponseDto
+} from '../../../models/main/my-reservations-response-dto';
+
+import type {
+  PinReservationSpotPathParameters
+} from '../../../models/main/pin-reservation-spot-path-parameters';
+
+import type {
   ReservationResponseDto
 } from '../../../models/main/reservation-response-dto';
 
 import type {
-  ReservationsControllerCreateReservationPathParameters
-} from '../../../models/main/reservations-controller-create-reservation-path-parameters';
+  ReservationSpotsResponseDto
+} from '../../../models/main/reservation-spots-response-dto';
 
 import type {
-  ReservationsControllerDeleteReservationPathParameters
-} from '../../../models/main/reservations-controller-delete-reservation-path-parameters';
+  ReservationWindowResponseDto
+} from '../../../models/main/reservation-window-response-dto';
 
 import type {
-  ReservationsControllerGetReservationsCardsPathParameters
-} from '../../../models/main/reservations-controller-get-reservations-cards-path-parameters';
+  UnpinReservationSpotPathParameters
+} from '../../../models/main/unpin-reservation-spot-path-parameters';
 
 import type {
-  ReservationsControllerGetReservationsPathParameters
-} from '../../../models/main/reservations-controller-get-reservations-path-parameters';
+  UpdateMyReservationPathParameters
+} from '../../../models/main/update-my-reservation-path-parameters';
 
 import type {
-  ReservationsResponseDto
-} from '../../../models/main/reservations-response-dto';
-
-import type {
-  ReservationsCardsResponseDtoOutput
-} from '../../../models/main/reservations-cards-response-dto-output';
+  UpdateReservationDto
+} from '../../../models/main/update-reservation-dto';
 
 import { mainFetch } from '../../../../mutators';
 import type { ErrorType , BodyType } from '../../../../mutators';
@@ -81,21 +113,20 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export const getReservationsControllerGetReservationsUrl = ({ guildId }: ReservationsControllerGetReservationsPathParameters,) => {
+export const getListReservationSpotsUrl = ({ guildId }: ListReservationSpotsPathParameters,) => {
 
 
 
 
-  return `/guilds/${guildId}/reservations`
+  return `/guilds/${guildId}/reservation-spots`
 }
 
 /**
- * Retrieve reservations for a guild
- * @summary Get reservations
+ * @summary List reservation spots with current availability
  */
-export const reservationsControllerGetReservations = async ({ guildId }: ReservationsControllerGetReservationsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationsResponseDto> => {
+export const listReservationSpots = async ({ guildId }: ListReservationSpotsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationSpotsResponseDto> => {
 
-  return mainFetch<ReservationsResponseDto>(getReservationsControllerGetReservationsUrl({ guildId }),
+  return mainFetch<ReservationSpotsResponseDto>(getListReservationSpotsUrl({ guildId }),
   {
     ...options,
     method: 'GET'
@@ -108,69 +139,69 @@ export const reservationsControllerGetReservations = async ({ guildId }: Reserva
 
 
 
-export const getReservationsControllerGetReservationsQueryKey = ({ guildId }: ReservationsControllerGetReservationsPathParameters,) => {
+export const getListReservationSpotsQueryKey = ({ guildId }: ListReservationSpotsPathParameters,) => {
     return [
-    `/guilds/${guildId}/reservations`
+    `/guilds/${guildId}/reservation-spots`
     ] as const;
     }
 
 
-export const getReservationsControllerGetReservationsQueryOptions = <TData = Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError = ErrorType<void>>({ guildId }: ReservationsControllerGetReservationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getListReservationSpotsQueryOptions = <TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>({ guildId }: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getReservationsControllerGetReservationsQueryKey({ guildId });
+  const queryKey =  queryOptions?.queryKey ?? getListReservationSpotsQueryKey({ guildId });
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof reservationsControllerGetReservations>>> = ({ signal }) => reservationsControllerGetReservations({ guildId }, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReservationSpots>>> = ({ signal }) => listReservationSpots({ guildId }, { signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ReservationsControllerGetReservationsQueryResult = NonNullable<Awaited<ReturnType<typeof reservationsControllerGetReservations>>>
-export type ReservationsControllerGetReservationsQueryError = ErrorType<void>
+export type ListReservationSpotsQueryResult = NonNullable<Awaited<ReturnType<typeof listReservationSpots>>>
+export type ListReservationSpotsQueryError = ErrorType<unknown>
 
 
-export function useReservationsControllerGetReservations<TData = Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError = ErrorType<void>>(
- pathParams: ReservationsControllerGetReservationsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError, TData>> & Pick<
+export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+ pathParams: ListReservationSpotsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof reservationsControllerGetReservations>>,
+          Awaited<ReturnType<typeof listReservationSpots>>,
           TError,
-          Awaited<ReturnType<typeof reservationsControllerGetReservations>>
+          Awaited<ReturnType<typeof listReservationSpots>>
         > , 'initialData'
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReservationsControllerGetReservations<TData = Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError = ErrorType<void>>(
- pathParams: ReservationsControllerGetReservationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError, TData>> & Pick<
+export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+ pathParams: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof reservationsControllerGetReservations>>,
+          Awaited<ReturnType<typeof listReservationSpots>>,
           TError,
-          Awaited<ReturnType<typeof reservationsControllerGetReservations>>
+          Awaited<ReturnType<typeof listReservationSpots>>
         > , 'initialData'
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReservationsControllerGetReservations<TData = Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError = ErrorType<void>>(
- pathParams: ReservationsControllerGetReservationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+ pathParams: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get reservations
+ * @summary List reservation spots with current availability
  */
 
-export function useReservationsControllerGetReservations<TData = Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError = ErrorType<void>>(
- { guildId }: ReservationsControllerGetReservationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export function useListReservationSpots<TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+ { guildId }: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getReservationsControllerGetReservationsQueryOptions({ guildId },options)
+  const queryOptions = getListReservationSpotsQueryOptions({ guildId },options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -178,14 +209,14 @@ export function useReservationsControllerGetReservations<TData = Awaited<ReturnT
 }
 
 /**
- * @summary Get reservations
+ * @summary List reservation spots with current availability
  */
-export const prefetchReservationsControllerGetReservationsQuery = async <TData = Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError = ErrorType<void>>(
- queryClient: QueryClient, { guildId }: ReservationsControllerGetReservationsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const prefetchListReservationSpotsQuery = async <TData = Awaited<ReturnType<typeof listReservationSpots>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, { guildId }: ListReservationSpotsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReservationSpots>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
-  const queryOptions = getReservationsControllerGetReservationsQueryOptions({ guildId },options)
+  const queryOptions = getListReservationSpotsQueryOptions({ guildId },options)
 
   await queryClient.prefetchQuery(queryOptions);
 
@@ -193,53 +224,213 @@ export const prefetchReservationsControllerGetReservationsQuery = async <TData =
 }
 
 /**
- * @summary Get reservations
+ * @summary List reservation spots with current availability
  */
-export const invalidateReservationsControllerGetReservations = async (
- queryClient: QueryClient, { guildId }: ReservationsControllerGetReservationsPathParameters, options?: InvalidateOptions
+export const invalidateListReservationSpots = async (
+ queryClient: QueryClient, { guildId }: ListReservationSpotsPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
-  await queryClient.invalidateQueries({ queryKey: getReservationsControllerGetReservationsQueryKey({ guildId }) }, options);
+  await queryClient.invalidateQueries({ queryKey: getListReservationSpotsQueryKey({ guildId }) }, options);
 
   return queryClient;
 }
 
 /**
- * @summary Get reservations
+ * @summary List reservation spots with current availability
  */
-export const useSetReservationsControllerGetReservationsQueryData = () => {
+export const useSetListReservationSpotsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: ReservationsControllerGetReservationsPathParameters,updater: Awaited<ReturnType<typeof reservationsControllerGetReservations>> | undefined | ((old: Awaited<ReturnType<typeof reservationsControllerGetReservations>> | undefined) => Awaited<ReturnType<typeof reservationsControllerGetReservations>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof reservationsControllerGetReservations>>>({ queryKey: getReservationsControllerGetReservationsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: ListReservationSpotsPathParameters,updater: Awaited<ReturnType<typeof listReservationSpots>> | undefined | ((old: Awaited<ReturnType<typeof listReservationSpots>> | undefined) => Awaited<ReturnType<typeof listReservationSpots>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listReservationSpots>>>({ queryKey: getListReservationSpotsQueryKey({ guildId }) }, updater);
   };
 }
 
 /**
- * @summary Get reservations
+ * @summary List reservation spots with current availability
  */
-export const useGetReservationsControllerGetReservationsQueryData = () => {
+export const useGetListReservationSpotsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: ReservationsControllerGetReservationsPathParameters,) =>
-    queryClient.getQueryData<Awaited<ReturnType<typeof reservationsControllerGetReservations>>>(getReservationsControllerGetReservationsQueryKey({ guildId }));
+  return ({ guildId }: ListReservationSpotsPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof listReservationSpots>>>(getListReservationSpotsQueryKey({ guildId }));
 }
 
 
-export const getReservationsControllerCreateReservationUrl = ({ guildId }: ReservationsControllerCreateReservationPathParameters,) => {
+export const getListSpotReservationsUrl = ({ guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/guilds/${guildId}/reservations`
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/reservation-spots/${spotId}/reservations?${stringifiedParams}` : `/guilds/${guildId}/reservation-spots/${spotId}/reservations`
 }
 
 /**
- * Create a new reservation to a guild
- * @summary Create reservation
+ * @summary List reservations for one spot and time window
  */
-export const reservationsControllerCreateReservation = async ({ guildId }: ReservationsControllerCreateReservationPathParameters,
+export const listSpotReservations = async ({ guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationWindowResponseDto> => {
+
+  return mainFetch<ReservationWindowResponseDto>(getListSpotReservationsUrl({ guildId, spotId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSpotReservationsQueryKey = ({ guildId, spotId }: ListSpotReservationsPathParameters,
+    params?: ListSpotReservationsParams,) => {
+    return [
+    `/guilds/${guildId}/reservation-spots/${spotId}/reservations`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSpotReservationsQueryOptions = <TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>({ guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSpotReservationsQueryKey({ guildId, spotId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSpotReservations>>> = ({ signal }) => listSpotReservations({ guildId, spotId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined && spotId !== null && spotId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListSpotReservationsQueryResult = NonNullable<Awaited<ReturnType<typeof listSpotReservations>>>
+export type ListSpotReservationsQueryError = ErrorType<unknown>
+
+
+export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+ pathParams: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSpotReservations>>,
+          TError,
+          Awaited<ReturnType<typeof listSpotReservations>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+ pathParams: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSpotReservations>>,
+          TError,
+          Awaited<ReturnType<typeof listSpotReservations>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+ pathParams: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List reservations for one spot and time window
+ */
+
+export function useListSpotReservations<TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+ { guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListSpotReservationsQueryOptions({ guildId, spotId },params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List reservations for one spot and time window
+ */
+export const prefetchListSpotReservationsQuery = async <TData = Awaited<ReturnType<typeof listSpotReservations>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, { guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSpotReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getListSpotReservationsQueryOptions({ guildId, spotId },params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary List reservations for one spot and time window
+ */
+export const invalidateListSpotReservations = async (
+ queryClient: QueryClient, { guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getListSpotReservationsQueryKey({ guildId, spotId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List reservations for one spot and time window
+ */
+export const useSetListSpotReservationsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams | undefined,updater: Awaited<ReturnType<typeof listSpotReservations>> | undefined | ((old: Awaited<ReturnType<typeof listSpotReservations>> | undefined) => Awaited<ReturnType<typeof listSpotReservations>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listSpotReservations>>>({ queryKey: getListSpotReservationsQueryKey({ guildId, spotId },params) }, updater);
+  };
+}
+
+/**
+ * @summary List reservations for one spot and time window
+ */
+export const useGetListSpotReservationsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, spotId }: ListSpotReservationsPathParameters,
+    params: ListSpotReservationsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof listSpotReservations>>>(getListSpotReservationsQueryKey({ guildId, spotId },params));
+}
+
+
+export const getCreateReservationUrl = ({ guildId, spotId }: CreateReservationPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/reservation-spots/${spotId}/reservations`
+}
+
+/**
+ * @summary Create a reservation owned by the authenticated user
+ */
+export const createReservation = async ({ guildId, spotId }: CreateReservationPathParameters,
     createReservationDto: CreateReservationDto, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationResponseDto> => {
 
-  return mainFetch<ReservationResponseDto>(getReservationsControllerCreateReservationUrl({ guildId }),
+  return mainFetch<ReservationResponseDto>(getCreateReservationUrl({ guildId, spotId }),
   {
     ...options,
     method: 'POST',
@@ -252,11 +443,11 @@ export const reservationsControllerCreateReservation = async ({ guildId }: Reser
 
 
 
-export const getReservationsControllerCreateReservationMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reservationsControllerCreateReservation>>, TError,{pathParams: ReservationsControllerCreateReservationPathParameters;data: BodyType<CreateReservationDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof reservationsControllerCreateReservation>>, TError,{pathParams: ReservationsControllerCreateReservationPathParameters;data: BodyType<CreateReservationDto>}, TContext> => {
+export const getCreateReservationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReservation>>, TError,{pathParams: CreateReservationPathParameters;data: BodyType<CreateReservationDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createReservation>>, TError,{pathParams: CreateReservationPathParameters;data: BodyType<CreateReservationDto>}, TContext> => {
 
-const mutationKey = ['reservationsControllerCreateReservation'];
+const mutationKey = ['createReservation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -266,10 +457,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reservationsControllerCreateReservation>>, {pathParams: ReservationsControllerCreateReservationPathParameters;data: BodyType<CreateReservationDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createReservation>>, {pathParams: CreateReservationPathParameters;data: BodyType<CreateReservationDto>}> = (props) => {
           const {pathParams,data} = props ?? {};
 
-          return  reservationsControllerCreateReservation(pathParams,data,requestOptions)
+          return  createReservation(pathParams,data,requestOptions)
         }
 
 
@@ -279,38 +470,37 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ReservationsControllerCreateReservationMutationResult = NonNullable<Awaited<ReturnType<typeof reservationsControllerCreateReservation>>>
-    export type ReservationsControllerCreateReservationMutationBody = BodyType<CreateReservationDto>
-    export type ReservationsControllerCreateReservationMutationError = ErrorType<void>
+    export type CreateReservationMutationResult = NonNullable<Awaited<ReturnType<typeof createReservation>>>
+    export type CreateReservationMutationBody = BodyType<CreateReservationDto>
+    export type CreateReservationMutationError = ErrorType<unknown>
 
     /**
- * @summary Create reservation
+ * @summary Create a reservation owned by the authenticated user
  */
-export const useReservationsControllerCreateReservation = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reservationsControllerCreateReservation>>, TError,{pathParams: ReservationsControllerCreateReservationPathParameters;data: BodyType<CreateReservationDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
+export const useCreateReservation = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReservation>>, TError,{pathParams: CreateReservationPathParameters;data: BodyType<CreateReservationDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof reservationsControllerCreateReservation>>,
+        Awaited<ReturnType<typeof createReservation>>,
         TError,
-        {pathParams: ReservationsControllerCreateReservationPathParameters;data: BodyType<CreateReservationDto>},
+        {pathParams: CreateReservationPathParameters;data: BodyType<CreateReservationDto>},
         TContext
       > => {
-      return useMutation(getReservationsControllerCreateReservationMutationOptions(options), queryClient);
+      return useMutation(getCreateReservationMutationOptions(options), queryClient);
     }
-    export const getReservationsControllerDeleteReservationUrl = ({ guildId, reservationRecordId }: ReservationsControllerDeleteReservationPathParameters,) => {
+    export const getDeleteReservationUrl = ({ guildId, reservationId }: DeleteReservationPathParameters,) => {
 
 
 
 
-  return `/guilds/${guildId}/reservations/${reservationRecordId}`
+  return `/guilds/${guildId}/reservations/${reservationId}`
 }
 
 /**
- * Deletes a reservation the user owns or can moderate
- * @summary Delete reservation
+ * @summary Cancel an owned or locally moderated reservation
  */
-export const reservationsControllerDeleteReservation = async ({ guildId, reservationRecordId }: ReservationsControllerDeleteReservationPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationResponseDto> => {
+export const deleteReservation = async ({ guildId, reservationId }: DeleteReservationPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
-  return mainFetch<ReservationResponseDto>(getReservationsControllerDeleteReservationUrl({ guildId, reservationRecordId }),
+  return mainFetch<void>(getDeleteReservationUrl({ guildId, reservationId }),
   {
     ...options,
     method: 'DELETE'
@@ -323,11 +513,11 @@ export const reservationsControllerDeleteReservation = async ({ guildId, reserva
 
 
 
-export const getReservationsControllerDeleteReservationMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reservationsControllerDeleteReservation>>, TError,{pathParams: ReservationsControllerDeleteReservationPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof reservationsControllerDeleteReservation>>, TError,{pathParams: ReservationsControllerDeleteReservationPathParameters}, TContext> => {
+export const getDeleteReservationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReservation>>, TError,{pathParams: DeleteReservationPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteReservation>>, TError,{pathParams: DeleteReservationPathParameters}, TContext> => {
 
-const mutationKey = ['reservationsControllerDeleteReservation'];
+const mutationKey = ['deleteReservation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -337,10 +527,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reservationsControllerDeleteReservation>>, {pathParams: ReservationsControllerDeleteReservationPathParameters}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteReservation>>, {pathParams: DeleteReservationPathParameters}> = (props) => {
           const {pathParams} = props ?? {};
 
-          return  reservationsControllerDeleteReservation(pathParams,requestOptions)
+          return  deleteReservation(pathParams,requestOptions)
         }
 
 
@@ -350,38 +540,184 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ReservationsControllerDeleteReservationMutationResult = NonNullable<Awaited<ReturnType<typeof reservationsControllerDeleteReservation>>>
+    export type DeleteReservationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteReservation>>>
 
-    export type ReservationsControllerDeleteReservationMutationError = ErrorType<unknown>
+    export type DeleteReservationMutationError = ErrorType<unknown>
 
     /**
- * @summary Delete reservation
+ * @summary Cancel an owned or locally moderated reservation
  */
-export const useReservationsControllerDeleteReservation = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reservationsControllerDeleteReservation>>, TError,{pathParams: ReservationsControllerDeleteReservationPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+export const useDeleteReservation = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReservation>>, TError,{pathParams: DeleteReservationPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof reservationsControllerDeleteReservation>>,
+        Awaited<ReturnType<typeof deleteReservation>>,
         TError,
-        {pathParams: ReservationsControllerDeleteReservationPathParameters},
+        {pathParams: DeleteReservationPathParameters},
         TContext
       > => {
-      return useMutation(getReservationsControllerDeleteReservationMutationOptions(options), queryClient);
+      return useMutation(getDeleteReservationMutationOptions(options), queryClient);
     }
-    export const getReservationsControllerGetReservationsCardsUrl = ({ guildId }: ReservationsControllerGetReservationsCardsPathParameters,) => {
+    export const getPinReservationSpotUrl = ({ guildId, spotId }: PinReservationSpotPathParameters,) => {
 
 
 
 
-  return `/guilds/${guildId}/reservations/cards`
+  return `/guilds/${guildId}/reservation-spot-pins/${spotId}`
 }
 
 /**
- * Retrieve reservations cards
- * @summary Get reservations cards
+ * @summary Pin a reservation spot for the current user
  */
-export const reservationsControllerGetReservationsCards = async ({ guildId }: ReservationsControllerGetReservationsCardsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationsCardsResponseDtoOutput> => {
+export const pinReservationSpot = async ({ guildId, spotId }: PinReservationSpotPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
-  return mainFetch<ReservationsCardsResponseDtoOutput>(getReservationsControllerGetReservationsCardsUrl({ guildId }),
+  return mainFetch<void>(getPinReservationSpotUrl({ guildId, spotId }),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+
+
+
+export const getPinReservationSpotMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinReservationSpot>>, TError,{pathParams: PinReservationSpotPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof pinReservationSpot>>, TError,{pathParams: PinReservationSpotPathParameters}, TContext> => {
+
+const mutationKey = ['pinReservationSpot'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof pinReservationSpot>>, {pathParams: PinReservationSpotPathParameters}> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  pinReservationSpot(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PinReservationSpotMutationResult = NonNullable<Awaited<ReturnType<typeof pinReservationSpot>>>
+
+    export type PinReservationSpotMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Pin a reservation spot for the current user
+ */
+export const usePinReservationSpot = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinReservationSpot>>, TError,{pathParams: PinReservationSpotPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof pinReservationSpot>>,
+        TError,
+        {pathParams: PinReservationSpotPathParameters},
+        TContext
+      > => {
+      return useMutation(getPinReservationSpotMutationOptions(options), queryClient);
+    }
+    export const getUnpinReservationSpotUrl = ({ guildId, spotId }: UnpinReservationSpotPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/reservation-spot-pins/${spotId}`
+}
+
+/**
+ * @summary Unpin a reservation spot for the current user
+ */
+export const unpinReservationSpot = async ({ guildId, spotId }: UnpinReservationSpotPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getUnpinReservationSpotUrl({ guildId, spotId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getUnpinReservationSpotMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpinReservationSpot>>, TError,{pathParams: UnpinReservationSpotPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unpinReservationSpot>>, TError,{pathParams: UnpinReservationSpotPathParameters}, TContext> => {
+
+const mutationKey = ['unpinReservationSpot'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unpinReservationSpot>>, {pathParams: UnpinReservationSpotPathParameters}> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  unpinReservationSpot(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnpinReservationSpotMutationResult = NonNullable<Awaited<ReturnType<typeof unpinReservationSpot>>>
+
+    export type UnpinReservationSpotMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Unpin a reservation spot for the current user
+ */
+export const useUnpinReservationSpot = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpinReservationSpot>>, TError,{pathParams: UnpinReservationSpotPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof unpinReservationSpot>>,
+        TError,
+        {pathParams: UnpinReservationSpotPathParameters},
+        TContext
+      > => {
+      return useMutation(getUnpinReservationSpotMutationOptions(options), queryClient);
+    }
+    export const getListMyReservationsUrl = (params?: ListMyReservationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/users/@me/reservations?${stringifiedParams}` : `/users/@me/reservations`
+}
+
+/**
+ * @summary List the current user's reservations
+ */
+export const listMyReservations = async (params?: ListMyReservationsParams, options?: Parameters<typeof mainFetch>[1]): Promise<MyReservationsResponseDto> => {
+
+  return mainFetch<MyReservationsResponseDto>(getListMyReservationsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -394,69 +730,69 @@ export const reservationsControllerGetReservationsCards = async ({ guildId }: Re
 
 
 
-export const getReservationsControllerGetReservationsCardsQueryKey = ({ guildId }: ReservationsControllerGetReservationsCardsPathParameters,) => {
+export const getListMyReservationsQueryKey = (params?: ListMyReservationsParams,) => {
     return [
-    `/guilds/${guildId}/reservations/cards`
+    `/users/@me/reservations`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getReservationsControllerGetReservationsCardsQueryOptions = <TData = Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError = ErrorType<void>>({ guildId }: ReservationsControllerGetReservationsCardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getListMyReservationsQueryOptions = <TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getReservationsControllerGetReservationsCardsQueryKey({ guildId });
+  const queryKey =  queryOptions?.queryKey ?? getListMyReservationsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>> = ({ signal }) => reservationsControllerGetReservationsCards({ guildId }, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyReservations>>> = ({ signal }) => listMyReservations(params, { signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ReservationsControllerGetReservationsCardsQueryResult = NonNullable<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>>
-export type ReservationsControllerGetReservationsCardsQueryError = ErrorType<void>
+export type ListMyReservationsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyReservations>>>
+export type ListMyReservationsQueryError = ErrorType<unknown>
 
 
-export function useReservationsControllerGetReservationsCards<TData = Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError = ErrorType<void>>(
- pathParams: ReservationsControllerGetReservationsCardsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError, TData>> & Pick<
+export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+ params: undefined |  ListMyReservationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>,
+          Awaited<ReturnType<typeof listMyReservations>>,
           TError,
-          Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>
+          Awaited<ReturnType<typeof listMyReservations>>
         > , 'initialData'
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReservationsControllerGetReservationsCards<TData = Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError = ErrorType<void>>(
- pathParams: ReservationsControllerGetReservationsCardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError, TData>> & Pick<
+export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+ params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>,
+          Awaited<ReturnType<typeof listMyReservations>>,
           TError,
-          Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>
+          Awaited<ReturnType<typeof listMyReservations>>
         > , 'initialData'
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReservationsControllerGetReservationsCards<TData = Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError = ErrorType<void>>(
- pathParams: ReservationsControllerGetReservationsCardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+ params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get reservations cards
+ * @summary List the current user's reservations
  */
 
-export function useReservationsControllerGetReservationsCards<TData = Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError = ErrorType<void>>(
- { guildId }: ReservationsControllerGetReservationsCardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export function useListMyReservations<TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+ params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getReservationsControllerGetReservationsCardsQueryOptions({ guildId },options)
+  const queryOptions = getListMyReservationsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -464,14 +800,14 @@ export function useReservationsControllerGetReservationsCards<TData = Awaited<Re
 }
 
 /**
- * @summary Get reservations cards
+ * @summary List the current user's reservations
  */
-export const prefetchReservationsControllerGetReservationsCardsQuery = async <TData = Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError = ErrorType<void>>(
- queryClient: QueryClient, { guildId }: ReservationsControllerGetReservationsCardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const prefetchListMyReservationsQuery = async <TData = Awaited<ReturnType<typeof listMyReservations>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, params?: ListMyReservationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyReservations>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
-  const queryOptions = getReservationsControllerGetReservationsCardsQueryOptions({ guildId },options)
+  const queryOptions = getListMyReservationsQueryOptions(params,options)
 
   await queryClient.prefetchQuery(queryOptions);
 
@@ -479,32 +815,175 @@ export const prefetchReservationsControllerGetReservationsCardsQuery = async <TD
 }
 
 /**
- * @summary Get reservations cards
+ * @summary List the current user's reservations
  */
-export const invalidateReservationsControllerGetReservationsCards = async (
- queryClient: QueryClient, { guildId }: ReservationsControllerGetReservationsCardsPathParameters, options?: InvalidateOptions
+export const invalidateListMyReservations = async (
+ queryClient: QueryClient, params?: ListMyReservationsParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
-  await queryClient.invalidateQueries({ queryKey: getReservationsControllerGetReservationsCardsQueryKey({ guildId }) }, options);
+  await queryClient.invalidateQueries({ queryKey: getListMyReservationsQueryKey(params) }, options);
 
   return queryClient;
 }
 
 /**
- * @summary Get reservations cards
+ * @summary List the current user's reservations
  */
-export const useSetReservationsControllerGetReservationsCardsQueryData = () => {
+export const useSetListMyReservationsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: ReservationsControllerGetReservationsCardsPathParameters,updater: Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>> | undefined | ((old: Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>> | undefined) => Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>>({ queryKey: getReservationsControllerGetReservationsCardsQueryKey({ guildId }) }, updater);
+  return (params: ListMyReservationsParams | undefined,updater: Awaited<ReturnType<typeof listMyReservations>> | undefined | ((old: Awaited<ReturnType<typeof listMyReservations>> | undefined) => Awaited<ReturnType<typeof listMyReservations>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listMyReservations>>>({ queryKey: getListMyReservationsQueryKey(params) }, updater);
   };
 }
 
 /**
- * @summary Get reservations cards
+ * @summary List the current user's reservations
  */
-export const useGetReservationsControllerGetReservationsCardsQueryData = () => {
+export const useGetListMyReservationsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: ReservationsControllerGetReservationsCardsPathParameters,) =>
-    queryClient.getQueryData<Awaited<ReturnType<typeof reservationsControllerGetReservationsCards>>>(getReservationsControllerGetReservationsCardsQueryKey({ guildId }));
+  return (params?: ListMyReservationsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof listMyReservations>>>(getListMyReservationsQueryKey(params));
 }
+
+
+export const getUpdateMyReservationUrl = ({ reservationId }: UpdateMyReservationPathParameters,) => {
+
+
+
+
+  return `/users/@me/reservations/${reservationId}`
+}
+
+/**
+ * @summary Update one of the current user's reservations
+ */
+export const updateMyReservation = async ({ reservationId }: UpdateMyReservationPathParameters,
+    updateReservationDto: UpdateReservationDto, options?: Parameters<typeof mainFetch>[1]): Promise<ReservationResponseDto> => {
+
+  return mainFetch<ReservationResponseDto>(getUpdateMyReservationUrl({ reservationId }),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateReservationDto)
+  }
+);}
+
+
+
+
+
+export const getUpdateMyReservationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyReservation>>, TError,{pathParams: UpdateMyReservationPathParameters;data: BodyType<UpdateReservationDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyReservation>>, TError,{pathParams: UpdateMyReservationPathParameters;data: BodyType<UpdateReservationDto>}, TContext> => {
+
+const mutationKey = ['updateMyReservation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyReservation>>, {pathParams: UpdateMyReservationPathParameters;data: BodyType<UpdateReservationDto>}> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  updateMyReservation(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyReservationMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyReservation>>>
+    export type UpdateMyReservationMutationBody = BodyType<UpdateReservationDto>
+    export type UpdateMyReservationMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update one of the current user's reservations
+ */
+export const useUpdateMyReservation = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyReservation>>, TError,{pathParams: UpdateMyReservationPathParameters;data: BodyType<UpdateReservationDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyReservation>>,
+        TError,
+        {pathParams: UpdateMyReservationPathParameters;data: BodyType<UpdateReservationDto>},
+        TContext
+      > => {
+      return useMutation(getUpdateMyReservationMutationOptions(options), queryClient);
+    }
+    export const getDeleteMyReservationUrl = ({ reservationId }: DeleteMyReservationPathParameters,) => {
+
+
+
+
+  return `/users/@me/reservations/${reservationId}`
+}
+
+/**
+ * @summary Cancel one of the current user's reservations
+ */
+export const deleteMyReservation = async ({ reservationId }: DeleteMyReservationPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getDeleteMyReservationUrl({ reservationId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteMyReservationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyReservation>>, TError,{pathParams: DeleteMyReservationPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMyReservation>>, TError,{pathParams: DeleteMyReservationPathParameters}, TContext> => {
+
+const mutationKey = ['deleteMyReservation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMyReservation>>, {pathParams: DeleteMyReservationPathParameters}> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  deleteMyReservation(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMyReservationMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMyReservation>>>
+
+    export type DeleteMyReservationMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Cancel one of the current user's reservations
+ */
+export const useDeleteMyReservation = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyReservation>>, TError,{pathParams: DeleteMyReservationPathParameters}, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMyReservation>>,
+        TError,
+        {pathParams: DeleteMyReservationPathParameters},
+        TContext
+      > => {
+      return useMutation(getDeleteMyReservationMutationOptions(options), queryClient);
+    }

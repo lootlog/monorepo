@@ -1,237 +1,585 @@
 import {
-  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
-  Logger,
   NotFoundException,
+  UnprocessableEntityException,
 } from "@nestjs/common";
-import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { PrismaService } from "src/db/prisma.service";
+import { Permission, Prisma } from "src/generated/prisma/client";
+import { GuildsService } from "src/guilds/guilds.service";
 import type { CreateReservationDto } from "./dto/create-reservation.dto";
-import { Permission, type Prisma } from "src/generated/prisma/client";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { RedisService } from "@lootlog/nest-shared/redis";
-import { HttpService } from "@nestjs/axios";
-import { env } from "src/config/env";
-import { lastValueFrom } from "rxjs";
+import type { MyReservationsQueryDto } from "./dto/reservation-query.dto";
+import type { UpdateReservationDto } from "./dto/update-reservation.dto";
+import { ReservationCatalogService } from "./reservation-catalog.service";
+import { ReservationEventsPublisher } from "./reservation-events.publisher";
+import {
+  getDiscordAvatarUrl,
+  presentReservation,
+  type ReservationWithGuild,
+} from "./reservation-presentation";
+import {
+  parseReservationWindow,
+  validateReservationTime,
+  type ReservationSettings,
+} from "./reservation-policy";
+import { ReservationReminderService } from "./reservation-reminder.service";
+import { ReservationSharingService } from "./reservation-sharing.service";
 
-const DEFAULT_RESERVATION_SETTINGS = {
+const DEFAULT_RESERVATION_SETTINGS: ReservationSettings = {
   reservationMaxDurationMinutes: 180,
   reservationMinDurationMinutes: 30,
   reservationTimeGranularityMinutes: 15,
   reservationMaxAdvanceDays: 7,
   reservationActiveLimitPerSpot: 3,
-} as const;
-
-const RESERVATIONS_CACHE_TTL_SECONDS = 15;
-const RESERVATIONS_CLEANUP_GATE_TTL_SECONDS = 15 * 60;
-const RESERVATIONS_CARDS_CACHE_TTL_SECONDS = 60 * 60;
-
-type ReservationRecord = {
-  id: number;
-  reservationId: string;
-  createdDate: Date;
-  fromDate: Date;
-  toDate: Date;
-  createdBy: string;
-  comment?: string | null;
 };
 
-type SerializedReservationRecord = Omit<
-  ReservationRecord,
-  "createdDate" | "fromDate" | "toDate"
-> & {
-  createdDate: string;
-  fromDate: string;
-  toDate: string;
+type ViewerContext = {
+  guildId: string;
+  userId: string;
+  discordId: string;
+  actorIsOwner: boolean;
+  permissions: Permission[];
 };
 
-type ReservationCard = {
-  lvl: number;
-  images: string[];
-  maps: string[];
-};
-
-type ReservationsCardsPayload = Record<
-  string,
-  ReservationCard | ReservationCard[] | undefined
->;
+function canModerateReservations(context: ViewerContext): boolean {
+  const permissions = new Set(context.permissions);
+  return (
+    context.actorIsOwner ||
+    permissions.has(Permission.OWNER) ||
+    permissions.has(Permission.ADMIN) ||
+    permissions.has(Permission.LOOTLOG_MANAGE)
+  );
+}
 
 @Injectable()
 export class ReservationsService {
-  private readonly logger = new Logger(ReservationsService.name);
-
   constructor(
     private readonly prisma: PrismaService,
-    private readonly amqpConnection: AmqpConnection,
-    private readonly redis: RedisService,
-    private readonly httpService: HttpService,
+    private readonly guildsService: GuildsService,
+    private readonly catalogService: ReservationCatalogService,
+    private readonly sharingService: ReservationSharingService,
+    private readonly reminderService: ReservationReminderService,
+    private readonly eventsPublisher: ReservationEventsPublisher,
   ) {}
 
-  private getReservationsCacheKey(guildId: string) {
-    return `reservations:list:${guildId}`;
-  }
-
-  private getReservationsCleanupGateKey(guildId: string) {
-    return `reservations:cleanup:${guildId}`;
-  }
-
-  private getReservationRetentionDate() {
-    return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  }
-
-  private async deleteExpiredReservations(guildId: string) {
-    const monthAgoDate = this.getReservationRetentionDate();
-    await this.prisma.reservation.deleteMany({
+  async listSpots(context: ViewerContext) {
+    const now = new Date();
+    const [spots, visibleGuildIds, pinnedSpots] = await Promise.all([
+      this.catalogService.getSpots(),
+      this.sharingService.getVisibleGuildIds(context.guildId),
+      this.prisma.userPinnedReservationSpot.findMany({
+        where: { userId: context.userId, guildId: context.guildId },
+        select: { spotId: true },
+      }),
+    ]);
+    const reservations = await this.prisma.reservation.findMany({
       where: {
-        guildId,
-        toDate: { lt: monthAgoDate },
+        guildId: { in: visibleGuildIds },
+        endsAt: { gt: now },
       },
+      include: { guild: true },
+      orderBy: [{ startsAt: "asc" }, { id: "asc" }],
     });
-    return monthAgoDate;
-  }
+    const pinnedSpotIds = new Set(pinnedSpots.map(({ spotId }) => spotId));
+    const viewer = this.toPresentationViewer(context);
 
-  private async deleteExpiredReservationsWithGate(guildId: string) {
-    const monthAgoDate = this.getReservationRetentionDate();
-    let cleanupScheduled = false;
-
-    try {
-      cleanupScheduled = await this.redis.setNX(
-        this.getReservationsCleanupGateKey(guildId),
-        "1",
-        RESERVATIONS_CLEANUP_GATE_TTL_SECONDS,
+    return spots.map((spot) => {
+      const spotReservations = reservations.filter(
+        (reservation) => reservation.spotId === spot.id,
       );
-    } catch (error) {
-      this.logger.warn("Reservations cleanup gate unavailable", error);
-    }
+      const currentReservation =
+        spotReservations.find(
+          (reservation) =>
+            reservation.startsAt <= now && reservation.endsAt > now,
+        ) ?? null;
+      const nextReservation =
+        spotReservations.find((reservation) => reservation.startsAt > now) ??
+        null;
 
-    if (cleanupScheduled) {
-      await this.deleteExpiredReservations(guildId);
-    }
-
-    return monthAgoDate;
+      return {
+        ...spot,
+        isPinned: pinnedSpotIds.has(spot.id),
+        isAvailableNow: currentReservation === null,
+        availableUntil:
+          currentReservation === null
+            ? (nextReservation?.startsAt ?? null)
+            : null,
+        activeReservationCount: spotReservations.length,
+        hasPartnerReservations: spotReservations.some(
+          (reservation) => reservation.guildId !== context.guildId,
+        ),
+        currentReservation: currentReservation
+          ? presentReservation(currentReservation, viewer)
+          : null,
+        nextReservation: nextReservation
+          ? presentReservation(nextReservation, viewer)
+          : null,
+      };
+    });
   }
 
-  private async invalidateReservationsCache(guildId: string) {
-    try {
-      await this.redis.del(this.getReservationsCacheKey(guildId));
-    } catch (error) {
-      this.logger.warn("Failed to invalidate reservations cache", error);
-    }
+  async listWindow(
+    context: ViewerContext,
+    spotId: string,
+    fromValue: string,
+    toValue: string,
+  ) {
+    await this.catalogService.getSpot(spotId);
+    const { from, to } = parseReservationWindow(fromValue, toValue);
+    const visibleGuildIds = await this.sharingService.getVisibleGuildIds(
+      context.guildId,
+    );
+    const reservations = await this.prisma.reservation.findMany({
+      where: {
+        guildId: { in: visibleGuildIds },
+        spotId,
+        startsAt: { lt: to },
+        endsAt: { gt: from },
+      },
+      include: { guild: true },
+      orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    });
+    const viewer = this.toPresentationViewer(context);
+
+    return {
+      items: reservations.map((reservation) =>
+        presentReservation(reservation, viewer),
+      ),
+      window: { from, to },
+    };
   }
 
-  private normalizeReservationsCards(input: ReservationsCardsPayload) {
-    const result: Record<string, ReservationCard[]> = {};
+  async createReservation(options: {
+    context: ViewerContext;
+    spotId: string;
+    data: CreateReservationDto;
+  }) {
+    const { context, data } = options;
+    const [spot, guild, settings, visibleGuildIds, member] = await Promise.all([
+      this.catalogService.getSpot(options.spotId),
+      this.prisma.guild.findUniqueOrThrow({
+        where: { id: context.guildId },
+      }),
+      this.getReservationSettings(context.guildId),
+      this.sharingService.getVisibleGuildIds(context.guildId),
+      this.prisma.member.findFirst({
+        where: {
+          guildId: context.guildId,
+          active: true,
+          OR: [{ globalUserId: context.userId }, { userId: context.discordId }],
+        },
+        orderBy: { updatedAt: "desc" },
+      }),
+    ]);
+    if (!member) {
+      throw new ForbiddenException({ code: "RESERVATION_MEMBER_REQUIRED" });
+    }
 
-    Object.entries(input ?? {}).forEach(([key, value]) => {
-      if (!value) {
-        return;
-      }
-
-      const cards = Array.isArray(value) ? value : [value];
-      const sanitized = cards
-        .map((card) => ({
-          lvl: Number(card.lvl) || 0,
-          images: Array.isArray(card.images) ? card.images.filter(Boolean) : [],
-          maps: Array.isArray(card.maps) ? card.maps.filter(Boolean) : [],
-        }))
-        .filter(
-          (card) =>
-            card.lvl > 0 || card.images.length > 0 || card.maps.length > 0,
-        );
-
-      if (sanitized.length > 0) {
-        result[key] = sanitized;
-      }
+    const startsAt = new Date(data.startsAt);
+    const endsAt = new Date(data.endsAt);
+    validateReservationTime({ startsAt, endsAt, settings });
+    const reminderMinutesBefore = data.reminderMinutesBefore ?? null;
+    const reminderContext = await this.reminderService.prepare({
+      discordId: context.discordId,
+      startsAt,
+      reminderMinutesBefore,
     });
 
-    return result;
-  }
+    const created = await this.prisma.$transaction(
+      async (transaction) => {
+        const overlappingReservation = await transaction.reservation.findFirst({
+          where: {
+            guildId: { in: visibleGuildIds },
+            spotId: spot.id,
+            startsAt: { lt: endsAt },
+            endsAt: { gt: startsAt },
+          },
+          select: { id: true },
+        });
+        if (overlappingReservation) {
+          throw new ConflictException({ code: "RESERVATION_OVERLAP" });
+        }
 
-  private mapReservationRecord(reservation: ReservationRecord) {
-    const { id, reservationId, createdDate, fromDate, toDate, createdBy } =
-      reservation;
+        const activeReservationsCount = await transaction.reservation.count({
+          where: {
+            guildId: context.guildId,
+            spotId: spot.id,
+            endsAt: { gt: new Date() },
+            OR: [
+              { createdByUserId: context.userId },
+              { legacyCreatedByDiscordId: context.discordId },
+            ],
+          },
+        });
+        if (activeReservationsCount >= settings.reservationActiveLimitPerSpot) {
+          throw new UnprocessableEntityException({
+            code: "ACTIVE_LIMIT_REACHED",
+            limit: settings.reservationActiveLimitPerSpot,
+          });
+        }
 
-    return {
-      id,
-      reservationId,
-      createdDate,
-      fromDate,
-      toDate,
-      createdBy,
-      comment: reservation.comment,
-    } satisfies ReservationRecord;
-  }
-
-  private serializeReservationRecord(reservation: ReservationRecord) {
-    return {
-      id: reservation.id,
-      reservationId: reservation.reservationId,
-      createdDate: reservation.createdDate.toISOString(),
-      fromDate: reservation.fromDate.toISOString(),
-      toDate: reservation.toDate.toISOString(),
-      createdBy: reservation.createdBy,
-      comment: reservation.comment ?? null,
-    };
-  }
-
-  private deserializeReservationRecord(
-    reservation: SerializedReservationRecord,
-  ): ReservationRecord {
-    return {
-      id: reservation.id,
-      reservationId: reservation.reservationId,
-      createdDate: new Date(reservation.createdDate),
-      fromDate: new Date(reservation.fromDate),
-      toDate: new Date(reservation.toDate),
-      createdBy: reservation.createdBy,
-      comment: reservation.comment,
-    };
-  }
-
-  private groupReservationRecords(reservations: ReservationRecord[]) {
-    return reservations.reduce<Record<string, ReservationRecord[]>>(
-      (accumulator, reservation) => {
-        const list =
-          accumulator[reservation.reservationId] ??
-          (accumulator[reservation.reservationId] = []);
-
-        list.push(this.mapReservationRecord(reservation));
-
-        return accumulator;
+        return transaction.reservation.create({
+          data: {
+            guildId: context.guildId,
+            spotId: spot.id,
+            spotName: spot.name,
+            startsAt,
+            endsAt,
+            createdByUserId: context.userId,
+            authorDisplayName: member.name,
+            authorAvatarUrl: getDiscordAvatarUrl(
+              context.discordId,
+              member.avatar,
+            ),
+            reminderMinutesBefore,
+            comment: data.comment || null,
+          },
+          include: { guild: true },
+        });
       },
-      {},
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
+
+    try {
+      await this.reminderService.schedule({
+        context: reminderContext,
+        discordId: context.discordId,
+        reservationId: created.id,
+        spotName: spot.name,
+        organizationName: guild.name,
+        startsAt,
+      });
+    } catch (error) {
+      await this.prisma.reservation.delete({ where: { id: created.id } });
+      throw error;
+    }
+
+    await this.eventsPublisher.created({
+      sourceGuildId: context.guildId,
+      audienceGuildIds: visibleGuildIds,
+      reservation: created,
+      actorDiscordId: context.discordId,
+    });
+
+    return presentReservation(created, this.toPresentationViewer(context));
   }
 
-  private serializeReservationGroups(
-    groups: Record<string, ReservationRecord[]>,
-  ) {
-    return Object.fromEntries(
-      Object.entries(groups).map(([reservationId, reservations]) => [
-        reservationId,
-        reservations.map((reservation) =>
-          this.serializeReservationRecord(reservation),
-        ),
-      ]),
-    ) satisfies Record<string, SerializedReservationRecord[]>;
+  async deleteReservation(options: {
+    context: ViewerContext;
+    reservationId: number;
+  }): Promise<void> {
+    const { context } = options;
+    const visibleGuildIds = await this.sharingService.getVisibleGuildIds(
+      context.guildId,
+    );
+    const reservation = await this.prisma.reservation.findFirst({
+      where: {
+        id: options.reservationId,
+        guildId: { in: visibleGuildIds },
+      },
+    });
+    if (!reservation) {
+      throw new NotFoundException({ code: "RESERVATION_NOT_FOUND" });
+    }
+
+    const isMine =
+      reservation.createdByUserId === context.userId ||
+      reservation.legacyCreatedByDiscordId === context.discordId;
+    const canModerateSource =
+      reservation.guildId === context.guildId &&
+      canModerateReservations(context);
+    if (!isMine && !canModerateSource) {
+      throw new ForbiddenException({ code: "RESERVATION_DELETE_FORBIDDEN" });
+    }
+
+    await this.reminderService.cancel(reservation.id);
+    await this.prisma.reservation.delete({ where: { id: reservation.id } });
+    await this.eventsPublisher.deleted({
+      sourceGuildId: reservation.guildId,
+      audienceGuildIds: visibleGuildIds,
+      reservation,
+      actorDiscordId: reservation.legacyCreatedByDiscordId ?? context.discordId,
+    });
   }
 
-  private deserializeReservationGroups(
-    groups: Record<string, SerializedReservationRecord[]>,
-  ) {
-    return Object.fromEntries(
-      Object.entries(groups).map(([reservationId, reservations]) => [
-        reservationId,
-        reservations.map((reservation) =>
-          this.deserializeReservationRecord(reservation),
-        ),
-      ]),
-    ) satisfies Record<string, ReservationRecord[]>;
+  async pinSpot(
+    userId: string,
+    guildId: string,
+    spotId: string,
+  ): Promise<void> {
+    await this.catalogService.getSpot(spotId);
+    await this.prisma.userPinnedReservationSpot.upsert({
+      where: { userId_guildId_spotId: { userId, guildId, spotId } },
+      create: { userId, guildId, spotId },
+      update: {},
+    });
   }
 
-  private async getReservationSettings(guildId: string) {
+  async unpinSpot(
+    userId: string,
+    guildId: string,
+    spotId: string,
+  ): Promise<void> {
+    await this.prisma.userPinnedReservationSpot.deleteMany({
+      where: { userId, guildId, spotId },
+    });
+  }
+
+  async listMine(options: {
+    userId: string;
+    discordId: string;
+    query: MyReservationsQueryDto;
+  }) {
+    const accessibleGuilds =
+      await this.guildsService.getCurrentUserAccessibleGuilds(
+        options.discordId,
+        options.userId,
+      );
+    const now = new Date();
+    const retentionStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const statusFilter =
+      options.query.status === "past"
+        ? { endsAt: { gte: retentionStart, lt: now } }
+        : { endsAt: { gte: now } };
+    const reservations = await this.prisma.reservation.findMany({
+      where: {
+        guildId: { in: accessibleGuilds.map((guild) => guild.id) },
+        ...statusFilter,
+        OR: [
+          { createdByUserId: options.userId },
+          { legacyCreatedByDiscordId: options.discordId },
+        ],
+      },
+      include: { guild: true },
+      orderBy:
+        options.query.status === "past"
+          ? [{ endsAt: "desc" }, { id: "desc" }]
+          : [{ startsAt: "asc" }, { id: "asc" }],
+    });
+    const viewer = {
+      guildId: null,
+      userId: options.userId,
+      discordId: options.discordId,
+      canModerateCurrentGuild: false,
+    };
+    return {
+      items: reservations.map((reservation) =>
+        presentReservation(reservation, viewer),
+      ),
+    };
+  }
+
+  async updateMine(options: {
+    userId: string;
+    discordId: string;
+    reservationId: number;
+    data: UpdateReservationDto;
+  }) {
+    const accessibleGuilds =
+      await this.guildsService.getCurrentUserAccessibleGuilds(
+        options.discordId,
+        options.userId,
+      );
+    const reservation = await this.prisma.reservation.findFirst({
+      where: {
+        id: options.reservationId,
+        guildId: { in: accessibleGuilds.map((guild) => guild.id) },
+        OR: [
+          { createdByUserId: options.userId },
+          { legacyCreatedByDiscordId: options.discordId },
+        ],
+      },
+      include: { guild: true },
+    });
+    if (!reservation) {
+      throw new NotFoundException({ code: "RESERVATION_NOT_FOUND" });
+    }
+
+    const startsAt = options.data.startsAt
+      ? new Date(options.data.startsAt)
+      : reservation.startsAt;
+    const endsAt = options.data.endsAt
+      ? new Date(options.data.endsAt)
+      : reservation.endsAt;
+    const comment =
+      options.data.comment === undefined
+        ? reservation.comment
+        : options.data.comment || null;
+    const reminderMinutesBefore =
+      options.data.reminderMinutesBefore === undefined
+        ? reservation.reminderMinutesBefore
+        : options.data.reminderMinutesBefore;
+    const timeChanged =
+      startsAt.getTime() !== reservation.startsAt.getTime() ||
+      endsAt.getTime() !== reservation.endsAt.getTime();
+    const reminderChanged =
+      reminderMinutesBefore !== reservation.reminderMinutesBefore;
+    const reminderNeedsReschedule = timeChanged || reminderChanged;
+
+    const [settings, visibleGuildIds] = await Promise.all([
+      this.getReservationSettings(reservation.guildId),
+      this.sharingService.getVisibleGuildIds(reservation.guildId),
+    ]);
+    if (timeChanged) {
+      validateReservationTime({
+        startsAt,
+        endsAt,
+        settings,
+        allowPastStart: startsAt.getTime() === reservation.startsAt.getTime(),
+      });
+    }
+
+    const reminderContext = reminderNeedsReschedule
+      ? await this.reminderService.prepare({
+          discordId: options.discordId,
+          startsAt,
+          reminderMinutesBefore,
+        })
+      : null;
+    const previousReminderScheduledFor =
+      reservation.reminderMinutesBefore === null
+        ? null
+        : new Date(
+            reservation.startsAt.getTime() -
+              reservation.reminderMinutesBefore * 60_000,
+          );
+    const previousReminderContext =
+      reminderNeedsReschedule &&
+      reservation.reminderMinutesBefore !== null &&
+      previousReminderScheduledFor &&
+      previousReminderScheduledFor.getTime() > Date.now()
+        ? await this.reminderService
+            .prepare({
+              discordId: options.discordId,
+              startsAt: reservation.startsAt,
+              reminderMinutesBefore: reservation.reminderMinutesBefore,
+            })
+            .catch(() => null)
+        : null;
+
+    const updated = await this.prisma.$transaction(
+      async (transaction) => {
+        if (timeChanged) {
+          const overlappingReservation =
+            await transaction.reservation.findFirst({
+              where: {
+                id: { not: reservation.id },
+                guildId: { in: visibleGuildIds },
+                spotId: reservation.spotId,
+                startsAt: { lt: endsAt },
+                endsAt: { gt: startsAt },
+              },
+              select: { id: true },
+            });
+          if (overlappingReservation) {
+            throw new ConflictException({ code: "RESERVATION_OVERLAP" });
+          }
+        }
+
+        return transaction.reservation.update({
+          where: { id: reservation.id },
+          data: {
+            startsAt,
+            endsAt,
+            comment,
+            reminderMinutesBefore,
+          },
+          include: { guild: true },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+
+    if (reminderNeedsReschedule) {
+      try {
+        await this.reminderService.cancel(updated.id);
+        await this.reminderService.schedule({
+          context: reminderContext,
+          discordId: options.discordId,
+          reservationId: updated.id,
+          spotName: updated.spotName,
+          organizationName: updated.guild.name,
+          startsAt: updated.startsAt,
+        });
+      } catch (error) {
+        await this.prisma.reservation.update({
+          where: { id: reservation.id },
+          data: {
+            startsAt: reservation.startsAt,
+            endsAt: reservation.endsAt,
+            comment: reservation.comment,
+            reminderMinutesBefore: reservation.reminderMinutesBefore,
+          },
+        });
+        await this.reminderService.cancel(reservation.id);
+        await this.reminderService.schedule({
+          context: previousReminderContext,
+          discordId: options.discordId,
+          reservationId: reservation.id,
+          spotName: reservation.spotName,
+          organizationName: reservation.guild.name,
+          startsAt: reservation.startsAt,
+        });
+        throw error;
+      }
+    }
+
+    await this.eventsPublisher.updated({
+      sourceGuildId: updated.guildId,
+      audienceGuildIds: visibleGuildIds,
+      reservation: updated,
+      actorDiscordId: reservation.legacyCreatedByDiscordId ?? options.discordId,
+    });
+
+    return presentReservation(updated, {
+      guildId: null,
+      userId: options.userId,
+      discordId: options.discordId,
+      canModerateCurrentGuild: false,
+    });
+  }
+
+  async deleteMine(options: {
+    userId: string;
+    discordId: string;
+    reservationId: number;
+  }): Promise<void> {
+    const accessibleGuilds =
+      await this.guildsService.getCurrentUserAccessibleGuilds(
+        options.discordId,
+        options.userId,
+      );
+    const reservation = await this.prisma.reservation.findFirst({
+      where: {
+        id: options.reservationId,
+        guildId: { in: accessibleGuilds.map((guild) => guild.id) },
+        OR: [
+          { createdByUserId: options.userId },
+          { legacyCreatedByDiscordId: options.discordId },
+        ],
+      },
+    });
+    if (!reservation) {
+      throw new NotFoundException({ code: "RESERVATION_NOT_FOUND" });
+    }
+
+    const audienceGuildIds = await this.sharingService.getVisibleGuildIds(
+      reservation.guildId,
+    );
+    await this.reminderService.cancel(reservation.id);
+    await this.prisma.reservation.delete({ where: { id: reservation.id } });
+    await this.eventsPublisher.deleted({
+      sourceGuildId: reservation.guildId,
+      audienceGuildIds,
+      reservation,
+      actorDiscordId: reservation.legacyCreatedByDiscordId ?? options.discordId,
+    });
+  }
+
+  private async getReservationSettings(
+    guildId: string,
+  ): Promise<ReservationSettings> {
     const guild = await this.prisma.guild.findUnique({
       where: { id: guildId },
       select: {
@@ -243,291 +591,18 @@ export class ReservationsService {
       },
     });
 
+    return guild ?? DEFAULT_RESERVATION_SETTINGS;
+  }
+
+  private toPresentationViewer(context: ViewerContext) {
     return {
-      reservationMaxDurationMinutes:
-        guild?.reservationMaxDurationMinutes ??
-        DEFAULT_RESERVATION_SETTINGS.reservationMaxDurationMinutes,
-      reservationMinDurationMinutes:
-        guild?.reservationMinDurationMinutes ??
-        DEFAULT_RESERVATION_SETTINGS.reservationMinDurationMinutes,
-      reservationTimeGranularityMinutes:
-        guild?.reservationTimeGranularityMinutes ??
-        DEFAULT_RESERVATION_SETTINGS.reservationTimeGranularityMinutes,
-      reservationMaxAdvanceDays:
-        guild?.reservationMaxAdvanceDays ??
-        DEFAULT_RESERVATION_SETTINGS.reservationMaxAdvanceDays,
-      reservationActiveLimitPerSpot:
-        guild?.reservationActiveLimitPerSpot ??
-        DEFAULT_RESERVATION_SETTINGS.reservationActiveLimitPerSpot,
+      guildId: context.guildId,
+      userId: context.userId,
+      discordId: context.discordId,
+      canModerateCurrentGuild: canModerateReservations(context),
     };
-  }
-
-  private emitReservationCreated(
-    guildId: string,
-    reservation: ReservationRecord,
-  ) {
-    const payload = {
-      guildId,
-      reservation: this.serializeReservationRecord(reservation),
-    };
-
-    this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.GUILDS_RESERVATIONS_CREATE,
-      payload,
-    );
-  }
-
-  private emitReservationDeleted(
-    guildId: string,
-    reservation: ReservationRecord,
-  ) {
-    const payload = {
-      guildId,
-      reservation: this.serializeReservationRecord(reservation),
-    };
-
-    this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.GUILDS_RESERVATIONS_DELETE,
-      payload,
-    );
-  }
-
-  async createReservation(guildId: string, data: CreateReservationDto) {
-    const fromDate = new Date(data.fromDate);
-    const toDate = new Date(data.toDate);
-    const incomingFrom = fromDate.getTime();
-    const incomingTo = toDate.getTime();
-
-    if (Number.isNaN(incomingFrom) || Number.isNaN(incomingTo)) {
-      throw new BadRequestException("Nieprawidłowy zakres czasowy rezerwacji.");
-    }
-
-    const settings = await this.getReservationSettings(guildId);
-    const now = Date.now();
-    const maxPastOffsetMs = 60 * 60 * 1000; // 1 hour
-    if (incomingFrom < now - maxPastOffsetMs) {
-      throw new BadRequestException(
-        "Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.",
-      );
-    }
-
-    if (incomingFrom >= incomingTo) {
-      throw new BadRequestException(
-        "Data zakończenia musi być późniejsza niż rozpoczęcia.",
-      );
-    }
-
-    const minimumDurationMs =
-      settings.reservationMinDurationMinutes * 60 * 1000;
-    if (incomingTo - incomingFrom < minimumDurationMs) {
-      throw new BadRequestException(
-        `Rezerwacja musi trwać co najmniej ${settings.reservationMinDurationMinutes} minut.`,
-      );
-    }
-
-    const maximumDurationMs =
-      settings.reservationMaxDurationMinutes * 60 * 1000;
-    if (incomingTo - incomingFrom > maximumDurationMs) {
-      throw new BadRequestException(
-        `Rezerwacja może trwać maksymalnie ${settings.reservationMaxDurationMinutes} minut.`,
-      );
-    }
-
-    const maxAdvanceMs =
-      settings.reservationMaxAdvanceDays * 24 * 60 * 60 * 1000;
-    if (incomingFrom > now + maxAdvanceMs) {
-      throw new BadRequestException(
-        `Rezerwację można utworzyć maksymalnie ${settings.reservationMaxAdvanceDays} dni do przodu.`,
-      );
-    }
-
-    await this.deleteExpiredReservations(guildId);
-
-    const overlappingReservation = await this.prisma.reservation.findFirst({
-      where: {
-        guildId,
-        reservationId: data.reservationId,
-        NOT: {
-          OR: [{ toDate: { lte: fromDate } }, { fromDate: { gte: toDate } }],
-        },
-      },
-    });
-
-    if (overlappingReservation) {
-      throw new BadRequestException(
-        "Istnieje już inna rezerwacja w podanym przedziale czasowym.",
-      );
-    }
-
-    const activeReservationsCount = await this.prisma.reservation.count({
-      where: {
-        guildId,
-        reservationId: data.reservationId,
-        createdBy: data.createdBy,
-        toDate: { gt: new Date(now) },
-      },
-    });
-
-    if (activeReservationsCount >= settings.reservationActiveLimitPerSpot) {
-      throw new BadRequestException(
-        `Możesz mieć maksymalnie ${settings.reservationActiveLimitPerSpot} aktywne rezerwacje na tym expowisku.`,
-      );
-    }
-
-    const createPayload: Prisma.ReservationUncheckedCreateInput = {
-      guildId,
-      reservationId: data.reservationId,
-      createdDate: data.createdDate,
-      fromDate: data.fromDate,
-      toDate: data.toDate,
-      createdBy: data.createdBy,
-      ...(data.comment !== undefined ? { comment: data.comment } : {}),
-    };
-
-    const created = await this.prisma.reservation.create({
-      data: createPayload,
-    });
-
-    const record = this.mapReservationRecord(created);
-    await this.invalidateReservationsCache(guildId);
-    this.emitReservationCreated(guildId, record);
-
-    return record;
-  }
-
-  getReservationsCards() {
-    const cacheKey = `reservations:cards`;
-
-    return this.redis.getOrSetJsonBestEffort({
-      key: cacheKey,
-      ttlSeconds: RESERVATIONS_CARDS_CACHE_TTL_SECONDS,
-      onError: (error) =>
-        this.logger.warn("Reservations cards cache unavailable", error),
-      factory: async () => {
-        const externalUrl = env.RESERVATIONS_CARDS_URL;
-
-        const response = await lastValueFrom(
-          this.httpService.get<unknown>(externalUrl),
-        );
-
-        const rawPayload = response.data;
-
-        let decodedPayload: unknown;
-        if (typeof rawPayload === "string") {
-          try {
-            decodedPayload = JSON.parse(rawPayload);
-          } catch {
-            throw new Error("Nie udało się zdekodować danych kart rezerwacji.");
-          }
-        } else {
-          decodedPayload = rawPayload;
-        }
-
-        const payload = decodedPayload as
-          | { data?: ReservationsCardsPayload }
-          | ReservationsCardsPayload
-          | undefined;
-
-        const data =
-          (payload as { data?: ReservationsCardsPayload })?.data ??
-          (payload as ReservationsCardsPayload) ??
-          undefined;
-
-        if (!data) {
-          throw new Error(
-            "Brak danych kart rezerwacji z zewnętrznego serwisu.",
-          );
-        }
-
-        const normalized = this.normalizeReservationsCards(data);
-
-        if (Object.keys(normalized).length === 0) {
-          throw new Error("Brak kart rezerwacji po przetworzeniu odpowiedzi.");
-        }
-
-        return normalized;
-      },
-    });
-  }
-
-  async getReservations(guildId: string) {
-    const monthAgoDate = await this.deleteExpiredReservationsWithGate(guildId);
-    const serializedReservations = await this.redis.getOrSetJsonBestEffort({
-      key: this.getReservationsCacheKey(guildId),
-      ttlSeconds: RESERVATIONS_CACHE_TTL_SECONDS,
-      onError: (error) =>
-        this.logger.warn("Reservations cache unavailable", error),
-      factory: async () => {
-        const reservations = (await this.prisma.reservation.findMany({
-          where: {
-            guildId,
-            toDate: { gte: monthAgoDate },
-          },
-          orderBy: [{ reservationId: "asc" }, { fromDate: "asc" }],
-        })) as ReservationRecord[];
-
-        return this.serializeReservationGroups(
-          this.groupReservationRecords(reservations),
-        );
-      },
-    });
-
-    return this.deserializeReservationGroups(serializedReservations);
-  }
-
-  async clearReservations(guildId: string) {
-    await this.prisma.reservation.deleteMany({
-      where: { guildId },
-    });
-    await this.invalidateReservationsCache(guildId);
-  }
-
-  async deleteReservation(options: {
-    guildId: string;
-    reservationRecordId: number;
-    actorDiscordId: string;
-    actorIsOwner: boolean;
-    permissions: Permission[];
-  }) {
-    const {
-      guildId,
-      reservationRecordId,
-      actorDiscordId,
-      actorIsOwner,
-      permissions,
-    } = options;
-
-    const reservation = await this.prisma.reservation.findFirst({
-      where: {
-        id: reservationRecordId,
-        guildId,
-      },
-    });
-
-    if (!reservation) {
-      throw new NotFoundException("Nie znaleziono rezerwacji.");
-    }
-
-    const permissionsSet = new Set(permissions);
-    const canModerate =
-      actorIsOwner ||
-      permissionsSet.has(Permission.LOOTLOG_MANAGE) ||
-      permissionsSet.has(Permission.ADMIN);
-
-    if (!canModerate && reservation.createdBy !== actorDiscordId) {
-      throw new ForbiddenException("Nie możesz usunąć tej rezerwacji.");
-    }
-
-    await this.prisma.reservation.delete({
-      where: { id: reservation.id },
-    });
-
-    const record = this.mapReservationRecord(reservation);
-    await this.invalidateReservationsCache(guildId);
-    this.emitReservationDeleted(guildId, record);
-
-    return record;
   }
 }
+
+export type { ViewerContext };
+export type { ReservationWithGuild };

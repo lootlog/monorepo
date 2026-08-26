@@ -63,6 +63,11 @@ _Avoid_: Domain event, socket event
 A time-bounded claim on a map or hunting resource within an Organization.
 _Avoid_: Assignment
 
+**Reservation partnership**:
+A direct, reciprocal agreement between two Organizations to disclose and
+coordinate their reservation calendars.
+_Avoid_: Alliance, inherited share
+
 ## Access
 
 **Access policy**:

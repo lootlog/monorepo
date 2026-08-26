@@ -5,12 +5,15 @@ import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area";
 
 import { cn } from "@lootlog/ui/lib/utils";
 
+type ScrollAreaOrientation = "vertical" | "horizontal" | "both";
+
 const ScrollArea = React.forwardRef<
   HTMLDivElement,
   ScrollAreaPrimitive.Root.Props & {
     onScroll?: (event: React.UIEvent<HTMLDivElement>) => void;
+    orientation?: ScrollAreaOrientation;
   }
->(({ className, children, onScroll, ...props }, ref) => {
+>(({ className, children, onScroll, orientation = "both", ...props }, ref) => {
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
@@ -25,9 +28,9 @@ const ScrollArea = React.forwardRef<
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
-      <ScrollBar orientation="horizontal" />
-      <ScrollAreaPrimitive.Corner />
+      {orientation !== "horizontal" && <ScrollBar />}
+      {orientation !== "vertical" && <ScrollBar orientation="horizontal" />}
+      {orientation === "both" && <ScrollAreaPrimitive.Corner />}
     </ScrollAreaPrimitive.Root>
   );
 });
