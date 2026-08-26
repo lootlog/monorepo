@@ -7,8 +7,10 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsRoot = path.resolve(dirname, "../prisma/migrations");
 const reservationMigrations = [
   "20260826120000_reservations_v2",
+  "20260826120500_reservations_v2_rollout_bridge",
   "20260826121000_reservations_v2_backfill",
   "20260826122000_reservations_v2_contract",
+  "20260826123000_reservations_v2_constraint_alignment",
 ];
 
 describe("reservation v2 migration", () => {
@@ -73,7 +75,29 @@ describe("reservation v2 migration", () => {
           "utf8",
         );
         await client.query(sql);
+
+        if (migration === "20260826121000_reservations_v2_backfill") {
+          await client.query(`
+            INSERT INTO "Reservation"
+              ("guildId", "reservationId", "createdDate", "fromDate", "toDate", "createdBy", "comment")
+            VALUES
+              ('guild-1', 'W trakcie wdrożenia', '2026-08-02T12:00:00Z', '2026-08-02T13:00:00Z', '2026-08-02T14:00:00Z', 'discord-1', 'Ruch podczas migracji')
+          `);
+        }
       }
+
+      await client.query(`
+        INSERT INTO "Reservation"
+          ("guildId", "reservationId", "createdDate", "fromDate", "toDate", "createdBy", "comment")
+        VALUES
+          ('guild-1', 'Legacy po wdrożeniu', '2026-08-03T09:00:00Z', '2026-08-03T10:00:00Z', '2026-08-03T11:00:00Z', 'discord-1', 'Stare API')
+      `);
+      await client.query(`
+        INSERT INTO "Reservation"
+          ("guildId", "spotId", "spotName", "startsAt", "endsAt", "createdByUserId", "authorDisplayName", "comment")
+        VALUES
+          ('guild-1', 'v2-po-wdrozeniu', 'V2 po wdrożeniu', '2026-08-04T10:00:00Z', '2026-08-04T11:00:00Z', 'user-1', 'Żółw 🐢', 'Nowe API')
+      `);
 
       const result = await client.query<{
         authorDisplayName: string;
@@ -91,7 +115,7 @@ describe("reservation v2 migration", () => {
         toDate: Date;
       }>(`SELECT * FROM "Reservation" ORDER BY "id"`);
 
-      expect(result.rows).toHaveLength(2);
+      expect(result.rows).toHaveLength(5);
       expect(result.rows[0]).toMatchObject({
         reservationId: "Potępione Zamczysko",
         spotId: "potepione-zamczysko",
@@ -116,6 +140,42 @@ describe("reservation v2 migration", () => {
       expect(result.rows[1]?.startsAt).toEqual(result.rows[1]?.fromDate);
       expect(result.rows[1]?.endsAt).toEqual(result.rows[1]?.toDate);
       expect(result.rows[1]?.createdAt).toEqual(result.rows[1]?.createdDate);
+      expect(result.rows[2]).toMatchObject({
+        reservationId: "W trakcie wdrożenia",
+        spotId: "w-trakcie-wdrozenia",
+        spotName: "W trakcie wdrożenia",
+        createdBy: "discord-1",
+        createdByUserId: "user-1",
+        authorDisplayName: "Żółw 🐢",
+        comment: "Ruch podczas migracji",
+      });
+      expect(result.rows[2]?.startsAt).toEqual(result.rows[2]?.fromDate);
+      expect(result.rows[2]?.endsAt).toEqual(result.rows[2]?.toDate);
+      expect(result.rows[2]?.createdAt).toEqual(result.rows[2]?.createdDate);
+      expect(result.rows[3]).toMatchObject({
+        reservationId: "Legacy po wdrożeniu",
+        spotId: "legacy-po-wdrozeniu",
+        spotName: "Legacy po wdrożeniu",
+        createdBy: "discord-1",
+        createdByUserId: "user-1",
+        authorDisplayName: "Żółw 🐢",
+        comment: "Stare API",
+      });
+      expect(result.rows[3]?.startsAt).toEqual(result.rows[3]?.fromDate);
+      expect(result.rows[3]?.endsAt).toEqual(result.rows[3]?.toDate);
+      expect(result.rows[3]?.createdAt).toEqual(result.rows[3]?.createdDate);
+      expect(result.rows[4]).toMatchObject({
+        reservationId: "V2 po wdrożeniu",
+        spotId: "v2-po-wdrozeniu",
+        spotName: "V2 po wdrożeniu",
+        createdBy: "discord-1",
+        createdByUserId: "user-1",
+        authorDisplayName: "Żółw 🐢",
+        comment: "Nowe API",
+      });
+      expect(result.rows[4]?.startsAt).toEqual(result.rows[4]?.fromDate);
+      expect(result.rows[4]?.endsAt).toEqual(result.rows[4]?.toDate);
+      expect(result.rows[4]?.createdAt).toEqual(result.rows[4]?.createdDate);
     } finally {
       await client.end();
     }

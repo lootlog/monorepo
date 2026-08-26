@@ -10,11 +10,21 @@ const future = () => new Date(Date.now() + 60_000);
 
 describe("ReservationSharingService", () => {
   const prisma = {
+    $transaction: vi.fn(),
     reservationShare: {
       findMany: vi.fn(),
     },
     reservationShareInvitation: {
       findUnique: vi.fn(),
+    },
+  };
+  const transaction = {
+    reservationShare: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
+    reservationShareInvitation: {
+      updateMany: vi.fn(),
     },
   };
   const guildsService = {
@@ -25,6 +35,10 @@ describe("ReservationSharingService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    prisma.$transaction.mockImplementation(
+      (callback: (value: typeof transaction) => unknown) =>
+        Promise.resolve(callback(transaction)),
+    );
     service = new ReservationSharingService(
       prisma as never,
       guildsService as never,
@@ -96,6 +110,56 @@ describe("ReservationSharingService", () => {
         discordId: "discord",
       }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it("rejects acceptance when another request has already claimed the invitation", async () => {
+    const invitation = {
+      id: "invite",
+      sourceGuildId: "a",
+      sourceGuild: { id: "a", name: "A", icon: null },
+      createdByUserId: "creator",
+      acceptedAt: null,
+      revokedAt: null,
+      expiresAt: future(),
+    };
+    prisma.reservationShareInvitation.findUnique.mockResolvedValue(invitation);
+    guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+      { id: "b", name: "B", icon: null },
+    ]);
+    transaction.reservationShareInvitation.updateMany.mockResolvedValue({
+      count: 0,
+    });
+    transaction.reservationShare.findUnique.mockResolvedValue(null);
+    transaction.reservationShare.upsert.mockResolvedValue({
+      id: "share",
+      createdAt: new Date(),
+    });
+
+    await expect(
+      service.acceptInvitation({
+        token: "token",
+        targetGuildId: "b",
+        userId: "user",
+        discordId: "discord",
+      }),
+    ).rejects.toBeInstanceOf(GoneException);
+
+    expect(
+      transaction.reservationShareInvitation.updateMany,
+    ).toHaveBeenCalledWith({
+      where: {
+        id: invitation.id,
+        acceptedAt: null,
+        revokedAt: null,
+        expiresAt: { gt: expect.any(Date) },
+      },
+      data: {
+        acceptedAt: expect.any(Date),
+        acceptedByUserId: "user",
+        targetGuildId: "b",
+      },
+    });
+    expect(transaction.reservationShare.upsert).not.toHaveBeenCalled();
   });
 
   it.each([

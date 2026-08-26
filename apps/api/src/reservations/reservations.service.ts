@@ -293,11 +293,16 @@ export class ReservationsService {
       throw new ForbiddenException({ code: "RESERVATION_DELETE_FORBIDDEN" });
     }
 
+    const audienceGuildIds =
+      reservation.guildId === context.guildId
+        ? visibleGuildIds
+        : await this.sharingService.getVisibleGuildIds(reservation.guildId);
+
     await this.reminderService.cancel(reservation.id);
     await this.prisma.reservation.delete({ where: { id: reservation.id } });
     await this.eventsPublisher.deleted({
       sourceGuildId: reservation.guildId,
-      audienceGuildIds: visibleGuildIds,
+      audienceGuildIds,
       reservation,
       actorDiscordId: reservation.legacyCreatedByDiscordId ?? context.discordId,
     });

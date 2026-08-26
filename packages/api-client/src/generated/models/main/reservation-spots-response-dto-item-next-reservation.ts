@@ -34,6 +34,7 @@ export type ReservationSpotsResponseDtoItemNextReservation = {
   isMine: boolean;
   canEdit: boolean;
   canCancel: boolean;
+  /** @nullable */
   editingConstraints: ReservationSpotsResponseDtoItemNextReservationEditingConstraints;
   reminderMinutesBefore: typeof ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore[keyof typeof ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore] | null;
 } | null;

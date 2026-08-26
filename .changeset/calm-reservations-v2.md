@@ -57,3 +57,8 @@ Limit day swiping to coarse, non-hover mobile input and contain the three-day
 track so compact calendars cannot drift into native horizontal scrolling.
 Render the compact calendar with a vertical-only scroll area so its swipe
 previews never expose a horizontal scrollbar on mobile devices.
+Keep the reservation V2 rollout compatible with both deployed API versions,
+claim sharing invitations atomically, tolerate post-commit invalidation publish
+failures with bounded retry and dead-letter routing, scope invalidations to the
+reservation's source sharing graph, and redact source Organization editing
+policy from partner calendar responses.

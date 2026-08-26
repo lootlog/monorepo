@@ -1,5 +1,5 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import type { ReservationChangedEventV2 } from "@lootlog/types";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -14,6 +14,8 @@ type ReservationEventInput = {
 
 @Injectable()
 export class ReservationEventsPublisher {
+  private readonly logger = new Logger(ReservationEventsPublisher.name);
+
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   async created(input: ReservationEventInput): Promise<void> {
@@ -72,7 +74,7 @@ export class ReservationEventsPublisher {
       | RoutingKey.GUILDS_RESERVATIONS_DELETE,
     input: ReservationEventInput,
   ): Promise<void> {
-    await this.amqpConnection.publish(DEFAULT_EXCHANGE_NAME, routingKey, {
+    await this.publishSafely(routingKey, {
       guildId: input.sourceGuildId,
       reservation: {
         id: input.reservation.id,
@@ -86,10 +88,24 @@ export class ReservationEventsPublisher {
   }
 
   private async publishV2(event: ReservationChangedEventV2): Promise<void> {
-    await this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2,
-      event,
-    );
+    await this.publishSafely(RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2, event);
+  }
+
+  private async publishSafely(
+    routingKey: RoutingKey,
+    payload: unknown,
+  ): Promise<void> {
+    try {
+      await this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        routingKey,
+        payload,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish reservation event ${routingKey}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 }

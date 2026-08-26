@@ -179,17 +179,22 @@ export class ReservationSharingService {
       targetGuild.id,
     );
     const share = await this.prisma.$transaction(async (transaction) => {
-      const currentInvitation =
-        await transaction.reservationShareInvitation.findUnique({
-          where: { id: invitation.id },
-        });
+      const acceptedAt = new Date();
+      const claim = await transaction.reservationShareInvitation.updateMany({
+        where: {
+          id: invitation.id,
+          acceptedAt: null,
+          revokedAt: null,
+          expiresAt: { gt: acceptedAt },
+        },
+        data: {
+          acceptedAt,
+          acceptedByUserId: options.userId,
+          targetGuildId: targetGuild.id,
+        },
+      });
 
-      if (
-        !currentInvitation ||
-        currentInvitation.acceptedAt ||
-        currentInvitation.revokedAt ||
-        currentInvitation.expiresAt <= new Date()
-      ) {
+      if (claim.count === 0) {
         throw new GoneException({ code: "INVITATION_EXPIRED" });
       }
 
@@ -212,15 +217,6 @@ export class ReservationSharingService {
           createdByUserId: invitation.createdByUserId,
           acceptedByUserId: options.userId,
           revokedAt: null,
-        },
-      });
-
-      await transaction.reservationShareInvitation.update({
-        where: { id: currentInvitation.id },
-        data: {
-          acceptedAt: new Date(),
-          acceptedByUserId: options.userId,
-          targetGuildId: targetGuild.id,
         },
       });
 

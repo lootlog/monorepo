@@ -31,6 +31,7 @@ export type ReservationWindowResponseDtoItemsItem = {
   isMine: boolean;
   canEdit: boolean;
   canCancel: boolean;
+  /** @nullable */
   editingConstraints: ReservationWindowResponseDtoItemsItemEditingConstraints;
   reminderMinutesBefore: typeof ReservationWindowResponseDtoItemsItemReminderMinutesBefore[keyof typeof ReservationWindowResponseDtoItemsItemReminderMinutesBefore] | null;
 };

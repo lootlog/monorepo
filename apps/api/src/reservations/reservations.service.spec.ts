@@ -279,6 +279,37 @@ describe("ReservationsService", () => {
     expect(prisma.reservation.delete).not.toHaveBeenCalled();
   });
 
+  it("invalidates only the source organization's sharing audience when an owner deletes through a partner calendar", async () => {
+    const sourceGuildId = "partner-guild";
+    prisma.reservation.findFirst.mockResolvedValue({
+      ...reservation,
+      guildId: sourceGuildId,
+    });
+    sharingService.getVisibleGuildIds.mockImplementation((guildId: string) =>
+      Promise.resolve(
+        guildId === context.guildId
+          ? [context.guildId, sourceGuildId, "viewer-only-partner"]
+          : [sourceGuildId, context.guildId],
+      ),
+    );
+
+    await service.deleteReservation({
+      context,
+      reservationId: reservation.id,
+    });
+
+    expect(sharingService.getVisibleGuildIds).toHaveBeenNthCalledWith(
+      2,
+      sourceGuildId,
+    );
+    expect(eventsPublisher.deleted).toHaveBeenCalledWith({
+      sourceGuildId,
+      audienceGuildIds: [sourceGuildId, context.guildId],
+      reservation: expect.objectContaining({ guildId: sourceGuildId }),
+      actorDiscordId: context.discordId,
+    });
+  });
+
   it("requires a configured DM target before creating a reminded reservation", async () => {
     reminderService.prepare.mockRejectedValueOnce(
       Object.assign(new Error("DM target required"), { status: 422 }),

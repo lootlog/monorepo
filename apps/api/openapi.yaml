@@ -10567,6 +10567,7 @@ components:
                   - reservationMinDurationMinutes
                   - reservationTimeGranularityMinutes
                   - reservationMaxAdvanceDays
+                nullable: true
               reminderMinutesBefore:
                 anyOf:
                   - type: number
@@ -10687,6 +10688,7 @@ components:
                   - reservationMinDurationMinutes
                   - reservationTimeGranularityMinutes
                   - reservationMaxAdvanceDays
+                nullable: true
               reminderMinutesBefore:
                 anyOf:
                   - type: number
@@ -10825,6 +10827,7 @@ components:
                   - reservationMinDurationMinutes
                   - reservationTimeGranularityMinutes
                   - reservationMaxAdvanceDays
+                nullable: true
               reminderMinutesBefore:
                 anyOf:
                   - type: number
@@ -10993,6 +10996,7 @@ components:
             - reservationMinDurationMinutes
             - reservationTimeGranularityMinutes
             - reservationMaxAdvanceDays
+          nullable: true
         reminderMinutesBefore:
           anyOf:
             - type: number
@@ -11259,6 +11263,7 @@ components:
                   - reservationMinDurationMinutes
                   - reservationTimeGranularityMinutes
                   - reservationMaxAdvanceDays
+                nullable: true
               reminderMinutesBefore:
                 anyOf:
                   - type: number

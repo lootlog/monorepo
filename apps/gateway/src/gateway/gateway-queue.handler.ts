@@ -243,7 +243,21 @@ export class GatewayQueueHandler {
     rawData: unknown,
     amqpMsg: AmqpMessage,
   ) {
-    const data = ReservationChangedEventV2Dto.schema.parse(rawData);
+    const result = ReservationChangedEventV2Dto.schema.safeParse(rawData);
+    if (!result.success) {
+      await this.handleWithRetry(
+        rawData,
+        amqpMsg,
+        RoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_DLQ,
+        "invalid reservation v2 change",
+        () => {
+          throw result.error;
+        },
+      );
+      return;
+    }
+
+    const data = result.data;
     await this.handleWithRetry(
       data,
       amqpMsg,

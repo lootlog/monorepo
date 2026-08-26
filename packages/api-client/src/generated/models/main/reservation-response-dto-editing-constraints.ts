@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * @nullable
+ */
 export type ReservationResponseDtoEditingConstraints = {
   /**
      * @maximum 9007199254740991
@@ -27,4 +30,4 @@ export type ReservationResponseDtoEditingConstraints = {
      * @exclusiveMinimum 0
      */
   reservationMaxAdvanceDays: number;
-};
+} | null;
