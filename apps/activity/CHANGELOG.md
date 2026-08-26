@@ -1,5 +1,13 @@
 # @lootlog/activity
 
+## 0.0.9
+
+### Patch Changes
+
+- Updated dependencies [008ef3f]
+  - @lootlog/types@3.0.1
+  - @lootlog/nest-shared@1.0.7
+
 ## 0.0.8
 
 ### Patch Changes

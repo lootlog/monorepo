@@ -1,6 +1,6 @@
 {
   "name": "@lootlog/cli",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "license": "MIT",
   "bin": {
