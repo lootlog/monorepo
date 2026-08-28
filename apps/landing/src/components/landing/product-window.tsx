@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 type ProductWindowProps = {
   alt: string;
   caption: string;
@@ -7,6 +5,7 @@ type ProductWindowProps = {
   imageViewportClassName?: string;
   priority?: boolean;
   src: string;
+  srcSet: string;
 };
 
 export function ProductWindow({
@@ -16,6 +15,7 @@ export function ProductWindow({
   imageViewportClassName = "aspect-video",
   priority = false,
   src,
+  srcSet,
 }: ProductWindowProps) {
   return (
     <figure
@@ -36,12 +36,14 @@ export function ProductWindow({
           .filter(Boolean)
           .join(" ")}
       >
-        <Image
+        <img
           src={src}
+          srcSet={srcSet}
           alt={alt}
           width={1280}
           height={720}
-          priority={priority}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
           sizes="(max-width: 1024px) 100vw, 58vw"
           className="h-full w-full object-cover object-top"
         />

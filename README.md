@@ -73,7 +73,7 @@ boundaries, deployment, and known gaps.
 ## Technology
 
 - pnpm workspaces and Turborepo
-- TypeScript, React 19, Vite, Next.js, and TanStack Router/Query
+- TypeScript, React 19, Vite, TanStack Start, and TanStack Router/Query
 - NestJS with Fastify and Better Auth
 - PostgreSQL, TimescaleDB, Prisma, Drizzle, and R2
 - RabbitMQ, Redis, Socket.IO, and Meilisearch

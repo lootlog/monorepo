@@ -1,6 +1,6 @@
 # @lootlog/landing
 
-Static Next.js product site for Lootlog.
+Static TanStack Start product site for Lootlog.
 
 ## Responsibilities
 
@@ -30,7 +30,8 @@ The development server uses port `3003`.
 pnpm --filter @lootlog/landing build
 pnpm --filter @lootlog/landing lint
 pnpm --filter @lootlog/landing typecheck
+pnpm --filter @lootlog/landing test
 ```
 
-The app builds as a static export. Published content changes require a
-Changeset.
+The app prerenders its public routes to `dist/client` for Cloudflare Pages.
+Published content changes require a Changeset.

@@ -156,8 +156,8 @@ jobs:
       GAME_CLIENT_VITE_BATTLELOG_API_URL: ${{ vars.GAME_CLIENT_VITE_BATTLELOG_API_URL }}
       GAME_CLIENT_VITE_GATEWAY_URL: ${{ vars.GAME_CLIENT_VITE_GATEWAY_URL }}
       GAME_CLIENT_VITE_LOOTLOG_APP_URL: ${{ vars.GAME_CLIENT_VITE_LOOTLOG_APP_URL }}
-      LANDING_NEXT_PUBLIC_ADDON_URL: ${{ vars.LANDING_NEXT_PUBLIC_ADDON_URL }}
-      LANDING_NEXT_PUBLIC_AUTH_SERVICE_URL: ${{ vars.LANDING_NEXT_PUBLIC_AUTH_SERVICE_URL }}
+      LANDING_VITE_ADDON_URL: ${{ vars.LANDING_VITE_ADDON_URL }}
+      LANDING_VITE_AUTH_SERVICE_URL: ${{ vars.LANDING_VITE_AUTH_SERVICE_URL }}
       WEB_VITE_ACTIVITY_API_URL: ${{ vars.WEB_VITE_ACTIVITY_API_URL }}
       WEB_VITE_ADDON_INSTALL_URL: ${{ vars.WEB_VITE_ADDON_INSTALL_URL }}
       WEB_VITE_API_URL: ${{ vars.WEB_VITE_API_URL }}
@@ -191,8 +191,8 @@ jobs:
         run: |
           case "$PACKAGE_NAME" in
             @lootlog/landing)
-              export NEXT_PUBLIC_ADDON_URL="$LANDING_NEXT_PUBLIC_ADDON_URL"
-              export NEXT_PUBLIC_AUTH_SERVICE_URL="$LANDING_NEXT_PUBLIC_AUTH_SERVICE_URL"
+              export VITE_ADDON_URL="$LANDING_VITE_ADDON_URL"
+              export VITE_AUTH_SERVICE_URL="$LANDING_VITE_AUTH_SERVICE_URL"
               ;;
             @lootlog/web)
               export VITE_ACTIVITY_API_URL="$WEB_VITE_ACTIVITY_API_URL"
@@ -480,6 +480,37 @@ jobs:
                 --keep-vars
             fi
           done < <(jq -c '.[]' <<< "$CLOUDFLARE_MATRIX")
+
+      - name: Smoke-check public Cloudflare routes
+        if: needs.release.outputs.cloudflare-matrix != '[]'
+        env:
+          CLOUDFLARE_MATRIX: ${{ needs.release.outputs.cloudflare-matrix }}
+        run: |
+          fetch() {
+            curl --fail-with-body --silent --show-error --location \
+              --retry 10 \
+              --retry-all-errors \
+              --retry-delay 3 \
+              --max-time 20 \
+              "$1"
+          }
+
+          if jq -e '.[] | select(.packageName == "@lootlog/landing")' <<< "$CLOUDFLARE_MATRIX" >/dev/null; then
+            landing_home="$(fetch https://lootlog.pl/)"
+            grep -q '<meta property="og:image"' <<< "$landing_home"
+            grep -q 'application/ld+json' <<< "$landing_home"
+            fetch https://lootlog.pl/privacy-policy | grep -q 'Polityka prywatności'
+            fetch https://lootlog.pl/terms-of-service | grep -q 'Regulamin serwisu'
+            fetch https://lootlog.pl/brand/lootlog-social.png >/dev/null
+          fi
+
+          if jq -e '.[] | select(.packageName == "@lootlog/docs")' <<< "$CLOUDFLARE_MATRIX" >/dev/null; then
+            fetch https://docs.lootlog.pl/ | grep -q 'url=/docs'
+            fetch https://docs.lootlog.pl/docs | grep -q 'Wprowadzenie'
+            fetch https://docs.lootlog.pl/docs/installation | grep -q 'Instalacja'
+            fetch https://docs.lootlog.pl/api/search | jq -e '.type == "advanced"' >/dev/null
+            fetch https://docs.lootlog.pl/brand/favicon.svg >/dev/null
+          fi
 
       - name: Checkout infra repository
         if: needs.release.outputs.docker-matrix != '[]'

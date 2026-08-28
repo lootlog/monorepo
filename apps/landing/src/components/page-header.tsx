@@ -1,12 +1,11 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "@/src/hooks/use-session";
 import { authClient } from "@/src/lib/auth-client";
 import { Button } from "@lootlog/ui/components/button";
 import { links } from "@/src/config/links";
+import { createAuthCallbackUrl } from "@/src/config/auth";
 
 export const PageHeader: React.FC = () => {
   const { t } = useTranslation();
@@ -15,7 +14,7 @@ export const PageHeader: React.FC = () => {
   const isLoading = session.isPending;
 
   const handleLoginAction = async () => {
-    const url = `${window.location.href}@me`;
+    const url = createAuthCallbackUrl(window.location.origin);
 
     await authClient.signIn.social({
       provider: "discord",
@@ -26,7 +25,7 @@ export const PageHeader: React.FC = () => {
 
   return (
     <div className="flex flex-row items-center justify-between w-full h-16 text-white">
-      <Link href="/" className="text-xl font-bold">
+      <Link to="/" className="text-xl font-bold">
         {t("landing.header.brand")}
       </Link>
       <div className="flex flex-row gap-4">

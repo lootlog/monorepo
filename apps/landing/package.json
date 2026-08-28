@@ -1,36 +1,43 @@
 {
   "name": "@lootlog/landing",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "private": true,
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "next dev -p 3003 --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "vite dev",
+    "build": "vite build && tsc --noEmit && node scripts/verify-static-build.mjs",
+    "start": "vite preview",
+    "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
+    "test": "vitest run",
     "doctor": "npx -y react-doctor@latest ."
   },
   "dependencies": {
     "@lootlog/ui": "workspace:*",
-    "@mdx-js/loader": "^3.1.1",
-    "@mdx-js/react": "^3.1.1",
-    "@next/mdx": "^16.3.3",
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-start": "^1.168.49",
     "@types/mdx": "^2.0.14",
     "better-auth": "1.6.30",
     "framer-motion": "^12.43.0",
     "i18next": "^26.4.0",
     "lucide-react": "^1.35.0",
-    "next": "^16.3.3",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-i18next": "^17.0.12"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
+    "@mdx-js/rollup": "^3.1.1",
+    "@tailwindcss/vite": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "typescript": "catalog:"
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

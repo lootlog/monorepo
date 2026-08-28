@@ -1,5 +1,3 @@
-"use client";
-
 import { ArrowUpRight, Check, Code2, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
