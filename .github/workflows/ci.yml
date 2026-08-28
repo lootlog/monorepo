@@ -274,6 +274,9 @@ jobs:
     if: needs.plan.outputs.docker-services != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
     strategy:
       fail-fast: false
       matrix:
@@ -293,6 +296,7 @@ jobs:
           context: .
           target: ${{ matrix.service }}
           push: false
+          load: true
           tags: lootlog-${{ matrix.service }}:ci
           build-args: |
             GITHUB_SHA=${{ needs.plan.outputs.head-sha }}
@@ -300,6 +304,25 @@ jobs:
           cache-from: type=gha,scope=docker-${{ matrix.service }}
           cache-to: type=gha,mode=min,scope=docker-${{ matrix.service }}
           provenance: false
+
+      - name: Scan Docker image for vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: lootlog-${{ matrix.service }}:ci
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+
+      - name: Upload Trivy results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-${{ matrix.service }}
 
   ci-success:
     name: ${{ github.event_name == 'workflow_dispatch' && 'Automated CI result' || 'CI Success' }}
