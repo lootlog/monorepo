@@ -9,9 +9,6 @@
   ],
   "typesVersions": {
     "*": {
-      "auth/user-metadata": [
-        "./dist/auth/user-metadata.d.ts"
-      ],
       "auth/verify-jwt": [
         "./dist/auth/verify-jwt.d.ts"
       ],
@@ -21,11 +18,6 @@
     }
   },
   "exports": {
-    "./auth/user-metadata": {
-      "types": "./dist/auth/user-metadata.d.ts",
-      "import": "./dist/auth/user-metadata.mjs",
-      "require": "./dist/auth/user-metadata.js"
-    },
     "./auth/verify-jwt": {
       "types": "./dist/auth/verify-jwt.d.ts",
       "import": "./dist/auth/verify-jwt.mjs",
@@ -42,7 +34,6 @@
     "lint": "oxlint src"
   },
   "dependencies": {
-    "hono": "^4.12.32",
     "jose": "^6.2.4"
   },
   "devDependencies": {
