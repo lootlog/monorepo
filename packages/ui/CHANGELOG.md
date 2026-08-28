@@ -1,5 +1,12 @@
 # @lootlog/ui
 
+## 3.0.2
+
+### Patch Changes
+
+- f0a1338: Update runtime dependencies across applications and shared packages.
+- af13bc9: Refactor complex control flow into smaller internal helpers while preserving existing behavior and contracts.
+
 ## 3.0.1
 
 ### Patch Changes

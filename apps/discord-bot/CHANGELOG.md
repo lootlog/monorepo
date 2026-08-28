@@ -1,5 +1,17 @@
 # @lootlog/discord-bot
 
+## 1.0.8
+
+### Patch Changes
+
+- f0a1338: Update runtime dependencies across applications and shared packages.
+- 02813db: Remove vulnerable build tooling from production images and update transitive runtime dependencies to patched releases.
+- Updated dependencies [7742f4f]
+- Updated dependencies [f0a1338]
+  - @lootlog/instrumentation@0.0.3
+  - @lootlog/nest-shared@1.0.8
+  - @lootlog/types@3.0.1
+
 ## 1.0.7
 
 ### Patch Changes

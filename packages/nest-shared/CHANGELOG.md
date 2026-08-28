@@ -1,5 +1,12 @@
 # @lootlog/nest-shared
 
+## 1.0.8
+
+### Patch Changes
+
+- f0a1338: Update runtime dependencies across applications and shared packages.
+- @lootlog/types@3.0.1
+
 ## 1.0.7
 
 ### Patch Changes

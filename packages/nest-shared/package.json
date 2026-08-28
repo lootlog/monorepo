@@ -1,6 +1,6 @@
 {
   "name": "@lootlog/nest-shared",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "private": true,
   "description": "Shared NestJS modules, services, and utilities for backend microservices",
   "license": "MIT",
