@@ -22,6 +22,19 @@ import { EventSummaryService } from "./event-summary.service";
 import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id";
 import { TimersService } from "src/timers/timers.service";
 
+const normalizeCloseRespawnWindowOptions = (
+  options: CloseRespawnWindowOptions,
+) => ({
+  ...options,
+  createNewWindow: options.createNewWindow ?? false,
+  isAutoClose: options.isAutoClose ?? false,
+});
+
+const getRespawnWindowCloseLogMessage = (isAutoClose: boolean): string =>
+  isAutoClose
+    ? "Auto-closing respawn window"
+    : "Manually closing respawn window";
+
 @Injectable()
 export class EventRespawnService {
   private readonly logger = new Logger(EventRespawnService.name);
@@ -44,12 +57,8 @@ export class EventRespawnService {
     heroId: string,
     options: CloseRespawnWindowOptions = {},
   ): Promise<void> {
-    const {
-      createNewWindow = false,
-      newMinSpawnTime,
-      newMaxSpawnTime,
-      isAutoClose = false,
-    } = options;
+    const { createNewWindow, newMinSpawnTime, newMaxSpawnTime, isAutoClose } =
+      normalizeCloseRespawnWindowOptions(options);
 
     const hero = await this.prisma.eventHeroNpc.findFirst({
       where: { id: heroId, event: { id: eventId, guildId } },
@@ -68,9 +77,7 @@ export class EventRespawnService {
     const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
 
     this.logger.log({
-      message: isAutoClose
-        ? "Auto-closing respawn window"
-        : "Manually closing respawn window",
+      message: getRespawnWindowCloseLogMessage(isAutoClose),
       heroId,
       eventId,
       guildId,

@@ -50,6 +50,76 @@ type NotificationRuleCardProps = {
   actionsDisabled: boolean;
 };
 
+type NotificationRule = NotificationRuleCardProps["rule"];
+type Translator = ReturnType<typeof useTranslation>["t"];
+
+const getRecurringScheduleLabel = (rule: NotificationRule, t: Translator) => {
+  if (rule.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE) {
+    return undefined;
+  }
+  if (
+    !rule.scheduleIntervalType ||
+    rule.scheduleIntervalType === NotificationScheduleIntervalType.ONCE
+  ) {
+    return undefined;
+  }
+  if (rule.scheduleIntervalType === NotificationScheduleIntervalType.HOURLY) {
+    return t("settings.notifications.intervalTypes.hourly").replace(
+      "X",
+      String(rule.scheduleIntervalValue ?? 1),
+    );
+  }
+  if (rule.scheduleIntervalType === NotificationScheduleIntervalType.DAILY) {
+    return `${t("settings.notifications.intervalTypes.daily")} ${rule.scheduleTimeOfDay ?? ""}`;
+  }
+  if (rule.scheduleIntervalType === NotificationScheduleIntervalType.WEEKLY) {
+    return `${t(`settings.notifications.weekdays.${rule.scheduleWeekday ?? 0}`)} ${rule.scheduleTimeOfDay ?? ""}`;
+  }
+  return "";
+};
+
+const getNpcLabel = (rule: NotificationRule, t: Translator) => {
+  if (rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
+    return undefined;
+  }
+  const npcCount = getGuildNotificationRuleNpcCount(rule);
+  return npcCount > 0
+    ? t("settings.notifications.npcCount", { count: npcCount })
+    : t("settings.notifications.allNpcs");
+};
+
+const getNotificationRuleCardViewModel = (
+  rule: NotificationRule,
+  t: Translator,
+) => {
+  const triggerLabel = t(
+    getNotificationTriggerTranslationKey(rule.triggerType),
+  );
+  return {
+    triggerLabel,
+    displayName: rule.name ?? triggerLabel,
+    enabledLabel: rule.enabled
+      ? t("settings.notifications.states.enabled")
+      : t("settings.notifications.states.disabled"),
+    recurringScheduleLabel: getRecurringScheduleLabel(rule, t),
+    scheduledAtLabel:
+      rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
+      rule.scheduledAt
+        ? formatNotificationDateInTimeZone(
+            rule.scheduledAt,
+            rule.scheduleTimezone ?? "Europe/Warsaw",
+          )
+        : undefined,
+    timerScheduleLabel:
+      rule.scheduleAnchor !== null && rule.scheduleOffsetMinutes !== null
+        ? t(getGuildNotificationRuleScheduleTranslationKey(rule), {
+            minutes: rule.scheduleOffsetMinutes,
+          })
+        : undefined,
+    npcLabel: getNpcLabel(rule, t),
+  };
+};
+
 export const NotificationRuleCard = ({
   rule,
   actionsDisabled,
@@ -130,7 +200,7 @@ export const NotificationRuleCard = ({
     }
     return label;
   });
-  const npcCount = getGuildNotificationRuleNpcCount(rule);
+  const viewModel = getNotificationRuleCardViewModel(rule, t);
   const hasTestableTargets = rule.targets.some(
     ({ target }) => target.active && target.canSend,
   );
@@ -213,67 +283,37 @@ export const NotificationRuleCard = ({
         <div className="min-w-0 space-y-2">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">
-              {rule.name ??
-                t(getNotificationTriggerTranslationKey(rule.triggerType))}
+              {viewModel.displayName}
             </p>
             <p className="text-xs text-muted-foreground">
-              {t(getNotificationTriggerTranslationKey(rule.triggerType))}
+              {viewModel.triggerLabel}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Badge variant={rule.enabled ? "default" : "secondary"}>
-              {rule.enabled
-                ? t("settings.notifications.states.enabled")
-                : t("settings.notifications.states.disabled")}
+              {viewModel.enabledLabel}
             </Badge>
             {rule.world ? (
               <Badge variant="secondary">{rule.world}</Badge>
             ) : null}
-            {rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
-            rule.scheduleIntervalType &&
-            rule.scheduleIntervalType !==
-              NotificationScheduleIntervalType.ONCE ? (
+            {viewModel.recurringScheduleLabel ? (
               <Badge variant="secondary">
-                {rule.scheduleIntervalType ===
-                NotificationScheduleIntervalType.HOURLY
-                  ? `${t("settings.notifications.intervalTypes.hourly").replace("X", String(rule.scheduleIntervalValue ?? 1))}`
-                  : rule.scheduleIntervalType ===
-                      NotificationScheduleIntervalType.DAILY
-                    ? `${t("settings.notifications.intervalTypes.daily")} ${rule.scheduleTimeOfDay ?? ""}`
-                    : rule.scheduleIntervalType ===
-                        NotificationScheduleIntervalType.WEEKLY
-                      ? `${t(`settings.notifications.weekdays.${rule.scheduleWeekday ?? 0}`)} ${rule.scheduleTimeOfDay ?? ""}`
-                      : ""}
+                {viewModel.recurringScheduleLabel}
               </Badge>
             ) : null}
-            {rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
-            rule.scheduledAt ? (
-              <Badge variant="secondary">
-                {formatNotificationDateInTimeZone(
-                  rule.scheduledAt,
-                  rule.scheduleTimezone ?? "Europe/Warsaw",
-                )}
-              </Badge>
+            {viewModel.scheduledAtLabel ? (
+              <Badge variant="secondary">{viewModel.scheduledAtLabel}</Badge>
             ) : null}
-            {rule.scheduleAnchor !== null &&
-            rule.scheduleOffsetMinutes !== null ? (
-              <Badge variant="secondary">
-                {t(getGuildNotificationRuleScheduleTranslationKey(rule), {
-                  minutes: rule.scheduleOffsetMinutes,
-                })}
-              </Badge>
+            {viewModel.timerScheduleLabel ? (
+              <Badge variant="secondary">{viewModel.timerScheduleLabel}</Badge>
             ) : null}
             <Badge variant="secondary">
               {t("settings.notifications.targetCount", {
                 count: targetLabels.length,
               })}
             </Badge>
-            {rule.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE ? (
-              <Badge variant="secondary">
-                {npcCount > 0
-                  ? t("settings.notifications.npcCount", { count: npcCount })
-                  : t("settings.notifications.allNpcs")}
-              </Badge>
+            {viewModel.npcLabel ? (
+              <Badge variant="secondary">{viewModel.npcLabel}</Badge>
             ) : null}
           </div>
           {rule.targets.length > 0 ? (
@@ -403,13 +443,7 @@ export const NotificationRuleCard = ({
                     description={t(
                       "settings.notifications.deleteRuleDialog.description",
                       {
-                        name:
-                          rule.name ??
-                          t(
-                            getNotificationTriggerTranslationKey(
-                              rule.triggerType,
-                            ),
-                          ),
+                        name: viewModel.displayName,
                       },
                     )}
                     confirmButtonLabel={t(

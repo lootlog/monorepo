@@ -43,6 +43,11 @@ const getKillCount = (
   );
 };
 
+const getEventRouteIds = (guildId?: string, eventId?: string) => ({
+  eventId: eventId ?? "",
+  guildId: guildId ?? "",
+});
+
 export const EventKillsHistoryContent = ({
   guildId,
   eventId,
@@ -56,21 +61,22 @@ export const EventKillsHistoryContent = ({
     null,
   );
   const hasEventRouteParams = Boolean(guildId && eventId);
+  const routeIds = getEventRouteIds(guildId, eventId);
   const {
     data: event,
     isLoading: eventLoading,
     error: eventError,
   } = useShowEventOverview(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: routeIds.guildId,
+      eventId: routeIds.eventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getShowEventOverviewQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: routeIds.guildId,
+          eventId: routeIds.eventId,
         }),
       },
     },
@@ -83,8 +89,8 @@ export const EventKillsHistoryContent = ({
     isLoading: killsLoading,
     isError: killsHasError,
   } = useEventKillHistory({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
+    guildId: routeIds.guildId,
+    eventId: routeIds.eventId,
     heroId: selectedHeroId,
     limit: 20,
   });
@@ -94,15 +100,15 @@ export const EventKillsHistoryContent = ({
     isLoading: heroStatsLoading,
   } = useEventsRankingControllerGetEventHeroStats(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: routeIds.guildId,
+      eventId: routeIds.eventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: routeIds.guildId,
+          eventId: routeIds.eventId,
         }),
       },
     },
@@ -121,7 +127,7 @@ export const EventKillsHistoryContent = ({
       <div className="flex h-64 flex-col items-center justify-center gap-4">
         <AlertCircle className="size-12 text-destructive" />
         <p className="text-muted-foreground">{t("events.error")}</p>
-        <Link to="/$guildId/events" params={{ guildId: guildId ?? "" }}>
+        <Link to="/$guildId/events" params={{ guildId: routeIds.guildId }}>
           <Button variant="outline">{t("events.common.backToEvent")}</Button>
         </Link>
       </div>
@@ -162,8 +168,8 @@ export const EventKillsHistoryContent = ({
 
           <EventKillsTable
             kills={allKills}
-            guildId={guildId ?? ""}
-            eventId={eventId ?? ""}
+            guildId={routeIds.guildId}
+            eventId={routeIds.eventId}
             scrollElement={scrollElement}
             resetKey={selectedHeroId ?? "all"}
             isLoading={killsLoading}

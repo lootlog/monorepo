@@ -12,15 +12,36 @@ type AbyssSummaryCardsProps = {
   season?: AbyssSeason;
 };
 
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+const getSeasonRecord = (season: AbyssSeason | undefined, t: Translate) => {
+  if (!season) {
+    return `0${t("battlePanel.statistics.columns.w")} / 0${t(
+      "battlePanel.statistics.columns.l",
+    )}`;
+  }
+  return `${season.wins}${t("battlePanel.statistics.columns.w")} / ${
+    season.losses
+  }${t("battlePanel.statistics.columns.l")}`;
+};
+
+const getOptionalAbyssMetric = (value: number | null | undefined) => {
+  if (value === null || value === undefined) return "-";
+  return formatAbyssNumber(value);
+};
+
+const getPointsSubvalue = (points: number | null | undefined, t: Translate) => {
+  if (points === null || points === undefined) {
+    return t("battlePanel.abyss.pointsUnavailable");
+  }
+  return t("battlePanel.abyss.stats.points", {
+    value: formatAbyssNumber(points),
+  });
+};
+
 export function AbyssSummaryCards({ season }: AbyssSummaryCardsProps) {
   const { t } = useTranslation();
-  const recordValue = season
-    ? `${season.wins}${t("battlePanel.statistics.columns.w")} / ${
-        season.losses
-      }${t("battlePanel.statistics.columns.l")}`
-    : `0${t("battlePanel.statistics.columns.w")} / 0${t(
-        "battlePanel.statistics.columns.l",
-      )}`;
+  const recordValue = getSeasonRecord(season, t);
   const cards = [
     {
       key: "record",
@@ -53,28 +74,15 @@ export function AbyssSummaryCards({ season }: AbyssSummaryCardsProps) {
       key: "peakRating",
       icon: Crown,
       label: t("battlePanel.abyss.cards.peakRating"),
-      value:
-        season?.peakRating === null || season?.peakRating === undefined
-          ? "-"
-          : formatAbyssNumber(season.peakRating),
+      value: getOptionalAbyssMetric(season?.peakRating),
       subvalue: t("battlePanel.abyss.season"),
     },
     {
       key: "points",
       icon: Sparkles,
       label: t("battlePanel.abyss.cards.points"),
-      value:
-        season?.totalPointsGained === null ||
-        season?.totalPointsGained === undefined
-          ? "-"
-          : formatAbyssNumber(season.totalPointsGained),
-      subvalue:
-        season?.totalPointsGained === null ||
-        season?.totalPointsGained === undefined
-          ? t("battlePanel.abyss.pointsUnavailable")
-          : t("battlePanel.abyss.stats.points", {
-              value: formatAbyssNumber(season.totalPointsGained),
-            }),
+      value: getOptionalAbyssMetric(season?.totalPointsGained),
+      subvalue: getPointsSubvalue(season?.totalPointsGained, t),
     },
   ];
 

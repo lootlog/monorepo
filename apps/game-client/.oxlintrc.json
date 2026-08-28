@@ -24,6 +24,7 @@
     }
   },
   "rules": {
+    "complexity": "error",
     "eqeqeq": "error",
     "no-console": ["warn", { "allow": ["warn"] }],
     "no-debugger": "error",

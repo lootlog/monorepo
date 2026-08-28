@@ -162,6 +162,23 @@ const inferLegacyDefinedPosition = (
   return typeof position === "object" && position !== null;
 };
 
+const migrateLegacyWindowStateShapes = (
+  state: Record<string, unknown>,
+): void => {
+  const addTimer = state["add-timer"] as Record<string, unknown> | undefined;
+  if (addTimer && typeof addTimer === "object" && !("state" in addTimer)) {
+    state["add-timer"] = { ...addTimer, state: {} };
+  }
+
+  const onlinePlayers = state["online-players"] as
+    | Record<string, unknown>
+    | undefined;
+  if (onlinePlayers && typeof onlinePlayers === "object") {
+    const { state: _, ...windowState } = onlinePlayers;
+    state["online-players"] = windowState;
+  }
+};
+
 export const migrateWindowsState = (
   persisted: unknown,
   version: number,
@@ -230,21 +247,7 @@ export const migrateWindowsState = (
     };
   }
 
-  const addTimer = state["add-timer"] as Record<string, unknown> | undefined;
-  if (addTimer && typeof addTimer === "object" && !("state" in addTimer)) {
-    state["add-timer"] = {
-      ...addTimer,
-      state: {},
-    };
-  }
-
-  const onlinePlayers = state["online-players"] as
-    | Record<string, unknown>
-    | undefined;
-  if (onlinePlayers && typeof onlinePlayers === "object") {
-    const { state: _, ...windowState } = onlinePlayers;
-    state["online-players"] = windowState;
-  }
+  migrateLegacyWindowStateShapes(state);
 
   if (version < 10) {
     state.currentWindowFocus = undefined;

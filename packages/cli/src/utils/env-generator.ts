@@ -111,6 +111,26 @@ const shouldGenerateValue = (key: string): boolean => {
   return !EXTERNAL_VALUE_KEY_SET.has(key);
 };
 
+const includesAny = (value: string, fragments: string[]): boolean => {
+  return fragments.some((fragment) => value.includes(fragment));
+};
+
+const shouldGenerateSecret = (lowerKey: string): boolean => {
+  if (!includesAny(lowerKey, ["secret", "key", "token"])) {
+    return false;
+  }
+
+  if (includesAny(lowerKey, ["master_key", "masterkey"])) {
+    return true;
+  }
+
+  return !includesAny(lowerKey, ["discord", "r2", "axiom"]);
+};
+
+const isUnconfiguredPlaceholder = (value: string): boolean => {
+  return ["xxx", "your_"].includes(value) || value.startsWith("your_");
+};
+
 const generateSmartDefault = (
   key: string,
   originalValue: string,
@@ -127,25 +147,12 @@ const generateSmartDefault = (
     return originalValue;
   }
 
-  if (lowerKey.includes("password") || lowerKey.includes("pass")) {
+  if (includesAny(lowerKey, ["password", "pass"])) {
     return generatePassword();
   }
 
-  if (
-    lowerKey.includes("secret") ||
-    lowerKey.includes("key") ||
-    lowerKey.includes("token")
-  ) {
-    if (lowerKey.includes("master_key") || lowerKey.includes("masterkey")) {
-      return generateSecretKey();
-    }
-    if (
-      !lowerKey.includes("discord") &&
-      !lowerKey.includes("r2") &&
-      !lowerKey.includes("axiom")
-    ) {
-      return generateSecretKey();
-    }
+  if (shouldGenerateSecret(lowerKey)) {
+    return generateSecretKey();
   }
 
   if (lowerKey.includes("port")) {
@@ -159,7 +166,7 @@ const generateSmartDefault = (
     return "localhost";
   }
 
-  if (lowerKey.includes("url") || lowerKey.includes("uri")) {
+  if (includesAny(lowerKey, ["url", "uri"])) {
     return originalValue;
   }
 
@@ -167,19 +174,11 @@ const generateSmartDefault = (
     return "local";
   }
 
-  if (
-    lowerKey.includes("db_name") ||
-    lowerKey.includes("database") ||
-    lowerKey.includes("db_user")
-  ) {
+  if (includesAny(lowerKey, ["db_name", "database", "db_user"])) {
     return originalValue;
   }
 
-  if (
-    originalValue === "xxx" ||
-    originalValue === "your_" ||
-    originalValue.startsWith("your_")
-  ) {
+  if (isUnconfiguredPlaceholder(originalValue)) {
     return originalValue;
   }
 

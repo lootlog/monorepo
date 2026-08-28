@@ -32,6 +32,133 @@ import {
 
 const guildRouteApi = getRouteApi("/_authenticated/$guildId");
 
+const getBreadcrumbRouteFlags = ({
+  guildId,
+  eventId,
+  memberId,
+  roleId,
+  npcId,
+  docId,
+  path,
+}: {
+  guildId?: string;
+  eventId?: string;
+  memberId?: string;
+  roleId?: string;
+  npcId?: string;
+  docId?: string;
+  path: string;
+}) => {
+  const isEventRoute = Boolean(eventId && guildId && path.includes("/events"));
+  return {
+    isEventRoute,
+    isSettingsRoleRoute: Boolean(
+      guildId && roleId && path.startsWith(`/${guildId}/settings/roles/`),
+    ),
+    isSettingsMemberRoute: Boolean(
+      guildId && memberId && path.startsWith(`/${guildId}/settings/members/`),
+    ),
+    isSettingsNpcRoute: Boolean(
+      guildId && npcId && path.startsWith(`/${guildId}/settings/npcs/`),
+    ),
+    isDocsDetailRoute: Boolean(
+      guildId && docId && path.startsWith(`/${guildId}/docs/`),
+    ),
+    isEventMemberRoute: Boolean(
+      memberId && path.includes("/members/") && isEventRoute,
+    ),
+  };
+};
+
+const useBreadcrumbLookupData = ({
+  guildId,
+  docId,
+  isSettingsMemberRoute,
+  isSettingsRoleRoute,
+  isSettingsNpcRoute,
+  isDocsDetailRoute,
+}: {
+  guildId?: string;
+  docId?: string;
+  isSettingsMemberRoute: boolean;
+  isSettingsRoleRoute: boolean;
+  isSettingsNpcRoute: boolean;
+  isDocsDetailRoute: boolean;
+}) => {
+  const queryGuildId = guildId ?? "";
+  const queryDocId = docId ?? "";
+  const { data: settingsMembers } = useMembersControllerGetGuildMembers(
+    { guildId: queryGuildId },
+    { includeInactive: true },
+    {
+      query: {
+        enabled: isSettingsMemberRoute,
+        queryKey: getMembersControllerGetGuildMembersQueryKey(
+          { guildId: queryGuildId },
+          { includeInactive: true },
+        ),
+      },
+    },
+  );
+  const { data: settingsRoles } = useRolesControllerGetGuildRoles(
+    { guildId: queryGuildId },
+    {
+      query: {
+        enabled: isSettingsRoleRoute,
+        queryKey: getRolesControllerGetGuildRolesQueryKey({
+          guildId: queryGuildId,
+        }),
+      },
+    },
+  );
+  const { data: settingsLootlogConfig } =
+    useLootlogConfigControllerGetLootlogConfig(
+      { guildId: queryGuildId },
+      {
+        query: {
+          enabled: isSettingsNpcRoute,
+          queryKey: getLootlogConfigControllerGetLootlogConfigQueryKey({
+            guildId: queryGuildId,
+          }),
+        },
+      },
+    );
+  const { data: currentDocument } = useDocsControllerGetDocument(
+    { guildId: queryGuildId, docId: queryDocId },
+    {
+      query: {
+        enabled: isDocsDetailRoute,
+        queryKey: getDocsControllerGetDocumentQueryKey({
+          guildId: queryGuildId,
+          docId: queryDocId,
+        }),
+      },
+    },
+  );
+  return {
+    settingsMembers,
+    settingsRoles,
+    settingsLootlogConfig,
+    currentDocument,
+  };
+};
+
+const getBreadcrumbVisibilityClassName = (
+  index: number,
+  breadcrumbsCount: number,
+) => {
+  if (index === breadcrumbsCount - 1) {
+    return "flex min-w-0";
+  }
+  if (index === breadcrumbsCount - 2) {
+    return "hidden shrink-0 sm:flex";
+  }
+  if (index === breadcrumbsCount - 3) {
+    return "hidden shrink-0 xl:flex";
+  }
+  return "hidden shrink-0 2xl:flex";
+};
+
 export const GuildBreadcrumbs: FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -67,111 +194,77 @@ export const GuildBreadcrumbs: FC = () => {
     docId,
   } = params;
   const path = location.pathname;
-
-  const isEventRoute = Boolean(eventId && guildId && path.includes("/events"));
-  const isSettingsRoleRoute = Boolean(
-    guildId && roleId && path.startsWith(`/${guildId}/settings/roles/`),
-  );
-  const isSettingsMemberRoute = Boolean(
-    guildId && memberId && path.startsWith(`/${guildId}/settings/members/`),
-  );
-  const isSettingsNpcRoute = Boolean(
-    guildId && npcId && path.startsWith(`/${guildId}/settings/npcs/`),
-  );
-  const isDocsDetailRoute = Boolean(
-    guildId && docId && path.startsWith(`/${guildId}/docs/`),
-  );
-  const isEventMemberRoute = Boolean(
-    params.memberId && path.includes("/members/") && isEventRoute,
-  );
-  const { data: settingsMembers } = useMembersControllerGetGuildMembers(
-    { guildId: guildId ?? "" },
-    { includeInactive: true },
-    {
-      query: {
-        enabled: isSettingsMemberRoute,
-        queryKey: getMembersControllerGetGuildMembersQueryKey(
-          { guildId: guildId ?? "" },
-          { includeInactive: true },
-        ),
-      },
-    },
-  );
-  const { data: settingsRoles } = useRolesControllerGetGuildRoles(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        enabled: isSettingsRoleRoute,
-        queryKey: getRolesControllerGetGuildRolesQueryKey({
-          guildId: guildId ?? "",
-        }),
-      },
-    },
-  );
-  const { data: settingsLootlogConfig } =
-    useLootlogConfigControllerGetLootlogConfig(
-      { guildId: guildId ?? "" },
-      {
-        query: {
-          enabled: isSettingsNpcRoute,
-          queryKey: getLootlogConfigControllerGetLootlogConfigQueryKey({
-            guildId: guildId ?? "",
-          }),
-        },
-      },
-    );
-  const { data: currentDocument } = useDocsControllerGetDocument(
-    { guildId: guildId ?? "", docId: docId ?? "" },
-    {
-      query: {
-        enabled: isDocsDetailRoute,
-        queryKey: getDocsControllerGetDocumentQueryKey({
-          guildId: guildId ?? "",
-          docId: docId ?? "",
-        }),
-      },
-    },
-  );
-  const event = isEventRoute ? eventRouteData?.event : undefined;
-  const eventRankings = isEventMemberRoute
-    ? (eventRouteData?.rankings ?? [])
-    : [];
-  const settingsMemberName = isSettingsMemberRoute
-    ? settingsMembers?.find((member) => String(member.id) === memberId)?.name
-    : undefined;
-  const settingsRoleName = isSettingsRoleRoute
-    ? settingsRoles?.find((role) => role.id === roleId)?.name
-    : undefined;
-  const settingsNpc = isSettingsNpcRoute
-    ? settingsLootlogConfig?.npcs?.find((npc) => String(npc.id) === npcId)
-    : undefined;
-  const settingsNpcName = settingsNpc
-    ? t(`npcType.${settingsNpc.npcType}`)
-    : undefined;
-
-  const navInfo = getNavigationInfo({
+  const routeFlags = getBreadcrumbRouteFlags({
+    guildId,
+    eventId,
+    memberId,
+    roleId,
+    npcId,
+    docId,
     path,
-    params: {
-      guildId,
-      eventId,
-      heroId,
-      killId,
-      memberId,
-      npcId,
-      reservationId,
-      roleId,
-      docId,
-    },
-    docTitle: isDocsDetailRoute ? currentDocument?.title : undefined,
-    guildName: guild?.name,
-    eventName: event?.name,
-    eventHeroNpcs: event?.heroNpcs,
-    eventRankings,
-    settingsMemberName,
-    settingsNpcName,
-    settingsRoleName,
-    t,
   });
+  const {
+    settingsMembers,
+    settingsRoles,
+    settingsLootlogConfig,
+    currentDocument,
+  } = useBreadcrumbLookupData({
+    guildId,
+    docId,
+    isSettingsMemberRoute: routeFlags.isSettingsMemberRoute,
+    isSettingsRoleRoute: routeFlags.isSettingsRoleRoute,
+    isSettingsNpcRoute: routeFlags.isSettingsNpcRoute,
+    isDocsDetailRoute: routeFlags.isDocsDetailRoute,
+  });
+  const resolveSettingsNpcName = () => {
+    if (!routeFlags.isSettingsNpcRoute) {
+      return undefined;
+    }
+    const settingsNpc = settingsLootlogConfig?.npcs?.find(
+      (npc) => String(npc.id) === npcId,
+    );
+    return settingsNpc ? t(`npcType.${settingsNpc.npcType}`) : undefined;
+  };
+  const resolveNavigationInfo = () => {
+    const event = routeFlags.isEventRoute ? eventRouteData?.event : undefined;
+    const eventRankings = routeFlags.isEventMemberRoute
+      ? (eventRouteData?.rankings ?? [])
+      : [];
+    const settingsMemberName = routeFlags.isSettingsMemberRoute
+      ? settingsMembers?.find((member) => String(member.id) === memberId)?.name
+      : undefined;
+    const settingsRoleName = routeFlags.isSettingsRoleRoute
+      ? settingsRoles?.find((role) => role.id === roleId)?.name
+      : undefined;
+    const settingsNpcName = resolveSettingsNpcName();
+
+    return getNavigationInfo({
+      path,
+      params: {
+        guildId,
+        eventId,
+        heroId,
+        killId,
+        memberId,
+        npcId,
+        reservationId,
+        roleId,
+        docId,
+      },
+      docTitle: routeFlags.isDocsDetailRoute
+        ? currentDocument?.title
+        : undefined,
+      guildName: guild?.name,
+      eventName: event?.name,
+      eventHeroNpcs: event?.heroNpcs,
+      eventRankings,
+      settingsMemberName,
+      settingsNpcName,
+      settingsRoleName,
+      t,
+    });
+  };
+  const navInfo = resolveNavigationInfo();
 
   return (
     <PageHeader>
@@ -209,18 +302,10 @@ export const GuildBreadcrumbs: FC = () => {
                 )}
                 {navInfo.breadcrumbs.map((crumb, index) => {
                   const isLast = index === navInfo.breadcrumbs.length - 1;
-                  const isPrevious = index === navInfo.breadcrumbs.length - 2;
-                  const isEarlierContext =
-                    index === navInfo.breadcrumbs.length - 3;
-                  let visibilityClassName = "hidden shrink-0 2xl:flex";
-
-                  if (isLast) {
-                    visibilityClassName = "flex min-w-0";
-                  } else if (isPrevious) {
-                    visibilityClassName = "hidden shrink-0 sm:flex";
-                  } else if (isEarlierContext) {
-                    visibilityClassName = "hidden shrink-0 xl:flex";
-                  }
+                  const visibilityClassName = getBreadcrumbVisibilityClassName(
+                    index,
+                    navInfo.breadcrumbs.length,
+                  );
 
                   return (
                     <motion.div

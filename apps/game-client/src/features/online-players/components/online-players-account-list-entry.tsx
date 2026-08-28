@@ -65,27 +65,76 @@ const getHighlightClassName = ({
   return undefined;
 };
 
+const resolvePresenceDetails = (
+  presence: PlayerPresence,
+  unknownLocation: string,
+  unknownWorld: string,
+) => {
+  const { player } = presence;
+  return {
+    accountId: player?.accountId ? Number.parseInt(player.accountId, 10) : 0,
+    characterId: player?.characterId
+      ? Number.parseInt(player.characterId, 10)
+      : 0,
+    locationName: player?.location?.map ?? presence.mapName ?? unknownLocation,
+    player,
+    world: player?.world ?? unknownWorld,
+  };
+};
+
+type OnlinePlayerActionStateInput = {
+  accountId: number;
+  characterId: number;
+  characterNick: string;
+  gameInterface?: string;
+  heroCharacterId?: string;
+  heroClanId?: number;
+  heroName?: string;
+  isFriend: boolean;
+  isPartyMember: boolean;
+  playerClanId?: number;
+};
+
+const resolveOnlinePlayerActionState = ({
+  accountId,
+  characterId,
+  characterNick,
+  gameInterface,
+  heroCharacterId,
+  heroClanId,
+  heroName,
+  isFriend,
+  isPartyMember,
+  playerClanId,
+}: OnlinePlayerActionStateInput) => {
+  const isSelf =
+    String(characterId) === heroCharacterId || characterNick === heroName;
+  const isSameClan =
+    playerClanId !== undefined &&
+    heroClanId !== undefined &&
+    playerClanId === heroClanId;
+  const canUseCharacterActions = characterId > 0 && accountId > 0;
+
+  return {
+    canAddFriend: characterId > 0 && !isSelf && !isFriend,
+    canInviteToParty: characterId > 0 && !isSelf && !isPartyMember,
+    canShowGameContextActions: gameInterface === "ni" && canUseCharacterActions,
+    isSameClan,
+    isSelf,
+  };
+};
+
 export const OnlinePlayersAccountListEntry: FC<
   OnlinePlayersAccountListEntryProps
 > = ({ presence, guildMember }) => {
   const { t } = useTranslation("onlinePlayers");
-  const player = presence.player;
   const character = getPresenceCharacter(presence);
-  const characterId = player?.characterId
-    ? Number.parseInt(player.characterId, 10)
-    : 0;
-  const accountId = player?.accountId
-    ? Number.parseInt(player.accountId, 10)
-    : 0;
-  const locationName =
-    player?.location?.map ?? presence.mapName ?? t("location.unknown");
-  const world = player?.world ?? t("world.unknown");
+  const { accountId, characterId, locationName, player, world } =
+    resolvePresenceDetails(presence, t("location.unknown"), t("world.unknown"));
   const heroCharacterId = useGameStore((state) => state.game?.hero.characterId);
   const heroName = useGameStore((state) => state.game?.hero.name);
   const heroClanId = useGameStore((state) => state.game?.hero.clan?.id);
   const gameInterface = useGameStore((state) => state.game?.interface);
-  const isSelf =
-    String(characterId) === heroCharacterId || character.nick === heroName;
   const isPartyMember = usePartyStore(
     (state) =>
       characterId > 0 &&
@@ -96,21 +145,30 @@ export const OnlinePlayersAccountListEntry: FC<
   const isFriend = useFriendsStore((state) =>
     state.isFriend(characterId.toString()),
   );
-  const isSameClan =
-    player?.clan?.id !== undefined &&
-    heroClanId !== undefined &&
-    player.clan.id === heroClanId;
+  const {
+    canAddFriend,
+    canInviteToParty,
+    canShowGameContextActions,
+    isSameClan,
+    isSelf,
+  } = resolveOnlinePlayerActionState({
+    accountId,
+    characterId,
+    characterNick: character.nick,
+    gameInterface,
+    heroCharacterId,
+    heroClanId,
+    heroName,
+    isFriend,
+    isPartyMember,
+    playerClanId: player?.clan?.id,
+  });
   const highlightClassName = getHighlightClassName({
     isSelf,
     isAfk: presence.isAfk,
     isPartyMember,
     isSameClan,
   });
-  const canUseCharacterActions = characterId > 0 && accountId > 0;
-  const canInviteToParty = characterId > 0 && !isSelf && !isPartyMember;
-  const canShowGameContextActions =
-    gameInterface === "ni" && canUseCharacterActions;
-  const canAddFriend = characterId > 0 && !isSelf && !isFriend;
   const memberName = guildMember?.name ?? t("member.unknown");
 
   const handleInviteToParty = () => {

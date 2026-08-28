@@ -59,6 +59,17 @@ const GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID = "__global-notification-mutes__";
 const DETECTOR_LEVEL_MIN = 0;
 const DETECTOR_LEVEL_MAX = 500;
 
+const resolvePreferenceUpdate = <Current, Patch>(
+  current: Current,
+  patch: Patch | undefined,
+  merge: (patch: Patch) => Current,
+): Current => (patch ? merge(patch) : current);
+
+const hasStoredPreference = (
+  storedValue: unknown,
+  providedValue: unknown,
+): boolean => storedValue !== undefined || providedValue !== undefined;
+
 type MutedNpcPreferenceInput = Pick<
   MutedNpcPreference,
   "npcKey" | "npcId" | "name" | "npcType" | "lvl"
@@ -449,40 +460,47 @@ export class UsersService {
       storedGameAccountSettings?.airTags,
     );
 
-    const nextNotifications = preferences.notifications
-      ? this.mergeNotificationsSettings(currentNotifications, {
-          notifications: preferences.notifications,
-        })
-      : currentNotifications;
-    const nextDetector = preferences.detector
-      ? this.mergeDetectorSettings(currentDetector, {
-          detector: preferences.detector,
-        })
-      : currentDetector;
-    const nextPings = preferences.pings
-      ? this.normalizeMapPingPreferences({
-          ...currentPings,
-          ...preferences.pings,
-        })
-      : currentPings;
-    const nextAirTags = preferences.airTags
-      ? this.normalizeAirTagPreferences({
-          ...currentAirTags,
-          ...preferences.airTags,
-        })
-      : currentAirTags;
-    const hasStoredNotifications =
-      storedGameAccountSettings?.notifications !== undefined ||
-      preferences.notifications !== undefined;
-    const hasStoredDetector =
-      storedGameAccountSettings?.detector !== undefined ||
-      preferences.detector !== undefined;
-    const hasStoredPings =
-      storedGameAccountSettings?.pings !== undefined ||
-      preferences.pings !== undefined;
-    const hasStoredAirTags =
-      storedGameAccountSettings?.airTags !== undefined ||
-      preferences.airTags !== undefined;
+    const nextNotifications = resolvePreferenceUpdate(
+      currentNotifications,
+      preferences.notifications,
+      (notifications) =>
+        this.mergeNotificationsSettings(currentNotifications, {
+          notifications,
+        }),
+    );
+    const nextDetector = resolvePreferenceUpdate(
+      currentDetector,
+      preferences.detector,
+      (detector) => this.mergeDetectorSettings(currentDetector, { detector }),
+    );
+    const nextPings = resolvePreferenceUpdate(
+      currentPings,
+      preferences.pings,
+      (pings) =>
+        this.normalizeMapPingPreferences({ ...currentPings, ...pings }),
+    );
+    const nextAirTags = resolvePreferenceUpdate(
+      currentAirTags,
+      preferences.airTags,
+      (airTags) =>
+        this.normalizeAirTagPreferences({ ...currentAirTags, ...airTags }),
+    );
+    const hasStoredNotifications = hasStoredPreference(
+      storedGameAccountSettings?.notifications,
+      preferences.notifications,
+    );
+    const hasStoredDetector = hasStoredPreference(
+      storedGameAccountSettings?.detector,
+      preferences.detector,
+    );
+    const hasStoredPings = hasStoredPreference(
+      storedGameAccountSettings?.pings,
+      preferences.pings,
+    );
+    const hasStoredAirTags = hasStoredPreference(
+      storedGameAccountSettings?.airTags,
+      preferences.airTags,
+    );
 
     const nextSettings = {
       ...storedGameAccountSettings,
@@ -520,11 +538,12 @@ export class UsersService {
       hasStoredDetector,
       hasStoredPings,
       hasStoredAirTags,
-      hasStoredPreferences:
-        hasStoredNotifications ||
-        hasStoredDetector ||
-        hasStoredPings ||
+      hasStoredPreferences: [
+        hasStoredNotifications,
+        hasStoredDetector,
+        hasStoredPings,
         hasStoredAirTags,
+      ].some(Boolean),
     };
   }
 

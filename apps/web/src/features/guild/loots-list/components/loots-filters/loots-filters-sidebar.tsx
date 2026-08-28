@@ -78,6 +78,80 @@ type LootsFiltersSidebarProps = {
   embedded?: boolean;
 };
 
+type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
+
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
+const embeddedValue = <Value,>(
+  embedded: boolean,
+  embeddedValue: Value,
+  sidebarValue: Value,
+) => (embedded ? embeddedValue : sidebarValue);
+
+const getEntitySearchParams = (
+  search: string,
+  selectedNames: string,
+  world: string | null | undefined,
+) => {
+  const queryWorld = world || "";
+  if (search.length > 0) {
+    return { search, world: queryWorld };
+  }
+  if (selectedNames.length > 0) {
+    return { search: selectedNames.split(","), world: queryWorld };
+  }
+  return undefined;
+};
+
+const getHidQueryState = (
+  hid: string | null | undefined,
+  world: string | null | undefined,
+) => {
+  const parsedHid = parseItemHid(hid && world ? formatItemHid(hid, world) : "");
+  const queryParams: LootsControllerResolveLootItemByHidParams | undefined =
+    parsedHid ? { hid: parsedHid.hid, world: parsedHid.world } : undefined;
+  return {
+    queryParams,
+    fallbackQueryParams: queryParams ?? { hid: "" },
+  };
+};
+
+const toFilterOptions = <Item extends { name: string }>(
+  items: Item[] | undefined,
+) =>
+  valueOr(items, []).map((item) => ({
+    value: item.name,
+    label: item.name,
+  }));
+
+const getFilterSectionState = (filters: LootFilters) => {
+  const npcActiveFilterCount =
+    Number(filters.npcTypes.length > 0) +
+    Number(filters.npcs.length > 0) +
+    Number(Boolean(filters.npcLevelMin || filters.npcLevelMax));
+  const itemActiveFilterCount =
+    Number(filters.rarities.length > 0) +
+    Number(filters.professions.length > 0) +
+    Number(filters.itemNames.length > 0 || Boolean(filters.hid)) +
+    Number(Boolean(filters.itemLevelMin || filters.itemLevelMax));
+  const playerActiveFilterCount =
+    Number(filters.players.length > 0) +
+    Number(Boolean(filters.playerLevelMin || filters.playerLevelMax));
+  const initiallyOpenSections: string[] = [];
+  if (npcActiveFilterCount > 0) initiallyOpenSections.push("npc");
+  if (itemActiveFilterCount > 0) initiallyOpenSections.push("item");
+  if (playerActiveFilterCount > 0) initiallyOpenSections.push("player");
+  if (initiallyOpenSections.length === 0) initiallyOpenSections.push("npc");
+
+  return {
+    npcActiveFilterCount,
+    itemActiveFilterCount,
+    playerActiveFilterCount,
+    initiallyOpenSections,
+  };
+};
+
 export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   className,
   embedded = false,
@@ -108,18 +182,16 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
   const selectedPlayerNames = filters.players.join(",");
   const selectedNpcNames = filters.npcs.join(",");
-  const playersSearchParams =
-    debouncedPlayersSearchValue.length > 0
-      ? { search: debouncedPlayersSearchValue, world: world || "" }
-      : selectedPlayerNames.length > 0
-        ? { search: selectedPlayerNames.split(","), world: world || "" }
-        : undefined;
-  const npcsSearchParams =
-    debouncedNpcsSearchValue.length > 0
-      ? { search: debouncedNpcsSearchValue, world: world || "" }
-      : selectedNpcNames.length > 0
-        ? { search: selectedNpcNames.split(","), world: world || "" }
-        : undefined;
+  const playersSearchParams = getEntitySearchParams(
+    debouncedPlayersSearchValue,
+    selectedPlayerNames,
+    world,
+  );
+  const npcsSearchParams = getEntitySearchParams(
+    debouncedNpcsSearchValue,
+    selectedNpcNames,
+    world,
+  );
   const itemsSearchParams = {
     limit: 10,
     search: debouncedItemsSearchValue,
@@ -150,25 +222,17 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     },
   });
 
-  const parsedHid = parseItemHid(
-    filters.hid && world ? formatItemHid(filters.hid, world) : "",
-  );
-  const hidItemQueryParams:
-    | LootsControllerResolveLootItemByHidParams
-    | undefined = parsedHid
-    ? {
-        hid: parsedHid.hid,
-        world: parsedHid.world,
-      }
-    : undefined;
-  const hidItemFallbackQueryParams = hidItemQueryParams ?? { hid: "" };
+  const {
+    queryParams: hidItemQueryParams,
+    fallbackQueryParams: hidItemFallbackQueryParams,
+  } = getHidQueryState(filters.hid, world);
   const { data: hidItem } = useLootsControllerResolveLootItemByHid(
-    { guildId: guildId ?? "" },
+    { guildId: valueOr(guildId, "") },
     hidItemFallbackQueryParams,
     {
       query: {
         queryKey: getLootsControllerResolveLootItemByHidQueryKey(
-          { guildId: guildId ?? "" },
+          { guildId: valueOr(guildId, "") },
           hidItemFallbackQueryParams,
         ),
         enabled: !!guildId && !!hidItemQueryParams,
@@ -176,23 +240,9 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     },
   );
 
-  const playersOptions =
-    playersQuery.data?.map((player) => ({
-      value: player.name,
-      label: player.name,
-    })) ?? [];
-
-  const npcsOptions =
-    npcsQuery.data?.map((npc) => ({
-      value: npc.name,
-      label: npc.name,
-    })) ?? [];
-
-  const itemsOptions =
-    itemsQuery.data?.hits.map((item) => ({
-      value: item.name,
-      label: item.name,
-    })) ?? [];
+  const playersOptions = toFilterOptions(playersQuery.data);
+  const npcsOptions = toFilterOptions(npcsQuery.data);
+  const itemsOptions = toFilterOptions(itemsQuery.data?.hits);
 
   const updateFilters = (newFilters: Partial<typeof filters>) => {
     setFilters((currentFilters) => {
@@ -291,27 +341,12 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
 
   const canSaveCurrentFilter =
     hasActiveFilters && !isCurrentFilterAlreadySaved();
-  const npcActiveFilterCount =
-    Number(filters.npcTypes.length > 0) +
-    Number(filters.npcs.length > 0) +
-    Number(Boolean(filters.npcLevelMin || filters.npcLevelMax));
-  const itemActiveFilterCount =
-    Number(filters.rarities.length > 0) +
-    Number(filters.professions.length > 0) +
-    Number(filters.itemNames.length > 0 || Boolean(filters.hid)) +
-    Number(Boolean(filters.itemLevelMin || filters.itemLevelMax));
-  const playerActiveFilterCount =
-    Number(filters.players.length > 0) +
-    Number(Boolean(filters.playerLevelMin || filters.playerLevelMax));
-  const initiallyOpenSections = [
-    ...(npcActiveFilterCount > 0 ? ["npc"] : []),
-    ...(itemActiveFilterCount > 0 ? ["item"] : []),
-    ...(playerActiveFilterCount > 0 ? ["player"] : []),
-  ];
-
-  if (initiallyOpenSections.length === 0) {
-    initiallyOpenSections.push("npc");
-  }
+  const {
+    npcActiveFilterCount,
+    itemActiveFilterCount,
+    playerActiveFilterCount,
+    initiallyOpenSections,
+  } = getFilterSectionState(filters);
 
   const isQuickFilterApplied = (filter: SavedFilter["filters"]) =>
     JSON.stringify(filter) === JSON.stringify(getCurrentFiltersForSaving());
@@ -360,14 +395,18 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
       <div
         className={cn(
           "h-full flex shrink-0 flex-col bg-background",
-          embedded ? "w-full p-0" : "w-[340px] py-3 pr-3",
+          embeddedValue(embedded, "w-full p-0", "w-[340px] py-3 pr-3"),
           className,
         )}
       >
         <div
           className={cn(
             "flex min-h-0 flex-1 flex-col overflow-hidden bg-filters-sidebar",
-            embedded ? "border-0" : "rounded-2xl border border-border",
+            embeddedValue(
+              embedded,
+              "border-0",
+              "rounded-2xl border border-border",
+            ),
           )}
         >
           <div className="flex-1 overflow-hidden">
@@ -518,7 +557,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="0"
-                            value={filters.npcLevelMin ?? ""}
+                            value={valueOr(filters.npcLevelMin, "")}
                             onChange={(e) =>
                               updateFilters({ npcLevelMin: e.target.value })
                             }
@@ -533,7 +572,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="500"
-                            value={filters.npcLevelMax ?? ""}
+                            value={valueOr(filters.npcLevelMax, "")}
                             onChange={(e) =>
                               updateFilters({ npcLevelMax: e.target.value })
                             }
@@ -666,7 +705,10 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                             <ItemImage
                               icon={hidItem.icon}
-                              rarity={hidItem.rarity ?? ItemRarity.COMMON}
+                              rarity={valueOr(
+                                hidItem.rarity,
+                                ItemRarity.COMMON,
+                              )}
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">
@@ -698,7 +740,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="0"
-                            value={filters.itemLevelMin ?? ""}
+                            value={valueOr(filters.itemLevelMin, "")}
                             onChange={(e) =>
                               updateFilters({ itemLevelMin: e.target.value })
                             }
@@ -713,7 +755,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="500"
-                            value={filters.itemLevelMax ?? ""}
+                            value={valueOr(filters.itemLevelMax, "")}
                             onChange={(e) =>
                               updateFilters({ itemLevelMax: e.target.value })
                             }
@@ -764,7 +806,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="0"
-                            value={filters.playerLevelMin ?? ""}
+                            value={valueOr(filters.playerLevelMin, "")}
                             onChange={(e) =>
                               updateFilters({ playerLevelMin: e.target.value })
                             }
@@ -779,7 +821,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                           <Input
                             type="number"
                             placeholder="500"
-                            value={filters.playerLevelMax ?? ""}
+                            value={valueOr(filters.playerLevelMax, "")}
                             onChange={(e) =>
                               updateFilters({ playerLevelMax: e.target.value })
                             }

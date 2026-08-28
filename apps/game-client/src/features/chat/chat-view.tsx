@@ -36,6 +36,68 @@ interface ChatViewProps {
   unreadCountByGuildId: ChatUnreadCountByGuildId;
 }
 
+type ChatAsyncStateInput = {
+  chatInitialError: unknown;
+  chatInitialLoading: boolean;
+  chatRefreshing: boolean;
+  connected: boolean;
+  failedGuildCount: number;
+  guildsError: unknown;
+  guildsFetching: boolean;
+  guildsLoading: boolean;
+  hasMessagesResponse: boolean;
+  joined: boolean;
+  preferencesError: unknown;
+  preferencesLoading: boolean;
+  selectedGuildId: string;
+  visibleGuildCount?: number;
+};
+
+const resolveChatAsyncState = ({
+  chatInitialError,
+  chatInitialLoading,
+  chatRefreshing,
+  connected,
+  failedGuildCount,
+  guildsError,
+  guildsFetching,
+  guildsLoading,
+  hasMessagesResponse,
+  joined,
+  preferencesError,
+  preferencesLoading,
+  selectedGuildId,
+  visibleGuildCount,
+}: ChatAsyncStateInput) => {
+  const guildsLoaded = visibleGuildCount !== undefined;
+  const waitingForGuildSelection =
+    guildsLoaded && visibleGuildCount > 0 && !selectedGuildId;
+  const initialLoading = guildsLoaded
+    ? waitingForGuildSelection || chatInitialLoading
+    : guildsLoading || preferencesLoading || chatInitialLoading;
+  const initialError = guildsLoaded
+    ? chatInitialError
+    : (guildsError ?? preferencesError);
+  const partialError =
+    (guildsLoaded && Boolean(guildsError)) || failedGuildCount > 0;
+  const refreshing = guildsLoaded
+    ? guildsFetching || (hasMessagesResponse && chatRefreshing)
+    : hasMessagesResponse && chatRefreshing;
+  const stale = hasMessagesResponse && (!connected || !joined);
+
+  return {
+    initialError,
+    initialLoading,
+    partialError,
+    refreshing,
+    showOfflineStatus: !partialError && stale,
+    showRefreshingStatus: !partialError && !stale && refreshing,
+  };
+};
+
+const shouldShowChatInput = (guildId: string, isEnabled: boolean) =>
+  guildId !== "" && guildId !== "all" && isEnabled;
+
 export const ChatView = ({
   isOpen,
   selectedGuildId,
@@ -136,21 +198,28 @@ export const ChatView = ({
     currentMessages,
     guildNamesById,
   );
-  const guildsLoaded = visibleGuilds !== undefined;
-  const waitingForGuildSelection =
-    guildsLoaded && visibleGuilds.length > 0 && !selectedGuildId;
-  const initialLoading =
-    (!guildsLoaded && (guildsLoading || preferences.isLoading)) ||
-    waitingForGuildSelection ||
-    chatInitialLoading;
-  const initialError = !guildsLoaded
-    ? (guildsError ?? preferences.error)
-    : chatInitialError;
-  const partialError =
-    (guildsLoaded && Boolean(guildsError)) || failedGuildIds.length > 0;
-  const refreshing =
-    (guildsLoaded && guildsFetching) || (hasMessagesResponse && chatRefreshing);
-  const stale = hasMessagesResponse && (!connected || !joined);
+  const {
+    initialError,
+    initialLoading,
+    partialError,
+    showOfflineStatus,
+    showRefreshingStatus,
+  } = resolveChatAsyncState({
+    chatInitialError,
+    chatInitialLoading,
+    chatRefreshing,
+    connected,
+    failedGuildCount: failedGuildIds.length,
+    guildsError,
+    guildsFetching,
+    guildsLoading,
+    hasMessagesResponse,
+    joined,
+    preferencesError: preferences.error,
+    preferencesLoading: preferences.isLoading,
+    selectedGuildId,
+    visibleGuildCount: visibleGuilds?.length,
+  });
   const retryChatData = () => {
     if (guildsError) {
       void refetchGuilds();
@@ -239,12 +308,12 @@ export const ChatView = ({
               retryLabel={t("actions.retry", { ns: "common" })}
             />
             <AsyncStatusIndicator
-              active={!partialError && stale}
+              active={showOfflineStatus}
               kind="warning"
               label={t("states.offline")}
             />
             <AsyncStatusIndicator
-              active={!partialError && !stale && refreshing}
+              active={showRefreshingStatus}
               delay
               kind="loading"
               label={t("states.refreshing")}
@@ -280,16 +349,14 @@ export const ChatView = ({
             />
           </AsyncContent>
         </div>
-        {Boolean(effectiveSelectedGuildId) &&
-          effectiveSelectedGuildId !== "all" &&
-          isChatInputEnabled && (
-            <ChatInput
-              onMessageSent={() =>
-                setScrollToBottomRequest((currentRequest) => currentRequest + 1)
-              }
-              selectedGuildId={effectiveSelectedGuildId}
-            />
-          )}
+        {shouldShowChatInput(effectiveSelectedGuildId, isChatInputEnabled) && (
+          <ChatInput
+            onMessageSent={() =>
+              setScrollToBottomRequest((currentRequest) => currentRequest + 1)
+            }
+            selectedGuildId={effectiveSelectedGuildId}
+          />
+        )}
       </div>
     </DraggableWindow>
   );

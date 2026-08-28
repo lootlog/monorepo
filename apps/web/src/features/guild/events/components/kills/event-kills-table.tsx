@@ -41,6 +41,9 @@ type EventKillsTableProps =
   | EventKillsTableHistoryProps
   | EventKillsTablePreviewProps;
 
+const getEventKillsTableVariant = (props: EventKillsTableProps) =>
+  props.variant === "preview" ? "preview" : "history";
+
 const getColumnClassName = (columnId: string, isPreview: boolean) => {
   if (columnId === "monster") {
     return "min-w-0";
@@ -72,14 +75,8 @@ const getColumnClassName = (columnId: string, isPreview: boolean) => {
 export const EventKillsTable = (props: EventKillsTableProps) => {
   const { t } = useTranslation();
   const loaderRowRef = useRef<HTMLTableRowElement>(null);
-  const {
-    eventId,
-    guildId,
-    hasError,
-    isLoading,
-    kills,
-    variant = "history",
-  } = props;
+  const { eventId, guildId, hasError, isLoading, kills } = props;
+  const variant = getEventKillsTableVariant(props);
   const isPreview = variant === "preview";
   const historyProps = props.variant === "preview" ? undefined : props;
   const fetchNextPage = historyProps?.fetchNextPage;

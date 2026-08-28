@@ -38,20 +38,74 @@ type GuildSwitcherProps = {
   value?: string;
 };
 
-export const GuildSwitcher: FC<GuildSwitcherProps> = ({
-  disabled = false,
-  allowAll = false,
-  className = "",
-  gridClassName = "",
-  buttonClassName = "",
-  layout = "scroll",
-  multiple = false,
-  onChange,
-  onToggle,
-  selectedValues,
-  unreadCountByGuildId,
-  value,
-}) => {
+const resolveGuildSwitcherProps = (props: GuildSwitcherProps) => ({
+  ...props,
+  allowAll: props.allowAll ?? false,
+  buttonClassName: props.buttonClassName ?? "",
+  className: props.className ?? "",
+  disabled: props.disabled ?? false,
+  gridClassName: props.gridClassName ?? "",
+  layout: props.layout ?? "scroll",
+  multiple: props.multiple ?? false,
+});
+
+type GuildSwitcherStatusInput = {
+  arePreferencesFetched: boolean;
+  arePreferencesLoading: boolean;
+  hasGuilds: boolean;
+  hasGuildsError: boolean;
+  hasPreferences: boolean;
+  hasPreferencesError: boolean;
+  isFetched: boolean;
+  isLoading: boolean;
+  visibleGuildCount: number;
+};
+
+const getGuildSwitcherStatus = ({
+  arePreferencesFetched,
+  arePreferencesLoading,
+  hasGuilds,
+  hasGuildsError,
+  hasPreferences,
+  hasPreferencesError,
+  isFetched,
+  isLoading,
+  visibleGuildCount,
+}: GuildSwitcherStatusInput) => {
+  const hasResolvedGuilds = hasGuilds && isFetched && arePreferencesFetched;
+  if (hasResolvedGuilds && visibleGuildCount === 1) {
+    return "single" as const;
+  }
+  if (hasResolvedGuilds && visibleGuildCount === 0) {
+    return "hidden" as const;
+  }
+  if ((!hasGuilds && isLoading) || (!hasPreferences && arePreferencesLoading)) {
+    return "loading" as const;
+  }
+  if (
+    (!hasGuilds && hasGuildsError) ||
+    (!hasPreferences && hasPreferencesError)
+  ) {
+    return "error" as const;
+  }
+  return "ready" as const;
+};
+
+export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
+  const {
+    disabled,
+    allowAll,
+    className,
+    gridClassName,
+    buttonClassName,
+    layout,
+    multiple,
+    onChange,
+    onToggle,
+    selectedValues,
+    unreadCountByGuildId,
+    value,
+  } = resolveGuildSwitcherProps(props);
   const { t } = useTranslation("common");
   const characterId = useCurrentCharacterId();
   const { guildsQuery, preferencesQuery, visibleGuilds } =
@@ -98,6 +152,17 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   const selectedValue = value !== undefined ? value : guildId;
   const selectedGuildIds = selectedValues ?? [];
   const resolvedButtonClassName = buttonClassName;
+  const status = getGuildSwitcherStatus({
+    arePreferencesFetched,
+    arePreferencesLoading,
+    hasGuilds: Boolean(guilds),
+    hasGuildsError: Boolean(error),
+    hasPreferences: Boolean(userPreferences),
+    hasPreferencesError: Boolean(preferencesError),
+    isFetched,
+    isLoading,
+    visibleGuildCount: visibleGuilds.length,
+  });
 
   const handleChange = (newGuildId: string) => {
     if (disabled) return;
@@ -148,21 +213,11 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     );
   };
 
-  if (
-    guilds &&
-    isFetched &&
-    arePreferencesFetched &&
-    visibleGuilds.length === 1
-  ) {
+  if (status === "single") {
     return null;
   }
 
-  if (
-    guilds &&
-    isFetched &&
-    arePreferencesFetched &&
-    visibleGuilds.length === 0
-  ) {
+  if (status === "hidden") {
     return (
       <TooltipProvider>
         <div
@@ -240,7 +295,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     </>
   );
 
-  if ((!guilds && isLoading) || (!userPreferences && arePreferencesLoading)) {
+  if (status === "loading") {
     content = (
       <AsyncStatusIndicator
         active
@@ -249,7 +304,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
         label={t("async.loadingGuilds")}
       />
     );
-  } else if ((!guilds && error) || (!userPreferences && preferencesError)) {
+  } else if (status === "error") {
     content = (
       <AsyncStatusIndicator
         active

@@ -64,6 +64,49 @@ const NPC_TYPE_ORDER: NpcType[] = [
   "COMMON",
 ];
 
+type StatsSettings = ReturnType<typeof useStatsSettings>["settings"];
+
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
+const getNpcTypeFilter = (npcType: StatsSettings["npcType"]) =>
+  npcType && npcType !== "ALL" ? [npcType] : undefined;
+
+const getMemberKillsQueryParams = ({
+  settings,
+  debouncedSearch,
+  debouncedMinLvl,
+  debouncedMaxLvl,
+  cursor,
+}: {
+  settings: StatsSettings;
+  debouncedSearch: string;
+  debouncedMinLvl: number | undefined;
+  debouncedMaxLvl: number | undefined;
+  cursor: number;
+}) =>
+  buildMemberKillsParams({
+    world: settings.world ?? undefined,
+    npcTypes: getNpcTypeFilter(settings.npcType),
+    search: debouncedSearch || undefined,
+    limit: ITEMS_PER_PAGE,
+    cursor,
+    minLvl: debouncedMinLvl,
+    maxLvl: debouncedMaxLvl,
+    period: settings.period,
+  });
+
+const hasMemberStatsFilters = (
+  settings: StatsSettings,
+  debouncedSearch: string,
+) =>
+  Boolean(settings.world) ||
+  Boolean(settings.minLvl) ||
+  Boolean(settings.maxLvl) ||
+  settings.period !== "all" ||
+  settings.npcType !== "ALL" ||
+  Boolean(debouncedSearch);
+
 export const MemberStatsPage: React.FC = () => {
   const { t } = useTranslation();
   const { memberId, guildId } = useParams({
@@ -88,18 +131,12 @@ export const MemberStatsPage: React.FC = () => {
       guildId,
       memberId,
     },
-    buildMemberKillsParams({
-      world: settings.world ?? undefined,
-      npcTypes:
-        settings.npcType && settings.npcType !== "ALL"
-          ? [settings.npcType]
-          : undefined,
-      search: debouncedSearch || undefined,
-      limit: ITEMS_PER_PAGE,
+    getMemberKillsQueryParams({
+      settings,
+      debouncedSearch,
+      debouncedMinLvl,
+      debouncedMaxLvl,
       cursor,
-      minLvl: debouncedMinLvl,
-      maxLvl: debouncedMaxLvl,
-      period: settings.period,
     }),
   );
   const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
@@ -207,17 +244,11 @@ export const MemberStatsPage: React.FC = () => {
   }
 
   const overview = data?.overview;
-  const npcs = data?.npcs ?? [];
-  const hasActiveFilters =
-    Boolean(settings.world) ||
-    Boolean(settings.minLvl) ||
-    Boolean(settings.maxLvl) ||
-    settings.period !== "all" ||
-    settings.npcType !== "ALL" ||
-    Boolean(debouncedSearch);
+  const npcs = valueOr(data?.npcs, []);
+  const hasActiveFilters = hasMemberStatsFilters(settings, debouncedSearch);
   const pagination = data?.pagination;
-  const total = pagination?.total ?? 0;
-  const hasNext = pagination?.hasNext ?? false;
+  const total = valueOr(pagination?.total, 0);
+  const hasNext = valueOr(pagination?.hasNext, false);
   const hasPrev = cursor > 0;
 
   const activeTypes = NPC_TYPE_ORDER.filter(
@@ -251,7 +282,7 @@ export const MemberStatsPage: React.FC = () => {
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {t("kills.memberStats.totalParticipations", {
-                    count: overview?.totalParticipations ?? 0,
+                    count: valueOr(overview?.totalParticipations, 0),
                   })}
                 </p>
               </div>
@@ -324,7 +355,7 @@ export const MemberStatsPage: React.FC = () => {
                 onValueChange={handlePeriodChange}
               />
               <Select
-                value={settings.npcType ?? "ALL"}
+                value={valueOr(settings.npcType, "ALL")}
                 onValueChange={handleNpcTypeChange}
                 items={[
                   { value: "ALL", label: <>{t("kills.filters.allTypes")}</> },

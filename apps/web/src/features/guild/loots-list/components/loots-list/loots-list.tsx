@@ -61,9 +61,50 @@ type LootShareUpdateGatewayPayload = LootCreateGatewayPayload & {
 };
 
 type LootsInfiniteData = InfiniteData<Loot[]>;
+type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
 
 const parseOptionalNumber = (value: string) =>
   value.length > 0 ? Number(value) : undefined;
+
+const optionalValues = <Value,>(values: Value[]) =>
+  values.length > 0 ? values : undefined;
+
+const optionalText = (value: string | null | undefined) =>
+  value ? value : undefined;
+
+const getLootQueryParams = (
+  filters: LootFilters,
+  world: string | null | undefined,
+): LootsControllerFetchLootsByGuildIdParams => ({
+  limit: LOOTS_PAGE_LIMIT,
+  npcs: optionalValues(filters.npcs),
+  npcTypes: optionalValues(filters.npcTypes),
+  rarities: optionalValues(filters.rarities),
+  professions: optionalValues(filters.professions),
+  players: optionalValues(filters.players),
+  npcLevelMin: parseOptionalNumber(filters.npcLevelMin),
+  npcLevelMax: parseOptionalNumber(filters.npcLevelMax),
+  itemLevelMin: parseOptionalNumber(filters.itemLevelMin),
+  itemLevelMax: parseOptionalNumber(filters.itemLevelMax),
+  playerLevelMin: parseOptionalNumber(filters.playerLevelMin),
+  playerLevelMax: parseOptionalNumber(filters.playerLevelMax),
+  search: optionalText(filters.search),
+  hid: optionalText(filters.hid),
+  itemNames: optionalValues(filters.itemNames),
+  world: optionalText(world),
+});
+
+const getCurrentGuildId = (
+  guilds: Array<{ id: string; vanityUrl?: string | null }> | undefined,
+  guildId: string | undefined,
+) =>
+  guilds?.find((guild) => guild.id === guildId || guild.vanityUrl === guildId)
+    ?.id ?? guildId;
+
+const getLootPages = (loots: LootsInfiniteData | undefined) => loots?.pages;
+
+const hasInitialLoots = (loots: LootsInfiniteData | undefined) =>
+  (loots?.pages?.[0]?.length ?? 0) > 0;
 
 const includesAll = <T,>(values: T[] | undefined, expected: T[]) => {
   if (!values?.length) {
@@ -302,29 +343,8 @@ export const LootsList: FC = () => {
     clearNewLootTimeouts();
     setNewLootIds({});
   };
-  const currentGuild = guilds?.find(
-    (guild) => guild.id === guildId || guild.vanityUrl === guildId,
-  );
-  const currentGuildId = currentGuild?.id ?? guildId;
-  const lootQueryParams: LootsControllerFetchLootsByGuildIdParams = {
-    limit: LOOTS_PAGE_LIMIT,
-    npcs: filters.npcs.length > 0 ? filters.npcs : undefined,
-    npcTypes: filters.npcTypes.length > 0 ? filters.npcTypes : undefined,
-    rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
-    professions:
-      filters.professions.length > 0 ? filters.professions : undefined,
-    players: filters.players.length > 0 ? filters.players : undefined,
-    npcLevelMin: parseOptionalNumber(filters.npcLevelMin),
-    npcLevelMax: parseOptionalNumber(filters.npcLevelMax),
-    itemLevelMin: parseOptionalNumber(filters.itemLevelMin),
-    itemLevelMax: parseOptionalNumber(filters.itemLevelMax),
-    playerLevelMin: parseOptionalNumber(filters.playerLevelMin),
-    playerLevelMax: parseOptionalNumber(filters.playerLevelMax),
-    search: filters.search || undefined,
-    hid: filters.hid || undefined,
-    itemNames: filters.itemNames.length > 0 ? filters.itemNames : undefined,
-    world: world || undefined,
-  };
+  const currentGuildId = getCurrentGuildId(guilds, guildId);
+  const lootQueryParams = getLootQueryParams(filters, world);
   const {
     data: loots,
     fetchNextPage,
@@ -536,7 +556,7 @@ export const LootsList: FC = () => {
 
   const scrollElementRef = useRef<HTMLDivElement>(null);
   const { viewMode } = useViewMode("loots-view-mode");
-  const { allLoots, gridRows } = useStableLootCollections(loots?.pages);
+  const { allLoots, gridRows } = useStableLootCollections(getLootPages(loots));
   const totalCount = allLoots.length;
 
   const listVirtualizer = useVirtualizer({
@@ -599,7 +619,7 @@ export const LootsList: FC = () => {
     scrollElementRef,
   });
 
-  const hasLoots = (loots?.pages?.[0]?.length ?? 0) > 0;
+  const hasLoots = hasInitialLoots(loots);
 
   if (!world) {
     return (

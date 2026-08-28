@@ -2,33 +2,46 @@ import { describe, expect, it } from "vitest";
 import { NpcType } from "@/api/npcs.api";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimersFiltering } from "./use-timers-filtering";
+import {
+  fixtureValue,
+  nestedFixtureValue,
+  optionalFixtureValue,
+} from "@/test-utils/fixture-value";
 
 const createTimer = (
   overrides?: Partial<TimerWithTimeLeft>,
 ): TimerWithTimeLeft => ({
-  guildId: overrides?.guildId ?? "guild-1",
-  timerKey: overrides?.timerKey ?? "timer-1",
-  world: overrides?.world ?? "pandora",
-  npcId: overrides?.npcId ?? 10,
-  minSpawnTime: overrides?.minSpawnTime ?? "2026-04-22T10:00:00.000Z",
-  maxSpawnTime: overrides?.maxSpawnTime ?? "2026-04-22T10:05:00.000Z",
-  updatedAt: overrides?.updatedAt ?? "2026-04-22T09:59:00.000Z",
-  wasReset: overrides?.wasReset ?? false,
+  guildId: fixtureValue(overrides, "guildId", "guild-1"),
+  timerKey: fixtureValue(overrides, "timerKey", "timer-1"),
+  world: fixtureValue(overrides, "world", "pandora"),
+  npcId: fixtureValue(overrides, "npcId", 10),
+  minSpawnTime: fixtureValue(
+    overrides,
+    "minSpawnTime",
+    "2026-04-22T10:00:00.000Z",
+  ),
+  maxSpawnTime: fixtureValue(
+    overrides,
+    "maxSpawnTime",
+    "2026-04-22T10:05:00.000Z",
+  ),
+  updatedAt: fixtureValue(overrides, "updatedAt", "2026-04-22T09:59:00.000Z"),
+  wasReset: fixtureValue(overrides, "wasReset", false),
   npc: {
-    id: overrides?.npc?.id ?? 10,
-    name: overrides?.npc?.name ?? "Tanroth",
-    lvl: overrides?.npc?.lvl ?? 120,
-    prof: overrides?.npc?.prof ?? "W",
-    icon: overrides?.npc?.icon ?? "icon.gif",
-    wt: overrides?.npc?.wt ?? 10,
-    type: overrides?.npc?.type ?? NpcType.HERO,
-    margonemType: overrides?.npc?.margonemType ?? 4,
-    location: overrides?.npc?.location ?? "Ruins",
+    id: nestedFixtureValue(overrides, "npc", "id", 10),
+    name: nestedFixtureValue(overrides, "npc", "name", "Tanroth"),
+    lvl: nestedFixtureValue(overrides, "npc", "lvl", 120),
+    prof: nestedFixtureValue(overrides, "npc", "prof", "W"),
+    icon: nestedFixtureValue(overrides, "npc", "icon", "icon.gif"),
+    wt: nestedFixtureValue(overrides, "npc", "wt", 10),
+    type: nestedFixtureValue(overrides, "npc", "type", NpcType.HERO),
+    margonemType: nestedFixtureValue(overrides, "npc", "margonemType", 4),
+    location: nestedFixtureValue(overrides, "npc", "location", "Ruins"),
   },
-  minTimeLeft: overrides?.minTimeLeft ?? 60_000,
-  maxTimeLeft: overrides?.maxTimeLeft ?? 120_000,
-  members: overrides?.members,
-  mergedGuildIds: overrides?.mergedGuildIds,
+  minTimeLeft: fixtureValue(overrides, "minTimeLeft", 60_000),
+  maxTimeLeft: fixtureValue(overrides, "maxTimeLeft", 120_000),
+  members: optionalFixtureValue(overrides, "members"),
+  mergedGuildIds: optionalFixtureValue(overrides, "mergedGuildIds"),
 });
 
 describe("useTimersFiltering", () => {

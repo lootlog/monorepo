@@ -107,6 +107,16 @@ type ChartPayloadItem = {
   payload?: Record<string, unknown>;
 };
 
+const resolveTooltipItemKey = (
+  configuredKey: string | undefined,
+  item: ChartPayloadItem,
+): string => configuredKey || item.name || item.dataKey || "value";
+
+const resolveIndicatorColor = (
+  color: string | undefined,
+  item: ChartPayloadItem,
+): unknown => color || item.payload?.fill || item.color;
+
 function ChartTooltipContent({
   active,
   payload,
@@ -192,9 +202,9 @@ function ChartTooltipContent({
         {payload
           .filter((item) => item.type !== "none")
           .map((item, index) => {
-            const key = `${nameKey || item.name || item.dataKey || "value"}`;
+            const key = resolveTooltipItemKey(nameKey, item);
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
-            const indicatorColor = color || item.payload?.fill || item.color;
+            const indicatorColor = resolveIndicatorColor(color, item);
 
             return (
               <div
@@ -204,7 +214,7 @@ function ChartTooltipContent({
                   indicator === "dot" && "items-center",
                 )}
               >
-                {formatter && item?.value !== undefined && item.name ? (
+                {formatter && item.value !== undefined && item.name ? (
                   formatter(
                     item.value,
                     item.name,
