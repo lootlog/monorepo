@@ -37,52 +37,55 @@ import {
   useGuildsControllerGetGuildDiscordSyncStatus,
 } from "@lootlog/api-client/react-query/main/guilds";
 
+const getResolvedGuildId = (guildId: string | undefined) => guildId ?? "";
+
 export const NotificationsSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const hasGuildId = Boolean(guildId);
+  const resolvedGuildId = getResolvedGuildId(guildId);
   const { data: syncState } = useGuildsControllerGetGuildDiscordSyncStatus(
     {
-      guildId: guildId ?? "",
+      guildId: resolvedGuildId,
     },
     {
       query: {
         enabled: hasGuildId,
         queryKey: getGuildsControllerGetGuildDiscordSyncStatusQueryKey({
-          guildId: guildId ?? "",
+          guildId: resolvedGuildId,
         }),
       },
     },
   );
   const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
-    { guildId: guildId ?? "" },
+    { guildId: resolvedGuildId },
     {
       query: {
         enabled: hasGuildId,
         queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({
-          guildId: guildId ?? "",
+          guildId: resolvedGuildId,
         }),
       },
     },
   );
   const rulesQuery = useNotificationsGuildControllerGetGuildRules(
-    { guildId: guildId ?? "" },
+    { guildId: resolvedGuildId },
     {
       query: {
         enabled: hasGuildId,
         queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({
-          guildId: guildId ?? "",
+          guildId: resolvedGuildId,
         }),
       },
     },
   );
   const jobsQuery = useNotificationsGuildControllerGetGuildJobs(
-    { guildId: guildId ?? "" },
+    { guildId: resolvedGuildId },
     {
       query: {
         enabled: hasGuildId,
         queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({
-          guildId: guildId ?? "",
+          guildId: resolvedGuildId,
         }),
         refetchInterval: (query) => {
           const jobs = query.state.data;

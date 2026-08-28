@@ -90,7 +90,8 @@
     }
   },
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "lint": "oxlint src"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

@@ -492,6 +492,226 @@ const DEBUFF_ACTIONS = new Set([
 
 const SYSTEM_ACTIONS = new Set(["txt", "shout"]);
 
+const DAMAGE_ACTIONS = new Set([
+  ...Object.keys(DAMAGE_DEALT_ACTIONS),
+  ...Object.keys(DAMAGE_TAKEN_ACTIONS),
+  ...Object.keys(SPECIAL_DAMAGE_ACTIONS),
+  ...PASSIVE_DAMAGE_ACTIONS,
+]);
+const ABSORB_ACTIONS = new Set([
+  ...ABSORB_GAIN_ACTIONS,
+  ...MAGIC_ABSORB_GAIN_ACTIONS,
+  ...ABSORB_SPEND_ACTIONS,
+  ...MAGIC_ABSORB_SPEND_ACTIONS,
+]);
+const ACTION_CATEGORY_SETS: ReadonlyArray<
+  readonly [BattleActionCategory, ReadonlySet<string>]
+> = [
+  ["damage", DAMAGE_ACTIONS],
+  ["healing", HEALING_ACTIONS],
+  ["mitigation", MITIGATION_ACTIONS],
+  ["counter", COUNTER_ACTIONS],
+  ["absorb", ABSORB_ACTIONS],
+  ["resource", RESOURCE_ACTIONS],
+  ["control", CONTROL_ACTIONS],
+  ["spell", SPELL_ACTIONS],
+  ["combo", COMBO_ACTIONS],
+  ["outcome", OUTCOME_ACTIONS],
+  ["movement", MOVEMENT_ACTIONS],
+  ["legendary", LEGENDARY_ACTIONS],
+  ["buff", BUFF_ACTIONS],
+  ["debuff", DEBUFF_ACTIONS],
+  ["system", SYSTEM_ACTIONS],
+];
+
+type WarriorActionContext = {
+  attacker: Warrior;
+  defender: Warrior | null;
+  value: number;
+};
+
+type DefenderActionContext = {
+  attacker: Warrior;
+  defender: Warrior;
+  value: number;
+};
+
+type WarriorActionHandler = (context: WarriorActionContext) => void;
+type DefenderActionHandler = (context: DefenderActionContext) => void;
+
+type TeamOutcomeMetrics = {
+  hpSum: Record<number, number>;
+  alive: Record<number, number>;
+  dmgDealt: Record<number, number>;
+  dmgTaken: Record<number, number>;
+};
+
+type OutcomeTeams = {
+  winningTeam: number | null;
+  losingTeam: number | null;
+};
+
+type TimelineActionAnalysis = {
+  actions: BattleTimelineAction[];
+  byWarrior: Record<string, BattleTimelineWarriorDelta>;
+  damage: number;
+  healing: number;
+  mitigation: number;
+  resourcePressure: number;
+  energyPressure: number;
+  manaPressure: number;
+  flags: string[];
+  labels: string[];
+};
+
+type TimelineActionAccumulator = Omit<
+  TimelineActionAnalysis,
+  "flags" | "labels"
+> & {
+  flags: Set<string>;
+  labels: Set<string>;
+  hasActualDamage: boolean;
+};
+
+type TimelineActionContext = {
+  actionType: string;
+  param: string;
+  value: number;
+  actorId: string | null;
+  targetId: string | null;
+  handled: boolean;
+};
+
+const splitOutcomeNames = (value: string): string[] =>
+  value
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0);
+
+const addTeamMetric = (
+  metrics: Record<number, number>,
+  team: number,
+  value: number,
+): void => {
+  metrics[team] = (metrics[team] ?? 0) + value;
+};
+
+const incrementAttackerStat =
+  (stat: keyof Warrior): WarriorActionHandler =>
+  ({ attacker }) => {
+    (attacker[stat] as number)++;
+  };
+const addToAttackerStat =
+  (stat: keyof Warrior): WarriorActionHandler =>
+  ({ attacker, value }) => {
+    (attacker[stat] as number) += value;
+  };
+const addDamageTaken =
+  (stat: keyof Warrior): WarriorActionHandler =>
+  ({ attacker, value }) => {
+    (attacker[stat] as number) += value;
+    attacker.damageTaken += value;
+  };
+
+const ATTACKER_ACTION_HANDLERS: Record<string, WarriorActionHandler> = {
+  "+rage": addToAttackerStat("rageDamageDealt"),
+  "+taken_dmg": ({ attacker, defender, value }) => {
+    attacker.stigmaDamageDealt += value;
+    if (defender) defender.stigmaDamageTaken += value;
+  },
+  "+pierce": incrementAttackerStat("armorPierces"),
+  "+crit": incrementAttackerStat("criticalHits"),
+  heal: addToAttackerStat("passiveHealing"),
+  bandage: addToAttackerStat("activeHealing"),
+  heal_target: ({ defender, value }) => {
+    if (defender) defender.activeHealing += value;
+  },
+  "+acdmg": addToAttackerStat("reducedArmor"),
+  wound: addDamageTaken("woundDamageTaken"),
+  critwound: addDamageTaken("critWoundDamageTaken"),
+  anguish: addDamageTaken("legbonAnguishDamageTaken"),
+  poison: addDamageTaken("poisonDamageTaken"),
+  injure: addDamageTaken("injureDamageTaken"),
+  "+injure": ({ defender }) => {
+    if (defender) defender.injures++;
+  },
+  "+fastarrow": incrementAttackerStat("fastArrows"),
+  fire: addDamageTaken("firePassiveDamageTaken"),
+  light: addDamageTaken("lightningPassiveDamageTaken"),
+  energy: ({ attacker, value }) => {
+    attacker.regeneratedEnergy -= value;
+  },
+  "en-regen": addToAttackerStat("regeneratedEnergy"),
+  "+energy": addToAttackerStat("regeneratedEnergy"),
+  "+engback": addToAttackerStat("regeneratedEnergy"),
+  "+legbon_curse": incrementAttackerStat("legbonCurse"),
+  "+legbon_holytouch": incrementAttackerStat("legbonHolytouch"),
+  legbon_holytouch_heal: addToAttackerStat("legbonHolytouchValue"),
+  "+legbon_verycrit": incrementAttackerStat("legbonVerycrit"),
+  "+legbon_anguish": incrementAttackerStat("legbonAnguish"),
+  legbon_lastheal: ({ attacker, defender, value }) => {
+    const healedWarrior = defender ?? attacker;
+    healedWarrior.legbonLastheal++;
+    healedWarrior.legbonLasthealValue += value;
+  },
+};
+
+const incrementDefenderStat =
+  (stat: keyof Warrior): DefenderActionHandler =>
+  ({ defender }) => {
+    (defender[stat] as number)++;
+  };
+const addToDefenderStat =
+  (stat: keyof Warrior): DefenderActionHandler =>
+  ({ defender, value }) => {
+    (defender[stat] as number) += value;
+  };
+const blockAttack: DefenderActionHandler = ({ attacker, defender, value }) => {
+  defender.blocks++;
+  defender.blockedDamage += value;
+  attacker.attacksBlocked++;
+};
+
+const DEFENDER_ACTION_HANDLERS: Record<string, DefenderActionHandler> = {
+  "-evade": ({ attacker, defender }) => {
+    defender.evasions++;
+    attacker.attacksEvaded++;
+  },
+  "-contra": incrementDefenderStat("counters"),
+  "-blok": blockAttack,
+  "-block": blockAttack,
+  "-parry": blockAttack,
+  "-arrowblock": blockAttack,
+  "-pierceb": blockAttack,
+  "-endest": addToDefenderStat("destroyedEnergy"),
+  "-manadest": addToDefenderStat("destroyedMana"),
+  "en-regen": addToDefenderStat("regeneratedEnergy"),
+  mana: ({ attacker, value }) => {
+    attacker.regeneratedMana -= value;
+  },
+  stealmana: ({ attacker, defender, value }) => {
+    defender.destroyedMana += value;
+    attacker.regeneratedMana += value;
+  },
+  "-legbon_cleanse": incrementDefenderStat("legbonCleanse"),
+  "-legbon_glare": incrementDefenderStat("legbonGlare"),
+  "-legbon_critred": ({ defender, value }) => {
+    defender.legbonCritredValue = value;
+  },
+  "-legbon_facade": ({ defender, value }) => {
+    defender.legbonFacadeValue = value;
+  },
+  "+legbon_puncture": ({ attacker, value }) => {
+    attacker.legbonPunctureValue = value;
+  },
+  "+resdmg": ({ attacker, value }) => {
+    attacker.magicResistanceDestroyed += value;
+  },
+  "+actdmg": ({ attacker, value }) => {
+    attacker.reducedPoisonResistance += value;
+  },
+};
+
 const createEmptyTimelineStats = (): BattleTimelineWarriorDelta => ({
   damageDealt: 0,
   damageTaken: 0,
@@ -789,302 +1009,478 @@ export class BattleProcessor {
     this.battleTimeline.push(turn);
   }
 
-  private analyzeTimelineActions(move: ParsedMove): {
-    actions: BattleTimelineAction[];
-    byWarrior: Record<string, BattleTimelineWarriorDelta>;
-    damage: number;
-    healing: number;
-    mitigation: number;
-    resourcePressure: number;
-    energyPressure: number;
-    manaPressure: number;
-    flags: string[];
-    labels: string[];
-  } {
-    const byWarrior: Record<string, BattleTimelineWarriorDelta> = {};
-    const flags = new Set<string>();
-    const labels = new Set<string>();
-    const actions: BattleTimelineAction[] = [];
-    const hasActualDamage = move.actions.some(
-      (action) => DAMAGE_TAKEN_ACTIONS[action.actionType],
-    );
-
-    let damage = 0;
-    let healing = 0;
-    let mitigation = 0;
-    let resourcePressure = 0;
-    let energyPressure = 0;
-    let manaPressure = 0;
+  private analyzeTimelineActions(move: ParsedMove): TimelineActionAnalysis {
+    const accumulator: TimelineActionAccumulator = {
+      actions: [],
+      byWarrior: {},
+      damage: 0,
+      healing: 0,
+      mitigation: 0,
+      resourcePressure: 0,
+      energyPressure: 0,
+      manaPressure: 0,
+      flags: new Set<string>(),
+      labels: new Set<string>(),
+      hasActualDamage: move.actions.some(
+        (action) => DAMAGE_TAKEN_ACTIONS[action.actionType],
+      ),
+    };
 
     for (const { actionType, param } of move.actions) {
       const category = this.getActionCategory(actionType);
       const handled = category !== "unknown";
       const value = this.parseActionValue(param);
-      const actorId = move.attackerId;
-      const targetId = move.defenderId;
+      const context: TimelineActionContext = {
+        actionType,
+        param,
+        value,
+        actorId: move.attackerId,
+        targetId: move.defenderId,
+        handled,
+      };
 
       this.recordActionCoverage(actionType, category, handled);
-
-      actions.push({
+      accumulator.actions.push({
         actionType,
         param,
         category,
-        actorId,
-        targetId,
+        actorId: context.actorId,
+        targetId: context.targetId,
         value,
         handled,
       });
-
-      if (DAMAGE_DEALT_ACTIONS[actionType]) {
-        if (!hasActualDamage && actorId) {
-          this.addTimelineDelta(byWarrior, actorId, "damageDealt", value);
-          damage += value;
-        }
-        flags.add("damage");
-        continue;
-      }
-
-      if (DAMAGE_TAKEN_ACTIONS[actionType]) {
-        if (actorId) {
-          this.addTimelineDelta(byWarrior, actorId, "damageDealt", value);
-        }
-        if (targetId) {
-          this.addTimelineDelta(byWarrior, targetId, "damageTaken", value);
-          if (actionType === "-dmga" || actionType === "-dmgo") {
-            this.trackAuxiliaryDamageTaken(targetId, value);
-          }
-        }
-        damage += value;
-        flags.add("damage");
-        continue;
-      }
-
-      const specialDamageAction = SPECIAL_DAMAGE_ACTIONS[actionType];
-      if (specialDamageAction) {
-        if (actorId) {
-          this.addTimelineDelta(byWarrior, actorId, "damageDealt", value);
-        }
-        if (targetId && specialDamageAction.targetTakesDamage) {
-          this.addTimelineDelta(byWarrior, targetId, "damageTaken", value);
-        }
-        damage += value;
-        flags.add("damage");
-        continue;
-      }
-
-      if (PASSIVE_DAMAGE_ACTIONS.has(actionType)) {
-        if (actorId) {
-          this.addTimelineDelta(byWarrior, actorId, "damageTaken", value);
-          this.trackEffectDamage(actorId, value);
-        }
-        damage += value;
-        flags.add("effectDamage");
-        continue;
-      }
-
-      if (HEALING_ACTIONS.has(actionType)) {
-        const healedWarriorId =
-          actionType === "heal_target" || actionType === "legbon_lastheal"
-            ? (targetId ?? actorId)
-            : actorId;
-        if (actorId) {
-          this.addTimelineDelta(byWarrior, actorId, "healingDone", value);
-          if (actionType === "heal_target") {
-            this.trackTargetHealing(actorId, value);
-          }
-        }
-        if (healedWarriorId) {
-          this.addTimelineDelta(
-            byWarrior,
-            healedWarriorId,
-            "healingReceived",
-            value,
-          );
-        }
-        healing += value;
-        flags.add("healing");
-        continue;
-      }
-
-      if (MITIGATION_ACTIONS.has(actionType)) {
-        const defenderId = targetId ?? actorId;
-        if (defenderId) {
-          this.addTimelineDelta(byWarrior, defenderId, "mitigation", value);
-          this.trackMitigationEvent(defenderId);
-        }
-        mitigation += value;
-        flags.add(this.getMitigationFlag(actionType));
-        continue;
-      }
-
-      if (COUNTER_ACTIONS.has(actionType)) {
-        flags.add("counter");
-        continue;
-      }
-
-      if (ABSORB_GAIN_ACTIONS.has(actionType)) {
-        const warriorId = actorId ?? targetId;
-        if (warriorId) {
-          this.addTimelineDelta(byWarrior, warriorId, "absorbGained", value);
-          this.trackAbsorb(warriorId, "absorptionGained", value);
-        }
-        flags.add("absorb");
-        continue;
-      }
-
-      if (MAGIC_ABSORB_GAIN_ACTIONS.has(actionType)) {
-        const warriorId = actorId ?? targetId;
-        if (warriorId) {
-          this.addTimelineDelta(
-            byWarrior,
-            warriorId,
-            "magicAbsorbGained",
-            value,
-          );
-          this.trackAbsorb(warriorId, "magicAbsorptionGained", value);
-        }
-        flags.add("absorb");
-        continue;
-      }
-
-      if (ABSORB_SPEND_ACTIONS.has(actionType)) {
-        const warriorId = targetId ?? actorId;
-        if (warriorId) {
-          this.addTimelineDelta(byWarrior, warriorId, "absorbSpent", value);
-          this.trackAbsorb(warriorId, "absorptionSpent", value);
-        }
-        mitigation += value;
-        flags.add("absorb");
-        continue;
-      }
-
-      if (MAGIC_ABSORB_SPEND_ACTIONS.has(actionType)) {
-        const warriorId = targetId ?? actorId;
-        if (warriorId) {
-          this.addTimelineDelta(
-            byWarrior,
-            warriorId,
-            "magicAbsorbSpent",
-            value,
-          );
-          this.trackAbsorb(warriorId, "magicAbsorptionSpent", value);
-        }
-        mitigation += value;
-        flags.add("absorb");
-        continue;
-      }
-
-      if (CONTROL_ACTIONS.has(actionType)) {
-        if (actorId) {
-          this.addTimelineDelta(byWarrior, actorId, "controlApplied", 1);
-          this.trackControl(actorId, "controlApplied");
-        }
-        if (targetId) {
-          this.addTimelineDelta(byWarrior, targetId, "controlTaken", 1);
-          this.trackControl(targetId, "controlTaken");
-        }
-        flags.add(actionType.includes("freeze") ? "freeze" : "stun");
-        continue;
-      }
-
-      if (RESOURCE_ACTIONS.has(actionType)) {
-        const resourceTargetId =
-          actionType.startsWith("-") || actionType === "stealmana"
-            ? targetId
-            : actorId;
-        if (
-          actorId &&
-          (actionType.startsWith("-") || actionType === "stealmana")
-        ) {
-          this.addTimelineDelta(byWarrior, actorId, "resourcePressure", value);
-          const pressureField = this.getResourcePressureField(actionType);
-          if (pressureField) {
-            this.addTimelineDelta(byWarrior, actorId, pressureField, value);
-          }
-          this.trackResourcePressure(actorId, actionType, value);
-          resourcePressure += value;
-          if (pressureField === "energyPressure") {
-            energyPressure += value;
-          } else if (pressureField === "manaPressure") {
-            manaPressure += value;
-          }
-        }
-        if (resourceTargetId) {
-          const direction =
-            actionType === "en-regen" ||
-            actionType === "+energy" ||
-            actionType === "+engback"
-              ? value
-              : -value;
-          this.addTimelineDelta(
-            byWarrior,
-            resourceTargetId,
-            "resourceDelta",
-            direction,
-          );
-        }
-        flags.add("resource");
-        continue;
-      }
-
-      if (actionType === "+oth_dmg") {
-        const targetFromParam = this.getTargetIdFromActionParam(param);
-        const effectiveTargetId = targetFromParam ?? targetId;
-        if (actorId) {
-          this.addTimelineDelta(byWarrior, actorId, "damageDealt", value);
-        }
-        if (effectiveTargetId) {
-          this.addTimelineDelta(
-            byWarrior,
-            effectiveTargetId,
-            "damageTaken",
-            value,
-          );
-        }
-        damage += value;
-        flags.add("damage");
-        continue;
-      }
-
-      if (COMBO_ACTIONS.has(actionType)) {
-        if (actionType === "combo-max" && actorId) {
-          this.trackComboMax(actorId, value);
-        }
-        flags.add("combo");
-        continue;
-      }
-
-      if (actionType === "+ph") {
-        flags.add("ph");
-        continue;
-      }
-
-      if (actionType === "flee") {
-        flags.add("flee");
-        continue;
-      }
-
-      if (actionType === "txt" && param.includes("utrata tury")) {
-        flags.add("stun");
-      }
-
-      if (handled) {
-        labels.add(actionType);
-      }
+      this.processTimelineAction(context, accumulator);
     }
 
     return {
-      actions,
-      byWarrior,
-      damage,
-      healing,
-      mitigation,
-      resourcePressure,
-      energyPressure,
-      manaPressure,
-      flags: Array.from(flags),
-      labels: Array.from(labels),
+      actions: accumulator.actions,
+      byWarrior: accumulator.byWarrior,
+      damage: accumulator.damage,
+      healing: accumulator.healing,
+      mitigation: accumulator.mitigation,
+      resourcePressure: accumulator.resourcePressure,
+      energyPressure: accumulator.energyPressure,
+      manaPressure: accumulator.manaPressure,
+      flags: Array.from(accumulator.flags),
+      labels: Array.from(accumulator.labels),
     };
+  }
+
+  private processTimelineAction(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): void {
+    if (this.processTimelineDamage(context, accumulator)) return;
+    if (this.processTimelineHealing(context, accumulator)) return;
+    if (this.processTimelineMitigation(context, accumulator)) return;
+    if (this.processTimelineCounter(context, accumulator)) return;
+    if (this.processTimelineAbsorb(context, accumulator)) return;
+    if (this.processTimelineControl(context, accumulator)) return;
+    if (this.processTimelineResource(context, accumulator)) return;
+    if (this.processTimelineOtherDamage(context, accumulator)) return;
+    if (this.processTimelineCombo(context, accumulator)) return;
+    if (this.processTimelineOutcomeMarker(context, accumulator)) return;
+
+    if (context.actionType === "txt" && context.param.includes("utrata tury")) {
+      accumulator.flags.add("stun");
+    }
+    if (context.handled) accumulator.labels.add(context.actionType);
+  }
+
+  private processTimelineDamage(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (this.processTimelineDamageDealt(context, accumulator)) return true;
+    if (this.processTimelineDamageTaken(context, accumulator)) return true;
+    if (this.processTimelineSpecialDamage(context, accumulator)) return true;
+    return this.processTimelinePassiveDamage(context, accumulator);
+  }
+
+  private processTimelineDamageDealt(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (!DAMAGE_DEALT_ACTIONS[context.actionType]) return false;
+    if (!accumulator.hasActualDamage && context.actorId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.actorId,
+        "damageDealt",
+        context.value,
+      );
+      accumulator.damage += context.value;
+    }
+    accumulator.flags.add("damage");
+    return true;
+  }
+
+  private processTimelineDamageTaken(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (!DAMAGE_TAKEN_ACTIONS[context.actionType]) return false;
+    if (context.actorId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.actorId,
+        "damageDealt",
+        context.value,
+      );
+    }
+    if (context.targetId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.targetId,
+        "damageTaken",
+        context.value,
+      );
+      if (context.actionType === "-dmga" || context.actionType === "-dmgo") {
+        this.trackAuxiliaryDamageTaken(context.targetId, context.value);
+      }
+    }
+    accumulator.damage += context.value;
+    accumulator.flags.add("damage");
+    return true;
+  }
+
+  private processTimelineSpecialDamage(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    const action = SPECIAL_DAMAGE_ACTIONS[context.actionType];
+    if (!action) return false;
+    if (context.actorId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.actorId,
+        "damageDealt",
+        context.value,
+      );
+    }
+    if (context.targetId && action.targetTakesDamage) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.targetId,
+        "damageTaken",
+        context.value,
+      );
+    }
+    accumulator.damage += context.value;
+    accumulator.flags.add("damage");
+    return true;
+  }
+
+  private processTimelinePassiveDamage(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (!PASSIVE_DAMAGE_ACTIONS.has(context.actionType)) return false;
+    if (context.actorId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.actorId,
+        "damageTaken",
+        context.value,
+      );
+      this.trackEffectDamage(context.actorId, context.value);
+    }
+    accumulator.damage += context.value;
+    accumulator.flags.add("effectDamage");
+    return true;
+  }
+
+  private processTimelineHealing(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (!HEALING_ACTIONS.has(context.actionType)) return false;
+    const healsTarget =
+      context.actionType === "heal_target" ||
+      context.actionType === "legbon_lastheal";
+    const healedWarriorId = healsTarget
+      ? (context.targetId ?? context.actorId)
+      : context.actorId;
+    if (context.actorId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.actorId,
+        "healingDone",
+        context.value,
+      );
+      if (context.actionType === "heal_target") {
+        this.trackTargetHealing(context.actorId, context.value);
+      }
+    }
+    if (healedWarriorId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        healedWarriorId,
+        "healingReceived",
+        context.value,
+      );
+    }
+    accumulator.healing += context.value;
+    accumulator.flags.add("healing");
+    return true;
+  }
+
+  private processTimelineMitigation(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (!MITIGATION_ACTIONS.has(context.actionType)) return false;
+    const defenderId = context.targetId ?? context.actorId;
+    if (defenderId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        defenderId,
+        "mitigation",
+        context.value,
+      );
+      this.trackMitigationEvent(defenderId);
+    }
+    accumulator.mitigation += context.value;
+    accumulator.flags.add(this.getMitigationFlag(context.actionType));
+    return true;
+  }
+
+  private processTimelineCounter(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (!COUNTER_ACTIONS.has(context.actionType)) return false;
+    accumulator.flags.add("counter");
+    return true;
+  }
+
+  private processTimelineAbsorb(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (ABSORB_GAIN_ACTIONS.has(context.actionType)) {
+      this.applyTimelineAbsorb(
+        context.actorId ?? context.targetId,
+        context.value,
+        "absorbGained",
+        "absorptionGained",
+        accumulator,
+      );
+      return true;
+    }
+    if (MAGIC_ABSORB_GAIN_ACTIONS.has(context.actionType)) {
+      this.applyTimelineAbsorb(
+        context.actorId ?? context.targetId,
+        context.value,
+        "magicAbsorbGained",
+        "magicAbsorptionGained",
+        accumulator,
+      );
+      return true;
+    }
+    if (ABSORB_SPEND_ACTIONS.has(context.actionType)) {
+      this.applyTimelineAbsorb(
+        context.targetId ?? context.actorId,
+        context.value,
+        "absorbSpent",
+        "absorptionSpent",
+        accumulator,
+      );
+      accumulator.mitigation += context.value;
+      return true;
+    }
+    if (MAGIC_ABSORB_SPEND_ACTIONS.has(context.actionType)) {
+      this.applyTimelineAbsorb(
+        context.targetId ?? context.actorId,
+        context.value,
+        "magicAbsorbSpent",
+        "magicAbsorptionSpent",
+        accumulator,
+      );
+      accumulator.mitigation += context.value;
+      return true;
+    }
+    return false;
+  }
+
+  private applyTimelineAbsorb(
+    warriorId: string | null,
+    value: number,
+    deltaField:
+      | "absorbGained"
+      | "magicAbsorbGained"
+      | "absorbSpent"
+      | "magicAbsorbSpent",
+    mechanicsField:
+      | "absorptionGained"
+      | "magicAbsorptionGained"
+      | "absorptionSpent"
+      | "magicAbsorptionSpent",
+    accumulator: TimelineActionAccumulator,
+  ): void {
+    if (warriorId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        warriorId,
+        deltaField,
+        value,
+      );
+      this.trackAbsorb(warriorId, mechanicsField, value);
+    }
+    accumulator.flags.add("absorb");
+  }
+
+  private processTimelineControl(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (!CONTROL_ACTIONS.has(context.actionType)) return false;
+    if (context.actorId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.actorId,
+        "controlApplied",
+        1,
+      );
+      this.trackControl(context.actorId, "controlApplied");
+    }
+    if (context.targetId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.targetId,
+        "controlTaken",
+        1,
+      );
+      this.trackControl(context.targetId, "controlTaken");
+    }
+    accumulator.flags.add(
+      context.actionType.includes("freeze") ? "freeze" : "stun",
+    );
+    return true;
+  }
+
+  private processTimelineResource(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (!RESOURCE_ACTIONS.has(context.actionType)) return false;
+
+    const appliesPressure = this.isResourcePressureAction(context.actionType);
+    const resourceTargetId = appliesPressure
+      ? context.targetId
+      : context.actorId;
+    if (context.actorId && appliesPressure) {
+      this.applyTimelineResourcePressure(context, accumulator);
+    }
+    if (resourceTargetId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        resourceTargetId,
+        "resourceDelta",
+        this.getResourceDirection(context.actionType, context.value),
+      );
+    }
+    accumulator.flags.add("resource");
+    return true;
+  }
+
+  private applyTimelineResourcePressure(
+    context: TimelineActionContext & { actorId: string },
+    accumulator: TimelineActionAccumulator,
+  ): void {
+    this.addTimelineDelta(
+      accumulator.byWarrior,
+      context.actorId,
+      "resourcePressure",
+      context.value,
+    );
+    const pressureField = this.getResourcePressureField(context.actionType);
+    if (pressureField) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.actorId,
+        pressureField,
+        context.value,
+      );
+    }
+    this.trackResourcePressure(
+      context.actorId,
+      context.actionType,
+      context.value,
+    );
+    accumulator.resourcePressure += context.value;
+    if (pressureField === "energyPressure") {
+      accumulator.energyPressure += context.value;
+    } else if (pressureField === "manaPressure") {
+      accumulator.manaPressure += context.value;
+    }
+  }
+
+  private isResourcePressureAction(actionType: string): boolean {
+    return actionType.startsWith("-") || actionType === "stealmana";
+  }
+
+  private getResourceDirection(actionType: string, value: number): number {
+    const restoresResource =
+      actionType === "en-regen" ||
+      actionType === "+energy" ||
+      actionType === "+engback";
+    return restoresResource ? value : -value;
+  }
+
+  private processTimelineOtherDamage(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (context.actionType !== "+oth_dmg") return false;
+    const effectiveTargetId =
+      this.getTargetIdFromActionParam(context.param) ?? context.targetId;
+    if (context.actorId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        context.actorId,
+        "damageDealt",
+        context.value,
+      );
+    }
+    if (effectiveTargetId) {
+      this.addTimelineDelta(
+        accumulator.byWarrior,
+        effectiveTargetId,
+        "damageTaken",
+        context.value,
+      );
+    }
+    accumulator.damage += context.value;
+    accumulator.flags.add("damage");
+    return true;
+  }
+
+  private processTimelineCombo(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (!COMBO_ACTIONS.has(context.actionType)) return false;
+    if (context.actionType === "combo-max" && context.actorId) {
+      this.trackComboMax(context.actorId, context.value);
+    }
+    accumulator.flags.add("combo");
+    return true;
+  }
+
+  private processTimelineOutcomeMarker(
+    context: TimelineActionContext,
+    accumulator: TimelineActionAccumulator,
+  ): boolean {
+    if (context.actionType === "+ph") {
+      accumulator.flags.add("ph");
+      return true;
+    }
+    if (context.actionType === "flee") {
+      accumulator.flags.add("flee");
+      return true;
+    }
+    return false;
   }
 
   private addTimelineDelta(
@@ -1230,21 +1626,12 @@ export class BattleProcessor {
     hasSpell: boolean,
     battleMeta: { characterId: string },
   ) {
-    const attacker = move.attackerId
-      ? (this.warriors.get(move.attackerId) ?? null)
-      : null;
-    const defender = move.defenderId
-      ? (this.warriors.get(move.defenderId) ?? null)
-      : null;
+    const attacker = this.getWarriorOrNull(move.attackerId);
+    const defender = this.getWarriorOrNull(move.defenderId);
     let defenderTakenDamage = 0;
 
     for (const { actionType, param } of move.actions) {
-      if (actionType === "winner") {
-        this.battleOutcome.winner = param;
-        continue;
-      }
-      if (actionType === "loser") {
-        this.battleOutcome.loser = param;
+      if (this.processOutcomeAction(actionType, param)) {
         continue;
       }
       if (actionType === "+ph") {
@@ -1252,28 +1639,14 @@ export class BattleProcessor {
         if (warrior) warrior.ph = +param;
       }
 
-      // Handle turn loss (txt has no attackerId/defenderId)
       if (actionType === "txt") {
-        if (param.includes("utrata tury")) {
-          const warriorName = param.split(" - ")[0]?.trim();
-          const warrior = warriorName ? this.findWarrior(warriorName) : null;
-          if (warrior) {
-            warrior.turns++;
-            warrior.turnsLost++;
-          }
-        } else if (param.includes("poddał walkę")) {
-          const warriorName = param.split(" poddał walkę")[0]?.trim();
-          const warrior = warriorName ? this.findWarrior(warriorName) : null;
-          if (warrior) warrior.surrendered = true;
-        }
+        this.processTextAction(param);
         continue;
       }
 
       if (!attacker) continue;
 
       const value = this.parseActionValue(param);
-      const firstValue = value;
-
       if (DAMAGE_DEALT_ACTIONS[actionType]) {
         attacker.damageDealt += value;
         (attacker[DAMAGE_DEALT_ACTIONS[actionType]] as number) += value;
@@ -1291,219 +1664,21 @@ export class BattleProcessor {
         continue;
       }
 
-      switch (actionType) {
-        case "+oth_dmg":
-          if (hasSpell) {
-            this.handleSpellTrueDamage(attacker, param, firstValue, defender);
-          } else {
-            this.handleReflectedDamage(attacker, defender, firstValue);
-          }
-          break;
-
-        case "+rage":
-          attacker.rageDamageDealt += value;
-          break;
-
-        case "+taken_dmg":
-          attacker.stigmaDamageDealt += value;
-          if (defender) defender.stigmaDamageTaken += value;
-          break;
-
-        case "+pierce":
-          attacker.armorPierces++;
-          break;
-
-        case "+crit":
-          attacker.criticalHits++;
-          break;
-
-        case "heal":
-          attacker.passiveHealing += value;
-          break;
-
-        case "bandage":
-          attacker.activeHealing += value;
-          break;
-
-        case "heal_target":
-          if (defender) {
-            defender.activeHealing += value;
-          }
-          break;
-
-        case "+acdmg":
-          attacker.reducedArmor += value;
-          break;
-
-        case "wound":
-          attacker.woundDamageTaken += value;
-          attacker.damageTaken += value;
-          break;
-
-        case "critwound":
-          attacker.critWoundDamageTaken += value;
-          attacker.damageTaken += value;
-          break;
-
-        case "anguish":
-          attacker.legbonAnguishDamageTaken += value;
-          attacker.damageTaken += value;
-          break;
-
-        case "poison":
-          attacker.poisonDamageTaken += value;
-          attacker.damageTaken += value;
-          break;
-
-        case "injure":
-          attacker.injureDamageTaken += value;
-          attacker.damageTaken += value;
-          break;
-
-        case "+injure":
-          if (defender) defender.injures++;
-          break;
-
-        case "flee":
-          attacker.fled = true;
-          this.battleOutcome.hasFlee = true;
-          break;
-
-        case "+fastarrow":
-          attacker.fastArrows++;
-          break;
-
-        case "fire":
-          attacker.firePassiveDamageTaken += value;
-          attacker.damageTaken += value;
-          break;
-
-        case "light":
-          attacker.lightningPassiveDamageTaken += value;
-          attacker.damageTaken += value;
-          break;
-
-        case "energy":
-          attacker.regeneratedEnergy -= value;
-          break;
-
-        case "en-regen":
-          attacker.regeneratedEnergy += value;
-          break;
-
-        case "+energy":
-        case "+engback":
-          attacker.regeneratedEnergy += value;
-          break;
-
-        case "+legbon_curse":
-          attacker.legbonCurse++;
-          break;
-
-        case "+legbon_holytouch":
-          attacker.legbonHolytouch++;
-          break;
-
-        case "legbon_holytouch_heal":
-          attacker.legbonHolytouchValue += value;
-          break;
-
-        case "+legbon_verycrit":
-          attacker.legbonVerycrit++;
-          break;
-
-        case "+legbon_anguish":
-          attacker.legbonAnguish++;
-          break;
-
-        case "combo-max":
-          if (move.attackerId) {
-            this.trackComboMax(move.attackerId, value);
-          }
-          break;
-
-        case "legbon_lastheal":
-          if (defender) {
-            defender.legbonLastheal++;
-            defender.legbonLasthealValue += value;
-          } else {
-            attacker.legbonLastheal++;
-            attacker.legbonLasthealValue += value;
-          }
-          break;
+      const handledSpecialAction = this.processSpecialWarriorAction({
+        actionType,
+        param,
+        value,
+        hasSpell,
+        attacker,
+        defender,
+        attackerId: move.attackerId,
+      });
+      if (!handledSpecialAction) {
+        ATTACKER_ACTION_HANDLERS[actionType]?.({ attacker, defender, value });
       }
 
       if (!defender) continue;
-
-      switch (actionType) {
-        case "-evade":
-          defender.evasions++;
-          if (attacker) attacker.attacksEvaded++;
-          break;
-
-        case "-contra":
-          defender.counters++;
-          break;
-
-        case "-blok":
-        case "-block":
-        case "-parry":
-        case "-arrowblock":
-        case "-pierceb":
-          defender.blocks++;
-          defender.blockedDamage += value;
-          if (attacker) attacker.attacksBlocked++;
-          break;
-
-        case "-endest":
-          defender.destroyedEnergy += value;
-          break;
-
-        case "-manadest":
-          defender.destroyedMana += value;
-          break;
-
-        case "en-regen":
-          defender.regeneratedEnergy += value;
-          break;
-
-        case "mana":
-          attacker.regeneratedMana -= value;
-          break;
-
-        case "stealmana":
-          defender.destroyedMana += value;
-          attacker.regeneratedMana += value;
-          break;
-
-        case "-legbon_cleanse":
-          defender.legbonCleanse++;
-          break;
-
-        case "-legbon_glare":
-          defender.legbonGlare++;
-          break;
-
-        case "-legbon_critred":
-          defender.legbonCritredValue = value;
-          break;
-
-        case "-legbon_facade":
-          defender.legbonFacadeValue = value;
-          break;
-
-        case "+legbon_puncture":
-          attacker.legbonPunctureValue = value;
-          break;
-
-        case "+resdmg":
-          attacker.magicResistanceDestroyed += value;
-          break;
-
-        case "+actdmg":
-          attacker.reducedPoisonResistance += value;
-          break;
-      }
+      DEFENDER_ACTION_HANDLERS[actionType]?.({ attacker, defender, value });
     }
 
     if (defender && move.defenderId && defenderTakenDamage > 0) {
@@ -1513,6 +1688,83 @@ export class BattleProcessor {
         move.defenderHpPercentage,
       );
     }
+  }
+
+  private getWarriorOrNull(warriorId: string | null): Warrior | null {
+    return warriorId ? (this.warriors.get(warriorId) ?? null) : null;
+  }
+
+  private processOutcomeAction(actionType: string, param: string): boolean {
+    if (actionType === "winner") {
+      this.battleOutcome.winner = param;
+      return true;
+    }
+    if (actionType === "loser") {
+      this.battleOutcome.loser = param;
+      return true;
+    }
+    return false;
+  }
+
+  private processTextAction(param: string): void {
+    if (param.includes("utrata tury")) {
+      const warriorName = param.split(" - ")[0]?.trim();
+      const warrior = warriorName ? this.findWarrior(warriorName) : null;
+      if (warrior) {
+        warrior.turns++;
+        warrior.turnsLost++;
+      }
+      return;
+    }
+
+    if (param.includes("poddał walkę")) {
+      const warriorName = param.split(" poddał walkę")[0]?.trim();
+      const warrior = warriorName ? this.findWarrior(warriorName) : null;
+      if (warrior) warrior.surrendered = true;
+    }
+  }
+
+  private processSpecialWarriorAction(context: {
+    actionType: string;
+    param: string;
+    value: number;
+    hasSpell: boolean;
+    attacker: Warrior;
+    defender: Warrior | null;
+    attackerId: string | null;
+  }): boolean {
+    if (context.actionType === "+oth_dmg") {
+      if (context.hasSpell) {
+        this.handleSpellTrueDamage(
+          context.attacker,
+          context.param,
+          context.value,
+          context.defender,
+        );
+      } else {
+        this.handleReflectedDamage(
+          context.attacker,
+          context.defender,
+          context.value,
+        );
+      }
+      return true;
+    }
+
+    if (context.actionType === "flee") {
+      context.attacker.fled = true;
+      this.battleOutcome.hasFlee = true;
+      return true;
+    }
+
+    if (context.actionType === "combo-max") {
+      if (context.attackerId) {
+        this.trackComboMax(context.attackerId, context.value);
+      }
+      return true;
+    }
+
+    return false;
   }
 
   private handleSpellTrueDamage(
@@ -1612,36 +1864,11 @@ export class BattleProcessor {
   }
 
   private getActionCategory(actionType: string): BattleActionCategory {
-    if (
-      DAMAGE_DEALT_ACTIONS[actionType] ||
-      DAMAGE_TAKEN_ACTIONS[actionType] ||
-      SPECIAL_DAMAGE_ACTIONS[actionType]
-    ) {
-      return "damage";
-    }
-    if (PASSIVE_DAMAGE_ACTIONS.has(actionType)) return "damage";
-    if (HEALING_ACTIONS.has(actionType)) return "healing";
-    if (MITIGATION_ACTIONS.has(actionType)) return "mitigation";
-    if (COUNTER_ACTIONS.has(actionType)) return "counter";
-    if (
-      ABSORB_GAIN_ACTIONS.has(actionType) ||
-      MAGIC_ABSORB_GAIN_ACTIONS.has(actionType) ||
-      ABSORB_SPEND_ACTIONS.has(actionType) ||
-      MAGIC_ABSORB_SPEND_ACTIONS.has(actionType)
-    ) {
-      return "absorb";
-    }
-    if (RESOURCE_ACTIONS.has(actionType)) return "resource";
-    if (CONTROL_ACTIONS.has(actionType)) return "control";
-    if (SPELL_ACTIONS.has(actionType)) return "spell";
-    if (COMBO_ACTIONS.has(actionType)) return "combo";
-    if (OUTCOME_ACTIONS.has(actionType)) return "outcome";
-    if (MOVEMENT_ACTIONS.has(actionType)) return "movement";
-    if (LEGENDARY_ACTIONS.has(actionType)) return "legendary";
-    if (BUFF_ACTIONS.has(actionType)) return "buff";
-    if (DEBUFF_ACTIONS.has(actionType)) return "debuff";
-    if (SYSTEM_ACTIONS.has(actionType)) return "system";
-    return "unknown";
+    return (
+      ACTION_CATEGORY_SETS.find(([, actions]) =>
+        actions.has(actionType),
+      )?.[0] ?? "unknown"
+    );
   }
 
   private recordActionCoverage(
@@ -2011,51 +2238,12 @@ export class BattleProcessor {
     return undefined;
   }
 
-  private determineOutcomeTeams() {
-    const splitOutcomeNames = (value: string): string[] =>
-      value
-        .split(",")
-        .map((name) => name.trim())
-        .filter((name) => name.length > 0);
-
-    const getTeamFromNames = (names: string[]): number | null => {
-      if (names.length === 0) return null;
-      const tokens = names.map((name) => name.trim());
-      const normalizedNames = new Set(
-        tokens.map((name) => this.normalize(name)),
-      );
-      const numericIds = new Set(tokens.filter((token) => /^\d+$/.test(token)));
-      const matchedTeams: number[] = [];
-
-      for (const [id, warrior] of this.warriors.entries()) {
-        if (numericIds.has(id) || numericIds.has(String(warrior.originalId))) {
-          matchedTeams.push(warrior.team);
-          continue;
-        }
-        if (normalizedNames.has(this.normalize(warrior.name))) {
-          matchedTeams.push(warrior.team);
-        }
-      }
-
-      if (matchedTeams.length === 0) return null;
-
-      const counts = matchedTeams.reduce<Record<number, number>>(
-        (acc, team) => {
-          acc[team] = (acc[team] ?? 0) + 1;
-          return acc;
-        },
-        {},
-      );
-      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-      const [topTeam] = sorted[0] ?? [];
-      return topTeam === undefined ? null : Number(topTeam);
-    };
-
+  private determineOutcomeTeams(): void {
     const winnerNames = splitOutcomeNames(this.battleOutcome.winner);
     const loserNames = splitOutcomeNames(this.battleOutcome.loser);
 
-    let winningTeam = getTeamFromNames(winnerNames);
-    let losingTeam = getTeamFromNames(loserNames);
+    let winningTeam = this.getTeamFromOutcomeNames(winnerNames);
+    let losingTeam = this.getTeamFromOutcomeNames(loserNames);
 
     if (winningTeam === null && losingTeam !== null) {
       winningTeam = this.getOpposingTeam(losingTeam);
@@ -2064,65 +2252,119 @@ export class BattleProcessor {
     }
 
     if (winningTeam === null || losingTeam === null) {
-      const teams = Array.from(this.warriors.entries()).reduce(
-        (acc, [id, w]) => {
-          const hp = this.lastHp.get(id);
-          const hpValue = typeof hp === "number" ? hp : 0;
-          acc.hpSum[w.team] = (acc.hpSum[w.team] ?? 0) + hpValue;
-          acc.alive[w.team] = (acc.alive[w.team] ?? 0) + (hpValue > 0 ? 1 : 0);
-          acc.dmgDealt[w.team] = (acc.dmgDealt[w.team] ?? 0) + w.damageDealt;
-          acc.dmgTaken[w.team] = (acc.dmgTaken[w.team] ?? 0) + w.damageTaken;
-          return acc;
-        },
-        {
-          hpSum: {} as Record<number, number>,
-          alive: {} as Record<number, number>,
-          dmgDealt: {} as Record<number, number>,
-          dmgTaken: {} as Record<number, number>,
-        },
-      );
-
-      const [t1, t2] = [1, 2];
-      const alive1 = teams.alive[t1] ?? 0;
-      const alive2 = teams.alive[t2] ?? 0;
-      const hp1 = teams.hpSum[t1] ?? 0;
-      const hp2 = teams.hpSum[t2] ?? 0;
-      const dealt1 = teams.dmgDealt[t1] ?? 0;
-      const dealt2 = teams.dmgDealt[t2] ?? 0;
-      const taken1 = teams.dmgTaken[t1] ?? 0;
-      const taken2 = teams.dmgTaken[t2] ?? 0;
-      const getDefaultOpposingTeam = (team: number): number =>
-        team === t1 ? t2 : t1;
-
-      if (winningTeam === null && losingTeam === null) {
-        if (alive1 !== alive2) {
-          winningTeam = alive1 > alive2 ? t1 : t2;
-          losingTeam = getDefaultOpposingTeam(winningTeam);
-        } else if (hp1 !== hp2) {
-          winningTeam = hp1 > hp2 ? t1 : t2;
-          losingTeam = getDefaultOpposingTeam(winningTeam);
-        } else if (dealt1 !== dealt2) {
-          winningTeam = dealt1 > dealt2 ? t1 : t2;
-          losingTeam = getDefaultOpposingTeam(winningTeam);
-        } else if (taken1 !== taken2) {
-          winningTeam = taken1 < taken2 ? t1 : t2;
-          losingTeam = getDefaultOpposingTeam(winningTeam);
-        } else {
-          // Deterministic default
-          winningTeam = t1;
-          losingTeam = t2;
-        }
-      } else if (winningTeam === null) {
-        if (losingTeam !== null) {
-          winningTeam = getDefaultOpposingTeam(losingTeam);
-        }
-      } else if (losingTeam === null) {
-        losingTeam = getDefaultOpposingTeam(winningTeam);
-      }
+      ({ winningTeam, losingTeam } = this.resolveFallbackOutcomeTeams(
+        winningTeam,
+        losingTeam,
+      ));
     }
 
     this.battleOutcome.winningTeam = winningTeam;
     this.battleOutcome.losingTeam = losingTeam;
+  }
+
+  private getTeamFromOutcomeNames(names: string[]): number | null {
+    if (names.length === 0) return null;
+
+    const tokens = names.map((name) => name.trim());
+    const normalizedNames = new Set(tokens.map((name) => this.normalize(name)));
+    const numericIds = new Set(tokens.filter((token) => /^\d+$/.test(token)));
+    const matchedTeams: number[] = [];
+
+    for (const [id, warrior] of this.warriors.entries()) {
+      if (numericIds.has(id) || numericIds.has(String(warrior.originalId))) {
+        matchedTeams.push(warrior.team);
+        continue;
+      }
+      if (normalizedNames.has(this.normalize(warrior.name))) {
+        matchedTeams.push(warrior.team);
+      }
+    }
+
+    if (matchedTeams.length === 0) return null;
+
+    const counts = matchedTeams.reduce<Record<number, number>>((acc, team) => {
+      addTeamMetric(acc, team, 1);
+      return acc;
+    }, {});
+    const [topEntry] = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    return topEntry ? Number(topEntry[0]) : null;
+  }
+
+  private collectTeamOutcomeMetrics(): TeamOutcomeMetrics {
+    const metrics: TeamOutcomeMetrics = {
+      hpSum: {},
+      alive: {},
+      dmgDealt: {},
+      dmgTaken: {},
+    };
+
+    for (const [id, warrior] of this.warriors.entries()) {
+      const hp = this.lastHp.get(id);
+      const hpValue = typeof hp === "number" ? hp : 0;
+      addTeamMetric(metrics.hpSum, warrior.team, hpValue);
+      addTeamMetric(metrics.alive, warrior.team, hpValue > 0 ? 1 : 0);
+      addTeamMetric(metrics.dmgDealt, warrior.team, warrior.damageDealt);
+      addTeamMetric(metrics.dmgTaken, warrior.team, warrior.damageTaken);
+    }
+
+    return metrics;
+  }
+
+  private resolveFallbackOutcomeTeams(
+    winningTeam: number | null,
+    losingTeam: number | null,
+  ): OutcomeTeams {
+    if (winningTeam === null && losingTeam === null) {
+      return this.resolveOutcomeFromMetrics(this.collectTeamOutcomeMetrics());
+    }
+    if (winningTeam === null) {
+      return {
+        winningTeam: this.getDefaultOpposingTeam(losingTeam as number),
+        losingTeam,
+      };
+    }
+    return {
+      winningTeam,
+      losingTeam: this.getDefaultOpposingTeam(winningTeam),
+    };
+  }
+
+  private resolveOutcomeFromMetrics(teams: TeamOutcomeMetrics): OutcomeTeams {
+    const [teamOne, teamTwo] = [1, 2];
+    const aliveOne = teams.alive[teamOne] ?? 0;
+    const aliveTwo = teams.alive[teamTwo] ?? 0;
+    const hpOne = teams.hpSum[teamOne] ?? 0;
+    const hpTwo = teams.hpSum[teamTwo] ?? 0;
+    const dealtOne = teams.dmgDealt[teamOne] ?? 0;
+    const dealtTwo = teams.dmgDealt[teamTwo] ?? 0;
+    const takenOne = teams.dmgTaken[teamOne] ?? 0;
+    const takenTwo = teams.dmgTaken[teamTwo] ?? 0;
+
+    if (aliveOne !== aliveTwo) {
+      return this.outcomeFromComparison(aliveOne > aliveTwo);
+    }
+    if (hpOne !== hpTwo) {
+      return this.outcomeFromComparison(hpOne > hpTwo);
+    }
+    if (dealtOne !== dealtTwo) {
+      return this.outcomeFromComparison(dealtOne > dealtTwo);
+    }
+    if (takenOne !== takenTwo) {
+      return this.outcomeFromComparison(takenOne < takenTwo);
+    }
+    return { winningTeam: teamOne, losingTeam: teamTwo };
+  }
+
+  private outcomeFromComparison(teamOneWins: boolean): OutcomeTeams {
+    const winningTeam = teamOneWins ? 1 : 2;
+    return {
+      winningTeam,
+      losingTeam: this.getDefaultOpposingTeam(winningTeam),
+    };
+  }
+
+  private getDefaultOpposingTeam(team: number): number {
+    return team === 1 ? 2 : 1;
   }
 
   private getOpposingTeam(team: number): number | null {

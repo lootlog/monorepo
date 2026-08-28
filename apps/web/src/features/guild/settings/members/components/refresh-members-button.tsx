@@ -1,7 +1,4 @@
-import { Button } from "@lootlog/ui/components/button";
-import { RefreshCw, Clock } from "lucide-react";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { cn } from "@/utils/cn";
 import { useRefreshStatus } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
@@ -15,18 +12,22 @@ import {
   useMembersControllerRefreshAllMembers,
 } from "@lootlog/api-client/react-query/main/members";
 import { useQueryClient } from "@tanstack/react-query";
+import { RefreshMembersStatus } from "./refresh-members-status";
+
+const getResolvedGuildId = (guildId: string | undefined) => guildId ?? "";
 
 export const RefreshMembersButton = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+  const resolvedGuildId = getResolvedGuildId(guildId);
   const queryClient = useQueryClient();
   const { markAsRefreshed, markAsFailed } = useRefreshStatus();
   const latestRefreshJobQuery = useMembersControllerGetLatestRefreshJob(
-    { guildId: guildId ?? "" },
+    { guildId: resolvedGuildId },
     {
       query: {
         queryKey: getMembersControllerGetLatestRefreshJobQueryKey({
-          guildId: guildId ?? "",
+          guildId: resolvedGuildId,
         }),
         staleTime: 60_000,
       },
@@ -95,12 +96,6 @@ export const RefreshMembersButton = () => {
   );
 
   const displayJob = jobStatus ?? currentJob;
-  const isRefreshing =
-    displayJob?.status === "PROCESSING" || displayJob?.status === "PENDING";
-  const progress =
-    displayJob && displayJob.totalMembers > 0
-      ? (displayJob.processedMembers / displayJob.totalMembers) * 100
-      : 0;
 
   const handleRefresh = () => {
     if (!guildId) {
@@ -112,99 +107,12 @@ export const RefreshMembersButton = () => {
     });
   };
 
-  if (isRefreshing && displayJob) {
-    return (
-      <div className="flex flex-col gap-2 min-w-48">
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <RefreshCw className="w-4 h-4 animate-spin" />
-          <span>
-            {t("settings.members.refreshingProgress", {
-              processed: displayJob.processedMembers,
-              total: displayJob.totalMembers,
-            })}
-          </span>
-        </div>
-        <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (!countdown.isExpired) {
-    if (displayJob?.status === "COMPLETED") {
-      return (
-        <div className="flex flex-wrap items-center gap-2 text-sm text-green-600">
-          <RefreshCw className="w-4 h-4" />
-          <span>
-            {t("settings.members.refreshSuccessWithCooldown", {
-              minutes: countdown.minutes,
-              seconds: countdown.seconds.toString().padStart(2, "0"),
-            })}
-          </span>
-        </div>
-      );
-    }
-
-    if (displayJob?.status === "FAILED") {
-      return (
-        <div className="flex flex-wrap items-center gap-2 text-sm text-red-600">
-          <Clock className="w-4 h-4" />
-          <span>
-            {t("settings.members.refreshErrorWithCooldown", {
-              minutes: countdown.minutes,
-              seconds: countdown.seconds.toString().padStart(2, "0"),
-            })}
-          </span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <Clock className="w-4 h-4" />
-        <span>
-          {t("settings.members.nextRefreshIn", {
-            minutes: countdown.minutes,
-            seconds: countdown.seconds.toString().padStart(2, "0"),
-          })}
-        </span>
-      </div>
-    );
-  }
-
-  if (displayJob?.status === "FAILED") {
-    return (
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={handleRefresh}
-        disabled={isPending || !countdown.isExpired}
-      >
-        <RefreshCw
-          className={cn("w-4 h-4 mr-2", isPending && "animate-spin")}
-        />
-        <span className="mr-1 font-medium">
-          {t("settings.members.refreshError")}
-        </span>
-        <span className="opacity-70">·</span>
-        <span className="ml-1">{t("settings.members.retry")}</span>
-      </Button>
-    );
-  }
-
   return (
-    <Button
-      size="sm"
-      variant="outline"
-      onClick={handleRefresh}
-      disabled={isPending || !countdown.isExpired}
-    >
-      <RefreshCw className={cn("w-4 h-4 mr-2", isPending && "animate-spin")} />
-      {t("settings.members.refreshAll")}
-    </Button>
+    <RefreshMembersStatus
+      countdown={countdown}
+      displayJob={displayJob}
+      isPending={isPending}
+      onRefresh={handleRefresh}
+    />
   );
 };

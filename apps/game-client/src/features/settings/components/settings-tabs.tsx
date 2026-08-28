@@ -62,6 +62,49 @@ const ICONS: Record<string, LucideIcon> = {
 
 const COMPACT_WIDTH = 600;
 
+const getSettingsContent = (subsection: SettingsSubsectionValue): ReactNode => {
+  switch (subsection) {
+    case "visibility":
+      return <ServerVisibilitySettingsTab />;
+    case "behavior":
+      return <GeneralSettingsTab />;
+    case "chat":
+      return <ChatAppearanceSettingsForm />;
+    case "npc-colors":
+      return <NpcColorsSettings />;
+    case "timer-appearance":
+      return <TimersSettingsAppearance />;
+    case "timer-colors":
+      return <TimersSettingsColors />;
+    case "timer-behavior":
+      return <TimersSettingsGeneral />;
+    case "hidden-timers":
+      return <HiddenTimersTab />;
+    case "catching":
+      return <CatchingSettings />;
+    case "detector":
+      return <DetectorSettingsTab />;
+    case "battle-panel":
+      return <BattlePanelSettingsTab />;
+    case "notification-rules":
+      return <NotificationsSettingsTab />;
+    case "notification-mutes":
+      return <NotificationMutesSettingsTab />;
+    case "sounds":
+      return <SoundsSettingsTab />;
+    case "hotkeys":
+      return <HotkeysSettingsTab />;
+    case "logs":
+      return <LogsSettingsTab />;
+    case "debug":
+      return <DebugTab />;
+    case "build":
+      return <InformationSettingsTab />;
+    default:
+      return <GeneralSettingsTab />;
+  }
+};
+
 export const SettingsTabs = () => {
   const { t } = useTranslation();
   const activeTab = useWindowsStore((state) => state.settings.state?.activeTab);
@@ -190,66 +233,7 @@ export const SettingsTabs = () => {
     }
   };
 
-  let content: ReactNode;
-
-  switch (selectedSubsection) {
-    case "visibility":
-      content = <ServerVisibilitySettingsTab />;
-      break;
-    case "behavior":
-      content = <GeneralSettingsTab />;
-      break;
-    case "chat":
-      content = <ChatAppearanceSettingsForm />;
-      break;
-    case "npc-colors":
-      content = <NpcColorsSettings />;
-      break;
-    case "timer-appearance":
-      content = <TimersSettingsAppearance />;
-      break;
-    case "timer-colors":
-      content = <TimersSettingsColors />;
-      break;
-    case "timer-behavior":
-      content = <TimersSettingsGeneral />;
-      break;
-    case "hidden-timers":
-      content = <HiddenTimersTab />;
-      break;
-    case "catching":
-      content = <CatchingSettings />;
-      break;
-    case "detector":
-      content = <DetectorSettingsTab />;
-      break;
-    case "battle-panel":
-      content = <BattlePanelSettingsTab />;
-      break;
-    case "notification-rules":
-      content = <NotificationsSettingsTab />;
-      break;
-    case "notification-mutes":
-      content = <NotificationMutesSettingsTab />;
-      break;
-    case "sounds":
-      content = <SoundsSettingsTab />;
-      break;
-    case "hotkeys":
-      content = <HotkeysSettingsTab />;
-      break;
-    case "logs":
-      content = <LogsSettingsTab />;
-      break;
-    case "debug":
-      content = <DebugTab />;
-      break;
-    case "build":
-      content = <InformationSettingsTab />;
-      break;
-    default:
-      content = <GeneralSettingsTab />;
-  }
+  const content = getSettingsContent(selectedSubsection);
 
   const navigationPanel = (
     <div className="ll:flex ll:h-full ll:min-h-0 ll:w-48 ll:flex-col ll:border-0 ll:border-r ll:border-solid ll:border-gray-500/30 ll:bg-black/15 ll:p-2">

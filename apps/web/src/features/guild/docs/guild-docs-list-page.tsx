@@ -44,6 +44,17 @@ import { GuildDocsListSkeleton } from "./guild-docs-list-skeleton";
 import { useTranslation } from "react-i18next";
 import { SearchInput } from "@/components/ui/search-input";
 
+const filterGuildDocuments = (
+  documents: GuildDocumentListResponseDtoItemsItem[],
+  searchValue: string,
+) => {
+  const normalizedSearch = searchValue.trim().toLocaleLowerCase("pl");
+  if (!normalizedSearch) return documents;
+  return documents.filter((document) =>
+    document.title.toLocaleLowerCase("pl").includes(normalizedSearch),
+  );
+};
+
 export const GuildDocsListPage = () => {
   const { t } = useTranslation();
   const guildId = useGuildId() ?? "";
@@ -63,12 +74,7 @@ export const GuildDocsListPage = () => {
   const deleteDocument = useDocsControllerDeleteDocument();
 
   const documents = documentsQuery.data?.items ?? [];
-  const normalizedSearch = searchValue.trim().toLocaleLowerCase("pl");
-  const filteredDocuments = normalizedSearch
-    ? documents.filter((document) =>
-        document.title.toLocaleLowerCase("pl").includes(normalizedSearch),
-      )
-    : documents;
+  const filteredDocuments = filterGuildDocuments(documents, searchValue);
   const limit = documentsQuery.data?.limit ?? {
     canCreate: false,
     max: 50,

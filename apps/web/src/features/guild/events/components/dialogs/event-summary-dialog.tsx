@@ -52,17 +52,27 @@ export const EventSummaryDialog = ({
     },
   );
 
-  const deck = data ? buildWrappedDeck(buildWrappedQualityModel(data)) : null;
-  const slides = deck?.mode === "presentation" ? deck.slides : [];
-  const matchingIndex = slides.findIndex(
-    (slide) => slide.id === currentSlideId,
-  );
-  const activeIndex =
-    matchingIndex >= 0
-      ? matchingIndex
-      : Math.min(previousIndexRef.current, Math.max(slides.length - 1, 0));
-  const activeSlide = slides[activeIndex];
-  const isFinalSlide = activeSlide?.kind === "finale";
+  const resolveSlideState = () => {
+    const deck = data ? buildWrappedDeck(buildWrappedQualityModel(data)) : null;
+    const slides = deck?.mode === "presentation" ? deck.slides : [];
+    const matchingIndex = slides.findIndex(
+      (slide) => slide.id === currentSlideId,
+    );
+    const activeIndex =
+      matchingIndex >= 0
+        ? matchingIndex
+        : Math.min(previousIndexRef.current, Math.max(slides.length - 1, 0));
+    const activeSlide = slides[activeIndex];
+    return {
+      deck,
+      slides,
+      activeIndex,
+      activeSlide,
+      isFinalSlide: activeSlide?.kind === "finale",
+    };
+  };
+  const { deck, slides, activeIndex, activeSlide, isFinalSlide } =
+    resolveSlideState();
 
   useEffect(() => {
     if (!open) {
@@ -161,6 +171,101 @@ export const EventSummaryDialog = ({
     );
   }
 
+  const renderStage = () => {
+    if (isLoading) {
+      return (
+        <div className="flex h-full items-center justify-center px-6">
+          <div className="w-full max-w-xl">
+            <LoadingState
+              title={t("events.summaryDialog.loadingTitle")}
+              description={t("events.summaryDialog.loadingDescription")}
+            />
+          </div>
+        </div>
+      );
+    }
+    if (error || !data || !deck) {
+      return (
+        <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center px-6 text-center">
+          <p className="text-lg font-semibold">
+            {t("events.summaryDialog.errorTitle")}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            {t("events.summaryDialog.errorDescription")}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-6"
+            onClick={() => void refetch()}
+          >
+            <RotateCcw className="size-4" />
+            {t("events.summaryDialog.retry")}
+          </Button>
+        </div>
+      );
+    }
+    if (deck.mode === "sparse") {
+      return <WrappedSparseSummary eventName={eventName} facts={deck.facts} />;
+    }
+    if (!activeSlide) {
+      return null;
+    }
+    return (
+      <>
+        <AnimatePresence initial={false} mode="wait" custom={direction}>
+          <motion.div
+            key={activeSlide.id}
+            custom={direction}
+            initial={
+              prefersReducedMotion
+                ? { opacity: 0 }
+                : { opacity: 0, x: direction * 40 }
+            }
+            animate={{ opacity: 1, x: 0 }}
+            exit={
+              prefersReducedMotion
+                ? { opacity: 0 }
+                : { opacity: 0, x: direction * -40 }
+            }
+            transition={{ duration: prefersReducedMotion ? 0.12 : 0.24 }}
+            className="h-full"
+          >
+            <WrappedSlideContent
+              slide={activeSlide}
+              eventName={eventName}
+              world={data.event.world}
+            />
+          </motion.div>
+        </AnimatePresence>
+        {activeIndex > 0 ? (
+          <button
+            type="button"
+            className="group absolute inset-y-0 left-0 z-10 flex w-16 items-center justify-start pl-3 text-muted-foreground outline-none sm:w-24 sm:pl-5"
+            aria-label={t("events.summaryDialog.previous")}
+            onClick={() => selectSlide(activeIndex - 1)}
+          >
+            <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              <ArrowLeft className="size-4" />
+            </span>
+          </button>
+        ) : null}
+        {!isFinalSlide ? (
+          <button
+            type="button"
+            className="group absolute inset-y-0 right-0 z-10 flex w-16 items-center justify-end pr-3 text-muted-foreground outline-none sm:w-24 sm:pr-5"
+            aria-label={t("events.summaryDialog.next")}
+            onClick={() => selectSlide(activeIndex + 1)}
+          >
+            <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              <ArrowRight className="size-4" />
+            </span>
+          </button>
+        ) : null}
+      </>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -204,88 +309,7 @@ export const EventSummaryDialog = ({
           ref={stageRef}
           className="relative min-h-0 flex-1 overflow-hidden bg-background"
         >
-          {isLoading ? (
-            <div className="flex h-full items-center justify-center px-6">
-              <div className="w-full max-w-xl">
-                <LoadingState
-                  title={t("events.summaryDialog.loadingTitle")}
-                  description={t("events.summaryDialog.loadingDescription")}
-                />
-              </div>
-            </div>
-          ) : error || !data || !deck ? (
-            <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center px-6 text-center">
-              <p className="text-lg font-semibold">
-                {t("events.summaryDialog.errorTitle")}
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {t("events.summaryDialog.errorDescription")}
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-6"
-                onClick={() => void refetch()}
-              >
-                <RotateCcw className="size-4" />
-                {t("events.summaryDialog.retry")}
-              </Button>
-            </div>
-          ) : deck.mode === "sparse" ? (
-            <WrappedSparseSummary eventName={eventName} facts={deck.facts} />
-          ) : activeSlide ? (
-            <>
-              <AnimatePresence initial={false} mode="wait" custom={direction}>
-                <motion.div
-                  key={activeSlide.id}
-                  custom={direction}
-                  initial={
-                    prefersReducedMotion
-                      ? { opacity: 0 }
-                      : { opacity: 0, x: direction * 40 }
-                  }
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={
-                    prefersReducedMotion
-                      ? { opacity: 0 }
-                      : { opacity: 0, x: direction * -40 }
-                  }
-                  transition={{ duration: prefersReducedMotion ? 0.12 : 0.24 }}
-                  className="h-full"
-                >
-                  <WrappedSlideContent
-                    slide={activeSlide}
-                    eventName={eventName}
-                    world={data.event.world}
-                  />
-                </motion.div>
-              </AnimatePresence>
-              {activeIndex > 0 ? (
-                <button
-                  type="button"
-                  className="group absolute inset-y-0 left-0 z-10 flex w-16 items-center justify-start pl-3 text-muted-foreground outline-none sm:w-24 sm:pl-5"
-                  aria-label={t("events.summaryDialog.previous")}
-                  onClick={() => selectSlide(activeIndex - 1)}
-                >
-                  <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                    <ArrowLeft className="size-4" />
-                  </span>
-                </button>
-              ) : null}
-              {!isFinalSlide ? (
-                <button
-                  type="button"
-                  className="group absolute inset-y-0 right-0 z-10 flex w-16 items-center justify-end pr-3 text-muted-foreground outline-none sm:w-24 sm:pr-5"
-                  aria-label={t("events.summaryDialog.next")}
-                  onClick={() => selectSlide(activeIndex + 1)}
-                >
-                  <span className="flex size-9 items-center justify-center rounded-full border border-border bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                    <ArrowRight className="size-4" />
-                  </span>
-                </button>
-              ) : null}
-            </>
-          ) : null}
+          {renderStage()}
           <p className="sr-only" aria-live="polite" aria-atomic="true">
             {activeSlideLabel}
           </p>

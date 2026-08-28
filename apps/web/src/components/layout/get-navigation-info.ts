@@ -443,8 +443,7 @@ function resolveSettingsRoutes(
   guildBreadcrumb: Breadcrumb,
   args: GetNavigationInfoArgs,
 ): NavigationInfo | null {
-  const { params, settingsMemberName, settingsNpcName, settingsRoleName, t } =
-    args;
+  const { t } = args;
 
   if (!path.startsWith(routes.settings)) return null;
 
@@ -464,6 +463,24 @@ function resolveSettingsRoutes(
   }
 
   breadcrumbs.push(settingsBreadcrumb);
+
+  appendSettingsRouteBreadcrumbs(path, routes, breadcrumbs, args);
+
+  return {
+    breadcrumbs,
+    showBack: true,
+    backPath: getSettingsBackPath(path, routes),
+  };
+}
+
+function appendSettingsRouteBreadcrumbs(
+  path: string,
+  routes: Routes,
+  breadcrumbs: Breadcrumb[],
+  args: GetNavigationInfoArgs,
+): void {
+  const { params, settingsMemberName, settingsNpcName, settingsRoleName, t } =
+    args;
 
   if (path === routes.settingsRoles) {
     breadcrumbs.push({ label: t("common.breadcrumbs.roles"), path: null });
@@ -552,25 +569,18 @@ function resolveSettingsRoutes(
   } else if (path === `${routes.settings}/info`) {
     breadcrumbs.push({ label: t("common.breadcrumbs.info"), path: null });
   }
+}
 
-  let backPath: string;
-  if (path === routes.settings) {
-    backPath = routes.base;
-  } else if (path.startsWith(`${routes.notifications}/`)) {
-    backPath = routes.notifications;
-  } else if (path.startsWith(`${routes.settingsRoles}/`)) {
-    backPath = routes.settingsRoles;
-  } else if (path.startsWith(`${routes.settingsMembers}/`)) {
-    backPath = routes.settingsMembers;
-  } else if (path.startsWith(`${routes.settingsNpcs}/`)) {
-    backPath = routes.settingsNpcs;
-  } else if (path === routes.notifications) {
-    backPath = routes.base;
-  } else {
-    backPath = routes.settings;
+function getSettingsBackPath(path: string, routes: Routes): string {
+  if (path === routes.settings) return routes.base;
+  if (path.startsWith(`${routes.notifications}/`)) return routes.notifications;
+  if (path.startsWith(`${routes.settingsRoles}/`)) return routes.settingsRoles;
+  if (path.startsWith(`${routes.settingsMembers}/`)) {
+    return routes.settingsMembers;
   }
-
-  return { breadcrumbs, showBack: true, backPath };
+  if (path.startsWith(`${routes.settingsNpcs}/`)) return routes.settingsNpcs;
+  if (path === routes.notifications) return routes.base;
+  return routes.settings;
 }
 
 function fallback(

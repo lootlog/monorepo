@@ -29,17 +29,26 @@ type ChatNpcMessageViewProps = {
   wrapSender?: (sender: ReactElement) => ReactNode;
 };
 
-export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = ({
-  all,
-  appearance = CHAT_APPEARANCE_READABLE_PRESET,
-  count = 1,
-  guildName,
-  memberColor,
-  message,
-  npcTypeColors,
-  senderName,
-  wrapSender,
-}) => {
+const valueOrDefault = <Value,>(
+  value: Value | undefined,
+  defaultValue: Value,
+): Value => value ?? defaultValue;
+
+export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
+  const {
+    all,
+    guildName,
+    memberColor,
+    message,
+    npcTypeColors,
+    senderName,
+    wrapSender,
+  } = props;
+  const appearance = valueOrDefault(
+    props.appearance,
+    CHAT_APPEARANCE_READABLE_PRESET,
+  );
+  const count = valueOrDefault(props.count, 1);
   const npc = message.npc;
   if (!npc) return null;
 

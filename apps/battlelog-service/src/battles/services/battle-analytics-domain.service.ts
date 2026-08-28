@@ -9,6 +9,19 @@ import type {
   StoredBattleWithWarriors,
 } from "src/battles/services/battle-analytics.types";
 
+const EMPTY_PLAYER_VS_PLAYER_WARRIOR = {
+  name: "",
+  lvl: 0,
+  prof: "",
+  icon: "",
+  fireDamage: 0,
+  frostDamage: 0,
+  lightningDamage: 0,
+  poisonDamageTaken: 0,
+  woundDamageTaken: 0,
+  critWoundDamageTaken: 0,
+};
+
 @Injectable()
 export class BattleAnalyticsDomainService {
   inflateBattleRows(
@@ -58,17 +71,19 @@ export class BattleAnalyticsDomainService {
   }
 
   mapPlayerVsPlayerWarrior(warrior: InflatedBattleWarrior | undefined) {
+    const resolvedWarrior = warrior ?? EMPTY_PLAYER_VS_PLAYER_WARRIOR;
+
     return {
-      name: warrior?.name ?? "",
-      lvl: warrior?.lvl ?? 0,
-      prof: warrior?.prof ?? "",
-      icon: warrior?.icon ?? "",
-      fireDamage: warrior?.fireDamage ?? 0,
-      frostDamage: warrior?.frostDamage ?? 0,
-      lightningDamage: warrior?.lightningDamage ?? 0,
-      poisonDamageTaken: warrior?.poisonDamageTaken ?? 0,
-      woundDamageTaken: warrior?.woundDamageTaken ?? 0,
-      critWoundDamageTaken: warrior?.critWoundDamageTaken ?? 0,
+      name: resolvedWarrior.name,
+      lvl: resolvedWarrior.lvl,
+      prof: resolvedWarrior.prof,
+      icon: resolvedWarrior.icon,
+      fireDamage: resolvedWarrior.fireDamage,
+      frostDamage: resolvedWarrior.frostDamage,
+      lightningDamage: resolvedWarrior.lightningDamage,
+      poisonDamageTaken: resolvedWarrior.poisonDamageTaken,
+      woundDamageTaken: resolvedWarrior.woundDamageTaken,
+      critWoundDamageTaken: resolvedWarrior.critWoundDamageTaken,
     };
   }
 

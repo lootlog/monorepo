@@ -42,6 +42,9 @@ import { useTranslation } from "react-i18next";
 import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
 import { PlayerVsPlayerFilterToolbar } from "./components/player-vs-player-filter-toolbar";
 
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
 export function PlayerVsPlayerFullPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -52,21 +55,35 @@ export function PlayerVsPlayerFullPage() {
     opponentId?: string;
   };
 
-  const opponentId = params.opponentId ?? params.myId;
+  const opponentId = valueOr(params.opponentId, params.myId);
   const [queryState, setQueryState] = useQueryStates(
     battlePanelPlayerVsPlayerSearchParsers,
   );
-  const pageIndex = getBattlePanelPageIndex(queryState.page);
-  const currentCharacterId =
-    normalizeBattlePanelCharacterId(queryState.characterId) ?? params.myId;
-  const period = queryState.period ?? "30d";
-  const minLevel = queryState.minLevel;
-  const maxLevel = queryState.maxLevel;
-  const startDate = queryState.startDate ?? undefined;
-  const endDate = queryState.endDate ?? undefined;
-  const ph = queryState.ph ?? undefined;
-  const matchmaking = queryState.matchmaking ?? undefined;
-  const cursor = queryState.cursor ?? undefined;
+  const resolvePageState = () => ({
+    pageIndex: getBattlePanelPageIndex(queryState.page),
+    currentCharacterId:
+      normalizeBattlePanelCharacterId(queryState.characterId) ?? params.myId,
+    period: queryState.period ?? "30d",
+    minLevel: queryState.minLevel,
+    maxLevel: queryState.maxLevel,
+    startDate: queryState.startDate ?? undefined,
+    endDate: queryState.endDate ?? undefined,
+    ph: queryState.ph ?? undefined,
+    matchmaking: queryState.matchmaking ?? undefined,
+    cursor: queryState.cursor ?? undefined,
+  });
+  const {
+    pageIndex,
+    currentCharacterId,
+    period,
+    minLevel,
+    maxLevel,
+    startDate,
+    endDate,
+    ph,
+    matchmaking,
+    cursor,
+  } = resolvePageState();
   const pageSize = 20;
 
   const applyFilterState = ({
@@ -128,11 +145,11 @@ export function PlayerVsPlayerFullPage() {
     useBattlesControllerGetPlayerVsPlayerBattles({
       cursor,
       size: pageSize,
-      characterId: currentCharacterId ?? params.myId,
+      characterId: valueOr(currentCharacterId, params.myId),
       period,
       startDate,
       endDate,
-      opponentId: opponentId ?? "",
+      opponentId: valueOr(opponentId, ""),
       minLevel,
       maxLevel,
       ph,
@@ -177,13 +194,14 @@ export function PlayerVsPlayerFullPage() {
     handleBattleOpen(battleId);
   };
 
-  const opponentName =
-    data?.battles[0]?.opponentWarrior.name ??
-    t("battlePanel.statistics.playerVsPlayer.opponentFallback");
+  const opponentName = valueOr(
+    data?.battles[0]?.opponentWarrior.name,
+    t("battlePanel.statistics.playerVsPlayer.opponentFallback"),
+  );
   const myCharacter = data?.battles[0]?.userWarrior;
 
   const table = useReactTable({
-    data: data?.battles ?? [],
+    data: valueOr(data?.battles, []),
     columns: playerVsPlayerColumns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -264,10 +282,79 @@ export function PlayerVsPlayerFullPage() {
       onNextPage={handleNextPage}
       pageIndex={pageIndex}
       pageSize={pageSize}
-      totalCount={data?.pagination?.total ?? 0}
-      visibleCount={data?.battles.length ?? 0}
+      totalCount={valueOr(data?.pagination?.total, 0)}
+      visibleCount={valueOr(data?.battles.length, 0)}
     />
   );
+
+  const renderResults = () => {
+    if (isLoading) {
+      return <TableRowsSkeleton />;
+    }
+    if (isError) {
+      return (
+        <BattlePanelEmptyState
+          icon={AlertCircle}
+          title={t("battlePanel.statistics.empty.errorTitle")}
+          description={
+            getRouteErrorMessage(error) ??
+            t("common.routeErrors.status.500.description")
+          }
+        />
+      );
+    }
+    if (!data || data.battles.length === 0) {
+      return (
+        <BattlePanelEmptyState
+          icon={SearchX}
+          title={t("battlePanel.statistics.playerVsPlayer.emptyTitle")}
+          description={t(
+            "battlePanel.statistics.playerVsPlayer.emptyDescription",
+          )}
+        />
+      );
+    }
+    if (isMobile) {
+      return (
+        <div className="grid gap-2 p-3">
+          {data.battles.map((battle) => (
+            <BattlePanelPvpBattleCard
+              key={battle.battleId}
+              battle={battle}
+              onBattleClick={handleBattleOpen}
+            />
+          ))}
+        </div>
+      );
+    }
+    return (
+      <Table className="border-b">
+        <TanStackTableHeader
+          table={table}
+          className="sticky top-0 z-10 bg-background"
+          rowClassName="border-b-1! border-border"
+          headClassName="whitespace-nowrap"
+        />
+        <TanStackTableBody
+          table={table}
+          cellClassName="whitespace-nowrap align-middle"
+          getRowProps={(row) => ({
+            className: cn(
+              "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
+              getBattleResultRowClassName(
+                getPlayerVsPlayerBattleResult(row.original),
+              ),
+            ),
+            onClick: () => handleBattleOpen(row.original.battleId),
+            onKeyDown: (event) =>
+              handleBattleRowKeyDown(event, row.original.battleId),
+            role: "link",
+            tabIndex: 0,
+          })}
+        />
+      </Table>
+    );
+  };
 
   return (
     <>
@@ -330,62 +417,7 @@ export function PlayerVsPlayerFullPage() {
               toolbar={toolbar}
               withHorizontalScroll={!isMobile}
             >
-              {isLoading ? (
-                <TableRowsSkeleton />
-              ) : isError ? (
-                <BattlePanelEmptyState
-                  icon={AlertCircle}
-                  title={t("battlePanel.statistics.empty.errorTitle")}
-                  description={
-                    getRouteErrorMessage(error) ??
-                    t("common.routeErrors.status.500.description")
-                  }
-                />
-              ) : !data || data.battles.length === 0 ? (
-                <BattlePanelEmptyState
-                  icon={SearchX}
-                  title={t("battlePanel.statistics.playerVsPlayer.emptyTitle")}
-                  description={t(
-                    "battlePanel.statistics.playerVsPlayer.emptyDescription",
-                  )}
-                />
-              ) : isMobile ? (
-                <div className="grid gap-2 p-3">
-                  {data.battles.map((battle) => (
-                    <BattlePanelPvpBattleCard
-                      key={battle.battleId}
-                      battle={battle}
-                      onBattleClick={handleBattleOpen}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <Table className="border-b">
-                  <TanStackTableHeader
-                    table={table}
-                    className="sticky top-0 z-10 bg-background"
-                    rowClassName="border-b-1! border-border"
-                    headClassName="whitespace-nowrap"
-                  />
-                  <TanStackTableBody
-                    table={table}
-                    cellClassName="whitespace-nowrap align-middle"
-                    getRowProps={(row) => ({
-                      className: cn(
-                        "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
-                        getBattleResultRowClassName(
-                          getPlayerVsPlayerBattleResult(row.original),
-                        ),
-                      ),
-                      onClick: () => handleBattleOpen(row.original.battleId),
-                      onKeyDown: (event) =>
-                        handleBattleRowKeyDown(event, row.original.battleId),
-                      role: "link",
-                      tabIndex: 0,
-                    })}
-                  />
-                </Table>
-              )}
+              {renderResults()}
             </BattlePanelResultsSurface>
           </div>
         </div>

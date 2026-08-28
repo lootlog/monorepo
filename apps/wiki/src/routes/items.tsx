@@ -209,6 +209,55 @@ const getSearchState = ({
   world: worldValue.trim(),
 });
 
+const itemSearchKeys: Array<keyof ItemsRouteSearch> = [
+  "advancedFilter",
+  "maxLevel",
+  "minLevel",
+  "professions",
+  "query",
+  "rarities",
+  "sort",
+  "types",
+  "world",
+];
+
+const isSameSearchState = (
+  first: ItemsRouteSearch,
+  second: ItemsRouteSearch,
+): boolean => itemSearchKeys.every((key) => first[key] === second[key]);
+
+const getItemsSearchRequest = (search: ItemsRouteSearch, filters: string[]) => {
+  const hasActiveSearch =
+    search.query.trim() !== "" ||
+    search.world.trim() !== "" ||
+    filters.length > 0;
+
+  return {
+    hasActiveSearch,
+    queryParams: {
+      facets: ["rarity", "type"],
+      filter: filters.length > 0 ? filters : undefined,
+      limit: SEARCH_LIMIT,
+      offset: 0,
+      search: search.query.trim() || undefined,
+      sort:
+        search.sort && search.sort !== "relevance" ? [search.sort] : undefined,
+      world: search.world.trim() || undefined,
+    },
+  };
+};
+
+const getSearchStatus = (
+  hasActiveSearch: boolean,
+  isError: boolean,
+  isPending: boolean,
+): SearchStatus => {
+  if (!hasActiveSearch) return "idle";
+  if (isError) return "error";
+  if (isPending) return "loading";
+  return "ready";
+};
+
 export const Route = createFileRoute("/items")({
   component: ItemsRoute,
   head: () => ({
@@ -238,20 +287,10 @@ function ItemsRoute() {
     search.advancedFilter,
   );
   const filters = buildFilters(search);
-  const hasActiveSearch =
-    search.query.trim() !== "" ||
-    search.world.trim() !== "" ||
-    filters.length > 0;
-  const queryParams = {
-    facets: ["rarity", "type"],
-    filter: filters.length > 0 ? filters : undefined,
-    limit: SEARCH_LIMIT,
-    offset: 0,
-    search: search.query.trim() || undefined,
-    sort:
-      search.sort && search.sort !== "relevance" ? [search.sort] : undefined,
-    world: search.world.trim() || undefined,
-  };
+  const { hasActiveSearch, queryParams } = getItemsSearchRequest(
+    search,
+    filters,
+  );
   const itemsQuery = useItemsControllerGetItems(queryParams, {
     query: {
       enabled: hasActiveSearch,
@@ -265,15 +304,11 @@ function ItemsRoute() {
     },
   });
   const data = hasActiveSearch ? itemsQuery.data : undefined;
-  let status: SearchStatus = "ready";
-
-  if (!hasActiveSearch) {
-    status = "idle";
-  } else if (itemsQuery.isError) {
-    status = "error";
-  } else if (itemsQuery.isPending) {
-    status = "loading";
-  }
+  const status = getSearchStatus(
+    hasActiveSearch,
+    itemsQuery.isError,
+    itemsQuery.isPending,
+  );
 
   useEffect(() => {
     setQueryValue(search.query);
@@ -310,17 +345,7 @@ function ItemsRoute() {
       worldValue,
     });
 
-    if (
-      nextSearch.advancedFilter === search.advancedFilter &&
-      nextSearch.maxLevel === search.maxLevel &&
-      nextSearch.minLevel === search.minLevel &&
-      nextSearch.professions === search.professions &&
-      nextSearch.query === search.query &&
-      nextSearch.rarities === search.rarities &&
-      nextSearch.sort === search.sort &&
-      nextSearch.types === search.types &&
-      nextSearch.world === search.world
-    ) {
+    if (isSameSearchState(nextSearch, search)) {
       return;
     }
 

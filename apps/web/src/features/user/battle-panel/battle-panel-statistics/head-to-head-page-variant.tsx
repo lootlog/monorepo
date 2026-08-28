@@ -68,6 +68,9 @@ type HeadToHeadFilterPatch = {
   search?: string;
 };
 
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
 export function HeadToHeadPageVariant({
   columns,
   emptyDescriptionKey,
@@ -86,20 +89,34 @@ export function HeadToHeadPageVariant({
   const [queryState, setQueryState] = useQueryStates(
     battlePanelHeadToHeadSearchParsers,
   );
-  const pageIndex = getBattlePanelPageIndex(queryState.page);
-  const currentCharacterId = normalizeBattlePanelCharacterId(
-    queryState.characterId,
-  );
-  const period = queryState.period ?? "30d";
-  const minLevel = queryState.minLevel;
-  const maxLevel = queryState.maxLevel;
-  const startDate = queryState.startDate ?? undefined;
-  const endDate = queryState.endDate ?? undefined;
-  const ph = showPhFilter ? (queryState.ph ?? undefined) : undefined;
-  const cursor = queryState.cursor ?? undefined;
-  const search = queryState.search ?? undefined;
-  const sortBy = queryState.sortBy ?? "totalBattles";
-  const sortOrder = queryState.sortOrder ?? "desc";
+  const resolvePageState = () => ({
+    pageIndex: getBattlePanelPageIndex(queryState.page),
+    currentCharacterId: normalizeBattlePanelCharacterId(queryState.characterId),
+    period: queryState.period ?? "30d",
+    minLevel: queryState.minLevel,
+    maxLevel: queryState.maxLevel,
+    startDate: queryState.startDate ?? undefined,
+    endDate: queryState.endDate ?? undefined,
+    ph: showPhFilter ? (queryState.ph ?? undefined) : undefined,
+    cursor: queryState.cursor ?? undefined,
+    search: queryState.search ?? undefined,
+    sortBy: queryState.sortBy ?? "totalBattles",
+    sortOrder: queryState.sortOrder ?? "desc",
+  });
+  const {
+    pageIndex,
+    currentCharacterId,
+    period,
+    minLevel,
+    maxLevel,
+    startDate,
+    endDate,
+    ph,
+    cursor,
+    search,
+    sortBy,
+    sortOrder,
+  } = resolvePageState();
   const selectedWarriors = getSelectedWarriorsFromSearch(search);
   const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
   const pageSize = 20;
@@ -274,7 +291,7 @@ export function HeadToHeadPageVariant({
   };
 
   const table = useReactTable({
-    data: data?.records ?? [],
+    data: valueOr(data?.records, []),
     columns,
     state: {
       sorting,
@@ -321,7 +338,7 @@ export function HeadToHeadPageVariant({
       period={period}
       minLevel={minLevel}
       maxLevel={maxLevel}
-      ph={ph ?? false}
+      ph={valueOr(ph, false)}
       matchmaking={matchmaking}
       selectedWarriors={selectedWarriors}
       showPhFilter={showPhFilter}
@@ -366,10 +383,76 @@ export function HeadToHeadPageVariant({
       onNextPage={handleNextPage}
       pageIndex={pageIndex}
       pageSize={pageSize}
-      totalCount={data?.pagination?.total ?? 0}
-      visibleCount={data?.records.length ?? 0}
+      totalCount={valueOr(data?.pagination?.total, 0)}
+      visibleCount={valueOr(data?.records.length, 0)}
     />
   );
+
+  const renderResults = () => {
+    if (isLoading) {
+      return <TableRowsSkeleton trailingColumns={trailingSkeletonColumns} />;
+    }
+    if (isError) {
+      return (
+        <BattlePanelEmptyState
+          icon={AlertCircle}
+          title={t("battlePanel.statistics.empty.errorTitle")}
+          description={
+            getRouteErrorMessage(error) ??
+            t("common.routeErrors.status.500.description")
+          }
+        />
+      );
+    }
+    if (!data || data.records.length === 0) {
+      return (
+        <BattlePanelEmptyState
+          icon={SearchX}
+          title={t(emptyTitleKey)}
+          description={t(emptyDescriptionKey)}
+        />
+      );
+    }
+    if (isMobile) {
+      return (
+        <div className="grid gap-2 p-3">
+          {data.records.map((record) => (
+            <BattlePanelH2hCard
+              key={record.opponentId}
+              record={record}
+              showRatingDelta={showRatingDelta}
+              onOpen={handleRowClick}
+            />
+          ))}
+        </div>
+      );
+    }
+    return (
+      <Table className="border-b">
+        <TanStackTableHeader
+          table={table}
+          className="sticky top-0 z-10 bg-background"
+          rowClassName="border-b-1! border-border"
+          headClassName="whitespace-nowrap"
+        />
+        <TanStackTableBody
+          table={table}
+          cellClassName="whitespace-nowrap"
+          getRowProps={(row) => ({
+            className: cn(
+              "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              getBattleResultRowClassName(row.original.lastBattleResult),
+            ),
+            onClick: () => handleRowClick(row.original.opponentId),
+            onKeyDown: (event) =>
+              handleRowKeyDown(event, row.original.opponentId),
+            role: "link",
+            tabIndex: 0,
+          })}
+        />
+      </Table>
+    );
+  };
 
   return (
     <>
@@ -402,61 +485,7 @@ export function HeadToHeadPageVariant({
             toolbar={toolbar}
             withHorizontalScroll={!isMobile}
           >
-            {isLoading ? (
-              <TableRowsSkeleton trailingColumns={trailingSkeletonColumns} />
-            ) : isError ? (
-              <BattlePanelEmptyState
-                icon={AlertCircle}
-                title={t("battlePanel.statistics.empty.errorTitle")}
-                description={
-                  getRouteErrorMessage(error) ??
-                  t("common.routeErrors.status.500.description")
-                }
-              />
-            ) : !data || data.records.length === 0 ? (
-              <BattlePanelEmptyState
-                icon={SearchX}
-                title={t(emptyTitleKey)}
-                description={t(emptyDescriptionKey)}
-              />
-            ) : isMobile ? (
-              <div className="grid gap-2 p-3">
-                {data.records.map((record) => (
-                  <BattlePanelH2hCard
-                    key={record.opponentId}
-                    record={record}
-                    showRatingDelta={showRatingDelta}
-                    onOpen={handleRowClick}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Table className="border-b">
-                <TanStackTableHeader
-                  table={table}
-                  className="sticky top-0 z-10 bg-background"
-                  rowClassName="border-b-1! border-border"
-                  headClassName="whitespace-nowrap"
-                />
-                <TanStackTableBody
-                  table={table}
-                  cellClassName="whitespace-nowrap"
-                  getRowProps={(row) => ({
-                    className: cn(
-                      "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      getBattleResultRowClassName(
-                        row.original.lastBattleResult,
-                      ),
-                    ),
-                    onClick: () => handleRowClick(row.original.opponentId),
-                    onKeyDown: (event) =>
-                      handleRowKeyDown(event, row.original.opponentId),
-                    role: "link",
-                    tabIndex: 0,
-                  })}
-                />
-              </Table>
-            )}
+            {renderResults()}
           </BattlePanelResultsSurface>
         </div>
       </div>

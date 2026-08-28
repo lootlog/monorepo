@@ -134,6 +134,92 @@ type ActiveSuggestion =
     }
   | null;
 
+type SuggestionPosition = {
+  bottom: number;
+  left: number;
+  top: number;
+};
+
+const getSuggestionPosition = (
+  editorSurface: HTMLDivElement | null,
+): SuggestionPosition => {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || !editorSurface) {
+    return { bottom: 8, left: 16, top: 8 };
+  }
+
+  const rangeRect = selection.getRangeAt(0).getBoundingClientRect();
+  const editorSurfaceRect = editorSurface.getBoundingClientRect();
+  return {
+    bottom: rangeRect.bottom - editorSurfaceRect.top + 8,
+    left: rangeRect.left - editorSurfaceRect.left,
+    top: rangeRect.top - editorSurfaceRect.top - 8,
+  };
+};
+
+const buildSuggestion = (
+  match: RegExpExecArray,
+  prefixLength: number,
+  position: SuggestionPosition,
+  type: "mention" | "variable",
+): ActiveSuggestion => {
+  const query = match[1] ?? "";
+  return {
+    left: position.left,
+    query,
+    replaceLength: prefixLength + query.length,
+    top: position.top > 160 ? position.top : position.bottom,
+    type,
+  };
+};
+
+const getActiveTemplateSuggestion = (
+  textBeforeCursor: string,
+  position: SuggestionPosition,
+): ActiveSuggestion => {
+  const variableMatch = /\{\{([a-zA-Z]*)$/.exec(textBeforeCursor);
+  if (variableMatch)
+    return buildSuggestion(variableMatch, 2, position, "variable");
+
+  const mentionMatch = /@([^\s@<>]*)$/.exec(textBeforeCursor);
+  if (mentionMatch)
+    return buildSuggestion(mentionMatch, 1, position, "mention");
+  return null;
+};
+
+const readTemplateEditorState = ({
+  editorSurface,
+  onChange,
+  setActiveSuggestion,
+}: {
+  editorSurface: HTMLDivElement | null;
+  onChange: (value: string) => void;
+  setActiveSuggestion: (suggestion: ActiveSuggestion) => void;
+}) => {
+  onChange(serializeTemplateEditorValue());
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) {
+    setActiveSuggestion(null);
+    return;
+  }
+
+  const anchorNode = selection.anchor.getNode();
+  if (!$isTextNode(anchorNode)) {
+    setActiveSuggestion(null);
+    return;
+  }
+
+  const textBeforeCursor = anchorNode
+    .getTextContent()
+    .slice(0, selection.anchor.offset);
+  setActiveSuggestion(
+    getActiveTemplateSuggestion(
+      textBeforeCursor,
+      getSuggestionPosition(editorSurface),
+    ),
+  );
+};
+
 export { createPreviewTemplateValues, renderTemplatePreview };
 
 export const NotificationTemplateEditor = ({
@@ -552,78 +638,13 @@ export const NotificationTemplateEditor = ({
             <EditorRefPlugin editorRef={editorRef} />
             <OnChangePlugin
               onChange={(editorState) => {
-                editorState.read(() => {
-                  onChange(serializeTemplateEditorValue());
-
-                  const selection = $getSelection();
-
-                  if (!$isRangeSelection(selection)) {
-                    setActiveSuggestion(null);
-                    return;
-                  }
-
-                  const anchorNode = selection.anchor.getNode();
-
-                  if (!$isTextNode(anchorNode)) {
-                    setActiveSuggestion(null);
-                    return;
-                  }
-
-                  const textBeforeCursor = anchorNode
-                    .getTextContent()
-                    .slice(0, selection.anchor.offset);
-                  const domSelection = window.getSelection();
-                  const range =
-                    domSelection && domSelection.rangeCount > 0
-                      ? domSelection.getRangeAt(0)
-                      : null;
-                  const rangeRect = range?.getBoundingClientRect();
-                  const editorSurfaceRect =
-                    editorSurfaceRef.current?.getBoundingClientRect();
-                  const suggestionLeft =
-                    rangeRect && editorSurfaceRect
-                      ? rangeRect.left - editorSurfaceRect.left
-                      : 16;
-                  const suggestionTop =
-                    rangeRect && editorSurfaceRect
-                      ? rangeRect.top - editorSurfaceRect.top - 8
-                      : 8;
-                  const suggestionBottom =
-                    rangeRect && editorSurfaceRect
-                      ? rangeRect.bottom - editorSurfaceRect.top + 8
-                      : 8;
-                  const variableMatch = /\{\{([a-zA-Z]*)$/.exec(
-                    textBeforeCursor,
-                  );
-
-                  if (variableMatch) {
-                    setActiveSuggestion({
-                      left: suggestionLeft,
-                      query: variableMatch[1] ?? "",
-                      replaceLength: 2 + (variableMatch[1]?.length ?? 0),
-                      top:
-                        suggestionTop > 160 ? suggestionTop : suggestionBottom,
-                      type: "variable",
-                    });
-                    return;
-                  }
-
-                  const mentionMatch = /@([^\s@<>]*)$/.exec(textBeforeCursor);
-
-                  if (mentionMatch) {
-                    setActiveSuggestion({
-                      left: suggestionLeft,
-                      query: mentionMatch[1] ?? "",
-                      replaceLength: 1 + (mentionMatch[1]?.length ?? 0),
-                      top:
-                        suggestionTop > 160 ? suggestionTop : suggestionBottom,
-                      type: "mention",
-                    });
-                    return;
-                  }
-
-                  setActiveSuggestion(null);
-                });
+                editorState.read(() =>
+                  readTemplateEditorState({
+                    editorSurface: editorSurfaceRef.current,
+                    onChange,
+                    setActiveSuggestion,
+                  }),
+                );
               }}
             />
             {activeSuggestion && filteredSuggestions.length > 0 ? (

@@ -39,6 +39,37 @@ export type WrappedQualityModel = {
 const isFiniteNonNegative = (value: number): boolean =>
   Number.isFinite(value) && value >= 0;
 
+const hasValidAssignmentWindow = (data: EventWrapped) => {
+  const windowStart = data.event.startsAt
+    ? Date.parse(data.event.startsAt)
+    : Number.NaN;
+  const windowEnd = Date.parse(data.event.endsAt ?? data.generatedAt);
+  return (
+    Number.isFinite(windowStart) &&
+    Number.isFinite(windowEnd) &&
+    windowEnd >= windowStart
+  );
+};
+
+const getDominantHero = (data: EventWrapped, killSourceConsistent: boolean) => {
+  const maximumHeroKills = Math.max(
+    ...data.heroes.map((hero) => hero.totalKills),
+    0,
+  );
+  const heroesWithMaximumKills = data.heroes.filter(
+    (hero) => hero.totalKills === maximumHeroKills,
+  );
+  if (
+    !killSourceConsistent ||
+    data.heroes.length < 2 ||
+    maximumHeroKills <= 0 ||
+    heroesWithMaximumKills.length !== 1
+  ) {
+    return null;
+  }
+  return heroesWithMaximumKills[0] ?? null;
+};
+
 const validateLeader = ({
   factId,
   result,
@@ -103,14 +134,7 @@ export const buildWrappedQualityModel = (
     });
   }
 
-  const windowStart = data.event.startsAt
-    ? Date.parse(data.event.startsAt)
-    : Number.NaN;
-  const windowEnd = Date.parse(data.event.endsAt ?? data.generatedAt);
-  const assignmentWindowValid =
-    Number.isFinite(windowStart) &&
-    Number.isFinite(windowEnd) &&
-    windowEnd >= windowStart;
+  const assignmentWindowValid = hasValidAssignmentWindow(data);
 
   if (!assignmentWindowValid) {
     omissions.push({
@@ -169,20 +193,7 @@ export const buildWrappedQualityModel = (
       })
     : null;
 
-  const maximumHeroKills = Math.max(
-    ...data.heroes.map((hero) => hero.totalKills),
-    0,
-  );
-  const heroesWithMaximumKills = data.heroes.filter(
-    (hero) => hero.totalKills === maximumHeroKills,
-  );
-  const dominantHero =
-    killSourceConsistent &&
-    data.heroes.length >= 2 &&
-    maximumHeroKills > 0 &&
-    heroesWithMaximumKills.length === 1
-      ? (heroesWithMaximumKills[0] ?? null)
-      : null;
+  const dominantHero = getDominantHero(data, killSourceConsistent);
 
   if (!dominantHero) {
     omissions.push({

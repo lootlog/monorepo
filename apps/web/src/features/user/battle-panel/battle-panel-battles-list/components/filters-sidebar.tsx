@@ -49,6 +49,20 @@ type FiltersSidebarProps = {
   showMatchmakingFilter?: boolean;
 };
 
+const hasActiveBattleFilters = (
+  filters: BattleFilters,
+  showMatchmakingFilter: boolean,
+) =>
+  Boolean(filters.world) ||
+  (filters.type?.length ?? 0) > 0 ||
+  (filters.result?.length ?? 0) > 0 ||
+  Boolean(filters.ph) ||
+  (showMatchmakingFilter && Boolean(filters.matchmaking)) ||
+  (filters.characterId?.length ?? 0) > 0 ||
+  Boolean(filters.search) ||
+  (filters.minLevel !== undefined && filters.minLevel !== 1) ||
+  (filters.maxLevel !== undefined && filters.maxLevel !== 500);
+
 export const FiltersSidebar = ({
   filters,
   onFiltersChange,
@@ -147,16 +161,10 @@ export const FiltersSidebar = ({
     onFiltersChange({});
   };
 
-  const hasActiveFilters =
-    !!filters.world ||
-    (filters.type?.length ?? 0) > 0 ||
-    (filters.result?.length ?? 0) > 0 ||
-    !!filters.ph ||
-    (showMatchmakingFilter && !!filters.matchmaking) ||
-    (filters.characterId?.length ?? 0) > 0 ||
-    !!filters.search ||
-    (filters.minLevel !== undefined && filters.minLevel !== 1) ||
-    (filters.maxLevel !== undefined && filters.maxLevel !== 500);
+  const hasActiveFilters = hasActiveBattleFilters(
+    filters,
+    showMatchmakingFilter,
+  );
 
   return (
     <div

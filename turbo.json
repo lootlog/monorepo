@@ -52,7 +52,8 @@
         "src/**/*.tsx",
         "**/*.ts",
         "**/*.tsx",
-        ".oxlintrc.json"
+        ".oxlintrc.json",
+        "$TURBO_ROOT$/.oxlintrc.json"
       ]
     },
     "typecheck": {

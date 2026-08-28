@@ -70,40 +70,97 @@ function deletesOther(entry: OtherEntry): boolean {
   return "del" in entry && entry.del === 1;
 }
 
+function getOptionalProperty<ObjectType, Key extends keyof ObjectType>(
+  value: ObjectType | undefined,
+  key: Key,
+): ObjectType[Key] | undefined {
+  return value?.[key];
+}
+
+function valueOrCurrent<Value, Candidate>(
+  value: Candidate | null | undefined,
+  current: Value,
+): Value | Candidate {
+  return value ?? current;
+}
+
+function resolveClan(
+  currentClan: RuntimeGameSnapshot["hero"]["clan"],
+  heroPatch: GameEvent["h"],
+): RuntimeGameSnapshot["hero"]["clan"] {
+  if (heroPatch && "clan" in heroPatch) {
+    return heroPatch.clan ? Object.freeze({ ...heroPatch.clan }) : undefined;
+  }
+  return currentClan;
+}
+
+function resolveMap(
+  currentMap: RuntimeGameSnapshot["map"],
+  town: GameEvent["town"],
+): RuntimeGameSnapshot["map"] {
+  return town
+    ? Object.freeze({
+        id: town.id,
+        name: town.name,
+        visibility: town.visibility,
+      })
+    : currentMap;
+}
+
 function patchGame(
   current: RuntimeGameSnapshot,
   event: GameEvent,
 ): RuntimeGameSnapshot {
   const heroPatch = event.h;
   const town = event.town;
-  const warriorStats = heroPatch?.warrior_stats;
-  let clan = current.hero.clan;
-  if (heroPatch && "clan" in heroPatch) {
-    clan = heroPatch.clan ? Object.freeze({ ...heroPatch.clan }) : undefined;
-  }
+  const warriorStats = getOptionalProperty(heroPatch, "warrior_stats");
+  const heroHp = getOptionalProperty(heroPatch, "hp");
+  const heroMaxHp = getOptionalProperty(heroPatch, "maxhp");
 
   return Object.freeze({
     hero: Object.freeze({
-      accountId: String(heroPatch?.account ?? current.hero.accountId),
-      characterId: String(heroPatch?.id ?? current.hero.characterId),
-      clan,
-      currentHp: warriorStats?.hp ?? heroPatch?.hp ?? current.hero.currentHp,
-      icon: heroPatch?.img ?? current.hero.icon,
-      level: heroPatch?.lvl ?? current.hero.level,
-      maxHp: warriorStats?.maxhp ?? heroPatch?.maxhp ?? current.hero.maxHp,
-      name: heroPatch?.nick ?? current.hero.name,
-      profession: heroPatch?.prof ?? current.hero.profession,
-      x: heroPatch?.x ?? current.hero.x,
-      y: heroPatch?.y ?? current.hero.y,
+      accountId: String(
+        valueOrCurrent(
+          getOptionalProperty(heroPatch, "account"),
+          current.hero.accountId,
+        ),
+      ),
+      characterId: String(
+        valueOrCurrent(
+          getOptionalProperty(heroPatch, "id"),
+          current.hero.characterId,
+        ),
+      ),
+      clan: resolveClan(current.hero.clan, heroPatch),
+      currentHp: valueOrCurrent(
+        getOptionalProperty(warriorStats, "hp"),
+        valueOrCurrent(heroHp, current.hero.currentHp),
+      ),
+      icon: valueOrCurrent(
+        getOptionalProperty(heroPatch, "img"),
+        current.hero.icon,
+      ),
+      level: valueOrCurrent(
+        getOptionalProperty(heroPatch, "lvl"),
+        current.hero.level,
+      ),
+      maxHp: valueOrCurrent(
+        getOptionalProperty(warriorStats, "maxhp"),
+        valueOrCurrent(heroMaxHp, current.hero.maxHp),
+      ),
+      name: valueOrCurrent(
+        getOptionalProperty(heroPatch, "nick"),
+        current.hero.name,
+      ),
+      profession: valueOrCurrent(
+        getOptionalProperty(heroPatch, "prof"),
+        current.hero.profession,
+      ),
+      x: valueOrCurrent(getOptionalProperty(heroPatch, "x"), current.hero.x),
+      y: valueOrCurrent(getOptionalProperty(heroPatch, "y"), current.hero.y),
     }),
     interface: current.interface,
-    map: town
-      ? Object.freeze({
-          id: town.id,
-          name: town.name,
-          visibility: town.visibility,
-        })
-      : current.map,
+    map: resolveMap(current.map, town),
     world: current.world,
   });
 }
@@ -325,17 +382,18 @@ export class RuntimeStateProjection {
     entry: AppliedNpcEntry,
     heroLevel: number | undefined,
   ): RuntimeNpc | undefined {
-    const templateId = entry.tpl ?? 0;
+    const templateId = valueOrCurrent(entry.tpl, 0);
     const template = this.npcTemplates.get(templateId);
-    const icon =
-      typeof entry.icon === "string"
-        ? entry.icon
-        : this.icons.get(entry.icon?.id ?? -1);
-    const name = entry.nick ?? template?.nick;
-    const profession = entry.prof ?? template?.prof;
-    const type = entry.type ?? template?.type;
+    const icon = this.resolveNpcIcon(entry.icon);
+    const name = valueOrCurrent(entry.nick, template?.nick);
+    const profession = valueOrCurrent(entry.prof, template?.prof);
+    const type = valueOrCurrent(entry.type, template?.type);
     const level = resolveNpcLevel(entry, template, heroLevel);
-    const weight = entry.wt ?? entry.warrior_type ?? template?.warrior_type;
+    const weight = valueOrCurrent(
+      entry.wt,
+      valueOrCurrent(entry.warrior_type, template?.warrior_type),
+    );
+    const { x, y } = entry;
 
     if (
       icon !== undefined &&
@@ -344,23 +402,23 @@ export class RuntimeStateProjection {
       type !== undefined &&
       level !== undefined &&
       weight !== undefined &&
-      entry.x !== undefined &&
-      entry.y !== undefined
+      x !== undefined &&
+      y !== undefined
     ) {
       return Object.freeze({
         actions: entry.actions,
-        groupId: entry.grp ?? entry.group,
+        groupId: valueOrCurrent(entry.grp, entry.group),
         icon,
         id: entry.id,
         level,
         name,
         profession,
-        respawnRandomness: entry.resp_rand ?? template?.resp_rand,
+        respawnRandomness: valueOrCurrent(entry.resp_rand, template?.resp_rand),
         templateId,
         type,
         weight,
-        x: entry.x,
-        y: entry.y,
+        x,
+        y,
       });
     }
 
@@ -369,6 +427,11 @@ export class RuntimeStateProjection {
     } catch {
       return undefined;
     }
+  }
+
+  private resolveNpcIcon(icon: AppliedNpcEntry["icon"]): string | undefined {
+    if (typeof icon === "string") return icon;
+    return this.icons.get(getOptionalProperty(icon, "id") ?? -1);
   }
 
   private applyFriends(event: GameEvent): void {

@@ -33,6 +33,7 @@ import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestion
 import { NPC_NAMES } from "@/constants/margonem";
 import { useTranslation } from "react-i18next";
 import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { TimerFormFieldError } from "./timer-form-field-error";
 
 const SECONDS_IN_HOUR = 3600;
 const SECONDS_IN_MINUTE = 60;
@@ -55,6 +56,142 @@ const MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS = {
   [CreateManualTimerDtoType.TITAN]: "titan",
 } as const satisfies Record<(typeof MANUAL_TIMER_NPC_TYPES)[number], string>;
 
+type TimerFormTranslation = (
+  key: string,
+  options?: Record<string, unknown>,
+) => string;
+
+type TimerFormValidationData = {
+  endDate?: string;
+  lvl?: string;
+  maxDuration?: string;
+  minDuration?: string;
+  startDate?: string;
+};
+
+const hasText = (value?: string): value is string =>
+  value !== undefined && value.length > 0;
+
+const addValidationIssue = (
+  context: z.RefinementCtx,
+  message: string,
+  path: keyof TimerFormValidationData,
+) => {
+  context.addIssue({ code: "custom", message, path: [path] });
+};
+
+const validateTimerLevel = (
+  data: TimerFormValidationData,
+  context: z.RefinementCtx,
+  t: TimerFormTranslation,
+) => {
+  if (!hasText(data.lvl)) {
+    return;
+  }
+
+  const level = Number(data.lvl);
+  if (
+    Number.isInteger(level) &&
+    level >= MIN_NPC_LEVEL &&
+    level <= MAX_NPC_LEVEL
+  ) {
+    return;
+  }
+
+  addValidationIssue(
+    context,
+    t("addForm.validation.lvlRange", {
+      min: MIN_NPC_LEVEL,
+      max: MAX_NPC_LEVEL,
+    }),
+    "lvl",
+  );
+};
+
+const validateTimerDurations = (
+  data: TimerFormValidationData,
+  context: z.RefinementCtx,
+  t: TimerFormTranslation,
+) => {
+  const { minDuration, maxDuration } = data;
+
+  if (!hasText(minDuration)) {
+    addValidationIssue(
+      context,
+      t("addForm.validation.minDurationRequired"),
+      "minDuration",
+    );
+  } else if (parseDurationToSeconds(minDuration) <= 0) {
+    addValidationIssue(
+      context,
+      t("addForm.validation.durationGreaterThanZero"),
+      "minDuration",
+    );
+  }
+
+  if (!hasText(maxDuration)) {
+    addValidationIssue(
+      context,
+      t("addForm.validation.maxDurationRequired"),
+      "maxDuration",
+    );
+    return;
+  }
+
+  const maxSeconds = parseDurationToSeconds(maxDuration);
+  if (maxSeconds <= 0) {
+    addValidationIssue(
+      context,
+      t("addForm.validation.durationGreaterThanZero"),
+      "maxDuration",
+    );
+  }
+  if (
+    hasText(minDuration) &&
+    maxSeconds < parseDurationToSeconds(minDuration)
+  ) {
+    addValidationIssue(
+      context,
+      t("addForm.validation.maxDurationMin"),
+      "maxDuration",
+    );
+  }
+};
+
+const validateTimerDates = (
+  data: TimerFormValidationData,
+  context: z.RefinementCtx,
+  t: TimerFormTranslation,
+) => {
+  const { startDate, endDate } = data;
+
+  if (!hasText(startDate)) {
+    addValidationIssue(
+      context,
+      t("addForm.validation.startDateRequired"),
+      "startDate",
+    );
+  }
+  if (!hasText(endDate)) {
+    addValidationIssue(
+      context,
+      t("addForm.validation.endDateRequired"),
+      "endDate",
+    );
+  }
+  if (
+    hasText(startDate) &&
+    hasText(endDate) &&
+    new Date(endDate) <= new Date(startDate)
+  ) {
+    addValidationIssue(
+      context,
+      t("addForm.validation.endDateAfterStart"),
+      "endDate",
+    );
+  }
+};
+
 const formatSecondsToHHMMSS = (seconds: number): string => {
   const h = Math.floor(seconds / SECONDS_IN_HOUR);
   const m = Math.floor((seconds % SECONDS_IN_HOUR) / SECONDS_IN_MINUTE);
@@ -62,9 +199,7 @@ const formatSecondsToHHMMSS = (seconds: number): string => {
   return `${h}h ${m}m ${s}s`;
 };
 
-const createFormSchema = (
-  t: (key: string, options?: Record<string, unknown>) => string,
-) =>
+const createFormSchema = (t: TimerFormTranslation) =>
   z
     .object({
       name: z
@@ -90,117 +225,30 @@ const createFormSchema = (
       endDate: z.string().optional(),
     })
     .superRefine((data, ctx) => {
-      const hasMinDuration = data.minDuration && data.minDuration.length > 0;
-      const hasMaxDuration = data.maxDuration && data.maxDuration.length > 0;
-      const hasStartDate = data.startDate && data.startDate.length > 0;
-      const hasEndDate = data.endDate && data.endDate.length > 0;
-      const hasLvl = data.lvl && data.lvl.length > 0;
-
+      const hasMinDuration = hasText(data.minDuration);
+      const hasMaxDuration = hasText(data.maxDuration);
+      const hasStartDate = hasText(data.startDate);
+      const hasEndDate = hasText(data.endDate);
       const usingDurations = hasMinDuration || hasMaxDuration;
       const usingDates = hasStartDate || hasEndDate;
 
-      if (hasLvl && data.lvl) {
-        const lvl = Number(data.lvl);
-        if (
-          !Number.isInteger(lvl) ||
-          lvl < MIN_NPC_LEVEL ||
-          lvl > MAX_NPC_LEVEL
-        ) {
-          ctx.addIssue({
-            code: "custom",
-            message: t("addForm.validation.lvlRange", {
-              min: MIN_NPC_LEVEL,
-              max: MAX_NPC_LEVEL,
-            }),
-            path: ["lvl"],
-          });
-        }
-      }
+      validateTimerLevel(data, ctx, t);
 
       if (!usingDurations && !usingDates) {
-        ctx.addIssue({
-          code: "custom",
-          message: t("addForm.validation.provideRespawnOrDates"),
-          path: ["minDuration"],
-        });
+        addValidationIssue(
+          ctx,
+          t("addForm.validation.provideRespawnOrDates"),
+          "minDuration",
+        );
         return;
       }
 
       if (usingDurations) {
-        if (!hasMinDuration) {
-          ctx.addIssue({
-            code: "custom",
-            message: t("addForm.validation.minDurationRequired"),
-            path: ["minDuration"],
-          });
-        } else if (data.minDuration) {
-          const minSeconds = parseDurationToSeconds(data.minDuration);
-          if (minSeconds <= 0) {
-            ctx.addIssue({
-              code: "custom",
-              message: t("addForm.validation.durationGreaterThanZero"),
-              path: ["minDuration"],
-            });
-          }
-        }
-
-        if (!hasMaxDuration) {
-          ctx.addIssue({
-            code: "custom",
-            message: t("addForm.validation.maxDurationRequired"),
-            path: ["maxDuration"],
-          });
-        } else if (data.maxDuration) {
-          const maxSeconds = parseDurationToSeconds(data.maxDuration);
-          if (maxSeconds <= 0) {
-            ctx.addIssue({
-              code: "custom",
-              message: t("addForm.validation.durationGreaterThanZero"),
-              path: ["maxDuration"],
-            });
-          }
-
-          if (hasMinDuration && data.minDuration) {
-            const minSeconds = parseDurationToSeconds(data.minDuration);
-            if (maxSeconds < minSeconds) {
-              ctx.addIssue({
-                code: "custom",
-                message: t("addForm.validation.maxDurationMin"),
-                path: ["maxDuration"],
-              });
-            }
-          }
-        }
+        validateTimerDurations(data, ctx, t);
       }
 
       if (usingDates) {
-        if (!hasStartDate) {
-          ctx.addIssue({
-            code: "custom",
-            message: t("addForm.validation.startDateRequired"),
-            path: ["startDate"],
-          });
-        }
-
-        if (!hasEndDate) {
-          ctx.addIssue({
-            code: "custom",
-            message: t("addForm.validation.endDateRequired"),
-            path: ["endDate"],
-          });
-        }
-
-        if (hasStartDate && hasEndDate && data.startDate && data.endDate) {
-          const startTime = new Date(data.startDate);
-          const endTime = new Date(data.endDate);
-          if (endTime <= startTime) {
-            ctx.addIssue({
-              code: "custom",
-              message: t("addForm.validation.endDateAfterStart"),
-              path: ["endDate"],
-            });
-          }
-        }
+        validateTimerDates(data, ctx, t);
       }
     });
 
@@ -209,6 +257,87 @@ type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
 type AddTimerFormProps = {
   initialGuildId?: string;
 };
+
+type GuildSelection = {
+  contextKey: string;
+  guildId: string;
+};
+
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
+const getPreferredGuildId = (
+  initialGuildId: string | undefined,
+  savedGuildId: string | undefined,
+  currentGuildId: string | undefined,
+  availableGuildIds: ReadonlySet<string>,
+  firstVisibleGuildId: string | undefined,
+) => {
+  if (initialGuildId && availableGuildIds.has(initialGuildId)) {
+    return initialGuildId;
+  }
+  if (savedGuildId && availableGuildIds.has(savedGuildId)) {
+    return savedGuildId;
+  }
+  if (currentGuildId && availableGuildIds.has(currentGuildId)) {
+    return currentGuildId;
+  }
+  return valueOr(firstVisibleGuildId, "");
+};
+
+const resolveStoredGuildIds = (
+  characterId: string,
+  guildIdByCharId: Record<string, string>,
+  selectedGuildIdsByCharId: Record<string, string[]>,
+) => {
+  if (!characterId) {
+    return { currentGuildId: undefined, savedGuildId: undefined };
+  }
+
+  return {
+    currentGuildId: guildIdByCharId[characterId],
+    savedGuildId: selectedGuildIdsByCharId[characterId]?.[0],
+  };
+};
+
+const getSelectedGuildId = (
+  selection: GuildSelection | null,
+  contextKey: string,
+  availableGuildIds: ReadonlySet<string>,
+  preferredGuildId: string,
+) => {
+  if (
+    selection?.contextKey === contextKey &&
+    availableGuildIds.has(selection.guildId)
+  ) {
+    return selection.guildId;
+  }
+  return preferredGuildId;
+};
+
+const shouldShowNoNpcResults = ({
+  debouncedSearch,
+  hasSearchResults,
+  isFailed,
+  isLoading,
+  showSuggestions,
+}: {
+  debouncedSearch: string;
+  hasSearchResults: boolean;
+  isFailed: boolean;
+  isLoading: boolean;
+  showSuggestions: boolean;
+}) =>
+  showSuggestions &&
+  debouncedSearch.length >= 2 &&
+  !hasSearchResults &&
+  !isLoading &&
+  !isFailed;
+
+const getSelectedNpcType = (npcType: FormValues["type"]) =>
+  npcType || EMPTY_NPC_TYPE_VALUE;
+
+const getFieldErrorMessage = (error?: { message?: string }) => error?.message;
 
 export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   initialGuildId,
@@ -228,38 +357,33 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [customDatesEnabled, setCustomDatesEnabled] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [selectedGuildSelection, setSelectedGuildSelection] = useState<{
-    contextKey: string;
-    guildId: string;
-  } | null>(null);
+  const [selectedGuildSelection, setSelectedGuildSelection] =
+    useState<GuildSelection | null>(null);
   const [selectedNpc, setSelectedNpc] =
     useState<SearchTimersNpcResponseDtoOutput | null>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const currentGuildId = characterId ? guildIdByCharId[characterId] : undefined;
-  const savedGuildId = characterId
-    ? selectedGuildIdsForTimersByCharId[characterId]?.[0]
-    : undefined;
-  const guildSelectionContextKey = `${characterId}:${initialGuildId ?? ""}:${savedGuildId ?? ""}`;
+  const { currentGuildId, savedGuildId } = resolveStoredGuildIds(
+    characterId,
+    guildIdByCharId,
+    selectedGuildIdsForTimersByCharId,
+  );
+  const guildSelectionContextKey = `${characterId}:${valueOr(initialGuildId, "")}:${valueOr(savedGuildId, "")}`;
   const availableGuildIds = new Set(visibleGuilds.map((guild) => guild.id));
-  let preferredGuildId = "";
-
-  if (initialGuildId && availableGuildIds.has(initialGuildId)) {
-    preferredGuildId = initialGuildId;
-  } else if (savedGuildId && availableGuildIds.has(savedGuildId)) {
-    preferredGuildId = savedGuildId;
-  } else if (currentGuildId && availableGuildIds.has(currentGuildId)) {
-    preferredGuildId = currentGuildId;
-  } else {
-    preferredGuildId = visibleGuilds[0]?.id ?? "";
-  }
-
-  const selectedGuildId =
-    selectedGuildSelection?.contextKey === guildSelectionContextKey &&
-    availableGuildIds.has(selectedGuildSelection.guildId)
-      ? selectedGuildSelection.guildId
-      : preferredGuildId;
+  const preferredGuildId = getPreferredGuildId(
+    initialGuildId,
+    savedGuildId,
+    currentGuildId,
+    availableGuildIds,
+    visibleGuilds[0]?.id,
+  );
+  const selectedGuildId = getSelectedGuildId(
+    selectedGuildSelection,
+    guildSelectionContextKey,
+    availableGuildIds,
+    preferredGuildId,
+  );
 
   const searchGuildId = selectedGuildId;
 
@@ -273,14 +397,14 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
     {
       limit: 10,
       search: debouncedSearch,
-      world: world ?? "",
+      world: valueOr(world, ""),
     },
     {
       query: {
         queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey(
           { guildId: searchGuildId },
           {
-            world: world ?? "",
+            world: valueOr(world, ""),
             search: debouncedSearch,
             limit: 10,
           },
@@ -423,16 +547,17 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
     control,
     name: ["startDate", "endDate", "type"],
   });
-  const selectedNpcType = watchedNpcType || EMPTY_NPC_TYPE_VALUE;
+  const selectedNpcType = getSelectedNpcType(watchedNpcType);
   const nameField = register("name");
 
-  const hasSearchResults = npcResults && npcResults.length > 0;
-  const showNoResults =
-    showSuggestions &&
-    debouncedSearch.length >= 2 &&
-    !hasSearchResults &&
-    !npcSearchLoading &&
-    !npcSearchFailed;
+  const hasSearchResults = Boolean(npcResults?.length);
+  const showNoResults = shouldShowNoNpcResults({
+    debouncedSearch,
+    hasSearchResults,
+    isFailed: npcSearchFailed,
+    isLoading: npcSearchLoading,
+    showSuggestions,
+  });
 
   return (
     <form
@@ -541,11 +666,9 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                   nameField.onChange(event);
                 }}
               />
-              {errors.name && (
-                <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                  {errors.name.message}
-                </p>
-              )}
+              <TimerFormFieldError
+                message={getFieldErrorMessage(errors.name)}
+              />
             </div>
 
             <div className="ll:grid ll:grid-cols-1 ll:gap-2 ll:sm:grid-cols-2 ll:w-full ll:box-border">
@@ -561,11 +684,9 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                   placeholder={t("addForm.lvlPlaceholder")}
                   {...register("lvl")}
                 />
-                {errors.lvl && (
-                  <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                    {errors.lvl.message}
-                  </p>
-                )}
+                <TimerFormFieldError
+                  message={getFieldErrorMessage(errors.lvl)}
+                />
               </div>
               <div className="ll:min-w-0">
                 <Label htmlFor="npcType">{t("addForm.typeLabel")}</Label>
@@ -614,11 +735,9 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                 disabled={customDatesEnabled}
                 {...register("minDuration")}
               />
-              {errors.minDuration && (
-                <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                  {errors.minDuration.message}
-                </p>
-              )}
+              <TimerFormFieldError
+                message={getFieldErrorMessage(errors.minDuration)}
+              />
             </div>
 
             <div className="ll:w-full ll:box-border">
@@ -632,11 +751,9 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                 disabled={customDatesEnabled}
                 {...register("maxDuration")}
               />
-              {errors.maxDuration && (
-                <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                  {errors.maxDuration.message}
-                </p>
-              )}
+              <TimerFormFieldError
+                message={getFieldErrorMessage(errors.maxDuration)}
+              />
             </div>
 
             <div className="ll:mt-2">
@@ -663,11 +780,9 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                     {...register("startDate")}
                     className="ll:text-xs"
                   />
-                  {errors.startDate && (
-                    <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                      {errors.startDate.message}
-                    </p>
-                  )}
+                  <TimerFormFieldError
+                    message={getFieldErrorMessage(errors.startDate)}
+                  />
                 </div>
                 <div className="ll:w-full ll:box-border">
                   <Label htmlFor="endDate">{t("addForm.endDateLabel")}</Label>
@@ -677,11 +792,9 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                     {...register("endDate")}
                     className="ll:text-xs"
                   />
-                  {errors.endDate && (
-                    <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                      {errors.endDate.message}
-                    </p>
-                  )}
+                  <TimerFormFieldError
+                    message={getFieldErrorMessage(errors.endDate)}
+                  />
                 </div>
                 {startDate && endDate && (
                   <p className="ll:text-xs ll:text-gray-400">

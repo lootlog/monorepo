@@ -34,6 +34,25 @@ type DmActionsCardProps = {
   onAddWatch: () => void;
 };
 
+const resolveDmActionState = (
+  dmTarget: NotificationTargetWithTestTriggerResponseDto | null,
+  pendingStates: readonly boolean[],
+) => ({
+  hasActiveDm: Boolean(dmTarget?.active && dmTarget.canSend),
+  hasDmTarget: dmTarget !== null,
+  isDmActionPending: pendingStates.some(Boolean),
+});
+
+const getDmHint = (
+  hasDmTarget: boolean,
+  canSend: boolean | undefined,
+  t: ReturnType<typeof useTranslation>["t"],
+) => {
+  if (!hasDmTarget) return t("settings.userNotifications.dm.requiredHint");
+  if (!canSend) return t("settings.userNotifications.dm.cannotSendHint");
+  return t("settings.userNotifications.dm.reactivateHint");
+};
+
 export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -69,12 +88,14 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
       },
     });
 
-  const hasDmTarget = dmTarget !== null;
-  const hasActiveDm = Boolean(dmTarget?.active && dmTarget.canSend);
-  const isDmActionPending =
-    createUserTarget.isPending ||
-    updateUserTarget.isPending ||
-    triggerUserTargetTest.isPending;
+  const { hasActiveDm, hasDmTarget, isDmActionPending } = resolveDmActionState(
+    dmTarget,
+    [
+      createUserTarget.isPending,
+      updateUserTarget.isPending,
+      triggerUserTargetTest.isPending,
+    ],
+  );
 
   const handleEnableDm = async () => {
     try {
@@ -165,11 +186,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
       {!hasActiveDm ? (
         <p className="flex items-center gap-1.5 text-xs text-amber-500">
           <ShieldAlert className="size-3.5 shrink-0" />
-          {hasDmTarget && !dmTarget.canSend
-            ? t("settings.userNotifications.dm.cannotSendHint")
-            : hasDmTarget
-              ? t("settings.userNotifications.dm.reactivateHint")
-              : t("settings.userNotifications.dm.requiredHint")}
+          {getDmHint(hasDmTarget, dmTarget?.canSend, t)}
         </p>
       ) : null}
 

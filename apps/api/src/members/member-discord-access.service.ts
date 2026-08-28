@@ -25,6 +25,9 @@ import type {
   StoredMemberWithRoles,
 } from "./member.types";
 
+const valueOrDefault = <T>(value: T | undefined, defaultValue: T): T =>
+  value ?? defaultValue;
+
 @Injectable()
 export class MemberDiscordAccessService {
   private readonly env: RuntimeEnvironment;
@@ -48,33 +51,35 @@ export class MemberDiscordAccessService {
     returnDeactivatedMember?: boolean;
     throwOnMemberUnauthorized?: boolean;
   }): Promise<MemberWithRoles | null> {
-    const {
-      discordId,
-      guildId,
-      userId,
-      refresh = false,
-      standalone = false,
-      skipTtlCheck = false,
-      returnDeactivatedMember = false,
-      throwOnMemberUnauthorized = true,
-    } = options;
+    const { discordId, guildId, userId } = options;
+    const refresh = valueOrDefault(options.refresh, false);
+    const standalone = valueOrDefault(options.standalone, false);
+    const skipTtlCheck = valueOrDefault(options.skipTtlCheck, false);
+    const returnDeactivatedMember = valueOrDefault(
+      options.returnDeactivatedMember,
+      false,
+    );
+    const throwOnMemberUnauthorized = valueOrDefault(
+      options.throwOnMemberUnauthorized,
+      true,
+    );
 
-    const desiredGuildId =
-      refresh || standalone
-        ? await this.resolveActiveGuildId(guildId)
-        : guildId;
+    const desiredGuildId = await this.resolveDesiredGuildId(
+      guildId,
+      refresh,
+      standalone,
+    );
 
     const now = new Date();
-    const cacheTtl = refresh
-      ? getRefreshPermissionsTtl(this.env)
-      : getMemberCacheSoftTtl(this.env);
+    const cacheTtl = this.getMemberCacheTtl(refresh);
     const cacheExpiry = new Date(now.getTime() - cacheTtl);
 
     const storedMember = await this.getStoredMember(discordId, desiredGuildId);
-    const hasFreshMember =
-      storedMember !== null &&
-      !skipTtlCheck &&
-      this.isMemberFresh(storedMember, cacheExpiry);
+    const hasFreshMember = this.hasFreshMember(
+      storedMember,
+      skipTtlCheck,
+      cacheExpiry,
+    );
 
     if (storedMember && refresh && hasFreshMember) {
       throw new BadRequestException(ErrorKey.MEMBER_TTL_ACTIVE);
@@ -100,37 +105,81 @@ export class MemberDiscordAccessService {
       this.throwMemberSyncError(refreshAttempt);
     }
 
-    if (refreshAttempt.member) {
-      return refreshAttempt.member.active || returnDeactivatedMember
-        ? refreshAttempt.member
-        : null;
+    const refreshedMember = this.resolveRefreshedMember(
+      refreshAttempt,
+      returnDeactivatedMember,
+    );
+    if (refreshedMember !== undefined) {
+      return refreshedMember;
     }
 
     if (refreshAttempt.status === "NOT_FOUND") {
       return null;
     }
 
-    if (
+    return this.resolveStaleMember(storedMember, refreshAttempt, now);
+  }
+
+  private async resolveDesiredGuildId(
+    guildId: string,
+    refresh: boolean,
+    standalone: boolean,
+  ): Promise<string> {
+    return refresh || standalone ? this.resolveActiveGuildId(guildId) : guildId;
+  }
+
+  private getMemberCacheTtl(refresh: boolean): number {
+    return refresh
+      ? getRefreshPermissionsTtl(this.env)
+      : getMemberCacheSoftTtl(this.env);
+  }
+
+  private hasFreshMember(
+    member: StoredMemberWithRoles | null,
+    skipTtlCheck: boolean,
+    cacheExpiry: Date,
+  ): member is StoredMemberWithRoles {
+    return (
+      member !== null &&
+      !skipTtlCheck &&
+      this.isMemberFresh(member, cacheExpiry)
+    );
+  }
+
+  private resolveRefreshedMember(
+    refreshAttempt: MemberRefreshAttempt,
+    returnDeactivatedMember: boolean,
+  ): MemberWithRoles | null | undefined {
+    if (!refreshAttempt.member) return undefined;
+    return refreshAttempt.member.active || returnDeactivatedMember
+      ? refreshAttempt.member
+      : null;
+  }
+
+  private async resolveStaleMember(
+    storedMember: StoredMemberWithRoles | null,
+    refreshAttempt: MemberRefreshAttempt,
+    now: Date,
+  ): Promise<MemberWithRoles | null> {
+    const canUseStaleMember =
       storedMember?.active &&
       (this.canUseStaleMember(storedMember, now) ||
-        isTransientMemberSyncStatus(refreshAttempt.status))
-    ) {
-      await this.diagnostics.recordMemberRefreshMetric({
-        outcome: "stale_used",
-        reason: refreshAttempt.status,
-      });
+        isTransientMemberSyncStatus(refreshAttempt.status));
+    if (!canUseStaleMember) return null;
 
-      return this.decorateMember(storedMember, {
-        isStale: true,
-        staleWarning: refreshAttempt.refreshQueued
-          ? "Using cached data while a Discord refresh is queued"
-          : "Using cached data due to Discord API rate limiting or errors",
-        refreshQueued: refreshAttempt.refreshQueued,
-        nextRefreshAt: refreshAttempt.nextRefreshAt,
-      });
-    }
+    await this.diagnostics.recordMemberRefreshMetric({
+      outcome: "stale_used",
+      reason: refreshAttempt.status,
+    });
 
-    return null;
+    return this.decorateMember(storedMember, {
+      isStale: true,
+      staleWarning: refreshAttempt.refreshQueued
+        ? "Using cached data while a Discord refresh is queued"
+        : "Using cached data due to Discord API rate limiting or errors",
+      refreshQueued: refreshAttempt.refreshQueued,
+      nextRefreshAt: refreshAttempt.nextRefreshAt,
+    });
   }
 
   async refreshMember(options: {

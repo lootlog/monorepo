@@ -1,5 +1,10 @@
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  fixtureValue,
+  nestedFixtureValue,
+  optionalFixtureValue,
+} from "@/test-utils/fixture-value";
 import { GatewayEvent } from "@/config/gateway";
 import type { Timer } from "@/api/timers.api";
 
@@ -28,29 +33,37 @@ vi.mock("@/hooks/api/use-timers-cache", () => ({
 import { useTimersSocket } from "./use-timers-socket";
 
 const createTimer = (overrides?: Partial<Timer>): Timer => ({
-  guildId: overrides?.guildId ?? "guild-1",
-  timerKey: overrides?.timerKey ?? "tanroth",
-  world: overrides?.world ?? "pandora",
-  npcId: overrides?.npcId ?? 10,
-  minSpawnTime: overrides?.minSpawnTime ?? "2026-04-22T10:00:00.000Z",
-  maxSpawnTime: overrides?.maxSpawnTime ?? "2026-04-22T10:05:00.000Z",
-  updatedAt: overrides?.updatedAt ?? "2026-04-22T09:59:00.000Z",
-  wasReset: overrides?.wasReset ?? false,
+  guildId: fixtureValue(overrides, "guildId", "guild-1"),
+  timerKey: fixtureValue(overrides, "timerKey", "tanroth"),
+  world: fixtureValue(overrides, "world", "pandora"),
+  npcId: fixtureValue(overrides, "npcId", 10),
+  minSpawnTime: fixtureValue(
+    overrides,
+    "minSpawnTime",
+    "2026-04-22T10:00:00.000Z",
+  ),
+  maxSpawnTime: fixtureValue(
+    overrides,
+    "maxSpawnTime",
+    "2026-04-22T10:05:00.000Z",
+  ),
+  updatedAt: fixtureValue(overrides, "updatedAt", "2026-04-22T09:59:00.000Z"),
+  wasReset: fixtureValue(overrides, "wasReset", false),
   npc: {
-    id: overrides?.npc?.id ?? 10,
-    name: overrides?.npc?.name ?? "Tanroth",
-    lvl: overrides?.npc?.lvl ?? 120,
-    prof: overrides?.npc?.prof ?? "W",
-    icon: overrides?.npc?.icon ?? "icon.gif",
-    wt: overrides?.npc?.wt ?? 10,
-    type: overrides?.npc?.type ?? "hero",
-    margonemType: overrides?.npc?.margonemType ?? 4,
-    location: overrides?.npc?.location ?? "Ruins",
+    id: nestedFixtureValue(overrides, "npc", "id", 10),
+    name: nestedFixtureValue(overrides, "npc", "name", "Tanroth"),
+    lvl: nestedFixtureValue(overrides, "npc", "lvl", 120),
+    prof: nestedFixtureValue(overrides, "npc", "prof", "W"),
+    icon: nestedFixtureValue(overrides, "npc", "icon", "icon.gif"),
+    wt: nestedFixtureValue(overrides, "npc", "wt", 10),
+    type: nestedFixtureValue(overrides, "npc", "type", "hero"),
+    margonemType: nestedFixtureValue(overrides, "npc", "margonemType", 4),
+    location: nestedFixtureValue(overrides, "npc", "location", "Ruins"),
   } as never,
-  member: overrides?.member,
-  members: overrides?.members,
-  isCustomTime: overrides?.isCustomTime ?? false,
-  isPending: overrides?.isPending ?? false,
+  member: optionalFixtureValue(overrides, "member"),
+  members: optionalFixtureValue(overrides, "members"),
+  isCustomTime: fixtureValue(overrides, "isCustomTime", false),
+  isPending: fixtureValue(overrides, "isPending", false),
 });
 
 describe("useTimersSocket", () => {

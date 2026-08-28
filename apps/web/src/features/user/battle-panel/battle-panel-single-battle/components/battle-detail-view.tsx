@@ -54,6 +54,56 @@ type BattleDetailViewProps = {
   timeline: BattleTimelineResponseDtoOutput | undefined;
 };
 
+const getBattleDetailLayoutState = ({
+  battle,
+  chartHeight,
+  isTimelinePending,
+  scrollViewportHeight,
+  sideContent,
+  timeline,
+}: Pick<
+  BattleDetailViewProps,
+  "battle" | "isTimelinePending" | "sideContent" | "timeline"
+> & {
+  chartHeight: number;
+  scrollViewportHeight: number;
+}) => {
+  const timelineTurns = timeline?.timeline ?? [];
+  const hasTimeline = timelineTurns.length > 0;
+  return {
+    hasSideContent: Boolean(sideContent),
+    hasTimeline,
+    is1v1: battle?.type === "1v1",
+    layoutStyle: {
+      "--battle-chart-height": `${chartHeight}px`,
+      "--battle-scroll-viewport-height": scrollViewportHeight
+        ? `${scrollViewportHeight}px`
+        : "100dvh",
+      "--battle-side-card-height": `max(0px, calc(var(--battle-scroll-viewport-height) - var(--battle-chart-height) - ${
+        STICKY_TOP_OFFSET_PX +
+        STICKY_CONTENT_GAP_PX +
+        SIDE_CARD_BOTTOM_OFFSET_PX
+      }px))`,
+    } as CSSProperties,
+    shouldRenderTimelineSlot: isTimelinePending || hasTimeline,
+    timelineTurns,
+  };
+};
+
+const getBattleCharacterId = (battle: Battle | undefined) =>
+  battle?.characterId ?? null;
+
+const getScrollToTurnRequestId = (
+  scrollTargetTurn: number | null,
+  selectedTurnNumber: number | null,
+  requestId: number,
+) => {
+  if (scrollTargetTurn === null || scrollTargetTurn !== selectedTurnNumber) {
+    return 0;
+  }
+  return requestId;
+};
+
 export function BattleDetailView({
   battle,
   battleId,
@@ -100,25 +150,26 @@ export function BattleDetailView({
     resetToDefaults,
   } = useStatsCustomization(STAT_CATEGORIES);
 
-  const is1v1 = battle?.type === "1v1";
-  const timelineTurns = timeline?.timeline ?? [];
+  const {
+    hasSideContent,
+    hasTimeline,
+    is1v1,
+    layoutStyle,
+    shouldRenderTimelineSlot,
+    timelineTurns,
+  } = getBattleDetailLayoutState({
+    battle,
+    chartHeight,
+    isTimelinePending,
+    scrollViewportHeight,
+    sideContent,
+    timeline,
+  });
   const selectedTurnNumber = getBattlePanelSelectedTurn({
     availableTurns: timelineTurns.map((turn) => turn.turn),
     requestedTurn: queryState.turn,
     selectedTurn,
   });
-  const hasTimeline = timelineTurns.length > 0;
-  const hasSideContent = Boolean(sideContent);
-  const shouldRenderTimelineSlot = isTimelinePending || hasTimeline;
-  const layoutStyle = {
-    "--battle-chart-height": `${chartHeight}px`,
-    "--battle-scroll-viewport-height": scrollViewportHeight
-      ? `${scrollViewportHeight}px`
-      : "100dvh",
-    "--battle-side-card-height": `max(0px, calc(var(--battle-scroll-viewport-height) - var(--battle-chart-height) - ${
-      STICKY_TOP_OFFSET_PX + STICKY_CONTENT_GAP_PX + SIDE_CARD_BOTTOM_OFFSET_PX
-    }px))`,
-  } as CSSProperties;
 
   const setMeasuredChartHeight = (value: number) => {
     if (chartHeightRef.current === value) {
@@ -430,7 +481,7 @@ export function BattleDetailView({
                 <BattleHpTimelineChart
                   timeline={timeline.timeline}
                   warriors={timeline.warriors}
-                  characterId={battle?.characterId ?? null}
+                  characterId={getBattleCharacterId(battle)}
                   selectedTurn={selectedTurnNumber}
                   onTurnSelect={handleTurnSelect}
                 />
@@ -525,12 +576,11 @@ export function BattleDetailView({
                   className="lg:flex lg:h-[var(--battle-side-card-height)] lg:min-h-0 lg:w-full lg:flex-col"
                   listScrollClassName="lg:min-h-0 lg:flex-1 lg:pr-2"
                   selectedTurn={selectedTurnNumber}
-                  scrollToSelectedTurnRequestId={
-                    scrollTargetTurn !== null &&
-                    scrollTargetTurn === selectedTurnNumber
-                      ? scrollTargetRequestId
-                      : 0
-                  }
+                  scrollToSelectedTurnRequestId={getScrollToTurnRequestId(
+                    scrollTargetTurn,
+                    selectedTurnNumber,
+                    scrollTargetRequestId,
+                  )}
                   onListScroll={handleBattleScroll}
                   onSelectedTurnScrollComplete={
                     handleSelectedTurnScrollComplete
