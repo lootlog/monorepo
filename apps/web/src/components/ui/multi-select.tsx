@@ -116,6 +116,61 @@ interface MultiSelectProps
   disabled?: boolean;
 }
 
+const resolveValue = <Value,>(
+  controlledValue: Value | undefined,
+  fallback: Value,
+) => (controlledValue === undefined ? fallback : controlledValue);
+
+const getSearchPresentation = ({
+  commandSearch,
+  controlledSearch,
+  inputSearchValue,
+  minimumSearchLength,
+  options,
+  t,
+}: {
+  commandSearch: boolean;
+  controlledSearch: boolean;
+  inputSearchValue: string;
+  minimumSearchLength: number;
+  options: MultiSelectProps["options"];
+  t: ReturnType<typeof useTranslation>["t"];
+}) => {
+  const hasSearch = commandSearch || controlledSearch;
+  const shouldPromptForSearch =
+    controlledSearch && inputSearchValue.length < minimumSearchLength;
+  const searchPrompt =
+    minimumSearchLength > 1
+      ? t("common.searchMinimumCharacters", { count: minimumSearchLength })
+      : t("common.startTypingToSearch");
+
+  return {
+    hasSearch,
+    shouldPromptForSearch,
+    searchPrompt,
+    visibleOptions: shouldPromptForSearch ? [] : options,
+  };
+};
+
+const isTriggerActivationKey = (key: string) =>
+  ["Enter", " ", "ArrowDown"].includes(key);
+
+const getOptionsViewport = (
+  hasSearch: boolean,
+  loading: boolean,
+  optionCount: number,
+) => ({
+  className: cn(
+    hasSearch && "h-24",
+    !hasSearch && loading && "h-24",
+    !hasSearch && optionCount === 0 && !loading && "h-12",
+  ),
+  style:
+    !hasSearch && optionCount > 0 && !loading
+      ? { height: `${Math.min(optionCount, 6) * 2.5}rem` }
+      : undefined,
+});
+
 export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
   (
     {
@@ -144,28 +199,41 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
   ) => {
     const { t } = useTranslation();
     const [selectedValues, setSelectedValues] = React.useState<string[]>(
-      value ?? defaultValue,
+      resolveValue(value, defaultValue),
     );
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
     const [inputSearchValue, setInputSearchValue] = React.useState(
-      searchValue ?? "",
+      resolveValue(searchValue, ""),
     );
     const optionCacheRef = React.useRef(
       new Map(options.map((option) => [option.value, option])),
     );
-    const resolvedPlaceholder = placeholder ?? t("common.selectOptions");
-    const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
-    const resolvedEmptyMessage = emptyMessage ?? t("common.noResults");
-    const hasSearch = commandSearch || controlledSearch;
-    const shouldPromptForSearch =
-      controlledSearch && inputSearchValue.length < minimumSearchLength;
-    const searchPrompt =
-      minimumSearchLength > 1
-        ? t("common.searchMinimumCharacters", {
-            count: minimumSearchLength,
-          })
-        : t("common.startTypingToSearch");
-    const visibleOptions = shouldPromptForSearch ? [] : options;
+    const resolvedPlaceholder = resolveValue(
+      placeholder,
+      t("common.selectOptions"),
+    );
+    const resolvedSearchPlaceholder = resolveValue(
+      searchPlaceholder,
+      t("common.search"),
+    );
+    const resolvedEmptyMessage = resolveValue(
+      emptyMessage,
+      t("common.noResults"),
+    );
+    const { hasSearch, shouldPromptForSearch, searchPrompt, visibleOptions } =
+      getSearchPresentation({
+        commandSearch,
+        controlledSearch,
+        inputSearchValue,
+        minimumSearchLength,
+        options,
+        t,
+      });
+    const optionsViewport = getOptionsViewport(
+      hasSearch,
+      loading,
+      options.length,
+    );
 
     React.useEffect(() => {
       if (value !== undefined) {
@@ -248,11 +316,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
         return;
       }
 
-      if (
-        event.key !== "Enter" &&
-        event.key !== " " &&
-        event.key !== "ArrowDown"
-      ) {
+      if (!isTriggerActivationKey(event.key)) {
         return;
       }
 
@@ -400,18 +464,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                 onChange={handleControlledSearchChange}
               />
             ) : null}
-            <ScrollArea
-              className={cn(
-                hasSearch && "h-24",
-                !hasSearch && loading && "h-24",
-                !hasSearch && options.length === 0 && !loading && "h-12",
-              )}
-              style={
-                !hasSearch && options.length > 0 && !loading
-                  ? { height: `${Math.min(options.length, 6) * 2.5}rem` }
-                  : undefined
-              }
-            >
+            <ScrollArea {...optionsViewport}>
               <CommandList className="h-full max-h-none overflow-visible">
                 {!loading ? (
                   <CommandEmpty

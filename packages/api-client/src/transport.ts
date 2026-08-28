@@ -283,12 +283,12 @@ const createRequestBody = (
   return JSON.stringify(body);
 };
 
-const resolveRequestConfiguration = (
+const resolveBaseUrl = (
   service: ApiService,
   override: ApiClientOverride | undefined,
+  serviceConfiguration: ApiClientOverride | undefined,
   path: string,
 ) => {
-  const serviceConfiguration = serviceConfigurations.get(service);
   const baseUrl =
     override?.baseUrl ??
     serviceConfiguration?.baseUrl ??
@@ -298,11 +298,35 @@ const resolveRequestConfiguration = (
     throw new Error(`Missing base URL for ${service} API request`);
   }
 
+  return baseUrl;
+};
+
+const resolveFetchImplementation = (
+  service: ApiService,
+  override: ApiClientOverride | undefined,
+  serviceConfiguration: ApiClientOverride | undefined,
+) => {
   const fetchImplementation = override?.fetch ?? serviceConfiguration?.fetch;
 
   if (!fetchImplementation && typeof fetch === "undefined") {
     throw new Error(`Fetch is unavailable for ${service} API request`);
   }
+
+  return fetchImplementation;
+};
+
+const resolveRequestConfiguration = (
+  service: ApiService,
+  override: ApiClientOverride | undefined,
+  path: string,
+) => {
+  const serviceConfiguration = serviceConfigurations.get(service);
+  const baseUrl = resolveBaseUrl(service, override, serviceConfiguration, path);
+  const fetchImplementation = resolveFetchImplementation(
+    service,
+    override,
+    serviceConfiguration,
+  );
 
   return {
     baseUrl,

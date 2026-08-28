@@ -11,6 +11,7 @@ import { CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrate
 import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
 import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/api-client/models/main/create-notification-rule-dto-trigger-type";
 import type { NotificationTargetResponseDto } from "@lootlog/api-client/models/main/notification-target-response-dto";
+import type { NotificationRuleResponseDto } from "@lootlog/api-client/models/main/notification-rule-response-dto";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getDefaultGuildNotificationRuleContentTemplate,
@@ -52,6 +53,179 @@ import {
   useNpcsControllerGetNpcs,
 } from "@lootlog/api-client/react-query/search/npcs";
 
+const getDefaultContentTemplate = (
+  triggerType: CreateNotificationRuleDtoTriggerType,
+) =>
+  triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
+    ? getDefaultScheduledMessageContentTemplate()
+    : getDefaultGuildNotificationRuleContentTemplate();
+
+const getEmptyRuleFormValues = (): RuleFormValues => ({
+  name: "",
+  triggerType: NotificationTriggerType.TIMER_BEFORE_SPAWN,
+  world: ALL_WORLDS_VALUE,
+  npcIds: [],
+  manualNpcEntry: false,
+  manualNpcIds: "",
+  contentTemplate: getDefaultGuildNotificationRuleContentTemplate(),
+  scheduleAnchor: NotificationScheduleAnchor.MIN_SPAWN,
+  scheduleOffsetMinutes: "0",
+  scheduledAt: "",
+  scheduleIntervalType: NotificationScheduleIntervalType.ONCE,
+  scheduleIntervalValue: "",
+  scheduleTimeOfDay: "",
+  scheduleWeekday: "",
+  scheduledUntil: "",
+  targetIds: [],
+  enabled: true,
+});
+
+const stringifyNullable = (value: number | null | undefined, fallback = "") =>
+  value === null || value === undefined ? fallback : String(value);
+
+const formatRuleDate = (value: string | null, timezone: string | null) =>
+  value
+    ? formatDateTimeLocalInputValue(
+        value,
+        timezone ?? GUILD_NOTIFICATION_TIMEZONE,
+      )
+    : "";
+
+const getRuleFormDefaultValues = (
+  rule: NotificationRuleResponseDto | undefined,
+): RuleFormValues => {
+  if (!rule) {
+    return getEmptyRuleFormValues();
+  }
+
+  const triggerType =
+    rule.triggerType ?? NotificationTriggerType.TIMER_BEFORE_SPAWN;
+  const npcIds = getGuildNotificationRuleNpcIds(rule);
+
+  return {
+    name: rule.name ?? "",
+    triggerType,
+    world: rule.world ?? ALL_WORLDS_VALUE,
+    npcIds,
+    manualNpcEntry: false,
+    manualNpcIds: npcIds.join("\n"),
+    contentTemplate:
+      rule.contentTemplate ?? getDefaultContentTemplate(triggerType),
+    scheduleAnchor: rule.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
+    scheduleOffsetMinutes: stringifyNullable(rule.scheduleOffsetMinutes, "0"),
+    scheduledAt: formatRuleDate(rule.scheduledAt, rule.scheduleTimezone),
+    scheduleIntervalType:
+      rule.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE,
+    scheduleIntervalValue: stringifyNullable(rule.scheduleIntervalValue),
+    scheduleTimeOfDay: rule.scheduleTimeOfDay ?? "",
+    scheduleWeekday: stringifyNullable(rule.scheduleWeekday),
+    scheduledUntil: formatRuleDate(rule.scheduledUntil, rule.scheduleTimezone),
+    targetIds: getGuildNotificationRuleTargetIds(rule),
+    enabled: rule.enabled ?? true,
+  };
+};
+
+const getNotificationFieldVisibility = (
+  triggerType: CreateNotificationRuleDtoTriggerType,
+  intervalType: NotificationScheduleIntervalType | undefined,
+) => {
+  const isScheduledMessage =
+    triggerType === NotificationTriggerType.SCHEDULED_MESSAGE;
+  const isRecurring =
+    isScheduledMessage &&
+    intervalType !== undefined &&
+    intervalType !== NotificationScheduleIntervalType.ONCE;
+
+  return {
+    isScheduledMessage,
+    isRecurring,
+    showScheduledAtField:
+      isScheduledMessage &&
+      (intervalType === NotificationScheduleIntervalType.ONCE ||
+        intervalType === NotificationScheduleIntervalType.HOURLY),
+    showTimeOfDayField:
+      isScheduledMessage &&
+      (intervalType === NotificationScheduleIntervalType.DAILY ||
+        intervalType === NotificationScheduleIntervalType.WEEKLY),
+    showWeekdayField:
+      isScheduledMessage &&
+      intervalType === NotificationScheduleIntervalType.WEEKLY,
+    showIntervalValueField:
+      isScheduledMessage &&
+      intervalType === NotificationScheduleIntervalType.HOURLY,
+  };
+};
+
+const getWorldOptions = (
+  worlds: string[],
+  ruleWorld: string | null | undefined,
+) => {
+  const options = [...worlds];
+  if (ruleWorld && !options.includes(ruleWorld)) {
+    options.unshift(ruleWorld);
+  }
+  return options;
+};
+
+const getNpcOptions = (
+  npcs: Array<{ id: number; name: string; type: string }>,
+  t: (key: string) => string,
+) => {
+  const options = new Map<string, { value: string; label: string }>();
+  for (const npc of npcs) {
+    options.set(String(npc.id), {
+      value: String(npc.id),
+      label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
+    });
+  }
+  return Array.from(options.values());
+};
+
+const useNotificationRuleData = (
+  guildId: string | undefined,
+  ruleId: string | undefined,
+) => {
+  const queryGuildId = guildId ?? "";
+  const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
+    { guildId: queryGuildId },
+    {
+      query: {
+        queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({
+          guildId: queryGuildId,
+        }),
+      },
+    },
+  );
+  const rulesQuery = useNotificationsGuildControllerGetGuildRules(
+    { guildId: queryGuildId },
+    {
+      query: {
+        queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({
+          guildId: queryGuildId,
+        }),
+      },
+    },
+  );
+  const { data: worlds = [] } = useGuildsControllerGetWorldsByGuildId({
+    guildId: queryGuildId,
+  });
+  const { data: guildRoles = [] } = useRolesControllerGetGuildRoles({
+    guildId: queryGuildId,
+  });
+  const rule = ruleId
+    ? rulesQuery.data?.items.find((item) => String(item.id) === ruleId)
+    : undefined;
+
+  return {
+    targetsQuery,
+    rulesQuery,
+    worlds,
+    guildRoles,
+    rule,
+    maxNpcCount: rulesQuery.data?.limits?.maxNpcsPerRule ?? 5,
+  };
+};
+
 export const useNotificationRuleForm = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -60,32 +234,9 @@ export const useNotificationRuleForm = () => {
   const params = useParams({ strict: false });
   const ruleId = (params as { ruleId?: string }).ruleId;
   const isCreateMode = ruleId === undefined;
-
-  const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({
-          guildId: guildId ?? "",
-        }),
-      },
-    },
-  );
-  const rulesQuery = useNotificationsGuildControllerGetGuildRules(
-    { guildId: guildId ?? "" },
-    {
-      query: {
-        queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({
-          guildId: guildId ?? "",
-        }),
-      },
-    },
-  );
+  const { targetsQuery, rulesQuery, worlds, guildRoles, rule, maxNpcCount } =
+    useNotificationRuleData(guildId, ruleId);
   const targets = targetsQuery.data ?? [];
-  const maxNpcCount = rulesQuery.data?.limits?.maxNpcsPerRule ?? 5;
-  const rule = isCreateMode
-    ? undefined
-    : rulesQuery.data?.items.find((r) => String(r.id) === ruleId);
 
   const createRule = useNotificationsGuildControllerCreateGuildRule({
     mutation: {
@@ -109,12 +260,6 @@ export const useNotificationRuleForm = () => {
       },
     },
   });
-  const { data: worlds = [] } = useGuildsControllerGetWorldsByGuildId({
-    guildId: guildId ?? "",
-  });
-  const { data: guildRoles = [] } = useRolesControllerGetGuildRoles({
-    guildId: guildId ?? "",
-  });
   const [npcSearch, setNpcSearch] = useState("");
   const [extraTargets, setExtraTargets] = useState<
     NotificationTargetResponseDto[]
@@ -123,83 +268,13 @@ export const useNotificationRuleForm = () => {
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
 
-  const getDefaultContentTemplate = (
-    triggerType: CreateNotificationRuleDtoTriggerType,
-  ) =>
-    triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
-      ? getDefaultScheduledMessageContentTemplate()
-      : getDefaultGuildNotificationRuleContentTemplate();
-
   const form = useForm<RuleFormValues>({
     resolver: zodResolver(ruleFormSchema(t, maxNpcCount)),
-    defaultValues: {
-      name: "",
-      triggerType: NotificationTriggerType.TIMER_BEFORE_SPAWN,
-      world: ALL_WORLDS_VALUE,
-      npcIds: [],
-      manualNpcEntry: false,
-      manualNpcIds: "",
-      contentTemplate: getDefaultGuildNotificationRuleContentTemplate(),
-      scheduleAnchor: NotificationScheduleAnchor.MIN_SPAWN,
-      scheduleOffsetMinutes: "0",
-      scheduledAt: "",
-      scheduleIntervalType: NotificationScheduleIntervalType.ONCE,
-      scheduleIntervalValue: "",
-      scheduleTimeOfDay: "",
-      scheduleWeekday: "",
-      scheduledUntil: "",
-      targetIds: [],
-      enabled: true,
-    },
+    defaultValues: getEmptyRuleFormValues(),
   });
 
   useEffect(() => {
-    const triggerType =
-      rule?.triggerType ?? NotificationTriggerType.TIMER_BEFORE_SPAWN;
-
-    form.reset({
-      name: rule?.name ?? "",
-      triggerType,
-      world: rule?.world ?? ALL_WORLDS_VALUE,
-      npcIds: rule ? getGuildNotificationRuleNpcIds(rule) : [],
-      manualNpcEntry: false,
-      manualNpcIds: rule ? getGuildNotificationRuleNpcIds(rule).join("\n") : "",
-      contentTemplate:
-        rule?.contentTemplate ?? getDefaultContentTemplate(triggerType),
-      scheduleAnchor:
-        rule?.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
-      scheduleOffsetMinutes:
-        rule?.scheduleOffsetMinutes !== null &&
-        rule?.scheduleOffsetMinutes !== undefined
-          ? String(rule.scheduleOffsetMinutes)
-          : "0",
-      scheduledAt: rule?.scheduledAt
-        ? formatDateTimeLocalInputValue(
-            rule.scheduledAt,
-            rule.scheduleTimezone ?? GUILD_NOTIFICATION_TIMEZONE,
-          )
-        : "",
-      scheduleIntervalType:
-        rule?.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE,
-      scheduleIntervalValue:
-        rule?.scheduleIntervalValue !== null &&
-        rule?.scheduleIntervalValue !== undefined
-          ? String(rule.scheduleIntervalValue)
-          : "",
-      scheduleTimeOfDay: rule?.scheduleTimeOfDay ?? "",
-      scheduleWeekday:
-        rule?.scheduleWeekday !== null && rule?.scheduleWeekday !== undefined
-          ? String(rule.scheduleWeekday)
-          : "",
-      scheduledUntil: rule?.scheduledUntil
-        ? formatDateTimeLocalInputValue(
-            rule.scheduledUntil,
-            rule.scheduleTimezone ?? GUILD_NOTIFICATION_TIMEZONE,
-          )
-        : "",
-      targetIds: rule ? getGuildNotificationRuleTargetIds(rule) : [],
-      enabled: rule?.enabled ?? true,
-    });
+    form.reset(getRuleFormDefaultValues(rule));
     setNpcSearch("");
     setExtraTargets([]);
     setFormResetKey((prev) => prev + 1);
@@ -208,27 +283,15 @@ export const useNotificationRuleForm = () => {
   const mergedTargets = mergeGuildNotificationTargets(targets, extraTargets);
   const contentTemplate = form.watch("contentTemplate");
   const watchedTriggerType = form.watch("triggerType");
-  const isScheduledMessage =
-    watchedTriggerType === NotificationTriggerType.SCHEDULED_MESSAGE;
   const watchedIntervalType = form.watch("scheduleIntervalType");
-  const isRecurring =
-    isScheduledMessage &&
-    watchedIntervalType !== undefined &&
-    watchedIntervalType !== NotificationScheduleIntervalType.ONCE;
-  const showScheduledAtField =
-    isScheduledMessage &&
-    (watchedIntervalType === NotificationScheduleIntervalType.ONCE ||
-      watchedIntervalType === NotificationScheduleIntervalType.HOURLY);
-  const showTimeOfDayField =
-    isScheduledMessage &&
-    (watchedIntervalType === NotificationScheduleIntervalType.DAILY ||
-      watchedIntervalType === NotificationScheduleIntervalType.WEEKLY);
-  const showWeekdayField =
-    isScheduledMessage &&
-    watchedIntervalType === NotificationScheduleIntervalType.WEEKLY;
-  const showIntervalValueField =
-    isScheduledMessage &&
-    watchedIntervalType === NotificationScheduleIntervalType.HOURLY;
+  const {
+    isScheduledMessage,
+    isRecurring,
+    showScheduledAtField,
+    showTimeOfDayField,
+    showWeekdayField,
+    showIntervalValueField,
+  } = getNotificationFieldVisibility(watchedTriggerType, watchedIntervalType);
   const selectedWorld = form.watch("world");
   const isManualNpcEntry = form.watch("manualNpcEntry") ?? false;
   const selectedNpcIds = form.watch("npcIds") ?? [];
@@ -255,29 +318,16 @@ export const useNotificationRuleForm = () => {
     },
   });
 
-  const npcOptionsMap = new Map<string, { value: string; label: string }>();
-
-  for (const npc of [
-    ...(selectedNpcQuery.data ?? []),
-    ...(searchedNpcQuery.data ?? []),
-  ]) {
-    npcOptionsMap.set(String(npc.id), {
-      value: String(npc.id),
-      label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
-    });
-  }
-
-  const npcOptions = Array.from(npcOptionsMap.values());
+  const npcOptions = getNpcOptions(
+    [...(selectedNpcQuery.data ?? []), ...(searchedNpcQuery.data ?? [])],
+    t,
+  );
   const targetOptions = mergedTargets.map((target) => ({
     value: String(target.id),
     label: getGuildNotificationTargetLabel(target),
   }));
 
-  const worldOptions = [...worlds];
-
-  if (rule?.world && !worldOptions.includes(rule.world)) {
-    worldOptions.unshift(rule.world);
-  }
+  const worldOptions = getWorldOptions(worlds, rule?.world);
 
   const isSubmitting = createRule.isPending || updateRule.isPending;
   const isLoading = targetsQuery.isLoading || rulesQuery.isLoading;

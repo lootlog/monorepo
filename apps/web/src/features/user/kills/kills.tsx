@@ -44,6 +44,30 @@ type KillsSearchParams = {
 
 const ITEMS_PER_PAGE = 20;
 
+const getKillsFilters = (
+  searchParams: KillsSearchParams,
+  debouncedSearch: string,
+  debouncedMinLvl: string,
+  debouncedMaxLvl: string,
+): KillsFiltersState => ({
+  world: searchParams.world,
+  npcTypes: searchParams.npcType
+    ? (searchParams.npcType.split(",") as NpcType[])
+    : undefined,
+  search: debouncedSearch || undefined,
+  minLvl: debouncedMinLvl ? Number(debouncedMinLvl) : undefined,
+  maxLvl: debouncedMaxLvl ? Number(debouncedMaxLvl) : undefined,
+  period: searchParams.period ?? "all",
+});
+
+const hasKillsFilters = (filters: KillsFiltersState) =>
+  Boolean(filters.world) ||
+  Boolean(filters.npcTypes?.length) ||
+  Boolean(filters.search) ||
+  Boolean(filters.minLvl) ||
+  Boolean(filters.maxLvl) ||
+  filters.period !== "all";
+
 const getNextSearchParams = (
   searchParams: KillsSearchParams,
   updates: Partial<KillsSearchParams>,
@@ -78,16 +102,12 @@ export const KillsPage: React.FC = () => {
     { id: "totalKills", desc: true },
   ]);
 
-  const filters: KillsFiltersState = {
-    world: searchParams.world,
-    npcTypes: searchParams.npcType
-      ? (searchParams.npcType.split(",") as NpcType[])
-      : undefined,
-    search: debouncedSearch || undefined,
-    minLvl: debouncedMinLvl ? Number(debouncedMinLvl) : undefined,
-    maxLvl: debouncedMaxLvl ? Number(debouncedMaxLvl) : undefined,
-    period: searchParams.period ?? "all",
-  };
+  const filters = getKillsFilters(
+    searchParams,
+    debouncedSearch,
+    debouncedMinLvl,
+    debouncedMaxLvl,
+  );
 
   const cursor = searchParams.cursor ? Number(searchParams.cursor) : 0;
   const sortOrder: KillsControllerGetUserNpcKillsParams["sortOrder"] =
@@ -225,13 +245,44 @@ export const KillsPage: React.FC = () => {
   });
 
   const hasPrev = cursor > 0;
-  const hasActiveFilters =
-    Boolean(filters.world) ||
-    Boolean(filters.npcTypes?.length) ||
-    Boolean(filters.search) ||
-    Boolean(filters.minLvl) ||
-    Boolean(filters.maxLvl) ||
-    filters.period !== "all";
+  const hasActiveFilters = hasKillsFilters(filters);
+
+  const renderResults = () => {
+    if (isLoading) {
+      return <TableRowsSkeleton trailingColumns={2} />;
+    }
+    if (!data || data.npcs.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
+          <p className="text-muted-foreground">
+            {t(
+              hasActiveFilters
+                ? "kills.ranking.filteredNoData"
+                : "kills.ranking.noData",
+            )}
+          </p>
+        </div>
+      );
+    }
+    if (isMobile) {
+      return <KillsMobileList npcs={data.npcs} startRank={cursor} />;
+    }
+    return (
+      <Table className="border-b">
+        <TanStackTableHeader
+          table={table}
+          className="bg-background sticky top-0 z-10"
+          rowClassName="border-b-1! border-border"
+          headClassName="whitespace-nowrap"
+        />
+        <TanStackTableBody
+          table={table}
+          rowClassName="bg-background border-b border-border h-14"
+          cellClassName="whitespace-nowrap"
+        />
+      </Table>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -271,39 +322,7 @@ export const KillsPage: React.FC = () => {
 
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
-              {isLoading ? (
-                <TableRowsSkeleton trailingColumns={2} />
-              ) : !data || data.npcs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-                  <p className="text-muted-foreground">
-                    {t(
-                      hasActiveFilters
-                        ? "kills.ranking.filteredNoData"
-                        : "kills.ranking.noData",
-                    )}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {isMobile ? (
-                    <KillsMobileList npcs={data.npcs} startRank={cursor} />
-                  ) : (
-                    <Table className="border-b">
-                      <TanStackTableHeader
-                        table={table}
-                        className="bg-background sticky top-0 z-10"
-                        rowClassName="border-b-1! border-border"
-                        headClassName="whitespace-nowrap"
-                      />
-                      <TanStackTableBody
-                        table={table}
-                        rowClassName="bg-background border-b border-border h-14"
-                        cellClassName="whitespace-nowrap"
-                      />
-                    </Table>
-                  )}
-                </>
-              )}
+              {renderResults()}
             </ScrollArea>
             <TablePaginationFooter
               totalLabel={t("kills.ranking.total", {

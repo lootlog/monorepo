@@ -1067,38 +1067,7 @@ export class GuildsService {
 
     const guild = await this.prisma.guild.update({
       where: { id: guildId },
-      data: {
-        ...(hasOwnField(data, "vanityUrl")
-          ? { vanityUrl: generateSlug(data.vanityUrl ?? undefined) }
-          : {}),
-        ...(data.publicStatsCardEnabled !== undefined
-          ? { publicStatsCardEnabled: data.publicStatsCardEnabled }
-          : {}),
-        ...(data.reservationMaxDurationMinutes !== undefined
-          ? {
-              reservationMaxDurationMinutes: data.reservationMaxDurationMinutes,
-            }
-          : {}),
-        ...(data.reservationMinDurationMinutes !== undefined
-          ? {
-              reservationMinDurationMinutes: data.reservationMinDurationMinutes,
-            }
-          : {}),
-        ...(data.reservationTimeGranularityMinutes !== undefined
-          ? {
-              reservationTimeGranularityMinutes:
-                data.reservationTimeGranularityMinutes,
-            }
-          : {}),
-        ...(data.reservationMaxAdvanceDays !== undefined
-          ? { reservationMaxAdvanceDays: data.reservationMaxAdvanceDays }
-          : {}),
-        ...(data.reservationActiveLimitPerSpot !== undefined
-          ? {
-              reservationActiveLimitPerSpot: data.reservationActiveLimitPerSpot,
-            }
-          : {}),
-      },
+      data: this.buildGuildConfigUpdateData(data),
     });
 
     const cacheInvalidations = [
@@ -1114,6 +1083,41 @@ export class GuildsService {
     await Promise.all(cacheInvalidations);
 
     return guild;
+  }
+
+  private buildGuildConfigUpdateData(data: UpdateGuildConfigDto) {
+    return {
+      ...(hasOwnField(data, "vanityUrl")
+        ? { vanityUrl: generateSlug(data.vanityUrl ?? undefined) }
+        : {}),
+      ...(data.publicStatsCardEnabled !== undefined
+        ? { publicStatsCardEnabled: data.publicStatsCardEnabled }
+        : {}),
+      ...(data.reservationMaxDurationMinutes !== undefined
+        ? {
+            reservationMaxDurationMinutes: data.reservationMaxDurationMinutes,
+          }
+        : {}),
+      ...(data.reservationMinDurationMinutes !== undefined
+        ? {
+            reservationMinDurationMinutes: data.reservationMinDurationMinutes,
+          }
+        : {}),
+      ...(data.reservationTimeGranularityMinutes !== undefined
+        ? {
+            reservationTimeGranularityMinutes:
+              data.reservationTimeGranularityMinutes,
+          }
+        : {}),
+      ...(data.reservationMaxAdvanceDays !== undefined
+        ? { reservationMaxAdvanceDays: data.reservationMaxAdvanceDays }
+        : {}),
+      ...(data.reservationActiveLimitPerSpot !== undefined
+        ? {
+            reservationActiveLimitPerSpot: data.reservationActiveLimitPerSpot,
+          }
+        : {}),
+    };
   }
 
   async getWorldsByGuildId(guildId: string) {

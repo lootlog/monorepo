@@ -65,6 +65,18 @@ const NO_SEASON_VALUE = "no-season";
 const isAbyssTab = (value: string): value is AbyssTab =>
   value === "battles" || value === "analytics" || value === "seasons";
 
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
+const getCharacterFilter = (characterId: string | undefined) =>
+  characterId ? [characterId] : undefined;
+
+const getSeasonLabel = (
+  season: AbyssSeason,
+  index: number,
+  latestSeasonLabel: string,
+) => (index === 0 ? latestSeasonLabel : getAbyssSeasonRangeLabel(season));
+
 export function AbyssHub() {
   const { t } = useTranslation();
   const { data: charactersResponse, isLoading: isLoadingCharacters } =
@@ -73,16 +85,29 @@ export function AbyssHub() {
   const [queryState, setQueryState] = useQueryStates(
     battlePanelAbyssSearchParsers,
   );
-  const pageIndex = getBattlePanelPageIndex(queryState.page);
-
-  const activeTab = queryState.tab;
-  const currentCharacterId = normalizeBattlePanelCharacterId(
-    queryState.characterId,
-  );
-  const selectedCharacterId = currentCharacterId ?? characters?.[0]?.id;
-  const minLevel = queryState.minLevel;
-  const maxLevel = queryState.maxLevel;
-  const cursor = queryState.cursor ?? undefined;
+  const resolvePageState = () => {
+    const currentCharacterId = normalizeBattlePanelCharacterId(
+      queryState.characterId,
+    );
+    return {
+      pageIndex: getBattlePanelPageIndex(queryState.page),
+      activeTab: queryState.tab,
+      currentCharacterId,
+      selectedCharacterId: currentCharacterId ?? characters?.[0]?.id,
+      minLevel: queryState.minLevel,
+      maxLevel: queryState.maxLevel,
+      cursor: queryState.cursor ?? undefined,
+    };
+  };
+  const {
+    pageIndex,
+    activeTab,
+    currentCharacterId,
+    selectedCharacterId,
+    minLevel,
+    maxLevel,
+    cursor,
+  } = resolvePageState();
 
   useEffect(() => {
     if (!isLoadingCharacters && characters?.length && !currentCharacterId) {
@@ -98,25 +123,29 @@ export function AbyssHub() {
   const { data: seasons = [], isLoading: isLoadingSeasons } =
     useBattlesControllerGetAbyssSeasons(
       {
-        characterId: selectedCharacterId ?? "",
+        characterId: valueOr(selectedCharacterId, ""),
       },
       {
         query: {
           enabled: Boolean(selectedCharacterId),
           queryKey: getBattlesControllerGetAbyssSeasonsQueryKey({
-            characterId: selectedCharacterId ?? "",
+            characterId: valueOr(selectedCharacterId, ""),
           }),
         },
       },
     );
 
-  const selectedSeason =
-    seasons.find((season) => season.id === queryState.seasonId) ?? seasons[0];
-  const startDate = queryState.startDate ?? selectedSeason?.startedAt;
-  const endDate = queryState.endDate ?? selectedSeason?.endedAt;
+  const selectedSeason = valueOr(
+    seasons.find((season) => season.id === queryState.seasonId),
+    seasons[0],
+  );
+  const startDate = valueOr(queryState.startDate, selectedSeason?.startedAt);
+  const endDate = valueOr(queryState.endDate, selectedSeason?.endedAt);
   const isStatsEnabled = Boolean(selectedCharacterId);
   const isBattlesTab = activeTab === "battles";
   const isAnalyticsTab = activeTab === "analytics";
+  const enableAnalyticsQueries = isStatsEnabled && isAnalyticsTab;
+  const enableBattlesQuery = isStatsEnabled && isBattlesTab;
   const abyssStatsParams = {
     characterId: selectedCharacterId,
     period: ABYSS_PERIOD,
@@ -131,7 +160,7 @@ export function AbyssHub() {
     size: PAGE_SIZE,
     includeTotal: true,
     matchmaking: true,
-    characterId: selectedCharacterId ? [selectedCharacterId] : undefined,
+    characterId: getCharacterFilter(selectedCharacterId),
     startDate,
     endDate,
     minLevel,
@@ -141,7 +170,7 @@ export function AbyssHub() {
   const { data: professionData, isLoading: isProfessionLoading } =
     useBattlesControllerGetProfessionWinRate(abyssStatsParams, {
       query: {
-        enabled: isStatsEnabled && isAnalyticsTab,
+        enabled: enableAnalyticsQueries,
         queryKey:
           getBattlesControllerGetProfessionWinRateQueryKey(abyssStatsParams),
       },
@@ -149,7 +178,7 @@ export function AbyssHub() {
   const { data: streakData, isLoading: isStreakLoading } =
     useBattlesControllerGetCurrentStreak(abyssStatsParams, {
       query: {
-        enabled: isStatsEnabled && isAnalyticsTab,
+        enabled: enableAnalyticsQueries,
         queryKey:
           getBattlesControllerGetCurrentStreakQueryKey(abyssStatsParams),
       },
@@ -157,7 +186,7 @@ export function AbyssHub() {
   const { data: durationData, isLoading: isDurationLoading } =
     useBattlesControllerGetBattleDuration(abyssStatsParams, {
       query: {
-        enabled: isStatsEnabled && isAnalyticsTab,
+        enabled: enableAnalyticsQueries,
         queryKey:
           getBattlesControllerGetBattleDurationQueryKey(abyssStatsParams),
       },
@@ -165,7 +194,7 @@ export function AbyssHub() {
   const { data: combatProfile, isLoading: isCombatProfileLoading } =
     useBattlesControllerGetCombatProfile(abyssStatsParams, {
       query: {
-        enabled: isStatsEnabled && isAnalyticsTab,
+        enabled: enableAnalyticsQueries,
         queryKey:
           getBattlesControllerGetCombatProfileQueryKey(abyssStatsParams),
       },
@@ -173,14 +202,14 @@ export function AbyssHub() {
   const { data: ratingGrowthData, isLoading: isRatingGrowthLoading } =
     useBattlesControllerGetRatingGrowth(abyssStatsParams, {
       query: {
-        enabled: isStatsEnabled && isAnalyticsTab,
+        enabled: enableAnalyticsQueries,
         queryKey: getBattlesControllerGetRatingGrowthQueryKey(abyssStatsParams),
       },
     });
   const { data: ratingDeltaData, isLoading: isRatingDeltaLoading } =
     useBattlesControllerGetRatingDeltaByOpponent(abyssStatsParams, {
       query: {
-        enabled: isStatsEnabled && isAnalyticsTab,
+        enabled: enableAnalyticsQueries,
         queryKey:
           getBattlesControllerGetRatingDeltaByOpponentQueryKey(
             abyssStatsParams,
@@ -190,7 +219,7 @@ export function AbyssHub() {
   const { data: battlesResponse, isLoading: isBattlesLoading } =
     useBattlesControllerGetDashboardBattles(dashboardParams, {
       query: {
-        enabled: isStatsEnabled && isBattlesTab,
+        enabled: enableBattlesQuery,
         queryKey:
           getBattlesControllerGetDashboardBattlesQueryKey(dashboardParams),
       },
@@ -319,9 +348,11 @@ export function AbyssHub() {
                     value: season.id,
                     label: (
                       <>
-                        {index === 0
-                          ? t("battlePanel.abyss.latestSeason")
-                          : getAbyssSeasonRangeLabel(season)}
+                        {getSeasonLabel(
+                          season,
+                          index,
+                          t("battlePanel.abyss.latestSeason"),
+                        )}
                       </>
                     ),
                   })),
@@ -343,9 +374,11 @@ export function AbyssHub() {
                   ) : (
                     seasons.map((season, index) => (
                       <SelectItem key={season.id} value={season.id}>
-                        {index === 0
-                          ? t("battlePanel.abyss.latestSeason")
-                          : getAbyssSeasonRangeLabel(season)}
+                        {getSeasonLabel(
+                          season,
+                          index,
+                          t("battlePanel.abyss.latestSeason"),
+                        )}
                       </SelectItem>
                     ))
                   )}

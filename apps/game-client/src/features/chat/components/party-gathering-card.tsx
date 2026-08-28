@@ -18,6 +18,7 @@ import {
 } from "@/store/party-finder.store";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 import { ChatCharacterTooltip } from "./chat-character-tooltip";
+import type { TFunction } from "i18next";
 
 type PartyGatheringCardProps = {
   message: ChatMessageResponseDtoOutput;
@@ -29,15 +30,55 @@ type PartyGatheringCardProps = {
   showTimestamp?: boolean;
 };
 
-export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
-  message,
-  member,
-  guildName,
-  all,
-  isMsgYesterday,
-  showGuildLabel = true,
-  showTimestamp = true,
+const valueOrDefault = <Value,>(
+  value: Value | undefined,
+  defaultValue: Value,
+): Value => value ?? defaultValue;
+
+const resolveSenderName = (
+  member: MemberSummaryResponseDtoOutput | undefined,
+  message: ChatMessageResponseDtoOutput,
+  fallback: string,
+): string => member?.name ?? message.characterData?.nick ?? fallback;
+
+const resolveVolunteerLabel = (params: {
+  isPending: boolean;
+  meetsLevelRequirement: boolean;
+  isJoinedToThisGathering: boolean;
+  isRegisteredElsewhere: boolean;
+  minLvl: number;
+  maxLvl: number;
+  t: TFunction<"chat">;
 }) => {
+  if (params.isPending) return params.t("partyGathering.volunteering");
+  if (!params.meetsLevelRequirement) {
+    return params.t("partyGathering.requiredLevel", {
+      min: params.minLvl,
+      max: params.maxLvl,
+    });
+  }
+  if (params.isJoinedToThisGathering) return params.t("partyGathering.joined");
+  if (params.isRegisteredElsewhere) {
+    return params.t("partyGathering.joinedElsewhere");
+  }
+  return params.t("partyGathering.joinParty");
+};
+
+const hasLevelRange = (
+  partyGathering: NonNullable<ChatMessageResponseDtoOutput["partyGathering"]>,
+): boolean =>
+  partyGathering.minLvl !== undefined || partyGathering.maxLvl !== undefined;
+
+const isVolunteerDisabled = (
+  isPending: boolean,
+  meetsLevelRequirement: boolean,
+  hasCurrentReadyRoom: boolean,
+): boolean => isPending || !meetsLevelRequirement || hasCurrentReadyRoom;
+
+export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
+  const { message, member, guildName, all, isMsgYesterday } = props;
+  const showGuildLabel = valueOrDefault(props.showGuildLabel, true);
+  const showTimestamp = valueOrDefault(props.showTimestamp, true);
   const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
   const applyToReadyRoom = usePartyReadyRoomControllerApply();
@@ -46,8 +87,11 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
   const currentReadyRoom = usePartyFinderStore((state) =>
     selectReadyRoomForCharacter(state, currentCharacterIdentity),
   );
-  const senderName =
-    member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
+  const senderName = resolveSenderName(
+    member,
+    message,
+    t("contextMenu.unknownUser"),
+  );
 
   const heroLvl = useGameStore((state) => state.game?.hero.level ?? 0);
   const heroAccountId = useGameStore(
@@ -130,6 +174,24 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
     );
   };
 
+  const minLvl = valueOrDefault(partyGathering.minLvl, 1);
+  const maxLvl = valueOrDefault(partyGathering.maxLvl, 500);
+  const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
+  const isJoinedToThisGathering =
+    currentReadyRoom?.viewer === "PARTICIPANT" &&
+    currentReadyRoom.notificationId === partyGathering.notificationId;
+  const isRegisteredElsewhere =
+    currentReadyRoom !== null && !isJoinedToThisGathering;
+  const volunteerLabel = resolveVolunteerLabel({
+    isPending: applyToReadyRoom.isPending,
+    meetsLevelRequirement: meetsLevelReq,
+    isJoinedToThisGathering,
+    isRegisteredElsewhere,
+    minLvl,
+    maxLvl,
+    t,
+  });
+
   return (
     <div className="ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:text-white ll:text-[length:var(--ll-chat-font-size)] ll:leading-[var(--ll-chat-line-height)] ll:select-text ll:cursor-text">
       <div
@@ -194,60 +256,35 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             </span>
           </div>
         )}
-        {partyGathering?.description && (
+        {partyGathering.description && (
           <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:text-gray-300 ll:italic">
             &quot;{partyGathering.description}&quot;
           </p>
         )}
-        {(partyGathering?.minLvl ?? partyGathering?.maxLvl) && (
+        {hasLevelRange(partyGathering) && (
           <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-gray-400">
             {t("partyGathering.levelRange", {
-              min: partyGathering?.minLvl ?? 1,
-              max: partyGathering?.maxLvl ?? 500,
+              min: minLvl,
+              max: maxLvl,
             })}
           </p>
         )}
-        {!isOrganizingCharacter &&
-          (() => {
-            const minLvl = partyGathering?.minLvl ?? 1;
-            const maxLvl = partyGathering?.maxLvl ?? 500;
-            const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
-            const isJoinedToThisGathering =
-              currentReadyRoom?.viewer === "PARTICIPANT" &&
-              currentReadyRoom.notificationId === partyGathering.notificationId;
-            const isRegisteredElsewhere =
-              currentReadyRoom !== null && !isJoinedToThisGathering;
-
-            return (
-              <Button
-                onClick={handleVolunteer}
-                disabled={
-                  applyToReadyRoom.isPending ||
-                  !meetsLevelReq ||
-                  currentReadyRoom !== null
-                }
-                className="ll:box-border ll:w-full ll:min-w-0 ll:max-w-full ll:mt-[var(--ll-chat-space-xs)] ll:text-[length:var(--ll-chat-meta-font-size)] ll:h-[var(--ll-chat-control-height)] ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
-              >
-                {applyToReadyRoom.isPending ? (
-                  <>
-                    <Loader2 className="ll:w-[var(--ll-chat-icon-size)] ll:h-[var(--ll-chat-icon-size)] ll:animate-spin ll:mr-[var(--ll-chat-space-sm)]" />
-                    {t("partyGathering.volunteering")}
-                  </>
-                ) : !meetsLevelReq ? (
-                  t("partyGathering.requiredLevel", {
-                    min: minLvl,
-                    max: maxLvl,
-                  })
-                ) : isJoinedToThisGathering ? (
-                  t("partyGathering.joined")
-                ) : isRegisteredElsewhere ? (
-                  t("partyGathering.joinedElsewhere")
-                ) : (
-                  t("partyGathering.joinParty")
-                )}
-              </Button>
-            );
-          })()}
+        {!isOrganizingCharacter && (
+          <Button
+            onClick={handleVolunteer}
+            disabled={isVolunteerDisabled(
+              applyToReadyRoom.isPending,
+              meetsLevelReq,
+              currentReadyRoom !== null,
+            )}
+            className="ll:box-border ll:w-full ll:min-w-0 ll:max-w-full ll:mt-[var(--ll-chat-space-xs)] ll:text-[length:var(--ll-chat-meta-font-size)] ll:h-[var(--ll-chat-control-height)] ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
+          >
+            {applyToReadyRoom.isPending ? (
+              <Loader2 className="ll:w-[var(--ll-chat-icon-size)] ll:h-[var(--ll-chat-icon-size)] ll:animate-spin ll:mr-[var(--ll-chat-space-sm)]" />
+            ) : null}
+            {volunteerLabel}
+          </Button>
+        )}
       </div>
     </div>
   );

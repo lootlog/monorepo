@@ -24,6 +24,25 @@ type NotificationJobDetailDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+const getNotificationJobPayload = (
+  job: NonNullable<NotificationJobDetailDialogProps["job"]>,
+) => {
+  const payload = job.payloadSnapshot;
+  return {
+    message: payload?.message ?? payload?.content ?? undefined,
+    npcName: payload?.npcName ?? undefined,
+    title: payload?.title ?? undefined,
+    world: payload?.world ?? job.rule.world,
+  };
+};
+
+const hasJobDeliveryDetails = (
+  job: NonNullable<NotificationJobDetailDialogProps["job"]>,
+) =>
+  job.attemptCount > 0 ||
+  Boolean(job.providerMessageId) ||
+  Boolean(job.sourceEntityType);
+
 export const NotificationJobDetailDialog = ({
   job,
   onOpenChange,
@@ -34,14 +53,8 @@ export const NotificationJobDetailDialog = ({
     return null;
   }
 
-  const payload = job.payloadSnapshot;
-  const world = payload?.world ?? job.rule.world;
-  const npcName = payload?.npcName ?? undefined;
-  const message = payload?.message ?? payload?.content ?? undefined;
-  const title = payload?.title ?? undefined;
-
-  const hasDeliveryDetails =
-    job.attemptCount > 0 || job.providerMessageId || job.sourceEntityType;
+  const { message, npcName, title, world } = getNotificationJobPayload(job);
+  const hasDeliveryDetails = hasJobDeliveryDetails(job);
 
   return (
     <Dialog open={job !== null} onOpenChange={onOpenChange}>

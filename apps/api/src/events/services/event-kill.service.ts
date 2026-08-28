@@ -689,22 +689,12 @@ export class EventKillService {
     const heroMapIds = heroMaps.map((map) => map.id);
     const mapIdToName = this.createMapNameLookup(heroMaps);
 
-    const scoringMode = normalizeEventScoringMode(
-      (event as { scoringMode?: unknown }).scoringMode,
-    );
-    const scoringRules =
-      scoringMode === "ADVANCED"
-        ? normalizeEventScoringRules(event.scoringRules)
-        : null;
-    const confirmationMinutes = Math.max(
-      0,
-      event.participationConfirmationMinutes ?? 0,
-    );
-    const confirmationDeadlineAt =
-      confirmationMinutes > 0
-        ? new Date(killedAt.getTime() + confirmationMinutes * 60_000)
-        : null;
-    const autoConfirmedAt = confirmationMinutes > 0 ? null : killedAt;
+    const {
+      scoringMode,
+      scoringRules,
+      confirmationDeadlineAt,
+      autoConfirmedAt,
+    } = this.resolveKillScoringConfig(event, killedAt);
 
     const kill = await this.prisma.$transaction(async (tx) => {
       const heroKill = await tx.eventHeroKill.create({
@@ -813,30 +803,12 @@ export class EventKillService {
             : undefined;
 
         const memberAssignments = memberAssignmentsHistory.get(memberId) ?? [];
-        let memberPresentAtKill = false;
-        let memberLeaveTime: Date | null = null;
-
-        for (const assignment of memberAssignments) {
-          if (assignment.assignedAt > effectiveKilledAt) {
-            continue;
-          }
-
-          if (
-            !assignment.unassignedAt ||
-            assignment.unassignedAt >= effectiveKilledAt
-          ) {
-            memberPresentAtKill = true;
-            continue;
-          }
-
-          if (
-            assignment.unassignedAt >= trackingWindowStartTime &&
-            assignment.unassignedAt < effectiveKilledAt &&
-            (!memberLeaveTime || assignment.unassignedAt > memberLeaveTime)
-          ) {
-            memberLeaveTime = assignment.unassignedAt;
-          }
-        }
+        const { memberPresentAtKill, memberLeaveTime } =
+          this.getMemberKillState({
+            assignments: memberAssignments,
+            killedAt: effectiveKilledAt,
+            trackingWindowStartTime,
+          });
 
         const { totalPoints, basePoints, appliedBonuses } =
           this.pointsService.calculateMemberPoints({
@@ -986,6 +958,59 @@ export class EventKillService {
     );
 
     return kill.kill;
+  }
+
+  private resolveKillScoringConfig(event: Event, killedAt: Date) {
+    const scoringMode = normalizeEventScoringMode(
+      (event as { scoringMode?: unknown }).scoringMode,
+    );
+    const scoringRules =
+      scoringMode === "ADVANCED"
+        ? normalizeEventScoringRules(event.scoringRules)
+        : null;
+    const confirmationMinutes = Math.max(
+      0,
+      event.participationConfirmationMinutes ?? 0,
+    );
+
+    return {
+      scoringMode,
+      scoringRules,
+      confirmationDeadlineAt:
+        confirmationMinutes > 0
+          ? new Date(killedAt.getTime() + confirmationMinutes * 60_000)
+          : null,
+      autoConfirmedAt: confirmationMinutes > 0 ? null : killedAt,
+    };
+  }
+
+  private getMemberKillState(params: {
+    assignments: MemberAssignmentHistoryEntry[];
+    killedAt: Date;
+    trackingWindowStartTime: Date;
+  }): { memberPresentAtKill: boolean; memberLeaveTime: Date | null } {
+    let memberPresentAtKill = false;
+    let memberLeaveTime: Date | null = null;
+
+    for (const assignment of params.assignments) {
+      if (assignment.assignedAt > params.killedAt) continue;
+      if (
+        !assignment.unassignedAt ||
+        assignment.unassignedAt >= params.killedAt
+      ) {
+        memberPresentAtKill = true;
+        continue;
+      }
+      if (
+        assignment.unassignedAt >= params.trackingWindowStartTime &&
+        assignment.unassignedAt < params.killedAt &&
+        (!memberLeaveTime || assignment.unassignedAt > memberLeaveTime)
+      ) {
+        memberLeaveTime = assignment.unassignedAt;
+      }
+    }
+
+    return { memberPresentAtKill, memberLeaveTime };
   }
 
   getHeroKillHistory(

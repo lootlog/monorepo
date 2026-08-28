@@ -12,10 +12,11 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { NpcTile } from "@/components/tiles";
 import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
-import { formatDurationHuman } from "../../utils/format-duration";
 import { formatDateTime } from "../../utils/format-date";
-import { normalizeBonusBreakdown } from "../../utils/normalize-bonus-breakdown";
-import { formatPoints } from "./member-kills-view-model";
+import {
+  formatPoints,
+  getMemberKillScoringViewModel,
+} from "./member-kills-view-model";
 
 type MemberKillRowProps = {
   kill: EventMemberKill;
@@ -30,77 +31,13 @@ export const MemberKillRow = ({
 }: MemberKillRowProps) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
-  const point = kill.memberPoint;
-  const basePoints = point?.basePoints ?? 0;
-  const bonusBreakdown = normalizeBonusBreakdown(point?.bonusBreakdown);
-  const manualAdjustmentPoints = point?.manualAdjustmentPoints ?? 0;
-  const hasManualPointsAdjustment = manualAdjustmentPoints !== 0;
-  const autoTotalPoints = (point?.points ?? 0) - manualAdjustmentPoints;
-  const fallbackBonusPoints =
-    Math.round(Math.max(0, autoTotalPoints - basePoints) * 10_000) / 10_000;
-  const bonusPoints =
-    bonusBreakdown.length > 0
-      ? Math.round(
-          bonusBreakdown.reduce((sum, item) => sum + item.points, 0) * 10_000,
-        ) / 10_000
-      : fallbackBonusPoints;
-  const uncappedTotal = basePoints + bonusPoints;
-  const capReduction = Math.max(0, uncappedTotal - autoTotalPoints);
-  const trackingPercentage =
-    typeof point?.trackingDurationPercentage === "number"
-      ? `${Math.round(point.trackingDurationPercentage)}%`
-      : "—";
-  const trackingTime =
-    typeof point?.trackingDurationSeconds === "number" &&
-    point.trackingDurationSeconds >= 0
-      ? formatDurationHuman(point.trackingDurationSeconds)
-      : "—";
-  const scoringItems = [
-    {
-      label: t("events.kills.pointsTooltip.basePoints"),
-      value: formatPoints(basePoints),
-      valueClassName: "text-foreground",
-    },
-    ...(bonusBreakdown.length > 0
-      ? bonusBreakdown.map((bonus) => ({
-          label: t("events.kills.pointsTooltip.bonusItem", {
-            name:
-              bonus.ruleName ?? t("events.kills.pointsTooltip.unnamedBonus"),
-          }),
-          value: `+${formatPoints(bonus.points)}`,
-          valueClassName: "text-cyan-400",
-        }))
-      : bonusPoints > 0
-        ? [
-            {
-              label: t("events.kills.pointsTooltip.bonusTotal"),
-              value: `+${formatPoints(bonusPoints)}`,
-              valueClassName: "text-cyan-400",
-            },
-          ]
-        : []),
-    ...(capReduction > 0
-      ? [
-          {
-            label: t("events.kills.pointsTooltip.capReduction"),
-            value: `-${formatPoints(capReduction)}`,
-            valueClassName: "text-amber-400",
-          },
-        ]
-      : []),
-    ...(manualAdjustmentPoints !== 0
-      ? [
-          {
-            label: t("events.kills.pointsTooltip.manualAdjustment"),
-            value:
-              manualAdjustmentPoints > 0
-                ? `+${formatPoints(manualAdjustmentPoints)}`
-                : formatPoints(manualAdjustmentPoints),
-            valueClassName: "text-amber-400",
-          },
-        ]
-      : []),
-  ];
+  const {
+    point,
+    hasManualPointsAdjustment,
+    trackingPercentage,
+    trackingTime,
+    scoringItems,
+  } = getMemberKillScoringViewModel(kill, t);
 
   return (
     <Fragment>

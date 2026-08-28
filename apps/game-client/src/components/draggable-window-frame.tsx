@@ -288,33 +288,174 @@ const measureWindowContent = ({
   };
 };
 
-export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
-  children,
-  id,
-  actions,
-  title,
-  onClose,
-  variant: _variant = "small",
-  heightMode = "fixed",
-  widthMode = "fixed",
-  resizable = true,
-  minWidth = 242,
-  minHeight = 240,
-  maxWidth,
-  maxHeight,
-  maxContentHeight,
-  isMaxHeightAdjustmentArmed = false,
-  onMaxHeightAdjustmentArmedChange,
-  onMaxContentHeightChange,
-  onResolvedMaxContentHeightChange,
-  dynamicHeight = false,
-  closable = true,
-  disableTitle = false,
-  draggableContent = false,
-  contentClassName,
-  animationPhase,
-  onWindowAnimationEnd,
+const resolveDraggableWindowFrameProps = (
+  props: DraggableWindowFrameProps,
+) => ({
+  ...props,
+  closable: props.closable ?? true,
+  disableTitle: props.disableTitle ?? false,
+  draggableContent: props.draggableContent ?? false,
+  dynamicHeight: props.dynamicHeight ?? false,
+  heightMode: props.heightMode ?? "fixed",
+  isMaxHeightAdjustmentArmed: props.isMaxHeightAdjustmentArmed ?? false,
+  minHeight: props.minHeight ?? 240,
+  minWidth: props.minWidth ?? 242,
+  resizable: props.resizable ?? true,
+  widthMode: props.widthMode ?? "fixed",
+});
+
+const resolveWindowResizeState = ({
+  contentChromeHeight,
+  heightMode,
+  isMaxHeightAdjustmentArmed,
+  isResizing,
+  minHeight,
+  previewMaxContentHeight,
+  resizable,
+  widthMode,
+}: {
+  contentChromeHeight: number;
+  heightMode: NonNullable<DraggableWindowFrameProps["heightMode"]>;
+  isMaxHeightAdjustmentArmed: boolean;
+  isResizing: boolean;
+  minHeight: number;
+  previewMaxContentHeight: number | null;
+  resizable: boolean;
+  widthMode: NonNullable<DraggableWindowFrameProps["widthMode"]>;
 }) => {
+  const isMeasuredAutoHeightMode = heightMode === "auto-up-to-max";
+  const isCssAutoHeightMode = heightMode === "css-auto-up-to-max";
+  const isAutoHeightMode = isMeasuredAutoHeightMode || isCssAutoHeightMode;
+  const isAutoWidthMode = widthMode === "fit-content";
+  const isAdjustingMaxHeight =
+    isAutoHeightMode &&
+    isMaxHeightAdjustmentArmed &&
+    isResizing &&
+    previewMaxContentHeight !== null;
+
+  return {
+    allowsHorizontalResize: resizable && !isAutoWidthMode,
+    allowsVerticalResize:
+      resizable && (!isAutoHeightMode || isMaxHeightAdjustmentArmed),
+    isAdjustingMaxHeight,
+    isAutoHeightMode,
+    isAutoWidthMode,
+    isCssAutoHeightMode,
+    isMeasuredAutoHeightMode,
+    previewWindowHeight:
+      previewMaxContentHeight === null
+        ? null
+        : Math.max(minHeight, contentChromeHeight + previewMaxContentHeight),
+  };
+};
+
+const resolveWindowFrameMeasurements = ({
+  autoHeight,
+  autoWidth,
+  contentMeasurements,
+  dynamicHeight,
+  isAdjustingMaxHeight,
+  isAutoHeightMode,
+  isAutoWidthMode,
+  isCssAutoHeightMode,
+  localSize,
+  previewMaxContentHeight,
+  previewWindowHeight,
+  resolvedMaxContentHeight,
+}: {
+  autoHeight: number;
+  autoWidth: number;
+  contentMeasurements: {
+    measuredContentHeight: number;
+    renderedContentHeight: number;
+    windowChromeHeight: number;
+  };
+  dynamicHeight: boolean;
+  isAdjustingMaxHeight: boolean;
+  isAutoHeightMode: boolean;
+  isAutoWidthMode: boolean;
+  isCssAutoHeightMode: boolean;
+  localSize: { height: number; width: number };
+  previewMaxContentHeight: number | null;
+  previewWindowHeight: number | null;
+  resolvedMaxContentHeight?: number;
+}) => {
+  let effectiveHeight = isAutoHeightMode ? autoHeight : localSize.height;
+  if (isAdjustingMaxHeight && previewWindowHeight !== null) {
+    effectiveHeight = previewWindowHeight;
+  }
+  const effectiveWidth = isAutoWidthMode ? autoWidth : localSize.width;
+  const autoCssHeight =
+    isCssAutoHeightMode && isAdjustingMaxHeight ? effectiveHeight : "auto";
+  const style = {
+    width: effectiveWidth,
+    height:
+      dynamicHeight || isCssAutoHeightMode ? autoCssHeight : effectiveHeight,
+  };
+  const cssMaxContentHeight = isCssAutoHeightMode
+    ? (previewMaxContentHeight ?? resolvedMaxContentHeight)
+    : undefined;
+  const contentHeight = isAdjustingMaxHeight
+    ? (previewMaxContentHeight ?? 0)
+    : contentMeasurements.renderedContentHeight;
+  const previewShadeOffset =
+    previewMaxContentHeight === null
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            contentHeight - MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
+            contentMeasurements.measuredContentHeight,
+          ),
+        );
+  const previewBoundaryOffset =
+    previewMaxContentHeight === null
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            contentHeight - MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
+            previewMaxContentHeight - MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
+          ),
+        );
+
+  return {
+    cssMaxContentHeight,
+    effectiveHeight,
+    effectiveWidth,
+    previewBoundaryOffset,
+    previewShadeOffset,
+    style,
+  };
+};
+
+export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
+  const {
+    children,
+    id,
+    actions,
+    title,
+    onClose,
+    heightMode,
+    widthMode,
+    resizable,
+    minWidth,
+    minHeight,
+    maxWidth,
+    maxHeight,
+    maxContentHeight,
+    isMaxHeightAdjustmentArmed,
+    onMaxHeightAdjustmentArmedChange,
+    onMaxContentHeightChange,
+    onResolvedMaxContentHeightChange,
+    dynamicHeight,
+    closable,
+    disableTitle,
+    draggableContent,
+    contentClassName,
+    animationPhase,
+    onWindowAnimationEnd,
+  } = resolveDraggableWindowFrameProps(props);
   const { opacity, rawDefaultPosition, defaultSize, isLocked } =
     useWindowsStore(
       useShallow((state) => ({
@@ -360,39 +501,47 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const windowBodyRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
-  const isMeasuredAutoHeightMode = heightMode === "auto-up-to-max";
-  const isCssAutoHeightMode = heightMode === "css-auto-up-to-max";
-  const isAutoHeightMode = isMeasuredAutoHeightMode || isCssAutoHeightMode;
-  const isAutoWidthMode = widthMode === "fit-content";
   const resolvedMaxContentHeight = sanitizeMaxContentHeight(maxContentHeight);
-  const allowsHorizontalResize = resizable && !isAutoWidthMode;
-  const allowsVerticalResize =
-    resizable && (!isAutoHeightMode || isMaxHeightAdjustmentArmed);
-  const isAdjustingMaxHeight =
-    isAutoHeightMode &&
-    isMaxHeightAdjustmentArmed &&
-    isResizing &&
-    previewMaxContentHeight !== null;
-  const previewWindowHeight =
-    previewMaxContentHeight === null
-      ? null
-      : Math.max(
-          minHeight,
-          contentMeasurements.windowChromeHeight + previewMaxContentHeight,
-        );
-  const getEffectiveHeight = () => {
-    if (!isAutoHeightMode) {
-      return localSize.height;
-    }
-
-    if (isAdjustingMaxHeight && previewWindowHeight !== null) {
-      return previewWindowHeight;
-    }
-
-    return autoHeight;
-  };
-  const effectiveHeight = getEffectiveHeight();
-  const effectiveWidth = isAutoWidthMode ? autoWidth : localSize.width;
+  const {
+    allowsHorizontalResize,
+    allowsVerticalResize,
+    isAdjustingMaxHeight,
+    isAutoHeightMode,
+    isAutoWidthMode,
+    isCssAutoHeightMode,
+    isMeasuredAutoHeightMode,
+    previewWindowHeight,
+  } = resolveWindowResizeState({
+    contentChromeHeight: contentMeasurements.windowChromeHeight,
+    heightMode,
+    isMaxHeightAdjustmentArmed,
+    isResizing,
+    minHeight,
+    previewMaxContentHeight,
+    resizable,
+    widthMode,
+  });
+  const {
+    cssMaxContentHeight,
+    effectiveHeight,
+    effectiveWidth,
+    previewBoundaryOffset,
+    previewShadeOffset,
+    style,
+  } = resolveWindowFrameMeasurements({
+    autoHeight,
+    autoWidth,
+    contentMeasurements,
+    dynamicHeight,
+    isAdjustingMaxHeight,
+    isAutoHeightMode,
+    isAutoWidthMode,
+    isCssAutoHeightMode,
+    localSize,
+    previewMaxContentHeight,
+    previewWindowHeight,
+    resolvedMaxContentHeight,
+  });
 
   useEffect(() => {
     const windowBody = windowBodyRef.current;
@@ -891,47 +1040,6 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = ({
     minHeight,
     onResolvedMaxContentHeightChange,
   ]);
-
-  let style: { width: number; height: number | "auto" } = {
-    width: effectiveWidth,
-    height: effectiveHeight,
-  };
-
-  if (dynamicHeight || isCssAutoHeightMode) {
-    style = {
-      width: effectiveWidth,
-      height:
-        isCssAutoHeightMode && isAdjustingMaxHeight ? effectiveHeight : "auto",
-    };
-  }
-
-  const cssMaxContentHeight = isCssAutoHeightMode
-    ? (previewMaxContentHeight ?? resolvedMaxContentHeight)
-    : undefined;
-  const contentHeight = isAdjustingMaxHeight
-    ? (previewMaxContentHeight ?? 0)
-    : contentMeasurements.renderedContentHeight;
-  const measuredContentHeight = contentMeasurements.measuredContentHeight;
-  const previewShadeOffset =
-    previewMaxContentHeight === null
-      ? 0
-      : Math.max(
-          0,
-          Math.min(
-            contentHeight - MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
-            measuredContentHeight,
-          ),
-        );
-  const previewBoundaryOffset =
-    previewMaxContentHeight === null
-      ? 0
-      : Math.max(
-          0,
-          Math.min(
-            contentHeight - MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
-            previewMaxContentHeight - MAX_HEIGHT_PREVIEW_LINE_HEIGHT,
-          ),
-        );
 
   const handleLockToggle = useCallback(() => {
     setLockedInStore(id, !isLocked);

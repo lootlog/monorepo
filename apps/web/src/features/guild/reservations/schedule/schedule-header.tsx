@@ -32,6 +32,32 @@ type ScheduleHeaderProps = {
   onAddReservation: () => void;
 };
 
+const compactValue = <Value,>(
+  isCompact: boolean,
+  compactValue: Value,
+  regularValue: Value,
+) => (isCompact ? compactValue : regularValue);
+
+const trueOrUndefined = (value: boolean) => (value ? true : undefined);
+
+const getScheduleDateLabels = (date: Date, isCompact: boolean) => {
+  const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 6);
+  return {
+    label: compactValue(
+      isCompact,
+      format(date, "EEE, d MMM", { locale: pl }),
+      `${format(weekStart, "d MMM", { locale: pl })} – ${format(weekEnd, "d MMM yyyy", { locale: pl })}`,
+    ),
+    shortCompactLabel: format(date, "d MMM", { locale: pl }),
+    compactTitle: compactValue(
+      isCompact,
+      format(date, "EEEE, d MMMM yyyy", { locale: pl }),
+      undefined,
+    ),
+  };
+};
+
 export function ScheduleHeader({
   date,
   isCompact,
@@ -48,37 +74,42 @@ export function ScheduleHeader({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [infoOpen, setInfoOpen] = useState(false);
-  const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-  const weekEnd = addDays(weekStart, 6);
-  const label = isCompact
-    ? format(date, "EEE, d MMM", { locale: pl })
-    : `${format(weekStart, "d MMM", { locale: pl })} – ${format(weekEnd, "d MMM yyyy", { locale: pl })}`;
-  const shortCompactLabel = format(date, "d MMM", { locale: pl });
-  const nearestFreeSlotLabel = isFindingNearestFreeSlot
-    ? t("reservations.schedule.header.findingNearestSlot")
-    : t("reservations.schedule.header.findNearestSlot");
+  const { label, shortCompactLabel, compactTitle } = getScheduleDateLabels(
+    date,
+    isCompact,
+  );
+  const nearestFreeSlotLabel = compactValue(
+    isFindingNearestFreeSlot,
+    t("reservations.schedule.header.findingNearestSlot"),
+    t("reservations.schedule.header.findNearestSlot"),
+  );
+  const iconButtonClassName = compactValue(isCompact, "size-11", "size-8");
+  const compactTitleFor = (key: string) =>
+    compactValue(isCompact, t(key), undefined);
   const actionToolbar = (
     <div
       role="toolbar"
       aria-label={t("reservations.schedule.header.actions")}
       className={cn(
         "flex items-center gap-1",
-        isCompact
-          ? "pointer-events-auto rounded-xl border bg-background p-1 shadow-lg"
-          : "ml-auto",
+        compactValue(
+          isCompact,
+          "pointer-events-auto rounded-xl border bg-background p-1 shadow-lg",
+          "ml-auto",
+        ),
       )}
     >
       <Button
         type="button"
-        variant={isCompact ? "ghost" : "outline"}
-        size={isCompact ? "icon" : "sm"}
-        className={cn(isCompact && "size-11")}
+        variant={compactValue(isCompact, "ghost", "outline")}
+        size={compactValue(isCompact, "icon", "sm")}
+        className={compactValue(isCompact, "size-11", undefined)}
         onClick={onToday}
         aria-label={t("reservations.schedule.header.today")}
-        title={isCompact ? t("reservations.schedule.header.today") : undefined}
+        title={compactTitleFor("reservations.schedule.header.today")}
       >
         <CalendarDays />
-        <span className={cn(isCompact && "sr-only")}>
+        <span className={compactValue(isCompact, "sr-only", undefined)}>
           {t("reservations.schedule.header.today")}
         </span>
       </Button>
@@ -86,10 +117,10 @@ export function ScheduleHeader({
         type="button"
         variant="ghost"
         size="icon"
-        className={cn(isCompact ? "size-11" : "size-8")}
+        className={iconButtonClassName}
         disabled={isFindingNearestFreeSlot}
         onClick={onFindNearestFreeSlot}
-        aria-busy={isFindingNearestFreeSlot || undefined}
+        aria-busy={trueOrUndefined(isFindingNearestFreeSlot)}
         aria-label={nearestFreeSlotLabel}
         title={nearestFreeSlotLabel}
       >
@@ -103,10 +134,10 @@ export function ScheduleHeader({
         type="button"
         variant="ghost"
         size="icon"
-        className={cn(isCompact ? "size-11" : "size-8")}
+        className={iconButtonClassName}
         onClick={() => setInfoOpen(true)}
         aria-label={t("reservations.schedule.header.info")}
-        title={isCompact ? t("reservations.schedule.header.info") : undefined}
+        title={compactTitleFor("reservations.schedule.header.info")}
       >
         <Info />
       </Button>
@@ -115,31 +146,27 @@ export function ScheduleHeader({
           type="button"
           variant="ghost"
           size="icon"
-          className={cn(isCompact ? "size-11" : "size-8")}
+          className={iconButtonClassName}
           disabled={!settingsHref}
           onClick={() => settingsHref && navigate({ to: settingsHref })}
           aria-label={t("reservations.schedule.header.settings")}
-          title={
-            isCompact ? t("reservations.schedule.header.settings") : undefined
-          }
+          title={compactTitleFor("reservations.schedule.header.settings")}
         >
           <Settings />
         </Button>
       )}
       <Button
         type="button"
-        size={isCompact ? "icon" : "sm"}
-        className={cn(isCompact && "size-11")}
+        size={compactValue(isCompact, "icon", "sm")}
+        className={compactValue(isCompact, "size-11", undefined)}
         onClick={onAddReservation}
         aria-label={t("reservations.schedule.header.addReservation")}
-        title={
-          isCompact
-            ? t("reservations.schedule.header.addReservation")
-            : undefined
-        }
+        title={compactTitleFor("reservations.schedule.header.addReservation")}
       >
         <Plus />
-        <span className={cn(isCompact ? "sr-only" : "hidden sm:inline")}>
+        <span
+          className={compactValue(isCompact, "sr-only", "hidden sm:inline")}
+        >
           {t("reservations.schedule.header.addReservation")}
         </span>
       </Button>
@@ -151,36 +178,36 @@ export function ScheduleHeader({
       <header
         className={cn(
           "shrink-0 border-b bg-background",
-          isCompact
-            ? "flex items-center gap-1 px-2 py-1"
-            : "flex items-center gap-2 px-3 py-2",
+          compactValue(
+            isCompact,
+            "flex items-center gap-1 px-2 py-1",
+            "flex items-center gap-2 px-3 py-2",
+          ),
         )}
       >
         <div
           data-slot="schedule-date-navigation"
           className={cn(
             "items-center gap-1",
-            isCompact
-              ? "grid w-full min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_2.75rem]"
-              : "flex",
+            compactValue(
+              isCompact,
+              "grid w-full min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_2.75rem]",
+              "flex",
+            ),
           )}
         >
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className={cn(isCompact ? "size-11" : "size-8")}
+            className={iconButtonClassName}
             onClick={onPrevious}
-            title={
-              isCompact
-                ? t("reservations.schedule.header.previousDay")
-                : undefined
-            }
-            aria-label={
-              isCompact
-                ? t("reservations.schedule.header.previousDay")
-                : t("reservations.schedule.header.previousWeek")
-            }
+            title={compactTitleFor("reservations.schedule.header.previousDay")}
+            aria-label={compactValue(
+              isCompact,
+              t("reservations.schedule.header.previousDay"),
+              t("reservations.schedule.header.previousWeek"),
+            )}
           >
             <ChevronLeft />
           </Button>
@@ -188,15 +215,21 @@ export function ScheduleHeader({
             aria-live="polite"
             className={cn(
               "min-w-0 truncate text-sm font-semibold capitalize",
-              isCompact ? "text-center" : "sm:min-w-52 sm:text-center",
+              compactValue(
+                isCompact,
+                "text-center",
+                "sm:min-w-52 sm:text-center",
+              ),
             )}
-            title={
-              isCompact
-                ? format(date, "EEEE, d MMMM yyyy", { locale: pl })
-                : undefined
-            }
+            title={compactTitle}
           >
-            <span className={cn(isCompact && "max-[400px]:hidden")}>
+            <span
+              className={compactValue(
+                isCompact,
+                "max-[400px]:hidden",
+                undefined,
+              )}
+            >
               {label}
             </span>
             {isCompact && (
@@ -209,16 +242,14 @@ export function ScheduleHeader({
             type="button"
             variant="ghost"
             size="icon"
-            className={cn(isCompact ? "size-11" : "size-8")}
+            className={iconButtonClassName}
             onClick={onNext}
-            title={
-              isCompact ? t("reservations.schedule.header.nextDay") : undefined
-            }
-            aria-label={
-              isCompact
-                ? t("reservations.schedule.header.nextDay")
-                : t("reservations.schedule.header.nextWeek")
-            }
+            title={compactTitleFor("reservations.schedule.header.nextDay")}
+            aria-label={compactValue(
+              isCompact,
+              t("reservations.schedule.header.nextDay"),
+              t("reservations.schedule.header.nextWeek"),
+            )}
           >
             <ChevronRight />
           </Button>

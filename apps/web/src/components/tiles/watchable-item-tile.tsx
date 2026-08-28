@@ -38,6 +38,56 @@ type WatchableItemTileProps = ItemTileProps & {
   selectedItemNames?: string[];
 };
 
+const getWatchableItemState = ({
+  currentGuildId,
+  hasActiveDm,
+  isQuickAddPending,
+  isRemovePending,
+  itemId,
+  state,
+  watchContext,
+  watchedItemsCount,
+  hasWatchedItem,
+  isItemWatchedInScope,
+}: {
+  currentGuildId: string | undefined;
+  hasActiveDm: boolean;
+  isQuickAddPending: boolean;
+  isRemovePending: boolean;
+  itemId: number;
+  state: "error" | "loading" | "ready";
+  watchContext: WatchedItemScope;
+  watchedItemsCount: number;
+  hasWatchedItem: (itemId: number, world: string) => boolean;
+  isItemWatchedInScope: (itemId: number, scope: WatchedItemScope) => boolean;
+}) => {
+  const effectiveGuildId = watchContext.guildId || currentGuildId || "";
+  const effectiveWatchContext = {
+    guildId: effectiveGuildId,
+    world: watchContext.world,
+  };
+  const isReady = state === "ready";
+  const isWatched =
+    isReady &&
+    effectiveGuildId.length > 0 &&
+    isItemWatchedInScope(itemId, effectiveWatchContext);
+  const wouldCreate = isReady && !hasWatchedItem(itemId, watchContext.world);
+  const limitReached =
+    isReady && watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT && wouldCreate;
+
+  return {
+    effectiveGuildId,
+    effectiveWatchContext,
+    isWatchedItemLimitReached: limitReached,
+    isWatchedInScope: isWatched,
+    showAddAction: isReady && hasActiveDm && !isWatched,
+    showDmRequired: isReady && !hasActiveDm,
+    showPending: state === "loading" || isQuickAddPending || isRemovePending,
+    showRemoveAction: isReady && hasActiveDm && isWatched,
+    wouldCreateNewWatchedItem: wouldCreate,
+  };
+};
+
 export const WatchableItemTile = ({
   item,
   color,
@@ -70,23 +120,29 @@ export const WatchableItemTile = ({
       },
     },
   });
-  const effectiveGuildId = watchContext.guildId || currentGuildId || "";
-  const effectiveWatchContext = {
-    guildId: effectiveGuildId,
-    world: watchContext.world,
-  };
-  const isWatchedInScope =
-    state === "ready" &&
-    effectiveGuildId.length > 0 &&
-    isItemWatchedInScope(item.id, effectiveWatchContext);
-  const wouldCreateNewWatchedItem =
-    state === "ready" && !hasWatchedItem(item.id, watchContext.world);
-  const isWatchedItemLimitReached =
-    state === "ready" &&
-    watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT &&
-    wouldCreateNewWatchedItem;
-
   const isRemovePending = deleteWatchedItem.isPending;
+  const {
+    effectiveGuildId,
+    effectiveWatchContext,
+    isWatchedItemLimitReached,
+    isWatchedInScope,
+    showAddAction,
+    showDmRequired,
+    showPending,
+    showRemoveAction,
+    wouldCreateNewWatchedItem,
+  } = getWatchableItemState({
+    currentGuildId,
+    hasActiveDm,
+    hasWatchedItem,
+    isItemWatchedInScope,
+    isQuickAddPending,
+    isRemovePending,
+    itemId: item.id,
+    state,
+    watchContext,
+    watchedItemsCount,
+  });
   const formattedItemHid = formatItemHid(item.hid, watchContext.world);
   const hasItemFilter = selectedItemNames.length > 0;
   const isItemSelected = selectedItemNames.includes(item.name);
@@ -252,7 +308,7 @@ export const WatchableItemTile = ({
           {t("loots.list.itemActions.showLoots")}
         </ContextMenuItem>
         <ContextMenuSeparator />
-        {state === "loading" || isQuickAddPending || isRemovePending ? (
+        {showPending ? (
           <ContextMenuItem disabled className="gap-2">
             <LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />
             {t("settings.userNotifications.quickAdd.loading")}
@@ -269,7 +325,7 @@ export const WatchableItemTile = ({
             </ContextMenuItem>
           </>
         ) : null}
-        {state === "ready" && !hasActiveDm ? (
+        {showDmRequired ? (
           <>
             <ContextMenuItem disabled>
               {t("settings.userNotifications.quickAdd.dmRequired")}
@@ -280,7 +336,7 @@ export const WatchableItemTile = ({
             </ContextMenuItem>
           </>
         ) : null}
-        {state === "ready" && hasActiveDm && isWatchedInScope ? (
+        {showRemoveAction ? (
           <>
             <ContextMenuItem
               className="gap-2"
@@ -297,7 +353,7 @@ export const WatchableItemTile = ({
             </ContextMenuItem>
           </>
         ) : null}
-        {state === "ready" && hasActiveDm && !isWatchedInScope ? (
+        {showAddAction ? (
           isWatchedItemLimitReached ? (
             <>
               <ContextMenuItem disabled>

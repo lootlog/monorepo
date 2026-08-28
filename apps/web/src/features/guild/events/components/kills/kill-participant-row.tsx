@@ -39,19 +39,12 @@ interface KillParticipantRowProps {
   isEditPending?: boolean;
 }
 
-export const KillParticipantRow = ({
-  participant,
-  rank,
-  isExpanded,
-  onToggle,
-  guildId,
-  eventId,
-  canEdit,
-  onEditPoints,
-  isEditPending,
-}: KillParticipantRowProps) => {
-  const { t } = useTranslation();
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+const buildParticipantScoringView = (
+  participant: KillDetailParticipant,
+  t: Translate,
+) => {
   const aggregatedMaps = participant.mapData
     ? aggregateMapData(participant.mapData)
     : [];
@@ -76,30 +69,6 @@ export const KillParticipantRow = ({
     0,
     participant.basePoints + bonusPoints - autoTotalPoints,
   );
-  const trackingDuration =
-    typeof participant.trackingDurationSeconds === "number"
-      ? formatDurationHuman(participant.trackingDurationSeconds)
-      : "—";
-  const trackingPercentage =
-    typeof participant.trackingDurationPercentage === "number"
-      ? `${Math.round(participant.trackingDurationPercentage)}%`
-      : "—";
-  const avatarUrl = getDiscordAvatarUrl(
-    participant.member.userId,
-    participant.member.avatar,
-    32,
-  );
-  const roleCssColor = getCustomRoleCssColor(
-    participant.member.roles?.[0]?.color,
-  );
-  const memberLinkParams =
-    guildId && eventId
-      ? {
-          guildId,
-          eventId,
-          memberId: String(participant.member.id),
-        }
-      : null;
   const scoringItems = [
     {
       label: t("events.kills.pointsTooltip.basePoints"),
@@ -142,6 +111,59 @@ export const KillParticipantRow = ({
       : []),
   ];
 
+  return {
+    aggregatedMaps,
+    hasManualAdjustment,
+    scoringItems,
+    totalAfkSeconds,
+    trackingDuration:
+      typeof participant.trackingDurationSeconds === "number"
+        ? formatDurationHuman(participant.trackingDurationSeconds)
+        : "—",
+    trackingPercentage:
+      typeof participant.trackingDurationPercentage === "number"
+        ? `${Math.round(participant.trackingDurationPercentage)}%`
+        : "—",
+  };
+};
+
+export const KillParticipantRow = ({
+  participant,
+  rank,
+  isExpanded,
+  onToggle,
+  guildId,
+  eventId,
+  canEdit,
+  onEditPoints,
+  isEditPending,
+}: KillParticipantRowProps) => {
+  const { t } = useTranslation();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const {
+    aggregatedMaps,
+    hasManualAdjustment,
+    scoringItems,
+    totalAfkSeconds,
+    trackingDuration,
+    trackingPercentage,
+  } = buildParticipantScoringView(participant, t);
+  const avatarUrl = getDiscordAvatarUrl(
+    participant.member.userId,
+    participant.member.avatar,
+    32,
+  );
+  const roleCssColor = getCustomRoleCssColor(
+    participant.member.roles?.[0]?.color,
+  );
+  const memberLinkParams =
+    guildId && eventId
+      ? {
+          guildId,
+          eventId,
+          memberId: String(participant.member.id),
+        }
+      : null;
   const handleDialogSubmit = async ({
     pointsDelta,
     comment,

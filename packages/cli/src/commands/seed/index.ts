@@ -69,6 +69,12 @@ interface SeedOptions {
   count?: number;
 }
 
+type SeedSubcommandHandler = (options: SeedOptions) => Promise<void>;
+
+const DEFAULT_ITEMS_OUTPUT = "./packages/cli/src/mocks/data/items.json";
+const DEFAULT_NPCS_OUTPUT = "./packages/cli/src/mocks/data/npcs.json";
+const DEFAULT_PLAYERS_OUTPUT = "./packages/cli/src/mocks/data/players.json";
+
 const parseOptions = (args: string[]): SeedOptions => {
   const options: SeedOptions = {};
   const takeNextArg = (index: number): string | undefined => args[index + 1];
@@ -124,6 +130,136 @@ const parseOptions = (args: string[]): SeedOptions => {
   return options;
 };
 
+const scrapeItemsCommand: SeedSubcommandHandler = async (options) => {
+  await scrapeItems(options.output ?? DEFAULT_ITEMS_OUTPUT, options.force);
+};
+
+const scrapeNpcsCommand: SeedSubcommandHandler = async (options) => {
+  await scrapeNpcs(options.output ?? DEFAULT_NPCS_OUTPUT, options.force);
+};
+
+const scrapeAllCommand: SeedSubcommandHandler = async (options) => {
+  console.log(chalk.blue("🔄 Starting complete scraping process...\n"));
+
+  await scrapeItems(options.itemsOutput ?? DEFAULT_ITEMS_OUTPUT, options.force);
+  console.log();
+
+  await scrapeNpcs(options.npcsOutput ?? DEFAULT_NPCS_OUTPUT, options.force);
+  console.log();
+
+  console.log(chalk.green("✅ Scraping completed successfully!"));
+};
+
+const generatePlayersFile = async (
+  count: number,
+  output: string,
+  force: boolean | undefined,
+): Promise<boolean> => {
+  const outputPath = path.resolve(output);
+  const outputExists = await fileExists(outputPath);
+
+  if (outputExists && !force) {
+    console.log(
+      chalk.yellow(
+        `⏭️  Players file already exists at ${outputPath}. Use --force to regenerate.`,
+      ),
+    );
+    return false;
+  }
+
+  console.log(chalk.blue(`Generating ${count} players...`));
+  const players = generatePlayers(count);
+  await writeFile(outputPath, JSON.stringify(players, null, 2));
+  console.log(
+    chalk.green(
+      `✅ Generated ${players.length} players saved to ${outputPath}`,
+    ),
+  );
+  return true;
+};
+
+const generatePlayersCommand: SeedSubcommandHandler = async (options) => {
+  await generatePlayersFile(
+    options.count ?? options.players ?? 1000,
+    options.output ?? DEFAULT_PLAYERS_OUTPUT,
+    options.force,
+  );
+};
+
+const runSeedCommand: SeedSubcommandHandler = async (options) => {
+  await seed({
+    guildsCount: options.guilds,
+    lootsCount: options.loots,
+    battlesCount: options.battles,
+    playersCount: options.players,
+    clean: options.clean !== false,
+  });
+};
+
+const scrapeSetupData = async (options: SeedOptions): Promise<void> => {
+  if (options.skipScrape) {
+    console.log(
+      chalk.gray("⏭️  Step 1: Skipped scraping (using existing data)\n"),
+    );
+    return;
+  }
+
+  console.log(chalk.blue("📥 Step 1: Scraping data from margoworld.pl"));
+  await scrapeItems(DEFAULT_ITEMS_OUTPUT, options.force);
+  console.log();
+  await scrapeNpcs(DEFAULT_NPCS_OUTPUT, options.force);
+  console.log();
+};
+
+const generateSetupPlayers = async (
+  playerCount: number,
+  force: boolean | undefined,
+): Promise<void> => {
+  console.log(chalk.blue("👥 Step 2: Generating players"));
+  const playersPath = path.resolve(DEFAULT_PLAYERS_OUTPUT);
+
+  if ((await fileExists(playersPath)) && !force) {
+    console.log(
+      chalk.gray(
+        `⏭️  Players file already exists. Use --force to regenerate.\n`,
+      ),
+    );
+    return;
+  }
+
+  const players = generatePlayers(playerCount);
+  await writeFile(playersPath, JSON.stringify(players, null, 2));
+  console.log(chalk.green(`✅ Generated ${players.length} players\n`));
+};
+
+const setupCommand: SeedSubcommandHandler = async (options) => {
+  console.log(chalk.blue("🚀 Starting complete setup...\n"));
+  await scrapeSetupData(options);
+
+  const playerCount = options.players ?? 1000;
+  await generateSetupPlayers(playerCount, options.force);
+
+  console.log(chalk.blue("🌱 Step 3: Seeding database"));
+  await seed({
+    guildsCount: options.guilds ?? 5,
+    lootsCount: options.loots ?? 5000,
+    battlesCount: options.battles ?? 1000,
+    playersCount: playerCount,
+    clean: true,
+  });
+
+  console.log(chalk.green("\n✅ Complete setup finished successfully!"));
+};
+
+const SEED_SUBCOMMAND_HANDLERS: Record<string, SeedSubcommandHandler> = {
+  "scrape:items": scrapeItemsCommand,
+  "scrape:npcs": scrapeNpcsCommand,
+  "scrape:all": scrapeAllCommand,
+  "generate:players": generatePlayersCommand,
+  run: runSeedCommand,
+  setup: setupCommand,
+};
+
 export const seedCommand = async (args: string[]): Promise<void> => {
   if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
     displaySeedHelp();
@@ -132,146 +268,18 @@ export const seedCommand = async (args: string[]): Promise<void> => {
 
   const [subcommand, ...rest] = args;
   const options = parseOptions(rest);
+  const handler = SEED_SUBCOMMAND_HANDLERS[subcommand];
+
+  if (!handler) {
+    console.error(chalk.red(`\n❌ Unknown subcommand: ${subcommand}\n`));
+    console.log(
+      chalk.gray(`Run 'pnpm seed --help' to see available subcommands.\n`),
+    );
+    process.exit(1);
+  }
 
   try {
-    switch (subcommand) {
-      case "scrape:items": {
-        const output =
-          options.output ?? "./packages/cli/src/mocks/data/items.json";
-        await scrapeItems(output, options.force);
-        break;
-      }
-
-      case "scrape:npcs": {
-        const output =
-          options.output ?? "./packages/cli/src/mocks/data/npcs.json";
-        await scrapeNpcs(output, options.force);
-        break;
-      }
-
-      case "scrape:all": {
-        console.log(chalk.blue("🔄 Starting complete scraping process...\n"));
-
-        const itemsOutput =
-          options.itemsOutput ?? "./packages/cli/src/mocks/data/items.json";
-        const npcsOutput =
-          options.npcsOutput ?? "./packages/cli/src/mocks/data/npcs.json";
-
-        await scrapeItems(itemsOutput, options.force);
-        console.log();
-
-        await scrapeNpcs(npcsOutput, options.force);
-        console.log();
-
-        console.log(chalk.green("✅ Scraping completed successfully!"));
-        break;
-      }
-
-      case "generate:players": {
-        const count = options.count ?? options.players ?? 1000;
-        const output =
-          options.output ?? "./packages/cli/src/mocks/data/players.json";
-        const outputPath = path.resolve(output);
-
-        const outputExists = await fileExists(outputPath);
-
-        if (outputExists && !options.force) {
-          console.log(
-            chalk.yellow(
-              `⏭️  Players file already exists at ${outputPath}. Use --force to regenerate.`,
-            ),
-          );
-          break;
-        }
-
-        console.log(chalk.blue(`Generating ${count} players...`));
-
-        const players = generatePlayers(count);
-        await writeFile(outputPath, JSON.stringify(players, null, 2));
-
-        console.log(
-          chalk.green(
-            `✅ Generated ${players.length} players saved to ${outputPath}`,
-          ),
-        );
-        break;
-      }
-
-      case "run": {
-        await seed({
-          guildsCount: options.guilds,
-          lootsCount: options.loots,
-          battlesCount: options.battles,
-          playersCount: options.players,
-          clean: options.clean !== false,
-        });
-        break;
-      }
-
-      case "setup": {
-        console.log(chalk.blue("🚀 Starting complete setup...\n"));
-
-        if (!options.skipScrape) {
-          console.log(
-            chalk.blue("📥 Step 1: Scraping data from margoworld.pl"),
-          );
-          await scrapeItems(
-            "./packages/cli/src/mocks/data/items.json",
-            options.force,
-          );
-          console.log();
-
-          await scrapeNpcs(
-            "./packages/cli/src/mocks/data/npcs.json",
-            options.force,
-          );
-          console.log();
-        } else {
-          console.log(
-            chalk.gray("⏭️  Step 1: Skipped scraping (using existing data)\n"),
-          );
-        }
-
-        console.log(chalk.blue("👥 Step 2: Generating players"));
-        const playerCount = options.players ?? 1000;
-        const playersPath = path.resolve(
-          "./packages/cli/src/mocks/data/players.json",
-        );
-
-        const playersFileExists = await fileExists(playersPath);
-
-        if (playersFileExists && !options.force) {
-          console.log(
-            chalk.gray(
-              `⏭️  Players file already exists. Use --force to regenerate.\n`,
-            ),
-          );
-        } else {
-          const players = generatePlayers(playerCount);
-          await writeFile(playersPath, JSON.stringify(players, null, 2));
-          console.log(chalk.green(`✅ Generated ${players.length} players\n`));
-        }
-
-        console.log(chalk.blue("🌱 Step 3: Seeding database"));
-        await seed({
-          guildsCount: options.guilds ?? 5,
-          lootsCount: options.loots ?? 5000,
-          battlesCount: options.battles ?? 1000,
-          playersCount: playerCount,
-          clean: true,
-        });
-
-        console.log(chalk.green("\n✅ Complete setup finished successfully!"));
-        break;
-      }
-
-      default:
-        console.error(chalk.red(`\n❌ Unknown subcommand: ${subcommand}\n`));
-        console.log(
-          chalk.gray(`Run 'pnpm seed --help' to see available subcommands.\n`),
-        );
-        process.exit(1);
-    }
+    await handler(options);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(chalk.red(`\n❌ Error: ${message}\n`));

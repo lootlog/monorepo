@@ -24,6 +24,26 @@ import { useTranslation } from "react-i18next";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
 
+const getServerVisibilityViewState = (
+  isLoading: boolean,
+  loadError: unknown,
+  guildCount: number,
+) => ({
+  showEmpty: !isLoading && !loadError && guildCount === 0,
+  showGuilds: !isLoading && !loadError && guildCount > 0,
+  showLoadError: !isLoading && Boolean(loadError),
+});
+
+const showPreferencesSaved = ({
+  isError,
+  isPending,
+  isSuccess,
+}: {
+  isError: boolean;
+  isPending: boolean;
+  isSuccess: boolean;
+}) => isSuccess && !isPending && !isError;
+
 export const ServerVisibilitySettings = () => {
   const { t } = useTranslation();
   const guildsQuery = useUsersControllerGetCurrentUserGuilds();
@@ -52,6 +72,12 @@ export const ServerVisibilitySettings = () => {
   const accessibleGuildIdSet = new Set(orderedGuilds.map((guild) => guild.id));
   const isLoading = guildsQuery.isLoading || preferencesQuery.isLoading;
   const loadError = guildsQuery.error ?? preferencesQuery.error;
+  const { showEmpty, showGuilds, showLoadError } = getServerVisibilityViewState(
+    isLoading,
+    loadError,
+    orderedGuilds.length,
+  );
+  const isSaved = showPreferencesSaved(updatePreferences);
 
   const updateGuildVisibility = (guildId: string, isVisible: boolean) => {
     updatePreferences.mutate({
@@ -87,11 +113,7 @@ export const ServerVisibilitySettings = () => {
                 {updatePreferences.isPending
                   ? t("settings.servers.saving")
                   : null}
-                {updatePreferences.isSuccess &&
-                !updatePreferences.isPending &&
-                !updatePreferences.isError
-                  ? t("settings.servers.saved")
-                  : null}
+                {isSaved ? t("settings.servers.saved") : null}
               </span>
             </div>
           </Card>
@@ -103,7 +125,7 @@ export const ServerVisibilitySettings = () => {
             </Card>
           ) : null}
 
-          {!isLoading && loadError ? (
+          {showLoadError ? (
             <Card
               className="flex h-64 flex-col items-center justify-center gap-3 bg-card"
               role="alert"
@@ -125,7 +147,7 @@ export const ServerVisibilitySettings = () => {
             </Card>
           ) : null}
 
-          {!isLoading && !loadError && orderedGuilds.length === 0 ? (
+          {showEmpty ? (
             <Card className="flex h-64 flex-col items-center justify-center gap-3 bg-card">
               <Server className="size-10 text-muted-foreground opacity-50" />
               <p className="text-sm text-muted-foreground">
@@ -134,7 +156,7 @@ export const ServerVisibilitySettings = () => {
             </Card>
           ) : null}
 
-          {!isLoading && !loadError && orderedGuilds.length > 0 ? (
+          {showGuilds ? (
             <Card className="gap-0 overflow-hidden border-border bg-card p-0">
               <div className="flex flex-col gap-3 border-b border-border p-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -26,6 +26,13 @@ import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries
 import { getAssignmentAvailability } from "./utils/get-assignment-availability";
 import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/api-client/models/main/event-coordination-response-dto-heroes-item";
 
+const getRouteId = (value: string | undefined) => value ?? "";
+
+const hasAnyPermission = (
+  permissions: readonly string[] | undefined,
+  allowed: readonly string[],
+) => allowed.some((permission) => permissions?.includes(permission));
+
 export const EventCoordinationPage = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
@@ -34,6 +41,8 @@ export const EventCoordinationPage = () => {
   const [closingHero, setClosingHero] =
     useState<EventCoordinationResponseDtoHeroesItem | null>(null);
   const hasEventRouteParams = Boolean(guildId && eventId);
+  const resolvedGuildId = getRouteId(guildId);
+  const resolvedEventId = getRouteId(eventId);
 
   const { data: permissions } = useGuildPermissions();
   const {
@@ -43,15 +52,15 @@ export const EventCoordinationPage = () => {
     refetch,
   } = useEventsMonitoringControllerGetCoordination(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: resolvedGuildId,
+      eventId: resolvedEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getEventsMonitoringControllerGetCoordinationQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: resolvedGuildId,
+          eventId: resolvedEventId,
         }),
       },
     },
@@ -112,19 +121,18 @@ export const EventCoordinationPage = () => {
     },
   });
 
-  const canWrite =
-    permissions?.includes(Permission.LOOTLOG_EVENTS_WRITE) ||
-    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER) ||
-    false;
-
-  const canManage =
-    permissions?.includes(Permission.LOOTLOG_MANAGE) ||
-    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER) ||
-    false;
+  const canWrite = hasAnyPermission(permissions, [
+    Permission.LOOTLOG_EVENTS_WRITE,
+    Permission.LOOTLOG_EVENTS_MANAGE,
+    Permission.ADMIN,
+    Permission.OWNER,
+  ]);
+  const canManage = hasAnyPermission(permissions, [
+    Permission.LOOTLOG_MANAGE,
+    Permission.LOOTLOG_EVENTS_MANAGE,
+    Permission.ADMIN,
+    Permission.OWNER,
+  ]);
 
   const handleSelfAssign = async (
     mapId: string,
@@ -235,8 +243,8 @@ export const EventCoordinationPage = () => {
                 <EventCoordinationHeroCard
                   key={hero.heroId}
                   hero={hero}
-                  guildId={guildId ?? ""}
-                  eventId={eventId ?? ""}
+                  guildId={resolvedGuildId}
+                  eventId={resolvedEventId}
                   assignmentTimeoutMinutes={
                     coordination.assignmentTimeoutMinutes
                   }

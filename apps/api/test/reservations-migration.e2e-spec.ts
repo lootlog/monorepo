@@ -13,6 +13,30 @@ const reservationMigrations = [
   "20260826123000_reservations_v2_constraint_alignment",
 ];
 
+type ReservationMigrationRow = {
+  authorDisplayName: string;
+  comment: string;
+  createdAt: Date;
+  createdBy: string;
+  createdByUserId: string | null;
+  createdDate: Date;
+  endsAt: Date;
+  fromDate: Date;
+  reservationId: string;
+  spotId: string;
+  spotName: string;
+  startsAt: Date;
+  toDate: Date;
+};
+
+const expectLegacyDatesPreserved = (
+  row: ReservationMigrationRow | undefined,
+): void => {
+  expect(row?.startsAt).toEqual(row?.fromDate);
+  expect(row?.endsAt).toEqual(row?.toDate);
+  expect(row?.createdAt).toEqual(row?.createdDate);
+};
+
 describe("reservation v2 migration", () => {
   it("preserves every legacy row, date, comment, and unresolved author", async () => {
     const client = new Client({
@@ -99,21 +123,9 @@ describe("reservation v2 migration", () => {
           ('guild-1', 'v2-po-wdrozeniu', 'V2 po wdrożeniu', '2026-08-04T10:00:00Z', '2026-08-04T11:00:00Z', 'user-1', 'Żółw 🐢', 'Nowe API')
       `);
 
-      const result = await client.query<{
-        authorDisplayName: string;
-        comment: string;
-        createdAt: Date;
-        createdBy: string;
-        createdByUserId: string | null;
-        createdDate: Date;
-        endsAt: Date;
-        fromDate: Date;
-        reservationId: string;
-        spotId: string;
-        spotName: string;
-        startsAt: Date;
-        toDate: Date;
-      }>(`SELECT * FROM "Reservation" ORDER BY "id"`);
+      const result = await client.query<ReservationMigrationRow>(
+        `SELECT * FROM "Reservation" ORDER BY "id"`,
+      );
 
       expect(result.rows).toHaveLength(5);
       expect(result.rows[0]).toMatchObject({
@@ -125,9 +137,7 @@ describe("reservation v2 migration", () => {
         authorDisplayName: "Żółw 🐢",
         comment: "Znany autor",
       });
-      expect(result.rows[0]?.startsAt).toEqual(result.rows[0]?.fromDate);
-      expect(result.rows[0]?.endsAt).toEqual(result.rows[0]?.toDate);
-      expect(result.rows[0]?.createdAt).toEqual(result.rows[0]?.createdDate);
+      expectLegacyDatesPreserved(result.rows[0]);
       expect(result.rows[1]).toMatchObject({
         reservationId: "Grota Szeptów",
         spotId: "grota-szeptow",
@@ -137,9 +147,7 @@ describe("reservation v2 migration", () => {
         authorDisplayName: "Nieznany użytkownik",
         comment: "Nie usuwaj",
       });
-      expect(result.rows[1]?.startsAt).toEqual(result.rows[1]?.fromDate);
-      expect(result.rows[1]?.endsAt).toEqual(result.rows[1]?.toDate);
-      expect(result.rows[1]?.createdAt).toEqual(result.rows[1]?.createdDate);
+      expectLegacyDatesPreserved(result.rows[1]);
       expect(result.rows[2]).toMatchObject({
         reservationId: "W trakcie wdrożenia",
         spotId: "w-trakcie-wdrozenia",
@@ -149,9 +157,7 @@ describe("reservation v2 migration", () => {
         authorDisplayName: "Żółw 🐢",
         comment: "Ruch podczas migracji",
       });
-      expect(result.rows[2]?.startsAt).toEqual(result.rows[2]?.fromDate);
-      expect(result.rows[2]?.endsAt).toEqual(result.rows[2]?.toDate);
-      expect(result.rows[2]?.createdAt).toEqual(result.rows[2]?.createdDate);
+      expectLegacyDatesPreserved(result.rows[2]);
       expect(result.rows[3]).toMatchObject({
         reservationId: "Legacy po wdrożeniu",
         spotId: "legacy-po-wdrozeniu",
@@ -161,9 +167,7 @@ describe("reservation v2 migration", () => {
         authorDisplayName: "Żółw 🐢",
         comment: "Stare API",
       });
-      expect(result.rows[3]?.startsAt).toEqual(result.rows[3]?.fromDate);
-      expect(result.rows[3]?.endsAt).toEqual(result.rows[3]?.toDate);
-      expect(result.rows[3]?.createdAt).toEqual(result.rows[3]?.createdDate);
+      expectLegacyDatesPreserved(result.rows[3]);
       expect(result.rows[4]).toMatchObject({
         reservationId: "V2 po wdrożeniu",
         spotId: "v2-po-wdrozeniu",
@@ -173,9 +177,7 @@ describe("reservation v2 migration", () => {
         authorDisplayName: "Żółw 🐢",
         comment: "Nowe API",
       });
-      expect(result.rows[4]?.startsAt).toEqual(result.rows[4]?.fromDate);
-      expect(result.rows[4]?.endsAt).toEqual(result.rows[4]?.toDate);
-      expect(result.rows[4]?.createdAt).toEqual(result.rows[4]?.createdDate);
+      expectLegacyDatesPreserved(result.rows[4]);
     } finally {
       await client.end();
     }

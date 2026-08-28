@@ -22,20 +22,54 @@ import {
   useMembersControllerGetMe,
 } from "@lootlog/api-client/react-query/main/members";
 
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
+const getRankingSelection = <
+  Hero extends { npcName: string },
+  Ranking extends { heroNpcName: string },
+>(
+  heroes: Hero[],
+  rankings: Ranking[],
+  selectedHeroName: string | null,
+) => {
+  const heroNamesWithRankings = new Set(
+    rankings.map((ranking) => ranking.heroNpcName),
+  );
+  const defaultHeroName =
+    heroes.find((hero) => heroNamesWithRankings.has(hero.npcName))?.npcName ??
+    heroes[0]?.npcName ??
+    null;
+  const effectiveSelectedHeroName =
+    selectedHeroName && heroes.some((hero) => hero.npcName === selectedHeroName)
+      ? selectedHeroName
+      : defaultHeroName;
+  return {
+    effectiveSelectedHeroName,
+    filteredRankings: effectiveSelectedHeroName
+      ? rankings.filter(
+          (ranking) => ranking.heroNpcName === effectiveSelectedHeroName,
+        )
+      : rankings,
+  };
+};
+
 export const EventRankingPage = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
   const hasEventRouteParams = Boolean(guildId && eventId);
+  const queryGuildId = valueOr(guildId, "");
+  const queryEventId = valueOr(eventId, "");
 
   const { data: permissions } = useGuildPermissions();
   const { data: currentMember } = useMembersControllerGetMe(
-    { guildId: guildId ?? "" },
+    { guildId: queryGuildId },
     {
       query: {
         enabled: Boolean(guildId),
         queryKey: getMembersControllerGetMeQueryKey({
-          guildId: guildId ?? "",
+          guildId: queryGuildId,
         }),
         staleTime: 30_000,
       },
@@ -51,15 +85,15 @@ export const EventRankingPage = () => {
     error: eventError,
   } = useShowEventOverview(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getShowEventOverviewQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
@@ -70,15 +104,15 @@ export const EventRankingPage = () => {
     error: rankingError,
   } = useListEventRanking(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getListEventRankingQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
@@ -99,31 +133,19 @@ export const EventRankingPage = () => {
         <p className="text-muted-foreground">
           {t("events.error", "Nie znaleziono eventu")}
         </p>
-        <Link to="/$guildId/events" params={{ guildId: guildId ?? "" }}>
+        <Link to="/$guildId/events" params={{ guildId: queryGuildId }}>
           <Button variant="outline">{t("events.backToList")}</Button>
         </Link>
       </div>
     );
   }
 
-  const heroes = event.heroNpcs ?? [];
-  const heroNamesWithRankings = new Set(
-    rankings.map((ranking) => ranking.heroNpcName),
+  const heroes = valueOr(event.heroNpcs, []);
+  const { effectiveSelectedHeroName, filteredRankings } = getRankingSelection(
+    heroes,
+    rankings,
+    selectedHeroName,
   );
-  const defaultHeroName =
-    heroes.find((hero) => heroNamesWithRankings.has(hero.npcName))?.npcName ??
-    heroes[0]?.npcName ??
-    null;
-  const effectiveSelectedHeroName =
-    selectedHeroName && heroes.some((hero) => hero.npcName === selectedHeroName)
-      ? selectedHeroName
-      : defaultHeroName;
-
-  const filteredRankings = effectiveSelectedHeroName
-    ? rankings.filter(
-        (ranking) => ranking.heroNpcName === effectiveSelectedHeroName,
-      )
-    : rankings;
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">

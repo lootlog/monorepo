@@ -76,6 +76,9 @@ interface MapManageDialogProps {
   };
 }
 
+const getHeroLocations = (hero: MapManageDialogProps["hero"]) =>
+  hero.locations ?? [];
+
 export const MapManageDialog = ({
   open,
   onOpenChange,
@@ -136,10 +139,9 @@ export const MapManageDialog = ({
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     null,
   );
-
-  const [localLocations, setLocalLocations] = useState<LocationData[]>(
-    hero.locations ?? [],
-  );
+  const heroLocations = getHeroLocations(hero);
+  const [localLocations, setLocalLocations] =
+    useState<LocationData[]>(heroLocations);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleReorder = (newOrder: LocationData[]) => {
@@ -160,14 +162,13 @@ export const MapManageDialog = ({
       },
       {
         onError: () => {
-          setLocalLocations(hero.locations ?? []);
+          setLocalLocations(heroLocations);
           toast.error(t("events.locations.errors.updateFailed"));
         },
       },
     );
   };
 
-  const heroLocations = hero.locations ?? [];
   const heroLocationsKey = heroLocations
     .map((location) => location.id)
     .join(":");
@@ -180,8 +181,8 @@ export const MapManageDialog = ({
       : heroLocations;
 
   const allMapsFromLocations = useMemo(
-    () => hero.locations?.flatMap((location) => location.maps) ?? [],
-    [hero.locations],
+    () => heroLocations.flatMap((location) => location.maps),
+    [heroLocations],
   );
   const allMaps = useMemo(
     () => [...allMapsFromLocations, ...hero.maps],
@@ -471,7 +472,7 @@ export const MapManageDialog = ({
               {totalMapsCount > 0 ? (
                 <ScrollArea className={hasLotsOfMaps ? "h-[140px]" : undefined}>
                   <div className="space-y-3">
-                    {hero.locations?.map((location) =>
+                    {heroLocations.map((location) =>
                       location.maps.length > 0 ? (
                         <div key={location.id} className="space-y-1">
                           <p className="text-[10px] font-medium text-muted-foreground uppercase">
@@ -482,7 +483,7 @@ export const MapManageDialog = ({
                               <MapChip
                                 key={map.id}
                                 map={map}
-                                locations={hero.locations ?? []}
+                                locations={heroLocations}
                                 onDelete={() => handleDeleteMap(map.id)}
                                 onLocationChange={(locId) =>
                                   handleMapLocationChange(map.id, locId)
@@ -505,7 +506,7 @@ export const MapManageDialog = ({
                             <MapChip
                               key={map.id}
                               map={map}
-                              locations={hero.locations ?? []}
+                              locations={heroLocations}
                               onDelete={() => handleDeleteMap(map.id)}
                               onLocationChange={(locId) =>
                                 handleMapLocationChange(map.id, locId)
@@ -579,7 +580,7 @@ export const MapManageDialog = ({
                           >
                             {t("events.locations.noLocation")}
                           </Button>
-                          {hero.locations?.map((loc) => (
+                          {heroLocations.map((loc) => (
                             <Button
                               key={loc.id}
                               variant="ghost"
@@ -621,7 +622,7 @@ export const MapManageDialog = ({
                 {t("events.maps.searchMaps")}
               </Label>
 
-              {hero.locations && hero.locations.length > 0 && (
+              {heroLocations.length > 0 && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
                     {t("events.locations.addTo")}:
@@ -636,7 +637,7 @@ export const MapManageDialog = ({
                         value: "none",
                         label: <>{t("events.locations.noLocation")}</>,
                       },
-                      ...hero.locations.map((loc) => ({
+                      ...heroLocations.map((loc) => ({
                         value: loc.id,
                         label: <>{loc.name}</>,
                       })),
@@ -649,7 +650,7 @@ export const MapManageDialog = ({
                       <SelectItem value="none">
                         {t("events.locations.noLocation")}
                       </SelectItem>
-                      {hero.locations.map((loc) => (
+                      {heroLocations.map((loc) => (
                         <SelectItem key={loc.id} value={loc.id}>
                           {loc.name}
                         </SelectItem>

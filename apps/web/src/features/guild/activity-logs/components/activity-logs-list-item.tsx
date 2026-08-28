@@ -34,7 +34,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
   const [openItems, setOpenItems] = useState<string[]>([]);
   const guildId = useGuildId();
   const { data: members } = useMembersControllerGetGuildMemberReferences(
-    { guildId: guildId ?? "" },
+    { guildId: guildId || "" },
     { includeInactive: true },
   );
   const { t } = useTranslation();
@@ -91,6 +91,66 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
     }
   };
 
+  const renderActor = () => {
+    const actor = activity.actorSnapshot;
+    if (hasActorSnapshot && actor) {
+      return (
+        <div className="flex items-center gap-3 mb-3">
+          <PlayerTile
+            player={{
+              id: actor.id,
+              name: actor.name,
+              lvl: actor.lvl,
+              prof: actor.prof,
+              icon: actor.icon,
+            }}
+            className="scale-80 top-1"
+            accountId={actor.accountId}
+            characterId={actor.characterId}
+            world={activity.world ?? undefined}
+          />
+          <div className="flex flex-col">
+            <span className="font-medium text-sm">{actor.name}</span>
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              {actor.lvl}
+              {actor.prof?.[0]?.toLowerCase()}
+              {actor.clanName && activity.world && (
+                <>
+                  &nbsp;•
+                  {actor.clanId ? (
+                    <a
+                      href={`${MARGONEM_GUILD_URL},${activity.world},${actor.clanId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-primary hover:underline transition-colors text-white"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {actor.clanName}
+                    </a>
+                  ) : (
+                    <span>{actor.clanName}</span>
+                  )}
+                </>
+              )}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    if (actor) {
+      return (
+        <div className="flex items-center gap-2 text-sm mb-2">
+          <User className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">
+            {actor.name}({actor.lvl}
+            {actor.prof?.[0]?.toLowerCase() ?? ""})
+          </span>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card
       className={`p-4 transition-all duration-300 border bg-background  ${
@@ -129,60 +189,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
             </div>
           </div>
 
-          {hasActorSnapshot && (
-            <div className="flex items-center gap-3 mb-3">
-              <PlayerTile
-                player={{
-                  id: activity.actorSnapshot?.id,
-                  name: activity.actorSnapshot?.name,
-                  lvl: activity.actorSnapshot?.lvl,
-                  prof: activity.actorSnapshot?.prof,
-                  icon: activity.actorSnapshot?.icon,
-                }}
-                className="scale-80 top-1"
-                accountId={activity.actorSnapshot?.accountId}
-                characterId={activity.actorSnapshot?.characterId}
-                world={activity.world ?? undefined}
-              />
-              <div className="flex flex-col">
-                <span className="font-medium text-sm">
-                  {activity.actorSnapshot?.name}
-                </span>
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  {activity.actorSnapshot?.lvl}
-                  {activity.actorSnapshot?.prof?.[0]?.toLowerCase()}
-                  {activity.actorSnapshot?.clanName && activity.world && (
-                    <>
-                      &nbsp;•
-                      {activity.actorSnapshot.clanId ? (
-                        <a
-                          href={`${MARGONEM_GUILD_URL},${activity.world},${activity.actorSnapshot.clanId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:text-primary hover:underline transition-colors text-white"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {activity.actorSnapshot.clanName}
-                        </a>
-                      ) : (
-                        <span>{activity.actorSnapshot.clanName}</span>
-                      )}
-                    </>
-                  )}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {!hasActorSnapshot && activity.actorSnapshot && (
-            <div className="flex items-center gap-2 text-sm mb-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">
-                {activity.actorSnapshot.name}({activity.actorSnapshot.lvl}
-                {activity.actorSnapshot.prof?.[0]?.toLowerCase() ?? ""})
-              </span>
-            </div>
-          )}
+          {renderActor()}
 
           <div className="flex items-center gap-4 text-xs mb-2 flex-wrap">
             <div className="flex items-center gap-1.5 text-muted-foreground">

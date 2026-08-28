@@ -11,7 +11,13 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import type { EventHeroNpc, EventMap, EventMapLocation } from "./types/api";
+import type {
+  EventHeroNpc,
+  EventMap,
+  EventMapLocation,
+  EventMapsResponse,
+} from "./types/api";
+import type { EventOverviewResponseDto } from "@lootlog/api-client/models/main/event-overview-response-dto";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import {
   Trophy,
@@ -71,19 +77,143 @@ type EventDetailHero = EventHeroNpc & {
   maps: EventMap[];
 };
 
+type EventOverview = EventOverviewResponseDto;
+type Translator = ReturnType<typeof useTranslation>["t"];
+
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
+const getEventHeroes = (
+  event: EventOverview | undefined,
+  eventMaps: EventMapsResponse | undefined,
+): EventDetailHero[] => {
+  const heroMapsById = new Map(
+    valueOr(eventMaps?.heroNpcs, []).map((hero) => [hero.id, hero]),
+  );
+  return valueOr(event?.heroNpcs, []).map((hero) => {
+    const mapsData = heroMapsById.get(hero.id);
+    return {
+      ...hero,
+      locations: valueOr(mapsData?.locations, []),
+      maps: valueOr(mapsData?.maps, []),
+    };
+  });
+};
+
+const getEventDateRangeLabel = (
+  event: EventOverview | undefined,
+  t: Translator,
+) => {
+  if (!event) return "";
+  const start = format(
+    new Date(event.startsAt || event.createdAt),
+    "d MMM yyyy",
+    {
+      locale: pl,
+    },
+  );
+  const end = event.endsAt
+    ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
+    : t("events.ongoing");
+  return `${start} - ${end}`;
+};
+
+const getEventAccess = (
+  permissions: ReturnType<typeof useGuildPermissions>["data"],
+) => ({
+  canManage: Boolean(
+    permissions?.includes(Permission.LOOTLOG_MANAGE) ||
+    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
+    permissions?.includes(Permission.ADMIN) ||
+    permissions?.includes(Permission.OWNER),
+  ),
+  canDeleteEvent: Boolean(
+    permissions?.includes(Permission.ADMIN) ||
+    permissions?.includes(Permission.OWNER),
+  ),
+});
+
+const getEventStatusView = (
+  event: EventOverview | undefined,
+  timestamp: number,
+  eventIsPinned: boolean,
+  t: Translator,
+) => {
+  const status = event ? getEventStatusAtTimestamp(event, timestamp) : "ended";
+  let pinActionLabel = t("events.pinEvent");
+  if (status !== "active") {
+    pinActionLabel = t("events.pinUnavailable");
+  } else if (eventIsPinned) {
+    pinActionLabel = t("events.unpinEvent");
+  }
+
+  if (status === "upcoming") {
+    return {
+      status,
+      isActive: false,
+      pinActionLabel,
+      statusLabel: t("events.upcoming"),
+      statusVariant: "outline" as const,
+    };
+  }
+  if (status === "active") {
+    return {
+      status,
+      isActive: true,
+      pinActionLabel,
+      statusLabel: t("events.active"),
+      statusVariant: "default" as const,
+    };
+  }
+  return {
+    status,
+    isActive: false,
+    pinActionLabel,
+    statusLabel: t("events.ended"),
+    statusVariant: "secondary" as const,
+  };
+};
+
+const getEventScoring = (event: EventOverview | undefined) => {
+  const scoringMode = normalizeEventScoringMode(event?.scoringMode);
+  return {
+    scoringMode,
+    scoringRules:
+      scoringMode === "ADVANCED"
+        ? normalizeEventScoringRules(event?.scoringRules)
+        : null,
+  };
+};
+
+const getEventPinnedState = (
+  eventId: string | undefined,
+  isPinned: (eventId: string) => boolean,
+) => (eventId ? isPinned(eventId) : false);
+
+const isPinActionDisabled = (
+  eventId: string | undefined,
+  isEventActive: boolean,
+  isPending: (eventId: string) => boolean,
+) => !eventId || !isEventActive || isPending(eventId);
+
+const hasEventDetailErrors = (mapsError: unknown, rankingError: unknown) =>
+  Boolean(mapsError || rankingError);
+
 export const EventDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
+  const queryGuildId = valueOr(guildId, "");
+  const queryEventId = valueOr(eventId, "");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
     togglePin,
     isPinned,
     isPending: isPinPending,
-  } = useToggleEventPin(guildId ?? "");
+  } = useToggleEventPin(queryGuildId);
   const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const hasEventRouteParams = Boolean(guildId && eventId);
-  const eventIsPinned = eventId ? isPinned(eventId) : false;
+  const eventIsPinned = getEventPinnedState(eventId, isPinned);
 
   const {
     data: event,
@@ -91,15 +221,15 @@ export const EventDetail = () => {
     error,
   } = useShowEventOverview(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getShowEventOverviewQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
@@ -110,15 +240,15 @@ export const EventDetail = () => {
     error: mapsError,
   } = useListEventMaps(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getListEventMapsQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
@@ -128,22 +258,22 @@ export const EventDetail = () => {
 
   const { data: heroTimers } = useListEventHeroTimers(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
-      world: event?.world ?? "",
+      world: valueOr(event?.world, ""),
     },
     {
       query: {
         enabled: hasEventRouteParams && Boolean(event?.world),
         queryKey: getListEventHeroTimersQueryKey(
           {
-            guildId: guildId ?? "",
-            eventId: eventId ?? "",
+            guildId: queryGuildId,
+            eventId: queryEventId,
           },
           {
-            world: event?.world ?? "",
+            world: valueOr(event?.world, ""),
           },
         ),
       },
@@ -152,30 +282,30 @@ export const EventDetail = () => {
 
   const { data: heroStats } = useEventsRankingControllerGetEventHeroStats(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
   );
   const { data: rankings = [], error: rankingError } = useListEventRanking(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getListEventRankingQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
@@ -235,70 +365,22 @@ export const EventDetail = () => {
     return () => window.clearInterval(intervalId);
   }, []);
 
-  const heroMapsById = new Map(
-    (eventMaps?.heroNpcs ?? []).map((hero) => [hero.id, hero]),
-  );
-  const heroes: EventDetailHero[] = (event?.heroNpcs ?? []).map((hero) => {
-    const mapsData = heroMapsById.get(hero.id);
-    return {
-      ...hero,
-      locations: mapsData?.locations ?? [],
-      maps: mapsData?.maps ?? [],
-    };
-  });
-  const scoringMode = normalizeEventScoringMode(event?.scoringMode);
-  const scoringRules =
-    scoringMode === "ADVANCED"
-      ? normalizeEventScoringRules(event?.scoringRules)
-      : null;
-  const eventDateRangeLabel = event
-    ? `${format(new Date(event.startsAt || event.createdAt), "d MMM yyyy", {
-        locale: pl,
-      })} - ${
-        event.endsAt
-          ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
-          : t("events.ongoing")
-      }`
-    : "";
-
-  const canManage =
-    permissions?.includes(Permission.LOOTLOG_MANAGE) ||
-    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER);
-
-  const canDeleteEvent =
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER);
-  const eventStatus =
-    event !== undefined && event !== null
-      ? getEventStatusAtTimestamp(event, currentTimestamp)
-      : "ended";
-  const isEventActive = eventStatus === "active";
-  let pinActionLabel = t("events.pinEvent");
-  if (!isEventActive) {
-    pinActionLabel = t("events.pinUnavailable");
-  } else if (eventIsPinned) {
-    pinActionLabel = t("events.unpinEvent");
-  }
-  const eventStatusLabel =
-    eventStatus === "upcoming"
-      ? t("events.upcoming")
-      : eventStatus === "ended"
-        ? t("events.ended")
-        : t("events.active");
-  const eventStatusVariant =
-    eventStatus === "active"
-      ? "default"
-      : eventStatus === "upcoming"
-        ? "outline"
-        : "secondary";
+  const heroes = getEventHeroes(event, eventMaps);
+  const { scoringMode, scoringRules } = getEventScoring(event);
+  const eventDateRangeLabel = getEventDateRangeLabel(event, t);
+  const { canManage, canDeleteEvent } = getEventAccess(permissions);
+  const {
+    isActive: isEventActive,
+    pinActionLabel,
+    statusLabel: eventStatusLabel,
+    statusVariant: eventStatusVariant,
+  } = getEventStatusView(event, currentTimestamp, eventIsPinned, t);
 
   const handleEditHero = (hero: EventHeroNpc) => {
     setSelectedHero({
       ...hero,
-      locations: hero.locations ?? [],
-      maps: hero.maps ?? [],
+      locations: valueOr(hero.locations, []),
+      maps: valueOr(hero.maps, []),
     });
     setHeroDialogOpen(true);
   };
@@ -306,8 +388,8 @@ export const EventDetail = () => {
   const handleManageMaps = (hero: EventHeroNpc) => {
     setSelectedHero({
       ...hero,
-      locations: hero.locations ?? [],
-      maps: hero.maps ?? [],
+      locations: valueOr(hero.locations, []),
+      maps: valueOr(hero.maps, []),
     });
     setMapDialogOpen(true);
   };
@@ -316,8 +398,8 @@ export const EventDetail = () => {
     try {
       await deleteHero.mutateAsync({
         pathParams: {
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
           heroId,
         },
       });
@@ -387,7 +469,7 @@ export const EventDetail = () => {
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <p className="text-muted-foreground">{t("events.error")}</p>
-        <Link to="/$guildId/events" params={{ guildId: guildId ?? "" }}>
+        <Link to="/$guildId/events" params={{ guildId: queryGuildId }}>
           <Button variant="outline">{t("events.backToList")}</Button>
         </Link>
       </div>
@@ -398,8 +480,8 @@ export const EventDetail = () => {
     navigate({
       to: "/$guildId/events/$eventId/edit",
       params: {
-        guildId: guildId ?? "",
-        eventId: eventId ?? "",
+        guildId: queryGuildId,
+        eventId: queryEventId,
       },
     });
   };
@@ -424,16 +506,16 @@ export const EventDetail = () => {
           <HeroManageDialog
             open={heroDialogOpen}
             onOpenChange={setHeroDialogOpen}
-            guildId={guildId ?? ""}
-            eventId={eventId ?? ""}
+            guildId={queryGuildId}
+            eventId={queryEventId}
             hero={selectedHero}
           />
           {selectedHero && (
             <MapManageDialog
               open={mapDialogOpen}
               onOpenChange={setMapDialogOpen}
-              guildId={guildId ?? ""}
-              eventId={eventId ?? ""}
+              guildId={queryGuildId}
+              eventId={queryEventId}
               hero={selectedHero}
             />
           )}
@@ -449,8 +531,8 @@ export const EventDetail = () => {
               try {
                 await updateEvent.mutateAsync({
                   pathParams: {
-                    guildId: guildId ?? "",
-                    eventId: eventId ?? "",
+                    guildId: queryGuildId,
+                    eventId: queryEventId,
                   },
                   data: {
                     endsAt: new Date().toISOString(),
@@ -474,8 +556,8 @@ export const EventDetail = () => {
               try {
                 await updateEvent.mutateAsync({
                   pathParams: {
-                    guildId: guildId ?? "",
-                    eventId: eventId ?? "",
+                    guildId: queryGuildId,
+                    eventId: queryEventId,
                   },
                   data: {
                     endsAt: null as never,
@@ -502,15 +584,15 @@ export const EventDetail = () => {
               try {
                 await deleteEvent.mutateAsync({
                   pathParams: {
-                    guildId: guildId ?? "",
-                    eventId: eventId ?? "",
+                    guildId: queryGuildId,
+                    eventId: queryEventId,
                   },
                 });
                 toast.success(t("events.deleteSuccess"));
                 setDeleteDialogOpen(false);
                 navigate({
                   to: "/$guildId/events",
-                  params: { guildId: guildId ?? "" },
+                  params: { guildId: queryGuildId },
                 });
               } catch {
                 toast.error(t("events.deleteError"));
@@ -528,8 +610,8 @@ export const EventDetail = () => {
           <EventSummaryDialog
             open={summaryDialogOpen}
             onOpenChange={setSummaryDialogOpen}
-            guildId={guildId ?? ""}
-            eventId={eventId ?? ""}
+            guildId={queryGuildId}
+            eventId={queryEventId}
             eventName={event.name}
           />
         </>
@@ -570,7 +652,7 @@ export const EventDetail = () => {
                         >
                           <Clock className="size-3.5" />
                           {t("events.header.assignmentTimeoutValue", {
-                            minutes: event.assignmentTimeoutMinutes ?? 5,
+                            minutes: valueOr(event.assignmentTimeoutMinutes, 5),
                           })}
                         </button>
                       }
@@ -596,9 +678,11 @@ export const EventDetail = () => {
                       aria-label={pinActionLabel}
                       title={pinActionLabel}
                       aria-pressed={eventIsPinned}
-                      disabled={
-                        !eventId || !isEventActive || isPinPending(eventId)
-                      }
+                      disabled={isPinActionDisabled(
+                        eventId,
+                        isEventActive,
+                        isPinPending,
+                      )}
                       className={cn(
                         "h-9 shrink-0 gap-2 px-3",
                         eventIsPinned
@@ -633,7 +717,7 @@ export const EventDetail = () => {
                 render={
                   <Link
                     to="/$guildId/events/$eventId/coordination"
-                    params={{ guildId: guildId ?? "", eventId: eventId ?? "" }}
+                    params={{ guildId: queryGuildId, eventId: queryEventId }}
                   >
                     <Crosshair className="size-3.5" />
                     {t("events.coordination.trigger")}
@@ -664,8 +748,8 @@ export const EventDetail = () => {
 
           <div className="xl:hidden">
             <EventActionsCard
-              canManage={canManage ?? false}
-              canDeleteEvent={canDeleteEvent ?? false}
+              canManage={canManage}
+              canDeleteEvent={canDeleteEvent}
               isActive={isEventActive}
               isUpdatePending={updateEvent.isPending}
               isDeletePending={deleteEvent.isPending}
@@ -675,7 +759,7 @@ export const EventDetail = () => {
             />
           </div>
 
-          {(mapsError || rankingError) && (
+          {hasEventDetailErrors(mapsError, rankingError) && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {mapsError && <p>{t("events.maps.error")}</p>}
               {rankingError && <p>{t("events.ranking.error")}</p>}
@@ -696,9 +780,9 @@ export const EventDetail = () => {
                         hero.npcId !== null && statistic.npcId === hero.npcId,
                     ),
                   }))}
-                  guildId={guildId ?? ""}
-                  eventId={eventId ?? ""}
-                  canManage={canManage ?? false}
+                  guildId={queryGuildId}
+                  eventId={queryEventId}
+                  canManage={canManage}
                   onAddHero={() => {
                     setSelectedHero(null);
                     setHeroDialogOpen(true);
@@ -711,7 +795,7 @@ export const EventDetail = () => {
 
               <div className="order-4 xl:order-none">
                 <EventHeroLoots
-                  guildId={guildId ?? ""}
+                  guildId={queryGuildId}
                   heroNpcNames={heroes.map((h) => h.npcName)}
                   heroNpcs={heroes}
                   showHeroTabs
@@ -724,8 +808,8 @@ export const EventDetail = () => {
             <div className="contents xl:block xl:min-w-0 xl:space-y-3">
               <div className="hidden xl:block">
                 <EventActionsCard
-                  canManage={canManage ?? false}
-                  canDeleteEvent={canDeleteEvent ?? false}
+                  canManage={canManage}
+                  canDeleteEvent={canDeleteEvent}
                   isActive={isEventActive}
                   isUpdatePending={updateEvent.isPending}
                   isDeletePending={deleteEvent.isPending}
@@ -739,16 +823,16 @@ export const EventDetail = () => {
                 <EventRankingPreview
                   rankings={rankings}
                   heroNpcs={heroes}
-                  guildId={guildId ?? ""}
-                  eventId={eventId ?? ""}
+                  guildId={queryGuildId}
+                  eventId={queryEventId}
                   limit={5}
                 />
               </div>
 
               <div className="order-3 xl:order-none">
                 <RecentKillsPreview
-                  guildId={guildId ?? ""}
-                  eventId={eventId ?? ""}
+                  guildId={queryGuildId}
+                  eventId={queryEventId}
                   heroNpcs={heroes}
                   showHeroTabs
                   limit={5}

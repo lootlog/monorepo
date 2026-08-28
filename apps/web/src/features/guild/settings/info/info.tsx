@@ -17,6 +17,36 @@ import {
 } from "@lootlog/api-client/react-query/main/guilds";
 import { invalidateNotificationsGuildControllerGetAvailableGuildTargets } from "@lootlog/api-client/react-query/main/notifications";
 
+type GuildSyncPresentationData = {
+  channelCount?: number;
+  lastAttemptAt?: string | null;
+  lastError?: string | null;
+  lastSuccessAt?: string | null;
+  missingPermissions?: string[];
+  requiredPermissions?: string[];
+  selectableChannelCount?: number;
+  status?: string;
+};
+
+const getGuildSyncPresentation = (
+  data: GuildSyncPresentationData | undefined,
+  notAvailable: string,
+  noErrors: string,
+) => ({
+  channelCount: data?.channelCount ?? 0,
+  lastAttempt: data?.lastAttemptAt
+    ? format(new Date(data.lastAttemptAt), "dd.MM.yyyy HH:mm:ss")
+    : notAvailable,
+  lastError: data?.lastError ?? noErrors,
+  lastSuccess: data?.lastSuccessAt
+    ? format(new Date(data.lastSuccessAt), "dd.MM.yyyy HH:mm:ss")
+    : notAvailable,
+  missingPermissions: data?.missingPermissions ?? [],
+  requiredPermissions: data?.requiredPermissions ?? [],
+  selectableChannelCount: data?.selectableChannelCount ?? 0,
+  status: data?.status ?? "UNKNOWN",
+});
+
 export const InfoSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
@@ -47,8 +77,21 @@ export const InfoSettings = () => {
   });
 
   const installUrl = guildId ? buildDiscordBotInstallUrl(guildId) : "#";
-  const missingPermissions = data?.missingPermissions ?? [];
   const hasRequiredPermissions = hasConfirmedGuildDiscordPermissions(data);
+  const {
+    channelCount,
+    lastAttempt,
+    lastError,
+    lastSuccess,
+    missingPermissions,
+    requiredPermissions,
+    selectableChannelCount,
+    status,
+  } = getGuildSyncPresentation(
+    data,
+    t("settings.guildInfo.notAvailable"),
+    t("settings.guildInfo.noErrors"),
+  );
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">
@@ -145,9 +188,7 @@ export const InfoSettings = () => {
                       {t("settings.guildInfo.fields.status")}
                     </p>
                     <div className="mt-2">
-                      <Badge variant="outline">
-                        {data?.status ?? "UNKNOWN"}
-                      </Badge>
+                      <Badge variant="outline">{status}</Badge>
                     </div>
                   </div>
                   <div className="rounded-xl border border-border/70 bg-background p-3">
@@ -156,8 +197,8 @@ export const InfoSettings = () => {
                     </p>
                     <p className="mt-2 text-sm font-medium">
                       {t("settings.guildInfo.channelCounts", {
-                        total: data?.channelCount ?? 0,
-                        selectable: data?.selectableChannelCount ?? 0,
+                        total: channelCount,
+                        selectable: selectableChannelCount,
                       })}
                     </p>
                   </div>
@@ -187,7 +228,7 @@ export const InfoSettings = () => {
                 </p>
 
                 <div className="flex flex-wrap gap-2">
-                  {(data?.requiredPermissions ?? []).map((permission) => (
+                  {requiredPermissions.map((permission) => (
                     <Badge key={permission} variant="outline">
                       {permission}
                     </Badge>
@@ -241,27 +282,13 @@ export const InfoSettings = () => {
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       {t("settings.guildInfo.fields.lastAttempt")}
                     </p>
-                    <p className="mt-2 text-sm font-medium">
-                      {data?.lastAttemptAt
-                        ? format(
-                            new Date(data.lastAttemptAt),
-                            "dd.MM.yyyy HH:mm:ss",
-                          )
-                        : t("settings.guildInfo.notAvailable")}
-                    </p>
+                    <p className="mt-2 text-sm font-medium">{lastAttempt}</p>
                   </div>
                   <div className="rounded-xl border border-border/70 bg-background p-3">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       {t("settings.guildInfo.fields.lastSuccess")}
                     </p>
-                    <p className="mt-2 text-sm font-medium">
-                      {data?.lastSuccessAt
-                        ? format(
-                            new Date(data.lastSuccessAt),
-                            "dd.MM.yyyy HH:mm:ss",
-                          )
-                        : t("settings.guildInfo.notAvailable")}
-                    </p>
+                    <p className="mt-2 text-sm font-medium">{lastSuccess}</p>
                   </div>
                 </div>
 
@@ -269,9 +296,7 @@ export const InfoSettings = () => {
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {t("settings.guildInfo.fields.lastError")}
                   </p>
-                  <p className="mt-2 text-sm font-medium">
-                    {data?.lastError ?? t("settings.guildInfo.noErrors")}
-                  </p>
+                  <p className="mt-2 text-sm font-medium">{lastError}</p>
                 </div>
               </Card>
             </>

@@ -149,6 +149,53 @@ const renderNotificationContent = ({
   return <SingleNotificationMessage notification={notification} />;
 };
 
+const resolveNotificationAppearance = ({
+  categorySettings,
+  guildNamesById,
+  notification,
+  npcTypeColors,
+}: Pick<
+  SingleNotificationProps,
+  "categorySettings" | "guildNamesById" | "notification" | "npcTypeColors"
+>) => {
+  const key = getNotificationSettingsKey(notification);
+  const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
+  const autoHideDurationMs = autoHideTimeout > 0 ? autoHideTimeout * 1000 : 0;
+  const serverNames = notification.servers
+    .map((server) => guildNamesById[server] ?? "")
+    .filter(Boolean);
+  const time = format(new Date(notification.createdAt), "HH:mm");
+  const highlight = categorySettings?.highlight;
+
+  return {
+    autoHideDurationMs,
+    background: getBackgroundColor(key, highlight, npcTypeColors),
+    borderColor: getBorderColor(key, highlight, npcTypeColors),
+    metaText: `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`,
+  };
+};
+
+const resolveNotificationActionState = (
+  notification: StoredNotification,
+  heroLevel: number,
+  joinLabel: string,
+) => {
+  const isPartyGathering = isPartyGatheringNotification(notification);
+  const regularNotification =
+    !isPartyGathering && !isMentionNotification(notification)
+      ? notification
+      : null;
+  const minLevel = isPartyGathering ? (notification.minLvl ?? 1) : 1;
+  const maxLevel = isPartyGathering ? (notification.maxLvl ?? 500) : 500;
+
+  return {
+    actionLabel: isPartyGathering ? joinLabel : null,
+    isPartyGathering,
+    meetsLevelReq: heroLevel >= minLevel && heroLevel <= maxLevel,
+    showJoinAction: Boolean(regularNotification?.isGatheringParty),
+  };
+};
+
 export const SingleNotification: FC<SingleNotificationProps> = ({
   animationEffectsEnabled,
   autoHideState,
@@ -176,39 +223,20 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     guildMember?.avatar,
   );
   const memberColor = useMemberColor(guildMember);
-  const isPartyGathering = isPartyGatheringNotification(notification);
-  const regularNotification =
-    !isPartyGathering && !isMentionNotification(notification)
-      ? notification
-      : null;
-
-  const key = getNotificationSettingsKey(notification);
-  const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
-  const autoHideDurationMs = autoHideTimeout > 0 ? autoHideTimeout * 1000 : 0;
-
-  const serverNames = notification.servers
-    .map((server) => guildNamesById[server] ?? "")
-    .filter(Boolean);
-  const time = format(new Date(notification.createdAt), "HH:mm");
-  const background = getBackgroundColor(
-    key,
-    categorySettings?.highlight,
-    npcTypeColors,
-  );
-  const borderColor = getBorderColor(
-    key,
-    categorySettings?.highlight,
-    npcTypeColors,
-  );
+  const { autoHideDurationMs, background, borderColor, metaText } =
+    resolveNotificationAppearance({
+      categorySettings,
+      guildNamesById,
+      notification,
+      npcTypeColors,
+    });
   const hasAutoHideRing = autoHideDurationMs > 0;
   const showAutoHideRing = hasAutoHideRing && animationEffectsEnabled;
-  const metaText = `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`;
   const senderName = guildMember?.name ?? t("states.unknownSender");
 
   const heroLvl = useGameStore((state) => state.game?.hero.level ?? 0);
-  const minLvl = isPartyGathering ? (notification.minLvl ?? 1) : 1;
-  const maxLvl = isPartyGathering ? (notification.maxLvl ?? 500) : 500;
-  const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
+  const { actionLabel, isPartyGathering, meetsLevelReq, showJoinAction } =
+    resolveNotificationActionState(notification, heroLvl, t("actions.join"));
 
   const handleRemoveNotification = () =>
     onRemoveNotification(notification.notificationId);
@@ -217,16 +245,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     onJoinReadyRoom(notification);
   };
 
-  const showPartyGatheringAction = isPartyGathering;
-  const showJoinAction = Boolean(regularNotification?.isGatheringParty);
-  let actionLabel: string | null = null;
   const hasAutoHideState = Boolean(autoHideState);
   const autoHideDeadlineMs = autoHideState?.deadlineMs;
   const autoHidePausedRemainingMs = autoHideState?.pausedRemainingMs;
-
-  if (showPartyGatheringAction) {
-    actionLabel = t("actions.join");
-  }
 
   useEffect(() => {
     const path = autoHidePathRef.current;

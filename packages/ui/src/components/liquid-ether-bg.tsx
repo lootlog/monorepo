@@ -56,27 +56,31 @@ interface LiquidEtherWebGL {
 
 const defaultColors = ["#5227FF", "#FF9FFC", "#B19EEF"];
 
-export default function LiquidEther({
-  mouseForce = 20,
-  cursorSize = 100,
-  isViscous = false,
-  viscous = 30,
-  iterationsViscous = 32,
-  iterationsPoisson = 32,
-  dt = 0.014,
-  BFECC = true,
-  resolution = 0.5,
-  isBounce = false,
-  colors = defaultColors,
-  style = {},
-  className = "",
-  autoDemo = true,
-  autoSpeed = 0.5,
-  autoIntensity = 2.2,
-  takeoverDuration = 0.25,
-  autoResumeDelay = 1000,
-  autoRampDuration = 0.6,
-}: LiquidEtherProps): React.ReactElement {
+const valueOrDefault = <T,>(value: T | undefined, defaultValue: T): T =>
+  value ?? defaultValue;
+
+export default function LiquidEther(
+  props: LiquidEtherProps,
+): React.ReactElement {
+  const mouseForce = valueOrDefault(props.mouseForce, 20);
+  const cursorSize = valueOrDefault(props.cursorSize, 100);
+  const isViscous = valueOrDefault(props.isViscous, false);
+  const viscous = valueOrDefault(props.viscous, 30);
+  const iterationsViscous = valueOrDefault(props.iterationsViscous, 32);
+  const iterationsPoisson = valueOrDefault(props.iterationsPoisson, 32);
+  const dt = valueOrDefault(props.dt, 0.014);
+  const BFECC = valueOrDefault(props.BFECC, true);
+  const resolution = valueOrDefault(props.resolution, 0.5);
+  const isBounce = valueOrDefault(props.isBounce, false);
+  const colors = valueOrDefault(props.colors, defaultColors);
+  const style = valueOrDefault(props.style, {});
+  const className = valueOrDefault(props.className, "");
+  const autoDemo = valueOrDefault(props.autoDemo, true);
+  const autoSpeed = valueOrDefault(props.autoSpeed, 0.5);
+  const autoIntensity = valueOrDefault(props.autoIntensity, 2.2);
+  const takeoverDuration = valueOrDefault(props.takeoverDuration, 0.25);
+  const autoResumeDelay = valueOrDefault(props.autoResumeDelay, 1000);
+  const autoRampDuration = valueOrDefault(props.autoRampDuration, 0.6);
   const mountRef = useRef<HTMLDivElement | null>(null);
   const webglRef = useRef<LiquidEtherWebGL | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
