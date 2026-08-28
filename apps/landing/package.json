@@ -18,7 +18,7 @@
     "@mdx-js/react": "^3.1.1",
     "@next/mdx": "^16.3.3",
     "@types/mdx": "^2.0.14",
-    "better-auth": "1.6.30",
+    "better-auth": "1.7.1",
     "framer-motion": "^12.43.0",
     "i18next": "^26.4.0",
     "lucide-react": "^1.35.0",

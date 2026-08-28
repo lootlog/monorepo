@@ -57,7 +57,7 @@
   "dependencies": {
     "@axiomhq/winston": "^1.8.0",
     "@lootlog/types": "workspace:*",
-    "fastify": "5.11.3",
+    "fastify": "5.12.1",
     "js-yaml": "^5.4.1",
     "nest-winston": "catalog:",
     "winston": "^3.19.0",
