@@ -1,15 +1,21 @@
-# Development traffic splitter
+# Traffic splitter
 
-This Cloudflare Worker owns `dev.lootlog.pl` and routes requests to the
-development Landing, Docs, and Web origins. Generated asset namespaces are
+This package is the source of truth for two independently deployed Cloudflare
+Workers:
+
+- `lootlog-traffic-splitter-dev` owns `dev.lootlog.pl` and uses development
+  origins;
+- `lootlog-route-splitter` owns `lootlog.pl` and uses production origins.
+
+Both Workers use the same route table. Their generated asset namespaces are
 explicit:
 
-| Paths                                                         | Origin                         |
-| ------------------------------------------------------------- | ------------------------------ |
-| `/`, legal pages, `/landing-assets`, `/brand`, `/screenshots` | Landing Pages preview          |
-| `/docs`, `/docs-assets`, `/__tsr`, `/api/search`              | Docs development Assets Worker |
-| `/__legacy-assets/{landing,docs}/assets`                      | Tagged legacy asset origin     |
-| `/assets` and every remaining application route               | Web Pages preview              |
+| Paths                                                                   | Origin                     |
+| ----------------------------------------------------------------------- | -------------------------- |
+| `/`, legal pages, `/_next`, `/landing-assets`, `/brand`, `/screenshots` | Landing                    |
+| `/docs`, `/docs-assets`, `/__tsr`, `/api/search`                        | Docs                       |
+| `/__legacy-assets/{landing,docs}/assets`                                | Tagged legacy asset origin |
+| `/assets` and every remaining application route                         | Web                        |
 
 Legacy `/assets` requests selected from a Landing or Docs document are
 temporarily redirected into an origin-tagged, non-cacheable namespace. When a
@@ -28,7 +34,15 @@ pnpm --filter @lootlog/traffic-splitter lint
 pnpm --filter @lootlog/traffic-splitter build
 ```
 
-Merges to `main` deploy the Worker through the GitHub `dev` environment. Set
-`CLOUDFLARE_WORKERS_API_TOKEN` there from Cloudflare's **Edit Cloudflare
-Workers** token template, scoped to the Lootlog account and `lootlog.pl` zone.
-The existing Pages-only `CLOUDFLARE_API_TOKEN` is intentionally not reused.
+The `dev` command and merges to `main` target only the Wrangler `develop`
+environment and therefore cannot overwrite the production Worker. The GitHub
+`dev` environment uses `CLOUDFLARE_WORKERS_API_TOKEN`, scoped to the Lootlog
+account and `lootlog.pl` zone. The existing Pages-only
+`CLOUDFLARE_API_TOKEN` is intentionally not reused.
+
+Production is the top-level Wrangler environment. It is deployed only by the
+approved release workflow from its checksummed artifact. During a coordinated
+release, the compatible splitter is promoted before Landing and Docs. Public
+smoke checks then fetch the generated CSS and JavaScript through their real
+domains. A failed deployment or smoke check rolls applications back first and
+the splitter last.

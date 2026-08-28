@@ -48,7 +48,7 @@ apps/
 ├── gateway/             Socket.IO presence and real-time fan-out
 ├── landing/             Public product site and legal pages
 ├── search/              Meilisearch-backed public search API
-├── traffic-splitter/    Development edge router for dev.lootlog.pl
+├── traffic-splitter/    Shared edge router for dev.lootlog.pl and lootlog.pl
 ├── web/                 Authenticated React web app
 └── wiki/                Public Margonem knowledge app
 
@@ -127,16 +127,20 @@ Changesets version private workspaces and create immutable release artifacts.
 Merging an ordinary feature pull request may deploy development environments
 but does not create a production release.
 
-`dev.lootlog.pl` is served by the repository-owned
-`@lootlog/traffic-splitter` Worker. The GitHub `dev` environment uses the
-dedicated `CLOUDFLARE_WORKERS_API_TOKEN` secret for Worker scripts and custom
-domain updates; Pages deployments continue to use `CLOUDFLARE_API_TOKEN`.
+`dev.lootlog.pl` and `lootlog.pl` use the same repository-owned
+`@lootlog/traffic-splitter` implementation but remain separate Cloudflare
+Workers. Merges to `main` can update only the development Worker. The GitHub
+`dev` environment uses the dedicated `CLOUDFLARE_WORKERS_API_TOKEN` secret for
+Worker scripts and custom-domain updates; Pages deployments continue to use
+`CLOUDFLARE_API_TOKEN`.
 
 The Changesets version pull request is the release gate. Its merge creates tags,
 GitHub Releases, container images, and Cloudflare artifacts. Production
 promotion requires environment approval. Container services deploy through
 GitOps and ArgoCD; Cloudflare apps deploy the checksummed artifacts produced by
-the release. Rollbacks reuse existing artifacts.
+the release. The production splitter is promoted before the frontend artifacts
+and rolled back after them if public asset checks fail. Rollbacks reuse
+existing artifacts.
 
 Do not use `docker-compose.prod.yml` as production documentation. Self-hosting
 is community-supported until the project ships a tested distribution.

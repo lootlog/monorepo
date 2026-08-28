@@ -54,7 +54,11 @@ test("keeps Pages development targets and skips version pull requests", () => {
     affectedPackages: ["@lootlog/landing"],
   });
   const versionPlan = createCiPlan({
-    affectedPackages: ["@lootlog/docs", "@lootlog/landing"],
+    affectedPackages: [
+      "@lootlog/docs",
+      "@lootlog/landing",
+      "@lootlog/traffic-splitter",
+    ],
     associatedPullRequestHeads: ["changeset-release/main"],
   });
 
@@ -78,19 +82,38 @@ test("deploys the development traffic splitter from the repository", () => {
     {
       artifactPath: "apps/traffic-splitter/dist",
       configPath: "apps/traffic-splitter/wrangler.jsonc",
-      environment: "",
+      environment: "develop",
       kind: "worker",
       packageName: "@lootlog/traffic-splitter",
       project: "lootlog-traffic-splitter-dev",
     },
   ]);
+  assert.equal(trafficSplitterWranglerConfig.name, "lootlog-route-splitter");
+  assert.deepEqual(trafficSplitterWranglerConfig.routes, [
+    { custom_domain: true, pattern: "lootlog.pl" },
+  ]);
+  assert.deepEqual(trafficSplitterWranglerConfig.vars, {
+    DOCS_ORIGIN: "https://lootlog-docs.communicator-dev.workers.dev",
+    LANDING_ORIGIN: "https://lootlog-landing.pages.dev",
+    WEB_ORIGIN: "https://lootlog-web-monorepo.pages.dev",
+  });
   assert.equal(
-    trafficSplitterWranglerConfig.name,
+    trafficSplitterWranglerConfig.env.develop.name,
     "lootlog-traffic-splitter-dev",
   );
-  assert.deepEqual(trafficSplitterWranglerConfig.routes, [
+  assert.deepEqual(trafficSplitterWranglerConfig.env.develop.routes, [
     { custom_domain: true, pattern: "dev.lootlog.pl" },
   ]);
+  assert.deepEqual(trafficSplitterWranglerConfig.env.develop.vars, {
+    DOCS_ORIGIN: "https://lootlog-docs-develop.communicator-dev.workers.dev",
+    LANDING_ORIGIN: "https://develop.lootlog-landing.pages.dev",
+    WEB_ORIGIN: "https://develop.lootlog-web-monorepo.pages.dev",
+  });
+  assert.notEqual(
+    trafficSplitterWranglerConfig.env.develop.name,
+    trafficSplitterWranglerConfig.name,
+    "development must not overwrite the production Worker",
+  );
   assert.match(
     developmentWorkflow,
     /matrix\.kind == 'worker' && secrets\.CLOUDFLARE_WORKERS_API_TOKEN/u,
