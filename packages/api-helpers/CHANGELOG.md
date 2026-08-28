@@ -1,5 +1,12 @@
 # @lootlog/api-helpers
 
+## 1.0.3
+
+### Patch Changes
+
+- 7742f4f: Remove unused Hono-specific helpers, configuration, documentation, and dependency declarations.
+- f0a1338: Update runtime dependencies across applications and shared packages.
+
 ## 1.0.2
 
 ### Patch Changes
