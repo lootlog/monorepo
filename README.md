@@ -48,6 +48,7 @@ apps/
 ├── gateway/             Socket.IO presence and real-time fan-out
 ├── landing/             Public product site and legal pages
 ├── search/              Meilisearch-backed public search API
+├── traffic-splitter/    Development edge router for dev.lootlog.pl
 ├── web/                 Authenticated React web app
 └── wiki/                Public Margonem knowledge app
 
@@ -125,6 +126,11 @@ Workspace-specific commands are documented in each app or package README.
 Changesets version private workspaces and create immutable release artifacts.
 Merging an ordinary feature pull request may deploy development environments
 but does not create a production release.
+
+`dev.lootlog.pl` is served by the repository-owned
+`@lootlog/traffic-splitter` Worker. The GitHub `dev` environment uses the
+dedicated `CLOUDFLARE_WORKERS_API_TOKEN` secret for Worker scripts and custom
+domain updates; Pages deployments continue to use `CLOUDFLARE_API_TOKEN`.
 
 The Changesets version pull request is the release gate. Its merge creates tags,
 GitHub Releases, container images, and Cloudflare artifacts. Production

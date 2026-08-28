@@ -35,6 +35,16 @@ for (const [documentName, document, canonicalUrl] of [
     document,
     /<link rel="apple-touch-icon" href="\/apple-icon\.png"/u,
   );
+  assert.match(
+    document,
+    /(?:href|src)="\/landing-assets\/[^"]+\.(?:css|js)"/u,
+    `${documentName} does not use the landing asset namespace`,
+  );
+  assert.doesNotMatch(
+    document,
+    /(?:href|src)="\/assets\//u,
+    `${documentName} uses the shared asset namespace`,
+  );
 }
 
 assert.match(homeDocument, /<script type="application\/ld\+json">/u);

@@ -41,6 +41,17 @@ const cloudflareDevelopmentTargets = new Map([
       project: "lootlog-docs-develop",
     },
   ],
+  [
+    "@lootlog/traffic-splitter",
+    {
+      artifactPath: "apps/traffic-splitter/dist",
+      configPath: "apps/traffic-splitter/wrangler.jsonc",
+      environment: "",
+      kind: "worker",
+      packageName: "@lootlog/traffic-splitter",
+      project: "lootlog-traffic-splitter-dev",
+    },
+  ],
 ]);
 
 const apiClientProducers = new Set([

@@ -13,6 +13,11 @@ const rootDocument = await readFile(
 assert.match(rootDocument, /http-equiv="refresh" content="0;url=\/docs"/u);
 assert.match(rootDocument, /window\.location\.replace\("\/docs"\)/u);
 assert.match(rootDocument, /href="\/docs"/u);
+assert.doesNotMatch(
+  rootDocument,
+  /(?:href|src)="\/assets\//u,
+  "root redirect uses the shared asset namespace",
+);
 
 const contentFiles = (await readdir(contentDirectory))
   .filter((fileName) => fileName.endsWith(".mdx"))
@@ -46,6 +51,16 @@ await Promise.all(
       `${routePath} lacks its visible description`,
     );
     assert.match(document, /class="[^"]*docs-body/u);
+    assert.match(
+      document,
+      /(?:href|src)="\/docs-assets\/[^"]+\.(?:css|js)"/u,
+      `${routePath} does not use the Docs asset namespace`,
+    );
+    assert.doesNotMatch(
+      document,
+      /(?:href|src)="\/assets\//u,
+      `${routePath} uses the shared asset namespace`,
+    );
   }),
 );
 
