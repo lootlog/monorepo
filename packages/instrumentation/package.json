@@ -17,11 +17,6 @@
       "types": "./dist/instrumentation-nest.d.mts",
       "import": "./dist/instrumentation-nest.mjs",
       "require": "./dist/instrumentation-nest.cjs"
-    },
-    "./instrumentation-hono": {
-      "types": "./dist/instrumentation-hono.d.mts",
-      "import": "./dist/instrumentation-hono.mjs",
-      "require": "./dist/instrumentation-hono.cjs"
     }
   },
   "scripts": {
