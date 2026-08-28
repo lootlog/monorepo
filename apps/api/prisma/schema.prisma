@@ -650,7 +650,6 @@ model UserSettings {
   userId         String   @unique
   guildsOrder    String[] @default([])
   hiddenGuildIds String[] @default([])
-  theme          String   @default("default")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@lootlog/ui/lib/utils";
-import { ThemeInteractiveFrame, useThemeMeta } from "@/themes";
+import { ThemeInteractiveFrame } from "@/themes/theme-interactive-frame";
 
 interface NavElement {
   id: string;
@@ -23,7 +23,6 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
   className = "",
 }) => {
   const { pathname } = useLocation();
-  const { isRukiaTheme } = useThemeMeta();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -84,10 +83,8 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
             className={cn(
               "inline-flex items-center px-6 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
               active
-                ? isRukiaTheme
-                  ? "bg-primary/15 text-white font-semibold"
-                  : "bg-primary/15 text-primary"
-                : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                ? "bg-surface-selected text-foreground font-semibold"
+                : "bg-background text-muted-foreground hover:bg-surface-hover hover:text-foreground",
             )}
           >
             {item.label}

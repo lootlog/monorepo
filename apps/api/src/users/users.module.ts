@@ -7,6 +7,7 @@ import { AuthModule } from "src/auth/auth.module";
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 import { GuildsModule } from "src/guilds/guilds.module";
+import { ThemeLibraryService } from "./theme-library.service";
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { GuildsModule } from "src/guilds/guilds.module";
     HttpModule,
     GuildsModule,
   ],
-  providers: [UsersService],
+  providers: [UsersService, ThemeLibraryService],
   controllers: [UsersController],
   exports: [UsersService],
 })

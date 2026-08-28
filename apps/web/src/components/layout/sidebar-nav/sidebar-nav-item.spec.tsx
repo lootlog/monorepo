@@ -11,7 +11,7 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-vi.mock("@/themes", () => ({
+vi.mock("@/themes/theme-interactive-frame", () => ({
   ThemeInteractiveFrame: ({ children }: { children: ReactNode }) => children,
 }));
 

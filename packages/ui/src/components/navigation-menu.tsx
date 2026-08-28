@@ -4,6 +4,8 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@lootlog/ui/lib/utils";
 
+import { usePortalContainer } from "./portal-container-context";
+
 function NavigationMenu({
   className,
   children,
@@ -56,7 +58,7 @@ function NavigationMenuItem({
 }
 
 const navigationMenuTriggerStyle = cva(
-  "group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-popup-open:hover:bg-accent data-popup-open:text-accent-foreground data-popup-open:focus:bg-accent data-popup-open:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1",
+  "group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium hover:bg-surface-hover hover:text-foreground focus:bg-surface-hover focus:text-foreground disabled:pointer-events-none disabled:opacity-50 data-popup-open:hover:bg-surface-selected data-popup-open:text-foreground data-popup-open:focus:bg-surface-selected data-popup-open:bg-surface-selected focus-visible:ring-ring outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1",
 );
 
 function NavigationMenuTrigger({
@@ -103,8 +105,10 @@ function NavigationMenuViewport({
   align = "start",
   ...props
 }: NavigationMenuPrimitive.Positioner.Props) {
+  const container = usePortalContainer();
+
   return (
-    <NavigationMenuPrimitive.Portal>
+    <NavigationMenuPrimitive.Portal container={container}>
       <NavigationMenuPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}
@@ -136,7 +140,7 @@ function NavigationMenuLink({
     <NavigationMenuPrimitive.Link
       data-slot="navigation-menu-link"
       className={cn(
-        "data-active:focus:bg-accent data-active:hover:bg-accent data-active:bg-accent/50 data-active:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus-visible:ring-ring/50 [&_svg:not([class*='text-'])]:text-muted-foreground flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none focus-visible:ring-[3px] focus-visible:outline-1 [&_svg:not([class*='size-'])]:size-4",
+        "data-active:focus:bg-surface-selected data-active:hover:bg-surface-selected data-active:bg-surface-selected data-active:text-foreground hover:bg-surface-hover hover:text-foreground focus:bg-surface-hover focus:text-foreground focus-visible:ring-ring [&_svg:not([class*='text-'])]:text-muted-foreground flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none focus-visible:ring-[3px] focus-visible:outline-1 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
@@ -157,7 +161,7 @@ function NavigationMenuIndicator({
       )}
       {...props}
     >
-      <div className="bg-border relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm shadow-md" />
+      <div className="bg-border relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm shadow-[0_6px_14px_-8px_var(--theme-shadow)]" />
     </NavigationMenuPrimitive.Icon>
   );
 }

@@ -17,6 +17,10 @@ vi.mock("@lootlog/api-client/react-query/main/kills", () => ({
   useKillsControllerGetUserKillStats: mocks.useKillStats,
 }));
 
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => vi.fn(),
+}));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => {
@@ -74,19 +78,16 @@ vi.mock("./player-kill-stats-panel", () => ({
 
 vi.mock("./top-killed-npcs-panel", () => ({
   TopKilledNpcsPanel: ({
+    data,
     npcType,
-    period,
-    world,
   }: {
+    data?: { topNpcs: unknown[] };
     npcType: string;
-    period: string;
-    world?: string;
   }) => (
     <section
       aria-label="Najczęściej bite potwory"
+      data-count={data?.topNpcs.length}
       data-npc-type={npcType}
-      data-period={period}
-      data-world={world}
     />
   ),
 }));
@@ -139,9 +140,11 @@ describe("DashboardStatisticsPanel", () => {
     const ranking = within(statistics).getByRole("region", {
       name: "Najczęściej bite potwory",
     });
-    expect(ranking.dataset.period).toBe("7d");
-    expect(ranking.dataset.world).toBe("Lunia");
     expect(ranking.dataset.npcType).toBe("HERO");
+    expect(mocks.useKillStats).toHaveBeenCalledWith(
+      { npcTypes: ["HERO"], period: "7d", world: "Lunia" },
+      expect.any(Object),
+    );
   });
 
   it("renders both data sections as separate cards without a compact switcher", () => {

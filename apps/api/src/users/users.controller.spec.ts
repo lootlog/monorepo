@@ -3,6 +3,7 @@ import { mockFn } from "src/test/mock-fn";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
 import { AuthGuard } from "@lootlog/nest-shared";
+import { ThemeLibraryService } from "./theme-library.service";
 
 describe("UserController", () => {
   let controller: UsersController;
@@ -23,6 +24,13 @@ describe("UserController", () => {
         {
           provide: UsersService,
           useValue: mockUsersService,
+        },
+        {
+          provide: ThemeLibraryService,
+          useValue: {
+            getThemeLibrary: mockFn(),
+            patchThemeLibrary: mockFn(),
+          },
         },
       ],
     })

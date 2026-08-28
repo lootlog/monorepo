@@ -1042,6 +1042,510 @@
     "title": "Wygląd",
     "description": "Dostosuj wygląd aplikacji według swoich preferencji.",
     "themeLabel": "Motyw",
+    "galleryTitle": "Motywy, które zmieniają cały interfejs",
+    "galleryDescription": "Wybierz gotową recepturę albo zbuduj własną. Motyw steruje komponentami, typografią, gęstością, nawigacją, wykresami i ruchem — nie tylko kolorem.",
+    "activeTheme": "Aktywny motyw:",
+    "darkOnly": "Tryb ciemny",
+    "customDescription": "{{recipe}} · {{density}}",
+    "duplicateName": "{{name}} — kopia",
+    "deleteConfirm": "Usunąć ten motyw? Tej operacji nie można cofnąć.",
+    "actions": {
+      "active": "Aktywny",
+      "activate": "Użyj",
+      "create": "Nowy motyw",
+      "import": "Importuj",
+      "edit": "Edytuj motyw",
+      "remix": "Remiksuj",
+      "duplicate": "Duplikuj",
+      "download": "Pobierz plik",
+      "copyCode": "Kopiuj kod",
+      "delete": "Usuń",
+      "configure": "Dostosuj efekty",
+      "more": "Więcej akcji"
+    },
+    "badges": {
+      "preset": "Preset",
+      "custom": "Własny",
+      "special": "Specjalny",
+      "locked": "Zablokowany"
+    },
+    "sections": {
+      "mine": {
+        "title": "Moje motywy",
+        "description": "Prywatna biblioteka synchronizowana z Twoim kontem. Możesz zapisać do 20 motywów."
+      },
+      "presets": {
+        "title": "Presety Lootloga",
+        "description": "Znane palety rozbudowane o własny charakter komponentów. Każdy preset możesz potraktować jako punkt startowy."
+      },
+      "special": {
+        "title": "Motywy specjalne",
+        "description": "Rukia, Rias i kotki zachowują autorskie dekoracje oraz efekty. Zmieniasz tylko gęstość i intensywność ruchu."
+      }
+    },
+    "emptyMine": {
+      "title": "Nie masz jeszcze własnego motywu",
+      "description": "Utwórz go od zera, zremiksuj preset albo zaimportuj motyw otrzymany od innej osoby."
+    },
+    "toasts": {
+      "saved": "Motyw zapisany",
+      "deleted": "Motyw usunięty",
+      "duplicated": "Utworzono kopię motywu",
+      "imported": "Motyw zaimportowany",
+      "codeCopied": "Kod motywu skopiowany",
+      "copyError": "Nie udało się skopiować kodu motywu.",
+      "specialUpdated": "Ustawienia motywu specjalnego zapisane",
+      "saveError": "Nie udało się zapisać motywu. Przywróciliśmy ostatni zapisany stan.",
+      "conflict": "Motyw został zmieniony w innej karcie. Pobraliśmy najnowszą wersję — spróbuj ponownie."
+    },
+    "import": {
+      "title": "Importuj motyw",
+      "description": "Wklej kod LLT1 albo wybierz plik .lootlog-theme.json. Import zawsze tworzy nową kopię.",
+      "placeholder": "LLT1.… lub zawartość pliku JSON",
+      "codeLabel": "Kod lub JSON motywu",
+      "chooseFile": "Wybierz plik motywu",
+      "action": "Importuj motyw",
+      "importing": "Importowanie…",
+      "errors": {
+        "invalid": "Ten motyw ma nieobsługiwany format albo zawiera niedozwolone dane.",
+        "corrupted": "Kod motywu jest uszkodzony. Poproś nadawcę o ponowne skopiowanie.",
+        "tooLarge": "Motyw przekracza limit 64 KiB. Usuń zbędne dane i spróbuj ponownie.",
+        "unsupportedVersion": "Ten motyw pochodzi z nowszej, nieobsługiwanej wersji formatu."
+      }
+    },
+    "specialControls": {
+      "description": "Dekoracje i warianty komponentów pozostają częścią pakietu. Możesz dostosować jego rytm i ilość ruchu."
+    },
+    "previewSession": {
+      "active": "Testujesz motyw „{{name}}” bez zapisywania",
+      "back": "Wróć do edytora",
+      "end": "Zakończ podgląd"
+    },
+    "builder": {
+      "createTitle": "Nowy motyw",
+      "editTitle": "Edytuj motyw",
+      "subtitle": "Draft wpływa wyłącznie na podgląd do momentu zapisania.",
+      "defaultName": "Mój motyw",
+      "back": "Wróć do galerii",
+      "settingsTab": "Ustawienia",
+      "previewTab": "Podgląd",
+      "name": "Nazwa motywu",
+      "colors": "Kolory semantyczne",
+      "colorsDescription": "Każda zmiana dotyczy tylko wybranego tokenu. Pełny zestaw przelicza wyłącznie jawna akcja generatora.",
+      "interactions": "Interakcje",
+      "interactionsDescription": "Jawne kolory hover, active, selected i focus. Żaden komponent nie domiesza własnej barwy.",
+      "components": "Komponenty",
+      "componentsDescription": "Receptura ustawia cały zestaw. Ręczna zmiana pojedynczego komponentu tworzy wariant własny.",
+      "surfaces": "Powierzchnie",
+      "surfacesDescription": "Głębokość, obramowania, promień i gęstość całego interfejsu.",
+      "recipe": "Receptura komponentów",
+      "customRecipe": "Wariant własny — komponenty zostały dostrojone niezależnie od receptury.",
+      "radius": "Zaokrąglenie",
+      "density": "Gęstość",
+      "surface": "Powierzchnie",
+      "border": "Obramowania",
+      "typography": "Typografia",
+      "headingFont": "Nagłówki",
+      "bodyFont": "Treść",
+      "headingWeight": "Grubość nagłówków",
+      "bodyWeight": "Grubość treści",
+      "tracking": "Odstępy liter",
+      "navigation": "Nawigacja",
+      "navigationSurface": "Tło sidebara",
+      "navigationActive": "Aktywna pozycja",
+      "charts": "Wykresy",
+      "chartColor": "Kolor wykresu {{number}}",
+      "chartGrid": "Siatka",
+      "chartStroke": "Grubość linii",
+      "chartFill": "Wypełnienie",
+      "motion": "Ruch",
+      "advanced": "Tryb Advanced",
+      "advancedDescription": "Wszystkie tokeny, wartości HEX i wyszukiwarka ustawień.",
+      "searchControls": "Szukaj tokenu lub ustawienia…",
+      "generatePalette": "Wygeneruj pełną paletę",
+      "tryInApplication": "Wypróbuj w aplikacji",
+      "resetGroup": "Resetuj grupę {{title}}",
+      "lockAxis": "Zablokuj oś podczas remiksowania",
+      "unlockAxis": "Odblokuj oś podczas remiksowania",
+      "reset": "Resetuj",
+      "remix": "Remiksuj",
+      "before": "Przed",
+      "after": "Po",
+      "activateAfterSave": "Aktywuj po zapisaniu",
+      "contrastTitle": "Kontrast wymaga poprawy",
+      "contrastDescription": "{{count}} par kolorów nie spełnia WCAG 2.2 AA. Zapis jest zablokowany do czasu poprawy.",
+      "previewLabel": "Izolowany podgląd motywu Lootloga",
+      "leaveConfirm": "Masz niezapisane zmiany. Opuścić kreator i je odrzucić?",
+      "notFoundTitle": "Nie znaleziono motywu",
+      "notFoundDescription": "Motyw mógł zostać usunięty albo nie należy do Twojej biblioteki."
+    },
+    "options": {
+      "recipe": {
+        "signal": "Sygnał",
+        "solid": "Pełny",
+        "soft": "Miękki",
+        "outline": "Kontur",
+        "custom": "Własna"
+      },
+      "radius": {
+        "sharp": "Ostry",
+        "compact": "Zwarty",
+        "default": "Domyślny",
+        "round": "Okrągły"
+      },
+      "density": {
+        "compact": "Zwarta",
+        "standard": "Standardowa",
+        "comfortable": "Wygodna"
+      },
+      "surface": {
+        "flat": "Płaska",
+        "raised": "Uniesiona",
+        "floating": "Pływająca"
+      },
+      "border": {
+        "none": "Brak",
+        "subtle": "Subtelne",
+        "strong": "Mocne"
+      },
+      "font": {
+        "geist": "Geist",
+        "inter": "Inter",
+        "manrope": "Manrope"
+      },
+      "weight": {
+        "regular": "Regular",
+        "medium": "Medium",
+        "semibold": "Semibold",
+        "bold": "Bold"
+      },
+      "tracking": {
+        "tight": "Ciasne",
+        "normal": "Normalne",
+        "relaxed": "Luźne"
+      },
+      "components": {
+        "button": {
+          "label": "Przyciski",
+          "solid": "Pełne",
+          "soft": "Miękkie",
+          "outline": "Konturowe",
+          "minimal": "Minimalne"
+        },
+        "card": {
+          "label": "Karty",
+          "solid": "Pełne",
+          "soft": "Miękkie",
+          "outline": "Konturowe"
+        },
+        "input": {
+          "label": "Pola",
+          "outline": "Konturowe",
+          "filled": "Wypełnione",
+          "underline": "Podkreślone"
+        },
+        "badge": {
+          "label": "Odznaki",
+          "solid": "Pełne",
+          "soft": "Miękkie",
+          "outline": "Konturowe"
+        },
+        "table": {
+          "label": "Tabele",
+          "plain": "Proste",
+          "striped": "Paskowane",
+          "separated": "Rozdzielone"
+        }
+      },
+      "chartGrid": {
+        "hidden": "Ukryta",
+        "subtle": "Subtelna",
+        "strong": "Mocna"
+      },
+      "chartStroke": {
+        "thin": "Cienka",
+        "default": "Domyślna",
+        "bold": "Gruba"
+      },
+      "chartFill": { "none": "Brak", "soft": "Miękkie" },
+      "navigationSurface": {
+        "solid": "Pełne tło",
+        "subtle": "Subtelne tło"
+      },
+      "navigationActive": {
+        "filled": "Wypełnienie",
+        "line": "Linia"
+      },
+      "motion": {
+        "quiet": "Spokojny",
+        "standard": "Standardowy",
+        "expressive": "Wyrazisty"
+      },
+      "tokens": {
+        "background": "Tło",
+        "foreground": "Tekst",
+        "card": "Karty",
+        "cardForeground": "Tekst kart",
+        "popover": "Overlaye",
+        "popoverForeground": "Tekst overlayów",
+        "primary": "Główny",
+        "primaryForeground": "Tekst główny",
+        "secondary": "Drugorzędny",
+        "secondaryForeground": "Tekst drugorzędny",
+        "muted": "Wyciszony",
+        "mutedForeground": "Tekst wyciszony",
+        "accent": "Akcent",
+        "accentForeground": "Tekst akcentu",
+        "destructive": "Destrukcyjny",
+        "destructiveForeground": "Tekst destrukcyjny",
+        "border": "Obramowanie",
+        "input": "Obramowanie pól",
+        "ring": "Focus ring",
+        "sidebar": "Sidebar",
+        "sidebarForeground": "Tekst sidebara",
+        "sidebarPrimary": "Główny sidebara",
+        "sidebarPrimaryForeground": "Tekst główny sidebara",
+        "sidebarAccent": "Akcent sidebara",
+        "sidebarAccentForeground": "Tekst akcentu sidebara",
+        "sidebarBorder": "Obramowanie sidebara",
+        "sidebarRing": "Focus sidebara",
+        "signalLive": "Sygnał live",
+        "signalReady": "Sygnał gotowości",
+        "signalTimer": "Sygnał timera",
+        "signalAlert": "Sygnał alertu",
+        "primaryHover": "Główny · hover",
+        "primaryActive": "Główny · active",
+        "secondaryHover": "Drugorzędny · hover",
+        "secondaryActive": "Drugorzędny · active",
+        "neutralHover": "Neutralny · hover",
+        "neutralActive": "Neutralny · active",
+        "destructiveHover": "Destrukcyjny · hover",
+        "destructiveActive": "Destrukcyjny · active",
+        "surfaceHover": "Powierzchnia · hover",
+        "surfaceSelected": "Powierzchnia · selected",
+        "inputHover": "Pole · hover",
+        "inputFocus": "Pole · focus",
+        "sidebarHover": "Sidebar · hover",
+        "sidebarActive": "Sidebar · active",
+        "shadow": "Cień"
+      }
+    },
+    "preview": {
+      "scenarios": {
+        "dashboard": "Dashboard",
+        "loots": "Looty i tabela",
+        "components": "Komponenty",
+        "states": "Stany i overlaye"
+      },
+      "scenarioTitles": {
+        "dashboard": "Pulpit organizacji",
+        "loots": "Lista lootów",
+        "components": "Biblioteka komponentów",
+        "states": "Stany interfejsu"
+      },
+      "viewports": {
+        "desktop": "Desktop",
+        "tablet": "Tablet",
+        "mobile": "Mobile"
+      },
+      "focusPreview": "Skup podgląd",
+      "restoreSettings": "Pokaż ustawienia",
+      "inspector": "Włącz inspektor tokenów",
+      "inspectorSlot": "Wybrany komponent",
+      "inspectorTokens": "Używane tokeny",
+      "shell": {
+        "personalWorkspace": "Przejdź do przestrzeni osobistej",
+        "brandInitials": "LL",
+        "addOrganization": "Dodaj organizację",
+        "applications": "Aplikacje",
+        "openNavigation": "Otwórz nawigację",
+        "closeNavigation": "Zamknij nawigację",
+        "beta": "BETA",
+        "greeting": "Cześć, Wild! 👋",
+        "userName": "Wild",
+        "userInitials": "W",
+        "organizationName": "Aether",
+        "organizationInitials": "AE",
+        "worldNames": { "luvia": "Luvia", "gordion": "Gordion" },
+        "worlds": {
+          "aether": "Aether",
+          "north": "Strażnicy Północy",
+          "ember": "Ember",
+          "frost": "Frost",
+          "void": "Void"
+        },
+        "worldInitials": {
+          "aether": "AE",
+          "north": "SP",
+          "ember": "EM",
+          "frost": "FR",
+          "void": "VO"
+        }
+      },
+      "navigation": "Podgląd nawigacji",
+      "nav": {
+        "dashboard": "Pulpit",
+        "loot": "Looty",
+        "timers": "Timery",
+        "activity": "Aktywność",
+        "settings": "Ustawienia"
+      },
+      "guild": "Organizacja · Aether",
+      "title": "Przegląd łupów",
+      "notifications": "Powiadomienia",
+      "lastLoot": "Ostatni loot",
+      "legendary": "Legendarny",
+      "itemName": "Pierścień Zorzy",
+      "itemMeta": "Tytan · 2 min temu",
+      "nextSpawn": "Następny respawn",
+      "activity": "Aktywność drużyny",
+      "chart": "Przykładowy wykres aktywności",
+      "period": "7D",
+      "table": "Najaktywniejsi",
+      "players": {
+        "first": "Agar",
+        "second": "Nyras",
+        "third": "Vaal"
+      },
+      "dashboard": {
+        "npcs": {
+          "first": "Mazurnik Przybrzeżny",
+          "second": "Wysłannik Tellarów",
+          "third": "Nymphemonia",
+          "fourth": "Wabicielka",
+          "fifth": "Neferkar Set"
+        },
+        "reservations": {
+          "title": "Moje zapisy",
+          "showAll": "Pokaż wszystkie",
+          "reminder": "15 min",
+          "first": {
+            "name": "Kwieciste Przejście",
+            "organization": "Aether",
+            "time": "Dzisiaj, 18:00–19:30"
+          },
+          "second": {
+            "name": "Zalana Grota",
+            "organization": "Aether",
+            "time": "Jutro, 20:00–21:00"
+          },
+          "third": {
+            "name": "Stare Wyrobisko",
+            "organization": "Północ",
+            "time": "Sobota, 16:30–18:00"
+          }
+        }
+      },
+      "loots": {
+        "npcs": {
+          "maddok": "Maddok Magua",
+          "nymphemonia": "Nymphemonia",
+          "berserker": "Potulny Berserker"
+        },
+        "players": { "wild": "Wild", "agar": "Agar", "mira": "Mira" },
+        "playerInitials": { "wild": "W", "agar": "A", "mira": "M" },
+        "locations": {
+          "maddok": "Świątynia Andarum",
+          "nymphemonia": "Kryształowa Grota",
+          "berserker": "Płaskowyż Arpan"
+        },
+        "times": {
+          "recent": "2 min temu",
+          "hour": "58 min temu",
+          "yesterday": "Wczoraj, 22:14"
+        }
+      },
+      "searchPlaceholder": "Znajdź gracza…",
+      "search": "Szukaj",
+      "addLoot": "Dodaj loot",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "filters": { "all": "Wszystkie", "titans": "Tytani", "heroes": "Herosi" },
+      "rarities": {
+        "heroic": "Heroik",
+        "unique": "Unikat",
+        "legendary": "Legenda"
+      },
+      "lootTable": {
+        "item": "Przedmiot",
+        "npc": "Potwór",
+        "owner": "Zdobywca"
+      },
+      "lootFixtures": {
+        "aurora": {
+          "name": "Pierścień Zorzy",
+          "npc": "Maddok Magua",
+          "owner": "Agar"
+        },
+        "north": {
+          "name": "Płaszcz Północy",
+          "npc": "Tepeyollotl",
+          "owner": "Nyras"
+        },
+        "astratus": {
+          "name": "Szpon Astratusa",
+          "npc": "Astratus",
+          "owner": "Vaal"
+        },
+        "awakening": {
+          "name": "Zwój Przebudzenia",
+          "npc": "Regulus",
+          "owner": "Mira"
+        }
+      },
+      "components": {
+        "pageTitle": "Ustawienia interfejsu",
+        "pageDescription": "Sprawdź wygląd formularzy, przycisków i wyborów w prawdziwym kontekście ustawień.",
+        "buttons": "Przyciski i odznaki",
+        "primary": "Główny",
+        "secondary": "Drugorzędny",
+        "outline": "Kontur",
+        "ghost": "Ghost",
+        "destructive": "Usuń",
+        "disabled": "Wyłączony",
+        "new": "Nowy",
+        "ready": "Gotowy",
+        "draft": "Draft",
+        "error": "Błąd",
+        "form": "Formularz",
+        "name": "Nazwa",
+        "nameValue": "Wyprawa po tytana",
+        "description": "Dodaj opis…",
+        "remember": "Zapamiętaj ustawienie",
+        "notifications": "Powiadomienia",
+        "selection": "Wybór i zakładki",
+        "grid": "Siatka",
+        "rows": "Wiersze",
+        "list": "Lista",
+        "general": "Ogólne",
+        "access": "Dostęp",
+        "generalDescription": "Podstawowe ustawienia widoku i zachowania.",
+        "accessDescription": "Role i uprawnienia dla członków organizacji.",
+        "alertTitle": "Zmiany są lokalne",
+        "alertDescription": "Ten scenariusz nie wysyła żadnych danych do API."
+      },
+      "states": {
+        "pageTitle": "Powiadomienia i stany",
+        "pageDescription": "Zweryfikuj komunikaty, brak danych, ładowanie i warstwy ponad stroną.",
+        "successTitle": "Zapisano zmiany",
+        "successDescription": "Konfiguracja jest gotowa do użycia.",
+        "errorTitle": "Nie udało się zapisać",
+        "errorDescription": "Sprawdź połączenie i spróbuj ponownie.",
+        "refresh": "Odśwież",
+        "overlays": "Interaktywne overlaye",
+        "tooltip": "Tooltip",
+        "tooltipContent": "Portal używa tokenów draftu",
+        "popover": "Popover",
+        "popoverTitle": "Szybkie ustawienia",
+        "popoverDescription": "Ta powierzchnia dziedziczy motyw canvasu.",
+        "dialog": "Otwórz dialog",
+        "dialogTitle": "Zapisz widok",
+        "dialogDescription": "Dialog pozostaje wewnątrz izolowanego podglądu.",
+        "loading": "Wczytywanie przykładowych danych…"
+      },
+      "emptyTitle": "Wszystko przejrzane",
+      "emptyDescription": "Nowe looty pojawią się tutaj automatycznie."
+    },
     "themes": {
       "default": {
         "title": "Default v2",

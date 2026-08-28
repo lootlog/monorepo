@@ -15,29 +15,6 @@ const UpdateUserPreferencesSchema = z.object({
       message: "hiddenGuildIds must contain unique values",
     })
     .optional(),
-  theme: z
-    .enum([
-      "default",
-      "cyberpunk",
-      "pastel",
-      "fantasy",
-      "shonen",
-      "onepiece",
-      "anime",
-      "goth",
-      "halloween",
-      "realmadrid",
-      "realmadrid-3rd",
-      "barcelona",
-      "waguri",
-      "rukia",
-      "rias",
-      "cat-pink",
-      "cat-purple",
-      "cat-blue",
-      "cat-random",
-    ])
-    .optional(),
   chatAppearance: z
     .object({
       npcLayout: z.enum(["tile", "inline"]).optional(),

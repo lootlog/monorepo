@@ -16,6 +16,8 @@
     "doctor": "npx -y react-doctor@latest ."
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource-variable/manrope": "^5.2.8",
     "@hookform/resolvers": "catalog:",
     "@lexical/code": "0.48.0",
     "@lexical/link": "0.48.0",
@@ -42,6 +44,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
+    "fflate": "^0.8.2",
     "framer-motion": "^12.42.2",
     "i18next": "^26.3.6",
     "lexical": "^0.48.0",

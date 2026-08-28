@@ -23,7 +23,7 @@ export const NotificationsActionsCard = ({
   return (
     <Card className="gap-3 border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-primary/10 p-2.5">
+        <div className="rounded-xl bg-surface-selected p-2.5">
           <Settings className="size-4 text-primary" />
         </div>
         <h3 className="text-base font-semibold">

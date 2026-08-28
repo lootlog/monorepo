@@ -46,7 +46,7 @@ export const NotificationJobDetailDialog = ({
   return (
     <Dialog open={job !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-xl">
-        <DialogHeader className="border-b bg-muted/30 px-5 py-4">
+        <DialogHeader className="border-b bg-secondary px-5 py-4">
           <DialogTitle className="px-0 pt-0 text-base">
             {t("settings.notifications.jobDetail.title")}
           </DialogTitle>
@@ -196,7 +196,7 @@ export const NotificationJobDetailDialog = ({
               </div>
             ) : null}
             {job.lastError ? (
-              <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4">
+              <div className="rounded-xl border border-destructive bg-card p-4">
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-destructive">
                   {t("settings.notifications.jobDetail.lastError")}
                 </p>

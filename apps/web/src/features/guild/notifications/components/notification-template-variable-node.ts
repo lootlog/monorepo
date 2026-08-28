@@ -97,8 +97,7 @@ export class NotificationTemplateVariableNode extends TextNode {
   }
 
   private applyVariableStyles(element: HTMLElement) {
-    element.style.backgroundColor =
-      "color-mix(in oklab, var(--primary) 12%, transparent)";
+    element.style.backgroundColor = "var(--surface-selected)";
     element.style.borderRadius = "2px";
     element.style.color = "var(--primary)";
   }

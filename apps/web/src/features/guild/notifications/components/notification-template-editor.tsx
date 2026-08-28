@@ -516,7 +516,7 @@ export const NotificationTemplateEditor = ({
         }}
       >
         <div className="overflow-visible rounded-xl border border-border/70 bg-background">
-          <div className="border-b border-border/60 bg-muted/20 px-3 py-2">
+          <div className="border-b border-border bg-secondary px-3 py-2">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               {t("settings.notifications.templateEditor.label")}
             </p>
@@ -658,7 +658,7 @@ export const NotificationTemplateEditor = ({
                               value={suggestion.label}
                               className={cn(
                                 highlightedSuggestionIndex === index &&
-                                  "bg-primary/50 text-accent-foreground",
+                                  "bg-surface-selected text-foreground",
                               )}
                               onMouseEnter={() => {
                                 setHighlightedSuggestion({

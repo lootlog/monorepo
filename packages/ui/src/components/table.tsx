@@ -9,7 +9,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     <table
       data-slot="table"
       className={cn(
-        "w-full caption-bottom text-sm [&_tr[data-state=expanded-detail]]:bg-muted/40 [&_tr[data-state=expanded-detail]]:hover:bg-muted/40",
+        "w-full caption-bottom text-sm [&_tr[data-state=expanded-detail]]:bg-surface-selected [&_tr[data-state=expanded-detail]]:hover:bg-surface-selected",
         className,
       )}
       {...props}
@@ -21,7 +21,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("bg-secondary/45 [&_tr]:border-b", className)}
+      className={cn("bg-secondary [&_tr]:border-b", className)}
       {...props}
     />
   );
@@ -41,10 +41,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
       data-slot="table-footer"
-      className={cn(
-        "bg-muted/50 font-medium [&>tr]:last:border-b-0",
-        className,
-      )}
+      className={cn("bg-muted font-medium [&>tr]:last:border-b-0", className)}
       {...props}
     />
   );
@@ -55,7 +52,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b border-border/70 transition-colors hover:bg-accent/35 data-[state=selected]:bg-primary/12 [&_td:last-child]:pr-4 [&_td:first-child]:pl-4 [&_th:first-child]:pl-4 [&_th:last-child]:pr-4",
+        "border-b border-border transition-colors hover:bg-surface-hover data-[state=selected]:bg-surface-selected [&_td:last-child]:pr-4 [&_td:first-child]:pl-4 [&_th:first-child]:pl-4 [&_th:last-child]:pr-4",
         className,
       )}
       {...props}

@@ -30,7 +30,7 @@ export const ThemeCard: FC<ThemeCardProps> = ({
         "hover:shadow-md hover:scale-[1.02]",
         isActive
           ? "border-primary shadow-md ring-2 ring-primary ring-offset-2"
-          : "border-border hover:border-primary/50",
+          : "border-border hover:border-input-focus",
       )}
     >
       {isActive && (
@@ -55,7 +55,7 @@ export const ThemeCard: FC<ThemeCardProps> = ({
             }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-sm">
+            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-background backdrop-blur-sm border border-border shadow-sm">
               <Eye className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>

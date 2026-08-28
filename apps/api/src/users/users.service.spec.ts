@@ -186,7 +186,6 @@ describe("UsersService", () => {
       userId: "auth-user-current",
       guildsOrder: [],
       hiddenGuildIds: [],
-      theme: "default",
       chatAppearance: {
         npcLayout: "tile",
         fontScalePercent: 100,
@@ -209,7 +208,6 @@ describe("UsersService", () => {
       userId: "auth-user-current",
       guildsOrder: ["guild-1"],
       hiddenGuildIds: [],
-      theme: "default",
     });
     mockPrismaService.userSettingDocument.findUnique.mockResolvedValue({
       overrides: "broken-json-shape",
@@ -230,7 +228,6 @@ describe("UsersService", () => {
       userId: "auth-user-current",
       guildsOrder: ["guild-2", "guild-1"],
       hiddenGuildIds: ["guild-unavailable"],
-      theme: "fantasy",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -260,13 +257,11 @@ describe("UsersService", () => {
         userId: "auth-user-current",
         guildsOrder: [],
         hiddenGuildIds: ["guild-unavailable", "guild-1"],
-        theme: "default",
       },
     });
     expect(result).toMatchObject({
       guildsOrder: ["guild-2", "guild-1"],
       hiddenGuildIds: ["guild-unavailable", "guild-1"],
-      theme: "fantasy",
     });
   });
 
@@ -276,7 +271,6 @@ describe("UsersService", () => {
       userId: "auth-user-current",
       guildsOrder: ["guild-1"],
       hiddenGuildIds: [],
-      theme: "fantasy",
       chatAppearance: {
         ...CHAT_APPEARANCE_READABLE_PRESET,
         showNpcAvatar: false,
@@ -355,7 +349,6 @@ describe("UsersService", () => {
     });
     expect(result).toMatchObject({
       guildsOrder: ["guild-1"],
-      theme: "fantasy",
       chatAppearance: {
         ...currentSettings.chatAppearance,
         fontScalePercent: 150,
@@ -548,7 +541,6 @@ describe("UsersService", () => {
       userId: "auth-user-current",
       guildsOrder: [],
       hiddenGuildIds: [],
-      theme: "default",
       chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,
       mutes: {
         players: [

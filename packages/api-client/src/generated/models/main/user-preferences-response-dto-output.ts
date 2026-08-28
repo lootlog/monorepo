@@ -12,7 +12,6 @@ export interface UserPreferencesResponseDtoOutput {
   userId: string;
   guildsOrder: string[];
   hiddenGuildIds: string[];
-  theme: string;
   chatAppearance: UserPreferencesResponseDtoOutputChatAppearance;
   mutes: UserPreferencesResponseDtoOutputMutes;
 }

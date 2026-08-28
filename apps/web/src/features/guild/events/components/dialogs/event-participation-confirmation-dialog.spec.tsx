@@ -7,7 +7,7 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventParticipationConfirmationDialog } from "./event-participation-confirmation-dialog";
 
@@ -39,6 +39,10 @@ vi.mock("sonner", () => ({
     error: vi.fn(),
     success: vi.fn(),
   },
+}));
+
+vi.mock("@lootlog/ui/components/scroll-area", () => ({
+  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock("@lootlog/api-client/react-query/main/events", () => ({

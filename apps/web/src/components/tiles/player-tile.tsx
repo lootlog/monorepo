@@ -80,7 +80,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
       />,
       event.currentTarget.getBoundingClientRect(),
       {
-        contentClassName: "border-border/50 bg-popover/95",
+        contentClassName: "border-border bg-popover",
         triggerElement: event.currentTarget,
       },
     );
@@ -123,7 +123,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
       <TooltipProvider delay={100}>
         <Tooltip>
           <TooltipTrigger render={triggerElement} />
-          <TooltipContent className="border-border/50 bg-popover/95">
+          <TooltipContent className="border-border bg-popover">
             <PlayerTooltipContent
               name={name}
               lvl={lvl ?? undefined}
@@ -157,7 +157,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
           </span>
         }
       />
-      <ContextMenuContent className="min-w-56 rounded-xl border-border bg-popover p-1.5 shadow-xl">
+      <ContextMenuContent className="min-w-56 rounded-xl border-border bg-popover p-1.5 shadow-[0_14px_34px_-18px_var(--theme-shadow)]">
         <ContextMenuItem
           className="h-9 cursor-pointer gap-2 rounded-lg px-2.5"
           onClick={onShowLoots}

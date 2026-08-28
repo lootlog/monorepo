@@ -5,6 +5,8 @@ import * as React from "react";
 
 import { cn } from "@lootlog/ui/lib/utils";
 
+import { usePortalContainer } from "./portal-container-context";
+
 type DrawerContextValue = {
   modal: DrawerPrimitive.Root.Props["modal"];
   showSwipeHandle: boolean;
@@ -44,7 +46,15 @@ function DrawerTrigger(props: DrawerPrimitive.Trigger.Props) {
 }
 
 function DrawerPortal(props: DrawerPrimitive.Portal.Props) {
-  return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />;
+  const container = usePortalContainer();
+
+  return (
+    <DrawerPrimitive.Portal
+      data-slot="drawer-portal"
+      container={container}
+      {...props}
+    />
+  );
 }
 
 function DrawerClose(props: DrawerPrimitive.Close.Props) {
@@ -59,7 +69,7 @@ function DrawerOverlay({
     <DrawerPrimitive.Backdrop
       data-slot="drawer-overlay"
       className={cn(
-        "fixed inset-0 z-50 min-h-dvh bg-black/50 transition-opacity duration-300 data-starting-style:opacity-0 data-ending-style:opacity-0 data-swiping:duration-0 supports-[-webkit-touch-callout:none]:absolute",
+        "fixed inset-0 z-50 min-h-dvh bg-[var(--theme-shadow)] opacity-60 transition-opacity duration-300 data-starting-style:opacity-0 data-ending-style:opacity-0 data-swiping:duration-0 supports-[-webkit-touch-callout:none]:absolute",
         className,
       )}
       {...props}

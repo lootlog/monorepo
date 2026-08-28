@@ -9,6 +9,11 @@ import {
   DEFAULT_NPC_TYPE_COLORS,
   isHexAppearanceColor,
 } from "./npc-appearance-colors.js";
+import {
+  createDefaultThemeLibrary,
+  isThemePresetId,
+  ThemeLibrarySchema,
+} from "./theme.types.js";
 
 export const SETTINGS_DOMAINS = [
   "general",
@@ -119,7 +124,7 @@ export const SETTINGS_CATALOG = {
     },
   },
   appearance: {
-    schemaVersion: 3,
+    schemaVersion: 4,
     migrations: [
       {
         fromVersion: 1,
@@ -129,9 +134,22 @@ export const SETTINGS_CATALOG = {
         fromVersion: 2,
         migrate: ({ colorMode: _colorMode, ...overrides }) => overrides,
       },
+      {
+        fromVersion: 3,
+        migrate: (overrides) => ({
+          ...overrides,
+          theme: createDefaultThemeLibrary(
+            isThemePresetId(overrides.theme) ? overrides.theme : "default",
+          ),
+        }),
+      },
     ],
     fields: {
-      theme: field("default", userScopes, isString),
+      theme: field(
+        createDefaultThemeLibrary(),
+        userScopes,
+        (value) => ThemeLibrarySchema.safeParse(value).success,
+      ),
       "chat.npcLayout": field(
         CHAT_APPEARANCE_READABLE_PRESET.npcLayout,
         userScopes,

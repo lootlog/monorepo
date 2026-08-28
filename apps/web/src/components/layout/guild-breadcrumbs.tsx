@@ -183,7 +183,7 @@ export const GuildBreadcrumbs: FC = () => {
               variant="ghost"
               size="sm"
               onClick={() => navigate({ to: navInfo.backPath as string })}
-              className="p-1 h-8 w-8 rounded-full hover:bg-muted/50 transition-colors"
+              className="p-1 h-8 w-8 rounded-full hover:bg-neutral-hover transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>

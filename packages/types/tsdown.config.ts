@@ -1,6 +1,9 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
+  deps: {
+    onlyBundle: false,
+  },
   entry: {
     index: "src/index.ts",
   },

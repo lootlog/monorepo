@@ -35,8 +35,11 @@ glow, or decorative glass. Shadows are reserved for detached overlays.
   breadcrumbs, current route, and route actions.
 - Current navigation uses a cobalt field or text treatment with a visible
   focus ring. Sidebar boundaries use Rule Blue.
-- Page content uses 12px mobile and 16–24px desktop gutters. Dense data pages
-  may use the full available width.
+- Page content uses 12px mobile and 16–24px desktop gutters. Operational page
+  frames use the full available width inside those shell gutters. Constrain
+  prose, a single form column, or preview media—not the page frame. Catalogs,
+  galleries, boards, tables, and split workspaces must not sit inside a
+  centered fixed `max-width` container.
 
 ## Page Archetypes
 
@@ -96,10 +99,39 @@ these screens into landing pages.
   belongs on a route or side panel.
 - Focus uses a visible 2px Sync Cyan ring with offset. Disabled controls retain
   their label and footprint.
+- Every generic hover, active, selected, focus, surface, input, sidebar, and
+  shadow state comes from an explicit semantic theme token. Do not create
+  chromatic states with opacity suffixes, `color-mix()`, raw Tailwind palette
+  colors, or component-local color literals.
+- Game rarity, product status illustrations, and registered special-theme
+  packages are the only color exceptions. Keep them allowlisted and scoped so
+  they cannot restyle generic component chrome.
+- Theme-scoped previews provide a `PortalContainerProvider`; dialogs, selects,
+  dropdowns, popovers, and tooltips must inherit that local scope.
+
+## Theme Builder
+
+- The builder is a full-width split workspace: a 380–420px settings rail and a
+  canvas that consumes the remaining width and height. It must not inherit a
+  page-level `max-width` or a fixed preview height.
+- The builder shell is neutral and independent from both the saved theme and
+  the draft. Only the canvas receives the draft theme.
+- Desktop, tablet, and mobile canvas modes respond to their selected simulated
+  viewport, not the browser window width. Draft changes update the canvas
+  immediately and never mutate application or backend state before an explicit
+  action.
+- "Try in application" is an in-memory session. It does not write settings,
+  snapshots, or browser storage and always exposes a persistent exit path.
+- Theme previews reuse product shells and query-free presentation views from
+  real workflows. Do not maintain a separate demo dashboard, invented
+  navigation model, or generic component gallery when the product surface
+  already owns the corresponding layout.
 
 ## Responsive and Accessibility
 
-- Validate at 360px, 768px, and 1440px widths.
+- Validate at 360px, 768px, and 1440px widths. Also validate catalogs, boards,
+  and split workspaces at 2560px; added width must increase usable workspace or
+  column count instead of becoming symmetric empty margins.
 - Toolbars wrap actions below the title before truncating meaningful copy.
 - Data tables may scroll horizontally; primary row identity remains visible.
 - Filter sidebars become sheets below the desktop layout breakpoint.

@@ -1,5 +1,44 @@
 openapi: 3.0.0
 paths:
+  /users/@me/themes:
+    get:
+      operationId: UsersController_getThemeLibrary
+      parameters: []
+      responses:
+        "200":
+          description: Theme library
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThemeLibraryResponseDto_Output"
+      security:
+        - bearer: []
+      summary: Get the current user's theme library
+      tags:
+        - users
+    patch:
+      operationId: UsersController_patchThemeLibrary
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchThemeLibraryDto"
+      responses:
+        "200":
+          description: Updated theme library
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThemeLibraryResponseDto_Output"
+        "409":
+          description: Theme library revision conflict
+      security:
+        - bearer: []
+      summary: Atomically update the current user's themes
+      tags:
+        - users
   /users/@me:
     delete:
       description: Permanently delete user account and associated data
@@ -6407,6 +6446,996 @@ components:
       bearerFormat: JWT
       type: http
   schemas:
+    ThemeLibraryResponseDto_Output:
+      type: object
+      properties:
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        selection:
+          oneOf:
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                    - preset
+                presetId:
+                  type: string
+                  enum:
+                    - default
+                    - cyberpunk
+                    - pastel
+                    - fantasy
+                    - shonen
+                    - onepiece
+                    - anime
+                    - waguri
+                    - goth
+                    - halloween
+                    - realmadrid
+                    - realmadrid-3rd
+                    - barcelona
+                    - rukia
+                    - rias
+                    - cat-pink
+                    - cat-purple
+                    - cat-blue
+                    - cat-random
+              required:
+                - kind
+                - presetId
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                    - custom
+                themeId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - kind
+                - themeId
+        customThemes:
+          type: array
+          maxItems: 20
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 1
+                maxLength: 64
+              name:
+                type: string
+                minLength: 1
+                maxLength: 48
+              config:
+                type: object
+                properties:
+                  version:
+                    type: number
+                    enum:
+                      - 1
+                  tokens:
+                    type: object
+                    properties:
+                      background:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      foreground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      card:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      cardForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      popover:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      popoverForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      primary:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      primaryForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      secondary:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      secondaryForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      muted:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      mutedForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      accent:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      accentForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      destructive:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      destructiveForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      border:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      input:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      ring:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebar:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebarForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebarPrimary:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebarPrimaryForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebarAccent:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebarAccentForeground:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebarBorder:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebarRing:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      signalLive:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      signalReady:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      signalTimer:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      signalAlert:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      primaryHover:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      primaryActive:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      secondaryHover:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      secondaryActive:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      neutralHover:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      neutralActive:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      destructiveHover:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      destructiveActive:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      surfaceHover:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      surfaceSelected:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      inputHover:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      inputFocus:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebarHover:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      sidebarActive:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                      shadow:
+                        type: string
+                        pattern: ^#[\da-f]{6}$
+                    required:
+                      - background
+                      - foreground
+                      - card
+                      - cardForeground
+                      - popover
+                      - popoverForeground
+                      - primary
+                      - primaryForeground
+                      - secondary
+                      - secondaryForeground
+                      - muted
+                      - mutedForeground
+                      - accent
+                      - accentForeground
+                      - destructive
+                      - destructiveForeground
+                      - border
+                      - input
+                      - ring
+                      - sidebar
+                      - sidebarForeground
+                      - sidebarPrimary
+                      - sidebarPrimaryForeground
+                      - sidebarAccent
+                      - sidebarAccentForeground
+                      - sidebarBorder
+                      - sidebarRing
+                      - signalLive
+                      - signalReady
+                      - signalTimer
+                      - signalAlert
+                      - primaryHover
+                      - primaryActive
+                      - secondaryHover
+                      - secondaryActive
+                      - neutralHover
+                      - neutralActive
+                      - destructiveHover
+                      - destructiveActive
+                      - surfaceHover
+                      - surfaceSelected
+                      - inputHover
+                      - inputFocus
+                      - sidebarHover
+                      - sidebarActive
+                      - shadow
+                  recipe:
+                    type: string
+                    enum:
+                      - signal
+                      - solid
+                      - soft
+                      - outline
+                      - custom
+                  components:
+                    type: object
+                    properties:
+                      button:
+                        type: string
+                        enum:
+                          - solid
+                          - soft
+                          - outline
+                          - minimal
+                      card:
+                        type: string
+                        enum:
+                          - solid
+                          - soft
+                          - outline
+                      input:
+                        type: string
+                        enum:
+                          - outline
+                          - filled
+                          - underline
+                      badge:
+                        type: string
+                        enum:
+                          - solid
+                          - soft
+                          - outline
+                      table:
+                        type: string
+                        enum:
+                          - plain
+                          - striped
+                          - separated
+                    required:
+                      - button
+                      - card
+                      - input
+                      - badge
+                      - table
+                  radius:
+                    type: string
+                    enum:
+                      - sharp
+                      - compact
+                      - default
+                      - round
+                  density:
+                    type: string
+                    enum:
+                      - compact
+                      - standard
+                      - comfortable
+                  surface:
+                    type: string
+                    enum:
+                      - flat
+                      - raised
+                      - floating
+                  border:
+                    type: string
+                    enum:
+                      - none
+                      - subtle
+                      - strong
+                  typography:
+                    type: object
+                    properties:
+                      heading:
+                        type: string
+                        enum:
+                          - geist
+                          - inter
+                          - manrope
+                      body:
+                        type: string
+                        enum:
+                          - geist
+                          - inter
+                          - manrope
+                      headingWeight:
+                        type: string
+                        enum:
+                          - medium
+                          - semibold
+                          - bold
+                      bodyWeight:
+                        type: string
+                        enum:
+                          - regular
+                          - medium
+                      tracking:
+                        type: string
+                        enum:
+                          - tight
+                          - normal
+                          - relaxed
+                    required:
+                      - heading
+                      - body
+                      - headingWeight
+                      - bodyWeight
+                      - tracking
+                  navigation:
+                    type: object
+                    properties:
+                      surface:
+                        type: string
+                        enum:
+                          - solid
+                          - subtle
+                      active:
+                        type: string
+                        enum:
+                          - filled
+                          - line
+                    required:
+                      - surface
+                      - active
+                  charts:
+                    minItems: 5
+                    maxItems: 5
+                    type: array
+                    items:
+                      type: string
+                      pattern: ^#[\da-f]{6}$
+                  chartStyle:
+                    type: object
+                    properties:
+                      grid:
+                        type: string
+                        enum:
+                          - hidden
+                          - subtle
+                          - strong
+                      stroke:
+                        type: string
+                        enum:
+                          - thin
+                          - default
+                          - bold
+                      fill:
+                        type: string
+                        enum:
+                          - none
+                          - soft
+                    required:
+                      - grid
+                      - stroke
+                      - fill
+                  motion:
+                    type: string
+                    enum:
+                      - quiet
+                      - standard
+                      - expressive
+                required:
+                  - version
+                  - tokens
+                  - recipe
+                  - components
+                  - radius
+                  - density
+                  - surface
+                  - border
+                  - typography
+                  - navigation
+                  - charts
+                  - chartStyle
+                  - motion
+            required:
+              - id
+              - name
+              - config
+        specialOverrides:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              density:
+                type: string
+                enum:
+                  - compact
+                  - standard
+                  - comfortable
+              motion:
+                type: string
+                enum:
+                  - quiet
+                  - standard
+                  - expressive
+            required:
+              - density
+              - motion
+      required:
+        - revision
+        - selection
+        - customThemes
+        - specialOverrides
+    PatchThemeLibraryDto:
+      type: object
+      properties:
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        operations:
+          minItems: 1
+          maxItems: 50
+          type: array
+          items:
+            oneOf:
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                      - select
+                  selection:
+                    oneOf:
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                              - preset
+                          presetId:
+                            type: string
+                            enum:
+                              - default
+                              - cyberpunk
+                              - pastel
+                              - fantasy
+                              - shonen
+                              - onepiece
+                              - anime
+                              - waguri
+                              - goth
+                              - halloween
+                              - realmadrid
+                              - realmadrid-3rd
+                              - barcelona
+                              - rukia
+                              - rias
+                              - cat-pink
+                              - cat-purple
+                              - cat-blue
+                              - cat-random
+                        required:
+                          - kind
+                          - presetId
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                              - custom
+                          themeId:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                        required:
+                          - kind
+                          - themeId
+                required:
+                  - kind
+                  - selection
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                      - upsert
+                  theme:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                      name:
+                        type: string
+                        minLength: 1
+                        maxLength: 48
+                      config:
+                        type: object
+                        properties:
+                          version:
+                            type: number
+                            enum:
+                              - 1
+                          tokens:
+                            type: object
+                            properties:
+                              background:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              foreground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              card:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              cardForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              popover:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              popoverForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              primary:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              primaryForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              secondary:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              secondaryForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              muted:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              mutedForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              accent:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              accentForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              destructive:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              destructiveForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              border:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              input:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              ring:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebar:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebarForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebarPrimary:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebarPrimaryForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebarAccent:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebarAccentForeground:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebarBorder:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebarRing:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              signalLive:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              signalReady:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              signalTimer:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              signalAlert:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              primaryHover:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              primaryActive:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              secondaryHover:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              secondaryActive:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              neutralHover:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              neutralActive:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              destructiveHover:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              destructiveActive:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              surfaceHover:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              surfaceSelected:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              inputHover:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              inputFocus:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebarHover:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              sidebarActive:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                              shadow:
+                                type: string
+                                pattern: ^#[\da-f]{6}$
+                            required:
+                              - background
+                              - foreground
+                              - card
+                              - cardForeground
+                              - popover
+                              - popoverForeground
+                              - primary
+                              - primaryForeground
+                              - secondary
+                              - secondaryForeground
+                              - muted
+                              - mutedForeground
+                              - accent
+                              - accentForeground
+                              - destructive
+                              - destructiveForeground
+                              - border
+                              - input
+                              - ring
+                              - sidebar
+                              - sidebarForeground
+                              - sidebarPrimary
+                              - sidebarPrimaryForeground
+                              - sidebarAccent
+                              - sidebarAccentForeground
+                              - sidebarBorder
+                              - sidebarRing
+                              - signalLive
+                              - signalReady
+                              - signalTimer
+                              - signalAlert
+                              - primaryHover
+                              - primaryActive
+                              - secondaryHover
+                              - secondaryActive
+                              - neutralHover
+                              - neutralActive
+                              - destructiveHover
+                              - destructiveActive
+                              - surfaceHover
+                              - surfaceSelected
+                              - inputHover
+                              - inputFocus
+                              - sidebarHover
+                              - sidebarActive
+                              - shadow
+                          recipe:
+                            type: string
+                            enum:
+                              - signal
+                              - solid
+                              - soft
+                              - outline
+                              - custom
+                          components:
+                            type: object
+                            properties:
+                              button:
+                                type: string
+                                enum:
+                                  - solid
+                                  - soft
+                                  - outline
+                                  - minimal
+                              card:
+                                type: string
+                                enum:
+                                  - solid
+                                  - soft
+                                  - outline
+                              input:
+                                type: string
+                                enum:
+                                  - outline
+                                  - filled
+                                  - underline
+                              badge:
+                                type: string
+                                enum:
+                                  - solid
+                                  - soft
+                                  - outline
+                              table:
+                                type: string
+                                enum:
+                                  - plain
+                                  - striped
+                                  - separated
+                            required:
+                              - button
+                              - card
+                              - input
+                              - badge
+                              - table
+                          radius:
+                            type: string
+                            enum:
+                              - sharp
+                              - compact
+                              - default
+                              - round
+                          density:
+                            type: string
+                            enum:
+                              - compact
+                              - standard
+                              - comfortable
+                          surface:
+                            type: string
+                            enum:
+                              - flat
+                              - raised
+                              - floating
+                          border:
+                            type: string
+                            enum:
+                              - none
+                              - subtle
+                              - strong
+                          typography:
+                            type: object
+                            properties:
+                              heading:
+                                type: string
+                                enum:
+                                  - geist
+                                  - inter
+                                  - manrope
+                              body:
+                                type: string
+                                enum:
+                                  - geist
+                                  - inter
+                                  - manrope
+                              headingWeight:
+                                type: string
+                                enum:
+                                  - medium
+                                  - semibold
+                                  - bold
+                              bodyWeight:
+                                type: string
+                                enum:
+                                  - regular
+                                  - medium
+                              tracking:
+                                type: string
+                                enum:
+                                  - tight
+                                  - normal
+                                  - relaxed
+                            required:
+                              - heading
+                              - body
+                              - headingWeight
+                              - bodyWeight
+                              - tracking
+                          navigation:
+                            type: object
+                            properties:
+                              surface:
+                                type: string
+                                enum:
+                                  - solid
+                                  - subtle
+                              active:
+                                type: string
+                                enum:
+                                  - filled
+                                  - line
+                            required:
+                              - surface
+                              - active
+                          charts:
+                            minItems: 5
+                            maxItems: 5
+                            type: array
+                            items:
+                              type: string
+                              pattern: ^#[\da-f]{6}$
+                          chartStyle:
+                            type: object
+                            properties:
+                              grid:
+                                type: string
+                                enum:
+                                  - hidden
+                                  - subtle
+                                  - strong
+                              stroke:
+                                type: string
+                                enum:
+                                  - thin
+                                  - default
+                                  - bold
+                              fill:
+                                type: string
+                                enum:
+                                  - none
+                                  - soft
+                            required:
+                              - grid
+                              - stroke
+                              - fill
+                          motion:
+                            type: string
+                            enum:
+                              - quiet
+                              - standard
+                              - expressive
+                        required:
+                          - version
+                          - tokens
+                          - recipe
+                          - components
+                          - radius
+                          - density
+                          - surface
+                          - border
+                          - typography
+                          - navigation
+                          - charts
+                          - chartStyle
+                          - motion
+                    required:
+                      - id
+                      - name
+                      - config
+                  activate:
+                    default: false
+                    type: boolean
+                required:
+                  - kind
+                  - theme
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                      - delete
+                  themeId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                required:
+                  - kind
+                  - themeId
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                      - set-special-overrides
+                  presetId:
+                    type: string
+                    enum:
+                      - rukia
+                      - rias
+                      - cat-pink
+                      - cat-purple
+                      - cat-blue
+                      - cat-random
+                  overrides:
+                    type: object
+                    properties:
+                      density:
+                        type: string
+                        enum:
+                          - compact
+                          - standard
+                          - comfortable
+                      motion:
+                        type: string
+                        enum:
+                          - quiet
+                          - standard
+                          - expressive
+                    required:
+                      - density
+                      - motion
+                required:
+                  - kind
+                  - presetId
+                  - overrides
+      required:
+        - revision
+        - operations
     StatusOkResponseDto_Output:
       type: object
       properties:
@@ -6429,8 +7458,6 @@ components:
           type: array
           items:
             type: string
-        theme:
-          type: string
         chatAppearance:
           type: object
           properties:
@@ -6529,7 +7556,6 @@ components:
         - userId
         - guildsOrder
         - hiddenGuildIds
-        - theme
         - chatAppearance
         - mutes
     UserCurrentGuildResponseDto_Output:
@@ -6573,28 +7599,6 @@ components:
           items:
             type: string
             minLength: 1
-        theme:
-          type: string
-          enum:
-            - default
-            - cyberpunk
-            - pastel
-            - fantasy
-            - shonen
-            - onepiece
-            - anime
-            - goth
-            - halloween
-            - realmadrid
-            - realmadrid-3rd
-            - barcelona
-            - waguri
-            - rukia
-            - rias
-            - cat-pink
-            - cat-purple
-            - cat-blue
-            - cat-random
         chatAppearance:
           type: object
           properties:

@@ -13,9 +13,11 @@ import { DocumentTitleUpdater } from "@/components/router/document-title-updater
 import { RootRouteError } from "@/components/router/root-route-error";
 import { RootRouteNotFound } from "@/components/router/root-route-not-found";
 import { resolveDocumentTitle } from "@/lib/router/document-title";
-import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
+import { ThemeRootEffects } from "@/themes/theme-root-effects";
+import { ThemeSpinnerProvider } from "@/themes/theme-spinner-provider";
 
 import "@lootlog/ui/globals.css";
+import "@/themes/runtime.css";
 import "../scrollbars.css";
 import "@/i18n/config";
 

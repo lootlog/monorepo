@@ -13,7 +13,8 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import type { FC, MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ThemeCircularFrame, useThemeMeta } from "@/themes";
+import { ThemeCircularFrame } from "@/themes/theme-circular-frame";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 import { useTranslation } from "react-i18next";
 import {
   ContextMenu,
@@ -74,7 +75,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
       />
       <AvatarFallback
         className={cn(
-          "rounded-none font-medium text-white transition-opacity",
+          "rounded-none font-medium text-foreground transition-opacity",
           isHidden && "opacity-35",
         )}
       >

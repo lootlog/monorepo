@@ -31,7 +31,7 @@ import {
   getTimersControllerGetTimersQueryKey,
   useTimersControllerGetTimers,
 } from "@lootlog/api-client/react-query/main/timers";
-import { ThemeEmptyStateIcon } from "@/themes";
+import { ThemeEmptyStateIcon } from "@/themes/theme-empty-state-icon";
 
 export const Timers = () => {
   const guildId = useGuildId();

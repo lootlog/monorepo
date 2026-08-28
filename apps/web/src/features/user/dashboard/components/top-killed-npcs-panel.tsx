@@ -1,49 +1,39 @@
+import type { UserKillStatsResponseDtoOutput } from "@lootlog/api-client/models/main/user-kill-stats-response-dto-output";
 import { Button } from "@lootlog/ui/components/button";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { Link } from "@tanstack/react-router";
 import { ChevronRight, CircleAlert, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  getKillsControllerGetUserKillStatsQueryKey,
-  useKillsControllerGetUserKillStats,
-} from "@lootlog/api-client/react-query/main/kills";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
-import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import {
   TRACKABLE_NPC_TYPES,
   type NpcType,
 } from "@/features/user/kills/npc-types";
 
 type TopKilledNpcsPanelProps = {
-  world?: string;
+  data?: UserKillStatsResponseDtoOutput;
+  hasActiveFilters: boolean;
+  isError: boolean;
+  isLoading: boolean;
   npcType: NpcType;
-  period: KillStatsPeriod;
   onNpcTypeChange: (type: NpcType) => void;
+  onRetry: () => void;
+  onViewAll: () => void;
 };
 
-export const TopKilledNpcsPanel: React.FC<TopKilledNpcsPanelProps> = ({
-  world,
+export const TopKilledNpcsPanel = ({
+  data,
+  hasActiveFilters,
+  isError,
+  isLoading,
   npcType,
-  period,
   onNpcTypeChange,
-}) => {
+  onRetry,
+  onViewAll,
+}: TopKilledNpcsPanelProps) => {
   const { t } = useTranslation();
-  const killStatsParams = {
-    world,
-    npcTypes: [npcType],
-    period: period === "all" ? undefined : period,
-  };
-  const { data, isError, isLoading, refetch } =
-    useKillsControllerGetUserKillStats(killStatsParams, {
-      query: {
-        queryKey: getKillsControllerGetUserKillStatsQueryKey(killStatsParams),
-        staleTime: 30_000,
-      },
-    });
-  const hasActiveFilters = Boolean(world) || period !== "all";
   const topNpcs = data?.topNpcs?.slice(0, 5) ?? [];
   let content: ReactNode;
 
@@ -75,7 +65,7 @@ export const TopKilledNpcsPanel: React.FC<TopKilledNpcsPanelProps> = ({
           variant="outline"
           size="sm"
           className="mt-4 min-h-11 lg:min-h-9"
-          onClick={() => void refetch()}
+          onClick={onRetry}
         >
           <RefreshCw className="size-4" />
           {t("common.actions.retry")}
@@ -178,18 +168,10 @@ export const TopKilledNpcsPanel: React.FC<TopKilledNpcsPanelProps> = ({
       <div className="border-b border-border/70">{content}</div>
 
       <div className="mt-auto flex min-h-10 justify-center px-3 py-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-10"
-          render={
-            <Link to="/@me/kills">
-              {t("kills.home.topKilledNpcs.viewAll")}
-              <ChevronRight className="ml-2 size-4" />
-            </Link>
-          }
-          nativeButton={false}
-        />
+        <Button variant="ghost" size="sm" className="h-10" onClick={onViewAll}>
+          {t("kills.home.topKilledNpcs.viewAll")}
+          <ChevronRight className="ml-2 size-4" />
+        </Button>
       </div>
     </section>
   );

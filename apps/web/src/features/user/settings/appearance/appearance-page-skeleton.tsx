@@ -1,5 +1,6 @@
 import { Card } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { ThemeGalleryGrid } from "./theme-gallery-grid";
 
 export const AppearanceSettingsPageSkeleton = () => {
   return (
@@ -14,7 +15,7 @@ export const AppearanceSettingsPageSkeleton = () => {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <ThemeGalleryGrid>
         {Array.from({ length: 8 }).map((_, i) => (
           <Card key={i} className="border-border bg-card p-4">
             <Skeleton className="mb-3 h-24 w-full rounded-lg" />
@@ -27,7 +28,7 @@ export const AppearanceSettingsPageSkeleton = () => {
             </div>
           </Card>
         ))}
-      </div>
+      </ThemeGalleryGrid>
     </div>
   );
 };

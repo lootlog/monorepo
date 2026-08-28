@@ -39,7 +39,7 @@ export const NotificationsInfoDialog = ({
     },
     {
       icon: <Clock3 className="size-4 text-primary" />,
-      iconBg: "bg-primary/10",
+      iconBg: "bg-surface-selected",
       title: t("settings.notifications.info.jobs.title"),
       description: t("settings.notifications.info.jobs.description"),
     },
