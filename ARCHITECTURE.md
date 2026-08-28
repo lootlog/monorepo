@@ -41,6 +41,7 @@ organization operations.
 | `@lootlog/web`               | Authenticated personal and organization web app                                                                      | Generated API client, gateway        |
 | `@lootlog/landing`           | Product introduction and legal pages                                                                                 | Static TanStack Start client output  |
 | `@lootlog/docs`              | User documentation                                                                                                   | Static TanStack Start client output  |
+| `@lootlog/traffic-splitter`  | Development-only edge routing for `dev.lootlog.pl`                                                                   | Cloudflare Worker and static origins |
 | `@lootlog/wiki`              | Public Margonem knowledge and search                                                                                 | Search API                           |
 | `@lootlog/developer`         | Future developer surface; currently not a supported product                                                          | Static frontend                      |
 
@@ -180,6 +181,14 @@ Managed production uses immutable release artifacts:
 - Cloudflare applications use checksummed artifacts built by the release;
 - the Changesets version PR creates release versions and artifacts;
 - production rollback reuses an existing artifact instead of rebuilding it.
+
+The development hostname `dev.lootlog.pl` is owned by the
+`@lootlog/traffic-splitter` Worker. It routes Landing, Docs, and Web requests to
+their independently deployed development origins. Landing and Docs generated
+assets use the distinct `/landing-assets` and `/docs-assets` namespaces; Web
+continues to own `/assets`. The Worker retains referer-based routing for cached
+pre-migration `/assets` documents during development rollouts. Its Wrangler
+configuration is the source of truth for the existing custom domain.
 
 Docker Compose supports local infrastructure. `docker-compose.prod.yml` is not
 a supported production model and should be retired or clearly marked legacy.

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { parse } from "jsonc-parser";
 import { createCiPlan } from "../ci/create-ci-plan.mjs";
 
 const developmentWorkflow = readFileSync(
@@ -10,6 +11,12 @@ const developmentWorkflow = readFileSync(
 const docsWranglerConfig = JSON.parse(
   readFileSync(
     new URL("../../apps/docs/wrangler.jsonc", import.meta.url),
+    "utf8",
+  ),
+);
+const trafficSplitterWranglerConfig = parse(
+  readFileSync(
+    new URL("../../apps/traffic-splitter/wrangler.jsonc", import.meta.url),
     "utf8",
   ),
 );
@@ -60,4 +67,32 @@ test("keeps Pages development targets and skips version pull requests", () => {
     },
   ]);
   assert.deepEqual(versionPlan.cloudflareTargets, []);
+});
+
+test("deploys the development traffic splitter from the repository", () => {
+  const plan = createCiPlan({
+    affectedPackages: ["@lootlog/traffic-splitter"],
+  });
+
+  assert.deepEqual(plan.cloudflareTargets, [
+    {
+      artifactPath: "apps/traffic-splitter/dist",
+      configPath: "apps/traffic-splitter/wrangler.jsonc",
+      environment: "",
+      kind: "worker",
+      packageName: "@lootlog/traffic-splitter",
+      project: "lootlog-traffic-splitter-dev",
+    },
+  ]);
+  assert.equal(
+    trafficSplitterWranglerConfig.name,
+    "lootlog-traffic-splitter-dev",
+  );
+  assert.deepEqual(trafficSplitterWranglerConfig.routes, [
+    { custom_domain: true, pattern: "dev.lootlog.pl" },
+  ]);
+  assert.match(
+    developmentWorkflow,
+    /matrix\.kind == 'worker' && secrets\.CLOUDFLARE_WORKERS_API_TOKEN/u,
+  );
 });

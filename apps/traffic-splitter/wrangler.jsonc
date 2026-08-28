@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lootlog-traffic-splitter-dev",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-28",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "dev.lootlog.pl",
+      "custom_domain": true,
+    },
+  ],
+  "vars": {
+    "DOCS_ORIGIN": "https://lootlog-docs-develop.communicator-dev.workers.dev",
+    "LANDING_ORIGIN": "https://develop.lootlog-landing.pages.dev",
+    "WEB_ORIGIN": "https://develop.lootlog-web-monorepo.pages.dev",
+  },
+  "observability": {
+    "enabled": true,
+  },
+}
