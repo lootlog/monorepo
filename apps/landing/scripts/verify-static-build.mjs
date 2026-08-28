@@ -3,6 +3,11 @@ import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const clientDirectory = path.resolve("dist/client");
+const artifactBaseUrl = new URL("https://static-artifact.invalid");
+
+function isLocalAssetReference(reference) {
+  return new URL(reference, artifactBaseUrl).origin === artifactBaseUrl.origin;
+}
 
 function readDocument(relativePath) {
   return readFile(path.join(clientDirectory, relativePath), "utf8");
@@ -38,7 +43,7 @@ for (const [documentName, document, canonicalUrl] of [
   const generatedAssetReferences = Array.from(
     document.matchAll(/(?:href|src)="([^"]+\.(?:css|js)(?:[?#][^"]*)?)"/gu),
     ([, reference]) => reference,
-  );
+  ).filter(isLocalAssetReference);
   assert.ok(
     generatedAssetReferences.length > 0,
     `${documentName} does not reference generated CSS or JavaScript`,

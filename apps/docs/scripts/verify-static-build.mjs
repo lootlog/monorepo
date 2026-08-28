@@ -4,6 +4,11 @@ import path from "node:path";
 
 const clientDirectory = path.resolve("dist/client");
 const contentDirectory = path.resolve("content/docs");
+const artifactBaseUrl = new URL("https://static-artifact.invalid");
+
+function isLocalAssetReference(reference) {
+  return new URL(reference, artifactBaseUrl).origin === artifactBaseUrl.origin;
+}
 
 const rootDocument = await readFile(
   path.join(clientDirectory, "index.html"),
@@ -54,7 +59,7 @@ await Promise.all(
     const generatedAssetReferences = Array.from(
       document.matchAll(/(?:href|src)="([^"]+\.(?:css|js)(?:[?#][^"]*)?)"/gu),
       ([, reference]) => reference,
-    );
+    ).filter(isLocalAssetReference);
     assert.ok(
       generatedAssetReferences.length > 0,
       `${routePath} does not reference generated CSS or JavaScript`,
