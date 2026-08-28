@@ -51,16 +51,21 @@ await Promise.all(
       `${routePath} lacks its visible description`,
     );
     assert.match(document, /class="[^"]*docs-body/u);
-    assert.match(
-      document,
-      /(?:href|src)="\/docs-assets\/[^"]+\.(?:css|js)"/u,
-      `${routePath} does not use the Docs asset namespace`,
+    const generatedAssetReferences = Array.from(
+      document.matchAll(/(?:href|src)="([^"]+\.(?:css|js)(?:[?#][^"]*)?)"/gu),
+      ([, reference]) => reference,
     );
-    assert.doesNotMatch(
-      document,
-      /(?:href|src)="\/assets\//u,
-      `${routePath} uses the shared asset namespace`,
+    assert.ok(
+      generatedAssetReferences.length > 0,
+      `${routePath} does not reference generated CSS or JavaScript`,
     );
+    for (const reference of generatedAssetReferences) {
+      assert.match(
+        reference,
+        /^\/docs-assets\//u,
+        `${routePath} references a generated asset outside the Docs namespace: ${reference}`,
+      );
+    }
   }),
 );
 
