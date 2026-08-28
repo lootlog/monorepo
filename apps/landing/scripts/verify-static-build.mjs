@@ -3,6 +3,11 @@ import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const clientDirectory = path.resolve("dist/client");
+const artifactBaseUrl = new URL("https://static-artifact.invalid");
+
+function isLocalAssetReference(reference) {
+  return new URL(reference, artifactBaseUrl).origin === artifactBaseUrl.origin;
+}
 
 function readDocument(relativePath) {
   return readFile(path.join(clientDirectory, relativePath), "utf8");
@@ -35,6 +40,21 @@ for (const [documentName, document, canonicalUrl] of [
     document,
     /<link rel="apple-touch-icon" href="\/apple-icon\.png"/u,
   );
+  const generatedAssetReferences = Array.from(
+    document.matchAll(/(?:href|src)="([^"]+\.(?:css|js)(?:[?#][^"]*)?)"/gu),
+    ([, reference]) => reference,
+  ).filter(isLocalAssetReference);
+  assert.ok(
+    generatedAssetReferences.length > 0,
+    `${documentName} does not reference generated CSS or JavaScript`,
+  );
+  for (const reference of generatedAssetReferences) {
+    assert.match(
+      reference,
+      /^\/landing-assets\//u,
+      `${documentName} references a generated asset outside the Landing namespace: ${reference}`,
+    );
+  }
 }
 
 assert.match(homeDocument, /<script type="application\/ld\+json">/u);

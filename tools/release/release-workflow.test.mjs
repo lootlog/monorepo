@@ -81,8 +81,29 @@ test("smoke-checks Landing and Docs before the rollback boundary closes", () => 
 
   assert.match(smokeStep, /https:\/\/lootlog\.pl\/privacy-policy/u);
   assert.match(smokeStep, /https:\/\/docs\.lootlog\.pl\/api\/search/u);
+  assert.match(
+    smokeStep,
+    /verify-public-static-assets\.mjs \\\n+\s+https:\/\/lootlog\.pl \\\n+\s+\/landing-assets/u,
+  );
+  assert.match(
+    smokeStep,
+    /verify-public-static-assets\.mjs \\\n+\s+https:\/\/docs\.lootlog\.pl \\\n+\s+\/docs-assets/u,
+  );
   assert.ok(
     smokeStepPosition < rollbackStepPosition,
     "public smoke checks must run before the rollback step",
+  );
+});
+
+test("deploys the immutable production splitter before frontend artifacts", () => {
+  const deployStep = getNamedStep("Deploy Cloudflare release artifacts");
+
+  assert.match(
+    deployStep,
+    /sort_by\(if \.packageName == "@lootlog\/traffic-splitter" then 0 else 1 end\)/u,
+  );
+  assert.match(
+    deployStep,
+    /@lootlog\/traffic-splitter\)[\s\S]*wrangler deploy "\$artifact_path\/index\.js"/u,
   );
 });

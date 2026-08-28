@@ -13,6 +13,15 @@ const deployableServices = new Set([
 
 const cloudflareTargets = new Map([
   [
+    "@lootlog/traffic-splitter",
+    {
+      artifactPath: "apps/traffic-splitter/dist",
+      configPath: "apps/traffic-splitter/wrangler.jsonc",
+      kind: "worker",
+      project: "lootlog-route-splitter",
+    },
+  ],
+  [
     "@lootlog/landing",
     {
       artifactPath: "apps/landing/dist/client",
@@ -105,6 +114,15 @@ export function createReleasePlan(publishedPackages) {
       });
     }
   }
+
+  releasePlan.cloudflare.sort((left, right) => {
+    const leftPriority =
+      left.packageName === "@lootlog/traffic-splitter" ? 0 : 1;
+    const rightPriority =
+      right.packageName === "@lootlog/traffic-splitter" ? 0 : 1;
+
+    return leftPriority - rightPriority;
+  });
 
   return releasePlan;
 }
