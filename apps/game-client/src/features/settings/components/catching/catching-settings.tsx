@@ -20,7 +20,7 @@ import { useGameStore } from "@/store/game.store";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { UserLootlogConfigAccountResponseDtoOutput } from "@lootlog/api-client/models/main/user-lootlog-config-account-response-dto-output";
 
@@ -47,7 +47,7 @@ export const CatchingSettings = () => {
   const initialCharacterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
-  const [selectedCharacterId, setSelectedCharacterId] =
+  const [requestedCharacterId, setRequestedCharacterId] =
     useState(initialCharacterId);
   const [selectionByCharacterId, setSelectionByCharacterId] = useState<
     Record<string, string[]>
@@ -55,16 +55,12 @@ export const CatchingSettings = () => {
   const selectionByCharacterIdRef = useRef<Record<string, string[]>>({});
   const { t } = useTranslation();
 
-  useEffect(() => {
-    if (!characterList || characterList.length === 0) return;
-
-    const characterExists = characterList.some(
-      (character) => String(character.id) === selectedCharacterId,
-    );
-    if (characterExists) return;
-
-    setSelectedCharacterId(String(characterList[0].id));
-  }, [characterList, selectedCharacterId]);
+  const requestedCharacterExists = characterList?.some(
+    (character) => String(character.id) === requestedCharacterId,
+  );
+  const selectedCharacterId = requestedCharacterExists
+    ? requestedCharacterId
+    : String(characterList?.[0]?.id ?? "");
 
   const applyToAllMutation = useMutation({
     mutationKey: ["apply-catching-config-to-all-characters", accountId],
@@ -230,7 +226,7 @@ export const CatchingSettings = () => {
       >
         <Tabs
           value={selectedCharacterId}
-          onValueChange={setSelectedCharacterId}
+          onValueChange={setRequestedCharacterId}
           className="ll:w-full ll:gap-3"
         >
           <TabsList className={SETTINGS_SUBTABS_LIST_CLASS_NAME}>

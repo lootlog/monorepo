@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { DraggableWindow } from "@/components/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
@@ -43,14 +43,19 @@ export const CatchingWhitelistWarning: FC = () => {
   );
   const [dismissedCharacters, setDismissedCharacters] =
     useLocalStorage<DismissedCharacters>(STORAGE_KEY, {});
-  const [hasChecked, setHasChecked] = useState(false);
+  const checkedCharacterIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
-    if (!isSuccess || !characterId || hasChecked || !dismissedCharacters)
+    if (
+      !isSuccess ||
+      !characterId ||
+      checkedCharacterIdsRef.current.has(characterId) ||
+      !dismissedCharacters
+    )
       return;
 
     if (dismissedCharacters[characterId]) {
-      setHasChecked(true);
+      checkedCharacterIdsRef.current.add(characterId);
       return;
     }
 
@@ -61,12 +66,11 @@ export const CatchingWhitelistWarning: FC = () => {
       setOpen("catching-whitelist-warning", true);
     }
 
-    setHasChecked(true);
+    checkedCharacterIdsRef.current.add(characterId);
   }, [
     isSuccess,
     lootlogCharactersConfig,
     characterId,
-    hasChecked,
     dismissedCharacters,
     setOpen,
   ]);

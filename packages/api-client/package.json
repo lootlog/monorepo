@@ -35,7 +35,7 @@
     "@lootlog/typescript-config": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@types/node": "catalog:",
-    "orval": "^8.22.0",
+    "orval": "^8.26.0",
     "oxfmt": "^0.60.0",
     "oxlint": "^1.75.0",
     "react": "catalog:",
@@ -44,7 +44,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^5.99.2",
+    "@tanstack/react-query": "^5.102.8",
     "react": "^19.0.0"
   },
   "peerDependenciesMeta": {

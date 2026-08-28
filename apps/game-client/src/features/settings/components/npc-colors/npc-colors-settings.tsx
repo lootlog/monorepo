@@ -21,7 +21,7 @@ import {
 import type { SettingsDocumentsResponseDtoOutput } from "@lootlog/api-client/models/main/settings-documents-response-dto-output";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { NpcColorEditorPopover } from "./npc-color-editor-popover";
@@ -31,15 +31,21 @@ export const NpcColorsSettings = () => {
   const preferences = useUserPreferences();
   const settingsDocuments = useAppearanceSettingsDocuments();
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<NpcTypeColors>(DEFAULT_NPC_TYPE_COLORS);
+  const serverDraft = getNpcTypeColorsFromSettingsDocuments(
+    settingsDocuments.data,
+  );
+  const [draftState, setDraftState] = useState({
+    source: settingsDocuments.data,
+    value: serverDraft,
+  });
+  const draft =
+    draftState.source === settingsDocuments.data
+      ? draftState.value
+      : serverDraft;
   const [openType, setOpenType] = useState<CombatNpcType | null>(null);
   const [saving, setSaving] = useState(false);
   const queue = useRef(Promise.resolve());
   const generation = useRef(0);
-
-  useEffect(() => {
-    setDraft(getNpcTypeColorsFromSettingsDocuments(settingsDocuments.data));
-  }, [settingsDocuments.data]);
 
   const updateCache = (patch: Partial<NpcTypeColors>) => {
     queryClient.setQueryData<SettingsDocumentsResponseDtoOutput>(
@@ -78,7 +84,10 @@ export const NpcColorsSettings = () => {
             (current) =>
               updateNpcTypeColorsInSettingsDocuments(current, nextColors),
           );
-          setDraft(nextColors);
+          setDraftState({
+            source: settingsDocuments.data,
+            value: nextColors,
+          });
         } catch {
           generation.current += 1;
           await settingsDocuments.refetch();
@@ -94,7 +103,10 @@ export const NpcColorsSettings = () => {
       DEFAULT_NPC_TYPE_COLORS[npcType],
     );
     const patch = { [npcType]: color } as Partial<NpcTypeColors>;
-    setDraft((current) => ({ ...current, ...patch }));
+    setDraftState({
+      source: settingsDocuments.data,
+      value: { ...draft, ...patch },
+    });
     updateCache(patch);
     return color;
   };
@@ -102,7 +114,10 @@ export const NpcColorsSettings = () => {
   const resetType = (npcType: CombatNpcType) => {
     const defaultColor = DEFAULT_NPC_TYPE_COLORS[npcType];
     const patch = { [npcType]: defaultColor };
-    setDraft((current) => ({ ...current, ...patch }));
+    setDraftState({
+      source: settingsDocuments.data,
+      value: { ...draft, ...patch },
+    });
     updateCache(patch);
     commit({}, [`npcColors.${npcType}`]);
   };
@@ -117,7 +132,10 @@ export const NpcColorsSettings = () => {
           variant="ghost"
           className="ll:gap-2 ll:px-2"
           onClick={() => {
-            setDraft(DEFAULT_NPC_TYPE_COLORS);
+            setDraftState({
+              source: settingsDocuments.data,
+              value: DEFAULT_NPC_TYPE_COLORS,
+            });
             updateCache(DEFAULT_NPC_TYPE_COLORS);
             commit(
               {},

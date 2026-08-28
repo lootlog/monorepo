@@ -502,6 +502,9 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
   const windowBodyRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
   const resolvedMaxContentHeight = sanitizeMaxContentHeight(maxContentHeight);
+  const activePreviewMaxContentHeight = isMaxHeightAdjustmentArmed
+    ? previewMaxContentHeight
+    : null;
   const {
     allowsHorizontalResize,
     allowsVerticalResize,
@@ -517,7 +520,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
     isMaxHeightAdjustmentArmed,
     isResizing,
     minHeight,
-    previewMaxContentHeight,
+    previewMaxContentHeight: activePreviewMaxContentHeight,
     resizable,
     widthMode,
   });
@@ -529,8 +532,8 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
     previewShadeOffset,
     style,
   } = resolveWindowFrameMeasurements({
-    autoHeight,
-    autoWidth,
+    autoHeight: isMeasuredAutoHeightMode ? autoHeight : minHeight,
+    autoWidth: isAutoWidthMode ? autoWidth : minWidth,
     contentMeasurements,
     dynamicHeight,
     isAdjustingMaxHeight,
@@ -538,7 +541,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
     isAutoWidthMode,
     isCssAutoHeightMode,
     localSize,
-    previewMaxContentHeight,
+    previewMaxContentHeight: activePreviewMaxContentHeight,
     previewWindowHeight,
     resolvedMaxContentHeight,
   });
@@ -609,12 +612,9 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
 
   const draggableRef = useRef<HTMLDivElement>(null);
 
-  const onDragStop = useCallback(
-    (position: { x: number; y: number }) => {
-      setPositionInStore(id, position);
-    },
-    [id, setPositionInStore],
-  );
+  const onDragStop = (position: { x: number; y: number }) => {
+    setPositionInStore(id, position);
+  };
 
   const { position, handlePointerDown, isDragging, cancelDrag, recalculate } =
     useDrag({
@@ -721,7 +721,7 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
     setCurrentWindowFocus,
   ]);
 
-  const handleResizeEnd = useCallback(() => {
+  const handleResizeEnd = () => {
     setIsResizing(false);
     if (
       isAutoHeightMode &&
@@ -741,19 +741,11 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
     if (isMaxHeightAdjustmentArmed) {
       onMaxHeightAdjustmentArmedChange?.(false);
     }
-  }, [
-    isAutoHeightMode,
-    isMaxHeightAdjustmentArmed,
-    onMaxContentHeightChange,
-    onMaxHeightAdjustmentArmedChange,
-  ]);
+  };
 
-  const handleOpacityChange = useCallback(
-    (newOpacity: WindowOpacity) => {
-      setOpacityInStore(id, newOpacity);
-    },
-    [id, setOpacityInStore],
-  );
+  const handleOpacityChange = (newOpacity: WindowOpacity) => {
+    setOpacityInStore(id, newOpacity);
+  };
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -773,17 +765,9 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
     setSizeInStore(id, { height: localSize.height, width: effectiveWidth });
   }, [effectiveWidth, localSize.height, isResizing, id, setSizeInStore]);
 
-  useEffect(() => {
-    if (!isMaxHeightAdjustmentArmed) {
-      previewMaxContentHeightRef.current = null;
-      setPreviewMaxContentHeight(null);
-    }
-  }, [isMaxHeightAdjustmentArmed]);
-
   useLayoutEffect(() => {
     if (!isAutoWidthMode) {
       autoWidthRef.current = minWidth;
-      setAutoWidth(minWidth);
       return () => undefined;
     }
 
@@ -899,7 +883,6 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
   useLayoutEffect(() => {
     if (!isMeasuredAutoHeightMode) {
       resolvedMaxContentHeightRef.current = null;
-      setAutoHeight(minHeight);
       return () => undefined;
     }
 
@@ -1041,9 +1024,9 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
     onResolvedMaxContentHeightChange,
   ]);
 
-  const handleLockToggle = useCallback(() => {
+  const handleLockToggle = () => {
     setLockedInStore(id, !isLocked);
-  }, [id, isLocked, setLockedInStore]);
+  };
 
   const windowZIndex = windowFocusHistory.indexOf(id);
   const zIndex =

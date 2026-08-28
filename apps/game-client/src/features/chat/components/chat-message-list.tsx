@@ -6,7 +6,14 @@ import {
   type ChatAppearanceSettings,
   type NpcTypeColors,
 } from "@lootlog/types";
-import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FC,
+} from "react";
 import { getChatDensityStyle } from "../chat-density";
 import { createChatScrollController } from "../chat-scroll-controller";
 import { subscribeToChatScrollToMessage } from "../chat-scroll-to-message";
@@ -68,14 +75,6 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
   const appearanceReflowFrameRef = useRef<number | null>(null);
   const resizeCorrectionFrameRef = useRef<number | null>(null);
   const programmaticTargetExpiryFrameRef = useRef<number | null>(null);
-  const getScrollSnapshotRef = useRef(() => ({
-    clientHeight: CHAT_LIST_FALLBACK_HEIGHT_PX,
-    scrollHeight: 0,
-    scrollTop: 0,
-  }));
-  const captureViewportAnchorRef = useRef<() => void>(() => undefined);
-  const restoreViewportAnchorRef = useRef<() => void>(() => undefined);
-  const scrollToPhysicalBottomRef = useRef<() => void>(() => undefined);
   const [scrollController] = useState(() =>
     createChatScrollController({
       applyScroll: () => undefined,
@@ -84,7 +83,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
   );
   const hasRenderedRows = renderables.length > 0;
 
-  getScrollSnapshotRef.current = () => {
+  const getScrollSnapshot = useEffectEvent(() => {
     const scrollViewport = scrollAreaRef.current;
     return {
       clientHeight:
@@ -92,9 +91,9 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       scrollHeight: scrollViewport?.scrollHeight ?? 0,
       scrollTop: scrollViewport?.scrollTop ?? 0,
     };
-  };
+  });
 
-  captureViewportAnchorRef.current = () => {
+  const captureViewportAnchor = useEffectEvent(() => {
     const scrollViewport = scrollAreaRef.current;
     const messageList = messageListRef.current;
     if (!scrollViewport || !messageList) return;
@@ -110,9 +109,9 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
         firstVisibleRow.getBoundingClientRect().top - viewportTop,
       rowKey: firstVisibleRow.dataset.chatRowKey,
     };
-  };
+  });
 
-  restoreViewportAnchorRef.current = () => {
+  const restoreViewportAnchor = useEffectEvent(() => {
     const anchor = viewportAnchorRef.current;
     const scrollViewport = scrollAreaRef.current;
     const messageList = messageListRef.current;
@@ -128,15 +127,12 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
       scrollViewport.getBoundingClientRect().top;
     const nextScrollTop =
       scrollViewport.scrollTop + currentOffset - anchor.offsetFromViewportTop;
-    scrollController.preservePosition(
-      getScrollSnapshotRef.current(),
-      nextScrollTop,
-    );
-  };
+    scrollController.preservePosition(getScrollSnapshot(), nextScrollTop);
+  });
 
-  scrollToPhysicalBottomRef.current = () => {
-    scrollController.pinToBottom(getScrollSnapshotRef.current());
-  };
+  const scrollToPhysicalBottom = useEffectEvent(() => {
+    scrollController.pinToBottom(getScrollSnapshot());
+  });
 
   useLayoutEffect(() => {
     scrollController.setApplyScroll(({ behavior, top }) => {
@@ -159,20 +155,20 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
     if (!scrollViewport) return;
 
     const updateScrollState = () => {
-      const snapshot = getScrollSnapshotRef.current();
+      const snapshot = getScrollSnapshot();
       scrollController.observe(snapshot);
       if (scrollController.getMode() === "reading-history") {
-        captureViewportAnchorRef.current();
+        captureViewportAnchor();
       }
     };
     const registerUserScrollIntent = () => {
-      const snapshot = getScrollSnapshotRef.current();
+      const snapshot = getScrollSnapshot();
       scrollController.registerUserScrollIntent(snapshot);
     };
     const handleWheel = (event: WheelEvent) => {
       if (event.deltaY === 0) return;
       registerUserScrollIntent();
-      captureViewportAnchorRef.current();
+      captureViewportAnchor();
     };
     const handleTouchStart = () => {
       registerUserScrollIntent();
@@ -195,7 +191,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
         return;
       }
       registerUserScrollIntent();
-      captureViewportAnchorRef.current();
+      captureViewportAnchor();
     };
 
     scrollViewport.addEventListener("scroll", updateScrollState, {
@@ -231,9 +227,9 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
         const shouldFollowNewMessages =
           scrollController.shouldFollowNewMessages();
         if (shouldFollowNewMessages) {
-          scrollToPhysicalBottomRef.current();
+          scrollToPhysicalBottom();
         } else {
-          restoreViewportAnchorRef.current();
+          restoreViewportAnchor();
         }
       });
     });
@@ -264,20 +260,20 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
         appearanceReflowFrameRef.current = null;
         if (shouldFollowBottom) {
           scrollController.requestFollowBottom();
-          scrollToPhysicalBottomRef.current();
+          scrollToPhysicalBottom();
         } else {
-          restoreViewportAnchorRef.current();
+          restoreViewportAnchor();
         }
       });
     } else if (isInitialLayout || ownMessageScrollRequested) {
       scrollController.requestFollowBottom();
-      scrollToPhysicalBottomRef.current();
+      scrollToPhysicalBottom();
       scrollController.completeInitialization();
     } else if (
       renderablesChanged &&
       scrollController.shouldFollowNewMessages()
     ) {
-      scrollToPhysicalBottomRef.current();
+      scrollToPhysicalBottom();
     }
 
     previousAppearanceSignatureRef.current = appearanceSignature;
@@ -315,10 +311,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
           targetRect.top -
           viewportRect.top -
           (scrollViewport.clientHeight - targetRect.height) / 2;
-        scrollController.jumpToMessage(
-          getScrollSnapshotRef.current(),
-          targetScrollTop,
-        );
+        scrollController.jumpToMessage(getScrollSnapshot(), targetScrollTop);
       }),
     [scrollController],
   );

@@ -6,64 +6,79 @@ const WINDOW_ENTRY_RETENTION_MS = 240;
 
 export type WindowAnimationPhase = "enter" | "exit" | "open" | "preparing";
 
+type WindowPresenceState = {
+  animationEffectsEnabled: boolean;
+  entryAnimationCompleted: boolean;
+  entryAnimationStarted: boolean;
+  isOpen: boolean;
+  retainedForExit: boolean;
+};
+
+const resolveWindowPresenceInput = (
+  current: WindowPresenceState,
+  isOpen: boolean,
+  animationEffectsEnabled: boolean,
+): WindowPresenceState => {
+  const nextState = {
+    ...current,
+    animationEffectsEnabled,
+    isOpen,
+  };
+
+  if (isOpen) {
+    nextState.retainedForExit = true;
+  } else if (!animationEffectsEnabled) {
+    nextState.retainedForExit = false;
+  }
+
+  if (!animationEffectsEnabled && isOpen) {
+    nextState.entryAnimationStarted = true;
+    nextState.entryAnimationCompleted = true;
+  } else if (animationEffectsEnabled && !isOpen) {
+    nextState.entryAnimationStarted = false;
+    nextState.entryAnimationCompleted = false;
+  }
+
+  return nextState;
+};
+
 export const useWindowPresence = (isOpen: boolean) => {
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
-  const [retainedForExit, setRetainedForExit] = useState(isOpen);
-  const [entryAnimationStarted, setEntryAnimationStarted] = useState(
-    !animationEffectsEnabled,
-  );
-  const [entryAnimationCompleted, setEntryAnimationCompleted] = useState(
-    !animationEffectsEnabled,
-  );
-
-  useEffect(() => {
-    if (isOpen) {
-      if (!retainedForExit) {
-        setRetainedForExit(true);
-      }
-      return;
-    }
-
-    if (!animationEffectsEnabled && retainedForExit) {
-      setRetainedForExit(false);
-    }
-  }, [animationEffectsEnabled, isOpen, retainedForExit]);
+  const [presenceState, setPresenceState] = useState<WindowPresenceState>({
+    animationEffectsEnabled,
+    entryAnimationCompleted: !animationEffectsEnabled,
+    entryAnimationStarted: !animationEffectsEnabled,
+    isOpen,
+    retainedForExit: isOpen,
+  });
+  let currentPresenceState = presenceState;
+  if (
+    presenceState.animationEffectsEnabled !== animationEffectsEnabled ||
+    presenceState.isOpen !== isOpen
+  ) {
+    currentPresenceState = resolveWindowPresenceInput(
+      presenceState,
+      isOpen,
+      animationEffectsEnabled,
+    );
+    setPresenceState(currentPresenceState);
+  }
+  const { entryAnimationCompleted, entryAnimationStarted, retainedForExit } =
+    currentPresenceState;
 
   useEffect(() => {
     if (isOpen || !animationEffectsEnabled || !retainedForExit) return;
 
     const timeoutId = window.setTimeout(() => {
-      setRetainedForExit(false);
+      setPresenceState((current) =>
+        current.isOpen ? current : { ...current, retainedForExit: false },
+      );
     }, WINDOW_EXIT_RETENTION_MS);
 
     return () => window.clearTimeout(timeoutId);
   }, [animationEffectsEnabled, isOpen, retainedForExit]);
-
-  useEffect(() => {
-    if (!animationEffectsEnabled) {
-      if (isOpen) {
-        if (!entryAnimationStarted) {
-          setEntryAnimationStarted(true);
-        }
-        if (!entryAnimationCompleted) {
-          setEntryAnimationCompleted(true);
-        }
-      }
-      return;
-    }
-
-    if (!isOpen) {
-      setEntryAnimationStarted(false);
-      setEntryAnimationCompleted(false);
-    }
-  }, [
-    animationEffectsEnabled,
-    entryAnimationCompleted,
-    entryAnimationStarted,
-    isOpen,
-  ]);
 
   useEffect(() => {
     if (
@@ -76,7 +91,11 @@ export const useWindowPresence = (isOpen: boolean) => {
     }
 
     const animationFrameId = window.requestAnimationFrame(() => {
-      setEntryAnimationStarted(true);
+      setPresenceState((current) =>
+        current.isOpen && current.animationEffectsEnabled
+          ? { ...current, entryAnimationStarted: true }
+          : current,
+      );
     });
 
     return () => window.cancelAnimationFrame(animationFrameId);
@@ -99,7 +118,10 @@ export const useWindowPresence = (isOpen: boolean) => {
     if (phase !== "enter") return;
 
     const timeoutId = window.setTimeout(() => {
-      setEntryAnimationCompleted(true);
+      setPresenceState((current) => ({
+        ...current,
+        entryAnimationCompleted: true,
+      }));
     }, WINDOW_ENTRY_RETENTION_MS);
 
     return () => window.clearTimeout(timeoutId);
@@ -107,12 +129,18 @@ export const useWindowPresence = (isOpen: boolean) => {
 
   const onAnimationEnd = () => {
     if (phase === "enter") {
-      setEntryAnimationCompleted(true);
+      setPresenceState((current) => ({
+        ...current,
+        entryAnimationCompleted: true,
+      }));
       return;
     }
 
     if (phase === "exit") {
-      setRetainedForExit(false);
+      setPresenceState((current) => ({
+        ...current,
+        retainedForExit: false,
+      }));
     }
   };
 

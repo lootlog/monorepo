@@ -34,7 +34,7 @@
     "lint": "oxlint src"
   },
   "dependencies": {
-    "jose": "^6.2.4"
+    "jose": "^6.2.10"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

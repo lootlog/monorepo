@@ -128,7 +128,9 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   );
   const hiddenGuildIds = userPreferences?.hiddenGuildIds;
   const latestHiddenGuildIds = useRef(hiddenGuildIds ?? []);
-  latestHiddenGuildIds.current = hiddenGuildIds ?? [];
+  useEffect(() => {
+    latestHiddenGuildIds.current = hiddenGuildIds ?? [];
+  }, [hiddenGuildIds]);
   useEffect(() => {
     if (!isFetched || !arePreferencesFetched || visibleGuilds.length === 0)
       return;

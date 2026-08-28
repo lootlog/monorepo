@@ -57,10 +57,6 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
     } | null>(null);
 
     React.useEffect(() => {
-      if (Array.isArray(value)) setInternalValue(value[0] ?? 0);
-    }, [value]);
-
-    React.useEffect(() => {
       const handlePointerMove = (event: PointerEvent) => {
         const gesture = pointerGesture.current;
         if (

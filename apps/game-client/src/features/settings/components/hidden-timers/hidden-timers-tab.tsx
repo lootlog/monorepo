@@ -3,7 +3,7 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
 import { useTimersStore } from "@/store/timers.store";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
 
@@ -11,27 +11,17 @@ export const HiddenTimersTab = () => {
   const { generalConfig } = useTimersStore();
   const { data: guilds, isFetched } =
     useUsersControllerGetCurrentUserAccessibleGuilds();
-  const [selectedGuildId, setSelectedGuildId] = useState("");
+  const [requestedGuildId, setRequestedGuildId] = useState("");
   const { t } = useTranslation();
-
-  useEffect(() => {
-    if (generalConfig.timersGrouping || !isFetched) {
-      return;
-    }
-
-    if (!guilds || guilds.length === 0) {
-      setSelectedGuildId("");
-      return;
-    }
-
-    const hasSelectedGuild = guilds.some(
-      (guild) => guild.id === selectedGuildId,
-    );
-
-    if (!hasSelectedGuild) {
-      setSelectedGuildId(guilds[0].id);
-    }
-  }, [generalConfig.timersGrouping, guilds, isFetched, selectedGuildId]);
+  const requestedGuildExists = guilds?.some(
+    (guild) => guild.id === requestedGuildId,
+  );
+  let selectedGuildId = "";
+  if (!generalConfig.timersGrouping && isFetched) {
+    selectedGuildId = requestedGuildExists
+      ? requestedGuildId
+      : (guilds?.[0]?.id ?? "");
+  }
 
   return (
     <SettingsTabLayout
@@ -52,7 +42,7 @@ export const HiddenTimersTab = () => {
               guilds={guilds}
               selectedGuildId={selectedGuildId}
               selectionMode="single"
-              onSelect={setSelectedGuildId}
+              onSelect={setRequestedGuildId}
               emptyStateLabel={t("settings.hiddenTimers.emptyGuilds")}
               variant="compact"
             />
