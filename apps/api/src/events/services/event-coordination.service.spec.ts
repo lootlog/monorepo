@@ -1,24 +1,25 @@
 import { NotFoundException } from "@nestjs/common";
-import { CoverageGapType } from "src/generated/prisma/client";
+import { CoverageGapType } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { TimersService } from "src/timers/timers.service";
 import { buildTimerKey } from "src/timers/utils/timer-key";
 import { mockFn } from "src/test/mock-fn";
 import { EventCoordinationService } from "./event-coordination.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("EventCoordinationService", () => {
   const now = new Date("2026-06-19T12:00:00.000Z");
   const guildId = "guild-1";
   const eventId = "event-1";
 
-  const mockPrisma = {
+  const mockPrisma = createPrismaServiceTestDouble({
     event: {
       findFirst: mockFn(),
     },
     eventMapCoverageGap: {
       findMany: mockFn(),
     },
-  };
+  });
 
   const mockTimersService = {
     getTimersForEventHeroFilters: mockFn(),

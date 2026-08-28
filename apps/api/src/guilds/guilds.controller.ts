@@ -18,7 +18,7 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "src/generated/prisma/client";
+import { type Guild, Permission } from "src/db/domain";
 import { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
 import { UserGuildListResponseDto } from "src/guilds/dto/user-guild-list-response.dto";
 import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";

@@ -1,4 +1,4 @@
-import { NpcType, Permission } from "src/generated/prisma/client";
+import { NpcType, Permission } from "src/db/domain";
 import { NotificationMatchingService } from "./notification-matching.service";
 
 describe("NotificationMatchingService", () => {

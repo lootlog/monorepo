@@ -1,4 +1,4 @@
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
 import { CreateReservationDto } from "./dto/create-reservation.dto";
 import { ReservationsController } from "./reservations.controller";

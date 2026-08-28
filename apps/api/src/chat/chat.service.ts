@@ -21,7 +21,7 @@ import {
 } from "@lootlog/types";
 import { v6 } from "uuid";
 import { GuildsService } from "src/guilds/guilds.service";
-import { Permission, type Role } from "src/generated/prisma/client";
+import { Permission, type Role } from "src/db/domain";
 import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
 import type { ChatStoredMessage } from "src/chat/types/chat-stored-message.type";
 import type { ChatMessageViewer } from "src/chat/types/chat-message-viewer.type";

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { CoverageGapType, type Prisma } from "src/generated/prisma/client";
+import { CoverageGapType, type Prisma } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { clipToWindow } from "../utils/tracking-window.util";
 
@@ -44,7 +44,7 @@ export class EventSummaryService {
     maxSpawnTime: Date,
     wasManualClose: boolean,
   ): Promise<void> {
-    const maps = await this.prisma.eventMap.findMany({
+    const maps = await this.prisma.orm.public.EventMap.findMany({
       where: { heroNpcId },
       select: { id: true, mapName: true, mapId: true },
     });
@@ -60,25 +60,27 @@ export class EventSummaryService {
     const mapIds = maps.map((m) => m.id);
     const mapNameById = new Map(maps.map((m) => [m.id, m.mapName]));
 
-    const presenceLogs = await this.prisma.eventPresenceLog.findMany({
-      where: {
-        mapId: { in: mapIds },
-        OR: [
-          {
-            startedAt: { gte: windowOpenedAt, lte: windowClosedAt },
-          },
-          {
-            startedAt: { lt: windowOpenedAt },
-            OR: [{ endedAt: null }, { endedAt: { gt: windowOpenedAt } }],
-          },
-        ],
+    const presenceLogs = await this.prisma.orm.public.EventPresenceLog.findMany(
+      {
+        where: {
+          mapId: { in: mapIds },
+          OR: [
+            {
+              startedAt: { gte: windowOpenedAt, lte: windowClosedAt },
+            },
+            {
+              startedAt: { lt: windowOpenedAt },
+              OR: [{ endedAt: null }, { endedAt: { gt: windowOpenedAt } }],
+            },
+          ],
+        },
+        include: {
+          member: { select: { id: true, name: true, avatar: true } },
+        },
       },
-      include: {
-        member: { select: { id: true, name: true, avatar: true } },
-      },
-    });
+    );
 
-    const gaps = await this.prisma.eventMapCoverageGap.findMany({
+    const gaps = await this.prisma.orm.public.EventMapCoverageGap.findMany({
       where: {
         heroNpcId,
         OR: [
@@ -231,8 +233,8 @@ export class EventSummaryService {
         ? Math.round((totalCoverageSeconds / totalWindowSeconds) * 10000) / 100
         : 0;
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.eventRespawnWindowSummary.create({
+    await this.prisma.transaction(async (tx) => {
+      await tx.orm.public.EventRespawnWindowSummary.create({
         data: {
           heroNpcId,
           killId,
@@ -252,7 +254,7 @@ export class EventSummaryService {
         },
       });
 
-      const deletedLogs = await tx.eventPresenceLog.deleteMany({
+      const deletedLogs = await tx.orm.public.EventPresenceLog.deleteMany({
         where: {
           mapId: { in: mapIds },
           OR: [
@@ -267,7 +269,7 @@ export class EventSummaryService {
         },
       });
 
-      const deletedGaps = await tx.eventMapCoverageGap.deleteMany({
+      const deletedGaps = await tx.orm.public.EventMapCoverageGap.deleteMany({
         where: {
           heroNpcId,
           endedAt: { not: null, lte: windowClosedAt },
@@ -294,7 +296,7 @@ export class EventSummaryService {
     limit = 20,
     cursor?: string,
   ) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: {
         id: heroNpcId,
         eventId,
@@ -306,14 +308,15 @@ export class EventSummaryService {
       return { data: [], nextCursor: null };
     }
 
-    const summaries = await this.prisma.eventRespawnWindowSummary.findMany({
-      where: {
-        heroNpcId,
-        ...(cursor && { id: { lt: cursor } }),
-      },
-      orderBy: { windowClosedAt: "desc" },
-      take: limit + 1,
-    });
+    const summaries =
+      await this.prisma.orm.public.EventRespawnWindowSummary.findMany({
+        where: {
+          heroNpcId,
+          ...(cursor && { id: { lt: cursor } }),
+        },
+        orderBy: { windowClosedAt: "desc" },
+        take: limit + 1,
+      });
 
     const hasMore = summaries.length > limit;
     const data = hasMore ? summaries.slice(0, limit) : summaries;

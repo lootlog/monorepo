@@ -288,8 +288,8 @@ jobs:
               current_tag="$package_name@$version"
 
               case "$service" in
-                api) migration_path="apps/api/prisma/migrations" ;;
-                activity) migration_path="apps/activity/prisma/migrations" ;;
+                api) migration_path="apps/api/migrations/app" ;;
+                activity) migration_path="apps/activity/migrations/app" ;;
                 auth) migration_path="apps/auth/drizzle" ;;
                 battlelog-service) migration_path="apps/battlelog-service/drizzle" ;;
                 *) continue ;;
@@ -313,6 +313,24 @@ jobs:
 
               echo "### $service ($comparison)"
               echo
+              if [[ "$service" == "api" || "$service" == "activity" ]]; then
+                echo "Before the first Prisma 8 deployment, apply all pending migrations from the previous immutable Prisma 7 release. The Prisma 8 sign command verifies the schema and does not apply missing legacy migrations."
+                echo
+                if [[ "$service" == "api" ]]; then
+                  echo "The final Prisma 7 migration must be \`20260826123000_reservations_v2_constraint_alignment\`."
+                else
+                  echo "The final Prisma 7 migration must be \`20260623090000_add_member_activity_sessions\`."
+                fi
+                echo
+                echo "After the Prisma 7 deploy, run from the Prisma 8 release checkout:"
+                echo
+                echo "1. \`pnpm $service:db:sign\` (see the service runbook)"
+                echo "2. \`pnpm $service:migration:status\`"
+                echo "3. \`pnpm $service:db:verify\`"
+                echo
+                echo "For a fresh database or a migration advance, run \`pnpm $service:db:migrate\`, then verify again. A sign or verify mismatch blocks release."
+                echo
+              fi
               if [[ -z "$migration_files" ]]; then
                 echo "No migration files detected."
               else

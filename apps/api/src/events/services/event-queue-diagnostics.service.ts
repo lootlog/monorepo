@@ -14,7 +14,7 @@ export class EventQueueDiagnosticsService {
   ) {}
 
   async getAutoCloseJobsStatus(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: { id: true },
     });
@@ -23,7 +23,7 @@ export class EventQueueDiagnosticsService {
       throw new NotFoundException("Event not found");
     }
 
-    const heroes = await this.prisma.eventHeroNpc.findMany({
+    const heroes = await this.prisma.orm.public.EventHeroNpc.findMany({
       where: { eventId },
       select: { id: true },
     });
@@ -71,7 +71,7 @@ export class EventQueueDiagnosticsService {
   }
 
   async getQueueHealth(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: { id: true },
     });

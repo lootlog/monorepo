@@ -11,11 +11,12 @@ import {
   type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { ApiApplicationOrm } from "src/db/application-client";
 import {
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationProvider as DbNotificationProvider,
   NotificationTargetType as DbNotificationTargetType,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import type { Logger as WinstonLogger } from "winston";
 import { DiscordBotClientService } from "src/discord-bot-client/discord-bot-client.service";
 import { discordBotConfig } from "src/config/discord-bot.config";
@@ -28,15 +29,20 @@ type GetGuildDiscordChannelsOptions = {
   refreshIfStale?: boolean;
 };
 
-type GuildSyncStatePersistenceClient = Pick<
-  PrismaService,
-  "discordGuildSyncState"
->;
+type GuildSyncStatePersistenceClient = {
+  orm: {
+    public: Pick<ApiApplicationOrm["public"], "DiscordGuildSyncState">;
+  };
+};
 
-type GuildChannelPersistenceClient = Pick<
-  PrismaService,
-  "discordGuildChannelSnapshot" | "notificationTarget"
->;
+type GuildChannelPersistenceClient = {
+  orm: {
+    public: Pick<
+      ApiApplicationOrm["public"],
+      "DiscordGuildChannelSnapshot" | "NotificationTarget"
+    >;
+  };
+};
 
 @Injectable()
 export class ChannelsService {
@@ -134,7 +140,7 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.transaction(async (tx) => {
       await this.upsertGuildChannelSnapshot(tx, event.guildId, event.channel);
       await this.syncGuildNotificationTarget(tx, event.guildId, event.channel);
 
@@ -148,8 +154,8 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.discordGuildChannelSnapshot.deleteMany({
+    await this.prisma.transaction(async (tx) => {
+      await tx.orm.public.DiscordGuildChannelSnapshot.deleteMany({
         where: {
           guildId: event.guildId,
           channelId: event.channelId,
@@ -186,11 +192,11 @@ export class ChannelsService {
 
   private async loadGuildDiscordState(guildId: string) {
     const [channels, syncState] = await Promise.all([
-      this.prisma.discordGuildChannelSnapshot.findMany({
+      this.prisma.orm.public.DiscordGuildChannelSnapshot.findMany({
         where: { guildId },
         orderBy: [{ position: "asc" }, { name: "asc" }],
       }),
-      this.prisma.discordGuildSyncState.findUnique({
+      this.prisma.orm.public.DiscordGuildSyncState.findUnique({
         where: { guildId },
       }),
     ]);
@@ -203,7 +209,7 @@ export class ChannelsService {
       return;
     }
 
-    await this.prisma.discordGuildSyncState.upsert({
+    await this.prisma.orm.public.DiscordGuildSyncState.upsert({
       where: { guildId },
       create: {
         guildId,
@@ -250,7 +256,7 @@ export class ChannelsService {
 
   private async reconcileGuildChannels(event: DiscordGuildChannelsSyncedEvent) {
     const existingChannels =
-      await this.prisma.discordGuildChannelSnapshot.findMany({
+      await this.prisma.orm.public.DiscordGuildChannelSnapshot.findMany({
         where: { guildId: event.guildId },
         select: { channelId: true },
       });
@@ -261,7 +267,7 @@ export class ChannelsService {
       .map((channel) => channel.channelId)
       .filter((channelId) => !nextChannelIds.has(channelId));
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.transaction(async (tx) => {
       await Promise.all(
         event.channels.map(async (channel) => {
           await this.upsertGuildChannelSnapshot(tx, event.guildId, channel);
@@ -270,7 +276,7 @@ export class ChannelsService {
       );
 
       if (removedChannelIds.length > 0) {
-        await tx.discordGuildChannelSnapshot.deleteMany({
+        await tx.orm.public.DiscordGuildChannelSnapshot.deleteMany({
           where: {
             guildId: event.guildId,
             channelId: {
@@ -326,7 +332,7 @@ export class ChannelsService {
       ? new Date(syncState.lastSuccessAt)
       : lastAttemptAt;
 
-    await client.discordGuildSyncState.upsert({
+    await client.orm.public.DiscordGuildSyncState.upsert({
       where: { guildId },
       create: {
         guildId,
@@ -366,7 +372,7 @@ export class ChannelsService {
       "status" | "lastAttemptAt" | "lastError"
     >,
   ) {
-    await client.discordGuildSyncState.upsert({
+    await client.orm.public.DiscordGuildSyncState.upsert({
       where: { guildId },
       create: {
         guildId,
@@ -408,7 +414,7 @@ export class ChannelsService {
   ) {
     const channelData = this.createGuildChannelSnapshotData(guildId, channel);
 
-    await client.discordGuildChannelSnapshot.upsert({
+    await client.orm.public.DiscordGuildChannelSnapshot.upsert({
       where: {
         guildId_channelId: {
           guildId,
@@ -425,7 +431,7 @@ export class ChannelsService {
     guildId: string,
     channel: DiscordGuildChannelSnapshot,
   ) {
-    await client.notificationTarget.updateMany({
+    await client.orm.public.NotificationTarget.updateMany({
       where: {
         ownerType: DbNotificationOwnerType.GUILD,
         ownerId: guildId,
@@ -484,7 +490,7 @@ export class ChannelsService {
   }
 
   private async guildExists(guildId: string) {
-    const guild = await this.prisma.guild.findUnique({
+    const guild = await this.prisma.orm.public.Guild.findUnique({
       where: { id: guildId },
       select: { id: true },
     });

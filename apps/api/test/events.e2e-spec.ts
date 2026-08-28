@@ -1,7 +1,7 @@
 import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
-import { Permission } from "../src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/db/prisma.service";
 import { buildTimerKey } from "../src/timers/utils/timer-key";
@@ -78,7 +78,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
 
   afterAll(async () => {
     if (prisma) {
-      await prisma.$disconnect();
+      await prisma.onModuleDestroy();
     }
     if (app) {
       await app.close();
@@ -87,7 +87,12 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
   });
 
   beforeEach(async () => {
-    await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings", "Event", "EventHeroNpc", "EventMap", "EventMapAssignmentHistory", "EventHeroKill", "EventKillPoint", "EventRanking", "EventRespawnWindowSummary" CASCADE`;
+    await prisma.execute(
+      prisma.raw
+        .sql`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings", "Event", "EventHeroNpc", "EventMap", "EventMapAssignmentHistory", "EventHeroKill", "EventKillPoint", "EventRanking", "EventRespawnWindowSummary" CASCADE`
+        .affectedCount()
+        .build(),
+    );
     await redis.deleteByPattern("timer:*");
     await redis.deleteByPattern("perms:*");
     await redis.deleteByPattern("guild:*");
@@ -95,8 +100,10 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
   });
 
   it("records one event kill when multiple users submit timers for the same killed NPC", async () => {
-    const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
-    const role = await prisma.role.create({
+    const guild = await prisma.orm.public.Guild.create({
+      data: TEST_GUILDS.GUILD_1,
+    });
+    const role = await prisma.orm.public.Role.create({
       data: {
         id: "event-role-1",
         guildId: guild.id,
@@ -109,7 +116,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
     });
     const members = await Promise.all(
       testUsers.map((user, index) =>
-        prisma.member.create({
+        prisma.orm.public.Member.create({
           data: {
             userId: user.discordId,
             guildId: guild.id,
@@ -120,7 +127,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         }),
       ),
     );
-    await prisma.userCharactersLootlogSettings.createMany({
+    await prisma.orm.public.UserCharactersLootlogSettings.createMany({
       data: testUsers.map((user) => ({
         userId: user.discordId,
         accountId: "event-account",
@@ -128,7 +135,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         catchingGuildIds: [guild.id],
       })),
     });
-    const event = await prisma.event.create({
+    const event = await prisma.orm.public.Event.create({
       data: {
         guildId: guild.id,
         name: "Timer Dedup Event",
@@ -137,7 +144,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         participationConfirmationMinutes: 0,
       },
     });
-    const hero = await prisma.eventHeroNpc.create({
+    const hero = await prisma.orm.public.EventHeroNpc.create({
       data: {
         eventId: event.id,
         npcId: eventNpc.id,
@@ -146,7 +153,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         npcLvl: eventNpc.lvl,
       },
     });
-    const eventMap = await prisma.eventMap.create({
+    const eventMap = await prisma.orm.public.EventMap.create({
       data: {
         heroNpcId: hero.id,
         mapId: 5001,
@@ -156,7 +163,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         },
       },
     });
-    await prisma.eventMapAssignmentHistory.createMany({
+    await prisma.orm.public.EventMapAssignmentHistory.createMany({
       data: members.map((member) => ({
         mapId: eventMap.id,
         heroNpcId: hero.id,
@@ -168,7 +175,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
     const previousMinSpawnTime = new Date(Date.now() - 20 * 60 * 1000);
     const previousMaxSpawnTime = new Date(Date.now() - 5 * 60 * 1000);
     const timerKey = buildTimerKey(eventNpc.id, eventNpc.name);
-    await prisma.timer.create({
+    await prisma.orm.public.Timer.create({
       data: {
         guildId: guild.id,
         createdById: members[0].id,
@@ -214,10 +221,10 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
 
     await waitFor(async () => {
       const [killCount, rankingCount] = await Promise.all([
-        prisma.eventHeroKill.count({
+        prisma.orm.public.EventHeroKill.count({
           where: { heroNpcId: hero.id },
         }),
-        prisma.eventRanking.count({
+        prisma.orm.public.EventRanking.count({
           where: { eventId: event.id },
         }),
       ]);
@@ -225,7 +232,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
     });
 
     const [timer, kills, rankings] = await Promise.all([
-      prisma.timer.findUnique({
+      prisma.orm.public.Timer.findUnique({
         where: {
           timerId: {
             guildId: guild.id,
@@ -234,11 +241,11 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
           },
         },
       }),
-      prisma.eventHeroKill.findMany({
+      prisma.orm.public.EventHeroKill.findMany({
         where: { heroNpcId: hero.id },
         include: { points: true },
       }),
-      prisma.eventRanking.findMany({
+      prisma.orm.public.EventRanking.findMany({
         where: { eventId: event.id },
       }),
     ]);
@@ -253,8 +260,10 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
   });
 
   it("records one event kill when 50 users submit timers for the same killed NPC concurrently", async () => {
-    const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
-    const role = await prisma.role.create({
+    const guild = await prisma.orm.public.Guild.create({
+      data: TEST_GUILDS.GUILD_1,
+    });
+    const role = await prisma.orm.public.Role.create({
       data: {
         id: "event-role-1",
         guildId: guild.id,
@@ -271,7 +280,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
     }));
     const members = await Promise.all(
       users.map((user, index) =>
-        prisma.member.create({
+        prisma.orm.public.Member.create({
           data: {
             userId: user.discordId,
             guildId: guild.id,
@@ -282,7 +291,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         }),
       ),
     );
-    await prisma.userCharactersLootlogSettings.createMany({
+    await prisma.orm.public.UserCharactersLootlogSettings.createMany({
       data: users.map((user) => ({
         userId: user.discordId,
         accountId: "event-account",
@@ -290,7 +299,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         catchingGuildIds: [guild.id],
       })),
     });
-    const event = await prisma.event.create({
+    const event = await prisma.orm.public.Event.create({
       data: {
         guildId: guild.id,
         name: "Timer Burst Dedup Event",
@@ -299,7 +308,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         participationConfirmationMinutes: 0,
       },
     });
-    const hero = await prisma.eventHeroNpc.create({
+    const hero = await prisma.orm.public.EventHeroNpc.create({
       data: {
         eventId: event.id,
         npcId: eventNpc.id,
@@ -308,7 +317,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         npcLvl: eventNpc.lvl,
       },
     });
-    const eventMap = await prisma.eventMap.create({
+    const eventMap = await prisma.orm.public.EventMap.create({
       data: {
         heroNpcId: hero.id,
         mapId: 5001,
@@ -318,7 +327,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         },
       },
     });
-    await prisma.eventMapAssignmentHistory.createMany({
+    await prisma.orm.public.EventMapAssignmentHistory.createMany({
       data: members.map((member) => ({
         mapId: eventMap.id,
         heroNpcId: hero.id,
@@ -330,7 +339,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
     const previousMinSpawnTime = new Date(Date.now() - 20 * 60 * 1000);
     const previousMaxSpawnTime = new Date(Date.now() - 5 * 60 * 1000);
     const timerKey = buildTimerKey(eventNpc.id, eventNpc.name);
-    await prisma.timer.create({
+    await prisma.orm.public.Timer.create({
       data: {
         guildId: guild.id,
         createdById: members[0].id,
@@ -367,10 +376,10 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
 
     await waitFor(async () => {
       const [killCount, rankingCount] = await Promise.all([
-        prisma.eventHeroKill.count({
+        prisma.orm.public.EventHeroKill.count({
           where: { heroNpcId: hero.id },
         }),
-        prisma.eventRanking.count({
+        prisma.orm.public.EventRanking.count({
           where: { eventId: event.id },
         }),
       ]);
@@ -378,18 +387,18 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
     });
 
     const [timers, kills, rankings] = await Promise.all([
-      prisma.timer.findMany({
+      prisma.orm.public.Timer.findMany({
         where: {
           guildId: guild.id,
           world: "event-world",
           timerKey,
         },
       }),
-      prisma.eventHeroKill.findMany({
+      prisma.orm.public.EventHeroKill.findMany({
         where: { heroNpcId: hero.id },
         include: { points: true },
       }),
-      prisma.eventRanking.findMany({
+      prisma.orm.public.EventRanking.findMany({
         where: { eventId: event.id },
       }),
     ]);
@@ -402,8 +411,10 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
   });
 
   it("should forbid event creation without manage permission and create no event", async () => {
-    const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
-    const role = await prisma.role.create({
+    const guild = await prisma.orm.public.Guild.create({
+      data: TEST_GUILDS.GUILD_1,
+    });
+    const role = await prisma.orm.public.Role.create({
       data: {
         id: "event-role-1",
         guildId: guild.id,
@@ -411,7 +422,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         permissions: [Permission.LOOTLOG_EVENTS_READ],
       },
     });
-    await prisma.member.create({
+    await prisma.orm.public.Member.create({
       data: {
         userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
         guildId: guild.id,
@@ -432,12 +443,14 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
       })
       .expect(403);
 
-    await expect(prisma.event.count()).resolves.toBe(0);
+    await expect(prisma.orm.public.Event.count()).resolves.toBe(0);
   });
 
   it("should forbid reading events without events read permission", async () => {
-    const guild = await prisma.guild.create({ data: TEST_GUILDS.GUILD_1 });
-    const role = await prisma.role.create({
+    const guild = await prisma.orm.public.Guild.create({
+      data: TEST_GUILDS.GUILD_1,
+    });
+    const role = await prisma.orm.public.Role.create({
       data: {
         id: "event-role-1",
         guildId: guild.id,
@@ -445,7 +458,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         permissions: [Permission.LOOTLOG_TIMERS_WRITE],
       },
     });
-    await prisma.member.create({
+    await prisma.orm.public.Member.create({
       data: {
         userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
         guildId: guild.id,
@@ -454,7 +467,7 @@ describe("Events E2E Tests (Timer Kill Deduplication)", () => {
         roles: { connect: { id: role.id } },
       },
     });
-    await prisma.event.create({
+    await prisma.orm.public.Event.create({
       data: {
         guildId: guild.id,
         name: "Readable Event",

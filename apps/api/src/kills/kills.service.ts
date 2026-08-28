@@ -2,7 +2,7 @@ import { Injectable, Inject } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { Permission, NpcType, type Role } from "src/generated/prisma/client";
+import { Permission, NpcType, type Role } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
@@ -193,7 +193,7 @@ export class KillsService {
 
     // 2. Save to UserKillStats for personal stats
     try {
-      await this.prisma.userKillStats.upsert({
+      await this.prisma.orm.public.UserKillStats.upsert({
         where: {
           userId_world_npcId: {
             userId: discordId,
@@ -223,7 +223,7 @@ export class KillsService {
         },
       });
       userStatsUpdated = true;
-      await this.prisma.userKillStatsBucket.upsert({
+      await this.prisma.orm.public.UserKillStatsBucket.upsert({
         where: {
           userId_world_npcId_periodStart: {
             userId: discordId,
@@ -283,7 +283,9 @@ export class KillsService {
     const [config, writableGuilds] = await guildContextPromise;
 
     const writableGuildIds = new Set(writableGuilds.map((guild) => guild.id));
-    const targetGuildIds = new Set(config?.catchingGuildIds ?? []);
+    const targetGuildIds = new Set<string>(
+      (config?.catchingGuildIds ?? []) as string[],
+    );
     const guildIdArray = Array.from(targetGuildIds).filter((guildId) =>
       writableGuildIds.has(guildId),
     );
@@ -293,7 +295,7 @@ export class KillsService {
     }
 
     // 4. Batch-fetch members for all target guilds (single query)
-    const members = await this.prisma.member.findMany({
+    const members = await this.prisma.orm.public.Member.findMany({
       where: { userId: discordId, guildId: { in: guildIdArray } },
     });
     const membersByGuild = new Map(members.map((m) => [m.guildId, m]));
@@ -314,7 +316,7 @@ export class KillsService {
 
         try {
           // 4a. Always increment member participation (memberKills)
-          await this.prisma.npcKillStats.upsert({
+          await this.prisma.orm.public.NpcKillStats.upsert({
             where: {
               guildId_memberId_world_npcId: {
                 guildId,
@@ -347,7 +349,7 @@ export class KillsService {
             },
           });
           guildStatsUpdated = true;
-          await this.prisma.npcKillStatsBucket.upsert({
+          await this.prisma.orm.public.NpcKillStatsBucket.upsert({
             where: {
               guildId_memberId_world_npcId_periodStart: {
                 guildId,
@@ -395,7 +397,7 @@ export class KillsService {
 
           if (isFirstGuildKill) {
             // First guild member to report this kill - increment unique kills
-            await this.prisma.guildKillSummary.upsert({
+            await this.prisma.orm.public.GuildKillSummary.upsert({
               where: {
                 guildId_world_npcId: {
                   guildId,
@@ -425,7 +427,7 @@ export class KillsService {
               },
             });
             guildStatsUpdated = true;
-            await this.prisma.guildKillSummaryBucket.upsert({
+            await this.prisma.orm.public.GuildKillSummaryBucket.upsert({
               where: {
                 guildId_world_npcId_periodStart: {
                   guildId,
@@ -533,7 +535,7 @@ export class KillsService {
     return this.getCachedKillStats(cacheKey, "guild kill stats", async () => {
       const [memberStats, guildSummary] = periodStart
         ? await Promise.all([
-            this.prisma.npcKillStatsBucket.groupBy({
+            this.prisma.orm.public.NpcKillStatsBucket.groupBy({
               by: ["memberId", "npcType"],
               where: {
                 ...memberStatsWhere,
@@ -543,7 +545,7 @@ export class KillsService {
                 memberKills: true,
               },
             }),
-            this.prisma.guildKillSummaryBucket.groupBy({
+            this.prisma.orm.public.GuildKillSummaryBucket.groupBy({
               by: ["npcType"],
               where: {
                 ...guildSummaryWhere,
@@ -555,14 +557,14 @@ export class KillsService {
             }),
           ])
         : await Promise.all([
-            this.prisma.npcKillStats.groupBy({
+            this.prisma.orm.public.NpcKillStats.groupBy({
               by: ["memberId", "npcType"],
               where: memberStatsWhere,
               _sum: {
                 memberKills: true,
               },
             }),
-            this.prisma.guildKillSummary.groupBy({
+            this.prisma.orm.public.GuildKillSummary.groupBy({
               by: ["npcType"],
               where: guildSummaryWhere,
               _sum: {
@@ -574,7 +576,7 @@ export class KillsService {
       const memberIds = [...new Set(memberStats.map((stat) => stat.memberId))];
       const members =
         memberIds.length > 0
-          ? await this.prisma.member.findMany({
+          ? await this.prisma.orm.public.Member.findMany({
               where: { id: { in: memberIds } },
               select: {
                 id: true,
@@ -743,13 +745,13 @@ export class KillsService {
 
     return this.getCachedKillStats(cacheKey, "user kill stats", async () => {
       const stats = periodStart
-        ? await this.prisma.userKillStatsBucket.findMany({
+        ? await this.prisma.orm.public.UserKillStatsBucket.findMany({
             where: {
               ...statsWhere,
               periodStart: { gte: periodStart },
             },
           })
-        : await this.prisma.userKillStats.findMany({
+        : await this.prisma.orm.public.UserKillStats.findMany({
             where: statsWhere,
           });
 
@@ -833,13 +835,13 @@ export class KillsService {
 
     return this.getCachedKillStats(cacheKey, "user npc kills", async () => {
       const stats = periodStart
-        ? await this.prisma.userKillStatsBucket.findMany({
+        ? await this.prisma.orm.public.UserKillStatsBucket.findMany({
             where: {
               ...whereCondition,
               periodStart: { gte: periodStart },
             },
           })
-        : await this.prisma.userKillStats.findMany({
+        : await this.prisma.orm.public.UserKillStats.findMany({
             where: whereCondition,
           });
 
@@ -956,13 +958,13 @@ export class KillsService {
 
     return this.getCachedKillStats(cacheKey, "guild top npcs", async () => {
       const summaries = periodStart
-        ? await this.prisma.guildKillSummaryBucket.findMany({
+        ? await this.prisma.orm.public.GuildKillSummaryBucket.findMany({
             where: {
               ...summariesWhere,
               periodStart: { gte: periodStart },
             },
           })
-        : await this.prisma.guildKillSummary.findMany({
+        : await this.prisma.orm.public.GuildKillSummary.findMany({
             where: summariesWhere,
           });
 
@@ -1044,7 +1046,7 @@ export class KillsService {
 
     return this.getCachedKillStats(cacheKey, "guild top killers", async () => {
       const stats = periodStart
-        ? await this.prisma.npcKillStatsBucket.findMany({
+        ? await this.prisma.orm.public.NpcKillStatsBucket.findMany({
             where: {
               ...statsWhere,
               periodStart: { gte: periodStart },
@@ -1053,7 +1055,7 @@ export class KillsService {
               member: true,
             },
           })
-        : await this.prisma.npcKillStats.findMany({
+        : await this.prisma.orm.public.NpcKillStats.findMany({
             where: statsWhere,
             include: {
               member: true,
@@ -1153,7 +1155,7 @@ export class KillsService {
 
     return this.getCachedKillStats(cacheKey, "npc killers", async () => {
       const stats = periodStart
-        ? await this.prisma.npcKillStatsBucket.findMany({
+        ? await this.prisma.orm.public.NpcKillStatsBucket.findMany({
             where: {
               ...statsWhere,
               periodStart: { gte: periodStart },
@@ -1162,7 +1164,7 @@ export class KillsService {
               member: true,
             },
           })
-        : await this.prisma.npcKillStats.findMany({
+        : await this.prisma.orm.public.NpcKillStats.findMany({
             where: statsWhere,
             include: {
               member: true,
@@ -1170,19 +1172,19 @@ export class KillsService {
           });
 
       const summaries = periodStart
-        ? await this.prisma.guildKillSummaryBucket.findMany({
+        ? await this.prisma.orm.public.GuildKillSummaryBucket.findMany({
             where: {
               ...summaryWhere,
               periodStart: { gte: periodStart },
             },
           })
-        : await this.prisma.guildKillSummary.findMany({
+        : await this.prisma.orm.public.GuildKillSummary.findMany({
             where: summaryWhere,
           });
 
       const metadataSummaries =
         stats.length === 0 && summaries.length === 0
-          ? ((await this.prisma.guildKillSummary.findMany({
+          ? ((await this.prisma.orm.public.GuildKillSummary.findMany({
               where: {
                 guildId,
                 npcId,
@@ -1329,7 +1331,7 @@ export class KillsService {
     });
 
     return this.getCachedKillStats(cacheKey, "member kills", async () => {
-      const member = await this.prisma.member.findFirst({
+      const member = await this.prisma.orm.public.Member.findFirst({
         where: {
           id: memberId,
           guildId,
@@ -1341,13 +1343,13 @@ export class KillsService {
       }
 
       const stats = periodStart
-        ? await this.prisma.npcKillStatsBucket.findMany({
+        ? await this.prisma.orm.public.NpcKillStatsBucket.findMany({
             where: {
               ...statsWhere,
               periodStart: { gte: periodStart },
             },
           })
-        : await this.prisma.npcKillStats.findMany({
+        : await this.prisma.orm.public.NpcKillStats.findMany({
             where: statsWhere,
           });
 

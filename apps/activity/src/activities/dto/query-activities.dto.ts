@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createZodDto, type ZodDto } from "nestjs-zod";
-import { ActivityType, ActivitySource } from "src/generated/prisma/client";
+import { ActivityType, ActivitySource } from "src/shared/db/domain";
 
 const singleToArray = (val: unknown) => {
   if (Array.isArray(val)) {

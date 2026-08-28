@@ -13,6 +13,8 @@
     "build/**",
     "coverage/**",
     "dist/**",
+    "apps/activity/migrations/**",
+    "apps/api/migrations/**",
     "node_modules/**",
     "out/**",
     "pnpm-lock.yaml",

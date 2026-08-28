@@ -20,7 +20,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Role } from "src/generated/prisma/client";
+import { Permission, type Role } from "src/db/domain";
 import { AssignMemberDto } from "./dto/assign-member.dto";
 import { AssignMapLocationDto } from "./dto/assign-map-location.dto";
 import { CreateHeroDto } from "./dto/create-hero.dto";

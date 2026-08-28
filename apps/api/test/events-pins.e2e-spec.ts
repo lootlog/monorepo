@@ -2,7 +2,7 @@ import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { PrismaService } from "../src/db/prisma.service";
-import { Permission } from "../src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import {
   closeE2EApp,
   createE2EApp,
@@ -103,7 +103,7 @@ describe("Event pins E2E", () => {
     ).expect(200);
 
     expect(
-      await prisma.userPinnedEvent.count({
+      await prisma.orm.public.UserPinnedEvent.count({
         where: { userId: "e2e-user" },
       }),
     ).toBe(2);
@@ -120,14 +120,14 @@ describe("Event pins E2E", () => {
     ).expect(204);
 
     expect(
-      await prisma.userPinnedEvent.count({
+      await prisma.orm.public.UserPinnedEvent.count({
         where: { userId: "e2e-user" },
       }),
     ).toBe(1);
 
-    await prisma.event.delete({ where: { id: secondEvent.id } });
+    await prisma.orm.public.Event.delete({ where: { id: secondEvent.id } });
     expect(
-      await prisma.userPinnedEvent.count({
+      await prisma.orm.public.UserPinnedEvent.count({
         where: { userId: "e2e-user" },
       }),
     ).toBe(0);

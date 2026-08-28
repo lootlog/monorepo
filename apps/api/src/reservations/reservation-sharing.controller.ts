@@ -17,7 +17,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "src/generated/prisma/client";
+import { type Guild, Permission } from "src/db/domain";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";

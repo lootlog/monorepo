@@ -13,7 +13,7 @@ import { battlelogConfig } from "src/config/battlelog.config";
 import { MEMBER_LAST_DISCORD_STATUS } from "src/members/constants/member-discord-status.constant";
 import { MembersService } from "src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import type { Prisma } from "src/generated/prisma/client";
+import type { Prisma } from "src/db/domain";
 import { getUserLootlogConfigCachePattern } from "src/shared/constants/cache.constant";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -95,10 +95,10 @@ export class UsersService {
   async getUserPreferences(userId: string) {
     const [userSettings, notificationMutesSettings, appearanceDocument] =
       await Promise.all([
-        this.prisma.userSettings.findUnique({
+        this.prisma.orm.public.UserSettings.findUnique({
           where: { userId },
         }),
-        this.prisma.userGameAccountSettings.findUnique({
+        this.prisma.orm.public.UserGameAccountSettings.findUnique({
           where: {
             userId_accountId: {
               userId,
@@ -106,7 +106,7 @@ export class UsersService {
             },
           },
         }),
-        this.prisma.userSettingDocument?.findUnique({
+        this.prisma.orm.public.UserSettingDocument?.findUnique({
           where: {
             userId_domain_scopeType_scopeId: {
               userId,
@@ -147,8 +147,8 @@ export class UsersService {
   async deleteAccount({ authUserId, discordId }: DeleteAccountParams) {
     await this.triggerBattlelogCleanup(authUserId);
 
-    const deletedMembers = await this.prisma.$transaction(async (tx) => {
-      const members = await tx.member.findMany({
+    const deletedMembers = await this.prisma.transaction(async (tx) => {
+      const members = await tx.orm.public.Member.findMany({
         where: { userId: discordId },
         select: {
           id: true,
@@ -161,34 +161,42 @@ export class UsersService {
       const memberIds = members.map((member) => member.id);
 
       if (memberIds.length > 0) {
-        await tx.npcKillStats.deleteMany({
+        await tx.orm.public.NpcKillStats.deleteMany({
           where: { memberId: { in: memberIds } },
         });
       }
 
-      await tx.userKillStats.deleteMany({ where: { userId: discordId } });
-      await tx.userCharactersLootlogSettings.deleteMany({
+      await tx.orm.public.UserKillStats.deleteMany({
         where: { userId: discordId },
       });
-      await tx.userSettings.deleteMany({ where: { userId: authUserId } });
-      await tx.userSettingDocument.deleteMany({
+      await tx.orm.public.UserCharactersLootlogSettings.deleteMany({
+        where: { userId: discordId },
+      });
+      await tx.orm.public.UserSettings.deleteMany({
         where: { userId: authUserId },
       });
-      await tx.userGameAccountSettings.deleteMany({
+      await tx.orm.public.UserSettingDocument.deleteMany({
         where: { userId: authUserId },
       });
-      await tx.userTimerSettings.deleteMany({ where: { userId: authUserId } });
-      await tx.userSoundSettings.deleteMany({ where: { userId: authUserId } });
-      await tx.userGuildTimerSettings.deleteMany({
+      await tx.orm.public.UserGameAccountSettings.deleteMany({
         where: { userId: authUserId },
       });
-      await tx.userPinnedEvent.deleteMany({
+      await tx.orm.public.UserTimerSettings.deleteMany({
+        where: { userId: authUserId },
+      });
+      await tx.orm.public.UserSoundSettings.deleteMany({
+        where: { userId: authUserId },
+      });
+      await tx.orm.public.UserGuildTimerSettings.deleteMany({
+        where: { userId: authUserId },
+      });
+      await tx.orm.public.UserPinnedEvent.deleteMany({
         where: { userId: authUserId },
       });
 
       await Promise.all(
         members.map((member) =>
-          tx.member.update({
+          tx.orm.public.Member.update({
             where: { id: member.id },
             data: {
               active: false,
@@ -253,9 +261,9 @@ export class UsersService {
   ) {
     const [currentUserSettings, currentMutes, currentAppearanceDocument] =
       await Promise.all([
-        this.prisma.userSettings.findUnique({ where: { userId } }),
+        this.prisma.orm.public.UserSettings.findUnique({ where: { userId } }),
         this.getUserNotificationMutes(userId),
-        this.prisma.userSettingDocument?.findUnique({
+        this.prisma.orm.public.UserSettingDocument?.findUnique({
           where: {
             userId_domain_scopeType_scopeId: {
               userId,
@@ -295,7 +303,7 @@ export class UsersService {
 
     const [userSettings] = await Promise.all([
       shouldUpdateUserSettings
-        ? this.prisma.userSettings.upsert({
+        ? this.prisma.orm.public.UserSettings.upsert({
             where: { userId },
             update: {
               ...nextUserSettingsPayload,
@@ -309,7 +317,7 @@ export class UsersService {
           })
         : Promise.resolve(currentUserSettings),
       preferences.mutes
-        ? this.prisma.userGameAccountSettings.upsert({
+        ? this.prisma.orm.public.UserGameAccountSettings.upsert({
             where: {
               userId_accountId: {
                 userId,
@@ -331,8 +339,8 @@ export class UsersService {
             },
           })
         : Promise.resolve(null),
-      nextChatAppearance && this.prisma.userSettingDocument
-        ? this.prisma.userSettingDocument.upsert({
+      nextChatAppearance && this.prisma.orm.public.UserSettingDocument
+        ? this.prisma.orm.public.UserSettingDocument.upsert({
             where: {
               userId_domain_scopeType_scopeId: {
                 userId,
@@ -389,7 +397,7 @@ export class UsersService {
     accountId: string,
   ): Promise<UserGameAccountPreferences> {
     const gameAccountSettings =
-      await this.prisma.userGameAccountSettings.findUnique({
+      await this.prisma.orm.public.UserGameAccountSettings.findUnique({
         where: {
           userId_accountId: {
             userId,
@@ -436,7 +444,7 @@ export class UsersService {
     preferences: UpdateUserGameAccountPreferencesDto,
   ): Promise<UserGameAccountPreferences> {
     const gameAccountSettings =
-      await this.prisma.userGameAccountSettings.findUnique({
+      await this.prisma.orm.public.UserGameAccountSettings.findUnique({
         where: {
           userId_accountId: {
             userId,
@@ -510,7 +518,7 @@ export class UsersService {
       ...(hasStoredAirTags ? { airTags: nextAirTags } : {}),
     };
 
-    await this.prisma.userGameAccountSettings.upsert({
+    await this.prisma.orm.public.UserGameAccountSettings.upsert({
       where: {
         userId_accountId: {
           userId,
@@ -606,7 +614,7 @@ export class UsersService {
 
   private async getUserNotificationMutes(userId: string) {
     const notificationMutesSettings =
-      await this.prisma.userGameAccountSettings.findUnique({
+      await this.prisma.orm.public.UserGameAccountSettings.findUnique({
         where: {
           userId_accountId: {
             userId,

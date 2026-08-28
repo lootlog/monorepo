@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import { chalk } from "zx";
+import { seedCommand } from "../../../apps/api/scripts/seed/index.js";
 import { env } from "./commands/env/index.js";
 import { events } from "./commands/events/index.js";
-import { seedCommand } from "./commands/seed/index.js";
 
 const COMMANDS = {
   env,

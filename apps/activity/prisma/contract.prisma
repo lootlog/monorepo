@@ -1,0 +1,92 @@
+// use prisma-next
+// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
+namespace public {
+  model ActivityActorSnapshot {
+    id          String                  @id(map: "ActivityActorSnapshot_pkey") @default(cuid(2))
+    accountId   Int
+    characterId Int
+    clanName    String?
+    icon        String
+    lvl         Int
+    source      pg.enum(ActivitySource)
+    fingerprint String
+    createdAt   Timestamptz             @default(now())
+    clanId      Int?
+    name        String
+    prof        String
+    activities  Activity[]
+
+    @@index([fingerprint], map: "ActivityActorSnapshot_fingerprint_key", unique: true)
+
+    @@map("ActivityActorSnapshot")
+  }
+
+  model Activity {
+    id              String                  @default(cuid(2))
+    userId          String
+    guildId         String
+    discordId       String
+    _type           pg.enum(ActivityType)   @map("type")
+    createdAt       Timestamptz             @default(now())
+    source          pg.enum(ActivitySource)
+    details         Jsonb?
+    actorSnapshotId String?
+    world           String?
+    idempotencyKey  String
+    actorSnapshot   ActivityActorSnapshot?  @relation(fields:[actorSnapshotId], references:[id], onDelete: SetNull, onUpdate: Cascade, map: "Activity_actorSnapshotId_fkey", index: false)
+
+    @@id([id, createdAt], map: "Activity_pkey")
+    @@index([createdAt, guildId], map: "Activity_createdAt_guildId_idx")
+    @@index([createdAt, _type], map: "Activity_createdAt_type_idx")
+    @@index([createdAt, userId], map: "Activity_createdAt_userId_idx")
+    @@index([guildId, createdAt], map: "Activity_guildId_createdAt_idx")
+    @@index([idempotencyKey, createdAt], map: "Activity_idempotencyKey_createdAt_key", unique: true)
+
+    @@map("Activity")
+  }
+
+  model MemberActivitySession {
+    guildId     String
+    discordId   String
+    source      pg.enum(ActivitySource)
+    sessionId   String
+    userId      String?
+    userAgent   String?
+    world       String?
+    connectedAt Timestamptz             @default(now())
+    lastSeenAt  Timestamptz             @default(now())
+
+    @@id([guildId, discordId, source, sessionId], map: "MemberActivitySession_pkey")
+    @@index([guildId, discordId, source], map: "MemberActivitySession_guildId_discordId_source_idx")
+    @@index([guildId, source], map: "MemberActivitySession_guildId_source_idx")
+    @@index([lastSeenAt], map: "MemberActivitySession_lastSeenAt_idx")
+
+    @@map("MemberActivitySession")
+  }
+
+  model MemberActivityStats {
+    guildId            String
+    discordId          String
+    source             pg.enum(ActivitySource)
+    lastSeenAt         Timestamptz?
+    visitCount         Int                     @default(0)
+    activeSessionCount Int                     @default(0)
+    createdAt          Timestamptz             @default(now())
+    updatedAt          temporal.timestamptz(onCreate: now, onUpdate: now)
+
+    @@id([guildId, discordId, source], map: "MemberActivityStats_pkey")
+    @@index([guildId, source], map: "MemberActivityStats_guildId_source_idx")
+
+    @@map("MemberActivityStats")
+  }
+
+  native_enum ActivitySource {
+    GAME = "GAME"
+    WEB_APP = "WEB_APP"
+  }
+
+  native_enum ActivityType {
+    CONNECT_EVENT = "CONNECT_EVENT"
+    DISCONNECT_EVENT = "DISCONNECT_EVENT"
+  }
+}

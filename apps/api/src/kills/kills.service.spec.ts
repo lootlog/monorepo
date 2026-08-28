@@ -7,13 +7,14 @@ import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { GuildsService } from "src/guilds/guilds.service";
-import { Permission, NpcType, type Role } from "src/generated/prisma/client";
+import { Permission, NpcType, type Role } from "src/db/domain";
 import type { CreateKillDto } from "./dto/create-kill.dto";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
 } from "./dto/get-kill-stats.dto";
 import { GetMemberKillsDto } from "./dto/get-member-kills.dto";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("KillsService", () => {
   let service: KillsService;
@@ -100,7 +101,7 @@ describe("KillsService", () => {
   });
 
   beforeEach(async () => {
-    const mockPrismaService = {
+    const mockPrismaService = createPrismaServiceTestDouble({
       userKillStats: {
         upsert: mockFn(),
         findMany: mockFn(),
@@ -135,7 +136,7 @@ describe("KillsService", () => {
         findFirst: mockFn(),
         findMany: mockFn().mockResolvedValue([]),
       },
-    };
+    });
 
     const mockRedisService = {
       setNX: mockFn().mockResolvedValue(true),

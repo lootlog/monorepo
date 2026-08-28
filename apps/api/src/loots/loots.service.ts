@@ -25,7 +25,7 @@ import {
   type Guild,
   type Prisma,
   type Role,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import { GuildsService } from "src/guilds/guilds.service";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import type { UpdateLootDto } from "src/loots/dto/update-loot.dto";
@@ -384,13 +384,14 @@ export class LootsService implements OnModuleInit {
       return { share: {}, source: LootShareSource.NONE };
     }
 
-    const ambiguousNpcVariant = await this.prisma.npcSnapshot.findFirst({
-      where: {
-        name: primaryNpc.name,
-        OR: [{ type: { not: NpcType.COLOSSUS } }, { type: null }],
-      },
-      select: { id: true },
-    });
+    const ambiguousNpcVariant =
+      await this.prisma.orm.public.NpcSnapshot.findFirst({
+        where: {
+          name: primaryNpc.name,
+          OR: [{ type: { not: NpcType.COLOSSUS } }, { type: null }],
+        },
+        select: { id: true },
+      });
 
     if (ambiguousNpcVariant) {
       return { share: {}, source: LootShareSource.NONE };
@@ -414,7 +415,7 @@ export class LootsService implements OnModuleInit {
     actorUserId: string,
     lootId: number,
   ): Promise<LootShare> {
-    const loot = await this.prisma.loot.findFirst({
+    const loot = await this.prisma.orm.public.Loot.findFirst({
       where: this.getAuthorizedLootUpdateWhere(actorUserId, lootId),
       select: { lootShareSource: true },
     });
@@ -446,7 +447,7 @@ export class LootsService implements OnModuleInit {
         LOOT_LOCK_RETRY_OPTIONS,
       );
 
-      const existingLoot = await this.prisma.loot.findUnique({
+      const existingLoot = await this.prisma.orm.public.Loot.findUnique({
         where: { uniqueId },
         select: { id: true },
       });
@@ -484,7 +485,7 @@ export class LootsService implements OnModuleInit {
 
       const [lootlogConfigs, members] = await Promise.all([
         this.lootlogConfigService.getMultipleLootlogConfigs(filteredGuildIds),
-        this.prisma.member.findMany({
+        this.prisma.orm.public.Member.findMany({
           where: {
             guildId: { in: filteredGuildIds },
             userId: discordId,
@@ -582,26 +583,27 @@ export class LootsService implements OnModuleInit {
       }
 
       if (existingLoot) {
-        const existingSubmissions = await this.prisma.lootSubmission.findMany({
-          where: {
-            lootId: existingLoot.id,
-            OR: outcome.submissionData.map((submission) => ({
-              guildId: submission.guildId,
-              memberId: submission.memberId,
-            })),
-          },
-          select: {
-            guildId: true,
-            memberId: true,
-          },
-        });
+        const existingSubmissions =
+          await this.prisma.orm.public.LootSubmission.findMany({
+            where: {
+              lootId: existingLoot.id,
+              OR: outcome.submissionData.map((submission) => ({
+                guildId: submission.guildId,
+                memberId: submission.memberId,
+              })),
+            },
+            select: {
+              guildId: true,
+              memberId: true,
+            },
+          });
         const newSubmissions = this.getNewLootSubmissions(
           outcome.submissionData,
           existingSubmissions,
         );
 
         if (newSubmissions.length > 0) {
-          await this.prisma.lootSubmission.createMany({
+          await this.prisma.orm.public.LootSubmission.createMany({
             data: newSubmissions.map((submission) => ({
               guildId: submission.guildId,
               memberId: submission.memberId,
@@ -647,7 +649,7 @@ export class LootsService implements OnModuleInit {
         highestWtNpcType,
       );
 
-      const loot = await this.prisma.loot.create({
+      const loot = await this.prisma.orm.public.Loot.create({
         data: {
           uniqueId,
           world: body.world,
@@ -667,7 +669,7 @@ export class LootsService implements OnModuleInit {
         },
       });
 
-      await this.prisma.lootSubmission.createMany({
+      await this.prisma.orm.public.LootSubmission.createMany({
         data: outcome.submissionData.map((submission) => ({
           guildId: submission.guildId,
           memberId: submission.memberId,
@@ -752,7 +754,7 @@ export class LootsService implements OnModuleInit {
   async deleteLoot(options: { guildId: string; lootId: number }) {
     const { guildId, lootId } = options;
 
-    const loot = await this.prisma.loot.findFirst({
+    const loot = await this.prisma.orm.public.Loot.findFirst({
       where: {
         id: lootId,
         lootSubmissions: { some: { guildId } },
@@ -763,7 +765,7 @@ export class LootsService implements OnModuleInit {
       throw new ForbiddenException(ErrorKey.CANT_DELETE_LOOT);
     }
 
-    await this.prisma.lootSubmission.deleteMany({
+    await this.prisma.orm.public.LootSubmission.deleteMany({
       where: {
         lootId,
         guildId,
@@ -791,7 +793,7 @@ export class LootsService implements OnModuleInit {
       actorUserId,
       lootId,
     );
-    const loot = await this.prisma.loot.findFirst({
+    const loot = await this.prisma.orm.public.Loot.findFirst({
       where: authorizedLootWhere,
       include: {
         lootItems: {
@@ -876,7 +878,7 @@ export class LootsService implements OnModuleInit {
       });
     }
 
-    const updateResult = await this.prisma.loot.updateMany({
+    const updateResult = await this.prisma.orm.public.Loot.updateMany({
       where: {
         ...authorizedLootWhere,
         lootShareSource: { not: LootShareSource.CHAT_MESSAGE },

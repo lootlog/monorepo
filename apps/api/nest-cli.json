@@ -5,6 +5,9 @@
   "compilerOptions": {
     "builder": "swc",
     "typeCheck": true,
+    "assets": [
+      { "include": "db/generated/contract.json", "outDir": "dist/src" }
+    ],
     "plugins": ["@nestjs/swagger"],
     "deleteOutDir": true
   }

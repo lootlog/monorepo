@@ -6,7 +6,7 @@ import {
   UnprocessableEntityException,
 } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
-import { Permission, Prisma } from "src/generated/prisma/client";
+import { Permission, Prisma } from "src/db/domain";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { CreateReservationDto } from "./dto/create-reservation.dto";
 import type { MyReservationsQueryDto } from "./dto/reservation-query.dto";
@@ -68,12 +68,12 @@ export class ReservationsService {
     const [spots, visibleGuildIds, pinnedSpots] = await Promise.all([
       this.catalogService.getSpots(),
       this.sharingService.getVisibleGuildIds(context.guildId),
-      this.prisma.userPinnedReservationSpot.findMany({
+      this.prisma.orm.public.UserPinnedReservationSpot.findMany({
         where: { userId: context.userId, guildId: context.guildId },
         select: { spotId: true },
       }),
     ]);
-    const reservations = await this.prisma.reservation.findMany({
+    const reservations = await this.prisma.orm.public.Reservation.findMany({
       where: {
         guildId: { in: visibleGuildIds },
         endsAt: { gt: now },
@@ -130,7 +130,7 @@ export class ReservationsService {
     const visibleGuildIds = await this.sharingService.getVisibleGuildIds(
       context.guildId,
     );
-    const reservations = await this.prisma.reservation.findMany({
+    const reservations = await this.prisma.orm.public.Reservation.findMany({
       where: {
         guildId: { in: visibleGuildIds },
         spotId,
@@ -158,12 +158,12 @@ export class ReservationsService {
     const { context, data } = options;
     const [spot, guild, settings, visibleGuildIds, member] = await Promise.all([
       this.catalogService.getSpot(options.spotId),
-      this.prisma.guild.findUniqueOrThrow({
+      this.prisma.orm.public.Guild.findUniqueOrThrow({
         where: { id: context.guildId },
       }),
       this.getReservationSettings(context.guildId),
       this.sharingService.getVisibleGuildIds(context.guildId),
-      this.prisma.member.findFirst({
+      this.prisma.orm.public.Member.findFirst({
         where: {
           guildId: context.guildId,
           active: true,
@@ -186,32 +186,34 @@ export class ReservationsService {
       reminderMinutesBefore,
     });
 
-    const created = await this.prisma.$transaction(
+    const created = await this.prisma.transaction(
       async (transaction) => {
-        const overlappingReservation = await transaction.reservation.findFirst({
-          where: {
-            guildId: { in: visibleGuildIds },
-            spotId: spot.id,
-            startsAt: { lt: endsAt },
-            endsAt: { gt: startsAt },
-          },
-          select: { id: true },
-        });
+        const overlappingReservation =
+          await transaction.orm.public.Reservation.findFirst({
+            where: {
+              guildId: { in: visibleGuildIds },
+              spotId: spot.id,
+              startsAt: { lt: endsAt },
+              endsAt: { gt: startsAt },
+            },
+            select: { id: true },
+          });
         if (overlappingReservation) {
           throw new ConflictException({ code: "RESERVATION_OVERLAP" });
         }
 
-        const activeReservationsCount = await transaction.reservation.count({
-          where: {
-            guildId: context.guildId,
-            spotId: spot.id,
-            endsAt: { gt: new Date() },
-            OR: [
-              { createdByUserId: context.userId },
-              { legacyCreatedByDiscordId: context.discordId },
-            ],
-          },
-        });
+        const activeReservationsCount =
+          await transaction.orm.public.Reservation.count({
+            where: {
+              guildId: context.guildId,
+              spotId: spot.id,
+              endsAt: { gt: new Date() },
+              OR: [
+                { createdByUserId: context.userId },
+                { legacyCreatedByDiscordId: context.discordId },
+              ],
+            },
+          });
         if (activeReservationsCount >= settings.reservationActiveLimitPerSpot) {
           throw new UnprocessableEntityException({
             code: "ACTIVE_LIMIT_REACHED",
@@ -219,7 +221,7 @@ export class ReservationsService {
           });
         }
 
-        return transaction.reservation.create({
+        return transaction.orm.public.Reservation.create({
           data: {
             guildId: context.guildId,
             spotId: spot.id,
@@ -251,7 +253,9 @@ export class ReservationsService {
         startsAt,
       });
     } catch (error) {
-      await this.prisma.reservation.delete({ where: { id: created.id } });
+      await this.prisma.orm.public.Reservation.delete({
+        where: { id: created.id },
+      });
       throw error;
     }
 
@@ -273,7 +277,7 @@ export class ReservationsService {
     const visibleGuildIds = await this.sharingService.getVisibleGuildIds(
       context.guildId,
     );
-    const reservation = await this.prisma.reservation.findFirst({
+    const reservation = await this.prisma.orm.public.Reservation.findFirst({
       where: {
         id: options.reservationId,
         guildId: { in: visibleGuildIds },
@@ -299,7 +303,9 @@ export class ReservationsService {
         : await this.sharingService.getVisibleGuildIds(reservation.guildId);
 
     await this.reminderService.cancel(reservation.id);
-    await this.prisma.reservation.delete({ where: { id: reservation.id } });
+    await this.prisma.orm.public.Reservation.delete({
+      where: { id: reservation.id },
+    });
     await this.eventsPublisher.deleted({
       sourceGuildId: reservation.guildId,
       audienceGuildIds,
@@ -314,7 +320,7 @@ export class ReservationsService {
     spotId: string,
   ): Promise<void> {
     await this.catalogService.getSpot(spotId);
-    await this.prisma.userPinnedReservationSpot.upsert({
+    await this.prisma.orm.public.UserPinnedReservationSpot.upsert({
       where: { userId_guildId_spotId: { userId, guildId, spotId } },
       create: { userId, guildId, spotId },
       update: {},
@@ -326,7 +332,7 @@ export class ReservationsService {
     guildId: string,
     spotId: string,
   ): Promise<void> {
-    await this.prisma.userPinnedReservationSpot.deleteMany({
+    await this.prisma.orm.public.UserPinnedReservationSpot.deleteMany({
       where: { userId, guildId, spotId },
     });
   }
@@ -347,7 +353,7 @@ export class ReservationsService {
       options.query.status === "past"
         ? { endsAt: { gte: retentionStart, lt: now } }
         : { endsAt: { gte: now } };
-    const reservations = await this.prisma.reservation.findMany({
+    const reservations = await this.prisma.orm.public.Reservation.findMany({
       where: {
         guildId: { in: accessibleGuilds.map((guild) => guild.id) },
         ...statusFilter,
@@ -386,7 +392,7 @@ export class ReservationsService {
         options.discordId,
         options.userId,
       );
-    const reservation = await this.prisma.reservation.findFirst({
+    const reservation = await this.prisma.orm.public.Reservation.findFirst({
       where: {
         id: options.reservationId,
         guildId: { in: accessibleGuilds.map((guild) => guild.id) },
@@ -463,11 +469,11 @@ export class ReservationsService {
             .catch(() => null)
         : null;
 
-    const updated = await this.prisma.$transaction(
+    const updated = await this.prisma.transaction(
       async (transaction) => {
         if (timeChanged) {
           const overlappingReservation =
-            await transaction.reservation.findFirst({
+            await transaction.orm.public.Reservation.findFirst({
               where: {
                 id: { not: reservation.id },
                 guildId: { in: visibleGuildIds },
@@ -482,7 +488,7 @@ export class ReservationsService {
           }
         }
 
-        return transaction.reservation.update({
+        return transaction.orm.public.Reservation.update({
           where: { id: reservation.id },
           data: {
             startsAt,
@@ -508,7 +514,7 @@ export class ReservationsService {
           startsAt: updated.startsAt,
         });
       } catch (error) {
-        await this.prisma.reservation.update({
+        await this.prisma.orm.public.Reservation.update({
           where: { id: reservation.id },
           data: {
             startsAt: reservation.startsAt,
@@ -555,7 +561,7 @@ export class ReservationsService {
         options.discordId,
         options.userId,
       );
-    const reservation = await this.prisma.reservation.findFirst({
+    const reservation = await this.prisma.orm.public.Reservation.findFirst({
       where: {
         id: options.reservationId,
         guildId: { in: accessibleGuilds.map((guild) => guild.id) },
@@ -573,7 +579,9 @@ export class ReservationsService {
       reservation.guildId,
     );
     await this.reminderService.cancel(reservation.id);
-    await this.prisma.reservation.delete({ where: { id: reservation.id } });
+    await this.prisma.orm.public.Reservation.delete({
+      where: { id: reservation.id },
+    });
     await this.eventsPublisher.deleted({
       sourceGuildId: reservation.guildId,
       audienceGuildIds,
@@ -585,7 +593,7 @@ export class ReservationsService {
   private async getReservationSettings(
     guildId: string,
   ): Promise<ReservationSettings> {
-    const guild = await this.prisma.guild.findUnique({
+    const guild = await this.prisma.orm.public.Guild.findUnique({
       where: { id: guildId },
       select: {
         reservationMaxDurationMinutes: true,

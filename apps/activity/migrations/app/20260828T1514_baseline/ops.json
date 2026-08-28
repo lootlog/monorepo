@@ -1,0 +1,719 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "extension.timescaledb",
+    "label": "Create extension \"timescaledb\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create extension \"timescaledb\"",
+        "sql": "CREATE EXTENSION IF NOT EXISTS \"timescaledb\""
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.ActivitySource",
+    "label": "Create enum type \"ActivitySource\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "ActivitySource"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"ActivitySource\"",
+        "sql": "CREATE TYPE \"public\".\"ActivitySource\" AS ENUM ('GAME', 'WEB_APP')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.ActivityType",
+    "label": "Create enum type \"ActivityType\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "ActivityType"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"ActivityType\"",
+        "sql": "CREATE TYPE \"public\".\"ActivityType\" AS ENUM ('CONNECT_EVENT', 'DISCONNECT_EVENT')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.Activity",
+    "label": "Create table \"Activity\"",
+    "summary": "Creates table \"Activity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Activity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Activity\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Activity\"",
+        "sql": "CREATE TABLE \"public\".\"Activity\" (\n  \"actorSnapshotId\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"details\" jsonb,\n  \"discordId\" text NOT NULL,\n  \"guildId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"idempotencyKey\" text NOT NULL,\n  \"source\" \"ActivitySource\" NOT NULL,\n  \"type\" \"ActivityType\" NOT NULL,\n  \"userId\" text NOT NULL,\n  \"world\" text,\n  CONSTRAINT \"Activity_pkey\" PRIMARY KEY (\"id\", \"createdAt\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Activity\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.ActivityActorSnapshot",
+    "label": "Create table \"ActivityActorSnapshot\"",
+    "summary": "Creates table \"ActivityActorSnapshot\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "ActivityActorSnapshot"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"ActivityActorSnapshot\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ActivityActorSnapshot\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"ActivityActorSnapshot\"",
+        "sql": "CREATE TABLE \"public\".\"ActivityActorSnapshot\" (\n  \"accountId\" int4 NOT NULL,\n  \"characterId\" int4 NOT NULL,\n  \"clanId\" int4,\n  \"clanName\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"fingerprint\" text NOT NULL,\n  \"icon\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"lvl\" int4 NOT NULL,\n  \"name\" text NOT NULL,\n  \"prof\" text NOT NULL,\n  \"source\" \"ActivitySource\" NOT NULL,\n  CONSTRAINT \"ActivityActorSnapshot_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"ActivityActorSnapshot\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ActivityActorSnapshot\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.MemberActivitySession",
+    "label": "Create table \"MemberActivitySession\"",
+    "summary": "Creates table \"MemberActivitySession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "MemberActivitySession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"MemberActivitySession\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivitySession\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"MemberActivitySession\"",
+        "sql": "CREATE TABLE \"public\".\"MemberActivitySession\" (\n  \"connectedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"discordId\" text NOT NULL,\n  \"guildId\" text NOT NULL,\n  \"lastSeenAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"sessionId\" text NOT NULL,\n  \"source\" \"ActivitySource\" NOT NULL,\n  \"userAgent\" text,\n  \"userId\" text,\n  \"world\" text,\n  CONSTRAINT \"MemberActivitySession_pkey\" PRIMARY KEY (\"guildId\", \"discordId\", \"source\", \"sessionId\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"MemberActivitySession\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivitySession\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.MemberActivityStats",
+    "label": "Create table \"MemberActivityStats\"",
+    "summary": "Creates table \"MemberActivityStats\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "MemberActivityStats"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"MemberActivityStats\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivityStats\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"MemberActivityStats\"",
+        "sql": "CREATE TABLE \"public\".\"MemberActivityStats\" (\n  \"activeSessionCount\" int4 DEFAULT 0 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"discordId\" text NOT NULL,\n  \"guildId\" text NOT NULL,\n  \"lastSeenAt\" timestamptz,\n  \"source\" \"ActivitySource\" NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"visitCount\" int4 DEFAULT 0 NOT NULL,\n  CONSTRAINT \"MemberActivityStats_pkey\" PRIMARY KEY (\"guildId\", \"discordId\", \"source\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"MemberActivityStats\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivityStats\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Activity.Activity_createdAt_guildId_idx",
+    "label": "Create index \"Activity_createdAt_guildId_idx\" on \"Activity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Activity_createdAt_guildId_idx",
+        "table": "Activity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Activity_createdAt_guildId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_createdAt_guildId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Activity_createdAt_guildId_idx\"",
+        "sql": "CREATE INDEX \"Activity_createdAt_guildId_idx\" ON \"public\".\"Activity\" (\"createdAt\", \"guildId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Activity_createdAt_guildId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_createdAt_guildId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Activity.Activity_createdAt_type_idx",
+    "label": "Create index \"Activity_createdAt_type_idx\" on \"Activity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Activity_createdAt_type_idx",
+        "table": "Activity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Activity_createdAt_type_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_createdAt_type_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Activity_createdAt_type_idx\"",
+        "sql": "CREATE INDEX \"Activity_createdAt_type_idx\" ON \"public\".\"Activity\" (\"createdAt\", \"type\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Activity_createdAt_type_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_createdAt_type_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Activity.Activity_createdAt_userId_idx",
+    "label": "Create index \"Activity_createdAt_userId_idx\" on \"Activity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Activity_createdAt_userId_idx",
+        "table": "Activity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Activity_createdAt_userId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_createdAt_userId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Activity_createdAt_userId_idx\"",
+        "sql": "CREATE INDEX \"Activity_createdAt_userId_idx\" ON \"public\".\"Activity\" (\"createdAt\", \"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Activity_createdAt_userId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_createdAt_userId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Activity.Activity_guildId_createdAt_idx",
+    "label": "Create index \"Activity_guildId_createdAt_idx\" on \"Activity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Activity_guildId_createdAt_idx",
+        "table": "Activity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Activity_guildId_createdAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_guildId_createdAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Activity_guildId_createdAt_idx\"",
+        "sql": "CREATE INDEX \"Activity_guildId_createdAt_idx\" ON \"public\".\"Activity\" (\"guildId\", \"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Activity_guildId_createdAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_guildId_createdAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Activity.Activity_idempotencyKey_createdAt_key",
+    "label": "Create index \"Activity_idempotencyKey_createdAt_key\" on \"Activity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Activity_idempotencyKey_createdAt_key",
+        "table": "Activity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Activity_idempotencyKey_createdAt_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_idempotencyKey_createdAt_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Activity_idempotencyKey_createdAt_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Activity_idempotencyKey_createdAt_key\" ON \"public\".\"Activity\" (\"idempotencyKey\", \"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Activity_idempotencyKey_createdAt_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Activity_idempotencyKey_createdAt_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ActivityActorSnapshot.ActivityActorSnapshot_fingerprint_key",
+    "label": "Create index \"ActivityActorSnapshot_fingerprint_key\" on \"ActivityActorSnapshot\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ActivityActorSnapshot_fingerprint_key",
+        "table": "ActivityActorSnapshot"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ActivityActorSnapshot_fingerprint_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ActivityActorSnapshot_fingerprint_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ActivityActorSnapshot_fingerprint_key\"",
+        "sql": "CREATE UNIQUE INDEX \"ActivityActorSnapshot_fingerprint_key\" ON \"public\".\"ActivityActorSnapshot\" (\"fingerprint\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ActivityActorSnapshot_fingerprint_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ActivityActorSnapshot_fingerprint_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.MemberActivitySession.MemberActivitySession_guildId_discordId_source_idx",
+    "label": "Create index \"MemberActivitySession_guildId_discordId_source_idx\" on \"MemberActivitySession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "MemberActivitySession_guildId_discordId_source_idx",
+        "table": "MemberActivitySession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"MemberActivitySession_guildId_discordId_source_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivitySession_guildId_discordId_source_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"MemberActivitySession_guildId_discordId_source_idx\"",
+        "sql": "CREATE INDEX \"MemberActivitySession_guildId_discordId_source_idx\" ON \"public\".\"MemberActivitySession\" (\"guildId\", \"discordId\", \"source\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"MemberActivitySession_guildId_discordId_source_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivitySession_guildId_discordId_source_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.MemberActivitySession.MemberActivitySession_guildId_source_idx",
+    "label": "Create index \"MemberActivitySession_guildId_source_idx\" on \"MemberActivitySession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "MemberActivitySession_guildId_source_idx",
+        "table": "MemberActivitySession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"MemberActivitySession_guildId_source_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivitySession_guildId_source_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"MemberActivitySession_guildId_source_idx\"",
+        "sql": "CREATE INDEX \"MemberActivitySession_guildId_source_idx\" ON \"public\".\"MemberActivitySession\" (\"guildId\", \"source\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"MemberActivitySession_guildId_source_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivitySession_guildId_source_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.MemberActivitySession.MemberActivitySession_lastSeenAt_idx",
+    "label": "Create index \"MemberActivitySession_lastSeenAt_idx\" on \"MemberActivitySession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "MemberActivitySession_lastSeenAt_idx",
+        "table": "MemberActivitySession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"MemberActivitySession_lastSeenAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivitySession_lastSeenAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"MemberActivitySession_lastSeenAt_idx\"",
+        "sql": "CREATE INDEX \"MemberActivitySession_lastSeenAt_idx\" ON \"public\".\"MemberActivitySession\" (\"lastSeenAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"MemberActivitySession_lastSeenAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivitySession_lastSeenAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.MemberActivityStats.MemberActivityStats_guildId_source_idx",
+    "label": "Create index \"MemberActivityStats_guildId_source_idx\" on \"MemberActivityStats\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "MemberActivityStats_guildId_source_idx",
+        "table": "MemberActivityStats"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"MemberActivityStats_guildId_source_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivityStats_guildId_source_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"MemberActivityStats_guildId_source_idx\"",
+        "sql": "CREATE INDEX \"MemberActivityStats_guildId_source_idx\" ON \"public\".\"MemberActivityStats\" (\"guildId\", \"source\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"MemberActivityStats_guildId_source_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MemberActivityStats_guildId_source_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Activity.Activity_actorSnapshotId_fkey",
+    "label": "Add foreign key \"Activity_actorSnapshotId_fkey\" on \"Activity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Activity_actorSnapshotId_fkey",
+        "table": "Activity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Activity_actorSnapshotId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Activity_actorSnapshotId_fkey",
+          "public",
+          "\"public\".\"Activity\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Activity_actorSnapshotId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Activity\"\nADD CONSTRAINT \"Activity_actorSnapshotId_fkey\"\nFOREIGN KEY (\"actorSnapshotId\")\nREFERENCES \"public\".\"ActivityActorSnapshot\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Activity_actorSnapshotId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Activity_actorSnapshotId_fkey",
+          "public",
+          "\"public\".\"Activity\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "timescaledb.Activity.hypertable",
+    "label": "Convert Activity to a TimescaleDB hypertable",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Activity"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "convert Activity to a hypertable partitioned by createdAt",
+        "sql": "SELECT create_hypertable(\n              '\"public\".\"Activity\"',\n              'createdAt',\n              chunk_time_interval => INTERVAL '1 day',\n              migrate_data => TRUE,\n              if_not_exists => TRUE\n            )"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify Activity is a hypertable",
+        "sql": "SELECT EXISTS (\n              SELECT 1\n              FROM timescaledb_information.hypertables\n              WHERE hypertable_schema = 'public'\n                AND hypertable_name = 'Activity'\n            ) AS result"
+      }
+    ]
+  },
+  {
+    "id": "timescaledb.Activity.retention",
+    "label": "Configure seven-day Activity retention",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Activity"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "add seven-day retention policy",
+        "sql": "SELECT add_retention_policy(\n              '\"public\".\"Activity\"',\n              INTERVAL '7 days',\n              if_not_exists => TRUE\n            )"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify Activity retention policy exists",
+        "sql": "SELECT EXISTS (\n              SELECT 1\n              FROM timescaledb_information.jobs\n              WHERE hypertable_schema = 'public'\n                AND hypertable_name = 'Activity'\n                AND proc_name = 'policy_retention'\n            ) AS result"
+      }
+    ]
+  }
+]

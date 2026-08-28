@@ -8,13 +8,14 @@ import { EventEmitterService } from "./event-emitter.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RedlockService } from "src/lib/redlock/redlock.service";
-import { CoverageGapType } from "src/generated/prisma/client";
+import { CoverageGapType } from "src/db/domain";
 import { TimersService } from "src/timers/timers.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("EventTrackingService", () => {
   let service: EventTrackingService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     eventMap: {
       findFirst: mockFn(),
       findMany: mockFn(),
@@ -47,8 +48,8 @@ describe("EventTrackingService", () => {
       findUnique: mockFn(),
       findMany: mockFn(),
     },
-    $transaction: mockFn(),
-  };
+    transaction: mockFn(),
+  });
 
   const mockEventEmitter = {
     emitMapStatusUpdate: mockFn(),
@@ -866,11 +867,11 @@ describe("EventTrackingService", () => {
       mockPrismaService.eventMapCoverageGap.findMany.mockResolvedValue(
         openGaps,
       );
-      mockPrismaService.$transaction.mockResolvedValue([]);
+      mockPrismaService.transaction.mockResolvedValue([]);
 
       await service.closeAllGapsForHero(heroNpcId);
 
-      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+      expect(mockPrismaService.transaction).toHaveBeenCalled();
     });
 
     it("should do nothing if no open gaps", async () => {
@@ -878,7 +879,7 @@ describe("EventTrackingService", () => {
 
       await service.closeAllGapsForHero(heroNpcId);
 
-      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      expect(mockPrismaService.transaction).not.toHaveBeenCalled();
     });
   });
 

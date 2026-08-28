@@ -20,12 +20,7 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import { ErrorKey } from "./enum/error-key.enum";
 import { RuntimeEnvironment } from "@lootlog/types";
 import type { APIGuildMember } from "discord-api-types/v10";
-import {
-  Permission,
-  type Member,
-  type Guild,
-  MemberType,
-} from "src/generated/prisma/client";
+import { Permission, type Member, type Guild, MemberType } from "src/db/domain";
 import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -41,6 +36,7 @@ import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.cons
 import { MemberReadService } from "./member-read.service";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
 import { MemberRemovalService } from "./member-removal.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 vi.mock("src/config/service.config", () => ({
   serviceConfig: { env: "local" },
@@ -154,7 +150,7 @@ describe("MembersService", () => {
   } as APIGuildMember;
 
   beforeEach(async () => {
-    const mockPrismaService = {
+    const mockPrismaService = createPrismaServiceTestDouble({
       member: {
         findUnique: mockFn(),
         findMany: mockFn(),
@@ -180,7 +176,7 @@ describe("MembersService", () => {
         create: mockFn(),
         update: mockFn(),
       },
-    };
+    });
 
     const mockDiscordService = {
       getGuildMember: mockFn(),

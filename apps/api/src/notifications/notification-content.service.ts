@@ -6,7 +6,7 @@ import {
   NotificationTriggerType as DbNotificationTriggerType,
   type Prisma,
   type NotificationScheduleStrategy as DbNotificationScheduleStrategy,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import {
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
@@ -412,7 +412,7 @@ export class NotificationContentService {
     scheduledFor: Date,
   ) {
     if (notificationRule.guildId) {
-      const timers = await this.prisma.timer.findMany({
+      const timers = await this.prisma.orm.public.Timer.findMany({
         where: {
           guildId: notificationRule.guildId,
           deletedAt: null,

@@ -1,9 +1,10 @@
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import {
   ReservationsService,
   type ViewerContext,
 } from "./reservations.service";
 import { MyReservationsQueryDto } from "./dto/reservation-query.dto";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("ReservationsService", () => {
   const guild = {
@@ -58,7 +59,7 @@ describe("ReservationsService", () => {
       update: vi.fn(),
     },
   };
-  const prisma = {
+  const prisma = createPrismaServiceTestDouble({
     guild: {
       findUniqueOrThrow: vi.fn(),
       findUnique: vi.fn(),
@@ -74,8 +75,8 @@ describe("ReservationsService", () => {
       upsert: vi.fn(),
       deleteMany: vi.fn(),
     },
-    $transaction: vi.fn(),
-  };
+    transaction: vi.fn(),
+  });
   const guildsService = { getCurrentUserAccessibleGuilds: vi.fn() };
   const catalogService = {
     getSpot: vi.fn(),
@@ -101,7 +102,7 @@ describe("ReservationsService", () => {
     prisma.guild.findUniqueOrThrow.mockResolvedValue(guild);
     prisma.guild.findUnique.mockResolvedValue(guild);
     prisma.member.findFirst.mockResolvedValue(member);
-    prisma.$transaction.mockImplementation(
+    prisma.transaction.mockImplementation(
       async (callback: (value: typeof transaction) => unknown) =>
         callback(transaction),
     );
@@ -428,7 +429,7 @@ describe("ReservationsService", () => {
       }),
     ).rejects.toMatchObject({ status: 404 });
 
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.transaction).not.toHaveBeenCalled();
     expect(eventsPublisher.updated).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,6 @@
 import { createZodDto, type ZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { ActivitySource } from "src/generated/prisma/client";
+import { ActivitySource } from "src/shared/db/domain";
 import { isoDatetimeCodec } from "src/shared/dto/zod-response-codecs";
 
 const MemberActivityStatsResponseSchema = z.object({

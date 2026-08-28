@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { DocsService } from "./docs.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 const baseContent = {
   root: {
@@ -45,8 +46,8 @@ const createHistoryRecord = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const createPrismaMock = () => {
-  const prisma = {
-    $transaction: vi.fn<<T>(callback: (tx: unknown) => T) => T>(),
+  const prisma = createPrismaServiceTestDouble({
+    transaction: vi.fn<<T>(callback: (tx: unknown) => T) => T>(),
     guild: {
       findUnique: vi.fn<(...args: unknown[]) => unknown>(),
     },
@@ -66,9 +67,9 @@ const createPrismaMock = () => {
     member: {
       findMany: vi.fn<(...args: unknown[]) => unknown>(),
     },
-  };
+  });
 
-  prisma.$transaction.mockImplementation((callback) => callback(prisma));
+  prisma.transaction.mockImplementation((callback) => callback(prisma));
 
   return prisma;
 };
@@ -145,7 +146,7 @@ describe("DocsService", () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
 
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.transaction).not.toHaveBeenCalled();
   });
 
   it("rejects too long content before writing", async () => {
@@ -162,7 +163,7 @@ describe("DocsService", () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
 
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.transaction).not.toHaveBeenCalled();
   });
 
   it("creates an empty document and initial history snapshot", async () => {

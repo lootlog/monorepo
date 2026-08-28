@@ -11,7 +11,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { DiscordId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import { GuildsService } from "src/guilds/guilds.service";
 import { CreatePartyGatheringDto } from "src/messaging/dto/create-party-gathering.dto";
 import { PartyReadyRoomApplicationDto } from "src/messaging/ready-room/dto/party-ready-room-application.dto";

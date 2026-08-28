@@ -13,7 +13,7 @@ import {
   NotificationScheduleStrategy as DbNotificationScheduleStrategy,
   NotificationTriggerType as DbNotificationTriggerType,
   Prisma,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { GUILD_NOTIFICATION_TIMEZONE } from "src/notifications/constants/notification-schedule-timezone.constant";
@@ -67,11 +67,11 @@ export class NotificationRuleService {
 
   async listGuildRules(guildId: string) {
     const [guildSettings, rules] = await Promise.all([
-      this.prisma.guild.findUnique({
+      this.prisma.orm.public.Guild.findUnique({
         where: { id: guildId },
         select: { notificationRuleLimit: true },
       }),
-      this.prisma.notificationRule.findMany({
+      this.prisma.orm.public.NotificationRule.findMany({
         where: {
           ownerType: DbNotificationOwnerType.GUILD,
           ownerId: guildId,
@@ -170,20 +170,21 @@ export class NotificationRuleService {
   async triggerGuildRuleTest(guildId: string, ruleId: number) {
     await this.ensureGuildNotificationPermissions(guildId);
 
-    const notificationRule = await this.prisma.notificationRule.findFirst({
-      where: {
-        id: ruleId,
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-      },
-      include: {
-        targets: {
-          include: {
-            target: true,
+    const notificationRule =
+      await this.prisma.orm.public.NotificationRule.findFirst({
+        where: {
+          id: ruleId,
+          ownerType: DbNotificationOwnerType.GUILD,
+          ownerId: guildId,
+        },
+        include: {
+          targets: {
+            include: {
+              target: true,
+            },
           },
         },
-      },
-    });
+      });
 
     if (!notificationRule) {
       throw new NotFoundException(Error.NOTIFICATION_RULE_NOT_FOUND);
@@ -277,22 +278,20 @@ export class NotificationRuleService {
   // ── User Rules ───────────────────────────────────────────────────────
 
   listUserRules(discordId: string) {
-    return this.prisma.notificationRule
-      .findMany({
-        where: {
-          ownerType: DbNotificationOwnerType.USER,
-          ownerId: discordId,
-        },
-        include: {
-          targets: {
-            include: {
-              target: true,
-            },
+    return this.prisma.orm.public.NotificationRule.findMany({
+      where: {
+        ownerType: DbNotificationOwnerType.USER,
+        ownerId: discordId,
+      },
+      include: {
+        targets: {
+          include: {
+            target: true,
           },
         },
-        orderBy: [{ enabled: "desc" }, { updatedAt: "desc" }],
-      })
-      .then((rules) => rules.map((rule) => this.mapRuleResponse(rule)));
+      },
+      orderBy: [{ enabled: "desc" }, { updatedAt: "desc" }],
+    }).then((rules) => rules.map((rule) => this.mapRuleResponse(rule)));
   }
 
   async createUserRule(discordId: string, data: CreateNotificationRuleDto) {
@@ -348,7 +347,7 @@ export class NotificationRuleService {
       targetIds: data.targetIds,
     });
 
-    return this.prisma.notificationRule.create({
+    return this.prisma.orm.public.NotificationRule.create({
       data: {
         ownerType,
         ownerId,
@@ -424,8 +423,8 @@ export class NotificationRuleService {
       nextFilters = this.buildFilters(data);
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.notificationRule.update({
+    await this.prisma.transaction(async (tx) => {
+      await tx.orm.public.NotificationRule.update({
         where: { id: ruleId },
         data: {
           triggerType: nextTriggerType,
@@ -461,10 +460,10 @@ export class NotificationRuleService {
       });
 
       if (targetIds) {
-        await tx.notificationRuleTarget.deleteMany({
+        await tx.orm.public.NotificationRuleTarget.deleteMany({
           where: { ruleId },
         });
-        await tx.notificationRuleTarget.createMany({
+        await tx.orm.public.NotificationRuleTarget.createMany({
           data: targetIds.map((targetId) => ({ ruleId, targetId })),
           skipDuplicates: true,
         });
@@ -479,7 +478,9 @@ export class NotificationRuleService {
   ) {
     await this.ensureRule({ ownerType, ownerId, ruleId });
     await this.jobService.cancelPendingJobs({ ruleId });
-    await this.prisma.notificationRule.delete({ where: { id: ruleId } });
+    await this.prisma.orm.public.NotificationRule.delete({
+      where: { id: ruleId },
+    });
     return { success: true };
   }
 
@@ -505,7 +506,7 @@ export class NotificationRuleService {
   }
 
   private async ensureGuildRuleLimitNotExceeded(guildId: string) {
-    const guild = await this.prisma.guild.findUnique({
+    const guild = await this.prisma.orm.public.Guild.findUnique({
       where: { id: guildId },
       select: { notificationRuleLimit: true },
     });
@@ -514,12 +515,13 @@ export class NotificationRuleService {
       throw new NotFoundException(Error.GUILD_NOT_FOUND);
     }
 
-    const currentRuleCount = await this.prisma.notificationRule.count({
-      where: {
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: guildId,
-      },
-    });
+    const currentRuleCount =
+      await this.prisma.orm.public.NotificationRule.count({
+        where: {
+          ownerType: DbNotificationOwnerType.GUILD,
+          ownerId: guildId,
+        },
+      });
 
     ensureLimitNotExceeded({
       currentCount: currentRuleCount,
@@ -533,12 +535,13 @@ export class NotificationRuleService {
   }
 
   private async ensureUserRuleLimitNotExceeded(discordId: string) {
-    const currentRuleCount = await this.prisma.notificationRule.count({
-      where: {
-        ownerType: DbNotificationOwnerType.USER,
-        ownerId: discordId,
-      },
-    });
+    const currentRuleCount =
+      await this.prisma.orm.public.NotificationRule.count({
+        where: {
+          ownerType: DbNotificationOwnerType.USER,
+          ownerId: discordId,
+        },
+      });
 
     ensureLimitNotExceeded({
       currentCount: currentRuleCount,
@@ -556,13 +559,14 @@ export class NotificationRuleService {
     ownerId: string;
     ruleId: number;
   }) {
-    const notificationRule = await this.prisma.notificationRule.findFirst({
-      where: {
-        id: params.ruleId,
-        ownerType: params.ownerType,
-        ownerId: params.ownerId,
-      },
-    });
+    const notificationRule =
+      await this.prisma.orm.public.NotificationRule.findFirst({
+        where: {
+          id: params.ruleId,
+          ownerType: params.ownerType,
+          ownerId: params.ownerId,
+        },
+      });
 
     if (!notificationRule) {
       throw new NotFoundException(Error.NOTIFICATION_RULE_NOT_FOUND);

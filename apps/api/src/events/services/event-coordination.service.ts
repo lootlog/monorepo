@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { CoverageGapType } from "src/generated/prisma/client";
+import { CoverageGapType } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { TimersService } from "src/timers/timers.service";
 import { buildTimerKey } from "src/timers/utils/timer-key";
@@ -74,7 +74,7 @@ export class EventCoordinationService {
   ) {}
 
   async getCoordination(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: {
         assignmentTimeoutMinutes: true,
@@ -114,7 +114,7 @@ export class EventCoordinationService {
         event.world,
         event.heroNpcs,
       ),
-      this.prisma.eventMapCoverageGap.findMany({
+      this.prisma.orm.public.EventMapCoverageGap.findMany({
         where: {
           heroNpcId: { in: event.heroNpcs.map((hero) => hero.id) },
           endedAt: null,

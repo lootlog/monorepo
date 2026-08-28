@@ -15,9 +15,10 @@ import { DiscordService } from "src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
-import { type Guild, Permission } from "src/generated/prisma/client";
+import { type Guild, Permission } from "src/db/domain";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
 import { UserGuildAccessResolver } from "./user-guild-access-resolver.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 vi.mock("src/config/discord-bot.config", () => ({
   discordBotConfig: { channelSnapshotStaleSeconds: 300 },
@@ -34,7 +35,7 @@ describe("GuildsService", () => {
     debug: mockFn(),
   };
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     guild: {
       findMany: mockFn(),
       findFirst: mockFn(),
@@ -61,8 +62,8 @@ describe("GuildsService", () => {
     userSettings: {
       findUnique: mockFn(),
     },
-    $transaction: mockFn(),
-  };
+    transaction: mockFn(),
+  });
 
   const mockTransactionClient = {
     lootlogConfigNpc: {
@@ -157,7 +158,7 @@ describe("GuildsService", () => {
 
     service = module.get<GuildsService>(GuildsService);
     userGuildAccessResolver = module.get(UserGuildAccessResolver);
-    mockPrismaService.$transaction.mockImplementation(
+    mockPrismaService.transaction.mockImplementation(
       (
         callback: (
           tx: typeof mockTransactionClient,
@@ -1278,7 +1279,7 @@ describe("GuildsService", () => {
       mockPrismaService.guild.findUnique.mockResolvedValue({
         vanityUrl: null,
       });
-      mockPrismaService.$transaction.mockRejectedValue(error);
+      mockPrismaService.transaction.mockRejectedValue(error);
 
       await expect(
         service.deleteGuild({ guildId: "guild-123" }),

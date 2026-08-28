@@ -2,7 +2,7 @@ import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { PrismaService } from "../src/db/prisma.service";
-import { Permission } from "../src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import {
   closeE2EApp,
   createE2EApp,
@@ -50,7 +50,7 @@ describe("Events Monitoring E2E", () => {
       heroNpcId: hero.id,
       member,
     });
-    await prisma.eventMapCoverageGap.create({
+    await prisma.orm.public.EventMapCoverageGap.create({
       data: {
         mapId: map.id,
         heroNpcId: hero.id,
@@ -60,7 +60,7 @@ describe("Events Monitoring E2E", () => {
         hadAssignedMembers: false,
       },
     });
-    await prisma.eventMapAssignmentHistory.create({
+    await prisma.orm.public.EventMapAssignmentHistory.create({
       data: {
         mapId: map.id,
         heroNpcId: hero.id,
@@ -68,7 +68,7 @@ describe("Events Monitoring E2E", () => {
         assignedAt: new Date(Date.now() - 900_000),
       },
     });
-    await prisma.eventPresenceLog.create({
+    await prisma.orm.public.EventPresenceLog.create({
       data: {
         mapId: map.id,
         memberId: member.id,

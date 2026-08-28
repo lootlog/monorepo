@@ -1,4 +1,4 @@
-import type { Role, Permission } from "src/generated/prisma/client";
+import type { Role, Permission } from "src/db/domain";
 
 export type ChatMessageViewer = {
   discordId: string;

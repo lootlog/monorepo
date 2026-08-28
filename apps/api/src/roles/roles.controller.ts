@@ -8,7 +8,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission } from "src/generated/prisma/client";
+import { type Guild, Permission } from "src/db/domain";
 import { UpdateRolePermissionsDto } from "src/roles/dto/update-role-permissions.dto";
 import { RolesService } from "src/roles/roles.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";

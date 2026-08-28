@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { NpcType } from "src/generated/prisma/client";
+import { NpcType } from "src/db/domain";
 
 const TimerNpcResponseSchema = z
   .object({

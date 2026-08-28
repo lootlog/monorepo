@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { ActivitySource, ActivityType } from "src/generated/prisma/client";
+import { ActivitySource, ActivityType } from "src/shared/db/domain";
 import { PermissionsGuard } from "src/shared/guards/permissions.guard";
 import { ActivitiesController } from "./activities.controller";
 import { QueryActivitiesDto } from "./dto/query-activities.dto";

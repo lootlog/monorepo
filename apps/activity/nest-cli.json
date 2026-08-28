@@ -5,6 +5,12 @@
   "compilerOptions": {
     "builder": "swc",
     "typeCheck": true,
+    "assets": [
+      {
+        "include": "shared/db/generated/contract.json",
+        "outDir": "dist/src"
+      }
+    ],
     "deleteOutDir": true
   }
 }

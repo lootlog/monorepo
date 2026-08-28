@@ -5,7 +5,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { DiscordService } from "src/discord/discord.service";
 import { PrismaService } from "src/db/prisma.service";
-import type { Guild } from "src/generated/prisma/client";
+import type { Guild } from "src/db/domain";
 import { MEMBER_LAST_DISCORD_STATUS } from "src/members/constants/member-discord-status.constant";
 import { MembersService } from "src/members/members.service";
 
@@ -70,7 +70,7 @@ export class UserGuildAccessResolver {
     const discordGuildMap = new Map(
       discordGuilds.map((guild) => [guild.id, guild] as const),
     );
-    const guilds = await this.prisma.guild.findMany({
+    const guilds = await this.prisma.orm.public.Guild.findMany({
       where: {
         id: { in: discordGuildIds },
         active: true,

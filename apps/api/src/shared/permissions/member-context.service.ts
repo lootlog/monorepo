@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { type Guild, Permission } from "src/generated/prisma/client";
+import { type Guild, Permission } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { MembersService } from "src/members/members.service";
 import { ErrorKey } from "src/guilds/enum/error-key.enum";
@@ -276,7 +276,7 @@ export class MemberContextService {
       });
     }
 
-    const guild = await this.prisma.guild.findFirst({
+    const guild = await this.prisma.orm.public.Guild.findFirst({
       where: {
         active: true,
         OR: [{ id: idOrVanityURL }, { vanityUrl: idOrVanityURL }],

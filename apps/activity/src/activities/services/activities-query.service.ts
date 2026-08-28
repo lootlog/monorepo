@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type { Prisma } from "src/generated/prisma/client";
+import type { Prisma } from "src/shared/db/domain";
 import { PrismaService } from "src/shared/db/prisma.service";
 import type { QueryActivitiesDto } from "../dto/query-activities.dto";
 import { mapActivityDetails } from "../utils/map-activity-details";
@@ -71,7 +71,7 @@ export class ActivitiesQueryService {
       where.id = { lt: query.cursor };
     }
 
-    const activities = await this.prisma.activity.findMany({
+    const activities = await this.prisma.orm.public.Activity.findMany({
       where,
       take: limit + 1,
       orderBy: { createdAt: "desc" },
@@ -116,12 +116,13 @@ export class ActivitiesQueryService {
       };
     }
 
-    const snapshots = await this.prisma.activityActorSnapshot.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: limitValue * 2,
-      select: { name: true },
-    });
+    const snapshots =
+      await this.prisma.orm.public.ActivityActorSnapshot.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: limitValue * 2,
+        select: { name: true },
+      });
 
     return this.deduplicateNames(
       snapshots.map((snapshot) => snapshot.name),
@@ -144,7 +145,7 @@ export class ActivitiesQueryService {
       world: worldFilter,
     };
 
-    const worlds = await this.prisma.activity.findMany({
+    const worlds = await this.prisma.orm.public.Activity.findMany({
       where,
       distinct: ["world"],
       select: { world: true },
@@ -174,12 +175,13 @@ export class ActivitiesQueryService {
       clanName: clanNameFilter,
     };
 
-    const snapshots = await this.prisma.activityActorSnapshot.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: limitValue * 2,
-      select: { clanName: true },
-    });
+    const snapshots =
+      await this.prisma.orm.public.ActivityActorSnapshot.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: limitValue * 2,
+        select: { clanName: true },
+      });
 
     return this.deduplicateNames(
       snapshots.map((snapshot) => snapshot.clanName),
@@ -196,7 +198,7 @@ export class ActivitiesQueryService {
   }
 
   findMemberActivityStatsByGuild(guildId: string) {
-    return this.prisma.memberActivityStats.findMany({
+    return this.prisma.orm.public.MemberActivityStats.findMany({
       where: { guildId },
       orderBy: [
         { activeSessionCount: "desc" },
@@ -259,7 +261,7 @@ export class ActivitiesQueryService {
   }
 
   async findOne(id: string, guildId: string) {
-    const activity = await this.prisma.activity.findFirst({
+    const activity = await this.prisma.orm.public.Activity.findFirst({
       where: {
         id,
         guildId,

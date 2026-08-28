@@ -1,15 +1,16 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
-import type { Guild } from "src/generated/prisma/client";
+import type { Guild } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { LootsService } from "src/loots/loots.service";
 import { EventWrappedService } from "./event-wrapped.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("EventWrappedService", () => {
   let service: EventWrappedService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     event: {
       findFirst: mockFn(),
     },
@@ -25,7 +26,7 @@ describe("EventWrappedService", () => {
     eventMapAssignmentHistory: {
       findMany: mockFn(),
     },
-  };
+  });
 
   const mockRedisService = {
     getOrSetJsonBestEffort: mockFn(),

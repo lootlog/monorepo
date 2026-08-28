@@ -1,5 +1,5 @@
 import { createZodDto } from "nestjs-zod";
-import { CoverageGapType } from "src/generated/prisma/client";
+import { CoverageGapType } from "src/db/domain";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,

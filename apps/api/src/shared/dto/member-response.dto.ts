@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { MemberType } from "src/generated/prisma/client";
+import { MemberType } from "src/db/domain";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,

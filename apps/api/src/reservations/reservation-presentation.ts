@@ -1,4 +1,4 @@
-import type { Guild, Reservation } from "src/generated/prisma/client";
+import type { Guild, Reservation } from "src/db/domain";
 
 export type ReservationWithGuild = Reservation & {
   guild: Pick<

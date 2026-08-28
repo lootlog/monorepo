@@ -8,7 +8,7 @@ import {
 import { PrismaService } from "src/db/prisma.service";
 import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
 import { ErrorKey as GuildErrorKey } from "src/guilds/enum/error-key.enum";
-import type { Member } from "src/generated/prisma/client";
+import type { Member } from "src/db/domain";
 import { serviceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "@lootlog/types";
 import {
@@ -187,7 +187,7 @@ export class MemberDiscordAccessService {
     guildId: string;
     skipTtlCheck?: boolean;
   }): Promise<MemberWithRoles | null> {
-    const member = await this.prisma.member.findUnique({
+    const member = await this.prisma.orm.public.Member.findUnique({
       where: {
         memberId: { userId: options.discordId, guildId: options.guildId },
       },
@@ -234,7 +234,7 @@ export class MemberDiscordAccessService {
   }
 
   private async resolveActiveGuildId(guildId: string): Promise<string> {
-    const guild = await this.prisma.guild.findFirst({
+    const guild = await this.prisma.orm.public.Guild.findFirst({
       where: {
         active: true,
         OR: [{ id: guildId }, { vanityUrl: guildId }],
@@ -257,7 +257,7 @@ export class MemberDiscordAccessService {
     discordId: string,
     guildId: string,
   ): Promise<StoredMemberWithRoles | null> {
-    return this.prisma.member.findUnique({
+    return this.prisma.orm.public.Member.findUnique({
       where: {
         memberId: { userId: discordId, guildId },
       },

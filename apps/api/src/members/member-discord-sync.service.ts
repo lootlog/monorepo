@@ -226,7 +226,7 @@ export class MemberDiscordSyncService {
       const existingRoleIds =
         roleIds.length > 0
           ? (
-              await this.prisma.role.findMany({
+              await this.prisma.orm.public.Role.findMany({
                 where: { id: { in: roleIds } },
                 select: { id: true },
               })
@@ -236,7 +236,7 @@ export class MemberDiscordSyncService {
       const memberName = nick ?? user.global_name ?? user.username;
       const memberAvatar = avatar ?? user.avatar;
 
-      const member = await this.prisma.member.upsert({
+      const member = await this.prisma.orm.public.Member.upsert({
         where: { memberId: { userId: id, guildId } },
         update: {
           avatar: memberAvatar,
@@ -306,7 +306,7 @@ export class MemberDiscordSyncService {
       deactivate = false,
       markSynced = false,
     } = options;
-    const existingMember = await this.prisma.member.findUnique({
+    const existingMember = await this.prisma.orm.public.Member.findUnique({
       where: {
         memberId: { userId: discordId, guildId },
       },
@@ -317,7 +317,7 @@ export class MemberDiscordSyncService {
     }
 
     const attemptTimestamp = new Date();
-    const member = await this.prisma.member.update({
+    const member = await this.prisma.orm.public.Member.update({
       where: {
         memberId: { userId: discordId, guildId },
       },

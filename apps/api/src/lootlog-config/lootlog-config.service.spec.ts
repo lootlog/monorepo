@@ -2,11 +2,12 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
 import { LootlogConfigService } from "./lootlog-config.service";
 import { PrismaService } from "src/db/prisma.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("LootlogConfigService", () => {
   let service: LootlogConfigService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     lootlogConfig: {
       findUnique: mockFn(),
       findMany: mockFn(),
@@ -17,7 +18,7 @@ describe("LootlogConfigService", () => {
       upsert: mockFn(),
       delete: mockFn(),
     },
-  };
+  });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

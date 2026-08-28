@@ -1,4 +1,4 @@
-import { NotificationJobKind as DbNotificationJobKind } from "src/generated/prisma/client";
+import { NotificationJobKind as DbNotificationJobKind } from "src/db/domain";
 import type { PrismaService } from "src/db/prisma.service";
 
 export type TestTriggerUsage = {
@@ -22,7 +22,7 @@ export async function computeTestTriggerUsage(
   }
 
   const threshold = new Date(Date.now() - windowMs);
-  const testJobs = await prisma.notificationJob.findMany({
+  const testJobs = await prisma.orm.public.NotificationJob.findMany({
     where: {
       targetId: { in: targetIds },
       jobKind: DbNotificationJobKind.TEST,

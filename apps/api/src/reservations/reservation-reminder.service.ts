@@ -7,7 +7,7 @@ import {
   NotificationTargetType,
   NotificationTriggerType,
   type Prisma,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { NotificationJobService } from "src/notifications/notification-job.service";
 import { formatDiscordRelativeTimestamp } from "src/notifications/utils/discord-timestamp.util";
@@ -51,7 +51,7 @@ export class ReservationReminderService {
       });
     }
 
-    const target = await this.prisma.notificationTarget.findFirst({
+    const target = await this.prisma.orm.public.NotificationTarget.findFirst({
       where: {
         ownerType: NotificationOwnerType.USER,
         ownerId: options.discordId,
@@ -136,18 +136,19 @@ export class ReservationReminderService {
   }
 
   private async getOrCreateRule(discordId: string) {
-    const existingRule = await this.prisma.notificationRule.findFirst({
-      where: {
-        ownerType: NotificationOwnerType.USER,
-        ownerId: discordId,
-        name: RESERVATION_REMINDER_RULE_NAME,
-      },
-    });
+    const existingRule =
+      await this.prisma.orm.public.NotificationRule.findFirst({
+        where: {
+          ownerType: NotificationOwnerType.USER,
+          ownerId: discordId,
+          name: RESERVATION_REMINDER_RULE_NAME,
+        },
+      });
     if (existingRule) {
       return existingRule;
     }
 
-    return this.prisma.notificationRule.create({
+    return this.prisma.orm.public.NotificationRule.create({
       data: {
         ownerType: NotificationOwnerType.USER,
         ownerId: discordId,
@@ -158,7 +159,7 @@ export class ReservationReminderService {
         targets: {
           create: {
             targetId: (
-              await this.prisma.notificationTarget.findFirstOrThrow({
+              await this.prisma.orm.public.NotificationTarget.findFirstOrThrow({
                 where: {
                   ownerType: NotificationOwnerType.USER,
                   ownerId: discordId,

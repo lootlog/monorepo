@@ -1,9 +1,8 @@
 /* eslint-disable no-console */
 /* eslint-disable no-await-in-loop */
 import { NpcTypeEnum, getNpcTypeByWt } from "@lootlog/types";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../../../apps/api/src/generated/prisma/client";
 import { Meilisearch } from "meilisearch";
+import { Pool, type QueryResultRow } from "pg";
 import "dotenv/config";
 import { z } from "zod";
 import { ITEMS_INDEX } from "../items/constants/meilisearch";
@@ -20,13 +19,14 @@ const configSchema = z.object({
 
 const config = configSchema.parse(process.env);
 
-const prismaAdapter = new PrismaPg({
+const pool = new Pool({
   connectionString: config.POSTGRESQL_CONNECTION_URI,
 });
 
-const prisma = new PrismaClient({
-  adapter: prismaAdapter,
-});
+async function query<Row extends QueryResultRow>(sql: string): Promise<Row[]> {
+  const result = await pool.query<Row>(sql);
+  return result.rows;
+}
 
 const meilisearch = new Meilisearch({
   host: config.MEILISEARCH_HOST,
@@ -188,12 +188,12 @@ async function seedNpcs() {
 
   // Get the latest snapshot for each unique npcId
   // NpcSnapshot doesn't have world, so we need to join with Loot through LootNpc
-  const latestNpcSnapshots = await prisma.$queryRaw<NpcSnapshotWithWorld[]>`
+  const latestNpcSnapshots = await query<NpcSnapshotWithWorld>(`
     SELECT DISTINCT ON (ns."npcId", ns."type", l."world")
       ns."id",
       ns."npcId",
       ns."name",
-      ns."type",
+      ns."type"::text AS "type",
       ns."lvl",
       ns."icon",
       ns."wt",
@@ -204,7 +204,7 @@ async function seedNpcs() {
     INNER JOIN "LootNpc" ln ON ln."npcSnapshotId" = ns."id"
     INNER JOIN "Loot" l ON l."id" = ln."lootId"
     ORDER BY ns."npcId", ns."type", l."world", ns."createdAt" DESC
-  `;
+  `);
 
   console.log(`Found ${latestNpcSnapshots.length} unique NPC snapshots`);
 
@@ -248,7 +248,7 @@ async function seedPlayers() {
   console.log("\n--- Seeding Players ---");
 
   // PlayerSnapshot already has world, get the latest snapshot for each unique player per world
-  const latestPlayerSnapshots = await prisma.$queryRaw<PlayerSnapshotLatest[]>`
+  const latestPlayerSnapshots = await query<PlayerSnapshotLatest>(`
     SELECT DISTINCT ON (ps."world", ps."accountId", ps."characterId")
       ps."id",
       ps."world",
@@ -259,7 +259,7 @@ async function seedPlayers() {
       ps."icon"
     FROM "PlayerSnapshot" ps
     ORDER BY ps."world", ps."accountId", ps."characterId", ps."createdAt" DESC
-  `;
+  `);
 
   console.log(`Found ${latestPlayerSnapshots.length} unique Player snapshots`);
 
@@ -304,7 +304,7 @@ async function seedItems() {
 
   // ItemSnapshot doesn't have world, so we need to join with Loot through LootItem
   // Get the latest snapshot for each unique itemId and aggregate worlds separately
-  const latestItemSnapshots = await prisma.$queryRaw<ItemSnapshotWithWorld[]>`
+  const latestItemSnapshots = await query<ItemSnapshotWithWorld>(`
     WITH latest_items AS (
       SELECT DISTINCT ON (item_s."itemId")
         item_s."id",
@@ -335,12 +335,12 @@ async function seedItems() {
       latest_items."icon",
       latest_items."statRaw",
       latest_items."lvl",
-      latest_items."rarity",
-      latest_items."itemType",
+      latest_items."rarity"::text AS "rarity",
+      latest_items."itemType"::text AS "itemType",
       item_worlds.worlds
     FROM latest_items
     INNER JOIN item_worlds ON item_worlds."itemId" = latest_items."itemId"
-  `;
+  `);
 
   console.log(`Found ${latestItemSnapshots.length} unique Item snapshots`);
 
@@ -391,7 +391,7 @@ async function main() {
     console.error("\n❌ Seeding failed:", error);
     throw error;
   } finally {
-    await prisma.$disconnect();
+    await pool.end();
   }
 }
 

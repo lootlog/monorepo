@@ -82,7 +82,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
     const guildIds = guilds.map((g) => g.id);
     const staleThreshold = this.membersService.getMemberSoftStaleThreshold();
 
-    const staleMembers = await this.prisma.member.findMany({
+    const staleMembers = await this.prisma.orm.public.Member.findMany({
       where: {
         userId: discordId,
         guildId: { in: guildIds },

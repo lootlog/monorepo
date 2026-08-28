@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import type { NpcType } from "src/generated/prisma/client";
+import type { NpcType } from "src/db/domain";
 
 const KillsByTypeResponseSchema = z.object({
   COMMON: z.number().optional(),

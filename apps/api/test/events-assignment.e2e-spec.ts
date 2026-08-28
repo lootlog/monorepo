@@ -2,7 +2,7 @@ import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { PrismaService } from "../src/db/prisma.service";
-import { Permission } from "../src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import {
   closeE2EApp,
   createE2EApp,
@@ -59,7 +59,7 @@ describe("Events Assignment E2E", () => {
         .send({ memberId: member.id }),
     ).expect(201);
     await expect(
-      prisma.eventMapAssignmentHistory.count({
+      prisma.orm.public.EventMapAssignmentHistory.count({
         where: { mapId: map.id, memberId: member.id, unassignedAt: null },
       }),
     ).resolves.toBe(1);
@@ -70,7 +70,7 @@ describe("Events Assignment E2E", () => {
       ),
     ).expect(200);
     await expect(
-      prisma.eventMapAssignmentHistory.count({
+      prisma.orm.public.EventMapAssignmentHistory.count({
         where: { mapId: map.id, unassignedAt: null },
       }),
     ).resolves.toBe(0);
@@ -113,7 +113,7 @@ describe("Events Assignment E2E", () => {
     ).expect(400);
 
     await expect(
-      prisma.eventMapAssignmentHistory.count({
+      prisma.orm.public.EventMapAssignmentHistory.count({
         where: { mapId: map.id, memberId: member.id },
       }),
     ).resolves.toBe(0);

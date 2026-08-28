@@ -16,7 +16,7 @@ import {
 import {
   Prisma,
   type SettingsScopeType as PrismaSettingsScopeType,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import type { PatchSettingsDocumentsDto } from "./dto/settings-documents.dto";
 import { applySettingsPatch, resolveSettingsDomain } from "./settings-resolver";
@@ -52,17 +52,19 @@ export class SettingsDocumentsService {
     const scopes = this.getContextScopes(userId, context);
     await this.validateScopes(userId, scopes);
 
-    const documents = await this.prisma.userSettingDocument.findMany({
-      where: {
-        userId,
-        domain: { in: context.domains },
-        OR: scopes.map((scope) => ({
-          scopeType: scope.type as PrismaSettingsScopeType,
-          scopeId: scope.id,
-        })),
+    const documents = await this.prisma.orm.public.UserSettingDocument.findMany(
+      {
+        where: {
+          userId,
+          domain: { in: context.domains },
+          OR: scopes.map((scope) => ({
+            scopeType: scope.type as PrismaSettingsScopeType,
+            scopeId: scope.id,
+          })),
+        },
+        orderBy: [{ scopeType: "asc" }, { scopeId: "asc" }],
       },
-      orderBy: [{ scopeType: "asc" }, { scopeId: "asc" }],
-    });
+    );
 
     const domains: SettingsDocumentsResponse["domains"] = {};
 
@@ -109,11 +111,10 @@ export class SettingsDocumentsService {
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
-        await this.prisma.$transaction(
+        await this.prisma.transaction(
           async (transaction) => {
             for (const operation of sortedOperations) {
-              await transaction.$queryRaw(
-                Prisma.sql`
+              const lockPlan = this.prisma.raw.sql`
                   SELECT "id"
                   FROM "UserSettingDocument"
                   WHERE "userId" = ${userId}
@@ -121,8 +122,10 @@ export class SettingsDocumentsService {
                     AND "scopeType" = ${operation.scope.type}::"SettingsScopeType"
                     AND "scopeId" = ${operation.scope.id}
                   FOR UPDATE
-                `,
-              );
+                `
+                .returnsRow({ id: "pg/text@1" })
+                .build();
+              await transaction.query(lockPlan);
             }
 
             for (const operation of sortedOperations) {
@@ -135,7 +138,9 @@ export class SettingsDocumentsService {
                 },
               };
               const currentDocument =
-                await transaction.userSettingDocument.findUnique({ where });
+                await transaction.orm.public.UserSettingDocument.findUnique({
+                  where,
+                });
               const currentOverrides = isRecord(currentDocument?.overrides)
                 ? currentDocument.overrides
                 : {};
@@ -158,7 +163,9 @@ export class SettingsDocumentsService {
 
               if (Object.keys(nextOverrides).length === 0) {
                 if (currentDocument) {
-                  await transaction.userSettingDocument.delete({ where });
+                  await transaction.orm.public.UserSettingDocument.delete({
+                    where,
+                  });
                 }
                 continue;
               }
@@ -169,14 +176,14 @@ export class SettingsDocumentsService {
               };
 
               if (currentDocument) {
-                await transaction.userSettingDocument.update({
+                await transaction.orm.public.UserSettingDocument.update({
                   where,
                   data,
                 });
                 continue;
               }
 
-              await transaction.userSettingDocument.upsert({
+              await transaction.orm.public.UserSettingDocument.upsert({
                 where,
                 create: {
                   userId,
@@ -316,7 +323,7 @@ export class SettingsDocumentsService {
         continue;
       }
 
-      const member = await this.prisma.member.findFirst({
+      const member = await this.prisma.orm.public.Member.findFirst({
         where: {
           globalUserId: userId,
           guildId: scope.id,

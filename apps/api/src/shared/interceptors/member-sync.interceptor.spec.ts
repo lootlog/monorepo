@@ -7,6 +7,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { MembersService } from "src/members/members.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("MemberSyncInterceptor", () => {
   let interceptor: MemberSyncInterceptor;
@@ -25,11 +26,11 @@ describe("MemberSyncInterceptor", () => {
   };
 
   beforeEach(async () => {
-    const mockPrismaService = {
+    const mockPrismaService = createPrismaServiceTestDouble({
       member: {
         findMany: mockFn(),
       },
-    };
+    });
 
     const mockMembersService = {
       getMemberSoftStaleThreshold: mockFn(),

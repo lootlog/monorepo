@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { PrismaService } from "src/db/prisma.service";
-import { Permission, type PlayerSnapshot } from "src/generated/prisma/client";
+import { Permission, type PlayerSnapshot } from "src/db/domain";
 import {
   getGuildMemberReferencesCacheKey,
   getGuildMembersSummaryCacheKey,
@@ -31,7 +31,7 @@ export class MemberReadService {
     guildId: string,
     includeInactive = false,
   ): Promise<MemberWithRoles[]> {
-    return this.prisma.member.findMany({
+    return this.prisma.orm.public.Member.findMany({
       where: {
         guildId,
         ...(includeInactive ? {} : { active: true }),
@@ -55,7 +55,7 @@ export class MemberReadService {
       MEMBER_READ_CACHE_TTL_SECONDS,
       "guild member references",
       async () => {
-        const members = await this.prisma.member.findMany({
+        const members = await this.prisma.orm.public.Member.findMany({
           where: {
             guildId,
             ...(includeInactive ? {} : { active: true }),
@@ -96,7 +96,7 @@ export class MemberReadService {
       MEMBER_READ_CACHE_TTL_SECONDS,
       "guild members summary",
       async () => {
-        const guild = await this.prisma.guild.findFirst({
+        const guild = await this.prisma.orm.public.Guild.findFirst({
           where: {
             id: guildId,
             active: true,
@@ -110,7 +110,7 @@ export class MemberReadService {
           return [];
         }
 
-        const members = await this.prisma.member.findMany({
+        const members = await this.prisma.orm.public.Member.findMany({
           where: {
             guildId,
             active: true,
@@ -195,7 +195,7 @@ export class MemberReadService {
       MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS,
       "member lootlog config summary",
       async () => {
-        const member = await this.prisma.member.findUnique({
+        const member = await this.prisma.orm.public.Member.findUnique({
           where: {
             memberId: { userId: discordId, guildId },
           },
@@ -210,7 +210,7 @@ export class MemberReadService {
         }
 
         const configs =
-          await this.prisma.userCharactersLootlogSettings.findMany({
+          await this.prisma.orm.public.UserCharactersLootlogSettings.findMany({
             where: {
               userId: discordId,
             },
@@ -299,7 +299,7 @@ export class MemberReadService {
       return new Map();
     }
 
-    const snapshots = await this.prisma.playerSnapshot.findMany({
+    const snapshots = await this.prisma.orm.public.PlayerSnapshot.findMany({
       where: {
         OR: characterRefs.map(({ accountId, characterId }) => ({
           accountId,

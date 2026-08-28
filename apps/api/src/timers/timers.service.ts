@@ -19,7 +19,9 @@ import {
   type Timer,
   type Guild,
   type Role,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
+import { isRecordNotFoundError } from "src/db/application-client";
+import { rawTextArray } from "src/db/raw-values";
 import { getNpcRoutingTier, getNpcTypeByWt } from "@lootlog/types";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { PrismaService } from "src/db/prisma.service";
@@ -380,7 +382,7 @@ export class TimersService implements OnModuleInit {
       icon,
     );
 
-    return this.prisma.playerSnapshot.upsert({
+    return this.prisma.orm.public.PlayerSnapshot.upsert({
       where: {
         world_accountId_characterId_snapshotHash: {
           world,
@@ -506,8 +508,8 @@ export class TimersService implements OnModuleInit {
           },
         };
 
-    return this.prisma.$transaction(async (tx) => {
-      const entry = await tx.timerHistoryEntry.create({
+    return this.prisma.transaction(async (tx) => {
+      const entry = await tx.orm.public.TimerHistoryEntry.create({
         data: {
           guild: { connect: { id: data.guildId } },
           world: data.world,
@@ -536,7 +538,7 @@ export class TimersService implements OnModuleInit {
         },
       });
 
-      const staleEntries = await tx.timerHistoryEntry.findMany({
+      const staleEntries = await tx.orm.public.TimerHistoryEntry.findMany({
         where: {
           guildId: data.guildId,
           world: data.world,
@@ -548,7 +550,7 @@ export class TimersService implements OnModuleInit {
       });
 
       if (staleEntries.length > 0) {
-        await tx.timerHistoryEntry.deleteMany({
+        await tx.orm.public.TimerHistoryEntry.deleteMany({
           where: {
             id: { in: staleEntries.map((staleEntry) => staleEntry.id) },
           },
@@ -596,17 +598,18 @@ export class TimersService implements OnModuleInit {
     userId: string,
     world: string,
   ): Promise<string[]> {
-    const settings = await this.prisma.userSettingDocument.findUnique({
-      where: {
-        userId_domain_scopeType_scopeId: {
-          userId,
-          domain: "timers",
-          scopeType: "USER",
-          scopeId: userId,
+    const settings =
+      await this.prisma.orm.public.UserSettingDocument.findUnique({
+        where: {
+          userId_domain_scopeType_scopeId: {
+            userId,
+            domain: "timers",
+            scopeType: "USER",
+            scopeId: userId,
+          },
         },
-      },
-      select: { overrides: true },
-    });
+        select: { overrides: true },
+      });
     const overrides =
       settings?.overrides &&
       typeof settings.overrides === "object" &&
@@ -727,7 +730,7 @@ export class TimersService implements OnModuleInit {
     migratedSyntheticNpcId: number | null;
     migratedSyntheticTimerKey: string | null;
   }> {
-    const previousTimer = await this.prisma.timer.findUnique({
+    const previousTimer = await this.prisma.orm.public.Timer.findUnique({
       where: { timerId: { guildId, world, timerKey } },
     });
     if (previousTimer) {
@@ -763,7 +766,7 @@ export class TimersService implements OnModuleInit {
       }
 
       const syntheticTimerKey = buildTimerKey(syntheticNpcId, npcName);
-      const syntheticTimer = await this.prisma.timer.findUnique({
+      const syntheticTimer = await this.prisma.orm.public.Timer.findUnique({
         where: { timerId: { guildId, world, timerKey: syntheticTimerKey } },
       });
       if (!syntheticTimer) {
@@ -774,7 +777,7 @@ export class TimersService implements OnModuleInit {
         };
       }
 
-      const migratedTimer = await this.prisma.timer.upsert({
+      const migratedTimer = await this.prisma.orm.public.Timer.upsert({
         where: { timerId: { guildId, world, timerKey } },
         create: {
           createdById: syntheticTimer.createdById,
@@ -796,18 +799,13 @@ export class TimersService implements OnModuleInit {
       });
 
       try {
-        await this.prisma.timer.delete({
+        await this.prisma.orm.public.Timer.delete({
           where: {
             timerId: { guildId, world, timerKey: syntheticTimer.timerKey },
           },
         });
       } catch (error) {
-        if (
-          !(
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === "P2025"
-          )
-        ) {
+        if (!isRecordNotFoundError(error)) {
           throw error;
         }
       }
@@ -853,9 +851,9 @@ export class TimersService implements OnModuleInit {
     const tryFindTimer = async (
       attempt: number,
     ): Promise<Awaited<
-      ReturnType<typeof this.prisma.timer.findUnique>
+      ReturnType<typeof this.prisma.orm.public.Timer.findUnique>
     > | null> => {
-      const timer = await this.prisma.timer.findUnique({
+      const timer = await this.prisma.orm.public.Timer.findUnique({
         where: { timerId: { guildId, world, timerKey } },
         include: { member: true, actorCharacter: true },
       });
@@ -881,7 +879,7 @@ export class TimersService implements OnModuleInit {
     identifier: string,
   ) {
     if (isLegacyNpcIdIdentifier(identifier)) {
-      const timers = await this.prisma.timer.findMany({
+      const timers = await this.prisma.orm.public.Timer.findMany({
         where: {
           guildId,
           world,
@@ -903,7 +901,7 @@ export class TimersService implements OnModuleInit {
       return null;
     }
 
-    return this.prisma.timer.findUnique({
+    return this.prisma.orm.public.Timer.findUnique({
       where: { timerId: { guildId, world, timerKey: identifier } },
       include: { member: true, actorCharacter: true },
     });
@@ -919,7 +917,7 @@ export class TimersService implements OnModuleInit {
     npcId,
     npcName,
   }: EventTimerLookupInput) {
-    return this.prisma.timer.findUnique({
+    return this.prisma.orm.public.Timer.findUnique({
       where: {
         timerId: {
           guildId,
@@ -950,7 +948,7 @@ export class TimersService implements OnModuleInit {
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
 
       const windowOpenedAt = new Date();
-      const timer = await this.prisma.timer.upsert({
+      const timer = await this.prisma.orm.public.Timer.upsert({
         where: {
           timerId: {
             guildId,
@@ -1045,7 +1043,7 @@ export class TimersService implements OnModuleInit {
     try {
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
 
-      const timer = await this.prisma.timer.findUnique({
+      const timer = await this.prisma.orm.public.Timer.findUnique({
         where: { timerId: { guildId, world, timerKey } },
         include: { member: true, actorCharacter: true },
       });
@@ -1054,7 +1052,7 @@ export class TimersService implements OnModuleInit {
         return null;
       }
 
-      await this.prisma.timer.delete({
+      await this.prisma.orm.public.Timer.delete({
         where: { timerId: { guildId, world, timerKey } },
       });
 
@@ -1083,7 +1081,7 @@ export class TimersService implements OnModuleInit {
       return new Set<string>();
     }
 
-    const activeTimers = await this.prisma.timer.findMany({
+    const activeTimers = await this.prisma.orm.public.Timer.findMany({
       where: {
         OR: timerLookups.map((timerLookup) => ({
           guildId: timerLookup.guildId,
@@ -1123,7 +1121,7 @@ export class TimersService implements OnModuleInit {
 
     const timersByKey =
       timerKeys.length > 0
-        ? await this.prisma.timer.findMany({
+        ? await this.prisma.orm.public.Timer.findMany({
             where: {
               guildId,
               world,
@@ -1142,16 +1140,15 @@ export class TimersService implements OnModuleInit {
 
     const timersByName =
       npcNames.length > 0
-        ? await this.prisma.$queryRaw<
-            Array<{
-              npcId: number;
-              timerKey: string;
-              world: string;
-              minSpawnTime: Date;
-              maxSpawnTime: Date;
-              npc: unknown;
-            }>
-          >`
+        ? await this.prisma.query<{
+            npcId: number;
+            timerKey: string;
+            world: string;
+            minSpawnTime: Date;
+            maxSpawnTime: Date;
+            npc: unknown;
+          }>(
+            this.prisma.raw.sql`
             SELECT
               t."npcId",
               t."timerKey",
@@ -1162,8 +1159,18 @@ export class TimersService implements OnModuleInit {
             FROM "Timer" t
             WHERE t."guildId" = ${guildId}
               AND t."world" = ${world}
-              AND t."npc"->>'name' = ANY(${npcNames}::text[])
+              AND t."npc"->>'name' = ANY(${rawTextArray(npcNames)}::text[])
           `
+              .returnsRow({
+                npcId: "pg/int4@1",
+                timerKey: "pg/text@1",
+                world: "pg/text@1",
+                minSpawnTime: "pg/timestamp-temporal@1",
+                maxSpawnTime: "pg/timestamp-temporal@1",
+                npc: "pg/jsonb@1",
+              })
+              .build(),
+          )
         : [];
 
     const timers = [...timersByKey, ...timersByName];
@@ -1176,7 +1183,7 @@ export class TimersService implements OnModuleInit {
   }
 
   async getWorldsByGuildId(guildId: string) {
-    const worlds = await this.prisma.timer.findMany({
+    const worlds = await this.prisma.orm.public.Timer.findMany({
       where: { guildId },
       select: { world: true },
       distinct: ["world"],
@@ -1436,7 +1443,7 @@ export class TimersService implements OnModuleInit {
         },
       };
 
-      const newTimer = await this.prisma.timer.upsert({
+      const newTimer = await this.prisma.orm.public.Timer.upsert({
         where: {
           timerId: {
             guildId: context.guildId,
@@ -1657,7 +1664,7 @@ export class TimersService implements OnModuleInit {
       data.actorCharacter,
     );
 
-    const newTimer = await this.prisma.timer.create({
+    const newTimer = await this.prisma.orm.public.Timer.create({
       data: {
         maxSpawnTime,
         minSpawnTime,
@@ -1724,7 +1731,7 @@ export class TimersService implements OnModuleInit {
       key: cacheKey,
       ttlSeconds: CACHE_TTL_SECONDS,
       factory: () =>
-        this.prisma.timer.findMany({
+        this.prisma.orm.public.Timer.findMany({
           where: this.getTimersWhere(
             guild.id,
             world,
@@ -1772,7 +1779,7 @@ export class TimersService implements OnModuleInit {
 
     const guildIds = guilds.map((guild) => guild.id);
     const [timers, permissionsPerGuild] = await Promise.all([
-      this.prisma.timer.findMany({
+      this.prisma.orm.public.Timer.findMany({
         where: this.getTimersWhere(
           guildIds,
           world,
@@ -1830,7 +1837,7 @@ export class TimersService implements OnModuleInit {
     const timerKey = resolvedTimer?.timerKey ?? timerIdentifier;
     const administrativeUser = isAdministrativeUser(options.permissions);
 
-    const entries = await this.prisma.timerHistoryEntry.findMany({
+    const entries = await this.prisma.orm.public.TimerHistoryEntry.findMany({
       where: {
         guildId,
         world,
@@ -1882,7 +1889,7 @@ export class TimersService implements OnModuleInit {
     }
 
     const [entries, [guildPermissionsAndRoles]] = await Promise.all([
-      this.prisma.timerHistoryEntry.findMany({
+      this.prisma.orm.public.TimerHistoryEntry.findMany({
         where: {
           guildId,
           world,
@@ -1922,7 +1929,7 @@ export class TimersService implements OnModuleInit {
     guildId: string,
     historyEntryId: number,
   ) {
-    const entry = await this.prisma.timerHistoryEntry.findUnique({
+    const entry = await this.prisma.orm.public.TimerHistoryEntry.findUnique({
       where: { id: historyEntryId },
       include: {
         actorMember: true,
@@ -1951,7 +1958,7 @@ export class TimersService implements OnModuleInit {
       });
     }
 
-    const existingTimer = await this.prisma.timer.findUnique({
+    const existingTimer = await this.prisma.orm.public.Timer.findUnique({
       where: {
         timerId: {
           guildId,
@@ -1965,7 +1972,7 @@ export class TimersService implements OnModuleInit {
       throw new ConflictException({ message: ErrorKey.EXISTING_TIMER });
     }
 
-    const restoredTimer = await this.prisma.timer.upsert({
+    const restoredTimer = await this.prisma.orm.public.Timer.upsert({
       where: {
         timerId: {
           guildId,
@@ -2065,7 +2072,7 @@ export class TimersService implements OnModuleInit {
     try {
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
 
-      const timer = await this.prisma.timer.findUnique({
+      const timer = await this.prisma.orm.public.Timer.findUnique({
         where: {
           timerId: {
             guildId,
@@ -2097,7 +2104,7 @@ export class TimersService implements OnModuleInit {
           }
         : {};
 
-      const updatedTimer = await this.prisma.timer.update({
+      const updatedTimer = await this.prisma.orm.public.Timer.update({
         where: {
           timerId: {
             guildId,
@@ -2203,13 +2210,13 @@ export class TimersService implements OnModuleInit {
       });
 
       if (this.isManualTimerNpc(resolvedTimer.npc)) {
-        await this.prisma.timer.delete({
+        await this.prisma.orm.public.Timer.delete({
           where: {
             timerId: { guildId, world, timerKey: resolvedTimer.timerKey },
           },
         });
       } else {
-        await this.prisma.timer.update({
+        await this.prisma.orm.public.Timer.update({
           where: {
             timerId: { guildId, world, timerKey: resolvedTimer.timerKey },
           },
@@ -2226,10 +2233,7 @@ export class TimersService implements OnModuleInit {
         routing: this.getTimerDeleteRouting(resolvedTimer.npc),
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2025"
-      ) {
+      if (isRecordNotFoundError(error)) {
         throw new NotFoundException({ message: ErrorKey.TIMER_NOT_FOUND });
       }
       throw error;
@@ -2276,7 +2280,7 @@ export class TimersService implements OnModuleInit {
   ) {
     const limitNum = Number(limit) || 10;
     const manualTimerType = String(TIMER_TYPES.CUSTOM_MANUAL);
-    const timers = await this.prisma.$queryRaw<Timer[]>`
+    const plan = this.prisma.raw.sql`
       SELECT DISTINCT ON (t."timerKey")
         t."npc",
         t."npcId",
@@ -2291,7 +2295,16 @@ export class TimersService implements OnModuleInit {
         AND COALESCE(t."npc"->>'margonemType', '0') != ${manualTimerType}
       ORDER BY t."timerKey", t."updatedAt" DESC
       LIMIT ${limitNum}
-    `;
+    `
+      .returnsRow({
+        npc: "pg/jsonb@1",
+        npcId: "pg/int4@1",
+        timerKey: "pg/text@1",
+        latestRespBaseSeconds: "pg/int4@1",
+        latestRespawnRandomness: "pg/int4@1",
+      })
+      .build();
+    const timers = await this.prisma.query<Timer>(plan);
 
     return timers
       .map((timer) => {

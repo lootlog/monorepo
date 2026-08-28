@@ -1,4 +1,4 @@
-import { Permission, type Role } from "src/generated/prisma/client";
+import { Permission, type Role } from "src/db/domain";
 import { MessageType } from "src/chat/dto/send-message.dto";
 import type { ChatStoredMessage } from "src/chat/types/chat-stored-message.type";
 import { canViewChatMessage } from "./can-view-chat-message";

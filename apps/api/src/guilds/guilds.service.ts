@@ -13,12 +13,7 @@ import type { Logger } from "winston";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { ChannelsService } from "src/channels/channels.service";
 import { discordBotConfig } from "src/config/discord-bot.config";
-import {
-  type Guild,
-  ItemRarity,
-  NpcType,
-  Permission,
-} from "src/generated/prisma/client";
+import { type Guild, ItemRarity, NpcType, Permission } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
 import type { DeleteGuildDto } from "src/guilds/dto/delete-guild.dto";
@@ -344,7 +339,7 @@ export class GuildsService {
       }
     }
 
-    const guild = await this.prisma.guild.findFirst({
+    const guild = await this.prisma.orm.public.Guild.findFirst({
       where: {
         active: true,
         OR: [{ id: idOrVanityURL }, { vanityUrl: idOrVanityURL }],
@@ -489,7 +484,7 @@ export class GuildsService {
     discordId: string,
     requiredPermissions: Permission[],
   ) {
-    const guilds = await this.prisma.guild.findMany({
+    const guilds = await this.prisma.orm.public.Guild.findMany({
       where: {
         active: true,
         OR: [
@@ -521,10 +516,10 @@ export class GuildsService {
 
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
     const [guilds, members] = await Promise.all([
-      this.prisma.guild.findMany({
+      this.prisma.orm.public.Guild.findMany({
         where: { id: { in: guildIds }, active: true },
       }),
-      this.prisma.member.findMany({
+      this.prisma.orm.public.Member.findMany({
         where: {
           userId: discordId,
           active: true,
@@ -628,7 +623,7 @@ export class GuildsService {
       return Promise.resolve([]);
     }
 
-    return this.prisma.member.findMany({
+    return this.prisma.orm.public.Member.findMany({
       where: {
         userId: discordId,
         guildId: { in: guildIds },
@@ -847,10 +842,11 @@ export class GuildsService {
     userId: string,
     entries: T[],
   ): Promise<T[]> {
-    const userPreferences = await this.prisma.userSettings.findUnique({
-      where: { userId },
-      select: { guildsOrder: true },
-    });
+    const userPreferences =
+      await this.prisma.orm.public.UserSettings.findUnique({
+        where: { userId },
+        select: { guildsOrder: true },
+      });
 
     if (!userPreferences?.guildsOrder) {
       return entries;
@@ -1034,7 +1030,7 @@ export class GuildsService {
       );
     }
 
-    const oldGuild = await this.prisma.guild.findUnique({
+    const oldGuild = await this.prisma.orm.public.Guild.findUnique({
       where: { id: guildId },
       select: {
         vanityUrl: true,
@@ -1065,7 +1061,7 @@ export class GuildsService {
       );
     }
 
-    const guild = await this.prisma.guild.update({
+    const guild = await this.prisma.orm.public.Guild.update({
       where: { id: guildId },
       data: this.buildGuildConfigUpdateData(data),
     });
@@ -1121,7 +1117,7 @@ export class GuildsService {
   }
 
   async getWorldsByGuildId(guildId: string) {
-    const worlds = await this.prisma.timer.findMany({
+    const worlds = await this.prisma.orm.public.Timer.findMany({
       where: { guildId },
       select: { world: true },
       distinct: ["world"],
@@ -1131,7 +1127,7 @@ export class GuildsService {
   }
 
   getMultipleGuildsByIds(ids: string[]) {
-    return this.prisma.guild.findMany({
+    return this.prisma.orm.public.Guild.findMany({
       where: { id: { in: ids } },
     });
   }
@@ -1152,7 +1148,7 @@ export class GuildsService {
     let guild;
 
     try {
-      guild = await this.prisma.guild.upsert({
+      guild = await this.prisma.orm.public.Guild.upsert({
         where: { id: data.guildId },
         update: {
           name: data.name,
@@ -1184,7 +1180,7 @@ export class GuildsService {
       throw error;
     }
 
-    const existingGuild = await this.prisma.guild.findUnique({
+    const existingGuild = await this.prisma.orm.public.Guild.findUnique({
       where: { id: data.guildId },
     });
 
@@ -1229,12 +1225,12 @@ export class GuildsService {
 
   async updateGuild(data: UpdateGuildDto) {
     try {
-      const oldGuild = await this.prisma.guild.findUnique({
+      const oldGuild = await this.prisma.orm.public.Guild.findUnique({
         where: { id: data.guildId },
         select: { vanityUrl: true },
       });
 
-      await this.prisma.guild.update({
+      await this.prisma.orm.public.Guild.update({
         where: { id: data.guildId },
         data: {
           name: data.name,
@@ -1264,7 +1260,7 @@ export class GuildsService {
 
   async deleteGuild({ guildId }: DeleteGuildDto) {
     try {
-      const guild = await this.prisma.guild.findUnique({
+      const guild = await this.prisma.orm.public.Guild.findUnique({
         where: { id: guildId },
         select: { vanityUrl: true },
       });
@@ -1275,12 +1271,14 @@ export class GuildsService {
         >["affectedMembers"],
       };
 
-      await this.prisma.$transaction(async (tx) => {
-        await tx.lootlogConfigNpc.deleteMany({
+      await this.prisma.transaction(async (tx) => {
+        await tx.orm.public.LootlogConfigNpc.deleteMany({
           where: { lootlogConfigId: guildId },
         });
 
-        await tx.lootlogConfig.deleteMany({ where: { id: guildId } });
+        await tx.orm.public.LootlogConfig.deleteMany({
+          where: { id: guildId },
+        });
 
         deletedMembers = await this.membersService.deleteMembersByGuildId(
           guildId,
@@ -1288,7 +1286,7 @@ export class GuildsService {
         );
         await this.rolesService.deleteRolesByGuildId(guildId);
 
-        await tx.guild.update({
+        await tx.orm.public.Guild.update({
           where: { id: guildId },
           data: { active: false },
         });
@@ -1315,7 +1313,7 @@ export class GuildsService {
   }
 
   private loadGuildDiscordSyncState(guildId: string) {
-    return this.prisma.discordGuildSyncState.findUnique({
+    return this.prisma.orm.public.DiscordGuildSyncState.findUnique({
       where: { guildId },
     });
   }
@@ -1385,7 +1383,7 @@ export class GuildsService {
   }
 
   private createDefaultLootlogConfig(guildId: string) {
-    return this.prisma.lootlogConfig.upsert({
+    return this.prisma.orm.public.LootlogConfig.upsert({
       where: { id: guildId },
       update: {},
       create: {

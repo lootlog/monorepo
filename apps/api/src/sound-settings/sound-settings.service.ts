@@ -3,7 +3,7 @@ import type {
   NpcTypeSoundConfig,
   SettingsDomainResolution,
 } from "@lootlog/types";
-import type { Prisma } from "src/generated/prisma/client";
+import type { Prisma } from "src/db/domain";
 import { SettingsDocumentsService } from "src/settings-documents/settings-documents.service";
 import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
 

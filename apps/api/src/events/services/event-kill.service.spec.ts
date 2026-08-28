@@ -11,13 +11,14 @@ import { EventSummaryService } from "./event-summary.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { Event, EventHeroNpc } from "src/generated/prisma/client";
+import type { Event, EventHeroNpc } from "src/db/domain";
 import { TimersService } from "src/timers/timers.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("EventKillService", () => {
   let service: EventKillService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     event: {
       findFirst: mockFn(),
     },
@@ -62,9 +63,9 @@ describe("EventKillService", () => {
       findFirst: mockFn(),
       findMany: mockFn(),
     },
-    $transaction: mockFn(),
-    $queryRaw: mockFn(),
-  };
+    transaction: mockFn(),
+    query: mockFn(),
+  });
 
   const mockQueue = {
     add: mockFn(),
@@ -571,7 +572,7 @@ describe("EventKillService", () => {
         timerData,
       );
 
-      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      expect(mockPrismaService.transaction).not.toHaveBeenCalled();
       expect(mockRedisService.del).toHaveBeenCalledWith(
         `event:hero:kill:lock:${guildId}:${world}:${npcId}`,
       );
@@ -611,7 +612,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -665,7 +666,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -747,7 +748,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -902,7 +903,7 @@ describe("EventKillService", () => {
         .mockResolvedValueOnce([mockHero])
         .mockResolvedValueOnce([]);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
-      mockPrismaService.$transaction.mockRejectedValue(new Error("boom"));
+      mockPrismaService.transaction.mockRejectedValue(new Error("boom"));
 
       await expect(
         service.checkAndRecordEventHeroKill(
@@ -1002,7 +1003,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 2 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1097,7 +1098,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1182,7 +1183,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1273,7 +1274,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1354,7 +1355,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1442,7 +1443,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1528,7 +1529,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1623,7 +1624,7 @@ describe("EventKillService", () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1720,7 +1721,7 @@ describe("EventKillService", () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1808,7 +1809,7 @@ describe("EventKillService", () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1886,7 +1887,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 1 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1948,7 +1949,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -1982,7 +1983,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2017,7 +2018,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2054,7 +2055,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2105,7 +2106,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2163,7 +2164,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2211,7 +2212,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2256,7 +2257,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);
@@ -2304,7 +2305,7 @@ describe("EventKillService", () => {
           updateMany: mockFn().mockResolvedValue({ count: 0 }),
         },
       };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(txMock),
       );
       mockQueue.getJobs.mockResolvedValue([]);

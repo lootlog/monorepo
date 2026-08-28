@@ -1,12 +1,7 @@
 import { ForbiddenException } from "@nestjs/common";
 import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
-import {
-  type Guild,
-  type Member,
-  MemberType,
-  Permission,
-} from "src/generated/prisma/client";
+import { type Guild, type Member, MemberType, Permission } from "src/db/domain";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { mockFn } from "src/test/mock-fn";

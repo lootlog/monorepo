@@ -19,6 +19,10 @@ dist
 build
 **/generated
 generated
+!apps/api/src/db/generated
+!apps/api/src/db/generated/**
+!apps/activity/src/shared/db/generated
+!apps/activity/src/shared/db/generated/**
 **/.next
 .next
 **/.turbo

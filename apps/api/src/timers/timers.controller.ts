@@ -19,7 +19,7 @@ import {
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import { ZodResponse } from "nestjs-zod";
-import { type Guild, Permission, type Role } from "src/generated/prisma/client";
+import { type Guild, Permission, type Role } from "src/db/domain";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";

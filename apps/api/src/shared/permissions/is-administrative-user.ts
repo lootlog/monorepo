@@ -1,4 +1,4 @@
-import type { Permission } from "src/generated/prisma/client";
+import type { Permission } from "src/db/domain";
 import { PermissionResolver } from "./permission-resolver";
 
 export const isAdministrativeUser = (permissions: Permission[]) => {

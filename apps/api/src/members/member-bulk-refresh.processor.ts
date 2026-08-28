@@ -45,7 +45,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
     });
 
     try {
-      await this.prisma.memberRefreshJob.update({
+      await this.prisma.orm.public.MemberRefreshJob.update({
         where: { id: jobId },
         data: { status: "PROCESSING" },
       });
@@ -100,7 +100,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
           });
 
           progress.failedIds.push(memberId);
-          await this.prisma.memberRefreshJob.update({
+          await this.prisma.orm.public.MemberRefreshJob.update({
             where: { id: jobId },
             data: { failedMembers: { increment: 1 } },
           });
@@ -115,7 +115,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
 
       await processMember(0);
 
-      await this.prisma.memberRefreshJob.update({
+      await this.prisma.orm.public.MemberRefreshJob.update({
         where: { id: jobId },
         data: {
           status: "COMPLETED",
@@ -141,7 +141,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
         stack: (error as Error).stack,
       });
 
-      await this.prisma.memberRefreshJob.update({
+      await this.prisma.orm.public.MemberRefreshJob.update({
         where: { id: jobId },
         data: {
           status: "FAILED",
@@ -158,7 +158,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
     jobId: number,
     progress: JobProgress,
   ): Promise<void> {
-    await this.prisma.memberRefreshJob.update({
+    await this.prisma.orm.public.MemberRefreshJob.update({
       where: { id: jobId },
       data: { processedMembers: progress.processedCount },
     });

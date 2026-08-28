@@ -1,15 +1,16 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
-import { CoverageGapType } from "src/generated/prisma/client";
+import { CoverageGapType } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { EventSummaryService } from "./event-summary.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("EventSummaryService", () => {
   let service: EventSummaryService;
 
   const mockTransaction = mockFn();
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     eventMap: {
       findMany: mockFn(),
     },
@@ -28,8 +29,8 @@ describe("EventSummaryService", () => {
     eventHeroNpc: {
       findFirst: mockFn(),
     },
-    $transaction: mockTransaction,
-  };
+    transaction: mockTransaction,
+  });
 
   beforeEach(async () => {
     vi.clearAllMocks();

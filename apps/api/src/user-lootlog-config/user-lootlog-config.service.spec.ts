@@ -1,22 +1,23 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import { mockFn } from "src/test/mock-fn";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { UserLootlogConfigService } from "./user-lootlog-config.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("UserLootlogConfigService", () => {
   let service: UserLootlogConfigService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     userCharactersLootlogSettings: {
       findMany: mockFn(),
       findFirst: mockFn(),
       update: mockFn(),
       upsert: mockFn(),
     },
-  };
+  });
   const mockGuildsService = {
     getGuildsForRequiredPermissions: mockFn(),
   };

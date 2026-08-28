@@ -1,5 +1,5 @@
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
-import { Permission, type Role } from "src/generated/prisma/client";
+import { Permission, type Role } from "src/db/domain";
 import { MessageType } from "src/chat/dto/send-message.dto";
 import { ChatService } from "./chat.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";

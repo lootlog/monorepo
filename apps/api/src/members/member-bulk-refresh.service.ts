@@ -10,7 +10,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { serviceConfig } from "src/config/service.config";
 import { PrismaService } from "src/db/prisma.service";
-import type { MemberRefreshJob } from "src/generated/prisma/client";
+import type { MemberRefreshJob } from "src/db/domain";
 import { RuntimeEnvironment } from "@lootlog/types";
 import { getAdminBulkRefreshRateLimit } from "./constants/member-cache.constant";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
@@ -42,7 +42,7 @@ export class MemberBulkRefreshService {
     requestedBy: string,
   ): Promise<RefreshJobWithCooldown> {
     const rateLimit = getAdminBulkRefreshRateLimit(this.env);
-    const recentJob = await this.prisma.memberRefreshJob.findFirst({
+    const recentJob = await this.prisma.orm.public.MemberRefreshJob.findFirst({
       where: {
         guildId,
         createdAt: {
@@ -60,7 +60,7 @@ export class MemberBulkRefreshService {
     }
 
     const members = await this.memberReadService.getGuildMembers(guildId);
-    const job = await this.prisma.memberRefreshJob.create({
+    const job = await this.prisma.orm.public.MemberRefreshJob.create({
       data: {
         guildId,
         requestedBy,
@@ -93,7 +93,7 @@ export class MemberBulkRefreshService {
         stack: (error as Error).stack,
       });
 
-      await this.prisma.memberRefreshJob.update({
+      await this.prisma.orm.public.MemberRefreshJob.update({
         where: { id: job.id },
         data: {
           status: "FAILED",
@@ -110,7 +110,7 @@ export class MemberBulkRefreshService {
   async getLatestRefreshJob(
     guildId: string,
   ): Promise<RefreshJobWithCooldown | null> {
-    const job = await this.prisma.memberRefreshJob.findFirst({
+    const job = await this.prisma.orm.public.MemberRefreshJob.findFirst({
       where: { guildId },
       orderBy: { createdAt: "desc" },
     });
@@ -122,7 +122,7 @@ export class MemberBulkRefreshService {
     guildId: string;
     jobId: number;
   }): Promise<RefreshJobWithCooldown> {
-    const job = await this.prisma.memberRefreshJob.findFirst({
+    const job = await this.prisma.orm.public.MemberRefreshJob.findFirst({
       where: {
         id: options.jobId,
         guildId: options.guildId,

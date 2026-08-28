@@ -1,4 +1,4 @@
-import type { Event, EventHeroNpc } from "src/generated/prisma/client";
+import type { Event, EventHeroNpc } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { buildActiveEventWhere } from "./event-activity.util";
 
@@ -16,7 +16,7 @@ export async function findActiveEventHeroesByNpc(
 ): Promise<ActiveEventHeroMatch[]> {
   const now = new Date();
 
-  const directIdMatches = await prisma.eventHeroNpc.findMany({
+  const directIdMatches = await prisma.orm.public.EventHeroNpc.findMany({
     where: {
       npcId,
       event: {
@@ -30,7 +30,7 @@ export async function findActiveEventHeroesByNpc(
     },
   });
 
-  const nameMatches = await prisma.eventHeroNpc.findMany({
+  const nameMatches = await prisma.orm.public.EventHeroNpc.findMany({
     where: {
       npcName,
       event: {

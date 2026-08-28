@@ -4,7 +4,7 @@ Monorepo CLI utilities for local Lootlog development.
 
 ## Overview
 
-- Contains source commands for environment generation, RabbitMQ event publishing, and local data seeding.
+- Contains commands for environment generation, RabbitMQ event publishing, and local API data seeding.
 - Exposes a `lootlog` bin from the built package and a workspace script for environment generation.
 - Keeps command-specific documentation close to the implementation under `src/commands/`.
 
@@ -12,7 +12,7 @@ Monorepo CLI utilities for local Lootlog development.
 
 - `env` generates `.env` files from discovered `.env.example` templates.
 - `events` publishes test events to RabbitMQ for local workflows.
-- `seed` scrapes source data, generates fixtures, and seeds development databases.
+- `seed` delegates to `apps/api/scripts/seed`, where the database-specific implementation lives with the API.
 
 ## Development
 
@@ -30,11 +30,10 @@ Useful variants:
 
 ## Related Docs
 
-- [Seed command docs](./src/commands/seed/README.md)
+- [Seed command docs](../../apps/api/scripts/seed/README.md)
 - [Event fixture reference](./src/commands/events/EVENTS.md)
-- [Mock data notes](./src/mocks/data/README.md)
 
 ## Notes
 
-- Not every source command is exposed as a workspace script yet; additional command groups live under `src/commands/`.
+- Not every command is exposed as a package script; the root workspace scripts are the supported seed entry points.
 - The package root is intended for developer tooling inside this monorepo, not as a standalone published CLI.

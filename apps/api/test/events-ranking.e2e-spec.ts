@@ -2,7 +2,7 @@ import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { PrismaService } from "../src/db/prisma.service";
-import { Permission } from "../src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import {
   closeE2EApp,
   createE2EApp,

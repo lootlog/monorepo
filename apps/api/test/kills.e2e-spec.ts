@@ -5,7 +5,7 @@ import { PrismaService } from "../src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { TEST_GUILDS, TEST_USERS } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
-import { Permission, NpcType } from "../src/generated/prisma/client";
+import { Permission, NpcType } from "src/db/domain";
 
 const TEST_USERS_EXTENDED = {
   ...TEST_USERS,
@@ -46,7 +46,7 @@ function createKillRole(
   id: string,
   permissions: Permission[] = [Permission.LOOTLOG_LOOTS_WRITE],
 ) {
-  return prisma.role.create({
+  return prisma.orm.public.Role.create({
     data: {
       id,
       guildId,
@@ -66,7 +66,7 @@ function createKillMember(
     roleId: string;
   },
 ) {
-  return prisma.member.create({
+  return prisma.orm.public.Member.create({
     data: {
       userId: options.discordId,
       guildId: options.guildId,
@@ -100,7 +100,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
   afterAll(async () => {
     if (prisma) {
-      await prisma.$disconnect();
+      await prisma.onModuleDestroy();
     }
     if (app) {
       await app.close();
@@ -110,19 +110,25 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
   beforeEach(async () => {
     // Clear database tables
-    await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "UserKillStats", "NpcKillStats", "GuildKillSummary", "UserCharactersLootlogSettings" CASCADE`;
+    await prisma.execute(
+      prisma.raw
+        .sql`TRUNCATE TABLE "Guild", "Role", "Member", "UserKillStats", "NpcKillStats", "GuildKillSummary", "UserCharactersLootlogSettings" CASCADE`
+        .affectedCount()
+        .build(),
+    );
 
     await Promise.all([
       redis.deleteByPattern("kill:dedup:*"),
       redis.deleteByPattern("perms:*"),
       redis.deleteByPattern("guild:*"),
+      redis.deleteByPattern("user-lootlog-config:*"),
     ]);
   });
 
   describe("POST /kills - User Deduplication", () => {
     it("should deduplicate multiple requests from same user for same NPC within 30s window", async () => {
       // Setup: Create guild and member
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
       const role = await createKillRole(prisma, guild.id, "role-1");
@@ -135,7 +141,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         roleId: role.id,
       });
 
-      await prisma.userCharactersLootlogSettings.create({
+      await prisma.orm.public.UserCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
@@ -169,21 +175,21 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(response2.body.updated).toBe(0);
 
       // Verify only 1 kill was recorded in UserKillStats
-      const userKills = await prisma.userKillStats.findMany({
+      const userKills = await prisma.orm.public.UserKillStats.findMany({
         where: { userId: TEST_USERS.MEMBER_WITH_WRITE.discordId },
       });
       expect(userKills).toHaveLength(1);
       expect(userKills[0].totalKills).toBe(1);
 
       // Verify only 1 member participation in NpcKillStats
-      const npcKills = await prisma.npcKillStats.findMany({
+      const npcKills = await prisma.orm.public.NpcKillStats.findMany({
         where: { guildId: guild.id },
       });
       expect(npcKills).toHaveLength(1);
       expect(npcKills[0].memberKills).toBe(1);
 
       // Verify only 1 unique guild kill
-      const guildSummary = await prisma.guildKillSummary.findMany({
+      const guildSummary = await prisma.orm.public.GuildKillSummary.findMany({
         where: { guildId: guild.id },
       });
       expect(guildSummary).toHaveLength(1);
@@ -191,7 +197,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
     });
 
     it("should handle 10 concurrent requests from same user - only first counted", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
       const role = await createKillRole(prisma, guild.id, "role-1");
@@ -204,7 +210,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         roleId: role.id,
       });
 
-      await prisma.userCharactersLootlogSettings.create({
+      await prisma.orm.public.UserCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
@@ -246,21 +252,21 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(deduplicatedResponses).toHaveLength(9);
 
       // Verify database state
-      const userKills = await prisma.userKillStats.findMany();
+      const userKills = await prisma.orm.public.UserKillStats.findMany();
       expect(userKills).toHaveLength(1);
       expect(userKills[0].totalKills).toBe(1);
 
-      const npcKills = await prisma.npcKillStats.findMany();
+      const npcKills = await prisma.orm.public.NpcKillStats.findMany();
       expect(npcKills).toHaveLength(1);
       expect(npcKills[0].memberKills).toBe(1);
 
-      const guildSummary = await prisma.guildKillSummary.findMany();
+      const guildSummary = await prisma.orm.public.GuildKillSummary.findMany();
       expect(guildSummary).toHaveLength(1);
       expect(guildSummary[0].uniqueKills).toBe(1);
     });
 
     it("should allow same user to kill different NPCs", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
       const role = await createKillRole(prisma, guild.id, "role-1");
@@ -273,7 +279,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         roleId: role.id,
       });
 
-      await prisma.userCharactersLootlogSettings.create({
+      await prisma.orm.public.UserCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
@@ -312,20 +318,20 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(response2.body.deduplicated).toBeUndefined();
 
       // Verify 2 different NPC kills recorded
-      const userKills = await prisma.userKillStats.findMany();
+      const userKills = await prisma.orm.public.UserKillStats.findMany();
       expect(userKills).toHaveLength(2);
 
-      const npcKills = await prisma.npcKillStats.findMany();
+      const npcKills = await prisma.orm.public.NpcKillStats.findMany();
       expect(npcKills).toHaveLength(2);
 
-      const guildSummary = await prisma.guildKillSummary.findMany();
+      const guildSummary = await prisma.orm.public.GuildKillSummary.findMany();
       expect(guildSummary).toHaveLength(2);
     });
   });
 
   describe("POST /kills - Guild Deduplication (Multiple Members)", () => {
     it("should count participations for all members but only 1 unique guild kill", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
       const role = await createKillRole(prisma, guild.id, "role-1");
@@ -357,7 +363,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
       // Configure all members to report to the same guild
       await Promise.all([
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
@@ -365,7 +371,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             catchingGuildIds: [guild.id],
           },
         }),
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
             accountId: "22222",
@@ -373,7 +379,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             catchingGuildIds: [guild.id],
           },
         }),
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
             accountId: "33333",
@@ -411,14 +417,14 @@ describe("Kills E2E Tests (Deduplication)", () => {
       });
 
       // Each user should have their own UserKillStats
-      const userKills = await prisma.userKillStats.findMany();
+      const userKills = await prisma.orm.public.UserKillStats.findMany();
       expect(userKills).toHaveLength(3);
       userKills.forEach((kill) => {
         expect(kill.totalKills).toBe(1);
       });
 
       // Each member should have their own participation (memberKills)
-      const npcKills = await prisma.npcKillStats.findMany({
+      const npcKills = await prisma.orm.public.NpcKillStats.findMany({
         where: { guildId: guild.id },
       });
       expect(npcKills).toHaveLength(3);
@@ -431,7 +437,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(totalParticipations).toBe(3);
 
       // But only 1 unique guild kill
-      const guildSummary = await prisma.guildKillSummary.findMany({
+      const guildSummary = await prisma.orm.public.GuildKillSummary.findMany({
         where: { guildId: guild.id },
       });
       expect(guildSummary).toHaveLength(1);
@@ -439,7 +445,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
     });
 
     it("should handle 10 concurrent requests from different users - all get participation, 1 unique kill", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
       const role = await createKillRole(prisma, guild.id, "role-1");
@@ -466,7 +472,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
       await Promise.all(
         userIds.map((user) =>
-          prisma.userCharactersLootlogSettings.create({
+          prisma.orm.public.UserCharactersLootlogSettings.create({
             data: {
               userId: user.discordId,
               accountId: user.accountId,
@@ -501,15 +507,15 @@ describe("Kills E2E Tests (Deduplication)", () => {
       });
 
       // 10 user kill stats
-      const userKills = await prisma.userKillStats.findMany();
+      const userKills = await prisma.orm.public.UserKillStats.findMany();
       expect(userKills).toHaveLength(10);
 
       // 10 member participations
-      const npcKills = await prisma.npcKillStats.findMany();
+      const npcKills = await prisma.orm.public.NpcKillStats.findMany();
       expect(npcKills).toHaveLength(10);
 
       // But only 1 unique guild kill
-      const guildSummary = await prisma.guildKillSummary.findMany();
+      const guildSummary = await prisma.orm.public.GuildKillSummary.findMany();
       expect(guildSummary).toHaveLength(1);
       expect(guildSummary[0].uniqueKills).toBe(1);
     });
@@ -517,7 +523,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
   describe("POST /kills - Multi-character spam from same user", () => {
     it("should deduplicate kills from same user with different characters", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
       const role = await createKillRole(prisma, guild.id, "role-1");
@@ -532,7 +538,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
       // Same user with 3 different character configs (multi-client scenario)
       await Promise.all([
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
@@ -540,7 +546,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             catchingGuildIds: [guild.id],
           },
         }),
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
@@ -548,7 +554,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             catchingGuildIds: [guild.id],
           },
         }),
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
@@ -596,17 +602,17 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(deduplicatedResponses).toHaveLength(2);
 
       // Only 1 UserKillStats record
-      const userKills = await prisma.userKillStats.findMany();
+      const userKills = await prisma.orm.public.UserKillStats.findMany();
       expect(userKills).toHaveLength(1);
       expect(userKills[0].totalKills).toBe(1);
 
       // Only 1 member participation
-      const npcKills = await prisma.npcKillStats.findMany();
+      const npcKills = await prisma.orm.public.NpcKillStats.findMany();
       expect(npcKills).toHaveLength(1);
       expect(npcKills[0].memberKills).toBe(1);
 
       // Only 1 unique guild kill
-      const guildSummary = await prisma.guildKillSummary.findMany();
+      const guildSummary = await prisma.orm.public.GuildKillSummary.findMany();
       expect(guildSummary).toHaveLength(1);
       expect(guildSummary[0].uniqueKills).toBe(1);
     });
@@ -614,11 +620,11 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
   describe("POST /kills - Multiple Guilds", () => {
     it("should record participations in all configured guilds", async () => {
-      const guild1 = await prisma.guild.create({
+      const guild1 = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
-      const guild2 = await prisma.guild.create({
+      const guild2 = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_2,
       });
       const role1 = await createKillRole(prisma, guild1.id, "role-1");
@@ -642,7 +648,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       });
 
       // Configure to report to both guilds
-      await prisma.userCharactersLootlogSettings.create({
+      await prisma.orm.public.UserCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
@@ -661,15 +667,15 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(response.body.updated).toBe(2);
 
       // 1 user kill
-      const userKills = await prisma.userKillStats.findMany();
+      const userKills = await prisma.orm.public.UserKillStats.findMany();
       expect(userKills).toHaveLength(1);
 
       // 2 member participations (one per guild)
-      const npcKills = await prisma.npcKillStats.findMany();
+      const npcKills = await prisma.orm.public.NpcKillStats.findMany();
       expect(npcKills).toHaveLength(2);
 
       // 2 unique guild kills (one per guild)
-      const guildSummary = await prisma.guildKillSummary.findMany();
+      const guildSummary = await prisma.orm.public.GuildKillSummary.findMany();
       expect(guildSummary).toHaveLength(2);
       expect(
         guildSummary.find((s) => s.guildId === guild1.id)?.uniqueKills,
@@ -682,11 +688,11 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
   describe("GET /guilds/:guildId/stats/kills - Verify Stats", () => {
     it("should return correct stats after concurrent kills from multiple members", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
+      const role = await prisma.orm.public.Role.create({
         data: {
           id: "role-1",
           guildId: guild.id,
@@ -702,7 +708,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
       // Create 3 members
       await Promise.all([
-        prisma.member.create({
+        prisma.orm.public.Member.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             guildId: guild.id,
@@ -729,7 +735,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
       // Configure all to report to guild
       await Promise.all([
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
@@ -737,7 +743,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             catchingGuildIds: [guild.id],
           },
         }),
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
             accountId: "22222",
@@ -745,7 +751,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             catchingGuildIds: [guild.id],
           },
         }),
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
             accountId: "33333",
@@ -823,7 +829,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
     }
 
     it("should aggregate kills for same COLOSSUS name with different spawn IDs", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
       const role = await createKillRole(prisma, guild.id, "role-1");
@@ -836,7 +842,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         roleId: role.id,
       });
 
-      await prisma.userCharactersLootlogSettings.create({
+      await prisma.orm.public.UserCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
@@ -869,7 +875,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(response2.body.updated).toBe(1);
 
       // Verify only 1 record with 2 kills (aggregated under stable ID)
-      const userKills = await prisma.userKillStats.findMany({
+      const userKills = await prisma.orm.public.UserKillStats.findMany({
         where: { userId: TEST_USERS.MEMBER_WITH_WRITE.discordId },
       });
       expect(userKills).toHaveLength(1);
@@ -878,7 +884,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(userKills[0].npcType).toBe(NpcType.COLOSSUS);
 
       // Verify NpcKillStats also aggregated
-      const npcKills = await prisma.npcKillStats.findMany({
+      const npcKills = await prisma.orm.public.NpcKillStats.findMany({
         where: { guildId: guild.id },
       });
       expect(npcKills).toHaveLength(1);
@@ -886,7 +892,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(npcKills[0].npcId).toBeLessThan(0);
 
       // Verify GuildKillSummary aggregated
-      const guildSummary = await prisma.guildKillSummary.findMany({
+      const guildSummary = await prisma.orm.public.GuildKillSummary.findMany({
         where: { guildId: guild.id },
       });
       expect(guildSummary).toHaveLength(1);
@@ -895,7 +901,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
     });
 
     it("should create separate records for different COLOSSUS names", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
       const role = await createKillRole(prisma, guild.id, "role-1");
@@ -908,7 +914,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         roleId: role.id,
       });
 
-      await prisma.userCharactersLootlogSettings.create({
+      await prisma.orm.public.UserCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
@@ -936,7 +942,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         .expect(201);
 
       // Verify 2 separate records with different stable IDs
-      const userKills = await prisma.userKillStats.findMany({
+      const userKills = await prisma.orm.public.UserKillStats.findMany({
         where: { userId: TEST_USERS.MEMBER_WITH_WRITE.discordId },
         orderBy: { npcName: "asc" },
       });
@@ -949,11 +955,11 @@ describe("Kills E2E Tests (Deduplication)", () => {
     });
 
     it("should return negative npcId in top-npcs stats response", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
+      const role = await prisma.orm.public.Role.create({
         data: {
           id: "role-1",
           guildId: guild.id,
@@ -966,7 +972,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         },
       });
 
-      await prisma.member.create({
+      await prisma.orm.public.Member.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
@@ -976,7 +982,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         },
       });
 
-      await prisma.userCharactersLootlogSettings.create({
+      await prisma.orm.public.UserCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
@@ -1007,11 +1013,11 @@ describe("Kills E2E Tests (Deduplication)", () => {
     });
 
     it("should accept negative npcId in getNpcKillers endpoint", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
-      const role = await prisma.role.create({
+      const role = await prisma.orm.public.Role.create({
         data: {
           id: "role-1",
           guildId: guild.id,
@@ -1024,7 +1030,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         },
       });
 
-      await prisma.member.create({
+      await prisma.orm.public.Member.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
@@ -1034,7 +1040,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         },
       });
 
-      await prisma.userCharactersLootlogSettings.create({
+      await prisma.orm.public.UserCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           accountId: "11111",
@@ -1052,7 +1058,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
         .expect(201);
 
       // Get the stable negative ID from the database
-      const userKills = await prisma.userKillStats.findFirst({
+      const userKills = await prisma.orm.public.UserKillStats.findFirst({
         where: { npcType: NpcType.COLOSSUS },
       });
       const negativeNpcId = userKills!.npcId;
@@ -1074,7 +1080,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
     });
 
     it("should handle concurrent kills of same COLOSSUS from different spawn IDs", async () => {
-      const guild = await prisma.guild.create({
+      const guild = await prisma.orm.public.Guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
       const role = await createKillRole(prisma, guild.id, "role-1");
@@ -1106,7 +1112,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
 
       // Configure all members
       await Promise.all([
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             accountId: "11111",
@@ -1114,7 +1120,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             catchingGuildIds: [guild.id],
           },
         }),
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
             accountId: "22222",
@@ -1122,7 +1128,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
             catchingGuildIds: [guild.id],
           },
         }),
-        prisma.userCharactersLootlogSettings.create({
+        prisma.orm.public.UserCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
             accountId: "33333",
@@ -1174,7 +1180,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       });
 
       // Verify all 3 users have their own UserKillStats (per-user tracking)
-      const userKills = await prisma.userKillStats.findMany();
+      const userKills = await prisma.orm.public.UserKillStats.findMany();
       expect(userKills).toHaveLength(3);
 
       // All should have same stable negative npcId (derived from name)
@@ -1183,7 +1189,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(userKills[0].npcId).toBeLessThan(0);
 
       // 3 member participations in NpcKillStats (same npcId)
-      const npcKills = await prisma.npcKillStats.findMany({
+      const npcKills = await prisma.orm.public.NpcKillStats.findMany({
         where: { guildId: guild.id },
       });
       expect(npcKills).toHaveLength(3);
@@ -1191,7 +1197,7 @@ describe("Kills E2E Tests (Deduplication)", () => {
       expect(npcKillIds.size).toBe(1);
 
       // But only 1 unique guild kill (deduplication worked)
-      const guildSummary = await prisma.guildKillSummary.findMany({
+      const guildSummary = await prisma.orm.public.GuildKillSummary.findMany({
         where: { guildId: guild.id },
       });
       expect(guildSummary).toHaveLength(1);

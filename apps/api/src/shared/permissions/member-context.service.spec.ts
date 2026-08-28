@@ -1,5 +1,5 @@
 import { NotFoundException } from "@nestjs/common";
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { PrismaService } from "src/db/prisma.service";
@@ -11,6 +11,7 @@ import {
 import { Test, type TestingModule } from "@nestjs/testing";
 import { mockFn } from "src/test/mock-fn";
 import { MemberContextService } from "./member-context.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("MemberContextService", () => {
   let service: MemberContextService;
@@ -19,11 +20,11 @@ describe("MemberContextService", () => {
     warn: mockFn(),
   };
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     guild: {
       findFirst: mockFn(),
     },
-  };
+  });
 
   const mockRedisService = {
     get: mockFn(),

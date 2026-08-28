@@ -1,4 +1,4 @@
-import type { Permission, Role } from "src/generated/prisma/client";
+import type { Permission, Role } from "src/db/domain";
 import { PermissionResolver } from "src/shared/permissions/permission-resolver";
 
 interface EventHeroWithLevel {

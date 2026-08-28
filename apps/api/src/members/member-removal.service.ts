@@ -43,7 +43,7 @@ export class MemberRemovalService {
   }): Promise<MemberWithRoles> {
     const { discordId, guildId } = options;
 
-    const member = await this.prisma.member.findUnique({
+    const member = await this.prisma.orm.public.Member.findUnique({
       where: { memberId: { userId: discordId, guildId } },
       include: { roles: true },
     });
@@ -56,7 +56,7 @@ export class MemberRemovalService {
       throw new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED);
     }
 
-    const deactivatedMember = await this.prisma.member.update({
+    const deactivatedMember = await this.prisma.orm.public.Member.update({
       where: { memberId: { userId: discordId, guildId } },
       data: {
         active: false,
@@ -80,7 +80,7 @@ export class MemberRemovalService {
     options: DeactivateMembersMissingFromDiscordGuildsOptions,
   ): Promise<number> {
     const { discordId, userId, activeDiscordGuildIds, status } = options;
-    const missingMembers = await this.prisma.member.findMany({
+    const missingMembers = await this.prisma.orm.public.Member.findMany({
       where: {
         userId: discordId,
         globalUserId: userId,
@@ -102,7 +102,7 @@ export class MemberRemovalService {
     const syncTimestamp = new Date();
     await Promise.all(
       missingMembers.map((member) =>
-        this.prisma.member.update({
+        this.prisma.orm.public.Member.update({
           where: {
             memberId: { userId: member.userId, guildId: member.guildId },
           },
@@ -135,7 +135,7 @@ export class MemberRemovalService {
     const client = options?.tx ?? this.prisma;
 
     try {
-      const affectedMembers = await client.member.findMany({
+      const affectedMembers = await client.orm.public.Member.findMany({
         where: {
           guildId,
           active: true,
@@ -147,7 +147,7 @@ export class MemberRemovalService {
         },
       });
 
-      const result = await client.member.updateMany({
+      const result = await client.orm.public.Member.updateMany({
         where: {
           guildId,
           active: true,

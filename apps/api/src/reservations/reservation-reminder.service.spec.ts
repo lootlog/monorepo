@@ -1,7 +1,8 @@
 import { UnprocessableEntityException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NotificationTargetType } from "src/generated/prisma/client";
+import { NotificationTargetType } from "src/db/domain";
 import { ReservationReminderService } from "./reservation-reminder.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("ReservationReminderService", () => {
   const target = {
@@ -11,7 +12,7 @@ describe("ReservationReminderService", () => {
     active: true,
     canSend: true,
   };
-  const prisma = {
+  const prisma = createPrismaServiceTestDouble({
     notificationTarget: {
       findFirst: vi.fn(),
       findFirstOrThrow: vi.fn(),
@@ -20,7 +21,7 @@ describe("ReservationReminderService", () => {
       findFirst: vi.fn(),
       create: vi.fn(),
     },
-  };
+  });
   const jobs = {
     createNotificationJob: vi.fn(),
     enqueueNotificationJob: vi.fn(),

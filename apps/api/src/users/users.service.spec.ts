@@ -15,6 +15,7 @@ import {
   defaultNotificationsSettings,
 } from "@lootlog/types";
 import { UsersService } from "./users.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 vi.mock("src/config/battlelog.config", () => ({
   battlelogConfig: { serviceUrl: "http://battlelog-service:4000" },
@@ -75,8 +76,8 @@ describe("UsersService", () => {
     },
   };
 
-  const mockPrismaService = {
-    $transaction: mockFn(),
+  const mockPrismaService = createPrismaServiceTestDouble({
+    transaction: mockFn(),
     userSettings: {
       findUnique: mockFn(),
       upsert: mockFn(),
@@ -89,7 +90,7 @@ describe("UsersService", () => {
       findUnique: mockFn(),
       upsert: mockFn(),
     },
-  };
+  });
   const mockLogger = { warn: mockFn() };
   const mockAuthService = { invalidateIdpTokenCache: mockFn() };
   const mockMembersService = { notifyMembersRemoved: mockFn() };
@@ -103,7 +104,7 @@ describe("UsersService", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    mockPrismaService.$transaction.mockImplementation(
+    mockPrismaService.transaction.mockImplementation(
       (callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx),
     );
 
@@ -1052,7 +1053,7 @@ describe("UsersService", () => {
       { timeout: 5000 },
     );
 
-    expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockPrismaService.transaction).toHaveBeenCalledTimes(1);
     expect(mockTx.member.findMany).toHaveBeenCalledWith({
       where: { userId: "discord-123" },
       select: {

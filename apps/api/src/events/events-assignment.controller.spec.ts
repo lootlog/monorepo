@@ -1,5 +1,5 @@
 import { ForbiddenException } from "@nestjs/common";
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
 import { EventsAssignmentController } from "./events-assignment.controller";
 

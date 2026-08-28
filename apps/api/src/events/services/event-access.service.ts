@@ -1,9 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type {
-  EventHeroNpc,
-  Permission,
-  Role,
-} from "src/generated/prisma/client";
+import type { EventHeroNpc, Permission, Role } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { filterHeroesByLevel } from "src/shared/utils/can-view-event-hero";
 
@@ -43,7 +39,7 @@ export class EventAccessService {
     roles: Role[],
     permissions: Permission[],
   ): Promise<EventHeroNpc> {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: {
         id: heroId,
         eventId,
@@ -65,7 +61,7 @@ export class EventAccessService {
     roles: Role[],
     permissions: Permission[],
   ) {
-    const map = await this.prisma.eventMap.findFirst({
+    const map = await this.prisma.orm.public.EventMap.findFirst({
       where: {
         id: mapId,
         heroNpc: {

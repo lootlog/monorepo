@@ -1,6 +1,6 @@
 import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared/decorators";
 import { ForbiddenException } from "@nestjs/common";
-import type { Permission } from "src/generated/prisma/client";
+import type { Permission } from "src/db/domain";
 
 export const MemberPermissions = createRequiredRequestValueDecorator<
   Permission[]

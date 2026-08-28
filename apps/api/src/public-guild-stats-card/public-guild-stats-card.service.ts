@@ -8,6 +8,7 @@ import { RedisService } from "@lootlog/nest-shared/redis";
 import sharp from "sharp";
 import { serviceConfig } from "src/config/service.config";
 import { PrismaService } from "src/db/prisma.service";
+import { rawTimestamp } from "src/db/raw-values";
 import { RuntimeEnvironment } from "@lootlog/types";
 
 type GuildStatsCardData = {
@@ -136,7 +137,7 @@ export class PublicGuildStatsCardService {
   }
 
   private async getCardGuild(guildId: string): Promise<GuildStatsCardGuild> {
-    const guild = await this.prisma.guild.findFirst({
+    const guild = await this.prisma.orm.public.Guild.findFirst({
       where: {
         id: guildId,
         active: true,
@@ -160,13 +161,13 @@ export class PublicGuildStatsCardService {
     guildId: string,
   ): Promise<GuildStatsCardData["stats"]> {
     const dateFrom = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const rows = await this.prisma.$queryRaw<LootStatsRow[]>`
+    const plan = this.prisma.raw.sql`
       WITH valid_loots AS (
         SELECT DISTINCT l.id
         FROM "LootSubmission" ls
         INNER JOIN "Loot" l ON l.id = ls."lootId"
         WHERE ls."guildId" = ${guildId}
-          AND l."createdAt" >= ${dateFrom}
+          AND l."createdAt" >= ${rawTimestamp(dateFrom)}
       )
       SELECT
         COUNT(DISTINCT l.id) AS total_loots,
@@ -176,7 +177,14 @@ export class PublicGuildStatsCardService {
       INNER JOIN "Loot" l ON l.id = vl.id
       LEFT JOIN "LootItem" li ON li."lootId" = l.id
       LEFT JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-    `;
+    `
+      .returnsRow({
+        total_loots: "pg/int8@1",
+        legendary_items: "pg/int8@1",
+        heroic_items: "pg/int8@1",
+      })
+      .build();
+    const rows = await this.prisma.query<LootStatsRow>(plan);
     const row = rows[0];
 
     return {

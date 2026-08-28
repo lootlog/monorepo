@@ -4,15 +4,16 @@ import { mockFn } from "src/test/mock-fn";
 import { PrismaService } from "src/db/prisma.service";
 import { EVENT_HERO_KILL_QUEUE } from "../constants/event-hero-kill-queue.constant";
 import { EventTimerHooksService } from "./event-timer-hooks.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("EventTimerHooksService", () => {
   let service: EventTimerHooksService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     eventHeroNpc: {
       findMany: mockFn(),
     },
-  };
+  });
 
   const mockQueue = {
     add: mockFn(),

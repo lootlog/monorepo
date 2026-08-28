@@ -9,7 +9,7 @@ import {
   NotificationJobKind as DbNotificationJobKind,
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationTriggerType as DbNotificationTriggerType,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { PrismaService } from "src/db/prisma.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -51,16 +51,17 @@ export class NotificationsEventsHandler {
     maxSpawnTime: string;
     npc?: { name?: string } | null;
   }) {
-    const notificationRules = await this.prisma.notificationRule.findMany({
-      where: {
-        ownerType: DbNotificationOwnerType.GUILD,
-        ownerId: event.guildId,
-        guildId: event.guildId,
-        enabled: true,
-        triggerType: DbNotificationTriggerType.TIMER_BEFORE_SPAWN,
-        OR: [{ world: null }, { world: event.world }],
-      },
-    });
+    const notificationRules =
+      await this.prisma.orm.public.NotificationRule.findMany({
+        where: {
+          ownerType: DbNotificationOwnerType.GUILD,
+          ownerId: event.guildId,
+          guildId: event.guildId,
+          enabled: true,
+          triggerType: DbNotificationTriggerType.TIMER_BEFORE_SPAWN,
+          OR: [{ world: null }, { world: event.world }],
+        },
+      });
 
     await Promise.all(
       notificationRules.map(async (notificationRule) => {
@@ -130,7 +131,7 @@ export class NotificationsEventsHandler {
     npcType?: NpcType | null;
     npcLvl?: number | null;
   }) {
-    const watchedItems = await this.prisma.watchedItem.findMany({
+    const watchedItems = await this.prisma.orm.public.WatchedItem.findMany({
       where: {
         enabled: true,
         itemId: {

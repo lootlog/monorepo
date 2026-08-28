@@ -2,8 +2,8 @@ import { Controller, Get } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import {
   HealthCheckService,
+  HealthCheckError,
   HttpHealthIndicator,
-  PrismaHealthIndicator,
   MemoryHealthIndicator,
   DiskHealthIndicator,
   HealthCheck,
@@ -17,7 +17,6 @@ export class HealthzController {
   constructor(
     private readonly health: HealthCheckService,
     private readonly http: HttpHealthIndicator,
-    private readonly prismaHealth: PrismaHealthIndicator,
     private readonly prisma: PrismaService,
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
@@ -40,7 +39,7 @@ export class HealthzController {
   })
   check() {
     return this.health.check([
-      () => this.prismaHealth.pingCheck("database", this.prisma),
+      () => this.checkDatabase(),
       () =>
         this.http.pingCheck("api-service", `${apiServiceConfig.url}/healthz`),
       () => this.memory.checkHeap("memory_heap", 150 * 1024 * 1024),
@@ -48,5 +47,19 @@ export class HealthzController {
       () =>
         this.disk.checkStorage("storage", { path: "/", thresholdPercent: 0.9 }),
     ]);
+  }
+
+  private async checkDatabase() {
+    try {
+      await this.prisma.ping();
+      return { database: { status: "up" as const } };
+    } catch (error) {
+      throw new HealthCheckError("Database check failed", {
+        database: {
+          status: "down",
+          message: error instanceof Error ? error.message : String(error),
+        },
+      });
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { RABBIT_REQUEST_TYPE } from "@golevelup/nestjs-rabbitmq";
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants";
-import { ActivitySource, ActivityType } from "src/generated/prisma/client";
+import { ActivitySource, ActivityType } from "src/shared/db/domain";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { ActivitiesEventsService } from "./activities-events.service";
 import {

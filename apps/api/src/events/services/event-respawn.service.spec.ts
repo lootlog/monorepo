@@ -15,11 +15,12 @@ import { EventSummaryService } from "./event-summary.service";
 import { PrismaService } from "src/db/prisma.service";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
 import { TimersService } from "src/timers/timers.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("EventRespawnService", () => {
   let service: EventRespawnService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     eventHeroNpc: {
       findFirst: mockFn(),
     },
@@ -38,8 +39,8 @@ describe("EventRespawnService", () => {
     member: {
       findFirst: mockFn(),
     },
-    $transaction: mockFn(),
-  };
+    transaction: mockFn(),
+  });
 
   const mockQueue = {
     add: mockFn(),
@@ -197,7 +198,7 @@ describe("EventRespawnService", () => {
       mockPrismaService.eventMapAssignmentHistory.updateMany.mockResolvedValue({
         count: 1,
       });
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);
@@ -244,7 +245,7 @@ describe("EventRespawnService", () => {
       mockPrismaService.eventMapAssignmentHistory.updateMany.mockResolvedValue({
         count: 1,
       });
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockTimersService.closeEventRespawnTimer.mockResolvedValue(undefined);

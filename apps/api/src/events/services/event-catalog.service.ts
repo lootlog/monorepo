@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import type { Event } from "src/generated/prisma/client";
+import type { Event } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventPointsService } from "src/events/services/event-points.service";
@@ -124,7 +124,7 @@ export class EventCatalogService {
 
     const now = new Date();
 
-    const createdEvent = await this.prisma.event.create({
+    const createdEvent = await this.prisma.orm.public.Event.create({
       data: {
         ...eventData,
         world: normalizedWorld,
@@ -182,7 +182,7 @@ export class EventCatalogService {
         const normalizedWorld = world?.trim().toLowerCase();
         const referenceTime = new Date();
 
-        const events = await this.prisma.event.findMany({
+        const events = await this.prisma.orm.public.Event.findMany({
           where: {
             guildId,
             ...(normalizedWorld && { world: normalizedWorld }),
@@ -225,7 +225,7 @@ export class EventCatalogService {
     return this.eventReadCache.getOrSet(
       this.eventReadCache.getEventKey(guildId, eventId, "overview"),
       async () => {
-        const event = await this.prisma.event.findFirst({
+        const event = await this.prisma.orm.public.Event.findFirst({
           where: {
             id: eventId,
             guildId,
@@ -271,7 +271,7 @@ export class EventCatalogService {
     return this.eventReadCache.getOrSet(
       this.eventReadCache.getEventKey(guildId, eventId, "maps"),
       async () => {
-        const event = await this.prisma.event.findFirst({
+        const event = await this.prisma.orm.public.Event.findFirst({
           where: {
             id: eventId,
             guildId,
@@ -333,7 +333,7 @@ export class EventCatalogService {
   }
 
   async updateEvent(guildId: string, eventId: string, data: UpdateEventDto) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
     });
 
@@ -389,21 +389,21 @@ export class EventCatalogService {
       referenceTime,
     );
 
-    const updatedEvent = await this.prisma.$transaction(
+    const updatedEvent = await this.prisma.transaction(
       async (transactionClient) => {
         if (!currentEventIsActive || !updatedEventIsActive) {
-          await transactionClient.userPinnedEvent.deleteMany({
+          await transactionClient.orm.public.UserPinnedEvent.deleteMany({
             where: { eventId },
           });
         }
 
         if (heroNpcs) {
-          await transactionClient.eventHeroNpc.deleteMany({
+          await transactionClient.orm.public.EventHeroNpc.deleteMany({
             where: { eventId },
           });
         }
 
-        return transactionClient.event.update({
+        return transactionClient.orm.public.Event.update({
           where: { id: eventId },
           data: {
             ...updateData,
@@ -477,7 +477,7 @@ export class EventCatalogService {
   }
 
   async recalculateEventPointsForEvent(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: { id: true, basePointsPerKill: true },
     });
@@ -500,7 +500,7 @@ export class EventCatalogService {
   }
 
   async deleteEvent(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: { id: true },
     });
@@ -520,7 +520,7 @@ export class EventCatalogService {
       eventJobs.map((job) => job.remove().catch(() => undefined)),
     );
 
-    await this.prisma.event.delete({
+    await this.prisma.orm.public.Event.delete({
       where: { id: eventId },
     });
 
@@ -534,7 +534,7 @@ export class EventCatalogService {
 
   async createHero(guildId: string, eventId: string, data: CreateHeroDto) {
     const referenceTime = new Date();
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: {
         id: eventId,
         guildId,
@@ -561,7 +561,7 @@ export class EventCatalogService {
       }
     }
 
-    const createdHero = await this.prisma.eventHeroNpc.create({
+    const createdHero = await this.prisma.orm.public.EventHeroNpc.create({
       data: {
         eventId,
         npcId,
@@ -597,7 +597,7 @@ export class EventCatalogService {
     heroId: string,
     data: UpdateHeroDto,
   ) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: {
         id: heroId,
         eventId,
@@ -614,7 +614,7 @@ export class EventCatalogService {
     //   throw new BadRequestException("EVENT_HERO_NAME_LOCKED");
     // }
 
-    const updatedHero = await this.prisma.eventHeroNpc.update({
+    const updatedHero = await this.prisma.orm.public.EventHeroNpc.update({
       where: { id: heroId },
       data: {
         npcName: data.npcName,
@@ -628,7 +628,7 @@ export class EventCatalogService {
   }
 
   async deleteHero(guildId: string, eventId: string, heroId: string) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: {
         id: heroId,
         eventId,
@@ -640,7 +640,7 @@ export class EventCatalogService {
       throw new NotFoundException("Hero not found");
     }
 
-    await this.prisma.eventHeroNpc.delete({
+    await this.prisma.orm.public.EventHeroNpc.delete({
       where: { id: heroId },
     });
 
@@ -655,7 +655,7 @@ export class EventCatalogService {
     heroId: string,
     data: CreateMapDto,
   ) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: {
         id: heroId,
         eventId,
@@ -667,7 +667,7 @@ export class EventCatalogService {
       throw new NotFoundException("Hero not found");
     }
 
-    const existingMap = await this.prisma.eventMap.findFirst({
+    const existingMap = await this.prisma.orm.public.EventMap.findFirst({
       where: {
         heroNpcId: heroId,
         mapId: data.mapId,
@@ -678,7 +678,7 @@ export class EventCatalogService {
       throw new BadRequestException("Map already exists for this hero");
     }
 
-    const map = await this.prisma.eventMap.create({
+    const map = await this.prisma.orm.public.EventMap.create({
       data: {
         heroNpcId: heroId,
         mapId: data.mapId,
@@ -703,7 +703,7 @@ export class EventCatalogService {
     heroId: string,
     mapId: string,
   ) {
-    const map = await this.prisma.eventMap.findFirst({
+    const map = await this.prisma.orm.public.EventMap.findFirst({
       where: {
         id: mapId,
         heroNpcId: heroId,
@@ -718,7 +718,7 @@ export class EventCatalogService {
       throw new NotFoundException("Map not found");
     }
 
-    await this.prisma.eventMap.delete({
+    await this.prisma.orm.public.EventMap.delete({
       where: { id: mapId },
     });
 
@@ -733,7 +733,7 @@ export class EventCatalogService {
     heroId: string,
     data: CreateLocationDto,
   ) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: {
         id: heroId,
         eventId,
@@ -745,40 +745,43 @@ export class EventCatalogService {
       throw new NotFoundException("Hero not found");
     }
 
-    const existingLocation = await this.prisma.eventMapLocation.findFirst({
-      where: {
-        heroNpcId: heroId,
-        name: data.name,
-      },
-    });
+    const existingLocation =
+      await this.prisma.orm.public.EventMapLocation.findFirst({
+        where: {
+          heroNpcId: heroId,
+          name: data.name,
+        },
+      });
 
     if (existingLocation) {
       throw new BadRequestException("Location with this name already exists");
     }
 
-    const maxOrderResult = await this.prisma.eventMapLocation.aggregate({
-      where: { heroNpcId: heroId },
-      _max: { order: true },
-    });
+    const maxOrderResult =
+      await this.prisma.orm.public.EventMapLocation.aggregate({
+        where: { heroNpcId: heroId },
+        _max: { order: true },
+      });
     const newOrder = (maxOrderResult._max.order ?? -1) + 1;
 
-    const createdLocation = await this.prisma.eventMapLocation.create({
-      data: {
-        heroNpcId: heroId,
-        name: data.name,
-        order: newOrder,
-      },
-      include: {
-        maps: {
-          orderBy: { mapId: "asc" },
-          include: {
-            assignedMembers: {
-              select: memberSelectWithTopRole,
+    const createdLocation =
+      await this.prisma.orm.public.EventMapLocation.create({
+        data: {
+          heroNpcId: heroId,
+          name: data.name,
+          order: newOrder,
+        },
+        include: {
+          maps: {
+            orderBy: { mapId: "asc" },
+            include: {
+              assignedMembers: {
+                select: memberSelectWithTopRole,
+              },
             },
           },
         },
-      },
-    });
+      });
 
     await this.eventReadCache.invalidateEvent(guildId, eventId);
 
@@ -792,7 +795,7 @@ export class EventCatalogService {
     locationId: string,
     data: UpdateLocationDto,
   ) {
-    const location = await this.prisma.eventMapLocation.findFirst({
+    const location = await this.prisma.orm.public.EventMapLocation.findFirst({
       where: {
         id: locationId,
         heroNpcId: heroId,
@@ -808,35 +811,37 @@ export class EventCatalogService {
     }
 
     if (data.name && data.name !== location.name) {
-      const existingLocation = await this.prisma.eventMapLocation.findFirst({
-        where: {
-          heroNpcId: heroId,
-          name: data.name,
-          id: { not: locationId },
-        },
-      });
+      const existingLocation =
+        await this.prisma.orm.public.EventMapLocation.findFirst({
+          where: {
+            heroNpcId: heroId,
+            name: data.name,
+            id: { not: locationId },
+          },
+        });
 
       if (existingLocation) {
         throw new BadRequestException("Location with this name already exists");
       }
     }
 
-    const updatedLocation = await this.prisma.eventMapLocation.update({
-      where: { id: locationId },
-      data: {
-        ...(data.name && { name: data.name }),
-      },
-      include: {
-        maps: {
-          orderBy: { mapId: "asc" },
-          include: {
-            assignedMembers: {
-              select: memberSelectWithTopRole,
+    const updatedLocation =
+      await this.prisma.orm.public.EventMapLocation.update({
+        where: { id: locationId },
+        data: {
+          ...(data.name && { name: data.name }),
+        },
+        include: {
+          maps: {
+            orderBy: { mapId: "asc" },
+            include: {
+              assignedMembers: {
+                select: memberSelectWithTopRole,
+              },
             },
           },
         },
-      },
-    });
+      });
 
     await this.eventReadCache.invalidateEvent(guildId, eventId);
 
@@ -849,7 +854,7 @@ export class EventCatalogService {
     heroId: string,
     locationId: string,
   ) {
-    const location = await this.prisma.eventMapLocation.findFirst({
+    const location = await this.prisma.orm.public.EventMapLocation.findFirst({
       where: {
         id: locationId,
         heroNpcId: heroId,
@@ -864,7 +869,7 @@ export class EventCatalogService {
       throw new NotFoundException("Location not found");
     }
 
-    await this.prisma.eventMapLocation.delete({
+    await this.prisma.orm.public.EventMapLocation.delete({
       where: { id: locationId },
     });
 
@@ -879,7 +884,7 @@ export class EventCatalogService {
     heroId: string,
     data: ReorderLocationsDto,
   ) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: {
         id: heroId,
         eventId,
@@ -891,7 +896,7 @@ export class EventCatalogService {
       throw new NotFoundException("Hero not found");
     }
 
-    const locations = await this.prisma.eventMapLocation.findMany({
+    const locations = await this.prisma.orm.public.EventMapLocation.findMany({
       where: {
         heroNpcId: heroId,
         id: { in: data.locationIds },
@@ -904,14 +909,16 @@ export class EventCatalogService {
       );
     }
 
-    await this.prisma.$transaction(
-      data.locationIds.map((locationId, index) =>
-        this.prisma.eventMapLocation.update({
-          where: { id: locationId },
-          data: { order: index },
-        }),
-      ),
-    );
+    await this.prisma.transaction(async (transaction) => {
+      await Promise.all(
+        data.locationIds.map((locationId, index) =>
+          transaction.orm.public.EventMapLocation.update({
+            where: { id: locationId },
+            data: { order: index },
+          }),
+        ),
+      );
+    });
 
     await this.eventReadCache.invalidateEvent(guildId, eventId);
 
@@ -925,7 +932,7 @@ export class EventCatalogService {
     mapId: string,
     locationId: string | null,
   ) {
-    const map = await this.prisma.eventMap.findFirst({
+    const map = await this.prisma.orm.public.EventMap.findFirst({
       where: {
         id: mapId,
         heroNpcId: heroId,
@@ -941,7 +948,7 @@ export class EventCatalogService {
     }
 
     if (locationId) {
-      const location = await this.prisma.eventMapLocation.findFirst({
+      const location = await this.prisma.orm.public.EventMapLocation.findFirst({
         where: {
           id: locationId,
           heroNpcId: heroId,
@@ -953,7 +960,7 @@ export class EventCatalogService {
       }
     }
 
-    const updatedMap = await this.prisma.eventMap.update({
+    const updatedMap = await this.prisma.orm.public.EventMap.update({
       where: { id: mapId },
       data: { locationId },
       include: {
@@ -970,7 +977,7 @@ export class EventCatalogService {
   }
 
   async getLocations(guildId: string, eventId: string, heroId: string) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: {
         id: heroId,
         eventId,
@@ -982,7 +989,7 @@ export class EventCatalogService {
       throw new NotFoundException("Hero not found");
     }
 
-    return this.prisma.eventMapLocation.findMany({
+    return this.prisma.orm.public.EventMapLocation.findMany({
       where: { heroNpcId: heroId },
       orderBy: { order: "asc" },
       include: {
@@ -1005,7 +1012,7 @@ export class EventCatalogService {
   ): Promise<TimerNpcData | null> {
     const manualTimerType = String(TIMER_TYPES.CUSTOM_MANUAL);
 
-    const results = await this.prisma.$queryRaw<{ npc: TimerNpcData }[]>`
+    const plan = this.prisma.raw.sql`
       SELECT t."npc"
       FROM "Timer" t
       WHERE t."guildId" = ${guildId}
@@ -1014,7 +1021,10 @@ export class EventCatalogService {
         AND COALESCE(t."npc"->>'margonemType', '0') != ${manualTimerType}
       ORDER BY t."updatedAt" DESC
       LIMIT 1
-    `;
+    `
+      .returnsRow({ npc: "pg/jsonb@1" })
+      .build();
+    const results = await this.prisma.query<{ npc: TimerNpcData }>(plan);
 
     if (results.length === 0) {
       return null;

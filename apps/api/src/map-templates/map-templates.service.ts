@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type { Prisma } from "src/generated/prisma/client";
+import type { Prisma } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { MapTemplateMapsResponseSchema } from "src/shared/dto/map-template-response.dto";
 import type { CreateMapTemplateDto } from "./dto/create-map-template.dto";
@@ -9,7 +9,7 @@ export class MapTemplatesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getTemplates(guildId: string) {
-    const templates = await this.prisma.mapTemplate.findMany({
+    const templates = await this.prisma.orm.public.MapTemplate.findMany({
       where: { guildId },
       orderBy: { name: "asc" },
     });
@@ -18,7 +18,7 @@ export class MapTemplatesService {
   }
 
   async createTemplate(guildId: string, data: CreateMapTemplateDto) {
-    const template = await this.prisma.mapTemplate.create({
+    const template = await this.prisma.orm.public.MapTemplate.create({
       data: {
         guildId,
         name: data.name,
@@ -34,7 +34,7 @@ export class MapTemplatesService {
     templateId: string,
     data: CreateMapTemplateDto,
   ) {
-    const template = await this.prisma.mapTemplate.findFirst({
+    const template = await this.prisma.orm.public.MapTemplate.findFirst({
       where: { id: templateId, guildId },
     });
 
@@ -42,7 +42,7 @@ export class MapTemplatesService {
       throw new NotFoundException("Template not found");
     }
 
-    const templateToUpdate = await this.prisma.mapTemplate.update({
+    const templateToUpdate = await this.prisma.orm.public.MapTemplate.update({
       where: { id: templateId },
       data: {
         name: data.name,
@@ -54,7 +54,7 @@ export class MapTemplatesService {
   }
 
   async deleteTemplate(guildId: string, templateId: string) {
-    const template = await this.prisma.mapTemplate.findFirst({
+    const template = await this.prisma.orm.public.MapTemplate.findFirst({
       where: { id: templateId, guildId },
     });
 
@@ -62,7 +62,7 @@ export class MapTemplatesService {
       throw new NotFoundException("Template not found");
     }
 
-    await this.prisma.mapTemplate.delete({
+    await this.prisma.orm.public.MapTemplate.delete({
       where: { id: templateId },
     });
 

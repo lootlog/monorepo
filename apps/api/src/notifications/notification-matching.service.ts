@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { NotificationFilters } from "@lootlog/types";
-import { NpcType, Permission, type Prisma } from "src/generated/prisma/client";
+import { NpcType, Permission, type Prisma } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 
@@ -156,7 +156,7 @@ export class NotificationMatchingService {
       return activeGuildIdsByOwnerId;
     }
 
-    const memberships = await this.prisma.member.findMany({
+    const memberships = await this.prisma.orm.public.Member.findMany({
       where: {
         userId: {
           in: uniqueOwnerIds,
@@ -194,7 +194,7 @@ export class NotificationMatchingService {
       return result;
     }
 
-    const memberships = await this.prisma.member.findMany({
+    const memberships = await this.prisma.orm.public.Member.findMany({
       where: {
         userId: { in: uniqueOwnerIds },
         guildId: { in: uniqueGuildIds },

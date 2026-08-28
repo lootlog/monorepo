@@ -24,7 +24,7 @@ import {
 } from "src/chat/dto/chat-message-response.dto";
 import { SendMessageDto } from "src/chat/dto/send-message.dto";
 import { UpdateMessageDto } from "src/chat/dto/update-message.dto";
-import { type Guild, Permission } from "src/generated/prisma/client";
+import { type Guild, Permission } from "src/db/domain";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
 import { Permissions } from "src/shared/permissions/permissions.decorator";

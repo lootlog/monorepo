@@ -1,6 +1,6 @@
 import { createZodDto, type ZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { ActivitySource, ActivityType } from "src/generated/prisma/client";
+import { ActivitySource, ActivityType } from "src/shared/db/domain";
 import {
   isoDatetimeCodec,
   unknownRecordSchema,

@@ -16,11 +16,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import {
-  type Guild,
-  type Member,
-  Permission,
-} from "src/generated/prisma/client";
+import { type Guild, type Member, Permission } from "src/db/domain";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { GuildMember } from "src/shared/decorators/member.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";

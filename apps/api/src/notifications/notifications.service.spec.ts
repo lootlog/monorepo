@@ -3,7 +3,7 @@ import { mockFn } from "src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { NotificationTargetType } from "@lootlog/types";
-import { Prisma } from "src/generated/prisma/client";
+import { Prisma } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { GuildsService } from "src/guilds/guilds.service";
 import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
@@ -17,6 +17,7 @@ import { NotificationRuleService } from "./notification-rule.service";
 import { NotificationTargetService } from "./notification-target.service";
 import { NotificationsEventsHandler } from "./notifications-events.handler";
 import { WatchedItemService } from "./watched-item.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("Notification Services", () => {
   let targetService: NotificationTargetService;
@@ -78,8 +79,8 @@ describe("Notification Services", () => {
     ...overrides,
   });
 
-  const mockPrisma = {
-    $transaction: mockFn(),
+  const mockPrisma = createPrismaServiceTestDouble({
+    transaction: mockFn(),
     guild: {
       findUnique: mockFn(),
     },
@@ -125,7 +126,7 @@ describe("Notification Services", () => {
       update: mockFn(),
       updateMany: mockFn(),
     },
-  };
+  });
 
   const removedJobs = [
     {
@@ -231,7 +232,7 @@ describe("Notification Services", () => {
     mockPrisma.notificationRuleTarget.findMany.mockResolvedValue([]);
     mockPrisma.notificationRule.deleteMany.mockResolvedValue({ count: 0 });
     mockPrisma.notificationRule.delete.mockResolvedValue(undefined);
-    mockPrisma.$transaction.mockImplementation((callback) =>
+    mockPrisma.transaction.mockImplementation((callback) =>
       callback({
         watchedItem: {
           update: mockPrisma.watchedItem.update,
@@ -1162,14 +1163,10 @@ describe("Notification Services", () => {
   });
 
   it("recreates a canceled job when idempotency key already exists", async () => {
-    const uniqueConstraintError = new Error("P2002") as Error & {
-      code: string;
+    const uniqueConstraintError = new Error("unique constraint") as Error & {
+      sqlState: string;
     };
-    uniqueConstraintError.code = "P2002";
-    Object.setPrototypeOf(
-      uniqueConstraintError,
-      Prisma.PrismaClientKnownRequestError.prototype,
-    );
+    uniqueConstraintError.sqlState = "23505";
 
     mockPrisma.notificationJob.create.mockRejectedValueOnce(
       uniqueConstraintError,
@@ -1217,7 +1214,7 @@ describe("Notification Services", () => {
         ),
       },
     });
-    expect(mockPrisma.$transaction).toHaveBeenCalled();
+    expect(mockPrisma.transaction).toHaveBeenCalled();
     expect(createdJob).toEqual({
       id: "job-created",
       status: "PENDING",

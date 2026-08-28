@@ -1,10 +1,5 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import type {
-  Guild,
-  ItemRarity,
-  Permission,
-  Role,
-} from "src/generated/prisma/client";
+import type { Guild, ItemRarity, Permission, Role } from "src/db/domain";
 import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 import { LootsService } from "src/loots/loots.service";
 import { PrismaService } from "src/db/prisma.service";
@@ -142,7 +137,7 @@ export class EventWrappedService {
     permissions: Permission[],
     roles: Role[],
   ): Promise<EventWrappedResponseDto> {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId: guild.id },
       select: {
         id: true,
@@ -174,13 +169,14 @@ export class EventWrappedService {
     const eventWindowStart = event.startsAt ?? event.createdAt;
     const eventWindowEnd = event.endsAt ?? new Date();
     const heroIds = event.heroNpcs.map((hero) => hero.id);
-    const heroByName = new Map(
-      event.heroNpcs.map((hero) => [hero.npcName.toLowerCase(), hero]),
-    );
+    const heroByName = new Map<
+      string,
+      { id: string; npcName: string; npcIcon: string | null }
+    >(event.heroNpcs.map((hero) => [hero.npcName.toLowerCase(), hero]));
 
     const [rankings, kills, windowSummaries, assignments, loots] =
       await Promise.all([
-        this.prisma.eventRanking.findMany({
+        this.prisma.orm.public.EventRanking.findMany({
           where: { eventId },
           select: {
             memberId: true,
@@ -198,7 +194,7 @@ export class EventWrappedService {
             },
           },
         }) as Promise<RankingRow[]>,
-        this.prisma.eventHeroKill.findMany({
+        this.prisma.orm.public.EventHeroKill.findMany({
           where: { heroNpcId: { in: heroIds } },
           select: {
             id: true,
@@ -208,7 +204,7 @@ export class EventWrappedService {
           },
           orderBy: { killedAt: "asc" },
         }),
-        this.prisma.eventRespawnWindowSummary.findMany({
+        this.prisma.orm.public.EventRespawnWindowSummary.findMany({
           where: { heroNpcId: { in: heroIds } },
           select: {
             heroNpcId: true,
@@ -219,7 +215,7 @@ export class EventWrappedService {
             mapStats: true,
           },
         }) as Promise<SummaryRow[]>,
-        this.prisma.eventMapAssignmentHistory.findMany({
+        this.prisma.orm.public.EventMapAssignmentHistory.findMany({
           where: { heroNpcId: { in: heroIds } },
           select: {
             mapId: true,

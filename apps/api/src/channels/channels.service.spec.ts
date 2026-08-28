@@ -8,6 +8,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { ChannelsService } from "./channels.service";
 import { DiscordBotClientService } from "src/discord-bot-client/discord-bot-client.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 vi.mock("src/config/discord-bot.config", () => ({
   discordBotConfig: { channelSnapshotStaleSeconds: 300 },
@@ -29,8 +30,8 @@ describe("ChannelsService", () => {
     },
   };
 
-  const mockPrisma = {
-    $transaction: mockFn(),
+  const mockPrisma = createPrismaServiceTestDouble({
+    transaction: mockFn(),
     guild: {
       findUnique: mockFn(),
     },
@@ -41,7 +42,7 @@ describe("ChannelsService", () => {
       findUnique: mockFn(),
       upsert: mockFn(),
     },
-  };
+  });
 
   const mockDiscordBotClient = {
     refreshGuildChannels: mockFn(),
@@ -91,7 +92,7 @@ describe("ChannelsService", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    mockPrisma.$transaction.mockImplementation(
+    mockPrisma.transaction.mockImplementation(
       (callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx),
     );
     mockPrisma.guild.findUnique.mockResolvedValue({ id: "guild-1" });

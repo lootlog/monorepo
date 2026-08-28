@@ -3,7 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import type { EventKillPoint, Prisma } from "src/generated/prisma/client";
+import type { ApiApplicationTransaction } from "src/db/application-client";
+import type { EventKillPoint, Prisma } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { EventEmitterService } from "./event-emitter.service";
 import { EventReadCacheService } from "./event-read-cache.service";
@@ -81,7 +82,7 @@ export class EventPointsService {
     return this.eventReadCache.getOrSet(
       this.eventReadCache.getEventKey(guildId, eventId, "ranking"),
       async () => {
-        const event = await this.prisma.event.findFirst({
+        const event = await this.prisma.orm.public.Event.findFirst({
           where: { id: eventId, guildId },
         });
 
@@ -89,7 +90,7 @@ export class EventPointsService {
           throw new NotFoundException("Event not found");
         }
 
-        return this.prisma.eventRanking.findMany({
+        return this.prisma.orm.public.EventRanking.findMany({
           where: { eventId },
           select: {
             id: true,
@@ -241,24 +242,25 @@ export class EventPointsService {
     memberId: number;
     heroNpcName: string;
   }): Promise<boolean> {
-    const matchingKillPoints = await this.prisma.eventKillPoint.findMany({
-      where: {
-        memberId: params.memberId,
-        manualAdjustmentPoints: {
-          not: 0,
-        },
-        kill: {
-          heroNpc: {
-            eventId: params.eventId,
-            npcName: params.heroNpcName,
+    const matchingKillPoints =
+      await this.prisma.orm.public.EventKillPoint.findMany({
+        where: {
+          memberId: params.memberId,
+          manualAdjustmentPoints: {
+            not: 0,
+          },
+          kill: {
+            heroNpc: {
+              eventId: params.eventId,
+              npcName: params.heroNpcName,
+            },
           },
         },
-      },
-      select: {
-        confirmationDeadlineAt: true,
-        confirmedAt: true,
-      },
-    });
+        select: {
+          confirmationDeadlineAt: true,
+          confirmedAt: true,
+        },
+      });
 
     return matchingKillPoints.some((killPoint) =>
       this.isKillPointCountedInRanking({
@@ -409,7 +411,7 @@ export class EventPointsService {
   private async recalculateEventPointsWithCurrentRules(
     eventId: string,
   ): Promise<void> {
-    const event = await this.prisma.event.findUnique({
+    const event = await this.prisma.orm.public.Event.findUnique({
       where: { id: eventId },
       select: {
         scoringMode: true,
@@ -428,17 +430,19 @@ export class EventPointsService {
       scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(event.scoringRules)
         : null;
-    const existingRankings = await this.prisma.eventRanking.findMany({
-      where: { eventId },
-      select: {
-        id: true,
-        memberId: true,
-        heroNpcName: true,
-        totalPoints: true,
-        manualAdjustmentPoints: true,
-        pointsModified: true,
+    const existingRankings = await this.prisma.orm.public.EventRanking.findMany(
+      {
+        where: { eventId },
+        select: {
+          id: true,
+          memberId: true,
+          heroNpcName: true,
+          totalPoints: true,
+          manualAdjustmentPoints: true,
+          pointsModified: true,
+        },
       },
-    });
+    );
     const existingRankingsByKey = new Map(
       existingRankings.map((ranking) => [
         this.createRankingKey({
@@ -449,7 +453,7 @@ export class EventPointsService {
       ]),
     );
 
-    const killPoints = await this.prisma.eventKillPoint.findMany({
+    const killPoints = await this.prisma.orm.public.EventKillPoint.findMany({
       where: {
         kill: {
           heroNpc: {
@@ -512,7 +516,7 @@ export class EventPointsService {
       Math.max(...killPoints.map((point) => point.kill.killedAt.getTime())),
     );
     const windowSummaries =
-      await this.prisma.eventRespawnWindowSummary.findMany({
+      await this.prisma.orm.public.EventRespawnWindowSummary.findMany({
         where: {
           killId: {
             in: Array.from(new Set(killPoints.map((point) => point.kill.id))),
@@ -544,7 +548,7 @@ export class EventPointsService {
 
     const assignmentHistory =
       allMapIds.length > 0 && allMemberIds.length > 0
-        ? await this.prisma.eventMapAssignmentHistory.findMany({
+        ? await this.prisma.orm.public.EventMapAssignmentHistory.findMany({
             where: {
               mapId: { in: allMapIds },
               memberId: { in: allMemberIds },
@@ -693,13 +697,15 @@ export class EventPointsService {
     }
     const processedRankingKeys = new Set<string>();
 
-    const transactionOperations: Prisma.PrismaPromise<unknown>[] =
-      recalculatedKillPoints.map((recalculatedKillPoint) =>
-        this.prisma.eventKillPoint.update({
+    const transactionOperations: Array<
+      (transaction: ApiApplicationTransaction) => Promise<unknown>
+    > = recalculatedKillPoints.map(
+      (recalculatedKillPoint) => (transaction) =>
+        transaction.orm.public.EventKillPoint.update({
           where: { id: recalculatedKillPoint.killPointId },
           data: recalculatedKillPoint.updateData,
         }),
-      );
+    );
 
     for (const ranking of rankingMap.values()) {
       const rankingKey = this.createRankingKey({
@@ -728,8 +734,8 @@ export class EventPointsService {
       processedRankingKeys.add(rankingKey);
 
       if (existingRanking) {
-        transactionOperations.push(
-          this.prisma.eventRanking.update({
+        transactionOperations.push((transaction) =>
+          transaction.orm.public.EventRanking.update({
             where: { id: existingRanking.id },
             data: persistedRankingData,
           }),
@@ -737,8 +743,8 @@ export class EventPointsService {
         continue;
       }
 
-      transactionOperations.push(
-        this.prisma.eventRanking.create({
+      transactionOperations.push((transaction) =>
+        transaction.orm.public.EventRanking.create({
           data: {
             eventId,
             memberId: ranking.memberId,
@@ -765,8 +771,8 @@ export class EventPointsService {
       });
 
       if (manualAdjustmentPoints !== 0) {
-        transactionOperations.push(
-          this.prisma.eventRanking.update({
+        transactionOperations.push((transaction) =>
+          transaction.orm.public.EventRanking.update({
             where: { id: existingRanking.id },
             data: {
               totalPoints: manualAdjustmentPoints,
@@ -781,14 +787,18 @@ export class EventPointsService {
         continue;
       }
 
-      transactionOperations.push(
-        this.prisma.eventRanking.delete({
+      transactionOperations.push((transaction) =>
+        transaction.orm.public.EventRanking.delete({
           where: { id: existingRanking.id },
         }),
       );
     }
 
-    await this.prisma.$transaction(transactionOperations);
+    await this.prisma.transaction(async (transaction) => {
+      for (const operation of transactionOperations) {
+        await operation(transaction);
+      }
+    });
 
     await this.emitRankingUpdateByEventId(eventId);
   }
@@ -894,7 +904,7 @@ export class EventPointsService {
       return [];
     }
 
-    const maps = await this.prisma.eventMap.findMany({
+    const maps = await this.prisma.orm.public.EventMap.findMany({
       where: { heroNpcId },
       select: { id: true, mapName: true },
     });
@@ -912,7 +922,7 @@ export class EventPointsService {
     const mapIds = maps.map((m) => m.id);
     const mapNamesById = new Map(maps.map((map) => [map.id, map.mapName]));
 
-    const logs = await this.prisma.eventPresenceLog.findMany({
+    const logs = await this.prisma.orm.public.EventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
         memberId: { in: memberIds },
@@ -993,7 +1003,7 @@ export class EventPointsService {
       return [];
     }
 
-    const logs = await this.prisma.eventPresenceLog.findMany({
+    const logs = await this.prisma.orm.public.EventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
         memberId,
@@ -1056,7 +1066,7 @@ export class EventPointsService {
       return [];
     }
 
-    const logs = await this.prisma.eventPresenceLog.findMany({
+    const logs = await this.prisma.orm.public.EventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
         memberId: { in: memberIds },
@@ -1135,7 +1145,7 @@ export class EventPointsService {
           this.getTrackingDurationSecondsForRanking({
             trackingDurationSeconds: killPoint.trackingDurationSeconds,
           });
-        const existing = await this.prisma.eventRanking.findUnique({
+        const existing = await this.prisma.orm.public.EventRanking.findUnique({
           where: {
             eventId_memberId_heroNpcName: {
               eventId,
@@ -1152,7 +1162,7 @@ export class EventPointsService {
               killPoint.afkPercentage) /
             newTotalKills;
 
-          await this.prisma.eventRanking.update({
+          await this.prisma.orm.public.EventRanking.update({
             where: {
               eventId_memberId_heroNpcName: {
                 eventId,
@@ -1173,7 +1183,7 @@ export class EventPointsService {
           return;
         }
 
-        await this.prisma.eventRanking.create({
+        await this.prisma.orm.public.EventRanking.create({
           data: {
             eventId,
             memberId: killPoint.memberId,
@@ -1221,7 +1231,7 @@ export class EventPointsService {
       };
     }>;
   }> {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: { id: true },
     });
@@ -1232,7 +1242,7 @@ export class EventPointsService {
 
     const now = new Date();
     const [pendingKillPoints, expiredKillPoints] = await Promise.all([
-      this.prisma.eventKillPoint.findMany({
+      this.prisma.orm.public.EventKillPoint.findMany({
         where: {
           memberId,
           confirmedAt: null,
@@ -1268,7 +1278,7 @@ export class EventPointsService {
           confirmationDeadlineAt: "asc",
         },
       }),
-      this.prisma.eventKillPoint.findMany({
+      this.prisma.orm.public.EventKillPoint.findMany({
         where: {
           memberId,
           confirmedAt: null,
@@ -1370,7 +1380,7 @@ export class EventPointsService {
     killIds: string[],
   ): Promise<{ acknowledgedCount: number }> {
     const acknowledgedAt = new Date();
-    const result = await this.prisma.eventKillPoint.updateMany({
+    const result = await this.prisma.orm.public.EventKillPoint.updateMany({
       where: {
         killId: {
           in: killIds,
@@ -1406,29 +1416,30 @@ export class EventPointsService {
     killId: string,
     memberId: number,
   ): Promise<{ success: true; confirmedNow: boolean }> {
-    const memberKillPoints = await this.prisma.eventKillPoint.findMany({
-      where: {
-        killId,
-        memberId,
-        kill: {
-          heroNpc: {
-            eventId,
-            event: { guildId },
+    const memberKillPoints =
+      await this.prisma.orm.public.EventKillPoint.findMany({
+        where: {
+          killId,
+          memberId,
+          kill: {
+            heroNpc: {
+              eventId,
+              event: { guildId },
+            },
           },
         },
-      },
-      include: {
-        kill: {
-          include: {
-            heroNpc: {
-              select: {
-                npcName: true,
+        include: {
+          kill: {
+            include: {
+              heroNpc: {
+                select: {
+                  npcName: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
     if (memberKillPoints.length === 0) {
       throw new NotFoundException("Kill point not found");
@@ -1463,8 +1474,8 @@ export class EventPointsService {
       return { success: true, confirmedNow: false };
     }
 
-    const confirmedPoints = await this.prisma.$transaction(async (tx) => {
-      await tx.eventKillPoint.updateMany({
+    const confirmedPoints = await this.prisma.transaction(async (tx) => {
+      await tx.orm.public.EventKillPoint.updateMany({
         where: {
           id: { in: pointsToConfirmIds },
           confirmedAt: null,
@@ -1474,7 +1485,7 @@ export class EventPointsService {
         },
       });
 
-      return tx.eventKillPoint.findMany({
+      return tx.orm.public.EventKillPoint.findMany({
         where: {
           id: { in: pointsToConfirmIds },
         },
@@ -1503,7 +1514,7 @@ export class EventPointsService {
     comment: string | undefined,
     editedByUserId: string,
   ) {
-    const killPoint = await this.prisma.eventKillPoint.findFirst({
+    const killPoint = await this.prisma.orm.public.EventKillPoint.findFirst({
       where: {
         id: killPointId,
         killId,
@@ -1540,7 +1551,7 @@ export class EventPointsService {
       killPoint.manualAdjustmentPoints + normalizedPointsDelta,
     );
 
-    const updated = await this.prisma.eventKillPoint.update({
+    const updated = await this.prisma.orm.public.EventKillPoint.update({
       where: { id: killPointId },
       data: {
         points: updatedKillPoints,
@@ -1554,7 +1565,7 @@ export class EventPointsService {
     });
 
     if (isCountedInRanking) {
-      const ranking = await this.prisma.eventRanking.findFirst({
+      const ranking = await this.prisma.orm.public.EventRanking.findFirst({
         where: {
           eventId,
           memberId: killPoint.memberId,
@@ -1567,7 +1578,7 @@ export class EventPointsService {
           ranking.totalPoints + normalizedPointsDelta,
         );
 
-        await this.prisma.eventRanking.update({
+        await this.prisma.orm.public.EventRanking.update({
           where: { id: ranking.id },
           data: {
             totalPoints: { increment: normalizedPointsDelta },
@@ -1575,7 +1586,7 @@ export class EventPointsService {
           },
         });
 
-        await this.prisma.eventPointsEditHistory.create({
+        await this.prisma.orm.public.EventPointsEditHistory.create({
           data: {
             rankingId: ranking.id,
             previousPoints: ranking.totalPoints,
@@ -1604,7 +1615,7 @@ export class EventPointsService {
     comment: string | undefined,
     editedByUserId: string,
   ) {
-    const ranking = await this.prisma.eventRanking.findFirst({
+    const ranking = await this.prisma.orm.public.EventRanking.findFirst({
       where: {
         id: rankingId,
         eventId,
@@ -1636,7 +1647,7 @@ export class EventPointsService {
         heroNpcName: ranking.heroNpcName,
       });
 
-    await this.prisma.eventPointsEditHistory.create({
+    await this.prisma.orm.public.EventPointsEditHistory.create({
       data: {
         rankingId,
         previousPoints,
@@ -1647,7 +1658,7 @@ export class EventPointsService {
       },
     });
 
-    const updated = await this.prisma.eventRanking.update({
+    const updated = await this.prisma.orm.public.EventRanking.update({
       where: { id: rankingId },
       data: {
         totalPoints: normalizedNewTotalPoints,
@@ -1673,20 +1684,21 @@ export class EventPointsService {
       return new Map();
     }
 
-    const historyEntries = await this.prisma.eventPointsEditHistory.findMany({
-      where: {
-        rankingId: {
-          in: rankingIds,
-        },
-        ranking: {
-          eventId,
-          event: {
-            guildId,
+    const historyEntries =
+      await this.prisma.orm.public.EventPointsEditHistory.findMany({
+        where: {
+          rankingId: {
+            in: rankingIds,
+          },
+          ranking: {
+            eventId,
+            event: {
+              guildId,
+            },
           },
         },
-      },
-      orderBy: { editedAt: "desc" },
-    });
+        orderBy: { editedAt: "desc" },
+      });
 
     const editedByUserIds = Array.from(
       new Set(historyEntries.map((entry) => entry.editedByUserId)),
@@ -1694,7 +1706,7 @@ export class EventPointsService {
     const editors =
       editedByUserIds.length === 0
         ? []
-        : await this.prisma.member.findMany({
+        : await this.prisma.orm.public.Member.findMany({
             where: {
               guildId,
               globalUserId: {
@@ -1737,7 +1749,7 @@ export class EventPointsService {
   }
 
   private async emitRankingUpdateByEventId(eventId: string): Promise<void> {
-    const event = await this.prisma.event.findUnique({
+    const event = await this.prisma.orm.public.Event.findUnique({
       where: { id: eventId },
       select: { guildId: true, id: true },
     });

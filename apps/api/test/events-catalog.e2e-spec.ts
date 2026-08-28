@@ -2,7 +2,7 @@ import { type INestApplication } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import request from "supertest";
 import { PrismaService } from "../src/db/prisma.service";
-import { Permission } from "../src/generated/prisma/client";
+import { Permission } from "src/db/domain";
 import {
   closeE2EApp,
   createE2EApp,
@@ -126,9 +126,9 @@ describe("Events Catalog E2E", () => {
     )
       .expect(200)
       .expect((response) => expect(response.body.success).toBe(true));
-    await expect(prisma.event.count({ where: { id: eventId } })).resolves.toBe(
-      0,
-    );
+    await expect(
+      prisma.orm.public.Event.count({ where: { id: eventId } }),
+    ).resolves.toBe(0);
   });
 
   it("rejects invalid create/update payloads and missing events", async () => {

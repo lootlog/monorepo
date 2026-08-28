@@ -18,17 +18,18 @@ import { ErrorKey } from "src/timers/enum/error-key.enum";
 import { ExecutionError } from "redlock";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { RoutingKey } from "src/enum/routing-key.enum";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 import {
   NpcType,
   Permission,
   Profession,
   TimerHistoryAction,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 
 describe("TimersService", () => {
   let service: TimersService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     timer: {
       upsert: mockFn(),
       create: mockFn(),
@@ -49,9 +50,9 @@ describe("TimersService", () => {
     userSettingDocument: {
       findUnique: mockFn(),
     },
-    $transaction: mockFn(),
-    $queryRaw: mockFn(),
-  };
+    transaction: mockFn(),
+    query: mockFn(),
+  });
 
   const mockAmqpConnection = {
     publish: mockFn(),
@@ -165,7 +166,7 @@ describe("TimersService", () => {
       count: 0,
     });
     mockPrismaService.userSettingDocument.findUnique.mockResolvedValue(null);
-    mockPrismaService.$transaction.mockImplementation((callback) =>
+    mockPrismaService.transaction.mockImplementation((callback) =>
       callback(mockPrismaService),
     );
   });
@@ -1887,7 +1888,7 @@ describe("TimersService", () => {
     ];
 
     it("should search NPCs with timer data", async () => {
-      mockPrismaService.$queryRaw = mockFn<
+      mockPrismaService.query = mockFn<
         () => Promise<unknown>
       >().mockResolvedValue(mockTimersQueryResult);
 
@@ -1898,7 +1899,7 @@ describe("TimersService", () => {
         10,
       );
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+      expect(mockPrismaService.query).toHaveBeenCalled();
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         npcId: 123,
@@ -1916,7 +1917,7 @@ describe("TimersService", () => {
     });
 
     it("should handle empty search results", async () => {
-      mockPrismaService.$queryRaw = mockFn().mockResolvedValue([]);
+      mockPrismaService.query = mockFn().mockResolvedValue([]);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -1938,8 +1939,7 @@ describe("TimersService", () => {
         },
       ];
 
-      mockPrismaService.$queryRaw =
-        mockFn().mockResolvedValue(invalidTimerData);
+      mockPrismaService.query = mockFn().mockResolvedValue(invalidTimerData);
 
       const result = await service.searchNpcsWithTimerData(
         "guild1",
@@ -1952,13 +1952,13 @@ describe("TimersService", () => {
     });
 
     it("should use default limit when not provided", async () => {
-      mockPrismaService.$queryRaw = mockFn<
+      mockPrismaService.query = mockFn<
         () => Promise<unknown>
       >().mockResolvedValue(mockTimersQueryResult);
 
       await service.searchNpcsWithTimerData("guild1", "test-world", "Test");
 
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+      expect(mockPrismaService.query).toHaveBeenCalled();
     });
   });
 });

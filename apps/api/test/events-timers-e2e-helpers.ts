@@ -14,7 +14,7 @@ import {
   type Member,
   Permission,
   type Role,
-} from "../src/generated/prisma/client";
+} from "src/db/domain";
 import { buildTimerKey } from "../src/timers/utils/timer-key";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
 
@@ -70,7 +70,7 @@ export async function closeE2EApp(
   app: INestApplication,
   prisma: PrismaService,
 ) {
-  await prisma.$disconnect();
+  await prisma.onModuleDestroy();
   await app.close();
   await new Promise((resolve) => setTimeout(resolve, 500));
 }
@@ -79,7 +79,12 @@ export async function resetEventsTimersState(
   prisma: PrismaService,
   redis: RedisService,
 ) {
-  await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings", "Event", "EventHeroNpc", "EventMap", "EventMapLocation", "EventMapAssignmentHistory", "EventMapCoverageGap", "EventPresenceLog", "EventHeroKill", "EventKillPoint", "EventRanking", "EventPointsEditHistory", "EventRespawnWindowSummary" CASCADE`;
+  await prisma.execute(
+    prisma.raw
+      .sql`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings", "Event", "EventHeroNpc", "EventMap", "EventMapLocation", "EventMapAssignmentHistory", "EventMapCoverageGap", "EventPresenceLog", "EventHeroKill", "EventKillPoint", "EventRanking", "EventPointsEditHistory", "EventRespawnWindowSummary" CASCADE`
+      .affectedCount()
+      .build(),
+  );
   await Promise.all([
     redis.deleteByPattern("timer:*"),
     redis.deleteByPattern("perms:*"),
@@ -93,7 +98,7 @@ export async function createGuildFixture(
   prisma: PrismaService,
   overrides: Partial<Guild> = {},
 ) {
-  return prisma.guild.create({
+  return prisma.orm.public.Guild.create({
     data: {
       id: overrides.id ?? "e2e-guild",
       name: overrides.name ?? "E2E Guild",
@@ -117,7 +122,7 @@ export async function createMemberFixture(
   },
 ): Promise<{ role: Role; member: Member }> {
   const auth = params.auth ?? TEST_AUTH;
-  const role = await prisma.role.create({
+  const role = await prisma.orm.public.Role.create({
     data: {
       id: params.roleId ?? `${auth.discordId}-role`,
       guildId: params.guildId,
@@ -127,7 +132,7 @@ export async function createMemberFixture(
       lvlRangeTo: params.lvlRangeTo,
     },
   });
-  const member = await prisma.member.create({
+  const member = await prisma.orm.public.Member.create({
     data: {
       userId: auth.discordId,
       guildId: params.guildId,
@@ -161,7 +166,7 @@ export async function createEventFixture(
   hero: EventHeroNpc;
   map: EventMap;
 }> {
-  const event = await prisma.event.create({
+  const event = await prisma.orm.public.Event.create({
     data: {
       guildId: params.guildId,
       name: params.name ?? "E2E Event",
@@ -173,7 +178,7 @@ export async function createEventFixture(
       endsAt: params.endsAt,
     },
   });
-  const hero = await prisma.eventHeroNpc.create({
+  const hero = await prisma.orm.public.EventHeroNpc.create({
     data: {
       eventId: event.id,
       npcId: params.npcId === undefined ? TEST_NPC.id : params.npcId,
@@ -182,7 +187,7 @@ export async function createEventFixture(
       npcLvl: params.npcLvl === undefined ? TEST_NPC.lvl : params.npcLvl,
     },
   });
-  const map = await prisma.eventMap.create({
+  const map = await prisma.orm.public.EventMap.create({
     data: {
       heroNpcId: hero.id,
       mapId: params.mapId ?? 5001,
@@ -201,7 +206,7 @@ export async function createLocationFixture(
     order?: number;
   },
 ): Promise<EventMapLocation> {
-  return prisma.eventMapLocation.create({
+  return prisma.orm.public.EventMapLocation.create({
     data: {
       heroNpcId: params.heroNpcId,
       name: params.name ?? "E2E Location",
@@ -222,7 +227,7 @@ export async function createTimerFixture(
   },
 ) {
   const npc = params.npc ?? TEST_NPC;
-  return prisma.timer.create({
+  return prisma.orm.public.Timer.create({
     data: {
       guildId: params.guildId,
       createdById: params.memberId,
@@ -254,7 +259,7 @@ export async function createKillFixture(
   ranking: EventRanking;
   killPointId: string;
 }> {
-  const kill = await prisma.eventHeroKill.create({
+  const kill = await prisma.orm.public.EventHeroKill.create({
     data: {
       heroNpcId: params.heroNpcId,
       killedAt: new Date(Date.now() - 60_000),
@@ -263,7 +268,7 @@ export async function createKillFixture(
       timerCreatedById: params.member.id,
     },
   });
-  const killPoint = await prisma.eventKillPoint.create({
+  const killPoint = await prisma.orm.public.EventKillPoint.create({
     data: {
       killId: kill.id,
       memberId: params.member.id,
@@ -281,7 +286,7 @@ export async function createKillFixture(
       mapPresenceData: [],
     },
   });
-  const ranking = await prisma.eventRanking.create({
+  const ranking = await prisma.orm.public.EventRanking.create({
     data: {
       eventId: params.eventId,
       memberId: params.member.id,

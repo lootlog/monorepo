@@ -7,6 +7,7 @@ import { MemberBulkRefreshProcessor } from "./member-bulk-refresh.processor";
 import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
 import { MembersService } from "./members.service";
 import { PrismaService } from "src/db/prisma.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("MemberBulkRefreshProcessor", () => {
   let processor: MemberBulkRefreshProcessor;
@@ -65,12 +66,12 @@ describe("MemberBulkRefreshProcessor", () => {
       refreshMember: mockFn(),
     };
 
-    const mockPrismaService = {
+    const mockPrismaService = createPrismaServiceTestDouble({
       memberRefreshJob: {
         update: mockFn(),
         findUnique: mockFn().mockResolvedValue(mockJobRecord),
       },
-    };
+    });
 
     const mockMemberRefreshJobEventsService = {
       emitJobUpdate: mockFn().mockResolvedValue(undefined),

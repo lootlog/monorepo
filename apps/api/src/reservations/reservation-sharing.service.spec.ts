@@ -5,19 +5,20 @@ import {
 } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ReservationSharingService } from "./reservation-sharing.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 const future = () => new Date(Date.now() + 60_000);
 
 describe("ReservationSharingService", () => {
-  const prisma = {
-    $transaction: vi.fn(),
+  const prisma = createPrismaServiceTestDouble({
+    transaction: vi.fn(),
     reservationShare: {
       findMany: vi.fn(),
     },
     reservationShareInvitation: {
       findUnique: vi.fn(),
     },
-  };
+  });
   const transaction = {
     reservationShare: {
       findUnique: vi.fn(),
@@ -35,7 +36,7 @@ describe("ReservationSharingService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    prisma.$transaction.mockImplementation(
+    prisma.transaction.mockImplementation(
       (callback: (value: typeof transaction) => unknown) =>
         Promise.resolve(callback(transaction)),
     );

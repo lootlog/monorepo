@@ -7,11 +7,13 @@
     "node_modules",
     "test",
     "dist",
+    "migrations",
     "**/*spec.ts",
     "prisma",
     "prisma.config.ts",
     "vitest.config.ts",
     "vitest.config.e2e.ts",
+    "vitest.config.database.ts",
     "vitest.setup.ts"
   ]
 }

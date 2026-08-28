@@ -25,7 +25,7 @@ export class MemberRefreshJobEventsService {
     details: MemberRefreshJobUpdateDetails = {},
   ): Promise<void> {
     try {
-      const job = await this.prisma.memberRefreshJob.findUnique({
+      const job = await this.prisma.orm.public.MemberRefreshJob.findUnique({
         where: { id: jobId },
       });
 

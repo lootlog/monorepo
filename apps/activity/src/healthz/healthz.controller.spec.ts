@@ -2,7 +2,6 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import {
   HealthCheckService,
   HttpHealthIndicator,
-  PrismaHealthIndicator,
   MemoryHealthIndicator,
   DiskHealthIndicator,
 } from "@nestjs/terminus";
@@ -20,10 +19,6 @@ describe("HealthzController", () => {
     pingCheck: vi.fn(),
   };
 
-  const mockPrismaHealthIndicator = {
-    pingCheck: vi.fn(),
-  };
-
   const mockMemoryHealthIndicator = {
     checkHeap: vi.fn(),
     checkRSS: vi.fn(),
@@ -33,9 +28,13 @@ describe("HealthzController", () => {
     checkStorage: vi.fn(),
   };
 
-  const mockPrismaService = {};
+  const mockPrismaService = {
+    ping: vi.fn(),
+  };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthzController],
       providers: [
@@ -46,10 +45,6 @@ describe("HealthzController", () => {
         {
           provide: HttpHealthIndicator,
           useValue: mockHttpHealthIndicator,
-        },
-        {
-          provide: PrismaHealthIndicator,
-          useValue: mockPrismaHealthIndicator,
         },
         {
           provide: MemoryHealthIndicator,
@@ -85,6 +80,19 @@ describe("HealthzController", () => {
       await controller.check();
 
       expect(mockHealthCheckService.check).toHaveBeenCalled();
+    });
+
+    it("checks the database through PrismaService", async () => {
+      mockPrismaService.ping.mockResolvedValue(undefined);
+      mockHealthCheckService.check.mockImplementation(async (checks) =>
+        checks[0](),
+      );
+
+      await expect(controller.check()).resolves.toEqual({
+        database: { status: "up" },
+      });
+
+      expect(mockPrismaService.ping).toHaveBeenCalledOnce();
     });
   });
 });

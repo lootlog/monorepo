@@ -36,9 +36,10 @@ import {
   type Guild,
   LootSource,
   type Role,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import { ErrorKey } from "./enum/error-key.enum";
 import { RoutingKey } from "src/enum/routing-key.enum";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("LootsService", () => {
   let service: LootsService;
@@ -70,7 +71,7 @@ describe("LootsService", () => {
     member: {
       findMany: Mock;
     };
-    $queryRaw: Mock;
+    query: Mock;
   };
   let playersService: {
     bulkIndexPlayers: Mock;
@@ -165,7 +166,7 @@ describe("LootsService", () => {
   };
 
   beforeEach(async () => {
-    const mockPrismaService = {
+    const mockPrismaService = createPrismaServiceTestDouble({
       loot: {
         findUnique: mockFn(),
         create: mockFn(),
@@ -193,8 +194,8 @@ describe("LootsService", () => {
       member: {
         findMany: mockFn(),
       },
-      $queryRaw: mockFn(),
-    };
+      query: mockFn(),
+    });
 
     const mockPlayersService = {
       bulkIndexPlayers: mockFn(),

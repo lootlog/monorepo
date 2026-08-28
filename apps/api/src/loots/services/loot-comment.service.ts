@@ -10,7 +10,7 @@ export class LootCommentService {
   async getComments(options: { guildId: string; lootId: number }) {
     const { guildId, lootId } = options;
 
-    const comments = await this.prisma.lootComment.findMany({
+    const comments = await this.prisma.orm.public.LootComment.findMany({
       where: {
         guildId,
         lootId,
@@ -47,7 +47,7 @@ export class LootCommentService {
     body: CreateCommentDto;
   }) {
     const { discordId, lootId, body, guildId } = options;
-    const loot = await this.prisma.loot.findFirst({
+    const loot = await this.prisma.orm.public.Loot.findFirst({
       where: {
         id: lootId,
         lootSubmissions: { some: { guildId } },
@@ -58,7 +58,7 @@ export class LootCommentService {
       throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
     }
 
-    const comment = await this.prisma.lootComment.create({
+    const comment = await this.prisma.orm.public.LootComment.create({
       data: {
         content: body.content,
         guildId,

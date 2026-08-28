@@ -134,16 +134,27 @@
       "dependsOn": ["api-client:generate"],
       "outputs": []
     },
-    "api:migrate:dev": {
+    "api:db:migrate": {
       "cache": false,
       "interactive": true
     },
-    "api:generate": {
+    "api:contract:emit": {
       "cache": false
     },
-    "api:studio": {
-      "cache": false,
-      "interactive": false
+    "api:migration:plan": {
+      "cache": false
+    },
+    "api:migration:check": {
+      "cache": false
+    },
+    "api:migration:status": {
+      "cache": false
+    },
+    "api:db:sign": {
+      "cache": false
+    },
+    "api:db:verify": {
+      "cache": false
     },
     "test:coverage": {
       "dependsOn": ["^build"],
@@ -168,7 +179,7 @@
       "interactive": true
     },
     "test": {
-      "dependsOn": ["^build", "api:generate", "activity:generate"],
+      "dependsOn": ["^build"],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",
@@ -180,7 +191,7 @@
       ]
     },
     "test:e2e": {
-      "dependsOn": ["^build", "api:generate", "activity:generate"],
+      "dependsOn": ["^build"],
       "cache": false,
       "outputs": [],
       "inputs": [
@@ -191,6 +202,11 @@
         "vitest.config.e2e.*",
         "tsconfig.json"
       ]
+    },
+    "test:database": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": []
     },
     "format:check": {
       "cache": false,
@@ -212,16 +228,27 @@
       "cache": false,
       "interactive": false
     },
-    "activity:migrate:dev": {
+    "activity:db:migrate": {
       "cache": false,
       "interactive": true
     },
-    "activity:generate": {
+    "activity:contract:emit": {
       "cache": false
     },
-    "activity:studio": {
-      "cache": false,
-      "interactive": false
+    "activity:migration:plan": {
+      "cache": false
+    },
+    "activity:migration:check": {
+      "cache": false
+    },
+    "activity:migration:status": {
+      "cache": false
+    },
+    "activity:db:sign": {
+      "cache": false
+    },
+    "activity:db:verify": {
+      "cache": false
     }
   }
 }

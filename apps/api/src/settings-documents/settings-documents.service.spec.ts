@@ -1,32 +1,33 @@
 import { SettingsDocumentsService } from "./settings-documents.service";
 import type { PrismaService } from "src/db/prisma.service";
 import { describe, expect, it, vi } from "vitest";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 const createPrismaMock = () => {
-  const transactionClient = {
-    $queryRaw: vi.fn(),
+  const transactionClient = createPrismaServiceTestDouble({
+    query: vi.fn(),
     userSettingDocument: {
       findUnique: vi.fn(),
       upsert: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
-  };
+  });
 
   return {
     transactionClient,
-    prisma: {
+    prisma: createPrismaServiceTestDouble({
       userSettingDocument: {
         findMany: vi.fn(),
       },
       member: {
         findFirst: vi.fn(),
       },
-      $transaction: vi.fn(
+      transaction: vi.fn(
         async (operation: (client: typeof transactionClient) => unknown) =>
           operation(transactionClient),
       ),
-    },
+    }),
   };
 };
 
@@ -225,7 +226,7 @@ describe("SettingsDocumentsService", () => {
       ],
     });
 
-    expect(prisma.$transaction).toHaveBeenCalledOnce();
+    expect(prisma.transaction).toHaveBeenCalledOnce();
     expect(transactionClient.userSettingDocument.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

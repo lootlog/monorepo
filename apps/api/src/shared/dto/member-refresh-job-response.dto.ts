@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { RefreshJobStatus } from "src/generated/prisma/client";
+import { RefreshJobStatus } from "src/db/domain";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,

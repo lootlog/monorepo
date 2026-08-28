@@ -6,7 +6,7 @@ import type {
   Event,
   EventHeroNpc,
   Prisma,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { EventEmitterService } from "./event-emitter.service";
@@ -115,7 +115,7 @@ export class EventKillService {
   ) {}
 
   async getEventHeroTimers(guildId: string, eventId: string, world: string) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: {
         id: true,
@@ -343,7 +343,7 @@ export class EventKillService {
   }
 
   private async getEventHeroStatsUncached(guildId: string, eventId: string) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       include: {
         heroNpcs: {
@@ -371,7 +371,7 @@ export class EventKillService {
     );
     const npcStats =
       npcIds.length > 0
-        ? await this.prisma.npcKillStats.findMany({
+        ? await this.prisma.orm.public.NpcKillStats.findMany({
             where: {
               guildId,
               world: event.world,
@@ -554,7 +554,7 @@ export class EventKillService {
           };
 
           if (Object.keys(updateData).length > 0) {
-            eventHero = await this.prisma.eventHeroNpc.update({
+            eventHero = await this.prisma.orm.public.EventHeroNpc.update({
               where: { id: eventHero.id },
               data: updateData,
             });
@@ -679,7 +679,7 @@ export class EventKillService {
       ),
     );
 
-    const heroMaps = await this.prisma.eventMap.findMany({
+    const heroMaps = await this.prisma.orm.public.EventMap.findMany({
       where: { heroNpcId: eventHero.id },
       select: {
         id: true,
@@ -696,8 +696,8 @@ export class EventKillService {
       autoConfirmedAt,
     } = this.resolveKillScoringConfig(event, killedAt);
 
-    const kill = await this.prisma.$transaction(async (tx) => {
-      const heroKill = await tx.eventHeroKill.create({
+    const kill = await this.prisma.transaction(async (tx) => {
+      const heroKill = await tx.orm.public.EventHeroKill.create({
         data: {
           heroNpcId: eventHero.id,
           killedAt,
@@ -729,20 +729,21 @@ export class EventKillService {
         confirmedAt: Date | null;
       }> = [];
 
-      const assignmentHistory = await tx.eventMapAssignmentHistory.findMany({
-        where: this.buildAssignmentHistoryWhere({
-          mapIds: heroMapIds,
-          killedAt: effectiveKilledAt,
-          overlapWindowStartTime: scoringWindowStartTime,
-        }),
-        select: {
-          mapId: true,
-          memberId: true,
-          assignedAt: true,
-          unassignedAt: true,
-        },
-        orderBy: { assignedAt: "asc" },
-      });
+      const assignmentHistory =
+        await tx.orm.public.EventMapAssignmentHistory.findMany({
+          where: this.buildAssignmentHistoryWhere({
+            mapIds: heroMapIds,
+            killedAt: effectiveKilledAt,
+            overlapWindowStartTime: scoringWindowStartTime,
+          }),
+          select: {
+            mapId: true,
+            memberId: true,
+            assignedAt: true,
+            unassignedAt: true,
+          },
+          orderBy: { assignedAt: "asc" },
+        });
       const {
         memberAssignmentsHistory,
         memberMapIds,
@@ -853,14 +854,14 @@ export class EventKillService {
       }
 
       if (killPointsData.length > 0) {
-        await tx.eventKillPoint.createMany({
+        await tx.orm.public.EventKillPoint.createMany({
           data: killPointsData,
         });
       }
 
       await Promise.all(
         heroMaps.map((map) =>
-          tx.eventMap.update({
+          tx.orm.public.EventMap.update({
             where: { id: map.id },
             data: {
               assignedMembers: { set: [] },
@@ -869,7 +870,7 @@ export class EventKillService {
         ),
       );
 
-      await tx.eventMapAssignmentHistory.updateMany({
+      await tx.orm.public.EventMapAssignmentHistory.updateMany({
         where: {
           mapId: { in: heroMapIds },
           unassignedAt: null,
@@ -877,7 +878,7 @@ export class EventKillService {
         data: { unassignedAt: killedAt },
       });
 
-      const createdPoints = await tx.eventKillPoint.findMany({
+      const createdPoints = await tx.orm.public.EventKillPoint.findMany({
         where: { killId: heroKill.id },
       });
 
@@ -1044,7 +1045,7 @@ export class EventKillService {
     limit = 20,
     cursor?: string,
   ) {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: {
         id: heroId,
         eventId,
@@ -1057,7 +1058,7 @@ export class EventKillService {
       throw new NotFoundException("Hero not found");
     }
 
-    const kills = await this.prisma.eventHeroKill.findMany({
+    const kills = await this.prisma.orm.public.EventHeroKill.findMany({
       where: {
         heroNpcId: heroId,
         ...(cursor && { id: { lt: cursor } }),
@@ -1143,7 +1144,7 @@ export class EventKillService {
     cursor?: string,
     heroId?: string,
   ) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: { id: true },
     });
@@ -1152,7 +1153,7 @@ export class EventKillService {
       throw new NotFoundException("Event not found");
     }
 
-    const kills = await this.prisma.eventHeroKill.findMany({
+    const kills = await this.prisma.orm.public.EventHeroKill.findMany({
       where: {
         heroNpc: {
           eventId,
@@ -1245,7 +1246,7 @@ export class EventKillService {
     cursor?: string,
     heroId?: string,
   ) {
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: { id: true },
     });
@@ -1254,7 +1255,7 @@ export class EventKillService {
       throw new NotFoundException("Event not found");
     }
 
-    const member = await this.prisma.member.findFirst({
+    const member = await this.prisma.orm.public.Member.findFirst({
       where: { id: memberId, guildId },
       select: {
         id: true,
@@ -1268,7 +1269,7 @@ export class EventKillService {
       throw new NotFoundException("Member not found");
     }
 
-    const kills = await this.prisma.eventHeroKill.findMany({
+    const kills = await this.prisma.orm.public.EventHeroKill.findMany({
       where: {
         heroNpc: {
           eventId,
@@ -1362,7 +1363,7 @@ export class EventKillService {
     heroId: string,
     killId: string,
   ) {
-    const kill = await this.prisma.eventHeroKill.findFirst({
+    const kill = await this.prisma.orm.public.EventHeroKill.findFirst({
       where: {
         id: killId,
         heroNpcId: heroId,
@@ -1414,7 +1415,7 @@ export class EventKillService {
       throw new NotFoundException("Kill not found");
     }
 
-    const heroMaps = await this.prisma.eventMap.findMany({
+    const heroMaps = await this.prisma.orm.public.EventMap.findMany({
       where: { heroNpcId: heroId },
       select: { id: true, mapName: true },
     });
@@ -1433,8 +1434,10 @@ export class EventKillService {
       });
 
     const mapIdToName = this.createMapNameLookup(heroMaps);
-    const mapIds = heroMaps.map((m) => m.id);
-    const memberIds = [...new Set(kill.points.map((point) => point.memberId))];
+    const mapIds = heroMaps.map((map) => String(map.id));
+    const memberIds = [
+      ...new Set<number>(kill.points.map((point) => Number(point.memberId))),
+    ];
     const trackingWindowStartTime = getTrackingWindowStartTime({
       killedAt: effectiveKilledAt,
       minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
@@ -1447,21 +1450,22 @@ export class EventKillService {
       ),
     );
 
-    const assignments = await this.prisma.eventMapAssignmentHistory.findMany({
-      where: this.buildAssignmentHistoryWhere({
-        mapIds,
-        memberIds,
-        killedAt: effectiveKilledAt,
-        overlapWindowStartTime,
-      }),
-      select: {
-        mapId: true,
-        memberId: true,
-        assignedAt: true,
-        unassignedAt: true,
-      },
-      orderBy: [{ memberId: "asc" }, { assignedAt: "asc" }],
-    });
+    const assignments =
+      await this.prisma.orm.public.EventMapAssignmentHistory.findMany({
+        where: this.buildAssignmentHistoryWhere({
+          mapIds,
+          memberIds,
+          killedAt: effectiveKilledAt,
+          overlapWindowStartTime,
+        }),
+        select: {
+          mapId: true,
+          memberId: true,
+          assignedAt: true,
+          unassignedAt: true,
+        },
+        orderBy: [{ memberId: "asc" }, { assignedAt: "asc" }],
+      });
 
     const assignmentsByMember = new Map<
       number,
@@ -1483,7 +1487,7 @@ export class EventKillService {
     }
 
     const fallbackMemberIds = [
-      ...new Set(
+      ...new Set<number>(
         normalizedPoints
           .filter((point) => {
             const storedMapPresence = point.mapPresenceData as
@@ -1491,7 +1495,7 @@ export class EventKillService {
               | null;
             return !(storedMapPresence && storedMapPresence.length > 0);
           })
-          .map((point) => point.memberId),
+          .map((point) => Number(point.memberId)),
       ),
     ];
 
@@ -1669,7 +1673,7 @@ export class EventKillService {
     );
 
     const heroMaps =
-      (await this.prisma.eventMap.findMany({
+      (await this.prisma.orm.public.EventMap.findMany({
         where: { heroNpcId: { in: heroIds } },
         select: { id: true, mapName: true, heroNpcId: true },
       })) ?? [];
@@ -1679,7 +1683,7 @@ export class EventKillService {
 
     const mapIdToName = this.createMapNameLookup(heroMaps);
     const assignments =
-      (await this.prisma.eventMapAssignmentHistory.findMany({
+      (await this.prisma.orm.public.EventMapAssignmentHistory.findMany({
         where: this.buildAssignmentHistoryWhere({
           heroNpcIds: heroIds,
           memberIds,
@@ -1783,7 +1787,7 @@ export class EventKillService {
     }
 
     const windowSummaries =
-      await this.prisma.eventRespawnWindowSummary.findMany({
+      await this.prisma.orm.public.EventRespawnWindowSummary.findMany({
         where: {
           killId: {
             in: kills.map((kill) => kill.id),
@@ -1870,7 +1874,7 @@ export class EventKillService {
     heroId: string,
     killId: string,
   ) {
-    const kill = await this.prisma.eventHeroKill.findFirst({
+    const kill = await this.prisma.orm.public.EventHeroKill.findFirst({
       where: {
         id: killId,
         heroNpcId: heroId,
@@ -1889,17 +1893,18 @@ export class EventKillService {
       throw new NotFoundException("Kill not found");
     }
 
-    const summary = await this.prisma.eventRespawnWindowSummary.findUnique({
-      where: { killId },
-      select: { gapsTimeline: true, windowOpenedAt: true },
-    });
+    const summary =
+      await this.prisma.orm.public.EventRespawnWindowSummary.findUnique({
+        where: { killId },
+        select: { gapsTimeline: true, windowOpenedAt: true },
+      });
 
     const summaryGaps =
       (summary?.gapsTimeline as unknown as GapTimelineEntry[] | null) ?? [];
     const scoringWindowStartTime =
       summary?.windowOpenedAt ?? kill.minSpawnTimeAtKill;
 
-    const maps = await this.prisma.eventMap.findMany({
+    const maps = await this.prisma.orm.public.EventMap.findMany({
       where: { heroNpcId: heroId },
       select: { id: true, mapName: true, mapId: true },
     });
@@ -1918,7 +1923,7 @@ export class EventKillService {
       }>
     >();
     const timelineAssignments =
-      await this.prisma.eventMapAssignmentHistory.findMany({
+      await this.prisma.orm.public.EventMapAssignmentHistory.findMany({
         where: this.buildAssignmentHistoryWhere({
           mapIds: maps.map((map) => map.id),
           killedAt: kill.killedAt,

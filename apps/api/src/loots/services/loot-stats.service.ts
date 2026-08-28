@@ -1,7 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { NpcType, type ItemRarity } from "src/generated/prisma/client";
+import { NpcType, type ItemRarity } from "src/db/domain";
+import { rawTextArray, rawTimestamp } from "src/db/raw-values";
 import type {
   Period,
   LootStatsResponse,
@@ -154,78 +155,6 @@ export class LootStatsService {
     return parts.join(":");
   }
 
-  private buildFilterConditions(
-    dateFrom: Date | null,
-    world?: string,
-    npcTypes?: NpcType[],
-    excludeColossus?: boolean,
-  ) {
-    const dateParamIndex = this.getDateFilterParamIndex();
-    const worldParamIndex = this.getWorldFilterParamIndex(dateFrom);
-    const npcTypesParamIndex = this.getNpcTypesFilterParamIndex(
-      dateFrom,
-      world,
-    );
-    const dateCondition = dateFrom
-      ? `AND l."createdAt" >= $${dateParamIndex}`
-      : "";
-    const worldCondition = world ? `AND l.world = $${worldParamIndex}` : "";
-    const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${npcTypesParamIndex}::text[])`
-      : "";
-    const excludeColossusCondition = excludeColossus
-      ? `AND ns.type != 'COLOSSUS'`
-      : "";
-    const needsNpcFilter = !!(npcTypes?.length || excludeColossus);
-
-    return {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    };
-  }
-
-  private getDateFilterParamIndex() {
-    return 2;
-  }
-
-  private getWorldFilterParamIndex(dateFrom: Date | null) {
-    if (dateFrom) {
-      return 3;
-    }
-
-    return 2;
-  }
-
-  private getNpcTypesFilterParamIndex(dateFrom: Date | null, world?: string) {
-    let paramIndex = 2;
-
-    if (dateFrom) {
-      paramIndex += 1;
-    }
-
-    if (world) {
-      paramIndex += 1;
-    }
-
-    return paramIndex;
-  }
-
-  private buildFilterParams(
-    guildId: string,
-    dateFrom: Date | null,
-    world?: string,
-    npcTypes?: NpcType[],
-  ): (string | Date | string[])[] {
-    const params: (string | Date | string[])[] = [guildId];
-    if (dateFrom) params.push(dateFrom);
-    if (world) params.push(world);
-    if (npcTypes?.length) params.push(npcTypes);
-    return params;
-  }
-
   private getDateFromPeriod(period: Period): Date | null {
     if (period === "all") return null;
 
@@ -251,66 +180,66 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
   ): Promise<LootStatsOverview> {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-    const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-
-    const result = await this.prisma.$queryRawUnsafe<
-      Array<{
-        total_loots: bigint;
-        total_items: bigint;
-        legendary_items: bigint;
-        heroic_items: bigint;
-        avg_item_level: number | null;
-      }>
-    >(
-      needsNpcFilter
-        ? `
+    const needsNpcFilter = !!(npcTypes?.length || excludeColossus);
+    const minimumDate = dateFrom ?? new Date(0);
+    const filteredNpcTypes = npcTypes ?? [];
+    const plan = needsNpcFilter
+      ? this.prisma.raw.sql`
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id
           FROM "Loot" l
           INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
           INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
           INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE ls."guildId" = $1
+          WHERE ls."guildId" = ${guildId}
             AND ns.type != 'COMMON'
-          ${dateCondition}
-          ${worldCondition}
-          ${npcTypeCondition}
-          ${excludeColossusCondition}
+            AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+            AND (${!world} OR l.world = ${world ?? ""})
+            AND (${filteredNpcTypes.length === 0} OR ns.type::text = ANY(${rawTextArray(filteredNpcTypes)}::text[]))
+            AND (${!excludeColossus} OR ns.type != 'COLOSSUS')
         )
         SELECT
           COUNT(DISTINCT l.id) as total_loots,
           COUNT(li.id) as total_items,
           COUNT(li.id) FILTER (WHERE isnap.rarity = 'LEGENDARY') as legendary_items,
           COUNT(li.id) FILTER (WHERE isnap.rarity = 'HEROIC') as heroic_items,
-          AVG(isnap.lvl)::numeric as avg_item_level
+          AVG(isnap.lvl)::float8 as avg_item_level
         FROM valid_loots vl
         INNER JOIN "Loot" l ON l.id = vl.loot_id
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
       `
-        : `
+      : this.prisma.raw.sql`
         SELECT
           COUNT(DISTINCT l.id) as total_loots,
           COUNT(li.id) as total_items,
           COUNT(li.id) FILTER (WHERE isnap.rarity = 'LEGENDARY') as legendary_items,
           COUNT(li.id) FILTER (WHERE isnap.rarity = 'HEROIC') as heroic_items,
-          AVG(isnap.lvl)::numeric as avg_item_level
+          AVG(isnap.lvl)::float8 as avg_item_level
         FROM "Loot" l
         INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
-        ${dateCondition}
-        ${worldCondition}
-      `,
-      ...params,
+        WHERE ls."guildId" = ${guildId}
+          AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+          AND (${!world} OR l.world = ${world ?? ""})
+      `;
+    const result = await this.prisma.query<{
+      total_loots: bigint;
+      total_items: bigint;
+      legendary_items: bigint;
+      heroic_items: bigint;
+      avg_item_level: number | null;
+    }>(
+      plan
+        .returnsRow({
+          total_loots: "pg/int8@1",
+          total_items: "pg/int8@1",
+          legendary_items: "pg/int8@1",
+          heroic_items: "pg/int8@1",
+          avg_item_level: { codecId: "pg/float8@1", nullable: true },
+        })
+        .build(),
     );
 
     const row = result[0];
@@ -332,38 +261,26 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
   ): Promise<Partial<Record<ItemRarity, RarityStats>>> {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-    const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-
-    const result = await this.prisma.$queryRawUnsafe<
-      Array<{
-        rarity: ItemRarity;
-        count: bigint;
-      }>
-    >(
-      needsNpcFilter
-        ? `
+    const needsNpcFilter = !!(npcTypes?.length || excludeColossus);
+    const minimumDate = dateFrom ?? new Date(0);
+    const filteredNpcTypes = npcTypes ?? [];
+    const plan = needsNpcFilter
+      ? this.prisma.raw.sql`
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id
           FROM "Loot" l
           INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
           INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
           INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE ls."guildId" = $1
+          WHERE ls."guildId" = ${guildId}
             AND ns.type != 'COMMON'
-          ${dateCondition}
-          ${worldCondition}
-          ${npcTypeCondition}
-          ${excludeColossusCondition}
+            AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+            AND (${!world} OR l.world = ${world ?? ""})
+            AND (${filteredNpcTypes.length === 0} OR ns.type::text = ANY(${rawTextArray(filteredNpcTypes)}::text[]))
+            AND (${!excludeColossus} OR ns.type != 'COLOSSUS')
         )
         SELECT
-          isnap.rarity,
+          isnap.rarity::text AS rarity,
           COUNT(*) as count
         FROM valid_loots vl
         INNER JOIN "Loot" l ON l.id = vl.loot_id
@@ -372,22 +289,24 @@ export class LootStatsService {
         WHERE isnap.rarity IS NOT NULL
         GROUP BY isnap.rarity
       `
-        : `
+      : this.prisma.raw.sql`
         SELECT
-          isnap.rarity,
+          isnap.rarity::text AS rarity,
           COUNT(*) as count
         FROM "Loot" l
         INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE ls."guildId" = ${guildId}
           AND isnap.rarity IS NOT NULL
-        ${dateCondition}
-        ${worldCondition}
+          AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+          AND (${!world} OR l.world = ${world ?? ""})
         GROUP BY isnap.rarity
-      `,
-      ...params,
-    );
+      `;
+    const result = await this.prisma.query<{
+      rarity: ItemRarity;
+      count: bigint;
+    }>(plan.returnsRow({ rarity: "pg/text@1", count: "pg/int8@1" }).build());
 
     const total = result.reduce((sum, r) => sum + Number(r.count), 0);
     const byRarity: Partial<Record<ItemRarity, RarityStats>> = {};
@@ -411,64 +330,62 @@ export class LootStatsService {
     npcTypes?: NpcType[],
     excludeColossus?: boolean,
   ): Promise<TimelinePoint[]> {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+    const needsNpcFilter = !!(npcTypes?.length || excludeColossus);
     const truncUnit = this.getTimelineTruncUnit(period);
-    const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-
-    const result = await this.prisma.$queryRawUnsafe<
-      Array<{
-        date: Date;
-        rarity: ItemRarity | null;
-        count: bigint;
-      }>
-    >(
-      needsNpcFilter
-        ? `
+    const minimumDate = dateFrom ?? new Date(0);
+    const filteredNpcTypes = npcTypes ?? [];
+    const plan = needsNpcFilter
+      ? this.prisma.raw.sql`
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id, l."createdAt"
           FROM "Loot" l
           INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
           INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
           INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE ls."guildId" = $1
+          WHERE ls."guildId" = ${guildId}
             AND ns.type != 'COMMON'
-          ${dateCondition}
-          ${worldCondition}
-          ${npcTypeCondition}
-          ${excludeColossusCondition}
+            AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+            AND (${!world} OR l.world = ${world ?? ""})
+            AND (${filteredNpcTypes.length === 0} OR ns.type::text = ANY(${rawTextArray(filteredNpcTypes)}::text[]))
+            AND (${!excludeColossus} OR ns.type != 'COLOSSUS')
         )
         SELECT
-          date_trunc('${truncUnit}', vl."createdAt") as date,
-          isnap.rarity,
+          date_trunc(${truncUnit}, vl."createdAt") as date,
+          isnap.rarity::text AS rarity,
           COUNT(*) as count
         FROM valid_loots vl
         INNER JOIN "LootItem" li ON li."lootId" = vl.loot_id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        GROUP BY date_trunc('${truncUnit}', vl."createdAt"), isnap.rarity
+        GROUP BY 1, 2
         ORDER BY date ASC
       `
-        : `
+      : this.prisma.raw.sql`
         SELECT
-          date_trunc('${truncUnit}', l."createdAt") as date,
-          isnap.rarity,
+          date_trunc(${truncUnit}, l."createdAt") as date,
+          isnap.rarity::text AS rarity,
           COUNT(*) as count
         FROM "Loot" l
         INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
-        ${dateCondition}
-        ${worldCondition}
-        GROUP BY date_trunc('${truncUnit}', l."createdAt"), isnap.rarity
+        WHERE ls."guildId" = ${guildId}
+          AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+          AND (${!world} OR l.world = ${world ?? ""})
+        GROUP BY 1, 2
         ORDER BY date ASC
-      `,
-      ...params,
+      `;
+    const result = await this.prisma.query<{
+      date: Date;
+      rarity: ItemRarity | null;
+      count: bigint;
+    }>(
+      plan
+        .returnsRow({
+          date: "pg/timestamp-temporal@1",
+          rarity: { codecId: "pg/text@1", nullable: true },
+          count: "pg/int8@1",
+        })
+        .build(),
     );
 
     const timelineMap = new Map<
@@ -526,30 +443,9 @@ export class LootStatsService {
     excludeColossus?: boolean,
     limit = 10,
   ): Promise<TopNpc[]> {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-    const params: (string | Date | string[] | number)[] =
-      this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-    const limitParamIndex = params.length + 1;
-    params.push(limit);
-
-    const result = await this.prisma.$queryRawUnsafe<
-      Array<{
-        npc_id: number;
-        name: string;
-        type: NpcType | null;
-        lvl: number | null;
-        icon: string | null;
-        count: bigint;
-        legendary: bigint;
-        heroic: bigint;
-      }>
-    >(
-      `
+    const minimumDate = dateFrom ?? new Date(0);
+    const filteredNpcTypes = npcTypes ?? [];
+    const plan = this.prisma.raw.sql`
       WITH ranked_npcs AS (
         SELECT
           l.id as loot_id,
@@ -576,17 +472,17 @@ export class LootStatsService {
         INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
         INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
         INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE ls."guildId" = ${guildId}
           AND ns.type != 'COMMON'
-        ${dateCondition}
-        ${worldCondition}
-        ${npcTypeCondition}
-        ${excludeColossusCondition}
+          AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+          AND (${!world} OR l.world = ${world ?? ""})
+          AND (${filteredNpcTypes.length === 0} OR ns.type::text = ANY(${rawTextArray(filteredNpcTypes)}::text[]))
+          AND (${!excludeColossus} OR ns.type != 'COLOSSUS')
       )
       SELECT
         rn."npcId" as npc_id,
         rn.name,
-        rn.type,
+        rn.type::text AS type,
         rn.lvl,
         rn.icon,
         COUNT(li.id) as count,
@@ -600,9 +496,30 @@ export class LootStatsService {
         AND isnap.rarity IN ('LEGENDARY', 'HEROIC')
       GROUP BY rn."npcId", rn.name, rn.type, rn.lvl, rn.icon
       ORDER BY legendary DESC, count DESC
-      LIMIT $${limitParamIndex}
-    `,
-      ...params,
+      LIMIT ${limit}
+    `;
+    const result = await this.prisma.query<{
+      npc_id: number;
+      name: string;
+      type: NpcType | null;
+      lvl: number | null;
+      icon: string | null;
+      count: bigint;
+      legendary: bigint;
+      heroic: bigint;
+    }>(
+      plan
+        .returnsRow({
+          npc_id: "pg/int4@1",
+          name: "pg/text@1",
+          type: { codecId: "pg/text@1", nullable: true },
+          lvl: { codecId: "pg/int4@1", nullable: true },
+          icon: { codecId: "pg/text@1", nullable: true },
+          count: "pg/int8@1",
+          legendary: "pg/int8@1",
+          heroic: "pg/int8@1",
+        })
+        .build(),
     );
 
     return result.map((row) => ({
@@ -627,45 +544,23 @@ export class LootStatsService {
     excludeColossus?: boolean,
     limit = 10,
   ): Promise<TopContributor[]> {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-    const params: (string | Date | string[] | number)[] =
-      this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-    const limitParamIndex = params.length + 1;
-    params.push(limit);
-
-    const result = await this.prisma.$queryRawUnsafe<
-      Array<{
-        member_id: number;
-        name: string;
-        avatar: string | null;
-        user_id: string;
-        count: bigint;
-        legendary: bigint;
-        heroic: bigint;
-        unique: bigint;
-        upgraded: bigint;
-      }>
-    >(
-      needsNpcFilter
-        ? `
+    const needsNpcFilter = !!(npcTypes?.length || excludeColossus);
+    const minimumDate = dateFrom ?? new Date(0);
+    const filteredNpcTypes = npcTypes ?? [];
+    const plan = needsNpcFilter
+      ? this.prisma.raw.sql`
         WITH valid_loots AS (
           SELECT DISTINCT l.id as loot_id
           FROM "Loot" l
           INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
           INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
           INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE ls."guildId" = $1
+          WHERE ls."guildId" = ${guildId}
             AND ns.type != 'COMMON'
-          ${dateCondition}
-          ${worldCondition}
-          ${npcTypeCondition}
-          ${excludeColossusCondition}
+            AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+            AND (${!world} OR l.world = ${world ?? ""})
+            AND (${filteredNpcTypes.length === 0} OR ns.type::text = ANY(${rawTextArray(filteredNpcTypes)}::text[]))
+            AND (${!excludeColossus} OR ns.type != 'COLOSSUS')
         )
         SELECT
           m.id as member_id,
@@ -683,12 +578,12 @@ export class LootStatsService {
         INNER JOIN "Member" m ON m.id = ls."memberId"
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE ls."guildId" = ${guildId}
         GROUP BY m.id, m.name, m.avatar, m."userId"
         ORDER BY count DESC
-        LIMIT $${limitParamIndex}
+        LIMIT ${limit}
       `
-        : `
+      : this.prisma.raw.sql`
         SELECT
           m.id as member_id,
           m.name,
@@ -704,14 +599,37 @@ export class LootStatsService {
         INNER JOIN "Member" m ON m.id = ls."memberId"
         INNER JOIN "LootItem" li ON li."lootId" = l.id
         INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE ls."guildId" = $1
-        ${dateCondition}
-        ${worldCondition}
+        WHERE ls."guildId" = ${guildId}
+          AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+          AND (${!world} OR l.world = ${world ?? ""})
         GROUP BY m.id, m.name, m.avatar, m."userId"
         ORDER BY count DESC
-        LIMIT $${limitParamIndex}
-      `,
-      ...params,
+        LIMIT ${limit}
+      `;
+    const result = await this.prisma.query<{
+      member_id: number;
+      name: string;
+      avatar: string | null;
+      user_id: string;
+      count: bigint;
+      legendary: bigint;
+      heroic: bigint;
+      unique: bigint;
+      upgraded: bigint;
+    }>(
+      plan
+        .returnsRow({
+          member_id: "pg/int4@1",
+          name: "pg/text@1",
+          avatar: { codecId: "pg/text@1", nullable: true },
+          user_id: "pg/text@1",
+          count: "pg/int8@1",
+          legendary: "pg/int8@1",
+          heroic: "pg/int8@1",
+          unique: "pg/int8@1",
+          upgraded: "pg/int8@1",
+        })
+        .build(),
     );
 
     return result.map((row) => ({
@@ -737,29 +655,9 @@ export class LootStatsService {
     excludeColossus?: boolean,
     limit = 10,
   ): Promise<TopItem[]> {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-    const params: (string | Date | string[] | number)[] =
-      this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-    const limitParamIndex = params.length + 1;
-    params.push(limit);
-
-    const result = await this.prisma.$queryRawUnsafe<
-      Array<{
-        item_id: number;
-        hid: string;
-        name: string;
-        icon: string;
-        rarity: ItemRarity;
-        lvl: number;
-        count: bigint;
-      }>
-    >(
-      `
+    const minimumDate = dateFrom ?? new Date(0);
+    const filteredNpcTypes = npcTypes ?? [];
+    const plan = this.prisma.raw.sql`
       WITH ranked_npcs AS (
         SELECT
           l.id as loot_id,
@@ -781,19 +679,19 @@ export class LootStatsService {
         INNER JOIN "LootSubmission" ls ON ls."lootId" = l.id
         INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
         INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-        WHERE ls."guildId" = $1
+        WHERE ls."guildId" = ${guildId}
           AND ns.type != 'COMMON'
-        ${dateCondition}
-        ${worldCondition}
-        ${npcTypeCondition}
-        ${excludeColossusCondition}
+          AND (${dateFrom === null} OR l."createdAt" >= ${rawTimestamp(minimumDate)})
+          AND (${!world} OR l.world = ${world ?? ""})
+          AND (${filteredNpcTypes.length === 0} OR ns.type::text = ANY(${rawTextArray(filteredNpcTypes)}::text[]))
+          AND (${!excludeColossus} OR ns.type != 'COLOSSUS')
       )
       SELECT
         isnap."itemId" as item_id,
         MIN(li.hid) as hid,
         isnap.name,
         isnap.icon,
-        isnap.rarity,
+        isnap.rarity::text AS rarity,
         isnap.lvl,
         COUNT(*) as count
       FROM ranked_npcs rn
@@ -805,9 +703,28 @@ export class LootStatsService {
         AND isnap."itemType" NOT IN ('BLESS', 'UPGRADE', 'CONSUME')
       GROUP BY isnap."itemId", isnap.name, isnap.icon, isnap.rarity, isnap.lvl
       ORDER BY count DESC
-      LIMIT $${limitParamIndex}
-    `,
-      ...params,
+      LIMIT ${limit}
+    `;
+    const result = await this.prisma.query<{
+      item_id: number;
+      hid: string;
+      name: string;
+      icon: string;
+      rarity: ItemRarity;
+      lvl: number;
+      count: bigint;
+    }>(
+      plan
+        .returnsRow({
+          item_id: "pg/int4@1",
+          hid: "pg/text@1",
+          name: "pg/text@1",
+          icon: "pg/text@1",
+          rarity: "pg/text@1",
+          lvl: "pg/int4@1",
+          count: "pg/int8@1",
+        })
+        .build(),
     );
 
     return result.map((row) => ({

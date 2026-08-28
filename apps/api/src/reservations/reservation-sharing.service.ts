@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { env } from "src/config/env";
 import { PrismaService } from "src/db/prisma.service";
-import { Permission, type Guild } from "src/generated/prisma/client";
+import { Permission, type Guild } from "src/db/domain";
 import { GuildsService } from "src/guilds/guilds.service";
 import { ReservationEventsPublisher } from "./reservation-events.publisher";
 
@@ -37,7 +37,7 @@ export class ReservationSharingService {
   ) {}
 
   async getVisibleGuildIds(guildId: string): Promise<string[]> {
-    const shares = await this.prisma.reservationShare.findMany({
+    const shares = await this.prisma.orm.public.ReservationShare.findMany({
       where: {
         revokedAt: null,
         OR: [{ firstGuildId: guildId }, { secondGuildId: guildId }],
@@ -58,7 +58,7 @@ export class ReservationSharingService {
   async list(guildId: string) {
     const now = new Date();
     const [shares, pendingInvitations] = await Promise.all([
-      this.prisma.reservationShare.findMany({
+      this.prisma.orm.public.ReservationShare.findMany({
         where: {
           revokedAt: null,
           OR: [{ firstGuildId: guildId }, { secondGuildId: guildId }],
@@ -66,7 +66,7 @@ export class ReservationSharingService {
         include: { firstGuild: true, secondGuild: true },
         orderBy: { createdAt: "desc" },
       }),
-      this.prisma.reservationShareInvitation.findMany({
+      this.prisma.orm.public.ReservationShareInvitation.findMany({
         where: {
           sourceGuildId: guildId,
           acceptedAt: null,
@@ -102,14 +102,15 @@ export class ReservationSharingService {
   async createInvitation(guildId: string, userId: string) {
     const token = randomBytes(32).toString("base64url");
     const expiresAt = new Date(Date.now() + INVITATION_TTL_MS);
-    const invitation = await this.prisma.reservationShareInvitation.create({
-      data: {
-        sourceGuildId: guildId,
-        tokenHash: this.hashToken(token),
-        createdByUserId: userId,
-        expiresAt,
-      },
-    });
+    const invitation =
+      await this.prisma.orm.public.ReservationShareInvitation.create({
+        data: {
+          sourceGuildId: guildId,
+          tokenHash: this.hashToken(token),
+          createdByUserId: userId,
+          expiresAt,
+        },
+      });
     const inviteUrl = new URL(
       `/reservation-sharing/invitations/${token}`,
       env.WEB_APP_URL,
@@ -178,34 +179,38 @@ export class ReservationSharingService {
       invitation.sourceGuildId,
       targetGuild.id,
     );
-    const share = await this.prisma.$transaction(async (transaction) => {
+    const share = await this.prisma.transaction(async (transaction) => {
       const acceptedAt = new Date();
-      const claim = await transaction.reservationShareInvitation.updateMany({
-        where: {
-          id: invitation.id,
-          acceptedAt: null,
-          revokedAt: null,
-          expiresAt: { gt: acceptedAt },
-        },
-        data: {
-          acceptedAt,
-          acceptedByUserId: options.userId,
-          targetGuildId: targetGuild.id,
-        },
-      });
+      const claim =
+        await transaction.orm.public.ReservationShareInvitation.updateMany({
+          where: {
+            id: invitation.id,
+            acceptedAt: null,
+            revokedAt: null,
+            expiresAt: { gt: acceptedAt },
+          },
+          data: {
+            acceptedAt,
+            acceptedByUserId: options.userId,
+            targetGuildId: targetGuild.id,
+          },
+        });
 
       if (claim.count === 0) {
         throw new GoneException({ code: "INVITATION_EXPIRED" });
       }
 
-      const existingShare = await transaction.reservationShare.findUnique({
-        where: { firstGuildId_secondGuildId: { firstGuildId, secondGuildId } },
-      });
+      const existingShare =
+        await transaction.orm.public.ReservationShare.findUnique({
+          where: {
+            firstGuildId_secondGuildId: { firstGuildId, secondGuildId },
+          },
+        });
       if (existingShare && !existingShare.revokedAt) {
         throw new ConflictException({ code: "RESERVATION_SHARE_EXISTS" });
       }
 
-      const nextShare = await transaction.reservationShare.upsert({
+      const nextShare = await transaction.orm.public.ReservationShare.upsert({
         where: { firstGuildId_secondGuildId: { firstGuildId, secondGuildId } },
         create: {
           firstGuildId,
@@ -239,15 +244,16 @@ export class ReservationSharingService {
   }
 
   async revokeInvitation(guildId: string, invitationId: string): Promise<void> {
-    const result = await this.prisma.reservationShareInvitation.updateMany({
-      where: {
-        id: invitationId,
-        sourceGuildId: guildId,
-        acceptedAt: null,
-        revokedAt: null,
-      },
-      data: { revokedAt: new Date() },
-    });
+    const result =
+      await this.prisma.orm.public.ReservationShareInvitation.updateMany({
+        where: {
+          id: invitationId,
+          sourceGuildId: guildId,
+          acceptedAt: null,
+          revokedAt: null,
+        },
+        data: { revokedAt: new Date() },
+      });
 
     if (result.count === 0) {
       throw new NotFoundException({ code: "INVITATION_NOT_FOUND" });
@@ -255,7 +261,7 @@ export class ReservationSharingService {
   }
 
   async revokeShare(guildId: string, shareId: string): Promise<void> {
-    const share = await this.prisma.reservationShare.findFirst({
+    const share = await this.prisma.orm.public.ReservationShare.findFirst({
       where: {
         id: shareId,
         revokedAt: null,
@@ -266,7 +272,7 @@ export class ReservationSharingService {
       throw new NotFoundException({ code: "RESERVATION_SHARE_NOT_FOUND" });
     }
 
-    await this.prisma.reservationShare.update({
+    await this.prisma.orm.public.ReservationShare.update({
       where: { id: share.id },
       data: { revokedAt: new Date() },
     });
@@ -277,10 +283,11 @@ export class ReservationSharingService {
   }
 
   private async getUsableInvitation(token: string) {
-    const invitation = await this.prisma.reservationShareInvitation.findUnique({
-      where: { tokenHash: this.hashToken(token) },
-      include: { sourceGuild: true },
-    });
+    const invitation =
+      await this.prisma.orm.public.ReservationShareInvitation.findUnique({
+        where: { tokenHash: this.hashToken(token) },
+        include: { sourceGuild: true },
+      });
 
     if (!invitation) {
       throw new NotFoundException({ code: "INVITATION_NOT_FOUND" });

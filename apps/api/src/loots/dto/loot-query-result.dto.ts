@@ -1,4 +1,4 @@
-import type { Prisma } from "src/generated/prisma/client";
+import type { Prisma } from "src/db/domain";
 import type { LootItemDto } from "./loot-item.dto";
 import type { LootNpcDto } from "./loot-npc.dto";
 import type { LootPlayerDto } from "./loot-player.dto";

@@ -5,11 +5,15 @@ describe("ActivitiesQueryService", () => {
   const activityFindManyMock = vi.fn();
   const activityActorSnapshotFindManyMock = vi.fn();
   const prismaServiceMock = {
-    activity: {
-      findMany: activityFindManyMock,
-    },
-    activityActorSnapshot: {
-      findMany: activityActorSnapshotFindManyMock,
+    orm: {
+      public: {
+        Activity: {
+          findMany: activityFindManyMock,
+        },
+        ActivityActorSnapshot: {
+          findMany: activityActorSnapshotFindManyMock,
+        },
+      },
     },
   } as unknown as PrismaService;
 

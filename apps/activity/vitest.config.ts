@@ -13,9 +13,6 @@ export default defineConfig({
   ...createNestVitestConfig({
     rootDir: __dirname,
     include: ["src/**/*.spec.ts"],
-    alias: {
-      "prisma/generated/client": "./prisma/generated/client.ts",
-    },
     setupFiles: ["./vitest.setup.ts"],
   }),
   plugins: [swc.vite(swcPluginOptions)],

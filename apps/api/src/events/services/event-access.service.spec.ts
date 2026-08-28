@@ -1,6 +1,7 @@
 import { NotFoundException } from "@nestjs/common";
-import { Permission, type Role } from "src/generated/prisma/client";
+import { Permission, type Role } from "src/db/domain";
 import { EventAccessService } from "./event-access.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 function createRole(
   permissions: Permission[],
@@ -22,14 +23,14 @@ function createRole(
 }
 
 describe("EventAccessService", () => {
-  const mockPrisma = {
+  const mockPrisma = createPrismaServiceTestDouble({
     eventHeroNpc: {
       findFirst: vi.fn(),
     },
     eventMap: {
       findFirst: vi.fn(),
     },
-  };
+  });
 
   let service: EventAccessService;
 

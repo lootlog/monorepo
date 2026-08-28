@@ -9,15 +9,18 @@ const swcPluginOptions = nestSwcPluginOptions satisfies Parameters<
   typeof swc.vite
 >[0];
 
+const nestConfig = createNestVitestConfig({
+  rootDir: __dirname,
+  include: ["test/app.e2e-spec.ts"],
+  fileParallelism: false,
+  setupFiles: ["./vitest.setup.ts"],
+});
+
 export default defineConfig({
-  ...createNestVitestConfig({
-    rootDir: __dirname,
-    include: ["test/**/*.e2e-spec.ts"],
-    alias: {
-      "prisma/generated/client": "./prisma/generated/client.ts",
-    },
-    fileParallelism: false,
-    setupFiles: ["./vitest.setup.ts"],
-  }),
+  ...nestConfig,
+  test: {
+    ...nestConfig.test,
+    globalSetup: "./test/vitest.global-setup.ts",
+  },
   plugins: [swc.vite(swcPluginOptions)],
 });

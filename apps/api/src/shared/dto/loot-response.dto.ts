@@ -1,11 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import {
-  ItemRarity,
-  LootSource,
-  NpcType,
-  Profession,
-} from "src/generated/prisma/client";
+import { ItemRarity, LootSource, NpcType, Profession } from "src/db/domain";
 import { isoDatetimeCodec } from "./zod-response-codecs";
 
 const LootItemResponseSchema = z

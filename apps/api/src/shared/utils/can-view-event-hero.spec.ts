@@ -1,4 +1,4 @@
-import { Permission, type Role } from "src/generated/prisma/client";
+import { Permission, type Role } from "src/db/domain";
 import { filterHeroesByLevel } from "./can-view-event-hero";
 
 function createRole(

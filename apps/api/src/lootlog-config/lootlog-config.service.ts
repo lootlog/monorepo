@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { ItemRarity, NpcType } from "src/generated/prisma/client";
+import { ItemRarity, NpcType } from "src/db/domain";
 import { PrismaService } from "src/db/prisma.service";
 import type { UpdateLootlogConfigNpcDto } from "src/lootlog-config/dto/update-lootlog-config-npc.dto";
 import type { UpdateLootlogConfigDto } from "src/lootlog-config/dto/update-lootlog-config.dto";
@@ -9,7 +9,7 @@ export class LootlogConfigService {
   constructor(private readonly prisma: PrismaService) {}
 
   getLootlogConfig(guildId: string) {
-    return this.prisma.lootlogConfig.findUnique({
+    return this.prisma.orm.public.LootlogConfig.findUnique({
       where: {
         id: guildId,
       },
@@ -24,7 +24,7 @@ export class LootlogConfigService {
   }
 
   getMultipleLootlogConfigs(guildIds: string[]) {
-    return this.prisma.lootlogConfig.findMany({
+    return this.prisma.orm.public.LootlogConfig.findMany({
       where: {
         id: {
           in: guildIds,
@@ -41,11 +41,12 @@ export class LootlogConfigService {
   }
 
   async createLootlogConfig(guildId: string) {
-    const lootlogConfigExists = await this.prisma.lootlogConfig.findUnique({
-      where: {
-        id: guildId,
-      },
-    });
+    const lootlogConfigExists =
+      await this.prisma.orm.public.LootlogConfig.findUnique({
+        where: {
+          id: guildId,
+        },
+      });
 
     if (lootlogConfigExists) {
       return;
@@ -58,7 +59,7 @@ export class LootlogConfigService {
       })),
     };
 
-    return this.prisma.lootlogConfig.create({
+    return this.prisma.orm.public.LootlogConfig.create({
       data: {
         id: guildId,
         npcs: {
@@ -75,7 +76,7 @@ export class LootlogConfigService {
   }
 
   updateLootlogConfig(guildId: string, { npcs }: UpdateLootlogConfigDto) {
-    return this.prisma.lootlogConfig.update({
+    return this.prisma.orm.public.LootlogConfig.update({
       where: {
         id: guildId,
       },
@@ -96,7 +97,7 @@ export class LootlogConfigService {
   }
 
   updateNpc(guildId: string, npcId: string, data: UpdateLootlogConfigNpcDto) {
-    return this.prisma.lootlogConfigNpc.update({
+    return this.prisma.orm.public.LootlogConfigNpc.update({
       where: {
         lootlogConfigId: guildId,
         id: +npcId,

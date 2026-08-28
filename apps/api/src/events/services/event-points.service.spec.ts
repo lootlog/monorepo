@@ -4,11 +4,12 @@ import { EventPointsService } from "./event-points.service";
 import { EventReadCacheService } from "./event-read-cache.service";
 import { PrismaService } from "src/db/prisma.service";
 import { EventEmitterService } from "./event-emitter.service";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("EventPointsService", () => {
   let service: EventPointsService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     event: {
       findFirst: mockFn(),
       findUnique: mockFn(),
@@ -48,8 +49,8 @@ describe("EventPointsService", () => {
     member: {
       findMany: mockFn(),
     },
-    $transaction: mockFn(),
-  };
+    transaction: mockFn(),
+  });
 
   const mockEventEmitter = {
     emitRankingUpdate: mockFn(),
@@ -396,8 +397,8 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation((operations) =>
-        Promise.all(operations),
+      mockPrismaService.transaction.mockImplementation((callback) =>
+        callback(mockPrismaService),
       );
       mockPrismaService.event.findUnique.mockResolvedValue({
         id: eventId,
@@ -462,8 +463,8 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation((operations) =>
-        Promise.all(operations),
+      mockPrismaService.transaction.mockImplementation((callback) =>
+        callback(mockPrismaService),
       );
 
       mockPrismaService.event.findUnique.mockResolvedValue({
@@ -513,9 +514,9 @@ describe("EventPointsService", () => {
       expect(mockPrismaService.eventKillPoint.findMany).toHaveBeenCalledTimes(
         1,
       );
-      expect(
-        Array.isArray(mockPrismaService.$transaction.mock.calls[0]?.[0]),
-      ).toBe(true);
+      expect(mockPrismaService.transaction.mock.calls[0]?.[0]).toEqual(
+        expect.any(Function),
+      );
       expect(mockEventEmitter.emitRankingUpdate).toHaveBeenCalledWith(
         "guild-1",
         eventId,
@@ -562,8 +563,8 @@ describe("EventPointsService", () => {
       mockPrismaService.eventRanking.findMany.mockResolvedValue([]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.create.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation((operations) =>
-        Promise.all(operations),
+      mockPrismaService.transaction.mockImplementation((callback) =>
+        callback(mockPrismaService),
       );
 
       mockPrismaService.event.findUnique.mockResolvedValue({
@@ -645,8 +646,8 @@ describe("EventPointsService", () => {
       ]);
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.update.mockResolvedValue({});
-      mockPrismaService.$transaction.mockImplementation((operations) =>
-        Promise.all(operations),
+      mockPrismaService.transaction.mockImplementation((callback) =>
+        callback(mockPrismaService),
       );
       mockPrismaService.event.findUnique.mockResolvedValue({
         id: eventId,

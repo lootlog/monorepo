@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Permission, type Prisma } from "src/generated/prisma/client";
+import { Permission, type Prisma } from "src/db/domain";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { PrismaService } from "src/db/prisma.service";
@@ -31,7 +31,7 @@ export class RolesService {
   }
 
   async getRolesByGuildId(guildId: string) {
-    const roles = await this.prisma.role.findMany({
+    const roles = await this.prisma.orm.public.Role.findMany({
       where: { guildId },
       orderBy: { position: "desc" },
     });
@@ -44,7 +44,7 @@ export class RolesService {
     roles: GuildRoleDto[],
   ): Promise<Prisma.BatchPayload | undefined> {
     try {
-      return this.prisma.role.createMany({
+      return this.prisma.orm.public.Role.createMany({
         skipDuplicates: true,
         data: roles.map(({ id, name, color, admin, position }) => ({
           id,
@@ -69,7 +69,7 @@ export class RolesService {
     const permissions = this.getAdminPermissions(data.admin);
 
     try {
-      const existingRole = await this.prisma.role.findUnique({
+      const existingRole = await this.prisma.orm.public.Role.findUnique({
         where: { id: data.id, guildId: data.guildId },
         select: { permissions: true },
       });
@@ -88,7 +88,7 @@ export class RolesService {
         updateData.permissions = permissions;
       }
 
-      await this.prisma.role.upsert({
+      await this.prisma.orm.public.Role.upsert({
         where: { id: data.id },
         update: updateData,
         create: {
@@ -121,7 +121,7 @@ export class RolesService {
     roleId: string,
     data: UpdateRolePermissionsDto,
   ) {
-    const role = await this.prisma.role.findUnique({
+    const role = await this.prisma.orm.public.Role.findUnique({
       where: { id: roleId, guildId },
     });
 
@@ -129,7 +129,7 @@ export class RolesService {
       throw new NotFoundException();
     }
 
-    const guild = await this.prisma.guild.findUnique({
+    const guild = await this.prisma.orm.public.Guild.findUnique({
       where: { id: guildId },
     });
 
@@ -148,7 +148,7 @@ export class RolesService {
       throw new ForbiddenException();
     }
 
-    const updatedRole = await this.prisma.role.update({
+    const updatedRole = await this.prisma.orm.public.Role.update({
       where: { id: roleId },
       data: {
         permissions: data.permissions,
@@ -165,7 +165,7 @@ export class RolesService {
   }
 
   async deleteRole(data: DeleteRoleDto) {
-    const role = await this.prisma.role.findUnique({
+    const role = await this.prisma.orm.public.Role.findUnique({
       where: { id: data.id, guildId: data.guildId },
     });
 
@@ -173,7 +173,7 @@ export class RolesService {
       return;
     }
 
-    await this.prisma.role.delete({
+    await this.prisma.orm.public.Role.delete({
       where: { id: data.id },
     });
 
@@ -184,7 +184,7 @@ export class RolesService {
 
   async deleteRolesByGuildId(guildId: string) {
     try {
-      await this.prisma.role.deleteMany({
+      await this.prisma.orm.public.Role.deleteMany({
         where: { guildId },
       });
 

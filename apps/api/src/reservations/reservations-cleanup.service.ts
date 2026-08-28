@@ -36,7 +36,7 @@ export class ReservationsCleanupService {
     const startTime = Date.now();
 
     try {
-      const { count } = await this.prisma.reservation.deleteMany({
+      const { count } = await this.prisma.orm.public.Reservation.deleteMany({
         where: {
           endsAt: { lt: cutoffDate },
         },
@@ -64,7 +64,7 @@ export class ReservationsCleanupService {
       `Manual cleanup of expired reservations (cutoff: ${cutoffDate.toISOString()}, retention: ${retentionDays} days)`,
     );
 
-    const { count } = await this.prisma.reservation.deleteMany({
+    const { count } = await this.prisma.orm.public.Reservation.deleteMany({
       where: {
         endsAt: { lt: cutoffDate },
       },

@@ -19,11 +19,12 @@ import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "@lootlog/scoring";
 import { EVENT_HERO_KILL_JOB_NAME } from "./utils/event-hero-kill-job";
+import { createPrismaServiceTestDouble } from "src/test/prisma-service-test-double";
 
 describe("EventsService", () => {
   let service: EventsService;
 
-  const mockPrismaService = {
+  const mockPrismaService = createPrismaServiceTestDouble({
     event: {
       create: mockFn(),
       findMany: mockFn(),
@@ -57,9 +58,9 @@ describe("EventsService", () => {
     userPinnedEvent: {
       deleteMany: mockFn(),
     },
-    $transaction: mockFn(),
-    $queryRaw: mockFn(),
-  };
+    transaction: mockFn(),
+    query: mockFn(),
+  });
 
   const mockPointsService = {
     getRanking: mockFn(),
@@ -542,7 +543,7 @@ describe("EventsService", () => {
 
     it("should update event successfully", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({
@@ -552,12 +553,12 @@ describe("EventsService", () => {
 
       await service.updateEvent(guildId, eventId, { name: "Updated" });
 
-      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+      expect(mockPrismaService.transaction).toHaveBeenCalled();
     });
 
     it("should request updated hero maps sorted by mapId", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
@@ -573,7 +574,7 @@ describe("EventsService", () => {
     it("should set endsAt when provided", async () => {
       const newEndsAt = new Date(Date.now() + 60_000);
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
@@ -594,7 +595,7 @@ describe("EventsService", () => {
     it("removes pins when an active event is ended", async () => {
       const endedAt = new Date(Date.now() - 1);
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({
@@ -616,7 +617,7 @@ describe("EventsService", () => {
         ...existingEvent,
         endsAt: new Date(Date.now() - 60_000),
       });
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue(existingEvent);
@@ -630,7 +631,7 @@ describe("EventsService", () => {
 
     it("should persist advanced scoring rules on update", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({
@@ -656,7 +657,7 @@ describe("EventsService", () => {
 
     it("should not recalculate points automatically when basePointsPerKill changes", async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
-      mockPrismaService.$transaction.mockImplementation((callback) =>
+      mockPrismaService.transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
@@ -793,7 +794,7 @@ describe("EventsService", () => {
         id: eventId,
         world: "tempest",
       });
-      mockPrismaService.$queryRaw.mockResolvedValue([
+      mockPrismaService.query.mockResolvedValue([
         { npc: { id: 456, name: "Hero", icon: "hero.gif" } },
       ]);
       mockPrismaService.eventHeroNpc.create.mockResolvedValue({});
@@ -1145,13 +1146,13 @@ describe("EventsService", () => {
         { id: "loc-1" },
         { id: "loc-2" },
       ]);
-      mockPrismaService.$transaction.mockResolvedValue([]);
+      mockPrismaService.transaction.mockResolvedValue([]);
 
       const result = await service.reorderLocations(guildId, eventId, heroId, {
         locationIds: ["loc-2", "loc-1"],
       });
 
-      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+      expect(mockPrismaService.transaction).toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
   });

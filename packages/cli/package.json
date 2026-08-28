@@ -11,23 +11,18 @@
   "exports": "./dist/index.mjs",
   "scripts": {
     "lint": "oxlint src",
-    "test": "tsx src/utils/env-generator.test.ts",
+    "test": "tsx src/utils/env-generator.test.ts && tsx src/index.ts seed --help",
     "env:generate": "tsx src/commands/env/generate.ts"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
-    "@lootlog/battle-processor": "workspace:*",
-    "@lootlog/types": "workspace:*",
+    "@lootlog/api": "workspace:*",
     "amqplib": "^2.0.1",
-    "node-html-parser": "^9.0.2",
-    "random-words": "^2.0.1",
-    "uuid": "^14.0.2",
     "zx": "^8.8.5"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.8",
     "@types/node": "catalog:",
-    "dotenv": "^17.4.2",
     "tsx": "catalog:"
   }
 }

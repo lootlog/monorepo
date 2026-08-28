@@ -10,7 +10,7 @@ import {
   NotificationScheduleStrategy,
   NotificationTargetType,
   NotificationTriggerType,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import {
   isoDatetimeCodec,
   jsonValueSchema,

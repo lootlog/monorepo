@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { ActivityType, Prisma } from "src/generated/prisma/client";
+import { isActivityUniqueConstraintError } from "src/shared/db/application-client";
+import { ActivityType, Prisma } from "src/shared/db/domain";
 import { PrismaService } from "src/shared/db/prisma.service";
 import { CreateActivityDto } from "./dto/create-activity.dto";
 import { mapActivityDetails } from "./utils/map-activity-details";
@@ -21,8 +22,8 @@ export class ActivitiesService {
     }
 
     try {
-      const activity = await this.prisma.$transaction(async (tx) => {
-        const createdActivity = await tx.activity.create({
+      const activity = await this.prisma.transaction(async (tx) => {
+        const createdActivity = await tx.orm.public.Activity.create({
           data: {
             userId: dto.userId,
             guildId: dto.guildId,
@@ -52,15 +53,12 @@ export class ActivitiesService {
         details: mapActivityDetails(activity.details),
       };
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
+      if (isActivityUniqueConstraintError(error)) {
         this.logger.log(
           `Duplicate activity detected via idempotency key: ${dto.idempotencyKey}`,
         );
 
-        const existing = await this.prisma.activity.findFirst({
+        const existing = await this.prisma.orm.public.Activity.findFirst({
           where: { idempotencyKey: dto.idempotencyKey },
           include: {
             actorSnapshot: true,
@@ -102,20 +100,22 @@ export class ActivitiesService {
   ): Promise<void> {
     const sessionId = this.getActivitySessionId(dto);
     const lastSeenAt = new Date();
-    const createdSession = await tx.memberActivitySession.createMany({
-      data: {
-        guildId: dto.guildId,
-        discordId: dto.discordId,
-        source: dto.source,
-        sessionId,
-        userId: dto.userId,
-        userAgent: this.getDetailsString(dto, "userAgent"),
-        world: dto.world,
-        lastSeenAt,
+    const createdSession = await tx.orm.public.MemberActivitySession.createMany(
+      {
+        data: {
+          guildId: dto.guildId,
+          discordId: dto.discordId,
+          source: dto.source,
+          sessionId,
+          userId: dto.userId,
+          userAgent: this.getDetailsString(dto, "userAgent"),
+          world: dto.world,
+          lastSeenAt,
+        },
+        skipDuplicates: true,
       },
-      skipDuplicates: true,
-    });
-    const activeSessionCount = await tx.memberActivitySession.count({
+    );
+    const activeSessionCount = await tx.orm.public.MemberActivitySession.count({
       where: {
         guildId: dto.guildId,
         discordId: dto.discordId,
@@ -124,7 +124,7 @@ export class ActivitiesService {
     });
     const visitCountIncrement = createdSession.count;
 
-    await tx.memberActivityStats.upsert({
+    await tx.orm.public.MemberActivityStats.upsert({
       where: {
         guildId_discordId_source: {
           guildId: dto.guildId,
@@ -156,7 +156,7 @@ export class ActivitiesService {
   ): Promise<void> {
     const sessionId = this.getActivitySessionId(dto);
 
-    await tx.memberActivitySession.deleteMany({
+    await tx.orm.public.MemberActivitySession.deleteMany({
       where: {
         guildId: dto.guildId,
         discordId: dto.discordId,
@@ -164,7 +164,7 @@ export class ActivitiesService {
         sessionId,
       },
     });
-    const activeSessionCount = await tx.memberActivitySession.count({
+    const activeSessionCount = await tx.orm.public.MemberActivitySession.count({
       where: {
         guildId: dto.guildId,
         discordId: dto.discordId,
@@ -172,7 +172,7 @@ export class ActivitiesService {
       },
     });
 
-    await tx.memberActivityStats.updateMany({
+    await tx.orm.public.MemberActivityStats.updateMany({
       where: {
         guildId: dto.guildId,
         discordId: dto.discordId,
@@ -188,15 +188,15 @@ export class ActivitiesService {
     guildId: string;
     discordId: string;
   }): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.memberActivitySession.deleteMany({
+    await this.prisma.transaction(async (tx) => {
+      await tx.orm.public.MemberActivitySession.deleteMany({
         where: {
           guildId: member.guildId,
           discordId: member.discordId,
         },
       });
 
-      await tx.memberActivityStats.updateMany({
+      await tx.orm.public.MemberActivityStats.updateMany({
         where: {
           guildId: member.guildId,
           discordId: member.discordId,
@@ -237,7 +237,7 @@ export class ActivitiesService {
   }
 
   async deleteOne(id: string, guildId: string): Promise<number> {
-    const activity = await this.prisma.activity.findFirst({
+    const activity = await this.prisma.orm.public.Activity.findFirst({
       where: {
         id,
         guildId,
@@ -248,7 +248,7 @@ export class ActivitiesService {
       throw new NotFoundException(`Activity with ID ${id} not found`);
     }
 
-    await this.prisma.activity.delete({
+    await this.prisma.orm.public.Activity.delete({
       where: {
         id_createdAt: {
           id: activity.id,
@@ -261,7 +261,7 @@ export class ActivitiesService {
   }
 
   async deleteMany(guildId: string, type?: ActivityType): Promise<number> {
-    const result = await this.prisma.activity.deleteMany({
+    const result = await this.prisma.orm.public.Activity.deleteMany({
       where: {
         guildId,
         type,
@@ -274,7 +274,7 @@ export class ActivitiesService {
   async getStatsByGuild(
     guildId: string,
   ): Promise<Record<ActivityType, number>> {
-    const stats = await this.prisma.activity.groupBy({
+    const stats = await this.prisma.orm.public.Activity.groupBy({
       by: ["type"],
       where: { guildId },
       _count: { type: true },
@@ -300,23 +300,24 @@ export class ActivitiesService {
     const fingerprint = this.generateFingerprint(snapshot, source);
 
     try {
-      const actorSnapshot = await this.prisma.activityActorSnapshot.upsert({
-        where: { fingerprint },
-        update: {},
-        create: {
-          accountId: snapshot.accountId,
-          characterId: snapshot.characterId,
-          clanName: snapshot.clanName,
-          clanId: snapshot.clanId,
-          name: snapshot.name,
-          icon: snapshot.icon,
-          lvl: snapshot.lvl,
-          prof: snapshot.prof,
-          source,
-          fingerprint,
-        },
-        select: { id: true },
-      });
+      const actorSnapshot =
+        await this.prisma.orm.public.ActivityActorSnapshot.upsert({
+          where: { fingerprint },
+          update: {},
+          create: {
+            accountId: snapshot.accountId,
+            characterId: snapshot.characterId,
+            clanName: snapshot.clanName,
+            clanId: snapshot.clanId,
+            name: snapshot.name,
+            icon: snapshot.icon,
+            lvl: snapshot.lvl,
+            prof: snapshot.prof,
+            source,
+            fingerprint,
+          },
+          select: { id: true },
+        });
 
       return actorSnapshot.id;
     } catch (error) {

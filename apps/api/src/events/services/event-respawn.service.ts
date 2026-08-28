@@ -60,7 +60,7 @@ export class EventRespawnService {
     const { createNewWindow, newMinSpawnTime, newMaxSpawnTime, isAutoClose } =
       normalizeCloseRespawnWindowOptions(options);
 
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: { id: heroId, event: { id: eventId, guildId } },
       include: {
         event: true,
@@ -95,11 +95,11 @@ export class EventRespawnService {
       const closedAt = new Date();
 
       try {
-        await this.prisma.$transaction(async (tx) => {
+        await this.prisma.transaction(async (tx) => {
           if (hero.maps.length > 0) {
             await Promise.all(
               hero.maps.map((map) =>
-                tx.eventMap.update({
+                tx.orm.public.EventMap.update({
                   where: { id: map.id },
                   data: {
                     assignedMembers: { set: [] },
@@ -108,7 +108,7 @@ export class EventRespawnService {
               ),
             );
 
-            await tx.eventMapAssignmentHistory.updateMany({
+            await tx.orm.public.EventMapAssignmentHistory.updateMany({
               where: {
                 mapId: { in: hero.maps.map((map) => map.id) },
                 unassignedAt: null,
@@ -215,7 +215,7 @@ export class EventRespawnService {
     heroId: string,
     options: OpenRespawnWindowOptions,
   ): Promise<{ minSpawnTime: Date; maxSpawnTime: Date }> {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: { id: heroId, event: { id: eventId, guildId } },
       include: { event: true },
     });
@@ -237,7 +237,7 @@ export class EventRespawnService {
       maxSpawnTime,
     });
 
-    const firstMember = await this.prisma.member.findFirst({
+    const firstMember = await this.prisma.orm.public.Member.findFirst({
       where: { guildId },
       select: { id: true },
     });
@@ -261,7 +261,7 @@ export class EventRespawnService {
     const windowOpenedAt = timer.windowOpenedAt ?? new Date();
     await this.cancelScheduledAutoClose(heroId);
 
-    const heroMaps = await this.prisma.eventMap.findMany({
+    const heroMaps = await this.prisma.orm.public.EventMap.findMany({
       where: { heroNpcId: heroId },
       include: {
         assignedMembers: true,
@@ -347,7 +347,7 @@ export class EventRespawnService {
     maxSpawnTime: Date | null;
     overdueMs: number | null;
   }> {
-    const hero = await this.prisma.eventHeroNpc.findFirst({
+    const hero = await this.prisma.orm.public.EventHeroNpc.findFirst({
       where: { id: heroId, event: { id: eventId, guildId } },
       include: { event: true },
     });

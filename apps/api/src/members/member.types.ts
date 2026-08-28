@@ -1,9 +1,4 @@
-import type {
-  Member,
-  MemberRefreshJob,
-  Prisma,
-  Role,
-} from "src/generated/prisma/client";
+import type { Member, MemberRefreshJob, Prisma, Role } from "src/db/domain";
 import type {
   MemberRefreshStatus,
   MemberSyncStatus,

@@ -1,6 +1,6 @@
 import { hasRolePermissionInLevelRange } from "@lootlog/api-helpers/permissions";
 import { getNpcRoutingTier, type NpcRoutingTier } from "@lootlog/types";
-import { Permission, type Role } from "src/generated/prisma/client";
+import { Permission, type Role } from "src/db/domain";
 import { MessageType } from "src/chat/dto/send-message.dto";
 import type { ChatStoredMessage } from "src/chat/types/chat-stored-message.type";
 

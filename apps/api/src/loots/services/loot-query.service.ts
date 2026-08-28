@@ -8,7 +8,7 @@ import {
   type Guild,
   type Prisma,
   type Role,
-} from "src/generated/prisma/client";
+} from "src/db/domain";
 import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
 import type { LootItemDto } from "src/loots/dto/loot-item.dto";
 import type { LootNpcDto } from "src/loots/dto/loot-npc.dto";
@@ -105,7 +105,7 @@ export class LootQueryService {
       createdAtMax,
     });
 
-    const lootsWithRelations = await this.prisma.loot.findMany({
+    const lootsWithRelations = await this.prisma.orm.public.Loot.findMany({
       where: baseWhere,
       orderBy: { id: "desc" },
       take: limit,
@@ -222,7 +222,7 @@ export class LootQueryService {
       createdAtMax,
     });
 
-    return this.prisma.loot.count({
+    return this.prisma.orm.public.Loot.count({
       where: baseWhere,
     });
   }
@@ -237,7 +237,7 @@ export class LootQueryService {
       cursor: null,
     });
 
-    const loot = await this.prisma.loot.findFirst({
+    const loot = await this.prisma.orm.public.Loot.findFirst({
       where: {
         ...baseWhere,
         id: lootId,
@@ -280,7 +280,7 @@ export class LootQueryService {
 
     if (!loot) return null;
 
-    const commentsCount = await this.prisma.lootComment.count({
+    const commentsCount = await this.prisma.orm.public.LootComment.count({
       where: {
         lootId: loot.id,
         guildId: guild.id,
@@ -324,7 +324,7 @@ export class LootQueryService {
       world: options.world,
     });
 
-    const loot = await this.prisma.loot.findFirst({
+    const loot = await this.prisma.orm.public.Loot.findFirst({
       where: baseWhere,
       orderBy: { id: "desc" },
       select: {
@@ -353,7 +353,7 @@ export class LootQueryService {
       return undefined;
     }
 
-    const snapshots = await this.prisma.itemSnapshot.findMany({
+    const snapshots = await this.prisma.orm.public.ItemSnapshot.findMany({
       where: {
         name: {
           in: names,

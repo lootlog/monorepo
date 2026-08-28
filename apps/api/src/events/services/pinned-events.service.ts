@@ -36,7 +36,7 @@ export class PinnedEventsService {
   async listPinnedEvents(userId: string, guildId: string) {
     const referenceTime = new Date();
 
-    await this.prisma.userPinnedEvent.deleteMany({
+    await this.prisma.orm.public.UserPinnedEvent.deleteMany({
       where: {
         userId,
         event: {
@@ -49,7 +49,7 @@ export class PinnedEventsService {
       },
     });
 
-    const pinnedEvents = await this.prisma.userPinnedEvent.findMany({
+    const pinnedEvents = await this.prisma.orm.public.UserPinnedEvent.findMany({
       where: {
         userId,
         event: {
@@ -74,7 +74,7 @@ export class PinnedEventsService {
 
   async pinEvent(userId: string, guildId: string, eventId: string) {
     const referenceTime = new Date();
-    const event = await this.prisma.event.findFirst({
+    const event = await this.prisma.orm.public.Event.findFirst({
       where: { id: eventId, guildId },
       select: pinnedEventSelect,
     });
@@ -85,13 +85,13 @@ export class PinnedEventsService {
 
     const activeEvent = attachComputedEventActive(event, referenceTime);
     if (!activeEvent.active) {
-      await this.prisma.userPinnedEvent.deleteMany({
+      await this.prisma.orm.public.UserPinnedEvent.deleteMany({
         where: { userId, eventId },
       });
       throw new ConflictException("Only active events can be pinned");
     }
 
-    const pinnedEvent = await this.prisma.userPinnedEvent.upsert({
+    const pinnedEvent = await this.prisma.orm.public.UserPinnedEvent.upsert({
       where: { userId_eventId: { userId, eventId } },
       create: { userId, eventId },
       update: {},
@@ -105,7 +105,7 @@ export class PinnedEventsService {
   }
 
   async unpinEvent(userId: string, guildId: string, eventId: string) {
-    await this.prisma.userPinnedEvent.deleteMany({
+    await this.prisma.orm.public.UserPinnedEvent.deleteMany({
       where: {
         userId,
         eventId,
