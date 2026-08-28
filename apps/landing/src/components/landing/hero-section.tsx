@@ -1,5 +1,3 @@
-"use client";
-
 import { ArrowUpRight, Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
@@ -101,6 +99,7 @@ export function HeroSection() {
 
           <ProductWindow
             src="/screenshots/dashboard-current.png"
+            srcSet="/screenshots/dashboard-current-640.jpg 640w, /screenshots/dashboard-current-960.jpg 960w, /screenshots/dashboard-current.png 1280w"
             alt={t("landing.hero.screenshotAlt")}
             caption={t("landing.hero.screenshotCaption")}
             priority

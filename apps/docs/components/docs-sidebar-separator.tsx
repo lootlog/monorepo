@@ -1,5 +1,3 @@
-"use client";
-
 import { getChapterBySeparator } from "@/lib/docs-chapters";
 import type * as PageTree from "fumadocs-core/page-tree";
 import type { CSSProperties } from "react";

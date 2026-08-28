@@ -15,7 +15,7 @@ const cloudflareTargets = new Map([
   [
     "@lootlog/landing",
     {
-      artifactPath: "apps/landing/out",
+      artifactPath: "apps/landing/dist/client",
       kind: "pages",
       project: "lootlog-landing",
     },
@@ -39,7 +39,7 @@ const cloudflareTargets = new Map([
   [
     "@lootlog/docs",
     {
-      artifactPath: "apps/docs/out",
+      artifactPath: "apps/docs/dist/client",
       configPath: "apps/docs/wrangler.jsonc",
       kind: "worker",
       project: "lootlog-docs",

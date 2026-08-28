@@ -1,7 +1,5 @@
-"use client";
-
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LandingFooter } from "@/src/components/landing/footer";
@@ -22,7 +20,7 @@ export function PolicyLayout({ children, lastUpdated }: PolicyLayoutProps) {
       <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8">
         <div className="max-w-4xl mx-auto">
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-6"
           >
             <ArrowLeft className="w-4 h-4" />

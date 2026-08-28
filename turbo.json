@@ -33,13 +33,7 @@
         ".env*"
       ],
       "env": ["GAME_CLIENT_URL"],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**",
-        "dist/**",
-        "out/**",
-        "generated/**"
-      ]
+      "outputs": ["dist/**", "generated/**"]
     },
     "transit": {
       "dependsOn": ["^transit"]

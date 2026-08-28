@@ -15,7 +15,8 @@ const cloudflareDevelopmentTargets = new Map([
   [
     "@lootlog/landing",
     {
-      artifactPath: "apps/landing/out",
+      artifactPath: "apps/landing/dist/client",
+      kind: "pages",
       packageName: "@lootlog/landing",
       project: "lootlog-landing",
     },
@@ -24,8 +25,20 @@ const cloudflareDevelopmentTargets = new Map([
     "@lootlog/web",
     {
       artifactPath: "apps/web/dist",
+      kind: "pages",
       packageName: "@lootlog/web",
       project: "lootlog-web-monorepo",
+    },
+  ],
+  [
+    "@lootlog/docs",
+    {
+      artifactPath: "apps/docs/dist/client",
+      configPath: "apps/docs/wrangler.jsonc",
+      environment: "develop",
+      kind: "worker",
+      packageName: "@lootlog/docs",
+      project: "lootlog-docs-develop",
     },
   ],
 ]);

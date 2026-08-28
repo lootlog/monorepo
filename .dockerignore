@@ -19,8 +19,6 @@ dist
 build
 **/generated
 generated
-**/.next
-.next
 **/.turbo
 .turbo
 

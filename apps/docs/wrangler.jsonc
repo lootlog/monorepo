@@ -1,7 +1,14 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "lootlog-docs",
-  "compatibility_date": "2026-03-21",
+  "compatibility_date": "2026-08-28",
   "assets": {
-    "directory": "./out"
+    "directory": "./dist/client"
+  },
+  "env": {
+    "develop": {
+      "name": "lootlog-docs-develop",
+      "workers_dev": true
+    }
   }
 }

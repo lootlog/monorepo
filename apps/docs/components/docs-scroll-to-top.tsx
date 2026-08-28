@@ -1,10 +1,8 @@
-"use client";
-
-import { usePathname } from "next/navigation";
+import { useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 export function DocsScrollToTop() {
-  const pathname = usePathname();
+  const pathname = useLocation({ select: (location) => location.pathname });
 
   useEffect(() => {
     if (window.location.hash) return;
