@@ -4,5 +4,11 @@
   "compatibility_date": "2026-08-28",
   "assets": {
     "directory": "./dist/client"
+  },
+  "env": {
+    "develop": {
+      "name": "lootlog-docs-develop",
+      "workers_dev": true
+    }
   }
 }
