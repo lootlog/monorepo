@@ -6,16 +6,8 @@ import { DraggableWindow } from "@/components/draggable-window";
 import { TimersActions } from "@/features/timers/components/timers-actions";
 import { TimersContent } from "@/features/timers/components/timers-content";
 import { TimersUnderBagActions } from "@/features/timers/components/timers-under-bag-actions";
-import { useTimersFiltering } from "@/features/timers/hooks/use-timers-filtering";
-import { useTimerRemovalBoundary } from "@/features/timers/hooks/use-timer-removal-boundary";
+import { useTimerListProjection } from "@/features/timers/hooks/use-timer-list-projection";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
-import { calculateColorStatistics } from "@/features/timers/utils/color-statistics";
-import { checkFiltersActive } from "@/features/timers/utils/filters-utils";
-import {
-  calculateTimeLeft,
-  filterTimersByExpiredVisibility,
-  mergeTimers,
-} from "@/features/timers/utils/timers-utils";
 import { useTimers } from "@/hooks/api/use-timers";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
@@ -26,32 +18,6 @@ const EMPTY_TIMERS: Timer[] = [];
 
 const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
   value ?? fallback;
-
-const getDeduplicatedTimers = (timers: Timer[], timersGrouping: boolean) => {
-  if (timersGrouping) return timers;
-
-  const timersByCompositeKey = new Map<string, Timer>();
-  for (const timer of timers) {
-    timersByCompositeKey.set(
-      `${timer.guildId}_${timer.world}_${timer.timerKey}`,
-      timer,
-    );
-  }
-
-  return Array.from(timersByCompositeKey.values());
-};
-
-const normalizeUngroupedTimers = (timers: Timer[]) =>
-  timers.map((timer) => ({
-    ...timer,
-    members: timer.member ? [timer.member] : [],
-    actorCharactersByMemberId:
-      timer.member && timer.actorCharacter
-        ? { [String(timer.member.id)]: timer.actorCharacter }
-        : timer.actorCharactersByMemberId,
-    minTimeLeft: 0,
-    maxTimeLeft: 0,
-  }));
 
 interface TimersViewProps {
   isOpen: boolean;
@@ -136,54 +102,38 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const filters = valueOr(timersFilters[settingsKey], DEFAULT_TIMERS_FILTERS);
   const hiddenTimersForSettings = valueOr(hiddenTimers[settingsKey], []);
   const pinnedTimersForSettings = valueOr(pinnedTimers[settingsKey], []);
-  const deduplicatedTimers = getDeduplicatedTimers(
-    valueOr(timers, EMPTY_TIMERS),
-    generalConfig.timersGrouping,
-  );
-  const mergedTimers = generalConfig.timersGrouping
-    ? mergeTimers(deduplicatedTimers)
-    : normalizeUngroupedTimers(deduplicatedTimers);
-  const timerCalculationEpoch = useTimerRemovalBoundary(
-    mergedTimers,
-    generalConfig.removeTimerAfterMs,
-    isUnderBag || isOpen,
-  );
-  const activeTimers = filterTimersByExpiredVisibility(
-    calculateTimeLeft(mergedTimers, timerCalculationEpoch),
-    generalConfig.removeTimerAfterMs,
-    alwaysVisibleExpiredTimers,
-  );
-  const areFiltersActive = checkFiltersActive(
-    valueOr(timerFiltersSearchText, ""),
-    showHiddenTimers ? 0 : hiddenTimersForSettings.length,
-    filters,
-  );
-  const visibleTimers = useTimersFiltering({
-    calculatedTimers: activeTimers,
-    isGrouping: generalConfig.timersGrouping,
-    guildId: valueOr(guildId, ""),
-    hiddenTimers: hiddenTimersForSettings,
-    showHiddenTimers,
-    searchText: valueOr(timerFiltersSearchText, ""),
-    selectedNpcTypes: filters.selectedNpcTypes,
-    minLvl: filters.minLvl,
-    maxLvl: filters.maxLvl,
-    selectedColors: filters.selectedColors,
-    colorFiltersEnabled: valueOr(colorFiltersEnabled, false),
-    timersColors: timersColors as Record<string, string>,
-    pinnedTimers: pinnedTimersForSettings,
-    sortOrder: valueOr(timersSortOrder, "asc"),
-    expiredTimersAtBottom: true,
-    removeTimerAfterMs: generalConfig.removeTimerAfterMs,
+  const {
+    areFiltersActive,
+    colorStatistics,
+    timers: sortedTimers,
+  } = useTimerListProjection({
+    context: {
+      guildId: valueOr(guildId, ""),
+      isGrouping: generalConfig.timersGrouping,
+    },
+    enabled: isUnderBag || isOpen,
+    filters: {
+      maxLvl: filters.maxLvl,
+      minLvl: filters.minLvl,
+      searchText: valueOr(timerFiltersSearchText, ""),
+      selectedColors: filters.selectedColors,
+      selectedNpcTypes: filters.selectedNpcTypes,
+      showHiddenTimers,
+    },
+    preferences: {
+      alwaysVisibleExpiredTimers,
+      colorFiltersEnabled: valueOr(colorFiltersEnabled, false),
+      customColors,
+      defaultColorNames: defaultColorNames as Record<string, string>,
+      hiddenTimers: hiddenTimersForSettings,
+      overriddenDefaultColors,
+      pinnedTimers: pinnedTimersForSettings,
+      removeTimerAfterMs: generalConfig.removeTimerAfterMs,
+      sortOrder: valueOr(timersSortOrder, "asc"),
+      timersColors: timersColors as Record<string, string>,
+    },
+    timers: valueOr(timers, EMPTY_TIMERS),
   });
-  const sortedTimers = visibleTimers;
-  const colorStatistics = calculateColorStatistics(
-    timersColors as Record<string, string>,
-    sortedTimers,
-    customColors,
-    defaultColorNames as Record<string, string>,
-    overriddenDefaultColors,
-  );
   const handleAddTimer = () => {
     setOpen("add-timer", true, { guildId });
   };
