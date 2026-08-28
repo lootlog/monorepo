@@ -131,8 +131,8 @@ jobs:
           case "$PACKAGE_NAME" in
             @lootlog/landing)
               keys=(
-                NEXT_PUBLIC_ADDON_URL
-                NEXT_PUBLIC_AUTH_SERVICE_URL
+                VITE_ADDON_URL
+                VITE_AUTH_SERVICE_URL
               )
               ;;
             @lootlog/web)

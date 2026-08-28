@@ -1,5 +1,3 @@
-"use client";
-
 import { docsChapters, type DocsChapterId } from "@/lib/docs-chapters";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 

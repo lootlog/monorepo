@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 type ProductScreenshotProps = {
   alt: string;
   src: string;
@@ -17,12 +15,13 @@ export function ProductScreenshot({ alt, src, title }: ProductScreenshotProps) {
         </span>
         <span>{title}</span>
       </figcaption>
-      <Image
+      <img
         src={src}
         alt={alt}
         width={1280}
         height={720}
         sizes="(max-width: 768px) calc(100vw - 32px), 760px"
+        loading="lazy"
       />
     </figure>
   );

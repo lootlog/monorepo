@@ -39,8 +39,8 @@ organization operations.
 | `@lootlog/discord-bot`       | Discord membership synchronization, notifications, and commands                                                      | Discord, API, RabbitMQ               |
 | `@lootlog/game-client`       | Margonem runtime integration and in-game UI                                                                          | Browser runtime, APIs, gateway       |
 | `@lootlog/web`               | Authenticated personal and organization web app                                                                      | Generated API client, gateway        |
-| `@lootlog/landing`           | Product introduction and legal pages                                                                                 | Static Next.js output                |
-| `@lootlog/docs`              | User documentation                                                                                                   | Static Next.js output                |
+| `@lootlog/landing`           | Product introduction and legal pages                                                                                 | Static TanStack Start client output  |
+| `@lootlog/docs`              | User documentation                                                                                                   | Static TanStack Start client output  |
 | `@lootlog/wiki`              | Public Margonem knowledge and search                                                                                 | Search API                           |
 | `@lootlog/developer`         | Future developer surface; currently not a supported product                                                          | Static frontend                      |
 

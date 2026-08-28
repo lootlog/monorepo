@@ -1,5 +1,3 @@
-"use client";
-
 import { ArrowUpRight, BellRing, Clock3, UsersRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 

@@ -1,12 +1,11 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Heart, Loader2, LogIn } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 
 import { links } from "@/src/config/links";
+import { createAuthCallbackUrl } from "@/src/config/auth";
 import { useSession } from "@/src/hooks/use-session";
 import { authClient } from "@/src/lib/auth-client";
 import { LootlogMark } from "./lootlog-mark";
@@ -21,6 +20,8 @@ export function LandingHeader() {
   const [signInError, setSignInError] = useState(false);
 
   useEffect(() => {
+    // Session UI intentionally stays in its loading state until hydration.
+    // oxlint-disable-next-line react/set-state-in-effect
     setIsClientReady(true);
   }, []);
 
@@ -31,7 +32,7 @@ export function LandingHeader() {
     try {
       const result = await authClient.signIn.social({
         provider: "discord",
-        callbackURL: `${window.location.origin}/@me`,
+        callbackURL: createAuthCallbackUrl(window.location.origin),
         scopes: ["guilds.members.read", "guilds", "identify", "email"],
       });
 
@@ -49,7 +50,7 @@ export function LandingHeader() {
     <header className="sticky top-0 z-50 bg-[#07111f]/95 shadow-[0_8px_28px_rgba(0,0,0,0.18)] backdrop-blur-md">
       <div className="mx-auto flex h-[4.5rem] max-w-[96rem] items-center px-5 sm:px-8 lg:px-12">
         <Link
-          href="/"
+          to="/"
           className="inline-flex items-center gap-2 rounded-md text-xl font-black tracking-[-0.035em] text-[#f7f8f2] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
         >
           <LootlogMark className="size-7 shrink-0 rounded-md" />

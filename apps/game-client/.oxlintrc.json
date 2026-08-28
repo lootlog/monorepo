@@ -3,13 +3,11 @@
   "ignorePatterns": [
     "**/node_modules",
     "**/dist",
-    "**/.next",
     "**/out",
     "**/build",
     "**/coverage",
     "**/.source",
     "**/*.tsbuildinfo",
-    "**/next-env.d.ts",
     "**/pnpm-lock.yaml",
     "src/lib/api/generated/**"
   ],

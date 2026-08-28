@@ -1,12 +1,10 @@
-import Image from "next/image";
-
 type LootlogMarkProps = {
   className?: string;
 };
 
 export function LootlogMark({ className }: LootlogMarkProps) {
   return (
-    <Image
+    <img
       src="/brand/lootlog-mark.svg"
       alt=""
       aria-hidden="true"
