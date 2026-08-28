@@ -11,6 +11,12 @@ export const Route = createFileRoute("/terms-of-service")({
         content: "Szczegóły dotyczące regulaminu serwisu Lootlog.pl",
       },
     ],
+    links: [
+      {
+        rel: "canonical",
+        href: "https://lootlog.pl/terms-of-service",
+      },
+    ],
   }),
   component: TermsOfService,
 });

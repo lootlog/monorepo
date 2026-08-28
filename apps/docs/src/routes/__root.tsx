@@ -6,7 +6,10 @@ import {
 } from "@tanstack/react-router";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
 import { DocsSearchDialog } from "@/components/docs-search-dialog";
-import { polishTranslations } from "@/lib/polish-translations";
+import {
+  docsTranslations,
+  polishTranslations,
+} from "@/lib/polish-translations";
 import docsCss from "@/src/styles/global.css?url";
 
 export const Route = createRootRoute({
@@ -14,11 +17,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Dokumentacja Lootlog" },
+      { title: docsTranslations.metadata.title },
       {
         name: "description",
-        content:
-          "Instrukcje instalacji, obsługi dodatku i panelu webowego Lootlog dla graczy Margonem.",
+        content: docsTranslations.metadata.description,
       },
     ],
     links: [

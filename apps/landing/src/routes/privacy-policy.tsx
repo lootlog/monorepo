@@ -12,6 +12,12 @@ export const Route = createFileRoute("/privacy-policy")({
           "Szczegóły dotyczące przetwarzania danych osobowych w Lootlog.pl",
       },
     ],
+    links: [
+      {
+        rel: "canonical",
+        href: "https://lootlog.pl/privacy-policy",
+      },
+    ],
   }),
   component: PrivacyPolicy,
 });

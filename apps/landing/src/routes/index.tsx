@@ -30,6 +30,7 @@ export const Route = createFileRoute("/")({
       { name: "description", content: seo.description },
       { name: "keywords", content: seo.keywords.join(", ") },
     ],
+    links: [{ rel: "canonical", href: "https://lootlog.pl" }],
   }),
   component: HomePage,
 });

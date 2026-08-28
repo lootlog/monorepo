@@ -7,6 +7,20 @@ const releaseWorkflow = readFileSync(
   "utf8",
 );
 
+function getNamedStep(stepName) {
+  const stepStart = releaseWorkflow.indexOf(`      - name: ${stepName}`);
+  assert.notEqual(stepStart, -1, `workflow step not found: ${stepName}`);
+
+  const nextStepStart = releaseWorkflow.indexOf(
+    "\n      - name:",
+    stepStart + 1,
+  );
+  return releaseWorkflow.slice(
+    stepStart,
+    nextStepStart === -1 ? undefined : nextStepStart,
+  );
+}
+
 test("uses the Changesets action v2 contract", () => {
   assert.match(releaseWorkflow, /uses: changesets\/action@v2/);
 
@@ -41,6 +55,8 @@ test("uses the Changesets action v2 contract", () => {
 });
 
 test("builds Landing exclusively with Vite variable names", () => {
+  const buildStep = getNamedStep("Build immutable Cloudflare artifact");
+
   assert.match(
     releaseWorkflow,
     /LANDING_VITE_ADDON_URL: \$\{\{ vars\.LANDING_VITE_ADDON_URL \}\}/u,
@@ -49,19 +65,24 @@ test("builds Landing exclusively with Vite variable names", () => {
     releaseWorkflow,
     /LANDING_VITE_AUTH_SERVICE_URL: \$\{\{ vars\.LANDING_VITE_AUTH_SERVICE_URL \}\}/u,
   );
+  assert.match(buildStep, /export VITE_ADDON_URL="\$LANDING_VITE_ADDON_URL"/u);
   assert.match(
-    releaseWorkflow,
-    /export VITE_ADDON_URL="\$LANDING_VITE_ADDON_URL"/u,
-  );
-  assert.match(
-    releaseWorkflow,
+    buildStep,
     /export VITE_AUTH_SERVICE_URL="\$LANDING_VITE_AUTH_SERVICE_URL"/u,
   );
+  assert.doesNotMatch(buildStep, /NEXT_PUBLIC_/u);
 });
 
 test("smoke-checks Landing and Docs before the rollback boundary closes", () => {
-  assert.match(releaseWorkflow, /Smoke-check public Cloudflare routes/u);
-  assert.match(releaseWorkflow, /https:\/\/lootlog\.pl\/privacy-policy/u);
-  assert.match(releaseWorkflow, /https:\/\/docs\.lootlog\.pl\/api\/search/u);
-  assert.match(releaseWorkflow, /Roll back partial Cloudflare promotion/u);
+  const smokeStep = getNamedStep("Smoke-check public Cloudflare routes");
+  const rollbackStep = getNamedStep("Roll back partial Cloudflare promotion");
+  const smokeStepPosition = releaseWorkflow.indexOf(smokeStep);
+  const rollbackStepPosition = releaseWorkflow.indexOf(rollbackStep);
+
+  assert.match(smokeStep, /https:\/\/lootlog\.pl\/privacy-policy/u);
+  assert.match(smokeStep, /https:\/\/docs\.lootlog\.pl\/api\/search/u);
+  assert.ok(
+    smokeStepPosition < rollbackStepPosition,
+    "public smoke checks must run before the rollback step",
+  );
 });
