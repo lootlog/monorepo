@@ -15,7 +15,7 @@
   "dependencies": {
     "@lootlog/ui": "workspace:*",
     "@tanstack/react-router": "catalog:",
-    "@tanstack/react-start": "^1.168.32",
+    "@tanstack/react-start": "^1.168.49",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

@@ -14838,7 +14838,7 @@ components:
                                 - ">="
                                 - <
                                 - <=
-                                - "=="
+                                - ==
                                 - "!="
                             value:
                               type: number
@@ -14900,7 +14900,7 @@ components:
                                 - ">="
                                 - <
                                 - <=
-                                - "=="
+                                - ==
                                 - "!="
                             value:
                               type: number
@@ -16077,7 +16077,7 @@ components:
                                 - ">="
                                 - <
                                 - <=
-                                - "=="
+                                - ==
                                 - "!="
                             value:
                               type: number
@@ -16139,7 +16139,7 @@ components:
                                 - ">="
                                 - <
                                 - <=
-                                - "=="
+                                - ==
                                 - "!="
                             value:
                               type: number

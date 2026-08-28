@@ -12,6 +12,7 @@ import {
 } from "@/lib/online-players-presence";
 import {
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type Dispatch,
@@ -28,20 +29,70 @@ export type PlayersPresenceState = AsyncResourceState & {
   setOnlinePlayers: Dispatch<SetStateAction<PlayerPresenceResponse>>;
 };
 
+type PresenceResource = {
+  accessState: OnlinePlayersAccessState;
+  error: unknown;
+  loaded: boolean;
+  loading: boolean;
+  onlinePlayers: PlayerPresenceResponse;
+  scopeKey: string | null;
+};
+
+const createEmptyPresenceResource = (
+  scopeKey: string | null,
+): PresenceResource => ({
+  accessState: "allowed",
+  error: null,
+  loaded: false,
+  loading: false,
+  onlinePlayers: {},
+  scopeKey,
+});
+
 export const usePlayersPresence = (
   selectedGuildId?: string,
   world?: string,
 ): PlayersPresenceState => {
-  const [onlinePlayers, setOnlinePlayers] = useState<PlayerPresenceResponse>(
-    {},
+  const scopeKey =
+    selectedGuildId && world ? JSON.stringify([selectedGuildId, world]) : null;
+  const [presenceResource, setPresenceResource] = useState(() =>
+    createEmptyPresenceResource(scopeKey),
   );
-  const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState<unknown>(null);
-  const [accessState, setAccessState] =
-    useState<OnlinePlayersAccessState>("allowed");
   const [requestVersion, setRequestVersion] = useState(0);
   const { joined, connected, socket } = useSocket();
+  const visiblePresenceResource =
+    presenceResource.scopeKey === scopeKey
+      ? presenceResource
+      : createEmptyPresenceResource(scopeKey);
+  const setOnlinePlayers: Dispatch<SetStateAction<PlayerPresenceResponse>> = (
+    update,
+  ) => {
+    setPresenceResource((currentResource) => {
+      const scopedResource =
+        currentResource.scopeKey === scopeKey
+          ? currentResource
+          : createEmptyPresenceResource(scopeKey);
+      const nextOnlinePlayers =
+        typeof update === "function"
+          ? update(scopedResource.onlinePlayers)
+          : update;
+      return { ...scopedResource, onlinePlayers: nextOnlinePlayers };
+    });
+  };
+  const updateOnlinePlayersForCurrentScope = useEffectEvent(
+    (update: (current: PlayerPresenceResponse) => PlayerPresenceResponse) => {
+      setPresenceResource((currentResource) => {
+        const scopedResource =
+          currentResource.scopeKey === scopeKey
+            ? currentResource
+            : createEmptyPresenceResource(scopeKey);
+        return {
+          ...scopedResource,
+          onlinePlayers: update(scopedResource.onlinePlayers),
+        };
+      });
+    },
+  );
 
   const selectedGuildIdRef = useRef(selectedGuildId);
   const worldRef = useRef(world);
@@ -67,11 +118,6 @@ export const usePlayersPresence = (
     if (!selectedGuildId || !world) {
       requestIdRef.current += 1;
       visibleScopeRef.current = { guildId: selectedGuildId, world };
-      setOnlinePlayers({});
-      setLoading(false);
-      setLoaded(false);
-      setError(null);
-      setAccessState("allowed");
       return;
     }
 
@@ -82,11 +128,6 @@ export const usePlayersPresence = (
     if (scopeChanged) {
       requestIdRef.current += 1;
       visibleScopeRef.current = { guildId: selectedGuildId, world };
-      setOnlinePlayers({});
-      setLoaded(false);
-      setLoading(false);
-      setError(null);
-      setAccessState("allowed");
     }
 
     if (
@@ -101,9 +142,6 @@ export const usePlayersPresence = (
 
     const currentRequestId = ++requestIdRef.current;
     visibleScopeRef.current = { guildId: selectedGuildId, world };
-    setAccessState("allowed");
-    setError(null);
-    setLoading(true);
 
     requestServerPresence(socket, selectedGuildIdRef.current, world)
       .then((data) => {
@@ -111,31 +149,45 @@ export const usePlayersPresence = (
         if (requestIdRef.current !== currentRequestId) return;
 
         if (!data) {
-          setError(new Error("Online players response was empty"));
+          setPresenceResource({
+            ...createEmptyPresenceResource(scopeKey),
+            error: new Error("Online players response was empty"),
+          });
           return;
         }
 
         if (data.status === "forbidden") {
-          setOnlinePlayers({});
-          setAccessState("forbidden");
-          setLoaded(true);
+          setPresenceResource({
+            ...createEmptyPresenceResource(scopeKey),
+            accessState: "forbidden",
+            loaded: true,
+          });
           return;
         }
 
-        setOnlinePlayers(normalizePresenceResponse(data.players));
-        setLoaded(true);
+        setPresenceResource({
+          ...createEmptyPresenceResource(scopeKey),
+          loaded: true,
+          onlinePlayers: normalizePresenceResponse(data.players),
+        });
       })
       .catch((requestError: unknown) => {
         if (requestIdRef.current !== currentRequestId) return;
 
-        setError(requestError);
-      })
-      .finally(() => {
-        if (requestIdRef.current === currentRequestId) {
-          setLoading(false);
-        }
+        setPresenceResource({
+          ...createEmptyPresenceResource(scopeKey),
+          error: requestError,
+        });
       });
-  }, [joined, connected, socket, world, selectedGuildId, requestVersion]);
+  }, [
+    joined,
+    connected,
+    socket,
+    world,
+    selectedGuildId,
+    requestVersion,
+    scopeKey,
+  ]);
 
   useEffect(() => {
     if (!socket || !connected || !joined) return;
@@ -163,7 +215,9 @@ export const usePlayersPresence = (
         presenceUpdateController.frame = null;
         const updates = [...presenceUpdateController.pendingUpdates.values()];
         presenceUpdateController.pendingUpdates.clear();
-        setOnlinePlayers((previous) => applyPresenceUpdates(previous, updates));
+        updateOnlinePlayersForCurrentScope((previous) =>
+          applyPresenceUpdates(previous, updates),
+        );
       });
     };
 
@@ -183,12 +237,24 @@ export const usePlayersPresence = (
         handleOnlinePlayersPresenceUpdate,
       );
     };
-  }, [socket, joined, connected]);
+  }, [socket, joined, connected, scopeKey]);
 
   useEffect(() => {
     if (!socket || !connected || !joined) return;
 
     const handlePermissionsUpdated = () => {
+      setPresenceResource((currentResource) => {
+        const scopedResource =
+          currentResource.scopeKey === scopeKey
+            ? currentResource
+            : createEmptyPresenceResource(scopeKey);
+        return {
+          ...scopedResource,
+          accessState: "allowed",
+          error: null,
+          loading: true,
+        };
+      });
       setRequestVersion((version) => version + 1);
     };
 
@@ -197,19 +263,38 @@ export const usePlayersPresence = (
     return () => {
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     };
-  }, [socket, joined, connected]);
+  }, [socket, joined, connected, scopeKey]);
 
   const hasScope = Boolean(selectedGuildId && world);
 
   return {
-    accessState,
-    error,
-    hasLoaded: loaded,
-    initialLoading: hasScope && !loaded && !error,
-    onlinePlayers,
-    refreshing: loading && loaded,
-    retry: () => setRequestVersion((version) => version + 1),
+    accessState: visiblePresenceResource.accessState,
+    error: visiblePresenceResource.error,
+    hasLoaded: visiblePresenceResource.loaded,
+    initialLoading:
+      hasScope &&
+      !visiblePresenceResource.loaded &&
+      !visiblePresenceResource.error,
+    onlinePlayers: visiblePresenceResource.onlinePlayers,
+    refreshing:
+      visiblePresenceResource.loading && visiblePresenceResource.loaded,
+    retry: () => {
+      setPresenceResource((currentResource) => {
+        const scopedResource =
+          currentResource.scopeKey === scopeKey
+            ? currentResource
+            : createEmptyPresenceResource(scopeKey);
+        return {
+          ...scopedResource,
+          accessState: "allowed",
+          error: null,
+          loading: true,
+        };
+      });
+      setRequestVersion((version) => version + 1);
+    },
     setOnlinePlayers,
-    stale: hasScope && loaded && (!connected || !joined),
+    stale:
+      hasScope && visiblePresenceResource.loaded && (!connected || !joined),
   };
 };

@@ -535,6 +535,58 @@ describe("usePlayersPresence", () => {
     expect(result.current.onlinePlayers["discord-1"]).toHaveLength(1);
   });
 
+  it("hides the previous scope while the next scope is loading", async () => {
+    let resolveNextScope: (
+      value: Awaited<ReturnType<typeof emitWithAckSpy>>,
+    ) => void;
+    const nextScopePromise = new Promise((resolve) => {
+      resolveNextScope = resolve;
+    });
+    emitWithAckSpy
+      .mockResolvedValueOnce({
+        status: "success",
+        players: {
+          "discord-1": [
+            {
+              discordId: "discord-1",
+              platform: "game",
+              player: {
+                world: "alpha",
+                name: "Hero",
+                lvl: 123,
+                icon: "hero.png",
+                characterId: "10",
+                accountId: "20",
+                prof: "w",
+              },
+            },
+          ],
+        },
+      })
+      .mockImplementation(() => nextScopePromise);
+    let selectedGuildId = "guild-1";
+    const { result, rerender } = renderHook(() =>
+      usePlayersPresence(selectedGuildId, "alpha"),
+    );
+    await waitFor(() => {
+      expect(result.current.onlinePlayers["discord-1"]).toHaveLength(1);
+    });
+
+    selectedGuildId = "guild-2";
+    rerender();
+
+    expect(result.current.onlinePlayers).toEqual({});
+    expect(result.current.initialLoading).toBe(true);
+
+    await act(async () => {
+      if (!resolveNextScope) {
+        throw new Error("Expected next-scope resolver");
+      }
+      resolveNextScope({ status: "success", players: {} });
+      await nextScopePromise;
+    });
+  });
+
   it("refetches and clears stale players after permissions are updated", async () => {
     let resolvePermissionsRefetch: (
       value: Awaited<ReturnType<typeof emitWithAckSpy>>,

@@ -144,11 +144,6 @@ export const NpcsList: FC<NpcsListProps> = ({
       top: 0,
       behavior: animationEffectsEnabled ? "smooth" : "auto",
     });
-    setViewport((currentViewport) =>
-      currentViewport.scrollTop === 0
-        ? currentViewport
-        : { ...currentViewport, scrollTop: 0 },
-    );
   }, [animationEffectsEnabled, latestDetectionAnimationCycle]);
 
   const itemCount = npcs?.length ?? 0;

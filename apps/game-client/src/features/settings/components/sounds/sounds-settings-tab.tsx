@@ -12,7 +12,7 @@ import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 import type { SoundCategory } from "@/features/settings/components/sounds/types";
 import { Bell, Clock, Crosshair, Loader2, MapPin, Play } from "lucide-react";
-import { useEffect, useState, type FC, type ReactNode } from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { CategoryAccordionItem } from "./category-accordion-item";
 import { MasterVolumeControl } from "./master-volume-control";
@@ -58,12 +58,34 @@ export const SoundsSettingsTab: FC = () => {
     timers: false,
     pings: false,
   });
-  const [localVolumes, setLocalVolumes] = useState({
-    notifications: 0.5,
-    detector: 0.5,
-    timers: 0.5,
-    pings: 0,
+  const serverVolumes = {
+    notifications: soundSettings?.notificationsVolume ?? 0.5,
+    detector: soundSettings?.detectorVolume ?? 0.5,
+    timers: soundSettings?.timersVolume ?? 0.5,
+    pings: soundSettings?.pingsVolume ?? 0,
+  };
+  const [localVolumeState, setLocalVolumeState] = useState({
+    source: soundSettings,
+    values: serverVolumes,
   });
+  const localVolumes =
+    localVolumeState.source === soundSettings
+      ? localVolumeState.values
+      : serverVolumes;
+  const setLocalVolumes = (
+    update: (currentVolumes: typeof localVolumes) => typeof localVolumes,
+  ) => {
+    setLocalVolumeState((currentState) => {
+      const currentVolumes =
+        currentState.source === soundSettings
+          ? currentState.values
+          : serverVolumes;
+      return {
+        source: soundSettings,
+        values: update(currentVolumes),
+      };
+    });
+  };
   const [urlErrors, setUrlErrors] = useState<
     Record<string, Record<string, string>>
   >({});
@@ -107,19 +129,6 @@ export const SoundsSettingsTab: FC = () => {
     },
   ];
   const queueSoundConfigPatch = useSoundSettingsPatchQueue(updateSettings);
-
-  useEffect(() => {
-    if (!soundSettings) {
-      return;
-    }
-
-    setLocalVolumes({
-      notifications: soundSettings.notificationsVolume ?? 0.5,
-      detector: soundSettings.detectorVolume ?? 0.5,
-      timers: soundSettings.timersVolume ?? 0.5,
-      pings: soundSettings.pingsVolume ?? 0,
-    });
-  }, [soundSettings]);
 
   if (isLoading) {
     return (

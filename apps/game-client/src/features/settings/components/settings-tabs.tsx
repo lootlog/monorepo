@@ -167,10 +167,6 @@ export const SettingsTabs = () => {
   }, []);
 
   useEffect(() => {
-    setSelectedResultIndex(0);
-  }, [query]);
-
-  useEffect(() => {
     if (compactPanelOpen) {
       searchInputRef.current?.focus();
     }
@@ -242,7 +238,10 @@ export const SettingsTabs = () => {
         <input
           ref={searchInputRef}
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setSelectedResultIndex(0);
+          }}
           onKeyDown={handleSearchKeyDown}
           placeholder={t("settings.search.placeholder")}
           aria-label={t("settings.search.ariaLabel")}
@@ -252,7 +251,10 @@ export const SettingsTabs = () => {
           <button
             type="button"
             aria-label={t("settings.search.clear")}
-            onClick={() => setQuery("")}
+            onClick={() => {
+              setQuery("");
+              setSelectedResultIndex(0);
+            }}
             className="ll:absolute ll:right-1.5 ll:top-1/2 ll:flex ll:size-5 ll:-translate-y-1/2 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:text-gray-400 ll-custom-cursor-pointer"
           >
             <X className="ll:size-3.5" />

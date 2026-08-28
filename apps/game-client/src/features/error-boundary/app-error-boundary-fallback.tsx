@@ -19,9 +19,19 @@ export const AppErrorBoundaryFallback = ({ error }: FallbackProps) => {
   const { t } = useTranslation("errorBoundary");
   const setPosition = useWindowsStore((state) => state.setPosition);
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const position = useWindowsStore(
+    (state) => state[APP_ERROR_WINDOW_ID].position,
+  );
   const [isVisible, setIsVisible] = useState(true);
-  const [isPositionReady, setIsPositionReady] = useState(false);
   const [copyState, setCopyState] = useState<CopyState>("idle");
+  const centeredPositionX = Math.round(
+    (window.innerWidth - APP_ERROR_WINDOW_WIDTH) / 2,
+  );
+  const centeredPositionY = Math.round(
+    (window.innerHeight - APP_ERROR_WINDOW_DEFAULT_HEIGHT) / 2,
+  );
+  const isPositionReady =
+    position.x === centeredPositionX && position.y === centeredPositionY;
   const translations = {
     title: t("title"),
     summary: t("summary"),
@@ -40,18 +50,15 @@ export const AppErrorBoundaryFallback = ({ error }: FallbackProps) => {
   const errorDetails = getErrorBoundaryDetails(error, translations);
 
   useLayoutEffect(() => {
-    const centeredPosition = {
-      x: Math.round((window.innerWidth - APP_ERROR_WINDOW_WIDTH) / 2),
-      y: Math.round((window.innerHeight - APP_ERROR_WINDOW_DEFAULT_HEIGHT) / 2),
-    };
-
-    setPosition(APP_ERROR_WINDOW_ID, centeredPosition);
-    setIsPositionReady(true);
+    setPosition(APP_ERROR_WINDOW_ID, {
+      x: centeredPositionX,
+      y: centeredPositionY,
+    });
 
     return () => {
       setOpen(APP_ERROR_WINDOW_ID, false);
     };
-  }, [setOpen, setPosition]);
+  }, [centeredPositionX, centeredPositionY, setOpen, setPosition]);
 
   const handleClose = () => {
     setOpen(APP_ERROR_WINDOW_ID, false);

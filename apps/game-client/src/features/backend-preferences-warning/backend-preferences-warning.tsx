@@ -4,7 +4,7 @@ import { storageKey } from "@/lib/storage-key";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
 import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { useEffect, useState, type FC } from "react";
+import { useEffect, useLayoutEffect, type FC } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTranslation } from "react-i18next";
 
@@ -20,14 +20,18 @@ export const BackendPreferencesWarning: FC = () => {
   const open = useWindowsStore(
     (state) => state["backend-preferences-warning"].open,
   );
+  const position = useWindowsStore(
+    (state) => state["backend-preferences-warning"].position,
+  );
   const setOpen = useWindowsStore((state) => state.setOpen);
   const setPosition = useWindowsStore((state) => state.setPosition);
   const [dismissed, setDismissed] = useLocalStorage<boolean>(
     STORAGE_KEY,
     false,
   );
-  const [isPositionReady, setIsPositionReady] = useState(false);
-
+  const centerX = Math.round((window.innerWidth - WINDOW_WIDTH) / 2);
+  const centerY = Math.round((window.innerHeight - WINDOW_HEIGHT) / 2);
+  const isPositionReady = position.x === centerX && position.y === centerY;
   useEffect(() => {
     if (!gameInitialized || dismissed) {
       return;
@@ -36,22 +40,17 @@ export const BackendPreferencesWarning: FC = () => {
     setOpen("backend-preferences-warning", true);
   }, [dismissed, gameInitialized, setOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) {
-      setIsPositionReady(false);
       return;
     }
 
-    const centerX = Math.round((window.innerWidth - WINDOW_WIDTH) / 2);
-    const centerY = Math.round((window.innerHeight - WINDOW_HEIGHT) / 2);
     setPosition("backend-preferences-warning", { x: centerX, y: centerY });
-    setIsPositionReady(true);
-  }, [open, setPosition]);
+  }, [centerX, centerY, open, setPosition]);
 
   const handleClose = () => {
     setDismissed(true);
     setOpen("backend-preferences-warning", false);
-    setIsPositionReady(false);
   };
 
   const handleOpenSettings = () => {

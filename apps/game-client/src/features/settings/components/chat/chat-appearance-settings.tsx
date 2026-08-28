@@ -55,9 +55,20 @@ export const ChatAppearanceSettingsForm = () => {
     settingsDocuments.data,
   );
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<ChatAppearanceSettings>(
-    CHAT_APPEARANCE_READABLE_PRESET,
+  const serverDraft = getChatAppearanceFromSettingsDocuments(
+    settingsDocuments.data,
   );
+  const [draftState, setDraftState] = useState({
+    source: settingsDocuments.data,
+    value: serverDraft,
+  });
+  const draft =
+    draftState.source === settingsDocuments.data
+      ? draftState.value
+      : serverDraft;
+  const setDraft = (nextDraft: ChatAppearanceSettings) => {
+    setDraftState({ source: settingsDocuments.data, value: nextDraft });
+  };
   const mutationQueue = useRef(Promise.resolve());
   const queueFailed = useRef(false);
   const queueGeneration = useRef(0);
@@ -70,11 +81,9 @@ export const ChatAppearanceSettingsForm = () => {
   useEffect(() => {
     if (!settingsDocuments.data) return;
 
-    const nextChatAppearance = getChatAppearanceFromSettingsDocuments(
+    latestDraft.current = getChatAppearanceFromSettingsDocuments(
       settingsDocuments.data,
     );
-    setDraft(nextChatAppearance);
-    latestDraft.current = nextChatAppearance;
     queueFailed.current = false;
   }, [settingsDocuments.data]);
 
