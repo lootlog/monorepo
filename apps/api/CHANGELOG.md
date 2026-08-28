@@ -1,5 +1,21 @@
 # @lootlog/api
 
+## 5.0.5
+
+### Patch Changes
+
+- f0a1338: Update runtime dependencies across applications and shared packages.
+- af13bc9: Refactor complex control flow into smaller internal helpers while preserving existing behavior and contracts.
+- 02813db: Remove vulnerable build tooling from production images and update transitive runtime dependencies to patched releases.
+- Updated dependencies [7742f4f]
+- Updated dependencies [f0a1338]
+  - @lootlog/api-helpers@1.0.3
+  - @lootlog/instrumentation@0.0.3
+  - @lootlog/nest-shared@1.0.8
+  - @lootlog/datetime@1.0.1
+  - @lootlog/scoring@1.0.1
+  - @lootlog/types@3.0.1
+
 ## 5.0.4
 
 ### Patch Changes

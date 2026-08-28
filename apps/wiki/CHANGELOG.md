@@ -1,5 +1,16 @@
 # @lootlog/wiki
 
+## 0.1.8
+
+### Patch Changes
+
+- f0a1338: Update runtime dependencies across applications and shared packages.
+- af13bc9: Refactor complex control flow into smaller internal helpers while preserving existing behavior and contracts.
+- Updated dependencies [f0a1338]
+- Updated dependencies [af13bc9]
+  - @lootlog/api-client@5.0.3
+  - @lootlog/ui@3.0.2
+
 ## 0.1.7
 
 ### Patch Changes

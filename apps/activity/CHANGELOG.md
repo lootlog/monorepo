@@ -1,5 +1,15 @@
 # @lootlog/activity
 
+## 0.0.10
+
+### Patch Changes
+
+- f0a1338: Update runtime dependencies across applications and shared packages.
+- 02813db: Remove vulnerable build tooling from production images and update transitive runtime dependencies to patched releases.
+- Updated dependencies [f0a1338]
+  - @lootlog/nest-shared@1.0.8
+  - @lootlog/types@3.0.1
+
 ## 0.0.9
 
 ### Patch Changes

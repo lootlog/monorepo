@@ -1,5 +1,11 @@
 # @lootlog/battle-processor
 
+## 1.0.3
+
+### Patch Changes
+
+- af13bc9: Refactor complex control flow into smaller internal helpers while preserving existing behavior and contracts.
+
 ## 1.0.2
 
 ### Patch Changes

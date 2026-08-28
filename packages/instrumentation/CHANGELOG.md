@@ -1,5 +1,11 @@
 # @lootlog/instrumentation
 
+## 0.0.3
+
+### Patch Changes
+
+- 7742f4f: Remove unused Hono-specific helpers, configuration, documentation, and dependency declarations.
+
 ## 0.0.2
 
 ### Patch Changes

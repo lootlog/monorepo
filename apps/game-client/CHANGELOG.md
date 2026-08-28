@@ -1,5 +1,18 @@
 # @lootlog/game-client
 
+## 1.2.11
+
+### Patch Changes
+
+- f0a1338: Update runtime dependencies across applications and shared packages.
+- af13bc9: Refactor complex control flow into smaller internal helpers while preserving existing behavior and contracts.
+- Updated dependencies [f0a1338]
+- Updated dependencies [af13bc9]
+  - @lootlog/api-client@5.0.3
+  - @lootlog/margonem@1.0.2
+  - @lootlog/socket-parser@1.0.2
+  - @lootlog/types@3.0.1
+
 ## 1.2.10
 
 ### Patch Changes
