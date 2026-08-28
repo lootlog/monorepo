@@ -449,19 +449,33 @@ jobs:
               '{configPath: $configPath, kind: $kind, previousId: $previousId, project: $project}' \
               >> "$ROLLBACK_STATE"
 
-            if [[ "$package_name" == "@lootlog/wiki" ]]; then
-              pnpm exec wrangler deploy "$artifact_path/server/index.js" \
-                --config "$config_path" \
-                --env="" \
-                --assets "$artifact_path/client" \
-                --keep-vars
-            else
-              pnpm exec wrangler deploy \
-                --config "$config_path" \
-                --env="" \
-                --keep-vars
-            fi
-          done < <(jq -c '.[]' <<< "$CLOUDFLARE_MATRIX")
+            case "$package_name" in
+              @lootlog/traffic-splitter)
+                pnpm exec wrangler deploy "$artifact_path/index.js" \
+                  --config "$config_path" \
+                  --env="" \
+                  --name "$project" \
+                  --keep-vars
+                ;;
+              @lootlog/wiki)
+                pnpm exec wrangler deploy "$artifact_path/server/index.js" \
+                  --config "$config_path" \
+                  --env="" \
+                  --assets "$artifact_path/client" \
+                  --keep-vars
+                ;;
+              *)
+                pnpm exec wrangler deploy \
+                  --config "$config_path" \
+                  --env="" \
+                  --keep-vars
+                ;;
+            esac
+          done < <(
+            jq -c \
+              'sort_by(if .packageName == "@lootlog/traffic-splitter" then 0 else 1 end)[]' \
+              <<< "$CLOUDFLARE_MATRIX"
+          )
 
       - name: Smoke-check public Cloudflare routes
         if: needs.release.outputs.cloudflare-matrix != '[]'
@@ -484,6 +498,12 @@ jobs:
             fetch https://lootlog.pl/privacy-policy | grep -q 'Polityka prywatności'
             fetch https://lootlog.pl/terms-of-service | grep -q 'Regulamin serwisu'
             fetch https://lootlog.pl/brand/lootlog-social.png >/dev/null
+            node tools/release/verify-public-static-assets.mjs \
+              https://lootlog.pl \
+              /landing-assets \
+              / \
+              /privacy-policy \
+              /terms-of-service
           fi
 
           if jq -e '.[] | select(.packageName == "@lootlog/docs")' <<< "$CLOUDFLARE_MATRIX" >/dev/null; then
@@ -492,6 +512,11 @@ jobs:
             fetch https://docs.lootlog.pl/docs/installation | grep -q 'Instalacja'
             fetch https://docs.lootlog.pl/api/search | jq -e '.type == "advanced"' >/dev/null
             fetch https://docs.lootlog.pl/brand/favicon.svg >/dev/null
+            node tools/release/verify-public-static-assets.mjs \
+              https://docs.lootlog.pl \
+              /docs-assets \
+              /docs \
+              /docs/installation
           fi
 
       - name: Checkout infra repository

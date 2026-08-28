@@ -62,25 +62,32 @@ test("supports all eight deployable applications", () => {
   );
 });
 
-test("supports all five Cloudflare applications", () => {
+test("supports all six Cloudflare applications", () => {
   const publishedPackages = [
     { name: "@lootlog/landing", version: "1.0.0" },
     { name: "@lootlog/web", version: "1.0.0" },
     { name: "@lootlog/game-client", version: "1.0.0" },
     { name: "@lootlog/docs", version: "1.0.0" },
     { name: "@lootlog/wiki", version: "1.0.0" },
+    { name: "@lootlog/traffic-splitter", version: "1.0.0" },
   ];
 
+  const cloudflarePlan = createReleasePlan(publishedPackages).cloudflare;
+
   assert.deepEqual(
-    createReleasePlan(publishedPackages).cloudflare.map(
-      ({ artifactPath, kind, packageName, project }) => ({
-        artifactPath,
-        kind,
-        packageName,
-        project,
-      }),
-    ),
+    cloudflarePlan.map(({ artifactPath, kind, packageName, project }) => ({
+      artifactPath,
+      kind,
+      packageName,
+      project,
+    })),
     [
+      {
+        artifactPath: "apps/traffic-splitter/dist",
+        kind: "worker",
+        packageName: "@lootlog/traffic-splitter",
+        project: "lootlog-route-splitter",
+      },
       {
         artifactPath: "apps/landing/dist/client",
         kind: "pages",
@@ -112,6 +119,10 @@ test("supports all five Cloudflare applications", () => {
         project: "lootlog-wiki",
       },
     ],
+  );
+  assert.equal(
+    cloudflarePlan[0].configPath,
+    "apps/traffic-splitter/wrangler.jsonc",
   );
 });
 

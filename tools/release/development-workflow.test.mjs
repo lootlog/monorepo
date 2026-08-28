@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { parse } from "jsonc-parser";
 import { createCiPlan } from "../ci/create-ci-plan.mjs";
 
 const developmentWorkflow = readFileSync(
@@ -10,6 +11,12 @@ const developmentWorkflow = readFileSync(
 const docsWranglerConfig = JSON.parse(
   readFileSync(
     new URL("../../apps/docs/wrangler.jsonc", import.meta.url),
+    "utf8",
+  ),
+);
+const trafficSplitterWranglerConfig = parse(
+  readFileSync(
+    new URL("../../apps/traffic-splitter/wrangler.jsonc", import.meta.url),
     "utf8",
   ),
 );
@@ -47,7 +54,11 @@ test("keeps Pages development targets and skips version pull requests", () => {
     affectedPackages: ["@lootlog/landing"],
   });
   const versionPlan = createCiPlan({
-    affectedPackages: ["@lootlog/docs", "@lootlog/landing"],
+    affectedPackages: [
+      "@lootlog/docs",
+      "@lootlog/landing",
+      "@lootlog/traffic-splitter",
+    ],
     associatedPullRequestHeads: ["changeset-release/main"],
   });
 
@@ -60,4 +71,59 @@ test("keeps Pages development targets and skips version pull requests", () => {
     },
   ]);
   assert.deepEqual(versionPlan.cloudflareTargets, []);
+});
+
+test("deploys the development traffic splitter from the repository", () => {
+  const plan = createCiPlan({
+    affectedPackages: ["@lootlog/traffic-splitter"],
+  });
+
+  assert.deepEqual(plan.cloudflareTargets, [
+    {
+      artifactPath: "apps/traffic-splitter/dist",
+      configPath: "apps/traffic-splitter/wrangler.jsonc",
+      environment: "develop",
+      kind: "worker",
+      packageName: "@lootlog/traffic-splitter",
+      project: "lootlog-traffic-splitter-dev",
+    },
+  ]);
+  assert.equal(trafficSplitterWranglerConfig.name, "lootlog-route-splitter");
+  assert.deepEqual(trafficSplitterWranglerConfig.routes, [
+    { custom_domain: true, pattern: "lootlog.pl" },
+  ]);
+  assert.deepEqual(trafficSplitterWranglerConfig.vars, {
+    DOCS_ORIGIN: "https://lootlog-docs.communicator-dev.workers.dev",
+    LANDING_ORIGIN: "https://lootlog-landing.pages.dev",
+    WEB_ORIGIN: "https://lootlog-web-monorepo.pages.dev",
+  });
+  assert.equal(
+    trafficSplitterWranglerConfig.env.develop.name,
+    "lootlog-traffic-splitter-dev",
+  );
+  assert.deepEqual(trafficSplitterWranglerConfig.env.develop.routes, [
+    { custom_domain: true, pattern: "dev.lootlog.pl" },
+  ]);
+  assert.deepEqual(trafficSplitterWranglerConfig.env.develop.vars, {
+    DOCS_ORIGIN: "https://lootlog-docs-develop.communicator-dev.workers.dev",
+    LANDING_ORIGIN: "https://develop.lootlog-landing.pages.dev",
+    WEB_ORIGIN: "https://develop.lootlog-web-monorepo.pages.dev",
+  });
+  assert.notEqual(
+    trafficSplitterWranglerConfig.env.develop.name,
+    trafficSplitterWranglerConfig.name,
+    "development must not overwrite the production Worker",
+  );
+  assert.match(
+    developmentWorkflow,
+    /matrix\.kind == 'worker' && secrets\.CLOUDFLARE_WORKERS_API_TOKEN/u,
+  );
+  assert.match(
+    developmentWorkflow,
+    /matrix\.kind == 'pages' && secrets\.CLOUDFLARE_API_TOKEN \|\| ''/u,
+  );
+  assert.match(
+    developmentWorkflow,
+    /if \[\[ -z "\$CLOUDFLARE_API_TOKEN" \]\]; then/u,
+  );
 });

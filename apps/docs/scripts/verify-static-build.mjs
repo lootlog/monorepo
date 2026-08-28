@@ -4,6 +4,11 @@ import path from "node:path";
 
 const clientDirectory = path.resolve("dist/client");
 const contentDirectory = path.resolve("content/docs");
+const artifactBaseUrl = new URL("https://static-artifact.invalid");
+
+function isLocalAssetReference(reference) {
+  return new URL(reference, artifactBaseUrl).origin === artifactBaseUrl.origin;
+}
 
 const rootDocument = await readFile(
   path.join(clientDirectory, "index.html"),
@@ -13,6 +18,11 @@ const rootDocument = await readFile(
 assert.match(rootDocument, /http-equiv="refresh" content="0;url=\/docs"/u);
 assert.match(rootDocument, /window\.location\.replace\("\/docs"\)/u);
 assert.match(rootDocument, /href="\/docs"/u);
+assert.doesNotMatch(
+  rootDocument,
+  /(?:href|src)="\/assets\//u,
+  "root redirect uses the shared asset namespace",
+);
 
 const contentFiles = (await readdir(contentDirectory))
   .filter((fileName) => fileName.endsWith(".mdx"))
@@ -46,6 +56,21 @@ await Promise.all(
       `${routePath} lacks its visible description`,
     );
     assert.match(document, /class="[^"]*docs-body/u);
+    const generatedAssetReferences = Array.from(
+      document.matchAll(/(?:href|src)="([^"]+\.(?:css|js)(?:[?#][^"]*)?)"/gu),
+      ([, reference]) => reference,
+    ).filter(isLocalAssetReference);
+    assert.ok(
+      generatedAssetReferences.length > 0,
+      `${routePath} does not reference generated CSS or JavaScript`,
+    );
+    for (const reference of generatedAssetReferences) {
+      assert.match(
+        reference,
+        /^\/docs-assets\//u,
+        `${routePath} references a generated asset outside the Docs namespace: ${reference}`,
+      );
+    }
   }),
 );
 

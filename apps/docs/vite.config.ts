@@ -6,6 +6,9 @@ import { defineConfig } from "vite";
 import { docsPaths } from "./lib/docs-chapters.ts";
 
 export default defineConfig({
+  build: {
+    assetsDir: "docs-assets",
+  },
   server: {
     host: "0.0.0.0",
     port: 3005,

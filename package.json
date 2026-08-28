@@ -79,6 +79,7 @@
     "@lootlog/socket-parser": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "husky": "^9.1.7",
+    "jsonc-parser": "^3.3.1",
     "knip": "^6.32.3",
     "lint-staged": "^17.4.1",
     "oxfmt": "^0.60.0",

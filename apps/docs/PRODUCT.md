@@ -10,6 +10,8 @@ and verifies it. Follow the Read mode in `DESIGN.md`.
 The app uses TanStack Start with the Fumadocs Vite integration. Every guide,
 the root redirect, and the search index are prerendered into `dist/client`; the
 deployed Assets Worker does not execute server functions at runtime.
+Generated assets use `/docs-assets` so `dev.lootlog.pl` can route them without
+colliding with Landing or Web assets.
 
 Merges to `main` deploy the affected Docs artifact to the isolated
 `lootlog-docs-develop` Worker. Production continues to use `lootlog-docs` and
