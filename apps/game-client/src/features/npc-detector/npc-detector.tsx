@@ -6,7 +6,7 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { getNpcTypeByWt, type DetectorNpcType } from "@lootlog/types";
 import { NpcType } from "@/api/npcs.api";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
@@ -34,17 +34,11 @@ export const NpcDetector = () => {
   const { settings } = useCurrentGameAccountDetectorSettings();
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
-  const [resolvedMaxContentHeight, setResolvedMaxContentHeight] = useState(
+  const [measuredMaxContentHeight, setMeasuredMaxContentHeight] = useState(
     storedMaxContentHeight ?? defaultWindowHeight,
   );
-
-  useEffect(() => {
-    if (storedMaxContentHeight === undefined) {
-      return;
-    }
-
-    setResolvedMaxContentHeight(storedMaxContentHeight);
-  }, [storedMaxContentHeight]);
+  const resolvedMaxContentHeight =
+    storedMaxContentHeight ?? measuredMaxContentHeight;
 
   const handleClose = () => {
     setOpen("npc-detector", false);
@@ -82,7 +76,7 @@ export const NpcDetector = () => {
       onMaxContentHeightChange={(nextMaxContentHeight) =>
         setMaxContentHeight("npc-detector", nextMaxContentHeight)
       }
-      onResolvedMaxContentHeightChange={setResolvedMaxContentHeight}
+      onResolvedMaxContentHeightChange={setMeasuredMaxContentHeight}
       resizable
       minHeight={82}
       maxHeight={600}

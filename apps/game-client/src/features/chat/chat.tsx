@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
@@ -56,23 +56,21 @@ export const Chat = () => {
     },
   });
 
-  useEffect(() => {
-    if (!selectedGuildId) {
-      return;
-    }
-
-    if (selectedGuildId === "all") {
-      setUnreadCountByGuildId(clearAllChatUnreadCounts());
-      return;
-    }
+  const handleSelectedGuildChange: typeof setSelectedGuildId = (update) => {
+    const nextGuildId =
+      typeof update === "function" ? update(selectedGuildId) : update;
+    setSelectedGuildId(nextGuildId);
+    if (!nextGuildId) return;
 
     setUnreadCountByGuildId((currentUnreadCountByGuildId) =>
-      clearChatUnreadCount({
-        unreadCountByGuildId: currentUnreadCountByGuildId,
-        guildId: selectedGuildId,
-      }),
+      nextGuildId === "all"
+        ? clearAllChatUnreadCounts()
+        : clearChatUnreadCount({
+            unreadCountByGuildId: currentUnreadCountByGuildId,
+            guildId: nextGuildId,
+          }),
     );
-  }, [selectedGuildId]);
+  };
 
   if (!shouldRenderChatView) {
     return null;
@@ -82,7 +80,7 @@ export const Chat = () => {
     <ChatView
       isOpen={isChatViewVisible}
       selectedGuildId={selectedGuildId}
-      setSelectedGuildId={setSelectedGuildId}
+      setSelectedGuildId={handleSelectedGuildChange}
       unreadCountByGuildId={unreadCountByGuildId}
     />
   );

@@ -33,7 +33,6 @@ export const NotificationsSettingsTab = () => {
 
   useEffect(() => {
     if (syncStatus.status === "error" || syncStatus.status === "idle") {
-      setVisibleStatus(syncStatus.status);
       return;
     }
 
@@ -45,6 +44,11 @@ export const NotificationsSettingsTab = () => {
       window.clearTimeout(timeoutId);
     };
   }, [syncStatus.status]);
+
+  const resolvedVisibleStatus =
+    syncStatus.status === "error" || syncStatus.status === "idle"
+      ? syncStatus.status
+      : visibleStatus;
 
   return (
     <SettingsTabLayout
@@ -73,7 +77,7 @@ export const NotificationsSettingsTab = () => {
             <div className="ll:relative">
               <div className="ll:sticky ll:top-0 ll:z-10 ll:flex ll:h-0 ll:justify-end ll:pointer-events-none">
                 <SettingsSyncStatus
-                  status={visibleStatus}
+                  status={resolvedVisibleStatus}
                   errorLabel={t("common:syncStatus.error")}
                   savingLabel={t("common:syncStatus.saving")}
                   syncingLabel={t("common:syncStatus.syncing")}

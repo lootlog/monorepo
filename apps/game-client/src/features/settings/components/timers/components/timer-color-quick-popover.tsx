@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { TimerTileView } from "@/features/timers/components/timer-tile-view";
-import { useEffect, useState, type FC, type ReactElement } from "react";
+import { useState, type FC, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { alphaToHex, type ColorEditData } from "./color-utils";
 
@@ -30,10 +30,6 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
   const { t } = useTranslation();
   const [draft, setDraft] = useState(data);
 
-  useEffect(() => {
-    if (!open) setDraft(data);
-  }, [data, open]);
-
   const commitHex = (
     field: "backgroundColor" | "borderColor",
     value: string,
@@ -52,7 +48,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
     <Popover
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!nextOpen) setDraft(data);
+        setDraft(data);
         onOpenChange(nextOpen);
       }}
     >

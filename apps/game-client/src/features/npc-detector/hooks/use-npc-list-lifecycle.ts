@@ -26,8 +26,6 @@ export const useNpcListLifecycle = ({
   npcs,
   setNpcStates,
 }: UseNpcListLifecycleOptions) => {
-  const [notificationDeadlineByNpcId, setNotificationDeadlineByNpcId] =
-    useState<Map<number, number>>(() => new Map());
   const detectionDeadlineByNpcIdRef = useRef(
     new Map<number, DetectionAnimationDeadline>(),
   );
@@ -37,34 +35,36 @@ export const useNpcListLifecycle = ({
   const currentTimeMs = useNpcDetectorClock(
     hasNotificationCooldown || hasDetectionAnimation,
   );
+  const notificationNpcSignature = npcs
+    .filter((npc) => npc.notificationSent)
+    .map((npc) => npc.id)
+    .join(":");
+  const [notificationDeadlineState, setNotificationDeadlineState] = useState(
+    () => ({
+      deadlines: new Map<number, number>(),
+      signature: "",
+    }),
+  );
+  let notificationDeadlineByNpcId = notificationDeadlineState.deadlines;
+  if (notificationDeadlineState.signature !== notificationNpcSignature) {
+    const nextDeadlines = new Map<number, number>();
+    for (const npc of npcs) {
+      if (!npc.notificationSent) continue;
+      nextDeadlines.set(
+        npc.id,
+        notificationDeadlineState.deadlines.get(npc.id) ??
+          currentTimeMs + NPC_NOTIFICATION_COOLDOWN_MS,
+      );
+    }
+    notificationDeadlineByNpcId = nextDeadlines;
+    setNotificationDeadlineState({
+      deadlines: nextDeadlines,
+      signature: notificationNpcSignature,
+    });
+  }
 
   useEffect(() => {
     const activeNpcIds = new Set(npcs.map((npc) => npc.id));
-    const now = Date.now();
-
-    setNotificationDeadlineByNpcId((currentDeadlines) => {
-      const nextDeadlines = new Map<number, number>();
-
-      for (const npc of npcs) {
-        if (!npc.notificationSent) continue;
-
-        nextDeadlines.set(
-          npc.id,
-          currentDeadlines.get(npc.id) ?? now + NPC_NOTIFICATION_COOLDOWN_MS,
-        );
-      }
-
-      if (
-        nextDeadlines.size === currentDeadlines.size &&
-        [...nextDeadlines].every(
-          ([npcId, deadline]) => currentDeadlines.get(npcId) === deadline,
-        )
-      ) {
-        return currentDeadlines;
-      }
-
-      return nextDeadlines;
-    });
 
     for (const npcId of detectionDeadlineByNpcIdRef.current.keys()) {
       if (!activeNpcIds.has(npcId)) {

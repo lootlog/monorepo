@@ -24,7 +24,7 @@ jobs:
       cloudflare-matrix: ${{ steps.plan.outputs.cloudflare }}
       docker-matrix: ${{ steps.plan.outputs.docker }}
       published: ${{ steps.changesets.outputs.published }}
-      published-packages: ${{ steps.changesets.outputs.publishedPackages }}
+      published-packages: ${{ steps.changesets.outputs['published-packages'] }}
       release-plan: ${{ steps.plan.outputs.value }}
     steps:
       - name: Checkout repository
@@ -46,21 +46,21 @@ jobs:
 
       - name: Create version PR or publish releases
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
-          publish: pnpm release
-          version: pnpm run version
-          commit: "chore: update versions"
-          title: "chore: release packages"
-          createGithubReleases: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          publish-script: pnpm release
+          version-script: pnpm run version
+          commit-message: "chore: update versions"
+          pr-title: "chore: release packages"
+          create-github-releases: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          push-with-git-cli: true
 
       - name: Run required CI for the generated version PR
-        if: steps.changesets.outputs.pullRequestNumber != ''
+        if: steps.changesets.outputs['pr-number'] != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PULL_REQUEST_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
+          PULL_REQUEST_NUMBER: ${{ steps.changesets.outputs['pr-number'] }}
         run: |
           pull_request="$(
             gh pr view "$PULL_REQUEST_NUMBER" \
@@ -78,7 +78,7 @@ jobs:
       - name: Prepare release plan
         id: plan
         env:
-          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages || '[]' }}
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs['published-packages'] || '[]' }}
         run: |
           plan="$(node tools/release/create-deployment-matrix.mjs "$PUBLISHED_PACKAGES")"
           echo "value=$(jq -c . <<< "$plan")" >> "$GITHUB_OUTPUT"
