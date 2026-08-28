@@ -2,7 +2,9 @@
 
 FROM node:25.9.0-alpine3.22 AS runtime-base
 
-RUN apk add --no-cache dumb-init fontconfig ttf-dejavu
+RUN apk upgrade --no-cache && \
+    apk add --no-cache dumb-init fontconfig ttf-dejavu && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
@@ -14,6 +16,8 @@ ENV PATH="$PNPM_HOME:$PATH"
 ENV TURBO_TELEMETRY_DISABLED="1"
 
 RUN npm install -g pnpm@11.17.0 turbo@2.9.18
+
+COPY tools/release/prune-production-deploy.mjs /usr/local/lib/prune-production-deploy.mjs
 
 WORKDIR /usr/src/app
 
@@ -31,7 +35,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY --from=pruner-api /pruned/full/ .
 COPY --from=pruner-api /usr/src/app/tools/clean-swagger-metadata.mjs ./tools/clean-swagger-metadata.mjs
 RUN pnpm exec turbo run build --filter=@lootlog/api
-RUN pnpm deploy --filter=@lootlog/api --prod /prod/api
+RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
+    node /usr/local/lib/prune-production-deploy.mjs /prod/api
 
 FROM build-base AS pruner-auth
 COPY . .
@@ -43,7 +48,8 @@ COPY --from=pruner-auth /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-auth /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/auth
-RUN pnpm deploy --filter=@lootlog/auth --prod /prod/auth
+RUN pnpm deploy --filter=@lootlog/auth --prod /prod/auth && \
+    node /usr/local/lib/prune-production-deploy.mjs /prod/auth
 
 FROM build-base AS pruner-search
 COPY . .
@@ -56,7 +62,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY --from=pruner-search /pruned/full/ .
 COPY --from=pruner-search /usr/src/app/tools/clean-swagger-metadata.mjs ./tools/clean-swagger-metadata.mjs
 RUN pnpm exec turbo run build --filter=@lootlog/search
-RUN pnpm deploy --filter=@lootlog/search --prod /prod/search
+RUN pnpm deploy --filter=@lootlog/search --prod /prod/search && \
+    node /usr/local/lib/prune-production-deploy.mjs /prod/search
 
 FROM build-base AS pruner-discord-bot
 COPY . .
@@ -68,7 +75,8 @@ COPY --from=pruner-discord-bot /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-discord-bot /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/discord-bot
-RUN pnpm deploy --filter=@lootlog/discord-bot --prod /prod/discord-bot
+RUN pnpm deploy --filter=@lootlog/discord-bot --prod /prod/discord-bot && \
+    node /usr/local/lib/prune-production-deploy.mjs /prod/discord-bot
 
 FROM build-base AS pruner-gateway
 COPY . .
@@ -80,7 +88,8 @@ COPY --from=pruner-gateway /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-gateway /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/gateway
-RUN pnpm deploy --filter=@lootlog/gateway --prod /prod/gateway
+RUN pnpm deploy --filter=@lootlog/gateway --prod /prod/gateway && \
+    node /usr/local/lib/prune-production-deploy.mjs /prod/gateway
 
 FROM build-base AS pruner-battlelog-service
 COPY . .
@@ -92,7 +101,8 @@ COPY --from=pruner-battlelog-service /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-battlelog-service /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/battlelog-service
-RUN pnpm deploy --filter=@lootlog/battlelog-service --prod /prod/battlelog-service
+RUN pnpm deploy --filter=@lootlog/battlelog-service --prod /prod/battlelog-service && \
+    node /usr/local/lib/prune-production-deploy.mjs /prod/battlelog-service
 
 FROM build-base AS pruner-activity
 COPY . .
@@ -104,7 +114,8 @@ COPY --from=pruner-activity /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 COPY --from=pruner-activity /pruned/full/ .
 RUN pnpm exec turbo run build --filter=@lootlog/activity
-RUN pnpm deploy --filter=@lootlog/activity --prod /prod/activity
+RUN pnpm deploy --filter=@lootlog/activity --prod /prod/activity && \
+    node /usr/local/lib/prune-production-deploy.mjs /prod/activity
 
 FROM build-base AS build-developer
 
@@ -120,7 +131,8 @@ COPY packages/ui/ ./packages/ui/
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 RUN pnpm exec turbo run build --filter=@lootlog/developer
-RUN pnpm deploy --filter=@lootlog/developer --prod /prod/developer
+RUN pnpm deploy --filter=@lootlog/developer --prod /prod/developer && \
+    node /usr/local/lib/prune-production-deploy.mjs /prod/developer
 
 FROM runtime-base AS auth
 
