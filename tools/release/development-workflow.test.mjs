@@ -95,4 +95,12 @@ test("deploys the development traffic splitter from the repository", () => {
     developmentWorkflow,
     /matrix\.kind == 'worker' && secrets\.CLOUDFLARE_WORKERS_API_TOKEN/u,
   );
+  assert.match(
+    developmentWorkflow,
+    /matrix\.kind == 'pages' && secrets\.CLOUDFLARE_API_TOKEN \|\| ''/u,
+  );
+  assert.match(
+    developmentWorkflow,
+    /if \[\[ -z "\$CLOUDFLARE_API_TOKEN" \]\]; then/u,
+  );
 });

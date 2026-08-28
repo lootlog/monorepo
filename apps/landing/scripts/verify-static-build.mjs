@@ -35,16 +35,21 @@ for (const [documentName, document, canonicalUrl] of [
     document,
     /<link rel="apple-touch-icon" href="\/apple-icon\.png"/u,
   );
-  assert.match(
-    document,
-    /(?:href|src)="\/landing-assets\/[^"]+\.(?:css|js)"/u,
-    `${documentName} does not use the landing asset namespace`,
+  const generatedAssetReferences = Array.from(
+    document.matchAll(/(?:href|src)="([^"]+\.(?:css|js)(?:[?#][^"]*)?)"/gu),
+    ([, reference]) => reference,
   );
-  assert.doesNotMatch(
-    document,
-    /(?:href|src)="\/assets\//u,
-    `${documentName} uses the shared asset namespace`,
+  assert.ok(
+    generatedAssetReferences.length > 0,
+    `${documentName} does not reference generated CSS or JavaScript`,
   );
+  for (const reference of generatedAssetReferences) {
+    assert.match(
+      reference,
+      /^\/landing-assets\//u,
+      `${documentName} references a generated asset outside the Landing namespace: ${reference}`,
+    );
+  }
 }
 
 assert.match(homeDocument, /<script type="application\/ld\+json">/u);
