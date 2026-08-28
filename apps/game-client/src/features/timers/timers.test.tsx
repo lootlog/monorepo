@@ -11,9 +11,6 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 const mockUseTimers = vi.fn();
 const mockUseTimersSocket = vi.fn();
-const mockUseTimersFiltering = vi.fn();
-const mockCalculateColorStatistics = vi.fn();
-const mockCheckFiltersActive = vi.fn();
 const mockToggleOpen = vi.fn();
 const mockSetOpen = vi.fn();
 const mockSetSelectedGuildIdsForTimers = vi.fn();
@@ -106,19 +103,6 @@ vi.mock("@/features/timers/hooks/use-timers-socket", () => ({
   useTimersSocket: () => mockUseTimersSocket(),
 }));
 
-vi.mock("@/features/timers/hooks/use-timers-filtering", () => ({
-  useTimersFiltering: (...args: unknown[]) => mockUseTimersFiltering(...args),
-}));
-
-vi.mock("@/features/timers/utils/color-statistics", () => ({
-  calculateColorStatistics: (...args: unknown[]) =>
-    mockCalculateColorStatistics(...args),
-}));
-
-vi.mock("@/features/timers/utils/filters-utils", () => ({
-  checkFiltersActive: (...args: unknown[]) => mockCheckFiltersActive(...args),
-}));
-
 vi.mock("@/components/draggable-window", () => ({
   DraggableWindow: ({
     children,
@@ -169,6 +153,11 @@ vi.mock("@/features/timers/components/timers-content", () => ({
 import { Timers } from "./timers";
 
 const createTimer = (overrides?: Partial<Timer>): Timer => ({
+  actorCharacter: optionalFixtureValue(overrides, "actorCharacter"),
+  actorCharactersByMemberId: optionalFixtureValue(
+    overrides,
+    "actorCharactersByMemberId",
+  ),
   guildId: fixtureValue(overrides, "guildId", "guild-1"),
   timerKey: fixtureValue(overrides, "timerKey", "timer-1"),
   world: fixtureValue(overrides, "world", "pandora"),
@@ -208,9 +197,6 @@ describe("Timers", () => {
     });
     mockUseTimers.mockReset();
     mockUseTimersSocket.mockReset();
-    mockUseTimersFiltering.mockReset();
-    mockCalculateColorStatistics.mockReset();
-    mockCheckFiltersActive.mockReset();
     mockToggleOpen.mockReset();
     mockSetOpen.mockReset();
     mockSetSelectedGuildIdsForTimers.mockReset();
@@ -265,29 +251,32 @@ describe("Timers", () => {
       isLoading: false,
       refetch: vi.fn(),
     });
-    mockUseTimersFiltering.mockImplementation(
-      ({ calculatedTimers }: { calculatedTimers: unknown }) => calculatedTimers,
-    );
-    mockCalculateColorStatistics.mockReturnValue([
-      { color: "red", total: 1, active: 1, name: "Red" },
-    ]);
-    mockCheckFiltersActive.mockReturnValue(true);
   });
 
   it("queries timers once for the selected guild world and passes deduplicated data to the content", () => {
+    const member = { id: 77, name: "Alderaan" };
+    const actorCharacter = { id: "character-77", name: "Alderaan" };
     mockUseTimers.mockReturnValue({
       data: [
         createTimer({
           guildId: "guild-1",
           timerKey: "same",
+          updatedAt: "2099-04-22T09:59:00.000Z",
         }),
         createTimer({
+          actorCharacter: actorCharacter as never,
           guildId: "guild-1",
+          member: member as never,
           timerKey: "same",
           updatedAt: "2099-04-22T09:59:01.000Z",
         }),
       ],
     });
+    timersStoreState = {
+      ...timersStoreState,
+      defaultColorNames: { red: "Red" },
+      timersColors: { Tanroth: "red" },
+    };
 
     render(<Timers />);
 
@@ -296,17 +285,25 @@ describe("Timers", () => {
       world: "gefion",
     });
     expect(mockUseTimersSocket).toHaveBeenCalledTimes(1);
-    const filteringInput = mockUseTimersFiltering.mock.calls[0]?.[0] as
-      | { calculatedTimers: unknown[] }
-      | undefined;
-    expect(filteringInput?.calculatedTimers).toHaveLength(1);
-    expect(mockUseTimersFiltering).toHaveBeenCalledWith(
+    const contentInput = timersContentSpy.mock.calls.at(-1)?.[0] as {
+      sortedTimers: Array<
+        Timer & {
+          actorCharactersByMemberId?: Record<string, unknown>;
+          maxTimeLeft: number;
+          members?: unknown[];
+          minTimeLeft: number;
+        }
+      >;
+    };
+    expect(contentInput.sortedTimers).toEqual([
       expect.objectContaining({
-        guildId: "guild-1",
-        isGrouping: false,
-        searchText: "tan",
+        actorCharactersByMemberId: { "77": actorCharacter },
+        maxTimeLeft: expect.any(Number),
+        members: [member],
+        minTimeLeft: expect.any(Number),
+        updatedAt: "2099-04-22T09:59:01.000Z",
       }),
-    );
+    ]);
     expect(timersContentSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         settingsKey: "guild-1",
@@ -316,6 +313,46 @@ describe("Timers", () => {
       }),
     );
     expect(screen.getByText("TimersActions")).toBeInTheDocument();
+  });
+
+  it("projects the same timer state for the window and under-bag surfaces", () => {
+    const nowSpy = vi
+      .spyOn(Date, "now")
+      .mockReturnValue(new Date("2099-04-22T09:00:00.000Z").getTime());
+    mockUseTimers.mockReturnValue({ data: [createTimer()] });
+
+    const regularRender = render(<Timers />);
+    const regularTimers = (
+      timersContentSpy.mock.calls.at(-1)?.[0] as
+        | { sortedTimers: unknown[] }
+        | undefined
+    )?.sortedTimers;
+    expect(regularTimers).toBeDefined();
+    regularRender.unmount();
+
+    setTestRuntimeGame({
+      hero: { characterId: "101" },
+      interface: "ni",
+      world: "pandora",
+    });
+    timersStoreState = {
+      ...timersStoreState,
+      generalConfig: {
+        ...timersStoreState.generalConfig,
+        timersUnderBag: true,
+      },
+    };
+
+    render(<Timers />);
+
+    const underBagTimers = (
+      timersContentSpy.mock.calls.at(-1)?.[0] as
+        | { sortedTimers: unknown[] }
+        | undefined
+    )?.sortedTimers;
+    expect(underBagTimers).toBeDefined();
+    expect(underBagTimers).toEqual(regularTimers);
+    nowSpy.mockRestore();
   });
 
   it("passes initial loading and retry state to the timer content", () => {
@@ -387,11 +424,6 @@ describe("Timers", () => {
     expect(timersStoreState.hiddenTimers).toEqual({
       "guild-1": ["timer-1"],
     });
-    expect(mockUseTimersFiltering).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        showHiddenTimers: true,
-      }),
-    );
   });
 
   it("renders the under-bag path when enabled for the ni interface", () => {
@@ -443,7 +475,7 @@ describe("Timers", () => {
       },
     };
     mockUseTimers.mockReturnValue({ data: [createTimer()] });
-    mockUseTimersFiltering.mockReturnValue([]);
+    timersStoreState.timerFiltersSearchText = "missing";
 
     render(<Timers />);
 
