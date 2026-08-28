@@ -59,6 +59,9 @@ type PlayerVsPlayerChipLabelInput = PlayerVsPlayerFilterState & {
   translate: Translate;
 };
 
+const getSelectionCount = (selection: readonly unknown[] | undefined) =>
+  selection?.length ?? 0;
+
 export const getResetBattleListFilters = (): BattleFilters => ({
   minLevel: BATTLE_PANEL_DEFAULT_MIN_LEVEL,
   maxLevel: BATTLE_PANEL_DEFAULT_MAX_LEVEL,
@@ -215,29 +218,29 @@ export const buildBattleListFilterLabels = ({
     });
   }
 
-  if ((filters.result?.length ?? 0) > 0) {
+  if (getSelectionCount(filters.result) > 0) {
     chips.push({
       id: "result",
       label: translate("battlePanel.filters.chips.result", {
-        count: filters.result?.length ?? 0,
+        count: getSelectionCount(filters.result),
       }),
     });
   }
 
-  if ((filters.characterId?.length ?? 0) > 0) {
+  if (getSelectionCount(filters.characterId) > 0) {
     chips.push({
       id: "character",
       label: translate("battlePanel.filters.chips.character", {
-        count: filters.characterId?.length ?? 0,
+        count: getSelectionCount(filters.characterId),
       }),
     });
   }
 
-  if ((filters.type?.length ?? 0) > 0) {
+  if (getSelectionCount(filters.type) > 0) {
     chips.push({
       id: "type",
       label: translate("battlePanel.filters.chips.type", {
-        count: filters.type?.length ?? 0,
+        count: getSelectionCount(filters.type),
       }),
     });
   }

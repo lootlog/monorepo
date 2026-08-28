@@ -79,6 +79,9 @@ type EventMemberKillsPageContentProps = {
   initialHeroId?: string;
 };
 
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
 export const EventMemberKillsPageContent = ({
   guildId,
   eventId,
@@ -93,6 +96,9 @@ export const EventMemberKillsPageContent = ({
     null,
   );
   const hasEventRouteParams = Boolean(guildId && eventId);
+  const queryGuildId = valueOr(guildId, "");
+  const queryEventId = valueOr(eventId, "");
+  const queryMemberId = valueOr(memberId, "");
 
   const {
     data: event,
@@ -100,15 +106,15 @@ export const EventMemberKillsPageContent = ({
     error: eventError,
   } = useShowEventOverview(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getShowEventOverviewQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
@@ -121,23 +127,23 @@ export const EventMemberKillsPageContent = ({
     isLoading: killsLoading,
     error: killsError,
   } = useEventMemberKillHistory({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-    memberId: memberId ?? "",
+    guildId: queryGuildId,
+    eventId: queryEventId,
+    memberId: queryMemberId,
     heroId: selectedHeroId,
     limit: 20,
   });
   const { data: rankings = [] } = useListEventRanking(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getListEventRankingQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
@@ -158,17 +164,20 @@ export const EventMemberKillsPageContent = ({
         <p className="text-muted-foreground">
           {t("events.error", "Nie znaleziono eventu")}
         </p>
-        <Link to="/$guildId/events" params={{ guildId: guildId ?? "" }}>
+        <Link to="/$guildId/events" params={{ guildId: queryGuildId }}>
           <Button variant="outline">{t("events.backToList")}</Button>
         </Link>
       </div>
     );
   }
 
-  const heroes = event.heroNpcs ?? [];
-  const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];
+  const heroes = valueOr(event.heroNpcs, []);
+  const allKills = valueOr(
+    killsData?.pages.flatMap((page) => page.data),
+    [],
+  );
   const member = killsData?.pages[0]?.member;
-  const memberIdNumber = Number.parseInt(memberId ?? "", 10);
+  const memberIdNumber = Number.parseInt(queryMemberId, 10);
   const selectedHero = selectedHeroId
     ? heroes.find((hero) => hero.id === selectedHeroId)
     : undefined;
@@ -202,10 +211,10 @@ export const EventMemberKillsPageContent = ({
           />
           {scrollElement && (
             <MemberKillsList
-              guildId={guildId ?? ""}
-              eventId={eventId ?? ""}
+              guildId={queryGuildId}
+              eventId={queryEventId}
               scrollElement={scrollElement}
-              resetKey={selectedHeroId ?? "all"}
+              resetKey={valueOr(selectedHeroId, "all")}
               allKills={allKills}
               isLoading={killsLoading}
               hasError={Boolean(killsError)}

@@ -5,12 +5,7 @@ import { MessageType } from "@/api/chat.api";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/api-client/models/main/chat-message-response-dto-output";
 import type { MemberSummaryResponseDtoOutput as GuildMember } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
 import type { ChatAppearanceSettings, NpcTypeColors } from "@lootlog/types";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { useGameStore } from "@/store/game.store";
 import { PartyGatheringCard } from "./party-gathering-card";
 import {
@@ -19,12 +14,7 @@ import {
 } from "./chat-message.helpers";
 import { ChatNpcMessage } from "@/features/chat/components/chat-npc-message";
 import { canReplyToChatMessage } from "@/features/chat/chat-reply.helpers";
-import {
-  getChatMentionSegments,
-  type ChatMentionContext,
-} from "@/features/chat/chat-mentions.helpers";
-import { ChatMentionText } from "@/features/chat/components/chat-mention-text";
-import { Input } from "@/components/ui/input";
+import type { ChatMentionContext } from "@/features/chat/chat-mentions.helpers";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -35,21 +25,13 @@ import {
   removeChatMessage,
   updateChatMessage,
 } from "@/features/chat/chat.helpers";
-import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview";
 import { dispatchChatScrollToMessage } from "@/features/chat/chat-scroll-to-message";
-import { Button } from "@/components/ui/button";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import { ChatCharacterTooltip } from "@/features/chat/components/chat-character-tooltip";
 import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-message-view";
-import {
-  inviteCharacterToFriends,
-  inviteCharacterToParty,
-  showCharacterEquipment,
-  showCharacterProfile,
-  startPrivateMessage,
-} from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { ChatMessageBody } from "./chat-message-body";
+import { ChatMessageContextMenu } from "./chat-message-context-menu";
 
 type ChatMessageProps = {
   all: boolean;
@@ -121,10 +103,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   const canReplyMessage = canReplyToChatMessage(message);
   const senderName =
     member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
-  const mentionSegments = messageBody
-    ? getChatMentionSegments(messageBody.text, mentionContext)
-    : [];
-
   if (!message.characterData) return null;
 
   if (!guildName) return null;
@@ -169,88 +147,31 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         <ChatPlayerMessageView
           all={all}
           appearance={appearance}
-          body={
-            isEditing ? (
-              <form
-                className="ll:inline-flex ll:w-full ll:max-w-full ll:items-center ll:gap-[var(--ll-chat-space-sm)]"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  updateChatMessageMutation({
-                    pathParams: {
-                      guildId: message.guildId,
-                      messageId: message.id,
-                    },
-                    data: {
-                      message: draftMessage.trim(),
-                    },
-                  });
-                }}
-              >
-                <Input
-                  value={draftMessage}
-                  disabled={isUpdating}
-                  maxLength={128}
-                  onChange={(event) => setDraftMessage(event.target.value)}
-                  className="ll:h-[var(--ll-chat-control-height)] ll:flex-1"
-                />
-                <Button
-                  type="submit"
-                  disabled={isUpdating || draftMessage.trim().length === 0}
-                >
-                  {isUpdating ? (
-                    <Loader2
-                      aria-hidden
-                      className="ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
-                    />
-                  ) : (
-                    t("edit.save")
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  disabled={isUpdating}
-                  onClick={() => {
-                    setDraftMessage(message.message);
-                    setIsEditing(false);
-                  }}
-                >
-                  {t("edit.cancel")}
-                </Button>
-              </form>
-            ) : (
-              <span
-                className="ll:whitespace-pre-wrap ll:select-text"
-                style={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "normal",
-                }}
-              >
-                {isDeleting ? (
-                  <Loader2
-                    aria-label={t("contextMenu.deleting")}
-                    className="ll:mr-1 ll:inline ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
-                  />
-                ) : null}
-                {message.replyTo && (
-                  <ChatReplyPreview
-                    reply={message.replyTo}
-                    onClick={scrollToOriginalMessage}
-                    className="ll:mb-[var(--ll-chat-space-sm)] ll:max-w-[24rem]"
-                  />
-                )}
-                {messageBody && (
-                  <span
-                    className={cn("ll:select-text", {
-                      "ll:text-gray-200": isMsgYesterday,
-                    })}
-                    style={{ color: messageBody.color }}
-                  >
-                    <ChatMentionText segments={mentionSegments} />
-                  </span>
-                )}
-              </span>
-            )
-          }
+          body=<ChatMessageBody
+            draftMessage={draftMessage}
+            isDeleting={isDeleting}
+            isEditing={isEditing}
+            isMsgYesterday={isMsgYesterday}
+            isUpdating={isUpdating}
+            mentionContext={mentionContext}
+            message={message}
+            onCancel={() => {
+              setDraftMessage(message.message);
+              setIsEditing(false);
+            }}
+            onDraftChange={(event) => setDraftMessage(event.target.value)}
+            onScrollToOriginal={scrollToOriginalMessage}
+            onSubmit={(event) => {
+              event.preventDefault();
+              updateChatMessageMutation({
+                pathParams: {
+                  guildId: message.guildId,
+                  messageId: message.id,
+                },
+                data: { message: draftMessage.trim() },
+              });
+            }}
+          />
           guildName={guildName}
           isMsgYesterday={isMsgYesterday}
           messageId={message.id}
@@ -270,94 +191,29 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         />
       </ContextMenuTrigger>
 
-      <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
-        {message.characterData.nick !== heroName && (
-          <ContextMenuItem
-            onClick={() => {
-              startPrivateMessage(message.characterData.nick);
-            }}
-          >
-            {t("contextMenu.sendMessage")}
-          </ContextMenuItem>
-        )}
-        {canReplyMessage && onReply && (
-          <ContextMenuItem onClick={onReply}>
-            {t("contextMenu.reply")}
-          </ContextMenuItem>
-        )}
-        {canEditMessage && (
-          <ContextMenuItem
-            disabled={isUpdating || isDeleting}
-            onClick={() => {
-              setDraftMessage(message.message);
-              setIsEditing(true);
-            }}
-          >
-            {t("contextMenu.edit")}
-          </ContextMenuItem>
-        )}
-        {canDeleteMessage && (
-          <ContextMenuItem
-            disabled={isUpdating || isDeleting}
-            onClick={() => {
-              deleteChatMessageMutation({
-                pathParams: {
-                  guildId: message.guildId,
-                  messageId: message.id,
-                },
-              });
-            }}
-          >
-            {t("contextMenu.delete")}
-          </ContextMenuItem>
-        )}
-        {gameInterface === "ni" && (
-          <ContextMenuItem
-            onClick={() => {
-              showCharacterEquipment({
-                id: message.characterData.id,
-                nick: message.characterData.nick,
-                prof: message.characterData.prof,
-                icon: message.characterData.icon,
-                lvl: message.characterData.lvl,
-                account: message.characterData.acc,
-              });
-            }}
-          >
-            {t("contextMenu.showEquipment")}
-          </ContextMenuItem>
-        )}
-        {message.characterData.nick !== heroName && (
-          <ContextMenuItem
-            onClick={() => {
-              inviteCharacterToFriends(message.characterData.nick);
-            }}
-          >
-            {t("contextMenu.inviteFriends")}
-          </ContextMenuItem>
-        )}
-        {message.characterData.nick !== heroName && (
-          <ContextMenuItem
-            onClick={() => {
-              inviteCharacterToParty(message.characterData.id);
-            }}
-          >
-            {t("contextMenu.inviteParty")}
-          </ContextMenuItem>
-        )}
-        {gameInterface === "ni" && (
-          <ContextMenuItem
-            onClick={() => {
-              showCharacterProfile({
-                accountId: message.characterData.acc,
-                characterId: message.characterData.id,
-              });
-            }}
-          >
-            {t("contextMenu.showProfile")}
-          </ContextMenuItem>
-        )}
-      </ContextMenuContent>
+      <ChatMessageContextMenu
+        canDelete={canDeleteMessage}
+        canEdit={canEditMessage}
+        canReply={canReplyMessage}
+        gameInterface={gameInterface}
+        heroName={heroName}
+        isDeleting={isDeleting}
+        isUpdating={isUpdating}
+        message={message}
+        onDelete={() => {
+          deleteChatMessageMutation({
+            pathParams: {
+              guildId: message.guildId,
+              messageId: message.id,
+            },
+          });
+        }}
+        onEdit={() => {
+          setDraftMessage(message.message);
+          setIsEditing(true);
+        }}
+        onReply={onReply}
+      />
     </ContextMenu>
   );
 };

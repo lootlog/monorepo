@@ -77,6 +77,8 @@ import {
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
+import type { EventOverviewResponseDto } from "@lootlog/api-client/models/main/event-overview-response-dto";
+import type { EventMapsResponse } from "./types/api";
 
 const getWindowStatusConfig = (
   status: WindowStatus,
@@ -118,22 +120,140 @@ const getMapCoverageCountClassName = (
   return "text-destructive";
 };
 
+type EventOverview = EventOverviewResponseDto;
+
+const valueOr = <Value, Fallback>(
+  value: Value | null | undefined,
+  fallback: Fallback,
+): Value | Fallback => value ?? fallback;
+
+const canManageEvent = (
+  permissions: ReturnType<typeof useGuildPermissions>["data"],
+) =>
+  Boolean(
+    permissions?.includes(Permission.LOOTLOG_MANAGE) ||
+    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
+    permissions?.includes(Permission.ADMIN) ||
+    permissions?.includes(Permission.OWNER),
+  );
+
+const getEventHero = (
+  event: EventOverview | undefined,
+  eventMaps: EventMapsResponse | undefined,
+  heroId: string | undefined,
+) => {
+  const heroBase = event?.heroNpcs?.find((hero) => hero.id === heroId);
+  if (!heroBase) return undefined;
+  const heroMapsData = eventMaps?.heroNpcs?.find((hero) => hero.id === heroId);
+  return {
+    ...heroBase,
+    locations: valueOr(heroMapsData?.locations, []),
+    maps: valueOr(heroMapsData?.maps, []),
+  };
+};
+
+const getHeroMapsView = (
+  hero: NonNullable<ReturnType<typeof getEventHero>>,
+  windowStatus: WindowStatus,
+  presenceData: Parameters<typeof getMapStatus>[1] | undefined,
+) => {
+  const allMaps = [
+    ...hero.locations.flatMap((location) => location.maps),
+    ...hero.maps,
+  ];
+  const canShowCoverageCount =
+    isWindowActive(windowStatus) && presenceData !== undefined;
+  const coveredMapsCount = canShowCoverageCount
+    ? allMaps.filter(
+        (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
+      ).length
+    : 0;
+  const assignedMembers = allMaps.flatMap((map) => map.assignedMembers);
+  return {
+    allMaps,
+    totalMapsCount: allMaps.length,
+    canShowCoverageCount,
+    coveredMapsCount,
+    uniqueMembers: Array.from(
+      new Map(assignedMembers.map((member) => [member.id, member])).values(),
+    ),
+  };
+};
+
+const getRespawnActionView = (
+  hasTimer: boolean,
+  t: ReturnType<typeof useTranslation>["t"],
+) => ({
+  label: t(
+    hasTimer ? "events.respawn.closeWindow" : "events.respawn.openWindow",
+  ),
+  Icon: hasTimer ? X : Timer,
+});
+
+const getHeroRouteAvailability = (
+  guildId: string | undefined,
+  eventId: string | undefined,
+  heroId: string | undefined,
+) => ({
+  hasGuildId: Boolean(guildId),
+  hasEventRouteParams: Boolean(guildId && eventId),
+  hasHeroRouteParams: Boolean(guildId && eventId && heroId),
+});
+
+const canLoadHeroTimers = (
+  hasEventRouteParams: boolean,
+  world: string | null | undefined,
+) => hasEventRouteParams && Boolean(world);
+
+const getMapCoverageLabel = (
+  canShowCoverageCount: boolean,
+  coveredMapsCount: number,
+  totalMapsCount: number,
+) =>
+  canShowCoverageCount
+    ? `(${coveredMapsCount}/${totalMapsCount})`
+    : `(${totalMapsCount})`;
+
+const isHeroDetailLoading = (isLoading: boolean, isMapsLoading: boolean) =>
+  isLoading || isMapsLoading;
+
+const isHeroDetailMissing = (
+  error: unknown,
+  event: EventOverview | undefined,
+  hero: ReturnType<typeof getEventHero>,
+) => Boolean(error || !event || !hero);
+
+function assertDefined<Value>(
+  value: Value,
+): asserts value is NonNullable<Value> {
+  if (value === null || value === undefined) {
+    throw new Error("Expected hero detail data to be available");
+  }
+}
+
+const getAssignmentDisabledMessage = (
+  reason: ReturnType<typeof getAssignmentAvailability>["reason"],
+  t: ReturnType<typeof useTranslation>["t"],
+) => (reason === "OVERDUE" ? t("events.maps.assignmentDisabledOverdue") : null);
+
 export const HeroDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId } = useParams({ strict: false });
+  const queryGuildId = valueOr(guildId, "");
+  const queryEventId = valueOr(eventId, "");
+  const queryHeroId = valueOr(heroId, "");
   const queryClient = useQueryClient();
-  const hasGuildId = Boolean(guildId);
-  const hasEventRouteParams = Boolean(guildId && eventId);
-  const hasHeroRouteParams = Boolean(guildId && eventId && heroId);
+  const { hasGuildId, hasEventRouteParams, hasHeroRouteParams } =
+    getHeroRouteAvailability(guildId, eventId, heroId);
   const { data: guild } = useGuildsControllerGetGuildById(
     {
-      guildId: guildId ?? "",
+      guildId: queryGuildId,
     },
     {
       query: {
         enabled: hasGuildId,
         queryKey: getGuildsControllerGetGuildByIdQueryKey({
-          guildId: guildId ?? "",
+          guildId: queryGuildId,
         }),
       },
     },
@@ -146,12 +266,12 @@ export const HeroDetail = () => {
 
   const { data: permissions } = useGuildPermissions();
   const { data: currentMember } = useMembersControllerGetMe(
-    { guildId: guildId ?? "" },
+    { guildId: queryGuildId },
     {
       query: {
         enabled: hasGuildId,
         queryKey: getMembersControllerGetMeQueryKey({
-          guildId: guildId ?? "",
+          guildId: queryGuildId,
         }),
         staleTime: 30_000,
       },
@@ -236,11 +356,7 @@ export const HeroDetail = () => {
     },
   });
 
-  const canManage =
-    permissions?.includes(Permission.LOOTLOG_MANAGE) ||
-    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
-    permissions?.includes(Permission.ADMIN) ||
-    permissions?.includes(Permission.OWNER);
+  const canManage = canManageEvent(permissions);
 
   const {
     data: event,
@@ -248,15 +364,15 @@ export const HeroDetail = () => {
     error,
   } = useShowEventOverview(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getShowEventOverviewQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
@@ -270,47 +386,47 @@ export const HeroDetail = () => {
   const { data: activeGaps = [] } =
     useEventsMonitoringControllerGetActiveGapsForHero(
       {
-        guildId: guildId ?? "",
-        eventId: eventId ?? "",
-        heroId: heroId ?? "",
+        guildId: queryGuildId,
+        eventId: queryEventId,
+        heroId: queryHeroId,
       },
       {
         query: {
           enabled: hasHeroRouteParams,
           queryKey: getEventsMonitoringControllerGetActiveGapsForHeroQueryKey({
-            guildId: guildId ?? "",
-            eventId: eventId ?? "",
-            heroId: heroId ?? "",
+            guildId: queryGuildId,
+            eventId: queryEventId,
+            heroId: queryHeroId,
           }),
         },
       },
     );
   const { data: rankings = [] } = useListEventRanking(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getListEventRankingQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
   );
   const { data: eventMaps, isLoading: isMapsLoading } = useListEventMaps(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
       query: {
         enabled: hasEventRouteParams,
         queryKey: getListEventMapsQueryKey({
-          guildId: guildId ?? "",
-          eventId: eventId ?? "",
+          guildId: queryGuildId,
+          eventId: queryEventId,
         }),
       },
     },
@@ -318,22 +434,22 @@ export const HeroDetail = () => {
 
   const { data: timers } = useListEventHeroTimers(
     {
-      guildId: guildId ?? "",
-      eventId: eventId ?? "",
+      guildId: queryGuildId,
+      eventId: queryEventId,
     },
     {
-      world: event?.world ?? "",
+      world: valueOr(event?.world, ""),
     },
     {
       query: {
-        enabled: hasEventRouteParams && Boolean(event?.world),
+        enabled: canLoadHeroTimers(hasEventRouteParams, event?.world),
         queryKey: getListEventHeroTimersQueryKey(
           {
-            guildId: guildId ?? "",
-            eventId: eventId ?? "",
+            guildId: queryGuildId,
+            eventId: queryEventId,
           },
           {
-            world: event?.world ?? "",
+            world: valueOr(event?.world, ""),
           },
         ),
       },
@@ -342,26 +458,18 @@ export const HeroDetail = () => {
 
   const activeGapsMap = new Map(activeGaps.map((gap) => [gap.mapId, gap]));
 
-  const heroBase = event?.heroNpcs?.find((h) => h.id === heroId);
-  const heroMapsData = eventMaps?.heroNpcs?.find((h) => h.id === heroId);
-  const hero = heroBase
-    ? {
-        ...heroBase,
-        locations: heroMapsData?.locations ?? [],
-        maps: heroMapsData?.maps ?? [],
-      }
-    : undefined;
+  const hero = getEventHero(event, eventMaps, heroId);
   const heroTimer = findEventHeroTimer(timers, {
     heroNpcId: hero?.npcId,
     heroName: hero?.npcName,
   });
 
   const windowStatus = useWindowStatus(
-    heroTimer?.minSpawnTime ?? null,
-    heroTimer?.maxSpawnTime ?? null,
+    valueOr(heroTimer?.minSpawnTime, null),
+    valueOr(heroTimer?.maxSpawnTime, null),
   );
 
-  if (isLoading || isMapsLoading) {
+  if (isHeroDetailLoading(isLoading, isMapsLoading)) {
     return (
       <div className="flex items-center justify-center h-64">
         <Spinner className="h-8 w-8" />
@@ -374,22 +482,22 @@ export const HeroDetail = () => {
     enabledAt: assignmentEnabledAt,
     reason: assignmentDisabledReason,
   } = getAssignmentAvailability({
-    assignmentTimeoutMinutes: event?.assignmentTimeoutMinutes ?? 5,
+    assignmentTimeoutMinutes: valueOr(event?.assignmentTimeoutMinutes, 5),
     timer: heroTimer,
   });
-  const assignmentDisabledMessage =
-    assignmentDisabledReason === "OVERDUE"
-      ? t("events.maps.assignmentDisabledOverdue")
-      : null;
+  const assignmentDisabledMessage = getAssignmentDisabledMessage(
+    assignmentDisabledReason,
+    t,
+  );
 
-  if (error || !event || !hero) {
+  if (isHeroDetailMissing(error, event, hero)) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <p className="text-muted-foreground">{t("events.heroes.notFound")}</p>
         <Link
           to="/$guildId/events/$eventId"
-          params={{ guildId: guildId ?? "", eventId: eventId ?? "" }}
+          params={{ guildId: queryGuildId, eventId: queryEventId }}
         >
           <Button variant="outline">{t("events.common.backToEvent")}</Button>
         </Link>
@@ -397,33 +505,39 @@ export const HeroDetail = () => {
     );
   }
 
-  const allMapsFromLocations = hero.locations?.flatMap((loc) => loc.maps) ?? [];
-  const allMaps = [...allMapsFromLocations, ...(hero.maps ?? [])];
+  assertDefined(event);
+  assertDefined(hero);
 
-  const totalMapsCount = allMaps.length;
-  const canShowCoverageCount =
-    isWindowActive(windowStatus) && presenceData !== undefined;
-  const coveredMapsCount = canShowCoverageCount
-    ? allMaps.filter(
-        (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
-      ).length
-    : 0;
-  const allAssignedMembers = allMaps.flatMap((m) => m.assignedMembers);
-  const uniqueMembers = Array.from(
-    new Map(allAssignedMembers.map((m) => [m.id, m])).values(),
-  );
+  const {
+    allMaps,
+    totalMapsCount,
+    canShowCoverageCount,
+    coveredMapsCount,
+    uniqueMembers,
+  } = getHeroMapsView(hero, windowStatus, presenceData);
+  const respawnAction = getRespawnActionView(Boolean(heroTimer), t);
+  const RespawnActionIcon = respawnAction.Icon;
+  const handleRespawnActionClick = () => {
+    if (heroTimer) {
+      setCloseWindowOpen(true);
+      return;
+    }
+    setOpenWindowOpen(true);
+  };
 
   const handleSelfAssignClick = async (mapId: string) => {
     if (!eventId) return;
 
     try {
       if (!assignmentAllowed) {
-        toast.error(assignmentDisabledMessage ?? t("events.maps.assignError"));
+        toast.error(
+          valueOr(assignmentDisabledMessage, t("events.maps.assignError")),
+        );
         return;
       }
       await selfAssignMember.mutateAsync({
         pathParams: {
-          guildId: guildId ?? "",
+          guildId: queryGuildId,
           eventId,
           mapId,
         },
@@ -440,7 +554,7 @@ export const HeroDetail = () => {
     try {
       await selfUnassignMember.mutateAsync({
         pathParams: {
-          guildId: guildId ?? "",
+          guildId: queryGuildId,
           eventId,
           mapId,
         },
@@ -461,7 +575,9 @@ export const HeroDetail = () => {
 
     try {
       if (!assignmentAllowed) {
-        toast.error(assignmentDisabledMessage ?? t("events.maps.assignError"));
+        toast.error(
+          valueOr(assignmentDisabledMessage, t("events.maps.assignError")),
+        );
         return;
       }
       await assignMember.mutateAsync({
@@ -510,7 +626,7 @@ export const HeroDetail = () => {
         allMaps.map((map) =>
           unassignMember.mutateAsync({
             pathParams: {
-              guildId: guildId ?? "",
+              guildId: queryGuildId,
               eventId,
               mapId: map.id,
             },
@@ -533,7 +649,7 @@ export const HeroDetail = () => {
     try {
       await closeRespawnWindow.mutateAsync({
         pathParams: {
-          guildId: guildId ?? "",
+          guildId: queryGuildId,
           eventId,
           heroId,
         },
@@ -557,7 +673,7 @@ export const HeroDetail = () => {
     try {
       await openRespawnWindow.mutateAsync({
         pathParams: {
-          guildId: guildId ?? "",
+          guildId: queryGuildId,
           eventId,
           heroId,
         },
@@ -573,6 +689,73 @@ export const HeroDetail = () => {
     }
   };
 
+  const renderHeroHeader = () => (
+    <Card className="gap-0 overflow-hidden border-border bg-card p-0">
+      <div className="flex min-w-0 items-center gap-3 p-3 md:px-4">
+        {hero.npcIcon ? (
+          <NpcTile
+            className="flex w-10 shrink-0 items-center justify-center"
+            npc={{
+              id: valueOr(hero.npcId, undefined),
+              name: hero.npcName,
+              icon: hero.npcIcon,
+            }}
+          />
+        ) : (
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-yellow-500/10 ring-1 ring-border/70">
+            <Swords className="size-4 text-yellow-500" />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-medium leading-none text-muted-foreground">
+            {event.name}
+          </p>
+          <h1 className="mt-1 truncate text-base font-semibold leading-none">
+            {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
+          </h1>
+          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs leading-none text-muted-foreground">
+            <HeroTimerCountdown timer={heroTimer} />
+            {windowStatus !== "NONE" && (
+              <>
+                <span aria-hidden="true">·</span>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "h-5 shrink-0 px-1.5 text-[11px]",
+                    getWindowStatusConfig(windowStatus, t).className,
+                  )}
+                >
+                  {getWindowStatusConfig(windowStatus, t).label}
+                </Badge>
+              </>
+            )}
+          </div>
+        </div>
+        {canManage && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 shrink-0 px-2.5 lg:px-3"
+                  aria-label={respawnAction.label}
+                  onClick={handleRespawnActionClick}
+                >
+                  <RespawnActionIcon className="size-4" />
+                  <span className="hidden lg:inline">
+                    {respawnAction.label}
+                  </span>
+                </Button>
+              }
+            />
+            <TooltipContent>{respawnAction.label}</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </Card>
+  );
+
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">
       <EventParticipationConfirmationDialog
@@ -582,92 +765,7 @@ export const HeroDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-3">
-          <Card className="gap-0 overflow-hidden border-border bg-card p-0">
-            <div className="flex min-w-0 items-center gap-3 p-3 md:px-4">
-              {hero.npcIcon ? (
-                <NpcTile
-                  className="flex w-10 shrink-0 items-center justify-center"
-                  npc={{
-                    id: hero.npcId ?? undefined,
-                    name: hero.npcName,
-                    icon: hero.npcIcon,
-                  }}
-                />
-              ) : (
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-yellow-500/10 ring-1 ring-border/70">
-                  <Swords className="size-4 text-yellow-500" />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[11px] font-medium leading-none text-muted-foreground">
-                  {event.name}
-                </p>
-                <h1 className="mt-1 truncate text-base font-semibold leading-none">
-                  {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
-                </h1>
-                <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs leading-none text-muted-foreground">
-                  <HeroTimerCountdown timer={heroTimer} />
-                  {windowStatus !== "NONE" && (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "h-5 shrink-0 px-1.5 text-[11px]",
-                          getWindowStatusConfig(windowStatus, t).className,
-                        )}
-                      >
-                        {getWindowStatusConfig(windowStatus, t).label}
-                      </Badge>
-                    </>
-                  )}
-                </div>
-              </div>
-              {canManage && (
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9 shrink-0 px-2.5 lg:px-3"
-                        aria-label={t(
-                          heroTimer
-                            ? "events.respawn.closeWindow"
-                            : "events.respawn.openWindow",
-                        )}
-                        onClick={() =>
-                          heroTimer
-                            ? setCloseWindowOpen(true)
-                            : setOpenWindowOpen(true)
-                        }
-                      >
-                        {heroTimer ? (
-                          <X className="size-4" />
-                        ) : (
-                          <Timer className="size-4" />
-                        )}
-                        <span className="hidden lg:inline">
-                          {t(
-                            heroTimer
-                              ? "events.respawn.closeWindow"
-                              : "events.respawn.openWindow",
-                          )}
-                        </span>
-                      </Button>
-                    }
-                  />
-                  <TooltipContent>
-                    {t(
-                      heroTimer
-                        ? "events.respawn.closeWindow"
-                        : "events.respawn.openWindow",
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-          </Card>
+          {renderHeroHeader()}
 
           <HeroDetailResponsiveLayout
             maps={
@@ -686,9 +784,11 @@ export const HeroDetail = () => {
                         ),
                       )}
                     >
-                      {canShowCoverageCount
-                        ? `(${coveredMapsCount}/${totalMapsCount})`
-                        : `(${totalMapsCount})`}
+                      {getMapCoverageLabel(
+                        canShowCoverageCount,
+                        coveredMapsCount,
+                        totalMapsCount,
+                      )}
                     </span>
                   </h2>
                   {canManage && (
@@ -742,8 +842,8 @@ export const HeroDetail = () => {
                   )}
                 </header>
                 <EventMapGrid
-                  locations={hero.locations ?? []}
-                  maps={hero.maps ?? []}
+                  locations={hero.locations}
+                  maps={hero.maps}
                   onSelfAssignClick={handleSelfAssignClick}
                   onSelfUnassignClick={handleSelfUnassignClick}
                   onManageClick={handleManageClick}
@@ -775,8 +875,8 @@ export const HeroDetail = () => {
                       <MemberBadge
                         key={member.id}
                         member={member}
-                        guildId={guildId ?? ""}
-                        eventId={eventId ?? ""}
+                        guildId={queryGuildId}
+                        eventId={queryEventId}
                       />
                     ))}
                   </div>
@@ -790,20 +890,20 @@ export const HeroDetail = () => {
                     (r) => r.heroNpcName === hero.npcName,
                   )}
                   heroNpcs={[hero]}
-                  guildId={guildId ?? ""}
-                  eventId={eventId ?? ""}
+                  guildId={queryGuildId}
+                  eventId={queryEventId}
                   limit={5}
                 />
 
                 <RecentKillsPreview
-                  guildId={guildId ?? ""}
-                  eventId={eventId ?? ""}
-                  heroId={heroId ?? ""}
+                  guildId={queryGuildId}
+                  eventId={queryEventId}
+                  heroId={queryHeroId}
                   limit={5}
                 />
 
                 <EventHeroLoots
-                  guildId={guildId ?? ""}
+                  guildId={queryGuildId}
                   heroNpcNames={[hero.npcName]}
                   world={event.world}
                   limit={3}
@@ -816,8 +916,8 @@ export const HeroDetail = () => {
       <MapManageDialog
         open={mapManageOpen}
         onOpenChange={setMapManageOpen}
-        guildId={guildId ?? ""}
-        eventId={eventId ?? ""}
+        guildId={queryGuildId}
+        eventId={queryEventId}
         hero={hero}
       />
       {selectedMap && (
@@ -825,7 +925,7 @@ export const HeroDetail = () => {
           open={assignmentOpen}
           onOpenChange={setAssignmentOpen}
           mapName={selectedMap.mapName}
-          assignedMembers={selectedMap.assignedMembers || []}
+          assignedMembers={valueOr(selectedMap.assignedMembers, [])}
           onAssign={handleAssignFromModal}
           onUnassign={handleUnassignFromModal}
           disabled={!assignmentAllowed}

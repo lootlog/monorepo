@@ -28,6 +28,43 @@ type BattlesListProps = {
   toolbarEnd?: ReactNode;
 };
 
+const getCurrentFilters = (
+  params: UseBattlesParams | undefined,
+): BattleFilters => ({
+  world: params?.world,
+  type: params?.type,
+  search: params?.search,
+  result: params?.result,
+  ph: params?.ph,
+  matchmaking: params?.matchmaking,
+  characterId: params?.characterId,
+  minLevel: params?.minLevel,
+  maxLevel: params?.maxLevel,
+});
+
+const getBattlesTableState = (
+  battlesResponse: GetBattlesResponse | undefined,
+  pageSize: number | undefined,
+  params: UseBattlesParams | undefined,
+) => ({
+  battles: battlesResponse?.battles ?? [],
+  hasNext: Boolean(battlesResponse?.pagination?.hasNext),
+  hasPrev: Boolean(battlesResponse?.pagination?.hasPrev),
+  pageSize: pageSize ?? params?.size,
+  selectionLimit: params?.size,
+  totalCount: battlesResponse?.pagination?.total ?? 0,
+});
+
+const getBattlesListClassName = (
+  showPagination: boolean,
+  showFilters: boolean,
+) =>
+  cn(
+    "flex min-h-0 min-w-0 flex-col overflow-hidden",
+    showPagination ? "h-full flex-1" : "w-full",
+    showFilters && "gap-3",
+  );
+
 export const BattlesList = ({
   activeFilterChips = [],
   battlesResponse,
@@ -48,17 +85,8 @@ export const BattlesList = ({
 }: BattlesListProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const currentFilters: BattleFilters = {
-    world: params?.world,
-    type: params?.type,
-    search: params?.search,
-    result: params?.result,
-    ph: params?.ph,
-    matchmaking: params?.matchmaking,
-    characterId: params?.characterId,
-    minLevel: params?.minLevel,
-    maxLevel: params?.maxLevel,
-  };
+  const currentFilters = getCurrentFilters(params);
+  const tableState = getBattlesTableState(battlesResponse, pageSize, params);
 
   useEffect(() => {
     if (enableScrollToTop && containerRef.current) {
@@ -117,11 +145,7 @@ export const BattlesList = ({
   return (
     <div
       ref={containerRef}
-      className={cn(
-        "flex min-h-0 min-w-0 flex-col overflow-hidden",
-        showPagination ? "h-full flex-1" : "w-full",
-        showFilters && "gap-3",
-      )}
+      className={getBattlesListClassName(showPagination, showFilters)}
     >
       {showFilters && onFiltersChange && (
         <BattlesListFilters
@@ -133,10 +157,10 @@ export const BattlesList = ({
 
       <BattlesTable
         activeFilterChips={activeFilterChips}
-        battles={battlesResponse?.battles ?? []}
+        battles={tableState.battles}
         clearFiltersLabel={clearFiltersLabel}
-        hasNext={Boolean(battlesResponse?.pagination?.hasNext)}
-        hasPrev={Boolean(battlesResponse?.pagination?.hasPrev)}
+        hasNext={tableState.hasNext}
+        hasPrev={tableState.hasPrev}
         isLoading={isLoading}
         onClearFilters={onClearFilters}
         onMatchmakingClick={handleMatchmakingClick}
@@ -145,10 +169,10 @@ export const BattlesList = ({
         onPreviousPage={handlePreviousPage}
         onWorldClick={handleWorldClick}
         pageIndex={pageIndex}
-        pageSize={pageSize ?? params?.size}
+        pageSize={tableState.pageSize}
         showPagination={showPagination}
-        selectionLimit={params?.size}
-        totalCount={battlesResponse?.pagination?.total ?? 0}
+        selectionLimit={tableState.selectionLimit}
+        totalCount={tableState.totalCount}
         toolbar={toolbar}
         toolbarEnd={toolbarEnd}
       />

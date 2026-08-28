@@ -30,6 +30,36 @@ import {
 import { NotificationMatchingService } from "src/notifications/notification-matching.service";
 import { formatDiscordRelativeTimestamp } from "src/notifications/utils/discord-timestamp.util";
 
+type AllowedMention = "roles" | "users" | "everyone";
+
+const parseAllowedMentionList = (
+  value: Prisma.JsonValue | undefined,
+): AllowedMention[] | undefined =>
+  Array.isArray(value)
+    ? value.filter(
+        (entry): entry is AllowedMention =>
+          entry === "roles" || entry === "users" || entry === "everyone",
+      )
+    : undefined;
+
+const parseStringList = (
+  value: Prisma.JsonValue | undefined,
+): string[] | undefined =>
+  Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : undefined;
+
+const hasAllowedMentionValues = (params: {
+  parse: AllowedMention[] | undefined;
+  roles: string[] | undefined;
+  users: string[] | undefined;
+  repliedUser: boolean | undefined;
+}): boolean =>
+  (params.parse?.length ?? 0) > 0 ||
+  (params.roles?.length ?? 0) > 0 ||
+  (params.users?.length ?? 0) > 0 ||
+  params.repliedUser !== undefined;
+
 @Injectable()
 export class NotificationContentService {
   constructor(
@@ -251,31 +281,13 @@ export class NotificationContentService {
       return undefined;
     }
 
-    const parse = Array.isArray(value.parse)
-      ? value.parse.filter(
-          (entry): entry is "roles" | "users" | "everyone" =>
-            entry === "roles" || entry === "users" || entry === "everyone",
-        )
-      : undefined;
-    const roles = Array.isArray(value.roles)
-      ? value.roles.filter(
-          (entry): entry is string => typeof entry === "string",
-        )
-      : undefined;
-    const users = Array.isArray(value.users)
-      ? value.users.filter(
-          (entry): entry is string => typeof entry === "string",
-        )
-      : undefined;
+    const parse = parseAllowedMentionList(value.parse);
+    const roles = parseStringList(value.roles);
+    const users = parseStringList(value.users);
     const repliedUser =
       typeof value.repliedUser === "boolean" ? value.repliedUser : undefined;
 
-    if (
-      (parse?.length ?? 0) === 0 &&
-      (roles?.length ?? 0) === 0 &&
-      (users?.length ?? 0) === 0 &&
-      repliedUser === undefined
-    ) {
+    if (!hasAllowedMentionValues({ parse, roles, users, repliedUser })) {
       return undefined;
     }
 

@@ -27,6 +27,26 @@ export type LootFiltersHeaderProps = {
   onToggleFilters: () => void;
 };
 
+const getLootFiltersHeaderState = (
+  filters: {
+    hid: string;
+    itemNames: readonly unknown[];
+    npcs: readonly unknown[];
+    players: readonly unknown[];
+  },
+  isMobile: boolean,
+  isCompactLayout: boolean,
+  world: string | undefined,
+) => ({
+  hasSearchFilters:
+    filters.npcs.length > 0 ||
+    filters.itemNames.length > 0 ||
+    filters.hid !== "" ||
+    filters.players.length > 0,
+  showWorldControls: !isMobile || Boolean(world),
+  usesStackedControls: isMobile || isCompactLayout,
+});
+
 export const LootFiltersHeader = ({
   isFiltersOpen,
   isCompactLayout,
@@ -42,12 +62,8 @@ export const LootFiltersHeader = ({
   const { viewMode, setViewMode } = useViewMode("loots-view-mode");
   const primaryModifierKeyLabel = getPrimaryModifierKeyLabel();
 
-  const hasSearchFilters =
-    filters.npcs.length > 0 ||
-    filters.itemNames.length > 0 ||
-    filters.hid !== "" ||
-    filters.players.length > 0;
-  const usesStackedControls = isMobile || isCompactLayout;
+  const { hasSearchFilters, showWorldControls, usesStackedControls } =
+    getLootFiltersHeaderState(filters, isMobile, isCompactLayout, world);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -62,7 +78,7 @@ export const LootFiltersHeader = ({
 
   return (
     <>
-      {(!isMobile || world) && (
+      {showWorldControls && (
         <Card className="gap-2 rounded-xl border-border bg-card p-2 shadow-none">
           <div
             className={cn(
@@ -70,7 +86,7 @@ export const LootFiltersHeader = ({
               isMobile ? "flex-nowrap" : "flex-wrap",
             )}
           >
-            {(!isMobile || world) && (
+            {showWorldControls && (
               <div
                 className={cn(
                   "min-w-0 flex-1",

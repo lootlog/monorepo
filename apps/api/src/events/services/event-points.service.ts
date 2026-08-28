@@ -478,15 +478,10 @@ export class EventPointsService {
       return;
     }
 
-    const killPointsByKillId = new Map<string, typeof killPoints>();
-    for (const kp of killPoints) {
-      const existing = killPointsByKillId.get(kp.killId);
-      if (existing) {
-        existing.push(kp);
-      } else {
-        killPointsByKillId.set(kp.killId, [kp]);
-      }
-    }
+    const killPointsByKillId = this.groupBy(
+      killPoints,
+      (killPoint) => killPoint.killId,
+    );
 
     const heroMapIdsByKillId = new Map<string, Set<string>>();
     for (const [killId, points] of killPointsByKillId) {
@@ -517,21 +512,17 @@ export class EventPointsService {
       Math.max(...killPoints.map((point) => point.kill.killedAt.getTime())),
     );
     const windowSummaries =
-      killPoints.length > 0
-        ? await this.prisma.eventRespawnWindowSummary.findMany({
-            where: {
-              killId: {
-                in: Array.from(
-                  new Set(killPoints.map((point) => point.kill.id)),
-                ),
-              },
-            },
-            select: {
-              killId: true,
-              windowOpenedAt: true,
-            },
-          })
-        : [];
+      await this.prisma.eventRespawnWindowSummary.findMany({
+        where: {
+          killId: {
+            in: Array.from(new Set(killPoints.map((point) => point.kill.id))),
+          },
+        },
+        select: {
+          killId: true,
+          windowOpenedAt: true,
+        },
+      });
     const windowOpenedAtByKillId = new Map(
       windowSummaries.flatMap((summary) =>
         summary.killId
@@ -573,21 +564,10 @@ export class EventPointsService {
           })
         : [];
 
-    const assignmentsByMember = new Map<
-      number,
-      Array<{
-        mapId: string;
-        memberId: number;
-        assignedAt: Date;
-        unassignedAt: Date | null;
-      }>
-    >();
-    for (const assignment of assignmentHistory) {
-      if (!assignmentsByMember.has(assignment.memberId)) {
-        assignmentsByMember.set(assignment.memberId, []);
-      }
-      assignmentsByMember.get(assignment.memberId)?.push(assignment);
-    }
+    const assignmentsByMember = this.groupBy(
+      assignmentHistory,
+      (assignment) => assignment.memberId,
+    );
 
     const recalculatedKillPoints = killPoints.map((killPoint) => {
       const assignedMembersCount =
@@ -811,6 +791,23 @@ export class EventPointsService {
     await this.prisma.$transaction(transactionOperations);
 
     await this.emitRankingUpdateByEventId(eventId);
+  }
+
+  private groupBy<Key, Value>(
+    values: Value[],
+    getKey: (value: Value) => Key,
+  ): Map<Key, Value[]> {
+    const grouped = new Map<Key, Value[]>();
+    for (const value of values) {
+      const key = getKey(value);
+      const group = grouped.get(key);
+      if (group) {
+        group.push(value);
+      } else {
+        grouped.set(key, [value]);
+      }
+    }
+    return grouped;
   }
 
   private getMemberKillState(params: {

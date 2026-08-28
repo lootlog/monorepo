@@ -28,6 +28,9 @@ const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
   return formatDurationHuman(differenceSeconds);
 };
 
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
 export const KillDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
@@ -36,20 +39,24 @@ export const KillDetail = () => {
   const canEditPoints =
     Boolean(permissions?.includes(Permission.OWNER)) ||
     Boolean(permissions?.includes(Permission.ADMIN));
+  const queryGuildId = valueOr(guildId, "");
+  const queryEventId = valueOr(eventId, "");
+  const queryHeroId = valueOr(heroId, "");
+  const queryKillId = valueOr(killId, "");
   const { data, isLoading, error } = useKillDetail({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-    heroId: heroId ?? "",
-    killId: killId ?? "",
+    guildId: queryGuildId,
+    eventId: queryEventId,
+    heroId: queryHeroId,
+    killId: queryKillId,
   });
   const { data: matchingLoots, isLoading: isLootsLoading } = useMatchingLoots({
-    guildId: guildId ?? "",
-    world: data?.kill.heroNpc.event.world ?? "",
-    killedAt: data?.kill.killedAt ?? "",
-    npcName: data?.kill.heroNpc.npcName ?? "",
+    guildId: queryGuildId,
+    world: valueOr(data?.kill.heroNpc.event.world, ""),
+    killedAt: valueOr(data?.kill.killedAt, ""),
+    npcName: valueOr(data?.kill.heroNpc.npcName, ""),
     enabled: Boolean(data),
   });
-  const loots = matchingLoots ?? [];
+  const loots = valueOr(matchingLoots, []);
 
   if (isLoading) {
     return (
@@ -98,9 +105,9 @@ export const KillDetail = () => {
             <Link
               to="/$guildId/events/$eventId/heroes/$heroId"
               params={{
-                guildId: guildId ?? "",
-                eventId: eventId ?? "",
-                heroId: heroId ?? "",
+                guildId: queryGuildId,
+                eventId: queryEventId,
+                heroId: queryHeroId,
               }}
             >
               {t("events.common.backToHero")}
@@ -113,69 +120,87 @@ export const KillDetail = () => {
   }
 
   const { kill, eventConfig } = data;
-  const participants = kill.points ?? [];
-  const memberRoleColors = new Map<number, string>();
-  for (const participant of participants) {
-    const roleColor = getCustomRoleCssColor(
-      participant.member.roles?.[0]?.color,
-    );
-    if (roleColor) {
-      memberRoleColors.set(participant.member.id, roleColor);
+  const participants = valueOr(kill.points, []);
+  const getMemberRoleColors = () => {
+    const colors = new Map<number, string>();
+    for (const participant of participants) {
+      const roleColor = getCustomRoleCssColor(
+        participant.member.roles?.[0]?.color,
+      );
+      if (roleColor) colors.set(participant.member.id, roleColor);
     }
-  }
-  const currentDiscordId = session?.user?.discordId;
-  const highlightedRuleIds = Array.from(
-    new Set(
-      participants
-        .filter((participant) => participant.member.userId === currentDiscordId)
-        .flatMap((participant) => {
-          const evaluatedRuleIds = getAppliedRuleIdsForParticipant({
-            kill,
-            participant,
-            scoringRules: eventConfig.scoringRules,
-            assignedMembersCount: participants.length,
-          });
-          const bonusBreakdownRuleIds = normalizeBonusBreakdown(
-            participant.bonusBreakdown,
+    return colors;
+  };
+  const getHighlightedRuleIds = () => {
+    const currentDiscordId = session?.user?.discordId;
+    return Array.from(
+      new Set(
+        participants
+          .filter(
+            (participant) => participant.member.userId === currentDiscordId,
           )
-            .map((bonus) => bonus.ruleId)
-            .filter(
-              (ruleId): ruleId is string =>
-                typeof ruleId === "string" && ruleId.trim().length > 0,
-            );
-
-          return [...evaluatedRuleIds, ...bonusBreakdownRuleIds];
-        }),
-    ),
-  );
-  const respawnDurationText =
-    typeof kill.respawnDurationSeconds === "number"
-      ? formatDurationHuman(kill.respawnDurationSeconds)
-      : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
-  const windowDurationText =
-    typeof kill.windowDurationSeconds === "number"
-      ? formatDurationHuman(kill.windowDurationSeconds)
-      : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.maxSpawnTimeAtKill);
-  const fasterThanMaxSeconds =
-    typeof kill.windowDurationSeconds === "number" &&
-    typeof kill.respawnDurationSeconds === "number"
-      ? Math.max(0, kill.windowDurationSeconds - kill.respawnDurationSeconds)
+          .flatMap((participant) => {
+            const evaluatedRuleIds = getAppliedRuleIdsForParticipant({
+              kill,
+              participant,
+              scoringRules: eventConfig.scoringRules,
+              assignedMembersCount: participants.length,
+            });
+            const bonusBreakdownRuleIds = normalizeBonusBreakdown(
+              participant.bonusBreakdown,
+            )
+              .map((bonus) => bonus.ruleId)
+              .filter(
+                (ruleId): ruleId is string =>
+                  typeof ruleId === "string" && ruleId.trim().length > 0,
+              );
+            return [...evaluatedRuleIds, ...bonusBreakdownRuleIds];
+          }),
+      ),
+    );
+  };
+  const getTimingViewModel = () => {
+    const respawnDurationSeconds = kill.respawnDurationSeconds;
+    const windowDurationSeconds = kill.windowDurationSeconds;
+    const respawnDurationText =
+      typeof respawnDurationSeconds === "number"
+        ? formatDurationHuman(respawnDurationSeconds)
+        : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
+    const windowDurationText =
+      typeof windowDurationSeconds === "number"
+        ? formatDurationHuman(windowDurationSeconds)
+        : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.maxSpawnTimeAtKill);
+    const hasDurations =
+      typeof windowDurationSeconds === "number" &&
+      typeof respawnDurationSeconds === "number";
+    const fasterThanMaxSeconds = hasDurations
+      ? Math.max(0, windowDurationSeconds - respawnDurationSeconds)
       : null;
-  const respawnComparedToMaxPercentage =
-    typeof kill.windowDurationSeconds === "number" &&
-    typeof kill.respawnDurationSeconds === "number" &&
-    kill.windowDurationSeconds > 0
-      ? Math.max(
-          0,
-          Math.round(
-            (kill.respawnDurationSeconds / kill.windowDurationSeconds) * 100,
-          ),
-        )
-      : null;
-  const fasterThanMaxText =
-    typeof fasterThanMaxSeconds === "number" && fasterThanMaxSeconds > 0
-      ? formatDurationHuman(fasterThanMaxSeconds)
-      : null;
+    const respawnComparedToMaxPercentage =
+      hasDurations && windowDurationSeconds > 0
+        ? Math.max(
+            0,
+            Math.round((respawnDurationSeconds / windowDurationSeconds) * 100),
+          )
+        : null;
+    return {
+      respawnDurationText,
+      windowDurationText,
+      fasterThanMaxText:
+        typeof fasterThanMaxSeconds === "number" && fasterThanMaxSeconds > 0
+          ? formatDurationHuman(fasterThanMaxSeconds)
+          : null,
+      respawnComparedToMaxPercentage,
+    };
+  };
+  const memberRoleColors = getMemberRoleColors();
+  const highlightedRuleIds = getHighlightedRuleIds();
+  const {
+    respawnDurationText,
+    windowDurationText,
+    fasterThanMaxText,
+    respawnComparedToMaxPercentage,
+  } = getTimingViewModel();
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
@@ -214,9 +239,9 @@ export const KillDetail = () => {
               />
 
               <KillMapsTimelineSection
-                eventId={eventId ?? ""}
-                heroId={heroId ?? ""}
-                killId={killId ?? ""}
+                eventId={queryEventId}
+                heroId={queryHeroId}
+                killId={queryKillId}
                 minSpawnTimeAtKill={kill.minSpawnTimeAtKill}
                 killedAt={kill.killedAt}
                 memberRoleColors={memberRoleColors}
@@ -231,7 +256,7 @@ export const KillDetail = () => {
               <MatchingLootsSection
                 loots={loots}
                 isLoading={isLootsLoading}
-                guildId={guildId ?? ""}
+                guildId={queryGuildId}
                 npcName={kill.heroNpc.npcName}
               />
 

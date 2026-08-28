@@ -27,6 +27,9 @@ import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
+const optionalQueryValue = <Value,>(value: Value | null | undefined) =>
+  value ?? undefined;
+
 export const BattlePanelBattlesList = () => {
   const { t } = useTranslation();
   const [queryState, setQueryState] = useQueryStates(
@@ -37,22 +40,22 @@ export const BattlePanelBattlesList = () => {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const pageIndex = getBattlePanelPageIndex(queryState.page);
   const selectedWarriors = getSelectedWarriorsFromSearch(
-    queryState.search ?? undefined,
+    optionalQueryValue(queryState.search),
   );
 
   const { data: battlesResponse, isLoading: isBattlesLoading } =
     useBattlesControllerGetDashboardBattles({
-      cursor: queryState.cursor ?? undefined,
+      cursor: optionalQueryValue(queryState.cursor),
       size: pageSize,
       includeTotal: true,
-      world: queryState.world ?? undefined,
-      type: queryState.type ?? undefined,
-      search: queryState.search ?? undefined,
-      result: queryState.result ?? undefined,
-      ph: queryState.ph ?? undefined,
-      characterId: queryState.characterId ?? undefined,
-      startDate: queryState.startDate ?? undefined,
-      endDate: queryState.endDate ?? undefined,
+      world: optionalQueryValue(queryState.world),
+      type: optionalQueryValue(queryState.type),
+      search: optionalQueryValue(queryState.search),
+      result: optionalQueryValue(queryState.result),
+      ph: optionalQueryValue(queryState.ph),
+      characterId: optionalQueryValue(queryState.characterId),
+      startDate: optionalQueryValue(queryState.startDate),
+      endDate: optionalQueryValue(queryState.endDate),
       minLevel: queryState.minLevel,
       maxLevel: queryState.maxLevel,
     });
@@ -62,12 +65,12 @@ export const BattlePanelBattlesList = () => {
   const worlds = worldsResponse?.worlds ?? [];
 
   const filters: BattleFilters = {
-    world: queryState.world ?? undefined,
-    type: queryState.type ?? undefined,
-    search: queryState.search ?? undefined,
-    result: queryState.result ?? undefined,
-    ph: queryState.ph ?? undefined,
-    characterId: queryState.characterId ?? undefined,
+    world: optionalQueryValue(queryState.world),
+    type: optionalQueryValue(queryState.type),
+    search: optionalQueryValue(queryState.search),
+    result: optionalQueryValue(queryState.result),
+    ph: optionalQueryValue(queryState.ph),
+    characterId: optionalQueryValue(queryState.characterId),
     minLevel: queryState.minLevel,
     maxLevel: queryState.maxLevel,
   };
@@ -240,7 +243,7 @@ export const BattlePanelBattlesList = () => {
               clearFiltersLabel={t("battlePanel.filters.clear")}
               characters={characters}
               params={{
-                cursor: queryState.cursor ?? undefined,
+                cursor: optionalQueryValue(queryState.cursor),
                 size: pageSize,
                 world: filters.world,
                 type: filters.type,
@@ -248,8 +251,8 @@ export const BattlePanelBattlesList = () => {
                 result: filters.result,
                 ph: filters.ph,
                 characterId: filters.characterId,
-                startDate: queryState.startDate ?? undefined,
-                endDate: queryState.endDate ?? undefined,
+                startDate: optionalQueryValue(queryState.startDate),
+                endDate: optionalQueryValue(queryState.endDate),
                 minLevel: filters.minLevel,
                 maxLevel: filters.maxLevel,
               }}

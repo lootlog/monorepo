@@ -40,6 +40,14 @@ type ActivityLogsFiltersSidebarProps = {
   className?: string;
 };
 
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
+const optionalText = (value: string) => (value.length > 0 ? value : undefined);
+
+const getDateValue = (value: string | null | undefined) =>
+  value ? new Date(value) : undefined;
+
 export const ActivityLogsFiltersSidebar: FC<
   ActivityLogsFiltersSidebarProps
 > = ({ className }) => {
@@ -47,23 +55,32 @@ export const ActivityLogsFiltersSidebar: FC<
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useActivityLogsFilters();
   const guildId = useGuildId();
-  const [debouncedNameSearch] = useDebounceValue(filters.name ?? "", 300);
-  const [debouncedClanSearch] = useDebounceValue(filters.clanName ?? "", 300);
+  const [debouncedNameSearch] = useDebounceValue(
+    valueOr(filters.name, ""),
+    300,
+  );
+  const [debouncedClanSearch] = useDebounceValue(
+    valueOr(filters.clanName, ""),
+    300,
+  );
   const trimmedNameSearch = debouncedNameSearch.trim();
   const trimmedClanSearch = debouncedClanSearch.trim();
   const { data: guild } = useGuildsControllerGetGuildById({
-    guildId: guildId ?? "",
+    guildId: valueOr(guildId, ""),
   });
+  const activityGuildId = valueOr(guild?.id, "");
+  const nameSearch = optionalText(trimmedNameSearch);
+  const clanSearch = optionalText(trimmedClanSearch);
   const { data: nameSuggestionsResponse } = useQuery(
     getActivitiesControllerSuggestActorNamesQueryOptions(
-      { guildId: guild?.id ?? "" },
-      { search: trimmedNameSearch || undefined, limit: 8 },
+      { guildId: activityGuildId },
+      { search: nameSearch, limit: 8 },
       {
         query: {
-          enabled: Boolean(guild?.id && trimmedNameSearch.length >= 1),
+          enabled: Boolean(activityGuildId && trimmedNameSearch.length >= 1),
           queryKey: getActivitiesControllerSuggestActorNamesQueryKey(
-            { guildId: guild?.id ?? "" },
-            { search: trimmedNameSearch || undefined, limit: 8 },
+            { guildId: activityGuildId },
+            { search: nameSearch, limit: 8 },
           ),
           staleTime: 5 * 60 * 1000,
         },
@@ -72,27 +89,28 @@ export const ActivityLogsFiltersSidebar: FC<
   );
   const { data: clanNameSuggestionsResponse } = useQuery(
     getActivitiesControllerSuggestClanNamesQueryOptions(
-      { guildId: guild?.id ?? "" },
-      { search: trimmedClanSearch || undefined, limit: 8 },
+      { guildId: activityGuildId },
+      { search: clanSearch, limit: 8 },
       {
         query: {
-          enabled: Boolean(guild?.id && trimmedClanSearch.length >= 1),
+          enabled: Boolean(activityGuildId && trimmedClanSearch.length >= 1),
           queryKey: getActivitiesControllerSuggestClanNamesQueryKey(
-            { guildId: guild?.id ?? "" },
-            { search: trimmedClanSearch || undefined, limit: 8 },
+            { guildId: activityGuildId },
+            { search: clanSearch, limit: 8 },
           ),
           staleTime: 5 * 60 * 1000,
         },
       },
     ),
   );
-  const nameSuggestions = nameSuggestionsResponse?.suggestions ?? [];
-  const clanNameSuggestions = clanNameSuggestionsResponse?.suggestions ?? [];
+  const nameSuggestions = valueOr(nameSuggestionsResponse?.suggestions, []);
+  const clanNameSuggestions = valueOr(
+    clanNameSuggestionsResponse?.suggestions,
+    [],
+  );
 
-  const startDateValue = filters.startDate
-    ? new Date(filters.startDate)
-    : undefined;
-  const endDateValue = filters.endDate ? new Date(filters.endDate) : undefined;
+  const startDateValue = getDateValue(filters.startDate);
+  const endDateValue = getDateValue(filters.endDate);
   const today = startOfDay(new Date());
   const minSelectableDate = startOfDay(subDays(today, 7));
 
@@ -199,9 +217,9 @@ export const ActivityLogsFiltersSidebar: FC<
                         {t("activityLogs.filters.playerName")}
                       </Label>
                       <ActorNameSelector
-                        value={filters.name ?? ""}
+                        value={valueOr(filters.name, "")}
                         suggestions={nameSuggestions}
-                        searchValue={filters.name ?? ""}
+                        searchValue={valueOr(filters.name, "")}
                         onSearchChange={(value) =>
                           updateFilters({ name: value })
                         }
@@ -220,9 +238,9 @@ export const ActivityLogsFiltersSidebar: FC<
                         {t("activityLogs.filters.clanName")}
                       </Label>
                       <ActorNameSelector
-                        value={filters.clanName ?? ""}
+                        value={valueOr(filters.clanName, "")}
                         suggestions={clanNameSuggestions}
-                        searchValue={filters.clanName ?? ""}
+                        searchValue={valueOr(filters.clanName, "")}
                         onSearchChange={(value) =>
                           updateFilters({ clanName: value })
                         }

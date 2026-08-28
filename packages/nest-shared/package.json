@@ -51,6 +51,7 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
+    "lint": "oxlint src",
     "test": "vitest run src"
   },
   "dependencies": {

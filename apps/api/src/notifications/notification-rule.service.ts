@@ -46,6 +46,13 @@ const GUILD_NOTIFICATION_TEST_TRIGGER_WINDOW_SECONDS = Math.floor(
 const GUILD_NOTIFICATION_MAX_NPCS_PER_RULE = 5;
 const USER_NOTIFICATION_RULE_LIMIT = 50;
 
+const firstNonNullish = <T>(
+  fallback: T,
+  ...values: Array<T | null | undefined>
+): T =>
+  values.find((value): value is T => value !== null && value !== undefined) ??
+  fallback;
+
 @Injectable()
 export class NotificationRuleService {
   constructor(
@@ -757,64 +764,52 @@ export class NotificationRuleService {
       };
     }
 
-    const intervalType =
-      (data.scheduleIntervalType as
+    const intervalType = firstNonNullish(
+      DbNotificationScheduleIntervalType.ONCE,
+      data.scheduleIntervalType as
         | DbNotificationScheduleIntervalType
-        | undefined) ??
-      existingRule?.scheduleIntervalType ??
-      DbNotificationScheduleIntervalType.ONCE;
-    const intervalValue =
-      data.scheduleIntervalValue ?? existingRule?.scheduleIntervalValue ?? null;
-    const weekday =
-      data.scheduleWeekday ?? existingRule?.scheduleWeekday ?? null;
-    const timeOfDay =
-      data.scheduleTimeOfDay ?? existingRule?.scheduleTimeOfDay ?? null;
-    const hasScheduledUntil = hasOwnField(data, "scheduledUntil");
-    let scheduledUntil = existingRule?.scheduledUntil ?? null;
-
-    if (hasScheduledUntil) {
-      scheduledUntil = data.scheduledUntil
-        ? new Date(data.scheduledUntil)
-        : null;
-    }
+        | undefined,
+      existingRule?.scheduleIntervalType,
+    );
+    const intervalValue = firstNonNullish<number | null>(
+      null,
+      data.scheduleIntervalValue,
+      existingRule?.scheduleIntervalValue,
+    );
+    const weekday = firstNonNullish<number | null>(
+      null,
+      data.scheduleWeekday,
+      existingRule?.scheduleWeekday,
+    );
+    const timeOfDay = firstNonNullish<string | null>(
+      null,
+      data.scheduleTimeOfDay,
+      existingRule?.scheduleTimeOfDay,
+    );
+    const scheduledUntil = this.resolveScheduledUntil(
+      data,
+      existingRule?.scheduledUntil,
+    );
 
     const scheduleTimezone = this.resolveNotificationScheduleTimeZone({
       ownerType,
       providedTimeZone: data.scheduleTimezone,
-      existingTimeZone: existingRule?.scheduleTimezone ?? null,
+      existingTimeZone: firstNonNullish(null, existingRule?.scheduleTimezone),
     });
 
-    if (
-      ownerType === DbNotificationOwnerType.USER &&
-      isRecurringScheduleInterval(intervalType) &&
-      !scheduleTimezone
-    ) {
-      throw new BadRequestException(
-        Error.RECURRING_USER_SCHEDULED_MESSAGES_REQUIRE_TIMEZONE,
-      );
-    }
-
-    let scheduledAt: Date | null = null;
-
-    if (data.scheduledAt) {
-      scheduledAt = new Date(data.scheduledAt);
-    } else if (existingRule?.scheduledAt) {
-      scheduledAt = existingRule.scheduledAt;
-    }
-
-    if (
-      !scheduledAt &&
-      isRecurringScheduleInterval(intervalType) &&
-      timeOfDay &&
-      scheduleTimezone
-    ) {
-      scheduledAt = calculateFirstOccurrenceInTimeZone({
-        intervalType,
-        timeOfDay,
-        weekday,
-        timeZone: scheduleTimezone,
-      });
-    }
+    this.assertRecurringScheduleTimeZone(
+      ownerType,
+      intervalType,
+      scheduleTimezone,
+    );
+    const scheduledAt = this.resolveScheduledAt({
+      providedScheduledAt: data.scheduledAt,
+      existingScheduledAt: existingRule?.scheduledAt,
+      intervalType,
+      timeOfDay,
+      weekday,
+      scheduleTimezone,
+    });
 
     return {
       scheduledAt,
@@ -825,6 +820,61 @@ export class NotificationRuleService {
       scheduledUntil,
       scheduleTimezone,
     };
+  }
+
+  private resolveScheduledUntil(
+    data: Pick<
+      CreateNotificationRuleDto | UpdateNotificationRuleDto,
+      "scheduledUntil"
+    >,
+    existingScheduledUntil: Date | null | undefined,
+  ): Date | null {
+    if (!hasOwnField(data, "scheduledUntil")) {
+      return firstNonNullish(null, existingScheduledUntil);
+    }
+    return data.scheduledUntil ? new Date(data.scheduledUntil) : null;
+  }
+
+  private assertRecurringScheduleTimeZone(
+    ownerType: DbNotificationOwnerType,
+    intervalType: DbNotificationScheduleIntervalType,
+    scheduleTimezone: string | null,
+  ): void {
+    if (
+      ownerType === DbNotificationOwnerType.USER &&
+      isRecurringScheduleInterval(intervalType) &&
+      !scheduleTimezone
+    ) {
+      throw new BadRequestException(
+        Error.RECURRING_USER_SCHEDULED_MESSAGES_REQUIRE_TIMEZONE,
+      );
+    }
+  }
+
+  private resolveScheduledAt(params: {
+    providedScheduledAt: string | undefined;
+    existingScheduledAt: Date | null | undefined;
+    intervalType: DbNotificationScheduleIntervalType;
+    timeOfDay: string | null;
+    weekday: number | null;
+    scheduleTimezone: string | null;
+  }): Date | null {
+    const scheduledAt = params.providedScheduledAt
+      ? new Date(params.providedScheduledAt)
+      : firstNonNullish(null, params.existingScheduledAt);
+    const shouldCalculateFirstOccurrence =
+      !scheduledAt &&
+      isRecurringScheduleInterval(params.intervalType) &&
+      params.timeOfDay &&
+      params.scheduleTimezone;
+
+    if (!shouldCalculateFirstOccurrence) return scheduledAt;
+    return calculateFirstOccurrenceInTimeZone({
+      intervalType: params.intervalType,
+      timeOfDay: params.timeOfDay,
+      weekday: params.weekday,
+      timeZone: params.scheduleTimezone,
+    });
   }
 
   private resolveNotificationScheduleTimeZone(params: {

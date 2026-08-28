@@ -97,6 +97,115 @@ const CHAT_INPUT_SHELL_CLASS =
 const CHAT_INPUT_FOCUS_CLASS =
   "ll:focus-within:border-ring ll:focus-within:ring-ring/50 ll:focus-within:ring-[3px]";
 
+const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
+  value ?? fallback;
+
+const getActiveMentionForSuggestions = ({
+  activeMention,
+  caretIndex,
+  messageValue,
+  tabCompletionSession,
+}: {
+  activeMention: ActiveChatMention | null;
+  caretIndex: number;
+  messageValue: string;
+  tabCompletionSession: TabCompletionSession | null;
+}) => {
+  if (activeMention) {
+    return activeMention;
+  }
+  if (!tabCompletionSession) {
+    return null;
+  }
+
+  const { insertedLabel, mention } = tabCompletionSession;
+  const isSessionActive =
+    caretIndex === mention.end + 1 &&
+    /\s/.test(valueOr(messageValue[mention.end], "")) &&
+    messageValue.slice(mention.start, mention.end) === insertedLabel;
+
+  return isSessionActive ? mention : null;
+};
+
+const resolveSuggestionKeys = (
+  messageValue: string,
+  activeMention: ActiveChatMention | null,
+  dismissedSuggestionKey: string | null,
+) => {
+  const activeMentionKey = activeMention
+    ? [activeMention.start, activeMention.end, activeMention.query].join(":")
+    : null;
+  const commandKey = isCommandSuggestionsInput(messageValue)
+    ? `command:${messageValue}`
+    : null;
+  const isCommandInput = commandKey !== null;
+  const activeSuggestionKey = isCommandInput ? commandKey : activeMentionKey;
+
+  return {
+    activeSuggestionKey,
+    areSuggestionsDismissed:
+      activeSuggestionKey !== null &&
+      dismissedSuggestionKey === activeSuggestionKey,
+    isCommandInput,
+  };
+};
+
+const resolveSuggestionPresentation = ({
+  activeMention,
+  areSuggestionsDismissed,
+  filteredCommandSuggestions,
+  isCommandInput,
+  isFetchingMemberNames,
+  isFetchingRoleNames,
+  mentionSuggestions,
+}: {
+  activeMention: ActiveChatMention | null;
+  areSuggestionsDismissed: boolean;
+  filteredCommandSuggestions: CommandSuggestion[];
+  isCommandInput: boolean;
+  isFetchingMemberNames: boolean;
+  isFetchingRoleNames: boolean;
+  mentionSuggestions: ChatMentionSuggestion[];
+}) => {
+  const isCommandSuggestionsOpen =
+    isCommandInput &&
+    filteredCommandSuggestions.length > 0 &&
+    !areSuggestionsDismissed;
+  const isMentionSuggestionsOpen =
+    !isCommandInput && activeMention !== null && !areSuggestionsDismissed;
+  let suggestionMode: "command" | "mention" | null = null;
+  let activeSuggestions: ChatInputSuggestion[] = mentionSuggestions.map(
+    (suggestion) => ({ ...suggestion, type: "mention" as const }),
+  );
+
+  if (isCommandSuggestionsOpen) {
+    suggestionMode = "command";
+    activeSuggestions = filteredCommandSuggestions.map((suggestion) => ({
+      ...suggestion,
+      type: "command" as const,
+    }));
+  } else if (isMentionSuggestionsOpen) {
+    suggestionMode = "mention";
+  }
+
+  return {
+    activeSuggestions,
+    isMentionSuggestionsOpen,
+    showMentionSuggestionNoResults:
+      isMentionSuggestionsOpen &&
+      !isFetchingMemberNames &&
+      !isFetchingRoleNames &&
+      mentionSuggestions.length === 0,
+    suggestionMode,
+  };
+};
+
+const shouldLoadChatMentionData = (
+  selectedGuildId: string,
+  hasMentionInput: boolean,
+  isCommandInput: boolean,
+) => selectedGuildId !== "" && hasMentionInput && !isCommandInput;
+
 export const ChatInput: FC<ChatInputProps> = ({
   selectedGuildId,
   autofocus,
@@ -132,82 +241,73 @@ export const ChatInput: FC<ChatInputProps> = ({
   const pendingFocusCaretRef = useRef<number | null>(null);
   const isPending =
     isSendingMessage || isCreatingNotificationMessage || isClearingChat;
+  const resolvedGuildId = valueOr(selectedGuildId, "");
   const activeMention = getActiveChatMention({
     message: messageValue,
     caretIndex,
   });
-  const isTabCompletionSessionActive =
-    tabCompletionSession !== null &&
-    caretIndex === tabCompletionSession.mention.end + 1 &&
-    /\s/.test(messageValue[tabCompletionSession.mention.end] ?? "") &&
-    messageValue.slice(
-      tabCompletionSession.mention.start,
-      tabCompletionSession.mention.end,
-    ) === tabCompletionSession.insertedLabel;
-  const activeMentionForSuggestions =
-    activeMention ??
-    (isTabCompletionSessionActive ? tabCompletionSession.mention : null);
-  const activeMentionSuggestionKey = activeMentionForSuggestions
-    ? [
-        activeMentionForSuggestions.start,
-        activeMentionForSuggestions.end,
-        activeMentionForSuggestions.query,
-      ].join(":")
-    : null;
-  const commandSuggestionKey = isCommandSuggestionsInput(messageValue)
-    ? `command:${messageValue}`
-    : null;
+  const activeMentionForSuggestions = getActiveMentionForSuggestions({
+    activeMention,
+    caretIndex,
+    messageValue,
+    tabCompletionSession,
+  });
   const hasMentionInput = hasChatMentionToken(messageValue);
-  const isCommandInput = commandSuggestionKey !== null;
-  const activeSuggestionKey = isCommandInput
-    ? commandSuggestionKey
-    : activeMentionSuggestionKey;
-  const areSuggestionsDismissed =
-    activeSuggestionKey !== null && dismissedMentionKey === activeSuggestionKey;
-  const shouldLoadMentionData =
-    Boolean(selectedGuildId) && hasMentionInput && !isCommandInput;
-  const { data: guildPermissions = [] } =
-    useGuildsControllerGetGuildPermissions(
-      { guildId: selectedGuildId ?? "" },
-      {
-        query: {
-          queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-            guildId: selectedGuildId ?? "",
-          }),
-          enabled: Boolean(selectedGuildId),
-          staleTime: 5 * 60 * 1000,
-        },
-      },
+  const { activeSuggestionKey, areSuggestionsDismissed, isCommandInput } =
+    resolveSuggestionKeys(
+      messageValue,
+      activeMentionForSuggestions,
+      dismissedMentionKey,
     );
-  const { data: guildMembers = [], isFetching: isFetchingMemberNames } =
-    useGuildMembersSummary(
-      { guildId: selectedGuildId ?? "" },
-      {
-        query: {
-          enabled: shouldLoadMentionData,
-        },
+  const shouldLoadMentionData = shouldLoadChatMentionData(
+    resolvedGuildId,
+    hasMentionInput,
+    isCommandInput,
+  );
+  const guildPermissionsQuery = useGuildsControllerGetGuildPermissions(
+    { guildId: resolvedGuildId },
+    {
+      query: {
+        queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+          guildId: resolvedGuildId,
+        }),
+        enabled: Boolean(selectedGuildId),
+        staleTime: 5 * 60 * 1000,
       },
-    );
-  const { data: guildRoles = [], isFetching: isFetchingRoleNames } =
-    useRolesControllerGetGuildRoles(
-      { guildId: selectedGuildId ?? "" },
-      {
-        query: {
-          queryKey: getRolesControllerGetGuildRolesQueryKey({
-            guildId: selectedGuildId ?? "",
-          }),
-          enabled: shouldLoadMentionData,
-          gcTime: CHAT_QUERY_GC_TIME_MS,
-          staleTime: 5 * 60 * 1000,
-        },
+    },
+  );
+  const guildPermissions = valueOr(guildPermissionsQuery.data, []);
+  const guildMembersQuery = useGuildMembersSummary(
+    { guildId: resolvedGuildId },
+    {
+      query: {
+        enabled: shouldLoadMentionData,
       },
-    );
+    },
+  );
+  const guildMembers = valueOr(guildMembersQuery.data, []);
+  const isFetchingMemberNames = guildMembersQuery.isFetching;
+  const guildRolesQuery = useRolesControllerGetGuildRoles(
+    { guildId: resolvedGuildId },
+    {
+      query: {
+        queryKey: getRolesControllerGetGuildRolesQueryKey({
+          guildId: resolvedGuildId,
+        }),
+        enabled: shouldLoadMentionData,
+        gcTime: CHAT_QUERY_GC_TIME_MS,
+        staleTime: 5 * 60 * 1000,
+      },
+    },
+  );
+  const guildRoles = valueOr(guildRolesQuery.data, []);
+  const isFetchingRoleNames = guildRolesQuery.isFetching;
   const { data: currentMember } = useMembersControllerGetMe(
-    { guildId: selectedGuildId ?? "" },
+    { guildId: resolvedGuildId },
     {
       query: {
         queryKey: getMembersControllerGetMeQueryKey({
-          guildId: selectedGuildId ?? "",
+          guildId: resolvedGuildId,
         }),
         enabled: shouldLoadMentionData,
         gcTime: CHAT_QUERY_GC_TIME_MS,
@@ -230,7 +330,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const mentionSuggestions = getChatMentionSuggestions({
     memberSuggestions,
     roleSuggestions,
-    query: activeMentionForSuggestions?.query ?? "",
+    query: valueOr(activeMentionForSuggestions?.query, ""),
   });
   const mentionContext = buildChatMentionContext({
     currentCharacterNick,
@@ -238,33 +338,20 @@ export const ChatInput: FC<ChatInputProps> = ({
     members: guildMembers,
     roles: guildRoles,
   });
-  const isCommandSuggestionsOpen =
-    isCommandInput &&
-    filteredCommandSuggestions.length > 0 &&
-    !areSuggestionsDismissed;
-  const isMentionSuggestionsOpen =
-    !isCommandInput &&
-    activeMentionForSuggestions !== null &&
-    !areSuggestionsDismissed;
-  const suggestionMode = isCommandSuggestionsOpen
-    ? "command"
-    : isMentionSuggestionsOpen
-      ? "mention"
-      : null;
-  const activeSuggestions: ChatInputSuggestion[] = isCommandSuggestionsOpen
-    ? filteredCommandSuggestions.map((suggestion) => ({
-        ...suggestion,
-        type: "command" as const,
-      }))
-    : mentionSuggestions.map((suggestion) => ({
-        ...suggestion,
-        type: "mention" as const,
-      }));
-  const showMentionSuggestionNoResults =
-    isMentionSuggestionsOpen &&
-    !isFetchingMemberNames &&
-    !isFetchingRoleNames &&
-    mentionSuggestions.length === 0;
+  const {
+    activeSuggestions,
+    isMentionSuggestionsOpen,
+    showMentionSuggestionNoResults,
+    suggestionMode,
+  } = resolveSuggestionPresentation({
+    activeMention: activeMentionForSuggestions,
+    areSuggestionsDismissed,
+    filteredCommandSuggestions,
+    isCommandInput,
+    isFetchingMemberNames,
+    isFetchingRoleNames,
+    mentionSuggestions,
+  });
   const isClearChatCommand = messageValue.trim() === "/clr";
 
   useEffect(() => {

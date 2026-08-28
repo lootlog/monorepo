@@ -14,7 +14,8 @@
     }
   },
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "lint": "oxlint src"
   },
   "dependencies": {
     "@msgpack/msgpack": "^3.1.3"

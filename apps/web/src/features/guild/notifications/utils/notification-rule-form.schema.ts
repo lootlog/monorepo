@@ -10,213 +10,249 @@ import { parseManualNotificationRuleNpcIds } from "./notification-rule-form-npc.
 
 export const ALL_WORLDS_VALUE = "__all_worlds__";
 
-export const ruleFormSchema = (
+const createRuleFormSchema = (
   t: (key: string, options?: Record<string, unknown>) => string,
-  maxNpcCount: number,
 ) =>
-  z
-    .object({
-      name: z.string(),
-      triggerType: z.nativeEnum(NotificationTriggerType),
-      world: z.string().optional(),
-      npcIds: z.array(z.string()).optional(),
-      manualNpcEntry: z.boolean().optional(),
-      manualNpcIds: z.string().optional(),
-      contentTemplate: z
-        .string()
-        .trim()
-        .min(1, t("settings.notifications.validation.templateRequired")),
-      scheduleAnchor: z.nativeEnum(NotificationScheduleAnchor).optional(),
-      scheduleOffsetMinutes: z.string().optional(),
-      scheduledAt: z.string().optional(),
-      scheduleIntervalType: z
-        .nativeEnum(NotificationScheduleIntervalType)
-        .optional(),
-      scheduleIntervalValue: z.string().optional(),
-      scheduleTimeOfDay: z.string().optional(),
-      scheduleWeekday: z.string().optional(),
-      scheduledUntil: z.string().optional(),
-      targetIds: z
-        .array(z.string())
-        .min(1, t("settings.notifications.validation.targetRequired")),
-      enabled: z.boolean(),
-    })
-    .superRefine((data, ctx) => {
-      if (data.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN) {
-        const manualNpcEntry = data.manualNpcEntry ?? false;
-        const manualNpcIds = parseManualNotificationRuleNpcIds(
-          data.manualNpcIds ?? "",
-        );
+  z.object({
+    name: z.string(),
+    triggerType: z.nativeEnum(NotificationTriggerType),
+    world: z.string().optional(),
+    npcIds: z.array(z.string()).optional(),
+    manualNpcEntry: z.boolean().optional(),
+    manualNpcIds: z.string().optional(),
+    contentTemplate: z
+      .string()
+      .trim()
+      .min(1, t("settings.notifications.validation.templateRequired")),
+    scheduleAnchor: z.nativeEnum(NotificationScheduleAnchor).optional(),
+    scheduleOffsetMinutes: z.string().optional(),
+    scheduledAt: z.string().optional(),
+    scheduleIntervalType: z
+      .nativeEnum(NotificationScheduleIntervalType)
+      .optional(),
+    scheduleIntervalValue: z.string().optional(),
+    scheduleTimeOfDay: z.string().optional(),
+    scheduleWeekday: z.string().optional(),
+    scheduledUntil: z.string().optional(),
+    targetIds: z
+      .array(z.string())
+      .min(1, t("settings.notifications.validation.targetRequired")),
+    enabled: z.boolean(),
+  });
 
-        if (!data.world || data.world === ALL_WORLDS_VALUE) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t("settings.notifications.validation.worldRequired"),
-            path: ["world"],
-          });
-        }
+type RuleFormData = z.infer<ReturnType<typeof createRuleFormSchema>>;
+type Translator = (key: string, options?: Record<string, unknown>) => string;
 
-        if (manualNpcEntry) {
-          if ((data.manualNpcIds ?? "").trim().length === 0) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t(
-                "settings.notifications.validation.manualNpcIdsRequired",
-              ),
-              path: ["manualNpcIds"],
-            });
-          } else if (manualNpcIds.invalidTokens.length > 0) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t(
-                "settings.notifications.validation.manualNpcIdsInvalid",
-              ),
-              path: ["manualNpcIds"],
-            });
-          }
+const addIssue = (
+  ctx: z.RefinementCtx,
+  message: string,
+  path: keyof RuleFormData,
+) => {
+  ctx.addIssue({ code: z.ZodIssueCode.custom, message, path: [path] });
+};
 
-          if (manualNpcIds.ids.length > maxNpcCount) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t("settings.notifications.validation.maxNpcCount", {
-                count: maxNpcCount,
-              }),
-              path: ["manualNpcIds"],
-            });
-          }
-        } else {
-          if (!data.npcIds || data.npcIds.length === 0) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t("settings.notifications.validation.npcRequired"),
-              path: ["npcIds"],
-            });
-          }
+const validateManualNpcIds = (
+  data: RuleFormData,
+  ctx: z.RefinementCtx,
+  t: Translator,
+  maxNpcCount: number,
+) => {
+  const input = data.manualNpcIds ?? "";
+  const parsedIds = parseManualNotificationRuleNpcIds(input);
 
-          if (data.npcIds && data.npcIds.length > maxNpcCount) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t("settings.notifications.validation.maxNpcCount", {
-                count: maxNpcCount,
-              }),
-              path: ["npcIds"],
-            });
-          }
-        }
+  if (input.trim().length === 0) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.manualNpcIdsRequired"),
+      "manualNpcIds",
+    );
+  } else if (parsedIds.invalidTokens.length > 0) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.manualNpcIdsInvalid"),
+      "manualNpcIds",
+    );
+  }
 
-        if (!data.scheduleAnchor) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t(
-              "settings.notifications.validation.scheduleOffsetRequired",
-            ),
-            path: ["scheduleAnchor"],
-          });
-        }
-        const offset = data.scheduleOffsetMinutes?.trim();
-        if (!offset || offset.length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t(
-              "settings.notifications.validation.scheduleOffsetRequired",
-            ),
-            path: ["scheduleOffsetMinutes"],
-          });
-        } else if (!Number.isInteger(Number(offset)) || Number(offset) < 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t(
-              "settings.notifications.validation.scheduleOffsetNonNegative",
-            ),
-            path: ["scheduleOffsetMinutes"],
-          });
-        }
-      }
+  if (parsedIds.ids.length > maxNpcCount) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.maxNpcCount", {
+        count: maxNpcCount,
+      }),
+      "manualNpcIds",
+    );
+  }
+};
 
-      if (data.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
-        const interval =
-          data.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE;
+const validateSelectedNpcIds = (
+  data: RuleFormData,
+  ctx: z.RefinementCtx,
+  t: Translator,
+  maxNpcCount: number,
+) => {
+  if (!data.npcIds || data.npcIds.length === 0) {
+    addIssue(ctx, t("settings.notifications.validation.npcRequired"), "npcIds");
+  }
 
-        if (
-          interval === NotificationScheduleIntervalType.ONCE ||
-          interval === NotificationScheduleIntervalType.HOURLY
-        ) {
-          if (!data.scheduledAt) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t(
-                "settings.notifications.validation.scheduledAtRequired",
-              ),
-              path: ["scheduledAt"],
-            });
-          } else {
-            const scheduledAtIsoString = parseDateTimeLocalInputToIsoString(
-              data.scheduledAt,
-              GUILD_NOTIFICATION_TIMEZONE,
-            );
+  if (data.npcIds && data.npcIds.length > maxNpcCount) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.maxNpcCount", {
+        count: maxNpcCount,
+      }),
+      "npcIds",
+    );
+  }
+};
 
-            if (
-              !scheduledAtIsoString ||
-              new Date(scheduledAtIsoString).getTime() <= Date.now()
-            ) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: t(
-                  "settings.notifications.validation.scheduledAtFuture",
-                ),
-                path: ["scheduledAt"],
-              });
-            }
-          }
-        }
+const validateTimerSchedule = (
+  data: RuleFormData,
+  ctx: z.RefinementCtx,
+  t: Translator,
+) => {
+  if (!data.scheduleAnchor) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.scheduleOffsetRequired"),
+      "scheduleAnchor",
+    );
+  }
 
-        if (interval === NotificationScheduleIntervalType.HOURLY) {
-          const val = Number(data.scheduleIntervalValue);
-          if (
-            !data.scheduleIntervalValue ||
-            !Number.isInteger(val) ||
-            val < 1 ||
-            val > 24
-          ) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t(
-                "settings.notifications.validation.intervalValueRange",
-              ),
-              path: ["scheduleIntervalValue"],
-            });
-          }
-        }
+  const offset = data.scheduleOffsetMinutes?.trim();
+  if (!offset || offset.length === 0) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.scheduleOffsetRequired"),
+      "scheduleOffsetMinutes",
+    );
+  } else if (!Number.isInteger(Number(offset)) || Number(offset) < 0) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.scheduleOffsetNonNegative"),
+      "scheduleOffsetMinutes",
+    );
+  }
+};
 
-        if (
-          interval === NotificationScheduleIntervalType.DAILY ||
-          interval === NotificationScheduleIntervalType.WEEKLY
-        ) {
-          if (
-            !data.scheduleTimeOfDay ||
-            !/^\d{2}:\d{2}$/.test(data.scheduleTimeOfDay)
-          ) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t("settings.notifications.validation.timeOfDayRequired"),
-              path: ["scheduleTimeOfDay"],
-            });
-          }
-        }
+const validateTimerRule = (
+  data: RuleFormData,
+  ctx: z.RefinementCtx,
+  t: Translator,
+  maxNpcCount: number,
+) => {
+  if (!data.world || data.world === ALL_WORLDS_VALUE) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.worldRequired"),
+      "world",
+    );
+  }
 
-        if (interval === NotificationScheduleIntervalType.WEEKLY) {
-          if (
-            data.scheduleWeekday === undefined ||
-            data.scheduleWeekday === ""
-          ) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t("settings.notifications.validation.weekdayRequired"),
-              path: ["scheduleWeekday"],
-            });
-          }
-        }
-      }
-    });
+  if (data.manualNpcEntry ?? false) {
+    validateManualNpcIds(data, ctx, t, maxNpcCount);
+  } else {
+    validateSelectedNpcIds(data, ctx, t, maxNpcCount);
+  }
+
+  validateTimerSchedule(data, ctx, t);
+};
+
+const validateScheduledAt = (
+  data: RuleFormData,
+  ctx: z.RefinementCtx,
+  t: Translator,
+) => {
+  if (!data.scheduledAt) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.scheduledAtRequired"),
+      "scheduledAt",
+    );
+    return;
+  }
+
+  const scheduledAt = parseDateTimeLocalInputToIsoString(
+    data.scheduledAt,
+    GUILD_NOTIFICATION_TIMEZONE,
+  );
+  if (!scheduledAt || new Date(scheduledAt).getTime() <= Date.now()) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.scheduledAtFuture"),
+      "scheduledAt",
+    );
+  }
+};
+
+const validateHourlyInterval = (
+  data: RuleFormData,
+  ctx: z.RefinementCtx,
+  t: Translator,
+) => {
+  const intervalValue = Number(data.scheduleIntervalValue);
+  if (
+    !data.scheduleIntervalValue ||
+    !Number.isInteger(intervalValue) ||
+    intervalValue < 1 ||
+    intervalValue > 24
+  ) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.intervalValueRange"),
+      "scheduleIntervalValue",
+    );
+  }
+};
+
+const validateScheduledRule = (
+  data: RuleFormData,
+  ctx: z.RefinementCtx,
+  t: Translator,
+) => {
+  const interval =
+    data.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE;
+
+  if (
+    interval === NotificationScheduleIntervalType.ONCE ||
+    interval === NotificationScheduleIntervalType.HOURLY
+  ) {
+    validateScheduledAt(data, ctx, t);
+  }
+  if (interval === NotificationScheduleIntervalType.HOURLY) {
+    validateHourlyInterval(data, ctx, t);
+  }
+  if (
+    (interval === NotificationScheduleIntervalType.DAILY ||
+      interval === NotificationScheduleIntervalType.WEEKLY) &&
+    (!data.scheduleTimeOfDay || !/^\d{2}:\d{2}$/.test(data.scheduleTimeOfDay))
+  ) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.timeOfDayRequired"),
+      "scheduleTimeOfDay",
+    );
+  }
+  if (
+    interval === NotificationScheduleIntervalType.WEEKLY &&
+    (data.scheduleWeekday === undefined || data.scheduleWeekday === "")
+  ) {
+    addIssue(
+      ctx,
+      t("settings.notifications.validation.weekdayRequired"),
+      "scheduleWeekday",
+    );
+  }
+};
+
+export const ruleFormSchema = (t: Translator, maxNpcCount: number) =>
+  createRuleFormSchema(t).superRefine((data, ctx) => {
+    if (data.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN) {
+      validateTimerRule(data, ctx, t, maxNpcCount);
+    }
+    if (data.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
+      validateScheduledRule(data, ctx, t);
+    }
+  });
 
 export type RuleFormValues = z.infer<ReturnType<typeof ruleFormSchema>>;

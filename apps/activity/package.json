@@ -11,7 +11,7 @@
     "build": "nest build",
     "start": "APP_VERSION=$(node -p \"require('./package.json').version\") node dist/src/main.js",
     "start:debug": "nest start --debug --watch",
-    "lint": "oxlint src",
+    "lint": "oxlint src test",
     "format": "oxfmt src test",
     "test": "vitest run --config ./vitest.config.ts",
     "test:coverage": "vitest run --config ./vitest.config.ts --coverage",

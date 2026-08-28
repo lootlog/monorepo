@@ -33,6 +33,21 @@ type OnlinePlayersListProps = {
   filtersVisible: boolean;
 };
 
+const areOnlinePlayerFiltersActive = (
+  searchQuery: string,
+  filters: typeof DEFAULT_ONLINE_PLAYERS_FILTERS,
+): boolean =>
+  [
+    searchQuery.trim().length > 0,
+    filters.minLvl !== DEFAULT_ONLINE_PLAYERS_FILTERS.minLvl,
+    filters.maxLvl !== DEFAULT_ONLINE_PLAYERS_FILTERS.maxLvl,
+    filters.selectedProfession !==
+      DEFAULT_ONLINE_PLAYERS_FILTERS.selectedProfession,
+  ].some(Boolean);
+
+const hasRefreshError = (hasLoaded: boolean, error: unknown): boolean =>
+  hasLoaded && Boolean(error);
+
 export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   viewMode,
   filtersVisible,
@@ -80,12 +95,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   const filters = guildId
     ? (filtersByGuildId[guildId] ?? DEFAULT_ONLINE_PLAYERS_FILTERS)
     : DEFAULT_ONLINE_PLAYERS_FILTERS;
-  const areFiltersActive =
-    searchQuery.trim().length > 0 ||
-    filters.minLvl !== DEFAULT_ONLINE_PLAYERS_FILTERS.minLvl ||
-    filters.maxLvl !== DEFAULT_ONLINE_PLAYERS_FILTERS.maxLvl ||
-    filters.selectedProfession !==
-      DEFAULT_ONLINE_PLAYERS_FILTERS.selectedProfession;
+  const areFiltersActive = areOnlinePlayerFiltersActive(searchQuery, filters);
 
   const handleMinLvlChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (!guildId) return;
@@ -219,7 +229,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     <div className="ll:relative ll:h-full ll:w-full">
       <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
         <AsyncStatusIndicator
-          active={hasLoaded && Boolean(error)}
+          active={hasRefreshError(hasLoaded, error)}
           kind="error"
           label={t("states.refreshError")}
           onRetry={retry}

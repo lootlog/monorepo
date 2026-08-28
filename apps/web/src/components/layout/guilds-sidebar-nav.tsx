@@ -26,19 +26,129 @@ import {
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { canReadGuildDocs } from "@/features/guild/docs/docs-permissions";
 
+type Translator = (key: string) => string;
+
+const getGuildNavigationAccess = (
+  permissions: Parameters<typeof canManageGuild>[0],
+) => ({
+  canManage: canManageGuild(permissions),
+  canViewEvents: Boolean(
+    permissions?.includes("LOOTLOG_EVENTS_READ") ||
+    permissions?.includes("LOOTLOG_EVENTS_MANAGE") ||
+    permissions?.includes("OWNER"),
+  ),
+  canViewDocs: canReadGuildDocs(permissions),
+  canViewLoots: Boolean(
+    permissions?.includes("LOOTLOG_LOOTS_READ") ||
+    permissions?.includes("OWNER"),
+  ),
+  canViewTimers: Boolean(
+    permissions?.includes("LOOTLOG_TIMERS_READ") ||
+    permissions?.includes("OWNER"),
+  ),
+  canViewReservations: Boolean(
+    permissions?.includes("LOOTLOG_RESERVATIONS_READ") ||
+    permissions?.includes("OWNER"),
+  ),
+});
+
+const getGuildMenuItems = (
+  t: Translator,
+  access: ReturnType<typeof getGuildNavigationAccess>,
+  activeEventCount: number,
+): MenuItem[] => {
+  const hasActiveEvents = activeEventCount > 0;
+  return [
+    {
+      label: t("layout.navigation.lootlog"),
+      icon: <ClipboardList className="mr-1 h-4 w-4" />,
+      path: "",
+      available: true,
+      enabled: access.canViewLoots,
+    },
+    {
+      label: t("layout.navigation.timers"),
+      icon: <Clock className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.timers,
+      available: true,
+      enabled: access.canViewTimers,
+    },
+    {
+      label: t("layout.navigation.reservations"),
+      icon: <CalendarClock className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.reservations,
+      available: true,
+      enabled: access.canViewReservations,
+    },
+    {
+      label: t("layout.navigation.docs"),
+      icon: <FileText className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.docs,
+      available: true,
+      enabled: access.canViewDocs,
+    },
+    {
+      label: t("layout.navigation.events"),
+      icon: (
+        <div className="relative mr-1">
+          <Trophy
+            className={`h-4 w-4 ${hasActiveEvents ? "text-yellow-500" : ""}`}
+          />
+          {hasActiveEvents && (
+            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
+            </span>
+          )}
+        </div>
+      ),
+      path: ROUTE_SEGMENTS.guild.events,
+      available: true,
+      enabled: access.canViewEvents,
+      badge: hasActiveEvents
+        ? { content: activeEventCount, variant: "default" as const }
+        : undefined,
+      highlight: hasActiveEvents,
+    },
+    {
+      label: t("layout.navigation.stats"),
+      icon: <BarChart4 className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.stats,
+      available: true,
+      enabled: access.canViewLoots,
+    },
+    {
+      divided: true,
+      label: t("layout.navigation.activityLogs"),
+      icon: <Logs className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.activityLogs,
+      available: true,
+      enabled: access.canManage,
+    },
+    {
+      label: t("layout.navigation.notifications"),
+      icon: <BellRing className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.notifications,
+      available: true,
+      enabled: access.canManage,
+    },
+    {
+      label: t("layout.navigation.settings"),
+      icon: <Settings className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.settings,
+      available: true,
+      enabled: access.canManage,
+    },
+  ];
+};
+
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
   const { data: permissions } = useGuildPermissions();
   const { setOpenMobile } = useSidebar();
   const { t } = useTranslation();
-  const canManageCurrentGuild = canManageGuild(permissions);
-
-  const canViewEvents =
-    permissions?.includes("LOOTLOG_EVENTS_READ") ||
-    permissions?.includes("LOOTLOG_EVENTS_MANAGE") ||
-    permissions?.includes("OWNER");
-  const canViewDocs = canReadGuildDocs(permissions);
-  const activeEventsGuildId = canViewEvents ? (guildId ?? "") : "";
+  const access = getGuildNavigationAccess(permissions);
+  const activeEventsGuildId = access.canViewEvents ? (guildId ?? "") : "";
 
   const { data: activeEvents } = useListEvents(
     {
@@ -62,103 +172,8 @@ export const GuildsSidebarNav: FC = () => {
       },
     },
   );
-  const hasActiveEvents = (activeEvents?.length ?? 0) > 0;
   const activeEventCount = activeEvents?.length ?? 0;
-
-  const menuItems: MenuItem[] = [
-    {
-      label: t("layout.navigation.lootlog"),
-      icon: <ClipboardList className="mr-1 h-4 w-4" />,
-      path: "",
-      available: true,
-      enabled: Boolean(
-        permissions?.includes("LOOTLOG_LOOTS_READ") ||
-        permissions?.includes("OWNER"),
-      ),
-    },
-    {
-      label: t("layout.navigation.timers"),
-      icon: <Clock className="mr-1 h-4 w-4" />,
-      path: ROUTE_SEGMENTS.guild.timers,
-      available: true,
-      enabled: Boolean(
-        permissions?.includes("LOOTLOG_TIMERS_READ") ||
-        permissions?.includes("OWNER"),
-      ),
-    },
-    {
-      label: t("layout.navigation.reservations"),
-      icon: <CalendarClock className="mr-1 h-4 w-4" />,
-      path: ROUTE_SEGMENTS.guild.reservations,
-      available: true,
-      enabled: Boolean(
-        permissions?.includes("LOOTLOG_RESERVATIONS_READ") ||
-        permissions?.includes("OWNER"),
-      ),
-    },
-    {
-      label: t("layout.navigation.docs"),
-      icon: <FileText className="mr-1 h-4 w-4" />,
-      path: ROUTE_SEGMENTS.guild.docs,
-      available: true,
-      enabled: Boolean(canViewDocs),
-    },
-    {
-      label: t("layout.navigation.events"),
-      icon: (
-        <div className="relative mr-1">
-          <Trophy
-            className={`h-4 w-4 ${hasActiveEvents ? "text-yellow-500" : ""}`}
-          />
-          {hasActiveEvents && (
-            <span className="absolute -top-1 -right-1 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
-            </span>
-          )}
-        </div>
-      ),
-      path: ROUTE_SEGMENTS.guild.events,
-      available: true,
-      enabled: Boolean(canViewEvents),
-      badge: hasActiveEvents
-        ? { content: activeEventCount, variant: "default" as const }
-        : undefined,
-      highlight: hasActiveEvents,
-    },
-    {
-      label: t("layout.navigation.stats"),
-      icon: <BarChart4 className="mr-1 h-4 w-4" />,
-      path: ROUTE_SEGMENTS.guild.stats,
-      available: true,
-      enabled: Boolean(
-        permissions?.includes("LOOTLOG_LOOTS_READ") ||
-        permissions?.includes("OWNER"),
-      ),
-    },
-    {
-      divided: true,
-      label: t("layout.navigation.activityLogs"),
-      icon: <Logs className="mr-1 h-4 w-4" />,
-      path: ROUTE_SEGMENTS.guild.activityLogs,
-      available: true,
-      enabled: canManageCurrentGuild,
-    },
-    {
-      label: t("layout.navigation.notifications"),
-      icon: <BellRing className="mr-1 h-4 w-4" />,
-      path: ROUTE_SEGMENTS.guild.notifications,
-      available: true,
-      enabled: canManageCurrentGuild,
-    },
-    {
-      label: t("layout.navigation.settings"),
-      icon: <Settings className="mr-1 h-4 w-4" />,
-      path: ROUTE_SEGMENTS.guild.settings,
-      available: true,
-      enabled: canManageCurrentGuild,
-    },
-  ];
+  const menuItems = getGuildMenuItems(t, access, activeEventCount);
 
   const handleItemClick = () => {
     setOpenMobile(false);
@@ -171,7 +186,7 @@ export const GuildsSidebarNav: FC = () => {
       basePath={`/${guildId}`}
       header={sidebarHeader}
       beforeItems={
-        canViewEvents ? (
+        access.canViewEvents ? (
           <GuildPinnedEventsSection
             guildId={guildId ?? ""}
             onNavigate={handleItemClick}

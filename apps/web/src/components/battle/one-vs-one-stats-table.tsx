@@ -115,12 +115,96 @@ const getMatchingStatSearchKey = (
   return null;
 };
 
+const getVisibleStats = ({
+  config,
+  hideZeros,
+  opponent,
+  t,
+  user,
+}: {
+  config: ReturnType<typeof useStatsCustomization>["config"];
+  hideZeros: boolean;
+  opponent: Battle["warriors"][number] | undefined;
+  t: (key: string) => string;
+  user: Battle["warriors"][number] | undefined;
+}) => {
+  const categoriesMap = new Map<string, BattleStatCategoryDefinition>(
+    STAT_CATEGORIES.map((category) => [category.id, category]),
+  );
+  const allStatsMap = new Map<string, BattleStatDefinition>();
+  for (const category of STAT_CATEGORIES) {
+    for (const stat of category.stats) allStatsMap.set(String(stat.key), stat);
+  }
+
+  return config.categoryOrder
+    .map((categoryId) => {
+      const customization = config.categories[categoryId];
+      const categoryDefinition = categoriesMap.get(categoryId);
+      if (!customization?.visible) return null;
+
+      const orderedStats = customization.statOrder
+        .map((statKey) => allStatsMap.get(statKey))
+        .filter((stat): stat is BattleStatDefinition => stat !== undefined);
+      const filteredStats =
+        hideZeros && user && opponent
+          ? orderedStats.filter((stat) => {
+              const userValue = user[stat.key];
+              const opponentValue = opponent[stat.key];
+              const userNumber = typeof userValue === "number" ? userValue : 0;
+              const opponentNumber =
+                typeof opponentValue === "number" ? opponentValue : 0;
+              return userNumber !== 0 || opponentNumber !== 0;
+            })
+          : orderedStats;
+      if (filteredStats.length === 0) return null;
+
+      return {
+        id: categoryId,
+        label:
+          customization.name ??
+          (categoryDefinition
+            ? t(categoryDefinition.labelKey)
+            : customization.id),
+        stats: filteredStats.map((stat) => ({
+          ...stat,
+          label: t(stat.labelKey),
+        })),
+      };
+    })
+    .filter(
+      (category): category is NonNullable<typeof category> => category !== null,
+    );
+};
+
+const resolveStatsTableConfiguration = ({
+  controlledHideZeros,
+  internalConfig,
+  internalHideZeros,
+  internalSetHideZeros,
+  onHideZerosChange,
+  showHeader,
+  statsCustomizationConfig,
+}: {
+  controlledHideZeros?: boolean;
+  internalConfig: ReturnType<typeof useStatsCustomization>["config"];
+  internalHideZeros: boolean;
+  internalSetHideZeros: (hideZeros: boolean) => void;
+  onHideZerosChange?: (hideZeros: boolean) => void;
+  showHeader?: boolean;
+  statsCustomizationConfig?: ReturnType<typeof useStatsCustomization>["config"];
+}) => ({
+  config: statsCustomizationConfig ?? internalConfig,
+  hideZeros: controlledHideZeros ?? internalHideZeros,
+  setHideZeros: onHideZerosChange ?? internalSetHideZeros,
+  showHeader: showHeader ?? true,
+});
+
 export function OneVsOneStatsTable({
   battle,
   cardClassName,
   compact,
   scrollClassName,
-  showHeader = true,
+  showHeader,
   headerTitle,
   headerActions,
   hideZeros: controlledHideZeros,
@@ -135,8 +219,6 @@ export function OneVsOneStatsTable({
   );
   const statsScrollViewportRef = useRef<HTMLDivElement>(null);
   const statSearchAnimationFrameRef = useRef<number | null>(null);
-  const hideZeros = controlledHideZeros ?? internalHideZeros;
-  const setHideZeros = onHideZerosChange ?? setInternalHideZeros;
   const booleanLabels = {
     yes: t("common.boolean.yes"),
     no: t("common.boolean.no"),
@@ -155,7 +237,20 @@ export function OneVsOneStatsTable({
     removeCategory,
     resetToDefaults,
   } = internalStatsCustomization;
-  const config = statsCustomizationConfig ?? internalConfig;
+  const {
+    config,
+    hideZeros,
+    setHideZeros,
+    showHeader: resolvedShowHeader,
+  } = resolveStatsTableConfiguration({
+    controlledHideZeros,
+    internalConfig,
+    internalHideZeros,
+    internalSetHideZeros: setInternalHideZeros,
+    onHideZerosChange,
+    showHeader,
+    statsCustomizationConfig,
+  });
 
   const userWarrior = battle.warriors.find(
     (w) => w.originalId === battle.characterId,
@@ -167,63 +262,13 @@ export function OneVsOneStatsTable({
   const user = userWarrior;
   const opponent = opponentWarrior;
 
-  const categoriesMap = new Map<string, BattleStatCategoryDefinition>(
-    STAT_CATEGORIES.map((category) => [category.id, category]),
-  );
-  const allStatsMap = new Map<string, BattleStatDefinition>();
-  for (const category of STAT_CATEGORIES) {
-    for (const stat of category.stats) {
-      allStatsMap.set(String(stat.key), stat);
-    }
-  }
-
-  const visibleStats = config.categoryOrder
-    .map((categoryId) => {
-      const customization = config.categories[categoryId];
-      const categoryDefinition = categoriesMap.get(categoryId);
-
-      if (!customization?.visible) {
-        return null;
-      }
-
-      const orderedStats = customization.statOrder
-        .map((statKey) => allStatsMap.get(statKey))
-        .filter((stat): stat is BattleStatDefinition => stat !== undefined);
-
-      const filteredStats =
-        hideZeros && user && opponent
-          ? orderedStats.filter((stat) => {
-              const userValue = user[stat.key];
-              const opponentValue = opponent[stat.key];
-
-              const userNum = typeof userValue === "number" ? userValue : 0;
-              const opponentNum =
-                typeof opponentValue === "number" ? opponentValue : 0;
-
-              return userNum !== 0 || opponentNum !== 0;
-            })
-          : orderedStats;
-
-      if (filteredStats.length === 0) {
-        return null;
-      }
-
-      return {
-        id: categoryId,
-        label:
-          customization.name ??
-          (categoryDefinition
-            ? t(categoryDefinition.labelKey)
-            : customization.id),
-        stats: filteredStats.map((stat) => ({
-          ...stat,
-          label: t(stat.labelKey),
-        })),
-      };
-    })
-    .filter(
-      (category): category is NonNullable<typeof category> => category !== null,
-    );
+  const visibleStats = getVisibleStats({
+    config,
+    hideZeros,
+    opponent,
+    t,
+    user,
+  });
 
   const scrollToStatSearchKey = (searchKey: string) => {
     if (statSearchAnimationFrameRef.current != null) {
@@ -296,7 +341,7 @@ export function OneVsOneStatsTable({
         cardClassName,
       )}
     >
-      {showHeader && (
+      {resolvedShowHeader && (
         <BattleStatsTableHeader
           title={headerTitle ?? t("battlePanel.single.statistics.title")}
           compact={compact}

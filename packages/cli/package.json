@@ -10,6 +10,7 @@
   "module": "ESNext",
   "exports": "./dist/index.mjs",
   "scripts": {
+    "lint": "oxlint src",
     "test": "tsx src/utils/env-generator.test.ts",
     "env:generate": "tsx src/commands/env/generate.ts"
   },

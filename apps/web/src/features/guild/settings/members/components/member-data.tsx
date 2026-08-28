@@ -78,6 +78,82 @@ const DetailField = ({ label, value }: { label: string; value: ReactNode }) => (
   </div>
 );
 
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+const getMemberActivityPresentation = ({
+  gameActivityStats,
+  isOnlineInGame,
+  isOnlineOnWeb,
+  t,
+  webActivityStats,
+}: Pick<
+  MemberDataProps,
+  "gameActivityStats" | "isOnlineInGame" | "isOnlineOnWeb" | "webActivityStats"
+> & { t: Translate }) => {
+  const emptyValueLabel = t("settings.members.discordSync.values.notAvailable");
+  let onlineStatusLabel = t("settings.members.webActivity.offline");
+  if (isOnlineOnWeb && isOnlineInGame) {
+    onlineStatusLabel = t(
+      "settings.members.webActivity.onlineSources.webAndGame",
+    );
+  } else if (isOnlineOnWeb) {
+    onlineStatusLabel = t("settings.members.webActivity.onlineSources.web");
+  } else if (isOnlineInGame) {
+    onlineStatusLabel = t("settings.members.webActivity.onlineSources.game");
+  }
+
+  return {
+    emptyValueLabel,
+    gameLastSeenAt: formatDateTime(
+      gameActivityStats?.lastSeenAt,
+      emptyValueLabel,
+    ),
+    lastActivityLabel: webActivityStats?.lastSeenAt
+      ? getRelativeTime(webActivityStats.lastSeenAt)
+      : t("settings.members.webActivity.noData"),
+    onlineStatusLabel,
+    webLastSeenAt: formatDateTime(
+      webActivityStats?.lastSeenAt,
+      emptyValueLabel,
+    ),
+  };
+};
+
+const getMemberSyncRows = (
+  member: GuildMember,
+  emptyValueLabel: string,
+  t: Translate,
+) => [
+  {
+    label: t("settings.members.discordSync.fields.technicalStatus"),
+    value: member.lastDiscordStatus ?? emptyValueLabel,
+  },
+  {
+    label: t("settings.members.discordSync.fields.lastAttemptAt"),
+    value: formatDateTime(member.lastDiscordAttemptAt, emptyValueLabel),
+  },
+  {
+    label: t("settings.members.discordSync.fields.lastConfirmedAt"),
+    value: formatDateTime(member.lastDiscordSyncAt, emptyValueLabel),
+  },
+  ...(member.refreshQueued
+    ? [
+        {
+          label: t("settings.members.discordSync.fields.refreshQueue"),
+          value: t("settings.members.discordSync.values.queued"),
+        },
+      ]
+    : []),
+  ...(member.nextRefreshAt
+    ? [
+        {
+          label: t("settings.members.discordSync.fields.nextRefreshAt"),
+          value: formatDateTime(member.nextRefreshAt, emptyValueLabel),
+        },
+      ]
+    : []),
+];
+
 export const MemberData = ({
   member,
   webActivityStats,
@@ -90,30 +166,19 @@ export const MemberData = ({
   const accessState = getMemberAccessState({ member, isOnline });
   const hasProblem = isMemberProblematic(member);
   const syncPresentation = getMemberDiscordSyncPresentation(member);
-  const emptyValueLabel = t("settings.members.discordSync.values.notAvailable");
-  const webLastSeenAt = formatDateTime(
-    webActivityStats?.lastSeenAt,
+  const {
     emptyValueLabel,
-  );
-  const gameLastSeenAt = formatDateTime(
-    gameActivityStats?.lastSeenAt,
-    emptyValueLabel,
-  );
-  let onlineStatusLabel = t("settings.members.webActivity.offline");
-
-  if (isOnlineOnWeb && isOnlineInGame) {
-    onlineStatusLabel = t(
-      "settings.members.webActivity.onlineSources.webAndGame",
-    );
-  } else if (isOnlineOnWeb) {
-    onlineStatusLabel = t("settings.members.webActivity.onlineSources.web");
-  } else if (isOnlineInGame) {
-    onlineStatusLabel = t("settings.members.webActivity.onlineSources.game");
-  }
-
-  const lastActivityLabel = webActivityStats?.lastSeenAt
-    ? getRelativeTime(webActivityStats.lastSeenAt)
-    : t("settings.members.webActivity.noData");
+    gameLastSeenAt,
+    lastActivityLabel,
+    onlineStatusLabel,
+    webLastSeenAt,
+  } = getMemberActivityPresentation({
+    gameActivityStats,
+    isOnlineInGame,
+    isOnlineOnWeb,
+    t,
+    webActivityStats,
+  });
   const accessSummary = {
     active: {
       label: t("settings.members.access.ok"),
@@ -141,36 +206,7 @@ export const MemberData = ({
     },
   }[accessState];
   const AccessIcon = accessSummary.icon;
-  const syncRows = [
-    {
-      label: t("settings.members.discordSync.fields.technicalStatus"),
-      value: member.lastDiscordStatus ?? emptyValueLabel,
-    },
-    {
-      label: t("settings.members.discordSync.fields.lastAttemptAt"),
-      value: formatDateTime(member.lastDiscordAttemptAt, emptyValueLabel),
-    },
-    {
-      label: t("settings.members.discordSync.fields.lastConfirmedAt"),
-      value: formatDateTime(member.lastDiscordSyncAt, emptyValueLabel),
-    },
-    ...(member.refreshQueued
-      ? [
-          {
-            label: t("settings.members.discordSync.fields.refreshQueue"),
-            value: t("settings.members.discordSync.values.queued"),
-          },
-        ]
-      : []),
-    ...(member.nextRefreshAt
-      ? [
-          {
-            label: t("settings.members.discordSync.fields.nextRefreshAt"),
-            value: formatDateTime(member.nextRefreshAt, emptyValueLabel),
-          },
-        ]
-      : []),
-  ];
+  const syncRows = getMemberSyncRows(member, emptyValueLabel, t);
 
   return (
     <div className="min-h-full space-y-3 pb-3">
