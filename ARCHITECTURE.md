@@ -187,8 +187,11 @@ The development hostname `dev.lootlog.pl` is owned by the
 their independently deployed development origins. Landing and Docs generated
 assets use the distinct `/landing-assets` and `/docs-assets` namespaces; Web
 continues to own `/assets`. The Worker retains referer-based routing for cached
-pre-migration `/assets` documents during development rollouts. Its Wrangler
-configuration is the source of truth for the existing custom domain.
+pre-migration `/assets` documents during development rollouts. It redirects
+Landing and Docs legacy assets into origin-tagged aliases; cached untagged
+parents are identified with HEAD probes against only the three configured
+origins. Its Wrangler configuration is the source of truth for the existing
+custom domain.
 
 Docker Compose supports local infrastructure. `docker-compose.prod.yml` is not
 a supported production model and should be retired or clearly marked legacy.

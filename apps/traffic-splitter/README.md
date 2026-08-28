@@ -8,11 +8,16 @@ explicit:
 | ------------------------------------------------------------- | ------------------------------ |
 | `/`, legal pages, `/landing-assets`, `/brand`, `/screenshots` | Landing Pages preview          |
 | `/docs`, `/docs-assets`, `/__tsr`, `/api/search`              | Docs development Assets Worker |
+| `/__legacy-assets/{landing,docs}/assets`                      | Tagged legacy asset origin     |
 | `/assets` and every remaining application route               | Web Pages preview              |
 
-Legacy `/assets` requests are selected from a same-origin `Referer` so cached
-HTML from before the namespace migration remains usable during a deployment.
-Cookies and authorization headers are removed before forwarding.
+Legacy `/assets` requests selected from a Landing or Docs document are
+temporarily redirected into an origin-tagged, non-cacheable namespace. When a
+cached untagged parent asset requests a child, the Worker identifies the parent
+with HEAD requests to the three fixed origins before applying the same tag.
+This keeps pre-migration HTML and nested assets usable during a deployment
+without sharing mutable browser state. Cookies and authorization headers are
+removed before forwarding or probing.
 
 ## Commands
 
