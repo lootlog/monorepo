@@ -17,6 +17,7 @@ import { DocsScrollToTop } from "@/components/docs-scroll-to-top";
 import { DocsSidebarSeparator } from "@/components/docs-sidebar-separator";
 import { ProductScreenshot } from "@/components/product-screenshot";
 import { getChapterBySlug } from "@/lib/docs-chapters";
+import { docsTranslations } from "@/lib/polish-translations";
 import { docs, source } from "@/lib/source";
 
 type DocsLayoutStyle = CSSProperties & {
@@ -37,9 +38,16 @@ const loadStaticPage = createServerFn({ method: "GET" })
       throw notFound();
     }
 
+    const { description, title } = page.data;
+    if (!description || !title) {
+      throw new Error(`Documentation page lacks metadata: ${page.path}`);
+    }
+
     return {
+      description,
       path: page.path,
       slugs,
+      title,
       pageTree: await source.serializePageTree(source.getPageTree()),
     };
   });
@@ -52,6 +60,20 @@ export const Route = createFileRoute("/docs/$")({
     await docs.getPage(data.path)?.preload();
 
     return data;
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return {};
+    }
+
+    return {
+      meta: [
+        {
+          title: `${loaderData.title} | ${docsTranslations.metadata.title}`,
+        },
+        { name: "description", content: loaderData.description },
+      ],
+    };
   },
   component: DocsRoute,
 });

@@ -1,5 +1,18 @@
 import type { Translations } from "fumadocs-ui/i18n";
 
+export const docsTranslations = {
+  metadata: {
+    description:
+      "Instrukcje instalacji, obsługi dodatku i panelu webowego Lootlog dla graczy Margonem.",
+    title: "Dokumentacja Lootlog",
+  },
+  redirect: {
+    linkLabel: "dokumentacji Lootlog",
+    prefix: "Przejdź do",
+    suffix: ".",
+  },
+} as const;
+
 export const polishTranslations = {
   "Close Search(search dialog)(aria-label)": "Zamknij wyszukiwanie",
   "Close Sidebar(aria-label)": "Zamknij nawigację",

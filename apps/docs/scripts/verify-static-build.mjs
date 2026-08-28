@@ -32,6 +32,14 @@ await Promise.all(
     assert.ok(title, `${fileName} does not declare a title`);
     assert.ok(description, `${fileName} does not declare a description`);
     assert.match(document, /<html[^>]+lang="pl"/u);
+    assert.ok(
+      document.includes(`<title>${title} | Dokumentacja Lootlog</title>`),
+      `${routePath} lacks its page-specific document title`,
+    );
+    assert.ok(
+      document.includes(`<meta name="description" content="${description}"`),
+      `${routePath} lacks its page-specific meta description`,
+    );
     assert.ok(document.includes(title), `${routePath} lacks its visible title`);
     assert.ok(
       document.includes(description),
@@ -74,6 +82,11 @@ await Promise.all(
     );
 
     JSON.parse(response);
+    assert.match(
+      response,
+      /"k":\["description","path","slugs","title","pageTree"\]/u,
+      `${fileName} omits route metadata from client navigation data`,
+    );
   }),
 );
 

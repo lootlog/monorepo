@@ -5,6 +5,7 @@ type ProductWindowProps = {
   imageViewportClassName?: string;
   priority?: boolean;
   src: string;
+  srcSet: string;
 };
 
 export function ProductWindow({
@@ -14,6 +15,7 @@ export function ProductWindow({
   imageViewportClassName = "aspect-video",
   priority = false,
   src,
+  srcSet,
 }: ProductWindowProps) {
   return (
     <figure
@@ -36,6 +38,7 @@ export function ProductWindow({
       >
         <img
           src={src}
+          srcSet={srcSet}
           alt={alt}
           width={1280}
           height={720}

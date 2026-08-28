@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { docsTranslations } from "@/lib/polish-translations";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/")({
 
 function DocsRedirect() {
   const navigate = Route.useNavigate();
+  const { linkLabel, prefix, suffix } = docsTranslations.redirect;
 
   useEffect(() => {
     void navigate({ to: "/docs/$", params: { _splat: "" }, replace: true });
@@ -19,11 +21,11 @@ function DocsRedirect() {
   return (
     <main>
       <p>
-        Przejdź do{" "}
+        {prefix}{" "}
         <Link to="/docs/$" params={{ _splat: "" }}>
-          dokumentacji Lootlog
+          {linkLabel}
         </Link>
-        .
+        {suffix}
       </p>
     </main>
   );

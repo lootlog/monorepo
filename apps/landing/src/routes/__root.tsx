@@ -48,7 +48,6 @@ export const Route = createRootRoute({
     links: [
       { rel: "stylesheet", href: uiCss },
       { rel: "stylesheet", href: landingCss },
-      { rel: "canonical", href: "https://lootlog.pl" },
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
       { rel: "icon", href: "/icon.svg", type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: "/apple-icon.png" },
