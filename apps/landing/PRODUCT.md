@@ -30,7 +30,7 @@ resources.
 
 ## Constraints
 
-- The app is a statically exported Next.js site.
+- The app is prerendered by TanStack Start and deploys only `dist/client`.
 - It is an adoption surface, not the user documentation or authenticated app.
 - Follow the Persuade mode in `DESIGN.md`.
 - Polish is the supported product language and all copy remains behind i18n.

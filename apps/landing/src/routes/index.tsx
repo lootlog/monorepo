@@ -1,37 +1,8 @@
-import type { Metadata } from "next";
-import type { JSX } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { HomeContent } from "@/src/components/landing/home-content";
 import landingTranslations from "@/src/i18n/translations/landing.json";
 
 const { seo } = landingTranslations;
-
-export const metadata: Metadata = {
-  title: seo.title,
-  description: seo.description,
-  keywords: seo.keywords,
-  openGraph: {
-    title: seo.title,
-    description: seo.description,
-    type: "website",
-    locale: "pl_PL",
-    siteName: "Lootlog.pl",
-    url: "https://lootlog.pl",
-    images: [
-      {
-        url: "/brand/lootlog-social.png",
-        width: 1200,
-        height: 630,
-        alt: seo.socialImageAlt,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: seo.title,
-    description: seo.description,
-    images: ["/brand/lootlog-social.png"],
-  },
-};
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -52,7 +23,18 @@ const jsonLd = {
   },
 };
 
-export default function Home(): JSX.Element {
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: seo.title },
+      { name: "description", content: seo.description },
+      { name: "keywords", content: seo.keywords.join(", ") },
+    ],
+  }),
+  component: HomePage,
+});
+
+function HomePage() {
   return (
     <>
       <script

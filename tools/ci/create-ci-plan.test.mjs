@@ -90,7 +90,7 @@ test("plans development Pages deployments for affected frontend applications", (
     }).cloudflareTargets,
     [
       {
-        artifactPath: "apps/landing/out",
+        artifactPath: "apps/landing/dist/client",
         packageName: "@lootlog/landing",
         project: "lootlog-landing",
       },

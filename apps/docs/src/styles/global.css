@@ -1,9 +1,19 @@
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 @import "fumadocs-ui/css/style.css";
 
-@source "../../../packages/ui/src";
+@source "../../../../packages/ui/src";
 
 :root,
 .dark {
+  --font-geist-sans: "Geist Variable";
+  --font-geist-mono: "Geist Mono Variable";
+  --font-sans:
+    "Geist Variable", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:
+    "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, monospace;
   color-scheme: dark;
   --night-ink: #07111f;
   --raised-ink: #0d1a2c;

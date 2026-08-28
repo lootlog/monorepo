@@ -39,3 +39,29 @@ test("uses the Changesets action v2 contract", () => {
   );
   assert.doesNotMatch(releaseWorkflow, /^\s+GITHUB_TOKEN:/m);
 });
+
+test("builds Landing exclusively with Vite variable names", () => {
+  assert.match(
+    releaseWorkflow,
+    /LANDING_VITE_ADDON_URL: \$\{\{ vars\.LANDING_VITE_ADDON_URL \}\}/u,
+  );
+  assert.match(
+    releaseWorkflow,
+    /LANDING_VITE_AUTH_SERVICE_URL: \$\{\{ vars\.LANDING_VITE_AUTH_SERVICE_URL \}\}/u,
+  );
+  assert.match(
+    releaseWorkflow,
+    /export VITE_ADDON_URL="\$LANDING_VITE_ADDON_URL"/u,
+  );
+  assert.match(
+    releaseWorkflow,
+    /export VITE_AUTH_SERVICE_URL="\$LANDING_VITE_AUTH_SERVICE_URL"/u,
+  );
+});
+
+test("smoke-checks Landing and Docs before the rollback boundary closes", () => {
+  assert.match(releaseWorkflow, /Smoke-check public Cloudflare routes/u);
+  assert.match(releaseWorkflow, /https:\/\/lootlog\.pl\/privacy-policy/u);
+  assert.match(releaseWorkflow, /https:\/\/docs\.lootlog\.pl\/api\/search/u);
+  assert.match(releaseWorkflow, /Roll back partial Cloudflare promotion/u);
+});

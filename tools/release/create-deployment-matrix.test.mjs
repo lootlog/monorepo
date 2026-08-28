@@ -73,30 +73,40 @@ test("supports all five Cloudflare applications", () => {
 
   assert.deepEqual(
     createReleasePlan(publishedPackages).cloudflare.map(
-      ({ kind, packageName, project }) => ({ kind, packageName, project }),
+      ({ artifactPath, kind, packageName, project }) => ({
+        artifactPath,
+        kind,
+        packageName,
+        project,
+      }),
     ),
     [
       {
+        artifactPath: "apps/landing/dist/client",
         kind: "pages",
         packageName: "@lootlog/landing",
         project: "lootlog-landing",
       },
       {
+        artifactPath: "apps/web/dist",
         kind: "pages",
         packageName: "@lootlog/web",
         project: "lootlog-web-monorepo",
       },
       {
+        artifactPath: "apps/game-client/dist/@lootlog",
         kind: "pages",
         packageName: "@lootlog/game-client",
         project: "lootlog-game-client-monorepo",
       },
       {
+        artifactPath: "apps/docs/dist/client",
         kind: "worker",
         packageName: "@lootlog/docs",
         project: "lootlog-docs",
       },
       {
+        artifactPath: "apps/wiki/dist",
         kind: "worker",
         packageName: "@lootlog/wiki",
         project: "lootlog-wiki",

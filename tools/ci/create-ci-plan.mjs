@@ -15,7 +15,7 @@ const cloudflareDevelopmentTargets = new Map([
   [
     "@lootlog/landing",
     {
-      artifactPath: "apps/landing/out",
+      artifactPath: "apps/landing/dist/client",
       packageName: "@lootlog/landing",
       project: "lootlog-landing",
     },

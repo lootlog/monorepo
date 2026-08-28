@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 type ProductWindowProps = {
   alt: string;
   caption: string;
@@ -36,12 +34,13 @@ export function ProductWindow({
           .filter(Boolean)
           .join(" ")}
       >
-        <Image
+        <img
           src={src}
           alt={alt}
           width={1280}
           height={720}
-          priority={priority}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
           sizes="(max-width: 1024px) 100vw, 58vw"
           className="h-full w-full object-cover object-top"
         />

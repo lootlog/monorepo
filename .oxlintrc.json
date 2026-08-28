@@ -1,20 +1,15 @@
 {
-  "plugins": ["react", "typescript", "unicorn", "nextjs", "vitest"],
+  "plugins": ["react", "typescript", "unicorn", "vitest"],
   "ignorePatterns": [
     "**/node_modules",
     "**/dist",
-    "**/.next",
-    "**/out",
     "**/build",
     "**/coverage",
     "**/.source",
     "**/*.tsbuildinfo",
-    "**/next-env.d.ts",
     "**/pnpm-lock.yaml",
     ".agents/skills/**/scripts/**",
-    "packages/api-client/src/generated/**",
-    "apps/landing/.source/source.config.mjs",
-    "apps/landing/source.config.ts"
+    "packages/api-client/src/generated/**"
   ],
   "env": {
     "browser": true,
@@ -136,9 +131,6 @@
 
     "vitest/no-disabled-tests": "warn",
     "vitest/no-focused-tests": "error",
-    "vitest/valid-expect": "error",
-
-    "nextjs/no-html-link-for-pages": "off",
-    "nextjs/no-assign-module-variable": "off"
+    "vitest/valid-expect": "error"
   }
 }

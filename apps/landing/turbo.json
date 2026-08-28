@@ -1,0 +1,8 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "env": ["$TURBO_EXTENDS$", "VITE_ADDON_URL", "VITE_AUTH_SERVICE_URL"]
+    }
+  }
+}
