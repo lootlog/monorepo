@@ -5,8 +5,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "build": "wrangler deploy --dry-run --outdir dist && tsc --noEmit",
+    "dev": "wrangler dev --env develop",
+    "build": "wrangler deploy --env=\"\" --dry-run --outdir dist && tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
     "test": "vitest run"

@@ -46,7 +46,7 @@ const cloudflareDevelopmentTargets = new Map([
     {
       artifactPath: "apps/traffic-splitter/dist",
       configPath: "apps/traffic-splitter/wrangler.jsonc",
-      environment: "",
+      environment: "develop",
       kind: "worker",
       packageName: "@lootlog/traffic-splitter",
       project: "lootlog-traffic-splitter-dev",

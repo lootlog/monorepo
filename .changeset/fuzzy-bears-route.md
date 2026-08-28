@@ -4,6 +4,7 @@
 "@lootlog/traffic-splitter": patch
 ---
 
-Namespace static assets and manage the `dev.lootlog.pl` traffic splitter from
-the repository so Landing, Docs, and Web development deployments load the
-correct documents, scripts, and styles.
+Namespace static assets and manage the shared development and production
+traffic-splitter code from the repository. Keep the Workers independently
+deployable, promote the production splitter before frontend artifacts, and
+verify public CSS and JavaScript before closing the rollback boundary.

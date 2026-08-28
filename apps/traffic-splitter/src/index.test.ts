@@ -11,7 +11,13 @@ const environment = {
   WEB_ORIGIN: "https://develop.lootlog-web-monorepo.pages.dev",
 } satisfies TrafficSplitterEnvironment;
 
-describe("development traffic splitter", () => {
+const productionEnvironment = {
+  DOCS_ORIGIN: "https://lootlog-docs.example.workers.dev",
+  LANDING_ORIGIN: "https://lootlog-landing.pages.dev",
+  WEB_ORIGIN: "https://lootlog-web-monorepo.pages.dev",
+} satisfies TrafficSplitterEnvironment;
+
+describe("traffic splitter", () => {
   it.each([
     ["/", environment.LANDING_ORIGIN],
     ["/privacy-policy/", environment.LANDING_ORIGIN],
@@ -20,6 +26,7 @@ describe("development traffic splitter", () => {
     ["/brand/lootlog-mark.svg", environment.LANDING_ORIGIN],
     ["/screenshots/dashboard-current.png", environment.LANDING_ORIGIN],
     ["/favicon.ico", environment.LANDING_ORIGIN],
+    ["/_next/static/legacy.css", environment.LANDING_ORIGIN],
     ["/docs", environment.DOCS_ORIGIN],
     ["/docs/getting-started/", environment.DOCS_ORIGIN],
     ["/docs-assets/docs.js", environment.DOCS_ORIGIN],
@@ -35,6 +42,26 @@ describe("development traffic splitter", () => {
     await routeRequest(
       new Request(`https://dev.lootlog.pl${path}`),
       environment,
+      upstreamFetch,
+    );
+
+    expect(upstreamFetch.mock.calls[0]?.[0].url).toBe(
+      new URL(path, expectedOrigin).href,
+    );
+  });
+
+  it.each([
+    ["/landing-assets/app.css", productionEnvironment.LANDING_ORIGIN],
+    ["/docs-assets/docs.js", productionEnvironment.DOCS_ORIGIN],
+    ["/@me", productionEnvironment.WEB_ORIGIN],
+  ])("routes production path %s to %s", async (path, expectedOrigin) => {
+    const upstreamFetch = vi.fn<UpstreamFetch>((request) =>
+      Promise.resolve(Response.json({ url: request.url })),
+    );
+
+    await routeRequest(
+      new Request(`https://lootlog.pl${path}`),
+      productionEnvironment,
       upstreamFetch,
     );
 
