@@ -1,5 +1,3 @@
-"use client";
-
 import { useDocsLayout } from "fumadocs-ui/layouts/docs";
 import { DocsBrand } from "./docs-brand";
 

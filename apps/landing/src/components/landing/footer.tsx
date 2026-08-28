@@ -1,6 +1,4 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -54,13 +52,13 @@ export function LandingFooter() {
               <ArrowUpRight className="size-3.5" />
             </a>
             <Link
-              href="/privacy-policy"
+              to="/privacy-policy"
               className="inline-flex min-h-11 items-center rounded-md transition-colors hover:text-[#c8f135] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
             >
               {t("landing.footer.privacy")}
             </Link>
             <Link
-              href="/terms-of-service"
+              to="/terms-of-service"
               className="inline-flex min-h-11 items-center rounded-md transition-colors hover:text-[#c8f135] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c8f135] focus-visible:ring-offset-4 focus-visible:ring-offset-[#07111f]"
             >
               {t("landing.footer.terms")}

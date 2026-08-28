@@ -20,12 +20,7 @@ coverage
 .turbo
 **/.tanstack/
 
-# Vercel
-.vercel
-
 # Build Outputs
-.next/
-out/
 build
 dist
 *.tsbuildinfo

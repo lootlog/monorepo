@@ -1,0 +1,121 @@
+:root {
+  --font-geist-sans: "Geist Variable";
+  --font-geist-mono: "Geist Mono Variable";
+  --font-sans:
+    "Geist Variable", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:
+    "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, monospace;
+  --broadcast-ink: #07111f;
+  --broadcast-ink-soft: #0d1a2c;
+  --broadcast-paper: #f4f1e8;
+  --broadcast-paper-ink: #0a1830;
+  --broadcast-blue: #3157f6;
+  --broadcast-cyan: #35d3e4;
+  --broadcast-lime: #c8f135;
+  --broadcast-amber: #ffbd3f;
+  --broadcast-coral: #ff665b;
+  --broadcast-white: #f7f8f2;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--broadcast-ink);
+}
+
+.broadcast-display {
+  font-variation-settings: "wght" 850;
+}
+
+.broadcast-hero-layout {
+  display: grid;
+  grid-template-areas:
+    "headline"
+    "product"
+    "details";
+  gap: 1rem;
+}
+
+.broadcast-hero-headline {
+  grid-area: headline;
+}
+
+.broadcast-hero-product {
+  grid-area: product;
+}
+
+.broadcast-hero-details {
+  grid-area: details;
+}
+
+.signal-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: signal-pulse 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.signal-draw {
+  stroke-dasharray: 1;
+  animation: signal-draw 1.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes signal-draw {
+  from {
+    stroke-dashoffset: 0.88;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes signal-pulse {
+  0%,
+  72%,
+  100% {
+    opacity: 0.58;
+    transform: scale(0.88);
+  }
+
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (min-width: 1024px) {
+  .broadcast-hero-layout {
+    grid-template-areas:
+      "headline product"
+      "details product";
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    grid-template-rows: auto auto;
+    column-gap: 2.5rem;
+    row-gap: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .signal-draw,
+  .signal-pulse {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

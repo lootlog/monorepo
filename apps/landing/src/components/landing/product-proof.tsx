@@ -1,5 +1,3 @@
-"use client";
-
 import { ArrowUpRight, BellRing, Clock3, UsersRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -9,12 +7,20 @@ import { SignalRoute } from "@/src/components/landing/signal-route";
 const evidenceItems = [
   {
     key: "dashboard",
-    image: "/screenshots/guild-lootlog-current.jpg",
+    image: {
+      src: "/screenshots/guild-lootlog-current.jpg",
+      srcSet:
+        "/screenshots/guild-lootlog-current-640.jpg 640w, /screenshots/guild-lootlog-current-960.jpg 960w, /screenshots/guild-lootlog-current.jpg 1280w",
+    },
     surface: "blue",
   },
   {
     key: "statistics",
-    image: "/screenshots/guild-kill-stats-current.png",
+    image: {
+      src: "/screenshots/guild-kill-stats-current.png",
+      srcSet:
+        "/screenshots/guild-kill-stats-current-640.jpg 640w, /screenshots/guild-kill-stats-current-960.jpg 960w, /screenshots/guild-kill-stats-current.png 1280w",
+    },
     surface: "paper",
   },
 ] as const;
@@ -134,7 +140,8 @@ export function ProductProof() {
                     ].join(" ")}
                   />
                   <ProductWindow
-                    src={item.image}
+                    src={item.image.src}
+                    srcSet={item.image.srcSet}
                     alt={t(`landing.proof.${item.key}.alt`)}
                     caption={t(`landing.proof.${item.key}.caption`)}
                     className="relative"

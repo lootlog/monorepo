@@ -1,27 +1,31 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
+import {
+  readCookieConsent,
+  writeCookieConsent,
+} from "@/src/lib/cookie-consent-state";
 
 export function CookieConsent() {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem("cookie-consent");
+    const consent = readCookieConsent(localStorage);
     if (!consent) {
+      // The persisted decision is only available after browser hydration.
+      // oxlint-disable-next-line react/set-state-in-effect
       setIsVisible(true);
     }
   }, []);
 
   const acceptCookies = () => {
-    localStorage.setItem("cookie-consent", "accepted");
+    writeCookieConsent(localStorage, "accepted");
     setIsVisible(false);
   };
 
   const rejectCookies = () => {
-    localStorage.setItem("cookie-consent", "rejected");
+    writeCookieConsent(localStorage, "rejected");
     setIsVisible(false);
   };
 

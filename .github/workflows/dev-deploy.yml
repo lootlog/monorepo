@@ -116,6 +116,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Load Cloudflare preview variables
+        if: matrix.kind == 'pages'
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -131,8 +132,8 @@ jobs:
           case "$PACKAGE_NAME" in
             @lootlog/landing)
               keys=(
-                NEXT_PUBLIC_ADDON_URL
-                NEXT_PUBLIC_AUTH_SERVICE_URL
+                VITE_ADDON_URL
+                VITE_AUTH_SERVICE_URL
               )
               ;;
             @lootlog/web)
@@ -182,15 +183,33 @@ jobs:
           ARTIFACT_PATH: ${{ matrix.artifactPath }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CONFIG_PATH: ${{ matrix.configPath }}
+          KIND: ${{ matrix.kind }}
           PACKAGE_NAME: ${{ matrix.packageName }}
           PROJECT: ${{ matrix.project }}
+          WRANGLER_ENV: ${{ matrix.environment }}
         run: |
-          pnpm exec wrangler pages deploy "$ARTIFACT_PATH" \
-            --project-name "$PROJECT" \
-            --branch develop \
-            --commit-hash "$GITHUB_SHA" \
-            --commit-message "Deploy $PACKAGE_NAME to development" \
-            --commit-dirty=false
+          case "$KIND" in
+            pages)
+              pnpm exec wrangler pages deploy "$ARTIFACT_PATH" \
+                --project-name "$PROJECT" \
+                --branch develop \
+                --commit-hash "$GITHUB_SHA" \
+                --commit-message "Deploy $PACKAGE_NAME to development" \
+                --commit-dirty=false
+              ;;
+            worker)
+              pnpm exec wrangler deploy \
+                --config "$CONFIG_PATH" \
+                --env "$WRANGLER_ENV" \
+                --keep-vars \
+                --message "Deploy $PACKAGE_NAME to development"
+              ;;
+            *)
+              echo "::error::Unsupported Cloudflare deployment kind: $KIND"
+              exit 1
+              ;;
+          esac
 
   build-images:
     name: Build and push ${{ matrix.service }}

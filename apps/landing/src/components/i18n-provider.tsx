@@ -1,5 +1,3 @@
-"use client";
-
 import "@/src/i18n/config";
 import type { JSX, ReactNode } from "react";
 
