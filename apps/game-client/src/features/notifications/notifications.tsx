@@ -5,7 +5,7 @@ import { useNotifications } from "@/features/notifications/hooks/use-notificatio
 import { useVisibleNotifications } from "@/features/notifications/hooks/use-visible-notifications";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 
@@ -29,21 +29,12 @@ export const Notifications = () => {
   );
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
-  const [resolvedMaxContentHeight, setResolvedMaxContentHeight] = useState(
-    storedMaxContentHeight ?? defaultWindowHeight,
-  );
+  const resolvedMaxContentHeight =
+    storedMaxContentHeight ?? defaultWindowHeight;
   const { notifications: filteredNotifications, settings } =
     useVisibleNotifications({
       autoCleanup: true,
     });
-
-  useEffect(() => {
-    if (storedMaxContentHeight === undefined) {
-      return;
-    }
-
-    setResolvedMaxContentHeight(storedMaxContentHeight);
-  }, [storedMaxContentHeight]);
 
   const handleClose = () => {
     setOpen("notifications", false);

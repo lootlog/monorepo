@@ -6,20 +6,24 @@ export const useDelayedVisibility = (
   active: boolean,
   delayMs = DEFAULT_VISIBILITY_DELAY_MS,
 ) => {
-  const [visible, setVisible] = useState(false);
+  const [visibility, setVisibility] = useState({ active, visible: false });
+  let currentVisibility = visibility;
+  if (visibility.active !== active) {
+    currentVisibility = { active, visible: false };
+    setVisibility(currentVisibility);
+  }
 
   useEffect(() => {
-    if (!active) {
-      setVisible(false);
-      return;
-    }
+    if (!active) return;
 
     const timeoutId = window.setTimeout(() => {
-      setVisible(true);
+      setVisibility((current) =>
+        current.active === active ? { ...current, visible: true } : current,
+      );
     }, delayMs);
 
     return () => window.clearTimeout(timeoutId);
   }, [active, delayMs]);
 
-  return visible;
+  return currentVisibility.visible;
 };

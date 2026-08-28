@@ -231,13 +231,13 @@ export const ChatInput: FC<ChatInputProps> = ({
   const { handlePartyCommand } = usePartyCommand();
   const [messageValue, setMessageValue] = useState("");
   const [caretIndex, setCaretIndex] = useState(0);
-  const [selectedMentionIndex, setSelectedMentionIndex] = useState(-1);
+  const [requestedMentionIndex, setRequestedMentionIndex] = useState(-1);
   const [dismissedMentionKey, setDismissedMentionKey] = useState<string | null>(
     null,
   );
   const [tabCompletionSession, setTabCompletionSession] =
     useState<TabCompletionSession | null>(null);
-  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const [clearConfirmRequested, setIsClearConfirmOpen] = useState(false);
   const pendingFocusCaretRef = useRef<number | null>(null);
   const isPending =
     isSendingMessage || isCreatingNotificationMessage || isClearingChat;
@@ -353,6 +353,19 @@ export const ChatInput: FC<ChatInputProps> = ({
     mentionSuggestions,
   });
   const isClearChatCommand = messageValue.trim() === "/clr";
+  const selectedMentionIndex =
+    suggestionMode === null || activeSuggestions.length === 0
+      ? -1
+      : requestedMentionIndex >= 0 &&
+          requestedMentionIndex < activeSuggestions.length
+        ? requestedMentionIndex
+        : 0;
+  const setSelectedMentionIndex = (
+    update: (currentIndex: number) => number,
+  ) => {
+    setRequestedMentionIndex(update(selectedMentionIndex));
+  };
+  const isClearConfirmOpen = isClearChatCommand && clearConfirmRequested;
 
   useEffect(() => {
     if (
@@ -365,27 +378,6 @@ export const ChatInput: FC<ChatInputProps> = ({
 
     clearReplyDraft();
   }, [clearReplyDraft, replyDraft, selectedGuildId]);
-
-  useEffect(() => {
-    if (!isClearChatCommand) {
-      setIsClearConfirmOpen(false);
-    }
-  }, [isClearChatCommand]);
-
-  useEffect(() => {
-    if (suggestionMode === null || activeSuggestions.length === 0) {
-      setSelectedMentionIndex(-1);
-      return;
-    }
-
-    setSelectedMentionIndex((currentIndex) => {
-      if (currentIndex < 0 || currentIndex >= activeSuggestions.length) {
-        return 0;
-      }
-
-      return currentIndex;
-    });
-  }, [activeSuggestionKey, activeSuggestions.length, suggestionMode]);
 
   const focusEditorCaret = (nextCaretIndex: number) => {
     pendingFocusCaretRef.current = nextCaretIndex;
@@ -514,6 +506,7 @@ export const ChatInput: FC<ChatInputProps> = ({
     setCaretIndex(0);
     setDismissedMentionKey(null);
     setTabCompletionSession(null);
+    setRequestedMentionIndex(-1);
     clearReplyDraft();
     setIsClearConfirmOpen(false);
     editorRef.current?.setValue("", 0);
@@ -652,25 +645,17 @@ export const ChatInput: FC<ChatInputProps> = ({
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      setSelectedMentionIndex((currentIndex) => {
-        if (currentIndex <= 0) {
-          return activeSuggestions.length - 1;
-        }
-
-        return currentIndex - 1;
-      });
+      setSelectedMentionIndex((currentIndex) =>
+        currentIndex <= 0 ? activeSuggestions.length - 1 : currentIndex - 1,
+      );
       return;
     }
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setSelectedMentionIndex((currentIndex) => {
-        if (currentIndex >= activeSuggestions.length - 1) {
-          return 0;
-        }
-
-        return currentIndex + 1;
-      });
+      setSelectedMentionIndex((currentIndex) =>
+        currentIndex >= activeSuggestions.length - 1 ? 0 : currentIndex + 1,
+      );
       return;
     }
 
@@ -765,6 +750,10 @@ export const ChatInput: FC<ChatInputProps> = ({
                 setCaretIndex(nextCaretIndex);
                 setDismissedMentionKey(null);
                 setTabCompletionSession(null);
+                setRequestedMentionIndex(-1);
+                if (nextMessage.trim() !== "/clr") {
+                  setIsClearConfirmOpen(false);
+                }
               }}
               onCaretChange={setCaretIndex}
               onKeyDown={handleInputKeyDown}

@@ -32,11 +32,12 @@ export const useTimerRemovalBoundary = (
   timers: Timer[],
   removeTimerAfterMs: number,
   enabled: boolean,
-  initialEpoch = Date.now(),
+  initialEpoch?: number,
 ) => {
   const [timerCalculationEpoch, refreshTimers] = useReducer(
     () => Date.now(),
     initialEpoch,
+    (providedInitialEpoch) => providedInitialEpoch ?? Date.now(),
   );
   const nextBoundary = enabled
     ? getNextTimerRemovalBoundary(

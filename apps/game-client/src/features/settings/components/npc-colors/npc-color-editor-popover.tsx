@@ -11,7 +11,7 @@ import {
   type CombatNpcType,
 } from "@lootlog/types";
 import { RotateCcw } from "lucide-react";
-import { useEffect, useRef, useState, type FC, type ReactElement } from "react";
+import { useRef, useState, type FC, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 type NpcColorEditorPopoverProps = {
@@ -43,21 +43,16 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
   const [colorDraft, setColorDraft] = useState(color);
   const [hexDraft, setHexDraft] = useState(color);
   const savedColor = useRef(color);
-  const wasOpen = useRef(false);
   const surfaceColors = deriveNpcSurfaceColors(colorDraft);
 
-  useEffect(() => {
-    if (open && !wasOpen.current) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
       savedColor.current = color;
-      setColorDraft(color);
-      setHexDraft(color);
     }
-    if (!open) {
-      setColorDraft(color);
-      setHexDraft(color);
-    }
-    wasOpen.current = open;
-  }, [color, open]);
+    setColorDraft(color);
+    setHexDraft(color);
+    onOpenChange(nextOpen);
+  };
 
   const commitColor = (nextColor: string) => {
     if (!isHexAppearanceColor(nextColor)) {
@@ -82,7 +77,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
   };
 
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
         role="dialog"

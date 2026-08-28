@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTimersStore, TIMERS_STORAGE_KEY } from "@/store/timers.store";
 import {
   useTimerSettings,
@@ -40,7 +40,7 @@ export const useTimerSettingsSync = () => {
   const [localUpdatedAt] = useState<number>();
   const [localSnapshot, setLocalSnapshot] =
     useState<LocalSettingsSnapshot | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = useRef(false);
   const syncEnabled = useTimersStore((state) => state.syncEnabled);
 
   const {
@@ -52,9 +52,7 @@ export const useTimerSettingsSync = () => {
 
   useEffect(() => {
     if (syncEnabled === false) {
-      setIsInitialized(false);
-      setLocalSnapshot(null);
-      setShowConflict(false);
+      isInitializedRef.current = false;
       return;
     }
 
@@ -75,7 +73,7 @@ export const useTimerSettingsSync = () => {
         }
       }
 
-      if (!remoteSettings && localTimestamp && !isInitialized) {
+      if (!remoteSettings && localTimestamp && !isInitializedRef.current) {
         await migrateSettings({
           localData: {
             generalConfig: localStore.generalConfig,
@@ -94,7 +92,7 @@ export const useTimerSettingsSync = () => {
           },
           conflictResolution: "local",
         });
-        setIsInitialized(true);
+        isInitializedRef.current = true;
         return;
       }
 
@@ -157,8 +155,8 @@ export const useTimerSettingsSync = () => {
           syncEnabled: remoteSettings.syncEnabled,
         });
 
-        if (!isInitialized) {
-          setIsInitialized(true);
+        if (!isInitializedRef.current) {
+          isInitializedRef.current = true;
         }
       }
     };
@@ -168,7 +166,6 @@ export const useTimerSettingsSync = () => {
     remoteSettings,
     isLoading,
     isFetching,
-    isInitialized,
     syncEnabled,
     showConflict,
     migrateSettings,
@@ -219,7 +216,7 @@ export const useTimerSettingsSync = () => {
     }
 
     setShowConflict(false);
-    setIsInitialized(true);
+    isInitializedRef.current = true;
     setLocalSnapshot(null);
   };
 

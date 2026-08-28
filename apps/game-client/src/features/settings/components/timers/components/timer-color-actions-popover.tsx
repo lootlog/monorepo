@@ -6,7 +6,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
-import { useEffect, useState, type FC } from "react";
+import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type TimerColorActionsPopoverProps = {
@@ -33,10 +33,6 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
   const { t } = useTranslation();
   const [nameDraft, setNameDraft] = useState(name);
 
-  useEffect(() => {
-    if (!open) setNameDraft(name);
-  }, [name, open]);
-
   const commitName = () => {
     const normalizedName = nameDraft.trim();
     if (!normalizedName) {
@@ -50,7 +46,7 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
     <Popover
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!nextOpen) setNameDraft(name);
+        setNameDraft(name);
         onOpenChange(nextOpen);
       }}
     >
