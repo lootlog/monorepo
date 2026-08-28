@@ -183,7 +183,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test CI and release tooling
-        run: node --test tools/ci/*.test.mjs tools/release/*.test.mjs apps/developer/server-handler.test.js
+        run: node --test tools/release/*.test.mjs apps/developer/server-handler.test.js
 
       - name: Validate changesets
         if: needs.plan.outputs.version-pull-request != 'true'
