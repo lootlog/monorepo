@@ -4,6 +4,7 @@ import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
   SETTINGS_DOMAINS,
+  THEME_PRESET_IDS,
 } from "@lootlog/types";
 import { describe, expect, it } from "vitest";
 
@@ -36,7 +37,7 @@ describe("settings resolver", () => {
     }
   });
 
-  it("removes the obsolete color mode when migrating appearance settings", () => {
+  it("removes obsolete color mode and migrates a legacy theme to v4", () => {
     expect(
       migrateSettingsDocument(
         "appearance",
@@ -50,12 +51,27 @@ describe("settings resolver", () => {
         2,
       ),
     ).toEqual({
-      theme: "default",
+      theme: {
+        revision: 1,
+        selection: { kind: "preset", presetId: "default" },
+        customThemes: [],
+        specialOverrides: {},
+      },
       chat: {
         fontScalePercent: 110,
       },
     });
-    expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(3);
+    expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(4);
+  });
+
+  it.each(THEME_PRESET_IDS)("migrates the legacy %s theme ID", (presetId) => {
+    expect(
+      migrateSettingsDocument("appearance", { theme: presetId }, 3),
+    ).toMatchObject({
+      theme: {
+        selection: { kind: "preset", presetId },
+      },
+    });
   });
 
   it("keeps chat values on the user layer while ignoring lower scopes", () => {

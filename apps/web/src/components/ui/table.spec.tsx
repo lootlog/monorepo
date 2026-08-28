@@ -24,10 +24,10 @@ describe("Table expanded detail surface", () => {
     );
 
     expect(table?.className).toContain(
-      "[&_tr[data-state=expanded-detail]]:bg-muted/40",
+      "[&_tr[data-state=expanded-detail]]:bg-surface-selected",
     );
     expect(table?.className).toContain(
-      "[&_tr[data-state=expanded-detail]]:hover:bg-muted/40",
+      "[&_tr[data-state=expanded-detail]]:hover:bg-surface-selected",
     );
     expect(detailRow).toBeTruthy();
   });

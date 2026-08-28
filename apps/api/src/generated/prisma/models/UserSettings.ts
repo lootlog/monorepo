@@ -37,7 +37,6 @@ export type UserSettingsSumAggregateOutputType = {
 export type UserSettingsMinAggregateOutputType = {
   id: number | null
   userId: string | null
-  theme: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -45,7 +44,6 @@ export type UserSettingsMinAggregateOutputType = {
 export type UserSettingsMaxAggregateOutputType = {
   id: number | null
   userId: string | null
-  theme: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -55,7 +53,6 @@ export type UserSettingsCountAggregateOutputType = {
   userId: number
   guildsOrder: number
   hiddenGuildIds: number
-  theme: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -73,7 +70,6 @@ export type UserSettingsSumAggregateInputType = {
 export type UserSettingsMinAggregateInputType = {
   id?: true
   userId?: true
-  theme?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -81,7 +77,6 @@ export type UserSettingsMinAggregateInputType = {
 export type UserSettingsMaxAggregateInputType = {
   id?: true
   userId?: true
-  theme?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -91,7 +86,6 @@ export type UserSettingsCountAggregateInputType = {
   userId?: true
   guildsOrder?: true
   hiddenGuildIds?: true
-  theme?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -188,7 +182,6 @@ export type UserSettingsGroupByOutputType = {
   userId: string
   guildsOrder: string[]
   hiddenGuildIds: string[]
-  theme: string
   createdAt: Date
   updatedAt: Date
   _count: UserSettingsCountAggregateOutputType | null
@@ -221,7 +214,6 @@ export type UserSettingsWhereInput = {
   userId?: Prisma.StringFilter<"UserSettings"> | string
   guildsOrder?: Prisma.StringNullableListFilter<"UserSettings">
   hiddenGuildIds?: Prisma.StringNullableListFilter<"UserSettings">
-  theme?: Prisma.StringFilter<"UserSettings"> | string
   createdAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
 }
@@ -231,7 +223,6 @@ export type UserSettingsOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   guildsOrder?: Prisma.SortOrder
   hiddenGuildIds?: Prisma.SortOrder
-  theme?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -244,7 +235,6 @@ export type UserSettingsWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserSettingsWhereInput | Prisma.UserSettingsWhereInput[]
   guildsOrder?: Prisma.StringNullableListFilter<"UserSettings">
   hiddenGuildIds?: Prisma.StringNullableListFilter<"UserSettings">
-  theme?: Prisma.StringFilter<"UserSettings"> | string
   createdAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
 }, "id" | "userId">
@@ -254,7 +244,6 @@ export type UserSettingsOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   guildsOrder?: Prisma.SortOrder
   hiddenGuildIds?: Prisma.SortOrder
-  theme?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserSettingsCountOrderByAggregateInput
@@ -272,7 +261,6 @@ export type UserSettingsScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"UserSettings"> | string
   guildsOrder?: Prisma.StringNullableListFilter<"UserSettings">
   hiddenGuildIds?: Prisma.StringNullableListFilter<"UserSettings">
-  theme?: Prisma.StringWithAggregatesFilter<"UserSettings"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserSettings"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"UserSettings"> | Date | string
 }
@@ -281,7 +269,6 @@ export type UserSettingsCreateInput = {
   userId: string
   guildsOrder?: Prisma.UserSettingsCreateguildsOrderInput | string[]
   hiddenGuildIds?: Prisma.UserSettingsCreatehiddenGuildIdsInput | string[]
-  theme?: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -291,7 +278,6 @@ export type UserSettingsUncheckedCreateInput = {
   userId: string
   guildsOrder?: Prisma.UserSettingsCreateguildsOrderInput | string[]
   hiddenGuildIds?: Prisma.UserSettingsCreatehiddenGuildIdsInput | string[]
-  theme?: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -300,7 +286,6 @@ export type UserSettingsUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   guildsOrder?: Prisma.UserSettingsUpdateguildsOrderInput | string[]
   hiddenGuildIds?: Prisma.UserSettingsUpdatehiddenGuildIdsInput | string[]
-  theme?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -310,7 +295,6 @@ export type UserSettingsUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   guildsOrder?: Prisma.UserSettingsUpdateguildsOrderInput | string[]
   hiddenGuildIds?: Prisma.UserSettingsUpdatehiddenGuildIdsInput | string[]
-  theme?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -320,7 +304,6 @@ export type UserSettingsCreateManyInput = {
   userId: string
   guildsOrder?: Prisma.UserSettingsCreateguildsOrderInput | string[]
   hiddenGuildIds?: Prisma.UserSettingsCreatehiddenGuildIdsInput | string[]
-  theme?: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -329,7 +312,6 @@ export type UserSettingsUpdateManyMutationInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   guildsOrder?: Prisma.UserSettingsUpdateguildsOrderInput | string[]
   hiddenGuildIds?: Prisma.UserSettingsUpdatehiddenGuildIdsInput | string[]
-  theme?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -339,7 +321,6 @@ export type UserSettingsUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   guildsOrder?: Prisma.UserSettingsUpdateguildsOrderInput | string[]
   hiddenGuildIds?: Prisma.UserSettingsUpdatehiddenGuildIdsInput | string[]
-  theme?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -349,7 +330,6 @@ export type UserSettingsCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   guildsOrder?: Prisma.SortOrder
   hiddenGuildIds?: Prisma.SortOrder
-  theme?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -361,7 +341,6 @@ export type UserSettingsAvgOrderByAggregateInput = {
 export type UserSettingsMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  theme?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -369,7 +348,6 @@ export type UserSettingsMaxOrderByAggregateInput = {
 export type UserSettingsMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  theme?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -403,7 +381,6 @@ export type UserSettingsSelect<ExtArgs extends runtime.Types.Extensions.Internal
   userId?: boolean
   guildsOrder?: boolean
   hiddenGuildIds?: boolean
-  theme?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["userSettings"]>
@@ -413,7 +390,6 @@ export type UserSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   userId?: boolean
   guildsOrder?: boolean
   hiddenGuildIds?: boolean
-  theme?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["userSettings"]>
@@ -423,7 +399,6 @@ export type UserSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   userId?: boolean
   guildsOrder?: boolean
   hiddenGuildIds?: boolean
-  theme?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["userSettings"]>
@@ -433,12 +408,11 @@ export type UserSettingsSelectScalar = {
   userId?: boolean
   guildsOrder?: boolean
   hiddenGuildIds?: boolean
-  theme?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "guildsOrder" | "hiddenGuildIds" | "theme" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
+export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "guildsOrder" | "hiddenGuildIds" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
 
 export type $UserSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UserSettings"
@@ -448,7 +422,6 @@ export type $UserSettingsPayload<ExtArgs extends runtime.Types.Extensions.Intern
     userId: string
     guildsOrder: string[]
     hiddenGuildIds: string[]
-    theme: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["userSettings"]>
@@ -878,7 +851,6 @@ export interface UserSettingsFieldRefs {
   readonly userId: Prisma.FieldRef<"UserSettings", 'String'>
   readonly guildsOrder: Prisma.FieldRef<"UserSettings", 'String[]'>
   readonly hiddenGuildIds: Prisma.FieldRef<"UserSettings", 'String[]'>
-  readonly theme: Prisma.FieldRef<"UserSettings", 'String'>
   readonly createdAt: Prisma.FieldRef<"UserSettings", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"UserSettings", 'DateTime'>
 }

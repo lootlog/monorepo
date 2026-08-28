@@ -14,10 +14,10 @@ export const SectionHeader = ({
   children,
 }: SectionHeaderProps) => {
   return (
-    <section className="flex min-w-0 flex-col gap-3 border-b border-border/80 pb-4">
+    <section className="flex min-w-0 flex-col gap-3 border-b border-border pb-4">
       <div className="flex min-w-0 flex-wrap items-center gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="rounded-xl bg-primary/12 p-2.5">
+          <div className="rounded-xl bg-surface-selected p-2.5">
             <Icon className="size-4 text-primary" aria-hidden="true" />
           </div>
           <div className="min-w-0">

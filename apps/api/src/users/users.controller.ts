@@ -24,13 +24,50 @@ import { UpdateUserGameAccountPreferencesDto } from "src/users/dto/update-user-a
 import { UserCurrentGuildResponseDto } from "src/users/dto/user-current-guild-response.dto";
 import { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
 import { UsersService } from "src/users/users.service";
+import {
+  PatchThemeLibraryDto,
+  ThemeLibraryResponseDto,
+} from "src/users/dto/theme-library.dto";
+import { ThemeLibraryService } from "src/users/theme-library.service";
 
 @ApiTags("users")
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller("users")
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly themeLibraryService: ThemeLibraryService,
+  ) {}
+
+  @Get("/@me/themes")
+  @ApiOperation({ summary: "Get the current user's theme library" })
+  @ZodResponse({
+    status: 200,
+    description: "Theme library",
+    type: ThemeLibraryResponseDto,
+  })
+  getThemeLibrary(@UserId() userId: string) {
+    return this.themeLibraryService.getThemeLibrary(userId);
+  }
+
+  @Patch("/@me/themes")
+  @ApiOperation({ summary: "Atomically update the current user's themes" })
+  @ZodResponse({
+    status: 200,
+    description: "Updated theme library",
+    type: ThemeLibraryResponseDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: "Theme library revision conflict",
+  })
+  patchThemeLibrary(
+    @UserId() userId: string,
+    @Body() payload: PatchThemeLibraryDto,
+  ) {
+    return this.themeLibraryService.patchThemeLibrary(userId, payload);
+  }
 
   @Delete("/@me")
   @ApiOperation({

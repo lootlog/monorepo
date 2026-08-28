@@ -12,7 +12,7 @@ import { useLocation, useMatches, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ThemeInteractiveFrame } from "@/themes";
+import { ThemeInteractiveFrame } from "@/themes/theme-interactive-frame";
 import { getUserNavigationInfo } from "./get-user-navigation-info";
 
 type UserShellProps = {
@@ -67,7 +67,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                         onClick={() =>
                           navigate({ to: navigationInfo.backPath as string })
                         }
-                        className="h-8 w-8 p-1 rounded-full hover:bg-muted/50 transition-colors"
+                        className="h-8 w-8 p-1 rounded-full hover:bg-neutral-hover transition-colors"
                       >
                         <ArrowLeft className="h-4 w-4" />
                       </Button>

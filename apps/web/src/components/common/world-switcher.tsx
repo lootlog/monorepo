@@ -9,7 +9,7 @@ import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
 } from "@lootlog/api-client/react-query/main/guilds";
-import { ThemeSurfaceOverlay } from "@/themes";
+import { ThemeSurfaceOverlay } from "@/themes/theme-surface-overlay";
 
 const ALL_WORLDS_SENTINEL = "__ALL__";
 

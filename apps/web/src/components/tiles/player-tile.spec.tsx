@@ -40,7 +40,7 @@ describe("PlayerTile", () => {
     );
   });
 
-  it("shows and hides player details on hover without a shared tooltip provider", async () => {
+  it("shows and hides player details on focus without a shared tooltip provider", async () => {
     const { container } = render(
       <PlayerTile
         player={{
@@ -52,21 +52,16 @@ describe("PlayerTile", () => {
         }}
       />,
     );
-    const trigger = container.firstElementChild;
+    const trigger = container.querySelector('[data-slot="tooltip-trigger"]');
 
     expect(trigger).not.toBeNull();
 
-    fireEvent.pointerMove(trigger as Element, { pointerType: "mouse" });
+    fireEvent.focus(trigger as Element);
 
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip.textContent).toBe("Tester (123w)");
 
-    fireEvent.pointerLeave(trigger as Element);
-    fireEvent.pointerMove(document.body, {
-      clientX: 100,
-      clientY: 100,
-      pointerType: "mouse",
-    });
+    fireEvent.blur(trigger as Element);
 
     await waitFor(() => {
       expect(screen.queryByRole("tooltip")).toBeNull();
@@ -97,9 +92,7 @@ describe("PlayerTile", () => {
 
     expect(tooltipTrigger).not.toBeNull();
 
-    fireEvent.pointerMove(tooltipTrigger as Element, {
-      pointerType: "mouse",
-    });
+    fireEvent.focus(tooltipTrigger as Element);
 
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip.textContent).toBe("Tester (123w)");

@@ -1,0 +1,706 @@
+@layer base {
+  .cyberpunk body {
+    background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='cyberGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FF1493;stop-opacity:0.12' /%3E%3Cstop offset='50%25' style='stop-color:%239D4EDD;stop-opacity:0.09' /%3E%3Cstop offset='100%25' style='stop-color:%2300F0FF;stop-opacity:0.12' /%3E%3C/linearGradient%3E%3Cpattern id='grid' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='%23FF1493' stroke-width='0.5' opacity='0.06'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23cyberGrad)'/%3E%3Crect width='400' height='300' fill='url(%23grid)'/%3E%3Ccircle cx='100' cy='80' r='30' fill='%23FF1493' opacity='0.05'/%3E%3Ccircle cx='300' cy='180' r='40' fill='%2300F0FF' opacity='0.05'/%3E%3Ccircle cx='200' cy='220' r='25' fill='%239D4EDD' opacity='0.06'/%3E%3C/svg%3E");
+  }
+
+  .pastel body {
+    background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='pastelGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FFB3D9;stop-opacity:0.07' /%3E%3Cstop offset='50%25' style='stop-color:%23E0BBE4;stop-opacity:0.05' /%3E%3Cstop offset='100%25' style='stop-color:%23B4E7CE;stop-opacity:0.07' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23pastelGrad)'/%3E%3Ccircle cx='80' cy='60' r='50' fill='%23FFB3D9' opacity='0.05'/%3E%3Ccircle cx='320' cy='100' r='60' fill='%23E0BBE4' opacity='0.04'/%3E%3Ccircle cx='150' cy='200' r='70' fill='%23B4E7CE' opacity='0.05'/%3E%3Ccircle cx='280' cy='240' r='45' fill='%23FFB3D9' opacity='0.04'/%3E%3Cpath d='M 50 150 Q 100 100 150 150 T 250 150' stroke='%23E0BBE4' stroke-width='2' fill='none' opacity='0.05'/%3E%3Cpath d='M 200 80 Q 250 50 300 80' stroke='%23FFB3D9' stroke-width='2' fill='none' opacity='0.05'/%3E%3C/svg%3E");
+  }
+
+  .fantasy body {
+    background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3CradialGradient id='fantasyGrad'%3E%3Cstop offset='0%25' style='stop-color:%234A0E4E;stop-opacity:0.12' /%3E%3Cstop offset='60%25' style='stop-color:%238B0000;stop-opacity:0.09' /%3E%3Cstop offset='100%25' style='stop-color:%23000000;stop-opacity:0.12' /%3E%3C/radialGradient%3E%3Cfilter id='glow'%3E%3CfeGaussianBlur stdDeviation='3' result='coloredBlur'/%3E%3CfeMerge%3E%3CfeMergeNode in='coloredBlur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23fantasyGrad)'/%3E%3Cpolygon points='200,50 210,80 240,80 215,100 225,130 200,110 175,130 185,100 160,80 190,80' fill='%23FFD700' opacity='0.07' filter='url(%23glow)'/%3E%3Cpolygon points='100,150 105,165 120,165 110,175 115,190 100,180 85,190 90,175 80,165 95,165' fill='%23FFD700' opacity='0.05'/%3E%3Cpolygon points='320,180 325,195 340,195 330,205 335,220 320,210 305,220 310,205 300,195 315,195' fill='%23FFD700' opacity='0.05'/%3E%3Ccircle cx='200' cy='150' r='80' fill='%234A0E4E' opacity='0.05'/%3E%3C/svg%3E");
+  }
+
+  .shonen body {
+    background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='shonenGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FF6B35;stop-opacity:0.10' /%3E%3Cstop offset='50%25' style='stop-color:%2300A8E8;stop-opacity:0.08' /%3E%3Cstop offset='100%25' style='stop-color:%23FFD23F;stop-opacity:0.10' /%3E%3C/linearGradient%3E%3Cpattern id='energy' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 10 30 L 20 10 L 30 30 L 20 50 Z' fill='%23FFD23F' opacity='0.04'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23shonenGrad)'/%3E%3Crect width='400' height='300' fill='url(%23energy)'/%3E%3Cpath d='M 50 100 L 80 50 L 90 100 L 120 60 L 130 100' stroke='%23FFD23F' stroke-width='3' fill='none' opacity='0.07'/%3E%3Cpath d='M 250 180 L 280 130 L 290 180 L 320 140 L 330 180' stroke='%23FF6B35' stroke-width='3' fill='none' opacity='0.07'/%3E%3Ccircle cx='150' cy='150' r='40' fill='%2300A8E8' opacity='0.05'/%3E%3Ccircle cx='300' cy='80' r='35' fill='%23FF6B35' opacity='0.05'/%3E%3C/svg%3E");
+  }
+
+  .onepiece body {
+    background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='onepieceGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%232D8659;stop-opacity:0.12' /%3E%3Cstop offset='50%25' style='stop-color:%237FD99A;stop-opacity:0.09' /%3E%3Cstop offset='100%25' style='stop-color:%231A5238;stop-opacity:0.12' /%3E%3C/linearGradient%3E%3Cpattern id='swords' width='80' height='80' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 10 10 L 30 30 M 10 30 L 30 10' stroke='%232D8659' stroke-width='1' opacity='0.05'/%3E%3Cpath d='M 50 50 L 70 70 M 50 70 L 70 50' stroke='%237FD99A' stroke-width='1' opacity='0.06'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23onepieceGrad)'/%3E%3Crect width='400' height='300' fill='url(%23swords)'/%3E%3Ccircle cx='100' cy='100' r='40' fill='%232D8659' opacity='0.05'/%3E%3Ccircle cx='300' cy='200' r='50' fill='%237FD99A' opacity='0.06'/%3E%3Cpath d='M 150 150 L 170 100 L 175 150 L 180 100 L 185 150 L 200 80' stroke='%232D8659' stroke-width='2' fill='none' opacity='0.06'/%3E%3C/svg%3E");
+  }
+
+  .anime body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://a-static.besthdwallpaper.com/my-dress-up-darling-anime-marin-kitagawa-wallpaper-3554x1999-89573_53.jpg");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: 200px 70%;
+    filter: brightness(0.25);
+    z-index: -1;
+  }
+
+  .anime body {
+    background-image: none;
+  }
+
+  .anime body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://a-static.besthdwallpaper.com/my-dress-up-darling-anime-marin-kitagawa-wallpaper-3554x1999-89573_53.jpg");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: 200px 10%;
+    filter: brightness(0.12);
+    z-index: -1;
+  }
+
+  .waguri body {
+    background-image: none;
+  }
+
+  .waguri body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://images7.alphacoders.com/139/1398235.png");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    filter: brightness(0.1);
+    z-index: -1;
+  }
+
+  .goth body {
+    background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='gothGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23000000;stop-opacity:0.18' /%3E%3Cstop offset='50%25' style='stop-color:%238B1A3D;stop-opacity:0.14' /%3E%3Cstop offset='100%25' style='stop-color:%236A0DAD;stop-opacity:0.16' /%3E%3C/linearGradient%3E%3Cpattern id='crosses' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 30 10 L 30 50 M 10 30 L 50 30' stroke='%238B1A3D' stroke-width='1.5' opacity='0.08'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23gothGrad)'/%3E%3Crect width='400' height='300' fill='url(%23crosses)'/%3E%3Ccircle cx='100' cy='100' r='35' fill='%236A0DAD' opacity='0.08'/%3E%3Ccircle cx='320' cy='220' r='45' fill='%238B1A3D' opacity='0.09'/%3E%3Cpath d='M 200 80 Q 220 100 200 120 Q 180 100 200 80' fill='%238B1A3D' opacity='0.06'/%3E%3Cpath d='M 280 150 L 290 140 L 300 150 L 290 160 Z' fill='%236A0DAD' opacity='0.08'/%3E%3Ccircle cx='150' cy='250' r='30' fill='%23000' opacity='0.06'/%3E%3C/svg%3E");
+  }
+
+  .halloween body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://www.baltana.com/files/wallpapers-4/Halloween-Background-Wallpaper-HD-14401.jpg");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    filter: brightness(0.3);
+    z-index: -1;
+  }
+
+  .halloween body {
+    background-image: none;
+  }
+
+  .halloween body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://www.baltana.com/files/wallpapers-4/Halloween-Background-Wallpaper-HD-14401.jpg");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    filter: brightness(0.15);
+    z-index: -1;
+  }
+
+  .realmadrid body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://assets.goal.com/images/v3/blt05c464fcca9f63b6/Cristiano_Ronaldo_Real_Madrid_2012.jpg?auto=webp&format=pjpg&width=3840&quality=60");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: 200px 10%;
+    filter: brightness(0.3);
+    z-index: -1;
+  }
+
+  .realmadrid body {
+    background-image: none;
+  }
+
+  .realmadrid body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://assets.goal.com/images/v3/blt05c464fcca9f63b6/Cristiano_Ronaldo_Real_Madrid_2012.jpg?auto=webp&format=pjpg&width=3840&quality=60");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: 200px 10%;
+    filter: brightness(0.15);
+    z-index: -1;
+  }
+
+  .realmadrid-3rd body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://assets-cms.thescore.com/uploads/image/file/401278/w768xh576_GettyImages-941534222.jpg");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    filter: brightness(0.3);
+    z-index: -1;
+  }
+
+  .realmadrid-3rd body {
+    background-image: none;
+  }
+
+  .realmadrid-3rd body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://assets-cms.thescore.com/uploads/image/file/401278/w768xh576_GettyImages-941534222.jpg");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: 200px 10%;
+    filter: brightness(0.15);
+    z-index: -1;
+  }
+
+  .barcelona body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://s.france24.com/media/display/451ed2b8-eed6-11ea-afdd-005056bf87d6/w:1280/p:16x9/messi-1805.jpg");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: 70% 70%;
+    filter: brightness(0.3);
+    z-index: -1;
+  }
+
+  .barcelona body {
+    background-image: none;
+  }
+
+  .barcelona body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://s.france24.com/media/display/451ed2b8-eed6-11ea-afdd-005056bf87d6/w:1280/p:16x9/messi-1805.jpg");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: 200px 10%;
+    filter: brightness(0.15);
+    z-index: -1;
+  }
+}
+
+/* Yamato Theme - Ice blue/silver with crimson red accents */
+/* Rukia Kuchiki - Hakka no Togame (白霞罸) - Absolute Zero Ice */
+.rukia {
+  --background: oklch(0.1 0.025 230);
+  --foreground: oklch(0.96 0.015 230);
+  --card: oklch(0.14 0.03 230);
+  --card-foreground: oklch(0.96 0.015 230);
+  --popover: oklch(0.12 0.028 230);
+  --popover-foreground: oklch(0.96 0.015 230);
+  --primary: oklch(0.72 0.14 220);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.18 0.025 280);
+  --secondary-foreground: oklch(0.96 0.015 230);
+  --muted: oklch(0.2 0.03 230);
+  --muted-foreground: oklch(0.72 0.03 230);
+  --accent: oklch(0.65 0.16 280);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.26 0.035 230);
+  --input: oklch(0.28 0.04 230);
+  --ring: oklch(0.72 0.14 220);
+  --chart-1: oklch(0.72 0.14 220);
+  --chart-2: oklch(0.65 0.16 280);
+  --chart-3: oklch(0.82 0.12 220);
+  --chart-4: oklch(0.7 0.14 260);
+  --chart-5: oklch(0.55 0.12 230);
+  --sidebar: oklch(0.08 0.02 230);
+  --filters-sidebar: var(--sidebar);
+  --sidebar-foreground: oklch(0.96 0.015 230);
+  --sidebar-primary: oklch(0.72 0.14 220);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.2 0.03 230);
+  --sidebar-accent-foreground: oklch(0.96 0.015 230);
+  --sidebar-border: oklch(0.26 0.035 230);
+  --sidebar-ring: oklch(0.55 0.1 220);
+}
+
+.rukia body {
+  background-image: none;
+}
+
+.rukia body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("https://fictionhorizon.com/wp-content/uploads/2023/08/HakkanoTogane.jpg");
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: calc(50% + 200px) calc(50% + 200px);
+  background-repeat: no-repeat;
+  background-color: oklch(0.1 0.025 230);
+  filter: brightness(0.15);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+}
+
+.rukia.theme-ready body::before {
+  opacity: 1;
+}
+
+.rukia body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 30%,
+    oklch(0.1 0.025 230) 80%
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ===== RIAS GREMORY: Crimson red / dark purple / blue eye accents ===== */
+.rias {
+  --background: oklch(0.12 0.03 350);
+  --foreground: oklch(0.95 0.01 350);
+  --card: oklch(0.15 0.035 350);
+  --card-foreground: oklch(0.95 0.01 350);
+  --popover: oklch(0.14 0.03 350);
+  --popover-foreground: oklch(0.95 0.01 350);
+  --primary: oklch(0.52 0.22 15);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.2 0.05 330);
+  --secondary-foreground: oklch(0.95 0.01 350);
+  --muted: oklch(0.22 0.04 340);
+  --muted-foreground: oklch(0.68 0.03 350);
+  --accent: oklch(0.4 0.12 330);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.28 0.05 345);
+  --input: oklch(0.25 0.05 345);
+  --ring: oklch(0.55 0.12 240);
+  --chart-1: oklch(0.52 0.22 15);
+  --chart-2: oklch(0.4 0.12 330);
+  --chart-3: oklch(0.55 0.12 240);
+  --chart-4: oklch(0.6 0.18 10);
+  --chart-5: oklch(0.35 0.1 350);
+  --sidebar: oklch(0.1 0.025 350);
+  --filters-sidebar: var(--sidebar);
+  --sidebar-foreground: oklch(0.95 0.01 350);
+  --sidebar-primary: oklch(0.52 0.22 15);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.2 0.04 340);
+  --sidebar-accent-foreground: oklch(0.95 0.01 350);
+  --sidebar-border: oklch(0.28 0.05 345);
+  --sidebar-ring: oklch(0.55 0.12 240);
+}
+
+.rias body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("/themes/rias-bg.png");
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: oklch(0.12 0.03 350);
+  filter: brightness(0.15);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+}
+
+.rias.theme-ready body::before {
+  opacity: 1;
+}
+
+.rias body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      oklch(0.2 0.08 15 / 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 100% 100%,
+      oklch(0.2 0.08 330 / 0.06) 0%,
+      transparent 50%
+    );
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ===== RIAS GREMORY: Custom Effects ===== */
+
+/* Selection */
+.rias ::selection {
+  background: oklch(0.45 0.18 15 / 0.4);
+  color: oklch(0.98 0.01 350);
+}
+
+/* Scrollbar */
+.rias .custom-scrollbar {
+  scrollbar-color: oklch(0.4 0.15 15 / 0.4) transparent;
+}
+
+.rias .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.4 0.15 15 / 0.35);
+}
+
+.rias .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.5 0.2 15 / 0.5);
+  box-shadow: 0 0 8px oklch(0.5 0.2 15 / 0.3);
+}
+
+/* Skeleton shimmer */
+.rias [data-slot="skeleton"] {
+  animation: rias-shimmer 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    oklch(0.15 0.035 350) 0%,
+    oklch(0.2 0.05 15) 40%,
+    oklch(0.25 0.06 15) 50%,
+    oklch(0.2 0.05 15) 60%,
+    oklch(0.15 0.035 350) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes rias-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Input focus glow */
+.rias input:focus-visible,
+.rias textarea:focus-visible,
+.rias select:focus-visible,
+.rias [role="combobox"]:focus-visible {
+  box-shadow:
+    0 0 0 2px oklch(0.52 0.22 15 / 0.25),
+    0 0 14px oklch(0.45 0.18 15 / 0.2);
+}
+
+/* Tooltip & Popover */
+.rias [data-slot="tooltip-content"] {
+  border-color: oklch(0.4 0.12 15 / 0.5);
+  box-shadow:
+    0 4px 16px oklch(0.3 0.1 15 / 0.25),
+    inset 0 0 0 1px oklch(0.45 0.12 15 / 0.12);
+}
+
+.rias [data-slot="popover-content"] {
+  border-color: oklch(0.4 0.12 15 / 0.5);
+  box-shadow:
+    0 8px 28px oklch(0.3 0.1 15 / 0.3),
+    inset 0 0 0 1px oklch(0.45 0.12 15 / 0.1);
+}
+
+/* ===== RUKIA THEME: Custom Effects ===== */
+
+/* Selection */
+.rukia ::selection {
+  background: oklch(0.55 0.12 220 / 0.4);
+  color: oklch(0.98 0.01 230);
+}
+
+/* Scrollbar */
+.rukia .custom-scrollbar {
+  scrollbar-color: oklch(0.5 0.1 220 / 0.4) transparent;
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.5 0.1 220 / 0.35);
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.6 0.12 220 / 0.5);
+  box-shadow: 0 0 8px oklch(0.6 0.14 220 / 0.3);
+}
+
+/* Skeleton shimmer */
+@keyframes rukia-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.rukia [data-slot="skeleton"] {
+  animation: rukia-shimmer 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    oklch(0.18 0.03 230) 0%,
+    oklch(0.22 0.04 220) 40%,
+    oklch(0.28 0.05 220) 50%,
+    oklch(0.22 0.04 220) 60%,
+    oklch(0.18 0.03 230) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Input focus glow */
+.rukia input:focus-visible,
+.rukia textarea:focus-visible,
+.rukia select:focus-visible,
+.rukia [role="combobox"]:focus-visible {
+  box-shadow:
+    0 0 0 2px oklch(0.72 0.14 220 / 0.3),
+    0 0 16px oklch(0.6 0.12 220 / 0.2);
+}
+
+/* Tooltip & Popover frost border */
+.rukia [data-slot="tooltip-content"] {
+  border-color: oklch(0.45 0.08 220 / 0.5);
+  box-shadow:
+    0 4px 16px oklch(0.3 0.08 220 / 0.25),
+    inset 0 0 0 1px oklch(0.5 0.1 220 / 0.15);
+}
+
+.rukia [data-slot="popover-content"] {
+  border-color: oklch(0.45 0.08 220 / 0.5);
+  box-shadow:
+    0 8px 28px oklch(0.3 0.08 220 / 0.3),
+    inset 0 0 0 1px oklch(0.5 0.1 220 / 0.12);
+}
+
+/* ===== CAT THEME: Różowy Kociak ===== */
+.cat-pink {
+  --background: oklch(0.2 0.03 350);
+  --foreground: oklch(0.92 0.01 350);
+  --card: oklch(0.23 0.035 350);
+  --card-foreground: oklch(0.92 0.01 350);
+  --popover: oklch(0.26 0.04 350);
+  --popover-foreground: oklch(0.92 0.01 350);
+  --primary: oklch(0.78 0.08 350);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.3 0.045 350);
+  --secondary-foreground: oklch(0.92 0.01 350);
+  --muted: oklch(0.32 0.04 350);
+  --muted-foreground: oklch(0.7 0.02 350);
+  --accent: oklch(0.72 0.07 340);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.38 0.05 350);
+  --input: oklch(0.35 0.05 350);
+  --ring: oklch(0.78 0.08 350);
+  --chart-1: oklch(0.78 0.08 350);
+  --chart-2: oklch(0.72 0.07 340);
+  --chart-3: oklch(0.82 0.06 350);
+  --chart-4: oklch(0.75 0.07 330);
+  --chart-5: oklch(0.6 0.05 350);
+  --sidebar: oklch(0.22 0.035 350);
+  --filters-sidebar: var(--sidebar);
+  --sidebar-foreground: oklch(0.92 0.01 350);
+  --sidebar-primary: oklch(0.78 0.08 350);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.32 0.04 350);
+  --sidebar-accent-foreground: oklch(0.92 0.01 350);
+  --sidebar-border: oklch(0.38 0.05 350);
+  --sidebar-ring: oklch(0.6 0.05 350);
+  --cat-spinner-filter: brightness(0) saturate(100%) invert(80%) sepia(20%)
+    saturate(600%) hue-rotate(300deg) brightness(102%) contrast(92%);
+}
+
+/* ===== CAT THEME: Fioletowy Mruczek ===== */
+.cat-purple {
+  --background: oklch(0.25 0.04 300);
+  --foreground: oklch(0.92 0.01 300);
+  --card: oklch(0.28 0.045 300);
+  --card-foreground: oklch(0.92 0.01 300);
+  --popover: oklch(0.26 0.04 300);
+  --popover-foreground: oklch(0.92 0.01 300);
+  --primary: oklch(0.75 0.08 300);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.3 0.045 300);
+  --secondary-foreground: oklch(0.92 0.01 300);
+  --muted: oklch(0.32 0.04 300);
+  --muted-foreground: oklch(0.7 0.02 300);
+  --accent: oklch(0.68 0.07 290);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.38 0.05 300);
+  --input: oklch(0.35 0.05 300);
+  --ring: oklch(0.75 0.08 300);
+  --chart-1: oklch(0.75 0.08 300);
+  --chart-2: oklch(0.68 0.07 290);
+  --chart-3: oklch(0.8 0.06 300);
+  --chart-4: oklch(0.72 0.07 280);
+  --chart-5: oklch(0.58 0.05 300);
+  --sidebar: oklch(0.22 0.035 300);
+  --filters-sidebar: var(--sidebar);
+  --sidebar-foreground: oklch(0.92 0.01 300);
+  --sidebar-primary: oklch(0.75 0.08 300);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.32 0.04 300);
+  --sidebar-accent-foreground: oklch(0.92 0.01 300);
+  --sidebar-border: oklch(0.38 0.05 300);
+  --sidebar-ring: oklch(0.58 0.05 300);
+  --cat-spinner-filter: brightness(0) saturate(100%) invert(78%) sepia(15%)
+    saturate(500%) hue-rotate(230deg) brightness(102%) contrast(92%);
+}
+
+/* ===== CAT THEME: Niebieski Kocurek ===== */
+.cat-blue {
+  --background: oklch(0.25 0.04 230);
+  --foreground: oklch(0.92 0.01 230);
+  --card: oklch(0.28 0.045 230);
+  --card-foreground: oklch(0.92 0.01 230);
+  --popover: oklch(0.26 0.04 230);
+  --popover-foreground: oklch(0.92 0.01 230);
+  --primary: oklch(0.78 0.07 230);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.3 0.045 230);
+  --secondary-foreground: oklch(0.92 0.01 230);
+  --muted: oklch(0.32 0.04 230);
+  --muted-foreground: oklch(0.7 0.02 230);
+  --accent: oklch(0.72 0.07 220);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.38 0.05 230);
+  --input: oklch(0.35 0.05 230);
+  --ring: oklch(0.78 0.07 230);
+  --chart-1: oklch(0.78 0.07 230);
+  --chart-2: oklch(0.72 0.07 220);
+  --chart-3: oklch(0.82 0.06 230);
+  --chart-4: oklch(0.75 0.06 210);
+  --chart-5: oklch(0.58 0.05 230);
+  --sidebar: oklch(0.22 0.035 230);
+  --filters-sidebar: var(--sidebar);
+  --sidebar-foreground: oklch(0.92 0.01 230);
+  --sidebar-primary: oklch(0.78 0.07 230);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.32 0.04 230);
+  --sidebar-accent-foreground: oklch(0.92 0.01 230);
+  --sidebar-border: oklch(0.38 0.05 230);
+  --sidebar-ring: oklch(0.58 0.05 230);
+  --cat-spinner-filter: brightness(0) saturate(100%) invert(85%) sepia(18%)
+    saturate(400%) hue-rotate(165deg) brightness(102%) contrast(92%);
+}
+
+/* ===== CAT THEME: Wspólne dekoracje ===== */
+:is(.cat-pink, .cat-purple, .cat-blue) {
+  --radius: 0.75rem;
+}
+
+/* Cat paw spinner — tinted via theme filter */
+.cat-paw-spinner {
+  filter: var(--cat-spinner-filter);
+}
+
+/* Cat paw overlay — hidden by default, shown in cat themes */
+.cat-paw-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cat-pink .cat-paw-overlay {
+  display: block;
+  color: oklch(0.78 0.08 350);
+}
+
+.cat-purple .cat-paw-overlay {
+  display: block;
+  color: oklch(0.75 0.08 300);
+}
+
+.cat-blue .cat-paw-overlay {
+  display: block;
+  color: oklch(0.78 0.07 230);
+}
+
+:is(.cat-pink, .cat-purple, .cat-blue)
+  [data-slot="card"]
+  [data-slot="card"]
+  .cat-paw-overlay {
+  display: none;
+}
+
+:is(.cat-pink, .cat-purple, .cat-blue) [data-slot="sidebar-menu-button"] {
+  position: relative;
+}
+
+:is(.cat-pink, .cat-purple, .cat-blue)
+  [data-slot="sidebar-menu-button"]:hover::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='22' rx='7' ry='5.5' fill='white'/%3E%3Ccircle cx='9' cy='12' r='3.2' fill='white'/%3E%3Ccircle cx='15' cy='8' r='2.8' fill='white'/%3E%3Ccircle cx='21' cy='8' r='2.8' fill='white'/%3E%3Ccircle cx='27' cy='12' r='3.2' fill='white'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  animation: catPawIn 0.2s ease forwards;
+}
+
+@keyframes catPawIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  to {
+    opacity: 0.5;
+    transform: translateY(-50%) scale(1);
+  }
+}

@@ -42,7 +42,8 @@ import { Globe2, PackageOpen, SearchX } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useEffect, useEffectEvent, useRef, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { ThemeEmptyStateIcon, useThemedKey } from "@/themes";
+import { ThemeEmptyStateIcon } from "@/themes/theme-empty-state-icon";
+import { useThemedKey } from "@/themes/use-themed-key";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 
 const LOOTS_PAGE_LIMIT = 20;

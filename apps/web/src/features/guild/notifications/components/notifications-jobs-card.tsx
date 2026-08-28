@@ -109,7 +109,7 @@ export const NotificationsPendingJobsCard = ({
   return (
     <Card className="gap-3 border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-primary/10 p-2.5">
+        <div className="rounded-xl bg-surface-selected p-2.5">
           <Clock3 className="size-4 text-primary" />
         </div>
         <div>
@@ -131,7 +131,7 @@ export const NotificationsPendingJobsCard = ({
             {pendingJobs.map((job) => (
               <div
                 key={job.id}
-                className="rounded-xl border border-border/70 bg-background p-3"
+                className="rounded-xl border border-border bg-background p-3"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-2">

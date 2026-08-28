@@ -4,13 +4,16 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DashboardStatisticsFilters } from "./dashboard-statistics-filters";
 
-const mocks = vi.hoisted(() => ({
-  useKillStats: vi.fn(),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/kills", () => ({
-  getKillsControllerGetUserKillStatsQueryKey: () => ["kill-stats"],
-  useKillsControllerGetUserKillStats: mocks.useKillStats,
+vi.mock("@lootlog/ui/components/filter-popover", () => ({
+  FilterPopover: ({
+    options,
+  }: {
+    options: Array<{ label: string; value: string }>;
+  }) => (
+    <div data-testid="world-options">
+      {options.map(({ label }) => label).join(",")}
+    </div>
+  ),
 }));
 
 vi.mock("@/features/kills/components/kill-stats-period-select", () => ({
@@ -19,16 +22,15 @@ vi.mock("@/features/kills/components/kill-stats-period-select", () => ({
   ),
 }));
 
-vi.mock("@/components/common/world-switcher", () => ({
-  WorldSwitcher: ({ worlds }: { worlds: string[] }) => (
-    <div data-testid="world-options">{worlds.join(",")}</div>
-  ),
-}));
-
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string) =>
-      key === "kills.playerStats.allPeriod" ? "Cały okres" : key,
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        "kills.home.filters.allWorlds": "Wszystkie światy",
+        "kills.playerStats.allPeriod": "Cały okres",
+      };
+      return translations[key] ?? key;
+    },
   }),
 }));
 
@@ -38,18 +40,19 @@ describe("DashboardStatisticsFilters", () => {
     vi.clearAllMocks();
   });
 
-  it("keeps the selected world available before filter options load", () => {
-    mocks.useKillStats.mockReturnValue({ data: undefined });
-
+  it("keeps the selected world available before other options load", () => {
     render(
       <DashboardStatisticsFilters
+        availableWorlds={[]}
         filters={{ npcType: "ELITE2", period: "all", world: "Lunia" }}
         onPeriodChange={vi.fn()}
         onWorldChange={vi.fn()}
       />,
     );
 
-    expect(screen.getByTestId("world-options").textContent).toBe("Lunia");
+    expect(screen.getByTestId("world-options").textContent).toBe(
+      "Wszystkie światy,Lunia",
+    );
     expect(screen.getByRole("button", { name: "Cały okres" })).toBeTruthy();
   });
 });

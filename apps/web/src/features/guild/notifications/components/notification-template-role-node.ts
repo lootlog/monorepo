@@ -115,7 +115,7 @@ export class NotificationTemplateRoleNode extends TextNode {
   private applyRoleStyles(element: HTMLElement) {
     element.style.backgroundColor = this.__roleColor
       ? `${this.__roleColor}22`
-      : "color-mix(in oklab, var(--primary) 12%, transparent)";
+      : "var(--surface-selected)";
     element.style.borderRadius = "2px";
     element.style.color = this.__roleColor ?? "var(--primary)";
   }

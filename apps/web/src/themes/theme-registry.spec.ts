@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { isSpecialThemeId } from "@lootlog/types";
 import {
   CAT_THEME_VARIANTS,
   DEFAULT_THEME_ID,
@@ -12,10 +13,19 @@ import {
   isRukiaTheme,
   resolveThemeClass,
 } from "./resolver";
+import { SPECIAL_THEME_PACKAGES } from "./special-theme-packages";
 
 describe("theme registry", () => {
   it("covers every supported theme in the catalog", () => {
     expect(THEME_CATALOG.map((theme) => theme.name)).toEqual(THEME_IDS);
+    expect(
+      THEME_CATALOG.filter((theme) => theme.category === "special").every(
+        (theme) =>
+          isSpecialThemeId(theme.name) &&
+          theme.availability ===
+            SPECIAL_THEME_PACKAGES[theme.name].availability,
+      ),
+    ).toBe(true);
   });
 
   it("classifies cat themes and rukia correctly", () => {

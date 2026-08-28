@@ -19,7 +19,7 @@ import { WatchableItemTile } from "@/components/tiles";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { useThemeMeta } from "@/themes";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 import { buildLootItemOwnerMap } from "@/features/guild/loots-list/utils/build-loot-share-maps";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 

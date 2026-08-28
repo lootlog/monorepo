@@ -7,33 +7,17 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { PlayerKillStatsPanel } from "./player-kill-stats-panel";
 import { TopKilledNpcsPanel } from "./top-killed-npcs-panel";
 
 const mocks = vi.hoisted(() => ({
   refetch: vi.fn(),
-  useKillStats: vi.fn(),
-}));
-
-vi.mock("@lootlog/api-client/react-query/main/kills", () => ({
-  getKillsControllerGetUserKillStatsQueryKey: (params?: unknown) => [
-    "kill-stats",
-    params,
-  ],
-  useKillsControllerGetUserKillStats: mocks.useKillStats,
 }));
 
 vi.mock("@lootlog/ui/components/filter-popover", () => ({
   FilterPopover: ({ value }: { value: string }) => (
     <button type="button">{value}</button>
-  ),
-}));
-
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => (
-    <a href="/@me/kills">{children}</a>
   ),
 }));
 
@@ -102,6 +86,7 @@ const populatedRanking = {
       npcName:
         "Bardzo długa nazwa przeciwnika, która nie może rozsadzić panelu rankingu",
       npcProf: "w",
+      npcType: "ELITE2",
       totalKills: 1234,
     },
     ...Array.from({ length: 5 }, (_, index) => ({
@@ -110,29 +95,19 @@ const populatedRanking = {
       npcLvl: 299 - index,
       npcName: index === 4 ? "Szósty potwór" : `Potwór ${index + 2}`,
       npcProf: "m",
+      npcType: "ELITE2",
       totalKills: 1000 - index,
     })),
   ],
 };
 
 describe("dashboard statistics data panels", () => {
-  beforeEach(() => {
-    mocks.useKillStats.mockImplementation(
-      (params: { npcTypes?: string[] }) => ({
-        data: params.npcTypes ? populatedRanking : populatedStats,
-        isError: false,
-        isLoading: false,
-        refetch: mocks.refetch,
-      }),
-    );
-  });
-
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
   });
 
-  it("passes period, world, and NPC type to the ranking query", () => {
+  it("exposes the selected NPC type inside the query-free ranking view", () => {
     render(
       <>
         <PlayerKillStatsPanel
@@ -143,18 +118,16 @@ describe("dashboard statistics data panels", () => {
           onRetry={mocks.refetch}
         />
         <TopKilledNpcsPanel
-          world="Lunia"
-          period="7d"
+          data={populatedRanking}
+          hasActiveFilters
+          isError={false}
+          isLoading={false}
           npcType="HERO"
           onNpcTypeChange={vi.fn()}
+          onRetry={mocks.refetch}
+          onViewAll={vi.fn()}
         />
       </>,
-    );
-
-    expect(mocks.useKillStats).toHaveBeenNthCalledWith(
-      1,
-      { npcTypes: ["HERO"], period: "7d", world: "Lunia" },
-      expect.any(Object),
     );
 
     const ranking = screen.getByRole("region", {
@@ -176,9 +149,14 @@ describe("dashboard statistics data panels", () => {
           onRetry={mocks.refetch}
         />
         <TopKilledNpcsPanel
-          period="all"
+          data={populatedRanking}
+          hasActiveFilters={false}
+          isError={false}
+          isLoading={false}
           npcType="ELITE2"
           onNpcTypeChange={vi.fn()}
+          onRetry={mocks.refetch}
+          onViewAll={vi.fn()}
         />
       </>,
     );
@@ -274,13 +252,6 @@ describe("dashboard statistics data panels", () => {
   });
 
   it("distinguishes query failures from empty data and lets the user retry", () => {
-    mocks.useKillStats.mockReturnValueOnce({
-      data: undefined,
-      isError: true,
-      isLoading: false,
-      refetch: mocks.refetch,
-    });
-
     render(
       <>
         <PlayerKillStatsPanel
@@ -290,9 +261,13 @@ describe("dashboard statistics data panels", () => {
           onRetry={mocks.refetch}
         />
         <TopKilledNpcsPanel
-          period="all"
+          hasActiveFilters={false}
+          isError
+          isLoading={false}
           npcType="ELITE2"
           onNpcTypeChange={vi.fn()}
+          onRetry={mocks.refetch}
+          onViewAll={vi.fn()}
         />
       </>,
     );

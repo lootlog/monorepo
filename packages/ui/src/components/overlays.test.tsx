@@ -13,8 +13,75 @@ import {
   AlertDialogTrigger,
 } from "./alert-dialog";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "./sheet";
+import { PortalContainerProvider } from "./portal-container-provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./dropdown-menu";
 
 describe("Base UI overlays", () => {
+  it("renders provider-aware portals inside the scoped container", () => {
+    const portalContainer = document.createElement("div");
+    document.body.append(portalContainer);
+
+    const { unmount } = render(
+      <PortalContainerProvider container={portalContainer}>
+        <Dialog defaultOpen>
+          <DialogContent>
+            <DialogTitle>Scoped dialog</DialogTitle>
+          </DialogContent>
+        </Dialog>
+        <Tooltip defaultOpen>
+          <TooltipTrigger>Scoped tooltip trigger</TooltipTrigger>
+          <TooltipContent>Scoped tooltip</TooltipContent>
+        </Tooltip>
+        <Select
+          items={[{ label: "Scoped option", value: "option" }]}
+          defaultValue="option"
+          defaultOpen
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="option">Scoped option</SelectItem>
+          </SelectContent>
+        </Select>
+        <DropdownMenu defaultOpen>
+          <DropdownMenuTrigger>Scoped menu trigger</DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem>Scoped menu item</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </PortalContainerProvider>,
+    );
+
+    expect(
+      portalContainer.querySelector('[data-slot="dialog-content"]'),
+    ).toBeInTheDocument();
+    expect(
+      portalContainer.querySelector('[data-slot="tooltip-content"]'),
+    ).toBeInTheDocument();
+    expect(
+      portalContainer.querySelector('[data-slot="select-content"]'),
+    ).toBeInTheDocument();
+    expect(
+      portalContainer.querySelector('[data-slot="dropdown-menu-content"]'),
+    ).toBeInTheDocument();
+
+    unmount();
+    portalContainer.remove();
+  });
+
   it("opens a dialog and closes it with Escape", async () => {
     const handleOpenChange = vi.fn();
     render(

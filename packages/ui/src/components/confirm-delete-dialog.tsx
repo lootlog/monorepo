@@ -148,7 +148,7 @@ export function ConfirmDeleteDialog({
               void handleConfirm();
             }}
             disabled={isConfirmDisabled}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive-hover active:bg-destructive-active"
           >
             {confirmButtonLabel}
           </AlertDialogAction>

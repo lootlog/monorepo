@@ -145,7 +145,8 @@ describe("ServerVisibilitySettings", () => {
   it("renders ordered guilds and visibility counts", () => {
     render(<ServerVisibilitySettings />);
 
-    expect(screen.getByText("2 widoczne · 1 ukryty")).toBeTruthy();
+    expect(screen.getByText("2 widoczne", { exact: false })).toBeTruthy();
+    expect(screen.getByText("1 ukryty", { exact: false })).toBeTruthy();
     expect(
       screen
         .getAllByRole("switch")

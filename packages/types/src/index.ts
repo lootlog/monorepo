@@ -17,3 +17,4 @@ export * from "./common/chat.types.js";
 export * from "./common/chat-appearance-settings.js";
 export * from "./common/settings-documents.types.js";
 export * from "./common/reservation-events.types.js";
+export * from "./common/theme.types.js";

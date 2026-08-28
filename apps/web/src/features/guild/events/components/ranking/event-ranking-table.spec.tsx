@@ -49,6 +49,10 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
+vi.mock("@lootlog/ui/components/scroll-area", () => ({
+  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
+
 describe("EventRankingTable", () => {
   let restoreApiClients: () => void;
 

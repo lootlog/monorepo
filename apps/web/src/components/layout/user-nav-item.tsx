@@ -12,7 +12,8 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Link, useLocation } from "@tanstack/react-router";
-import { ThemeCircularFrame, useThemeMeta } from "@/themes";
+import { ThemeCircularFrame } from "@/themes/theme-circular-frame";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 import type { MouseEvent } from "react";
 
 export const UserNavItem = () => {

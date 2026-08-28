@@ -3,11 +3,9 @@ import type { MouseEvent, ReactNode } from "react";
 import { useLocation } from "@tanstack/react-router";
 import type { MenuItem } from "./types";
 import { SidebarNavItem } from "./sidebar-nav-item";
-import {
-  ThemeSidebarBackground,
-  ThemeSidebarFooterDecoration,
-  useThemeMeta,
-} from "@/themes";
+import { ThemeSidebarBackground } from "@/themes/theme-sidebar-background";
+import { ThemeSidebarFooterDecoration } from "@/themes/theme-sidebar-footer-decoration";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 
 interface SidebarNavProps {
   items: MenuItem[];

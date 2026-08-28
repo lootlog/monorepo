@@ -27,8 +27,16 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  PatchThemeLibraryDto
+} from '../../../models/main/patch-theme-library-dto';
+
+import type {
   StatusOkResponseDtoOutput
 } from '../../../models/main/status-ok-response-dto-output';
+
+import type {
+  ThemeLibraryResponseDtoOutput
+} from '../../../models/main/theme-library-response-dto-output';
 
 import type {
   UpdateUserGameAccountPreferencesDto
@@ -81,7 +89,219 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export const getUsersControllerDeleteAccountUrl = () => {
+export const getUsersControllerGetThemeLibraryUrl = () => {
+
+
+
+
+  return `/users/@me/themes`
+}
+
+/**
+ * @summary Get the current user's theme library
+ */
+export const usersControllerGetThemeLibrary = async ( options?: Parameters<typeof mainFetch>[1]): Promise<ThemeLibraryResponseDtoOutput> => {
+
+  return mainFetch<ThemeLibraryResponseDtoOutput>(getUsersControllerGetThemeLibraryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersControllerGetThemeLibraryQueryKey = () => {
+    return [
+    `/users/@me/themes`
+    ] as const;
+    }
+
+
+export const getUsersControllerGetThemeLibraryQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetThemeLibraryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>> = ({ signal }) => usersControllerGetThemeLibrary({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersControllerGetThemeLibraryQueryResult = NonNullable<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>>
+export type UsersControllerGetThemeLibraryQueryError = ErrorType<unknown>
+
+
+export function useUsersControllerGetThemeLibrary<TData = Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersControllerGetThemeLibrary<TData = Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersControllerGetThemeLibrary<TData = Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the current user's theme library
+ */
+
+export function useUsersControllerGetThemeLibrary<TData = Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersControllerGetThemeLibraryQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get the current user's theme library
+ */
+export const prefetchUsersControllerGetThemeLibraryQuery = async <TData = Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUsersControllerGetThemeLibraryQueryOptions(options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get the current user's theme library
+ */
+export const invalidateUsersControllerGetThemeLibrary = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetThemeLibraryQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get the current user's theme library
+ */
+export const useSetUsersControllerGetThemeLibraryQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof usersControllerGetThemeLibrary>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetThemeLibrary>> | undefined) => Awaited<ReturnType<typeof usersControllerGetThemeLibrary>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>>({ queryKey: getUsersControllerGetThemeLibraryQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get the current user's theme library
+ */
+export const useGetUsersControllerGetThemeLibraryQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetThemeLibrary>>>(getUsersControllerGetThemeLibraryQueryKey());
+}
+
+
+export const getUsersControllerPatchThemeLibraryUrl = () => {
+
+
+
+
+  return `/users/@me/themes`
+}
+
+/**
+ * @summary Atomically update the current user's themes
+ */
+export const usersControllerPatchThemeLibrary = async (patchThemeLibraryDto: PatchThemeLibraryDto, options?: Parameters<typeof mainFetch>[1]): Promise<ThemeLibraryResponseDtoOutput> => {
+
+  return mainFetch<ThemeLibraryResponseDtoOutput>(getUsersControllerPatchThemeLibraryUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(patchThemeLibraryDto)
+  }
+);}
+
+
+
+
+
+export const getUsersControllerPatchThemeLibraryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerPatchThemeLibrary>>, TError,{data: BodyType<PatchThemeLibraryDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersControllerPatchThemeLibrary>>, TError,{data: BodyType<PatchThemeLibraryDto>}, TContext> => {
+
+const mutationKey = ['usersControllerPatchThemeLibrary'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersControllerPatchThemeLibrary>>, {data: BodyType<PatchThemeLibraryDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersControllerPatchThemeLibrary(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersControllerPatchThemeLibraryMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerPatchThemeLibrary>>>
+    export type UsersControllerPatchThemeLibraryMutationBody = BodyType<PatchThemeLibraryDto>
+    export type UsersControllerPatchThemeLibraryMutationError = ErrorType<void>
+
+    /**
+ * @summary Atomically update the current user's themes
+ */
+export const useUsersControllerPatchThemeLibrary = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerPatchThemeLibrary>>, TError,{data: BodyType<PatchThemeLibraryDto>}, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersControllerPatchThemeLibrary>>,
+        TError,
+        {data: BodyType<PatchThemeLibraryDto>},
+        TContext
+      > => {
+      return useMutation(getUsersControllerPatchThemeLibraryMutationOptions(options), queryClient);
+    }
+    export const getUsersControllerDeleteAccountUrl = () => {
 
 
 

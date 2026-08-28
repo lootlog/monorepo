@@ -58,7 +58,7 @@ vi.mock("@/hooks/use-loots-filters", () => ({
   }),
 }));
 
-vi.mock("@/themes", () => ({
+vi.mock("@/themes/use-theme-meta", () => ({
   useThemeMeta: () => ({ isRukiaTheme: false }),
 }));
 

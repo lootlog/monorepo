@@ -1,5 +1,6 @@
 import { lazy, Suspense, type CSSProperties } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppLayoutFrame } from "@/components/layout/app-layout-frame";
 import { GuildShell } from "@/components/layout/guild-shell";
 import { GuildSidebarNavPlaceholder } from "@/components/layout/guild-sidebar-nav-placeholder";
 import { GuildsSidebarNav } from "@/components/layout/guilds-sidebar-nav";
@@ -9,12 +10,8 @@ import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Outlet, useLocation, useMatches } from "@tanstack/react-router";
+import { ThemePreviewSessionBanner } from "@/features/user/settings/appearance/theme-preview-session-banner";
 
-const ThemeAnnouncement = lazy(() =>
-  import("@/components/common/theme-announcement").then((module) => ({
-    default: module.ThemeAnnouncement,
-  })),
-);
 const CreateGuildModal = lazy(() =>
   import("@/components/common/create-guild-modal/create-guild-modal").then(
     (module) => ({
@@ -61,11 +58,8 @@ export const AppLayout = () => {
       className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground"
       data-design-system="signal-v2"
     >
-      <Suspense fallback={null}>
-        <ThemeAnnouncement />
-      </Suspense>
       <div className="h-full min-h-0 flex-1">
-        <div className="flex h-full max-h-full flex-row overflow-hidden">
+        <AppLayoutFrame>
           <SidebarProvider
             style={
               isStandaloneRoute
@@ -93,9 +87,10 @@ export const AppLayout = () => {
               </GuildShell>
             )}
           </SidebarProvider>
-        </div>
+        </AppLayoutFrame>
       </div>
       <Toaster />
+      <ThemePreviewSessionBanner />
       <Suspense fallback={null}>
         <CreateGuildModal />
         <InstallAddonModal />

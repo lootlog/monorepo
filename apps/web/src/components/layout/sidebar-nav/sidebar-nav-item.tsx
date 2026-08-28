@@ -4,7 +4,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { MenuItem } from "./types";
-import { ThemeInteractiveFrame } from "@/themes";
+import { ThemeInteractiveFrame } from "@/themes/theme-interactive-frame";
 
 export const SidebarNavItem = ({
   url,
@@ -30,7 +30,7 @@ export const SidebarNavItem = ({
   onItemClick: (e: MouseEvent) => void;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const badgeVariant = isActive ? "white" : (badge?.variant ?? "default");
+  const badgeVariant = isActive ? "outline" : (badge?.variant ?? "default");
 
   const buttonContent = (
     <Button
@@ -38,9 +38,9 @@ export const SidebarNavItem = ({
       size="sm"
       className={cn(
         "justify-between w-full font-semibold transition-colors duration-200 relative",
-        isActive && "shadow-[0_0_12px_var(--primary)/0.25]",
+        isActive && "shadow-[0_0_12px_var(--theme-shadow)]",
         !isActive &&
-          "text-muted-foreground hover:text-primary hover:!bg-primary/10",
+          "text-muted-foreground hover:text-foreground hover:!bg-neutral-hover",
         highlight &&
           !isActive && [
             "overflow-hidden",
@@ -63,7 +63,13 @@ export const SidebarNavItem = ({
         {label}
       </div>
       {badge && (
-        <Badge variant={badgeVariant} className="ml-auto">
+        <Badge
+          variant={badgeVariant}
+          className={cn(
+            "ml-auto",
+            isActive && "border-primary-foreground text-primary-foreground",
+          )}
+        >
           {badge.content}
         </Badge>
       )}
@@ -91,7 +97,7 @@ export const SidebarNavItem = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {isActive && !isRukiaTheme ? (
-        <div className="absolute inset-x-2 inset-y-0 rounded-md bg-primary/5" />
+        <div className="absolute inset-x-2 inset-y-0 rounded-md bg-surface-selected" />
       ) : null}
       <Link
         to={url}

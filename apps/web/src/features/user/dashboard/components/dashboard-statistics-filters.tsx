@@ -1,43 +1,41 @@
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { useTranslation } from "react-i18next";
-import type { DashboardFilters } from "../hooks/use-dashboard-filters";
 import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,
 } from "@/features/kills/components/kill-stats-period-select";
-import { WorldSwitcher } from "@/components/common/world-switcher";
-import {
-  getKillsControllerGetUserKillStatsQueryKey,
-  useKillsControllerGetUserKillStats,
-} from "@lootlog/api-client/react-query/main/kills";
+import type { DashboardFilters } from "../hooks/use-dashboard-filters";
 
 type DashboardStatisticsFiltersProps = {
+  availableWorlds: string[];
   filters: DashboardFilters;
-  onWorldChange: (world: string | undefined) => void;
   onPeriodChange: (period: KillStatsPeriod) => void;
+  onWorldChange: (world: string | undefined) => void;
 };
 
-export const DashboardStatisticsFilters: React.FC<
-  DashboardStatisticsFiltersProps
-> = ({ filters, onWorldChange, onPeriodChange }) => {
-  const { t } = useTranslation();
-  const { data } = useKillsControllerGetUserKillStats(undefined, {
-    query: {
-      queryKey: getKillsControllerGetUserKillStatsQueryKey(),
-      staleTime: 30_000,
-    },
-  });
+const ALL_WORLDS_VALUE = "__ALL_WORLDS__";
 
-  const availableWorlds = data?.overview.killsByWorld
-    ? Object.keys(data.overview.killsByWorld)
-    : [];
+export const DashboardStatisticsFilters = ({
+  availableWorlds,
+  filters,
+  onPeriodChange,
+  onWorldChange,
+}: DashboardStatisticsFiltersProps) => {
+  const { t } = useTranslation();
   const worlds = [
     ...(filters.world ? [filters.world] : []),
     ...availableWorlds.filter((world) => world !== filters.world),
   ].sort();
-
-  const handleWorldChange = (value: string | null) => {
-    onWorldChange(value ?? undefined);
-  };
+  const worldOptions = [
+    {
+      label: t("kills.home.filters.allWorlds"),
+      value: ALL_WORLDS_VALUE,
+    },
+    ...worlds.map((world) => ({
+      label: world.charAt(0).toUpperCase() + world.slice(1),
+      value: world,
+    })),
+  ];
 
   return (
     <div
@@ -57,13 +55,18 @@ export const DashboardStatisticsFilters: React.FC<
       </div>
       <div className="min-w-0 space-y-1">
         <span className="sr-only">{t("kills.filters.world")}</span>
-        <WorldSwitcher
-          value={filters.world ?? null}
-          onValueChange={handleWorldChange}
-          showAllOption
-          worlds={worlds}
+        <FilterPopover
+          options={worldOptions}
+          value={filters.world ?? ALL_WORLDS_VALUE}
+          onValueChange={(world) =>
+            onWorldChange(
+              world === ALL_WORLDS_VALUE ? undefined : (world as string),
+            )
+          }
           width="w-full"
           triggerClassName="h-11 w-full has-[>svg]:pr-4 @2xl/statistics:h-9"
+          emptyMessage={t("common.noResults")}
+          searchPlaceholder={t("common.search")}
         />
       </div>
     </div>

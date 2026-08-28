@@ -14,7 +14,7 @@ import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useThemeMeta } from "@/themes";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@lootlog/api-client/react-query/main/loots";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -165,7 +165,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
                 variant="outline"
                 size="icon"
                 aria-label={canTriggerRefreshText}
-                className="size-8 border-primary/30 bg-primary/10 text-primary shadow-sm hover:border-primary/60 hover:bg-primary/15 disabled:border-border disabled:bg-muted/40 disabled:text-muted-foreground disabled:opacity-100"
+                className="size-8 border-input bg-background text-primary shadow-sm hover:border-input-focus hover:bg-surface-hover disabled:border-border disabled:bg-secondary disabled:text-muted-foreground disabled:opacity-100"
                 onClick={handleRefreshPermissions}
                 disabled={!canTriggerRefresh || refreshMember.isPending}
               >

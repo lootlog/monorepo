@@ -4,7 +4,7 @@ import { BellRing, LayoutDashboard, Settings, Swords } from "lucide-react";
 import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { ROUTE_SEGMENTS } from "@/config/routes";
-import { useThemeMeta } from "@/themes";
+import { useThemeMeta } from "@/themes/use-theme-meta";
 
 export const UserSidebarNav = () => {
   const { data: session } = useSession();

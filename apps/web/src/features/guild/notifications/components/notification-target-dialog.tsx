@@ -222,7 +222,7 @@ export const NotificationTargetDialog = ({
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-lg">
-        <DialogHeader className="border-b bg-muted/30 px-5 py-4">
+        <DialogHeader className="border-b bg-secondary px-5 py-4">
           <DialogTitle className="px-0 pt-0 text-base">
             {t(
               isCreateMode

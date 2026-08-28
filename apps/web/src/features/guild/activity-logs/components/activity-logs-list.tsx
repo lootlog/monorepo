@@ -13,7 +13,8 @@ import {
 } from "@/hooks/utils/use-virtual-infinite-scroll";
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
-import { ThemeEmptyStateIcon, useThemedKey } from "@/themes";
+import { ThemeEmptyStateIcon } from "@/themes/theme-empty-state-icon";
+import { useThemedKey } from "@/themes/use-themed-key";
 import {
   activityLogsInfiniteQueryOptions,
   getActivityLogSources,

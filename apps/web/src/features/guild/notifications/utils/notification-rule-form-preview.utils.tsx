@@ -29,9 +29,7 @@ export const previewMarkdownComponents: Components = {
       return (
         <span
           style={{
-            backgroundColor: color
-              ? `${color}22`
-              : "color-mix(in oklab, var(--primary) 12%, transparent)",
+            backgroundColor: color ? `${color}22` : "var(--surface-selected)",
             borderRadius: "2px",
             color: color ?? "var(--primary)",
           }}

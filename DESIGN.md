@@ -246,6 +246,13 @@ The signal route uses thick rounded strokes connected by deliberate bends and ci
 - **Hover / Active:** Slight tonal change and at most a 2px upward hover translation; active returns to baseline.
 - **Focus:** A visible 2px signal-colored ring with generous offset. Disabled and loading states retain size and accessible naming.
 
+### Themeable component states
+
+- Generic product components must resolve hover, active, selected, focus, input, sidebar, surface and shadow colors from named semantic theme tokens. Do not derive chromatic states with opacity utilities, `color-mix()`, raw palette classes or component-local literals.
+- A component recipe may choose which named tokens it uses, but it must not synthesize a color that is absent from the active theme configuration. Manual component overrides are explicit theme data.
+- Domain colors are limited to game rarity and product status semantics. Illustrations and registered special-theme packages may use their own allowlisted palettes; their styles must not leak into generic component chrome.
+- Portaled UI inherits the theme scope that opened it. Embedded previews and editors must provide a local portal container instead of rendering themed overlays against the application root.
+
 ### Navigation
 
 - **Style:** Night Ink, stable placement and the Resp Orbit lockup. Text is compact, bold and quiet until hover or active state.

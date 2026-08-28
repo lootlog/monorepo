@@ -1,24 +1,13 @@
-export const THEME_IDS = [
-  "default",
-  "cyberpunk",
-  "pastel",
-  "fantasy",
-  "shonen",
-  "onepiece",
-  "anime",
-  "waguri",
-  "goth",
-  "halloween",
-  "realmadrid",
-  "realmadrid-3rd",
-  "barcelona",
-  "rukia",
-  "rias",
-  "cat-pink",
-  "cat-purple",
-  "cat-blue",
-  "cat-random",
-] as const;
+import {
+  THEME_PRESET_IDS,
+  type ThemeConfigV1,
+  type ThemePresetId,
+  isSpecialThemeId,
+} from "@lootlog/types";
+import { PRESET_THEME_CONFIGS } from "./preset-configs";
+import { SPECIAL_THEME_PACKAGES } from "./special-theme-packages";
+
+export const THEME_IDS = THEME_PRESET_IDS;
 
 export const THEME_CLASS_IDS = [
   "default",
@@ -47,7 +36,7 @@ export const CAT_THEME_VARIANTS = [
   "cat-blue",
 ] as const;
 
-export type ThemeId = (typeof THEME_IDS)[number];
+export type ThemeId = ThemePresetId;
 export type ResolvedThemeId = (typeof THEME_CLASS_IDS)[number];
 export type CatThemeVariant = (typeof CAT_THEME_VARIANTS)[number];
 export type ThemeFamily = "standard" | "rukia" | "rias" | "cat";
@@ -55,15 +44,21 @@ export type ThemeFamily = "standard" | "rukia" | "rias" | "cat";
 export interface ThemePreview {
   name: ThemeId;
   family: ThemeFamily;
+  category: "preset" | "special";
+  availability: "available" | "locked";
   colors: string[];
   backgroundImage: string;
+  config: ThemeConfigV1;
 }
 
 export const DEFAULT_THEME_ID: ThemeId = "default";
 export const DEFAULT_CAT_THEME_VARIANT: CatThemeVariant = "cat-pink";
 export const THEME_STORAGE_KEY = "lootlog-theme";
 
-export const THEME_CATALOG: ThemePreview[] = [
+const THEME_PREVIEWS: Omit<
+  ThemePreview,
+  "category" | "availability" | "config"
+>[] = [
   {
     name: "default",
     family: "standard",
@@ -196,3 +191,12 @@ export const THEME_CATALOG: ThemePreview[] = [
       "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='catRandomGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23F4B8C8;stop-opacity:0.1' /%3E%3Cstop offset='50%25' style='stop-color:%23C9AED6;stop-opacity:0.08' /%3E%3Cstop offset='100%25' style='stop-color:%23A8CFE0;stop-opacity:0.1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23catRandomGrad)'/%3E%3Cellipse cx='82' cy='80' rx='11' ry='8.5' fill='%23F4B8C8' opacity='0.1'/%3E%3Ccircle cx='70' cy='66' r='4.5' fill='%23F4B8C8' opacity='0.1'/%3E%3Ccircle cx='77' cy='62' r='4' fill='%23F4B8C8' opacity='0.1'/%3E%3Ccircle cx='87' cy='62' r='4' fill='%23F4B8C8' opacity='0.1'/%3E%3Ccircle cx='94' cy='66' r='4.5' fill='%23F4B8C8' opacity='0.1'/%3E%3Cellipse cx='282' cy='200' rx='11' ry='8.5' fill='%23A8CFE0' opacity='0.08' transform='rotate(20 280 200)'/%3E%3Ccircle cx='270' cy='186' r='4.5' fill='%23A8CFE0' opacity='0.08'/%3E%3Ccircle cx='277' cy='182' r='4' fill='%23A8CFE0' opacity='0.08'/%3E%3Ccircle cx='287' cy='182' r='4' fill='%23A8CFE0' opacity='0.08'/%3E%3Ccircle cx='294' cy='186' r='4.5' fill='%23A8CFE0' opacity='0.08'/%3E%3Cellipse cx='202' cy='140' rx='9.5' ry='7.5' fill='%23C9AED6' opacity='0.06' transform='rotate(-15 200 140)'/%3E%3Ccircle cx='192' cy='128' r='3.8' fill='%23C9AED6' opacity='0.06'/%3E%3Ccircle cx='198' cy='125' r='3.3' fill='%23C9AED6' opacity='0.06'/%3E%3Ccircle cx='206' cy='125' r='3.3' fill='%23C9AED6' opacity='0.06'/%3E%3Ccircle cx='212' cy='128' r='3.8' fill='%23C9AED6' opacity='0.06'/%3E%3C/svg%3E",
   },
 ];
+
+export const THEME_CATALOG: ThemePreview[] = THEME_PREVIEWS.map((theme) => ({
+  ...theme,
+  category: theme.family === "standard" ? "preset" : "special",
+  availability: isSpecialThemeId(theme.name)
+    ? SPECIAL_THEME_PACKAGES[theme.name].availability
+    : "available",
+  config: PRESET_THEME_CONFIGS[theme.name],
+}));

@@ -1,6 +1,6 @@
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useState, type FC } from "react";
-import { ThemeInteractiveFrame } from "@/themes";
+import { ThemeInteractiveFrame } from "@/themes/theme-interactive-frame";
 
 type FilterComboboxProps = {
   placeholder: string;

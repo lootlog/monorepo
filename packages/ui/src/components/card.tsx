@@ -2,18 +2,16 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@lootlog/ui/lib/utils";
-import { CatPawOverlay } from "@lootlog/ui/components/cat-paw-overlay";
-import { RukiaFrostCardOverlay } from "@lootlog/ui/components/rukia-frost-card-overlay";
-import { RiasMagicCardOverlay } from "@lootlog/ui/components/rias-magic-card-overlay";
+import { SurfaceDecoration } from "@lootlog/ui/components/surface-decoration";
 
 const cardVariants = cva(
-  "bg-card text-card-foreground relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-border py-5 shadow-xs",
+  "bg-card text-card-foreground relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-border py-5 shadow-[0_1px_2px_var(--theme-shadow)]",
   {
     variants: {
       variant: {
         default: "",
         interactive:
-          "cursor-pointer transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/70 hover:bg-accent/35",
+          "cursor-pointer transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-input-focus hover:bg-surface-hover active:bg-surface-selected",
       },
     },
     defaultVariants: {
@@ -34,9 +32,7 @@ function Card({
       className={cn(cardVariants({ variant }), className)}
       {...props}
     >
-      <CatPawOverlay />
-      <RukiaFrostCardOverlay />
-      <RiasMagicCardOverlay />
+      <SurfaceDecoration slot="card" />
       {children}
     </div>
   );

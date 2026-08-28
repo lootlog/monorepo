@@ -274,7 +274,6 @@ export class UsersService {
       ...(preferences.hiddenGuildIds !== undefined
         ? { hiddenGuildIds: preferences.hiddenGuildIds }
         : {}),
-      ...(preferences.theme !== undefined ? { theme: preferences.theme } : {}),
     };
     const shouldUpdateUserSettings =
       Object.keys(nextUserSettingsPayload).length > 0;
@@ -533,7 +532,6 @@ export class UsersService {
       userId: string;
       guildsOrder: string[];
       hiddenGuildIds: string[];
-      theme: string;
     },
     mutes: NotificationMutes,
     chatAppearance = CHAT_APPEARANCE_READABLE_PRESET,
@@ -542,7 +540,6 @@ export class UsersService {
       userId: settings.userId,
       guildsOrder: settings.guildsOrder,
       hiddenGuildIds: settings.hiddenGuildIds,
-      theme: settings.theme,
       chatAppearance: normalizeChatAppearanceSettings(chatAppearance),
       mutes: this.cloneNotificationMutes(mutes),
     };
@@ -562,7 +559,6 @@ export class UsersService {
     return {
       guildsOrder: [],
       hiddenGuildIds: [],
-      theme: "default",
     };
   }
 

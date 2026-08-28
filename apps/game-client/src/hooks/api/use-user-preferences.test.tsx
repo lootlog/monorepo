@@ -3,7 +3,6 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as UsersModule from "@lootlog/api-client/react-query/main/users";
-import type { UpdateUserPreferencesDtoTheme } from "@lootlog/api-client/models/main/update-user-preferences-dto-theme";
 import type { UpdateUserPreferencesDto } from "@lootlog/api-client/models/main/update-user-preferences-dto";
 import type { UserPreferencesResponseDtoOutput } from "@lootlog/api-client/models/main/user-preferences-response-dto-output";
 import { useUpdateUserPreferences } from "./use-user-preferences";
@@ -28,7 +27,6 @@ const createTestUserPreferences = (): UserPreferencesResponseDtoOutput => ({
   userId: "user-1",
   guildsOrder: ["guild-1"],
   hiddenGuildIds: [],
-  theme: "default",
   chatAppearance: {
     npcLayout: "tile",
     fontScalePercent: 100,
@@ -332,7 +330,7 @@ describe("useUpdateUserPreferences", () => {
     const previousData = createTestUserPreferences();
     const serverData: UserPreferencesResponseDtoOutput = {
       ...previousData,
-      theme: "updated",
+      hiddenGuildIds: ["guild-2"],
       mutes: {
         players: [],
         npcs: [],
@@ -351,7 +349,7 @@ describe("useUpdateUserPreferences", () => {
 
     await act(async () => {
       await result.current.mutateAsync({
-        theme: "default" as UpdateUserPreferencesDtoTheme,
+        hiddenGuildIds: ["guild-2"],
       });
     });
 

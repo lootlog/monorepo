@@ -16,6 +16,9 @@
   "scripts": {
     "build": "tsdown"
   },
+  "dependencies": {
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "tsdown": "catalog:"

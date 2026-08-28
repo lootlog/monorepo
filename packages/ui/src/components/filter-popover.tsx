@@ -159,7 +159,7 @@ export function FilterPopover<T extends string = string>({
                     key={option.value}
                     value={option.value}
                     onSelect={() => handleSelect(option.value)}
-                    className="min-h-9 rounded-md px-2.5 data-[selected=true]:bg-primary/15 data-[selected=true]:text-foreground"
+                    className="min-h-9 rounded-md px-2.5 data-[selected=true]:bg-surface-selected data-[selected=true]:text-foreground"
                   >
                     {option.render ? (
                       option.render()

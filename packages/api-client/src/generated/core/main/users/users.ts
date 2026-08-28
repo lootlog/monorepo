@@ -6,8 +6,16 @@
  * OpenAPI spec version: 1.0
  */
 import type {
+  PatchThemeLibraryDto
+} from '../../../models/main/patch-theme-library-dto';
+
+import type {
   StatusOkResponseDtoOutput
 } from '../../../models/main/status-ok-response-dto-output';
+
+import type {
+  ThemeLibraryResponseDtoOutput
+} from '../../../models/main/theme-library-response-dto-output';
 
 import type {
   UpdateUserGameAccountPreferencesDto
@@ -38,6 +46,52 @@ import type {
 } from '../../../models/main/users-controller-update-user-game-account-preferences-path-parameters';
 
 import { mainFetch } from '../../../../mutators';
+
+export const getUsersControllerGetThemeLibraryUrl = () => {
+
+
+
+
+  return `/users/@me/themes`
+}
+
+/**
+ * @summary Get the current user's theme library
+ */
+export const usersControllerGetThemeLibrary = async ( options?: Parameters<typeof mainFetch>[1]): Promise<ThemeLibraryResponseDtoOutput> => {
+
+  return mainFetch<ThemeLibraryResponseDtoOutput>(getUsersControllerGetThemeLibraryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+export const getUsersControllerPatchThemeLibraryUrl = () => {
+
+
+
+
+  return `/users/@me/themes`
+}
+
+/**
+ * @summary Atomically update the current user's themes
+ */
+export const usersControllerPatchThemeLibrary = async (patchThemeLibraryDto: PatchThemeLibraryDto, options?: Parameters<typeof mainFetch>[1]): Promise<ThemeLibraryResponseDtoOutput> => {
+
+  return mainFetch<ThemeLibraryResponseDtoOutput>(getUsersControllerPatchThemeLibraryUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(patchThemeLibraryDto)
+  }
+);}
+
 
 export const getUsersControllerDeleteAccountUrl = () => {
 
