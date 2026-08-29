@@ -3,10 +3,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import type {
   DiscordGuildChannelDeletedEvent,
   DiscordNotificationDeliveryResultEvent,
+  LootCreatedNotificationEventV2,
 } from "@lootlog/types";
-import type { LootVisibilityNpc } from "@lootlog/loot-visibility";
 import {
-  type NpcType,
   NotificationJobKind as DbNotificationJobKind,
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationTriggerType as DbNotificationTriggerType,
@@ -22,20 +21,6 @@ import {
   WATCHED_ITEM_DROPPED_TITLE,
   watchedItemDroppedMessage,
 } from "src/notifications/constants/notification-messages.constant";
-
-type LootCreatedEvent = {
-  lootId: number;
-  world: string;
-  guildIds: string[];
-  itemIds: number[];
-  itemNames: string[];
-  npcs?: Array<{
-    type?: NpcType | null;
-    lvl?: number | null;
-  }>;
-  npcType?: NpcType | null;
-  npcLvl?: number | null;
-};
 
 @Injectable()
 export class NotificationsEventsHandler {
@@ -136,7 +121,7 @@ export class NotificationsEventsHandler {
       durable: true,
     },
   })
-  async handleLootCreated(event: LootCreatedEvent) {
+  async handleLootCreated(event: LootCreatedNotificationEventV2) {
     const watchedItems = await this.prisma.watchedItem.findMany({
       where: {
         enabled: true,
@@ -173,7 +158,10 @@ export class NotificationsEventsHandler {
     );
     const guildNamesMap = new Map(guilds.map((g) => [g.id, g.name]));
 
-    const lootVisibilityNpcs = this.getLootVisibilityNpcs(event);
+    const lootVisibilityNpcs = event.npcs.map((npc) => ({
+      type: npc.type,
+      level: npc.lvl,
+    }));
     const membershipsByOwner =
       await this.matchingService.getActiveMembershipsWithRoles(
         watchedItems
@@ -280,29 +268,6 @@ export class NotificationsEventsHandler {
         }
       }),
     );
-  }
-
-  private getLootVisibilityNpcs(event: LootCreatedEvent): LootVisibilityNpc[] {
-    if (event.npcs && event.npcs.length > 0) {
-      return event.npcs.map((npc) => ({
-        type: npc.type ?? null,
-        level: npc.lvl ?? null,
-      }));
-    }
-
-    const hasLegacyNpcData =
-      (event.npcType !== null && event.npcType !== undefined) ||
-      (event.npcLvl !== null && event.npcLvl !== undefined);
-    if (!hasLegacyNpcData) {
-      return [];
-    }
-
-    return [
-      {
-        type: event.npcType ?? null,
-        level: event.npcLvl ?? null,
-      },
-    ];
   }
 
   @RabbitSubscribe({

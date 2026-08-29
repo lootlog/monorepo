@@ -1063,13 +1063,13 @@ describe("Notification Services", () => {
     ]);
 
     await eventsHandler.handleLootCreated({
+      version: 2,
       lootId: 999,
       world: "berufs",
       itemIds: [123, 456],
       itemNames: ["Legendarny Miecz"],
       guildIds: ["guild-1"],
-      npcType: NpcType.ELITE,
-      npcLvl: 100,
+      npcs: [{ type: NpcType.ELITE, lvl: 100 }],
     });
 
     expect(mockPrisma.watchedItem.findMany).toHaveBeenCalledWith({
@@ -1192,6 +1192,7 @@ describe("Notification Services", () => {
     ]);
 
     await eventsHandler.handleLootCreated({
+      version: 2,
       lootId: 1000,
       world: "berufs",
       itemIds: [123],
@@ -1201,8 +1202,6 @@ describe("Notification Services", () => {
         { type: NpcType.TITAN, lvl: 300 },
         { type: NpcType.HERO, lvl: 120 },
       ],
-      npcType: NpcType.TITAN,
-      npcLvl: 300,
     });
 
     expect(mockPrisma.notificationJob.create).not.toHaveBeenCalled();
@@ -1241,11 +1240,13 @@ describe("Notification Services", () => {
     ]);
 
     await eventsHandler.handleLootCreated({
+      version: 2,
       lootId: 1001,
       world: "berufs",
       itemIds: [123],
       itemNames: ["Legendarny Miecz"],
       guildIds: ["guild-1"],
+      npcs: [{ type: NpcType.ELITE, lvl: 100 }],
     });
 
     expect(mockPrisma.notificationJob.create).not.toHaveBeenCalled();
