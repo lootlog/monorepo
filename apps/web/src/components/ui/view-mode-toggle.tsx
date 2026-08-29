@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Grid2X2, List, type LucideIcon } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@lootlog/ui/components/toggle-group";
 import {
   Tooltip,
   TooltipContent,
@@ -37,7 +40,15 @@ export function ViewModeToggle({
   };
 
   return (
-    <div
+    <ToggleGroup
+      value={[value]}
+      onValueChange={(nextValue) => {
+        const nextMode = nextValue[0];
+        if (nextMode) {
+          onChange(nextMode as ViewMode);
+        }
+      }}
+      aria-label={`${listLabel} / ${gridLabel}`}
       className={cn(
         "flex items-center gap-0.5 rounded-xl border border-border bg-background/35 p-0.5",
         className,
@@ -47,27 +58,20 @@ export function ViewModeToggle({
         <Tooltip key={mode}>
           <TooltipTrigger
             render={
-              <div
+              <ToggleGroupItem
+                value={mode}
                 onMouseEnter={() => setHoveredMode(mode)}
                 onMouseLeave={() => setHoveredMode(null)}
+                aria-label={labels[mode]}
+                className="size-8 p-0 aria-pressed:bg-primary aria-pressed:text-primary-foreground"
               >
                 <ThemeInteractiveFrame
                   isHovered={hoveredMode === mode}
                   isActive={value === mode}
                 >
-                  <Button
-                    type="button"
-                    onClick={() => onChange(mode)}
-                    variant={value === mode ? "default" : "ghost"}
-                    size="icon"
-                    aria-label={labels[mode]}
-                    aria-pressed={value === mode}
-                    className="size-8"
-                  >
-                    <Icon className="size-4" />
-                  </Button>
+                  <Icon className="size-4" />
                 </ThemeInteractiveFrame>
-              </div>
+              </ToggleGroupItem>
             }
           />
           <TooltipContent side="bottom">
@@ -75,6 +79,6 @@ export function ViewModeToggle({
           </TooltipContent>
         </Tooltip>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }

@@ -1,6 +1,6 @@
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
   AlertTriangle,

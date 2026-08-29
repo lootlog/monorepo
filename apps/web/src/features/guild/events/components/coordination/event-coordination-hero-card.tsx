@@ -5,7 +5,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { cn } from "@lootlog/ui/lib/utils";
+import { Progress } from "@lootlog/ui/components/progress";
 import { NpcTile } from "@/components/tiles";
 import { formatDurationHuman } from "../../utils/format-duration";
 import {
@@ -174,13 +174,17 @@ export const EventCoordinationHeroCard = ({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="h-2 overflow-hidden rounded-full bg-muted">
-          <div
-            className={cn("h-full rounded-full", getProgressClass(hero))}
-            style={{ width: `${coveragePercentage}%` }}
-          />
-        </div>
+      <div className="flex flex-col gap-2">
+        <Progress
+          value={coveragePercentage}
+          variant={getProgressVariant(hero)}
+          aria-label={t("events.coordination.hero.coverageShort", {
+            covered: hero.coverage.coveredMaps,
+            total: hero.coverage.totalMaps,
+            percentage: coveragePercentage,
+          })}
+          className="[&_[data-slot=progress-track]]:h-2"
+        />
 
         {hero.activeGaps.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -237,18 +241,18 @@ function getGapLabelKey(gapType: "UNASSIGNED" | "UNCOVERED") {
   return "events.maps.gap.uncovered";
 }
 
-function getProgressClass(hero: EventCoordinationResponseDtoHeroesItem) {
+function getProgressVariant(hero: EventCoordinationResponseDtoHeroesItem) {
   if (hero.priority === "CRITICAL") {
-    return "bg-destructive";
+    return "alert" as const;
   }
 
   if (hero.priority === "WARNING") {
-    return "bg-amber-500";
+    return "timer" as const;
   }
 
   if (hero.priority === "OK") {
-    return "bg-green-500";
+    return "ready" as const;
   }
 
-  return "bg-muted-foreground/40";
+  return "default" as const;
 }

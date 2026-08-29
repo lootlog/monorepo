@@ -1,6 +1,8 @@
 import { Button } from "@lootlog/ui/components/button";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { Alert, AlertTitle } from "@lootlog/ui/components/alert";
+import { Empty, EmptyHeader, EmptyTitle } from "@lootlog/ui/components/empty";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, CircleAlert, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
@@ -65,34 +67,34 @@ export const TopKilledNpcsPanel: React.FC<TopKilledNpcsPanelProps> = ({
     );
   } else if (isError && !data) {
     content = (
-      <div role="alert" className="px-3 py-8 text-center">
-        <CircleAlert className="mx-auto size-5 text-destructive" />
-        <p className="mt-3 text-sm text-muted-foreground">
-          {t("kills.home.topKilledNpcs.loadError")}
-        </p>
+      <Alert variant="destructive" className="m-3 w-auto">
+        <CircleAlert />
+        <AlertTitle>{t("kills.home.topKilledNpcs.loadError")}</AlertTitle>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="mt-4 min-h-11 lg:min-h-9"
+          className="mt-2 w-fit min-h-11 lg:min-h-9"
           onClick={() => void refetch()}
         >
-          <RefreshCw className="size-4" />
+          <RefreshCw data-icon="inline-start" />
           {t("common.actions.retry")}
         </Button>
-      </div>
+      </Alert>
     );
   } else if (topNpcs.length === 0) {
     content = (
-      <div className="px-3 py-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          {t(
-            hasActiveFilters
-              ? "kills.home.topKilledNpcs.filteredNoData"
-              : "kills.home.topKilledNpcs.noData",
-          )}
-        </p>
-      </div>
+      <Empty className="min-h-40 border-0 bg-transparent p-3">
+        <EmptyHeader>
+          <EmptyTitle>
+            {t(
+              hasActiveFilters
+                ? "kills.home.topKilledNpcs.filteredNoData"
+                : "kills.home.topKilledNpcs.noData",
+            )}
+          </EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   } else {
     content = (

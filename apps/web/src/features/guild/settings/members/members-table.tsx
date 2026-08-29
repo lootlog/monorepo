@@ -18,9 +18,13 @@ import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { Permission } from "@lootlog/types";
-import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
 import {
   DropdownMenu,
@@ -148,6 +152,7 @@ export const MembersTable = ({
                 <AvatarImage
                   src={getDiscordAvatarUrl(member.userId, member.avatar)}
                 />
+                <AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback>
               </Avatar>
               <span className="min-w-0">
                 <span
@@ -375,6 +380,7 @@ export const MembersTable = ({
                     <AvatarImage
                       src={getDiscordAvatarUrl(member.userId, member.avatar)}
                     />
+                    <AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex min-w-0 items-center gap-2">

@@ -1,7 +1,8 @@
 import { Button } from "@lootlog/ui/components/button";
+import { Progress } from "@lootlog/ui/components/progress";
 import { Clock, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type RefreshDisplayJob = {
   status: string;
@@ -49,12 +50,14 @@ export const RefreshMembersStatus = ({
             })}
           </span>
         </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-          <div
-            className="h-full bg-primary transition-all duration-300"
-            style={{ width: `${getRefreshProgress(displayJob)}%` }}
-          />
-        </div>
+        <Progress
+          value={getRefreshProgress(displayJob)}
+          aria-label={t("settings.members.refreshingProgress", {
+            processed: displayJob.processedMembers,
+            total: displayJob.totalMembers,
+          })}
+          className="[&_[data-slot=progress-track]]:h-1.5"
+        />
       </div>
     );
   }

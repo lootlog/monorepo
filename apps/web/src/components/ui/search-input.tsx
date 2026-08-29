@@ -1,24 +1,36 @@
 import { Search } from "lucide-react";
-import { forwardRef } from "react";
-import { cn } from "@/utils/cn";
-import { Input } from "@lootlog/ui/components/input";
+import { forwardRef, type ReactNode } from "react";
+import { cn } from "@lootlog/ui/lib/utils";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@lootlog/ui/components/input-group";
 
 export type SearchProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 const SearchInput = forwardRef<
   HTMLInputElement,
-  React.ComponentProps<"input"> & { wrapperClassName?: string }
->(({ className, wrapperClassName, ...props }, ref) => {
+  React.ComponentProps<"input"> & {
+    wrapperClassName?: string;
+    endAdornment?: ReactNode;
+  }
+>(({ className, wrapperClassName, endAdornment, ...props }, ref) => {
   return (
-    <div className={cn("relative", wrapperClassName)}>
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-      <Input
+    <InputGroup className={cn(wrapperClassName, className)}>
+      <InputGroupAddon>
+        <Search aria-hidden="true" />
+      </InputGroupAddon>
+      <InputGroupInput
         {...props}
         type="search"
         ref={ref}
-        className={cn("pl-9", className)}
+        className={className}
       />
-    </div>
+      {endAdornment ? (
+        <InputGroupAddon align="inline-end">{endAdornment}</InputGroupAddon>
+      ) : null}
+    </InputGroup>
   );
 });
 

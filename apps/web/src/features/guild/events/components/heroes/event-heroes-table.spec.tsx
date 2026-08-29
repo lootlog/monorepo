@@ -62,7 +62,13 @@ vi.mock("@lootlog/ui/components/dropdown-menu", () => ({
     children: ReactNode;
     onClick?: () => void;
   }) => <button onClick={onClick}>{children}</button>,
-  DropdownMenuTrigger: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuTrigger: ({
+    children,
+    render,
+  }: {
+    children?: ReactNode;
+    render?: ReactNode;
+  }) => render ?? children,
 }));
 
 vi.mock("@lootlog/ui/components/confirm-delete-dialog", () => ({

@@ -1,5 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { Card } from "@lootlog/ui/components/card";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+  FieldTitle,
+} from "@lootlog/ui/components/field";
+import { RadioGroup, RadioGroupItem } from "@lootlog/ui/components/radio-group";
 import { Zap, Settings } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { EventScoringMode } from "@lootlog/scoring";
@@ -37,40 +44,42 @@ export const ScoringModeSelector = ({
   const { t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <RadioGroup
+      value={value}
+      onValueChange={(nextValue) => onChange(nextValue as EventScoringMode)}
+      className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+    >
       {modes.map((mode) => {
         const isActive = value === mode.value;
         const Icon = mode.icon;
         return (
-          <button
-            key={mode.value}
-            type="button"
-            onClick={() => onChange(mode.value)}
-            className="text-left"
-          >
-            <Card
+          <FieldLabel key={mode.value} className="cursor-pointer">
+            <Field
+              orientation="horizontal"
               className={cn(
-                "p-3 transition-all cursor-pointer",
+                "items-center rounded-lg border bg-card p-3 transition-all",
                 isActive
-                  ? `ring-1 ${mode.activeRing} bg-card`
+                  ? `ring-1 ${mode.activeRing}`
                   : "border-border bg-card opacity-70 hover:opacity-90",
               )}
             >
-              <div className="flex items-center gap-3">
-                <div className={cn("rounded-xl p-2", mode.bgColor)}>
-                  <Icon className={cn("size-4", mode.color)} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{t(mode.titleKey)}</p>
-                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
-                    {t(mode.descKey)}
-                  </p>
-                </div>
+              <RadioGroupItem
+                value={mode.value}
+                aria-label={t(mode.titleKey)}
+              />
+              <div className={cn("rounded-xl p-2", mode.bgColor)}>
+                <Icon className={cn("size-4", mode.color)} />
               </div>
-            </Card>
-          </button>
+              <FieldContent>
+                <FieldTitle>{t(mode.titleKey)}</FieldTitle>
+                <FieldDescription className="text-xs leading-tight">
+                  {t(mode.descKey)}
+                </FieldDescription>
+              </FieldContent>
+            </Field>
+          </FieldLabel>
         );
       })}
-    </div>
+    </RadioGroup>
   );
 };

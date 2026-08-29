@@ -6,7 +6,7 @@ import {
   getResetBattleListFilters,
   removeBattleListFilter,
 } from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
-import { BattlePanelMobileFiltersDrawer } from "@/features/user/battle-panel/components/battle-panel-mobile-filters-drawer";
+import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { useQueryStates } from "nuqs";
 import type { BattleFilters } from "./components/battles-list-filters";
 import {
@@ -218,10 +218,11 @@ export const BattlePanelBattlesList = () => {
   return (
     <>
       {isMobile && (
-        <BattlePanelMobileFiltersDrawer
+        <MobileFiltersDrawer
           open={isMobileFiltersOpen}
           onOpenChange={setIsMobileFiltersOpen}
-          contentClassName="p-0"
+          trigger={null}
+          childrenClassName="p-0"
           title={t("battlePanel.filters.battlesTitle")}
         >
           <FiltersSidebar
@@ -231,7 +232,7 @@ export const BattlePanelBattlesList = () => {
             className="h-auto w-full border-l-0 p-0"
             showMatchmakingFilter={false}
           />
-        </BattlePanelMobileFiltersDrawer>
+        </MobileFiltersDrawer>
       )}
 
       <div className="w-full min-w-0 flex flex-col h-full overflow-hidden bg-background">

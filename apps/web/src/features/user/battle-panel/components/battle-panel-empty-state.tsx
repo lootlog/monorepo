@@ -1,4 +1,11 @@
-import { Card } from "@lootlog/ui/components/card";
+import { Card, CardContent } from "@lootlog/ui/components/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@lootlog/ui/components/empty";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
@@ -18,29 +25,28 @@ export const BattlePanelEmptyState = ({
   framed = false,
 }: BattlePanelEmptyStateProps) => {
   const content = (
-    <div
-      className={cn(
-        "flex min-h-64 flex-col items-center justify-center gap-3 px-6 py-12 text-center",
-        className,
-      )}
+    <Empty
+      className={cn("min-h-64 border-0 bg-transparent px-6 py-12", className)}
     >
-      <div className="rounded-xl bg-muted/40 p-3">
-        <Icon className="size-5 text-muted-foreground" />
-      </div>
-      <div className="space-y-1">
-        <p className="text-sm font-medium text-foreground">{title}</p>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Icon />
+        </EmptyMedia>
+        <EmptyTitle>{title}</EmptyTitle>
         {description ? (
-          <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-            {description}
-          </p>
+          <EmptyDescription>{description}</EmptyDescription>
         ) : null}
-      </div>
-    </div>
+      </EmptyHeader>
+    </Empty>
   );
 
   if (!framed) {
     return content;
   }
 
-  return <Card className="border-border bg-card p-0">{content}</Card>;
+  return (
+    <Card className="border-border bg-card p-0">
+      <CardContent className="p-0">{content}</CardContent>
+    </Card>
+  );
 };

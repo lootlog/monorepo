@@ -22,12 +22,13 @@ import {
 } from "@lootlog/ui/components/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { FileText, Pencil, X, MapPin, Search } from "lucide-react";
+import { FileText, Pencil, X, MapPin } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { toast } from "sonner";
 import { getApiErrorStatus } from "@lootlog/api-client/transport";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   invalidateMapTemplatesControllerGetTemplates,
   useMapTemplatesControllerCreateTemplate,
@@ -326,15 +327,12 @@ export const MapTemplateFormDialog = ({
                   <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {t("settings.mapTemplates.searchAndAddMaps")}
                   </FormLabel>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={t("settings.mapTemplates.searchPlaceholder")}
-                      className="pl-9 h-9 text-sm"
-                    />
-                  </div>
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t("settings.mapTemplates.searchPlaceholder")}
+                    className="h-9 text-sm"
+                  />
 
                   <div className="border rounded-lg max-h-[200px] overflow-y-auto">
                     {filteredGameMaps.length > 0 ? (

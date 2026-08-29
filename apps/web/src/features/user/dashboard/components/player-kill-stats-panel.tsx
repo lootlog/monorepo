@@ -1,5 +1,7 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { Alert, AlertTitle } from "@lootlog/ui/components/alert";
+import { Empty, EmptyHeader, EmptyTitle } from "@lootlog/ui/components/empty";
 import { CircleAlert, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -60,32 +62,34 @@ export const PlayerKillStatsPanel: React.FC<PlayerKillStatsPanelProps> = ({
     );
   } else if (isError && !data) {
     content = (
-      <div role="alert" className="px-3 py-8 text-center">
-        <CircleAlert className="mx-auto size-5 text-destructive" />
-        <p className="mt-3 text-sm text-muted-foreground">
-          {t("kills.playerStats.loadError")}
-        </p>
+      <Alert variant="destructive" className="m-3 w-auto">
+        <CircleAlert />
+        <AlertTitle>{t("kills.playerStats.loadError")}</AlertTitle>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="mt-4 min-h-11 lg:min-h-9"
+          className="mt-2 w-fit min-h-11 lg:min-h-9"
           onClick={onRetry}
         >
-          <RefreshCw className="size-4" />
+          <RefreshCw data-icon="inline-start" />
           {t("common.actions.retry")}
         </Button>
-      </div>
+      </Alert>
     );
   } else if (!data || data.overview.totalKills === 0) {
     content = (
-      <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-        {t(
-          hasActiveFilters
-            ? "kills.playerStats.filteredNoData"
-            : "kills.playerStats.noData",
-        )}
-      </p>
+      <Empty className="min-h-40 border-0 bg-transparent p-3">
+        <EmptyHeader>
+          <EmptyTitle>
+            {t(
+              hasActiveFilters
+                ? "kills.playerStats.filteredNoData"
+                : "kills.playerStats.noData",
+            )}
+          </EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   } else {
     const activeNpcTypeEntries = NPC_TYPE_ORDER.map((type) => {

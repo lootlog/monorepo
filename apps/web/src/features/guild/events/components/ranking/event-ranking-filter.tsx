@@ -19,7 +19,10 @@ export const EventRankingFilter = ({
   }
 
   return (
-    <Tabs value={selectedHeroName} onValueChange={onSelectedHeroChange}>
+    <Tabs
+      value={selectedHeroName}
+      onValueChange={(heroName) => onSelectedHeroChange(heroName)}
+    >
       <EventScrollableTabsList className="border border-border/70 bg-muted/30">
         {heroes.map((hero) => (
           <TabsTrigger

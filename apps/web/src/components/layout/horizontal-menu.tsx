@@ -1,4 +1,10 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@lootlog/ui/components/navigation-menu";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ThemeInteractiveFrame, useThemeMeta } from "@/themes";
@@ -65,53 +71,71 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
   }, null);
 
   return (
-    <div
-      ref={scrollRef}
-      className={cn(
-        "flex w-full min-w-0 gap-2 overflow-x-auto overflow-y-hidden px-3 py-3 [scrollbar-width:none] [-ms-overflow-style:none] scroll-smooth [&::-webkit-scrollbar]:hidden",
-        className,
-      )}
-      role="navigation"
+    <NavigationMenu
+      viewport={false}
       aria-label={ariaLabel}
+      className="w-full max-w-none justify-start"
     >
-      {items.map((item) => {
-        const url = `${basePath}${item.href}`;
-        const active = url === activeUrl;
-        const isHovered = hoveredId === item.id;
+      <div
+        ref={scrollRef}
+        className={cn(
+          "w-full min-w-0 overflow-x-auto overflow-y-hidden px-3 py-3 [scrollbar-width:none] [-ms-overflow-style:none] scroll-smooth [&::-webkit-scrollbar]:hidden",
+          className,
+        )}
+      >
+        <NavigationMenuList className="w-max justify-start gap-2">
+          {items.map((item) => {
+            const url = `${basePath}${item.href}`;
+            const active = url === activeUrl;
+            const isHovered = hoveredId === item.id;
+            let tabClassName =
+              "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50";
 
-        const tabContent = (
-          <span
-            className={cn(
-              "inline-flex items-center px-6 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
-              active
-                ? isRukiaTheme
-                  ? "bg-primary/15 text-white font-semibold"
-                  : "bg-primary/15 text-primary"
-                : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50",
-            )}
-          >
-            {item.label}
-          </span>
-        );
+            if (active && isRukiaTheme) {
+              tabClassName = "bg-primary/15 text-white font-semibold";
+            } else if (active) {
+              tabClassName = "bg-primary/15 text-primary";
+            }
 
-        return (
-          <Link
-            key={item.id}
-            to={url}
-            preload="intent"
-            activeOptions={{ exact: true }}
-            aria-current={active ? "page" : undefined}
-            className="shrink-0"
-            ref={active ? activeTabRef : undefined}
-            onMouseEnter={() => setHoveredId(item.id)}
-            onMouseLeave={() => setHoveredId(null)}
-          >
-            <ThemeInteractiveFrame isHovered={isHovered} isActive={active}>
-              {tabContent}
-            </ThemeInteractiveFrame>
-          </Link>
-        );
-      })}
-    </div>
+            const tabContent = (
+              <span
+                className={cn(
+                  "inline-flex items-center px-6 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                  tabClassName,
+                )}
+              >
+                {item.label}
+              </span>
+            );
+
+            return (
+              <NavigationMenuItem key={item.id} className="shrink-0">
+                <NavigationMenuLink
+                  render={
+                    <Link
+                      to={url}
+                      preload="intent"
+                      activeOptions={{ exact: true }}
+                      ref={active ? activeTabRef : undefined}
+                    />
+                  }
+                  aria-current={active ? "page" : undefined}
+                  className="rounded-lg p-0 focus-visible:ring-2"
+                  onMouseEnter={() => setHoveredId(item.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                >
+                  <ThemeInteractiveFrame
+                    isHovered={isHovered}
+                    isActive={active}
+                  >
+                    {tabContent}
+                  </ThemeInteractiveFrame>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            );
+          })}
+        </NavigationMenuList>
+      </div>
+    </NavigationMenu>
   );
 };
