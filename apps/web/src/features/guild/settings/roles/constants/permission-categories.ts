@@ -44,6 +44,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     permissions: [
       Permission.LOOTLOG_LOOTS_READ,
       Permission.LOOTLOG_LOOTS_WRITE,
+      Permission.LOOTLOG_LOOTS_ARCHIVE,
       Permission.LOOTLOG_LOOTS_TITANS_READ,
       Permission.LOOTLOG_LOOTS_HEROES_READ,
     ],

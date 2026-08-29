@@ -44,21 +44,16 @@ import { useEffect, useEffectEvent, useRef, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { ThemeEmptyStateIcon, useThemedKey } from "@/themes";
 import { WorldSwitcher } from "@/components/common/world-switcher";
+import type {
+  GuildLootCreatedEventV2,
+  GuildLootShareUpdatedEventV2,
+} from "@lootlog/types";
 
 const LOOTS_PAGE_LIMIT = 20;
 const LOOTS_QUERY_STALE_TIME_MS = 30_000;
 const GRID_COLUMNS = 2;
 const EMPTY_LOOTS: Loot[] = [];
 const EMPTY_GRID_ROWS: Loot[][] = [];
-
-type LootCreateGatewayPayload = {
-  guildId: string;
-  lootId: number;
-};
-
-type LootShareUpdateGatewayPayload = LootCreateGatewayPayload & {
-  lootShare: LootShareResponseDto;
-};
 
 type LootsInfiniteData = InfiniteData<Loot[]>;
 type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
@@ -383,7 +378,7 @@ export const LootsList: FC = () => {
     staleTime: LOOTS_QUERY_STALE_TIME_MS,
   });
   const handleLootCreate = useEffectEvent(
-    async (payload: LootCreateGatewayPayload) => {
+    async (payload: GuildLootCreatedEventV2) => {
       if (!guildId || payload.guildId !== currentGuildId) {
         return;
       }
@@ -466,7 +461,7 @@ export const LootsList: FC = () => {
     },
   );
   const handleLootShareUpdate = useEffectEvent(
-    (payload: LootShareUpdateGatewayPayload) => {
+    (payload: GuildLootShareUpdatedEventV2) => {
       if (!guildId || payload.guildId !== currentGuildId) {
         return;
       }
@@ -531,10 +526,10 @@ export const LootsList: FC = () => {
       return;
     }
 
-    const onLootCreate = (payload: LootCreateGatewayPayload) => {
+    const onLootCreate = (payload: GuildLootCreatedEventV2) => {
       void handleLootCreate(payload);
     };
-    const onLootShareUpdate = (payload: LootShareUpdateGatewayPayload) => {
+    const onLootShareUpdate = (payload: GuildLootShareUpdatedEventV2) => {
       handleLootShareUpdate(payload);
     };
 

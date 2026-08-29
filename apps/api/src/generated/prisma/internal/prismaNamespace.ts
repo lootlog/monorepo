@@ -409,6 +409,7 @@ export const ModelName = {
   LootPlayer: 'LootPlayer',
   NpcSnapshot: 'NpcSnapshot',
   LootNpc: 'LootNpc',
+  OrganizationLootRecord: 'OrganizationLootRecord',
   LootSubmission: 'LootSubmission',
   LootComment: 'LootComment',
   LootlogConfigNpc: 'LootlogConfigNpc',
@@ -469,7 +470,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "timerHistoryEntry" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "reservationShare" | "reservationShareInvitation" | "userPinnedReservationSpot" | "userCharactersLootlogSettings" | "userSettings" | "userSettingDocument" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userSoundSettings" | "event" | "userPinnedEvent" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "guildDocument" | "guildDocumentHistory" | "npcKillStats" | "userKillStats" | "guildKillSummary" | "userKillStatsBucket" | "npcKillStatsBucket" | "guildKillSummaryBucket"
+    modelProps: "guild" | "role" | "member" | "timer" | "loot" | "itemSnapshot" | "lootItem" | "playerSnapshot" | "timerHistoryEntry" | "lootPlayer" | "npcSnapshot" | "lootNpc" | "organizationLootRecord" | "lootSubmission" | "lootComment" | "lootlogConfigNpc" | "lootlogConfig" | "reservation" | "reservationShare" | "reservationShareInvitation" | "userPinnedReservationSpot" | "userCharactersLootlogSettings" | "userSettings" | "userSettingDocument" | "userGameAccountSettings" | "notificationTarget" | "notificationRule" | "notificationRuleTarget" | "notificationJob" | "watchedItem" | "discordGuildChannelSnapshot" | "discordGuildSyncState" | "memberRefreshJob" | "userTimerSettings" | "userGuildTimerSettings" | "userSoundSettings" | "event" | "userPinnedEvent" | "eventMapLocation" | "eventMap" | "eventMapCoverageGap" | "eventMapAssignmentHistory" | "eventHeroNpc" | "eventPresenceLog" | "eventHeroKill" | "eventKillPoint" | "eventRanking" | "eventPointsEditHistory" | "eventRespawnWindowSummary" | "mapTemplate" | "guildDocument" | "guildDocumentHistory" | "npcKillStats" | "userKillStats" | "guildKillSummary" | "userKillStatsBucket" | "npcKillStatsBucket" | "guildKillSummaryBucket"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1358,6 +1359,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.LootNpcCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.LootNpcCountAggregateOutputType> | number
+        }
+      }
+    }
+    OrganizationLootRecord: {
+      payload: Prisma.$OrganizationLootRecordPayload<ExtArgs>
+      fields: Prisma.OrganizationLootRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OrganizationLootRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OrganizationLootRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.OrganizationLootRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OrganizationLootRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload>
+        }
+        findMany: {
+          args: Prisma.OrganizationLootRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload>[]
+        }
+        create: {
+          args: Prisma.OrganizationLootRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload>
+        }
+        createMany: {
+          args: Prisma.OrganizationLootRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OrganizationLootRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.OrganizationLootRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload>
+        }
+        update: {
+          args: Prisma.OrganizationLootRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.OrganizationLootRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OrganizationLootRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OrganizationLootRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.OrganizationLootRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrganizationLootRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.OrganizationLootRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrganizationLootRecord>
+        }
+        groupBy: {
+          args: Prisma.OrganizationLootRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrganizationLootRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OrganizationLootRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrganizationLootRecordCountAggregateOutputType> | number
         }
       }
     }
@@ -4931,10 +5006,22 @@ export const LootNpcScalarFieldEnum = {
 export type LootNpcScalarFieldEnum = (typeof LootNpcScalarFieldEnum)[keyof typeof LootNpcScalarFieldEnum]
 
 
-export const LootSubmissionScalarFieldEnum = {
+export const OrganizationLootRecordScalarFieldEnum = {
   id: 'id',
   lootId: 'lootId',
   guildId: 'guildId',
+  archivedAt: 'archivedAt',
+  archivedByMemberId: 'archivedByMemberId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrganizationLootRecordScalarFieldEnum = (typeof OrganizationLootRecordScalarFieldEnum)[keyof typeof OrganizationLootRecordScalarFieldEnum]
+
+
+export const LootSubmissionScalarFieldEnum = {
+  id: 'id',
+  organizationLootRecordId: 'organizationLootRecordId',
   memberId: 'memberId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -4945,9 +5032,8 @@ export type LootSubmissionScalarFieldEnum = (typeof LootSubmissionScalarFieldEnu
 
 export const LootCommentScalarFieldEnum = {
   id: 'id',
-  lootId: 'lootId',
+  organizationLootRecordId: 'organizationLootRecordId',
   memberId: 'memberId',
-  guildId: 'guildId',
   content: 'content',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -6292,6 +6378,7 @@ export type GlobalOmitConfig = {
   lootPlayer?: Prisma.LootPlayerOmit
   npcSnapshot?: Prisma.NpcSnapshotOmit
   lootNpc?: Prisma.LootNpcOmit
+  organizationLootRecord?: Prisma.OrganizationLootRecordOmit
   lootSubmission?: Prisma.LootSubmissionOmit
   lootComment?: Prisma.LootCommentOmit
   lootlogConfigNpc?: Prisma.LootlogConfigNpcOmit

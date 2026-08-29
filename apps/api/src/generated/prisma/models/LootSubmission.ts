@@ -28,20 +28,19 @@ export type AggregateLootSubmission = {
 
 export type LootSubmissionAvgAggregateOutputType = {
   id: number | null
-  lootId: number | null
+  organizationLootRecordId: number | null
   memberId: number | null
 }
 
 export type LootSubmissionSumAggregateOutputType = {
   id: number | null
-  lootId: number | null
+  organizationLootRecordId: number | null
   memberId: number | null
 }
 
 export type LootSubmissionMinAggregateOutputType = {
   id: number | null
-  lootId: number | null
-  guildId: string | null
+  organizationLootRecordId: number | null
   memberId: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -49,8 +48,7 @@ export type LootSubmissionMinAggregateOutputType = {
 
 export type LootSubmissionMaxAggregateOutputType = {
   id: number | null
-  lootId: number | null
-  guildId: string | null
+  organizationLootRecordId: number | null
   memberId: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -58,8 +56,7 @@ export type LootSubmissionMaxAggregateOutputType = {
 
 export type LootSubmissionCountAggregateOutputType = {
   id: number
-  lootId: number
-  guildId: number
+  organizationLootRecordId: number
   memberId: number
   createdAt: number
   updatedAt: number
@@ -69,20 +66,19 @@ export type LootSubmissionCountAggregateOutputType = {
 
 export type LootSubmissionAvgAggregateInputType = {
   id?: true
-  lootId?: true
+  organizationLootRecordId?: true
   memberId?: true
 }
 
 export type LootSubmissionSumAggregateInputType = {
   id?: true
-  lootId?: true
+  organizationLootRecordId?: true
   memberId?: true
 }
 
 export type LootSubmissionMinAggregateInputType = {
   id?: true
-  lootId?: true
-  guildId?: true
+  organizationLootRecordId?: true
   memberId?: true
   createdAt?: true
   updatedAt?: true
@@ -90,8 +86,7 @@ export type LootSubmissionMinAggregateInputType = {
 
 export type LootSubmissionMaxAggregateInputType = {
   id?: true
-  lootId?: true
-  guildId?: true
+  organizationLootRecordId?: true
   memberId?: true
   createdAt?: true
   updatedAt?: true
@@ -99,8 +94,7 @@ export type LootSubmissionMaxAggregateInputType = {
 
 export type LootSubmissionCountAggregateInputType = {
   id?: true
-  lootId?: true
-  guildId?: true
+  organizationLootRecordId?: true
   memberId?: true
   createdAt?: true
   updatedAt?: true
@@ -195,8 +189,7 @@ export type LootSubmissionGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 
 export type LootSubmissionGroupByOutputType = {
   id: number
-  lootId: number
-  guildId: string
+  organizationLootRecordId: number
   memberId: number
   createdAt: Date
   updatedAt: Date
@@ -227,48 +220,41 @@ export type LootSubmissionWhereInput = {
   OR?: Prisma.LootSubmissionWhereInput[]
   NOT?: Prisma.LootSubmissionWhereInput | Prisma.LootSubmissionWhereInput[]
   id?: Prisma.IntFilter<"LootSubmission"> | number
-  lootId?: Prisma.IntFilter<"LootSubmission"> | number
-  guildId?: Prisma.StringFilter<"LootSubmission"> | string
+  organizationLootRecordId?: Prisma.IntFilter<"LootSubmission"> | number
   memberId?: Prisma.IntFilter<"LootSubmission"> | number
   createdAt?: Prisma.DateTimeFilter<"LootSubmission"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LootSubmission"> | Date | string
-  loot?: Prisma.XOR<Prisma.LootScalarRelationFilter, Prisma.LootWhereInput>
+  organizationLootRecord?: Prisma.XOR<Prisma.OrganizationLootRecordScalarRelationFilter, Prisma.OrganizationLootRecordWhereInput>
   member?: Prisma.XOR<Prisma.MemberScalarRelationFilter, Prisma.MemberWhereInput>
-  guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
 }
 
 export type LootSubmissionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  loot?: Prisma.LootOrderByWithRelationInput
+  organizationLootRecord?: Prisma.OrganizationLootRecordOrderByWithRelationInput
   member?: Prisma.MemberOrderByWithRelationInput
-  guild?: Prisma.GuildOrderByWithRelationInput
 }
 
 export type LootSubmissionWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  lootId_guildId_memberId?: Prisma.LootSubmissionLootIdGuildIdMemberIdCompoundUniqueInput
+  organizationLootRecordId_memberId?: Prisma.LootSubmissionOrganizationLootRecordIdMemberIdCompoundUniqueInput
   AND?: Prisma.LootSubmissionWhereInput | Prisma.LootSubmissionWhereInput[]
   OR?: Prisma.LootSubmissionWhereInput[]
   NOT?: Prisma.LootSubmissionWhereInput | Prisma.LootSubmissionWhereInput[]
-  lootId?: Prisma.IntFilter<"LootSubmission"> | number
-  guildId?: Prisma.StringFilter<"LootSubmission"> | string
+  organizationLootRecordId?: Prisma.IntFilter<"LootSubmission"> | number
   memberId?: Prisma.IntFilter<"LootSubmission"> | number
   createdAt?: Prisma.DateTimeFilter<"LootSubmission"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LootSubmission"> | Date | string
-  loot?: Prisma.XOR<Prisma.LootScalarRelationFilter, Prisma.LootWhereInput>
+  organizationLootRecord?: Prisma.XOR<Prisma.OrganizationLootRecordScalarRelationFilter, Prisma.OrganizationLootRecordWhereInput>
   member?: Prisma.XOR<Prisma.MemberScalarRelationFilter, Prisma.MemberWhereInput>
-  guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
-}, "id" | "lootId_guildId_memberId">
+}, "id" | "organizationLootRecordId_memberId">
 
 export type LootSubmissionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -284,8 +270,7 @@ export type LootSubmissionScalarWhereWithAggregatesInput = {
   OR?: Prisma.LootSubmissionScalarWhereWithAggregatesInput[]
   NOT?: Prisma.LootSubmissionScalarWhereWithAggregatesInput | Prisma.LootSubmissionScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"LootSubmission"> | number
-  lootId?: Prisma.IntWithAggregatesFilter<"LootSubmission"> | number
-  guildId?: Prisma.StringWithAggregatesFilter<"LootSubmission"> | string
+  organizationLootRecordId?: Prisma.IntWithAggregatesFilter<"LootSubmission"> | number
   memberId?: Prisma.IntWithAggregatesFilter<"LootSubmission"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"LootSubmission"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"LootSubmission"> | Date | string
@@ -294,15 +279,13 @@ export type LootSubmissionScalarWhereWithAggregatesInput = {
 export type LootSubmissionCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
-  loot: Prisma.LootCreateNestedOneWithoutLootSubmissionsInput
+  organizationLootRecord: Prisma.OrganizationLootRecordCreateNestedOneWithoutSubmissionsInput
   member: Prisma.MemberCreateNestedOneWithoutLootSubmissionsInput
-  guild: Prisma.GuildCreateNestedOneWithoutLootSubmissionsInput
 }
 
 export type LootSubmissionUncheckedCreateInput = {
   id?: number
-  lootId: number
-  guildId: string
+  organizationLootRecordId: number
   memberId: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -311,15 +294,13 @@ export type LootSubmissionUncheckedCreateInput = {
 export type LootSubmissionUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  loot?: Prisma.LootUpdateOneRequiredWithoutLootSubmissionsNestedInput
+  organizationLootRecord?: Prisma.OrganizationLootRecordUpdateOneRequiredWithoutSubmissionsNestedInput
   member?: Prisma.MemberUpdateOneRequiredWithoutLootSubmissionsNestedInput
-  guild?: Prisma.GuildUpdateOneRequiredWithoutLootSubmissionsNestedInput
 }
 
 export type LootSubmissionUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationLootRecordId?: Prisma.IntFieldUpdateOperationsInput | number
   memberId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -327,8 +308,7 @@ export type LootSubmissionUncheckedUpdateInput = {
 
 export type LootSubmissionCreateManyInput = {
   id?: number
-  lootId: number
-  guildId: string
+  organizationLootRecordId: number
   memberId: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -341,8 +321,7 @@ export type LootSubmissionUpdateManyMutationInput = {
 
 export type LootSubmissionUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationLootRecordId?: Prisma.IntFieldUpdateOperationsInput | number
   memberId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -358,16 +337,14 @@ export type LootSubmissionOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type LootSubmissionLootIdGuildIdMemberIdCompoundUniqueInput = {
-  lootId: number
-  guildId: string
+export type LootSubmissionOrganizationLootRecordIdMemberIdCompoundUniqueInput = {
+  organizationLootRecordId: number
   memberId: number
 }
 
 export type LootSubmissionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -375,14 +352,13 @@ export type LootSubmissionCountOrderByAggregateInput = {
 
 export type LootSubmissionAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
 }
 
 export type LootSubmissionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -390,8 +366,7 @@ export type LootSubmissionMaxOrderByAggregateInput = {
 
 export type LootSubmissionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
-  guildId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -399,50 +374,8 @@ export type LootSubmissionMinOrderByAggregateInput = {
 
 export type LootSubmissionSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lootId?: Prisma.SortOrder
+  organizationLootRecordId?: Prisma.SortOrder
   memberId?: Prisma.SortOrder
-}
-
-export type LootSubmissionCreateNestedManyWithoutGuildInput = {
-  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutGuildInput, Prisma.LootSubmissionUncheckedCreateWithoutGuildInput> | Prisma.LootSubmissionCreateWithoutGuildInput[] | Prisma.LootSubmissionUncheckedCreateWithoutGuildInput[]
-  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutGuildInput | Prisma.LootSubmissionCreateOrConnectWithoutGuildInput[]
-  createMany?: Prisma.LootSubmissionCreateManyGuildInputEnvelope
-  connect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-}
-
-export type LootSubmissionUncheckedCreateNestedManyWithoutGuildInput = {
-  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutGuildInput, Prisma.LootSubmissionUncheckedCreateWithoutGuildInput> | Prisma.LootSubmissionCreateWithoutGuildInput[] | Prisma.LootSubmissionUncheckedCreateWithoutGuildInput[]
-  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutGuildInput | Prisma.LootSubmissionCreateOrConnectWithoutGuildInput[]
-  createMany?: Prisma.LootSubmissionCreateManyGuildInputEnvelope
-  connect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-}
-
-export type LootSubmissionUpdateManyWithoutGuildNestedInput = {
-  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutGuildInput, Prisma.LootSubmissionUncheckedCreateWithoutGuildInput> | Prisma.LootSubmissionCreateWithoutGuildInput[] | Prisma.LootSubmissionUncheckedCreateWithoutGuildInput[]
-  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutGuildInput | Prisma.LootSubmissionCreateOrConnectWithoutGuildInput[]
-  upsert?: Prisma.LootSubmissionUpsertWithWhereUniqueWithoutGuildInput | Prisma.LootSubmissionUpsertWithWhereUniqueWithoutGuildInput[]
-  createMany?: Prisma.LootSubmissionCreateManyGuildInputEnvelope
-  set?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  disconnect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  delete?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  connect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  update?: Prisma.LootSubmissionUpdateWithWhereUniqueWithoutGuildInput | Prisma.LootSubmissionUpdateWithWhereUniqueWithoutGuildInput[]
-  updateMany?: Prisma.LootSubmissionUpdateManyWithWhereWithoutGuildInput | Prisma.LootSubmissionUpdateManyWithWhereWithoutGuildInput[]
-  deleteMany?: Prisma.LootSubmissionScalarWhereInput | Prisma.LootSubmissionScalarWhereInput[]
-}
-
-export type LootSubmissionUncheckedUpdateManyWithoutGuildNestedInput = {
-  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutGuildInput, Prisma.LootSubmissionUncheckedCreateWithoutGuildInput> | Prisma.LootSubmissionCreateWithoutGuildInput[] | Prisma.LootSubmissionUncheckedCreateWithoutGuildInput[]
-  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutGuildInput | Prisma.LootSubmissionCreateOrConnectWithoutGuildInput[]
-  upsert?: Prisma.LootSubmissionUpsertWithWhereUniqueWithoutGuildInput | Prisma.LootSubmissionUpsertWithWhereUniqueWithoutGuildInput[]
-  createMany?: Prisma.LootSubmissionCreateManyGuildInputEnvelope
-  set?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  disconnect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  delete?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  connect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  update?: Prisma.LootSubmissionUpdateWithWhereUniqueWithoutGuildInput | Prisma.LootSubmissionUpdateWithWhereUniqueWithoutGuildInput[]
-  updateMany?: Prisma.LootSubmissionUpdateManyWithWhereWithoutGuildInput | Prisma.LootSubmissionUpdateManyWithWhereWithoutGuildInput[]
-  deleteMany?: Prisma.LootSubmissionScalarWhereInput | Prisma.LootSubmissionScalarWhereInput[]
 }
 
 export type LootSubmissionCreateNestedManyWithoutMemberInput = {
@@ -487,112 +420,57 @@ export type LootSubmissionUncheckedUpdateManyWithoutMemberNestedInput = {
   deleteMany?: Prisma.LootSubmissionScalarWhereInput | Prisma.LootSubmissionScalarWhereInput[]
 }
 
-export type LootSubmissionCreateNestedManyWithoutLootInput = {
-  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutLootInput, Prisma.LootSubmissionUncheckedCreateWithoutLootInput> | Prisma.LootSubmissionCreateWithoutLootInput[] | Prisma.LootSubmissionUncheckedCreateWithoutLootInput[]
-  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutLootInput | Prisma.LootSubmissionCreateOrConnectWithoutLootInput[]
-  createMany?: Prisma.LootSubmissionCreateManyLootInputEnvelope
+export type LootSubmissionCreateNestedManyWithoutOrganizationLootRecordInput = {
+  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput, Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput> | Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput[] | Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput[]
+  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutOrganizationLootRecordInput | Prisma.LootSubmissionCreateOrConnectWithoutOrganizationLootRecordInput[]
+  createMany?: Prisma.LootSubmissionCreateManyOrganizationLootRecordInputEnvelope
   connect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
 }
 
-export type LootSubmissionUncheckedCreateNestedManyWithoutLootInput = {
-  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutLootInput, Prisma.LootSubmissionUncheckedCreateWithoutLootInput> | Prisma.LootSubmissionCreateWithoutLootInput[] | Prisma.LootSubmissionUncheckedCreateWithoutLootInput[]
-  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutLootInput | Prisma.LootSubmissionCreateOrConnectWithoutLootInput[]
-  createMany?: Prisma.LootSubmissionCreateManyLootInputEnvelope
+export type LootSubmissionUncheckedCreateNestedManyWithoutOrganizationLootRecordInput = {
+  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput, Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput> | Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput[] | Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput[]
+  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutOrganizationLootRecordInput | Prisma.LootSubmissionCreateOrConnectWithoutOrganizationLootRecordInput[]
+  createMany?: Prisma.LootSubmissionCreateManyOrganizationLootRecordInputEnvelope
   connect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
 }
 
-export type LootSubmissionUpdateManyWithoutLootNestedInput = {
-  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutLootInput, Prisma.LootSubmissionUncheckedCreateWithoutLootInput> | Prisma.LootSubmissionCreateWithoutLootInput[] | Prisma.LootSubmissionUncheckedCreateWithoutLootInput[]
-  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutLootInput | Prisma.LootSubmissionCreateOrConnectWithoutLootInput[]
-  upsert?: Prisma.LootSubmissionUpsertWithWhereUniqueWithoutLootInput | Prisma.LootSubmissionUpsertWithWhereUniqueWithoutLootInput[]
-  createMany?: Prisma.LootSubmissionCreateManyLootInputEnvelope
+export type LootSubmissionUpdateManyWithoutOrganizationLootRecordNestedInput = {
+  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput, Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput> | Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput[] | Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput[]
+  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutOrganizationLootRecordInput | Prisma.LootSubmissionCreateOrConnectWithoutOrganizationLootRecordInput[]
+  upsert?: Prisma.LootSubmissionUpsertWithWhereUniqueWithoutOrganizationLootRecordInput | Prisma.LootSubmissionUpsertWithWhereUniqueWithoutOrganizationLootRecordInput[]
+  createMany?: Prisma.LootSubmissionCreateManyOrganizationLootRecordInputEnvelope
   set?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
   disconnect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
   delete?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
   connect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  update?: Prisma.LootSubmissionUpdateWithWhereUniqueWithoutLootInput | Prisma.LootSubmissionUpdateWithWhereUniqueWithoutLootInput[]
-  updateMany?: Prisma.LootSubmissionUpdateManyWithWhereWithoutLootInput | Prisma.LootSubmissionUpdateManyWithWhereWithoutLootInput[]
+  update?: Prisma.LootSubmissionUpdateWithWhereUniqueWithoutOrganizationLootRecordInput | Prisma.LootSubmissionUpdateWithWhereUniqueWithoutOrganizationLootRecordInput[]
+  updateMany?: Prisma.LootSubmissionUpdateManyWithWhereWithoutOrganizationLootRecordInput | Prisma.LootSubmissionUpdateManyWithWhereWithoutOrganizationLootRecordInput[]
   deleteMany?: Prisma.LootSubmissionScalarWhereInput | Prisma.LootSubmissionScalarWhereInput[]
 }
 
-export type LootSubmissionUncheckedUpdateManyWithoutLootNestedInput = {
-  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutLootInput, Prisma.LootSubmissionUncheckedCreateWithoutLootInput> | Prisma.LootSubmissionCreateWithoutLootInput[] | Prisma.LootSubmissionUncheckedCreateWithoutLootInput[]
-  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutLootInput | Prisma.LootSubmissionCreateOrConnectWithoutLootInput[]
-  upsert?: Prisma.LootSubmissionUpsertWithWhereUniqueWithoutLootInput | Prisma.LootSubmissionUpsertWithWhereUniqueWithoutLootInput[]
-  createMany?: Prisma.LootSubmissionCreateManyLootInputEnvelope
+export type LootSubmissionUncheckedUpdateManyWithoutOrganizationLootRecordNestedInput = {
+  create?: Prisma.XOR<Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput, Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput> | Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput[] | Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput[]
+  connectOrCreate?: Prisma.LootSubmissionCreateOrConnectWithoutOrganizationLootRecordInput | Prisma.LootSubmissionCreateOrConnectWithoutOrganizationLootRecordInput[]
+  upsert?: Prisma.LootSubmissionUpsertWithWhereUniqueWithoutOrganizationLootRecordInput | Prisma.LootSubmissionUpsertWithWhereUniqueWithoutOrganizationLootRecordInput[]
+  createMany?: Prisma.LootSubmissionCreateManyOrganizationLootRecordInputEnvelope
   set?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
   disconnect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
   delete?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
   connect?: Prisma.LootSubmissionWhereUniqueInput | Prisma.LootSubmissionWhereUniqueInput[]
-  update?: Prisma.LootSubmissionUpdateWithWhereUniqueWithoutLootInput | Prisma.LootSubmissionUpdateWithWhereUniqueWithoutLootInput[]
-  updateMany?: Prisma.LootSubmissionUpdateManyWithWhereWithoutLootInput | Prisma.LootSubmissionUpdateManyWithWhereWithoutLootInput[]
+  update?: Prisma.LootSubmissionUpdateWithWhereUniqueWithoutOrganizationLootRecordInput | Prisma.LootSubmissionUpdateWithWhereUniqueWithoutOrganizationLootRecordInput[]
+  updateMany?: Prisma.LootSubmissionUpdateManyWithWhereWithoutOrganizationLootRecordInput | Prisma.LootSubmissionUpdateManyWithWhereWithoutOrganizationLootRecordInput[]
   deleteMany?: Prisma.LootSubmissionScalarWhereInput | Prisma.LootSubmissionScalarWhereInput[]
-}
-
-export type LootSubmissionCreateWithoutGuildInput = {
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  loot: Prisma.LootCreateNestedOneWithoutLootSubmissionsInput
-  member: Prisma.MemberCreateNestedOneWithoutLootSubmissionsInput
-}
-
-export type LootSubmissionUncheckedCreateWithoutGuildInput = {
-  id?: number
-  lootId: number
-  memberId: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-}
-
-export type LootSubmissionCreateOrConnectWithoutGuildInput = {
-  where: Prisma.LootSubmissionWhereUniqueInput
-  create: Prisma.XOR<Prisma.LootSubmissionCreateWithoutGuildInput, Prisma.LootSubmissionUncheckedCreateWithoutGuildInput>
-}
-
-export type LootSubmissionCreateManyGuildInputEnvelope = {
-  data: Prisma.LootSubmissionCreateManyGuildInput | Prisma.LootSubmissionCreateManyGuildInput[]
-  skipDuplicates?: boolean
-}
-
-export type LootSubmissionUpsertWithWhereUniqueWithoutGuildInput = {
-  where: Prisma.LootSubmissionWhereUniqueInput
-  update: Prisma.XOR<Prisma.LootSubmissionUpdateWithoutGuildInput, Prisma.LootSubmissionUncheckedUpdateWithoutGuildInput>
-  create: Prisma.XOR<Prisma.LootSubmissionCreateWithoutGuildInput, Prisma.LootSubmissionUncheckedCreateWithoutGuildInput>
-}
-
-export type LootSubmissionUpdateWithWhereUniqueWithoutGuildInput = {
-  where: Prisma.LootSubmissionWhereUniqueInput
-  data: Prisma.XOR<Prisma.LootSubmissionUpdateWithoutGuildInput, Prisma.LootSubmissionUncheckedUpdateWithoutGuildInput>
-}
-
-export type LootSubmissionUpdateManyWithWhereWithoutGuildInput = {
-  where: Prisma.LootSubmissionScalarWhereInput
-  data: Prisma.XOR<Prisma.LootSubmissionUpdateManyMutationInput, Prisma.LootSubmissionUncheckedUpdateManyWithoutGuildInput>
-}
-
-export type LootSubmissionScalarWhereInput = {
-  AND?: Prisma.LootSubmissionScalarWhereInput | Prisma.LootSubmissionScalarWhereInput[]
-  OR?: Prisma.LootSubmissionScalarWhereInput[]
-  NOT?: Prisma.LootSubmissionScalarWhereInput | Prisma.LootSubmissionScalarWhereInput[]
-  id?: Prisma.IntFilter<"LootSubmission"> | number
-  lootId?: Prisma.IntFilter<"LootSubmission"> | number
-  guildId?: Prisma.StringFilter<"LootSubmission"> | string
-  memberId?: Prisma.IntFilter<"LootSubmission"> | number
-  createdAt?: Prisma.DateTimeFilter<"LootSubmission"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"LootSubmission"> | Date | string
 }
 
 export type LootSubmissionCreateWithoutMemberInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
-  loot: Prisma.LootCreateNestedOneWithoutLootSubmissionsInput
-  guild: Prisma.GuildCreateNestedOneWithoutLootSubmissionsInput
+  organizationLootRecord: Prisma.OrganizationLootRecordCreateNestedOneWithoutSubmissionsInput
 }
 
 export type LootSubmissionUncheckedCreateWithoutMemberInput = {
   id?: number
-  lootId: number
-  guildId: string
+  organizationLootRecordId: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -623,82 +501,59 @@ export type LootSubmissionUpdateManyWithWhereWithoutMemberInput = {
   data: Prisma.XOR<Prisma.LootSubmissionUpdateManyMutationInput, Prisma.LootSubmissionUncheckedUpdateManyWithoutMemberInput>
 }
 
-export type LootSubmissionCreateWithoutLootInput = {
+export type LootSubmissionScalarWhereInput = {
+  AND?: Prisma.LootSubmissionScalarWhereInput | Prisma.LootSubmissionScalarWhereInput[]
+  OR?: Prisma.LootSubmissionScalarWhereInput[]
+  NOT?: Prisma.LootSubmissionScalarWhereInput | Prisma.LootSubmissionScalarWhereInput[]
+  id?: Prisma.IntFilter<"LootSubmission"> | number
+  organizationLootRecordId?: Prisma.IntFilter<"LootSubmission"> | number
+  memberId?: Prisma.IntFilter<"LootSubmission"> | number
+  createdAt?: Prisma.DateTimeFilter<"LootSubmission"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"LootSubmission"> | Date | string
+}
+
+export type LootSubmissionCreateWithoutOrganizationLootRecordInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   member: Prisma.MemberCreateNestedOneWithoutLootSubmissionsInput
-  guild: Prisma.GuildCreateNestedOneWithoutLootSubmissionsInput
 }
 
-export type LootSubmissionUncheckedCreateWithoutLootInput = {
+export type LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput = {
   id?: number
-  guildId: string
   memberId: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
-export type LootSubmissionCreateOrConnectWithoutLootInput = {
+export type LootSubmissionCreateOrConnectWithoutOrganizationLootRecordInput = {
   where: Prisma.LootSubmissionWhereUniqueInput
-  create: Prisma.XOR<Prisma.LootSubmissionCreateWithoutLootInput, Prisma.LootSubmissionUncheckedCreateWithoutLootInput>
+  create: Prisma.XOR<Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput, Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput>
 }
 
-export type LootSubmissionCreateManyLootInputEnvelope = {
-  data: Prisma.LootSubmissionCreateManyLootInput | Prisma.LootSubmissionCreateManyLootInput[]
+export type LootSubmissionCreateManyOrganizationLootRecordInputEnvelope = {
+  data: Prisma.LootSubmissionCreateManyOrganizationLootRecordInput | Prisma.LootSubmissionCreateManyOrganizationLootRecordInput[]
   skipDuplicates?: boolean
 }
 
-export type LootSubmissionUpsertWithWhereUniqueWithoutLootInput = {
+export type LootSubmissionUpsertWithWhereUniqueWithoutOrganizationLootRecordInput = {
   where: Prisma.LootSubmissionWhereUniqueInput
-  update: Prisma.XOR<Prisma.LootSubmissionUpdateWithoutLootInput, Prisma.LootSubmissionUncheckedUpdateWithoutLootInput>
-  create: Prisma.XOR<Prisma.LootSubmissionCreateWithoutLootInput, Prisma.LootSubmissionUncheckedCreateWithoutLootInput>
+  update: Prisma.XOR<Prisma.LootSubmissionUpdateWithoutOrganizationLootRecordInput, Prisma.LootSubmissionUncheckedUpdateWithoutOrganizationLootRecordInput>
+  create: Prisma.XOR<Prisma.LootSubmissionCreateWithoutOrganizationLootRecordInput, Prisma.LootSubmissionUncheckedCreateWithoutOrganizationLootRecordInput>
 }
 
-export type LootSubmissionUpdateWithWhereUniqueWithoutLootInput = {
+export type LootSubmissionUpdateWithWhereUniqueWithoutOrganizationLootRecordInput = {
   where: Prisma.LootSubmissionWhereUniqueInput
-  data: Prisma.XOR<Prisma.LootSubmissionUpdateWithoutLootInput, Prisma.LootSubmissionUncheckedUpdateWithoutLootInput>
+  data: Prisma.XOR<Prisma.LootSubmissionUpdateWithoutOrganizationLootRecordInput, Prisma.LootSubmissionUncheckedUpdateWithoutOrganizationLootRecordInput>
 }
 
-export type LootSubmissionUpdateManyWithWhereWithoutLootInput = {
+export type LootSubmissionUpdateManyWithWhereWithoutOrganizationLootRecordInput = {
   where: Prisma.LootSubmissionScalarWhereInput
-  data: Prisma.XOR<Prisma.LootSubmissionUpdateManyMutationInput, Prisma.LootSubmissionUncheckedUpdateManyWithoutLootInput>
-}
-
-export type LootSubmissionCreateManyGuildInput = {
-  id?: number
-  lootId: number
-  memberId: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-}
-
-export type LootSubmissionUpdateWithoutGuildInput = {
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  loot?: Prisma.LootUpdateOneRequiredWithoutLootSubmissionsNestedInput
-  member?: Prisma.MemberUpdateOneRequiredWithoutLootSubmissionsNestedInput
-}
-
-export type LootSubmissionUncheckedUpdateWithoutGuildInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
-  memberId?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type LootSubmissionUncheckedUpdateManyWithoutGuildInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
-  memberId?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  data: Prisma.XOR<Prisma.LootSubmissionUpdateManyMutationInput, Prisma.LootSubmissionUncheckedUpdateManyWithoutOrganizationLootRecordInput>
 }
 
 export type LootSubmissionCreateManyMemberInput = {
   id?: number
-  lootId: number
-  guildId: string
+  organizationLootRecordId: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -706,52 +561,45 @@ export type LootSubmissionCreateManyMemberInput = {
 export type LootSubmissionUpdateWithoutMemberInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  loot?: Prisma.LootUpdateOneRequiredWithoutLootSubmissionsNestedInput
-  guild?: Prisma.GuildUpdateOneRequiredWithoutLootSubmissionsNestedInput
+  organizationLootRecord?: Prisma.OrganizationLootRecordUpdateOneRequiredWithoutSubmissionsNestedInput
 }
 
 export type LootSubmissionUncheckedUpdateWithoutMemberInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationLootRecordId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type LootSubmissionUncheckedUpdateManyWithoutMemberInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  lootId?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationLootRecordId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type LootSubmissionCreateManyLootInput = {
+export type LootSubmissionCreateManyOrganizationLootRecordInput = {
   id?: number
-  guildId: string
   memberId: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
-export type LootSubmissionUpdateWithoutLootInput = {
+export type LootSubmissionUpdateWithoutOrganizationLootRecordInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   member?: Prisma.MemberUpdateOneRequiredWithoutLootSubmissionsNestedInput
-  guild?: Prisma.GuildUpdateOneRequiredWithoutLootSubmissionsNestedInput
 }
 
-export type LootSubmissionUncheckedUpdateWithoutLootInput = {
+export type LootSubmissionUncheckedUpdateWithoutOrganizationLootRecordInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
   memberId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type LootSubmissionUncheckedUpdateManyWithoutLootInput = {
+export type LootSubmissionUncheckedUpdateManyWithoutOrganizationLootRecordInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
   memberId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -761,77 +609,65 @@ export type LootSubmissionUncheckedUpdateManyWithoutLootInput = {
 
 export type LootSubmissionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  lootId?: boolean
-  guildId?: boolean
+  organizationLootRecordId?: boolean
   memberId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
-  guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lootSubmission"]>
 
 export type LootSubmissionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  lootId?: boolean
-  guildId?: boolean
+  organizationLootRecordId?: boolean
   memberId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
-  guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lootSubmission"]>
 
 export type LootSubmissionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  lootId?: boolean
-  guildId?: boolean
+  organizationLootRecordId?: boolean
   memberId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
-  guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lootSubmission"]>
 
 export type LootSubmissionSelectScalar = {
   id?: boolean
-  lootId?: boolean
-  guildId?: boolean
+  organizationLootRecordId?: boolean
   memberId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type LootSubmissionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "lootId" | "guildId" | "memberId" | "createdAt" | "updatedAt", ExtArgs["result"]["lootSubmission"]>
+export type LootSubmissionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationLootRecordId" | "memberId" | "createdAt" | "updatedAt", ExtArgs["result"]["lootSubmission"]>
 export type LootSubmissionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
-  guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
 export type LootSubmissionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
-  guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
 export type LootSubmissionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  loot?: boolean | Prisma.LootDefaultArgs<ExtArgs>
+  organizationLootRecord?: boolean | Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>
   member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
-  guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
 
 export type $LootSubmissionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "LootSubmission"
   objects: {
-    loot: Prisma.$LootPayload<ExtArgs>
+    organizationLootRecord: Prisma.$OrganizationLootRecordPayload<ExtArgs>
     member: Prisma.$MemberPayload<ExtArgs>
-    guild: Prisma.$GuildPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
-    lootId: number
-    guildId: string
+    organizationLootRecordId: number
     memberId: number
     createdAt: Date
     updatedAt: Date
@@ -1229,9 +1065,8 @@ readonly fields: LootSubmissionFieldRefs;
  */
 export interface Prisma__LootSubmissionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  loot<T extends Prisma.LootDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LootDefaultArgs<ExtArgs>>): Prisma.Prisma__LootClient<runtime.Types.Result.GetResult<Prisma.$LootPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  organizationLootRecord<T extends Prisma.OrganizationLootRecordDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationLootRecordDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationLootRecordClient<runtime.Types.Result.GetResult<Prisma.$OrganizationLootRecordPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   member<T extends Prisma.MemberDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MemberDefaultArgs<ExtArgs>>): Prisma.Prisma__MemberClient<runtime.Types.Result.GetResult<Prisma.$MemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  guild<T extends Prisma.GuildDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GuildDefaultArgs<ExtArgs>>): Prisma.Prisma__GuildClient<runtime.Types.Result.GetResult<Prisma.$GuildPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1262,8 +1097,7 @@ export interface Prisma__LootSubmissionClient<T, Null = never, ExtArgs extends r
  */
 export interface LootSubmissionFieldRefs {
   readonly id: Prisma.FieldRef<"LootSubmission", 'Int'>
-  readonly lootId: Prisma.FieldRef<"LootSubmission", 'Int'>
-  readonly guildId: Prisma.FieldRef<"LootSubmission", 'String'>
+  readonly organizationLootRecordId: Prisma.FieldRef<"LootSubmission", 'Int'>
   readonly memberId: Prisma.FieldRef<"LootSubmission", 'Int'>
   readonly createdAt: Prisma.FieldRef<"LootSubmission", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"LootSubmission", 'DateTime'>

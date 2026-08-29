@@ -284,8 +284,8 @@ export const getLootsControllerDeleteLootUrl = ({ guildId, lootId }: LootsContro
 }
 
 /**
- * Delete a loot entry
- * @summary Delete loot
+ * Archive an Organization Loot record
+ * @summary Archive loot
  */
 export const lootsControllerDeleteLoot = async ({ guildId, lootId }: LootsControllerDeleteLootPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 

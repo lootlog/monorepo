@@ -15,7 +15,7 @@ import type { LootNpcDto } from "src/loots/dto/loot-npc.dto";
 import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 import { LootShareResponseSchema } from "src/shared/dto/loot-response.dto";
 import { DEFAULT_PAGE_LIMIT } from "../config/pagination";
-import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
+import { buildLootNpcVisibilityWhere } from "src/loots/loot-visibility.prisma";
 import {
   getProfByShortname,
   getShortnameByProf,
@@ -118,16 +118,22 @@ export class LootQueryService {
         lootShare: true,
         createdAt: true,
         updatedAt: true,
-        lootSubmissions: {
-          where: { guildId: guild.id },
-          include: {
-            member: {
-              select: {
-                name: true,
-                avatar: true,
-                userId: true,
+        organizationLootRecords: {
+          where: { guildId: guild.id, archivedAt: null },
+          take: 1,
+          select: {
+            submissions: {
+              include: {
+                member: {
+                  select: {
+                    name: true,
+                    avatar: true,
+                    userId: true,
+                  },
+                },
               },
             },
+            _count: { select: { comments: true } },
           },
         },
         lootItems: {
@@ -142,31 +148,44 @@ export class LootQueryService {
           include: { npcSnapshot: true },
           orderBy: { id: "asc" },
         },
-        _count: {
-          select: { comments: { where: { guildId: guild.id } } },
-        },
       },
     });
 
     if (!lootsWithRelations.length) return [];
 
-    const results: LootQueryResult[] = lootsWithRelations.map((loot) => ({
-      id: loot.id,
-      uniqueId: loot.uniqueId,
-      world: loot.world,
-      source: loot.source,
-      location: loot.location,
-      lootShare: this.parseLootShare(loot.lootShare),
-      createdAt: loot.createdAt,
-      updatedAt: loot.updatedAt,
-      items: this.mapItems(loot.lootItems as unknown as LootItemWithSnapshot[]),
-      players: (loot.lootPlayers as unknown as LootPlayerWithSnapshot[]).map(
-        (entry) => this.mapPlayerFromSnapshot(entry),
-      ),
-      npcs: this.mapNpcs(loot.lootNpcs as unknown as LootNpcWithSnapshot[]),
-      submissions: loot.lootSubmissions,
-      commentsCount: loot._count.comments,
-    }));
+    const results: LootQueryResult[] = lootsWithRelations.flatMap((loot) => {
+      const organizationRecord = loot.organizationLootRecords[0];
+      if (!organizationRecord) {
+        return [];
+      }
+
+      return [
+        {
+          id: loot.id,
+          uniqueId: loot.uniqueId,
+          world: loot.world,
+          source: loot.source,
+          location: loot.location,
+          lootShare: this.parseLootShare(loot.lootShare),
+          createdAt: loot.createdAt,
+          updatedAt: loot.updatedAt,
+          items: this.mapItems(
+            loot.lootItems as unknown as LootItemWithSnapshot[],
+          ),
+          players: (
+            loot.lootPlayers as unknown as LootPlayerWithSnapshot[]
+          ).map((entry) => this.mapPlayerFromSnapshot(entry)),
+          npcs: this.mapNpcs(loot.lootNpcs as unknown as LootNpcWithSnapshot[]),
+          submissions: organizationRecord.submissions.map((submission) => ({
+            guildId: guild.id,
+            lootId: loot.id,
+            memberId: submission.memberId,
+            member: submission.member,
+          })),
+          commentsCount: organizationRecord._count.comments,
+        },
+      ];
+    });
 
     return results;
   }
@@ -251,16 +270,22 @@ export class LootQueryService {
         lootShare: true,
         createdAt: true,
         updatedAt: true,
-        lootSubmissions: {
-          where: { guildId: guild.id },
-          include: {
-            member: {
-              select: {
-                name: true,
-                avatar: true,
-                userId: true,
+        organizationLootRecords: {
+          where: { guildId: guild.id, archivedAt: null },
+          take: 1,
+          select: {
+            submissions: {
+              include: {
+                member: {
+                  select: {
+                    name: true,
+                    avatar: true,
+                    userId: true,
+                  },
+                },
               },
             },
+            _count: { select: { comments: true } },
           },
         },
         lootItems: {
@@ -280,12 +305,8 @@ export class LootQueryService {
 
     if (!loot) return null;
 
-    const commentsCount = await this.prisma.lootComment.count({
-      where: {
-        lootId: loot.id,
-        guildId: guild.id,
-      },
-    });
+    const organizationRecord = loot.organizationLootRecords[0];
+    if (!organizationRecord) return null;
 
     return {
       id: loot.id,
@@ -301,8 +322,13 @@ export class LootQueryService {
         this.mapPlayerFromSnapshot(entry),
       ),
       npcs: this.mapNpcs(loot.lootNpcs),
-      submissions: loot.lootSubmissions,
-      commentsCount,
+      submissions: organizationRecord.submissions.map((submission) => ({
+        guildId: guild.id,
+        lootId: loot.id,
+        memberId: submission.memberId,
+        member: submission.member,
+      })),
+      commentsCount: organizationRecord._count.comments,
     };
   }
 
@@ -411,15 +437,7 @@ export class LootQueryService {
       createdAtMax?: string;
     },
   ): Prisma.LootWhereInput {
-    const filteredRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
-    );
-    const administrativeUser = isAdministrativeUser(permissions);
-
-    const levelRangesCondition = this.buildLevelRangesCondition(
-      filteredRoles,
-      administrativeUser,
-    );
+    const visibilityCondition = buildLootNpcVisibilityWhere(permissions, roles);
     const playersCondition = this.buildPlayersCondition(players);
     const npcsCondition = this.buildNpcsCondition(npcs);
     const npcTypesCondition = this.buildNpcTypesCondition(npcTypes);
@@ -449,9 +467,10 @@ export class LootQueryService {
     );
 
     const baseWhere: Prisma.LootWhereInput = {
-      lootSubmissions: {
+      organizationLootRecords: {
         some: {
           guildId: guild.id,
+          archivedAt: null,
         },
       },
     };
@@ -470,7 +489,7 @@ export class LootQueryService {
       npcLevelsCondition,
       itemLevelsCondition,
       playerLevelsCondition,
-      levelRangesCondition,
+      visibilityCondition,
       searchCondition,
       hidCondition,
       itemSnapshotIdsCondition,
@@ -486,86 +505,6 @@ export class LootQueryService {
 
   private parseLootShare(lootShare: Prisma.JsonValue) {
     return LootShareResponseSchema.parse(lootShare);
-  }
-
-  private buildLevelRangesCondition(
-    filteredRoles: Role[],
-    administrativeUser: boolean,
-  ): Prisma.LootWhereInput | null {
-    if (filteredRoles.length === 0 || administrativeUser) {
-      return null;
-    }
-
-    const npcVisibilityPerRole: Prisma.NpcSnapshotWhereInput[] = [];
-
-    for (const role of filteredRoles) {
-      const roleCondition = this.buildRoleVisibilityCondition(role);
-      if (roleCondition) {
-        npcVisibilityPerRole.push(roleCondition);
-      }
-    }
-
-    if (npcVisibilityPerRole.length === 0) {
-      return null;
-    }
-
-    return {
-      lootNpcs: {
-        some: {
-          npcSnapshot: {
-            OR: npcVisibilityPerRole,
-          },
-        },
-      },
-    };
-  }
-
-  private buildRoleVisibilityCondition(
-    role: Role,
-  ): Prisma.NpcSnapshotWhereInput | null {
-    const hasReadTitans = role.permissions?.includes(
-      Permission.LOOTLOG_LOOTS_TITANS_READ,
-    );
-    const hasReadHeroes = role.permissions?.includes(
-      Permission.LOOTLOG_LOOTS_HEROES_READ,
-    );
-
-    const lvlFrom = Number(role.lvlRangeFrom ?? 0);
-    const lvlTo = Number(role.lvlRangeTo ?? 500);
-
-    const npcConstraints: Prisma.NpcSnapshotWhereInput[] = [];
-
-    npcConstraints.push({
-      OR: [{ lvl: { gte: lvlFrom } }, ...(lvlFrom <= 0 ? [{ lvl: null }] : [])],
-    });
-
-    npcConstraints.push({
-      OR: [{ lvl: { lte: lvlTo } }, ...(lvlTo >= 0 ? [{ lvl: null }] : [])],
-    });
-
-    if (!hasReadTitans) {
-      npcConstraints.push({
-        type: {
-          not: NpcType.TITAN,
-        },
-      });
-    }
-
-    if (!hasReadHeroes) {
-      npcConstraints.push({
-        type: {
-          notIn: [NpcType.HERO, NpcType.EVENT_HERO],
-        },
-      });
-    }
-
-    if (npcConstraints.length === 0) {
-      return null;
-    }
-
-    return {
-      AND: npcConstraints,
-    };
   }
 
   private buildPlayersCondition(

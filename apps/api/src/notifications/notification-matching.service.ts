@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
+import { canViewLoot, type LootVisibilityNpc } from "@lootlog/loot-visibility";
 import type { NotificationFilters } from "@lootlog/types";
-import { NpcType, Permission, type Prisma } from "src/generated/prisma/client";
+import { Permission, type Prisma } from "src/generated/prisma/client";
 import { PrismaService } from "src/db/prisma.service";
-import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 
 type LootCreatedEvent = {
   lootId: number;
@@ -10,65 +10,17 @@ type LootCreatedEvent = {
   guildIds: string[];
   itemIds: number[];
   itemNames: string[];
-  npcType?: NpcType | null;
-  npcLvl?: number | null;
 };
 
 type MemberRoleInfo = {
   guildId: string;
   isGuildOwner: boolean;
   roles: {
+    id: string;
     permissions: Permission[];
     lvlRangeFrom: number | null;
     lvlRangeTo: number | null;
   }[];
-};
-
-type MemberRolePermissions = MemberRoleInfo["roles"][number];
-
-const UNKNOWN_NPC_LEVEL = 0;
-const DEFAULT_NPC_LVL_RANGE_FROM = 0;
-const DEFAULT_NPC_LVL_RANGE_TO = 500;
-
-const roleCanViewNpcLevel = (
-  role: MemberRolePermissions,
-  npcLvl: number | null | undefined,
-) => {
-  const lvlFrom = role.lvlRangeFrom ?? DEFAULT_NPC_LVL_RANGE_FROM;
-  const lvlTo = role.lvlRangeTo ?? DEFAULT_NPC_LVL_RANGE_TO;
-
-  if (npcLvl === null || npcLvl === undefined) {
-    return lvlFrom <= UNKNOWN_NPC_LEVEL || lvlTo >= UNKNOWN_NPC_LEVEL;
-  }
-
-  return npcLvl >= lvlFrom && npcLvl <= lvlTo;
-};
-
-const roleCanViewNpcType = (
-  role: MemberRolePermissions,
-  npcType: NpcType | null | undefined,
-) => {
-  if (npcType === NpcType.TITAN) {
-    return role.permissions.includes(Permission.LOOTLOG_LOOTS_TITANS_READ);
-  }
-
-  if (npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO) {
-    return role.permissions.includes(Permission.LOOTLOG_LOOTS_HEROES_READ);
-  }
-
-  return true;
-};
-
-const roleCanViewNpc = (
-  role: MemberRolePermissions,
-  npcType: NpcType | null | undefined,
-  npcLvl: number | null | undefined,
-) => {
-  return (
-    role.permissions.includes(Permission.LOOTLOG_LOOTS_READ) &&
-    roleCanViewNpcLevel(role, npcLvl) &&
-    roleCanViewNpcType(role, npcType)
-  );
 };
 
 @Injectable()
@@ -144,44 +96,6 @@ export class NotificationMatchingService {
     return [];
   }
 
-  async getActiveMembershipGuildIdsByOwner(
-    ownerIds: string[],
-    guildIds: string[],
-  ) {
-    const uniqueOwnerIds = [...new Set(ownerIds)];
-    const uniqueGuildIds = [...new Set(guildIds)];
-    const activeGuildIdsByOwnerId = new Map<string, Set<string>>();
-
-    if (uniqueOwnerIds.length === 0 || uniqueGuildIds.length === 0) {
-      return activeGuildIdsByOwnerId;
-    }
-
-    const memberships = await this.prisma.member.findMany({
-      where: {
-        userId: {
-          in: uniqueOwnerIds,
-        },
-        guildId: {
-          in: uniqueGuildIds,
-        },
-        active: true,
-      },
-      select: {
-        userId: true,
-        guildId: true,
-      },
-    });
-
-    for (const membership of memberships) {
-      const ownerGuildIds =
-        activeGuildIdsByOwnerId.get(membership.userId) ?? new Set();
-      ownerGuildIds.add(membership.guildId);
-      activeGuildIdsByOwnerId.set(membership.userId, ownerGuildIds);
-    }
-
-    return activeGuildIdsByOwnerId;
-  }
-
   async getActiveMembershipsWithRoles(
     ownerIds: string[],
     guildIds: string[],
@@ -210,6 +124,7 @@ export class NotificationMatchingService {
         },
         roles: {
           select: {
+            id: true,
             permissions: true,
             lvlRangeFrom: true,
             lvlRangeTo: true,
@@ -231,22 +146,24 @@ export class NotificationMatchingService {
     return result;
   }
 
-  canRolesViewNpc(
+  canRolesViewLoot(
     roles: MemberRoleInfo["roles"],
-    npcType: NpcType | null | undefined,
-    npcLvl: number | null | undefined,
+    npcs: readonly LootVisibilityNpc[],
     isGuildOwner?: boolean,
   ): boolean {
-    if (isGuildOwner) {
-      return true;
-    }
+    const permissions = isGuildOwner
+      ? [Permission.OWNER]
+      : roles.flatMap((role) => role.permissions);
 
-    const allPermissions = roles.flatMap((r) => r.permissions);
-
-    if (isAdministrativeUser(allPermissions)) {
-      return true;
-    }
-
-    return roles.some((role) => roleCanViewNpc(role, npcType, npcLvl));
+    return canViewLoot({
+      permissions,
+      roles: roles.map((role) => ({
+        id: role.id,
+        levelFrom: role.lvlRangeFrom ?? 0,
+        levelTo: role.lvlRangeTo ?? 500,
+        permissions: role.permissions,
+      })),
+      npcs,
+    });
   }
 }

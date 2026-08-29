@@ -7,3 +7,4 @@ the statuses `Proposed`, `Accepted`, `Superseded`, or `Deprecated`.
 ## Decisions
 
 - [0001 — Direct reciprocal reservation calendar sharing](0001-direct-reciprocal-reservation-sharing.md)
+- [0002 — Global loot with Organization-owned records](0002-global-loot-organization-records.md)

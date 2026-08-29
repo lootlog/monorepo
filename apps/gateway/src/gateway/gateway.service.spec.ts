@@ -563,42 +563,119 @@ describe("GatewayService", () => {
   });
 
   describe("handleGuildsLootCreate", () => {
-    it("should emit loot create event to loot room", () => {
+    it("emits a loot event only to sockets that can view every NPC", async () => {
       const payload = {
+        version: 2 as const,
         guildId: "guild-123",
         lootId: 42,
-        npc: {
-          type: "ELITE",
-          wt: 10,
-        },
+        npcs: [
+          { type: "ELITE", lvl: 100 },
+          { type: "TITAN", lvl: 150 },
+        ],
       };
+      const completeSocket = createSocketForGuild({
+        discordId: "reader",
+        roles: [
+          {
+            permissions: [
+              Permission.LOOTLOG_LOOTS_READ,
+              Permission.LOOTLOG_LOOTS_TITANS_READ,
+            ],
+            lvlRangeFrom: 1,
+            lvlRangeTo: 200,
+          },
+        ],
+      });
+      const baseOnlySocket = createSocketForGuild({
+        discordId: "base-reader",
+        roles: [{ permissions: [Permission.LOOTLOG_LOOTS_READ] }],
+      });
+      mockServer.fetchSockets.mockResolvedValue([
+        completeSocket,
+        baseOnlySocket,
+      ]);
 
       service.handleGuildsLootCreate(payload);
+      await flushPromises();
 
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:loots:base");
-      expect(mockServer.emit).toHaveBeenCalledWith(
+      expect(mockServer.in).toHaveBeenCalledWith([
+        "guild-123:loots:base",
+        "guild-123:loots:titans",
+      ]);
+      expect(completeSocket.emit).toHaveBeenCalledWith(
+        GatewayEvent.LOOTS_CREATE,
+        payload,
+      );
+      expect(baseOnlySocket.emit).not.toHaveBeenCalled();
+    });
+
+    it("does not let ADMIN bypass loot visibility, but OWNER still can", async () => {
+      const payload = {
+        version: 2 as const,
+        guildId: "guild-123",
+        lootId: 42,
+        npcs: [{ type: "TITAN", lvl: 150 }],
+      };
+      const adminSocket = createSocketForGuild({
+        discordId: "admin",
+        roles: [{ permissions: [Permission.ADMIN] }],
+      });
+      const ownerSocket = createSocketForGuild({
+        discordId: "owner",
+        ownerId: "owner",
+        roles: [],
+      });
+      mockServer.fetchSockets.mockResolvedValue([adminSocket, ownerSocket]);
+
+      service.handleGuildsLootCreate(payload);
+      await flushPromises();
+
+      expect(adminSocket.emit).not.toHaveBeenCalled();
+      expect(ownerSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.LOOTS_CREATE,
         payload,
       );
     });
+
+    it("fails closed when an NPC type is blank", async () => {
+      const payload = {
+        version: 2 as const,
+        guildId: "guild-123",
+        lootId: 42,
+        npcs: [{ type: "", lvl: 100 }],
+      };
+      const baseSocket = createSocketForGuild({
+        discordId: "base-reader",
+        roles: [{ permissions: [Permission.LOOTLOG_LOOTS_READ] }],
+      });
+      mockServer.fetchSockets.mockResolvedValue([baseSocket]);
+
+      service.handleGuildsLootCreate(payload);
+      await flushPromises();
+
+      expect(baseSocket.emit).not.toHaveBeenCalled();
+    });
   });
 
   describe("handleGuildsLootShareUpdate", () => {
-    it("should emit loot share update event to loot room", () => {
+    it("should emit loot share update event to an eligible socket", async () => {
       const payload = {
+        version: 2 as const,
         guildId: "guild-123",
         lootId: 42,
         lootShare: { player: ["item"] },
-        npc: {
-          type: "ELITE",
-          wt: 10,
-        },
+        npcs: [{ type: "ELITE", lvl: 100, wt: 10 }],
       };
+      const readerSocket = createSocketForGuild({
+        discordId: "reader",
+        roles: [{ permissions: [Permission.LOOTLOG_LOOTS_READ] }],
+      });
+      mockServer.fetchSockets.mockResolvedValue([readerSocket]);
 
       service.handleGuildsLootShareUpdate(payload);
+      await flushPromises();
 
-      expect(mockServer.to).toHaveBeenCalledWith("guild-123:loots:base");
-      expect(mockServer.emit).toHaveBeenCalledWith(
+      expect(readerSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.LOOTS_SHARE_UPDATE,
         payload,
       );

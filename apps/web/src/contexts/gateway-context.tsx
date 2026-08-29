@@ -10,6 +10,7 @@ import { socket } from "@/lib/gateway-client";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/api-client/react-query/main/users";
+import type { GuildLootCreatedEventV2 } from "@lootlog/types";
 
 export type GatewayProviderValue = {
   connected: boolean;
@@ -20,11 +21,6 @@ export type GatewayProviderValue = {
 
 type GatewayJoinPayload = {
   status: "error" | "success";
-};
-
-type LootCreateGatewayPayload = {
-  guildId: string;
-  lootId: number;
 };
 
 type Props = {
@@ -71,7 +67,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     }
   });
   const handleLootCreate = useEffectEvent(
-    (payload: LootCreateGatewayPayload) => {
+    (payload: GuildLootCreatedEventV2) => {
       if (payload.guildId === currentGuildId) {
         return;
       }

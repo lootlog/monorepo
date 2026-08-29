@@ -31,7 +31,7 @@ describe("LootsController", () => {
     fetchLootById: Mock;
     getComments: Mock;
     createComment: Mock;
-    deleteLoot: Mock;
+    archiveLoot: Mock;
     updateLoot: Mock;
   };
 
@@ -115,7 +115,7 @@ describe("LootsController", () => {
       fetchLootById: mockFn(),
       getComments: mockFn(),
       createComment: mockFn(),
-      deleteLoot: mockFn(),
+      archiveLoot: mockFn(),
       updateLoot: mockFn(),
     };
 
@@ -184,7 +184,7 @@ describe("LootsController", () => {
       );
 
       expect(fetchLootsParamTypes[3]).toBe(FetchLootsParamsDto);
-      expect(getLootStatsParamTypes[1]).toBe(LootStatsQueryDto);
+      expect(getLootStatsParamTypes[3]).toBe(LootStatsQueryDto);
       expect(createLootParamTypes[2]).toBe(CreateLootDto);
       expect(createCommentParamTypes[2]).toBe(CreateCommentDto);
       expect(resolveLootItemParamTypes[3]).toBe(ResolveLootItemParamsDto);
@@ -392,11 +392,18 @@ describe("LootsController", () => {
       ];
       service.getComments.mockResolvedValue(mockComments as never);
 
-      const result = await controller.getComments(lootId, mockGuild);
+      const result = await controller.getComments(
+        lootId,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [],
+        mockGuild,
+      );
 
       expect(service.getComments).toHaveBeenCalledWith({
         lootId,
-        guildId: mockGuild.id,
+        guild: mockGuild,
+        permissions: [Permission.LOOTLOG_LOOTS_READ],
+        roles: [],
       });
       expect(result).toEqual(mockComments);
     });
@@ -423,6 +430,8 @@ describe("LootsController", () => {
         discordId,
         lootId,
         body,
+        [Permission.LOOTLOG_LOOTS_READ],
+        [],
         mockGuild,
       );
 
@@ -430,7 +439,9 @@ describe("LootsController", () => {
         discordId,
         lootId,
         body,
-        guildId: mockGuild.id,
+        guild: mockGuild,
+        permissions: [Permission.LOOTLOG_LOOTS_READ],
+        roles: [],
       });
       expect(result).toEqual(mockComment);
     });
@@ -439,14 +450,26 @@ describe("LootsController", () => {
   describe("deleteLoot", () => {
     const lootId = 1;
 
-    it("should delete a loot", async () => {
-      service.deleteLoot.mockResolvedValue(undefined);
+    it("should archive an Organization Loot record", async () => {
+      const discordId = "discord123";
+      const permissions = [Permission.LOOTLOG_LOOTS_ARCHIVE];
+      const roles = [mockRole];
+      service.archiveLoot.mockResolvedValue(undefined);
 
-      await controller.deleteLoot(lootId, mockGuild);
-
-      expect(service.deleteLoot).toHaveBeenCalledWith({
-        guildId: mockGuild.id,
+      await controller.deleteLoot(
+        discordId,
         lootId,
+        permissions,
+        roles,
+        mockGuild,
+      );
+
+      expect(service.archiveLoot).toHaveBeenCalledWith({
+        discordId,
+        guild: mockGuild,
+        lootId,
+        permissions,
+        roles,
       });
     });
   });
