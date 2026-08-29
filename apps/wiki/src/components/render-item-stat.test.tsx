@@ -9,7 +9,7 @@ describe("renderItemStat", () => {
     );
 
     expect(markup).toContain("Aura odwetu");
-    expect(markup).toContain("text-green-500");
+    expect(markup).toContain("block w-full text-green-500");
     expect(markup).toContain("font-bold text-primary");
     expect(markup).not.toContain("<legbon>");
   });

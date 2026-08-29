@@ -59,7 +59,7 @@ export const TranslatedItemStat: FC<TranslatedItemStatProps> = ({
       components={{
         description: <div className="text-center text-muted-foreground" />,
         gold: <span className="text-primary" />,
-        legbon: <span className="text-green-500" />,
+        legbon: <span className="block w-full text-green-500" />,
         value: <span className="font-bold text-primary" />,
       }}
       i18nKey={`itemStats.${displayValue.key}`}
