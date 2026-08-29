@@ -4,12 +4,6 @@ import { Platform } from "./enums/platform.enum";
 import { UserPresenceStatus } from "./enums/user-presence-status.enum";
 
 describe("Gateway", () => {
-  const mockConnectionService = {
-    getConnectionMetadata: vi.fn(),
-    validateConnection: vi.fn(),
-    initializeSocketData: vi.fn(),
-  };
-
   const mockPresenceService = {
     emitDisconnectPresence: vi.fn(),
     broadcastPlayerDisconnect: vi.fn(),
@@ -24,10 +18,6 @@ describe("Gateway", () => {
   const mockSubscriptionService = {
     handleJoin: vi.fn(),
     handleDisconnect: vi.fn(),
-  };
-
-  const mockGatewayAuthService = {
-    verifyConnectionIdentity: vi.fn(),
   };
 
   const mockMapPingService = {
@@ -45,83 +35,17 @@ describe("Gateway", () => {
 
   beforeEach(() => {
     gateway = new Gateway(
-      mockConnectionService as never,
       mockPresenceService as never,
       mockSubscriptionService as never,
-      mockGatewayAuthService as never,
       mockMapPingService as never,
       mockAirTagService as never,
     );
     gateway.server = mockServer as never;
   });
 
-  it("disconnects invalid websocket connections", async () => {
-    const client = {
-      request: { headers: {} },
-      disconnect: vi.fn(),
-      on: vi.fn(),
-    };
-
-    mockConnectionService.getConnectionMetadata.mockReturnValue({
-      platform: Platform.UNKNOWN,
-    });
-    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue(null);
-    mockConnectionService.validateConnection.mockReturnValue({
-      valid: false,
-    });
-
-    await gateway.handleConnection(client as never);
-
-    expect(client.disconnect).toHaveBeenCalled();
-    expect(client.on).not.toHaveBeenCalled();
-  });
-
-  it("disconnects spoofed websocket connections without a verified session", async () => {
-    const client = {
-      request: {
-        headers: {
-          "x-auth-discord-id": "spoofed-discord",
-          "x-auth-user-id": "spoofed-user",
-          origin: "https://lootlog.com",
-        },
-      },
-      handshake: {},
-      disconnect: vi.fn(),
-      on: vi.fn(),
-    };
-
-    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue(null);
-    mockConnectionService.getConnectionMetadata.mockReturnValue({
-      platform: Platform.WEB_APP,
-    });
-    mockConnectionService.validateConnection.mockReturnValue({
-      valid: false,
-    });
-
-    await gateway.handleConnection(client as never);
-
-    expect(mockConnectionService.validateConnection).toHaveBeenCalledWith(
-      null,
-      Platform.WEB_APP,
-    );
-    expect(client.disconnect).toHaveBeenCalled();
-    expect(mockConnectionService.initializeSocketData).not.toHaveBeenCalled();
-  });
-
-  it("initializes socket data and handles disconnecting callbacks", async () => {
+  it("handles disconnecting callbacks for authenticated sockets", async () => {
     let disconnectingHandler!: () => Promise<void>;
 
-    const client = {
-      id: "socket-1",
-      request: { headers: {} },
-      disconnect: vi.fn(),
-      on: vi.fn((event: string, handler: () => Promise<void>) => {
-        if (event === GatewayEvent.DISCONNECTING) {
-          disconnectingHandler = handler;
-        }
-      }),
-      data: undefined,
-    };
     const socketData = {
       discordId: "discord-1",
       userId: "user-1",
@@ -134,16 +58,18 @@ describe("Gateway", () => {
         },
       ],
     };
+    const client = {
+      id: "socket-1",
+      request: { headers: {} },
+      disconnect: vi.fn(),
+      on: vi.fn((event: string, handler: () => Promise<void>) => {
+        if (event === GatewayEvent.DISCONNECTING) {
+          disconnectingHandler = handler;
+        }
+      }),
+      data: socketData,
+    };
 
-    mockConnectionService.getConnectionMetadata.mockReturnValue({
-      platform: Platform.GAME,
-    });
-    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue({
-      discordId: "discord-1",
-      userId: "user-1",
-    });
-    mockConnectionService.validateConnection.mockReturnValue({ valid: true });
-    mockConnectionService.initializeSocketData.mockReturnValue(socketData);
     mockSubscriptionService.handleDisconnect.mockResolvedValue(undefined);
     mockPresenceService.broadcastPlayerDisconnect.mockResolvedValue(undefined);
 
@@ -168,17 +94,6 @@ describe("Gateway", () => {
   it("emits web presence offline when a web socket disconnects", async () => {
     let disconnectingHandler!: () => Promise<void>;
 
-    const client = {
-      id: "socket-1",
-      request: { headers: {} },
-      disconnect: vi.fn(),
-      on: vi.fn((event: string, handler: () => Promise<void>) => {
-        if (event === GatewayEvent.DISCONNECTING) {
-          disconnectingHandler = handler;
-        }
-      }),
-      data: undefined,
-    };
     const socketData = {
       discordId: "discord-1",
       userId: "user-1",
@@ -191,16 +106,18 @@ describe("Gateway", () => {
         },
       ],
     };
+    const client = {
+      id: "socket-1",
+      request: { headers: {} },
+      disconnect: vi.fn(),
+      on: vi.fn((event: string, handler: () => Promise<void>) => {
+        if (event === GatewayEvent.DISCONNECTING) {
+          disconnectingHandler = handler;
+        }
+      }),
+      data: socketData,
+    };
 
-    mockConnectionService.getConnectionMetadata.mockReturnValue({
-      platform: Platform.WEB_APP,
-    });
-    mockGatewayAuthService.verifyConnectionIdentity.mockResolvedValue({
-      discordId: "discord-1",
-      userId: "user-1",
-    });
-    mockConnectionService.validateConnection.mockReturnValue({ valid: true });
-    mockConnectionService.initializeSocketData.mockReturnValue(socketData);
     mockSubscriptionService.handleDisconnect.mockResolvedValue(undefined);
     mockPresenceService.broadcastPlayerDisconnect.mockResolvedValue(undefined);
 
