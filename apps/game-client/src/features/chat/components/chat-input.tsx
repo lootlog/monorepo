@@ -97,9 +97,6 @@ const CHAT_INPUT_SHELL_CLASS =
 const CHAT_INPUT_FOCUS_CLASS =
   "ll:focus-within:border-ring ll:focus-within:ring-ring/50 ll:focus-within:ring-[3px]";
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 const getActiveMentionForSuggestions = ({
   activeMention,
   caretIndex,
@@ -121,7 +118,7 @@ const getActiveMentionForSuggestions = ({
   const { insertedLabel, mention } = tabCompletionSession;
   const isSessionActive =
     caretIndex === mention.end + 1 &&
-    /\s/.test(valueOr(messageValue[mention.end], "")) &&
+    /\s/.test(messageValue[mention.end] ?? "") &&
     messageValue.slice(mention.start, mention.end) === insertedLabel;
 
   return isSessionActive ? mention : null;
@@ -206,6 +203,20 @@ const shouldLoadChatMentionData = (
   isCommandInput: boolean,
 ) => selectedGuildId !== "" && hasMentionInput && !isCommandInput;
 
+const getChatMentionQueryData = <PermissionItem, MemberItem, RoleItem>({
+  permissions,
+  members,
+  roles,
+}: {
+  permissions: PermissionItem[] | undefined;
+  members: MemberItem[] | undefined;
+  roles: RoleItem[] | undefined;
+}) => ({
+  permissions: permissions ?? [],
+  members: members ?? [],
+  roles: roles ?? [],
+});
+
 export const ChatInput: FC<ChatInputProps> = ({
   selectedGuildId,
   autofocus,
@@ -241,7 +252,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const pendingFocusCaretRef = useRef<number | null>(null);
   const isPending =
     isSendingMessage || isCreatingNotificationMessage || isClearingChat;
-  const resolvedGuildId = valueOr(selectedGuildId, "");
+  const resolvedGuildId = selectedGuildId ?? "";
   const activeMention = getActiveChatMention({
     message: messageValue,
     caretIndex,
@@ -276,7 +287,6 @@ export const ChatInput: FC<ChatInputProps> = ({
       },
     },
   );
-  const guildPermissions = valueOr(guildPermissionsQuery.data, []);
   const guildMembersQuery = useGuildMembersSummary(
     { guildId: resolvedGuildId },
     {
@@ -285,7 +295,6 @@ export const ChatInput: FC<ChatInputProps> = ({
       },
     },
   );
-  const guildMembers = valueOr(guildMembersQuery.data, []);
   const isFetchingMemberNames = guildMembersQuery.isFetching;
   const guildRolesQuery = useRolesControllerGetGuildRoles(
     { guildId: resolvedGuildId },
@@ -300,8 +309,16 @@ export const ChatInput: FC<ChatInputProps> = ({
       },
     },
   );
-  const guildRoles = valueOr(guildRolesQuery.data, []);
   const isFetchingRoleNames = guildRolesQuery.isFetching;
+  const {
+    permissions: guildPermissions,
+    members: guildMembers,
+    roles: guildRoles,
+  } = getChatMentionQueryData({
+    permissions: guildPermissionsQuery.data,
+    members: guildMembersQuery.data,
+    roles: guildRolesQuery.data,
+  });
   const { data: currentMember } = useMembersControllerGetMe(
     { guildId: resolvedGuildId },
     {
@@ -330,7 +347,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const mentionSuggestions = getChatMentionSuggestions({
     memberSuggestions,
     roleSuggestions,
-    query: valueOr(activeMentionForSuggestions?.query, ""),
+    query: activeMentionForSuggestions?.query ?? "",
   });
   const mentionContext = buildChatMentionContext({
     currentCharacterNick,

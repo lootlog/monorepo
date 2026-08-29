@@ -40,9 +40,6 @@ type ActivityLogsFiltersSidebarProps = {
   className?: string;
 };
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 const optionalText = (value: string) => (value.length > 0 ? value : undefined);
 
 const getDateValue = (value: string | null | undefined) =>
@@ -55,20 +52,14 @@ export const ActivityLogsFiltersSidebar: FC<
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useActivityLogsFilters();
   const guildId = useGuildId();
-  const [debouncedNameSearch] = useDebounceValue(
-    valueOr(filters.name, ""),
-    300,
-  );
-  const [debouncedClanSearch] = useDebounceValue(
-    valueOr(filters.clanName, ""),
-    300,
-  );
+  const [debouncedNameSearch] = useDebounceValue(filters.name ?? "", 300);
+  const [debouncedClanSearch] = useDebounceValue(filters.clanName ?? "", 300);
   const trimmedNameSearch = debouncedNameSearch.trim();
   const trimmedClanSearch = debouncedClanSearch.trim();
   const { data: guild } = useGuildsControllerGetGuildById({
-    guildId: valueOr(guildId, ""),
+    guildId: guildId ?? "",
   });
-  const activityGuildId = valueOr(guild?.id, "");
+  const activityGuildId = guild?.id ?? "";
   const nameSearch = optionalText(trimmedNameSearch);
   const clanSearch = optionalText(trimmedClanSearch);
   const { data: nameSuggestionsResponse } = useQuery(
@@ -103,11 +94,8 @@ export const ActivityLogsFiltersSidebar: FC<
       },
     ),
   );
-  const nameSuggestions = valueOr(nameSuggestionsResponse?.suggestions, []);
-  const clanNameSuggestions = valueOr(
-    clanNameSuggestionsResponse?.suggestions,
-    [],
-  );
+  const nameSuggestions = nameSuggestionsResponse?.suggestions ?? [];
+  const clanNameSuggestions = clanNameSuggestionsResponse?.suggestions ?? [];
 
   const startDateValue = getDateValue(filters.startDate);
   const endDateValue = getDateValue(filters.endDate);
@@ -217,9 +205,9 @@ export const ActivityLogsFiltersSidebar: FC<
                         {t("activityLogs.filters.playerName")}
                       </Label>
                       <ActorNameSelector
-                        value={valueOr(filters.name, "")}
+                        value={filters.name ?? ""}
                         suggestions={nameSuggestions}
-                        searchValue={valueOr(filters.name, "")}
+                        searchValue={filters.name ?? ""}
                         onSearchChange={(value) =>
                           updateFilters({ name: value })
                         }
@@ -238,9 +226,9 @@ export const ActivityLogsFiltersSidebar: FC<
                         {t("activityLogs.filters.clanName")}
                       </Label>
                       <ActorNameSelector
-                        value={valueOr(filters.clanName, "")}
+                        value={filters.clanName ?? ""}
                         suggestions={clanNameSuggestions}
-                        searchValue={valueOr(filters.clanName, "")}
+                        searchValue={filters.clanName ?? ""}
                         onSearchChange={(value) =>
                           updateFilters({ clanName: value })
                         }

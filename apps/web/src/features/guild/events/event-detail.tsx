@@ -80,22 +80,19 @@ type EventDetailHero = EventHeroNpc & {
 type EventOverview = EventOverviewResponseDto;
 type Translator = ReturnType<typeof useTranslation>["t"];
 
-const valueOr = <Value,>(value: Value | null | undefined, fallback: Value) =>
-  value ?? fallback;
-
 const getEventHeroes = (
   event: EventOverview | undefined,
   eventMaps: EventMapsResponse | undefined,
 ): EventDetailHero[] => {
   const heroMapsById = new Map(
-    valueOr(eventMaps?.heroNpcs, []).map((hero) => [hero.id, hero]),
+    (eventMaps?.heroNpcs ?? []).map((hero) => [hero.id, hero]),
   );
-  return valueOr(event?.heroNpcs, []).map((hero) => {
+  return (event?.heroNpcs ?? []).map((hero) => {
     const mapsData = heroMapsById.get(hero.id);
     return {
       ...hero,
-      locations: valueOr(mapsData?.locations, []),
-      maps: valueOr(mapsData?.maps, []),
+      locations: mapsData?.locations ?? [],
+      maps: mapsData?.maps ?? [],
     };
   });
 };
@@ -199,11 +196,25 @@ const isPinActionDisabled = (
 const hasEventDetailErrors = (mapsError: unknown, rankingError: unknown) =>
   Boolean(mapsError || rankingError);
 
+const getEventRouteQuery = (
+  guildId: string | undefined,
+  eventId: string | undefined,
+) => ({
+  guildId: guildId ?? "",
+  eventId: eventId ?? "",
+});
+
+const getEventHeroTimerQuery = (world: string | null | undefined) => ({
+  world: world ?? "",
+});
+
 export const EventDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
-  const queryGuildId = valueOr(guildId, "");
-  const queryEventId = valueOr(eventId, "");
+  const { guildId: queryGuildId, eventId: queryEventId } = getEventRouteQuery(
+    guildId,
+    eventId,
+  );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
@@ -261,9 +272,7 @@ export const EventDetail = () => {
       guildId: queryGuildId,
       eventId: queryEventId,
     },
-    {
-      world: valueOr(event?.world, ""),
-    },
+    getEventHeroTimerQuery(event?.world),
     {
       query: {
         enabled: hasEventRouteParams && Boolean(event?.world),
@@ -272,9 +281,7 @@ export const EventDetail = () => {
             guildId: queryGuildId,
             eventId: queryEventId,
           },
-          {
-            world: valueOr(event?.world, ""),
-          },
+          getEventHeroTimerQuery(event?.world),
         ),
       },
     },
@@ -379,8 +386,8 @@ export const EventDetail = () => {
   const handleEditHero = (hero: EventHeroNpc) => {
     setSelectedHero({
       ...hero,
-      locations: valueOr(hero.locations, []),
-      maps: valueOr(hero.maps, []),
+      locations: hero.locations ?? [],
+      maps: hero.maps ?? [],
     });
     setHeroDialogOpen(true);
   };
@@ -388,8 +395,8 @@ export const EventDetail = () => {
   const handleManageMaps = (hero: EventHeroNpc) => {
     setSelectedHero({
       ...hero,
-      locations: valueOr(hero.locations, []),
-      maps: valueOr(hero.maps, []),
+      locations: hero.locations ?? [],
+      maps: hero.maps ?? [],
     });
     setMapDialogOpen(true);
   };
@@ -652,7 +659,7 @@ export const EventDetail = () => {
                         >
                           <Clock className="size-3.5" />
                           {t("events.header.assignmentTimeoutValue", {
-                            minutes: valueOr(event.assignmentTimeoutMinutes, 5),
+                            minutes: event.assignmentTimeoutMinutes ?? 5,
                           })}
                         </button>
                       }
