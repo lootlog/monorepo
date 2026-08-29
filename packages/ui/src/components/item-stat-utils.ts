@@ -506,9 +506,10 @@ const formatOutfit: StatValueFormatter = (key, value) => {
     return { key: `${key}.minutes`, value: [duration, locationSuffix] };
   }
 
+  const roundedHours = Math.round(durationMinutes / 60);
   return {
-    key: durationMinutes < 300 ? `${key}.hoursFew` : `${key}.hours`,
-    value: [Math.round(durationMinutes / 60).toString(), locationSuffix],
+    key: roundedHours < 5 ? `${key}.hoursFew` : `${key}.hours`,
+    value: [roundedHours.toString(), locationSuffix],
   };
 };
 

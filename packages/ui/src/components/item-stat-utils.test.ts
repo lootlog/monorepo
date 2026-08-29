@@ -63,6 +63,9 @@ describe("item stat utilities", () => {
       noauction: "Tego przedmiotu nie można wystawić na aukcję",
       nodepo: "Przedmiotu nie można przechowywać w depozycie",
       townlimit: "Działa tylko w wybranych lokacjach",
+      custom_teleport: {
+        set: "<description>Teleportuje Postać na mapę:\n{{value4}} ({{value2}}, {{value3}}).</description>",
+      },
       legbon: {
         dmgred:
           "<legbon>Fizyczna osłona: przyjmowane obrażenia fizyczne zmniejszone o <value>{{value}}%</value>.</legbon>",
@@ -217,6 +220,16 @@ describe("item stat utilities", () => {
         key: "opis",
         value: "01.01.2025, 00:30|2025|2024|2026",
       },
+    ]);
+  });
+
+  it("selects the outfit hour form from the rounded hour count", () => {
+    const blocks = mapStatsToDisplayValues(
+      parseItemStats("outfit=299,x,Tuzmer"),
+    );
+
+    expect(blocks.baseStatsBlock).toEqual([
+      { key: "outfit.hours", value: ["5", " w Tuzmer"] },
     ]);
   });
 

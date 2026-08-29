@@ -220,7 +220,7 @@
   "teleport": "<description>Teleportuje Postać na mapę:\n{{value4}} ({{value2}}, {{value3}}).</description>",
   "custom_teleport": {
     "empty": "<description>Kliknij dwa razy, aby wybrać docelowe miejsce teleportacji.</description>",
-    "set": "<description>Teleportuje Postać na mapę:\n{{value4}} ({{value2}},{{value3}}).</description>"
+    "set": "<description>Teleportuje Postać na mapę:\n{{value4}} ({{value2}}, {{value3}}).</description>"
   },
   "opis": "<description>{{value}}</description>",
   "etiquette": "<description>Ostatnio dostępny podczas:\n{{value}}</description>",
