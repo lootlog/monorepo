@@ -13,6 +13,7 @@ import { ReadyRoomRedisRepository } from "#src/messaging/ready-room/ready-room-r
 import { READY_ROOM_REPOSITORY } from "#src/messaging/ready-room/ready-room.repository";
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
 import { ChatModule } from "#src/chat/chat.module";
+import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ChatModule } from "#src/chat/chat.module";
   controllers: [MessagingController, PartyReadyRoomController],
   providers: [
     MessagingService,
+    NotificationRateLimiterService,
     ReadyRoomPublisher,
     ReadyRoomService,
     {

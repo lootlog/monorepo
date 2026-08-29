@@ -6,8 +6,10 @@ import type { ChatMessageResponseDtoOutput } from "@lootlog/api-client/models/ma
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/api-client/models/main/member-summary-response-dto-output";
 import type { NullableMemberResponseDto } from "@lootlog/api-client/models/main/nullable-member-response-dto";
 import type { RoleResponseDtoOutput } from "@lootlog/api-client/models/main/role-response-dto-output";
+import { ApiError } from "@lootlog/api-client/transport";
 import { MessageType } from "@/api/chat.api";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { toast } from "sonner";
 import { ChatInput } from "./chat-input";
 
 beforeEach(() => setTestRuntimeGame());
@@ -19,6 +21,10 @@ const mockClearReplyDraft = vi.fn();
 const mockSetQueryData = vi.fn();
 const mockScrollIntoView = vi.fn();
 const mockClearChatMessages = vi.fn();
+
+vi.mock("sonner", () => ({
+  toast: { error: vi.fn() },
+}));
 
 let mockGuildMembers: MemberSummaryResponseDtoOutput[] = [
   { id: 1, userId: "user-1", name: "Raider", color: 0x12ab34 },
@@ -246,6 +252,11 @@ vi.mock("@/features/command/hooks/use-party-command", () => ({
 }));
 
 vi.mock("@/features/chat/hooks/use-notification-chat-orchestration", () => ({
+  isNotificationRateLimitError: (error: unknown) =>
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    error.status === 429,
   useNotificationChatOrchestration: () => ({
     isCreatingNotificationMessage: false,
     startNotificationMessage: mockStartNotificationMessage,
@@ -293,6 +304,7 @@ describe("ChatInput", () => {
     mockSetQueryData.mockReset();
     mockScrollIntoView.mockReset();
     mockClearChatMessages.mockReset();
+    vi.mocked(toast.error).mockReset();
     mockGuildMembers = [
       { id: 1, userId: "user-1", name: "Raider", color: 0x12ab34 },
       { id: 2, userId: "user-2", name: "Hero", color: null },
@@ -749,6 +761,54 @@ describe("ChatInput", () => {
     await user.paste("!abc");
 
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("ignores repeated notification submits until orchestration finishes", async () => {
+    const deferred = Promise.withResolvers<{
+      result: ChatMessageResponseDtoOutput;
+    }>();
+    mockStartNotificationMessage.mockReturnValue(deferred.promise);
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("!alarm");
+
+    fireEvent.keyDown(editor, { key: "Enter" });
+    fireEvent.keyDown(editor, { key: "Enter" });
+
+    expect(mockStartNotificationMessage).toHaveBeenCalledTimes(1);
+    expect(editor).toHaveAttribute("tabindex", "-1");
+
+    deferred.resolve({ result: createSentMessageResponse() });
+    await waitFor(() => expect(editor).toHaveAttribute("tabindex", "0"));
+    expect(editor.textContent).toBe("");
+  });
+
+  it("shows only the notification rate-limit error for a 429 response", async () => {
+    mockStartNotificationMessage.mockRejectedValue(
+      new ApiError({
+        status: 429,
+        data: { retryAfterMs: 1_000 },
+        url: "/messaging",
+        method: "POST",
+        message: "Request failed",
+      }),
+    );
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("!alarm");
+    fireEvent.keyDown(editor, { key: "Enter" });
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Wysyłasz powiadomienia zbyt szybko. Spróbuj ponownie za chwilę.",
+      ),
+    );
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(editor.textContent).toBe("!alarm");
   });
 
   it("shows the clear chat command only for admin or owner permissions", async () => {

@@ -28,6 +28,10 @@ import type {
 } from '../../../models/main/messaging-controller-volunteer-path-parameters';
 
 import type {
+  NotificationRateLimitResponseDto
+} from '../../../models/main/notification-rate-limit-response-dto';
+
+import type {
   NotificationResponseDtoOutput
 } from '../../../models/main/notification-response-dto-output';
 
@@ -72,7 +76,7 @@ return mainFetch<NotificationResponseDtoOutput>(getMessagingControllerSendNotifi
 
 
 
-export const getMessagingControllerSendNotificationMutationOptions = <TError = ErrorType<unknown>,
+export const getMessagingControllerSendNotificationMutationOptions = <TError = ErrorType<NotificationRateLimitResponseDto>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerSendNotification>>, TError,MessagingControllerSendNotificationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof messagingControllerSendNotification>>, TError,MessagingControllerSendNotificationMutationVariables, TContext> => {
 
@@ -101,13 +105,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type MessagingControllerSendNotificationMutationResult = NonNullable<Awaited<ReturnType<typeof messagingControllerSendNotification>>>
     export type MessagingControllerSendNotificationMutationBody = BodyType<CreateNotificationDto>
-    export type MessagingControllerSendNotificationMutationError = ErrorType<unknown>
+    export type MessagingControllerSendNotificationMutationError = ErrorType<NotificationRateLimitResponseDto>
     export type MessagingControllerSendNotificationMutationVariables = {data: BodyType<CreateNotificationDto>}
 
     /**
  * @summary Send notification
  */
-export const useMessagingControllerSendNotification = <TError = ErrorType<unknown>,
+export const useMessagingControllerSendNotification = <TError = ErrorType<NotificationRateLimitResponseDto>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerSendNotification>>, TError,MessagingControllerSendNotificationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof messagingControllerSendNotification>>,

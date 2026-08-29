@@ -2,6 +2,8 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
 } from "@nestjs/common";
@@ -18,6 +20,7 @@ import { v4 as uuid } from "uuid";
 import { RoutingKey } from "#src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { ReadyRoomService } from "#src/messaging/ready-room/ready-room.service";
+import { NotificationRateLimiterService } from "#src/messaging/notification-rate-limiter.service";
 
 const NOTIFICATION_TTL_SECONDS = 1800; // 30 minutes
 
@@ -35,6 +38,7 @@ export class MessagingService {
     private readonly guildsService: GuildsService,
     private readonly redisService: RedisService,
     private readonly readyRoomService: ReadyRoomService,
+    private readonly notificationRateLimiter: NotificationRateLimiterService,
   ) {}
 
   private getNotificationKey(notificationId: string): string {
@@ -73,7 +77,22 @@ export class MessagingService {
     }
   }
 
-  async sendNotification(discordId: string, data: CreateNotificationDto) {
+  async sendNotification(
+    userId: string,
+    discordId: string,
+    data: CreateNotificationDto,
+  ) {
+    const rateLimit = await this.notificationRateLimiter.consume(userId);
+    if (rateLimit.accepted === false) {
+      throw new HttpException(
+        {
+          message: "NOTIFICATION_RATE_LIMITED",
+          retryAfterMs: rateLimit.retryAfterMs,
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
     if (!data.message && !data.npc) {
       throw new BadRequestException(Error.MISSING_MESSAGE_OR_NPC);
     }

@@ -37,9 +37,10 @@ describe("MessagingController", () => {
     });
 
     await expect(
-      controller.sendNotification("discord-1", data),
+      controller.sendNotification("user-1", "discord-1", data),
     ).resolves.toMatchObject({ notificationId: "notification-1" });
     expect(mockMessagingService.sendNotification).toHaveBeenCalledWith(
+      "user-1",
       "discord-1",
       data,
     );
