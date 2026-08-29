@@ -84,8 +84,8 @@ boundaries, deployment, and known gaps.
 
 Requirements:
 
-- Node.js 24 or newer
-- pnpm 11.17.0
+- Node.js 26.8.1
+- pnpm 12.1.0
 - Docker with Docker Compose
 
 ```bash
