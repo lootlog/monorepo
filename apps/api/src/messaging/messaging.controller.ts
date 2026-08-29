@@ -1,5 +1,5 @@
 import { Body, Controller, Param, Post, UseGuards } from "@nestjs/common";
-import { DiscordId } from "@lootlog/nest-shared/decorators";
+import { DiscordId, UserId } from "@lootlog/nest-shared/decorators";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -9,7 +9,10 @@ import {
 import { ZodResponse } from "nestjs-zod";
 import { CreateNotificationDto } from "#src/messaging/dto/create-notification.dto";
 import { CreateVolunteerDto } from "#src/messaging/dto/create-volunteer.dto";
-import { NotificationResponseDto } from "#src/messaging/dto/messaging-response.dto";
+import {
+  NotificationRateLimitResponseDto,
+  NotificationResponseDto,
+} from "#src/messaging/dto/messaging-response.dto";
 import { MessagingService } from "#src/messaging/messaging.service";
 import { AuthGuard } from "@lootlog/nest-shared";
 
@@ -30,11 +33,17 @@ export class MessagingController {
     description: "Notification sent successfully",
     type: NotificationResponseDto,
   })
+  @ApiResponse({
+    status: 429,
+    description: "Notification rate limit exceeded",
+    type: NotificationRateLimitResponseDto,
+  })
   sendNotification(
+    @UserId() userId: string,
     @DiscordId() discordId: string,
     @Body() data: CreateNotificationDto,
   ) {
-    return this.messagingService.sendNotification(discordId, data);
+    return this.messagingService.sendNotification(userId, discordId, data);
   }
 
   @Post(":notificationId/volunteer")

@@ -46,13 +46,13 @@ Object.defineProperty(window, "scrollTo", {
 
 const storageState = new Map<string, string>();
 
-const localStorageMock = {
-  clear: vi.fn(() => {
-    storageState.clear();
-  }),
+const localStorageMock: Storage = {
   get length() {
     return storageState.size;
   },
+  clear: vi.fn(() => {
+    storageState.clear();
+  }),
   getItem: vi.fn((key: string) => {
     return storageState.get(key) ?? null;
   }),
@@ -67,26 +67,16 @@ const localStorageMock = {
   }),
 };
 
-if (
-  typeof window.localStorage?.getItem !== "function" ||
-  typeof window.localStorage?.setItem !== "function" ||
-  typeof window.localStorage?.removeItem !== "function" ||
-  typeof window.localStorage?.clear !== "function"
-) {
-  Object.defineProperty(window, "localStorage", {
-    configurable: true,
-    value: localStorageMock,
-  });
-}
+Object.defineProperty(window, "localStorage", {
+  configurable: true,
+  value: localStorageMock,
+});
 
-if (
-  typeof globalThis.localStorage?.getItem !== "function" ||
-  typeof globalThis.localStorage?.setItem !== "function" ||
-  typeof globalThis.localStorage?.removeItem !== "function" ||
-  typeof globalThis.localStorage?.clear !== "function"
-) {
-  Object.defineProperty(globalThis, "localStorage", {
-    configurable: true,
-    value: localStorageMock,
-  });
-}
+Object.defineProperty(globalThis, "localStorage", {
+  configurable: true,
+  value: localStorageMock,
+});
+
+afterEach(() => {
+  localStorageMock.clear();
+});

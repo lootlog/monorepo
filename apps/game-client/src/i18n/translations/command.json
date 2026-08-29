@@ -8,6 +8,9 @@
   "input": {
     "placeholder": "Wiadomość..."
   },
+  "errors": {
+    "notificationRateLimited": "Wysyłasz powiadomienia zbyt szybko. Spróbuj ponownie za chwilę."
+  },
   "suggestions": {
     "partySearchLabel": "Szukaj grupy",
     "partySearchDescription": "/grp [opis] - Rozpocznij szukanie grupy",
