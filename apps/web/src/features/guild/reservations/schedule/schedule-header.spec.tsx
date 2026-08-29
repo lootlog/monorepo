@@ -89,6 +89,9 @@ describe("ScheduleHeader", () => {
     expect(dock?.className).toContain("absolute");
     expect(dock?.className).toContain("inset-x-0");
     expect(dock?.className).toContain("bottom-0");
+    expect(dock?.className).toContain(
+      "pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+    );
     expect(toolbar.className).toContain("pointer-events-auto");
     expect(toolbar.className).toContain("rounded-xl");
     expect(toolbar.className).toContain("border");
