@@ -1,6 +1,7 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { RedisService } from "@lootlog/nest-shared/redis";
 import { HttpService } from "@nestjs/axios";
-import type { ModuleMetadata } from "@nestjs/common";
+import { Global, Module, type ModuleMetadata } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import {
   WINSTON_MODULE_NEST_PROVIDER,
@@ -8,8 +9,9 @@ import {
 } from "nest-winston";
 import { of } from "rxjs";
 import { vi } from "vitest";
+import { gatewayRabbitMqModule } from "#src/gateway/gateway.module";
 
-export function createMockAmqpConnection() {
+function createMockAmqpConnection() {
   return {
     publish: vi.fn().mockResolvedValue(undefined),
     request: vi.fn().mockResolvedValue(undefined),
@@ -20,17 +22,14 @@ export function createMockAmqpConnection() {
   };
 }
 
-export function createMockHttpService() {
+function createMockHttpService() {
   return {
     get: vi.fn(() => of({ data: {} })),
     post: vi.fn(() => of({ data: {} })),
-    put: vi.fn(() => of({ data: {} })),
-    patch: vi.fn(() => of({ data: {} })),
-    delete: vi.fn(() => of({ data: {} })),
   };
 }
 
-export function createMockLogger() {
+function createMockLogger() {
   return {
     debug: vi.fn(),
     error: vi.fn(),
@@ -40,10 +39,23 @@ export function createMockLogger() {
   };
 }
 
+const mockAmqpConnection = createMockAmqpConnection();
+
+@Global()
+@Module({
+  providers: [{ provide: AmqpConnection, useValue: mockAmqpConnection }],
+  exports: [AmqpConnection],
+})
+class MockRabbitMqModule {}
+
 export function createTestingModuleWithMocks(metadata: ModuleMetadata) {
   return Test.createTestingModule(metadata)
+    .overrideModule(gatewayRabbitMqModule)
+    .useModule(MockRabbitMqModule)
     .overrideProvider(AmqpConnection)
-    .useValue(createMockAmqpConnection())
+    .useValue(mockAmqpConnection)
+    .overrideProvider(RedisService)
+    .useValue({})
     .overrideProvider(HttpService)
     .useValue(createMockHttpService())
     .overrideProvider(WINSTON_MODULE_PROVIDER)
