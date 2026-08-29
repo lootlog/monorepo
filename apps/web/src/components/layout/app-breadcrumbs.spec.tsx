@@ -22,8 +22,10 @@ describe("AppBreadcrumbs", () => {
       <AppBreadcrumbs
         breadcrumbs={[
           { label: "Lootlog", path: "/guild" },
-          { label: "Settings", path: "/guild/settings" },
-          { label: "Members", path: null },
+          { label: "Events", path: "/guild/events" },
+          { label: "Summer Event", path: "/guild/events/summer" },
+          { label: "Members", path: "/guild/events/summer/members" },
+          { label: "Very Long Member Name", path: null },
         ]}
         onNavigate={onNavigate}
       />,
@@ -36,14 +38,25 @@ describe("AppBreadcrumbs", () => {
     ).toBeDefined();
     expect(
       container.querySelectorAll('[data-slot="breadcrumb-separator"]'),
-    ).toHaveLength(2);
+    ).toHaveLength(4);
     expect(container.querySelector('[aria-current="page"]')?.textContent).toBe(
-      "Members",
+      "Very Long Member Name",
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    const breadcrumbItems = container.querySelectorAll(
+      '[data-slot="breadcrumb-item"]',
+    );
+    expect(breadcrumbItems[0]?.className).toContain("2xl:inline-flex");
+    expect(breadcrumbItems[2]?.className).toContain("xl:inline-flex");
+    expect(breadcrumbItems[3]?.className).toContain("sm:inline-flex");
+    expect(breadcrumbItems[4]?.className).not.toContain("hidden");
+    expect(
+      screen.getByRole("button", { name: "Summer Event" }).className,
+    ).toContain("truncate");
+
+    fireEvent.click(screen.getByRole("button", { name: "Members" }));
 
     expect(onNavigate).toHaveBeenCalledOnce();
-    expect(onNavigate).toHaveBeenCalledWith("/guild/settings");
+    expect(onNavigate).toHaveBeenCalledWith("/guild/events/summer/members");
   });
 });
