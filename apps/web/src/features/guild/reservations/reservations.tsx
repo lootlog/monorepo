@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Grid2X2, List, SearchX, TriangleAlert } from "lucide-react";
+import { SearchX, TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { ReservationSpotsResponseDto } from "@lootlog/api-client/models/main/reservation-spots-response-dto";
@@ -24,10 +24,12 @@ import {
 } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SearchInput } from "@/components/ui/search-input";
+import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { ReservationCard } from "./reservation-card";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
+import { getReservationCollectionClassName } from "./reservation-collection-layout";
 import {
   ReservationFilters,
   type ReservationFilter,
@@ -127,35 +129,20 @@ export function Reservations() {
             onChange={setFilter}
             className="col-span-2 row-start-2 xl:col-span-1 xl:col-start-2 xl:row-start-1"
           />
-          <div className="col-start-2 row-start-1 flex items-center gap-1 xl:col-start-3">
-            <Button
-              onClick={() => setViewMode("list")}
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="icon"
-              className="size-8"
-              aria-label={t("reservations.view.list")}
-              aria-pressed={viewMode === "list"}
-            >
-              <List />
-            </Button>
-            <Button
-              onClick={() => setViewMode("grid")}
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="icon"
-              className="size-8"
-              aria-label={t("reservations.view.grid")}
-              aria-pressed={viewMode === "grid"}
-            >
-              <Grid2X2 />
-            </Button>
-          </div>
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            listLabel={t("reservations.view.list")}
+            gridLabel={t("reservations.view.grid")}
+            className="col-start-2 row-start-1 xl:col-start-3"
+          />
         </Card>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
         {spotsQuery.isPending ? (
           <ScrollArea className="min-h-0 flex-1">
-            <div className="grid grid-cols-1 gap-3 px-3 pb-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className={getReservationCollectionClassName(viewMode)}>
               {Array.from({ length: 8 }).map((_, index) => (
                 <ReservationCardSkeleton key={index} viewMode={viewMode} />
               ))}
@@ -218,13 +205,7 @@ export function Reservations() {
           </div>
         ) : (
           <ScrollArea className="min-h-0 flex-1">
-            <div
-              className={
-                viewMode === "grid"
-                  ? "grid grid-cols-1 gap-3 px-3 pb-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-                  : "flex flex-col gap-3 px-3 pb-3"
-              }
-            >
+            <div className={getReservationCollectionClassName(viewMode)}>
               {sortedSpots.map((spot) => (
                 <ReservationCard
                   key={spot.id}

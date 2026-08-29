@@ -16,12 +16,12 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-const createSegment = (): ReservationSegment => {
+const createSegment = (dayIdx = 3): ReservationSegment => {
   const startsAt = new Date(2026, 0, 8, 10, 0);
   const endsAt = new Date(2026, 0, 8, 11, 0);
   return {
-    id: "reservation-1",
-    dayIdx: 3,
+    id: `reservation-${dayIdx}`,
+    dayIdx,
     startHour: 10,
     durationHours: 1,
     segmentStart: startsAt,
@@ -59,6 +59,20 @@ const createSegment = (): ReservationSegment => {
 };
 
 describe("DesktopWeekSchedule", () => {
+  it("renders only segments from the visible week", () => {
+    const { container } = render(
+      <DesktopWeekSchedule
+        weekStart={new Date(2026, 0, 5)}
+        segments={[createSegment(-1), createSegment(3), createSegment(7)]}
+        minuteStep={15}
+        onRangeSelect={vi.fn()}
+        onReservationSelect={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelectorAll(".reservation-card")).toHaveLength(1);
+  });
+
   it("uses a blocked cursor over past slots and a crosshair over future slots", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 7, 12, 0));

@@ -2,18 +2,14 @@ import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { Kbd } from "@lootlog/ui/components/kbd";
 import { AnimatePresence, motion } from "framer-motion";
-import { Filter, Grid2X2, List, Search } from "lucide-react";
+import { Filter, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { WorldSwitcher } from "@/components/common/world-switcher";
+import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { LootSearchCommand } from "./loot-search-command";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useViewMode } from "@/hooks/use-view-mode";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
@@ -55,7 +51,7 @@ export const LootFiltersHeader = ({
 }: LootFiltersHeaderProps) => {
   const { t } = useTranslation();
   const [isCommandOpen, setIsCommandOpen] = useState(false);
-  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [isFilterHovered, setIsFilterHovered] = useState(false);
   const isMobile = useIsMobile();
   const { world } = useGuildContext();
   const { filters } = useLootsFilters();
@@ -146,82 +142,20 @@ export const LootFiltersHeader = ({
                   <WorldSwitcher width="w-full" />
                 </div>
 
-                <div
-                  className={cn(
-                    "flex items-center gap-0.5 rounded-xl border border-border bg-background/35 p-0.5",
-                    isCompactLayout && "ml-auto",
-                  )}
-                >
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <div
-                          onMouseEnter={() => setHoveredButton("list")}
-                          onMouseLeave={() => setHoveredButton(null)}
-                        >
-                          <ThemeInteractiveFrame
-                            isHovered={hoveredButton === "list"}
-                            isActive={viewMode === "list"}
-                          >
-                            <Button
-                              onClick={() => setViewMode("list")}
-                              variant={
-                                viewMode === "list" ? "default" : "ghost"
-                              }
-                              size="icon"
-                              aria-label={t("loots.header.listView")}
-                              aria-pressed={viewMode === "list"}
-                              className="h-8 w-8"
-                            >
-                              <List className="h-4 w-4" />
-                            </Button>
-                          </ThemeInteractiveFrame>
-                        </div>
-                      }
-                    />
-                    <TooltipContent side="bottom">
-                      <p>{t("loots.header.listView")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <div
-                          onMouseEnter={() => setHoveredButton("grid")}
-                          onMouseLeave={() => setHoveredButton(null)}
-                        >
-                          <ThemeInteractiveFrame
-                            isHovered={hoveredButton === "grid"}
-                            isActive={viewMode === "grid"}
-                          >
-                            <Button
-                              onClick={() => setViewMode("grid")}
-                              variant={
-                                viewMode === "grid" ? "default" : "ghost"
-                              }
-                              size="icon"
-                              aria-label={t("loots.header.gridView")}
-                              aria-pressed={viewMode === "grid"}
-                              className="h-8 w-8"
-                            >
-                              <Grid2X2 className="h-4 w-4" />
-                            </Button>
-                          </ThemeInteractiveFrame>
-                        </div>
-                      }
-                    />
-                    <TooltipContent side="bottom">
-                      <p>{t("loots.header.gridView")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                <ViewModeToggle
+                  value={viewMode}
+                  onChange={setViewMode}
+                  listLabel={t("loots.header.listView")}
+                  gridLabel={t("loots.header.gridView")}
+                  className={cn(isCompactLayout && "ml-auto")}
+                />
 
                 <div
-                  onMouseEnter={() => setHoveredButton("filter")}
-                  onMouseLeave={() => setHoveredButton(null)}
+                  onMouseEnter={() => setIsFilterHovered(true)}
+                  onMouseLeave={() => setIsFilterHovered(false)}
                 >
                   <ThemeInteractiveFrame
-                    isHovered={hoveredButton === "filter"}
+                    isHovered={isFilterHovered}
                     isActive={isFiltersOpen}
                   >
                     <Button
