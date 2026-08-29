@@ -1,5 +1,19 @@
 # @lootlog/wiki
 
+## 0.1.9
+
+### Patch Changes
+
+- 3e53f4e: Support the complete set of item tooltip stats derivable from Margonem item data, preserve the game's tooltip ordering, and share one Polish item-stat dictionary between Web and Wiki.
+- 25ff0b8: Align item tooltip wording with the canonical Margonem translations.
+- Updated dependencies [3e53f4e]
+- Updated dependencies [25ff0b8]
+- Updated dependencies [a78ba7b]
+- Updated dependencies [87c9155]
+- Updated dependencies [a49b02c]
+  - @lootlog/ui@3.1.0
+  - @lootlog/api-client@5.0.4
+
 ## 0.1.8
 
 ### Patch Changes

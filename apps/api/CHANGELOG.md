@@ -1,5 +1,35 @@
 # @lootlog/api
 
+## 5.0.6
+
+### Patch Changes
+
+- fc87eab: Centralize Reservation settings defaults and time validation in a shared domain
+  module. Keep Organization settings in the API database while making the Web
+  form match the authoritative 60-second past-start grace and preserving existing
+  Reservation mutation error contracts. Replace localized Reservation settings
+  errors in the API with stable translation keys.
+- bf625a4: Introduce Organization-owned Loot records while retaining one global Loot and
+  allocation. Apply one all-NPC visibility policy to API reads, statistics,
+  comments, archives, real-time events, and watched-item notifications, and add
+  an action-specific loot archive permission. Require version 2 loot events with
+  the complete NPC list across API, gateway, and web consumers.
+- 42a49c1: Upgrade backend services to NestJS 12 and native ESM builds and tests without SWC.
+- 87c9155: Prevent duplicate manual notification submissions in the Game client and rate
+  limit notification creation to five attempts per five seconds per authenticated
+  user with an atomic Redis limiter and a typed HTTP 429 response.
+- Updated dependencies [fc87eab]
+- Updated dependencies [bf625a4]
+- Updated dependencies [42a49c1]
+  - @lootlog/reservations@1.0.1
+  - @lootlog/loot-visibility@1.0.1
+  - @lootlog/types@3.0.2
+  - @lootlog/nest-shared@1.0.9
+  - @lootlog/api-helpers@1.0.3
+  - @lootlog/datetime@1.0.1
+  - @lootlog/instrumentation@0.0.3
+  - @lootlog/scoring@1.0.1
+
 ## 5.0.5
 
 ### Patch Changes

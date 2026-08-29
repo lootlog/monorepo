@@ -1,5 +1,13 @@
 # @lootlog/nest-shared
 
+## 1.0.9
+
+### Patch Changes
+
+- 42a49c1: Upgrade backend services to NestJS 12 and native ESM builds and tests without SWC.
+- Updated dependencies [bf625a4]
+  - @lootlog/types@3.0.2
+
 ## 1.0.8
 
 ### Patch Changes

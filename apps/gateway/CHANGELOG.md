@@ -1,5 +1,24 @@
 # @lootlog/gateway
 
+## 1.0.10
+
+### Patch Changes
+
+- 6568b3a: Authenticate Socket.IO connections before exposing websocket message handlers and reject incomplete socket identities.
+- bf625a4: Introduce Organization-owned Loot records while retaining one global Loot and
+  allocation. Apply one all-NPC visibility policy to API reads, statistics,
+  comments, archives, real-time events, and watched-item notifications, and add
+  an action-specific loot archive permission. Require version 2 loot events with
+  the complete NPC list across API, gateway, and web consumers.
+- 42a49c1: Upgrade backend services to NestJS 12 and native ESM builds and tests without SWC.
+- Updated dependencies [bf625a4]
+- Updated dependencies [42a49c1]
+  - @lootlog/loot-visibility@1.0.1
+  - @lootlog/types@3.0.2
+  - @lootlog/nest-shared@1.0.9
+  - @lootlog/instrumentation@0.0.3
+  - @lootlog/socket-parser@1.0.2
+
 ## 1.0.9
 
 ### Patch Changes

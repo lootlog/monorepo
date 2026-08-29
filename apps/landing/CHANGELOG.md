@@ -1,5 +1,19 @@
 # @lootlog/landing
 
+## 1.0.9
+
+### Patch Changes
+
+- a9b615c: Namespace static assets and manage the shared development and production
+  traffic-splitter code from the repository. Keep the Workers independently
+  deployable, promote the production splitter before frontend artifacts, and
+  verify public CSS and JavaScript before closing the rollback boundary.
+- Updated dependencies [3e53f4e]
+- Updated dependencies [25ff0b8]
+- Updated dependencies [a78ba7b]
+- Updated dependencies [a49b02c]
+  - @lootlog/ui@3.1.0
+
 ## 1.0.8
 
 ### Patch Changes

@@ -1,5 +1,21 @@
 # @lootlog/game-client
 
+## 1.2.12
+
+### Patch Changes
+
+- c4c747d: Consolidate Timer list grouping, filtering, sorting, expiry, and color statistics
+  into one behavior-preserving projection shared by the window and under-bag views.
+- 87c9155: Prevent duplicate manual notification submissions in the Game client and rate
+  limit notification creation to five attempts per five seconds per authenticated
+  user with an atomic Redis limiter and a typed HTTP 429 response.
+- Updated dependencies [bf625a4]
+- Updated dependencies [87c9155]
+  - @lootlog/types@3.0.2
+  - @lootlog/api-client@5.0.4
+  - @lootlog/margonem@1.0.2
+  - @lootlog/socket-parser@1.0.2
+
 ## 1.2.11
 
 ### Patch Changes

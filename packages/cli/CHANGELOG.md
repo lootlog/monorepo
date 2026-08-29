@@ -1,5 +1,13 @@
 # @lootlog/cli
 
+## 1.0.9
+
+### Patch Changes
+
+- Updated dependencies [bf625a4]
+  - @lootlog/types@3.0.2
+  - @lootlog/battle-processor@1.0.3
+
 ## 1.0.8
 
 ### Patch Changes

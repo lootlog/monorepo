@@ -1,5 +1,11 @@
 # @lootlog/typescript-config
 
+## 1.0.3
+
+### Patch Changes
+
+- 42a49c1: Upgrade backend services to NestJS 12 and native ESM builds and tests without SWC.
+
 ## 1.0.2
 
 ### Patch Changes
