@@ -39,10 +39,43 @@ function getTranslatedValuePaths(displayValue: ItemDisplayValue): string[] {
 }
 
 describe("item stat utilities", () => {
+  it("uses the canonical Margonem wording for damage modifiers", () => {
+    expect(itemStats).toMatchObject({
+      combo_multiplier: "Obrażenia nieuchronne <value>{{value}}%</value>",
+      dmgmul: "Wszystkie obrażenia <value>{{value}}%</value>",
+      dmgmulabsolute: "Obrażenia nieuchronne <value>{{value}}%</value>",
+      dmgmulfire: "Obrażenia od ognia <value>{{value}}%</value>",
+      dmgmulfrost: "Obrażenia od zimna <value>{{value}}%</value>",
+      dmgmullight: "Obrażenia od błyskawic <value>{{value}}%</value>",
+      dmgmulphysical: "Obrażenia fizyczne <value>{{value}}%</value>",
+      dmgmulpoison: "Obrażenia od trucizny <value>{{value}}%</value>",
+      dmgmulwound: "Obrażenia od głębokiej rany <value>{{value}}%</value>",
+    });
+  });
+
+  it("keeps source wording for actions, metadata and legendary bonuses", () => {
+    expect(itemStats).toMatchObject({
+      action: {
+        auction: "Akcja: Wywołanie aukcji",
+        flee: "Akcja walki: Przerwanie walki - ucieczka",
+      },
+      add_battleset: "Akcja: Odblokowanie zestawu do walki",
+      noauction: "Tego przedmiotu nie można wystawić na aukcję",
+      nodepo: "Przedmiotu nie można przechowywać w depozycie",
+      townlimit: "Działa tylko w wybranych lokacjach",
+      legbon: {
+        dmgred:
+          "<legbon>Fizyczna osłona: przyjmowane obrażenia fizyczne zmniejszone o <value>{{value}}%</value>.</legbon>",
+        retaliation:
+          "<legbon>Aura odwetu: przyjęcie ataku ma <value>{{value}}%</value> szansy na odbicie w przeciwnika otrzymanych obrażeń.</legbon>",
+      },
+    });
+  });
+
   it("preserves stat formatting and semantic block assignment", () => {
     const blocks = mapStatsToDisplayValues(
       parseItemStats(
-        "created=1767225600;hp=10;dmg=5,8;lvl=20;reqp=wm;opis=Created #YEAR#[br]Line;teleport=x,10,20,Karka-han;legbon=curse,1;amount=2;lvlupgs=3;unknown=value;rarity=legendary;rkey=x",
+        "created=1767225600;hp=10;dmg=5,8;lvl=20;reqp=wm;opis=Created #YEAR#[br]Line;teleport=x,10,20,Karka-han;legbon=curse,1;amount=2;lvlupgs=3;unknown=value;rarity=legendary;rkey=x;enhancement_upgrade_lvl=4",
       ),
     );
 
@@ -84,6 +117,28 @@ describe("item stat utilities", () => {
       "crit",
       "hp",
       "wound",
+    ]);
+  });
+
+  it("uses source class casing and Polish bag inflection", () => {
+    const blocks = mapStatsToDisplayValues(
+      parseItemStats("bag=1;btype=1,8;target_class=1,8"),
+    );
+
+    expect(blocks.baseStatsBlock).toEqual([{ key: "bag.one", value: "1" }]);
+    expect(blocks.enhancementStatsBlock).toEqual([
+      {
+        key: "btype",
+        translateKey: "itemStats.classLower",
+        value: ["oneHanded", "armor"],
+      },
+    ]);
+    expect(blocks.requirementsBlock).toEqual([
+      {
+        key: "target_class",
+        translateKey: "itemStats.class",
+        value: ["oneHanded", "armor"],
+      },
     ]);
   });
 

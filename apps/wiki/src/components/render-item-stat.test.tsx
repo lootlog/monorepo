@@ -38,7 +38,7 @@ describe("renderItemStat", () => {
       </>,
     );
 
-    expect(markup).toContain("heroiczny");
+    expect(markup).toContain("Heroiczny");
     expect(markup).not.toContain(">heroic<");
   });
 
