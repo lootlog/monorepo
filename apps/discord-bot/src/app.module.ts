@@ -6,10 +6,12 @@ import { HealthzModule } from "./healthz/healthz.module.js";
 import { necordConfig } from "./config/discord.config.js";
 import { winstonConfig } from "./config/winston.config.js";
 
+export const discordClientModule = NecordModule.forRoot(necordConfig);
+
 @Module({
   imports: [
     WinstonModule.forRoot(winstonConfig),
-    NecordModule.forRoot(necordConfig),
+    discordClientModule,
     BotModule,
     HealthzModule,
   ],
