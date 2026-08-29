@@ -84,7 +84,10 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                 )}
               </div>
 
-              <Breadcrumb className="min-w-0 flex-1 overflow-hidden">
+              <Breadcrumb
+                aria-label={t("common.breadcrumbs.navigationLabel")}
+                className="min-w-0 flex-1 overflow-hidden"
+              >
                 <BreadcrumbList className="flex-nowrap justify-center overflow-hidden">
                   {navigationInfo.breadcrumbs.map((crumb, index) => {
                     const isLast =

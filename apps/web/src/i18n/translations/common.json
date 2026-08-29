@@ -52,6 +52,7 @@
     "all": "Wszystko"
   },
   "breadcrumbs": {
+    "navigationLabel": "Ścieżka nawigacji",
     "guild": "Lootlog",
     "lootsList": "Lista łupów",
     "timers": "Timery",

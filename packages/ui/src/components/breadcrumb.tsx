@@ -1,22 +1,19 @@
-import * as React from "react";
+import type { ComponentProps } from "react";
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 
 import { cn } from "@lootlog/ui/lib/utils";
 import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
 
-function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
-  return (
-    <nav
-      aria-label="breadcrumb"
-      data-slot="breadcrumb"
-      className={cn(className)}
-      {...props}
-    />
-  );
+type BreadcrumbProps = Omit<ComponentProps<"nav">, "aria-label"> & {
+  "aria-label": string;
+};
+
+function Breadcrumb({ className, ...props }: BreadcrumbProps) {
+  return <nav data-slot="breadcrumb" className={cn(className)} {...props} />;
 }
 
-function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
+function BreadcrumbList({ className, ...props }: ComponentProps<"ol">) {
   return (
     <ol
       data-slot="breadcrumb-list"
@@ -29,7 +26,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
   );
 }
 
-function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
+function BreadcrumbItem({ className, ...props }: ComponentProps<"li">) {
   return (
     <li
       data-slot="breadcrumb-item"
@@ -59,7 +56,7 @@ function BreadcrumbLink({
   });
 }
 
-function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
+function BreadcrumbPage({ className, ...props }: ComponentProps<"span">) {
   return (
     <span
       data-slot="breadcrumb-page"
@@ -76,7 +73,7 @@ function BreadcrumbSeparator({
   children,
   className,
   ...props
-}: React.ComponentProps<"li">) {
+}: ComponentProps<"li">) {
   return (
     <li
       data-slot="breadcrumb-separator"
@@ -94,19 +91,17 @@ function BreadcrumbEllipsis({
   className,
   label,
   ...props
-}: React.ComponentProps<"span"> & { label: string }) {
+}: ComponentProps<"span"> & { label: string }) {
   return (
     <span
       data-slot="breadcrumb-ellipsis"
-      role="presentation"
-      aria-hidden="true"
       className={cn(
         "flex size-5 items-center justify-center [&>svg]:size-4",
         className,
       )}
       {...props}
     >
-      <MoreHorizontalIcon />
+      <MoreHorizontalIcon aria-hidden="true" />
       <span className="sr-only">{label}</span>
     </span>
   );

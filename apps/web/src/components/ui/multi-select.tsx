@@ -115,32 +115,37 @@ const SelectedValueChips = ({
   options: MultiSelectOption[];
   maxCount: number;
   variant: VariantProps<typeof multiSelectVariants>["variant"];
-}) => (
-  <ComboboxValue>
-    {() => (
-      <>
-        {options.slice(0, maxCount).map((option) => (
-          <ComboboxChip
-            key={option.value}
-            className={cn(multiSelectVariants({ variant }), "h-auto")}
-          >
-            <span className="max-w-28 truncate">{option.label}</span>
-          </ComboboxChip>
-        ))}
-        {options.length > maxCount ? (
-          <span
-            className={cn(
-              multiSelectVariants({ variant }),
-              "border-border bg-transparent text-muted-foreground",
-            )}
-          >
-            +{options.length - maxCount}
-          </span>
-        ) : null}
-      </>
-    )}
-  </ComboboxValue>
-);
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <ComboboxValue>
+      {() => (
+        <>
+          {options.slice(0, maxCount).map((option) => (
+            <ComboboxChip
+              key={option.value}
+              className={cn(multiSelectVariants({ variant }), "h-auto")}
+              removeLabel={t("common.removeOption", { label: option.label })}
+            >
+              <span className="max-w-28 truncate">{option.label}</span>
+            </ComboboxChip>
+          ))}
+          {options.length > maxCount ? (
+            <span
+              className={cn(
+                multiSelectVariants({ variant }),
+                "border-border bg-transparent text-muted-foreground",
+              )}
+            >
+              +{options.length - maxCount}
+            </span>
+          ) : null}
+        </>
+      )}
+    </ComboboxValue>
+  );
+};
 
 const MultiSelectResults = ({
   options,
