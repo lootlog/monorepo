@@ -4,8 +4,10 @@ import { UserReservationsController } from "./user-reservations.controller";
 describe("UserReservationsController", () => {
   const reservationsService = {
     listMine: vi.fn<(options: unknown) => unknown>(),
-    updateMine: vi.fn<(options: unknown) => unknown>(),
-    deleteMine: vi.fn<(options: unknown) => unknown>(),
+  };
+  const reservationMutationsService = {
+    updateOwned: vi.fn<(options: unknown) => unknown>(),
+    deleteOwned: vi.fn<(options: unknown) => unknown>(),
   };
 
   beforeEach(() => {
@@ -15,6 +17,7 @@ describe("UserReservationsController", () => {
   it("derives reservation ownership from the authenticated user", () => {
     const controller = new UserReservationsController(
       reservationsService as never,
+      reservationMutationsService as never,
     );
     const data = {
       startsAt: "2026-08-26T12:30:00.000Z",
@@ -25,7 +28,7 @@ describe("UserReservationsController", () => {
 
     controller.updateMyReservation("user-1", "discord-1", 42, data);
 
-    expect(reservationsService.updateMine).toHaveBeenCalledWith({
+    expect(reservationMutationsService.updateOwned).toHaveBeenCalledWith({
       userId: "user-1",
       discordId: "discord-1",
       reservationId: 42,

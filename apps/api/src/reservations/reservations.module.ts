@@ -14,6 +14,7 @@ import { NotificationsModule } from "src/notifications/notifications.module";
 import { ReservationCatalogService } from "./reservation-catalog.service";
 import { ReservationEventsPublisher } from "./reservation-events.publisher";
 import { ReservationReminderService } from "./reservation-reminder.service";
+import { ReservationMutationsService } from "./reservation-mutations.service";
 import { ReservationSharingController } from "./reservation-sharing.controller";
 import { ReservationSharingService } from "./reservation-sharing.service";
 import { UserReservationsController } from "./user-reservations.controller";
@@ -36,6 +37,7 @@ import { UserReservationsController } from "./user-reservations.controller";
   ],
   providers: [
     ReservationsService,
+    ReservationMutationsService,
     ReservationsCleanupService,
     ReservationCatalogService,
     ReservationEventsPublisher,
