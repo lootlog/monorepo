@@ -7,6 +7,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { ReservationSettings } from "@lootlog/reservations";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-
-import type { ReservationSettings } from "./reservation-settings";
 
 type ReservationSettingsInfoDialogProps = {
   open: boolean;

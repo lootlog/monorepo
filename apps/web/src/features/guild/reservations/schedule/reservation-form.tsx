@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import type { ReservationSettings } from "@lootlog/reservations";
 import { toast } from "sonner";
 import {
   getListReservationSpotsQueryKey,
@@ -25,7 +26,6 @@ import { getReservationErrorMessage } from "../get-reservation-error-message";
 import {
   getReservationEarliestStartDate,
   getReservationLatestStartDate,
-  type ReservationSettings,
   validateReservationDateRange,
 } from "./reservation-settings";
 import { getReservationValidationMessage } from "./reservation-validation-message";

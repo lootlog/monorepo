@@ -13,10 +13,10 @@ import {
   WandSparkles,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { ReservationSettings } from "@lootlog/reservations";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ReservationSettingsInfoDialog } from "./reservation-settings-info-dialog";
-import type { ReservationSettings } from "./reservation-settings";
 
 type ScheduleHeaderProps = {
   date: Date;

@@ -1,8 +1,8 @@
+import type { ReservationSettings } from "@lootlog/reservations";
 import {
   ceilDateToReservationStep,
   floorDateToReservationStep,
   getReservationLatestStartDate,
-  type ReservationSettings,
 } from "./reservation-settings";
 import type { ReservationRange } from "./types";
 

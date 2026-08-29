@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
+import type { ReservationSettings } from "@lootlog/reservations";
 import {
   parseReservationWindow,
   validateReservationTime,
-  type ReservationSettings,
 } from "./reservation-policy";
 
 const settings: ReservationSettings = {
@@ -34,6 +34,41 @@ describe("reservation policy", () => {
         settings,
       }),
     ).toThrowError(expect.objectContaining({ status: 422 }));
+  });
+
+  it("preserves the HTTP error contract for a past start", () => {
+    expect(() =>
+      validateReservationTime({
+        startsAt: new Date("2026-08-26T11:45:00.000Z"),
+        endsAt: new Date("2026-08-26T12:30:00.000Z"),
+        now: new Date("2026-08-26T12:00:00.000Z"),
+        settings,
+      }),
+    ).toThrowError(
+      expect.objectContaining({
+        response: { code: "RESERVATION_START_IN_PAST" },
+        status: 422,
+      }),
+    );
+  });
+
+  it("preserves Organization settings in HTTP error details", () => {
+    expect(() =>
+      validateReservationTime({
+        startsAt: new Date("2026-08-26T12:15:00.000Z"),
+        endsAt: new Date("2026-08-26T12:20:00.000Z"),
+        now: new Date("2026-08-26T12:00:00.000Z"),
+        settings: { ...settings, reservationMinDurationMinutes: 15 },
+      }),
+    ).toThrowError(
+      expect.objectContaining({
+        response: {
+          code: "RESERVATION_TOO_SHORT",
+          minimumMinutes: 15,
+        },
+        status: 422,
+      }),
+    );
   });
 
   it("limits a calendar query to 31 days", () => {

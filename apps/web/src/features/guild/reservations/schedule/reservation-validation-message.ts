@@ -1,9 +1,7 @@
 import type { TFunction } from "i18next";
+import type { ReservationSettings } from "@lootlog/reservations";
 
-import type {
-  ReservationRangeValidationError,
-  ReservationSettings,
-} from "./reservation-settings";
+import type { ReservationRangeValidationError } from "./reservation-settings";
 
 export const getReservationValidationMessage = (
   error: ReservationRangeValidationError,

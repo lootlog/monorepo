@@ -1222,9 +1222,12 @@ describe("GuildsService", () => {
           reservationMinDurationMinutes: 90,
           reservationMaxDurationMinutes: 60,
         }),
-      ).rejects.toThrow(
-        "Minimalna długość rezerwacji nie może być większa niż maksymalna.",
-      );
+      ).rejects.toMatchObject({
+        response: {
+          message: "errors.guilds.reservations.durationRangeInvalid",
+        },
+        status: 400,
+      });
 
       expect(mockPrismaService.guild.update).not.toHaveBeenCalled();
     });

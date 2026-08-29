@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
+import type { ReservationSettings } from "@lootlog/reservations";
 import {
   findNearestFreeReservationRange,
   getNearestFreeReservationSearchWindow,
 } from "./find-nearest-free-reservation-range";
-import type { ReservationSettings } from "./reservation-settings";
 
 const settings = {
   reservationMaxDurationMinutes: 180,
