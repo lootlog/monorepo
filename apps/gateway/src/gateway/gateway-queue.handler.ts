@@ -12,9 +12,9 @@ import type { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
 import type { DeleteMemberRoleDto } from "src/gateway/dto/delete-member-role.dto";
 import type { DeleteMemberDto } from "src/gateway/dto/delete-member.dto";
 import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
-import type {
-  LootCreateEventDto,
-  LootShareUpdateEventDto,
+import {
+  LootCreateEventV2Dto,
+  LootShareUpdateEventV2Dto,
 } from "src/gateway/dto/loot-event.dto";
 import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
 import {
@@ -146,7 +146,22 @@ export class GatewayQueueHandler {
       deadLetterRoutingKey: RoutingKey.GUILDS_LOOTS_CREATE_RETRY,
     },
   })
-  async handleGuildsLootCreate(data: LootCreateEventDto, amqpMsg: AmqpMessage) {
+  async handleGuildsLootCreate(rawData: unknown, amqpMsg: AmqpMessage) {
+    const result = LootCreateEventV2Dto.schema.safeParse(rawData);
+    if (!result.success) {
+      await this.handleWithRetry(
+        rawData,
+        amqpMsg,
+        RoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+        "invalid loot create v2",
+        () => {
+          throw result.error;
+        },
+      );
+      return;
+    }
+
+    const data: LootCreateEventV2Dto = result.data;
     await this.handleWithRetry(
       data,
       amqpMsg,
@@ -167,10 +182,22 @@ export class GatewayQueueHandler {
       deadLetterRoutingKey: RoutingKey.GUILDS_LOOTS_SHARE_UPDATE_RETRY,
     },
   })
-  async handleGuildsLootShareUpdate(
-    data: LootShareUpdateEventDto,
-    amqpMsg: AmqpMessage,
-  ) {
+  async handleGuildsLootShareUpdate(rawData: unknown, amqpMsg: AmqpMessage) {
+    const result = LootShareUpdateEventV2Dto.schema.safeParse(rawData);
+    if (!result.success) {
+      await this.handleWithRetry(
+        rawData,
+        amqpMsg,
+        RoutingKey.GUILDS_LOOTS_SHARE_UPDATE_DLQ,
+        "invalid loot share update v2",
+        () => {
+          throw result.error;
+        },
+      );
+      return;
+    }
+
+    const data: LootShareUpdateEventV2Dto = result.data;
     await this.handleWithRetry(
       data,
       amqpMsg,
@@ -501,7 +528,7 @@ export class GatewayQueueHandler {
       durable: true,
     },
   })
-  handleLootCreateDLQ(data: LootCreateEventDto, amqpMsg: AmqpMessage) {
+  handleLootCreateDLQ(data: LootCreateEventV2Dto, amqpMsg: AmqpMessage) {
     this.logDeadLetterMessage("Loot Create", data, amqpMsg);
   }
 
@@ -514,7 +541,7 @@ export class GatewayQueueHandler {
     },
   })
   handleLootShareUpdateDLQ(
-    data: LootShareUpdateEventDto,
+    data: LootShareUpdateEventV2Dto,
     amqpMsg: AmqpMessage,
   ) {
     this.logDeadLetterMessage("Loot Share Update", data, amqpMsg);

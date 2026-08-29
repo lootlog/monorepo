@@ -56,13 +56,11 @@ them.
 _Avoid_: Loot share, Organization settlement
 
 **Organization Loot record**:
-An Organization-owned reference to a Loot drop with Organization-local
-Visibility, comments, settlement, and annotations.
+An Organization's record of a Loot drop.
 _Avoid_: Loot drop, Loot submission
 
 **Loot submission**:
-The record that a Member submitted an observation of a Loot drop to an
-Organization. Several Loot submissions may support one Organization Loot record.
+Evidence that a Member reported a Loot drop to an Organization.
 _Avoid_: Organization Loot record
 
 **Presence**:

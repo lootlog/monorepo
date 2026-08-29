@@ -107,6 +107,10 @@ and every associated NPC is covered by at least one complete role grant. The
 same rule is shared by list, detail, aggregate, comment, websocket, and
 watched-item notification paths.
 
+The public guild stats card is an explicit, Organization-configured publication
+of aggregate counts. Enabling it declassifies only those counts; it does not
+make the underlying Loot records or their metadata public.
+
 ## Durable delivery
 
 Durable ingestion uses idempotent identifiers where a client can retry. A

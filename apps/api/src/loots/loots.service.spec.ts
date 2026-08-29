@@ -79,6 +79,7 @@ describe("LootsService", () => {
       findUnique: Mock;
       findMany: Mock;
     };
+    $transaction: Mock;
     $queryRaw: Mock;
   };
   let playersService: {
@@ -209,8 +210,13 @@ describe("LootsService", () => {
         findUnique: mockFn(),
         findMany: mockFn(),
       },
+      $transaction: mockFn(),
       $queryRaw: mockFn(),
     };
+    mockPrismaService.$transaction.mockImplementation(
+      (callback: (tx: typeof mockPrismaService) => Promise<unknown>) =>
+        callback(mockPrismaService),
+    );
 
     const mockPlayersService = {
       bulkIndexPlayers: mockFn(),
@@ -743,13 +749,23 @@ describe("LootsService", () => {
         ],
         skipDuplicates: true,
       });
+      expect(prismaService.$transaction).toHaveBeenCalledTimes(1);
       expect(amqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
         RoutingKey.GUILDS_LOOTS_CREATE,
-        expect.objectContaining({
+        {
+          version: 2,
           guildId: "guild2",
           lootId: mockLoot.id,
-        }),
+          npcs: [
+            {
+              lvl: 50,
+              prof: Profession.WARRIOR,
+              type: NpcType.ELITE,
+              wt: 10,
+            },
+          ],
+        },
       );
       expect(amqpConnection.publish).not.toHaveBeenCalledWith(
         expect.any(String),
@@ -1281,6 +1297,21 @@ describe("LootsService", () => {
         new NotFoundException(ErrorKey.CANT_DELETE_LOOT),
       );
     });
+
+    it("rejects an already archived Organization Loot record", async () => {
+      vi.spyOn(service["lootQueryService"], "fetchLootById").mockResolvedValue({
+        id: 1,
+      } as never);
+      prismaService.member.findUnique.mockResolvedValue({ id: 42 });
+      prismaService.organizationLootRecord.updateMany.mockResolvedValue({
+        count: 0,
+      });
+
+      await expect(service.archiveLoot(options)).rejects.toThrow(
+        new NotFoundException(ErrorKey.CANT_DELETE_LOOT),
+      );
+      expect(lootStatsService.invalidateCache).not.toHaveBeenCalled();
+    });
   });
 
   describe("createComment", () => {
@@ -1426,15 +1457,10 @@ describe("LootsService", () => {
         expect.any(String),
         "guilds.loots.share.update",
         {
+          version: 2,
           guildId: "guild1",
           lootId,
           lootShare: { "1123": ["abc123"] },
-          npc: {
-            lvl: 50,
-            prof: Profession.WARRIOR,
-            type: NpcType.ELITE,
-            wt: 10,
-          },
           npcs: [
             {
               lvl: 50,
@@ -1782,12 +1808,10 @@ describe("LootsService", () => {
         expect.any(String),
         RoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
         expect.objectContaining({
-          npc: {
-            lvl: 120,
-            prof: Profession.WARRIOR,
-            type: NpcType.TITAN,
-            wt: 100,
-          },
+          version: 2,
+          npcs: expect.arrayContaining([
+            expect.objectContaining({ type: NpcType.TITAN, lvl: 120 }),
+          ]),
         }),
       );
     });
