@@ -1,8 +1,8 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { HTTP_CODE_METADATA } from "@nestjs/common/constants";
-import { mockFn } from "src/test/mock-fn";
-import { UserLootlogConfigController } from "./user-lootlog-config.controller";
-import { UserLootlogConfigService } from "./user-lootlog-config.service";
+import { mockFn } from "#src/test/mock-fn";
+import { UserLootlogConfigController } from "./user-lootlog-config.controller.js";
+import { UserLootlogConfigService } from "./user-lootlog-config.service.js";
 
 describe("UserLootlogConfigController", () => {
   let controller: UserLootlogConfigController;

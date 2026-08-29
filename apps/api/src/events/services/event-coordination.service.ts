@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { CoverageGapType } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { TimersService } from "src/timers/timers.service";
-import { buildTimerKey } from "src/timers/utils/timer-key";
+import { CoverageGapType } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { TimersService } from "#src/timers/timers.service";
+import { buildTimerKey } from "#src/timers/utils/timer-key";
 import {
   getEventRespawnWindowStatus,
   type EventRespawnWindowStatus,
-} from "../utils/event-respawn-window.util";
+} from "../utils/event-respawn-window.util.js";
 
 type CoordinationPriority = "CRITICAL" | "WARNING" | "OK" | "IDLE";
 type RecommendedAction =

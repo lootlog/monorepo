@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { NpcType, Permission, type Role } from "src/generated/prisma/client";
+import { NpcType, Permission, type Role } from "#src/generated/prisma/client";
 import {
   buildLootNpcVisibilitySql,
   buildLootNpcVisibilityWhere,
-} from "./loot-visibility.prisma";
+} from "./loot-visibility.prisma.js";
 
 function role(
   id: string,

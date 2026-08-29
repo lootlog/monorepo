@@ -3,12 +3,12 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import type { z } from "zod";
-import { MEILISEARCH_CLIENT } from "src/meilisearch/meilisearch.constants";
-import { buildMeilisearchSearchTermFilter } from "src/meilisearch/meilisearch.utils";
-import type { GetPlayersDto } from "./dto/get-players.dto";
-import { PLAYERS_INDEX } from "./constants/meilisearch";
-import type { IndexPlayersDto } from "./dto/index-players.dto";
-import type { playerHitSchema } from "./dto/player-hit.schema";
+import { MEILISEARCH_CLIENT } from "#src/meilisearch/meilisearch.constants";
+import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/meilisearch.utils";
+import type { GetPlayersDto } from "./dto/get-players.dto.js";
+import { PLAYERS_INDEX } from "./constants/meilisearch.js";
+import type { IndexPlayersDto } from "./dto/index-players.dto.js";
+import type { playerHitSchema } from "./dto/player-hit.schema.js";
 
 type PlayerHit = z.infer<typeof playerHitSchema>;
 

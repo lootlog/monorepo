@@ -1,4 +1,4 @@
-import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
+import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 
 export const READY_ROOM_REPOSITORY = Symbol("READY_ROOM_REPOSITORY");
 

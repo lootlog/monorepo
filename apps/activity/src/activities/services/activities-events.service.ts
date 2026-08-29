@@ -7,25 +7,25 @@ import {
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { Queue } from "src/enum/queue.enum";
+import { Queue } from "#src/enum/queue.enum";
 import {
   DEAD_LETTER_EXCHANGE_NAME,
   DEFAULT_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from "src/config/rabbitmq.config";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { RetryService } from "src/shared/rabbitmq/retry.service";
+} from "#src/config/rabbitmq.config";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { RetryService } from "#src/shared/rabbitmq/retry.service";
 import {
   CreateActivityDto,
   CreateActivitySchema,
-} from "src/activities/dto/create-activity.dto";
-import { ActivitiesService } from "src/activities/activities.service";
+} from "#src/activities/dto/create-activity.dto";
+import { ActivitiesService } from "#src/activities/activities.service";
 import { z } from "zod";
-import { env } from "src/config/env";
+import { env } from "#src/config/env";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
   verifyActivityEventSignature,
-} from "src/activities/utils/activity-event-signature";
+} from "#src/activities/utils/activity-event-signature";
 
 const GuildMemberRemovedSchema = z.object({
   discordId: z.string().min(1),

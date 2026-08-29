@@ -1,13 +1,13 @@
 import { RABBIT_REQUEST_TYPE } from "@golevelup/nestjs-rabbitmq";
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants";
-import { ActivitySource, ActivityType } from "src/generated/prisma/client";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { ActivitiesEventsService } from "./activities-events.service";
+import { ActivitySource, ActivityType } from "#src/generated/prisma/client";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { ActivitiesEventsService } from "./activities-events.service.js";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
   signActivityEvent,
-} from "src/activities/utils/activity-event-signature";
-import { env } from "src/config/env";
+} from "#src/activities/utils/activity-event-signature";
+import { env } from "#src/config/env";
 
 const validPayload = {
   userId: "user-1",

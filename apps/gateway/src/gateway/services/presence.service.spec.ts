@@ -1,9 +1,9 @@
-import { buildRoomName } from "src/gateway/utils/room-utils";
-import type { Socket } from "src/gateway/types/socket-user.type";
-import { PresenceService } from "./presence.service";
-import { GatewayEvent } from "../enums/gateway-event.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { UserPresenceStatus } from "../enums/user-presence-status.enum";
+import { buildRoomName } from "#src/gateway/utils/room-utils";
+import type { Socket } from "#src/gateway/types/socket-user.type";
+import { PresenceService } from "./presence.service.js";
+import { GatewayEvent } from "../enums/gateway-event.enum.js";
+import { Platform } from "#src/gateway/enums/platform.enum";
+import { UserPresenceStatus } from "../enums/user-presence-status.enum.js";
 import { Permission } from "@lootlog/types";
 
 const createPresenceSocket = (

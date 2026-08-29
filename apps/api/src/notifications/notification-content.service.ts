@@ -6,8 +6,8 @@ import {
   NotificationTriggerType as DbNotificationTriggerType,
   type Prisma,
   type NotificationScheduleStrategy as DbNotificationScheduleStrategy,
-} from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
+} from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
 import {
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
   DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
@@ -26,9 +26,9 @@ import {
   scheduledMessageNotification,
   ruleTestWithWorld,
   ruleTestWithoutWorld,
-} from "src/notifications/constants/notification-messages.constant";
-import { NotificationMatchingService } from "src/notifications/notification-matching.service";
-import { formatDiscordRelativeTimestamp } from "src/notifications/utils/discord-timestamp.util";
+} from "#src/notifications/constants/notification-messages.constant";
+import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
+import { formatDiscordRelativeTimestamp } from "#src/notifications/utils/discord-timestamp.util";
 
 type AllowedMention = "roles" | "users" | "everyone";
 

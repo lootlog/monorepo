@@ -1,5 +1,5 @@
 import type { RabbitMQConfig } from "@golevelup/nestjs-rabbitmq";
-import { env } from "./env";
+import { env } from "./env.js";
 
 export const DEFAULT_EXCHANGE_NAME = "default";
 

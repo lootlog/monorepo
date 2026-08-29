@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { ViteUserConfig } from "vitest/config";
 
 type CreateNestVitestConfigOptions = {
   rootDir: string;
@@ -19,20 +20,10 @@ const resolveRelativeEntries = (
     ]),
   );
 
-export const nestSwcPluginOptions = {
-  module: {
-    type: "es6",
-  },
-  jsc: {
-    parser: {
-      syntax: "typescript",
-      decorators: true,
-      dynamicImport: true,
-    },
-    transform: {
-      legacyDecorator: true,
-      decoratorMetadata: true,
-    },
+const nestOxcOptions = {
+  decorator: {
+    legacy: true,
+    emitDecoratorMetadata: true,
   },
 } as const;
 
@@ -42,11 +33,11 @@ export const createNestVitestConfig = ({
   alias = {},
   fileParallelism = true,
   setupFiles = [],
-}: CreateNestVitestConfigOptions) => ({
-  oxc: false,
+}: CreateNestVitestConfigOptions): ViteUserConfig => ({
+  oxc: nestOxcOptions,
   resolve: {
     alias: {
-      src: path.resolve(rootDir, "./src"),
+      "#src": path.resolve(rootDir, "./src"),
       ...resolveRelativeEntries(rootDir, alias),
     },
   },

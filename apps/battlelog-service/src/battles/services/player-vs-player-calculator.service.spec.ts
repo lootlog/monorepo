@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { InflatedBattleWithWarriors } from "./battle-analytics.types";
-import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service";
-import { PlayerVsPlayerCalculatorService } from "./player-vs-player-calculator.service";
+import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
+import { BattleAnalyticsDomainService } from "./battle-analytics-domain.service.js";
+import { PlayerVsPlayerCalculatorService } from "./player-vs-player-calculator.service.js";
 
 type TestBattleInput = {
   id: string;

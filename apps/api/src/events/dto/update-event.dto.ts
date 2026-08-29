@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createZodDto } from "nestjs-zod";
-import { HeroNpcSchema } from "./create-event.dto";
-import { EventScoringRulesSchema } from "./event-scoring-rules.dto";
+import { HeroNpcSchema } from "./create-event.dto.js";
+import { EventScoringRulesSchema } from "./event-scoring-rules.dto.js";
 import { EVENT_SCORING_MODES } from "@lootlog/scoring";
 
 const UpdateEventSchema = z.object({

@@ -1,16 +1,8 @@
-import swc from "unplugin-swc";
 import { defineConfig } from "vitest/config";
-import {
-  createNestVitestConfig,
-  nestSwcPluginOptions,
-} from "../../tools/vitest/create-nest-vitest-config";
-
-const swcPluginOptions = nestSwcPluginOptions satisfies Parameters<
-  typeof swc.vite
->[0];
+import { createNestVitestConfig } from "../../tools/vitest/create-nest-vitest-config.mjs";
 
 const nestConfig = createNestVitestConfig({
-  rootDir: __dirname,
+  rootDir: import.meta.dirname,
   include: ["test/**/*.e2e-spec.ts"],
   alias: {
     "@lootlog/api-helpers/permissions":
@@ -26,5 +18,4 @@ export default defineConfig({
     ...nestConfig.test,
     globalSetup: "./test/vitest.global-setup.ts",
   },
-  plugins: [swc.vite(swcPluginOptions)],
 });

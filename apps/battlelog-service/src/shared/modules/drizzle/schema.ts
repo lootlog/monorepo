@@ -10,7 +10,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import type { BattleWarriorStats } from "src/battles/battle-warrior-stats.types";
+import type { BattleWarriorStats } from "#src/battles/battle-warrior-stats.types";
 
 export const battles = pgTable(
   "battles",

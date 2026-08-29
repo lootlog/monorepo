@@ -2,15 +2,15 @@
 /* eslint-disable no-await-in-loop */
 import { NpcTypeEnum, getNpcTypeByWt } from "@lootlog/types";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../../../apps/api/src/generated/prisma/client";
+import { PrismaClient } from "../../../../apps/api/src/generated/prisma/client.js";
 import { Meilisearch } from "meilisearch";
 import "dotenv/config";
 import { z } from "zod";
-import { ITEMS_INDEX } from "../items/constants/meilisearch";
-import { createItemSearchFields } from "../items/utils/create-item-search-fields";
-import { getMeilisearchErrorCode } from "../meilisearch/meilisearch.utils";
-import { NPCS_INDEX } from "../npcs/constants/meilisearch";
-import { PLAYERS_INDEX } from "../players/constants/meilisearch";
+import { ITEMS_INDEX } from "../items/constants/meilisearch.js";
+import { createItemSearchFields } from "../items/utils/create-item-search-fields.js";
+import { getMeilisearchErrorCode } from "../meilisearch/meilisearch.utils.js";
+import { NPCS_INDEX } from "../npcs/constants/meilisearch.js";
+import { PLAYERS_INDEX } from "../players/constants/meilisearch.js";
 
 const configSchema = z.object({
   MEILISEARCH_HOST: z.string(),

@@ -1,9 +1,9 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { GetPlayersDto } from "./dto/get-players.dto";
-import { PlayerHitDto } from "./dto/player-hit.schema";
-import { PlayersService } from "./players.service";
+import { GetPlayersDto } from "./dto/get-players.dto.js";
+import { PlayerHitDto } from "./dto/player-hit.schema.js";
+import { PlayersService } from "./players.service.js";
 
 @ApiTags("Players")
 @Controller("players")

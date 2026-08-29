@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "src/db/prisma.service";
+import { PrismaService } from "#src/db/prisma.service";
 import {
   ItemRarity,
   NpcType,
@@ -8,18 +8,18 @@ import {
   type Guild,
   type Prisma,
   type Role,
-} from "src/generated/prisma/client";
-import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
-import type { LootItemDto } from "src/loots/dto/loot-item.dto";
-import type { LootNpcDto } from "src/loots/dto/loot-npc.dto";
-import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
-import { LootShareResponseSchema } from "src/shared/dto/loot-response.dto";
-import { DEFAULT_PAGE_LIMIT } from "../config/pagination";
-import { buildLootNpcVisibilityWhere } from "src/loots/loot-visibility.prisma";
+} from "#src/generated/prisma/client";
+import type { FetchLootsParamsDto } from "#src/loots/dto/fetch-loots-params.dto";
+import type { LootItemDto } from "#src/loots/dto/loot-item.dto";
+import type { LootNpcDto } from "#src/loots/dto/loot-npc.dto";
+import type { LootQueryResult } from "#src/loots/dto/loot-query-result.dto";
+import { LootShareResponseSchema } from "#src/shared/dto/loot-response.dto";
+import { DEFAULT_PAGE_LIMIT } from "../config/pagination.js";
+import { buildLootNpcVisibilityWhere } from "#src/loots/loot-visibility.prisma";
 import {
   getProfByShortname,
   getShortnameByProf,
-} from "src/shared/utils/get-prof-by-shortname";
+} from "#src/shared/utils/get-prof-by-shortname";
 
 const lootItemSelect = {
   hid: true,

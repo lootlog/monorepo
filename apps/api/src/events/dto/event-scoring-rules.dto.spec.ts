@@ -1,5 +1,5 @@
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "@lootlog/scoring";
-import { EventScoringRulesSchema } from "./event-scoring-rules.dto";
+import { EventScoringRulesSchema } from "./event-scoring-rules.dto.js";
 
 const cloneRulesPayload = () =>
   JSON.parse(JSON.stringify(DEFAULT_ADVANCED_EVENT_SCORING_RULES));

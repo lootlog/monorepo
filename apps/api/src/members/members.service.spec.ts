@@ -1,5 +1,5 @@
 import type { Mock, Mocked } from "vitest";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
@@ -11,13 +11,13 @@ import {
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { MembersService } from "./members.service";
-import { PrismaService } from "src/db/prisma.service";
-import { DiscordService } from "src/discord/discord.service";
-import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
-import { DiscordSyncDiagnosticsService } from "src/discord/discord-sync-diagnostics.service";
+import { MembersService } from "./members.service.js";
+import { PrismaService } from "#src/db/prisma.service";
+import { DiscordService } from "#src/discord/discord.service";
+import { DiscordRateLimiterService } from "#src/discord/discord-rate-limiter.service";
+import { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { ErrorKey } from "./enum/error-key.enum";
+import { ErrorKey } from "./enum/error-key.enum.js";
 import { RuntimeEnvironment } from "@lootlog/types";
 import type { APIGuildMember } from "discord-api-types/v10";
 import {
@@ -25,24 +25,24 @@ import {
   type Member,
   type Guild,
   MemberType,
-} from "src/generated/prisma/client";
-import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { RoutingKey } from "src/enum/routing-key.enum";
+} from "#src/generated/prisma/client";
+import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service.js";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import {
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
-} from "src/shared/constants/cache.constant";
-import { MemberDiscordAccessService } from "./member-discord-access.service";
-import { MemberDiscordRefreshService } from "./member-discord-refresh.service";
-import { MemberDiscordSyncService } from "./member-discord-sync.service";
-import { MemberBulkRefreshService } from "./member-bulk-refresh.service";
-import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
-import { MemberReadService } from "./member-read.service";
-import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
-import { MemberRemovalService } from "./member-removal.service";
+} from "#src/shared/constants/cache.constant";
+import { MemberDiscordAccessService } from "./member-discord-access.service.js";
+import { MemberDiscordRefreshService } from "./member-discord-refresh.service.js";
+import { MemberDiscordSyncService } from "./member-discord-sync.service.js";
+import { MemberBulkRefreshService } from "./member-bulk-refresh.service.js";
+import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
+import { MemberReadService } from "./member-read.service.js";
+import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
+import { MemberRemovalService } from "./member-removal.service.js";
 
-vi.mock("src/config/service.config", () => ({
+vi.mock("#src/config/service.config", () => ({
   serviceConfig: { env: "local" },
 }));
 

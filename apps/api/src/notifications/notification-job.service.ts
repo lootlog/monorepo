@@ -20,26 +20,26 @@ import {
   NotificationTriggerType as DbNotificationTriggerType,
   type NotificationTargetType as DbNotificationTargetType,
   Prisma,
-} from "src/generated/prisma/client";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
-import { GuildsService } from "src/guilds/guilds.service";
-import { GUILD_NOTIFICATION_TIMEZONE } from "src/notifications/constants/notification-schedule-timezone.constant";
-import { NOTIFICATIONS_DISPATCH_QUEUE } from "src/notifications/constants/notifications-dispatch-queue.constant";
+} from "#src/generated/prisma/client";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/constants/notification-schedule-timezone.constant";
+import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/constants/notifications-dispatch-queue.constant";
 import {
   NOTIFICATIONS_HISTORY_RESPONSE_LIMIT,
   NOTIFICATIONS_HISTORY_RETENTION_LIMIT,
-} from "src/notifications/constants/notifications-history.constant";
-import { NotificationContentService } from "src/notifications/notification-content.service";
+} from "#src/notifications/constants/notifications-history.constant";
+import { NotificationContentService } from "#src/notifications/notification-content.service";
 import {
   NotificationFiltersResponseDto,
   NotificationJobPayloadSnapshotResponseDto,
-} from "src/notifications/dto/notification-response.dto";
-import { NotificationMatchingService } from "src/notifications/notification-matching.service";
-import { Error } from "src/notifications/enum/error.enum";
-import type { NotificationDispatchJobData } from "src/notifications/notifications-dispatch.processor";
-import { calculateNextOccurrenceInTimeZone } from "src/notifications/utils/notification-schedule-time.util";
+} from "#src/notifications/dto/notification-response.dto";
+import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
+import { Error } from "#src/notifications/enum/error.enum";
+import type { NotificationDispatchJobData } from "#src/notifications/notifications-dispatch.processor";
+import { calculateNextOccurrenceInTimeZone } from "#src/notifications/utils/notification-schedule-time.util";
 
 type OwnerContext = {
   ownerType: DbNotificationOwnerType;

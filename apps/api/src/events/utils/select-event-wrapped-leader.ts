@@ -1,7 +1,7 @@
 import type {
   EventWrappedLeaderDto,
   EventWrappedLeaderResultDto,
-} from "../dto/event-wrapped.dto";
+} from "../dto/event-wrapped.dto.js";
 
 type EventWrappedLeaderCandidate = {
   memberId: number;

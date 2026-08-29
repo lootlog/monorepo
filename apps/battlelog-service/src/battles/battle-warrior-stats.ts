@@ -1,9 +1,9 @@
-import type { BattleWarrior } from "src/shared/modules/drizzle/schema";
+import type { BattleWarrior } from "#src/shared/modules/drizzle/schema";
 import {
   BATTLE_WARRIOR_STATS_KEYS,
   type BattleWarriorStats,
   type BattleWarriorStatsKey,
-} from "./battle-warrior-stats.types";
+} from "./battle-warrior-stats.types.js";
 
 const BOOLEAN_STATS_KEYS = new Set<BattleWarriorStatsKey>([
   "isDead",

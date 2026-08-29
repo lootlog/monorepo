@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { CreateBattleDto } from "./dto/create-battle.dto";
+import type { CreateBattleDto } from "./dto/create-battle.dto.js";
 
 type BattleEvent = CreateBattleDto["events"][number];
 

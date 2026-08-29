@@ -1,18 +1,18 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import { NotFoundException } from "@nestjs/common";
-import { EventKillService } from "./event-kill.service";
-import { EventReadCacheService } from "./event-read-cache.service";
-import { EventEmitterService } from "./event-emitter.service";
-import { EventPointsService } from "./event-points.service";
-import { EventTrackingService } from "./event-tracking.service";
-import { EventSummaryService } from "./event-summary.service";
-import { PrismaService } from "src/db/prisma.service";
+import { EventKillService } from "./event-kill.service.js";
+import { EventReadCacheService } from "./event-read-cache.service.js";
+import { EventEmitterService } from "./event-emitter.service.js";
+import { EventPointsService } from "./event-points.service.js";
+import { EventTrackingService } from "./event-tracking.service.js";
+import { EventSummaryService } from "./event-summary.service.js";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { Event, EventHeroNpc } from "src/generated/prisma/client";
-import { TimersService } from "src/timers/timers.service";
+import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
+import type { Event, EventHeroNpc } from "#src/generated/prisma/client";
+import { TimersService } from "#src/timers/timers.service";
 
 describe("EventKillService", () => {
   let service: EventKillService;

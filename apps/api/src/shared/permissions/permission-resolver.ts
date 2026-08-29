@@ -1,4 +1,4 @@
-import { Permission } from "src/generated/prisma/client";
+import { Permission } from "#src/generated/prisma/client";
 
 /**
  * Utility class for resolving permissions with implicit grants.

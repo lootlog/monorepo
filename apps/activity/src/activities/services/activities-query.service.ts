@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type { Prisma } from "src/generated/prisma/client";
-import { PrismaService } from "src/shared/db/prisma.service";
-import type { QueryActivitiesDto } from "../dto/query-activities.dto";
-import { mapActivityDetails } from "../utils/map-activity-details";
+import type { Prisma } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/shared/db/prisma.service";
+import type { QueryActivitiesDto } from "../dto/query-activities.dto.js";
+import { mapActivityDetails } from "../utils/map-activity-details.js";
 
 const DEFAULT_SUGGESTION_LIMIT = 10;
 const MIN_SUGGESTION_LIMIT = 1;

@@ -5,7 +5,7 @@ import {
   MessageType,
   PartyGatheringDataDto,
   ReplyToMessageDto,
-} from "src/chat/dto/send-message.dto";
+} from "#src/chat/dto/send-message.dto";
 
 const ChatNpcResponseSchema = z.object({
   id: z.number(),

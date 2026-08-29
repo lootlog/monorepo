@@ -1,19 +1,19 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { PrismaService } from "src/db/prisma.service";
-import { Permission, type PlayerSnapshot } from "src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { Permission, type PlayerSnapshot } from "#src/generated/prisma/client";
 import {
   getGuildMemberReferencesCacheKey,
   getGuildMembersSummaryCacheKey,
   getMemberLootlogConfigSummaryCacheKey,
-} from "src/shared/constants/cache.constant";
+} from "#src/shared/constants/cache.constant";
 import type {
   MemberLootlogConfigCharacterSummary,
   MemberLootlogConfigSummary,
   MemberReference,
   MemberSummary,
   MemberWithRoles,
-} from "./member.types";
+} from "./member.types.js";
 
 const MEMBER_READ_CACHE_TTL_SECONDS = 30;
 const MEMBER_LOOTLOG_CONFIG_SUMMARY_CACHE_TTL_SECONDS = 60;

@@ -1,6 +1,6 @@
-import { Permission } from "src/generated/prisma/client";
-import { ReservationMutationsService } from "./reservation-mutations.service";
-import type { ReservationViewerContext } from "./reservation-viewer";
+import { Permission } from "#src/generated/prisma/client";
+import { ReservationMutationsService } from "./reservation-mutations.service.js";
+import type { ReservationViewerContext } from "./reservation-viewer.js";
 
 describe("ReservationMutationsService", () => {
   const guild = {

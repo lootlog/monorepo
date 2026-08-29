@@ -1,14 +1,14 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { TimersCleanupService } from "./timers-cleanup.service";
-import { PrismaService } from "src/db/prisma.service";
+import { mockFn } from "#src/test/mock-fn";
+import { TimersCleanupService } from "./timers-cleanup.service.js";
+import { PrismaService } from "#src/db/prisma.service";
 
 const mockEnv = {
   TIMER_CLEANUP_ENABLED: "true",
   TIMER_RETENTION_DAYS: 7,
 };
 
-vi.mock("src/config/env", () => ({
+vi.mock("#src/config/env", () => ({
   get env() {
     return mockEnv;
   },

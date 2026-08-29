@@ -3,7 +3,7 @@ import {
   clipIntervalToWindow,
   getTrackingWindowDurationSeconds,
   getTrackingWindowStartTime,
-} from "./tracking-window.util";
+} from "./tracking-window.util.js";
 
 describe("tracking-window.util", () => {
   describe("clipIntervalToWindow", () => {

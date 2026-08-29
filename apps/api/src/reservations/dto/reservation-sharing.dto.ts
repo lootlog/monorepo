@@ -1,6 +1,6 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { isoDatetimeCodec } from "src/shared/dto/zod-response-codecs";
+import { isoDatetimeCodec } from "#src/shared/dto/zod-response-codecs";
 
 const ReservationShareOrganizationSchema = z.object({
   name: z.string(),

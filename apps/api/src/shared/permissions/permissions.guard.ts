@@ -5,12 +5,12 @@ import {
   type ExecutionContext,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { PERMISSIONS_KEY } from "./permissions.decorator";
-import { MemberContextService } from "./member-context.service";
-import type { Permission } from "src/generated/prisma/client";
-import { PerfDiagnosticsService } from "src/shared/diagnostics/perf-diagnostics.service";
-import { setRequestDiagnosticsRoute } from "src/shared/diagnostics/request-diagnostics-context";
-import { PermissionResolver } from "./permission-resolver";
+import { PERMISSIONS_KEY } from "./permissions.decorator.js";
+import { MemberContextService } from "./member-context.service.js";
+import type { Permission } from "#src/generated/prisma/client";
+import { PerfDiagnosticsService } from "#src/shared/diagnostics/perf-diagnostics.service";
+import { setRequestDiagnosticsRoute } from "#src/shared/diagnostics/request-diagnostics-context";
+import { PermissionResolver } from "./permission-resolver.js";
 
 interface RequestWithPermissions {
   userId?: string;

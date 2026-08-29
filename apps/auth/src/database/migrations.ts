@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import type pg from "pg";
-import type { db, drizzlePool } from "./drizzle";
+import type { db, drizzlePool } from "./drizzle.js";
 
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";

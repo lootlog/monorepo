@@ -8,19 +8,19 @@ import {
 import type { Queue as BullQueue } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { serviceConfig } from "src/config/service.config";
-import { PrismaService } from "src/db/prisma.service";
-import type { MemberRefreshJob } from "src/generated/prisma/client";
+import { serviceConfig } from "#src/config/service.config";
+import { PrismaService } from "#src/db/prisma.service";
+import type { MemberRefreshJob } from "#src/generated/prisma/client";
 import { RuntimeEnvironment } from "@lootlog/types";
-import { getAdminBulkRefreshRateLimit } from "./constants/member-cache.constant";
-import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
-import { ErrorKey } from "./enum/error-key.enum";
-import { MemberReadService } from "./member-read.service";
-import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
+import { getAdminBulkRefreshRateLimit } from "./constants/member-cache.constant.js";
+import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
+import { ErrorKey } from "./enum/error-key.enum.js";
+import { MemberReadService } from "./member-read.service.js";
+import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
 import type {
   MemberBulkRefreshJobData,
   RefreshJobWithCooldown,
-} from "./member.types";
+} from "./member.types.js";
 
 @Injectable()
 export class MemberBulkRefreshService {

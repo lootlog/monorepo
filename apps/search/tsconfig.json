@@ -5,10 +5,7 @@
     "declaration": false,
     "rootDir": ".",
     "strict": true,
-    "types": ["node", "vitest/globals"],
-    "paths": {
-      "src/*": ["./src/*"]
-    }
+    "types": ["node", "vitest/globals"]
   },
-  "exclude": ["src/scripts/**/*"]
+  "exclude": ["src/scripts/**/*", "vitest.config.ts"]
 }

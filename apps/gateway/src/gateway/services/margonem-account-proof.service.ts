@@ -2,8 +2,8 @@ import { HttpService } from "@nestjs/axios";
 import { Injectable, Logger } from "@nestjs/common";
 import { verify } from "node:crypto";
 import { firstValueFrom } from "rxjs";
-import { env } from "src/config/env";
-import type { MargonemAccountProofDto } from "src/gateway/dto/join-gateway.dto";
+import { env } from "#src/config/env";
+import type { MargonemAccountProofDto } from "#src/gateway/dto/join-gateway.dto";
 
 const REQUEST_TIMEOUT_MS = 10000;
 const KEY_CACHE_TTL_MS = 12 * 60 * 60 * 1000;

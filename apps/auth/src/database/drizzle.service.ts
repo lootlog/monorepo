@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger as WinstonLogger } from "winston";
-import { db, drizzlePool } from "./drizzle";
+import { db, drizzlePool } from "./drizzle.js";
 
 @Injectable()
 export class DrizzleService implements OnModuleInit, OnModuleDestroy {

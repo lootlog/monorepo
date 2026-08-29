@@ -1,7 +1,7 @@
 import { ConflictException, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "src/db/prisma.service";
-import { mockFn } from "src/test/mock-fn";
-import { PinnedEventsService } from "./pinned-events.service";
+import { PrismaService } from "#src/db/prisma.service";
+import { mockFn } from "#src/test/mock-fn";
+import { PinnedEventsService } from "./pinned-events.service.js";
 
 describe("PinnedEventsService", () => {
   const referenceTime = new Date("2026-08-16T12:00:00.000Z");

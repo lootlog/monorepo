@@ -1,8 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PrismaService } from "src/db/prisma.service";
-import { env } from "src/config/env";
-import { TIMER_TYPES } from "src/timers/constants/timer-limits";
+import { PrismaService } from "#src/db/prisma.service";
+import { env } from "#src/config/env";
+import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
 
 @Injectable()
 export class TimersCleanupService {

@@ -15,13 +15,13 @@ import {
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationProvider as DbNotificationProvider,
   NotificationTargetType as DbNotificationTargetType,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 import type { Logger as WinstonLogger } from "winston";
-import { DiscordBotClientService } from "src/discord-bot-client/discord-bot-client.service";
-import { discordBotConfig } from "src/config/discord-bot.config";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { PrismaService } from "src/db/prisma.service";
-import { RoutingKey } from "src/enum/routing-key.enum";
+import { DiscordBotClientService } from "#src/discord-bot-client/discord-bot-client.service";
+import { discordBotConfig } from "#src/config/discord-bot.config";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { PrismaService } from "#src/db/prisma.service";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 
 type GetGuildDiscordChannelsOptions = {
   forceRefresh?: boolean;

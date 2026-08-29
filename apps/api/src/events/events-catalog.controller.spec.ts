@@ -1,6 +1,6 @@
-import { Permission } from "src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
-import { EventsCatalogController } from "./events-catalog.controller";
+import { Permission } from "#src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { EventsCatalogController } from "./events-catalog.controller.js";
 
 describe("EventsCatalogController", () => {
   const mockEventsService = {

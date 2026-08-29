@@ -6,9 +6,9 @@ import {
 } from "@nestjs/common";
 import { validateToken } from "@lootlog/api-helpers/auth/verify-jwt";
 import { APIError } from "better-auth/api";
-import { AuthService } from "./auth.service";
-import { idpTokenRequestSchema } from "./dto/idp-token-request.dto";
-import { auth } from "./better-auth";
+import { AuthService } from "./auth.service.js";
+import { idpTokenRequestSchema } from "./dto/idp-token-request.dto.js";
+import { auth } from "./better-auth.js";
 
 vi.mock("@lootlog/api-helpers/auth/verify-jwt", () => ({
   validateToken:
@@ -27,7 +27,7 @@ vi.mock("./better-auth", () => ({
   },
 }));
 
-vi.mock("src/config/env", () => ({
+vi.mock("#src/config/env", () => ({
   env: {
     APP_URL: "http://localhost:3000",
   },

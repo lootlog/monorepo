@@ -1,10 +1,10 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { Permission } from "src/generated/prisma/client";
-import { RolesService } from "./roles.service";
-import { PrismaService } from "src/db/prisma.service";
+import { Permission } from "#src/generated/prisma/client";
+import { RolesService } from "./roles.service.js";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 
 describe("RolesService", () => {

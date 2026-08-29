@@ -1,5 +1,5 @@
-export { createEnv } from "./create-env";
+export { createEnv } from "./create-env.js";
 export {
   createWinstonConfig,
   type WinstonConfigOptions,
-} from "./winston.config";
+} from "./winston.config.js";

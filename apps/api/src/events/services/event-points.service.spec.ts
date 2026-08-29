@@ -1,9 +1,9 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { EventPointsService } from "./event-points.service";
-import { EventReadCacheService } from "./event-read-cache.service";
-import { PrismaService } from "src/db/prisma.service";
-import { EventEmitterService } from "./event-emitter.service";
+import { mockFn } from "#src/test/mock-fn";
+import { EventPointsService } from "./event-points.service.js";
+import { EventReadCacheService } from "./event-read-cache.service.js";
+import { PrismaService } from "#src/db/prisma.service";
+import { EventEmitterService } from "./event-emitter.service.js";
 
 describe("EventPointsService", () => {
   let service: EventPointsService;

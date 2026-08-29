@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
-import { PrismaModule } from "src/db/prisma.module";
-import { SettingsDocumentsController } from "./settings-documents.controller";
-import { SettingsDocumentsService } from "./settings-documents.service";
+import { PrismaModule } from "#src/db/prisma.module";
+import { SettingsDocumentsController } from "./settings-documents.controller.js";
+import { SettingsDocumentsService } from "./settings-documents.service.js";
 
 @Module({
   imports: [PrismaModule],

@@ -3,8 +3,8 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { z } from "zod";
 import { lastValueFrom } from "rxjs";
-import { env } from "src/config/env";
-import { normalizeReservationSpotId } from "./reservation-spot-id";
+import { env } from "#src/config/env";
+import { normalizeReservationSpotId } from "./reservation-spot-id.js";
 
 const RESERVATION_CATALOG_CACHE_KEY = "reservations:catalog:v2";
 const RESERVATION_CATALOG_CACHE_TTL_SECONDS = 60 * 60;

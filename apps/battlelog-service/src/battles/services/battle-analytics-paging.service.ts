@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import type {
   InMemoryPaginationOptions,
   InMemoryPaginationResult,
-} from "src/battles/services/battle-analytics.types";
+} from "#src/battles/services/battle-analytics.types";
 
 @Injectable()
 export class BattleAnalyticsPagingService {

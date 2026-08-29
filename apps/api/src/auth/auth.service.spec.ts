@@ -1,11 +1,11 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { AuthService } from "./auth.service";
+import { mockFn } from "#src/test/mock-fn";
+import { AuthService } from "./auth.service.js";
 import { HttpService } from "@nestjs/axios";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { RedisService } from "@lootlog/nest-shared/redis";
 
-vi.mock("src/config/auth.config", () => ({
+vi.mock("#src/config/auth.config", () => ({
   authConfig: { serviceUrl: "http://localhost:3001" },
 }));
 

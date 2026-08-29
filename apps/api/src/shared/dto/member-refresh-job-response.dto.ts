@@ -1,10 +1,10 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { RefreshJobStatus } from "src/generated/prisma/client";
+import { RefreshJobStatus } from "#src/generated/prisma/client";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
-} from "src/shared/dto/zod-response-codecs";
+} from "#src/shared/dto/zod-response-codecs";
 
 const MemberRefreshJobResponseSchema = z.object({
   id: z.number(),

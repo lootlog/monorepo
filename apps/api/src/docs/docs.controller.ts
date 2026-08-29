@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Post,
   Put,
@@ -20,15 +21,15 @@ import {
   type Guild,
   type Member,
   Permission,
-} from "src/generated/prisma/client";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { GuildMember } from "src/shared/decorators/member.decorator";
+} from "#src/generated/prisma/client";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { GuildMember } from "#src/shared/decorators/member.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { DocsService } from "./docs.service";
-import { CreateGuildDocumentDto } from "./dto/create-guild-document.dto";
-import { UpdateGuildDocumentDto } from "./dto/update-guild-document.dto";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { DocsService } from "./docs.service.js";
+import { CreateGuildDocumentDto } from "./dto/create-guild-document.dto.js";
+import { UpdateGuildDocumentDto } from "./dto/update-guild-document.dto.js";
 import {
   DocsMutationResponseDto,
   GuildDocumentHistoryResponseDto,
@@ -36,7 +37,7 @@ import {
   GuildDocumentListResponseDto,
   GuildDocumentResponseDto,
   GuildDocumentTrashResponseDto,
-} from "./dto/guild-document-response.dto";
+} from "./dto/guild-document-response.dto.js";
 
 const DOCS_READ_PERMISSIONS = [
   Permission.LOOTLOG_DOCS_READ,
@@ -229,6 +230,7 @@ export class DocsController {
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Post(":docId/restore")
+  @HttpCode(200)
   @ApiOperation({
     summary: "Restore guild document",
     description: "Restore a guild document from trash",

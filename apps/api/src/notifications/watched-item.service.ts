@@ -7,22 +7,22 @@ import {
 import {
   NotificationOwnerType as DbNotificationOwnerType,
   NotificationTriggerType as DbNotificationTriggerType,
-} from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { GuildsService } from "src/guilds/guilds.service";
-import { NotificationJobService } from "src/notifications/notification-job.service";
+} from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { NotificationJobService } from "#src/notifications/notification-job.service";
 import {
   NotificationFiltersResponseDto,
   NotificationRuleResponseDto,
   WatchedItemResponseDto,
   WatchedItemSnapshotResponseDto,
-} from "src/notifications/dto/notification-response.dto";
-import { NotificationMatchingService } from "src/notifications/notification-matching.service";
-import { NotificationTargetService } from "src/notifications/notification-target.service";
-import { Error as NotificationError } from "src/notifications/enum/error.enum";
-import { ensureLimitNotExceeded } from "src/notifications/utils/ensure-limit-not-exceeded.util";
-import type { CreateWatchedItemQuickAddDto } from "src/notifications/dto/create-watched-item-quick-add.dto";
-import type { CreateWatchedItemDto } from "src/notifications/dto/create-watched-item.dto";
+} from "#src/notifications/dto/notification-response.dto";
+import { NotificationMatchingService } from "#src/notifications/notification-matching.service";
+import { NotificationTargetService } from "#src/notifications/notification-target.service";
+import { Error as NotificationError } from "#src/notifications/enum/error.enum";
+import { ensureLimitNotExceeded } from "#src/notifications/utils/ensure-limit-not-exceeded.util";
+import type { CreateWatchedItemQuickAddDto } from "#src/notifications/dto/create-watched-item-quick-add.dto";
+import type { CreateWatchedItemDto } from "#src/notifications/dto/create-watched-item.dto";
 
 const USER_WATCHED_ITEM_LIMIT = 20;
 

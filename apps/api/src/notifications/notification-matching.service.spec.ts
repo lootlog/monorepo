@@ -1,5 +1,5 @@
-import { NpcType, Permission } from "src/generated/prisma/client";
-import { NotificationMatchingService } from "./notification-matching.service";
+import { NpcType, Permission } from "#src/generated/prisma/client";
+import { NotificationMatchingService } from "./notification-matching.service.js";
 
 describe("NotificationMatchingService", () => {
   let service: NotificationMatchingService;

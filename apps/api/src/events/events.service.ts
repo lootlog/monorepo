@@ -8,41 +8,41 @@ import type {
   Guild,
   Permission,
   Role,
-} from "src/generated/prisma/client";
-import type { EventWrappedResponseDto } from "./dto/event-wrapped.dto";
-import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
-import type { CreateEventDto } from "./dto/create-event.dto";
-import type { CreateHeroDto } from "./dto/create-hero.dto";
-import type { CreateLocationDto } from "./dto/create-location.dto";
-import type { CreateMapDto } from "./dto/create-map.dto";
-import type { ReorderLocationsDto } from "./dto/reorder-locations.dto";
-import type { UpdateEventDto } from "./dto/update-event.dto";
-import type { UpdateHeroDto } from "./dto/update-hero.dto";
-import type { UpdateLocationDto } from "./dto/update-location.dto";
+} from "#src/generated/prisma/client";
+import type { EventWrappedResponseDto } from "./dto/event-wrapped.dto.js";
+import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant.js";
+import type { CreateEventDto } from "./dto/create-event.dto.js";
+import type { CreateHeroDto } from "./dto/create-hero.dto.js";
+import type { CreateLocationDto } from "./dto/create-location.dto.js";
+import type { CreateMapDto } from "./dto/create-map.dto.js";
+import type { ReorderLocationsDto } from "./dto/reorder-locations.dto.js";
+import type { UpdateEventDto } from "./dto/update-event.dto.js";
+import type { UpdateHeroDto } from "./dto/update-hero.dto.js";
+import type { UpdateLocationDto } from "./dto/update-location.dto.js";
 import type {
   CheckEventHeroKillParams,
   EventHeroKillJobData,
-} from "./interfaces/check-event-hero-kill-params.interface";
-import type { KillTimerData } from "./interfaces/kill-timer-data.interface";
+} from "./interfaces/check-event-hero-kill-params.interface.js";
+import type { KillTimerData } from "./interfaces/kill-timer-data.interface.js";
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,
-} from "./interfaces/respawn-window.interface";
+} from "./interfaces/respawn-window.interface.js";
 import {
   EVENT_HERO_KILL_JOB_NAME,
   buildEventHeroKillJobId,
   createEventHeroKillJobData,
   getEventHeroKillWindowKey,
-} from "./utils/event-hero-kill-job";
-import { EventAccessService } from "./services/event-access.service";
-import { EventCatalogService } from "./services/event-catalog.service";
-import { EventKillService } from "./services/event-kill.service";
-import { EventPointsService } from "./services/event-points.service";
-import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service";
-import { EventRespawnService } from "./services/event-respawn.service";
-import { EventTrackingService } from "./services/event-tracking.service";
-import { EventWrappedService } from "./services/event-wrapped.service";
-import { EventCoordinationService } from "./services/event-coordination.service";
+} from "./utils/event-hero-kill-job.js";
+import { EventAccessService } from "./services/event-access.service.js";
+import { EventCatalogService } from "./services/event-catalog.service.js";
+import { EventKillService } from "./services/event-kill.service.js";
+import { EventPointsService } from "./services/event-points.service.js";
+import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service.js";
+import { EventRespawnService } from "./services/event-respawn.service.js";
+import { EventTrackingService } from "./services/event-tracking.service.js";
+import { EventWrappedService } from "./services/event-wrapped.service.js";
+import { EventCoordinationService } from "./services/event-coordination.service.js";
 
 @Injectable()
 export class EventsService {

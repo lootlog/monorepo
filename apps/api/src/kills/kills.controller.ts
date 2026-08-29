@@ -22,14 +22,14 @@ import {
   Permission,
   type Guild,
   type Role,
-} from "src/generated/prisma/client";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
-import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
+} from "#src/generated/prisma/client";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
-import { CreateKillDto } from "./dto/create-kill.dto";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
+import { CreateKillDto } from "./dto/create-kill.dto.js";
 import {
   CreateKillResponseDto,
   GuildKillStatsResponseDto,
@@ -39,16 +39,16 @@ import {
   NpcKillersResponseDto,
   UserKillStatsResponseDto,
   UserNpcKillsResponseDto,
-} from "./dto/kill-stats-response.dto";
+} from "./dto/kill-stats-response.dto.js";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
-} from "./dto/get-kill-stats.dto";
-import { GetMemberKillsDto } from "./dto/get-member-kills.dto";
-import { GetNpcKillersDto } from "./dto/get-npc-killers.dto";
-import { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto";
-import { KillsService } from "./kills.service";
-import { normalizeKillStatsPeriod } from "./utils/kill-stats-period";
+} from "./dto/get-kill-stats.dto.js";
+import { GetMemberKillsDto } from "./dto/get-member-kills.dto.js";
+import { GetNpcKillersDto } from "./dto/get-npc-killers.dto.js";
+import { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto.js";
+import { KillsService } from "./kills.service.js";
+import { normalizeKillStatsPeriod } from "./utils/kill-stats-period.js";
 
 @ApiTags("kills")
 @ApiBearerAuth()
@@ -161,6 +161,12 @@ export class KillsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
+  @ApiQuery({ name: "limit", required: true, type: Number })
+  @ApiQuery({ name: "world", required: true, type: String })
+  @ApiQuery({ name: "search", required: true, type: String })
+  @ApiQuery({ name: "minLvl", required: true, type: String })
+  @ApiQuery({ name: "maxLvl", required: true, type: String })
+  @ApiQuery({ name: "period", required: true, type: String })
   @ApiQuery({
     name: "npcType",
     required: false,
@@ -214,6 +220,8 @@ export class KillsController {
     status: 403,
     description: "Forbidden - insufficient permissions",
   })
+  @ApiQuery({ name: "limit", required: true, type: Number })
+  @ApiQuery({ name: "period", required: true, type: String })
   getGuildTopKillersByType(
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],

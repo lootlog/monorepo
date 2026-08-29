@@ -1,9 +1,9 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { GetItemsDto } from "./dto/get-items.dto";
-import { SearchItemsResponseDto } from "./dto/search-items-response.schema";
-import { ItemsService } from "./items.service";
+import { GetItemsDto } from "./dto/get-items.dto.js";
+import { SearchItemsResponseDto } from "./dto/search-items-response.schema.js";
+import { ItemsService } from "./items.service.js";
 
 @ApiTags("Items")
 @Controller("items")

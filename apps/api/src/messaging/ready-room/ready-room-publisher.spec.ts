@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { ReadyRoomPublisher } from "src/messaging/ready-room/ready-room-publisher";
-import type { ReadyRoomAggregate } from "src/messaging/ready-room/ready-room.types";
+import { ReadyRoomPublisher } from "#src/messaging/ready-room/ready-room-publisher";
+import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 
 const aggregate: ReadyRoomAggregate = {
   schemaVersion: 3,

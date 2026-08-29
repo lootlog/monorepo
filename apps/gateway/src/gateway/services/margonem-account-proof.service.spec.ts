@@ -1,9 +1,9 @@
 import { generateKeyPairSync, sign } from "node:crypto";
 import type { HttpService } from "@nestjs/axios";
 import { of } from "rxjs";
-import { env } from "src/config/env";
-import type { MargonemAccountProofDto } from "../dto/join-gateway.dto";
-import { MargonemAccountProofService } from "./margonem-account-proof.service";
+import { env } from "#src/config/env";
+import type { MargonemAccountProofDto } from "../dto/join-gateway.dto.js";
+import { MargonemAccountProofService } from "./margonem-account-proof.service.js";
 
 const NOW_MS = 1_700_000_000_000;
 

@@ -2,9 +2,9 @@ import type { IncomingHttpHeaders } from "node:http";
 import { HttpService } from "@nestjs/axios";
 import { Injectable, Logger } from "@nestjs/common";
 import { firstValueFrom } from "rxjs";
-import { env } from "src/config/env";
-import type { Socket } from "src/gateway/types/socket-user.type";
-import { ConnectionService } from "./connection.service";
+import { env } from "#src/config/env";
+import type { Socket } from "#src/gateway/types/socket-user.type";
+import { ConnectionService } from "./connection.service.js";
 
 const REQUEST_TIMEOUT_MS = 10000;
 

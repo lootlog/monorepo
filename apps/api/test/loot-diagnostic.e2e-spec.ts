@@ -1,8 +1,8 @@
 import { type INestApplication } from "@nestjs/common";
 import request from "supertest";
-import { AppModule } from "../src/app.module";
-import { createTestLootPayload, TEST_USERS } from "./test-helpers";
-import { createTestingModuleWithMocks } from "./test-module-helpers";
+import { AppModule } from "../src/app.module.js";
+import { createTestLootPayload, TEST_USERS } from "./test-helpers.js";
+import { createTestingModuleWithMocks } from "./test-module-helpers.js";
 
 describe("Loot Diagnostic", () => {
   let app: INestApplication;

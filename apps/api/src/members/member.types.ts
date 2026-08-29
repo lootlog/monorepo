@@ -3,12 +3,12 @@ import type {
   MemberRefreshJob,
   Prisma,
   Role,
-} from "src/generated/prisma/client";
+} from "#src/generated/prisma/client";
 import type {
   MemberRefreshStatus,
   MemberSyncStatus,
-} from "./member-discord-sync-status";
-import type { MemberLastDiscordStatus } from "./constants/member-discord-status.constant";
+} from "./member-discord-sync-status.js";
+import type { MemberLastDiscordStatus } from "./constants/member-discord-status.constant.js";
 
 export type MemberWithRoles = Member & {
   roles: Role[];

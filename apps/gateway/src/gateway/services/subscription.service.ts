@@ -1,25 +1,25 @@
 import { Injectable, Logger } from "@nestjs/common";
 import type { Server } from "socket.io";
-import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
-import { ResponseStatus } from "src/gateway/enums/response-status.enum";
-import { Platform } from "src/gateway/enums/platform.enum";
-import { ErrorMessages } from "src/gateway/constants/error-messages.constant";
-import { buildUser } from "src/gateway/utils/build-user";
-import { getGuildIds } from "src/gateway/utils/get-guild-ids";
-import { calculateUserRooms } from "src/gateway/utils/room-utils";
-import { GuildsService } from "src/guilds/guilds.service";
-import { PresenceService } from "./presence.service";
-import { ActivityService } from "./activity.service";
-import { ActivityType } from "src/gateway/enums/activity-type.enum";
-import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
-import type { MargonemAccountProofDto } from "src/gateway/dto/join-gateway.dto";
+import { GatewayEvent } from "#src/gateway/enums/gateway-event.enum";
+import { ResponseStatus } from "#src/gateway/enums/response-status.enum";
+import { Platform } from "#src/gateway/enums/platform.enum";
+import { ErrorMessages } from "#src/gateway/constants/error-messages.constant";
+import { buildUser } from "#src/gateway/utils/build-user";
+import { getGuildIds } from "#src/gateway/utils/get-guild-ids";
+import { calculateUserRooms } from "#src/gateway/utils/room-utils";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { PresenceService } from "./presence.service.js";
+import { ActivityService } from "./activity.service.js";
+import { ActivityType } from "#src/gateway/enums/activity-type.enum";
+import { UserPresenceStatus } from "#src/gateway/enums/user-presence-status.enum";
+import type { MargonemAccountProofDto } from "#src/gateway/dto/join-gateway.dto";
 import type {
   Socket,
   SocketUserPlayer,
-} from "src/gateway/types/socket-user.type";
-import type { UserGuildData } from "src/guilds/types/guild.types";
-import { MargonemAccountProofService } from "./margonem-account-proof.service";
-import { env } from "src/config/env";
+} from "#src/gateway/types/socket-user.type";
+import type { UserGuildData } from "#src/guilds/types/guild.types";
+import { MargonemAccountProofService } from "./margonem-account-proof.service.js";
+import { env } from "#src/config/env";
 
 interface JoinResult {
   status: ResponseStatus;

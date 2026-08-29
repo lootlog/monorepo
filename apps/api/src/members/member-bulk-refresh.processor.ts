@@ -3,11 +3,11 @@ import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { PrismaService } from "src/db/prisma.service";
-import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
-import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service";
-import { MembersService } from "./members.service";
-import type { MemberBulkRefreshJobData } from "./member.types";
+import { PrismaService } from "#src/db/prisma.service";
+import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant.js";
+import { MemberRefreshJobEventsService } from "./member-refresh-job-events.service.js";
+import { MembersService } from "./members.service.js";
+import type { MemberBulkRefreshJobData } from "./member.types.js";
 
 interface JobProgress {
   processedCount: number;

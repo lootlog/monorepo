@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { PaginationService } from "./pagination.service";
-import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import { PaginationService } from "./pagination.service.js";
+import { DrizzleService } from "#src/shared/modules/drizzle/drizzle.service";
 
 describe("PaginationService", () => {
   let service: PaginationService;

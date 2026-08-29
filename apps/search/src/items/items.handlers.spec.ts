@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { ItemsHandlers } from "./items.handlers";
-import { ItemsService } from "./items.service";
+import { ItemsHandlers } from "./items.handlers.js";
+import { ItemsService } from "./items.service.js";
 
 describe("ItemsHandlers", () => {
   let handler: ItemsHandlers;

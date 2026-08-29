@@ -1,6 +1,6 @@
-import { rabbitmqConfig } from "./rabbitmq.config";
-import { Queue } from "src/gateway/enums/queue.enum";
-import { RoutingKey } from "src/gateway/enums/routing-key.enum";
+import { rabbitmqConfig } from "./rabbitmq.config.js";
+import { Queue } from "#src/gateway/enums/queue.enum";
+import { RoutingKey } from "#src/gateway/enums/routing-key.enum";
 
 describe("rabbitmqConfig", () => {
   it("routes failed reservation v2 changes through a retry queue", () => {

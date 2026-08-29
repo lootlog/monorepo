@@ -1,20 +1,20 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { getQueueToken } from "@nestjs/bullmq";
 import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
-import { EventRespawnService } from "./event-respawn.service";
-import { EventReadCacheService } from "./event-read-cache.service";
-import { EventEmitterService } from "./event-emitter.service";
-import { EventKillService } from "./event-kill.service";
-import { EventTrackingService } from "./event-tracking.service";
-import { EventSummaryService } from "./event-summary.service";
-import { PrismaService } from "src/db/prisma.service";
-import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import { TimersService } from "src/timers/timers.service";
+import { EventRespawnService } from "./event-respawn.service.js";
+import { EventReadCacheService } from "./event-read-cache.service.js";
+import { EventEmitterService } from "./event-emitter.service.js";
+import { EventKillService } from "./event-kill.service.js";
+import { EventTrackingService } from "./event-tracking.service.js";
+import { EventSummaryService } from "./event-summary.service.js";
+import { PrismaService } from "#src/db/prisma.service";
+import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
+import { TimersService } from "#src/timers/timers.service";
 
 describe("EventRespawnService", () => {
   let service: EventRespawnService;

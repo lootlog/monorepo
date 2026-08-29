@@ -5,36 +5,36 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import type { Event } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
+import type { Event } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { EventPointsService } from "src/events/services/event-points.service";
-import { EventReadCacheService } from "src/events/services/event-read-cache.service";
-import { EventTrackingService } from "src/events/services/event-tracking.service";
-import { TIMER_TYPES } from "src/timers/constants/timer-limits";
-import { getEventWrappedCachePattern } from "src/shared/constants/cache.constant";
+import { EventPointsService } from "#src/events/services/event-points.service";
+import { EventReadCacheService } from "#src/events/services/event-read-cache.service";
+import { EventTrackingService } from "#src/events/services/event-tracking.service";
+import { TIMER_TYPES } from "#src/timers/constants/timer-limits";
+import { getEventWrappedCachePattern } from "#src/shared/constants/cache.constant";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   normalizeEventScoringMode,
   normalizeEventScoringRules,
   type EventScoringMode,
 } from "@lootlog/scoring";
-import type { CreateEventDto } from "../dto/create-event.dto";
-import type { CreateHeroDto } from "../dto/create-hero.dto";
-import type { CreateLocationDto } from "../dto/create-location.dto";
-import type { CreateMapDto } from "../dto/create-map.dto";
-import type { ReorderLocationsDto } from "../dto/reorder-locations.dto";
-import type { UpdateEventDto } from "../dto/update-event.dto";
-import type { UpdateHeroDto } from "../dto/update-hero.dto";
-import type { UpdateLocationDto } from "../dto/update-location.dto";
-import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data";
+import type { CreateEventDto } from "../dto/create-event.dto.js";
+import type { CreateHeroDto } from "../dto/create-hero.dto.js";
+import type { CreateLocationDto } from "../dto/create-location.dto.js";
+import type { CreateMapDto } from "../dto/create-map.dto.js";
+import type { ReorderLocationsDto } from "../dto/reorder-locations.dto.js";
+import type { UpdateEventDto } from "../dto/update-event.dto.js";
+import type { UpdateHeroDto } from "../dto/update-hero.dto.js";
+import type { UpdateLocationDto } from "../dto/update-location.dto.js";
+import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
+import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
 import {
   attachComputedEventActive,
   buildActiveEventWhere,
   compareEventsByActivityAndStart,
   isEventActiveAt,
-} from "../utils/event-activity.util";
+} from "../utils/event-activity.util.js";
 
 interface TimerNpcData {
   id: number;

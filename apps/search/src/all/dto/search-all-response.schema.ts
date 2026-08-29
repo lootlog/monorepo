@@ -1,8 +1,8 @@
 import { createZodDto, type ZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { itemHitSchema } from "../../items/dto/item-hit.schema";
-import { npcHitSchema } from "../../npcs/dto/npc-hit.schema";
-import { playerHitSchema } from "../../players/dto/player-hit.schema";
+import { itemHitSchema } from "../../items/dto/item-hit.schema.js";
+import { npcHitSchema } from "../../npcs/dto/npc-hit.schema.js";
+import { playerHitSchema } from "../../players/dto/player-hit.schema.js";
 
 export const searchAllResponseSchema = z
   .object({

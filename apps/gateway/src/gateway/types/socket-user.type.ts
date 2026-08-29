@@ -1,7 +1,7 @@
-import type { Platform } from "src/gateway/enums/platform.enum";
-import type { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
+import type { Platform } from "#src/gateway/enums/platform.enum";
+import type { UserPresenceStatus } from "#src/gateway/enums/user-presence-status.enum";
 import type { Socket as SocketIOSocket } from "socket.io";
-import type { UserGuildData } from "src/guilds/types/guild.types";
+import type { UserGuildData } from "#src/guilds/types/guild.types";
 
 export type SocketUserPlayerLocation = {
   x: number;

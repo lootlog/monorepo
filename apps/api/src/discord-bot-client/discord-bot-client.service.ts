@@ -5,7 +5,7 @@ import type {
   DiscordGuildSyncState,
 } from "@lootlog/types";
 import { firstValueFrom } from "rxjs";
-import { discordBotConfig } from "src/config/discord-bot.config";
+import { discordBotConfig } from "#src/config/discord-bot.config";
 
 @Injectable()
 export class DiscordBotClientService {

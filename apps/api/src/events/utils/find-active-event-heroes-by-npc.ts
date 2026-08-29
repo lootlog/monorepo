@@ -1,6 +1,6 @@
-import type { Event, EventHeroNpc } from "src/generated/prisma/client";
-import { PrismaService } from "src/db/prisma.service";
-import { buildActiveEventWhere } from "./event-activity.util";
+import type { Event, EventHeroNpc } from "#src/generated/prisma/client";
+import { PrismaService } from "#src/db/prisma.service";
+import { buildActiveEventWhere } from "./event-activity.util.js";
 
 export type ActiveEventHeroMatch = {
   eventHero: EventHeroNpc;

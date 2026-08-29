@@ -17,17 +17,17 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { BattlesService } from "src/battles/battles.service";
-import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
-import { CreateBattleDto } from "src/battles/dto/create-battle.dto";
-import { QueryBattlesDto } from "src/battles/dto/query-battles.dto";
-import { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
+import { BattlesService } from "#src/battles/battles.service";
+import { BattleAnalyticsService } from "#src/battles/services/battle-analytics.service";
+import { CreateBattleDto } from "#src/battles/dto/create-battle.dto";
+import { QueryBattlesDto } from "#src/battles/dto/query-battles.dto";
+import { QueryBattleAnalyticsDto } from "#src/battles/dto/query-battle-analytics.dto";
 import {
   QueryAbyssSeasonsDto,
   QueryBattleStatisticsDto,
   QueryPlayerVsPlayerDto,
-} from "src/battles/dto/query-battle-statistics.dto";
-import { UpdateBattleDto } from "src/battles/dto/update-battle.dto";
+} from "#src/battles/dto/query-battle-statistics.dto";
+import { UpdateBattleDto } from "#src/battles/dto/update-battle.dto";
 import {
   type BattleResponseInput,
   type BattlesListResponseInput,
@@ -40,7 +40,7 @@ import {
   BattlesListResponseDto,
   BattleUserWorldsResponseDto,
   BattleWarriorsSearchResponseDto,
-} from "src/battles/dto/battle-response.dto";
+} from "#src/battles/dto/battle-response.dto";
 import {
   AbyssSeasonResponseDto,
   BattleAnalyticsResponseDto,
@@ -53,14 +53,14 @@ import {
   RatingDeltaByOpponentResponseDto,
   RatingGrowthDataPointResponseDto,
   StreakResponseDto,
-} from "src/battles/dto/battle-statistics-response.dto";
+} from "#src/battles/dto/battle-statistics-response.dto";
 import type {
   BattleWithRelations,
   GetAllBattlesResult,
-} from "src/battles/interfaces/battle-service.interface";
+} from "#src/battles/interfaces/battle-service.interface";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { BattleAccessGuard } from "src/shared/guards/battle-access.guard";
-import { BattleOwnerGuard } from "src/shared/guards/battle-owner.guard";
+import { BattleAccessGuard } from "#src/shared/guards/battle-access.guard";
+import { BattleOwnerGuard } from "#src/shared/guards/battle-owner.guard";
 
 const normalizeBattleResponse = (
   battle: BattleWithRelations,

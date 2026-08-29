@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import type { CombatProfileDto } from "src/battles/dto/battle-statistics-response.dto";
-import { BattleAnalyticsDomainService } from "src/battles/services/battle-analytics-domain.service";
-import type { InflatedBattleWithWarriors } from "src/battles/services/battle-analytics.types";
+import type { CombatProfileDto } from "#src/battles/dto/battle-statistics-response.dto";
+import { BattleAnalyticsDomainService } from "#src/battles/services/battle-analytics-domain.service";
+import type { InflatedBattleWithWarriors } from "#src/battles/services/battle-analytics.types";
 
 type CombatProfileHighlight = CombatProfileDto["highlights"][number];
 

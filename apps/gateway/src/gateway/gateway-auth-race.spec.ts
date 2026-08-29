@@ -4,15 +4,15 @@ import { IoAdapter } from "@nestjs/platform-socket.io";
 import { Test } from "@nestjs/testing";
 import { io, type Socket as ClientSocket } from "socket.io-client";
 import type { ServerOptions } from "socket.io";
-import { Gateway } from "./gateway";
-import { GatewayEvent } from "./enums/gateway-event.enum";
-import { ConnectionService } from "./services/connection.service";
-import { GatewayAuthService } from "./services/gateway-auth.service";
-import { PresenceService } from "./services/presence.service";
-import { SubscriptionService } from "./services/subscription.service";
-import { MapPingService } from "./services/map-ping.service";
-import { AirTagService } from "./services/air-tag.service";
-import { RedisIoAdapter } from "src/lib/redis/redis-io.adapter";
+import { Gateway } from "./gateway.js";
+import { GatewayEvent } from "./enums/gateway-event.enum.js";
+import { ConnectionService } from "./services/connection.service.js";
+import { GatewayAuthService } from "./services/gateway-auth.service.js";
+import { PresenceService } from "./services/presence.service.js";
+import { SubscriptionService } from "./services/subscription.service.js";
+import { MapPingService } from "./services/map-ping.service.js";
+import { AirTagService } from "./services/air-tag.service.js";
+import { RedisIoAdapter } from "#src/lib/redis/redis-io.adapter";
 
 class TestRedisIoAdapter extends RedisIoAdapter {
   override createIOServer(port: number, options?: ServerOptions) {

@@ -1,5 +1,5 @@
-import { UpdateReservationDto } from "./dto/update-reservation.dto";
-import { UserReservationsController } from "./user-reservations.controller";
+import { UpdateReservationDto } from "./dto/update-reservation.dto.js";
+import { UserReservationsController } from "./user-reservations.controller.js";
 
 describe("UserReservationsController", () => {
   const reservationsService = {

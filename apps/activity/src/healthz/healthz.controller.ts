@@ -8,8 +8,8 @@ import {
   DiskHealthIndicator,
   HealthCheck,
 } from "@nestjs/terminus";
-import { PrismaService } from "src/shared/db/prisma.service";
-import { apiServiceConfig } from "src/config/api-service.config";
+import { PrismaService } from "#src/shared/db/prisma.service";
+import { apiServiceConfig } from "#src/config/api-service.config";
 
 @ApiTags("health")
 @Controller("healthz")

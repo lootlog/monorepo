@@ -1,6 +1,6 @@
 import { NotFoundException } from "@nestjs/common";
-import { Permission, type Role } from "src/generated/prisma/client";
-import { EventAccessService } from "./event-access.service";
+import { Permission, type Role } from "#src/generated/prisma/client";
+import { EventAccessService } from "./event-access.service.js";
 
 function createRole(
   permissions: Permission[],

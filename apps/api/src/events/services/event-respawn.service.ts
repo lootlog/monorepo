@@ -7,20 +7,20 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import { PrismaService } from "src/db/prisma.service";
-import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
-import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data";
+import { PrismaService } from "#src/db/prisma.service";
+import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant.js";
+import type { AutoCloseRespawnWindowJobData } from "../interfaces/auto-close-respawn-window-job-data.js";
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,
-} from "../interfaces/respawn-window.interface";
-import { EventEmitterService } from "./event-emitter.service";
-import { EventKillService } from "./event-kill.service";
-import { EventReadCacheService } from "./event-read-cache.service";
-import { EventTrackingService } from "./event-tracking.service";
-import { EventSummaryService } from "./event-summary.service";
-import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id";
-import { TimersService } from "src/timers/timers.service";
+} from "../interfaces/respawn-window.interface.js";
+import { EventEmitterService } from "./event-emitter.service.js";
+import { EventKillService } from "./event-kill.service.js";
+import { EventReadCacheService } from "./event-read-cache.service.js";
+import { EventTrackingService } from "./event-tracking.service.js";
+import { EventSummaryService } from "./event-summary.service.js";
+import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id.js";
+import { TimersService } from "#src/timers/timers.service";
 
 const normalizeCloseRespawnWindowOptions = (
   options: CloseRespawnWindowOptions,

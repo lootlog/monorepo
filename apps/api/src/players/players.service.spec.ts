@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { mockFn } from "src/test/mock-fn";
-import { PlayersService } from "./players.service";
+import { mockFn } from "#src/test/mock-fn";
+import { PlayersService } from "./players.service.js";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 
 describe("PlayersService", () => {

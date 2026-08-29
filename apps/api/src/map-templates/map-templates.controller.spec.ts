@@ -1,6 +1,6 @@
-import { Permission } from "src/generated/prisma/client";
-import { PERMISSIONS_KEY } from "src/shared/permissions/permissions.decorator";
-import { MapTemplatesController } from "./map-templates.controller";
+import { Permission } from "#src/generated/prisma/client";
+import { PERMISSIONS_KEY } from "#src/shared/permissions/permissions.decorator";
+import { MapTemplatesController } from "./map-templates.controller.js";
 
 describe("MapTemplatesController", () => {
   const mockMapTemplatesService = {

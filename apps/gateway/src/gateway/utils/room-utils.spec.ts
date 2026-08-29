@@ -1,13 +1,13 @@
 import { Permission } from "@lootlog/types";
-import { Platform } from "src/gateway/enums/platform.enum";
-import type { GuildRole, UserGuildData } from "src/guilds/types/guild.types";
+import { Platform } from "#src/gateway/enums/platform.enum";
+import type { GuildRole, UserGuildData } from "#src/guilds/types/guild.types";
 import {
   buildRoomName,
   buildUserGuildRoomName,
   calculateUserRooms,
   getNpcTier,
   hasFeatureRoomAccess,
-} from "./room-utils";
+} from "./room-utils.js";
 
 function createRole(
   permissions: Permission[],

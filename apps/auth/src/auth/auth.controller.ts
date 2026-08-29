@@ -16,12 +16,12 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { ZodSchemaValidationPipe } from "src/common/pipes/zod-schema-validation.pipe";
-import { AuthService } from "./auth.service";
+import { ZodSchemaValidationPipe } from "#src/common/pipes/zod-schema-validation.pipe";
+import { AuthService } from "./auth.service.js";
 import {
   type IdpTokenRequestDto,
   idpTokenRequestSchema,
-} from "./dto/idp-token-request.dto";
+} from "./dto/idp-token-request.dto.js";
 
 @ApiTags("auth")
 @Controller("auth")

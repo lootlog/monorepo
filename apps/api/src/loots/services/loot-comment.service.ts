@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable } from "@nestjs/common";
-import { PrismaService } from "src/db/prisma.service";
-import type { CreateCommentDto } from "src/loots/dto/create-comment-dto";
-import { ErrorKey } from "../enum/error-key.enum";
+import { PrismaService } from "#src/db/prisma.service";
+import type { CreateCommentDto } from "#src/loots/dto/create-comment-dto";
+import { ErrorKey } from "../enum/error-key.enum.js";
 
 @Injectable()
 export class LootCommentService {

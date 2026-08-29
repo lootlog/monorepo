@@ -1,10 +1,10 @@
 import { createZodDto } from "nestjs-zod";
-import { PointsEditType } from "src/generated/prisma/client";
+import { PointsEditType } from "#src/generated/prisma/client";
 import {
   isoDatetimeCodec,
   jsonValueSchema,
   nullableIsoDatetimeCodec,
-} from "src/shared/dto/zod-response-codecs";
+} from "#src/shared/dto/zod-response-codecs";
 import { z } from "zod";
 import { EVENT_SCORING_MODES } from "@lootlog/scoring";
 

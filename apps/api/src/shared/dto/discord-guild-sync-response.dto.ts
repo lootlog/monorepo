@@ -1,10 +1,10 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
-import { DiscordGuildSyncStatus } from "src/generated/prisma/client";
+import { DiscordGuildSyncStatus } from "#src/generated/prisma/client";
 import {
   isoDatetimeCodec,
   nullableIsoDatetimeCodec,
-} from "src/shared/dto/zod-response-codecs";
+} from "#src/shared/dto/zod-response-codecs";
 
 const DiscordGuildChannelSnapshotResponseSchema = z.object({
   id: z.number().int(),

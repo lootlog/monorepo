@@ -1,5 +1,5 @@
 import type { RuntimeEnvironment } from "@lootlog/types";
-import { env } from "./env";
+import { env } from "./env.js";
 
 export interface ServiceConfig {
   env: RuntimeEnvironment;

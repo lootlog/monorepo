@@ -7,9 +7,9 @@ import type {
   RatingDeltaByOpponentDto,
   RatingGrowthDataPointDto,
   StreakDto,
-} from "src/battles/dto/battle-statistics-response.dto";
-import { BattleAnalyticsDomainService } from "src/battles/services/battle-analytics-domain.service";
-import type { InflatedBattleWithWarriors } from "src/battles/services/battle-analytics.types";
+} from "#src/battles/dto/battle-statistics-response.dto";
+import { BattleAnalyticsDomainService } from "#src/battles/services/battle-analytics-domain.service";
+import type { InflatedBattleWithWarriors } from "#src/battles/services/battle-analytics.types";
 
 @Injectable()
 export class BattleSummaryCalculatorService {

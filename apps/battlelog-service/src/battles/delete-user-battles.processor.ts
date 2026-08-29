@@ -1,8 +1,8 @@
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Injectable, Logger } from "@nestjs/common";
 import type { Job } from "bullmq";
-import { DELETE_USER_BATTLES_QUEUE } from "./constants/delete-user-battles-queue.constant";
-import { BattlesService } from "./battles.service";
+import { DELETE_USER_BATTLES_QUEUE } from "./constants/delete-user-battles-queue.constant.js";
+import { BattlesService } from "./battles.service.js";
 
 export interface DeleteUserBattlesJobData {
   userId: string;

@@ -7,7 +7,7 @@ import {
   DEAD_LETTER_EXCHANGE_NAME,
   DEFAULT_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from "src/config/rabbitmq.config";
+} from "#src/config/rabbitmq.config";
 
 @Injectable()
 export class RetryService extends RabbitMqRetryService {

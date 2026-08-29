@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   isoDatetimeCodec,
   jsonValueSchema,
-} from "src/shared/dto/zod-response-codecs";
+} from "#src/shared/dto/zod-response-codecs";
 
 const TimerSettingsResponseSchema = z.object({
   userId: z.string(),

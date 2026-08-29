@@ -4,22 +4,22 @@ import {
   HttpStatus,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { mockFn } from "src/test/mock-fn";
-import { GuildsService } from "./guilds.service";
+import { mockFn } from "#src/test/mock-fn";
+import { GuildsService } from "./guilds.service.js";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { PrismaService } from "src/db/prisma.service";
-import { ChannelsService } from "src/channels/channels.service";
-import { MembersService } from "src/members/members.service";
-import { RolesService } from "src/roles/roles.service";
-import { DiscordService } from "src/discord/discord.service";
+import { PrismaService } from "#src/db/prisma.service";
+import { ChannelsService } from "#src/channels/channels.service";
+import { MembersService } from "#src/members/members.service";
+import { RolesService } from "#src/roles/roles.service";
+import { DiscordService } from "#src/discord/discord.service";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { DiscordGuildSyncStatus } from "@lootlog/types";
-import { type Guild, Permission } from "src/generated/prisma/client";
-import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
-import { UserGuildAccessResolver } from "./user-guild-access-resolver.service";
+import { type Guild, Permission } from "#src/generated/prisma/client";
+import { MEMBER_REFRESH_PRIORITY } from "#src/members/constants/member-refresh-queue.constant";
+import { UserGuildAccessResolver } from "./user-guild-access-resolver.service.js";
 
-vi.mock("src/config/discord-bot.config", () => ({
+vi.mock("#src/config/discord-bot.config", () => ({
   discordBotConfig: { channelSnapshotStaleSeconds: 300 },
 }));
 

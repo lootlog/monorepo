@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { PartyReadyRoomController } from "src/messaging/ready-room/party-ready-room.controller";
+import { PartyReadyRoomController } from "#src/messaging/ready-room/party-ready-room.controller";
 
 function createGuildsService() {
   return {

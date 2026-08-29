@@ -1,5 +1,5 @@
 import type { Mock } from "vitest";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   BadRequestException,
@@ -10,26 +10,26 @@ import {
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { LootsService } from "./loots.service";
-import { PlayersService } from "../players/players.service";
-import { NpcsService } from "../npcs/npcs.service";
-import { ItemsService } from "../items/items.service";
-import { GuildsService } from "../guilds/guilds.service";
-import { PrismaService } from "../db/prisma.service";
-import { LootlogConfigService } from "../lootlog-config/lootlog-config.service";
-import { UserLootlogConfigService } from "../user-lootlog-config/user-lootlog-config.service";
-import { LootAllocationService } from "./loot-allocation.service";
-import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.service";
-import { LootQueryService } from "./services/loot-query.service";
-import { LootCommentService } from "./services/loot-comment.service";
-import { LootStatsService } from "./services/loot-stats.service";
+import { LootsService } from "./loots.service.js";
+import { PlayersService } from "../players/players.service.js";
+import { NpcsService } from "../npcs/npcs.service.js";
+import { ItemsService } from "../items/items.service.js";
+import { GuildsService } from "../guilds/guilds.service.js";
+import { PrismaService } from "../db/prisma.service.js";
+import { LootlogConfigService } from "../lootlog-config/lootlog-config.service.js";
+import { UserLootlogConfigService } from "../user-lootlog-config/user-lootlog-config.service.js";
+import { LootAllocationService } from "./loot-allocation.service.js";
+import { LootSubmissionAcceptanceService } from "./loot-submission-acceptance.service.js";
+import { LootQueryService } from "./services/loot-query.service.js";
+import { LootCommentService } from "./services/loot-comment.service.js";
+import { LootStatsService } from "./services/loot-stats.service.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { RedlockService } from "src/lib/redlock/redlock.service";
+import { RedlockService } from "#src/lib/redlock/redlock.service";
 import { ExecutionError } from "redlock";
-import type { CreateLootDto } from "./dto/create-loot.dto";
-import type { UpdateLootDto } from "./dto/update-loot.dto";
-import type { CreateCommentDto } from "./dto/create-comment-dto";
-import type { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto";
+import type { CreateLootDto } from "./dto/create-loot.dto.js";
+import type { UpdateLootDto } from "./dto/update-loot.dto.js";
+import type { CreateCommentDto } from "./dto/create-comment-dto.js";
+import type { FetchLootsParamsDto } from "./dto/fetch-loots-params.dto.js";
 import {
   ItemRarity,
   Profession,
@@ -38,9 +38,9 @@ import {
   type Guild,
   LootSource,
   type Role,
-} from "src/generated/prisma/client";
-import { ErrorKey } from "./enum/error-key.enum";
-import { RoutingKey } from "src/enum/routing-key.enum";
+} from "#src/generated/prisma/client";
+import { ErrorKey } from "./enum/error-key.enum.js";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 
 describe("Loot modules", () => {
   let service: LootsService;

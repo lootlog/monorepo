@@ -1,28 +1,28 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { GatewayService } from "./gateway.service";
-import { Gateway } from "./gateway";
+import { GatewayService } from "./gateway.service.js";
+import { Gateway } from "./gateway.js";
 import { RedisService } from "@lootlog/nest-shared/redis";
-import { GuildsService } from "../guilds/guilds.service";
-import { CreateTimerDto } from "./dto/create-timer.dto";
-import type { DeleteTimerDto } from "./dto/delete-timer.dto";
-import { MessageType, SendMessageDto } from "./dto/send-message.dto";
-import { SendNotificationDto } from "./dto/send-notification.dto";
-import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto";
-import { NpcType } from "./enums/npc-type.enum";
-import { GatewayEvent } from "./enums/gateway-event.enum";
-import { Platform } from "./enums/platform.enum";
+import { GuildsService } from "../guilds/guilds.service.js";
+import { CreateTimerDto } from "./dto/create-timer.dto.js";
+import type { DeleteTimerDto } from "./dto/delete-timer.dto.js";
+import { MessageType, SendMessageDto } from "./dto/send-message.dto.js";
+import { SendNotificationDto } from "./dto/send-notification.dto.js";
+import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto.js";
+import { NpcType } from "./enums/npc-type.enum.js";
+import { GatewayEvent } from "./enums/gateway-event.enum.js";
+import { Platform } from "./enums/platform.enum.js";
 import { Permission, type PartyReadyRoomUpdateEnvelope } from "@lootlog/types";
-import { ActivityType } from "./enums/activity-type.enum";
-import { ActivityService } from "./services/activity.service";
-import { PresenceService } from "./services/presence.service";
+import { ActivityType } from "./enums/activity-type.enum.js";
+import { ActivityService } from "./services/activity.service.js";
+import { PresenceService } from "./services/presence.service.js";
 import type {
   ReservationCreateEventDto,
   ReservationChangedEventV2Dto,
   ReservationDeleteEventDto,
-} from "./dto/reservation-event.dto";
-import type { ChatMessageEnvelopeDto } from "./dto/chat-message-envelope.dto";
-import type { ChatMessagesClearDto } from "./dto/chat-messages-clear.dto";
-import { AirTagService } from "./services/air-tag.service";
+} from "./dto/reservation-event.dto.js";
+import type { ChatMessageEnvelopeDto } from "./dto/chat-message-envelope.dto.js";
+import type { ChatMessagesClearDto } from "./dto/chat-messages-clear.dto.js";
+import { AirTagService } from "./services/air-tag.service.js";
 
 describe("GatewayService", () => {
   let service: GatewayService;

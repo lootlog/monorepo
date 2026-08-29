@@ -1,4 +1,4 @@
-import { presentReservation } from "./reservation-presentation";
+import { presentReservation } from "./reservation-presentation.js";
 
 const guild = {
   id: "source-guild",

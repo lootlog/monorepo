@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import type { QueryBattleStatisticsDto } from "src/battles/dto/query-battle-statistics.dto";
-import type { HeadToHeadRecordDto } from "src/battles/dto/battle-statistics-response.dto";
-import { BattleAnalyticsDomainService } from "src/battles/services/battle-analytics-domain.service";
+import type { QueryBattleStatisticsDto } from "#src/battles/dto/query-battle-statistics.dto";
+import type { HeadToHeadRecordDto } from "#src/battles/dto/battle-statistics-response.dto";
+import { BattleAnalyticsDomainService } from "#src/battles/services/battle-analytics-domain.service";
 import type {
   BattleResult,
   InflatedBattleWithWarriors,
-} from "src/battles/services/battle-analytics.types";
+} from "#src/battles/services/battle-analytics.types";
 
 type HeadToHeadSortBy = NonNullable<QueryBattleStatisticsDto["sortBy"]>;
 

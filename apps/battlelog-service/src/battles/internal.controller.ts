@@ -4,9 +4,9 @@ import type { Queue } from "bullmq";
 import { z } from "zod";
 import { createZodDto, ZodResponse } from "nestjs-zod";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
-import { DELETE_USER_BATTLES_QUEUE } from "./constants/delete-user-battles-queue.constant";
-import type { DeleteUserBattlesJobData } from "./delete-user-battles.processor";
-import { BattleAcceptedResponseDto } from "./dto/battle-response.dto";
+import { DELETE_USER_BATTLES_QUEUE } from "./constants/delete-user-battles-queue.constant.js";
+import type { DeleteUserBattlesJobData } from "./delete-user-battles.processor.js";
+import { BattleAcceptedResponseDto } from "./dto/battle-response.dto.js";
 
 const DeleteUserDataSchema = z.object({ userId: z.string() });
 class DeleteUserDataDto extends createZodDto(DeleteUserDataSchema) {}

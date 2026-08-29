@@ -1,11 +1,11 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { FastifyReply } from "fastify";
-import { serviceConfig } from "src/config/service.config";
+import { serviceConfig } from "#src/config/service.config";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { mockFn } from "src/test/mock-fn";
+import { mockFn } from "#src/test/mock-fn";
 import { RuntimeEnvironment } from "@lootlog/types";
-import { PublicGuildStatsCardController } from "./public-guild-stats-card.controller";
-import { PublicGuildStatsCardService } from "./public-guild-stats-card.service";
+import { PublicGuildStatsCardController } from "./public-guild-stats-card.controller.js";
+import { PublicGuildStatsCardService } from "./public-guild-stats-card.service.js";
 
 describe("PublicGuildStatsCardController", () => {
   let controller: PublicGuildStatsCardController;

@@ -10,9 +10,9 @@ import type { Logger } from "winston";
 import {
   MessageType,
   type SendMessageDto,
-} from "src/chat/dto/send-message.dto";
-import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
-import { RoutingKey } from "src/enum/routing-key.enum";
+} from "#src/chat/dto/send-message.dto";
+import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
+import { RoutingKey } from "#src/enum/routing-key.enum";
 import { RedisService } from "@lootlog/nest-shared/redis";
 import {
   CHAT_MESSAGE_LIMIT,
@@ -20,16 +20,16 @@ import {
   type NpcRoutingTier,
 } from "@lootlog/types";
 import { v6 } from "uuid";
-import { GuildsService } from "src/guilds/guilds.service";
-import { Permission, type Role } from "src/generated/prisma/client";
-import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
-import type { ChatStoredMessage } from "src/chat/types/chat-stored-message.type";
-import type { ChatMessageViewer } from "src/chat/types/chat-message-viewer.type";
+import { GuildsService } from "#src/guilds/guilds.service";
+import { Permission, type Role } from "#src/generated/prisma/client";
+import { canViewChatMessage } from "#src/shared/utils/can-view-chat-message";
+import type { ChatStoredMessage } from "#src/chat/types/chat-stored-message.type";
+import type { ChatMessageViewer } from "#src/chat/types/chat-message-viewer.type";
 import {
   canDeleteChatMessage,
   canEditChatMessage,
-} from "src/chat/chat-message-permissions";
-import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
+} from "#src/chat/chat-message-permissions";
+import { isAdministrativeUser } from "#src/shared/permissions/is-administrative-user";
 
 type MessageRouting = {
   tier: NpcRoutingTier;

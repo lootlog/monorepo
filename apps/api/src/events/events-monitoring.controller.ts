@@ -15,10 +15,10 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ZodResponse } from "nestjs-zod";
-import { Permission, type Role } from "src/generated/prisma/client";
-import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto";
-import { EventCoordinationResponseDto } from "./dto/event-coordination-response.dto";
-import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto";
+import { Permission, type Role } from "#src/generated/prisma/client";
+import { CloseRespawnWindowDto } from "./dto/close-respawn-window.dto.js";
+import { EventCoordinationResponseDto } from "./dto/event-coordination-response.dto.js";
+import { OpenRespawnWindowDto } from "./dto/open-respawn-window.dto.js";
 import {
   CoverageGapResponseDto,
   HeroCoverageGapResponseDto,
@@ -26,14 +26,14 @@ import {
   HeroRespawnConfigResponseDto,
   KillTimelineMapResponseDto,
   NullableCoverageGapResponseDto,
-} from "./dto/event-monitoring-response.dto";
-import { EventsService } from "./events.service";
-import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
-import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
+} from "./dto/event-monitoring-response.dto.js";
+import { EventsService } from "./events.service.js";
+import { GuildData } from "#src/shared/decorators/guild-data.decorator";
+import { MemberPermissions } from "#src/shared/decorators/member-permissions.decorator";
+import { MemberRoles } from "#src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "@lootlog/nest-shared";
-import { Permissions } from "src/shared/permissions/permissions.decorator";
-import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { Permissions } from "#src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "#src/shared/permissions/permissions.guard";
 
 @ApiTags("events")
 @ApiBearerAuth()

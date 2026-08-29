@@ -2,8 +2,8 @@ import { performance } from "node:perf_hooks";
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { env } from "src/config/env";
-import { getRequestDiagnosticsContext } from "./request-diagnostics-context";
+import { env } from "#src/config/env";
+import { getRequestDiagnosticsContext } from "./request-diagnostics-context.js";
 
 type PerfMetadata = Record<string, unknown>;
 
