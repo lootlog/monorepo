@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import type { EventTimer } from "../../types/api";
 import type { TFunction } from "i18next";
 

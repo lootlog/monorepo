@@ -13,6 +13,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint .",
+    "test": "vitest run",
     "doctor": "npx -y react-doctor@latest ."
   },
   "dependencies": {

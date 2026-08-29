@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Search, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { SearchInput } from "@/components/ui/search-input";
 import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import {
   Avatar,
@@ -18,7 +19,6 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Card } from "@lootlog/ui/components/card";
-import { Input } from "@lootlog/ui/components/input";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { WorldSwitcher } from "@/components/common/world-switcher";
@@ -186,15 +186,11 @@ export const StatsRanking: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 md:hidden">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder={t("kills.fullRanking.searchPlaceholder")}
-                    onChange={handleSearchChange}
-                    className="pl-8 w-full"
-                  />
-                </div>
+                <SearchInput
+                  placeholder={t("kills.fullRanking.searchPlaceholder")}
+                  onChange={handleSearchChange}
+                  wrapperClassName="flex-1"
+                />
                 <StatsRankingFiltersMobile
                   world={settings.world}
                   minLvl={settings.minLvl}
@@ -208,15 +204,11 @@ export const StatsRanking: React.FC = () => {
               </div>
 
               <div className="hidden md:flex w-full flex-wrap items-center gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder={t("kills.fullRanking.searchPlaceholder")}
-                    onChange={handleSearchChange}
-                    className="pl-8 w-[200px]"
-                  />
-                </div>
+                <SearchInput
+                  placeholder={t("kills.fullRanking.searchPlaceholder")}
+                  onChange={handleSearchChange}
+                  wrapperClassName="w-[200px]"
+                />
                 <LevelFilters
                   minLvl={settings.minLvl}
                   maxLvl={settings.maxLvl}

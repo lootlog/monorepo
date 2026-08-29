@@ -10,14 +10,6 @@ import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@lootlog/ui/components/drawer";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -25,10 +17,10 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { Input } from "@lootlog/ui/components/input";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useBattlesControllerGetUserCharacters } from "@lootlog/api-client/react-query/battlelog/battles";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { useTranslation } from "react-i18next";
+import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 
 type StatisticsFiltersMobileProps = {
   characterId?: string;
@@ -81,176 +73,158 @@ export const StatisticsFiltersMobile = ({
   ];
 
   return (
-    <Drawer>
-      <DrawerTrigger
-        render={
-          <Button className="w-full justify-between">
+    <MobileFiltersDrawer
+      title={t("battlePanel.filters.statisticsTitle")}
+      closeLabel={t("battlePanel.actions.close")}
+      childrenClassName="pr-2"
+      trigger={
+        <Button className="w-full justify-between">
+          <span className="flex items-center gap-2">
+            <Filter data-icon="inline-start" />
+            {t("battlePanel.filters.title")}
+          </span>
+        </Button>
+      }
+    >
+      <div className="space-y-2">
+        <Label>{t("battlePanel.filters.character")}</Label>
+        <Select
+          value={characterId}
+          onValueChange={(value) =>
+            onCharacterChange(
+              value === null || value === "all" ? undefined : value,
+            )
+          }
+          items={[
+            {
+              value: null,
+              label: <>{t("battlePanel.filters.selectCharacter")}</>,
+            },
+            ...characters.map((char) => ({
+              value: char.id,
+              label: (
+                <>
+                  {char.name} ({char.world})
+                </>
+              ),
+            })),
+          ]}
+        >
+          <SelectTrigger className="w-full">
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <span>{t("battlePanel.filters.title")}</span>
-            </div>
-          </Button>
-        }
-      />
-      <DrawerContent className="flex max-h-[85vh] flex-col p-4">
-        <DrawerHeader className="mb-4 shrink-0">
-          <DrawerTitle>{t("battlePanel.filters.statisticsTitle")}</DrawerTitle>
-        </DrawerHeader>
-        <ScrollArea className="min-h-0 flex-1">
-          <div className="space-y-4 pr-2">
-            <div className="space-y-2">
-              <Label>{t("battlePanel.filters.character")}</Label>
-              <Select
-                value={characterId}
-                onValueChange={(value) =>
-                  onCharacterChange(
-                    value === null || value === "all" ? undefined : value,
-                  )
-                }
-                items={[
-                  {
-                    value: null,
-                    label: <>{t("battlePanel.filters.selectCharacter")}</>,
-                  },
-                  ...characters.map((char) => ({
-                    value: char.id,
-                    label: (
-                      <>
-                        {char.name} ({char.world})
-                      </>
-                    ),
-                  })),
-                ]}
-              >
-                <SelectTrigger className="w-full">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <SelectValue
-                      placeholder={t("battlePanel.filters.selectCharacter")}
-                    />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {characters.map((char) => (
-                    <SelectItem key={char.id} value={char.id}>
-                      {char.name} ({char.world})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t("battlePanel.filters.period")}</Label>
-              <Select
-                value={period}
-                onValueChange={(value) => {
-                  if (value !== null) onPeriodChange(value);
-                }}
-                items={[
-                  ...periodOptions.map((option) => ({
-                    value: option.value,
-                    label: <>{option.label}</>,
-                  })),
-                ]}
-              >
-                <SelectTrigger className="w-full">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <SelectValue />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {periodOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t("battlePanel.filters.levelRange")}</Label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <Input
-                    type="number"
-                    placeholder={t("battlePanel.filters.minPlaceholder")}
-                    value={minLevel ?? ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      onMinLevelChange(value ? Number(value) : undefined);
-                    }}
-                    min={1}
-                    max={500}
-                    className="w-full"
-                  />
-                </div>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                <div className="flex-1">
-                  <Input
-                    type="number"
-                    placeholder={t("battlePanel.filters.maxPlaceholder")}
-                    value={maxLevel ?? ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      onMaxLevelChange(value ? Number(value) : undefined);
-                    }}
-                    min={1}
-                    max={500}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <div className="flex items-center gap-2">
-                <Award className="h-4 w-4" />
-                <Label htmlFor="ph-filter-mobile" className="cursor-pointer">
-                  {t("battlePanel.filters.honorPoints")}
-                </Label>
-              </div>
-              <Checkbox
-                id="ph-filter-mobile"
-                checked={ph === true}
-                onCheckedChange={(checked) => onPhChange(checked === true)}
+              <User className="h-4 w-4" />
+              <SelectValue
+                placeholder={t("battlePanel.filters.selectCharacter")}
               />
             </div>
+          </SelectTrigger>
+          <SelectContent>
+            {characters.map((char) => (
+              <SelectItem key={char.id} value={char.id}>
+                {char.name} ({char.world})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-            {showMatchmakingFilter && (
-              <div className="flex items-center justify-between rounded-md border p-3">
-                <div className="flex items-center gap-2">
-                  <Swords className="h-4 w-4" />
-                  <Label
-                    htmlFor="matchmaking-filter-mobile"
-                    className="cursor-pointer"
-                  >
-                    {t("battlePanel.filters.matchmaking")}
-                  </Label>
-                </div>
-                <Checkbox
-                  id="matchmaking-filter-mobile"
-                  checked={matchmaking === true}
-                  onCheckedChange={(checked) =>
-                    onMatchmakingChange(checked === true)
-                  }
-                />
-              </div>
-            )}
+      <div className="space-y-2">
+        <Label>{t("battlePanel.filters.period")}</Label>
+        <Select
+          value={period}
+          onValueChange={(value) => {
+            if (value !== null) onPeriodChange(value);
+          }}
+          items={[
+            ...periodOptions.map((option) => ({
+              value: option.value,
+              label: <>{option.label}</>,
+            })),
+          ]}
+        >
+          <SelectTrigger className="w-full">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <SelectValue />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {periodOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>{t("battlePanel.filters.levelRange")}</Label>
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <Input
+              type="number"
+              placeholder={t("battlePanel.filters.minPlaceholder")}
+              value={minLevel ?? ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                onMinLevelChange(value ? Number(value) : undefined);
+              }}
+              min={1}
+              max={500}
+              className="w-full"
+            />
           </div>
-        </ScrollArea>
-        <div className="mt-6 shrink-0">
-          <DrawerClose
-            render={
-              <Button variant="outline" className="w-full">
-                {t("battlePanel.actions.close")}
-              </Button>
-            }
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <div className="flex-1">
+            <Input
+              type="number"
+              placeholder={t("battlePanel.filters.maxPlaceholder")}
+              value={maxLevel ?? ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                onMaxLevelChange(value ? Number(value) : undefined);
+              }}
+              min={1}
+              max={500}
+              className="w-full"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between rounded-md border p-3">
+        <div className="flex items-center gap-2">
+          <Award className="h-4 w-4" />
+          <Label htmlFor="ph-filter-mobile" className="cursor-pointer">
+            {t("battlePanel.filters.honorPoints")}
+          </Label>
+        </div>
+        <Checkbox
+          id="ph-filter-mobile"
+          checked={ph === true}
+          onCheckedChange={(checked) => onPhChange(checked === true)}
+        />
+      </div>
+
+      {showMatchmakingFilter && (
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center gap-2">
+            <Swords className="h-4 w-4" />
+            <Label
+              htmlFor="matchmaking-filter-mobile"
+              className="cursor-pointer"
+            >
+              {t("battlePanel.filters.matchmaking")}
+            </Label>
+          </div>
+          <Checkbox
+            id="matchmaking-filter-mobile"
+            checked={matchmaking === true}
+            onCheckedChange={(checked) => onMatchmakingChange(checked === true)}
           />
         </div>
-      </DrawerContent>
-    </Drawer>
+      )}
+    </MobileFiltersDrawer>
   );
 };

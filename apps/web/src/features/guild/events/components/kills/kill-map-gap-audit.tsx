@@ -3,7 +3,7 @@ import type { TFunction } from "i18next";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { formatTimeShort } from "../../utils/format-date";
 import { formatDurationHuman } from "../../utils/format-duration";
 import type { NormalizedMapGap } from "../../utils/kill-map-timeline-data";

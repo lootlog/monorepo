@@ -80,6 +80,35 @@ these screens into landing pages.
 
 ## Components
 
+### Shadcn first
+
+Use the shadcn registry and the shared `@lootlog/ui` implementation before
+creating a new UI primitive. Run shadcn CLI `search`/`docs`, then `add --dry-run`
+and inspect the diff. The web and UI package configurations must stay on
+Base UI with the `base-nova` style; never overwrite locally extended
+components from the CLI.
+
+Use this mapping for recurring needs:
+
+- actions: `Button`, `ButtonGroup`, `ToggleGroup`, and `DropdownMenu`;
+- form structure: `FieldSet`, `FieldGroup`, `Field`, `FieldLabel`,
+  `FieldDescription`, and `FieldError`;
+- search and selection: `SearchInput`/`InputGroup`, `Combobox`, `Select`, and
+  `RadioGroup`;
+- feedback: `Alert`, `Empty`, `Skeleton`, `Progress`, `Badge`, and `Spinner`;
+- navigation and records: `Breadcrumb`, `NavigationMenu`, `Item`, and
+  `MobileFiltersDrawer`;
+- structured panels: the complete `CardHeader`, `CardContent`, and
+  `CardFooter` composition without nested cards.
+
+Native buttons are reserved for schedule cells, drag/reorder handles, slide
+navigation layers, and full-card hit targets whose semantics cannot be
+expressed by a shared primitive. Every exception needs an accessible name, a
+visible focus ring, keyboard coverage, and a short code comment naming the
+specialized hit target. Domain markup remains appropriate for chart markers,
+legend dots, counter overlays, battle visualizations, timelines, schedules,
+themes, and item-rarity colors.
+
 - Panels use `bg-card`, a 1px `border-border`, 16px corners, and no decorative
   blur. Nested cards are not permitted.
 - Controls use 12px corners, a minimum 36px desktop height, and a 44px touch

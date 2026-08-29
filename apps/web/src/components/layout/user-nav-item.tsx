@@ -5,7 +5,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useSession } from "@/hooks/auth/use-session";
 import { ROUTES } from "@/config/routes";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import {
   Avatar,
   AvatarFallback,

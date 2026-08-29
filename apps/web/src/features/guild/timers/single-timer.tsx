@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/utils/cn";
+import { cn } from "@lootlog/ui/lib/utils";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";

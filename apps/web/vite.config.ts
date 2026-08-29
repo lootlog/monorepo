@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
@@ -83,6 +83,9 @@ function shouldDeferModulePreload(dep: string) {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  test: {
+    setupFiles: "./src/test/setup.ts",
+  },
   server: {
     port: 3000,
     host: "0.0.0.0",
